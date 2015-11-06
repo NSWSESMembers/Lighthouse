@@ -3,9 +3,12 @@
 <head><title>Beacon HUD Options</title></head>
 <body>
 
-Unit (beacon id code for now):
-<input type="text" id="id">
+Unit Name or code:<input type="text" id="unitname"><button id="resolve">Resolve</button>
+
 <br>
+
+
+
 Time Period:
 <select id="time">
  <option value="today">Today (Since midnight)</option>
@@ -15,7 +18,7 @@ Time Period:
 </select>
 <br>
 <div id="status"></div>
-<button id="save">Save</button>
+<button id="save" disabled>Save</button>
 
 <script src="options.js"></script>
 </body>
