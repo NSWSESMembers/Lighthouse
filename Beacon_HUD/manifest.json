@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
 
-  "name": "Beacon Hud",
+  "name": "Beacon Summary",
   "description": "Shows job counts from beacon",
   "version": "2.0",
   "options_page": "options.html",
