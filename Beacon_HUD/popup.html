@@ -1,37 +1,52 @@
 <!doctype html>
-<!--
- This page is shown when the extension button is clicked, because the
- "browser_action" field in manifest.json contains the "default_popup" key with
- value "popup.html".
- -->
+
 <html>
   <head>
     <title>Beacon Stats</title>
-    <style>
-      body {
-        font-family: "Segoe UI", "Lucida Grande", Tahoma, sans-serif;
-        font-size: 100%;
-      }
-      #status {
-        /* avoid an excessively wide status text */
-        white-space: pre;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        max-width: 1024px;
-      }
-    </style>
-
-    <!--
-      - JavaScript and HTML must be in separate files: see our Content Security
-      - Policy documentation[1] for details and explanation.
-      -
-      - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
-     -->
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+    <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="popup.js"></script>
+
   </head>
   <body>
-    <div id="status"></div>
+    <div id="status">
     <span id="result">Hacking the Matrix....Please wait</span>
+    </div>
+
+
+    <div id="results" align="center">
+
+      <span id="banner">Job Summary For Test</span>
+      <br><br>
+
+          <table class="bigtbl">
+    <tr class="header">
+    <td>New</td>
+    <td>Acknowledged</td> 
+    <td>Completed</td>
+    </tr>
+    <tr class="rowresults">
+    <td id="new">New</td>
+    <td id="ack">Acknowledged</td> 
+    <td id="comp">Completed</td>
+  </tr>
+   </table>
+<br><br><br><br><br><br>
+      <table class="smltbl">
+      <tr class="header">
+        <td>Referred</td>
+        <td>Cancelled</td>
+        <td>Rejected</td>
+      </tr>
+      <tr class="rowresults">
+        <td id="ref">-</td>
+        <td id="can">-</td>
+        <td id="rej">-</td>
+      </tr>                 
+</table>
+
+    </div>
   </body>
 </html>
 

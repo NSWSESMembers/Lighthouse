@@ -4,7 +4,7 @@ var id = '';
 var timeperiod = '';
 
 chrome.storage.sync.get({
-    unitid: '199',
+    unitid: '149',
     time: 'today'
   }, function(items) {
     console.log("chrome storage");
@@ -144,7 +144,31 @@ var xhttp = new XMLHttpRequest();
 
 console.log(completeJob);
 
-document.getElementById("result").innerHTML = "New Jobs:"+newJob+"<br>"+"Acknowledged Jobs:"+ackJob+"<br>"+"Complete Jobs:"+completeJob+"<br>"+"Referred Jobs:"+refJob+"<br>"+"Finalised Jobs:"+finJob+"<br>"+"Cancelled Jobs:"+canJob+"<br>"+"Rejected Jobs:"+rejJob;
+document.getElementById("status").style.visibility = 'hidden';
+
+
+
+ document.getElementById("new").innerHTML  = newJob;
+ document.getElementById("ack").innerHTML  = ackJob;
+ document.getElementById("comp").innerHTML  = completeJob;
+ document.getElementById("ref").innerHTML  = refJob;
+ document.getElementById("can").innerHTML  = canJob;
+ document.getElementById("rej").innerHTML  = rejJob;
+
+document.getElementById("results").style.visibility = 'visible';
+
+var s = new Date(starttime);
+var e = new Date(endtime);
+
+var options = {
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric"
+};
+
+document.getElementById("banner").innerHTML = "<h2>Job summary for "+id+"</h2><h3>"+s.toLocaleTimeString("en-au",options)+" to "+e.toLocaleTimeString("en-au",options)+"</h3>";
+
     } 
   }
   console.log(id)

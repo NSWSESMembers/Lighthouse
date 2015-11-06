@@ -1,0 +1,44 @@
+.bigtbl {
+	width:100%;
+	text-align: center;
+}
+
+.bigtbl tr td {
+	width:33%;
+}
+.bigtbl .header {
+	font-size: 50px;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.bigtbl .rowresults {
+font-size: 90px;
+}
+
+
+.smltbl {
+	width:100%;
+	text-align: center;
+}
+
+.smltbl tr td {
+	width:33%;
+}
+
+.smltbl .header {
+	font-size: 20px;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.smltbl .rowresults {
+font-size: 50px;
+text-decoration:
+
+}
+
+
+#results {
+	visibility: hidden;
+}

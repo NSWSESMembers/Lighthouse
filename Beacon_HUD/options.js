@@ -20,7 +20,7 @@ function save_options() {
 function restore_options() {
   // Use default value color = 'red' and likesColor = true.
   chrome.storage.sync.get({
-    unitid: '199',
+    unitid: '149',
     time: 'today'
   }, function(items) {
     document.getElementById('id').value = items.unitid;
