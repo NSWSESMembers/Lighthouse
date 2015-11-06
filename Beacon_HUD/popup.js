@@ -13,20 +13,22 @@ document.addEventListener('DOMContentLoaded', function() {
 function RunForestRun() {
 
 
-
-    var id = '';
-    var timeperiod = '';
-
+    var id;
+    var timeperiod;
+    var unitname;
     chrome.storage.sync.get({
         unitid: '149',
-        time: 'today'
+        time: 'today',
+        unitname: 'Kiama'
     }, function(items) {
         console.log("chrome storage");
         console.log(items.unitid);
         console.log(items.time);
         id = items.unitid;
+        unitname = items.unitname;
         timeperiod = items.time;
-        HackTheMatrix(id, timeperiod);
+        console.log(unitname);
+        HackTheMatrix(id, timeperiod,unitname);
     });
 
 
@@ -34,7 +36,7 @@ function RunForestRun() {
 }
 
 //make the call to beacon
-function HackTheMatrix(id, timeperiod) {
+function HackTheMatrix(id, timeperiod, unit) {
 
     var starttime;
     var endtime;
@@ -182,7 +184,8 @@ function HackTheMatrix(id, timeperiod) {
             document.getElementById("can").innerHTML = canJob;
             document.getElementById("rej").innerHTML = rejJob;
             document.getElementById("tsk").innerHTML = tskJob;
-
+            document.getElementById("fin").innerHTML = finJob;
+            document.getElementById("total").innerHTML = "Total Job Count: "+(newJob+ackJob+completeJob+refJob+canJob+finJob+tskJob);
 
             document.getElementById("results").style.visibility = 'visible';
 
@@ -196,7 +199,7 @@ function HackTheMatrix(id, timeperiod) {
                 day: "numeric"
             };
 
-            document.getElementById("banner").innerHTML = "<h2>Job summary for " + id + "</h2><h4>" + s.toLocaleTimeString("en-au", options) + " to " + e.toLocaleTimeString("en-au", options) + "</h4>";
+            document.getElementById("banner").innerHTML = "<h2>Job summary for " + unit + "</h2><h4>" + s.toLocaleTimeString("en-au", options) + " to " + e.toLocaleTimeString("en-au", options) + "</h4>";
 
         }
     }
