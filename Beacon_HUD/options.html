@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head><title>Beacon HUD Options</title></head>
+<body>
+
+Unit (beacon id code for now):
+<input type="text" id="id">
+<br>
+Time Period:
+<select id="time">
+ <option value="today">Today (Since midnight)</option>
+ <option value="24hrs">Last 24hrs</option>
+ <option value="3d">Last 3 days</option>
+ <option value="7d">Last 7 days</option>
+</select>
+<br>
+<div id="status"></div>
+<button id="save">Save</button>
+
+<script src="options.js"></script>
+</body>
+</html>
