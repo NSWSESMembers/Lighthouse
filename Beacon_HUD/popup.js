@@ -67,11 +67,11 @@ function HackTheMatrix(id, timeperiod, unit) {
             start.setHours(0, 0, 0, 0);
 
 
-            starttime = start.toISOString()
-            endtime = end.toISOString()
+            starttime = start.toISOString();
+            endtime = end.toISOString();
 
-            console.log(starttime)
-            console.log(endtime)
+            console.log(starttime);
+            console.log(endtime);
 
             break;
 
@@ -83,11 +83,11 @@ function HackTheMatrix(id, timeperiod, unit) {
             start.setDate(start.getDate() - 1);
 
 
-            starttime = start.toISOString()
-            endtime = end.toISOString()
+            starttime = start.toISOString();
+            endtime = end.toISOString();
 
-            console.log(starttime)
-            console.log(endtime)
+            console.log(starttime);
+            console.log(endtime);
 
             break;
 
@@ -99,11 +99,11 @@ function HackTheMatrix(id, timeperiod, unit) {
             start.setDate(start.getDate() - 3);
 
 
-            starttime = start.toISOString()
-            endtime = end.toISOString()
+            starttime = start.toISOString();
+            endtime = end.toISOString();
 
-            console.log(starttime)
-            console.log(endtime)
+            console.log(starttime);
+            console.log(endtime);
 
             break;
 
@@ -115,14 +115,29 @@ function HackTheMatrix(id, timeperiod, unit) {
             start.setDate(start.getDate() - 7);
 
 
-            starttime = start.toISOString()
-            endtime = end.toISOString()
+            starttime = start.toISOString();
+            endtime = end.toISOString();
 
-            console.log(starttime)
-            console.log(endtime)
+            console.log(starttime);
+            console.log(endtime);
 
             break;
 
+        case "30d":
+
+            var end = new Date();
+
+            var start = new Date();
+            start.setDate(start.getDate() - 30);
+
+
+            starttime = start.toISOString();
+            endtime = end.toISOString();
+
+            console.log(starttime);
+            console.log(endtime);
+
+            break;
 
     }
 
@@ -199,10 +214,16 @@ function HackTheMatrix(id, timeperiod, unit) {
                         break;
                     case "Rescue":
                         rescue = rescue +1;
-                        break;   
+                        break;
+                    case "RCR":
+                        rescue = rescue +1;
+                        break;
                     case "Flood":
                         flood = flood +1;
-                        break;      
+                        break;
+                    case "Flood Misc":
+                        flood = flood +1;
+                        break;                
                 }
 
 
