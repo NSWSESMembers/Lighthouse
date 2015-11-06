@@ -36,6 +36,25 @@ font-size: 90px;
 font-size: 50px;
 }
 
+.tinytbl {
+	width:100%;
+	text-align: center;
+}
+
+.tinytbl tr td {
+	width:25%;
+}
+
+.tinytbl .header {
+	font-size: 20px;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.tinytbl .rowresults {
+font-size: 30px;
+}
+
 #total {
 	font-size: 25px;
 	font-weight: bold;

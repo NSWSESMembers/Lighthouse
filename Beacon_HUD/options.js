@@ -52,7 +52,8 @@ function save_options() {
     status.textContent = 'Options saved.';
     setTimeout(function() {
       status.textContent = '';
-    }, 750);
+      window.location.replace("popup.html");
+    }, 1000);
   });
 }
 

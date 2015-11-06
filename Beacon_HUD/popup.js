@@ -1,8 +1,21 @@
-//update every 60 seconds
-window.setInterval(function() {
-    RunForestRun()
-}, 60000);
+//update every X seconds
+function startTimer(duration, display) {
+    var timer = duration, minutes, seconds;
+    setInterval(function () {
+        minutes = parseInt(timer / 60, 10)
+        seconds = parseInt(timer % 60, 10);
 
+        minutes = minutes < 10 ? "0" + minutes : minutes;
+        seconds = seconds < 10 ? "0" + seconds : seconds;
+
+        display.textContent = minutes + ":" + seconds;
+
+        if (--timer < 0) { //when the timer is 0 run the code
+            timer = duration;
+            RunForestRun();
+        }
+    }, 1000);
+}
 
 //because
 document.addEventListener('DOMContentLoaded', function() {
@@ -17,17 +30,20 @@ function RunForestRun() {
     var timeperiod;
     var unitname;
     chrome.storage.sync.get({
-        unitid: '149',
+        unitid: '199',
         time: 'today',
-        unitname: 'Kiama'
+        unitname: 'Parramatta'
     }, function(items) {
-        console.log("chrome storage");
-        console.log(items.unitid);
-        console.log(items.time);
         id = items.unitid;
         unitname = items.unitname;
         timeperiod = items.time;
-        console.log(unitname);
+
+
+        //run every X period of time the main loop.
+        display = document.querySelector('#time');
+        startTimer(120, display);
+
+
         HackTheMatrix(id, timeperiod,unitname);
     });
 
@@ -126,6 +142,8 @@ function HackTheMatrix(id, timeperiod, unit) {
 
 
 
+            //walk the csv and count the jobs
+
             console.log(jobs)
 
             var completeJob = 0;
@@ -136,6 +154,11 @@ function HackTheMatrix(id, timeperiod, unit) {
             var canJob = 0;
             var rejJob = 0;
             var tskJob = 0;
+
+            var storm = 0;
+            var flood = 0;
+            var rescue = 0;
+            var support = 0;
 
             jobs.forEach(function(entry) {
                 console.log(entry[12]);
@@ -167,6 +190,20 @@ function HackTheMatrix(id, timeperiod, unit) {
                         break;
                 }
 
+                switch (entry[3]) {
+                    case "Support":
+                        support = support +1;
+                        break;
+                    case "Storm":
+                        storm = storm +1;
+                        break;
+                    case "Rescue":
+                        rescue = rescue +1;
+                        break;   
+                    case "Flood":
+                        flood = flood +1;
+                        break;      
+                }
 
 
             });
@@ -185,6 +222,12 @@ function HackTheMatrix(id, timeperiod, unit) {
             document.getElementById("rej").innerHTML = rejJob;
             document.getElementById("tsk").innerHTML = tskJob;
             document.getElementById("fin").innerHTML = finJob;
+
+            document.getElementById("support").innerHTML = support;
+            document.getElementById("flood").innerHTML = flood;
+            document.getElementById("rescue").innerHTML = rescue;
+            document.getElementById("storm").innerHTML = storm;
+
             document.getElementById("total").innerHTML = "Total Job Count: "+(newJob+ackJob+completeJob+refJob+canJob+finJob+tskJob);
 
             document.getElementById("results").style.visibility = 'visible';
