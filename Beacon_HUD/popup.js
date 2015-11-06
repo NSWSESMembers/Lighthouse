@@ -19,6 +19,11 @@ function startTimer(duration, display) {
 
 //because
 document.addEventListener('DOMContentLoaded', function() {
+
+        //run every X period of time the main loop.
+        display = document.querySelector('#time');
+        startTimer(120, display);
+        
     RunForestRun()
 });
 
@@ -39,15 +44,8 @@ function RunForestRun() {
         timeperiod = items.time;
 
 
-        //run every X period of time the main loop.
-        display = document.querySelector('#time');
-        startTimer(120, display);
-
-
         HackTheMatrix(id, timeperiod,unitname);
     });
-
-
 
 }
 
