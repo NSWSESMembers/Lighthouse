@@ -115,6 +115,15 @@ var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (xhttp.readyState == 4 && xhttp.status == 200) {
       var jobs = CSVToArray(xhttp.responseText);
+      
+      //assume theres a problem because this isnt the cvs we are looking for
+      if (jobs[0][0] !== "Region") {
+            document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in? do you have report permissions?";
+           throw new Error('Error talking with beacon. cvs file isnt right');
+      };
+     
+
+
       console.log(jobs) 
 
       var completeJob = 0;
