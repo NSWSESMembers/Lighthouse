@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         //run every X period of time the main loop.
         display = document.querySelector('#time');
-        startTimer(120, display);
-        
+        startTimer(180, display);
+
     RunForestRun()
 });
 
