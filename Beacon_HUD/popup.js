@@ -167,7 +167,7 @@ var options = {
     day: "numeric"
 };
 
-document.getElementById("banner").innerHTML = "<h2>Job summary for "+id+"</h2><h3>"+s.toLocaleTimeString("en-au",options)+" to "+e.toLocaleTimeString("en-au",options)+"</h3>";
+document.getElementById("banner").innerHTML = "<h2>Job summary for "+id+"</h2><h4>"+s.toLocaleTimeString("en-au",options)+" to "+e.toLocaleTimeString("en-au",options)+"</h4>";
 
     } 
   }
