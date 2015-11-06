@@ -145,13 +145,14 @@ function HackTheMatrix(id, timeperiod, unit) {
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (xhttp.readyState == 4 && xhttp.status == 200) {
-            var jobs = CSVToArray(xhttp.responseText);
+            //console.log(xhttp.responseText);
+            var jobs = JSON.parse(xhttp.responseText);
 
             //assume theres a problem because this isnt the cvs we are looking for
-            if (jobs[0][0] !== "Region") {
-                document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in? do you have report permissions?";
-                throw new Error('Error talking with beacon. cvs file isnt right');
-            };
+            // if (jobs[0][0] !== "Region") {
+            //     document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in? do you have report permissions?";
+            //     throw new Error('Error talking with beacon. cvs file isnt right');
+            // };
 
 
 
@@ -173,10 +174,11 @@ function HackTheMatrix(id, timeperiod, unit) {
             var rescue = 0;
             var support = 0;
 
-            jobs.forEach(function(entry) {
-                console.log(entry[12]);
+            for (entry in jobs.Results) {
+                console.log(jobs.Results[entry].JobStatusType.Name);
+                console.log(jobs.Results[entry].Type);
 
-                switch (entry[12]) {
+                switch (jobs.Results[entry].JobStatusType.Name) {
                     case "Complete":
                         completeJob = completeJob + 1;
                         break;
@@ -203,7 +205,7 @@ function HackTheMatrix(id, timeperiod, unit) {
                         break;
                 }
 
-                switch (entry[3]) {
+                switch (jobs.Results[entry].Type) {
                     case "Support":
                         support = support +1;
                         break;
@@ -216,6 +218,9 @@ function HackTheMatrix(id, timeperiod, unit) {
                     case "RCR":
                         rescue = rescue +1;
                         break;
+                    case "GLR":
+                        rescue = rescue +1;
+                        break;                        
                     case "Flood":
                         flood = flood +1;
                         break;
@@ -225,9 +230,9 @@ function HackTheMatrix(id, timeperiod, unit) {
                 }
 
 
-            });
+            }
 
-            console.log(completeJob);
+            
 
             document.getElementById("status").style.visibility = 'hidden';
 
@@ -265,12 +270,9 @@ function HackTheMatrix(id, timeperiod, unit) {
 
         }
     }
-    console.log(id)
-    xhttp.open("POST", "https://beacon.ses.nsw.gov.au/Reports/DetailedJobListing", true);
-    xhttp.setRequestHeader("Content-type", "application/json");
-    xhttp.send("{\"StartDate\":\"" + starttime + "\",\"EndDate\":\"" + endtime + "\",\"ReportId\":9,\"EventId\":null,\"EntityIds\":[" + id + "],\"EquipmentLeftOnly\":false}");
-
-
+    //console.log(id)
+    xhttp.open("GET","https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate="+starttime+"&EndDate="+endtime+"&Hq="+id+"&ViewModelType=2&PageIndex=1&PageSize=1000&SortField=Id&SortOrder=desc", true);
+    xhttp.send();
 };
 
 
