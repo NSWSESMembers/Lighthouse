@@ -3,7 +3,7 @@
 
   "name": "Beacon Hud",
   "description": "Shows job counts from beacon",
-  "version": "1.0",
+  "version": "2.0",
   "options_page": "options.html",
   "background": {
     "scripts": ["bg.js"]

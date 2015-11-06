@@ -1,5 +1,19 @@
+//update every 60 seconds
+window.setInterval(function(){
+  RunForestRun()
+}, 60000);
+
+
+//because
 document.addEventListener('DOMContentLoaded', function() {
-  
+RunForestRun()
+});
+
+//Get times vars for the call
+function RunForestRun() {
+
+
+
 var id = '';
 var timeperiod = '';
 
@@ -17,9 +31,9 @@ chrome.storage.sync.get({
 
 
 
-});
+}
 
-
+//make the call to beacon
 function HackTheMatrix(id,timeperiod) {
 
 var starttime;
@@ -110,6 +124,7 @@ var xhttp = new XMLHttpRequest();
       var finJob = 0;
       var canJob = 0;
       var rejJob = 0;
+      var tskJob = 0;
 
       jobs.forEach(function(entry){
         console.log(entry[12]);
@@ -135,7 +150,10 @@ var xhttp = new XMLHttpRequest();
             break;
           case   "Rejected":
             rejJob = rejJob+1;
-            break;        
+            break;
+          case   "Tasked":
+            tskJob = tskJob+1;
+            break;         
         }
 
 
@@ -154,6 +172,8 @@ document.getElementById("status").style.visibility = 'hidden';
  document.getElementById("ref").innerHTML  = refJob;
  document.getElementById("can").innerHTML  = canJob;
  document.getElementById("rej").innerHTML  = rejJob;
+  document.getElementById("tsk").innerHTML  = tskJob;
+
 
 document.getElementById("results").style.visibility = 'visible';
 
@@ -178,6 +198,14 @@ document.getElementById("banner").innerHTML = "<h2>Job summary for "+id+"</h2><h
 
 
 };
+
+
+
+
+
+
+
+
 
 
     // ref: http://stackoverflow.com/a/1293163/2343
