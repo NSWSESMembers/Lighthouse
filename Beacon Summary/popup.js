@@ -146,13 +146,13 @@ function HackTheMatrix(id, timeperiod, unit) {
     xhttp.onreadystatechange = function() {
         if (xhttp.readyState == 4 && xhttp.status == 200) {
             //console.log(xhttp.responseText);
-            var jobs = JSON.parse(xhttp.responseText);
 
-            //assume theres a problem because this isnt the cvs we are looking for
-            // if (jobs[0][0] !== "Region") {
-            //     document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in? do you have report permissions?";
-            //     throw new Error('Error talking with beacon. cvs file isnt right');
-            // };
+            try {
+                var jobs = JSON.parse(xhttp.responseText);
+            } catch (e) {
+                document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in?";
+                throw new Error('Error talking with beacon. JSON result isnt valid');
+            };
 
 
 
@@ -268,7 +268,13 @@ function HackTheMatrix(id, timeperiod, unit) {
 
             document.getElementById("banner").innerHTML = "<h2>Job summary for " + unit + "</h2><h4>" + s.toLocaleTimeString("en-au", options) + " to " + e.toLocaleTimeString("en-au", options) + "</h4>";
 
+        } else if (xhttp.status !== 200) {
+            document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in?";
+                throw new Error('Error talking with beacon. xhttp gave non 200 result');
+
         }
+
+
     }
     //console.log(id)
     xhttp.open("GET","https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate="+starttime+"&EndDate="+endtime+"&Hq="+id+"&ViewModelType=2&PageIndex=1&PageSize=1000&SortField=Id&SortOrder=desc", true);
