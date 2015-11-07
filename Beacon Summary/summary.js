@@ -268,7 +268,7 @@ function HackTheMatrix(id, timeperiod, unit) {
 
             document.getElementById("banner").innerHTML = "<h2>Job summary for " + unit + "</h2><h4>" + s.toLocaleTimeString("en-au", options) + " to " + e.toLocaleTimeString("en-au", options) + "</h4>";
 
-        } else if (xhttp.status !== 200) {
+        } else if (xhttp.readyState == 4 && xhttp.status !== 200) {
             document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in?";
                 throw new Error('Error talking with beacon. xhttp gave non 200 result');
 

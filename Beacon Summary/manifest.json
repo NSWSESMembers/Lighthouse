@@ -5,16 +5,10 @@
   "description": "Shows job counts from beacon",
   "version": "3.0",
   "options_page": "options.html",
-  "background": {
-    "scripts": ["bg.js"]
-  },
   "icons": {
     "128": "128.png",
     "64":"64.png"
     },
-  "browser_action": {
-    "default_icon": "128.png"
-  },
   "permissions": [
     "tabs",
     "storage",
@@ -25,5 +19,7 @@
       "matches": ["https://beacon.ses.nsw.gov.au/*"],
       "js": ["beacon.js"]
     }
-  ]
+  ],
+  "web_accessible_resources": ["summary.html"]
+
 }
