@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
 
-  "name": "Beacon Summary",
-  "description": "Shows job counts from beacon",
+  "name": "Beacon Enhancement Suite (BES)",
+  "description": "Provides multiple enhanements to the beacon website. accessed via the BES menu in beacon",
   "version": "3.0",
   "options_page": "options.html",
   "icons": {
@@ -20,6 +20,6 @@
       "js": ["beacon.js"]
     }
   ],
-  "web_accessible_resources": ["summary.html"]
+  "web_accessible_resources": ["*.html"]
 
 }
