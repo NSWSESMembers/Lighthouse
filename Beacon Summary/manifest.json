@@ -3,7 +3,7 @@
 
   "name": "Beacon Summary",
   "description": "Shows job counts from beacon",
-  "version": "2.0",
+  "version": "3.0",
   "options_page": "options.html",
   "background": {
     "scripts": ["bg.js"]
@@ -19,5 +19,11 @@
     "tabs",
     "storage",
     "https://beacon.ses.nsw.gov.au/"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://beacon.ses.nsw.gov.au/*"],
+      "js": ["beacon.js"]
+    }
   ]
 }
