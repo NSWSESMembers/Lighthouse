@@ -1,3 +1,37 @@
+
+//on DOM load
+document.addEventListener('DOMContentLoaded', function() {
+
+        //run every X period of time the main loop.
+        display = document.querySelector('#time');
+        startTimer(180, display);
+
+    RunForestRun()
+});
+
+
+
+function getSearchParameters() {
+      var prmstr = window.location.search.substr(1);
+      return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
+}
+
+function transformToAssocArray( prmstr ) {
+    var params = {};
+    var prmarr = prmstr.split("&");
+    for ( var i = 0; i < prmarr.length; i++) {
+        var tmparr = prmarr[i].split("=");
+        params[tmparr[0]] = tmparr[1];
+    }
+    return params;
+}
+
+var timeperiod;
+var unitname = "";
+
+
+var params = getSearchParameters();
+
 //update every X seconds
 function startTimer(duration, display) {
     var timer = duration, minutes, seconds;
@@ -17,128 +51,47 @@ function startTimer(duration, display) {
     }, 1000);
 }
 
-//because
-document.addEventListener('DOMContentLoaded', function() {
 
-        //run every X period of time the main loop.
-        display = document.querySelector('#time');
-        startTimer(180, display);
-
-    RunForestRun()
-});
 
 //Get times vars for the call
 function RunForestRun() {
 
+    if (unitname == "") {
 
-    var id;
-    var timeperiod;
-    var unitname;
-    chrome.storage.sync.get({
-        unitid: '199',
-        time: 'today',
-        unitname: 'Parramatta'
-    }, function(items) {
-        id = items.unitid;
-        unitname = items.unitname;
-        timeperiod = items.time;
+console.log("firstrun...will fetch vars");
 
 
-        HackTheMatrix(id, timeperiod,unitname);
-    });
+
+
+
+var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+        results = JSON.parse(xhttp.responseText);
+        unitname = results.Name;
+        HackTheMatrix(params.hq,unitname);
+    }
+  }
+  
+  xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Entities/"+params.hq, true);
+  xhttp.send();
+
+} else {
+console.log("rerun...will NOT fetch vars");
+
+HackTheMatrix(params.hq, unitname);
+
+}
+    
+    
 
 }
 
 //make the call to beacon
-function HackTheMatrix(id, timeperiod, unit) {
+function HackTheMatrix(id, unit) {
 
-    var starttime;
-    var endtime;
-
-    switch (timeperiod) {
-
-        case "today":
-
-            var end = new Date();
-
-            var start = new Date();
-            start.setHours(0, 0, 0, 0);
-
-
-            starttime = start.toISOString();
-            endtime = end.toISOString();
-
-            console.log(starttime);
-            console.log(endtime);
-
-            break;
-
-        case "24hrs":
-
-            var end = new Date();
-
-            var start = new Date();
-            start.setDate(start.getDate() - 1);
-
-
-            starttime = start.toISOString();
-            endtime = end.toISOString();
-
-            console.log(starttime);
-            console.log(endtime);
-
-            break;
-
-        case "3d":
-
-            var end = new Date();
-
-            var start = new Date();
-            start.setDate(start.getDate() - 3);
-
-
-            starttime = start.toISOString();
-            endtime = end.toISOString();
-
-            console.log(starttime);
-            console.log(endtime);
-
-            break;
-
-        case "7d":
-
-            var end = new Date();
-
-            var start = new Date();
-            start.setDate(start.getDate() - 7);
-
-
-            starttime = start.toISOString();
-            endtime = end.toISOString();
-
-            console.log(starttime);
-            console.log(endtime);
-
-            break;
-
-        case "30d":
-
-            var end = new Date();
-
-            var start = new Date();
-            start.setDate(start.getDate() - 30);
-
-
-            starttime = start.toISOString();
-            endtime = end.toISOString();
-
-            console.log(starttime);
-            console.log(endtime);
-
-            break;
-
-    }
-
+    var start = new Date(decodeURIComponent(params.start));
+    var end = new Date(decodeURIComponent(params.end));
 
 
 
@@ -256,9 +209,6 @@ function HackTheMatrix(id, timeperiod, unit) {
 
             document.getElementById("results").style.visibility = 'visible';
 
-            var s = new Date(starttime);
-            var e = new Date(endtime);
-
             var options = {
                 weekday: "short",
                 year: "numeric",
@@ -266,7 +216,7 @@ function HackTheMatrix(id, timeperiod, unit) {
                 day: "numeric"
             };
 
-            document.getElementById("banner").innerHTML = "<h2>Job summary for " + unit + "</h2><h4>" + s.toLocaleTimeString("en-au", options) + " to " + e.toLocaleTimeString("en-au", options) + "</h4>";
+            document.getElementById("banner").innerHTML = "<h2>Job summary for " + unit + "</h2><h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
 
         } else if (xhttp.readyState == 4 && xhttp.status !== 200) {
             document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in?";
@@ -277,7 +227,7 @@ function HackTheMatrix(id, timeperiod, unit) {
 
     }
     //console.log(id)
-    xhttp.open("GET","https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate="+starttime+"&EndDate="+endtime+"&Hq="+id+"&ViewModelType=2&PageIndex=1&PageSize=1000&SortField=Id&SortOrder=desc", true);
+    xhttp.open("GET","https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate="+start.toISOString()+"&EndDate="+end.toISOString()+"&Hq="+id+"&ViewModelType=2&PageIndex=1&PageSize=1000&SortField=Id&SortOrder=desc", true);
     xhttp.send();
 };
 

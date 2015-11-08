@@ -4,7 +4,6 @@
   "name": "Beacon Enhancement Suite (BES)",
   "description": "Provides multiple enhanements to the beacon website. accessed via the BES menu in beacon",
   "version": "3.0",
-  "options_page": "options.html",
   "icons": {
     "128": "128.png",
     "64":"64.png"
@@ -16,10 +15,21 @@
   ],
   "content_scripts": [
     {
+      "matches": ["https://beacon.ses.nsw.gov.au/Jobs"],
+      "js": ["BES-Jobs.js"]
+      },
+      {
+      "matches": ["https://beacon.ses.nsw.gov.au/Account/Login*"],
+      "js": ["BES-Account.js"]
+      },
+      {
       "matches": ["https://beacon.ses.nsw.gov.au/*"],
-      "js": ["beacon.js"]
-    }
+      "exclude_matches": ["https://beacon.ses.nsw.gov.au/Account/Login*"],
+      "js": ["BES-Generic.js"]
+      }
   ],
-  "web_accessible_resources": ["*.html"]
-
+  "web_accessible_resources": ["*.html","BES-JobsContent.js","bes.png"],
+  "background": {
+    "scripts": ["background.js"]
+  }
 }
