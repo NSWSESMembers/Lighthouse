@@ -1,3 +1,6 @@
+var timeoverride = null;
+
+
 
 //on DOM load
 document.addEventListener('DOMContentLoaded', function() {
@@ -7,9 +10,24 @@ document.addEventListener('DOMContentLoaded', function() {
         startTimer(180, display);
 
     RunForestRun()
+
+
+
 });
 
 
+$(document).on('change', 'input[type=radio][name=slide]', function () {
+        console.log(this.value);
+            timeoverride = this.value;
+
+            
+            RunForestRun();
+    });
+
+
+function myScript() {
+    console.log("radio");
+}
 
 function getSearchParameters() {
       var prmstr = window.location.search.substr(1);
@@ -56,12 +74,33 @@ function startTimer(duration, display) {
 //Get times vars for the call
 function RunForestRun() {
 
+if (timeoverride !== null) { //we are using a time override
+
+var end = new Date();
+
+            var start = new Date();
+            start.setDate(start.getDate() - (timeoverride/24));
+
+
+            starttime = start.toISOString();
+            endtime = end.toISOString();
+
+            console.log(starttime);
+            console.log(endtime);
+
+            params.start = starttime;
+            params.end = endtime;
+
+}
+
+
     if (unitname == "") {
 
 console.log("firstrun...will fetch vars");
 
 
 
+if (typeof params.hq !== 'undefined') {
 
 
 var xhttp = new XMLHttpRequest();
@@ -75,6 +114,10 @@ var xhttp = new XMLHttpRequest();
   
   xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Entities/"+params.hq, true);
   xhttp.send();
+
+} else { //no hq was sent, get them all
+   HackTheMatrix(params.hq, unitname); 
+}
 
 } else {
 console.log("rerun...will NOT fetch vars");
@@ -90,10 +133,14 @@ HackTheMatrix(params.hq, unitname);
 //make the call to beacon
 function HackTheMatrix(id, unit) {
 
+   document.title = unitname+ " Job Summary";
+
+
     var start = new Date(decodeURIComponent(params.start));
     var end = new Date(decodeURIComponent(params.end));
 
-
+console.log(start);
+            console.log(end);
 
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
@@ -103,7 +150,7 @@ function HackTheMatrix(id, unit) {
             try {
                 var jobs = JSON.parse(xhttp.responseText);
             } catch (e) {
-                document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in?";
+                document.getElementById("loading").innerHTML = "Error talking with beacon. Are you logged in?";
                 throw new Error('Error talking with beacon. JSON result isnt valid');
             };
 
@@ -131,55 +178,67 @@ function HackTheMatrix(id, unit) {
                 console.log(jobs.Results[entry].JobStatusType.Name);
                 console.log(jobs.Results[entry].Type);
 
-                switch (jobs.Results[entry].JobStatusType.Name) {
-                    case "Complete":
-                        completeJob = completeJob + 1;
-                        break;
-                    case "New":
+                //job status ids
+                //1 = new
+                //2 = ack
+                //3 = reject
+                //4 = tasked
+                //5 = ref
+                //6 = comp
+                //7 = can
+                //8 = fin
+
+
+                switch (jobs.Results[entry].JobStatusType.Id) {
+
+                    case 1:
                         newJob = newJob + 1;
                         break;
-                    case "Acknowledged":
+                    case 2:
                         ackJob = ackJob + 1;
                         break;
-                    case "Referred":
-                        refJob = refJob + 1;
-                        break;
-                    case "Finalised":
-                        finJob = finJob + 1;
-                        break;
-                    case "Cancelled":
-                        canJob = canJob + 1;
-                        break;
-                    case "Rejected":
+                    case 3:
                         rejJob = rejJob + 1;
                         break;
-                    case "Tasked":
+                    case 4:
                         tskJob = tskJob + 1;
+                        break;
+                    case 5:
+                        refJob = refJob + 1;
+                        break;
+                    case 6:
+                        completeJob = completeJob + 1;
+                        break;
+                    case 7:
+                        canJob = canJob + 1;
+                        break;
+                    case 8:
+                        finJob = finJob + 1;
                         break;
                 }
 
-                switch (jobs.Results[entry].Type) {
-                    case "Support":
+
+                //Parent Types
+                //Storm = 1
+                //Support = 2
+                //Flood Assistance  = 4
+                //Rescue = 5
+
+
+console.log(jobs.Results[entry].JobType.ParentId);
+                switch (jobs.Results[entry].JobType.ParentId) {
+                    case 2:
                         support = support +1;
                         break;
-                    case "Storm":
+                    case 1:
                         storm = storm +1;
                         break;
-                    case "Rescue":
+                    case 5:
                         rescue = rescue +1;
-                        break;
-                    case "RCR":
-                        rescue = rescue +1;
-                        break;
-                    case "GLR":
-                        rescue = rescue +1;
-                        break;                        
-                    case "Flood":
+                        break;               
+                    case 4:
                         flood = flood +1;
-                        break;
-                    case "Flood Misc":
-                        flood = flood +1;
-                        break;                
+                        break;             
                 }
 
 
@@ -187,7 +246,7 @@ function HackTheMatrix(id, unit) {
 
             
 
-            document.getElementById("status").style.visibility = 'hidden';
+            document.getElementById("loading").style.visibility = 'hidden';
 
 
 
@@ -219,15 +278,23 @@ function HackTheMatrix(id, unit) {
             document.getElementById("banner").innerHTML = "<h2>Job summary for " + unit + "</h2><h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
 
         } else if (xhttp.readyState == 4 && xhttp.status !== 200) {
-            document.getElementById("status").innerHTML = "Error talking with beacon. Are you logged in?";
+            document.getElementById("loading").innerHTML = "Error talking with beacon. Are you logged in?";
                 throw new Error('Error talking with beacon. xhttp gave non 200 result');
 
         }
 
 
     }
+    if (typeof id !== 'undefined') {
+
     //console.log(id)
     xhttp.open("GET","https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate="+start.toISOString()+"&EndDate="+end.toISOString()+"&Hq="+id+"&ViewModelType=2&PageIndex=1&PageSize=1000&SortField=Id&SortOrder=desc", true);
+
+    } else {
+            unit = "State wide";
+            xhttp.open("GET","https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate="+start.toISOString()+"&EndDate="+end.toISOString()+"&ViewModelType=2&PageIndex=1&PageSize=1000&SortField=Id&SortOrder=desc", true);
+
+    } 
     xhttp.send();
 };
 

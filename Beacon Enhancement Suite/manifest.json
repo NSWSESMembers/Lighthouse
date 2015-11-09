@@ -2,8 +2,8 @@
   "manifest_version": 2,
 
   "name": "Beacon Enhancement Suite (BES)",
-  "description": "Provides multiple enhanements to the beacon website. accessed via the BES menu in beacon",
-  "version": "3.0",
+  "description": "Provides multiple enhanements to the beacon website.",
+  "version": "4.0",
   "icons": {
     "128": "128.png",
     "64":"64.png"
@@ -19,8 +19,17 @@
       "js": ["BES-Jobs.js"]
       },
       {
+      "matches": ["https://beacon.ses.nsw.gov.au/Jobs/*"],
+      "exclude_matches": ["https://beacon.ses.nsw.gov.au/Jobs"], 
+      "js": ["BES-JobView.js"]
+      },
+      {
       "matches": ["https://beacon.ses.nsw.gov.au/Account/Login*"],
       "js": ["BES-Account.js"]
+      },
+      {
+      "matches": ["https://beacon.ses.nsw.gov.au/Jobs/SituationalAwareness"],
+      "js": ["BES-SituationalAwareness.js"]
       },
       {
       "matches": ["https://beacon.ses.nsw.gov.au/*"],
@@ -28,7 +37,7 @@
       "js": ["BES-Generic.js"]
       }
   ],
-  "web_accessible_resources": ["*.html","BES-JobsContent.js","bes.png"],
+  "web_accessible_resources": ["*.html","BES-JobsContent.js","BES-SituationalAwarenessContent.js","bes.png","tv.png","lantern_pole.png"],
   "background": {
     "scripts": ["background.js"]
   }

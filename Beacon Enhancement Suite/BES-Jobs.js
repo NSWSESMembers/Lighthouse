@@ -2,19 +2,20 @@
 
 console.log("Job code");
 var bar = document.getElementsByClassName("btn-group pull-left text-left");
+console.log(bar);
+var summarybutton = document.createElement("button");
+summarybutton.classList.add("btn");
+summarybutton.classList.add("btn-sm");
+summarybutton.classList.add("btn-default");
+summarybutton.style.marginLeft = "20px";
+summarybutton.style.background = "blue";
 
-var button = document.createElement("button");
-button.classList.add("btn");
-button.classList.add("btn-sm");
-button.classList.add("btn-default");
-button.style.marginLeft = "20px";
-button.style.background = "blue";
+summarybutton.setAttribute("onclick","BESOpenSummaryScreen()");
+summarybutton.onclick = "BESOpenSummaryScreen()";
 
-button.setAttribute("onclick","BESOpenSummaryScreen()");
-button.onclick = "BESOpenSummaryScreen()";
+summarybutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top\" src=\""+chrome.extension.getURL("tv.png")+"\"> Summary Screen";
+bar[0].appendChild(summarybutton);
 
-button.innerHTML = "Summary Screen";
-bar[0].appendChild(button);
 
 
 var summaryUrl = chrome.extension.getURL("summary.html");

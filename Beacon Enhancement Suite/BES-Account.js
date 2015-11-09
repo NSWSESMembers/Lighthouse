@@ -3,7 +3,7 @@ var bar = document.getElementById("Password");
 var div = document.createElement("div");
 
 div.style.width="100%";
-div.style.height="50px";
+div.style.height="100px";
 div.style.borderRadius = "10px";
 div.style.marginTop = "20px";
 div.style.border="1px";
@@ -12,7 +12,7 @@ div.style.color="white";
 div.style.lineHeight="50px";
 
 
-div.innerHTML="<input id=\"BESKeepLogin\" type=\"checkbox\" checked>  Keep me logged in for 12 hours</input>";
+div.innerHTML="<input id=\"BESKeepLogin\" type=\"checkbox\" checked>  Try keep me logged in for 24 hours</input><h6>Chrome must remain open for this to work. Be security cautious of this and avoid using it on a public computer</h6>";
 
 var button = document.createElement("input");
 button.id="BESKeepLogin";
