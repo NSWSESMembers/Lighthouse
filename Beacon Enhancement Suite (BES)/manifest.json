@@ -2,8 +2,8 @@
   "manifest_version": 2,
 
   "name": "Beacon Enhancement Suite (BES)",
-  "description": "Provides multiple enhanements to the beacon website.",
-  "version": "4.0",
+  "description": "Provides multiple enhancements to the beacon website.",
+  "version": "4.3",
   "icons": {
     "128": "128.png",
     "64":"64.png"
@@ -20,7 +20,7 @@
       },
       {
       "matches": ["https://beacon.ses.nsw.gov.au/Jobs/*"],
-      "exclude_matches": ["https://beacon.ses.nsw.gov.au/Jobs"], 
+      "exclude_matches": ["https://beacon.ses.nsw.gov.au/Jobs","https://beacon.ses.nsw.gov.au/Jobs/SituationalAwareness"], 
       "js": ["BES-JobView.js"]
       },
       {

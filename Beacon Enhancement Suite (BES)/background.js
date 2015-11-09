@@ -85,8 +85,8 @@ console.log("keepalive:"+keepalive);
 console.log("timediff:"+(nowTime-timeSignedIn)/1000);
 var diff = (nowTime-timeSignedIn)/1000;
 
-//if under 24hrs ago they signed in and they ticked the box and we havnt hit a 401
-if (diff < 86400 && areweloggedin == true  && keepalive == true)
+//if under 12hrs ago they signed in and they ticked the box and we havnt hit a 401
+if (diff < 43200 && areweloggedin == true  && keepalive == true)
 {
   console.log("will try keep alive");
 
