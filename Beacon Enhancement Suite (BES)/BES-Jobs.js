@@ -5,15 +5,15 @@
 
 var bar = document.getElementsByClassName("btn-group pull-left text-left");
 console.log(bar);
-var summarybutton = document.createElement("button");
+var summarybutton = document.createElement("a");
+summarybutton.id="BESSummaryButton";
 summarybutton.classList.add("btn");
 summarybutton.classList.add("btn-sm");
 summarybutton.classList.add("btn-default");
 summarybutton.style.marginLeft = "20px";
 summarybutton.style.background = "blue";
-
-summarybutton.setAttribute("onclick","BESOpenSummaryScreen()");
-summarybutton.onclick = "BESOpenSummaryScreen()";
+summarybutton.style.color = "white";
+summarybutton.href="#"
 
 summarybutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top\" src=\""+chrome.extension.getURL("tv.png")+"\"> Summary Screen";
 bar[0].appendChild(summarybutton);
