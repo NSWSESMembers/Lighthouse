@@ -94,6 +94,7 @@ var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (xhttp.readyState == 4 && xhttp.status == 200) {
       console.log("Kept Alive");
+      //Was hoping for a 401....but i guess 500 is means the same thing...nice coding there
     } else if (xhttp.readyState == 4 && xhttp.status == 500) 
     {
       stopTimer();
@@ -104,7 +105,7 @@ var xhttp = new XMLHttpRequest();
   });
     }
 }
-  xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/1", true);
+  xhttp.open("HEAD", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/1", true);
   xhttp.send();
 
 } else {
