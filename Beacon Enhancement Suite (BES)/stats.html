@@ -1,0 +1,123 @@
+<!DOCTYPE html>  <meta charset="utf-8">
+
+<html>
+  <head>
+
+    <title>Beacon Stats</title>
+    
+            <script src='d3/d3.js' type='text/javascript'></script>
+  <script src='crossfilter/crossfilter.js' type='text/javascript'></script>
+
+      <script src='dc/dc.js' type='text/javascript'></script>
+
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+    <script src="jquery-1.11.3.min.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+    <script src="stats.js"></script>
+
+
+
+
+<link href='dc/dc.css' rel='stylesheet' type='text/css'>
+  </head>
+  <body>
+<div id="loading">
+  <img id="loading-image" src="loader.gif" alt="Loading..." /><br>Loading...
+</div>
+
+
+    <div id="results" align="center">
+      <p id="banner">Job Summary For Test</p>
+      <p id="total"></p>
+      <br><br>
+
+          <table class="bigtbl">
+    <tr class="header">
+    <td>New</td>
+    <td>Acknowledged</td>
+    <td>Tasked</td> 
+    <td>Completed</td>
+    </tr>
+    <tr class="rowresults">
+    <td id="new">New</td>
+    <td id="ack">Acknowledged</td> 
+    <td id="tsk">Tasked</td> 
+    <td id="comp">Completed</td>
+  </tr>
+   </table>
+<br><br><br><br>
+      <table class="smltbl">
+      <tr class="header">
+        <td>Referred</td>
+        <td>Cancelled</td>
+        <td>Rejected</td>
+        <td>Finalised</td>
+      </tr>
+      <tr class="rowresults">
+        <td id="ref">-</td>
+        <td id="can">-</td>
+        <td id="rej">-</td>
+        <td id="fin">-</td>
+      </tr>                 
+</table>
+<br><br><br>
+<table class="tinytbl">
+      <tr class="header">
+        <td>Storm</td>
+        <td>Support</td>
+        <td>Flood</td>
+        <td>Rescue</td>
+      </tr>
+      <tr class="rowresults">
+        <td id="storm">-</td>
+        <td id="support">-</td>
+        <td id="flood">-</td>
+        <td id="rescue">-</td>
+      </tr>                
+</table>
+<br><br><br><br><br>
+<table class="graphs">
+
+      <tr>
+  <td>    <div class='span4' id='dc-island-chart'>
+    <h4>
+    Job Types
+      </h4>
+    </div>   
+  </td>
+    <td>    <div class='span4' id='dc-local-chart'>
+    <h4>
+    Job Localities
+      </h4>
+    </div>   
+  </td>
+      <td>    <div class='span4' id='dc-priority-chart'>
+    <h4>
+    Job Priorities
+      </h4>
+    </div>   
+  </td>
+      </tr> 
+      <tr>
+      <td colspan="3"><div class='span12' id='dc-time-chart' style="float:inherit; padding-top:50px">
+      <h4>
+    Jobs per hour
+    </h4>
+  </div></td>
+  </tr>               
+</table>
+<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+  
+    </div>
+  </body>
+
+  <footer>
+<form>Override time frame with<br>
+  <label><input type="radio" id="radio1" name="slide" value="24">Last 24Hrs</label><label><input type="radio" id="radio2" name="slide" value="48">Last 48hrs</label><label><input type="radio" id="radio3" name="slide" value="72">Last 72 Hrs</label>
+</form>
+    Designed & developed by volunteers of the NSW SES. BES is licensed under <a rel="license" href="https://github.com/OSPFNeighbour/BeaconEnhanced/blob/master/LICENSE.md">MIT</a>.</span><div style="float:right;"><a href="summary.html"><span class="glyphicon glyphicon-refresh"></span> <span id="time">00:00</span></a></div>
+</footer>
+
+</html>
+
