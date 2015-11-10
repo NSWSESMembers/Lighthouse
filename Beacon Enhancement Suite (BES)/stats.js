@@ -70,7 +70,7 @@ function startTimer(duration, display) {
 
 function drawmelikeoneofyourfrenchgirls(jobs) {
 
-var timeChart = dc.lineChart("#dc-time-chart");
+var timeChart = dc.barChart("#dc-time-chart");
 var islandChart = dc.pieChart("#dc-island-chart");
 var localChart = dc.pieChart("#dc-local-chart");
 var prioritiesChart = dc.pieChart("#dc-priority-chart");
@@ -141,10 +141,27 @@ var JobStatusGroup = JobStatus.group()
     .dimension(volumeByHour)
     .group(volumeByHourGroup)
 //    .brushOn(false)           // added for title
-    
+    .xUnits(d3.time.hours)
     .elasticY(true)
+
     .x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) { return d.JobReceived; })))
     .xAxis();
+
+// // time graph
+//   timeChart.width(1000)
+//     .height(150)
+//     .transitionDuration(500)
+// //    .mouseZoomable(true)
+//     .margins({top: 10, right: 10, bottom: 20, left: 40})
+//     .dimension(volumeByHour)
+//     .group(volumeByHourGroup)
+// //    .brushOn(false)           // added for title
+//     .xUnits(d3.time.hours)
+//     .dotRadius(10)
+//     .elasticY(true)
+
+//     .x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) { return d.JobReceived; })))
+//     .xAxis();
 
 
 
