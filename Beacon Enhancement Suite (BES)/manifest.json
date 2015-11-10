@@ -3,7 +3,7 @@
 
   "name": "Beacon Enhancement Suite (BES)",
   "description": "Provides multiple enhancements to the beacon website.",
-  "version": "4.3",
+  "version": "4.4",
   "icons": {
     "128": "128.png",
     "64":"64.png"
