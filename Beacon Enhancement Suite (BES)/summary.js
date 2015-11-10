@@ -174,10 +174,18 @@ console.log(start);
             var rescue = 0;
             var support = 0;
 
+            var dates = [];
+
             for (entry in jobs.Results) {
                 console.log(jobs.Results[entry].JobStatusType.Name);
                 console.log(jobs.Results[entry].Type);
 
+
+                var rawdate = new Date(jobs.Results[entry].JobReceived);
+                rawdate = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+
+                dates.push(js_yyyy_mm_dd_hh_mm_ss(rawdate));
+                console.log(js_yyyy_mm_dd_hh_mm_ss(rawdate));
                 //job status ids
                 //1 = new
                 //2 = ack
@@ -243,6 +251,15 @@ console.log(jobs.Results[entry].JobType.ParentId);
 
 
             }
+
+
+
+console.log(dates);
+
+
+
+
+
 
             
 
@@ -388,4 +405,16 @@ function CSVToArray(strData, strDelimiter) {
 
     // Return the parsed data.
     return (arrData);
+}
+
+
+function js_yyyy_mm_dd_hh_mm_ss (input) {
+  now = new Date(input);
+  year = "" + now.getFullYear();
+  month = "" + (now.getMonth() + 1); if (month.length == 1) { month = "0" + month; }
+  day = "" + now.getDate(); if (day.length == 1) { day = "0" + day; }
+  hour = "" + now.getHours(); if (hour.length == 1) { hour = "0" + hour; }
+  minute = "" + now.getMinutes(); if (minute.length == 1) { minute = "0" + minute; }
+  second = "" + now.getSeconds(); if (second.length == 1) { second = "0" + second; }
+  return year + "-" + month + "-" + day + " " + hour + ":" + minute + ":" + second;
 }
