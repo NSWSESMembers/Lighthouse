@@ -17,7 +17,7 @@ summarybutton.style.background = "blue";
 summarybutton.style.color = "white";
 summarybutton.href="#"
 
-summarybutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top\" src=\""+chrome.extension.getURL("tv.png")+"\"> Summary Screen";
+summarybutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:3px\" src=\""+chrome.extension.getURL("tv.png")+"\">Summary Screen";
 bar[0].appendChild(summarybutton);
 //
 
@@ -27,11 +27,11 @@ statsbutton.classList.add("btn");
 statsbutton.classList.add("btn-sm");
 statsbutton.classList.add("btn-default");
 statsbutton.style.marginLeft = "20px";
-statsbutton.style.background = "blue";
+statsbutton.style.background = "rebeccapurple";
 statsbutton.style.color = "white";
 statsbutton.href="#"
 
-summarybutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top\" src=\""+chrome.extension.getURL("tv.png")+"\"> Summary Screen";
+statsbutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:3px\" src=\""+chrome.extension.getURL("stats.png")+"\">Statistics Screen";
 bar[0].appendChild(statsbutton);
 
 

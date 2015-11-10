@@ -37,7 +37,7 @@
       "js": ["BES-Generic.js"]
       }
   ],
-  "web_accessible_resources": ["*.html","BES-JobsContent.js","BES-SituationalAwarenessContent.js","bes.png","tv.png","lantern_pole.png"],
+  "web_accessible_resources": ["*.html","BES-JobsContent.js","BES-SituationalAwarenessContent.js","bes.png","tv.png","stats.png"],
   "background": {
     "scripts": ["background.js"]
   }
