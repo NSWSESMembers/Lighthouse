@@ -17,8 +17,8 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
             switch (newValue.Name) {
 
                 case "Storm":
-                	removeOptions(document.getElementById("CompleteQuickTextBox"));
-                    var quickText = ["","Tree removed and scene made safe.","Roof repaired and scene made safe.","Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe."]
+                    removeOptions(document.getElementById("CompleteQuickTextBox"));
+                    var quickText = ["", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe."]
                     document.getElementById("CompleteQuickTextBox").removed
                     for (var i = 0; i < quickText.length; i++) {
                         var opt = document.createElement('option');
@@ -31,7 +31,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 
                 case "Search":
                     removeOptions(document.getElementById("CompleteQuickTextBox"));
-                    var quickText = ["","All teams complete on search, person found safe and well.","All teams complete on search, nothing found." ]
+                    var quickText = ["", "All teams complete on search, person found safe and well.", "All teams complete on search, nothing found."]
 
                     for (var i = 0; i < quickText.length; i++) {
                         var opt = document.createElement('option');
@@ -40,10 +40,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
                         document.getElementById("CompleteQuickTextBox").add(opt);
                     }
 
-                    break;    
-
-
-
+                    break;
             }
 
 
@@ -53,11 +50,9 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 
 });
 
-function removeOptions(selectbox)
-{
+function removeOptions(selectbox) {
     var i;
-    for(i=selectbox.options.length-1;i>=0;i--)
-    {
+    for (i = selectbox.options.length - 1; i >= 0; i--) {
         selectbox.remove(i);
     }
 }
