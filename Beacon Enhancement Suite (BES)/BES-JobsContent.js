@@ -30,5 +30,3 @@ if (exports.hasOwnProperty("Hq"))
 }
 
 
-console.log("Changing page size");
-JobTaskingFilterViewModel.pageSizeChoices=ko.observableArray([20,50,75,100,200,500,1000]);
