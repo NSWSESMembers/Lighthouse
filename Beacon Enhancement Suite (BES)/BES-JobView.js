@@ -4,7 +4,11 @@ var s = document.createElement('script');
     s.innerHTML = "document.title = \"#\"+jobId";
     (document.head || document.documentElement).appendChild(s)
 
-
+//inject the coded needed to fix visual problems
+//needs to be injected so that it runs after the DOMs are created
+var s = document.createElement('script');
+s.src = chrome.extension.getURL('BES-JobsViewContent.js');
+(document.head || document.documentElement).appendChild(s)
 
 var block = document.getElementById("finaliseJobModal").getElementsByClassName("modal-body");
 var child = block[0]
@@ -37,6 +41,7 @@ textboxdiv.classList.add("col-lg-3");
 
 var textbox = document.createElement("select");
 textbox.id = "QuickFillBox";
+textbox.width = "100%";
 //textbox.classList.add("form-control");
 var option = document.createElement("option");
 option.text = "";
@@ -58,19 +63,9 @@ innerdiv.appendChild(textboxdiv);
 
 div.appendChild(innerdiv);
 
-console.log(div);
 
 child.insertBefore(div,child.childNodes[2]);
 
 
-
-document.getElementById("QuickFillBox").onchange = function() {
-console.log(this.value)
-
-var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
-block[0].value = this.value
-
-
-}
 
 
