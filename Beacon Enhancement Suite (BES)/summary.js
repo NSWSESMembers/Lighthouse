@@ -97,16 +97,23 @@ function RunForestRun() {
 
         console.log("firstrun...will fetch vars");
 
-        if (params.hq.split(",").length == 1)
-        {
+        
 
         if (typeof params.hq !== 'undefined') {
 
+        if (params.hq.split(",").length == 1)
+            {
 
             GetUnitNamefromBeacon(params.hq, function(returnedunitname) {
                 unitname = returnedunitname;
                 HackTheMatrix(params.hq, returnedunitname);
             });
+
+            } else {
+        console.log("passed array of units");
+        unitname = "group selection";
+        HackTheMatrix(params.hq, unitname);
+    }
 
         } else { //no hq was sent, get them all
             unitname = "NSW";
@@ -114,11 +121,7 @@ function RunForestRun() {
         }
 
 
-    } else {
-        console.log("passed array of units");
-        unitname = "group selection";
-        HackTheMatrix(params.hq, unitname);
-    }
+    
 
 
     } else {

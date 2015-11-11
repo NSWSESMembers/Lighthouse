@@ -48,10 +48,16 @@ option.text = "";
 textbox.add(option);
 
 var option = document.createElement("option");
-option.text = "All paperwork and documentation completed.";
+option.text = "All paperwork and documentation completed";
 textbox.add(option);
 
+var option = document.createElement("option");
+option.text = "NFA";
+textbox.add(option);
 
+var option = document.createElement("option");
+option.text = "Job completed";
+textbox.add(option);
 
 textboxdiv.appendChild(textbox);
 
