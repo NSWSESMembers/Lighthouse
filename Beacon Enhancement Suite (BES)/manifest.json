@@ -12,33 +12,34 @@
   "permissions": [
     "tabs",
     "storage",
-    "https://beacon.ses.nsw.gov.au/"
+    "https://beacon.ses.nsw.gov.au/",
+    "https://trainbeacon.ses.nsw.gov.au/"
   ],
   "content_scripts": [
     {
-      "matches": ["https://beacon.ses.nsw.gov.au/Jobs"],
+      "matches": ["https://*.ses.nsw.gov.au/Jobs"],
       "js": ["BES-Jobs.js"]
       },
       {
-      "matches": ["https://beacon.ses.nsw.gov.au/Jobs/*"],
-      "exclude_matches": ["https://beacon.ses.nsw.gov.au/Jobs","https://beacon.ses.nsw.gov.au/Jobs/SituationalAwareness"], 
+      "matches": ["https://*.ses.nsw.gov.au/Jobs/*"],
+      "exclude_matches": ["https://*.ses.nsw.gov.au/Jobs","https://*.ses.nsw.gov.au/Jobs/SituationalAwareness"], 
       "js": ["BES-JobView.js"]
       },
       {
-      "matches": ["https://beacon.ses.nsw.gov.au/Account/Login*"],
+      "matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": ["BES-Account.js"]
       },
       {
-      "matches": ["https://beacon.ses.nsw.gov.au/Jobs/SituationalAwareness"],
+      "matches": ["https://*.ses.nsw.gov.au/Jobs/SituationalAwareness"],
       "js": ["BES-SituationalAwareness.js"]
       },
       {
-      "matches": ["https://beacon.ses.nsw.gov.au/Messages/Create"],
+      "matches": ["https://*.ses.nsw.gov.au/Messages/Create"],
       "js": ["BES-MessagesCreate.js"]
       },
       {
-      "matches": ["https://beacon.ses.nsw.gov.au/*"],
-      "exclude_matches": ["https://beacon.ses.nsw.gov.au/Account/Login*"],
+      "matches": ["https://*.ses.nsw.gov.au/*"],
+      "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": ["BES-Generic.js"]
       }
   ],
