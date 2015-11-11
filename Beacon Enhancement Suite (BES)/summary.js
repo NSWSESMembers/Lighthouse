@@ -97,7 +97,8 @@ function RunForestRun() {
 
         console.log("firstrun...will fetch vars");
 
-
+        if (params.hq.split(",").length == 1)
+        {
 
         if (typeof params.hq !== 'undefined') {
 
@@ -112,12 +113,21 @@ function RunForestRun() {
             HackTheMatrix(null, unitname);
         }
 
+
+    } else {
+        console.log("passed array of units");
+        unitname = "group selection";
+        HackTheMatrix(params.hq, unitname);
+    }
+
+
     } else {
         console.log("rerun...will NOT fetch vars");
 
         HackTheMatrix(params.hq, unitname);
 
     }
+
 
 
 

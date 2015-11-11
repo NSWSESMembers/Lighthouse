@@ -47,6 +47,14 @@ font-size: 50px;
 	text-align: center;
 }
 
+
+.graphs tr td
+{
+  padding-bottom: 5em;
+}
+
+
+
 .tinytbl {
 	width:100%;
 	text-align: center;
@@ -120,4 +128,5 @@ label {
   width: 20%;
   z-index: 100;
 }
+
 

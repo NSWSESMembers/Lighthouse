@@ -68,18 +68,30 @@ function startTimer(duration, display) {
 }
 
 
+
 function drawmelikeoneofyourfrenchgirls(jobs) {
 
 var timeChart = dc.barChart("#dc-time-chart");
-var islandChart = dc.pieChart("#dc-island-chart");
+var jobtypeChart = dc.pieChart("#dc-jobtype-chart");
 var localChart = dc.pieChart("#dc-local-chart");
 var prioritiesChart = dc.pieChart("#dc-priority-chart");
+var treejobtagsChart = dc.pieChart("#dc-treetags-chart");
+var hazardtagsChart = dc.pieChart("#dc-hazardtags-chart");
+var propertytagsChart = dc.pieChart("#dc-propertytags-chart");
+
+
 
 
 jobs.Results.forEach(function(d) {
 var rawdate = new Date(d.JobReceived);
 rawdate = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
-d.JobReceived = rawdate
+d.JobReceived = rawdate;
+// d.CleanTags= [];
+// d.Tags.forEach(function(d2) {
+//     console.log(d2.Name);
+// d.CleanTags.push(d2.Name);
+// });
+
 });
 
 var facts = crossfilter(jobs.Results);
@@ -92,6 +104,7 @@ var all = facts.groupAll();
   var JobStatus = facts.dimension(function(d) {
     return d.JobStatusType.Name;
   });
+
 
 var JobStatusGroup = JobStatus.group()
     .reduceCount(function(d) { return d.JobStatusType.Name; });
@@ -108,33 +121,9 @@ var JobStatusGroup = JobStatus.group()
   var volumeByHourGroup = volumeByHour.group()
     .reduceCount(function(d) { return d.JobReceived; });
 
-
-
- // Pie Chart
-  var islands = facts.dimension(function (d) {
-    return d.Type
-    });
-  var islandsGroup = islands.group();
-
-
- // Pie Chart
-  var locals = facts.dimension(function (d) {
-    return d.Address.Locality
-    });
-  var localGroup = locals.group();
-
-// Pie Chart
-  var prio = facts.dimension(function (d) {
-    return d.JobPriorityType.Name
-    });
-  var prioGroup = prio.group();
-
-
-
-
 // time graph
   timeChart.width(1000)
-    .height(150)
+    .height(250)
     .transitionDuration(500)
     .brushOn(false)
 //    .mouseZoomable(true)
@@ -144,58 +133,239 @@ var JobStatusGroup = JobStatus.group()
 //    .brushOn(false)           // added for title
     .xUnits(d3.time.hours)
     .elasticY(true)
-
     .x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) { return d.JobReceived; })))
     .xAxis();
 
-// // time graph
-//   timeChart.width(1000)
-//     .height(150)
-//     .transitionDuration(500)
-// //    .mouseZoomable(true)
-//     .margins({top: 10, right: 10, bottom: 20, left: 40})
-//     .dimension(volumeByHour)
-//     .group(volumeByHourGroup)
-// //    .brushOn(false)           // added for title
-//     .xUnits(d3.time.hours)
-//     .dotRadius(10)
-//     .elasticY(true)
-
-//     .x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) { return d.JobReceived; })))
-//     .xAxis();
 
 
+ // jobtype Pie Chart
+  var jobtype = facts.dimension(function (d) {
+    return d.Type
+    });
+  var jobtypeGroup = jobtype.group();
 
-// islands pie chart
-  islandChart.width(350)
+// jobtype pie chart
+  jobtypeChart.width(350)
     .height(220)
     .radius(100)
-    .innerRadius(20)
-    .dimension(islands)
+    .innerRadius(0)
+    .dimension(jobtype)
     .legend(dc.legend())
     .title(function(d){return d.value;})
-    .group(islandsGroup);
+    .group(jobtypeGroup);
 
-    // islands pie chart
+
+
+ // Pie Chart
+  var locals = facts.dimension(function (d) {
+    return d.Address.Locality
+    });
+  var localGroup = locals.group();
+
+
+
+    // localities pie chart
   localChart.width(450)
     .height(220)
     .radius(100)
-    .innerRadius(20)
+    .innerRadius(0)
     .dimension(locals)
     .legend(dc.legend())
     .title(function(d){return d.value;})
     .group(localGroup);
 
 
-    // islands pie chart
+// Pie Chart
+  var prio = facts.dimension(function (d) {
+    return d.JobPriorityType.Name
+    });
+  var prioGroup = prio.group();
+
+
+    // priorities pie chart
   prioritiesChart.width(350)
     .height(220)
     .radius(100)
-    .innerRadius(20)
+    .innerRadius(0)
     .dimension(prio)
     .legend(dc.legend())
     .title(function(d){return d.value;})
     .group(prioGroup);
+
+
+
+// time chart
+  var tags = facts.dimension(function(d) {
+    console.log(d.Tags);
+    return d.Tags;
+  });
+
+console.log(tags);
+
+
+var treetagsGroup = tags.groupAll().reduce(TreereduceAdd, TreereduceRemove, reduceInitial).value();
+
+
+function TreereduceAdd(p, v) {
+    
+  v.Tags.forEach (function(val, idx) {
+    if (val.TagGroupId == 5) {
+     p[val.Name] = (p[val.Name] || 0) + 1; //increment counts
+ }
+  });
+  return p;
+}
+
+function TreereduceRemove(p, v) {
+  v.Tags.forEach (function(val, idx) {
+    if (val.TagGroupId == 5) {
+     p[val.Name] = (p[val.Name] || 0) - 1; //decrement counts
+ }
+  });
+  return p;
+
+}
+
+function reduceInitial() {
+  return {};  
+}
+
+
+// hack to make dc.js charts work
+treetagsGroup.all = function() {
+  var newObject = [];
+  for (var key in this) {
+    if (this.hasOwnProperty(key) && key != "all") {
+      newObject.push({
+        key: key,
+        value: this[key]
+      });
+    }
+  }
+  return newObject;
+}
+
+  treejobtagsChart.width(450)
+    .height(220)
+    .radius(100)
+    .innerRadius(0)
+    .dimension(tags)
+    .legend(dc.legend())
+    .title(function(d){return d.value;})
+    .group(treetagsGroup);
+
+
+
+var hazardtagsGroup = tags.groupAll().reduce(HazardreduceAdd, HazardreduceRemove, reduceInitial).value();
+
+
+function HazardreduceAdd(p, v) {
+    
+  v.Tags.forEach (function(val, idx) {
+    if (val.TagGroupId == 7) {
+     p[val.Name] = (p[val.Name] || 0) + 1; //increment counts
+ }
+  });
+  return p;
+}
+
+function HazardreduceRemove(p, v) {
+  v.Tags.forEach (function(val, idx) {
+    if (val.TagGroupId == 7) {
+     p[val.Name] = (p[val.Name] || 0) - 1; //decrement counts
+ }
+  });
+  return p;
+
+}
+
+function reduceInitial() {
+  return {};  
+}
+
+hazardtagsGroup.all = function() {
+  var newObject = [];
+  for (var key in this) {
+    if (this.hasOwnProperty(key) && key != "all") {
+      newObject.push({
+        key: key,
+        value: this[key]
+      });
+    }
+  }
+  return newObject;
+}
+
+
+  hazardtagsChart.width(450)
+    .height(220)
+    .radius(100)
+    .innerRadius(0)
+    .dimension(tags)
+    .legend(dc.legend())
+    .title(function(d){return d.value;})
+    .group(hazardtagsGroup);
+
+
+
+
+
+var propertytagsGroup = tags.groupAll().reduce(PropertyreduceAdd, PropertyreduceRemove, reduceInitial).value();
+
+
+function PropertyreduceAdd(p, v) {
+    
+  v.Tags.forEach (function(val, idx) {
+    if (val.TagGroupId == 13) {
+     p[val.Name] = (p[val.Name] || 0) + 1; //increment counts
+ }
+  });
+  return p;
+}
+
+function PropertyreduceRemove(p, v) {
+  v.Tags.forEach (function(val, idx) {
+    if (val.TagGroupId == 13) {
+     p[val.Name] = (p[val.Name] || 0) - 1; //decrement counts
+ }
+  });
+  return p;
+
+}
+
+function reduceInitial() {
+  return {};  
+}
+
+propertytagsGroup.all = function() {
+  var newObject = [];
+  for (var key in this) {
+    if (this.hasOwnProperty(key) && key != "all") {
+      newObject.push({
+        key: key,
+        value: this[key]
+      });
+    }
+  }
+  return newObject;
+}
+
+
+  propertytagsChart.width(450)
+    .height(220)
+    .radius(100)
+    .innerRadius(0)
+    .dimension(tags)
+    .legend(dc.legend())
+    .title(function(d){return d.value;})
+    .group(propertytagsGroup);
+
+
+
+
+
+
+
 dc.renderAll();    
 
 
@@ -240,6 +410,8 @@ var end = new Date();
 
 console.log("firstrun...will fetch vars");
 
+if (params.hq.split(",").length == 1)
+        {
 
 
 if (typeof params.hq !== 'undefined') {
@@ -255,6 +427,12 @@ GetUnitNamefromBeacon(params.hq, function(returnedunitname) {
    HackTheMatrix(null, unitname); 
 }
 
+    } else {
+        console.log("passed array of units");
+        unitname = "group selection";
+        HackTheMatrix(params.hq, unitname);
+    }
+    
 } else {
 console.log("rerun...will NOT fetch vars");
 
@@ -269,7 +447,7 @@ HackTheMatrix(params.hq, unitname);
 //make the call to beacon
 function HackTheMatrix(id, unit) {
 
-   document.title = unitname+ " Job Summary";
+   document.title = unitname+ " Job Statistics";
 
 
     var start = new Date(decodeURIComponent(params.start));
@@ -277,10 +455,12 @@ function HackTheMatrix(id, unit) {
 
     GetJSONfromBeacon(id,start,end, function(jobs) {
 
+            console.log(jobs)
+                    document.getElementById("total").innerHTML = "Total Job Count: " + (jobs.Results.length);
+
 
     drawmelikeoneofyourfrenchgirls(jobs);
 
-            console.log(jobs)
 
             
 
