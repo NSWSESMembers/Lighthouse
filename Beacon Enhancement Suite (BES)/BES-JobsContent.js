@@ -26,4 +26,9 @@ if (exports.hasOwnProperty("Hq"))
 } else {
     this.href = summaryUrl+"stats.html?&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate);
 }
+
 }
+
+
+console.log("Changing page size");
+JobTaskingFilterViewModel.pageSizeChoices=ko.observableArray([20,50,75,100,200,500,1000]);
