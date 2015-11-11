@@ -3,7 +3,7 @@
 
   "name": "Beacon Enhancement Suite (BES)",
   "description": "Provides multiple enhancements to the beacon website.",
-  "version": "4.6",
+  "version": "4.8",
   "icons": {
     "128": "128.png",
     "64":"64.png"
@@ -32,12 +32,16 @@
       "js": ["BES-SituationalAwareness.js"]
       },
       {
+      "matches": ["https://beacon.ses.nsw.gov.au/Messages/Create"],
+      "js": ["BES-MessagesCreate.js"]
+      },
+      {
       "matches": ["https://beacon.ses.nsw.gov.au/*"],
       "exclude_matches": ["https://beacon.ses.nsw.gov.au/Account/Login*"],
       "js": ["BES-Generic.js"]
       }
   ],
-  "web_accessible_resources": ["*.html","BES-JobsContent.js","BES-SituationalAwarenessContent.js","bes.png","tv.png","stats.png"],
+  "web_accessible_resources": ["*.html","BES-JobsContent.js","BES-SituationalAwarenessContent.js","BES-JobsViewContent.js","BES-MessagesCreateContent.js","bes.png","tv.png","stats.png"],
   "background": {
     "scripts": ["background.js"]
   }
