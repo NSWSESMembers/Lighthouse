@@ -21,7 +21,7 @@ div.style.color="white";
 div.style.lineHeight="50px";
 
 
-div.innerHTML="<input id=\"BESKeepLogin\" type=\"checkbox\" checked>  Try keep me logged in for 12 hours</input><h6>Chrome must remain open for this to work. Be security cautious of this and avoid using it on a public computer</h6>";
+div.innerHTML="<input id=\"BESKeepLogin\" type=\"checkbox\">  Try keep me logged in for 12 hours</input><h6>Chrome must remain open for this to work. Be security cautious of this and avoid using it on a public computer</h6>";
 
 var button = document.createElement("input");
 button.id="BESKeepLogin";
@@ -37,16 +37,6 @@ chrome.storage.sync.get({
     console.log("restoring keepalive setting:"+items.keepalive)
 
     document.getElementById('BESKeepLogin').checked = items.keepalive;
-  });
-
-document.getElementById('BESKeepLogin').addEventListener('click', function() {
-var InTime = new Date().getTime();
-console.log("saving keepalive setting:"+this.checked);
-chrome.storage.sync.set({
-    keepalive: this.checked,
-    timeIn: InTime
-  });
-
 });
 //
 
@@ -54,7 +44,7 @@ chrome.storage.sync.set({
 //event listener for keepalive box
 document.getElementById('BESKeepLogin').addEventListener('click', function() {
 var InTime = new Date().getTime();
-console.log("saving keepalive setting:"+this.checked);
+console.log("will save keepalive setting:"+this.checked);
 chrome.storage.sync.set({
     keepalive: this.checked,
     timeIn: InTime
