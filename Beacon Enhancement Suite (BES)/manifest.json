@@ -2,6 +2,7 @@
   "manifest_version": 2,
 
   "name": "Beacon Enhancement Suite (BES)",
+  "short_name": "BES",
   "description": "Provides multiple enhancements to the beacon website.",
   "version": "4.8",
   "icons": {
