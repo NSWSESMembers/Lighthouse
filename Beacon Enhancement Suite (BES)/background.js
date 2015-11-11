@@ -105,7 +105,7 @@ function KeepAliveLoop() {
                     });
                 }
             }
-            xhttp.open("HEAD", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/1", true);
+            xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/1", true);
             xhttp.send();
 
         } else {
