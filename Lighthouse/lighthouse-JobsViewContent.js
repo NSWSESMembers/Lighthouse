@@ -64,3 +64,9 @@ document.getElementById("CompleteQuickTextBox").onchange = function() {
 
     masterViewModel.completeTeamViewModel.actionTaken(this.value);
 }
+
+
+//job type pull
+
+console.log(masterViewModel.jobType.peek().Name);
+

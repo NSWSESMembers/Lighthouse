@@ -14,7 +14,7 @@ summarybutton.style.background = "blue";
 summarybutton.style.color = "white";
 summarybutton.href = "#"
 
-summarybutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Lighthouse Summary Screen";
+summarybutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Summary Screen";
 bar[0].appendChild(summarybutton);
 //
 
@@ -28,7 +28,7 @@ statsbutton.style.background = "rebeccapurple";
 statsbutton.style.color = "white";
 statsbutton.href = "#"
 
-statsbutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Lighthouse Statistics Screen";
+statsbutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Statistics Screen";
 bar[0].appendChild(statsbutton);
 
 
