@@ -69,7 +69,7 @@ function startTimer(duration, display) {
 
 
 
-function drawmelikeoneofyourfrenchgirls(jobs) {
+function drawmelikeoneofyourfrenchgirls(jobs,start,end) {
 
 var timeChart = dc.barChart("#dc-time-chart");
 var jobtypeChart = dc.pieChart("#dc-jobtype-chart");
@@ -132,8 +132,9 @@ var JobStatusGroup = JobStatus.group()
     .group(volumeByHourGroup)
 //    .brushOn(false)           // added for title
     .xUnits(d3.time.hours)
+    .x(d3.time.scale().domain([new Date(start), new Date(end)]))
     .elasticY(true)
-    .x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) { return d.JobReceived; })))
+//    .x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) { return d.JobReceived; })))
     .xAxis();
 
 
@@ -463,7 +464,7 @@ function HackTheMatrix(id, unit) {
                     document.getElementById("total").innerHTML = "Total Job Count: " + (jobs.Results.length);
 
 
-    drawmelikeoneofyourfrenchgirls(jobs);
+    drawmelikeoneofyourfrenchgirls(jobs,start,end);
 
 
             
