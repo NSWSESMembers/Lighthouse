@@ -12,6 +12,7 @@ Code will be pushed up the the chrome app store every milestone (I say that like
 ###Tested:
 
 - Change page title to job number when viewing a job
+- Fixed missing favicon on the login page
 - Fix missing X button on popup on situational awareness map
 - "Keep logged in" - hits a url in the back ground to keep user session alive
 - Summary and Statistics page that feeds directly from beacon filters
