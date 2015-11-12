@@ -9,17 +9,17 @@ the project now available for download and install from the google chrome store.
 Code will be pushed up the the chrome app store every milestone (I say that like I have milestones.... its more of a random event while im waiting for something else to happen)
 
 
-Tested:
+###Tested:
 
-# Change page title to job number when viewing a job
-# Fix missing X button on popup on situational awareness map
-# "Keep logged in" - hits a url in the back ground to keep user session alive
-# Summary and Statists page that feeds directly from beacon filters
-# Quick Text on team completion and job finalisation
+- Change page title to job number when viewing a job
+- Fix missing X button on popup on situational awareness map
+- "Keep logged in" - hits a url in the back ground to keep user session alive
+- Summary and Statists page that feeds directly from beacon filters
+- Quick Text on team completion and job finalisation
 
 
-In developement:
+###In developement:
 
-# Prefill "Primary Action" on job completion based of job type (you know, because of all the RCR we do on landsearch jobs)
-# Prefill "Contact" on send message screen to fill with users HQ
+- Prefill "Primary Action" on job completion based of job type (you know, because of all the RCR we do on landsearch jobs)
+- Prefill "Contact" on send message screen to fill with users HQ
 
