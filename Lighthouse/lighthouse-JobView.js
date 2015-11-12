@@ -7,7 +7,7 @@ var s = document.createElement('script');
 //inject the coded needed to fix visual problems
 //needs to be injected so that it runs after the DOMs are created
 var s = document.createElement('script');
-s.src = chrome.extension.getURL('BES-JobsViewContent.js');
+s.src = chrome.extension.getURL('lighthouse-JobsViewContent.js');
 (document.head || document.documentElement).appendChild(s)
 
 
@@ -30,7 +30,7 @@ label.classList.add("col-md-4");
 label.classList.add("col-lg-3");
 label.classList.add("control-label");
 
-label.innerText = "BES Quick Text";
+label.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh-black.png") + "\"> Quick Text";
 
 
 var textboxdiv = document.createElement("div");
@@ -92,7 +92,7 @@ var label = document.createElement("label");
 label.classList.add("col-md-3");
 label.classList.add("control-label");
 
-label.innerText = "BES Quick Text";
+label.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh-black.png") + "\"> Quick Text";
 
 
 var textboxdiv = document.createElement("div");

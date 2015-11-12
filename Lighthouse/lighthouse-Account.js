@@ -21,10 +21,10 @@ div.style.color="white";
 div.style.lineHeight="50px";
 
 
-div.innerHTML="<input id=\"BESKeepLogin\" type=\"checkbox\">  Try keep me logged in for 12 hours</input><h6>Chrome must remain open for this to work. Be security cautious of this and avoid using it on a public computer</h6>";
+div.innerHTML="<input id=\"lighthouseKeepLogin\" type=\"checkbox\">  Try keep me logged in for 12 hours</input><h6>Chrome must remain open for this to work. Be security cautious of this and avoid using it on a public computer</h6>";
 
 var button = document.createElement("input");
-button.id="BESKeepLogin";
+button.id="lighthouseKeepLogin";
 button.type="checkbox";
 button.innerHTML = "Keep Me Logged In for 24hrs";
 
@@ -36,13 +36,13 @@ chrome.storage.sync.get({
   }, function(items) {
     console.log("restoring keepalive setting:"+items.keepalive)
 
-    document.getElementById('BESKeepLogin').checked = items.keepalive;
+    document.getElementById('lighthouseKeepLogin').checked = items.keepalive;
 });
 //
 
 
 //event listener for keepalive box
-document.getElementById('BESKeepLogin').addEventListener('click', function() {
+document.getElementById('lighthouseKeepLogin').addEventListener('click', function() {
 var InTime = new Date().getTime();
 console.log("will save keepalive setting:"+this.checked);
 chrome.storage.sync.set({

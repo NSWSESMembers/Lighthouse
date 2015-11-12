@@ -1,4 +1,4 @@
-document.getElementById("BESSummaryButton").onclick = function() {
+document.getElementById("lighthouseSummaryButton").onclick = function() {
 
 var exports = JSON.parse(filterDataForExport());
 
@@ -13,7 +13,7 @@ if (exports.hasOwnProperty("Hq"))
 }
 }
 
-document.getElementById("BESStatsButton").onclick = function() {
+document.getElementById("lighthouseStatsButton").onclick = function() {
 
 var exports = JSON.parse(filterDataForExport());
 

@@ -1,10 +1,10 @@
 {
   "manifest_version": 2,
 
-  "name": "Beacon Enhancement Suite (BES)",
-  "short_name": "BES",
-  "description": "Provides multiple enhancements to the beacon website.",
-  "version": "4.9",
+  "name": "Lighthouse",
+  "short_name": "Lighthouse",
+  "description": "Provides multiple enhancements to NSW SES beacon.",
+  "version": "4.10",
   "icons": {
     "128": "128.png",
     "64":"64.png"
@@ -18,32 +18,32 @@
   "content_scripts": [
     {
       "matches": ["https://*.ses.nsw.gov.au/Jobs"],
-      "js": ["BES-Jobs.js"]
+      "js": ["lighthouse-Jobs.js"]
       },
       {
       "matches": ["https://*.ses.nsw.gov.au/Jobs/*"],
       "exclude_matches": ["https://*.ses.nsw.gov.au/Jobs","https://*.ses.nsw.gov.au/Jobs/SituationalAwareness"], 
-      "js": ["BES-JobView.js"]
+      "js": ["lighthouse-JobView.js"]
       },
       {
       "matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
-      "js": ["BES-Account.js"]
+      "js": ["lighthouse-Account.js"]
       },
       {
       "matches": ["https://*.ses.nsw.gov.au/Jobs/SituationalAwareness"],
-      "js": ["BES-SituationalAwareness.js"]
+      "js": ["lighthouse-SituationalAwareness.js"]
       },
       {
       "matches": ["https://*.ses.nsw.gov.au/Messages/Create"],
-      "js": ["BES-MessagesCreate.js"]
+      "js": ["lighthouse-MessagesCreate.js"]
       },
       {
       "matches": ["https://*.ses.nsw.gov.au/*"],
       "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
-      "js": ["BES-Generic.js"]
+      "js": ["lighthouse-Generic.js"]
       }
   ],
-  "web_accessible_resources": ["*.html","BES-JobsContent.js","BES-SituationalAwarenessContent.js","BES-JobsViewContent.js","BES-MessagesCreateContent.js","bes.png","tv.png","stats.png"],
+  "web_accessible_resources": ["*.html","lighthouse-JobsContent.js","lighthouse-SituationalAwarenessContent.js","lighthouse-JobsViewContent.js","lighthouse-MessagesCreateContent.js","lighthouse.png","tv.png","stats.png","lh*.png"],
   "background": {
     "scripts": ["background.js"]
   }
