@@ -4,7 +4,7 @@
   "name": "Lighthouse",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "4.10",
+  "version": "4.11",
   "icons": {
     "128": "128.png",
     "64":"64.png"
@@ -22,7 +22,7 @@
       },
       {
       "matches": ["https://*.ses.nsw.gov.au/Jobs/*"],
-      "exclude_matches": ["https://*.ses.nsw.gov.au/Jobs","https://*.ses.nsw.gov.au/Jobs/SituationalAwareness"], 
+      "exclude_matches": ["https://*.ses.nsw.gov.au/Jobs","https://*.ses.nsw.gov.au/Jobs/SituationalAwareness","https://*.ses.nsw.gov.au/Jobs/Tasking"], 
       "js": ["lighthouse-JobView.js"]
       },
       {
