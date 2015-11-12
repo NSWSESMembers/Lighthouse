@@ -74,7 +74,81 @@ child.insertBefore(div,child.childNodes[2]);
 
 
 
-//Finalise Job Quick Text
+
+
+//complete Job Quick Text
+
+var block = document.getElementById("completeRescueModal").getElementsByClassName("modal-body");
+var child = block[0];
+
+
+var div = document.createElement("div");
+div.classList.add("form-group");
+
+
+var innerdiv = document.createElement("div");
+innerdiv.classList.add("row");
+
+
+var label = document.createElement("label");
+label.classList.add("col-md-4");
+label.classList.add("col-lg-3");
+label.classList.add("control-label");
+
+label.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh-black.png") + "\"> Quick Text";
+
+
+var textboxdiv = document.createElement("div");
+textboxdiv.classList.add("col-lg-9");
+
+
+var textbox = document.createElement("select");
+textbox.classList.add("form-control");
+textbox.id = "FinaliseQuickTextBox";
+//textbox.classList.add("form-control");
+var option = document.createElement("option");
+option.text = "";
+textbox.add(option);
+
+var option = document.createElement("option");
+option.text = "All paperwork and documentation completed";
+textbox.add(option);
+
+var option = document.createElement("option");
+option.text = "NFA";
+textbox.add(option);
+
+var option = document.createElement("option");
+option.text = "Job completed";
+textbox.add(option);
+
+textboxdiv.appendChild(textbox);
+
+
+
+innerdiv.appendChild(label);
+
+innerdiv.appendChild(textboxdiv);
+
+div.appendChild(innerdiv);
+
+
+child.insertBefore(div,child.childNodes[6]);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//Complete Job Quick Text
 
 var block = document.getElementById("completeTeamModal").getElementsByClassName("modal-body");
 var child = block[0]
@@ -127,9 +201,43 @@ innerdiv.appendChild(textboxdiv);
 
 div.appendChild(innerdiv);
 
-console.log(child.childNodes)
 
 child.insertBefore(div,child.childNodes[28]);
+
+
+
+
+
+
+
+// //Team and Job and Finalise
+
+// var block = document.getElementById("completeTeamModal").getElementsByClassName("modal-footer");
+// var child = block[0]
+
+
+// var a = document.createElement("a");
+// a.classList.add("btn");
+// a.classList.add("btn-success");
+// a.classList.add("ladda-button");
+// a.style.backgroundColor = "rebeccapurple";
+// a.style.borderColor = "rebeccapurple";
+// a.id="lighthousecompleteandfinal";
+
+
+// var span = document.createElement("span");
+// span.classList.add("ladda-label");
+// span.innerText = "Complete Team & Job & Finalise";
+
+
+
+
+
+// a.appendChild(span);
+
+// console.log(span);
+
+// child.insertBefore(a,child.childNodes[4]);
 
 
 

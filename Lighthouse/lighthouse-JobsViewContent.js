@@ -70,3 +70,14 @@ document.getElementById("CompleteQuickTextBox").onchange = function() {
 
 console.log(masterViewModel.jobType.peek().Name);
 
+
+
+// document.getElementById("lighthousecompleteandfinal").onclick = function() {
+//     console.log("someone has their big boy pants on")
+
+    
+//     masterViewModel.JobManager.FinaliseJob(jobId,masterViewModel.completeTeamViewModel.actionTaken(),masterViewModel.completeTeamViewModel.timeComplete().format());
+
+
+// }
+
