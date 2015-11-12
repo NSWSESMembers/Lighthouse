@@ -14,7 +14,7 @@ Code will be pushed up the the chrome app store every milestone (I say that like
 - Change page title to job number when viewing a job
 - Fix missing X button on popup on situational awareness map
 - "Keep logged in" - hits a url in the back ground to keep user session alive
-- Summary and Statists page that feeds directly from beacon filters
+- Summary and Statistics page that feeds directly from beacon filters
 - Quick Text on team completion and job finalisation
 
 
