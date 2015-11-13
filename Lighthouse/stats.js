@@ -96,7 +96,7 @@ function renderPage(unit, jobs) {
   $('#banner').html(html);
 }
 
-// make piece chart using our standard parameters
+// make pie chart using our standard parameters
 function makePie(elem, w, h, dimension, group) {
   var chart = dc.pieChart(elem);
   chart.width(w)
@@ -118,9 +118,26 @@ function prepareCharts(jobs, start, end) {
   // convert timestamps to Date()s
   jobs.Results.forEach(function(d) {
     var rawdate = new Date(d.JobReceived);
-    d.JobReceived = new Date(
+    d.JobReceivedFixed = new Date(
       rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 )
     );
+d.hazardTags = [];
+d.treeTags = [];
+d.propertyTags = [];
+    d.Tags.forEach(function(d2){
+      switch (d2.TagGroupId)
+      {
+        case 5:
+          d.treeTags.push(d2.Name);
+          break;
+        case 7:
+          d.hazardTags.push(d2.Name);
+          break
+        case 13:
+          d.propertyTags.push(d2.Name);
+          break;
+      }
+    });
   });
 
   var facts = crossfilter(jobs.Results);
@@ -130,11 +147,11 @@ function prepareCharts(jobs, start, end) {
   // jobs per hour time chart
   var timeChart = dc.barChart("#dc-time-chart");
   var volumeByHour = facts.dimension(function(d) {
-    return d3.time.hour(d.JobReceived);
+    return d3.time.hour(d.JobReceivedFixed);
   });
 
   var volumeByHourGroup = volumeByHour.group()
-    .reduceCount(function(d) { return d.JobReceived; });
+    .reduceCount(function(d) { return d.JobReceivedFixed; });
 
   timeChart.width(1000)
     .height(250)
@@ -152,29 +169,30 @@ function prepareCharts(jobs, start, end) {
     //return d.JobReceived; })))
     .xAxis();
 
-  var tags = facts.dimension(function(d) {
-    return d.Tags;
-  });
 
-  preparePieCharts(facts, tags);
+  
+  preparePieCharts(facts);
 }
 
-// produces a 'group' for tag pie charts
-function makeTagGroup(tags, predicate) {
-  var group = tags.groupAll().reduce(
+
+
+
+// draw all of the pie charts
+function preparePieCharts(facts) {
+
+  // produces a 'group' for tag pie charts
+function makeTagGroup(fact) {
+  var group = facts.groupAll().reduce(
     function(p, v) {
-      v.Tags.forEach (function(val, idx) {
-        if (predicate(val)) {
-          p[val.Name] = (p[val.Name] || 0) + 1; //increment counts
-        }
+      v.fact.forEach (function(val, idx) {
+        console.log(val);
+          p[val] = (p[val] || 0) + 1; //increment counts
       });
       return p;
     },
     function(p, v) {
-      v.Tags.forEach (function(val, idx) {
-        if (predicate(val)) {
-          p[val.Name] = (p[val.Name] || 0) - 1; //decrement counts
-        }
+      fact.forEach (function(val, idx) {
+          p[val] = (p[val] || 0) - 1; //decrement counts
       });
       return p;
     },
@@ -194,19 +212,27 @@ function makeTagGroup(tags, predicate) {
     return newObject;
   }
 
+
+  group.top = function(count) {
+    var newObject = this.all();
+     newObject.sort(function(a, b){return b.value - a.value});
+    return newObject.slice(0, count);
+  };
+
   return group;
 }
 
-
-// draw all of the pie charts
-function preparePieCharts(facts, tags) {
-
   // produces a pie chart for displaying tags
-  function makeTagPie(elem, tagGroupId) {
-    var group = makeTagGroup(tags, function(val) {
-      return val.TagGroupId == tagGroupId;
+  function makeTagPie(elem, fact) {
+    var dimension = facts.dimension(function (d) {
+      return fact(d);
     });
-    return makePie(elem, 450, 220, tags, group);
+
+    var group = makeTagGroup(function(d) {
+      return fact(d);
+    });
+
+    return makePie(elem, 450, 220, dimension, group);
   }
 
   // produces a simple pie chart
@@ -217,6 +243,7 @@ function preparePieCharts(facts, tags) {
     var group = dimension.group();
 
     var chart = makePie(elem, w, h, dimension, group);
+
   }
 
   makeSimplePie("#dc-jobtype-chart", 350, 220, function(d) {
@@ -243,9 +270,19 @@ function preparePieCharts(facts, tags) {
     return d.JobPriorityType.Name;
   });
 
-  makeTagPie('#dc-treetags-chart', 5);
-  makeTagPie('#dc-hazardtags-chart', 7);
-  makeTagPie('#dc-propertytags-chart', 13);
+  
+
+  makeTagPie('#dc-treetags-chart', function(d) {
+    return d.treeTags;
+  });
+  makeTagPie('#dc-hazardtags-chart', function(d) {
+    return d.hazardTags;
+  });
+  makeTagPie('#dc-propertytags-chart', function(d) {
+    return d.propertyTags;
+  });
+
+
 }
 
 //Get times vars for the call
