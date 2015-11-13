@@ -21,7 +21,8 @@ div.style.color="white";
 div.style.lineHeight="50px";
 
 
-div.innerHTML="<input id=\"lighthouseKeepLogin\" type=\"checkbox\">  Try keep me logged in for 12 hours</input><h6>Chrome must remain open for this to work. Be security cautious of this and avoid using it on a public computer</h6>";
+
+div.innerHTML="<input autocomplete=\"off\" id=\"lighthouseKeepLogin\" type=\"checkbox\">  Try keep me logged in for 12 hours</input><h6>Chrome must remain open for this to work. Be security cautious of this and avoid using it on a public computer</h6>";
 
 var button = document.createElement("input");
 button.id="lighthouseKeepLogin";
@@ -32,7 +33,7 @@ bar.parentNode.insertBefore(div,bar.nextSibling);
 
 
 chrome.storage.sync.get({
-    keepalive: 'false',
+    keepalive: false,
   }, function(items) {
     console.log("restoring keepalive setting:"+items.keepalive)
 
