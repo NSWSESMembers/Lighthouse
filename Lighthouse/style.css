@@ -79,11 +79,6 @@ font-size: 30px;
 	font-weight: bold;
 }
 
-#results {
-	visibility: hidden;
-}
-
-
 footer {
 	position: fixed;
 	background-color:white;
