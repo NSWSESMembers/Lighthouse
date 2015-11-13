@@ -224,7 +224,19 @@ function preparePieCharts(facts, tags) {
   });
 
   makeSimplePie("#dc-local-chart", 450, 220, function(d) {
-    return d.Address.Locality;
+    switch(unitname)
+    {
+      case "NSW":
+        return d.LGA;
+        break;
+      case "group selection":
+        return d.LGA;
+        break;
+      default:
+        return d.Address.Locality;
+        break;
+    }
+    
   });
 
   makeSimplePie("#dc-priority-chart", 350, 220, function(d) {
