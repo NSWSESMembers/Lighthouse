@@ -77,7 +77,7 @@ function renderPage(unit, jobs) {
 
   $('#total').html("Total Job Count: " + (jobs.Results.length));
 
-  prepareCharts(jobs, start, end);
+  prepareData(jobs, start, end);
   dc.renderAll();
 
   $('#loading').hide();
@@ -113,7 +113,7 @@ function makePie(elem, w, h, dimension, group) {
 // gather and organise all of the data
 // build charts and feed data
 // render
-function prepareCharts(jobs, start, end) {
+function prepareData(jobs, start, end) {
 
   // convert timestamps to Date()s
   jobs.Results.forEach(function(d) {
@@ -139,6 +139,17 @@ d.propertyTags = [];
       }
     });
   });
+
+  
+  
+  prepareCharts(jobs, start, end);
+}
+
+
+
+
+// draw all of the pie charts
+function prepareCharts(jobs, start, end) {
 
   var facts = crossfilter(jobs.Results);
 
@@ -170,69 +181,160 @@ d.propertyTags = [];
     .xAxis();
 
 
-  
-  preparePieCharts(facts);
-}
 
 
 
+  // produces a 'group' for tag pie charts, switch on the key in the object that needs to be walked
+  function makeTagGroup(dim, targetfact) {
 
-// draw all of the pie charts
-function preparePieCharts(facts) {
-
-  // produces a 'group' for tag pie charts
-function makeTagGroup(fact) {
-  var group = facts.groupAll().reduce(
-    function(p, v) {
-      v.fact.forEach (function(val, idx) {
-        console.log(val);
-          p[val] = (p[val] || 0) + 1; //increment counts
-      });
-      return p;
-    },
-    function(p, v) {
-      fact.forEach (function(val, idx) {
-          p[val] = (p[val] || 0) - 1; //decrement counts
-      });
-      return p;
-    },
-    function() { return {}; }
-  ).value();
-
-  group.all = function() {
-    var newObject = [];
-    for (var key in this) {
-      if (this.hasOwnProperty(key) && key != "all") {
-        newObject.push({
-          key: key,
-          value: this[key]
-        });
+      switch (targetfact) {
+          case "treeTags":
+              var group = dim.groupAll().reduce(
+                  function(p, v) {
+                      v.treeTags.forEach(function(val, idx) {
+                          p[val] = (p[val] || 0) + 1; //increment counts
+                      });
+                      return p;
+                  },
+                  function(p, v) {
+                      v.treeTags.forEach(function(val, idx) {
+                          p[val] = (p[val] || 0) - 1; //decrement counts
+                      });
+                      return p;
+                  },
+                  function() {
+                      return {};
+                  }
+              ).value()
+              group.all = function() {
+                  var newObject = [];
+                  for (var key in this) {
+                      if (this.hasOwnProperty(key) && key != "all") {
+                          newObject.push({
+                              key: key,
+                              value: this[key]
+                          });
+                      }
+                  }
+                  return newObject;
+              };
+              group.top = function(count) {
+                  var newObject = this.all();
+                  newObject.sort(function(a, b) {
+                      return b.value - a.value
+                  });
+                  return newObject.slice(0, count);
+              };
+              return group;
+              break;
+          case "hazardTags":
+              var group = dim.groupAll().reduce(
+                  function(p, v) {
+                      v.hazardTags.forEach(function(val, idx) {
+                          p[val] = (p[val] || 0) + 1; //increment counts
+                      });
+                      return p;
+                  },
+                  function(p, v) {
+                      v.hazardTags.forEach(function(val, idx) {
+                          p[val] = (p[val] || 0) - 1; //decrement counts
+                      });
+                      return p;
+                  },
+                  function() {
+                      return {};
+                  }
+              ).value()
+              group.all = function() {
+                  var newObject = [];
+                  for (var key in this) {
+                      if (this.hasOwnProperty(key) && key != "all") {
+                          newObject.push({
+                              key: key,
+                              value: this[key]
+                          });
+                      }
+                  }
+                  return newObject;
+              };
+              group.top = function(count) {
+                  var newObject = this.all();
+                  newObject.sort(function(a, b) {
+                      return b.value - a.value
+                  });
+                  return newObject.slice(0, count);
+              };
+              return group;
+              break;
+          case "propertyTags":
+              var group = dim.groupAll().reduce(
+                  function(p, v) {
+                      v.propertyTags.forEach(function(val, idx) {
+                          p[val] = (p[val] || 0) + 1; //increment counts
+                      });
+                      return p;
+                  },
+                  function(p, v) {
+                      v.propertyTags.forEach(function(val, idx) {
+                          p[val] = (p[val] || 0) - 1; //decrement counts
+                      });
+                      return p;
+                  },
+                  function() {
+                      return {};
+                  }
+              ).value()
+              group.all = function() {
+                  var newObject = [];
+                  for (var key in this) {
+                      if (this.hasOwnProperty(key) && key != "all") {
+                          newObject.push({
+                              key: key,
+                              value: this[key]
+                          });
+                      }
+                  }
+                  return newObject;
+              };
+              group.top = function(count) {
+                  var newObject = this.all();
+                  newObject.sort(function(a, b) {
+                      return b.value - a.value
+                  });
+                  return newObject.slice(0, count);
+              };
+              return group;
+              break;              
       }
-    }
-    return newObject;
-  }
 
-
-  group.top = function(count) {
-    var newObject = this.all();
-     newObject.sort(function(a, b){return b.value - a.value});
-    return newObject.slice(0, count);
   };
 
-  return group;
-}
+
 
   // produces a pie chart for displaying tags
-  function makeTagPie(elem, fact) {
+  function makeTagPie(elem, fact, location) {
     var dimension = facts.dimension(function (d) {
       return fact(d);
     });
 
-    var group = makeTagGroup(function(d) {
-      return fact(d);
-    });
+    var group = makeTagGroup(dimension,location);
 
-    return makePie(elem, 450, 220, dimension, group);
+    var chart = makePie(elem, 450, 220, dimension, group);
+
+    chart.filterHandler (function (dimension, filters) {
+   dimension.filter(null);   
+    if (filters.length === 0)
+        dimension.filter(null);
+    else
+        dimension.filterFunction(function (d) {
+            for (var i=0; i < d.length; i++) {
+                if (filters.indexOf(d[i]) >= 0) return true;
+            }
+            return false; 
+        });
+  return filters; 
+  }
+);
   }
 
   // produces a simple pie chart
@@ -270,17 +372,17 @@ function makeTagGroup(fact) {
     return d.JobPriorityType.Name;
   });
 
-  
-
   makeTagPie('#dc-treetags-chart', function(d) {
     return d.treeTags;
-  });
+  },"treeTags");
+
   makeTagPie('#dc-hazardtags-chart', function(d) {
     return d.hazardTags;
-  });
+  },"hazardTags");
+
   makeTagPie('#dc-propertytags-chart', function(d) {
     return d.propertyTags;
-  });
+  },"propertyTags");
 
 
 }
