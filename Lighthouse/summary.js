@@ -258,8 +258,14 @@ function HackTheMatrix(id, unit) {
         document.getElementById("flood").innerHTML = flood;
         document.getElementById("rescue").innerHTML = rescue;
         document.getElementById("storm").innerHTML = storm;
+        var open = jobs.Results.length - finJob - rejJob - canJob - refJob - completeJob;
+        var closed = refJob + canJob + completeJob + finJob;
 
-        document.getElementById("total").innerHTML = "Total Job Count: " + (jobs.Results.length);
+        document.getElementById("open").innerHTML = open;
+        document.getElementById("closed").innerHTML = closed;
+        document.getElementById("totalnumber").innerHTML = jobs.Results.length;
+
+        //document.getElementById("total").innerHTML = "Total Job Count: " + (jobs.Results.length);
 
         document.getElementById("results").style.visibility = 'visible';
 

@@ -4,6 +4,51 @@ body{
    width:1000px;             /* As IE ignores !important it will set width as 1000px; */
 }
 
+.totals {
+	width:50%;
+	text-align: center;
+
+}
+
+#open {
+border: 1px solid black;
+color: black;
+text-shadow: 1px 1px 6px red;
+}
+
+#closed {
+border: 1px solid black;
+color: black;
+text-shadow: 1px 1px 6px green;
+
+}
+
+#totalnumber {
+border: 1px solid black;
+text-shadow: 1px 1px 6px black;
+
+}
+
+.totals tr td {
+	width:33.33%;
+}
+.totals .header {
+	font-size: 30px;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.totals .rowresults {
+font-size: 90px;
+}
+
+
+
+
+
+
+
+
 .bigtbl {
 	width:100%;
 	text-align: center;
@@ -13,13 +58,13 @@ body{
 	width:25%;
 }
 .bigtbl .header {
-	font-size: 50px;
+	font-size: 40px;
 	text-decoration: none;
 	font-weight: bold;
 }
 
 .bigtbl .rowresults {
-font-size: 90px;
+font-size: 80px;
 }
 
 
@@ -110,7 +155,8 @@ label {
    left: 0px;
    position: fixed;
    display: block;
-   opacity: 0.7;
+   opacity: 1;
+   font-size: 20px;
    background-color: #fff;
    z-index: 99;
    text-align: center;
