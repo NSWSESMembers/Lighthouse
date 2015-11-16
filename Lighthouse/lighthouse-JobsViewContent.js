@@ -72,6 +72,23 @@ console.log(masterViewModel.jobType.peek().Name);
 
 
 
+
+//clean up all <br>'s on the page'
+var block = document.getElementsByTagName("div");
+
+
+for(var i = 0; i < block.length; i++){
+   //do something to each div like
+   if (block[i].innerHTML.search("&lt;br&gt;") !== -1)
+   {
+    console.log("Fixing a bad BR");
+    block[i].innerHTML = block[i].innerHTML.replace("&lt;br&gt;","<br \>");
+   }
+
+}
+
+
+
 // document.getElementById("lighthousecompleteandfinal").onclick = function() {
 //     console.log("someone has their big boy pants on")
 
