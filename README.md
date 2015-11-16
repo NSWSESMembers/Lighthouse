@@ -17,7 +17,7 @@ Code will be pushed up the the chrome app store every milestone (I say that like
 - "Keep logged in" - hits a url in the back ground to keep user session alive
 - Summary and Statistics page that feeds directly from beacon filters
 - Quick Text on team completion and job finalisation
-
+- Fixed message <br> text. acts like a line break in the message correctly now.
 
 ###In developement:
 
