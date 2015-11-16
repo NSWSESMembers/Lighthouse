@@ -18,7 +18,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 
                 case "Storm":
                     removeOptions(document.getElementById("CompleteQuickTextBox"));
-                    var quickText = ["","No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe."]
+                    var quickText = ["","No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.","Branch/tree sectioned; resident/owner to organize removal"]
                     document.getElementById("CompleteQuickTextBox").removed
                     for (var i = 0; i < quickText.length; i++) {
                         var opt = document.createElement('option');

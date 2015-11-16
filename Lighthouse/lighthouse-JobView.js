@@ -95,7 +95,7 @@ label.classList.add("col-md-4");
 label.classList.add("col-lg-3");
 label.classList.add("control-label");
 
-label.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh-black.png") + "\"> Quick Text";
+label.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh-black.png") + "\"> Quick Fill";
 
 
 var textboxdiv = document.createElement("div");
@@ -116,6 +116,10 @@ textbox.add(option);
 
 var option = document.createElement("option");
 option.text = "NFA";
+textbox.add(option);
+
+var option = document.createElement("option");
+option.text = "NFA SES. Refered to Council";
 textbox.add(option);
 
 var option = document.createElement("option");
