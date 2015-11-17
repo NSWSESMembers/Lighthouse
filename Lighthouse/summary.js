@@ -1,5 +1,10 @@
 var timeoverride = null;
 
+window.onerror = function(message, url, lineNumber) {  
+  document.getElementById("loading").innerHTML = "Error loading page<br>"+message;
+  return true;
+}; 
+
 
 
 //on DOM load
@@ -14,12 +19,19 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-$(document).on('change', 'input[type=radio][name=slide]', function() {
+$(document).on('change', 'input[name=slide]:radio', function() {
     console.log(this.value);
     timeoverride = this.value;
 
 
     RunForestRun();
+});
+
+//refresh button
+$(document).ready(function() {
+document.getElementById("refresh").onclick = function() {
+RunForestRun();
+}
 });
 
 
@@ -126,8 +138,11 @@ function RunForestRun() {
 
     } else {
         console.log("rerun...will NOT fetch vars");
-
-        HackTheMatrix(params.hq, unitname);
+        if (typeof params.hq == 'undefined') {
+            HackTheMatrix(null, unitname);
+        } else {
+            HackTheMatrix(params.hq, unitname);
+        }
 
     }
 

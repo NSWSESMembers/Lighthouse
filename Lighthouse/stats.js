@@ -2,6 +2,12 @@ var timeoverride = null;
 var timeperiod;
 var unitname = "";
 
+window.onerror = function(message, url, lineNumber) {  
+  document.getElementById("loading").innerHTML = "Error loading page<br>"+message;
+  return true;
+}; 
+
+
 // init
 $(function() {
 
@@ -13,11 +19,18 @@ $(function() {
 });
 
 // redraw when the slide radio buttons change
-$('input[type=radio][name=slide]').change(function(e) {
+$(document).on('change', 'input[name=slide]:radio', function() {
   console.log(this.value);
   timeoverride = this.value;
 
   RunForestRun();
+});
+
+//refresh button
+$(document).ready(function() {
+document.getElementById("refresh").onclick = function() {
+RunForestRun();
+}
 });
 
 function getSearchParameters() {
@@ -437,6 +450,10 @@ function RunForestRun() {
     }
   } else {
     console.log("rerun...will NOT fetch vars");
-    fetchJobsFromBeacon(params.hq, unitname, fetchComplete);
+    if (typeof params.hq == 'undefined') {
+      fetchJobsFromBeacon(null, unitname, fetchComplete);
+    } else {
+      fetchJobsFromBeacon(params.hq, unitname, fetchComplete);
+    }
   }
 }
