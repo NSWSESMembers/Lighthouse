@@ -52,15 +52,14 @@ function GetJSONfromBeacon(Id, StartDate, EndDate, callback) {
 
 
         } else if (xhttp.readyState == 4 && xhttp.status !== 200) {
-            document.getElementById("loading").innerHTML = "Error talking with beacon. Are you logged in?";
-            throw new Error('Error talking with beacon. xhttp gave non 200 result');
+            throw new Error('Error talking with beacon. xhttp gave a  non 200 result. Are you logged in?');
 
         }
 
 
     }
 
-    if (Id !== null) {
+    if (Id !== null || typeof unit == undefined) {
 
                 if (Id.split(",").length == 1)
                 {
