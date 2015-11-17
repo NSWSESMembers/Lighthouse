@@ -2,16 +2,16 @@ console.log("Running content script");
 
 
 //if ops logs update
-masterViewModel.notesViewModel.opsLogEntries.subscribe(function(d){
+masterViewModel.notesViewModel.opsLogEntries.subscribe(function(d) {
 
-cleanupBr();
+    cleanupBr();
 
 });
 
 //if messages update
-masterViewModel.messagesViewModel.messages.subscribe(function(d){
+masterViewModel.messagesViewModel.messages.subscribe(function(d) {
 
-cleanupBr();
+    cleanupBr();
 
 });
 
@@ -21,23 +21,29 @@ cleanupBr();
 
 function cleanupBr() {
 
-//only run if messages and notes have loaded in (gets the shits overwise and wont load)
-if (masterViewModel.messagesViewModel.messages.peek().length !== 0 &&  masterViewModel.notesViewModel.opsLogEntries.peek().length !== 0 ) {
+    //only run if messages and notes have loaded in (gets the shits overwise and wont load)
+    if (masterViewModel.messagesViewModel.messages.peek().length !== 0 && masterViewModel.notesViewModel.opsLogEntries.peek().length !== 0) {
 
-    var all = document.getElementById("editRfaForm").getElementsByTagName("*");
-
-
-for (var i=0, max=all.length; i < max; i++) {
-
-     //Do something with the element here
-    all[i].innerHTML = (replaceAll(all[i].innerHTML,"&lt;br&gt;","<br>"));
-    //all[i].innerHTML = (replaceAll(all[i].innerHTML,"text: Text","html: Text"));
-
-}
-
-}
+        var all = document.getElementById("editRfaForm").getElementsByTagName("*");
 
 
+        for (var i = 0, max = all.length; i < max; i++) {
+
+            //Do something with the element here
+            all[i].innerHTML = (replaceAll(all[i].innerHTML, "&lt;br&gt;", "<br>"));
+            //all[i].innerHTML = (replaceAll(all[i].innerHTML,"text: Text","html: Text"));
+
+        }
+
+        try //get rid of the loading image which some times gets suck. i assume a race condition it the cause
+        {
+            var progress = document.getElementById("editRfaForm").getElementsByClassName("col-xs-12 text-center");
+            progress[0].parentNode.removeChild(progress[0]); //.style.visibility = 'hidden';
+        } catch (err) {
+            console.log(err.messages);
+
+        }
+    }
 
 
 }
@@ -63,7 +69,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 
                 case "Storm":
                     removeOptions(document.getElementById("CompleteQuickTextBox"));
-                    var quickText = ["","No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.","Branch/tree sectioned; resident/owner to organize removal"]
+                    var quickText = ["", "No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.", "Branch/tree sectioned; resident/owner to organize removal"]
                     document.getElementById("CompleteQuickTextBox").removed
                     for (var i = 0; i < quickText.length; i++) {
                         var opt = document.createElement('option');
@@ -96,7 +102,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 });
 
 function replaceAll(str, find, replace) {
-  return str.replace(new RegExp(find, 'g'), replace);
+    return str.replace(new RegExp(find, 'g'), replace);
 }
 
 function removeOptions(selectbox) {
@@ -119,9 +125,8 @@ document.getElementById("CompleteQuickTextBox").onchange = function() {
 // document.getElementById("lighthousecompleteandfinal").onclick = function() {
 //     console.log("someone has their big boy pants on")
 
-    
+
 //     masterViewModel.JobManager.FinaliseJob(jobId,masterViewModel.completeTeamViewModel.actionTaken(),masterViewModel.completeTeamViewModel.timeComplete().format());
 
 
 // }
-

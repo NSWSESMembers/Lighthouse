@@ -42,7 +42,7 @@ var selected = contentViewModel.selectedPageSizeChoice.peek();
 
 console.log("saved:"+saved);
 console.log("selected:"+selected);
-if (saved !== selected)
+if (saved != selected)
 {
 console.log("Fixing page size difference");
 contentViewModel.selectedPageSizeChoice(saved);
