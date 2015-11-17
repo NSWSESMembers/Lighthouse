@@ -18,9 +18,13 @@ Code will be pushed up the the chrome app store every milestone (I say that like
 - Summary and Statistics page that feeds directly from beacon filters
 - Quick Text on team completion and job finalisation
 - Fixed message <br> text. acts like a line break in the message correctly now.
+- added 200 and 500 to pagination choices
 
 ###In developement:
 
+
+
+## To Do
+
 - Prefill "Primary Action" on job completion based of job type (you know, because of all the RCR we do on landsearch jobs)
 - Prefill "Contact" on send message screen to fill with users HQ
-
