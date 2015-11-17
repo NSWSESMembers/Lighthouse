@@ -30,3 +30,20 @@ if (exports.hasOwnProperty("Hq"))
 }
 
 
+//More pageination choices!
+
+contentViewModel.pageSizeChoices.push(200);
+contentViewModel.pageSizeChoices.push(500);
+contentViewModel.pageSizeChoices.push(1000);
+
+var saved = utility.getPrimitiveFromLocalStorage(contentViewModel.localStorageKeys.PageSize);
+var selected = contentViewModel.selectedPageSizeChoice.peek();
+
+
+console.log("saved:"+saved);
+console.log("selected:"+selected);
+if (saved !== selected)
+{
+console.log("Fixing page size difference");
+contentViewModel.selectedPageSizeChoice(saved);
+}

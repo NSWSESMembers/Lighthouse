@@ -46,3 +46,4 @@ s.innerHTML = "var summaryUrl = \"" + summaryUrl + "\"";
 var s = document.createElement('script');
 s.src = chrome.extension.getURL('lighthouse-JobsContent.js');
 (document.head || document.documentElement).appendChild(s)
+
