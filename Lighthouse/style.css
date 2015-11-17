@@ -2,6 +2,7 @@ body{
    min-width:1300px; /* suppose you want minimun width of 1000px */
    width: auto !important;  /* Firefox will set width as auto */
    width:1000px;             /* As IE ignores !important it will set width as 1000px; */
+   margin-bottom: 60px;
 }
 
 .totals {
