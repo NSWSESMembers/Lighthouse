@@ -224,7 +224,6 @@ function HackTheMatrix(id, unit) {
 
             switch (d.key) {
                 case 1:
-                    console.log(d.key);
                     storm = d.value;
                     break;
                 case 2:
@@ -234,7 +233,7 @@ function HackTheMatrix(id, unit) {
                     flood = d.value;
                     break;
                 case 5:
-                    res = d.value;
+                    rescue = d.value;
                     break;
             }
 
