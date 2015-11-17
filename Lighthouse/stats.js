@@ -105,7 +105,7 @@ function makePie(elem, w, h, dimension, group) {
        .innerRadius(0)
        .dimension(dimension)
        .legend(dc.legend())
-       .title(function(d) { return d.value; })
+      // .title(function(d) { return d.value; })
        .group(group);
   return chart;
 }
@@ -161,14 +161,13 @@ function prepareCharts(jobs, start, end) {
     return d3.time.hour(d.JobReceivedFixed);
   });
 
-  var volumeByHourGroup = volumeByHour.group()
-    .reduceCount(function(d) { return d.JobReceivedFixed; });
+  var volumeByHourGroup = volumeByHour.group().reduceCount(function(d) { return d.JobReceivedFixed; });
 
   timeChart.width(1000)
     .height(250)
     .transitionDuration(500)
-    .brushOn(false)
-    //.mouseZoomable(true)
+    .brushOn(true)
+    .mouseZoomable(false)
     .margins({top: 10, right: 10, bottom: 20, left: 40})
     .dimension(volumeByHour)
     .group(volumeByHourGroup)
@@ -218,13 +217,13 @@ function prepareCharts(jobs, start, end) {
                   }
                   return newObject;
               };
-              group.top = function(count) {
-                  var newObject = this.all();
-                  newObject.sort(function(a, b) {
-                      return b.value - a.value
-                  });
-                  return newObject.slice(0, count);
-              };
+              // group.top = function(count) {
+              //     var newObject = this.all();
+              //     newObject.sort(function(a, b) {
+              //         return b.value - a.value
+              //     });
+              //     return newObject.slice(0, count);
+              // };
               return group;
               break;
           case "hazardTags":
@@ -257,14 +256,14 @@ function prepareCharts(jobs, start, end) {
                   }
                   return newObject;
               };
-              group.top = function(count) {
-                  var newObject = this.all();
-                  newObject.sort(function(a, b) {
-                      return b.value - a.value
-                  });
-                  return newObject.slice(0, count);
-              };
-              return group;
+              // group.top = function(count) {
+              //     var newObject = this.all();
+              //     newObject.sort(function(a, b) {
+              //         return b.value - a.value
+              //     });
+              //     return newObject.slice(0, count);
+              // };
+             return group;
               break;
           case "propertyTags":
               var group = dim.groupAll().reduce(
@@ -296,13 +295,13 @@ function prepareCharts(jobs, start, end) {
                   }
                   return newObject;
               };
-              group.top = function(count) {
-                  var newObject = this.all();
-                  newObject.sort(function(a, b) {
-                      return b.value - a.value
-                  });
-                  return newObject.slice(0, count);
-              };
+              // group.top = function(count) {
+              //     var newObject = this.all();
+              //     newObject.sort(function(a, b) {
+              //         return b.value - a.value
+              //     });
+              //     return newObject.slice(0, count);
+              // };
               return group;
               break;              
       }
@@ -345,6 +344,7 @@ function prepareCharts(jobs, start, end) {
     var group = dimension.group();
 
     var chart = makePie(elem, w, h, dimension, group);
+    chart.slicesCap(10)
 
   }
 
