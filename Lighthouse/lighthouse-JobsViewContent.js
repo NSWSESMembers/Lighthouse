@@ -24,16 +24,13 @@ function cleanupBr() {
     //only run if messages and notes have loaded in (gets the shits overwise and wont load)
     if (masterViewModel.messagesViewModel.messages.peek().length !== 0 && masterViewModel.notesViewModel.opsLogEntries.peek().length !== 0) {
 
-        var all = document.getElementById("editRfaForm").getElementsByTagName("*");
+        var selector = '.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: Text"]';
 
-
-        for (var i = 0, max = all.length; i < max; i++) {
-
-            //Do something with the element here
-            all[i].innerHTML = (replaceAll(all[i].innerHTML, "&lt;br&gt;", "<br>"));
-            //all[i].innerHTML = (replaceAll(all[i].innerHTML,"text: Text","html: Text"));
-
-        }
+        $(selector).each(function() {
+            var text = $(this).html();
+            var replaced = text.replace(/&lt;br&gt;/g, '<br />');
+            $(this).html(replaced);
+        });
 
         try //get rid of the loading image which some times gets suck. i assume a race condition it the cause
         {
@@ -44,7 +41,6 @@ function cleanupBr() {
 
         }
     }
-
 
 }
 
