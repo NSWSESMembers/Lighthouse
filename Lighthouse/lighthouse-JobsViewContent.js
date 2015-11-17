@@ -1,3 +1,48 @@
+console.log("Running content script");
+
+
+//if ops logs update
+masterViewModel.notesViewModel.opsLogEntries.subscribe(function(d){
+
+cleanupBr();
+
+});
+
+//if messages update
+masterViewModel.messagesViewModel.messages.subscribe(function(d){
+
+cleanupBr();
+
+});
+
+//call on run
+cleanupBr();
+
+
+function cleanupBr() {
+
+//only run if messages and notes have loaded in (gets the shits overwise and wont load)
+if (masterViewModel.messagesViewModel.messages.peek().length !== 0 &&  masterViewModel.notesViewModel.opsLogEntries.peek().length !== 0 ) {
+
+    var all = document.getElementById("editRfaForm").getElementsByTagName("*");
+
+
+for (var i=0, max=all.length; i < max; i++) {
+
+     //Do something with the element here
+    all[i].innerHTML = (replaceAll(all[i].innerHTML,"&lt;br&gt;","<br>"));
+    //all[i].innerHTML = (replaceAll(all[i].innerHTML,"text: Text","html: Text"));
+
+}
+
+}
+
+
+
+
+}
+
+
 document.getElementById("FinaliseQuickTextBox").onchange = function() {
     console.log(this.value)
 
@@ -50,6 +95,10 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 
 });
 
+function replaceAll(str, find, replace) {
+  return str.replace(new RegExp(find, 'g'), replace);
+}
+
 function removeOptions(selectbox) {
     var i;
     for (i = selectbox.options.length - 1; i >= 0; i--) {
@@ -63,28 +112,6 @@ document.getElementById("CompleteQuickTextBox").onchange = function() {
     var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
 
     masterViewModel.completeTeamViewModel.actionTaken(this.value);
-}
-
-
-//job type pull
-
-console.log(masterViewModel.jobType.peek().Name);
-
-
-
-
-//clean up all <br>'s on the page'
-var block = document.getElementsByTagName("div");
-
-
-for(var i = 0; i < block.length; i++){
-   //do something to each div like
-   if (block[i].innerHTML.search("&lt;br&gt;") !== -1)
-   {
-    console.log("Fixing a bad BR");
-    block[i].innerHTML = block[i].innerHTML.replace("&lt;br&gt;","<br \>");
-   }
-
 }
 
 

@@ -1,3 +1,5 @@
+
+
 //replace window title with job number
 var s = document.createElement('script');
     s.setAttribute('type', 'text/javascript');
@@ -104,7 +106,7 @@ textboxdiv.classList.add("col-lg-9");
 
 var textbox = document.createElement("select");
 textbox.classList.add("form-control");
-textbox.id = "FinaliseQuickTextBox";
+textbox.id = "CompleteQuickTextBox";
 //textbox.classList.add("form-control");
 var option = document.createElement("option");
 option.text = "";
