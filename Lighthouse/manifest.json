@@ -4,7 +4,7 @@
   "name": "Lighthouse",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "4.20",
+  "version": "2011.11.19.1",
   "icons": {
     "128": "128.png",
     "64":"64.png"
@@ -43,7 +43,7 @@
       "js": ["lighthouse-Generic.js"]
       }
   ],
-  "web_accessible_resources": ["*.html","lighthouse-JobsContent.js","lighthouse-SituationalAwarenessContent.js","lighthouse-JobsViewContent.js","lighthouse-MessagesCreateContent.js","lighthouse.png","tv.png","stats.png","lh*.png"],
+  "web_accessible_resources": ["*.html","lighthouse-JobsContent.js","lighthouse-SituationalAwarenessContent.js","lighthouse-JobsViewContent.js","lighthouse-MessagesCreateContent.js","lighthouse.png","tv.png","stats.png","lh*.png","lighthouse-GenericContent.js"],
   "background": {
     "scripts": ["background.js"]
   }
