@@ -2,10 +2,10 @@ var timeoverride = null;
 var timeperiod;
 var unitname = "";
 
-window.onerror = function(message, url, lineNumber) {  
-  document.getElementById("loading").innerHTML = "Error loading page<br>"+message+"<br> line:"+lineNumber;
-  return true;
-}; 
+// window.onerror = function(message, url, lineNumber) {  
+//   document.getElementById("loading").innerHTML = "Error loading page<br>"+message+"<br> line:"+lineNumber;
+//   return true;
+// }; 
 
 
 // init
@@ -81,7 +81,6 @@ function fetchJobsFromBeacon(id, unit, cb) {
 
 // render the page using the data provided
 function renderPage(unit, jobs) {
-  console.log(jobs);
 
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
@@ -107,6 +106,7 @@ function renderPage(unit, jobs) {
     unit + "</h2><h4>" + start.toLocaleTimeString("en-au", options) +
     " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
   $('#banner').html(html);
+
 }
 
 // make pie chart using our standard parameters
@@ -130,11 +130,23 @@ function prepareData(jobs, start, end) {
 
   // convert timestamps to Date()s
   jobs.Results.forEach(function(d) {
-
+//console.log("ID:"+d.Id+" Locality:"+d.Address.Locality);
     if (d.LGA == null)
     {
       d.LGA = "N/A";
     }
+
+    if (d.SituationOnScene == null)
+    {
+      d.SituationOnScene = "N/A";
+    }
+
+    if (d.Address.Locality == null)
+    {
+      d.Address.Locality = "N/A";
+    }
+
+
 
 
     var rawdate = new Date(d.JobReceived);
@@ -163,9 +175,95 @@ d.propertyTags = [];
   
   
   prepareCharts(jobs, start, end);
+
+
+makeCloud(jobs);
+
+}
+
+function walkCloudData(jobs){ //take array and make word:frequency array
+
+var wordCount = {};
+
+  jobs.Results.forEach(function(d) {
+//console.log(d);
+  var strings = d.SituationOnScene;
+    
+    // strip stringified objects and punctuations from the string
+    strings = strings.toLowerCase().replace(/object Object/g, '').replace(/[\+\.,\/#!$%\^&\*{}=_`~]/g,'');
+    
+    // convert the str back in an array 
+    strings = strings.split(' '); 
+
+    // Count frequency of word occurance
+
+    for(var i = 0; i < strings.length; i++) {
+        if(!wordCount[strings[i]])
+            wordCount[strings[i]] = 0;
+
+        wordCount[strings[i]]++; // {'hi': 12, 'foo': 2 ...}
+    }
+   // console.log(wordCount);
+  })
+
+    var wordCountArr = [];
+
+    for(var prop in wordCount) {
+      wordCountArr.push({text: prop, size: wordCount[prop]});
+    }
+    
+    return wordCountArr;
+
 }
 
 
+
+   //console.log(wordCount);
+function makeCloud(jobs) {
+
+calculateCloud(walkCloudData(jobs));
+
+
+
+  function calculateCloud(wordCount) {
+
+    var width = 800;
+    var height = 800;
+//console.log(wordCount);
+var fill = d3.scale.category20();
+
+  d3.layout.cloud().size([width, height])
+      .words(wordCount.map(function(d) {
+        return {text: d.text, size: d.size + Math.random() * 50};}))
+      .rotate(function() { return ~~(Math.random() * 2) * 90; })
+      .font("Impact")
+      .fontSize(function(d) { return d.size; })
+      .on("end", draw)
+      .start();
+
+  function draw(words) {
+$("#cloud").html("");
+   var svg = d3.select("#cloud").insert("svg")
+        .attr("width", width)
+        .attr("height", height)
+      .append("g")
+      .attr('transform', 'translate('+width/2+', '+height/2+')')
+      .selectAll("text")
+        .data(words)
+      .enter().append("text")
+        .style("font-size", function(d) { return d.size + "px"; })
+        .style("font-family", "Impact")
+        .style("fill", function(d, i) { return fill(i); })
+        .attr("text-anchor", "middle")
+        .attr("transform", function(d) {
+          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+        })
+        .text(function(d) { return d.text; });
+  }
+
+
+};
+}
 
 
 // draw all of the pie charts
@@ -182,6 +280,16 @@ function prepareCharts(jobs, start, end) {
 
   // jobs per hour time chart
   var timeChart = dc.barChart("#dc-time-chart");
+
+  //table 
+ // var dataTable = dc.dataTable("#dc-table-graph");
+
+// Create datatable dimension
+  var timeDimension = facts.dimension(function (d) {
+    return d.JobReceivedFixed;
+  });
+
+
   var volumeByHour = facts.dimension(function(d) {
     return d3.time.hour(d.JobReceivedFixed);
   });
@@ -194,7 +302,7 @@ function prepareCharts(jobs, start, end) {
     .brushOn(true)
     .mouseZoomable(false)
     .margins({top: 10, right: 10, bottom: 20, left: 40})
-    .dimension(volumeByHour)
+    .dimension(timeDimension)
     .group(volumeByHourGroup)
     //.brushOn(false)           // added for title
     .xUnits(d3.time.hours)
@@ -204,7 +312,6 @@ function prepareCharts(jobs, start, end) {
     //return d.JobReceived; })))
     .xAxis();
 
-
 countchart
 .dimension(facts)
 .group(all)
@@ -212,6 +319,23 @@ countchart
 some:"%filter-count selected out of total of %total-count",
 all:"%total-count job(s) total"
 });
+
+
+
+// Table of  data
+  // dataTable.width(960).height(800)
+  //   .dimension(timeDimension)
+  // .group(function(d) { return ""
+  //  })
+  // .size(10)
+  //   .columns([
+  //     function(d) { return d.Id; },
+  //     function(d) { return d.Address.PrettyAddress; },
+  //     function(d) { return d.Address.Locality; },
+  //     function(d) { return d.Type; }])
+  //   .sortBy(function(d){ return d.dtg; })
+  //   .order(d3.ascending);
+
 
 
   // produces a 'group' for tag pie charts, switch on the key in the object that needs to be walked
