@@ -3,7 +3,7 @@ var timeperiod;
 var unitname = "";
 
 window.onerror = function(message, url, lineNumber) {  
-  document.getElementById("loading").innerHTML = "Error loading page<br>"+message;
+  document.getElementById("loading").innerHTML = "Error loading page<br>"+message+"<br> line:"+lineNumber;
   return true;
 }; 
 
@@ -130,6 +130,13 @@ function prepareData(jobs, start, end) {
 
   // convert timestamps to Date()s
   jobs.Results.forEach(function(d) {
+
+    if (d.LGA == null)
+    {
+      d.LGA = "N/A";
+    }
+
+
     var rawdate = new Date(d.JobReceived);
     d.JobReceivedFixed = new Date(
       rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 )
@@ -168,6 +175,11 @@ function prepareCharts(jobs, start, end) {
 
   var all = facts.groupAll();
 
+
+  //display totals
+
+  var countchart = dc.dataCount("#total");
+
   // jobs per hour time chart
   var timeChart = dc.barChart("#dc-time-chart");
   var volumeByHour = facts.dimension(function(d) {
@@ -193,7 +205,13 @@ function prepareCharts(jobs, start, end) {
     .xAxis();
 
 
-
+countchart
+.dimension(facts)
+.group(all)
+.html({
+some:"%filter-count selected out of total of %total-count",
+all:"%total-count job(s) total"
+});
 
 
   // produces a 'group' for tag pie charts, switch on the key in the object that needs to be walked
