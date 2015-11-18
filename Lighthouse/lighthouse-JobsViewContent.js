@@ -70,8 +70,6 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
     if (typeof newValue !== 'undefined') {
         if (newValue !== null) {
 
-            console.log(newValue);
-
             switch (newValue.Name) {
 
                 case "Storm":
@@ -126,6 +124,86 @@ document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
 
     masterViewModel.completeTeamViewModel.actionTaken(this.value);
 }
+
+
+$(document).ready(function() {
+document.getElementById("stormtree").onclick = function() {
+taskFill("Storm","Tree Operations/Removal")
+}
+});
+
+$(document).ready(function() {
+document.getElementById("stormproperty").onclick = function() {
+taskFill("Storm","Property Protection")
+}
+});
+
+$(document).ready(function() {
+document.getElementById("stormsafety").onclick = function() {
+taskFill("Storm","Public Safety")
+}
+});
+
+$(document).ready(function() {
+document.getElementById("stormaccess").onclick = function() {
+taskFill("Storm","Road/Access Clearance")
+}
+});
+
+$(document).ready(function() {
+document.getElementById("stormrecon").onclick = function() {
+taskFill("Storm","Reconnaissance")
+}
+});
+
+$(document).ready(function() {
+document.getElementById("rcrcalloff").onclick = function() {
+taskFill("RoadCrashRescue","Call Off")
+}
+});
+
+$(document).ready(function() {
+document.getElementById("rcrcallextricate").onclick = function() {
+taskFill("RoadCrashRescue","Extrication ")
+}
+});
+
+
+
+
+function taskFill(parent, child) {
+
+masterViewModel.completeTeamViewModel.availablePrimaryActivities.peek().forEach(function(d){
+
+
+
+if (d.Name == parent)
+    {
+        masterViewModel.completeTeamViewModel.primaryActivity(d);
+        masterViewModel.completeTeamViewModel.availablePrimaryTasks.subscribe(function(d) {
+            d.forEach(function(d) {
+                if (d.Name == child) {masterViewModel.completeTeamViewModel.primaryTask(d)}
+            });
+        })
+    };
+
+});
+}
+
+
+
+
+
+// //no tasked team
+// if (masterViewModel.teamsViewModel.taskedTeams.peek().length != 0) {
+ 
+// var job = masterViewModel.jobType.peek();
+// var types = masterViewModel.completeTeamViewModel.availablePrimaryActivities.peek();
+
+// console.log(job);
+// console.log(types);
+
+// }
 
 
 

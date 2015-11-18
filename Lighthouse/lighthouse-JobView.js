@@ -214,6 +214,81 @@ child.insertBefore(div,child.childNodes[28]);
 
 
 
+//Team Complete Job Quick Taks
+
+var block = document.getElementById("completeTeamModal").getElementsByClassName("modal-body");
+var child = block[0]
+
+
+var div = document.createElement("div");
+div.classList.add("form-group");
+
+
+var innerdiv = document.createElement("div");
+innerdiv.classList.add("row");
+
+
+var label = document.createElement("label");
+label.classList.add("col-md-3");
+label.classList.add("control-label");
+
+label.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh-black.png") + "\"> Quick Tasks";
+
+
+var textboxdiv = document.createElement("div");
+textboxdiv.classList.add("col-md-9");
+
+
+makeButton("Storm/Tree Ops","stormtree","tag-task");
+makeButton("Storm/Property Protect","stormproperty","tag-task");
+makeButton("Storm/Public Safety","stormsafety","tag-task");
+makeButton("Storm/Road Access","stormaccess","tag-task");
+makeButton("Storm/Recon","stormrecon","tag-task");
+
+
+makeButton("RCR/Calloff","rcrcalloff","tag-rescue");
+makeButton("RCR/Extricate","rcrcallextricate","tag-rescue");
+
+
+
+function makeButton(text, id, icon) {
+
+
+var outterspan = document.createElement("span");
+outterspan.classList.add("label");
+outterspan.classList.add("tag");
+outterspan.classList.add(icon);
+
+outterspan.id = id;
+
+var innerspan = document.createElement("span");
+innerspan.classList.add("tag-text");
+innerspan.innerText=text
+
+
+outterspan.appendChild(innerspan);
+
+textboxdiv.appendChild(outterspan);
+
+
+
+}
+
+
+
+innerdiv.appendChild(label);
+
+innerdiv.appendChild(textboxdiv);
+
+div.appendChild(innerdiv);
+
+
+child.insertBefore(div,child.childNodes[28]);
+
+
+
+
+
 
 
 
