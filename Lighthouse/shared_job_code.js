@@ -45,6 +45,8 @@ function GetJSONfromBeacon(Id, StartDate, EndDate, callback) {
 
             // Make sure the callback is a function​
             if (typeof callback === "function") {
+                console.log("GetJSONfromBeacon call back with: ");
+                console.log(jobs);
 
                 callback(jobs);
 
