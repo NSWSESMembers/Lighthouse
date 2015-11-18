@@ -154,7 +154,7 @@ child.insertBefore(div,child.childNodes[6]);
 
 
 
-//Complete Job Quick Text
+//Team Complete Job Quick Text
 
 var block = document.getElementById("completeTeamModal").getElementsByClassName("modal-body");
 var child = block[0]
@@ -182,7 +182,7 @@ textboxdiv.classList.add("col-md-9");
 var textbox = document.createElement("select");
 textbox.classList.add("form-control");
 
-textbox.id = "CompleteQuickTextBox";
+textbox.id = "CompleteTeamQuickTextBox";
 textbox.width = "100%";
 
 var quickText = ["","NSW SES volunteers attended scene and resident no longer required assistance."]

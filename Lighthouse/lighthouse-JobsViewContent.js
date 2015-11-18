@@ -55,6 +55,17 @@ document.getElementById("FinaliseQuickTextBox").onchange = function() {
 }
 
 
+document.getElementById("CompleteQuickTextBox").onchange = function() {
+    console.log(this.value)
+
+    var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
+
+    masterViewModel.finalisationText(this.value);
+
+}
+
+
+
 masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValue) {
     if (typeof newValue !== 'undefined') {
         if (newValue !== null) {
@@ -64,27 +75,27 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
             switch (newValue.Name) {
 
                 case "Storm":
-                    removeOptions(document.getElementById("CompleteQuickTextBox"));
+                    removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
                     var quickText = ["", "No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.", "Branch/tree sectioned; resident/owner to organize removal"]
-                    document.getElementById("CompleteQuickTextBox").removed
+                    document.getElementById("CompleteTeamQuickTextBox").removed
                     for (var i = 0; i < quickText.length; i++) {
                         var opt = document.createElement('option');
                         opt.text = quickText[i];
                         opt.value = quickText[i];
-                        document.getElementById("CompleteQuickTextBox").add(opt);
+                        document.getElementById("CompleteTeamQuickTextBox").add(opt);
                     }
 
                     break;
 
                 case "Search":
-                    removeOptions(document.getElementById("CompleteQuickTextBox"));
+                    removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
                     var quickText = ["", "All teams complete on search, person found safe and well.", "All teams complete on search, nothing found."]
 
                     for (var i = 0; i < quickText.length; i++) {
                         var opt = document.createElement('option');
                         opt.text = quickText[i];
                         opt.value = quickText[i];
-                        document.getElementById("CompleteQuickTextBox").add(opt);
+                        document.getElementById("CompleteTeamQuickTextBox").add(opt);
                     }
 
                     break;
@@ -108,7 +119,7 @@ function removeOptions(selectbox) {
     }
 }
 
-document.getElementById("CompleteQuickTextBox").onchange = function() {
+document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
     console.log(this.value)
 
     var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
