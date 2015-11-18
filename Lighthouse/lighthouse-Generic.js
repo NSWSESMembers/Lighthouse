@@ -2,6 +2,11 @@ console.log("starting the keep alive loop")
 chrome.runtime.sendMessage({loggedin: true}, function(response) {
 });
 
+//inject our JS resource
+var s = document.createElement('script');
+s.src = chrome.extension.getURL('lighthouse-GenericContent.js');
+(document.head || document.documentElement).appendChild(s)
+
 
 
 var logo = document.getElementsByClassName("navbar-brand");
