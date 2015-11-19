@@ -65,18 +65,18 @@ function GetJSONfromBeacon(Id, StartDate, EndDate, callback) {
 
                 if (Id.split(",").length == 1)
                 {
-                    xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + Id + "&ViewModelType=2&PageIndex=1&PageSize=2000&SortField=Id&SortOrder=desc", true);
+                    xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + Id + "&ViewModelType=2&PageIndex=1&PageSize=20000&SortField=Id&SortOrder=desc", true);
                 } else {
                     var hqString = "";
                     Id.split(",").forEach(function(d){
                         hqString=hqString+"&Hq="+d
                     });
                     console.log(hqString)
-                    xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType=2&PageIndex=1&PageSize=2000&SortField=Id&SortOrder=desc", true);
+                    xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType=2&PageIndex=1&PageSize=20000&SortField=Id&SortOrder=desc", true);
 
                 }
     } else {
-        xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType=2&PageIndex=1&PageSize=2000&SortField=Id&SortOrder=desc", true);
+        xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/Search?Q=&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType=2&PageIndex=1&PageSize=20000&SortField=Id&SortOrder=desc", true);
 
     }
     xhttp.send();
