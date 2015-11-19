@@ -187,10 +187,13 @@ var wordCount = {};
 
   jobs.Results.forEach(function(d) {
 //console.log(d);
-  var strings = d.SituationOnScene;
+  var strings = d.SituationOnScene.removeStopWords();
     
+
+    //
     // strip stringified objects and punctuations from the string
-    strings = strings.toLowerCase().replace(/object Object/g, '').replace(/[\+\.,\/#!$%\^&\*{}=_`~]/g,'');
+
+    strings = strings.toLowerCase().replace(/object Object/g, '').replace(/\//g,' ').replace(/[\+\.,\/#!$%\^&\*{}=_`~]/g,'');
     
     // convert the str back in an array 
     strings = strings.split(' '); 
@@ -229,15 +232,18 @@ calculateCloud(walkCloudData(jobs));
 
     var width = 800;
     var height = 800;
+    var minFontSize = 24;
+    var typeFace = 'Impact';
+
 //console.log(wordCount);
 var fill = d3.scale.category20();
 
   d3.layout.cloud().size([width, height])
-      .words(wordCount.map(function(d) {
-        return {text: d.text, size: d.size + Math.random() * 50};}))
+      .words(wordCount)
+      //.spiral("rectangular")
       .rotate(function() { return ~~(Math.random() * 2) * 90; })
-      .font("Impact")
-      .fontSize(function(d) { return d.size; })
+      .font(typeFace)
+      .fontSize(function(d) { return d.size * minFontSize; })
       .on("end", draw)
       .start();
 
@@ -252,7 +258,7 @@ $("#cloud").html("");
         .data(words)
       .enter().append("text")
         .style("font-size", function(d) { return d.size + "px"; })
-        .style("font-family", "Impact")
+        .style("font-family", typeFace)
         .style("fill", function(d, i) { return fill(i); })
         .attr("text-anchor", "middle")
         .attr("transform", function(d) {
