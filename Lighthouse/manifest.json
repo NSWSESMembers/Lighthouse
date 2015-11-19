@@ -10,7 +10,6 @@
     "64":"64.png"
     },
   "permissions": [
-    "tabs",
     "storage",
     "https://beacon.ses.nsw.gov.au/",
     "https://trainbeacon.ses.nsw.gov.au/"
