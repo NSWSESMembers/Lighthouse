@@ -193,7 +193,7 @@ var wordCount = {};
     //
     // strip stringified objects and punctuations from the string
 
-    strings = strings.toLowerCase().replace(/object Object/g, '').replace(/\//g,' ').replace(/[\+\.,\/#!$%\^&\*{}=_`~]/g,'');
+    strings = strings.toLowerCase().replace(/object Object/g, '').replace(/\//g,' ').replace(/[\+\.,\/#!$%\^&\*{}=_`~]/g,'').replace(/[0-9]/g, '');
     
     // convert the str back in an array 
     strings = strings.split(' '); 
@@ -229,6 +229,8 @@ calculateCloud(walkCloudData(jobs));
 
 
   function calculateCloud(wordCount) {
+
+    console.log("Total word length: "+wordCount.length);
 
     var width = 800;
     var height = 800;

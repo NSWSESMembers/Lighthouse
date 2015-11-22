@@ -34,7 +34,7 @@ bar[0].appendChild(statsbutton);
 
 
 //set the extension code var into the head
-var summaryUrl = chrome.extension.getURL("");
+var summaryUrl = chrome.extension.getURL("/lighthouse/");
 var s = document.createElement('script');
 s.setAttribute('type', 'text/javascript');
 s.innerHTML = "var summaryUrl = \"" + summaryUrl + "\"";
@@ -44,6 +44,6 @@ s.innerHTML = "var summaryUrl = \"" + summaryUrl + "\"";
 
 //inject our JS resource
 var s = document.createElement('script');
-s.src = chrome.extension.getURL('lighthouse-JobsContent.js');
+s.src = chrome.extension.getURL('/Jobs/content/Jobs.js');
 (document.head || document.documentElement).appendChild(s)
 

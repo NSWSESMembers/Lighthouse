@@ -4,7 +4,7 @@ chrome.runtime.sendMessage({loggedin: true}, function(response) {
 
 //inject our JS resource
 var s = document.createElement('script');
-s.src = chrome.extension.getURL('lighthouse-GenericContent.js');
+s.src = chrome.extension.getURL('/all/content/all.js');
 (document.head || document.documentElement).appendChild(s)
 
 
