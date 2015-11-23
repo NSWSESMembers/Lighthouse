@@ -45,8 +45,12 @@
       "js": ["Teams/Edit.js"]
       },
       {
-      "matches": ["https://beacon.ses.nsw.gov.au/Teams/*/Jobs"],
+      "matches": ["https://*.ses.nsw.gov.au/Teams/*/Jobs"],
       "js": ["Teams/Jobs.js"]
+      },
+      {
+      "matches": ["https://*.ses.nsw.gov.au/Teams"],
+      "js": ["Teams/Teams.js"]
       },
       {
       "matches": ["https://*.ses.nsw.gov.au/*"],

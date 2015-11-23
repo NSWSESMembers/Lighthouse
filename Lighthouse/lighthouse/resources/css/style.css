@@ -5,11 +5,62 @@ body{
    margin-bottom: 60px;
 }
 
+
 .totals {
 	width:50%;
 	text-align: center;
 
 }
+
+
+.teamtotals {
+	width:100%;
+	text-align: center;
+
+}
+
+.teamtotals tbody tr td {
+	height: 100px;
+	vertical-align: middle;
+}
+
+.teamtotals tr:nth-child(even) {
+    background-color: #F0F0F0;
+}
+
+.teamtotals .header {
+	font-size: 30px;
+	text-decoration: none;
+	font-weight: bold;
+	padding-bottom: 20px;
+}
+
+.callsign {
+font-size: 30px;
+width: 15%;
+font-weight: bold;
+color: green;	
+}
+
+.members {
+width: 35%;
+font-size: 15px;
+}
+
+.status{
+width: 15%;
+}
+
+.jobcount{
+width: 15%;
+font-size: 30px;
+}
+
+.update{
+width: 20%;
+font-size: 15px;
+}
+
 
 #open {
 border: 1px solid black;
