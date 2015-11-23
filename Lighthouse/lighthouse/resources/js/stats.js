@@ -70,11 +70,11 @@ function startTimer(duration, display) {
 }
 
 // fetch jobs from beacon
-function fetchJobsFromBeacon(id, unit, cb) {
+function fetchJobsFromBeacon(id, host, unit, cb) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  GetJSONfromBeacon(id, start, end, function(data) {
+  GetJSONfromBeacon(id, host, start, end, function(data) {
     cb && cb(data);
   });
 }
@@ -570,6 +570,14 @@ function RunForestRun() {
     params.end = endtime;
   }
 
+      //IF TRAIN BEACON
+
+    if (params.host == "trainbeacon.ses.nsw.gov.au")
+    {
+        document.body.style.backgroundColor = "green";
+    }
+
+
   function fetchComplete(data) {
     console.log("Done fetching from beacon, rendering graphs...");
     renderPage(unitname, data);
@@ -583,27 +591,27 @@ function RunForestRun() {
 
       if (params.hq.split(",").length == 1) {
 
-        GetUnitNamefromBeacon(params.hq, function(result) {
+        GetUnitNamefromBeacon(params.hq, params.host, function(result) {
           unitname = result;
 
-          fetchJobsFromBeacon(params.hq, result, fetchComplete);
+          fetchJobsFromBeacon(params.hq, params.host,result, fetchComplete);
         });
 
       } else {
         console.log("passed array of units");
         unitname = "group selection";
-        fetchJobsFromBeacon(params.hq, unitname, fetchComplete);
+        fetchJobsFromBeacon(params.hq, params.host, unitname, fetchComplete);
       }
     } else { //no hq was sent, get them all
       unitname = "NSW";
-      fetchJobsFromBeacon(null, unitname, fetchComplete);
+      fetchJobsFromBeacon(null, params.host, unitname, fetchComplete);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
     if (typeof params.hq == 'undefined') {
-      fetchJobsFromBeacon(null, unitname, fetchComplete);
+      fetchJobsFromBeacon(null, params.host, unitname, fetchComplete);
     } else {
-      fetchJobsFromBeacon(params.hq, unitname, fetchComplete);
+      fetchJobsFromBeacon(params.hq, params.host, unitname, fetchComplete);
     }
   }
 }

@@ -1,7 +1,7 @@
 var timeoverride = null;
 
 window.onerror = function(message, url, lineNumber) {  
-  document.getElementById("loading").innerHTML = "Error loading page<br>"+message;
+  document.getElementById("loading").innerHTML = "Error loading page<br>"+message+" Line "+lineNumber;
   return true;
 }; 
 
@@ -11,8 +11,7 @@ window.onerror = function(message, url, lineNumber) {
 document.addEventListener('DOMContentLoaded', function() {
 
     //run every X period of time the main loop.
-    display = document.querySelector('#time');
-    startTimer(180, display);
+    startTimer(180);
 
     RunForestRun()
 
@@ -27,10 +26,16 @@ $(document).on('change', 'input[name=slide]:radio', function() {
     RunForestRun();
 });
 
+
+
 //refresh button
 $(document).ready(function() {
 document.getElementById("refresh").onclick = function() {
 RunForestRun();
+}
+document.getElementById("refreshtime").onchange = function() {
+    console.log(this.value);
+    startTimer(this.value);
 }
 });
 
@@ -61,7 +66,9 @@ var unitname = "";
 var params = getSearchParameters();
 
 //update every X seconds
-function startTimer(duration, display) {
+function startTimer(duration) {
+
+var display = document.querySelector('#time');
     var timer = duration,
         minutes, seconds;
     setInterval(function() {
@@ -71,7 +78,7 @@ function startTimer(duration, display) {
         minutes = minutes < 10 ? "0" + minutes : minutes;
         seconds = seconds < 10 ? "0" + seconds : seconds;
 
-        display.textContent = minutes + ":" + seconds;
+        display.innerText = minutes + ":" + seconds;
 
         if (--timer < 0) { //when the timer is 0 run the code
             timer = duration;
@@ -104,6 +111,14 @@ function RunForestRun() {
 
     }
 
+    //IF TRAIN BEACON
+
+    if (params.host == "trainbeacon.ses.nsw.gov.au")
+    {
+        document.body.style.backgroundColor = "green";
+    }
+
+
 
     if (unitname == "") {
 
@@ -116,20 +131,20 @@ function RunForestRun() {
         if (params.hq.split(",").length == 1)
             {
 
-            GetUnitNamefromBeacon(params.hq, function(returnedunitname) {
+            GetUnitNamefromBeacon(params.hq, params.host, function(returnedunitname) {
                 unitname = returnedunitname;
-                HackTheMatrix(params.hq, returnedunitname);
+                HackTheMatrix(params.hq, params.host, returnedunitname);
             });
 
             } else {
         console.log("passed array of units");
         unitname = "group selection";
-        HackTheMatrix(params.hq, unitname);
+        HackTheMatrix(params.hq, params.host, unitname);
     }
 
         } else { //no hq was sent, get them all
             unitname = "NSW";
-            HackTheMatrix(null, unitname);
+            HackTheMatrix(null, params.host, unitname);
         }
 
 
@@ -141,7 +156,7 @@ function RunForestRun() {
         if (typeof params.hq == 'undefined') {
             HackTheMatrix(null, unitname);
         } else {
-            HackTheMatrix(params.hq, unitname);
+            HackTheMatrix(params.hq, params.host, unitname);
         }
 
     }
@@ -152,7 +167,7 @@ function RunForestRun() {
 }
 
 //make the call to beacon
-function HackTheMatrix(id, unit) {
+function HackTheMatrix(id,host, unit) {
 
     document.title = unitname + " Job Summary";
 
@@ -160,7 +175,7 @@ function HackTheMatrix(id, unit) {
     var start = new Date(decodeURIComponent(params.start));
     var end = new Date(decodeURIComponent(params.end));
 
-    GetJSONfromBeacon(id, start, end, function(jobs) {
+    GetJSONfromBeacon(id, host, start, end, function(jobs) {
 
 
         var facts = crossfilter(jobs.Results);
