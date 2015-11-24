@@ -205,7 +205,7 @@ d.propertyTags = [];
 
     })
 
-if (thisJobisAck == false) {console.log(d.Id+" NO ACK!!!!!!!!!!!!!")}
+//if (thisJobisAck == false) {console.log(d.Id+" NO ACK!!!!!!!!!!!!!")}
 
   });
 
@@ -697,10 +697,10 @@ function RunForestRun() {
 
       //IF TRAIN BEACON
 
-    if (params.host == "trainbeacon.ses.nsw.gov.au")
-    {
-        document.body.style.backgroundColor = "green";
-    }
+    // if (params.host == "trainbeacon.ses.nsw.gov.au")
+    // {
+    //     document.body.style.backgroundColor = "green";
+    // }
 
 
   function fetchComplete(jobsData,notificationData) {

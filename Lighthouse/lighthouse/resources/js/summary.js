@@ -109,10 +109,10 @@ function RunForestRun() {
 
     //IF TRAIN BEACON
 
-    if (params.host == "trainbeacon.ses.nsw.gov.au")
-    {
-        document.body.style.backgroundColor = "green";
-    }
+    // if (params.host == "trainbeacon.ses.nsw.gov.au")
+    // {
+    //     document.body.style.backgroundColor = "green";
+    // }
 
 
 
