@@ -107,10 +107,10 @@ function RunForestRun() {
 
     //IF TRAIN BEACON
 
-    if (params.host == "trainbeacon.ses.nsw.gov.au")
-    {
-        document.body.style.backgroundColor = "green";
-    }
+    // if (params.host == "trainbeacon.ses.nsw.gov.au")
+    // {
+    //     document.body.style.backgroundColor = "green";
+    // }
 
 
     if (unitname == "") {
@@ -183,12 +183,10 @@ function HackTheMatrix(id, unit,host) {
 
         var table = document.getElementById("resultstable").getElementsByTagName('tbody')[0];
 
-        var tableRows = table.getElementsByTagName('tr');
-        var rowCount = tableRows.length;
-
-        for (var x = rowCount - 1; x > 0; x--) {
-            table.removeChild(tableRows[x]);
-        }
+        
+        $( "#resultstable tbody tr" ).each( function(){
+            this.parentNode.removeChild( this ); 
+        });
 
         teams.Results.forEach(function(d) { //for every team
 
