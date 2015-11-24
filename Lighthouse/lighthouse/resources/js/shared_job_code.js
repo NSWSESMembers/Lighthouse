@@ -28,6 +28,8 @@ function GetUnitNamefromBeacon(Id, host, callback) {
 //make the call to beacon
 function GetJSONfromBeacon(Id, host, StartDate, EndDate, callback) {
 
+    var limit = 5000;
+
     console.log("GetJSONfromBeacon called with:" + Id + "," + StartDate + "," + EndDate+", "+host);
 
 
@@ -38,6 +40,7 @@ function GetJSONfromBeacon(Id, host, StartDate, EndDate, callback) {
 
             try {
                 var jobs = JSON.parse(xhttp.responseText);
+                jobs.Results.length == limit && alert("That was a big request! the maximum number of jobs you can return is "+limit+". try selecting a smaller time period");
             } catch (e) {
                 document.getElementById("loading").innerHTML = "Error talking with beacon. Are you logged in?";
                 throw new Error('Error talking with beacon. JSON result isnt valid');
@@ -65,18 +68,18 @@ function GetJSONfromBeacon(Id, host, StartDate, EndDate, callback) {
 
                 if (Id.split(",").length == 1)
                 {
-                    xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + Id + "&ViewModelType=2&PageIndex=1&PageSize=20000&SortField=Id&SortOrder=desc", true);
+                    xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + Id + "&ViewModelType=2&PageIndex=1&PageSize="+limit+"&SortField=Id&SortOrder=desc", true);
                 } else {
                     var hqString = "";
                     Id.split(",").forEach(function(d){
                         hqString=hqString+"&Hq="+d
                     });
                     console.log(hqString)
-                    xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType=2&PageIndex=1&PageSize=20000&SortField=Id&SortOrder=desc", true);
+                    xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType=2&PageIndex=1&PageSize="+limit+"&SortField=Id&SortOrder=desc", true);
 
                 }
     } else {
-        xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType=2&PageIndex=1&PageSize=20000&SortField=Id&SortOrder=desc", true);
+        xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType=2&PageIndex=1&PageSize="+limit+"&SortField=Id&SortOrder=desc", true);
 
     }
     xhttp.send();
