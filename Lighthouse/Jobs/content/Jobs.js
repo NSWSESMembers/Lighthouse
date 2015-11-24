@@ -15,7 +15,6 @@ function summary() {
 
 var exports = JSON.parse(filterDataForExport());
 
-console.log(exports);
 
 if (exports.hasOwnProperty("Hq")) 
 {
@@ -28,7 +27,7 @@ if (exports.hasOwnProperty("Hq"))
 }
 
 $("#lighthouseStatsButton").mouseenter(function(ev){
-	      summary();
+	      stats();
 });
 
 document.getElementById("lighthouseStatsButton").onclick = function() {
@@ -46,8 +45,6 @@ function stats()
 
 
 var exports = JSON.parse(filterDataForExport());
-
-console.log(exports);
 
 if (exports.hasOwnProperty("Hq")) 
 {

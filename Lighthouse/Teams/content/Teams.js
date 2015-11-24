@@ -24,7 +24,6 @@ var hq = hqs.map(function(d){
 	return d.Id;
 })
 
-console.log(hq);
 
 if (hq.length !== 0) 
 {
