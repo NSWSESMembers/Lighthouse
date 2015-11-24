@@ -176,6 +176,11 @@ font-size: 30px;
 	font-weight: bold;
 }
 
+#avg {
+	font-size: 15px;
+	font-weight: bold;
+}
+
 footer {
 	position: fixed;
 	background-color:white;

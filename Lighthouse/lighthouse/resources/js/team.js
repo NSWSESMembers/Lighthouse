@@ -175,7 +175,8 @@ function HackTheMatrix(id, unit,host) {
             weekday: "short",
             year: "numeric",
             month: "2-digit",
-            day: "numeric"
+            day: "numeric",
+            hour12: false
         };
 
 

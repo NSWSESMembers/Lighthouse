@@ -33,10 +33,6 @@ $(document).ready(function() {
 document.getElementById("refresh").onclick = function() {
 RunForestRun();
 }
-document.getElementById("refreshtime").onchange = function() {
-    console.log(this.value);
-    startTimer(this.value);
-}
 });
 
 
@@ -302,7 +298,8 @@ function HackTheMatrix(id,host, unit) {
             weekday: "short",
             year: "numeric",
             month: "2-digit",
-            day: "numeric"
+            day: "numeric",
+            hour12: false
         };
 
         document.getElementById("banner").innerHTML = "<h2>Job summary for " + unit + "</h2><h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";

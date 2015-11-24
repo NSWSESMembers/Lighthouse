@@ -21,6 +21,8 @@
     </script>
     <script src="resources/js/shared_job_code.js">
     </script>
+    <script src="resources/js/shared_notification_code.js">
+    </script>
     <script src="resources/js/stats.js">
     </script>
     <link href='resources/js/dc/dc.css' rel='stylesheet' type='text/css'>
@@ -33,6 +35,7 @@
     <div align="center" id="results" style="display:none">
         <p id="banner">Job Summary For X</p>
         <p id="total"></p><br>
+        <p id="avg"></p><br>
         <br>
         <table class="graphs">
             <tr>
@@ -71,10 +74,31 @@
             </tr>
             <tr>
                 <td colspan="3">
-                    <div class='span12' id='dc-time-chart' style=
-                    "float:inherit; padding-top:30px">
-                        <h4>Jobs per hour</h4>
-                    </div>
+                    <span class='span12' id='dc-timeopen-chart' style=
+                    "float:inherit; padding-top:30px;display: inline-block;">
+                        <h4>Jobs open per hour</h4>
+                    </span>
+                    <span class='span12' id='dc-timeclosed-chart' style=
+                    "float:inherit; padding-top:30px;display: inline-block;">
+                        <h4>Jobs closed per hour</h4>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <span>
+                    <table class='table table-hover' id='dc-table-graph' style='width:1200px;margin-left:auto;margin-right:auto;align;text-align:left;'>
+                      <thead>
+                        <tr class='header'>
+                          <th>Job Number</th>
+                          <th>Job Type</th>
+                          <th>Created At</th>
+                          <th>Completed At</th>
+                          <th>Address</th>
+                        </tr>
+                      </thead>
+                    </table>
+                </span>
                 </td>
             </tr>
             <tr>

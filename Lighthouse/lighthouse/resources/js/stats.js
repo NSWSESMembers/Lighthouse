@@ -70,17 +70,21 @@ function startTimer(duration, display) {
 }
 
 // fetch jobs from beacon
-function fetchJobsFromBeacon(id, host, unit, cb) {
+function fetchFromBeacon(id, host, unit, cb) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
   GetJSONfromBeacon(id, host, start, end, function(data) {
-    cb && cb(data);
+    GetNotificationJSONfromBeacon(id, host, start, end, function(data2) {
+    cb && cb(data, data2);
   });
+});
+  
+
 }
 
 // render the page using the data provided
-function renderPage(unit, jobs) {
+function renderPage(unit, jobs, notifications ) {
 
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
@@ -89,7 +93,8 @@ function renderPage(unit, jobs) {
 
   $('#total').html("Total Job Count: " + (jobs.Results.length));
 
-  prepareData(jobs, start, end);
+
+  prepareData(jobs,notifications, start, end);
   dc.renderAll();
 
   $('#loading').hide();
@@ -99,7 +104,8 @@ function renderPage(unit, jobs) {
     weekday: "short",
     year: "numeric",
     month: "2-digit",
-    day: "numeric"
+    day: "numeric",
+    hour12: false
   };
 
   var html = "<h2>Job statistics for " +
@@ -126,10 +132,17 @@ function makePie(elem, w, h, dimension, group) {
 // gather and organise all of the data
 // build charts and feed data
 // render
-function prepareData(jobs, start, end) {
+function prepareData(jobs, notifications, start, end) {
 
   // convert timestamps to Date()s
+
+ var avgOpenCount =0;
+ var avgOpenTotal =0;
+ var avgAckCount =0;
+ var avgAckTotal =0; 
+
   jobs.Results.forEach(function(d) {
+    var thisJobisAck = false;
 //console.log("ID:"+d.Id+" Locality:"+d.Address.Locality);
     if (d.LGA == null)
     {
@@ -145,8 +158,6 @@ function prepareData(jobs, start, end) {
     {
       d.Address.Locality = "N/A";
     }
-
-
 
 
     var rawdate = new Date(d.JobReceived);
@@ -170,16 +181,67 @@ d.propertyTags = [];
           break;
       }
     });
+    d.JobOpenFor=0;
+    d.JobCompleted=new Date(0);
+    notifications.Results.forEach(function (d2){ //match notifications with jobs
+      if (d2.JobId == d.Id) { //if the jobs match
+        if (d2.Text == "Job "+d.Identifier+" Completed"){ //if its a completion note
+          var rawdate = new Date(d2.CreatedOn);
+          d.JobCompleted = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+          d.JobOpenFor = Math.abs((new Date(d.JobCompleted)) - (new Date(d.JobReceivedFixed)))/1000;
+          ++avgOpenCount;
+          avgOpenTotal=avgOpenTotal+d.JobOpenFor;
+
+        }
+        if (d2.Text.indexOf("Acknowledged") != -1 && thisJobisAck == false){ //if its a ack note
+          thisJobisAck = true;
+          ++avgAckCount;
+          var rawdate = new Date(d2.CreatedOn);
+          var fixeddate = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+          avgAckTotal=avgAckTotal+(Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000);
+        }
+      }
+
+
+    })
+
+if (thisJobisAck == false) {console.log(d.Id+" NO ACK!!!!!!!!!!!!!")}
+
   });
+
+console.log(avgOpenCount);
+console.log(avgAckCount);
+
+  var jobavg = Math.round(avgOpenTotal/avgOpenCount).toString();
+  var ackavg = Math.round(avgAckTotal/avgAckCount).toString();
+
+console.log(jobavg);
+console.log(ackavg);
+
+  $('#avg').html("Average job time: " + jobavg.toHHMMSS() + " | Average time to acknowledge: "+ackavg.toHHMMSS());
 
   
   
-  prepareCharts(jobs, start, end);
+prepareCharts(jobs, start, end);
 
 
 makeCloud(jobs);
 
 }
+
+String.prototype.toHHMMSS = function () {
+    var sec_num = parseInt(this, 10); // don't forget the second param
+    var hours   = Math.floor(sec_num / 3600);
+    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+    if (hours   < 10) {hours   = "0"+hours;}
+    if (minutes < 10) {minutes = "0"+minutes;}
+    if (seconds < 10) {seconds = "0"+seconds;}
+    var time    = hours+':'+minutes+':'+seconds;
+    return time;
+}
+
 
 function walkCloudData(jobs){ //take array and make word:frequency array
 
@@ -189,7 +251,6 @@ var wordCount = {};
 //console.log(d);
   var strings = d.SituationOnScene.removeStopWords();
     
-
     //
     // strip stringified objects and punctuations from the string
 
@@ -287,35 +348,75 @@ function prepareCharts(jobs, start, end) {
   var countchart = dc.dataCount("#total");
 
   // jobs per hour time chart
-  var timeChart = dc.barChart("#dc-time-chart");
+  var timeOpenChart = dc.barChart("#dc-timeopen-chart");
+  var timeClosedChart = dc.barChart("#dc-timeclosed-chart");
+  var dataTable = dc.dataTable("#dc-table-graph");
 
   //table 
  // var dataTable = dc.dataTable("#dc-table-graph");
 
-// Create datatable dimension
-  var timeDimension = facts.dimension(function (d) {
-    return d.JobReceivedFixed;
+   var closeTimeDimension = facts.dimension(function (d) {
+    return d.JobCompleted;
   });
 
 
-  var volumeByHour = facts.dimension(function(d) {
-    return d3.time.hour(d.JobReceivedFixed);
+  //closeTimeDimension.filter(function(d) { return d !> 'undefined'; });
+
+    var volumeClosedByHour = facts.dimension(function(d) {
+    return d3.time.hour(d.JobCompleted);
   });
 
-  var volumeByHourGroup = volumeByHour.group().reduceCount(function(d) { return d.JobReceivedFixed; });
+  var volumeClosedByHourGroup = volumeClosedByHour.group().reduceCount(function(d) { return d.JobCompleted; });
 
-  timeChart.width(1000)
+  timeClosedChart.width(800)
     .height(250)
     .transitionDuration(500)
     .brushOn(true)
     .mouseZoomable(false)
     .margins({top: 10, right: 10, bottom: 20, left: 40})
-    .dimension(timeDimension)
-    .group(volumeByHourGroup)
+    .dimension(closeTimeDimension)
+    .group(volumeClosedByHourGroup)
     //.brushOn(false)           // added for title
     .xUnits(d3.time.hours)
     .x(d3.time.scale().domain([new Date(start), new Date(end)]))
     .elasticY(true)
+    //.x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) {
+    //return d.JobReceived; })))
+    .xAxis();
+
+
+
+//console.log(total);
+//console.log(count);
+
+
+// Create datatable dimension
+  var timeOpenDimension = facts.dimension(function (d) {
+    return d.JobReceivedFixed;
+  });
+
+
+
+  var volumeOpenByHour = facts.dimension(function(d) {
+    return d3.time.hour(d.JobReceivedFixed);
+  });
+
+  var volumeOpenByHourGroup = volumeOpenByHour.group().reduceCount(function(d) { return d.JobReceivedFixed; });
+
+
+  timeOpenChart.width(800)
+    .height(250)
+    .transitionDuration(500)
+    .brushOn(true)
+    .mouseZoomable(false)
+    .margins({top: 10, right: 10, bottom: 20, left: 40})
+    .dimension(timeOpenDimension)
+    .group(volumeOpenByHourGroup)
+    //.brushOn(false)           // added for title
+    .xUnits(d3.time.hours)
+    .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+    .elasticY(true)
+
     //.x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) {
     //return d.JobReceived; })))
     .xAxis();
@@ -328,7 +429,31 @@ some:"%filter-count selected out of total of %total-count",
 all:"%total-count job(s) total"
 });
 
+ var options = {
+   // weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric",
+    hour12: false
+  };
 
+
+
+
+ // Table of  data
+  dataTable.width(1200).height(800)
+  .dimension(timeOpenDimension)
+  .group(function(d) { return "First 10"  })
+  .size(10)
+    .columns([
+      function(d) { return "<a href=\"https://beacon.ses.nsw.gov.au/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
+      function(d) { return d.Type; },
+      function(d) { return d.JobReceivedFixed.toLocaleTimeString("en-au", options); },
+      function(d) { return (new Date(d.JobCompleted).getTime() !== new Date(0).getTime() ? d.JobCompleted.toLocaleTimeString("en-au", options):"") },
+      function(d) { return d.Address.PrettyAddress; },
+      ])
+    .sortBy(function(d){ return d.JobReceivedFixed; })
+    .order(d3.ascending);
 
 // Table of  data
   // dataTable.width(960).height(800)
@@ -578,11 +703,14 @@ function RunForestRun() {
     }
 
 
-  function fetchComplete(data) {
+  function fetchComplete(jobsData,notificationData) {
     console.log("Done fetching from beacon, rendering graphs...");
-    renderPage(unitname, data);
+    renderPage(unitname, jobsData,notificationData);
     console.log("Graphs rendered.");
   }
+
+
+
 
   if (unitname == "") {
     console.log("firstrun...will fetch vars");
@@ -594,24 +722,24 @@ function RunForestRun() {
         GetUnitNamefromBeacon(params.hq, params.host, function(result) {
           unitname = result;
 
-          fetchJobsFromBeacon(params.hq, params.host,result, fetchComplete);
+          fetchFromBeacon(params.hq, params.host,result, fetchComplete);
         });
 
       } else {
         console.log("passed array of units");
         unitname = "group selection";
-        fetchJobsFromBeacon(params.hq, params.host, unitname, fetchComplete);
+        fetchFromBeacon(params.hq, params.host, unitname, fetchComplete);
       }
     } else { //no hq was sent, get them all
       unitname = "NSW";
-      fetchJobsFromBeacon(null, params.host, unitname, fetchComplete);
+      fetchFromBeacon(null, params.host, unitname, fetchComplete);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
     if (typeof params.hq == 'undefined') {
-      fetchJobsFromBeacon(null, params.host, unitname, fetchComplete);
+      fetchFromBeacon(null, params.host, unitname, fetchComplete);
     } else {
-      fetchJobsFromBeacon(params.hq, params.host, unitname, fetchComplete);
+      fetchFromBeacon(params.hq, params.host, unitname, fetchComplete);
     }
   }
 }
