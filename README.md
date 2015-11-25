@@ -1,4 +1,4 @@
-Lighthouse (formally Beacon Enhancement Suite) aims to improve Beacon usability by speeding up work flows (like closing a job or tasking a job to a team) or display information in a more useful way (big summary screens for operations or pretty graphs for making it look like we do lots things). I have also included minor fixes that the Beacon team has failed to address (like the missing X button on the situational awareness map)
+Lighthouse (formally Beacon Enhancement Suite) aims to improve Beacon usability by speeding up work flows (like closing a job or tasking a job to a team) or display information in a more useful way (big summary screens for operations or pretty graphs for making it look like we do lots things). I have also included minor fixes where possible.
 
 BES is completely client side, stores no user data and runs within the web browser. It can only access information that your browser can (meaning it adheres to beacon user permissions, security, and auditing)
 
