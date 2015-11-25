@@ -14,13 +14,13 @@ Code will be pushed up the the chrome app store every milestone (I say that like
 - Change page title to job number when viewing a job
 - Change page title to team name when viewing a team
 - Fixed missing favicon on the login page
-- Fix missing X button on popup on situational awareness map
+- hide maximise  button on popup on situational awareness map
 - "Keep logged in" - hits a url in the back ground to keep user session alive
 - Summary and Statistics page that feeds directly from beacon filters
 - Quick Text on team completion and job finalisation
 - Quick Task on team completion
 - Fixed message br text. acts like a line break in the message correctly now.
-- added 200 and 500 to pagination choices
+- added 200 and 500 to pagination choices to tasking and job list
 
 ###In developement:
 
