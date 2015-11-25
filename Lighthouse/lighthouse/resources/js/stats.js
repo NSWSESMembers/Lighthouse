@@ -12,7 +12,7 @@ var unitname = "";
 $(function() {
 
   //run every X period of time the main loop.
-  startTimer(180, $('#time'));
+  startTimer(18000, $('#time'));
 
   // main
   RunForestRun()
@@ -75,16 +75,14 @@ function fetchFromBeacon(id, host, unit, cb) {
   var end = new Date(decodeURIComponent(params.end));
 
   GetJSONfromBeacon(id, host, start, end, function(data) {
-    GetNotificationJSONfromBeacon(id, host, start, end, function(data2) {
-    cb && cb(data, data2);
-  });
+    cb && cb(data);
 });
   
 
 }
 
 // render the page using the data provided
-function renderPage(unit, jobs, notifications ) {
+function renderPage(unit, jobs) {
 
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
@@ -94,7 +92,7 @@ function renderPage(unit, jobs, notifications ) {
   $('#total').html("Total Job Count: " + (jobs.Results.length));
 
 
-  prepareData(jobs,notifications, start, end);
+  prepareData(jobs, start, end);
   dc.renderAll();
 
   $('#loading').hide();
@@ -132,7 +130,7 @@ function makePie(elem, w, h, dimension, group) {
 // gather and organise all of the data
 // build charts and feed data
 // render
-function prepareData(jobs, notifications, start, end) {
+function prepareData(jobs, start, end) {
 
   // convert timestamps to Date()s
 
@@ -143,6 +141,7 @@ function prepareData(jobs, notifications, start, end) {
 
   jobs.Results.forEach(function(d) {
     var thisJobisAck = false;
+    var thisJobisComp = false;
 //console.log("ID:"+d.Id+" Locality:"+d.Address.Locality);
     if (d.LGA == null)
     {
@@ -183,31 +182,46 @@ d.propertyTags = [];
     });
     d.JobOpenFor=0;
     d.JobCompleted=new Date(0);
-    notifications.Results.forEach(function (d2){ //match notifications with jobs
-      if (d2.JobId == d.Id) { //if the jobs match
-        if (d2.Text == "Job "+d.Identifier+" Completed"){ //if its a completion note
-          var rawdate = new Date(d2.CreatedOn);
-          d.JobCompleted = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
-          d.JobOpenFor = Math.abs((new Date(d.JobCompleted)) - (new Date(d.JobReceivedFixed)))/1000;
-          ++avgOpenCount;
-          avgOpenTotal=avgOpenTotal+d.JobOpenFor;
 
-        }
-        if (d2.Text.indexOf("Acknowledged") != -1 && thisJobisAck == false){ //if its a ack note
-          thisJobisAck = true;
+    for(var counter=d.JobStatusTypeHistory.length - 1; counter >= 0;counter--){
+       // jobStatusTypes: {
+       //  new: 1,
+       //  acknowledged: 2,
+       //  complete: 6,
+       //   can: 7,
+       // }, 
+      switch (d.JobStatusTypeHistory[counter].Type)
+      {
+        case 2: //ack
+        if (thisJobisAck == false)
+        {
+        thisJobisAck = true;
           ++avgAckCount;
-          var rawdate = new Date(d2.CreatedOn);
+          var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
           var fixeddate = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+          d.TimeToAck = Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000;
           avgAckTotal=avgAckTotal+(Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000);
-        }
+        }          
+        break
+        case 6: // complete
+        if (thisJobisComp == false)
+        {
+        thisJobisComp = true;
+        ++avgOpenCount;
+        var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
+        d.JobCompleted = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+          avgOpenTotal=avgOpenTotal+(Math.abs(d.JobCompleted - (new Date(d.JobReceivedFixed)))/1000);
+          }
+        break
       }
 
-
-    })
+    }
 
 //if (thisJobisAck == false) {console.log(d.Id+" NO ACK!!!!!!!!!!!!!")}
+//if (thisJobisComp == false) {console.log(d.Id+" NO COMP!!!!!!!!!!!!!")}
 
   });
+
 
 console.log(avgOpenCount);
 console.log(avgAckCount);
@@ -219,6 +233,7 @@ console.log(jobavg);
 console.log(ackavg);
 
   $('#avg').html("Average job time: " + jobavg.toHHMMSS() + " | Average time to acknowledge: "+ackavg.toHHMMSS());
+
 
   
   
@@ -703,9 +718,9 @@ function RunForestRun() {
     // }
 
 
-  function fetchComplete(jobsData,notificationData) {
+  function fetchComplete(jobsData) {
     console.log("Done fetching from beacon, rendering graphs...");
-    renderPage(unitname, jobsData,notificationData);
+    renderPage(unitname, jobsData);
     console.log("Graphs rendered.");
   }
 
