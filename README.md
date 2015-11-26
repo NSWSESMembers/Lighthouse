@@ -1,13 +1,46 @@
-Lighthouse (formally Beacon Enhancement Suite) aims to improve Beacon usability by speeding up work flows (like closing a job or tasking a job to a team) or display information in a more useful way (big summary screens for operations or pretty graphs for making it look like we do lots things). I have also included minor fixes where possible.
+#Lighthouse
 
-BES is completely client side, stores no user data and runs within the web browser. It can only access information that your browser can (meaning it adheres to beacon user permissions, security, and auditing)
+(Formerly "*Beacon Enhancement Suite*", "*BES*".)
 
-the project now available for download and install from the google chrome store. Please give it a try and see if you can find any problems (bugs), or if you can think of anything I can add to it to make day to day or operational use of beacon easier.
+##Requirements
 
+- [Google Chrome Browser](https://www.google.com/chrome/browser/desktop/index.html "Download Google Chrome")
+- NSW SES Beacon Account
 
+##Purpose
 
-Code will be pushed up the the chrome app store every milestone (I say that like I have milestones.... its more of a random event while im waiting for something else to happen)
+Lighthouse is intended to augment the functionality provided by Beacon. It streamlines some common workflows, such as closing a job or tasking a job to a team, it also provides customised displays for use on screens in an Operations Room.
 
+Lighthouse also provides an opportunity to test functionality or fixes before those changes are put to the Beacon development team for incorporation into the core system.
+
+##Operation
+
+Lighthouse is completely client-side. It stores no user data and runs cmpletely within the Chrome web browser. It is bound by existing Beacon management systems, such as user permissions, security checks and logging of actions within Beacon for auditing purposes.
+
+Lighthouse simply interfaces with the same information and functionality as normal Beacon, just in a different (and hopefully more effective and efficient) way.
+
+##Usage
+
+A compiled version of the Lighthouse system is available through the [Google Chrome Store](https://chrome.google.com/webstore/detail/lighthouse/eheijalihofgiaoeanmnjceefmcpajnb "Lighthouse in the Google Chrome Store").
+
+This version is updated when major changes are committed through the GitHub repository, and/or it is convenient to distribute an updated version.
+
+##Development
+
+Please use the Google Chrome Store version, or, for the more adventurous, use the GitHub version as an "unpacked extension".
+
+Send through any problems (bugs) or any ideas for how we can make improvements.
+
+## Changes
+
+###In developement:
+
+- Team summary screen
+
+###To Do
+
+- Prefill "Primary Action" on job completion based of job type (you know, because of all the RCR we do on landsearch jobs)
+- Prefill "Contact" on send message screen to fill with users HQ
 
 ###Tested:
 
@@ -15,19 +48,13 @@ Code will be pushed up the the chrome app store every milestone (I say that like
 - Change page title to team name when viewing a team
 - Fixed missing favicon on the login page
 - hide maximise  button on popup on situational awareness map
-- "Keep logged in" - hits a url in the back ground to keep user session alive
+- "Keep logged in" - hits a url in the background to keep user session alive
 - Summary and Statistics page that feeds directly from beacon filters
 - Quick Text on team completion and job finalisation
 - Quick Task on team completion
-- Fixed message br text. acts like a line break in the message correctly now.
-- added 200 and 500 to pagination choices to tasking and job list
-
-###In developement:
-
-- Team summary screen
+- Fixed message line breaks. Instead of showing `<br>` an actual line break is inserted into the message correctly now.
+- Added 200 and 500 to pagination choices to tasking and job list
 
 
-## To Do
 
-- Prefill "Primary Action" on job completion based of job type (you know, because of all the RCR we do on landsearch jobs)
-- Prefill "Contact" on send message screen to fill with users HQ
+
