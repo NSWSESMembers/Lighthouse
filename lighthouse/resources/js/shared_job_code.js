@@ -1,5 +1,7 @@
 function GetUnitNamefromBeacon(Id, host, callback) {
     console.log("GetUnitNamefromBeacon called with:" + Id+", "+host);
+    console.log("telling the keep alive system we are still active")
+    chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)});
 
 
     var xhttp = new XMLHttpRequest();
@@ -31,7 +33,8 @@ function GetJSONfromBeacon(Id, host, StartDate, EndDate, callback) {
     var limit = 5000;
 
     console.log("GetJSONfromBeacon called with:" + Id + "," + StartDate + "," + EndDate+", "+host);
-
+    console.log("telling the keep alive system we are still active")
+    chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)});
 
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {

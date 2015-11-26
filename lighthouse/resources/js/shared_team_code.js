@@ -1,6 +1,8 @@
 function GetUnitNamefromBeacon(Id,host, callback) {
     console.log("GetUnitNamefromBeacon called with:" + Id+", "+host);
 
+    console.log("telling the keep alive system we are still active")
+    chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)});
 
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
@@ -25,6 +27,8 @@ function GetUnitNamefromBeacon(Id,host, callback) {
 function GetTaskingfromBeacon(Id,host, callback) {
     console.log("GetTaskingfromBeacon called with:" + Id+", "+host);
 
+    console.log("telling the keep alive system we are still active")
+    chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)});   
 
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
