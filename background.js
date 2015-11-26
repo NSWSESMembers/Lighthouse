@@ -8,35 +8,17 @@ var areweloggedin = false;
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
 
-        if (areweloggedin == false && request.loggedin == true) //first time we knew about loggin in
+        if (request.activity == true) //we are active, so restart the timer
         {
-            areweloggedin = true;
-
-            chrome.storage.sync.get({
-                keepalive: false
-            }, function(items) {
-                keepalive = items.keepalive;
-
-                if (keepalive == true) {
-                    console.log("log in was triggered and will look at keeping alive");
-                    restartSlider()
-                    sendResponse({
-                        result: "Will Keepalive"
-                    });
-                } else {
-                    console.log("new log in was triggered but user not keeping alive");
-                }
-            });
-        } else if (request.loggedin == false) {
-            console.log("was told we are not logged in");
-            areweloggedin = false;
+            restartLooper();
         }
     });
+
 
 var MyLoop = setTimer();
 
 
-function restartSlider() {
+function restartLooper() {
     console.log("Restarting the Loooper!");
     if (MyLoop == null) {
         MyLoop = setTimer();
@@ -46,7 +28,7 @@ function restartSlider() {
 
 function setTimer() {
     console.log("Starting the Loooper!");
-    i = setInterval(KeepAliveLoop, (15 * 60 * 1000));
+    i = setInterval(KeepAliveLoop, (25 * 60 * 1000)); //10 sec (15 * 60 * 1000 would be 15 min)
     return i;
 }
 
@@ -61,34 +43,22 @@ function stopTimer() {
 
 function KeepAliveLoop() {
 
+
+
+
+console.log("will check if beacon is open")
     chrome.tabs.query({
         url: "https://beacon.ses.nsw.gov.au/*"
     }, function(tabs) {
         if (tabs.length > 0)
+        {
             console.log("Beacon is open somewhere");
-        else
-            console.log("Beacon is NOT open");
-    });
+
+            var r = confirm("You have been idle on Beacon for over 25 minutes. Please press OK to stay logged in, or Cancel to let your session time out");
+if (r == true) {
+    console.log("You pressed OK!");
 
 
-
-
-    chrome.storage.sync.get({
-        keepalive: false,
-        timeIn: '',
-    }, function(items) {
-        keepalive = items.keepalive;
-        timeSignedIn = items.timeIn;
-
-
-        //console.log(nowTime);
-        console.log("signin:" + timeSignedIn);
-        console.log("keepalive:" + keepalive);
-        console.log("timediff:" + (nowTime - timeSignedIn) / 1000);
-        var diff = (nowTime - timeSignedIn) / 1000;
-
-        //if under 12hrs ago they signed in and they ticked the box and we havnt hit a 401
-        if (diff < 43200 && areweloggedin == true && keepalive == true) {
             console.log("will try keep alive");
 
             var xhttp = new XMLHttpRequest();
@@ -99,22 +69,25 @@ function KeepAliveLoop() {
                 } else if (xhttp.readyState == 4 && xhttp.status == 500) {
                     stopTimer();
                     console.log("Logged out I think");
-                    areweloggedin == false;
-                    chrome.storage.sync.set({
-                        LoggedIn: false,
-                    });
                 }
             }
             xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/1", true);
             xhttp.send();
 
-        } else {
-            stopTimer();
-            console.log("We dont need to run, stopping loop");
-        }
-    });
-
+             } else {
+    console.log("You pressed Cancel!");
+    stopTimer()
 }
 
+    } else
+        {
+            stopTimer();
+            console.log("Beacon is NOT open");
+        }    
+    });
+
+   
+
+}
 
 //}
