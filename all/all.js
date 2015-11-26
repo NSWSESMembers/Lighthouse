@@ -1,4 +1,4 @@
-console.log("restarting the keep alive counter")
+console.log("telling the keep alive system we are still active")
 chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)});
 
 
