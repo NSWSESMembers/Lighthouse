@@ -35,7 +35,8 @@ Send through any problems (bugs) or any ideas for how we can make improvements.
 
 ###In developement:
 
-- Team summary screen
+- Idle session detection
+- Time picker options of this year and all time added.
 
 ###To Do
 
@@ -44,6 +45,7 @@ Send through any problems (bugs) or any ideas for how we can make improvements.
 
 ###Tested:
 
+- Team summary screen
 - Change page title to job number when viewing a job
 - Change page title to team name when viewing a team
 - Fixed missing favicon on the login page
