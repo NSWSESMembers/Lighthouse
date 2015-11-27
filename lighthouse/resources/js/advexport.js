@@ -158,8 +158,18 @@ function HackTheMatrix(id,host, unit) {
         if (document.getElementById("Tags").checked) {rObj["Tags"] = tags};
         if (document.getElementById("HQ").checked) {rObj["HQ"] = d.EntityAssignedTo.Code};
         if (document.getElementById("Region").checked) {rObj["Region"] = d.CallerFirstName};
-        if (document.getElementById("Event").checked) {rObj["Event"] = d.Event.Identifier};
 
+        if (document.getElementById("Event").checked)
+            {
+                if (d.Event !== null)
+                {
+                    rObj["Event"] = d.Event.Identifier;
+
+            } else
+            {
+               rObj["Event"] = ""; 
+            }
+            };
 
         if (document.getElementById("Level").checked) {rObj["Level"] = d.Address.Level};
         if (document.getElementById("StreetNumber").checked) {rObj["StreetNumber"] = d.Address.StreetNumber};
@@ -183,6 +193,7 @@ function HackTheMatrix(id,host, unit) {
         return rObj
 
         });
+console.log(exports);
 
         downloadCSV("LighthouseExport.csv",exports);
 
