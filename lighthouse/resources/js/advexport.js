@@ -140,7 +140,7 @@ function HackTheMatrix(id,host, unit) {
         var exports = jobs.Results.map(function(d){
         var rawdate = new Date(d.JobReceived);
         d.JobReceivedFixed = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
-        
+
         var tags = d.Tags.map(function(d){return d.Name}).join(",");
 
         var rObj = {};
@@ -214,9 +214,10 @@ function convertArrayOfObjectsToCSV(data) {
         data.forEach(function(item) {
             ctr = 0;
             keys.forEach(function(key) {
+                if (item[key] === null) {item[key] = ""};
                 if (ctr > 0) result += columnDelimiter;
 
-                result += item[key];
+                result += "\""+item[key]+"\"";
                 ctr++;
             });
             result += lineDelimiter;
