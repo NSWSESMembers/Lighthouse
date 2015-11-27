@@ -13,11 +13,14 @@ var s = document.createElement('script');
 s.src = chrome.extension.getURL('/all/content/all.js');
 (document.head || document.documentElement).appendChild(s)
 
-var logo = document.getElementsByClassName("navbar-brand");
-logo[0].style.background="transparent url('"+chrome.extension.getURL("lighthouse.png")+"') 0% 50% no-repeat";
-logo[0].style.backgroundSize="105px 35px";
-logo[0].style.width="120px";
-logo[0].style.height="50px";
-logo[0].style.margin="0 0 0 10px";
-logo[0].style.padding="0";
+
+var img = document.createElement("img");
+img.src = chrome.extension.getURL("lighthouse128.png");
+img.style.opacity = "0.1";
+
+
+document.getElementsByTagName('body')[0].style.backgroundImage = "url("+chrome.extension.getURL("lighthouse40.png")+")";
+
+document.getElementsByTagName('body')[0].style.backgroundRepeat = "no-repeat";
+document.getElementsByTagName('body')[0].style.backgroundPosition="0% 100%";
 
