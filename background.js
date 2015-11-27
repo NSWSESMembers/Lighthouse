@@ -22,6 +22,9 @@ function restartLooper() {
     console.log("Restarting the Loooper!");
     if (MyLoop == null) {
         MyLoop = setTimer();
+    } else {
+        stopTimer();
+        setTimer();
     }
 }
 
