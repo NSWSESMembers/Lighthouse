@@ -139,10 +139,13 @@ function HackTheMatrix(id,host, unit) {
 
         var exports = jobs.Results.map(function(d){
         var rawdate = new Date(d.JobReceived);
-        JobReceivedFixed = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+        d.JobReceivedFixed = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+        
         var tags = d.Tags.map(function(d){return d.Name}).join(",");
 
         var rObj = {};
+
+
 
         if (document.getElementById("Id").checked) {rObj["Id"] = d.Identifier};
         if (document.getElementById("Received").checked) {rObj["JobReceivedFixed"] = d.JobReceivedFixed};
@@ -151,7 +154,7 @@ function HackTheMatrix(id,host, unit) {
         if (document.getElementById("Status").checked) {rObj["Status"] = d.JobStatusType.Name};
         if (document.getElementById("SituationOnScene").checked) {rObj["SituationOnScene"] = d.SituationOnScene};
         if (document.getElementById("PermissionToEnterPremises").checked) {rObj["PermissionToEnterPremises"] = d.PermissionToEnterPremises};
-        
+
         if (document.getElementById("Tags").checked) {rObj["Tags"] = tags};
         if (document.getElementById("HQ").checked) {rObj["HQ"] = d.EntityAssignedTo.Code};
         if (document.getElementById("Region").checked) {rObj["Region"] = d.CallerFirstName};
