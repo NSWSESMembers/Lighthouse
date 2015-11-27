@@ -31,6 +31,19 @@ statsbutton.href = "#"
 statsbutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Statistics Screen";
 bar[0].appendChild(statsbutton);
 
+var exportbutton = document.createElement("a");
+exportbutton.id = "lighthousExportButton";
+exportbutton.classList.add("btn");
+exportbutton.classList.add("btn-sm");
+exportbutton.classList.add("btn-default");
+exportbutton.style.marginLeft = "20px";
+exportbutton.style.background = "#B80000";
+exportbutton.style.color = "white";
+exportbutton.href = "#"
+
+exportbutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Advanced Export";
+bar[0].appendChild(exportbutton);
+
 
 
 //set the extension code var into the head

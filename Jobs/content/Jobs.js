@@ -55,6 +55,39 @@ if (exports.hasOwnProperty("Hq"))
 }
 
 }
+
+
+$("#lighthousExportButton").mouseenter(function(ev){
+          advexport();
+});
+
+
+document.getElementById("lighthousExportButton").onclick = function() {
+
+summary();
+
+}
+
+
+function advexport() {
+
+
+var exports = JSON.parse(filterDataForExport());
+
+
+if (exports.hasOwnProperty("Hq")) 
+{
+    $("#lighthousExportButton").attr("href",summaryUrl+"advexport.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    //window.open(summaryUrl+"?hq="+exports.Hq[0]+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+} else {
+    $("#lighthousExportButton").attr("href",summaryUrl+"advexport.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+}
+
+}
+
+
+
+
 //More pageination choices!
 
 contentViewModel.pageSizeChoices.push(200);

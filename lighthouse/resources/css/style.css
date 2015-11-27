@@ -5,6 +5,12 @@ body{
    margin-bottom: 60px;
 }
 
+.small_foot_body{
+   min-width:1300px; /* suppose you want minimun width of 1000px */
+   width: auto !important;  /* Firefox will set width as auto */
+   width:1000px;             /* As IE ignores !important it will set width as 1000px; */
+   margin-bottom: 20px;
+}
 
 .totals {
 	width:50%;
@@ -190,6 +196,17 @@ footer {
 	font-size:12px;
 	text-align: center;
 }
+
+.small_foot {
+	position: fixed;
+	background-color:white;
+	bottom: 0px;
+	width: 100%;
+	height: 20px;
+	font-size:12px;
+	text-align: center;
+}
+
 
 input[type="radio"] {
 	margin-right: 5px;
