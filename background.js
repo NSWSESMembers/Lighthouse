@@ -15,30 +15,24 @@ chrome.runtime.onMessage.addListener(
     });
 
 
-var MyLoop = setTimer();
+var MyLoop;
 
 
 function restartLooper() {
     console.log("Restarting the Loooper!");
-    if (MyLoop == null) {
-        MyLoop = setTimer();
-    } else {
         stopTimer();
-        setTimer();
-    }
+        MyLoop = setTimer();
 }
 
 
 function setTimer() {
     console.log("Starting the Loooper!");
-    i = setInterval(KeepAliveLoop, (25 * 60 * 1000)); //10 sec (15 * 60 * 1000 would be 15 min)
-    return i;
+    return setInterval(KeepAliveLoop, (25 * 60 * 1000)); //10 sec (15 * 60 * 1000 would be 15 min)
 }
 
 function stopTimer() {
     console.log("Stopping the Looper!");
     clearInterval(MyLoop);
-    MyLoop = null;
 }
 
 
