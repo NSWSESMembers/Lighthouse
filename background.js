@@ -73,15 +73,22 @@ function keepaliveLoop() {
 }
 
 function checkBeaconStillActive(cb) {
-  chrome.tabs.query(
-    {
-      url: baseUri + "*",
-    },
-    function(tabs) {
-      cb(tabs.length > 0);
-    }
-  );
+    chrome.storage.sync.get({
+        keepalive: false,
+    }, function(items) {
+        if (items.keepalive) //if the user has selected to keep their session alive
+        {
+            chrome.tabs.query({
+                    url: baseUri + "*",
+                },
+                function(tabs) {
+                    cb(tabs.length > 0);
+                }
+            );
+        }
+    });
 }
+
 
 function hitApi(cb) {
   var xhttp = new XMLHttpRequest();
