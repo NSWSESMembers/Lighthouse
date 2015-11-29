@@ -1,90 +1,101 @@
-console.log("BG CODE RUNNING");
+// This background script is initialised and executed once and exists
+// seperate to all other pages. This script is responsible for hitting the
+// becaon API regularly to keep the user's session alive.
 
-var keepalive;
-var timeSignedIn;
-var nowTime = new Date().getTime();
-var areweloggedin = false;
+var baseUri = "https://beacon.ses.nsw.gov.au/";
+var statusCheckInterval = 60 * 1000;
+var keepaliveInterval = 25 * 60 * 1000;
 
-chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
+var statusTimer = null;
+var keepaliveTimer = null;
 
-        if (request.activity == true) //we are active, so restart the timer
-        {
-            restartLooper();
-        }
-    });
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.activity) {
+    console.log("Received message from beacon page. Setting timer...");
+    startTimers();
+  }
+});
 
+function startTimers() {
+  if (keepaliveTimer) {
+    clearInterval(keepaliveTimer);
+  }
 
-var MyLoop;
+  // trigger keepaliveLoop() after 25 minutes. We reset this timer every time
+  // we load a page since we don't need to keep alive if the user is hitting
+  // the API organically.
+  keepaliveTimer = setInterval(keepaliveLoop, keepaliveInterval);
 
-
-function restartLooper() {
-    console.log("Restarting the Loooper!");
-        stopTimer();
-        MyLoop = setTimer();
+  if (!statusTimer) {
+    // check beacon's status every minute.
+    statusTimer = setInterval(statusLoop, statusCheckInterval);
+  }
 }
 
+function cancelTimers() {
+  if (keepaliveTimer) {
+    clearInterval(keepaliveTimer);
+    keepaliveTimer = null;
+  }
 
-function setTimer() {
-    console.log("Starting the Loooper!");
-    return setInterval(KeepAliveLoop, (25 * 60 * 1000)); //10 sec (15 * 60 * 1000 would be 15 min)
+  if (statusTimer) {
+    clearInterval(statusTimer);
+    statusTimer = null;
+  }
 }
 
-function stopTimer() {
-    console.log("Stopping the Looper!");
-    clearInterval(MyLoop);
+function statusLoop() {
+  checkBeaconStillActive(function(active) {
+    if(!active) {
+      console.log("Beacon is no longer active so the keep alive timer has " +
+        "been killed.");
+
+      cancelTimers();
+    }
+    else {
+      console.log("Beacon is still active.");
+    }
+  });
 }
 
-
-
-
-function KeepAliveLoop() {
-
-
-
-
-console.log("will check if beacon is open")
-    chrome.tabs.query({
-        url: "https://beacon.ses.nsw.gov.au/*"
-    }, function(tabs) {
-        if (tabs.length > 0)
-        {
-            console.log("Beacon is open somewhere");
-
-            var r = confirm("You have been idle on Beacon for over 25 minutes. Please press OK to stay logged in, or Cancel to let your session time out");
-if (r == true) {
-    console.log("You pressed OK!");
-
-
-            console.log("will try keep alive");
-
-            var xhttp = new XMLHttpRequest();
-            xhttp.onreadystatechange = function() {
-                if (xhttp.readyState == 4 && xhttp.status == 200) {
-                    console.log("Kept Alive");
-                    //Was hoping for a 401....but i guess 500 is means the same thing...nice coding there
-                } else if (xhttp.readyState == 4 && xhttp.status == 500) {
-                    stopTimer();
-                    console.log("Logged out I think");
-                }
-            }
-            xhttp.open("GET", "https://beacon.ses.nsw.gov.au/Api/v1/Jobs/1", true);
-            xhttp.send();
-
-             } else {
-    console.log("You pressed Cancel!");
-    stopTimer()
+function keepaliveLoop() {
+  checkBeaconStillActive(function(active) {
+    if(active) {
+      if(confirm("You have been idle on Beacon for over 25 mins. Do you " +
+                 "wish to remain logged in?")) {
+        hitApi();
+      }
+      else {
+        cancelTimers();
+      }
+    }
+  });
 }
 
-    } else
-        {
-            stopTimer();
-            console.log("Beacon is NOT open");
-        }    
-    });
-
-   
-
+function checkBeaconStillActive(cb) {
+  chrome.tabs.query(
+    {
+      url: baseUri + "*",
+    },
+    function(tabs) {
+      cb(tabs.length > 0);
+    }
+  );
 }
 
-//}
+function hitApi(cb) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+      console.log("Beacon session kept alive");
+      cb && cb(true);
+    } else if (xhttp.readyState == 4 && xhttp.status == 500) {
+      // Was hoping for a 401....but i guess 500 is means the same thing...
+      console.log("Beacon appears to be logged out so cancelling keep alive");
+      cancelTimers();
+      cb && cb(false);
+    }
+  }
+  xhttp.open("GET", baseUri + "Api/v1/Jobs/1", true);
+  xhttp.send();
+}
