@@ -66,7 +66,10 @@
     {
       "matches": ["https://*.ses.nsw.gov.au/*"],
       "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
-      "js": ["all/all.js"]
+      "js": [
+        "Lighthouse/resources/js/jquery-1.11.3.min.js",
+        "all/all.js"
+      ]
     }
   ],
   "web_accessible_resources": [
