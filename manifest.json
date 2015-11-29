@@ -42,7 +42,13 @@
     },
     {
       "matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
-      "js": ["Account/Login.js"]
+      "js": [
+        "Lighthouse/resources/js/jquery-1.11.3.min.js",
+        "Account/Login.js"
+      ],
+      "css": [
+        "Account/Login.css"
+      ]
     },
     {
       "matches": ["https://*.ses.nsw.gov.au/Messages/Create"],

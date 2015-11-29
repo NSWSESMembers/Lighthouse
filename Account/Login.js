@@ -49,3 +49,6 @@ chrome.storage.sync.set({
   });
 
 });
+
+var url = chrome.extension.getURL("lighthouse128.png");
+$('#loginForm > fieldset > .row:last').prepend('<div class="something"><img src="' + url + '" /><div class="text">blergh blargh foo bar</div></div>');

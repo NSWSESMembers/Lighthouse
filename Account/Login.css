@@ -1,0 +1,22 @@
+.something {
+  text-align: left;
+  background-color: red;
+  margin-top: 1.0em;
+  overflow: auto;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: gray;
+  color: white;
+}
+
+.something .text {
+  padding: 10px 0;
+  float: left;
+}
+
+.something img {
+  float: left;
+  margin-right: 10px;
+  width: 100px;
+  height: 100px;
+}
