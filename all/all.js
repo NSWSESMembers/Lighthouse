@@ -1,26 +1,20 @@
+// notify keep alive system that a new page has been loaded (and therefore the
+// user's session has been refreshed)
 console.log("telling the keep alive system we are still active")
-chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)});
+chrome.runtime.sendMessage({activity: true});
 
+// notify keep alive system whenever we click on something. We let the event
+// propagate because we don't want to interfere with regular operation of <a>
+$('a').click(function(e) {
+  chrome.runtime.sendMessage({activity: true});
+});
 
-var elts = document.getElementsByTagName('a');
-var show = function() { chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)}); }
-for (var i = elts.length - 1; i >= 0; --i) {
-    elts[i].onclick = show;
-}
+// inject JS that is to run on every page in page context
+$.getScript(chrome.extension.getURL('/all/content/all.js'));
 
-//inject our JS resource
-var s = document.createElement('script');
-s.src = chrome.extension.getURL('/all/content/all.js');
-(document.head || document.documentElement).appendChild(s)
-
-
-var img = document.createElement("img");
-img.src = chrome.extension.getURL("lighthouse128.png");
-img.style.opacity = "0.1";
-
-
-document.getElementsByTagName('body')[0].style.backgroundImage = "url("+chrome.extension.getURL("lighthouse40.png")+")";
-
-document.getElementsByTagName('body')[0].style.backgroundRepeat = "no-repeat";
-document.getElementsByTagName('body')[0].style.backgroundPosition="0% 100%";
-
+// attach a Lighthouse stamp bottom right
+imageUrl = chrome.extension.getURL("lighthouse40.png");
+$('body').css('background-image', 'url(' + imageUrl + ')')
+         .css('background-repeat', 'no-repeat')
+         .css('background-attachment', 'fixed')
+         .css('background-position', 'right bottom');
