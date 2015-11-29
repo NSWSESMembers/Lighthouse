@@ -36,7 +36,6 @@ chrome.storage.sync.get({
     keepalive: false,
   }, function(items) {
     console.log("restoring keepalive setting:"+items.keepalive)
-
     document.getElementById('lighthouseKeepLogin').checked = items.keepalive;
 });
 //

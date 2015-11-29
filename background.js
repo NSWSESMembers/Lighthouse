@@ -67,6 +67,10 @@ function keepaliveLoop() {
       }
       else {
         cancelTimers();
+        //they dont want to keep alive any more. set storage to false.
+        chrome.storage.sync.set({
+          keepalive: false,
+        });
       }
     }
   });
