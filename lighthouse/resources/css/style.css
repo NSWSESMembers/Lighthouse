@@ -1,8 +1,27 @@
-body{
+body.stats {
    min-width:1300px; /* suppose you want minimun width of 1000px */
    width: auto !important;  /* Firefox will set width as auto */
    width:1000px;             /* As IE ignores !important it will set width as 1000px; */
    margin-bottom: 60px;
+}
+
+.stats header {
+  text-align: center;
+  margin-bottom: 1.0em;
+}
+
+.stats header div {
+  margin-bottom: 2.0em;
+}
+
+.stats header .total {
+	font-size: 25px;
+	font-weight: bold;
+}
+
+.stats header .avg {
+	font-size: 15px;
+	font-weight: bold;
 }
 
 .small_foot_body{
@@ -15,9 +34,7 @@ body{
 .totals {
 	width:50%;
 	text-align: center;
-
 }
-
 
 .teamtotals {
 	width:100%;
@@ -177,15 +194,6 @@ font-size: 50px;
 font-size: 30px;
 }
 
-#total {
-	font-size: 25px;
-	font-weight: bold;
-}
-
-#avg {
-	font-size: 15px;
-	font-weight: bold;
-}
 
 footer {
 	position: fixed;
@@ -195,6 +203,17 @@ footer {
 	height: 55px;
 	font-size:12px;
 	text-align: center;
+}
+
+footer .lastline {
+  position: relative;
+}
+
+footer .timer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding-right: 1px;
 }
 
 .small_foot {

@@ -89,8 +89,8 @@ function renderPage(unit, jobs) {
 
   document.title = unit + " Job Statistics";
 
-  $('#total').html("Total Job Count: " + (jobs.Results.length));
-
+  $('.stats header .total')
+    .html("Total Job Count: " + (jobs.Results.length));
 
   prepareData(jobs, start, end);
   dc.renderAll();
@@ -106,11 +106,11 @@ function renderPage(unit, jobs) {
     hour12: false
   };
 
-  var html = "<h2>Job statistics for " +
-    unit + "</h2><h4>" + start.toLocaleTimeString("en-au", options) +
-    " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
-  $('#banner').html(html);
-
+  $('.stats header h2').text('Job statistics for ' + unit);
+  $('.stats header h4').text(
+    start.toLocaleTimeString("en-au", options) + " to " +
+    end.toLocaleTimeString("en-au", options)
+  );
 }
 
 // make pie chart using our standard parameters
