@@ -8,7 +8,7 @@
   "icons": {
     "128": "lighthouse128.png",
     "64":"lighthouse64.png"
-    },
+  },
   "permissions": [
     "storage",
     "https://beacon.ses.nsw.gov.au/",
@@ -16,57 +16,65 @@
   ],
   "content_scripts": [
     {
-      "matches": ["https://*.ses.nsw.gov.au/Jobs",
-      "https://*.ses.nsw.gov.au/Jobs/"],
+      "matches": [
+        "https://*.ses.nsw.gov.au/Jobs",
+        "https://*.ses.nsw.gov.au/Jobs/"
+      ],
       "js": ["Jobs/Jobs.js"]
-      },
-      {
+    },
+    {
       "matches": ["https://*.ses.nsw.gov.au/Jobs/*"],
-      "exclude_matches": ["https://*.ses.nsw.gov.au/Jobs",
-      "https://*.ses.nsw.gov.au/Jobs/SituationalAwareness",
-      "https://*.ses.nsw.gov.au/Jobs/Tasking",
-      "https://*.ses.nsw.gov.au/Jobs/"], 
+      "exclude_matches": [
+        "https://*.ses.nsw.gov.au/Jobs",
+        "https://*.ses.nsw.gov.au/Jobs/SituationalAwareness",
+        "https://*.ses.nsw.gov.au/Jobs/Tasking",
+        "https://*.ses.nsw.gov.au/Jobs/"
+      ],
       "js": ["Jobs/View.js"]
-      },
-      {
+    },
+    {
       "matches": ["https://*.ses.nsw.gov.au/Jobs/Tasking"],
       "js": ["Jobs/Tasking.js"]
-      },
-      {
+    },
+    {
       "matches": ["https://*.ses.nsw.gov.au/Jobs/SituationalAwareness"],
       "js": ["Jobs/SituationalAwareness.js"]
-      },
-      {
+    },
+    {
       "matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": ["Account/Login.js"]
-      },
-      {
+    },
+    {
       "matches": ["https://*.ses.nsw.gov.au/Messages/Create"],
       "js": ["Messages/MessagesCreate.js"]
-      },
-      {
-      "matches": ["https://*.ses.nsw.gov.au/Teams/Create","https://beacon.ses.nsw.gov.au/Teams/*/Edit"],
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Teams/Create",
+        "https://beacon.ses.nsw.gov.au/Teams/*/Edit"
+      ],
       "js": ["Teams/Edit.js"]
-      },
-      {
+    },
+    {
       "matches": ["https://*.ses.nsw.gov.au/Teams/*/Jobs"],
       "js": ["Teams/Jobs.js"]
-      },
-      {
+    },
+    {
       "matches": ["https://*.ses.nsw.gov.au/Teams"],
       "js": ["Teams/Teams.js"]
-      },
-      {
+    },
+    {
       "matches": ["https://*.ses.nsw.gov.au/*"],
       "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": ["all/all.js"]
-      }
+    }
   ],
   "web_accessible_resources": [
-  "/lighthouse/*",
-  "/*/content/*",
-  "lighthouse*.png",
-  "lh*.png"],
+    "/lighthouse/*",
+    "/*/content/*",
+    "lighthouse*.png",
+    "lh*.png"
+  ],
   "background": {
     "scripts": ["background.js"]
   }
