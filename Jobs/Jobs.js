@@ -1,7 +1,7 @@
 //JOB Screen specific Code
 //add summary button
 var bar = document.getElementsByClassName("btn-group pull-left text-left");
-console.log(bar);
+
 
 
 var summarybutton = document.createElement("a");
@@ -14,7 +14,7 @@ summarybutton.style.background = "blue";
 summarybutton.style.color = "white";
 summarybutton.href = "#"
 
-summarybutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Summary Screen";
+summarybutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Summary (Filtered)";
 bar[0].appendChild(summarybutton);
 //
 
@@ -28,7 +28,7 @@ statsbutton.style.background = "rebeccapurple";
 statsbutton.style.color = "white";
 statsbutton.href = "#"
 
-statsbutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Statistics Screen";
+statsbutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Statistics (Filtered)";
 bar[0].appendChild(statsbutton);
 
 var exportbutton = document.createElement("a");
@@ -41,7 +41,7 @@ exportbutton.style.background = "#B80000";
 exportbutton.style.color = "white";
 exportbutton.href = "#"
 
-exportbutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Advanced Export";
+exportbutton.innerHTML = "<img width=\"16px\" style=\"vertical-align: top;margin-right:5px\" src=\"" + chrome.extension.getURL("lh.png") + "\">Advanced Export (Filtered)";
 bar[0].appendChild(exportbutton);
 
 
