@@ -244,7 +244,7 @@ console.log(jobavg);
 console.log(ackavg);
 
 var banner = "";
-console.log(EventwordCounts);
+//console.log(EventwordCounts);
 for (var i = 0; i < Object.keys(EventwordCounts).length; ++i) {
 banner = i == 0 ? banner + Object.keys(EventwordCounts)[i] : banner + " | " + Object.keys(EventwordCounts)[i] ;
 };
@@ -350,7 +350,7 @@ function prepareCharts(jobs, start, end) {
 
   //display totals
 
-  var countchart = dc.dataCount("#total");
+  var countchart = dc.dataCount(".total");
 
   // jobs per hour time chart
   var timeOpenChart = dc.barChart("#dc-timeopen-chart");
@@ -430,7 +430,7 @@ countchart
 .dimension(facts)
 .group(all)
 .html({
-some:"%filter-count selected out of total of %total-count",
+some:"%filter-count selected out of %total-count",
 all:"%total-count job(s) total"
 });
 
