@@ -4,7 +4,7 @@
   "name": "Lighthouse",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2015.11.30.6",
+  "version": "2015.11.30.7",
   "icons": {
     "128": "lighthouse128.png",
     "64":"lighthouse64.png"
@@ -52,7 +52,7 @@
     },
     {
       "matches": ["https://*.ses.nsw.gov.au/Messages/Create"],
-      "js": ["Messages/MessagesCreate.js"]
+      "js": ["Messages/Create.js"]
     },
     {
       "matches": [
