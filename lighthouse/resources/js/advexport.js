@@ -157,7 +157,7 @@ function HackTheMatrix(id,host, unit) {
 
         if (document.getElementById("Tags").checked) {rObj["Tags"] = tags};
         if (document.getElementById("HQ").checked) {rObj["HQ"] = d.EntityAssignedTo.Code};
-        if (document.getElementById("Region").checked) {rObj["Region"] = d.CallerFirstName};
+        if (document.getElementById("Region").checked) {rObj["Region"] = d.EntityAssignedTo.ParentEntity.Code};
 
         if (document.getElementById("Event").checked)
             {
