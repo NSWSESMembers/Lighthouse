@@ -11,12 +11,20 @@ body.stats {
 }
 
 .stats header div {
-  margin-bottom: 2.0em;
+  
+}
+
+.stats header .events {
+	width: 500px;
+	height:25px;
+	margin:auto;
+	font-size: 15px;
 }
 
 .stats header .total {
 	font-size: 25px;
 	font-weight: bold;
+	margin-bottom: 2.0em;
 }
 
 .stats header .avg {
@@ -262,5 +270,4 @@ label {
   width: 20%;
   z-index: 100;
 }
-
 

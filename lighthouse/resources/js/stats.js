@@ -138,10 +138,19 @@ function prepareData(jobs, start, end) {
  var avgOpenTotal =0;
  var avgAckCount =0;
  var avgAckTotal =0; 
+ var EventwordCounts = [];
 
   jobs.Results.forEach(function(d) {
     var thisJobisAck = false;
     var thisJobisComp = false;
+
+
+    if (d.Event)
+    {
+      var words = d.Event.Identifier +" - "+ d.Event.Description;
+
+        EventwordCounts[words] = (EventwordCounts[words] || 0) + 1;
+    }
 //console.log("ID:"+d.Id+" Locality:"+d.Address.Locality);
     if (d.LGA == null)
     {
@@ -222,7 +231,9 @@ d.propertyTags = [];
 
   });
 
-
+//EventwordCounts.sort(function(a, b) {
+ // return EventwordCounts[a] - EventwordCounts[b]});
+//console.log(EventwordCounts);
 console.log(avgOpenCount);
 console.log(avgAckCount);
 
@@ -232,15 +243,23 @@ console.log(avgAckCount);
 console.log(jobavg);
 console.log(ackavg);
 
-  $('#avg').html("Average job time: " + jobavg.toHHMMSS() + " | Average time to acknowledge: "+ackavg.toHHMMSS());
+var banner = "";
+console.log(EventwordCounts);
+for (var i = 0; i < Object.keys(EventwordCounts).length; ++i) {
+banner = i == 0 ? banner + Object.keys(EventwordCounts)[i] : banner + " | " + Object.keys(EventwordCounts)[i] ;
+};
 
+//banner = banner + " | Average job time: " + jobavg.toHHMMSS() + " | Average time to acknowledge: "+ackavg.toHHMMSS();
 
-  
+  $('.events').html(banner);
+
+//$('.events').marquee();
+  $('.events').marquee();
   
 prepareCharts(jobs, start, end);
 
 
-makeCloud(jobs);
+makeSituationOnSceneCloud(jobs);
 
 }
 
@@ -258,7 +277,7 @@ String.prototype.toHHMMSS = function () {
 }
 
 
-function walkCloudData(jobs){ //take array and make word:frequency array
+function walkSituationOnSceneWords(jobs){ //take array and make word:frequency array
 
 var wordCount = {};
 
@@ -288,7 +307,7 @@ var wordCount = {};
     var wordCountArr = [];
 
     for(var prop in wordCount) {
-      wordCountArr.push({text: prop, size: wordCount[prop]});
+      wordCountArr.push({text: prop, weight: wordCount[prop]});
     }
     
     return wordCountArr;
@@ -298,53 +317,24 @@ var wordCount = {};
 
 
    //console.log(wordCount);
-function makeCloud(jobs) {
+function makeSituationOnSceneCloud(jobs) {
 
-calculateCloud(walkCloudData(jobs));
+calculateSituationOnSceneCloud(walkSituationOnSceneWords(jobs));
 
 
 
-  function calculateCloud(wordCount) {
+  function calculateSituationOnSceneCloud(wordCount) {
 
-    console.log("Total word length: "+wordCount.length);
 
-    var width = 800;
-    var height = 800;
-    var minFontSize = 24;
-    var typeFace = 'Impact';
+ var purdyColor = tinygradient('black', 'red', 'orange', 'blue', 'LightBlue');
 
-//console.log(wordCount);
-var fill = d3.scale.category20();
+$('#cloud').jQCloud(wordCount, {
+  width: 500,
+  height: 350,
+  colors: purdyColor.rgb(10)
+});
 
-  d3.layout.cloud().size([width, height])
-      .words(wordCount)
-      //.spiral("rectangular")
-      .rotate(function() { return ~~(Math.random() * 2) * 90; })
-      .font(typeFace)
-      .fontSize(function(d) { return d.size * minFontSize; })
-      .on("end", draw)
-      .start();
-
-  function draw(words) {
-$("#cloud").html("");
-   var svg = d3.select("#cloud").insert("svg")
-        .attr("width", width)
-        .attr("height", height)
-      .append("g")
-      .attr('transform', 'translate('+width/2+', '+height/2+')')
-      .selectAll("text")
-        .data(words)
-      .enter().append("text")
-        .style("font-size", function(d) { return d.size + "px"; })
-        .style("font-family", typeFace)
-        .style("fill", function(d, i) { return fill(i); })
-        .attr("text-anchor", "middle")
-        .attr("transform", function(d) {
-          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-        })
-        .text(function(d) { return d.text; });
-  }
-
+console.log("Total word count: "+wordCount.length);
 
 };
 }
@@ -758,3 +748,67 @@ function RunForestRun() {
     }
   }
 }
+
+    (function($) {
+        $.fn.textWidth = function(){
+             var calc = '<span style="display:none">' + $(this).text() + '</span>';
+             $('body').append(calc);
+             var width = $('body').find('span:last').width();
+             $('body').find('span:last').remove();
+            return width;
+        };
+        
+        $.fn.marquee = function(args) {
+            var that = $(this);
+            var textWidth = that.textWidth(),
+                offset = that.width(),
+                width = offset,
+                css = {
+                    'text-indent' : that.css('text-indent'),
+                    'overflow' : that.css('overflow'),
+                    'white-space' : that.css('white-space')
+                },
+                marqueeCss = {
+                    'text-indent' : width,
+                    'overflow' : 'hidden',
+                    'white-space' : 'nowrap'
+                },
+                args = $.extend(true, { count: -1, speed: 1e1, leftToRight: false }, args),
+                i = 0,
+                stop = textWidth*-1,
+                dfd = $.Deferred();
+            
+            function go() {
+                if(!that.length) return dfd.reject();
+                if(width == stop) {
+                    i++;
+                    if(i == args.count) {
+                        that.css(css);
+                        return dfd.resolve();
+                    }
+                    if(args.leftToRight) {
+                        width = textWidth*-1;
+                    } else {
+                        width = offset;
+                    }
+                }
+                that.css('text-indent', width + 'px');
+                if(args.leftToRight) {
+                    width++;
+                } else {
+                    width--;
+                }
+                setTimeout(go, args.speed);
+            };
+            if(args.leftToRight) {
+                width = textWidth*-1;
+                width++;
+                stop = offset;
+            } else {
+                width--;            
+            }
+            that.css(marqueeCss);
+            go();
+            return dfd.promise();
+        };
+    })(jQuery);

@@ -3,11 +3,11 @@
 <head>
   <title>Beacon Stats</title>
   <meta charset="utf-8">
+
   <script src='resources/js/js-stopword/StopWord.js' type='text/javascript'></script>
   <script src='resources/js/d3/d3.js' type='text/javascript'></script>
   <script src='resources/js/crossfilter/crossfilter.js' type='text/javascript'></script>
   <script src='resources/js/dc/dc.js' type='text/javascript'></script>
-  <script src='resources/js/d3-cloud/d3.layout.cloud.js' type='text/javascript'></script>
   <link href="resources/js/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
   <link href="resources/css/style.css" rel="stylesheet" />
   <script src="resources/js/jquery-1.11.3.min.js"></script>
@@ -16,6 +16,15 @@
   <script src="resources/js/shared_notification_code.js"></script>
   <script src="resources/js/stats.js"></script>
   <link href='resources/js/dc/dc.css' rel='stylesheet' type='text/css'>
+  <script src='resources/js/jQCloud/dist/jqcloud.min.js' type='text/javascript'></script>
+  <script src='resources/js/tinycolor.js' type='text/javascript'></script>
+   <script src='resources/js/tinycolor.js' type='text/javascript'></script>
+   <script src='resources/js/jquery.marquee.js' type='text/javascript'></script>
+
+
+  <script src='resources/js/tinygradient/tinygradient.js' type='text/javascript'></script>
+
+  <link href="resources/js/jQCloud/dist/jqcloud.min.css" rel="stylesheet" />
 </head>
 <body class="stats">
   <div id="loading">
@@ -28,8 +37,9 @@
       <h2>Job Summary For X</h2>
       <h4>date1 to date2</h4>
       <div class="dates"></div>
+      <div class="events"></div>
       <div class="total"></div>
-      <div class="avg"></div>
+      
     </header>
 
     <table class="graphs">
@@ -96,8 +106,8 @@
       </tr>
       <tr>
         <td colspan="3">
+          <h4>Situation On Scene Wordcloud</h4>
           <div class="cloud" id='cloud'>
-            <h4>Situation On Scene Wordcloud</h4>
           </div>
         </td>
       </tr>
