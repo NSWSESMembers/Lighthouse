@@ -270,26 +270,25 @@ function HackTheMatrix(id,host, unit) {
 
 
 
-        document.getElementById("new").innerHTML = newJob;
-        document.getElementById("ack").innerHTML = ackJob;
-        document.getElementById("comp").innerHTML = completeJob;
-        document.getElementById("ref").innerHTML = refJob;
-        document.getElementById("can").innerHTML = canJob;
-        document.getElementById("rej").innerHTML = rejJob;
-        document.getElementById("tsk").innerHTML = tskJob;
-        document.getElementById("fin").innerHTML = finJob;
+        document.getElementById("new").innerHTML = newJob +"<h6>" + Math.round(newJob / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("ack").innerHTML = ackJob +"<h6>" + Math.round(ackJob / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("comp").innerHTML = completeJob +"<h6>" + Math.round(completeJob / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("ref").innerHTML = refJob +"<h6>" + Math.round(refJob / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("can").innerHTML = canJob +"<h6>" + Math.round(canJob / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("rej").innerHTML = rejJob +"<h6>" + Math.round(rejJob / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("tsk").innerHTML = tskJob +"<h6>" + Math.round(tskJob / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("fin").innerHTML = finJob +"<h6>" + Math.round(finJob / jobs.Results.length * 100)+"%</h6>";
 
-        document.getElementById("support").innerHTML = support;
-        document.getElementById("flood").innerHTML = flood;
-        document.getElementById("rescue").innerHTML = rescue;
-        document.getElementById("storm").innerHTML = storm;
+        document.getElementById("support").innerHTML = support+"<h6>" + Math.round(support / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("flood").innerHTML = flood+"<h6>" + Math.round(flood / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("rescue").innerHTML = rescue+"<h6>" + Math.round(rescue / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("storm").innerHTML = storm+"<h6>" + Math.round(storm / jobs.Results.length * 100)+"%</h6>";
         var open = jobs.Results.length - finJob - rejJob - canJob - refJob - completeJob;
         var closed = refJob + canJob + completeJob + finJob;
 
-        document.getElementById("open").innerHTML = open;
-        document.getElementById("closed").innerHTML = closed;
-        document.getElementById("totalnumber").innerHTML = jobs.Results.length;
-
+        document.getElementById("open").innerHTML = open+"<h6>" + Math.round(open / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("closed").innerHTML = closed+"<h6>" + Math.round(closed / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("totalnumber").innerHTML = jobs.Results.length +"<h6>" + Math.round(jobs.Results.length / jobs.Results.length * 100)+"%</h6>";
         //document.getElementById("total").innerHTML = "Total Job Count: " + (jobs.Results.length);
 
         document.getElementById("results").style.visibility = 'visible';
