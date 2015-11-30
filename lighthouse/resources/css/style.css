@@ -70,7 +70,21 @@ body {
 font-size: 30px;
 width: 15%;
 font-weight: bold;
+color: black;	
+}
+
+.callsign-active {
+font-size: 30px;
+width: 15%;
+font-weight: bold;
 color: green;	
+}
+
+.callsign-standby {
+font-size: 30px;
+width: 15%;
+font-weight: bold;
+color: blue;	
 }
 
 .members {

@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 $(document).on('change', 'input[name=slide]:radio', function() {
-    console.log(this.value);
     timeoverride = this.value;
 
 
@@ -170,7 +169,7 @@ function HackTheMatrix(id, unit,host) {
 
     GetJSONfromBeacon(id, host, start, end, function(teams) {
 
-        console.log(teams);
+        //console.log(teams);
         var options = {
             weekday: "short",
             year: "numeric",
@@ -205,7 +204,20 @@ function HackTheMatrix(id, unit,host) {
                 latestupdate.className = "update";
 
                 callsign.innerHTML = d.Callsign;
-                callsign.className = "callsign";
+
+                switch (d.TeamStatusType.Id) //color the callsign by team status
+                {
+                    case 3: //active
+                    callsign.className = "callsign-active";
+                    break;
+                    case 1: //standby
+                    callsign.className = "callsign-standby";
+                    break;
+                    default:
+                    callsign.className = "callsign";
+                    break;
+                }
+
 
 
                 if (d.Members.length == 0) {
