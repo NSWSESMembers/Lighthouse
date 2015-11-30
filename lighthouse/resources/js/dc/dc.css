@@ -62,7 +62,7 @@ div.dc-chart {
 
 .dc-chart .selected path {
     stroke-width: 3;
-    stroke: rebeccapurple;
+    stroke: black;
     fill-opacity: 1;
 }
 
