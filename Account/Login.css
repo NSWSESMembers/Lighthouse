@@ -1,7 +1,7 @@
-.something {
-  text-align: left;
+.lighthouse-keepalive {
+  text-align: center;
   background-color: red;
-  margin-top: 1.0em;
+  margin-top: 2.0em;
   overflow: auto;
   padding: 10px;
   border-radius: 10px;
@@ -9,12 +9,12 @@
   color: white;
 }
 
-.something .text {
+.lighthouse-keepalive .text {
   padding: 10px 0;
-  float: left;
+  float: center;
 }
 
-.something img {
+.lighthouse-keepalive img {
   float: left;
   margin-right: 10px;
   width: 100px;
