@@ -30,9 +30,9 @@ $(document).on('change', 'input[name=slide]:radio', function() {
 
 //refresh button
 $(document).ready(function() {
-document.getElementById("refresh").onclick = function() {
-RunForestRun();
-}
+    document.getElementById("refresh").onclick = function() {
+        RunForestRun();
+    }
 });
 
 
@@ -64,9 +64,9 @@ var params = getSearchParameters();
 //update every X seconds
 function startTimer(duration) {
 
-var display = document.querySelector('#time');
+    var display = document.querySelector('#time');
     var timer = duration,
-        minutes, seconds;
+    minutes, seconds;
     setInterval(function() {
         minutes = parseInt(timer / 60, 10)
         seconds = parseInt(timer % 60, 10);
@@ -124,19 +124,19 @@ function RunForestRun() {
 
         if (typeof params.hq !== 'undefined') {
 
-        if (params.hq.split(",").length == 1)
+            if (params.hq.split(",").length == 1)
             {
 
-            GetUnitNamefromBeacon(params.hq, params.host, function(returnedunitname) {
-                unitname = returnedunitname;
-                HackTheMatrix(params.hq, params.host, returnedunitname);
-            });
+                GetUnitNamefromBeacon(params.hq, params.host, function(returnedunitname) {
+                    unitname = returnedunitname;
+                    HackTheMatrix(params.hq, params.host, returnedunitname);
+                });
 
             } else {
-        console.log("passed array of units");
-        unitname = "group selection";
-        HackTheMatrix(params.hq, params.host, unitname);
-    }
+                console.log("passed array of units");
+                unitname = "GROUP";
+                HackTheMatrix(params.hq, params.host, unitname);
+            }
 
         } else { //no hq was sent, get them all
             unitname = "NSW";
@@ -144,7 +144,7 @@ function RunForestRun() {
         }
 
 
-    
+
 
 
     } else {
@@ -165,7 +165,6 @@ function RunForestRun() {
 //make the call to beacon
 function HackTheMatrix(id,host, unit) {
 
-    document.title = unitname + " Job Summary";
 
 
     var start = new Date(decodeURIComponent(params.start));
@@ -206,29 +205,29 @@ function HackTheMatrix(id,host, unit) {
             console.log(d.key + " " + d.value);
             switch (d.key) {
                 case "New":
-                    newJob = d.value;
-                    break;
+                newJob = d.value;
+                break;
                 case "Acknowledged":
-                    ackJob = d.value;
-                    break;
+                ackJob = d.value;
+                break;
                 case "Tasked":
-                    tskJob = d.value;
-                    break;
+                tskJob = d.value;
+                break;
                 case "Complete":
-                    completeJob = d.value;
-                    break;
+                completeJob = d.value;
+                break;
                 case "Finalised":
-                    finJob = d.value;
-                    break;
+                finJob = d.value;
+                break;
                 case "Referred":
-                    refJob = d.value;
-                    break;
+                refJob = d.value;
+                break;
                 case "Rejected":
-                    rejJob = d.value;
-                    break;
+                rejJob = d.value;
+                break;
                 case "Cancelled":
-                    canJob = d.value;
-                    break;
+                canJob = d.value;
+                break;
             }
 
         });
@@ -250,24 +249,41 @@ function HackTheMatrix(id,host, unit) {
 
             switch (d.key) {
                 case 1:
-                    storm = d.value;
-                    break;
+                storm = d.value;
+                break;
                 case 2:
-                    support = d.value;
-                    break;
+                support = d.value;
+                break;
                 case 4:
-                    flood = d.value;
-                    break;
+                flood = d.value;
+                break;
                 case 5:
-                    rescue = d.value;
-                    break;
+                rescue = d.value;
+                break;
             }
 
         });
 
+        var rhqCounts = [];
 
-        document.getElementById("loading").style.visibility = 'hidden';
+        jobs.Results.forEach(function(d) {
+            if (d.EntityAssignedTo)
+            {
+             rhqCounts[d.EntityAssignedTo.ParentEntity.Code] = (rhqCounts[d.EntityAssignedTo.ParentEntity.Code] || 0) + 1;
+            }
+        });
 
+        if (unit == "GROUP")
+        {
+          Object.keys(rhqCounts).forEach(function(d){
+            console.log(rhqCounts[d]);
+            console.log(jobs.Results.length);
+            if (rhqCounts[d] == jobs.Results.length)
+            {
+              unit = d;
+            }
+          })
+        }        
 
 
         document.getElementById("new").innerHTML = newJob +"<h6>" + Math.round(newJob / jobs.Results.length * 100)+"%</h6>";
@@ -291,7 +307,7 @@ function HackTheMatrix(id,host, unit) {
         document.getElementById("totalnumber").innerHTML = jobs.Results.length +"<h6>" + Math.round(jobs.Results.length / jobs.Results.length * 100)+"%</h6>";
         //document.getElementById("total").innerHTML = "Total Job Count: " + (jobs.Results.length);
 
-        document.getElementById("results").style.visibility = 'visible';
+
 
         var options = {
             weekday: "short",
@@ -301,9 +317,12 @@ function HackTheMatrix(id,host, unit) {
             hour12: false
         };
 
+        document.title = unit + " Job Summary";
+
         document.getElementById("banner").innerHTML = "<h2>Job summary for " + unit + "</h2><h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
 
-
+        document.getElementById("results").style.visibility = 'visible';
+        document.getElementById("loading").style.visibility = 'hidden';
 
 
     });

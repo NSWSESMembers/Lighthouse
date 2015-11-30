@@ -87,30 +87,19 @@ function renderPage(unit, jobs) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  document.title = unit + " Job Statistics";
 
-  $('.stats header .total')
-    .html("Total Job Count: " + (jobs.Results.length));
+  //$('.stats header .total')
+   // .html("Total Job Count: " + (jobs.Results.length));
 
-  prepareData(jobs, start, end);
+  prepareData(jobs, unit, start, end);
   dc.renderAll();
 
   $('#loading').hide();
   $('#results').show();
 
-  var options = {
-    weekday: "short",
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-    hour12: false
-  };
 
-  $('.stats header h2').text('Job statistics for ' + unit);
-  $('.stats header h4').text(
-    start.toLocaleTimeString("en-au", options) + " to " +
-    end.toLocaleTimeString("en-au", options)
-  );
+
+
 }
 
 // make pie chart using our standard parameters
@@ -130,7 +119,7 @@ function makePie(elem, w, h, dimension, group) {
 // gather and organise all of the data
 // build charts and feed data
 // render
-function prepareData(jobs, start, end) {
+function prepareData(jobs, unit, start, end) {
 
   // convert timestamps to Date()s
 
@@ -139,6 +128,7 @@ function prepareData(jobs, start, end) {
  var avgAckCount =0;
  var avgAckTotal =0; 
  var EventwordCounts = [];
+ var rhqCounts = [];
 
   jobs.Results.forEach(function(d) {
     var thisJobisAck = false;
@@ -151,6 +141,14 @@ function prepareData(jobs, start, end) {
 
         EventwordCounts[words] = (EventwordCounts[words] || 0) + 1;
     }
+
+if (d.EntityAssignedTo)
+    {
+        rhqCounts[d.EntityAssignedTo.ParentEntity.Code] = (rhqCounts[d.EntityAssignedTo.ParentEntity.Code] || 0) + 1;
+    }
+
+
+
 //console.log("ID:"+d.Id+" Locality:"+d.Address.Locality);
     if (d.LGA == null)
     {
@@ -234,6 +232,38 @@ d.propertyTags = [];
 //EventwordCounts.sort(function(a, b) {
  // return EventwordCounts[a] - EventwordCounts[b]});
 //console.log(EventwordCounts);
+
+
+if (unit == "GROUP")
+{
+  Object.keys(rhqCounts).forEach(function(d){
+    console.log(rhqCounts[d]);
+    console.log(jobs.Results.length);
+    if (rhqCounts[d] == jobs.Results.length)
+    {
+      unit = d;
+    }
+  })
+}
+
+
+  var options = {
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric",
+    hour12: false
+  };
+
+  document.title = unit + " Job Statistics";
+
+
+  $('.stats header h2').text('Job statistics for ' + unit);
+  $('.stats header h4').text(
+    start.toLocaleTimeString("en-au", options) + " to " +
+    end.toLocaleTimeString("en-au", options)
+  );
+
 console.log(avgOpenCount);
 console.log(avgAckCount);
 
@@ -732,7 +762,7 @@ function RunForestRun() {
 
       } else {
         console.log("passed array of units");
-        unitname = "group selection";
+        unitname = "GROUP";
         fetchFromBeacon(params.hq, params.host, unitname, fetchComplete);
       }
     } else { //no hq was sent, get them all
