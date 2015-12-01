@@ -303,21 +303,21 @@ function HackTheMatrix(unit, host) {
             hour12: false
         };
 
-        if (unit == []) //whole nsw state
+        if (unit.length == 0) //whole nsw state
         {
             document.title = "NSW Job Summary";
-            document.getElementById("banner").innerHTML = "<h2>Job Summary for NSW</h2>";
+            document.getElementById("banner").innerHTML = "<h3>Job summary for NSW</h3>";
         } else {
             if (Array.isArray(unit) == false) //1 lga
             {
                 document.title = unit.Name + " Job Summary";
-                document.getElementById("banner").innerHTML = '<h2>Job Summary for ' + unit.Name + "</h2>";
+                document.getElementById("banner").innerHTML = '<h3>Job summary for ' + unit.Name + "</h3>";
 
             };
             if (unit.length >= 1) //more than one
             {
                 document.title = "Group Job Summary";
-                document.getElementById("banner").innerHTML = "<h2>Job Summary for Group</h2>";
+                document.getElementById("banner").innerHTML = "<h3>Job summary for Group</h3>";
             };
         }
 

@@ -62,13 +62,13 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, callback) {
 
     if (unit !== null || typeof unit == undefined) {
 
-                if (unit.length == 1)
+                if (Array.isArray(unit) == false)
                 {
-                    xhttp.open("GET", "https://"+host+"/Api/v1/Teams/Search?StatusStartDate=" + StartDate.toISOString() + "&StatusEndDate=" + EndDate.toISOString() + "&CreatedAtId=" + Id + "&PageIndex=1&PageSize=20000&SortField=CreatedOn&SortOrder=desc", true);
+                    xhttp.open("GET", "https://"+host+"/Api/v1/Teams/Search?StatusStartDate=" + StartDate.toISOString() + "&StatusEndDate=" + EndDate.toISOString() + "&AssignedToId=" + unit.Id + "&CreatedAtId=" + unit.Id + "&PageIndex=1&PageSize=20000&SortField=CreatedOn&SortOrder=desc", true);
                 } else {
                     var hqString = "";
                     unit.forEach(function(d){
-                        hqString=hqString+"&Hq="+d.Id
+                        hqString=hqString+"&AssignedToId="+d.Id+"&CreatedAtId="+d.Id
                     });
                     console.log(hqString)
                     xhttp.open("GET", "https://"+host+"/Api/v1/Teams/Search?StatusStartDate=" + StartDate.toISOString() + "&StatusEndDate=" + EndDate.toISOString() + hqString + "&PageIndex=1&PageSize=20000&SortField=CreatedOn&SortOrder=desc", true);

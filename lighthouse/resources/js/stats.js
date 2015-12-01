@@ -242,7 +242,7 @@ var options = {
   hour12: false
 };
 
-if (unit == []) //whole nsw state
+if (unit.length == 0) //whole nsw state
 {
   document.title = "NSW Job Statistics";
   $('.stats header h2').text('Job statistics for NSW');
