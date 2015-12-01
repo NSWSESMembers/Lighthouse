@@ -27,38 +27,40 @@
         <img alt="Loading..." id="loading-image" src="resources/images/loader.gif"><br>
         Loading...
     </div>
-    <div align="center" id="results">
+    <div align="center" id="results" class="teamresults">
         <p id="banner">Team Summary For X</p><br>
-        <table id="resultstable" class="teamtotals">
-            <thead>
-            <tr class="header">
-                <td>Team<br>Call Sign</td>
-                <td>Team<br>Members</td>
-                <td>Team<br>Status</td>
-                <td>Tasking<br>Open/Closed</td>
-                <td>Team<br>Latest Update</td>
-            </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+        <div id="scrollbounds">
+            <table id="resultstable" class="teamtotals">
+                <thead>
+                    <tr class="header">
+                        <td>Team<br>Call Sign</td>
+                        <td>Team<br>Members</td>
+                        <td>Team<br>Status</td>
+                        <td>Tasking<br>Open/Closed</td>
+                        <td>Team<br>Latest Update</td>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
     </div>
     <footer>
         <form>
             Override time frame with<br>
             <label><input id="radio1" name="slide" type="radio" value="24">Last
-            24Hrs</label><label><input id="radio2" name="slide" type="radio"
-            value="48">Last 48hrs</label><label><input id="radio3" name="slide"
-            type="radio" value="72">Last 72 Hrs</label>
-        </form>Designed & developed by volunteers of the NSW SES. Lighthouse is
-        licensed under <a href=
-        "https://github.com/OSPFNeighbour/BeaconEnhanced/blob/master/LICENSE.md"
-        rel="license">MIT</a>.
-        <div style="float:right;">
-            <a href="#" id="refresh"><span class=
-            "glyphicon glyphicon-refresh"></span> <span id=
-            "time">00:00</span></a>
-        </div>
-    </footer>
-</body>
-</html>
+                24Hrs</label><label><input id="radio2" name="slide" type="radio"
+                value="48">Last 48hrs</label><label><input id="radio3" name="slide"
+                type="radio" value="72">Last 72 Hrs</label>
+            </form>Designed & developed by volunteers of the NSW SES. Lighthouse is
+            licensed under <a href=
+            "https://github.com/OSPFNeighbour/BeaconEnhanced/blob/master/LICENSE.md"
+            rel="license">MIT</a>.
+            <div style="float:right;">
+                <a href="#" id="refresh"><span class=
+                    "glyphicon glyphicon-refresh"></span> <span id=
+                    "time">00:00</span></a>
+                </div>
+            </footer>
+        </body>
+        </html>

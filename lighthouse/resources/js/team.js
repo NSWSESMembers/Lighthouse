@@ -287,18 +287,18 @@ latestupdate.innerHTML = "<img width=\"20%\" alt=\"Loading...\" src=\"resources/
  if (unit.length == 0) //whole nsw state
  {
     document.title = "NSW Team Summary";
-    document.getElementById("banner").innerHTML = "<h2>Team Summary for NSW</h2>";
+    document.getElementById("banner").innerHTML = "<h2>Team summary for NSW</h2>";
 } else {
-            if (unit.length == 1) //1 lga
+            if (Array.isArray(unit) == false) //1 lga
             {
                 document.title = unit.Name + " Team Summary";
-                document.getElementById("banner").innerHTML = '<h2>Team Summary for ' + unit.Name + "</h2>";
+                document.getElementById("banner").innerHTML = '<h2>Team summary for ' + unit.Name + "</h2>";
 
             };
-            if (unit.length >= 1) //more than one
+            if (unit.length >> 1) //more than one
             {
                 document.title = "Group Team Summary";
-                document.getElementById("banner").innerHTML = "<h2>Team Summary for Group</h2>";
+                document.getElementById("banner").innerHTML = "<h2>Team summary for Group</h2>";
             };
         }
         document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + "</h4>";
