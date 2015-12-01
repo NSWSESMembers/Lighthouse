@@ -90,7 +90,7 @@ if (exports.hasOwnProperty("Hq"))
     $("#lighthousExportButton").attr("href",lighthouseUrl+"lighthouse/advexport.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
     //window.open(summaryUrl+"?hq="+exports.Hq[0]+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
 } else {
-    $("#lighthousExportButton").attr("href",summaryUrl+"lighthouse/advexport.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    $("#lighthousExportButton").attr("href",lighthouseUrl+"lighthouse/advexport.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
 }
 
 }

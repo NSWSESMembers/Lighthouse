@@ -267,13 +267,6 @@ function HackTheMatrix(unit, host) {
 
         });
 
-        var rhqCounts = [];
-
-        jobs.Results.forEach(function(d) {
-            if (d.EntityAssignedTo) {
-                rhqCounts[d.EntityAssignedTo.ParentEntity.Code] = (rhqCounts[d.EntityAssignedTo.ParentEntity.Code] || 0) + 1;
-            }
-        });
 
         document.getElementById("new").innerHTML = newJob + "<h6>" + Math.round(newJob / jobs.Results.length * 100) + "%</h6>";
         document.getElementById("ack").innerHTML = ackJob + "<h6>" + Math.round(ackJob / jobs.Results.length * 100) + "%</h6>";

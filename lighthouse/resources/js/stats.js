@@ -128,7 +128,6 @@ function prepareData(jobs, unit, start, end) {
   var avgAckCount =0;
   var avgAckTotal =0; 
   var EventwordCounts = [];
-  var rhqCounts = [];
 
   jobs.Results.forEach(function(d) {
     var thisJobisAck = false;
@@ -141,13 +140,6 @@ function prepareData(jobs, unit, start, end) {
 
       EventwordCounts[words] = (EventwordCounts[words] || 0) + 1;
     }
-
-    if (d.EntityAssignedTo)
-    {
-      rhqCounts[d.EntityAssignedTo.ParentEntity.Code] = (rhqCounts[d.EntityAssignedTo.ParentEntity.Code] || 0) + 1;
-    }
-
-
 
 //console.log("ID:"+d.Id+" Locality:"+d.Address.Locality);
 if (d.LGA == null)
