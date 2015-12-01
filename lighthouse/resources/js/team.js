@@ -166,6 +166,7 @@ function HackTheMatrix(unit, host) {
     var start = new Date(decodeURIComponent(params.start));
     var end = new Date(decodeURIComponent(params.end));
     var totalMembersActive = 0;
+    var totalTeamsActive = 0;
 
     GetJSONTeamsfromBeacon(unit, host, start, end, function(teams) {
 
@@ -187,7 +188,7 @@ function HackTheMatrix(unit, host) {
         });
 
         teams.Results.forEach(function(d) { //for every team
-
+            totalTeamsActive++;
 
             if (d.TeamStatusType.Name !== "Stood Down") //that has not stood down
             {
@@ -278,6 +279,7 @@ GetTaskingfromBeacon(d.Id,host, function(e) {
     jobCount.className = "jobcount";
 });
 
+jobCount.innerHTML = "<img width=\"50%\" alt=\"Loading...\" src=\"resources/images/loader.gif\">";
 latestupdate.innerHTML = "<img width=\"20%\" alt=\"Loading...\" src=\"resources/images/loader.gif\">";
 
 
@@ -301,7 +303,7 @@ latestupdate.innerHTML = "<img width=\"20%\" alt=\"Loading...\" src=\"resources/
                 document.getElementById("banner").innerHTML = "<h2>Team summary for Group</h2>";
             };
         }
-        document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + "</h4>";
+        document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + " | Total Active Teams: "+totalTeamsActive+"</h4>";
 
 
         document.getElementById("loading").style.visibility = 'hidden';
