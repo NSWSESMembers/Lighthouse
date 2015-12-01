@@ -1,9 +1,9 @@
 var timeoverride = null;
 
-window.onerror = function(message, url, lineNumber) {  
-  document.getElementById("loading").innerHTML = "Error loading page<br>"+message+" Line "+lineNumber;
-  return true;
-}; 
+window.onerror = function(message, url, lineNumber) {
+    document.getElementById("loading").innerHTML = "Error loading page<br>" + message + " Line " + lineNumber;
+    return true;
+};
 
 
 
@@ -56,7 +56,7 @@ function transformToAssocArray(prmstr) {
 }
 
 var timeperiod;
-var unitname = "";
+var unit = [];
 
 
 var params = getSearchParameters();
@@ -66,7 +66,7 @@ function startTimer(duration) {
 
     var display = document.querySelector('#time');
     var timer = duration,
-    minutes, seconds;
+        minutes, seconds;
     setInterval(function() {
         minutes = parseInt(timer / 60, 10)
         seconds = parseInt(timer % 60, 10);
@@ -116,46 +116,46 @@ function RunForestRun() {
 
 
 
-    if (unitname == "") {
+    if (unit.length == 0) {
 
         console.log("firstrun...will fetch vars");
 
-        
+
 
         if (typeof params.hq !== 'undefined') {
 
-            if (params.hq.split(",").length == 1)
-            {
+            if (params.hq.split(",").length == 1) { //one HQ was passed
 
-                GetUnitNamefromBeacon(params.hq, params.host, function(returnedunitname) {
-                    unitname = returnedunitname;
-                    HackTheMatrix(params.hq, params.host, returnedunitname);
+                GetUnitNamefromBeacon(params.hq, params.host, function(result) {
+                    unit = result;
+                    HackTheMatrix(unit, params.host);
                 });
 
             } else {
                 console.log("passed array of units");
-                unitname = "GROUP";
-                HackTheMatrix(params.hq, params.host, unitname);
+                var hqsGiven = params.hq.split(",");
+                console.log(hqsGiven);
+                hqsGiven.forEach(function(d) {
+                    GetUnitNamefromBeacon(d, params.host, function(result) {
+                        unit.push(result);
+                        if (unit.length == params.hq.split(",").length) {
+                            HackTheMatrix(unit, params.host);
+                        }
+                    })
+                })
             }
-
         } else { //no hq was sent, get them all
-            unitname = "NSW";
-            HackTheMatrix(null, params.host, unitname);
+            unit = [];
+            HackTheMatrix(unit, params.host);
         }
-
 
 
 
 
     } else {
         console.log("rerun...will NOT fetch vars");
-        if (typeof params.hq == 'undefined') {
-            HackTheMatrix(null, unitname);
-        } else {
-            HackTheMatrix(params.hq, params.host, unitname);
+            HackTheMatrix(unit, params.host);
         }
-
-    }
 
 
 
@@ -163,14 +163,14 @@ function RunForestRun() {
 }
 
 //make the call to beacon
-function HackTheMatrix(id,host, unit) {
+function HackTheMatrix(unit, host) {
 
 
 
     var start = new Date(decodeURIComponent(params.start));
     var end = new Date(decodeURIComponent(params.end));
 
-    GetJSONfromBeacon(id, host, start, end, function(jobs) {
+    GetJSONfromBeacon(unit, host, start, end, function(jobs) {
 
 
         var facts = crossfilter(jobs.Results);
@@ -205,29 +205,29 @@ function HackTheMatrix(id,host, unit) {
             console.log(d.key + " " + d.value);
             switch (d.key) {
                 case "New":
-                newJob = d.value;
-                break;
+                    newJob = d.value;
+                    break;
                 case "Acknowledged":
-                ackJob = d.value;
-                break;
+                    ackJob = d.value;
+                    break;
                 case "Tasked":
-                tskJob = d.value;
-                break;
+                    tskJob = d.value;
+                    break;
                 case "Complete":
-                completeJob = d.value;
-                break;
+                    completeJob = d.value;
+                    break;
                 case "Finalised":
-                finJob = d.value;
-                break;
+                    finJob = d.value;
+                    break;
                 case "Referred":
-                refJob = d.value;
-                break;
+                    refJob = d.value;
+                    break;
                 case "Rejected":
-                rejJob = d.value;
-                break;
+                    rejJob = d.value;
+                    break;
                 case "Cancelled":
-                canJob = d.value;
-                break;
+                    canJob = d.value;
+                    break;
             }
 
         });
@@ -249,17 +249,17 @@ function HackTheMatrix(id,host, unit) {
 
             switch (d.key) {
                 case 1:
-                storm = d.value;
-                break;
+                    storm = d.value;
+                    break;
                 case 2:
-                support = d.value;
-                break;
+                    support = d.value;
+                    break;
                 case 4:
-                flood = d.value;
-                break;
+                    flood = d.value;
+                    break;
                 case 5:
-                rescue = d.value;
-                break;
+                    rescue = d.value;
+                    break;
             }
 
         });
@@ -267,44 +267,30 @@ function HackTheMatrix(id,host, unit) {
         var rhqCounts = [];
 
         jobs.Results.forEach(function(d) {
-            if (d.EntityAssignedTo)
-            {
-             rhqCounts[d.EntityAssignedTo.ParentEntity.Code] = (rhqCounts[d.EntityAssignedTo.ParentEntity.Code] || 0) + 1;
+            if (d.EntityAssignedTo) {
+                rhqCounts[d.EntityAssignedTo.ParentEntity.Code] = (rhqCounts[d.EntityAssignedTo.ParentEntity.Code] || 0) + 1;
             }
         });
 
-        if (unit == "GROUP")
-        {
-          Object.keys(rhqCounts).forEach(function(d){
-            console.log(rhqCounts[d]);
-            console.log(jobs.Results.length);
-            if (rhqCounts[d] == jobs.Results.length)
-            {
-              unit = d;
-            }
-          })
-        }        
+        document.getElementById("new").innerHTML = newJob + "<h6>" + Math.round(newJob / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("ack").innerHTML = ackJob + "<h6>" + Math.round(ackJob / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("comp").innerHTML = completeJob + "<h6>" + Math.round(completeJob / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("ref").innerHTML = refJob + "<h6>" + Math.round(refJob / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("can").innerHTML = canJob + "<h6>" + Math.round(canJob / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("rej").innerHTML = rejJob + "<h6>" + Math.round(rejJob / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("tsk").innerHTML = tskJob + "<h6>" + Math.round(tskJob / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("fin").innerHTML = finJob + "<h6>" + Math.round(finJob / jobs.Results.length * 100) + "%</h6>";
 
-
-        document.getElementById("new").innerHTML = newJob +"<h6>" + Math.round(newJob / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("ack").innerHTML = ackJob +"<h6>" + Math.round(ackJob / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("comp").innerHTML = completeJob +"<h6>" + Math.round(completeJob / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("ref").innerHTML = refJob +"<h6>" + Math.round(refJob / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("can").innerHTML = canJob +"<h6>" + Math.round(canJob / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("rej").innerHTML = rejJob +"<h6>" + Math.round(rejJob / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("tsk").innerHTML = tskJob +"<h6>" + Math.round(tskJob / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("fin").innerHTML = finJob +"<h6>" + Math.round(finJob / jobs.Results.length * 100)+"%</h6>";
-
-        document.getElementById("support").innerHTML = support+"<h6>" + Math.round(support / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("flood").innerHTML = flood+"<h6>" + Math.round(flood / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("rescue").innerHTML = rescue+"<h6>" + Math.round(rescue / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("storm").innerHTML = storm+"<h6>" + Math.round(storm / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("support").innerHTML = support + "<h6>" + Math.round(support / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("flood").innerHTML = flood + "<h6>" + Math.round(flood / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("rescue").innerHTML = rescue + "<h6>" + Math.round(rescue / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("storm").innerHTML = storm + "<h6>" + Math.round(storm / jobs.Results.length * 100) + "%</h6>";
         var open = jobs.Results.length - finJob - rejJob - canJob - refJob - completeJob;
         var closed = refJob + canJob + completeJob + finJob;
 
-        document.getElementById("open").innerHTML = open+"<h6>" + Math.round(open / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("closed").innerHTML = closed+"<h6>" + Math.round(closed / jobs.Results.length * 100)+"%</h6>";
-        document.getElementById("totalnumber").innerHTML = jobs.Results.length +"<h6>" + Math.round(jobs.Results.length / jobs.Results.length * 100)+"%</h6>";
+        document.getElementById("open").innerHTML = open + "<h6>" + Math.round(open / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("closed").innerHTML = closed + "<h6>" + Math.round(closed / jobs.Results.length * 100) + "%</h6>";
+        document.getElementById("totalnumber").innerHTML = jobs.Results.length + "<h6>" + Math.round(jobs.Results.length / jobs.Results.length * 100) + "%</h6>";
         //document.getElementById("total").innerHTML = "Total Job Count: " + (jobs.Results.length);
 
 
@@ -317,9 +303,25 @@ function HackTheMatrix(id,host, unit) {
             hour12: false
         };
 
-        document.title = unit + " Job Summary";
+        if (unit == []) //whole nsw state
+        {
+            document.title = "NSW Job Summary";
+            document.getElementById("banner").innerHTML = "<h2>Job Summary for NSW</h2>";
+        } else {
+            if (Array.isArray(unit) == false) //1 lga
+            {
+                document.title = unit.Name + " Job Summary";
+                document.getElementById("banner").innerHTML = '<h2>Job Summary for ' + unit.Name + "</h2>";
 
-        document.getElementById("banner").innerHTML = "<h2>Job summary for " + unit + "</h2><h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
+            };
+            if (unit.length >= 1) //more than one
+            {
+                document.title = "Group Job Summary";
+                document.getElementById("banner").innerHTML = "<h2>Job Summary for Group</h2>";
+            };
+        }
+
+        document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
 
         document.getElementById("results").style.visibility = 'visible';
         document.getElementById("loading").style.visibility = 'hidden';

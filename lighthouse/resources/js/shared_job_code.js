@@ -1,38 +1,10 @@
-function GetUnitNamefromBeacon(Id, host, callback) {
-    console.log("GetUnitNamefromBeacon called with:" + Id+", "+host);
-    console.log("telling the keep alive system we are still active")
-    chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)});
-
-
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function() {
-        if (xhttp.readyState == 4 && xhttp.status == 200) {
-            results = JSON.parse(xhttp.responseText);
-
-            if (typeof callback === "function") {
-                console.log("GetUnitNamefromBeacon call back with:" + results.Name);
-
-                callback(results.Name);
-
-            }
-
-
-        }
-    }
-
-    xhttp.open("GET", "https://"+host+"/Api/v1/Entities/" + params.hq, true);
-    xhttp.send();
-
-
-}
-
-
 //make the call to beacon
-function GetJSONfromBeacon(Id, host, StartDate, EndDate, callback) {
+function GetJSONfromBeacon(unit, host, StartDate, EndDate, callback) {
 
     var limit = 5000;
 
-    console.log("GetJSONfromBeacon called with:" + Id + "," + StartDate + "," + EndDate+", "+host);
+    console.log("GetJSONfromBeacon called with:" + StartDate + "," + EndDate+", "+host);
+    console.log(unit);
     console.log("telling the keep alive system we are still active")
     chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)});
 
@@ -66,21 +38,19 @@ function GetJSONfromBeacon(Id, host, StartDate, EndDate, callback) {
 
 
     }
+    if (unit !== null || typeof unit == undefined) {
+        if (Array.isArray(unit) == false)
+        {
+            xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType=6&PageIndex=1&PageSize="+limit+"&SortField=Id&SortOrder=desc", true);
+        } else {
+            var hqString = "";
+            unit.forEach(function(d){
+                hqString=hqString+"&Hq="+d.Id
+            });
+            console.log(hqString)
+            xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType=6&PageIndex=1&PageSize="+limit+"&SortField=Id&SortOrder=desc", true);
 
-    if (Id !== null || typeof unit == undefined) {
-
-                if (Id.split(",").length == 1)
-                {
-                    xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + Id + "&ViewModelType=6&PageIndex=1&PageSize="+limit+"&SortField=Id&SortOrder=desc", true);
-                } else {
-                    var hqString = "";
-                    Id.split(",").forEach(function(d){
-                        hqString=hqString+"&Hq="+d
-                    });
-                    console.log(hqString)
-                    xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType=6&PageIndex=1&PageSize="+limit+"&SortField=Id&SortOrder=desc", true);
-
-                }
+        }
     } else {
         xhttp.open("GET", "https://"+host+"/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType=6&PageIndex=1&PageSize="+limit+"&SortField=Id&SortOrder=desc", true);
 

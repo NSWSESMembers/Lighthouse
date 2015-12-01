@@ -54,7 +54,7 @@ function transformToAssocArray(prmstr) {
 }
 
 var timeperiod;
-var unitname = "";
+var unit = [];
 
 
 var params = getSearchParameters();
@@ -62,7 +62,7 @@ var params = getSearchParameters();
 //update every X seconds
 function startTimer(duration, display) {
     var timer = duration,
-        minutes, seconds;
+    minutes, seconds;
     setInterval(function() {
         minutes = parseInt(timer / 60, 10)
         seconds = parseInt(timer % 60, 10);
@@ -112,30 +112,39 @@ function RunForestRun() {
     // }
 
 
-    if (unitname == "") {
+    if (unit.length == 0) {
 
         console.log("firstrun...will fetch vars");
 
 
 
-        if (typeof params.hq !== 'undefined') {
+        if (typeof params.hq !== 'undefined') {  //if not no hqs
 
-            if (params.hq.split(",").length == 1) {
+            if (params.hq.split(",").length == 1) { //if only one HQ
 
-                GetUnitNamefromBeacon(params.hq,params.host, function(returnedunitname) {
-                    unitname = returnedunitname;
-                    HackTheMatrix(params.hq, returnedunitname,params.host);
+                GetUnitNamefromBeacon(params.hq,params.host, function(result) {
+                    unit = result;
+                    HackTheMatrix(unit,params.host);
                 });
 
             } else {
                 console.log("passed array of units");
-                unitname = "group selection";
-                HackTheMatrix(params.hq, unitname,params.host);
+                var hqsGiven = params.hq.split(",");
+                console.log(hqsGiven);
+                hqsGiven.forEach(function(d){
+                  GetUnitNamefromBeacon(d, params.host, function(result) {
+                    unit.push(result);
+                    if (unit.length == params.hq.split(",").length)
+                    {
+                      HackTheMatrix(unit, params.host);
+                  }
+              })
+              })
             }
 
         } else { //no hq was sent, get them all
-            unitname = "NSW";
-            HackTheMatrix(null, unitname,params.host);
+            unit = [];
+            HackTheMatrix(unit,params.host);
         }
 
 
@@ -143,13 +152,8 @@ function RunForestRun() {
 
     } else {
         console.log("rerun...will NOT fetch vars");
-        if (typeof params.hq == 'undefined') {
-            HackTheMatrix(null, unitname);
-        } else {
-            HackTheMatrix(params.hq, unitname,params.host);
+            HackTheMatrix(unit, params.host);
         }
-
-    }
 
 
 
@@ -157,17 +161,13 @@ function RunForestRun() {
 }
 
 //make the call to beacon
-function HackTheMatrix(id, unit,host) {
-
-
-    document.title = unitname + " Team Summary";
-
+function HackTheMatrix(unit, host) {
 
     var start = new Date(decodeURIComponent(params.start));
     var end = new Date(decodeURIComponent(params.end));
     var totalMembersActive = 0;
 
-    GetJSONfromBeacon(id, host, start, end, function(teams) {
+    GetJSONTeamsfromBeacon(unit, host, start, end, function(teams) {
 
         //console.log(teams);
         var options = {
@@ -177,7 +177,6 @@ function HackTheMatrix(id, unit,host) {
             day: "numeric",
             hour12: false
         };
-
 
 
         var table = document.getElementById("resultstable").getElementsByTagName('tbody')[0];
@@ -203,7 +202,7 @@ function HackTheMatrix(id, unit,host) {
                 var latestupdate = row.insertCell(4);
                 latestupdate.className = "update";
 
-                callsign.innerHTML = d.Callsign;
+                callsign.innerHTML = "<a href=\"https://"+host+"/Teams/"+d.Id+"/Edit\" target=\"_blank\">"+d.Callsign+"</a>";
 
                 switch (d.TeamStatusType.Id) //color the callsign by team status
                 {
@@ -212,6 +211,12 @@ function HackTheMatrix(id, unit,host) {
                     break;
                     case 1: //standby
                     callsign.className = "callsign-standby";
+                    break;
+                    case 4: //rest
+                    callsign.className = "callsign-rest";
+                    break;
+                    case 2: //alert
+                    callsign.className = "callsign-alert";
                     break;
                     default:
                     callsign.className = "callsign";
@@ -239,45 +244,66 @@ function HackTheMatrix(id, unit,host) {
                             }
                         }
                     })
-                }
-                members.className = "members";
+}
+members.className = "members";
 
-                var rawteamdate = new Date(d.TeamStatusStartDate);
-                var teamdate = new Date(rawteamdate.getTime() + (rawteamdate.getTimezoneOffset() * 60000));
-                status.innerHTML = d.TeamStatusType.Name +"<br>"+teamdate.toLocaleTimeString("en-au", options);
-                status.className = "status";
-
-
-
-                var latest = null;
-                var oldesttime = null;
-                var completed = 0;
-                GetTaskingfromBeacon(d.Id,host, function(e) {
-                    e.Results.forEach(function(f) {
-                        f.CurrentStatus == "Complete" && completed++;
-                        var rawdate = new Date(f.CurrentStatusTime);
-                        var thistime = new Date(rawdate.getTime() + (rawdate.getTimezoneOffset() * 60000));
-                        if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") {
-                            latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options);
-                            oldesttime = thistime;
-                        }
-                    });
-
-                    if (latest == null) {
-                        latest = "No Updates";
-                    }
-                    latestupdate.innerHTML = latest;
-
-                jobCount.innerHTML = d.TaskedJobCount+"/"+completed;
-                jobCount.className = "jobcount";
-                });
-
-                latestupdate.innerHTML = "<img width=\"20%\" alt=\"Loading...\" src=\"resources/images/loader.gif\">";
+var rawteamdate = new Date(d.TeamStatusStartDate);
+var teamdate = new Date(rawteamdate.getTime() + (rawteamdate.getTimezoneOffset() * 60000));
+status.innerHTML = d.TeamStatusType.Name +"<br>"+teamdate.toLocaleTimeString("en-au", options);
+status.className = "status";
 
 
-            }
-        });
-        document.getElementById("banner").innerHTML = "<h2>Team summary for " + unit + "</h2><h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + "</h4>";
+
+var latest = null;
+var oldesttime = null;
+var completed = 0;
+
+GetTaskingfromBeacon(d.Id,host, function(e) {
+    e.Results.forEach(function(f) {
+        f.CurrentStatus == "Complete" && completed++;
+        var rawdate = new Date(f.CurrentStatusTime);
+        var thistime = new Date(rawdate.getTime() + (rawdate.getTimezoneOffset() * 60000));
+        if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") {
+            latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options);
+            oldesttime = thistime;
+        }
+    });
+
+    if (latest == null) {
+        latest = "No Updates";
+    }
+    latestupdate.innerHTML = latest;
+
+    jobCount.innerHTML = d.TaskedJobCount+"/"+completed;
+    jobCount.className = "jobcount";
+});
+
+latestupdate.innerHTML = "<img width=\"20%\" alt=\"Loading...\" src=\"resources/images/loader.gif\">";
+
+
+}
+});
+
+ if (unit.length == 0) //whole nsw state
+ {
+    document.title = "NSW Team Summary";
+    document.getElementById("banner").innerHTML = "<h2>Team Summary for NSW</h2>";
+} else {
+            if (unit.length == 1) //1 lga
+            {
+                document.title = unit.Name + " Team Summary";
+                document.getElementById("banner").innerHTML = '<h2>Team Summary for ' + unit.Name + "</h2>";
+
+            };
+            if (unit.length >= 1) //more than one
+            {
+                document.title = "Group Team Summary";
+                document.getElementById("banner").innerHTML = "<h2>Team Summary for Group</h2>";
+            };
+        }
+        document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + "</h4>";
+
+
         document.getElementById("loading").style.visibility = 'hidden';
 
 

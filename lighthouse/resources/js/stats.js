@@ -1,6 +1,6 @@
 var timeoverride = null;
 var timeperiod;
-var unitname = "";
+var unit = [];
 
 // window.onerror = function(message, url, lineNumber) {  
 //   document.getElementById("loading").innerHTML = "Error loading page<br>"+message+"<br> line:"+lineNumber;
@@ -11,8 +11,8 @@ var unitname = "";
 // init
 $(function() {
 
-  //run every X period of time the main loop.
-  startTimer(18000, $('#time'));
+  //run every X seconds the main loop.
+  startTimer(180, $('#time'));
 
   // main
   RunForestRun()
@@ -28,9 +28,9 @@ $(document).on('change', 'input[name=slide]:radio', function() {
 
 //refresh button
 $(document).ready(function() {
-document.getElementById("refresh").onclick = function() {
-RunForestRun();
-}
+  document.getElementById("refresh").onclick = function() {
+    RunForestRun();
+  }
 });
 
 function getSearchParameters() {
@@ -70,13 +70,13 @@ function startTimer(duration, display) {
 }
 
 // fetch jobs from beacon
-function fetchFromBeacon(id, host, unit, cb) {
+function fetchFromBeacon(unit, host, cb) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  GetJSONfromBeacon(id, host, start, end, function(data) {
+  GetJSONfromBeacon(unit, host, start, end, function(data) {
     cb && cb(data);
-});
+  });
   
 
 }
@@ -91,30 +91,30 @@ function renderPage(unit, jobs) {
   //$('.stats header .total')
    // .html("Total Job Count: " + (jobs.Results.length));
 
-  prepareData(jobs, unit, start, end);
-  dc.renderAll();
+   prepareData(jobs, unit, start, end);
+   dc.renderAll();
 
-  $('#loading').hide();
-  $('#results').show();
-
-
+   $('#loading').hide();
+   $('#results').show();
 
 
-}
+
+
+ }
 
 // make pie chart using our standard parameters
 function makePie(elem, w, h, dimension, group) {
   var chart = dc.pieChart(elem);
   chart.width(w)
-       .height(h)
-       .radius(100)
-       .innerRadius(0)
-       .dimension(dimension)
-       .legend(dc.legend())
+  .height(h)
+  .radius(100)
+  .innerRadius(0)
+  .dimension(dimension)
+  .legend(dc.legend())
       // .title(function(d) { return d.value; })
-       .group(group);
-  return chart;
-}
+      .group(group);
+      return chart;
+    }
 
 // gather and organise all of the data
 // build charts and feed data
@@ -123,12 +123,12 @@ function prepareData(jobs, unit, start, end) {
 
   // convert timestamps to Date()s
 
- var avgOpenCount =0;
- var avgOpenTotal =0;
- var avgAckCount =0;
- var avgAckTotal =0; 
- var EventwordCounts = [];
- var rhqCounts = [];
+  var avgOpenCount =0;
+  var avgOpenTotal =0;
+  var avgAckCount =0;
+  var avgAckTotal =0; 
+  var EventwordCounts = [];
+  var rhqCounts = [];
 
   jobs.Results.forEach(function(d) {
     var thisJobisAck = false;
@@ -139,70 +139,70 @@ function prepareData(jobs, unit, start, end) {
     {
       var words = d.Event.Identifier +" - "+ d.Event.Description;
 
-        EventwordCounts[words] = (EventwordCounts[words] || 0) + 1;
+      EventwordCounts[words] = (EventwordCounts[words] || 0) + 1;
     }
 
-if (d.EntityAssignedTo)
+    if (d.EntityAssignedTo)
     {
-        rhqCounts[d.EntityAssignedTo.ParentEntity.Code] = (rhqCounts[d.EntityAssignedTo.ParentEntity.Code] || 0) + 1;
+      rhqCounts[d.EntityAssignedTo.ParentEntity.Code] = (rhqCounts[d.EntityAssignedTo.ParentEntity.Code] || 0) + 1;
     }
 
 
 
 //console.log("ID:"+d.Id+" Locality:"+d.Address.Locality);
-    if (d.LGA == null)
-    {
-      d.LGA = "N/A";
-    }
+if (d.LGA == null)
+{
+  d.LGA = "N/A";
+}
 
-    if (d.SituationOnScene == null)
-    {
-      d.SituationOnScene = "N/A";
-    }
+if (d.SituationOnScene == null)
+{
+  d.SituationOnScene = "N/A";
+}
 
-    if (d.Address.Locality == null)
-    {
-      d.Address.Locality = "N/A";
-    }
+if (d.Address.Locality == null)
+{
+  d.Address.Locality = "N/A";
+}
 
 
-    var rawdate = new Date(d.JobReceived);
-    d.JobReceivedFixed = new Date(
-      rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 )
-    );
+var rawdate = new Date(d.JobReceived);
+d.JobReceivedFixed = new Date(
+  rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 )
+  );
 d.hazardTags = [];
 d.treeTags = [];
 d.propertyTags = [];
-    d.Tags.forEach(function(d2){
-      switch (d2.TagGroupId)
-      {
-        case 5:
-          d.treeTags.push(d2.Name);
-          break;
-        case 7:
-          d.hazardTags.push(d2.Name);
-          break
-        case 13:
-          d.propertyTags.push(d2.Name);
-          break;
-      }
-    });
-    d.JobOpenFor=0;
-    d.JobCompleted=new Date(0);
+d.Tags.forEach(function(d2){
+  switch (d2.TagGroupId)
+  {
+    case 5:
+    d.treeTags.push(d2.Name);
+    break;
+    case 7:
+    d.hazardTags.push(d2.Name);
+    break
+    case 13:
+    d.propertyTags.push(d2.Name);
+    break;
+  }
+});
+d.JobOpenFor=0;
+d.JobCompleted=new Date(0);
 
-    for(var counter=d.JobStatusTypeHistory.length - 1; counter >= 0;counter--){
+for(var counter=d.JobStatusTypeHistory.length - 1; counter >= 0;counter--){
        // jobStatusTypes: {
        //  new: 1,
        //  acknowledged: 2,
        //  complete: 6,
        //   can: 7,
        // }, 
-      switch (d.JobStatusTypeHistory[counter].Type)
-      {
+       switch (d.JobStatusTypeHistory[counter].Type)
+       {
         case 2: //ack
         if (thisJobisAck == false)
         {
-        thisJobisAck = true;
+          thisJobisAck = true;
           ++avgAckCount;
           var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
           var fixeddate = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
@@ -213,12 +213,12 @@ d.propertyTags = [];
         case 6: // complete
         if (thisJobisComp == false)
         {
-        thisJobisComp = true;
-        ++avgOpenCount;
-        var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
-        d.JobCompleted = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+          thisJobisComp = true;
+          ++avgOpenCount;
+          var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
+          d.JobCompleted = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
           avgOpenTotal=avgOpenTotal+(Math.abs(d.JobCompleted - (new Date(d.JobReceivedFixed)))/1000);
-          }
+        }
         break
       }
 
@@ -227,48 +227,53 @@ d.propertyTags = [];
 //if (thisJobisAck == false) {console.log(d.Id+" NO ACK!!!!!!!!!!!!!")}
 //if (thisJobisComp == false) {console.log(d.Id+" NO COMP!!!!!!!!!!!!!")}
 
-  });
+});
 
 //EventwordCounts.sort(function(a, b) {
  // return EventwordCounts[a] - EventwordCounts[b]});
 //console.log(EventwordCounts);
 
 
-if (unit == "GROUP")
+var options = {
+  weekday: "short",
+  year: "numeric",
+  month: "2-digit",
+  day: "numeric",
+  hour12: false
+};
+
+if (unit == []) //whole nsw state
 {
-  Object.keys(rhqCounts).forEach(function(d){
-    console.log(rhqCounts[d]);
-    console.log(jobs.Results.length);
-    if (rhqCounts[d] == jobs.Results.length)
-    {
-      unit = d;
-    }
-  })
+  document.title = "NSW Job Statistics";
+  $('.stats header h2').text('Job statistics for NSW');
+} else {
+if (Array.isArray(unit) == false) //1 lga
+{
+  document.title = unit.Name + " Job Statistics";
+  $('.stats header h2').text('Job statistics for '+unit.Name);
+
+};
+if (unit.length >> 1) //more than one
+{
+  document.title = "Group Job Statistics";
+  $('.stats header h2').text('Job statistics for Group');
+};
 }
 
 
-  var options = {
-    weekday: "short",
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-    hour12: false
-  };
-
-  document.title = unit + " Job Statistics";
 
 
-  $('.stats header h2').text('Job statistics for ' + unit);
-  $('.stats header h4').text(
-    start.toLocaleTimeString("en-au", options) + " to " +
-    end.toLocaleTimeString("en-au", options)
+
+$('.stats header h4').text(
+  start.toLocaleTimeString("en-au", options) + " to " +
+  end.toLocaleTimeString("en-au", options)
   );
 
 console.log(avgOpenCount);
 console.log(avgAckCount);
 
-  var jobavg = Math.round(avgOpenTotal/avgOpenCount).toString();
-  var ackavg = Math.round(avgAckTotal/avgAckCount).toString();
+var jobavg = Math.round(avgOpenTotal/avgOpenCount).toString();
+var ackavg = Math.round(avgAckTotal/avgAckCount).toString();
 
 console.log(jobavg);
 console.log(ackavg);
@@ -276,16 +281,16 @@ console.log(ackavg);
 var banner = "";
 //console.log(EventwordCounts);
 for (var i = 0; i < Object.keys(EventwordCounts).length; ++i) {
-banner = i == 0 ? banner + Object.keys(EventwordCounts)[i] : banner + " | " + Object.keys(EventwordCounts)[i] ;
+  banner = i == 0 ? banner + Object.keys(EventwordCounts)[i] : banner + " | " + Object.keys(EventwordCounts)[i] ;
 };
 
 //banner = banner + " | Average job time: " + jobavg.toHHMMSS() + " | Average time to acknowledge: "+ackavg.toHHMMSS();
 
-  $('.events').html(banner);
+$('.events').html(banner);
 
 //$('.events').marquee();
-  $('.events').marquee();
-  
+$('.events').marquee();
+
 prepareCharts(jobs, start, end);
 
 
@@ -304,17 +309,17 @@ String.prototype.toHHMMSS = function () {
     if (seconds < 10) {seconds = "0"+seconds;}
     var time    = hours+':'+minutes+':'+seconds;
     return time;
-}
+  }
 
 
 function walkSituationOnSceneWords(jobs){ //take array and make word:frequency array
 
-var wordCount = {};
+  var wordCount = {};
 
   jobs.Results.forEach(function(d) {
 //console.log(d);
-  var strings = d.SituationOnScene.removeStopWords();
-    
+var strings = d.SituationOnScene.removeStopWords();
+
     //
     // strip stringified objects and punctuations from the string
 
@@ -326,48 +331,48 @@ var wordCount = {};
     // Count frequency of word occurance
 
     for(var i = 0; i < strings.length; i++) {
-        if(!wordCount[strings[i]])
-            wordCount[strings[i]] = 0;
+      if(!wordCount[strings[i]])
+        wordCount[strings[i]] = 0;
 
         wordCount[strings[i]]++; // {'hi': 12, 'foo': 2 ...}
-    }
+      }
    // console.log(wordCount);
-  })
+ })
 
-    var wordCountArr = [];
+  var wordCountArr = [];
 
-    for(var prop in wordCount) {
-      wordCountArr.push({text: prop, weight: wordCount[prop]});
-    }
-    
-    return wordCountArr;
+  for(var prop in wordCount) {
+    wordCountArr.push({text: prop, weight: wordCount[prop]});
+  }
+
+  return wordCountArr;
 
 }
 
 
 
    //console.log(wordCount);
-function makeSituationOnSceneCloud(jobs) {
+   function makeSituationOnSceneCloud(jobs) {
 
-calculateSituationOnSceneCloud(walkSituationOnSceneWords(jobs));
-
-
-
-  function calculateSituationOnSceneCloud(wordCount) {
+    calculateSituationOnSceneCloud(walkSituationOnSceneWords(jobs));
 
 
- var purdyColor = tinygradient('black', 'red', 'orange', 'blue', 'LightBlue');
 
-$('#cloud').jQCloud(wordCount, {
-  width: 500,
-  height: 350,
-  colors: purdyColor.rgb(10)
-});
+    function calculateSituationOnSceneCloud(wordCount) {
 
-console.log("Total word count: "+wordCount.length);
 
-};
-}
+     var purdyColor = tinygradient('black', 'red', 'orange', 'blue', 'LightBlue');
+
+     $('#cloud').jQCloud(wordCount, {
+      width: 500,
+      height: 350,
+      colors: purdyColor.rgb(10)
+    });
+
+     console.log("Total word count: "+wordCount.length);
+
+   };
+ }
 
 
 // draw all of the pie charts
@@ -390,34 +395,34 @@ function prepareCharts(jobs, start, end) {
   //table 
  // var dataTable = dc.dataTable("#dc-table-graph");
 
-   var closeTimeDimension = facts.dimension(function (d) {
-    return d.JobCompleted;
-  });
+ var closeTimeDimension = facts.dimension(function (d) {
+  return d.JobCompleted;
+});
 
 
   //closeTimeDimension.filter(function(d) { return d !> 'undefined'; });
 
-    var volumeClosedByHour = facts.dimension(function(d) {
+  var volumeClosedByHour = facts.dimension(function(d) {
     return d3.time.hour(d.JobCompleted);
   });
 
   var volumeClosedByHourGroup = volumeClosedByHour.group().reduceCount(function(d) { return d.JobCompleted; });
 
   timeClosedChart.width(800)
-    .height(250)
-    .transitionDuration(500)
-    .brushOn(true)
-    .mouseZoomable(false)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
-    .dimension(closeTimeDimension)
-    .group(volumeClosedByHourGroup)
+  .height(250)
+  .transitionDuration(500)
+  .brushOn(true)
+  .mouseZoomable(false)
+  .margins({top: 10, right: 10, bottom: 20, left: 40})
+  .dimension(closeTimeDimension)
+  .group(volumeClosedByHourGroup)
     //.brushOn(false)           // added for title
     .xUnits(d3.time.hours)
     .x(d3.time.scale().domain([new Date(start), new Date(end)]))
     .elasticY(true)
     //.x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) {
     //return d.JobReceived; })))
-    .xAxis();
+.xAxis();
 
 
 
@@ -426,27 +431,27 @@ function prepareCharts(jobs, start, end) {
 
 
 // Create datatable dimension
-  var timeOpenDimension = facts.dimension(function (d) {
-    return d.JobReceivedFixed;
-  });
+var timeOpenDimension = facts.dimension(function (d) {
+  return d.JobReceivedFixed;
+});
 
 
 
-  var volumeOpenByHour = facts.dimension(function(d) {
-    return d3.time.hour(d.JobReceivedFixed);
-  });
+var volumeOpenByHour = facts.dimension(function(d) {
+  return d3.time.hour(d.JobReceivedFixed);
+});
 
-  var volumeOpenByHourGroup = volumeOpenByHour.group().reduceCount(function(d) { return d.JobReceivedFixed; });
+var volumeOpenByHourGroup = volumeOpenByHour.group().reduceCount(function(d) { return d.JobReceivedFixed; });
 
 
-  timeOpenChart.width(800)
-    .height(250)
-    .transitionDuration(500)
-    .brushOn(true)
-    .mouseZoomable(false)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
-    .dimension(timeOpenDimension)
-    .group(volumeOpenByHourGroup)
+timeOpenChart.width(800)
+.height(250)
+.transitionDuration(500)
+.brushOn(true)
+.mouseZoomable(false)
+.margins({top: 10, right: 10, bottom: 20, left: 40})
+.dimension(timeOpenDimension)
+.group(volumeOpenByHourGroup)
     //.brushOn(false)           // added for title
     .xUnits(d3.time.hours)
     .x(d3.time.scale().domain([new Date(start), new Date(end)]))
@@ -454,41 +459,41 @@ function prepareCharts(jobs, start, end) {
 
     //.x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) {
     //return d.JobReceived; })))
-    .xAxis();
+.xAxis();
 
 countchart
 .dimension(facts)
 .group(all)
 .html({
-some:"%filter-count selected out of %total-count",
-all:"%total-count job(s) total"
+  some:"%filter-count selected out of %total-count",
+  all:"%total-count job(s) total"
 });
 
- var options = {
+var options = {
    // weekday: "short",
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-    hour12: false
-  };
+   year: "numeric",
+   month: "2-digit",
+   day: "numeric",
+   hour12: false
+ };
 
 
 
 
  // Table of  data
-  dataTable.width(1200).height(800)
-  .dimension(timeOpenDimension)
-  .group(function(d) { return "First 10"  })
-  .size(10)
-    .columns([
-      function(d) { return "<a href=\"https://beacon.ses.nsw.gov.au/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
-      function(d) { return d.Type; },
-      function(d) { return d.JobReceivedFixed.toLocaleTimeString("en-au", options); },
-      function(d) { return (new Date(d.JobCompleted).getTime() !== new Date(0).getTime() ? d.JobCompleted.toLocaleTimeString("en-au", options):"") },
-      function(d) { return d.Address.PrettyAddress; },
-      ])
-    .sortBy(function(d){ return d.JobReceivedFixed; })
-    .order(d3.ascending);
+ dataTable.width(1200).height(800)
+ .dimension(timeOpenDimension)
+ .group(function(d) { return "First 10"  })
+ .size(10)
+ .columns([
+  function(d) { return "<a href=\"https://beacon.ses.nsw.gov.au/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
+  function(d) { return d.Type; },
+  function(d) { return d.JobReceivedFixed.toLocaleTimeString("en-au", options); },
+  function(d) { return (new Date(d.JobCompleted).getTime() !== new Date(0).getTime() ? d.JobCompleted.toLocaleTimeString("en-au", options):"") },
+  function(d) { return d.Address.PrettyAddress; },
+  ])
+ .sortBy(function(d){ return d.JobReceivedFixed; })
+ .order(d3.ascending);
 
 // Table of  data
   // dataTable.width(960).height(800)
@@ -509,125 +514,125 @@ all:"%total-count job(s) total"
   // produces a 'group' for tag pie charts, switch on the key in the object that needs to be walked
   function makeTagGroup(dim, targetfact) {
 
-      switch (targetfact) {
-          case "treeTags":
-              var group = dim.groupAll().reduce(
-                  function(p, v) {
-                      v.treeTags.forEach(function(val, idx) {
+    switch (targetfact) {
+      case "treeTags":
+      var group = dim.groupAll().reduce(
+        function(p, v) {
+          v.treeTags.forEach(function(val, idx) {
                           p[val] = (p[val] || 0) + 1; //increment counts
-                      });
-                      return p;
-                  },
-                  function(p, v) {
-                      v.treeTags.forEach(function(val, idx) {
+                        });
+          return p;
+        },
+        function(p, v) {
+          v.treeTags.forEach(function(val, idx) {
                           p[val] = (p[val] || 0) - 1; //decrement counts
-                      });
-                      return p;
-                  },
-                  function() {
-                      return {};
-                  }
-              ).value()
-              group.all = function() {
-                  var newObject = [];
-                  for (var key in this) {
-                      if (this.hasOwnProperty(key) && key != "all") {
-                          newObject.push({
-                              key: key,
-                              value: this[key]
-                          });
-                      }
-                  }
-                  return newObject;
-              };
-              // group.top = function(count) {
-              //     var newObject = this.all();
-              //     newObject.sort(function(a, b) {
-              //         return b.value - a.value
-              //     });
-              //     return newObject.slice(0, count);
-              // };
-              return group;
-              break;
-          case "hazardTags":
-              var group = dim.groupAll().reduce(
-                  function(p, v) {
-                      v.hazardTags.forEach(function(val, idx) {
+                        });
+          return p;
+        },
+        function() {
+          return {};
+        }
+        ).value()
+      group.all = function() {
+        var newObject = [];
+        for (var key in this) {
+          if (this.hasOwnProperty(key) && key != "all") {
+            newObject.push({
+              key: key,
+              value: this[key]
+            });
+          }
+        }
+        return newObject;
+      };
+      // group.top = function(count) {
+      //   var newObject = this.all();
+      //   newObject.sort(function(a, b) {
+      //     return b.value - a.value
+      //   });
+      //   return newObject.slice(0, count);
+      // };
+      return group;
+      break;
+      case "hazardTags":
+      var group = dim.groupAll().reduce(
+        function(p, v) {
+          v.hazardTags.forEach(function(val, idx) {
                           p[val] = (p[val] || 0) + 1; //increment counts
-                      });
-                      return p;
-                  },
-                  function(p, v) {
-                      v.hazardTags.forEach(function(val, idx) {
+                        });
+          return p;
+        },
+        function(p, v) {
+          v.hazardTags.forEach(function(val, idx) {
                           p[val] = (p[val] || 0) - 1; //decrement counts
-                      });
-                      return p;
-                  },
-                  function() {
-                      return {};
-                  }
-              ).value()
-              group.all = function() {
-                  var newObject = [];
-                  for (var key in this) {
-                      if (this.hasOwnProperty(key) && key != "all") {
-                          newObject.push({
-                              key: key,
-                              value: this[key]
-                          });
-                      }
-                  }
-                  return newObject;
-              };
-              // group.top = function(count) {
-              //     var newObject = this.all();
-              //     newObject.sort(function(a, b) {
-              //         return b.value - a.value
-              //     });
-              //     return newObject.slice(0, count);
-              // };
-             return group;
-              break;
-          case "propertyTags":
-              var group = dim.groupAll().reduce(
-                  function(p, v) {
-                      v.propertyTags.forEach(function(val, idx) {
+                        });
+          return p;
+        },
+        function() {
+          return {};
+        }
+        ).value()
+      group.all = function() {
+        var newObject = [];
+        for (var key in this) {
+          if (this.hasOwnProperty(key) && key != "all") {
+            newObject.push({
+              key: key,
+              value: this[key]
+            });
+          }
+        }
+        return newObject;
+      };
+      // group.top = function(count) {
+      //   var newObject = this.all();
+      //   newObject.sort(function(a, b) {
+      //     return b.value - a.value
+      //   });
+      //   return newObject.slice(0, count);
+      // };
+      return group;
+      break;
+      case "propertyTags":
+      var group = dim.groupAll().reduce(
+        function(p, v) {
+          v.propertyTags.forEach(function(val, idx) {
                           p[val] = (p[val] || 0) + 1; //increment counts
-                      });
-                      return p;
-                  },
-                  function(p, v) {
-                      v.propertyTags.forEach(function(val, idx) {
+                        });
+          return p;
+        },
+        function(p, v) {
+          v.propertyTags.forEach(function(val, idx) {
                           p[val] = (p[val] || 0) - 1; //decrement counts
-                      });
-                      return p;
-                  },
-                  function() {
-                      return {};
-                  }
-              ).value()
-              group.all = function() {
-                  var newObject = [];
-                  for (var key in this) {
-                      if (this.hasOwnProperty(key) && key != "all") {
-                          newObject.push({
-                              key: key,
-                              value: this[key]
-                          });
-                      }
-                  }
-                  return newObject;
-              };
-              // group.top = function(count) {
-              //     var newObject = this.all();
-              //     newObject.sort(function(a, b) {
-              //         return b.value - a.value
-              //     });
-              //     return newObject.slice(0, count);
-              // };
-              return group;
-              break;              
-      }
+                        });
+          return p;
+        },
+        function() {
+          return {};
+        }
+        ).value()
+      group.all = function() {
+        var newObject = [];
+        for (var key in this) {
+          if (this.hasOwnProperty(key) && key != "all") {
+            newObject.push({
+              key: key,
+              value: this[key]
+            });
+          }
+        }
+        return newObject;
+      };
+      // group.top = function(count) {
+      //   var newObject = this.all();
+      //   newObject.sort(function(a, b) {
+      //     return b.value - a.value
+      //   });
+      //   return newObject.slice(0, count);
+      // };
+      return group;
+      break;              
+    }
 
   };
 
@@ -643,20 +648,22 @@ all:"%total-count job(s) total"
 
     var chart = makePie(elem, 450, 220, dimension, group);
 
+    //chart.slicesCap(10);
+
     chart.filterHandler (function (dimension, filters) {
-   dimension.filter(null);   
-    if (filters.length === 0)
-        dimension.filter(null);
+     dimension.filter(null);   
+     if (filters.length === 0)
+      dimension.filter(null);
     else
-        dimension.filterFunction(function (d) {
-            for (var i=0; i < d.length; i++) {
-                if (filters.indexOf(d[i]) >= 0) return true;
-            }
-            return false; 
-        });
-  return filters; 
+      dimension.filterFunction(function (d) {
+        for (var i=0; i < d.length; i++) {
+          if (filters.indexOf(d[i]) >= 0) return true;
+        }
+        return false; 
+      });
+    return filters; 
   }
-);
+  );
   }
 
   // produces a simple pie chart
@@ -676,19 +683,18 @@ all:"%total-count job(s) total"
   });
 
   makeSimplePie("#dc-local-chart", 450, 220, function(d) {
-    switch(unitname)
+    if (unit == []) //whole nsw state
     {
-      case "NSW":
-        return d.LGA;
-        break;
-      case "group selection":
-        return d.LGA;
-        break;
-      default:
-        return d.Address.Locality;
-        break;
-    }
-    
+      return d.LGA;
+    };
+    if (Array.isArray(unit) == false) //1 lga
+    {
+      return d.Address.Locality;
+    };
+    if (unit.length >> 1) //more than one
+    {
+      return d.LGA;
+    };
   });
 
   makeSimplePie("#dc-priority-chart", 350, 220, function(d) {
@@ -738,107 +744,112 @@ function RunForestRun() {
     // }
 
 
-  function fetchComplete(jobsData) {
-    console.log("Done fetching from beacon, rendering graphs...");
-    renderPage(unitname, jobsData);
-    console.log("Graphs rendered.");
-  }
+    function fetchComplete(jobsData) {
+      console.log("Done fetching from beacon, rendering graphs...");
+      renderPage(unit, jobsData);
+      console.log("Graphs rendered.");
+    }
 
 
 
 
-  if (unitname == "") {
-    console.log("firstrun...will fetch vars");
+    if (unit.length == 0) {
+      console.log("firstrun...will fetch vars");
 
-    if (typeof params.hq !== 'undefined') {
+    if (typeof params.hq !== 'undefined') { //HQ was sent (so no filter)
 
-      if (params.hq.split(",").length == 1) {
+      if (params.hq.split(",").length == 1) { //if only one HQ
 
         GetUnitNamefromBeacon(params.hq, params.host, function(result) {
-          unitname = result;
+          unit = result;
 
-          fetchFromBeacon(params.hq, params.host,result, fetchComplete);
+          fetchFromBeacon(unit, params.host, fetchComplete);
         });
 
-      } else {
+      } else { //if more than one HQ
         console.log("passed array of units");
-        unitname = "GROUP";
-        fetchFromBeacon(params.hq, params.host, unitname, fetchComplete);
+        var hqsGiven = params.hq.split(",");
+        console.log(hqsGiven);
+        hqsGiven.forEach(function(d){
+          GetUnitNamefromBeacon(d, params.host, function(result) {
+            unit.push(result);
+            if (unit.length == params.hq.split(",").length)
+            {
+              fetchFromBeacon(unit, params.host, fetchComplete);
+            }
+          })
+        })
       }
     } else { //no hq was sent, get them all
-      unitname = "NSW";
-      fetchFromBeacon(null, params.host, unitname, fetchComplete);
+      unit = [];
+      fetchFromBeacon(unit, params.host, fetchComplete);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
-    if (typeof params.hq == 'undefined') {
-      fetchFromBeacon(null, params.host, unitname, fetchComplete);
-    } else {
-      fetchFromBeacon(params.hq, params.host, unitname, fetchComplete);
+      fetchFromBeacon(unit, params.host, fetchComplete);
     }
-  }
 }
 
-    (function($) {
-        $.fn.textWidth = function(){
-             var calc = '<span style="display:none">' + $(this).text() + '</span>';
-             $('body').append(calc);
-             var width = $('body').find('span:last').width();
-             $('body').find('span:last').remove();
-            return width;
-        };
-        
-        $.fn.marquee = function(args) {
-            var that = $(this);
-            var textWidth = that.textWidth(),
-                offset = that.width(),
-                width = offset,
-                css = {
-                    'text-indent' : that.css('text-indent'),
-                    'overflow' : that.css('overflow'),
-                    'white-space' : that.css('white-space')
-                },
-                marqueeCss = {
-                    'text-indent' : width,
-                    'overflow' : 'hidden',
-                    'white-space' : 'nowrap'
-                },
-                args = $.extend(true, { count: -1, speed: 1e1, leftToRight: false }, args),
-                i = 0,
-                stop = textWidth*-1,
-                dfd = $.Deferred();
-            
-            function go() {
-                if(!that.length) return dfd.reject();
-                if(width == stop) {
-                    i++;
-                    if(i == args.count) {
-                        that.css(css);
-                        return dfd.resolve();
-                    }
-                    if(args.leftToRight) {
-                        width = textWidth*-1;
-                    } else {
-                        width = offset;
-                    }
-                }
-                that.css('text-indent', width + 'px');
-                if(args.leftToRight) {
-                    width++;
-                } else {
-                    width--;
-                }
-                setTimeout(go, args.speed);
-            };
-            if(args.leftToRight) {
-                width = textWidth*-1;
-                width++;
-                stop = offset;
-            } else {
-                width--;            
-            }
-            that.css(marqueeCss);
-            go();
-            return dfd.promise();
-        };
-    })(jQuery);
+(function($) {
+  $.fn.textWidth = function(){
+   var calc = '<span style="display:none">' + $(this).text() + '</span>';
+   $('body').append(calc);
+   var width = $('body').find('span:last').width();
+   $('body').find('span:last').remove();
+   return width;
+ };
+
+ $.fn.marquee = function(args) {
+  var that = $(this);
+  var textWidth = that.textWidth(),
+  offset = that.width(),
+  width = offset,
+  css = {
+    'text-indent' : that.css('text-indent'),
+    'overflow' : that.css('overflow'),
+    'white-space' : that.css('white-space')
+  },
+  marqueeCss = {
+    'text-indent' : width,
+    'overflow' : 'hidden',
+    'white-space' : 'nowrap'
+  },
+  args = $.extend(true, { count: -1, speed: 1e1, leftToRight: false }, args),
+  i = 0,
+  stop = textWidth*-1,
+  dfd = $.Deferred();
+
+  function go() {
+    if(!that.length) return dfd.reject();
+    if(width == stop) {
+      i++;
+      if(i == args.count) {
+        that.css(css);
+        return dfd.resolve();
+      }
+      if(args.leftToRight) {
+        width = textWidth*-1;
+      } else {
+        width = offset;
+      }
+    }
+    that.css('text-indent', width + 'px');
+    if(args.leftToRight) {
+      width++;
+    } else {
+      width--;
+    }
+    setTimeout(go, args.speed);
+  };
+  if(args.leftToRight) {
+    width = textWidth*-1;
+    width++;
+    stop = offset;
+  } else {
+    width--;            
+  }
+  that.css(marqueeCss);
+  go();
+  return dfd.promise();
+};
+})(jQuery);
