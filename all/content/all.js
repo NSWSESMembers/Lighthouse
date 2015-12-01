@@ -28,7 +28,7 @@ thismorning = new Date(thismorning.getTime() + ( thismorning.getTimezoneOffset()
 thismorning.setHours(0,0,0,0);
 
 
-var vars = "?host="+location.hostname+"&hq="+user.headquartersId+"&start="+encodeURIComponent(thismorning.toISOString())+"&end="+encodeURIComponent(tonight.toISOString());
+var vars = "?host="+location.hostname+"&hq="+user.currentHqId+"&start="+encodeURIComponent(thismorning.toISOString())+"&end="+encodeURIComponent(tonight.toISOString());
 
 var jobsummaryUrl = lighthouseUrl+"lighthouse/summary.html"+vars;
 var jobstatsUrl = lighthouseUrl+"lighthouse/stats.html"+vars; 
@@ -50,7 +50,7 @@ ul[0].appendChild(li);
         }
     }
 
-    xhttp.open("GET", "https://"+location.hostname+"/Api/v1/Entities/" + user.headquartersId, true);
+    xhttp.open("GET", "https://"+location.hostname+"/Api/v1/Entities/" + user.currentHqId, true);
     xhttp.send();
 
 
