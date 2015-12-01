@@ -35,8 +35,8 @@ Send through any problems (bugs) or any ideas for how we can make improvements.
 
 ###In developement:
 
-- Idle session detection
-- Time picker options of this year and all time added.
+
+
 
 ###To Do
 
@@ -45,16 +45,18 @@ Send through any problems (bugs) or any ideas for how we can make improvements.
 
 ###Tested:
 
-- Team summary screen
-- Change page title to job number when viewing a job
-- Change page title to team name when viewing a team
-- Fixed missing favicon on the login page
-- hide maximise  button on popup on situational awareness map
-- "Keep logged in" - hits a url in the background to keep user session alive
-- Summary and Statistics page that feeds directly from beacon filters
+- Idle session detection with popup to warn user.
+- Time picker options of 'this year' and 'all time' added.
+- Team summary screen.
+- Change page title to job number when viewing a job.
+- Change page title to team name when viewing a team.
+- Fixed missing favicon on the login page.
+- Fixed missing page title on the login page.
+- Hide maximise  button on popup on situational awareness map
+- Job summary and statistics page that feeds directly from beacon filters
 - Quick Text on team completion and job finalisation
 - Quick Task on team completion
-- Fixed message line breaks. Instead of showing `<br>` an actual line break is inserted into the message correctly now.
+- Fixed message line breaks. Instead of showing `<br>` an actual line break is inserted into the message correctly.
 - Added 200 and 500 to pagination choices to tasking and job list
 
 
