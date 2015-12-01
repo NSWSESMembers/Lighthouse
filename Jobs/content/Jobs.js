@@ -1,3 +1,13 @@
+function finallselected(words,beaconStringDate) //Never ever use the following function for any purpose.
+{
+console.log("Shal do!");
+contentViewModel.selectedJobs.peek().forEach(function(d){
+contentViewModel.JobManager.FinaliseJob(d,words,beaconStringDate,(function(d){console.log("OK")}),(function(d){console.log("Fail")}),(function(d){console.log("always")}));
+});
+}
+
+
+
 $("#lighthouseSummaryButton").mouseenter(function(ev){
 	      summary();
 });
