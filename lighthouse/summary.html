@@ -19,6 +19,7 @@
     </script>
     <script src="resources/js/shared_job_code.js">
     </script>
+    <script src="resources/js/shared_unit_code.js"></script>
 </head>
 <body>
     <div id="loading">
@@ -27,74 +28,79 @@
     </div>
     <div align="center" id="results">
         <p id="banner">Job Summary For Test</p><br>
-        <table class="totals">
-            <tr class="header">
-                <td>Open</td>
-                <td>Closed</td>
-                <td>Total</td>
-            </tr>
-            <tr class="rowresults">
-                <td id="open"></td>
-                <td id="closed"></td>
-                <td id="totalnumber"></td>
-            </tr>
-        </table><br>
-        <br>
-        <br>
-        <br>
-        <br>
-        <table class="bigtbl">
-            <tr class="header">
-                <td>New</td>
-                <td>Acknowledged</td>
-                <td>Tasked</td>
-                <td>Completed</td>
-            </tr>
-            <tr class="rowresults">
-                <td id="new"></td>
-                <td id="ack"></td>
-                <td id="tsk"></td>
-                <td id="comp"></td>
-            </tr>
-        </table><br>
-        <br>
-        <br>
-        <br>
-        <table class="smltbl">
-            <tr class="header">
-                <td>Referred</td>
-                <td>Cancelled</td>
-                <td>Rejected</td>
-                <td>Finalised</td>
-            </tr>
-            <tr class="rowresults">
-                <td id="ref">-</td>
-                <td id="can">-</td>
-                <td id="rej">-</td>
-                <td id="fin">-</td>
-            </tr>
-        </table><br>
-        <br>
-        <br>
-        <table class="tinytbl">
-            <tr class="header">
-                <td>Storm</td>
-                <td>Support</td>
-                <td>Flood</td>
-                <td>Rescue</td>
-            </tr>
-            <tr class="rowresults">
-                <td id="storm">-</td>
-                <td id="support">-</td>
-                <td id="flood">-</td>
-                <td id="rescue">-</td>
-            </tr>
-        </table>
-    </div>
-    <footer>
-        <form>
-            Override time frame with<br>
-            <label><input id="radio1" name="slide" type="radio" value="24">Last
+        <div class="StatsTotals">
+            <div>
+              <p class="header">Open</p>
+              <p class="data" id="open"></p>
+          </div>
+          <div>
+              <p class="header">Closed</p>
+              <p class="data" id="closed"></p>
+          </div>
+          <div>
+              <p class="header">Total</p>
+              <p class="data" id="totalnumber"></p>
+          </div>
+      </div>          
+        <div class="StatsmainStats">
+            <div>
+              <p class="header">New</p>
+              <p class="data" id="new"></p>
+          </div>
+          <div>
+              <p class="header">Acknowledged</p>
+              <p class="data" id="ack"></p>
+          </div>
+          <div>
+              <p class="header">Tasked</p>
+              <p class="data" id="tsk"></p>
+          </div>
+          <div>
+              <p class="header">Completed</p>
+              <p class="data" id="comp"></p>
+          </div> 
+      </div>                             
+       <div class="StatsminorStats">
+            <div>
+              <p class="header">Referred</p>
+              <p class="data" id="ref"></p>
+          </div>
+          <div>
+              <p class="header">Cancelled</p>
+              <p class="data" id="can"></p>
+          </div>
+          <div>
+              <p class="header">Rejected</p>
+              <p class="data" id="rej"></p>
+          </div>
+          <div>
+              <p class="header">Finalised</p>
+              <p class="data" id="fin"></p>
+          </div>           
+      </div>  
+       <div class="StatsjobStats">
+            <div>
+              <p class="header">Storm</p>
+              <p class="data" id="storm"></p>
+          </div>
+          <div>
+              <p class="header">Support</p>
+              <p class="data" id="support"></p>
+          </div>
+          <div>
+              <p class="header">Flood</p>
+              <p class="data" id="flood"></p>
+          </div>
+          <div>
+              <p class="header">Rescue</p>
+              <p class="data" id="rescue"></p>
+          </div>           
+      </div>      
+</div>
+<footer>
+    <form>
+        Override time frame with<br>
+        <label><input id="radio1" name="slide" type="radio" value="24">Last
             24Hrs</label><label><input id="radio2" name="slide" type="radio"
             value="48">Last 48hrs</label><label><input id="radio3" name="slide"
             type="radio" value="72">Last 72 Hrs</label>
@@ -104,9 +110,9 @@
         rel="license">MIT</a>.
         <div style="float:right;">
             <a href="#" id="refresh"><span class=
-            "glyphicon glyphicon-refresh"></span> <span id=
-            "time">00:00</span></a>
-        </div>
-    </footer>
-</body>
-</html>
+                "glyphicon glyphicon-refresh"></span> <span id=
+                "time">00:00</span></a>
+            </div>
+        </footer>
+    </body>
+    </html>

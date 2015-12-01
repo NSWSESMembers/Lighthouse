@@ -1,17 +1,15 @@
 body {
-   min-width:1300px; /* suppose you want minimun width of 1000px */
-   width: auto !important;  /* Firefox will set width as auto */
-   width:1000px;             /* As IE ignores !important it will set width as 1000px; */
-   margin-bottom: 60px;
+	width: auto !important;  /* Firefox will set width as auto */
+	margin-bottom: 60px;
 }
 
 .stats header {
-  text-align: center;
-  margin-bottom: 1.0em;
+	text-align: center;
+	margin-bottom: 1.0em;
 }
 
 .stats header div {
-  
+
 }
 
 .stats header .events {
@@ -33,10 +31,10 @@ body {
 }
 
 .small_foot_body{
-   min-width:1300px; /* suppose you want minimun width of 1000px */
-   width: auto !important;  /* Firefox will set width as auto */
-   width:1000px;             /* As IE ignores !important it will set width as 1000px; */
-   margin-bottom: 20px;
+	min-width:1300px; /* suppose you want minimun width of 1000px */
+	width: auto !important;  /* Firefox will set width as auto */
+	width:1000px;             /* As IE ignores !important it will set width as 1000px; */
+	margin-bottom: 20px;
 }
 
 .totals {
@@ -56,7 +54,7 @@ body {
 }
 
 .teamtotals tr:nth-child(even) {
-    background-color: #F0F0F0;
+	background-color: #F0F0F0;
 }
 
 .teamtotals .header {
@@ -67,64 +65,66 @@ body {
 }
 
 .callsign {
-font-size: 30px;
-width: 15%;
-font-weight: bold;
-color: black;	
+	font-size: 30px;
+	width: 15%;
+	font-weight: bold;
+	color: black;	
 }
 
 .callsign-active {
-font-size: 30px;
-width: 15%;
-font-weight: bold;
-color: green;	
+	font-size: 30px;
+	width: 15%;
+	font-weight: bold;
+	color: green;	
 }
 
 .callsign-standby {
-font-size: 30px;
-width: 15%;
-font-weight: bold;
-color: blue;	
+	font-size: 30px;
+	width: 15%;
+	font-weight: bold;
+	color: blue;	
+}
+
+.callsign-rest {
+	font-size: 30px;
+	width: 15%;
+	font-weight: bold;
+	color: Chocolate;	
+}
+
+.callsign-alert {
+	font-size: 30px;
+	width: 15%;
+	font-weight: bold;
+	color: orange;	
+}
+
+.callsign > a, .callsign-alert > a, .callsign-rest > a, .callsign-standby > a, .callsign-active > a {
+	color: inherit;
+  text-decoration: none; /* no underline */
 }
 
 .members {
-width: 35%;
-font-size: 15px;
+	width: 35%;
+	font-size: 15px;
 }
 
 .status{
-width: 15%;
+	width: 15%;
 }
 
 .jobcount{
-width: 15%;
-font-size: 30px;
+	width: 15%;
+	font-size: 30px;
 }
 
 .update{
-width: 20%;
-font-size: 15px;
+	width: 20%;
+	font-size: 15px;
 }
 
 
-#open {
-border: 1px solid black;
-color: black;
-text-shadow: 1px 1px 6px red;
-}
 
-#closed {
-border: 1px solid black;
-color: black;
-text-shadow: 1px 1px 6px green;
-
-}
-
-#totalnumber {
-border: 1px solid black;
-text-shadow: 1px 1px 6px black;
-
-}
 
 .totals tr td {
 	width:33.33%;
@@ -136,7 +136,7 @@ text-shadow: 1px 1px 6px black;
 }
 
 .totals .rowresults {
-font-size: 90px;
+	font-size: 90px;
 }
 
 
@@ -161,7 +161,7 @@ font-size: 90px;
 }
 
 .bigtbl .rowresults {
-font-size: 80px;
+	font-size: 80px;
 }
 
 
@@ -181,7 +181,7 @@ font-size: 80px;
 }
 
 .smltbl .rowresults {
-font-size: 50px;
+	font-size: 50px;
 }
 
 .graphs {
@@ -192,7 +192,7 @@ font-size: 50px;
 
 .graphs tr td
 {
-  padding-bottom: 5em;
+	padding-bottom: 5em;
 }
 
 
@@ -213,7 +213,7 @@ font-size: 50px;
 }
 
 .tinytbl .rowresults {
-font-size: 30px;
+	font-size: 30px;
 }
 
 
@@ -228,14 +228,14 @@ footer {
 }
 
 footer .lastline {
-  position: relative;
+	position: relative;
 }
 
 footer .timer {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  padding-right: 1px;
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	padding-right: 1px;
 }
 
 .small_foot {
@@ -254,34 +254,178 @@ input[type="radio"] {
 }
 
 label, input {
-    display: inline;
-    margin-right: 2px;
+	display: inline;
+	margin-right: 2px;
 }
 
 label {
-    margin-left: 20px;
+	margin-left: 20px;
 }
 
 
 #loading {
-   width: 100%;
-   height: 100%;
-   top: 0px;
-   left: 0px;
-   position: fixed;
-   display: block;
-   opacity: 1;
-   font-size: 20px;
-   background-color: #fff;
-   z-index: 99;
-   text-align: center;
+	width: 100%;
+	height: 100%;
+	top: 0px;
+	left: 0px;
+	position: fixed;
+	display: block;
+	opacity: 1;
+	font-size: 20px;
+	background-color: #fff;
+	z-index: 99;
+	text-align: center;
 }
 
 #loading-image {
-  position: absolute;
-  top: 100px;
-  left: 40%;
-  width: 20%;
-  z-index: 100;
+	position: absolute;
+	top: 100px;
+	left: 40%;
+	width: 20%;
+	z-index: 100;
+}
+
+
+.data {
+	margin: 0 0 0 0;
+}
+
+.StatsmainStats, .StatsminorStats, .StatsjobStats {
+	display: flex;
+	flex-flow: row;
+	justify-content: center;
+	margin-bottom: 5em;
+}
+
+.StatsTotals {
+	width:50%;
+	display: flex;
+	flex-flow: row;
+	justify-content: center;
+		margin-bottom: 5em;
+
+
+}
+
+.StatsTotals > div{
+	width: 33.3%;
+	display: flex;
+	flex-flow: column;
+	align-items: center;
+}
+
+.StatsTotals > div > .header{
+	font-size: 2.5vw;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.StatsTotals > div > #open {
+	font-size: 4vw;
+	text-shadow: 1px 1px 6px red;
+}
+
+.StatsTotals > div > #closed {
+	font-size: 4vw;
+	text-shadow: 1px 1px 6px green;
+}
+
+.StatsTotals > div > #totalnumber {
+	font-size: 4vw;
+	text-shadow: 1px 1px 6px black;
+
+}
+
+
+.StatsmainStats > div, .StatsminorStats > div, .StatsjobStats > div{
+	width: 25%;
+	display: flex;
+	flex-flow: column;
+	align-items: center;
+}
+
+.StatsmainStats > div > .header{
+	font-size: 2.5vw;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.StatsmainStats > div > .data{
+	font-size: 3.5vw;
+	text-decoration: none;
+}
+
+.StatsmainStats > div:nth-child(1) {
+	margin: 0 0 0 5em;
+}
+
+.StatsmainStats > div:nth-child(2) {
+	margin: 0 10em 0 10em;
+}
+
+.StatsmainStats > div:nth-child(3) {
+	margin: 0 10em 0 0;
+}
+
+.StatsmainStats > div:nth-child(4) {
+	margin: 0 5em 0 0;
+}
+
+
+.StatsminorStats > div > .header{
+	font-size: 2vw;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.StatsminorStats > div > .data{
+	font-size: 2.5vw;
+	text-decoration: none;
+}
+
+
+.StatsminorStats > div:nth-child(1) {
+	margin: 0 0 0 5em;
+}
+
+.StatsminorStats > div:nth-child(2) {
+	margin: 0 10em 0 10em;
+}
+
+.StatsminorStats > div:nth-child(3) {
+	margin: 0 10em 0 0;
+}
+
+.StatsminorStats > div:nth-child(4) {
+	margin: 0 5em 0 0;
+}
+
+
+.StatsjobStats > div > .header{
+	font-size: 1.5vw;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+.StatsjobStats > div > .data{
+	font-size: 2vw;
+	text-decoration: none;
+}
+
+
+.StatsjobStats > div:nth-child(1) {
+	margin: 0 0 0 5em;
+}
+
+.StatsjobStats > div:nth-child(2) {
+	margin: 0 10em 0 10em;
+}
+
+.StatsjobStats > div:nth-child(3) {
+	margin: 0 10em 0 0;
+}
+
+.StatsjobStats > div:nth-child(4) {
+	margin: 0 5em 0 0;
 }
 
