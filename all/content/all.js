@@ -3,7 +3,7 @@ var waiting = setInterval(function(){ //run every 1sec until we have loaded the 
 
 if (typeof user != "undefined")
 {
-
+clearInterval(waiting); //stop timer
 var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (xhttp.readyState == 4 && xhttp.status == 200) {
@@ -44,7 +44,7 @@ li.innerHTML =     "<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdo
 
 ul[0].appendChild(li);
 
-clearInterval(waiting);
+
 
 
         }
