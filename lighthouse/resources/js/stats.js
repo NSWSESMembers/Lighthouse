@@ -769,6 +769,7 @@ function RunForestRun() {
         });
 
       } else { //if more than one HQ
+        unit = []; 
         console.log("passed array of units");
         var hqsGiven = params.hq.split(",");
         console.log(hqsGiven);

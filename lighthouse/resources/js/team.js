@@ -131,6 +131,7 @@ function RunForestRun() {
                 });
 
             } else {
+                unit = [];
                 console.log("passed array of units");
                 var hqsGiven = params.hq.split(",");
                 console.log(hqsGiven);
