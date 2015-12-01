@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 $(document).on('change', 'input[name=slide]:radio', function() {
     console.log(this.value);
-    timeoverride = this.value;
+  timeoverride = (this.value == "reset" ? null : this.value);
 
 
     RunForestRun();
@@ -56,7 +56,7 @@ function transformToAssocArray(prmstr) {
 }
 
 var timeperiod;
-var unit = [];
+var unit = null;
 
 
 var params = getSearchParameters();
@@ -105,6 +105,8 @@ function RunForestRun() {
         params.start = starttime;
         params.end = endtime;
 
+    } else {
+        params = getSearchParameters();
     }
 
     //IF TRAIN BEACON
@@ -116,7 +118,7 @@ function RunForestRun() {
 
 
 
-    if (unit.length == 0) {
+    if (unit == null) {
 
         console.log("firstrun...will fetch vars");
 

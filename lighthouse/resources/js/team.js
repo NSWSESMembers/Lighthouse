@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 $(document).on('change', 'input[name=slide]:radio', function() {
-    timeoverride = this.value;
+      timeoverride = (this.value == "reset" ? null : this.value);
+
 
 
     RunForestRun();
@@ -54,7 +55,7 @@ function transformToAssocArray(prmstr) {
 }
 
 var timeperiod;
-var unit = [];
+var unit = null;
 
 
 var params = getSearchParameters();
@@ -101,6 +102,8 @@ function RunForestRun() {
         params.start = starttime;
         params.end = endtime;
 
+    } else {
+        params = getSearchParameters();
     }
 
 
@@ -112,7 +115,7 @@ function RunForestRun() {
     // }
 
 
-    if (unit.length == 0) {
+    if (unit == null) {
 
         console.log("firstrun...will fetch vars");
 
@@ -188,12 +191,12 @@ function HackTheMatrix(unit, host) {
         });
 
         teams.Results.forEach(function(d) { //for every team
-            totalTeamsActive++;
+            
 
             if (d.TeamStatusType.Name !== "Stood Down") //that has not stood down
             {
 
-
+                totalTeamsActive++;
 
                 var row = table.insertRow(-1);
                 var callsign = row.insertCell(0);

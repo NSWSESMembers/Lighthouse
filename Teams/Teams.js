@@ -25,10 +25,3 @@ var s = document.createElement('script');
 s.src = chrome.extension.getURL('/Teams/content/Teams.js');
 (document.head || document.documentElement).appendChild(s)
 
-//set the extension code var into the head
-var summaryUrl = chrome.extension.getURL("/lighthouse/");
-var s = document.createElement('script');
-s.setAttribute('type', 'text/javascript');
-s.innerHTML = "var summaryUrl = \"" + summaryUrl + "\"";
-(document.head || document.documentElement).appendChild(s)
-

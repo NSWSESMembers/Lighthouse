@@ -1,6 +1,6 @@
 var timeoverride = null;
 var timeperiod;
-var unit = [];
+var unit = null;
 
 // window.onerror = function(message, url, lineNumber) {  
 //   document.getElementById("loading").innerHTML = "Error loading page<br>"+message+"<br> line:"+lineNumber;
@@ -21,7 +21,7 @@ $(function() {
 // redraw when the slide radio buttons change
 $(document).on('change', 'input[name=slide]:radio', function() {
   console.log(this.value);
-  timeoverride = this.value;
+  timeoverride = (this.value == "reset" ? null : this.value);
 
   RunForestRun();
 });
@@ -683,7 +683,7 @@ var options = {
   });
 
   makeSimplePie("#dc-local-chart", 450, 220, function(d) {
-    if (unit == []) //whole nsw state
+    if (unit.length == 0) //whole nsw state
     {
       return d.LGA;
     };
@@ -734,6 +734,8 @@ function RunForestRun() {
 
     params.start = starttime;
     params.end = endtime;
+  } else {
+    params = getSearchParameters();
   }
 
       //IF TRAIN BEACON
@@ -753,7 +755,7 @@ function RunForestRun() {
 
 
 
-    if (unit.length == 0) {
+    if (unit == null) {
       console.log("firstrun...will fetch vars");
 
     if (typeof params.hq !== 'undefined') { //HQ was sent (so no filter)

@@ -37,7 +37,7 @@ function transformToAssocArray(prmstr) {
 }
 
 var timeperiod;
-var unitname = "";
+var unit = [];
 
 
 var params = getSearchParameters();
@@ -48,92 +48,33 @@ var params = getSearchParameters();
 function RunForestRun() {
 
             document.getElementById("loading").style.visibility = 'visible';
-
-
-    if (timeoverride !== null) { //we are using a time override
-
-        var end = new Date();
-
-        var start = new Date();
-        start.setDate(start.getDate() - (timeoverride / 24));
-
-
-        starttime = start.toISOString();
-        endtime = end.toISOString();
-
-        console.log(starttime);
-        console.log(endtime);
-
-        params.start = starttime;
-        params.end = endtime;
-
-    }
-
-    //IF TRAIN BEACON
-
-    // if (params.host == "trainbeacon.ses.nsw.gov.au")
-    // {
-    //     document.body.style.backgroundColor = "green";
-    // }
-
-
-
-    if (unitname == "") {
-
-        console.log("firstrun...will fetch vars");
-
-        
-
-        if (typeof params.hq !== 'undefined') {
-
-        if (params.hq.split(",").length == 1)
-            {
-
-            GetUnitNamefromBeacon(params.hq, params.host, function(returnedunitname) {
-                unitname = returnedunitname;
-                HackTheMatrix(params.hq, params.host, returnedunitname);
-            });
-
-            } else {
-        console.log("passed array of units");
-        unitname = "group selection";
-        HackTheMatrix(params.hq, params.host, unitname);
-    }
-
-        } else { //no hq was sent, get them all
-            unitname = "NSW";
-            HackTheMatrix(null, params.host, unitname);
+ 
+            HackTheMatrix(params.hq, params.host);
         }
 
 
-    
 
 
-    } else {
-        console.log("rerun...will NOT fetch vars");
-        if (typeof params.hq == 'undefined') {
-            HackTheMatrix(null, unitname);
-        } else {
-            HackTheMatrix(params.hq, params.host, unitname);
-        }
-
-    }
-
-
-
-
-}
 
 //make the call to beacon
-function HackTheMatrix(id,host, unit) {
+function HackTheMatrix(id,host) {
+console.log(id);
+if (typeof id !== "undefined")
+{
+id.split(",").forEach(function(d){
+    var newObj = {"Id":d};
+    unit.push(newObj);
+})
+} else {
+    unit = [];
+}
 
-    document.title = unitname + " Export";
-
+console.log(unit);
 
     var start = new Date(decodeURIComponent(params.start));
     var end = new Date(decodeURIComponent(params.end));
 
-    GetJSONfromBeacon(id, host, start, end, function(jobs) {
+    GetJSONfromBeacon(unit, host, start, end, function(jobs) {
 
 
 
