@@ -1,5 +1,4 @@
 body {
-	width: auto !important;  /* Firefox will set width as auto */
 	margin-bottom: 60px;
 }
 
@@ -42,14 +41,28 @@ body {
 	text-align: center;
 }
 
+h1 {
+  font-size: 5.9vmax;
+}
+h2 {
+  font-size: 3.0vmax;
+}
+
+p {
+  font-size: 2vmax;
+}
+/* Team Summary page START*/
+
+
 .teamtotals {
 	width:100%;
 	text-align: center;
+	overflow: scroll;
 
 }
 
 .teamtotals tbody tr td {
-	height: 100px;
+	height: 8vmax;
 	vertical-align: middle;
 }
 
@@ -58,42 +71,41 @@ body {
 }
 
 .teamtotals .header {
-	font-size: 30px;
+	font-size: 2vmax;
 	text-decoration: none;
 	font-weight: bold;
 	padding-bottom: 20px;
 }
-
 .callsign {
-	font-size: 30px;
+	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
 	color: black;	
 }
 
 .callsign-active {
-	font-size: 30px;
+	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
 	color: green;	
 }
 
 .callsign-standby {
-	font-size: 30px;
+	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
 	color: blue;	
 }
 
 .callsign-rest {
-	font-size: 30px;
+	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
 	color: Chocolate;	
 }
 
 .callsign-alert {
-	font-size: 30px;
+	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
 	color: orange;	
@@ -106,22 +118,28 @@ body {
 
 .members {
 	width: 35%;
-	font-size: 15px;
+	font-size: 1vmax;
 }
 
 .status{
+	font-size: 1vmax;
 	width: 15%;
 }
 
 .jobcount{
-	width: 15%;
-	font-size: 30px;
+	width: 10%;
+	font-size: 2vmax;
 }
 
 .update{
-	width: 20%;
-	font-size: 15px;
+	width: 25%;
+	font-size: 1vmax;
 }
+
+
+/* Team Summary page END*/
+
+
 
 
 
@@ -294,7 +312,7 @@ label {
 	display: flex;
 	flex-flow: row;
 	justify-content: center;
-	margin-bottom: 5em;
+	margin-bottom: 2em;
 }
 
 .StatsTotals {
@@ -315,23 +333,23 @@ label {
 }
 
 .StatsTotals > div > .header{
-	font-size: 2.5vw;
+	font-size: 2.5vmax;
 	text-decoration: none;
 	font-weight: bold;
 }
 
 .StatsTotals > div > #open {
-	font-size: 4vw;
+	font-size: 4vmax;
 	text-shadow: 1px 1px 6px red;
 }
 
 .StatsTotals > div > #closed {
-	font-size: 4vw;
+	font-size: 4vmax;
 	text-shadow: 1px 1px 6px green;
 }
 
 .StatsTotals > div > #totalnumber {
-	font-size: 4vw;
+	font-size: 4vmax;
 	text-shadow: 1px 1px 6px black;
 
 }
@@ -345,13 +363,13 @@ label {
 }
 
 .StatsmainStats > div > .header{
-	font-size: 2.5vw;
+	font-size: 2.5vmax;
 	text-decoration: none;
 	font-weight: bold;
 }
 
 .StatsmainStats > div > .data{
-	font-size: 3.5vw;
+	font-size: 3.5vmax;
 	text-decoration: none;
 }
 
@@ -373,13 +391,13 @@ label {
 
 
 .StatsminorStats > div > .header{
-	font-size: 2vw;
+	font-size: 2vmax;
 	text-decoration: none;
 	font-weight: bold;
 }
 
 .StatsminorStats > div > .data{
-	font-size: 2.5vw;
+	font-size: 2.5vmax;
 	text-decoration: none;
 }
 
@@ -402,13 +420,13 @@ label {
 
 
 .StatsjobStats > div > .header{
-	font-size: 1.5vw;
+	font-size: 1.5vmax;
 	text-decoration: none;
 	font-weight: bold;
 }
 
 .StatsjobStats > div > .data{
-	font-size: 2vw;
+	font-size: 2vmax;
 	text-decoration: none;
 }
 
