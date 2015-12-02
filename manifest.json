@@ -20,6 +20,10 @@
         "https://*.ses.nsw.gov.au/Jobs*",
         "https://*.ses.nsw.gov.au/Jobs/"
       ],
+      "exclude_matches": [
+        "https://*.ses.nsw.gov.au/Jobs/SituationalAwareness",
+        "https://*.ses.nsw.gov.au/Jobs/Tasking"
+      ],
       "js": ["Jobs/Jobs.js"]
     },
     {
@@ -75,14 +79,18 @@
       "js": [
         "Lighthouse/resources/js/jquery-1.11.3.min.js",
         "all/all.js"
-      ]
+      ],
+      "css": [
+        "all/lighthouse.css"
+        ]
     }
   ],
   "web_accessible_resources": [
     "/lighthouse/*",
     "/*/content/*",
     "lighthouse*.png",
-    "lh*.png"
+    "lh*.png",
+    "xmas.png"
   ],
   "background": {
     "scripts": ["background.js"]

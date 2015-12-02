@@ -1,21 +1,23 @@
+
 function finallselected(words,beaconStringDate) //Never ever use the following function for any purpose.
 {
-console.log("Man will someone be cranky with you!");
-contentViewModel.selectedJobs.peek().forEach(function(d){
-contentViewModel.JobManager.FinaliseJob(d,words,beaconStringDate,(function(d){console.log("OK")}),(function(d){console.log("Fail")}),(function(d){console.log("always")}));
-});
+    console.log("Man will someone be cranky with you!");
+    contentViewModel.selectedJobs.peek().forEach(function(d){
+        contentViewModel.JobManager.FinaliseJob(d,words,beaconStringDate,(function(d){console.log("OK")}),(function(d){console.log("Fail")}),(function(d){console.log("always")}));
+    });
 }
 
 
 
 $("#lighthouseSummaryButton").mouseenter(function(ev){
-	      summary();
+   summary();
 });
+
 
 
 document.getElementById("lighthouseSummaryButton").onclick = function() {
 
-summary();
+    summary();
 
 }
 
@@ -23,12 +25,12 @@ summary();
 function summary() {
 
 
-var exports = JSON.parse(filterDataForExport());
+    var exports = JSON.parse(filterDataForExport());
 
 
-if (exports.hasOwnProperty("Hq")) 
-{
-	$("#lighthouseSummaryButton").attr("href",lighthouseUrl+"lighthouse/summary.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    if (exports.hasOwnProperty("Hq")) 
+    {
+     $("#lighthouseSummaryButton").attr("href",lighthouseUrl+"lighthouse/summary.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
 	//window.open(summaryUrl+"?hq="+exports.Hq[0]+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
 } else {
 	$("#lighthouseSummaryButton").attr("href",lighthouseUrl+"lighthouse/summary.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
@@ -37,12 +39,12 @@ if (exports.hasOwnProperty("Hq"))
 }
 
 $("#lighthouseStatsButton").mouseenter(function(ev){
-	      stats();
+   stats();
 });
 
 document.getElementById("lighthouseStatsButton").onclick = function() {
 
-stats();
+    stats();
 
 
 }
@@ -54,11 +56,11 @@ function stats()
 {
 
 
-var exports = JSON.parse(filterDataForExport());
+    var exports = JSON.parse(filterDataForExport());
 
-if (exports.hasOwnProperty("Hq")) 
-{
-    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"lighthouse/stats.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    if (exports.hasOwnProperty("Hq")) 
+    {
+        $("#lighthouseStatsButton").attr("href",lighthouseUrl+"lighthouse/stats.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
     //window.open(summaryUrl+"?hq="+exports.Hq[0]+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
 } else {
    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"lighthouse/stats.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
@@ -68,13 +70,13 @@ if (exports.hasOwnProperty("Hq"))
 
 
 $("#lighthousExportButton").mouseenter(function(ev){
-          advexport();
+  advexport();
 });
 
 
 document.getElementById("lighthousExportButton").onclick = function() {
 
-summary();
+    summary();
 
 }
 
@@ -82,12 +84,12 @@ summary();
 function advexport() {
 
 
-var exports = JSON.parse(filterDataForExport());
+    var exports = JSON.parse(filterDataForExport());
 
 
-if (exports.hasOwnProperty("Hq")) 
-{
-    $("#lighthousExportButton").attr("href",lighthouseUrl+"lighthouse/advexport.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    if (exports.hasOwnProperty("Hq")) 
+    {
+        $("#lighthousExportButton").attr("href",lighthouseUrl+"lighthouse/advexport.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
     //window.open(summaryUrl+"?hq="+exports.Hq[0]+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
 } else {
     $("#lighthousExportButton").attr("href",lighthouseUrl+"lighthouse/advexport.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
@@ -112,8 +114,8 @@ console.log("saved:"+saved);
 console.log("selected:"+selected);
 if (saved != selected)
 {
-console.log("Fixing page size difference");
-contentViewModel.selectedPageSizeChoice(saved);
+    console.log("Fixing page size difference");
+    contentViewModel.selectedPageSizeChoice(saved);
 }
 
 initializeDateTimePicker(filterViewModel.startDate.peek(),filterViewModel.endDate.peek());

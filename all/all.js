@@ -20,6 +20,19 @@ $.getScript(chrome.extension.getURL('/all/content/all.js'));
 //          .css('background-position', 'right bottom');
 
 
+if (location.hostname == "beacon.ses.nsw.gov.au" && (new Date().getMonth() == 11))
+{
+console.log("Ho Ho Ho");
+var logo = document.getElementsByClassName("navbar-brand");
+logo[0].style.background="transparent url('"+chrome.extension.getURL("xmas.png")+"') 0% 50% no-repeat";
+logo[0].style.backgroundSize="105px 35px";
+logo[0].style.width="120px";
+logo[0].style.height="50px";
+logo[0].style.margin="0 0 0 10px";
+logo[0].style.padding="0";
+
+}
+
 
 //set the extension code var into the head
 var s = document.createElement('script');
