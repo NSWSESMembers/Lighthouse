@@ -58,7 +58,7 @@ whenWeAreReady(function() {
                         <a>Job Status</a>
                             <span class="label tag tag-job-status tag-disabled" id="fileropen"><span class="tag-text">Open Jobs</span></span>
                             <span class="label tag tag-job-status tag-disabled" id="filerclosed"><span class="tag-text">Closed Jobs</span></span>
-                            <span class="label tag tag-job-status tag-disabled" id="filerallstatus"><span class="tag-text">All Jobs</span></span>
+                            <span class="label tag tag-lighthouse" id="filerallstatus"><span class="tag-text"><img width="14px" style="vertical-align: top;margin-right:5px" src="$LHURLlh-black.png">All Jobs</span></span>
                             </span>
                             <span class="twitter-typeahead" style="margin-left: 5px;margin-bottom:10px;position: relative; display: inline-block; direction: ltr;">
                             <a>Job Type</a>
