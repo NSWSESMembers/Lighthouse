@@ -35,7 +35,7 @@ Send through any problems (bugs) or any ideas for how we can make improvements.
 
 ###In developement:
 
-
+- Quick Filters. Allows for fast access to complex filter groups when searching. eg, "All Open Jobs" selects all the job tags that mean open (New,Ack, Tasked, Refered)
 
 
 ###To Do
