@@ -50,18 +50,28 @@ whenWeAreReady(function() {
 
             var filtermenu = `<li class="">
                     <a href="#" class="js-sub-menu-toggle">
-                        <i class="fa fa-fw"></i><img width="14px" style="vertical-align: top;margin-right:10px;float:left" src="$LHURLlh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse</span>
+                        <i class="fa fa-fw"></i><img width="14px" style="vertical-align: top;margin-right:10px;float:left" src="$LHURLlh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span>
                         <i class="toggle-icon fa fa-angle-left"></i>
                     </a>
                     <ul class="sub-menu " style="display: none;">
-                        <span class="twitter-typeahead" style="margin-left: 5px;position: relative; display: inline-block; direction: ltr;">
+                        <span class="twitter-typeahead" style="margin-left: 5px;margin-bottom:10px;position: relative; display: inline-block; direction: ltr;">
+                        <a>Job Status</a>
                             <span class="label tag tag-job-status tag-disabled" id="fileropen"><span class="tag-text">Open Jobs</span></span>
                             <span class="label tag tag-job-status tag-disabled" id="filerclosed"><span class="tag-text">Closed Jobs</span></span>
+                            <span class="label tag tag-job-status tag-disabled" id="filerallstatus"><span class="tag-text">All Jobs</span></span>
+                            </span>
+                            <span class="twitter-typeahead" style="margin-left: 5px;margin-bottom:10px;position: relative; display: inline-block; direction: ltr;">
+                            <a>Job Type</a>
                             <span class="label tag tag-rescue tag-disabled" id="filerrescue"><span class="tag-text">Rescue Jobs</span></span>
                             <span class="label tag tag-job-type tag-disabled" id="filerstorm"><span class="tag-text">Storm Jobs</span></span>
                             <span class="label tag tag-lighthouse" id="fileralltype"><span class="tag-text"><img width="14px" style="vertical-align: top;margin-right:5px" src="$LHURLlh-black.png">All Job Types</span></span>
+                            </span>
+                            <span class="twitter-typeahead" style="margin-left: 5px;margin-bottom:10px;position: relative; display: inline-block; direction: ltr;">
+                            <a>Locations</a>
                             <span class="label tag tag-property tag-disabled" id="filermyhq"><span class="tag-text">$UNIT Jobs</span></span>
                             <span class="label tag tag-property tag-disabled" id="filerallmyregion"><span class="tag-text">$REGION Jobs</span></span>
+                            <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW Jobs</span></span>
+                            <br>
                         </span>
                     </ul>
             </li>`;
@@ -74,13 +84,7 @@ whenWeAreReady(function() {
 
             $("#filerrescue").click(function() {
                 filterViewModel.selectedParentJobTypes.removeAll();
-                filterViewModel.selectedParentJobTypes.push({
-                    Id: 5,
-                    Name: "Rescue",
-                    Description: "Rescue",
-                    ParentId: null
-                });
-                filterViewModel.rescueTypeClicked({
+                filterViewModel.parentJobTypeClicked({
                     Id: 5,
                     Name: "Rescue",
                     Description: "Rescue",
@@ -90,13 +94,8 @@ whenWeAreReady(function() {
 
             $("#filerstorm").click(function() {
                 filterViewModel.selectedParentJobTypes.removeAll();
-                filterViewModel.selectedParentJobTypes.push({
-                    Id: 1,
-                    Name: "Storm",
-                    Description: "Storm",
-                    ParentId: null
-                });
-                filterViewModel.rescueTypeClicked({
+                filterViewModel.selectedRescueTypes.removeAll();
+                filterViewModel.parentJobTypeClicked({
                     Id: 1,
                     Name: "Storm",
                     Description: "Storm",
@@ -165,6 +164,10 @@ whenWeAreReady(function() {
                     ParentId: null
                 });
             })
+
+            $("#filerallstatus").click(function() {
+                filterViewModel.selectedStatusTypes.removeAll();
+            })            
 
 
             $("#filerallmyregion").click(function() {
