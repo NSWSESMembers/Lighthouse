@@ -528,7 +528,7 @@ var options = {
       group.all = function() {
         var newObject = [];
         for (var key in this) {
-          if (this.hasOwnProperty(key) && key != "all") {
+          if (this.hasOwnProperty(key) && key != "all" && key != "top") {
             newObject.push({
               key: key,
               value: this[key]
@@ -537,13 +537,13 @@ var options = {
         }
         return newObject;
       };
-      // group.top = function(count) {
-      //   var newObject = this.all();
-      //   newObject.sort(function(a, b) {
-      //     return b.value - a.value
-      //   });
-      //   return newObject.slice(0, count);
-      // };
+      group.top = function(count) {
+        var newObject = this.all();
+        newObject.sort(function(a, b) {
+          return b.value - a.value
+        });
+        return newObject.slice(0, count);
+      };
       return group;
       break;
       case "hazardTags":
@@ -567,7 +567,7 @@ var options = {
       group.all = function() {
         var newObject = [];
         for (var key in this) {
-          if (this.hasOwnProperty(key) && key != "all") {
+          if (this.hasOwnProperty(key) && key != "all" && key != "top") {
             newObject.push({
               key: key,
               value: this[key]
@@ -576,13 +576,13 @@ var options = {
         }
         return newObject;
       };
-      // group.top = function(count) {
-      //   var newObject = this.all();
-      //   newObject.sort(function(a, b) {
-      //     return b.value - a.value
-      //   });
-      //   return newObject.slice(0, count);
-      // };
+      group.top = function(count) {
+        var newObject = this.all();
+        newObject.sort(function(a, b) {
+          return b.value - a.value
+        });
+        return newObject.slice(0, count);
+      };
       return group;
       break;
       case "propertyTags":
@@ -606,7 +606,7 @@ var options = {
       group.all = function() {
         var newObject = [];
         for (var key in this) {
-          if (this.hasOwnProperty(key) && key != "all") {
+          if (this.hasOwnProperty(key) && key != "all" && key != "top") {
             newObject.push({
               key: key,
               value: this[key]
@@ -615,13 +615,13 @@ var options = {
         }
         return newObject;
       };
-      // group.top = function(count) {
-      //   var newObject = this.all();
-      //   newObject.sort(function(a, b) {
-      //     return b.value - a.value
-      //   });
-      //   return newObject.slice(0, count);
-      // };
+      group.top = function(count) {
+        var newObject = this.all();
+        newObject.sort(function(a, b) {
+          return b.value - a.value
+        });
+        return newObject.slice(0, count);
+      };
       return group;
       break;              
     }
@@ -640,7 +640,7 @@ var options = {
 
     var chart = makePie(elem, 450, 220, dimension, group);
 
-    //chart.slicesCap(10);
+    chart.slicesCap(10);
 
     chart.filterHandler (function (dimension, filters) {
      dimension.filter(null);   
