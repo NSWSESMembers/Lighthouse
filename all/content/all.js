@@ -46,7 +46,8 @@ whenWeAreReady(function() {
 
             //lighthouse menu
 
-
+if (location.pathname == "/Jobs")
+{
 
             var filtermenu = `<li class="">
                     <a href="#" class="js-sub-menu-toggle">
@@ -68,9 +69,9 @@ whenWeAreReady(function() {
                             </span>
                             <span class="twitter-typeahead" style="margin-left: 5px;margin-bottom:10px;position: relative; display: inline-block; direction: ltr;">
                             <a>Locations</a>
-                            <span class="label tag tag-property tag-disabled" id="filermyhq"><span class="tag-text">$UNIT Jobs</span></span>
-                            <span class="label tag tag-property tag-disabled" id="filerallmyregion"><span class="tag-text">$REGION Jobs</span></span>
-                            <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW Jobs</span></span>
+                            <span class="label tag tag-property tag-disabled" id="filermyhq"><span class="tag-text">$UNIT</span></span>
+                            <span class="label tag tag-property tag-disabled" id="filerallmyregion"><span class="tag-text">$REGION</span></span>
+                            <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span>
                             <br>
                         </span>
                     </ul>
@@ -183,7 +184,7 @@ whenWeAreReady(function() {
             })
 
 
-
+    }
 
         }
     }
