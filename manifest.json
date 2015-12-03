@@ -22,7 +22,8 @@
       ],
       "exclude_matches": [
         "https://*.ses.nsw.gov.au/Jobs/SituationalAwareness",
-        "https://*.ses.nsw.gov.au/Jobs/Tasking"
+        "https://*.ses.nsw.gov.au/Jobs/Tasking",
+        "https://*.ses.nsw.gov.au/Jobs/*"
       ],
       "js": ["Jobs/Jobs.js"]
     },
