@@ -87,7 +87,8 @@
     "/*/content/*",
     "lighthouse*.png",
     "lh*.png",
-    "xmas.png"
+    "xmas.png",
+    "training-xmas.png"
   ],
   "background": {
     "scripts": ["background.js"]

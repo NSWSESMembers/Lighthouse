@@ -33,6 +33,13 @@ logo[0].style.padding="0";
 
 }
 
+if (location.hostname == "trainbeacon.ses.nsw.gov.au" && (new Date().getMonth() == 11))
+{
+console.log("Ho Ho Ho");
+var logo = document.getElementsByClassName("navbar-brand");
+logo[0].style.background="transparent url('"+chrome.extension.getURL("training-xmas.png")+"') 0% 50% no-repeat";
+}
+
 
 //set the extension code var into the head
 var s = document.createElement('script');
