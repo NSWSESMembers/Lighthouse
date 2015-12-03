@@ -1,38 +1,35 @@
-//Fix missing favicon on login page
-var s = document.createElement('link');
-s.href="/Content/images/favicon.ico";
-s.rel="SHORTCUT ICON";
-document.getElementsByTagName('head')[0].appendChild(s);
-//
+// FIX - Add Missing Favicon
+$('head').append('<link rel="SHORTCUT ICON" href="/Content/images/favicon.ico" />');
 
-//replace window title with job number
-var s = document.createElement('script');
-    s.setAttribute('type', 'text/javascript');
-    s.innerHTML = "document.title = \"Beacon - Login\"";
-    (document.head || document.documentElement).appendChild(s)
+// IMPROVEMENT - Replace Window Title
+$('head > title').text('Beacon - Login');
 
+// FUNCTIONALITY - Add "Keep Alive" Option to Login Form
+$('#loginForm > fieldset > .row:nth-last-child(2)')
+  .before('<div class="lighthouse-keepalive">'+
+            '<img src="' + chrome.extension.getURL("lighthouse128.png") + '" />'+
+            '<input autocomplete="off" id="lighthouseKeepLogin" type="checkbox" /> '+
+              'Try to keep my session active'+
+            '</input>'+
+            '<div class="text">'+
+              'If your beacon session is idle for 25&nbsp;minutes you will be prompted to extend your session.'+
+            '</div>'+
+          '</div>');
 
-
-var url = chrome.extension.getURL("lighthouse128.png");
-$('#loginForm > fieldset > .row:nth-last-child(2)').before('<div class="lighthouse-keepalive"><img src="' + url + '" /><input autocomplete=\"off\" id=\"lighthouseKeepLogin\" type=\"checkbox\">  Try keep my session active</input><div class="text">If your beacon session idles for 25 minutes you will be promped to extend your session.</div></div>');
-
-
-
-chrome.storage.sync.get({
+// Check Existing "Keep Alive" setting, and set checkbox to match last usage
+chrome.storage.sync.get(
+  {
     keepalive: false,
-  }, function(items) {
+  } ,
+  function(items) {
     console.log("restoring keepalive setting:"+items.keepalive)
     document.getElementById('lighthouseKeepLogin').checked = items.keepalive;
 });
-//
 
-
-//event listener for keepalive box
+// Event listener for keepalive box
 document.getElementById('lighthouseKeepLogin').addEventListener('click', function() {
-console.log("will save keepalive setting:"+this.checked);
-chrome.storage.sync.set({
-    keepalive: this.checked,
+  console.log("will save keepalive setting:"+this.checked);
+  chrome.storage.sync.set({
+    keepalive: this.checked
   });
-
 });
-
