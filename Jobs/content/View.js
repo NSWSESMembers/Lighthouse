@@ -20,10 +20,8 @@ cleanupBr();
 
 
 function cleanupBr() {
-
+console.log("BR cleanup called")
     //only run if messages and notes have loaded in (gets the shits overwise and wont load)
-    if (masterViewModel.messagesViewModel.messages.peek().length !== 0 && masterViewModel.notesViewModel.opsLogEntries.peek().length !== 0) {
-
         var selector = '.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: Text"]';
 
         $(selector).each(function() {
@@ -40,7 +38,6 @@ function cleanupBr() {
             console.log(err.messages);
 
         }
-    }
 
 }
 
