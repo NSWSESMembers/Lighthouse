@@ -1,3 +1,5 @@
+console.info('Lighthouse: Teams/content/Teams.js');
+
 $("#lighthouseTeamSummaryButton").mouseenter(function(ev){
 	      summary();
 });

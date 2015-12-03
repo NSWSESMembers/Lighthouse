@@ -1,4 +1,4 @@
-
+console.info('Lighthouse: Jobs/View.js');
 
 //replace window title with job number
 var s = document.createElement('script');

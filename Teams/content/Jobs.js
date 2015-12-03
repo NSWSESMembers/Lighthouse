@@ -1,3 +1,4 @@
+console.info('Lighthouse: Teams/content/Jobs.js');
 
 //replace window title with team name if set
 

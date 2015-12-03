@@ -1,3 +1,5 @@
+console.info('Lighthouse: Jobs/content/SituationalAwareness.js');
+
 window.addEventListener("load", pageFullyLoaded, false);
 
 
