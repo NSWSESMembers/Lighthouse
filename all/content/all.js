@@ -1,4 +1,4 @@
-whenWeAreReady(function() {
+whenWeAreReady(user,function() {
 
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
@@ -218,10 +218,10 @@ function filtershowallmyregion() {
 
 
 
-function whenWeAreReady(cb) //when external vars have loaded
+function whenWeAreReady(varToCheck,cb) //when external vars have loaded
 {
     var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-        if (typeof user != "undefined")
+        if (typeof varToCheck != "undefined")
             console.log("We are ready"); {
             clearInterval(waiting); //stop timer
             cb(); //call back
