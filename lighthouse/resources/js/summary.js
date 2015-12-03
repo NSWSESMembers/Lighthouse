@@ -281,8 +281,8 @@ function HackTheMatrix(unit, host) {
         document.getElementById("flood").innerHTML = flood + "<h6>" + Math.round(flood / jobs.Results.length * 100) + "%</h6>";
         document.getElementById("rescue").innerHTML = rescue + "<h6>" + Math.round(rescue / jobs.Results.length * 100) + "%</h6>";
         document.getElementById("storm").innerHTML = storm + "<h6>" + Math.round(storm / jobs.Results.length * 100) + "%</h6>";
-        var open = jobs.Results.length - finJob - rejJob - canJob - refJob - completeJob;
-        var closed = refJob + canJob + completeJob + finJob;
+        var open = newJob + ackJob + tskJob + refJob;
+        var closed = canJob + completeJob + finJob + rejJob;
 
         document.getElementById("open").innerHTML = open + "<h6>" + Math.round(open / jobs.Results.length * 100) + "%</h6>";
         document.getElementById("closed").innerHTML = closed + "<h6>" + Math.round(closed / jobs.Results.length * 100) + "%</h6>";
