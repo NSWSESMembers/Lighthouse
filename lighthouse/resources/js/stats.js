@@ -487,21 +487,6 @@ var options = {
  .sortBy(function(d){ return d.JobReceivedFixed; })
  .order(d3.ascending);
 
-// Table of  data
-  // dataTable.width(960).height(800)
-  //   .dimension(timeDimension)
-  // .group(function(d) { return ""
-  //  })
-  // .size(10)
-  //   .columns([
-  //     function(d) { return d.Id; },
-  //     function(d) { return d.Address.PrettyAddress; },
-  //     function(d) { return d.Address.Locality; },
-  //     function(d) { return d.Type; }])
-  //   .sortBy(function(d){ return d.dtg; })
-  //   .order(d3.ascending);
-
-
 
   // produces a 'group' for tag pie charts, switch on the key in the object that needs to be walked
   function makeTagGroup(dim, targetfact) {
