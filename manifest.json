@@ -4,7 +4,7 @@
   "name": "Lighthouse",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2015.12.3.4",
+  "version": "2015.12.3.5",
   "icons": {
     "128": "lighthouse128.png",
     "64":"lighthouse64.png"
@@ -17,13 +17,12 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.ses.nsw.gov.au/Jobs*",
-        "https://*.ses.nsw.gov.au/Jobs/"
+        "https://*.ses.nsw.gov.au/Jobs?q=*",
+        "https://*.ses.nsw.gov.au/Jobs"
       ],
       "exclude_matches": [
         "https://*.ses.nsw.gov.au/Jobs/SituationalAwareness",
-        "https://*.ses.nsw.gov.au/Jobs/Tasking",
-        "https://*.ses.nsw.gov.au/Jobs/*"
+        "https://*.ses.nsw.gov.au/Jobs/Tasking"
       ],
       "js": ["Jobs/Jobs.js"]
     },
@@ -31,8 +30,9 @@
       "matches": ["https://*.ses.nsw.gov.au/Jobs/*"],
       "exclude_matches": [
         "https://*.ses.nsw.gov.au/Jobs",
-        "https://*.ses.nsw.gov.au/Jobs/SituationalAwareness",
-        "https://*.ses.nsw.gov.au/Jobs/Tasking",
+        "https://*.ses.nsw.gov.au/Jobs/SituationalAwareness*",
+        "https://*.ses.nsw.gov.au/Jobs/Tasking*",
+        "https://*.ses.nsw.gov.au/Jobs/Sectors*",
         "https://*.ses.nsw.gov.au/Jobs/"
       ],
       "js": ["Jobs/View.js"]
