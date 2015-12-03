@@ -19,7 +19,7 @@
       "matches": ["https://*.ses.nsw.gov.au/*"],
       "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": [
-        "Lighthouse/resources/js/jquery-1.11.3.min.js",
+        "Lighthouse/resources/js/jquery-2.1.4.min.js",
         "all/all.js"
       ],
       "css": [
