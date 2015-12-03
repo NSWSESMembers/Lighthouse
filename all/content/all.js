@@ -226,5 +226,5 @@ function whenWeAreReady(cb) //when external vars have loaded
             clearInterval(waiting); //stop timer
             cb(); //call back
         }
-    }, 500)
+    }, 200)
 }
