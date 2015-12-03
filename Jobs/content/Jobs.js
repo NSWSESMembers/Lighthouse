@@ -1,3 +1,4 @@
+console.info('Lighthouse: Jobs/content/Jobs.js');
 
 function finallselected(words,beaconStringDate) //Never ever use the following function for any purpose.
 {

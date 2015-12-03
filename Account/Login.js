@@ -1,3 +1,5 @@
+console.info('Lighthouse: Account/Login.js');
+
 // FIX - Add Missing Favicon
 $('head').append('<link rel="SHORTCUT ICON" href="/Content/images/favicon.ico" />');
 

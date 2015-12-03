@@ -1,3 +1,5 @@
+console.info('Lighthouse: Jobs/content/View.js');
+
 console.log("Running content script");
 
 

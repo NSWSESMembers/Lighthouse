@@ -1,3 +1,5 @@
+console.info('Lighthouse: all/content/all.js');
+
 whenWeAreReady(function() {
 
     var xhttp = new XMLHttpRequest();

@@ -1,3 +1,5 @@
+console.info('Lighthouse: Teams/Teams.js');
+
 //add summary button
 var bar = document.getElementsByClassName("widget-header");
 console.log(bar);

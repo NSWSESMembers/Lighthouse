@@ -1,3 +1,5 @@
+console.info('Lighthouse: all/all.js');
+
 // notify keep alive system that a new page has been loaded (and therefore the
 // user's session has been refreshed)
 console.log("telling the keep alive system we are still active")

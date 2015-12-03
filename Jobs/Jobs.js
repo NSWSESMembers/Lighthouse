@@ -1,3 +1,5 @@
+console.info('Lighthouse: Jobs/Jobs.js');
+
 //JOB Screen specific Code
 //add summary button
 var bar = document.getElementsByClassName("btn-group pull-left text-left");

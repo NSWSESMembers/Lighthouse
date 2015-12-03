@@ -1,3 +1,5 @@
+console.info('Lighthouse: background.js');
+
 // This background script is initialised and executed once and exists
 // seperate to all other pages. This script is responsible for hitting the
 // becaon API regularly to keep the user's session alive.

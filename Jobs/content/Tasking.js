@@ -1,3 +1,5 @@
+console.info('Lighthouse: Jobs/content/Tasking.js');
+
 //More pageination choices!
 
 taskingViewModel.pageSizeChoices.push(200);
