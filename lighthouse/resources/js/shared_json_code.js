@@ -1,5 +1,5 @@
 function goGetMeSomeJSONFromBeacon(url, progresscb, cb) { //take url and a page limit and loop until a result returns less than we asked for
-        const perPageLimit = 5; //small for testing
+        const perPageLimit = 500; //small for testing
         var currentPage = 0;
         var totalResults = [];
         goGet(HandleResults); //make the first call to kick off the loop

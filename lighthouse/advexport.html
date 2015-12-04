@@ -14,11 +14,12 @@
   <script src='vendors/MProgress/mprogress.min.js'></script>     
 </head>
 <body class="small_foot_body">
-  <div id="loading" style="visibility: hidden">
+  <div id="loading">
     <div id="loadmiddle">
-      <p>Loading...</p>
       <div id="loadinner">
-      </div> 
+        <p>Loading...</p>
+        <div class="loadprogress" role="button" aria-label="progress"></div>
+      </div>
     </div>
   </div>
     <div align="center" id="results">

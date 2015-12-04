@@ -11,9 +11,15 @@ var unit = null;
 // init
 $(function() {
 
-  var mp = new Mprogress({
-  parent: '#loadinner'
-});
+  var element = document.querySelector('.loadprogress');
+
+
+  var mp = new ElasticProgress(element, {
+    buttonSize: 60,
+    fontFamily: "Montserrat",
+    colorBg: "#adeca8",
+    colorFg: "#7cc576",
+  });
 
   //run every X seconds the main loop.
   startTimer(180, $('#time'));
@@ -81,11 +87,12 @@ function fetchFromBeacon(unit, host, cb, progressBar) {
   GetJSONfromBeacon(unit, host, start, end, function(data) {
     cb && cb(data);
   },function(val,total){
-        if (val != total)
-        {
-        progressBar.set(val/total)
+    if (val != total)
+    {
+      progressBar.setValue(val/total)
     } else{
-        progressBar.end();
+      progressBar.setValue(val/total)
+      progressBar.close();
     }});
   
 
@@ -707,7 +714,7 @@ var options = {
 function RunForestRun(mp) {
 
 
-    mp && mp.start();
+  mp && mp.open();
 
 
   if (timeoverride !== null) { //we are using a time override
@@ -780,8 +787,8 @@ function RunForestRun(mp) {
     }
   } else {
     console.log("rerun...will NOT fetch vars");
-      fetchFromBeacon(unit, params.host, fetchComplete, mp);
-    }
+    fetchFromBeacon(unit, params.host, fetchComplete, mp);
+  }
 }
 
 (function($) {

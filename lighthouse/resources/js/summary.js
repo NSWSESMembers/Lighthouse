@@ -11,12 +11,14 @@ window.onerror = function(message, url, lineNumber) {
 document.addEventListener('DOMContentLoaded', function() {
 
 
-var element = document.querySelector('.Upload');
+var element = document.querySelector('.loadprogress');
 
 
 var mp = new ElasticProgress(element, {
-    colorFg:"#FF0000",
-  buttonSize:80
+    buttonSize: 60,
+    fontFamily: "Montserrat",
+    colorBg: "#adeca8",
+    colorFg: "#7cc576",
 });
 
     //run every X period of time the main loop.
@@ -338,8 +340,9 @@ function HackTheMatrix(unit, host, progressBar) {
     function(val,total){
         if (val != total)
         {
-        progressBar.setValue(val/total)
+        progressBar.setValue(val/total);
     } else{
+        progressBar.setValue(val/total);
         progressBar.close();
     }
 

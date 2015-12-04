@@ -4,27 +4,15 @@
   <meta charset="utf-8">
   <title>Beacon Stats</title>
   <link href="vendors/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="resources/css/style.css" rel="stylesheet" />    
-  <script src="vendors/d3/d3.min.js" type="text/javascript"></script>
-  <script src="vendors/crossfilter/crossfilter.min.js" type="text/javascript"></script>
-  <script src="vendors/dc/dc.min.js" type="text/javascript"></script>
-  <script src="vendors/jquery/jquery-1.11.3.min.js" type="text/javascript"></script>
-  <script src="vendors/bootstrap/js/bootstrap.min.js" type="text/javascript">></script>
-  <script src="resources/js/summary.js" type="text/javascript">></script>
-  <script src="resources/js/shared_job_code.js" type="text/javascript">></script>
-  <script src="resources/js/shared_unit_code.js" type="text/javascript">></script>
-  <script src="resources/js/shared_json_code.js" type="text/javascript">></script>
+  <link href="resources/css/style.css" rel="stylesheet" />
   <link rel='stylesheet' href='vendors/MProgress/mprogress.min.css'/>
-  <script src='vendors/MProgress/mprogress.min.js'></script>
-  <script src="vendors/greensock-js/src/minified/TweenMax.min.js"></script>
-  <script src="vendors/ElasticProgress/dist/elastic-progress.js"></script>
 </head>
 <body>
   <div id="loading">
     <div id="loadmiddle">
       <div id="loadinner">
         <p>Loading...</p>
-        <div class="Upload" role="button" aria-label="Upload file"></div>
+        <div class="loadprogress" role="button" aria-label="progress"></div>
       </div>
     </div>
   </div>
@@ -118,5 +106,17 @@
         "time">00:00</span></a>
       </div>
     </footer>
+    <script src="vendors/d3/d3.min.js" type="text/javascript"></script>
+  <script src="vendors/crossfilter/crossfilter.min.js" type="text/javascript"></script>
+  <script src="vendors/dc/dc.min.js" type="text/javascript"></script>
+  <script src="vendors/jquery/jquery-1.11.3.min.js" type="text/javascript"></script>
+  <script src="vendors/bootstrap/js/bootstrap.min.js" type="text/javascript">></script>
+  <script src="resources/js/summary.js" type="text/javascript">></script>
+  <script src="resources/js/shared_job_code.js" type="text/javascript">></script>
+  <script src="resources/js/shared_unit_code.js" type="text/javascript">></script>
+  <script src="resources/js/shared_json_code.js" type="text/javascript">></script>
+  <script src='vendors/MProgress/mprogress.min.js'></script>
+  <script src="vendors/greensock-js/src/minified/TweenMax.min.js"></script>
+  <script src="vendors/ElasticProgress/dist/elastic-progress.js"></script>
   </body>
   </html>
