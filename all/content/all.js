@@ -91,6 +91,7 @@ if (location.pathname == "/Jobs")
                     Description: "Rescue",
                     ParentId: null
                 });
+                filterViewModel.updateFilters();
             })
 
             $("#filerstorm").click(function() {
@@ -102,11 +103,13 @@ if (location.pathname == "/Jobs")
                     Description: "Storm",
                     ParentId: null
                 });
+                filterViewModel.updateFilters();
             })
 
             $("#fileralltype").click(function() {
                 filterViewModel.selectedParentJobTypes.removeAll();
                 filterViewModel.selectedRescueTypes.removeAll();
+                filterViewModel.updateFilters();
             })
 
 
@@ -136,6 +139,7 @@ if (location.pathname == "/Jobs")
                     Description: "Referred",
                     ParentId: null
                 });
+                filterViewModel.updateFilters();
             })
 
             $("#filerclosed").click(function() {
@@ -164,10 +168,12 @@ if (location.pathname == "/Jobs")
                     Description: "Finalised",
                     ParentId: null
                 });
+                filterViewModel.updateFilters();
             })
 
             $("#filerallstatus").click(function() {
                 filterViewModel.selectedStatusTypes.removeAll();
+                filterViewModel.updateFilters();
             })            
 
 
@@ -177,10 +183,12 @@ if (location.pathname == "/Jobs")
 
             $("#filermyhq").click(function() {
                 filterViewModel.selectedEntities.push(user.hq);
+                filterViewModel.updateFilters();
             })
 
             $("#clearlocator").click(function() {
                 filterViewModel.selectedEntities.removeAll();
+                filterViewModel.updateFilters();
             })
 
 
@@ -210,6 +218,7 @@ function filtershowallmyregion() {
             results.forEach(function(d) {
                 filterViewModel.selectedEntities.push(d);
             });
+            filterViewModel.updateFilters();
         }
     }
     xhttp.open("GET", "https://" + location.hostname + "/Api/v1/Entities/" + user.currentRegionId + "/Children", true);
