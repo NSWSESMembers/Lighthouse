@@ -11,11 +11,15 @@ var unit = null;
 // init
 $(function() {
 
+  var mp = new Mprogress({
+  parent: '#loadinner'
+});
+
   //run every X seconds the main loop.
   startTimer(180, $('#time'));
 
   // main
-  RunForestRun()
+  RunForestRun(mp)
 });
 
 // redraw when the slide radio buttons change
@@ -70,13 +74,19 @@ function startTimer(duration, display) {
 }
 
 // fetch jobs from beacon
-function fetchFromBeacon(unit, host, cb) {
+function fetchFromBeacon(unit, host, cb, progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
   GetJSONfromBeacon(unit, host, start, end, function(data) {
     cb && cb(data);
-  });
+  },function(val,total){
+        if (val != total)
+        {
+        progressBar.set(val/total)
+    } else{
+        progressBar.end();
+    }});
   
 
 }
@@ -694,7 +704,11 @@ var options = {
 }
 
 //Get times vars for the call
-function RunForestRun() {
+function RunForestRun(mp) {
+
+
+    mp && mp.start();
+
 
   if (timeoverride !== null) { //we are using a time override
 
@@ -742,7 +756,7 @@ function RunForestRun() {
         GetUnitNamefromBeacon(params.hq, params.host, function(result) {
           unit = result;
 
-          fetchFromBeacon(unit, params.host, fetchComplete);
+          fetchFromBeacon(unit, params.host, fetchComplete, mp);
         });
 
       } else { //if more than one HQ
@@ -755,18 +769,18 @@ function RunForestRun() {
             unit.push(result);
             if (unit.length == params.hq.split(",").length)
             {
-              fetchFromBeacon(unit, params.host, fetchComplete);
+              fetchFromBeacon(unit, params.host, fetchComplete, mp);
             }
           })
         })
       }
     } else { //no hq was sent, get them all
       unit = [];
-      fetchFromBeacon(unit, params.host, fetchComplete);
+      fetchFromBeacon(unit, params.host, fetchComplete, mp);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
-      fetchFromBeacon(unit, params.host, fetchComplete);
+      fetchFromBeacon(unit, params.host, fetchComplete, mp);
     }
 }
 

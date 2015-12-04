@@ -1,5 +1,5 @@
 //make the call to beacon
-function GetJSONfromBeacon(unit, host, StartDate, EndDate, callback) {
+function GetJSONfromBeacon(unit, host, StartDate, EndDate, callback, progressCallBack) {
 
     var url = "";
     console.log("GetJSONfromBeacon called with:" + StartDate + "," + EndDate + ", " + host);
@@ -28,7 +28,18 @@ function GetJSONfromBeacon(unit, host, StartDate, EndDate, callback) {
 
     }
 
-    goGetMeSomeJSONFromBeacon(url, function(results) { //call for the JSON, rebuild the array and return it when done.
+    var lastDisplayedVal = 0 ;
+    goGetMeSomeJSONFromBeacon(url,
+    function(count,total){
+        if (count > lastDisplayedVal) //buffer the output to that the progress alway moves forwards (sync loads suck)
+        { 
+            lastDisplayedVal = count;
+          progressCallBack(count,total);
+          
+      }
+        
+    },
+    function(results) { //call for the JSON, rebuild the array and return it when done.
 
         console.log("GetJSONfromBeacon call back with: ");
         var obj = {

@@ -51,7 +51,7 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, callback) {
 
     }
     
-    goGetMeSomeJSONFromBeacon(url, function(results) { //call for the JSON, rebuild the array and return it when done.
+    goGetMeSomeJSONFromBeacon(url, function(res){console.log("Progress CB")}, function(results) { //call for the JSON, rebuild the array and return it when done.
 
         console.log("GetJSONfromBeacon call back with: ");
         var obj = {

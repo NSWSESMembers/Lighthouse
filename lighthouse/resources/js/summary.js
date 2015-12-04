@@ -10,10 +10,16 @@ window.onerror = function(message, url, lineNumber) {
 //on DOM load
 document.addEventListener('DOMContentLoaded', function() {
 
-    //run every X period of time the main loop.
-    startTimer(180);
 
-    RunForestRun()
+var mp = new Mprogress({
+  parent: '#loadinner'
+});
+
+
+    //run every X period of time the main loop.
+   startTimer(180);
+
+RunForestRun(mp)
 
 });
 
@@ -86,7 +92,9 @@ function startTimer(duration) {
 
 
 //Get times vars for the call
-function RunForestRun() {
+function RunForestRun(mp) {
+    
+    mp && mp.start();
 
     if (timeoverride !== null) { //we are using a time override
 
@@ -130,7 +138,7 @@ function RunForestRun() {
 
                 GetUnitNamefromBeacon(params.hq, params.host, function(result) {
                     unit = result;
-                    HackTheMatrix(unit, params.host);
+                    HackTheMatrix(unit, params.host,mp);
                 });
 
             } else {
@@ -142,14 +150,14 @@ function RunForestRun() {
                     GetUnitNamefromBeacon(d, params.host, function(result) {
                         unit.push(result);
                         if (unit.length == params.hq.split(",").length) {
-                            HackTheMatrix(unit, params.host);
+                            HackTheMatrix(unit, params.host,mp);
                         }
                     })
                 })
             }
         } else { //no hq was sent, get them all
             unit = [];
-            HackTheMatrix(unit, params.host);
+            HackTheMatrix(unit, params.host,mp);
         }
 
 
@@ -166,7 +174,7 @@ function RunForestRun() {
 }
 
 //make the call to beacon
-function HackTheMatrix(unit, host) {
+function HackTheMatrix(unit, host, progressBar) {
 
 
 
@@ -318,10 +326,19 @@ function HackTheMatrix(unit, host) {
         }
 
         document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
-
-        document.getElementById("results").style.visibility = 'visible';
         document.getElementById("loading").style.visibility = 'hidden';
+        document.getElementById("results").style.visibility = 'visible';
+        
 
+
+    },
+    function(val,total){
+        if (val != total)
+        {
+        progressBar.set(val/total)
+    } else{
+        progressBar.end();
+    }
 
     });
 }
