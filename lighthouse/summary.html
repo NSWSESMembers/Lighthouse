@@ -16,13 +16,16 @@
   <script src="resources/js/shared_json_code.js" type="text/javascript">></script>
   <link rel='stylesheet' href='vendors/MProgress/mprogress.min.css'/>
   <script src='vendors/MProgress/mprogress.min.js'></script>
+  <script src="vendors/greensock-js/src/minified/TweenMax.min.js"></script>
+  <script src="vendors/ElasticProgress/dist/elastic-progress.js"></script>
 </head>
 <body>
   <div id="loading">
     <div id="loadmiddle">
-      <p>Loading...</p>
       <div id="loadinner">
-      </div> 
+        <p>Loading...</p>
+        <div class="Upload" role="button" aria-label="Upload file"></div>
+      </div>
     </div>
   </div>
   <div align="center" id="results">

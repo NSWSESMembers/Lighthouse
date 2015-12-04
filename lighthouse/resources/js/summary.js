@@ -11,10 +11,13 @@ window.onerror = function(message, url, lineNumber) {
 document.addEventListener('DOMContentLoaded', function() {
 
 
-var mp = new Mprogress({
-  parent: '#loadinner'
-});
+var element = document.querySelector('.Upload');
 
+
+var mp = new ElasticProgress(element, {
+    colorFg:"#FF0000",
+  buttonSize:80
+});
 
     //run every X period of time the main loop.
    startTimer(180);
@@ -94,7 +97,7 @@ function startTimer(duration) {
 //Get times vars for the call
 function RunForestRun(mp) {
     
-    mp && mp.start();
+    mp && mp.open();
 
     if (timeoverride !== null) { //we are using a time override
 
@@ -335,9 +338,9 @@ function HackTheMatrix(unit, host, progressBar) {
     function(val,total){
         if (val != total)
         {
-        progressBar.set(val/total)
+        progressBar.setValue(val/total)
     } else{
-        progressBar.end();
+        progressBar.close();
     }
 
     });
