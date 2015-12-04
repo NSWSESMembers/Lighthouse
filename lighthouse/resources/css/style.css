@@ -286,13 +286,25 @@ label {
 	height: 100%;
 	top: 0px;
 	left: 0px;
-	position: fixed;
-	display: block;
+	position: absolute;
+	display: table;
 	opacity: 1;
 	font-size: 20px;
 	background-color: #fff;
 	z-index: 99;
 	text-align: center;
+}
+
+#loadmiddle {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+#loadinner {
+	width: 20%;
+	height: 20%;
+	text-align: center;
+	margin: auto;
 }
 
 #loading-image {
