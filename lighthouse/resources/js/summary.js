@@ -11,27 +11,35 @@ window.onerror = function(message, url, lineNumber) {
 document.addEventListener('DOMContentLoaded', function() {
 
 
-var element = document.querySelector('.loadprogress');
+    var element = document.querySelector('.loadprogress');
 
 
-var mp = new ElasticProgress(element, {
-    buttonSize: 60,
-    fontFamily: "Montserrat",
-    colorBg: "#adeca8",
-    colorFg: "#7cc576",
-});
+    var mp = new ElasticProgress(element, {
+        buttonSize: 60,
+        fontFamily: "Montserrat",
+        colorBg: "#7dbde8",
+        colorFg: "#0f3a57",
+        onClose:function(){
+            document.getElementById("loading").style.visibility = 'hidden';
+            document.getElementById("results").style.visibility = 'visible';
+        }
+    });
+
+
+    ///SET ON CLOSE TO RUN THIS
+
 
     //run every X period of time the main loop.
-   startTimer(180);
+    startTimer(180);
 
-RunForestRun(mp)
+    RunForestRun(mp)
 
 });
 
 
 $(document).on('change', 'input[name=slide]:radio', function() {
     console.log(this.value);
-  timeoverride = (this.value == "reset" ? null : this.value);
+    timeoverride = (this.value == "reset" ? null : this.value);
 
 
     RunForestRun();
@@ -77,7 +85,7 @@ function startTimer(duration) {
 
     var display = document.querySelector('#time');
     var timer = duration,
-        minutes, seconds;
+    minutes, seconds;
     setInterval(function() {
         minutes = parseInt(timer / 60, 10)
         seconds = parseInt(timer % 60, 10);
@@ -98,7 +106,7 @@ function startTimer(duration) {
 
 //Get times vars for the call
 function RunForestRun(mp) {
-    
+
     mp && mp.open();
 
     if (timeoverride !== null) { //we are using a time override
@@ -170,8 +178,8 @@ function RunForestRun(mp) {
 
     } else {
         console.log("rerun...will NOT fetch vars");
-            HackTheMatrix(unit, params.host);
-        }
+        HackTheMatrix(unit, params.host);
+    }
 
 
 
@@ -221,29 +229,29 @@ function HackTheMatrix(unit, host, progressBar) {
             console.log(d.key + " " + d.value);
             switch (d.key) {
                 case "New":
-                    newJob = d.value;
-                    break;
+                newJob = d.value;
+                break;
                 case "Acknowledged":
-                    ackJob = d.value;
-                    break;
+                ackJob = d.value;
+                break;
                 case "Tasked":
-                    tskJob = d.value;
-                    break;
+                tskJob = d.value;
+                break;
                 case "Complete":
-                    completeJob = d.value;
-                    break;
+                completeJob = d.value;
+                break;
                 case "Finalised":
-                    finJob = d.value;
-                    break;
+                finJob = d.value;
+                break;
                 case "Referred":
-                    refJob = d.value;
-                    break;
+                refJob = d.value;
+                break;
                 case "Rejected":
-                    rejJob = d.value;
-                    break;
+                rejJob = d.value;
+                break;
                 case "Cancelled":
-                    canJob = d.value;
-                    break;
+                canJob = d.value;
+                break;
             }
 
         });
@@ -265,17 +273,17 @@ function HackTheMatrix(unit, host, progressBar) {
 
             switch (d.key) {
                 case 1:
-                    storm = d.value;
-                    break;
+                storm = d.value;
+                break;
                 case 2:
-                    support = d.value;
-                    break;
+                support = d.value;
+                break;
                 case 4:
-                    flood = d.value;
-                    break;
+                flood = d.value;
+                break;
                 case 5:
-                    rescue = d.value;
-                    break;
+                rescue = d.value;
+                break;
             }
 
         });
@@ -330,21 +338,18 @@ function HackTheMatrix(unit, host, progressBar) {
             };
         }
 
+
         document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
-        document.getElementById("loading").style.visibility = 'hidden';
-        document.getElementById("results").style.visibility = 'visible';
+        
+        progressBar.setValue(1);
+        progressBar.close();
+
+        
         
 
 
     },
     function(val,total){
-        if (val != total)
-        {
         progressBar.setValue(val/total);
-    } else{
-        progressBar.setValue(val/total);
-        progressBar.close();
-    }
-
     });
 }

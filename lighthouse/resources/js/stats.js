@@ -17,9 +17,14 @@ $(function() {
   var mp = new ElasticProgress(element, {
     buttonSize: 60,
     fontFamily: "Montserrat",
-    colorBg: "#adeca8",
-    colorFg: "#7cc576",
-  });
+    colorBg: "#ccb2e6",
+    colorFg: "#4c2673",
+    onClose:function(){
+     $('#loading').hide();
+     $('#results').show();
+
+   }
+ });
 
   //run every X seconds the main loop.
   startTimer(180, $('#time'));
@@ -85,15 +90,10 @@ function fetchFromBeacon(unit, host, cb, progressBar) {
   var end = new Date(decodeURIComponent(params.end));
 
   GetJSONfromBeacon(unit, host, start, end, function(data) {
-    cb && cb(data);
+    cb && cb(data,progressBar);
   },function(val,total){
-    if (val != total)
-    {
-      progressBar.setValue(val/total)
-    } else{
-      progressBar.setValue(val/total)
-      progressBar.close();
-    }});
+    progressBar.setValue(val/total)
+  });
   
 
 }
@@ -111,8 +111,8 @@ function renderPage(unit, jobs) {
    prepareData(jobs, unit, start, end);
    dc.renderAll();
 
-   $('#loading').hide();
-   $('#results').show();
+   //$('#loading').hide();
+   //$('#results').show();
 
 
 
@@ -744,10 +744,11 @@ function RunForestRun(mp) {
     // }
 
 
-    function fetchComplete(jobsData) {
+    function fetchComplete(jobsData, progressBar) {
       console.log("Done fetching from beacon, rendering graphs...");
       renderPage(unit, jobsData);
       console.log("Graphs rendered.");
+      progressBar.close();
     }
 
 

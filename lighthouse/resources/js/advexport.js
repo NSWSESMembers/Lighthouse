@@ -1,6 +1,7 @@
 var timeoverride = null;
 
-window.onerror = function(message, url, lineNumber) {  
+window.onerror = function(message, url, lineNumber) {
+  document.getElementById("loading").style.visibility = 'visible';
   document.getElementById("loading").innerHTML = "Error loading page<br>"+message+" Line "+lineNumber;
   return true;
 }; 
@@ -11,16 +12,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.getElementById("goButton").addEventListener("click", function(){
 
-   var element = document.querySelector('.loadprogress');
+    console.log("test");
+    var element = document.querySelector('.loadprogress');
 
-   var mp = new ElasticProgress(element, {
-    buttonSize: 60,
-    fontFamily: "Montserrat",
-    colorBg: "#adeca8",
-    colorFg: "#7cc576",
+    var mp = new ElasticProgress(element, {
+      buttonSize: 60,
+      fontFamily: "Montserrat",
+      colorBg: "#edadab",
+      colorFg: "#d2322d",
+      onClose:function(){
+       $('#loading').hide();
+     }
+   });
+    console.log("test");
+
+    RunForestRun(mp);
+
   });
 
- });
+});
 
 // //on DOM load
 
@@ -53,7 +63,7 @@ var params = getSearchParameters();
 
 //Get times vars for the call
 function RunForestRun(mp) {
-
+  console.log("test");
   mp && mp.open();
 
 
@@ -144,20 +154,14 @@ function HackTheMatrix(id,host, progressBar) {
      return rObj
 
    });
-
+progressBar.setValue(1);
+progressBar.close();
 downloadCSV("LighthouseExport.csv",exports);
 
-document.getElementById("loading").style.visibility = 'hidden';
+progressBar.close();
 
 },function(val,total){
-  if (val != total)
-  {
-    progressBar.setValue(val/total);
-  } else{
-    progressBar.setValue(val/total);
-    progressBar.close();
-  }
-
+  progressBar.setValue(val/total);
 });
 }
 

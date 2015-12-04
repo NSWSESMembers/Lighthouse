@@ -10,7 +10,9 @@ summarybutton.classList.add("btn");
 summarybutton.classList.add("btn-sm");
 summarybutton.classList.add("btn-default");
 summarybutton.style.marginLeft = "20px";
-summarybutton.style.background = "blue";
+summarybutton.style.background = "#175781";
+summarybutton.style.borderColor = "#0f3a57";
+
 summarybutton.style.color = "white";
 summarybutton.href = "#"
 
@@ -25,6 +27,7 @@ statsbutton.classList.add("btn-sm");
 statsbutton.classList.add("btn-default");
 statsbutton.style.marginLeft = "20px";
 statsbutton.style.background = "rebeccapurple";
+statsbutton.style.borderColor = "#4c2673";
 statsbutton.style.color = "white";
 statsbutton.href = "#"
 
@@ -37,7 +40,8 @@ exportbutton.classList.add("btn");
 exportbutton.classList.add("btn-sm");
 exportbutton.classList.add("btn-default");
 exportbutton.style.marginLeft = "20px";
-exportbutton.style.background = "#B80000";
+exportbutton.style.background = "#d2322d";
+exportbutton.style.borderColor = "#edadab";
 exportbutton.style.color = "white";
 exportbutton.href = "#"
 
