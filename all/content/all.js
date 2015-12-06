@@ -178,10 +178,12 @@ if (location.pathname == "/Jobs")
 
 
             $("#filerallmyregion").click(function() {
+                filterViewModel.selectedEntities.removeAll();
                 filtershowallmyregion();
             })
 
             $("#filermyhq").click(function() {
+                filterViewModel.selectedEntities.removeAll();
                 filterViewModel.selectedEntities.push(user.hq);
                 filterViewModel.updateFilters();
             })
