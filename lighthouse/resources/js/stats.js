@@ -748,6 +748,7 @@ function RunForestRun(mp) {
       console.log("Done fetching from beacon, rendering graphs...");
       renderPage(unit, jobsData);
       console.log("Graphs rendered.");
+      progressBar.setValue(1);
       progressBar.close();
     }
 
