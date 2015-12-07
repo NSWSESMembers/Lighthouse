@@ -91,7 +91,6 @@ function fetchFromBeacon(unit, host, cb, progressBar) {
   GetJSONfromBeacon(unit, host, start, end, function(data) {
     cb && cb(data,progressBar);
   },function(val,total){
-    console.log(val);
     if (val == -1 && total == -1)
     {
       progressBar.fail();
