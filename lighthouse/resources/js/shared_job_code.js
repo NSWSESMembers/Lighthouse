@@ -30,13 +30,16 @@ function GetJSONfromBeacon(unit, host, StartDate, EndDate, callback, progressCal
 
     var lastDisplayedVal = 0 ;
     goGetMeSomeJSONFromBeacon(url,
-    function(count,total){
+        function(count,total){
         if (count > lastDisplayedVal) //buffer the output to that the progress alway moves forwards (sync loads suck)
         { 
             lastDisplayedVal = count;
-          progressCallBack(count,total);
-          
-      }
+            progressCallBack(count,total);
+        }
+        if (count == -1 && total == -1) //allow errors
+        { 
+            progressCallBack(count,total);
+        }
         
     },
     function(results) { //call for the JSON, rebuild the array and return it when done.

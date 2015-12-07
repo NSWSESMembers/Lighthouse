@@ -22,7 +22,6 @@ $(function() {
     onClose:function(){
      $('#loading').hide();
      $('#results').show();
-
    }
  });
 
@@ -92,7 +91,13 @@ function fetchFromBeacon(unit, host, cb, progressBar) {
   GetJSONfromBeacon(unit, host, start, end, function(data) {
     cb && cb(data,progressBar);
   },function(val,total){
-    progressBar.setValue(val/total)
+    console.log(val);
+    if (val == -1 && total == -1)
+    {
+      progressBar.fail();
+    } else {
+      progressBar.setValue(val/total)
+    }
   });
   
 

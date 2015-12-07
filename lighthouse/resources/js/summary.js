@@ -350,6 +350,11 @@ function HackTheMatrix(unit, host, progressBar) {
 
     },
     function(val,total){
-        progressBar.setValue(val/total);
-    });
+        if (val == -1 && total == -1)
+        {
+          progressBar.fail();
+      } else {
+          progressBar.setValue(val/total)
+      }
+  });
 }

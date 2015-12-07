@@ -33,9 +33,13 @@ function goGetMeSomeJSONFromBeacon(url, progresscb, cb) { //take url and a page 
                         var result = JSON.parse(xhttp.responseText);
                         cb(result);
                     } catch (e) {
+                        progresscb(-1,-1);
                         //throw new Error('Error talking with beacon. JSON result isnt valid');
                         console.log(e);
                     };
+                } else if (xhttp.readyState == 4 && xhttp.status != 200) {
+                    console.log("Sending back a fail");
+                    progresscb(-1,-1)
                 }
             }
             console.log("fetching page #"+currentPage);
