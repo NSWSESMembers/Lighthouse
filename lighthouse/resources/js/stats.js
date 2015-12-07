@@ -415,11 +415,11 @@ function prepareCharts(jobs, start, end) {
 
   //closeTimeDimension.filter(function(d) { return d !> 'undefined'; });
 
-  var volumeClosedByHour = facts.dimension(function(d) {
+  var volumeClosedByPeriod = facts.dimension(function(d) {
     return d3.time.hour(d.JobCompleted);
   });
 
-  var volumeClosedByHourGroup = volumeClosedByHour.group().reduceCount(function(d) { return d.JobCompleted; });
+  var volumeClosedByPeriodGroup = volumeClosedByPeriod.group().reduceCount(function(d) { return d.JobCompleted; });
 
   timeClosedChart.width(800)
   .height(250)
@@ -428,7 +428,7 @@ function prepareCharts(jobs, start, end) {
   .mouseZoomable(false)
   .margins({top: 10, right: 10, bottom: 20, left: 40})
   .dimension(closeTimeDimension)
-  .group(volumeClosedByHourGroup)
+  .group(volumeClosedByPeriodGroup)
     //.brushOn(false)           // added for title
     .xUnits(d3.time.hours)
     .x(d3.time.scale().domain([new Date(start), new Date(end)]))
