@@ -4,24 +4,32 @@ function goGetMeSomeJSONFromBeacon(url, progresscb, cb) { //take url and a page 
         var totalResults = [];
         goGet(HandleResults,currentPage); //make the first call to kick off the loop
 
+
         function HandleResults(result) { //check the length of the return
-            console.log("Results Returned :" + result.Results.length)
+            console.log("Results Returned:" + result.Results.length)
             console.log(result);
-            if (result.Results.length == perPageLimit) //number of results is the limit, must be more to get.
+
+            if (result.Results.length > 1) //add it to the array
             {
                 totalResults.push.apply(totalResults, result.Results);
                 progresscb(totalResults.length,result.TotalItems)
-                console.log("Total collected:"+totalResults.length);
+                console.log("Total collected:"+totalResults.length+" of "+result.TotalItems);
+
+            if (totalResults.length < result.TotalItems) //length of array is less than expected number
+            {
+                console.log("There is more to get");
                 currentPage++; //guess we should get the next
                 goGet(HandleResults,currentPage);
             } else {
                 console.log("Got them all");
-                totalResults.push.apply(totalResults, result.Results);
-                progresscb(totalResults.length,result.TotalItems)
-                console.log("Total collected:"+totalResults.length);
                 cb(totalResults); //we are done
             }
+        } else { //last entry amazingly 0, or something is broken. lets stop
+            progresscb(totalResults.length,result.TotalItems)
+            console.log("Got them all"); 
+            cb(totalResults); //we are done 
         }
+    }
         function goGet(cb,page) { //make the XMLHttpRequest with the given URL
             var xhttp = new XMLHttpRequest();
             xhttp.onreadystatechange = function() {
