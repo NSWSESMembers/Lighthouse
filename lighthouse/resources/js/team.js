@@ -259,7 +259,7 @@ function HackTheMatrix(unit, host) {
         document.title = unit.Name + " Team Summary";
         document.getElementById("banner").innerHTML = '<h2>Team summary for ' + unit.Name + "</h2>";
       };
-      if (unit.length > 1) { //more than one
+      if (unit.length == 1) { //more than one
         document.title = "Group Team Summary";
         document.getElementById("banner").innerHTML = "<h2>Team summary for Group</h2>";
       };
