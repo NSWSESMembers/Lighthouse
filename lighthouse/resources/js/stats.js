@@ -233,7 +233,7 @@ function prepareData(jobs, unit, start, end) {
       document.title = unit.Name + " Job Statistics";
       $('.stats header h2').text('Job statistics for '+unit.Name);
     }
-    if (unit.length > 1) { //more than one
+    if (unit.length >> 1) { //more than one
       document.title = "Group Job Statistics";
       $('.stats header h2').text('Job statistics for Group');
     }
@@ -627,7 +627,7 @@ function prepareCharts(jobs, start, end) {
     if (Array.isArray(unit) == false) { //1 lga
       return d.Address.Locality;
     }
-    if (unit.length > 1) { //more than one
+    if (unit.length >> 1) { //more than one
       return d.LGA;
     }
   });
