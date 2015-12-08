@@ -341,8 +341,8 @@ function HackTheMatrix(unit, host, progressBar) {
 
         document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
         
-        progressBar.setValue(1);
-        progressBar.close();
+       progressBar && progressBar.setValue(1);
+        progressBar && progressBar.close();
 
         
         
@@ -350,11 +350,14 @@ function HackTheMatrix(unit, host, progressBar) {
 
     },
     function(val,total){
-        if (val == -1 && total == -1)
-        {
-          progressBar.fail();
-      } else {
-          progressBar.setValue(val/total)
-      }
-  });
+            if (progressBar) //if its a first load
+            {
+                if (val == -1 && total == -1)
+                {
+                  progressBar.fail();
+              } else {
+                  progressBar.setValue(val/total)
+              }
+          }
+      });
 }

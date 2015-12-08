@@ -91,11 +91,14 @@ function fetchFromBeacon(unit, host, cb, progressBar) {
   GetJSONfromBeacon(unit, host, start, end, function(data) {
     cb && cb(data,progressBar);
   },function(val,total){
-    if (val == -1 && total == -1)
+    if (progressBar) //if its a first load
     {
-      progressBar.fail();
-    } else {
-      progressBar.setValue(val/total)
+      if (val == -1 && total == -1)
+      {
+        progressBar.fail();
+      } else {
+        progressBar.setValue(val/total)
+      }
     }
   });
   
@@ -114,6 +117,12 @@ function renderPage(unit, jobs) {
 
    prepareData(jobs, unit, start, end);
    dc.renderAll();
+
+   $( ".total" ).click(function() {
+    console.log("clicky clicky")
+    dc.filterAll();
+    dc.renderAll();
+  });
 
    //$('#loading').hide();
    //$('#results').show();
@@ -276,7 +285,6 @@ if (unit.length >> 1) //more than one
 
 
 
-
 $('.stats header h4').text(
   start.toLocaleTimeString("en-au", options) + " to " +
   end.toLocaleTimeString("en-au", options)
@@ -412,12 +420,33 @@ function prepareCharts(jobs, start, end) {
   return d.JobCompleted;
 });
 
+var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
+var timeDifference = (Math.round(Math.abs((start.getTime() - end.getTime())/(oneDay))));
+var timePeriodWord;
+var timePeriodUnits;
+console.log(timeDifference);
 
-  //closeTimeDimension.filter(function(d) { return d !> 'undefined'; });
-
+if (timeDifference <= 1)
+{
+  timePeriodWord = "hour";
+  timePeriodUnits = d3.time.hours;
   var volumeClosedByPeriod = facts.dimension(function(d) {
     return d3.time.hour(d.JobCompleted);
   });
+} else {
+  timePeriodWord = "day";
+  timePeriodUnits = d3.time.days;
+  var volumeClosedByPeriod = facts.dimension(function(d) {
+    return d3.time.day(d.JobCompleted);
+  });
+}
+
+$('#receivedTitle').html("Jobs received per "+timePeriodWord);
+$('#completedTitle').html("Jobs completed per "+timePeriodWord);
+
+  //closeTimeDimension.filter(function(d) { return d !> 'undefined'; });
+
+  
 
   var volumeClosedByPeriodGroup = volumeClosedByPeriod.group().reduceCount(function(d) { return d.JobCompleted; });
 
@@ -429,10 +458,9 @@ function prepareCharts(jobs, start, end) {
   .margins({top: 10, right: 10, bottom: 20, left: 40})
   .dimension(closeTimeDimension)
   .group(volumeClosedByPeriodGroup)
-    //.brushOn(false)           // added for title
-    .xUnits(d3.time.hours)
-    .x(d3.time.scale().domain([new Date(start), new Date(end)]))
-    .elasticY(true)
+  .xUnits(timePeriodUnits)
+  .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+  .elasticY(true)
     //.x(d3.time.scale().domain(d3.extent(jobs.Results, function(d) {
     //return d.JobReceived; })))
 .xAxis();
@@ -752,8 +780,8 @@ function RunForestRun(mp) {
       console.log("Done fetching from beacon, rendering graphs...");
       renderPage(unit, jobsData);
       console.log("Graphs rendered.");
-      progressBar.setValue(1);
-      progressBar.close();
+      progressBar &&  progressBar.setValue(1);
+      progressBar && progressBar.close();
     }
 
 
