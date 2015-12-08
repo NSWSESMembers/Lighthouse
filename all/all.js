@@ -12,14 +12,6 @@ $('a').click(function(e) {
 // inject JS that is to run on every page in page context
 $.getScript(chrome.extension.getURL('/all/content/all.js'));
 
-// // attach a Lighthouse stamp bottom right
-// imageUrl = chrome.extension.getURL("lighthouse40.png");
-// $('body').css('background-image', 'url(' + imageUrl + ')')
-//          .css('background-repeat', 'no-repeat')
-//          .css('background-attachment', 'fixed')
-//          .css('background-position', 'right bottom');
-
-
 if (location.hostname == "beacon.ses.nsw.gov.au" && (new Date().getMonth() == 11))
 {
 console.log("Ho Ho Ho");
@@ -46,7 +38,3 @@ var s = document.createElement('script');
 s.setAttribute('type', 'text/javascript');
 s.innerHTML = "var lighthouseUrl = \"" + chrome.extension.getURL("") + "\"";
 (document.head || document.documentElement).appendChild(s)
-
-
-
-

@@ -7,9 +7,9 @@ document.getElementsByTagName('head')[0].appendChild(s);
 
 //replace window title with job number
 var s = document.createElement('script');
-    s.setAttribute('type', 'text/javascript');
-    s.innerHTML = "document.title = \"Beacon - Login\"";
-    (document.head || document.documentElement).appendChild(s)
+s.setAttribute('type', 'text/javascript');
+s.innerHTML = "document.title = \"Beacon - Login\"";
+(document.head || document.documentElement).appendChild(s)
 
 
 
@@ -29,10 +29,8 @@ chrome.storage.sync.get({
 
 //event listener for keepalive box
 document.getElementById('lighthouseKeepLogin').addEventListener('click', function() {
-console.log("will save keepalive setting:"+this.checked);
-chrome.storage.sync.set({
+  console.log("will save keepalive setting:"+this.checked);
+  chrome.storage.sync.set({
     keepalive: this.checked,
   });
-
 });
-
