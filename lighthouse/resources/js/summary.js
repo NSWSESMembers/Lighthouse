@@ -276,7 +276,7 @@ function HackTheMatrix(unit, host, progressBar) {
           document.title = unit.Name + " Job Summary";
           document.getElementById("banner").innerHTML = '<h3>Job summary for ' + unit.Name + "</h3>";
         }
-        if (unit.length >= 1) { //more than one
+        if (unit.length > 1) { //more than one
           document.title = "Group Job Summary";
           document.getElementById("banner").innerHTML = "<h3>Job summary for Group</h3>";
         };
