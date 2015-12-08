@@ -1,6 +1,6 @@
 // This background script is initialised and executed once and exists
-// seperate to all other pages. This script is responsible for hitting the
-// becaon API regularly to keep the user's session alive.
+// separate to all other pages. This script is responsible for hitting the
+// beacon API regularly to keep the user's session alive.
 
 var baseUri = "https://beacon.ses.nsw.gov.au/";
 var statusCheckInterval = 60 * 1000;
@@ -47,12 +47,9 @@ function cancelTimers() {
 function statusLoop() {
   checkBeaconStillActive(function(active) {
     if(!active) {
-      console.log("Beacon is no longer active so the keep alive timer has " +
-        "been killed.");
-
+      console.log("Beacon is no longer active so the keep alive timer has been killed.");
       cancelTimers();
-    }
-    else {
+    } else {
       console.log("Beacon is still active.");
     }
   });
@@ -61,11 +58,9 @@ function statusLoop() {
 function keepaliveLoop() {
   checkBeaconStillActive(function(active) {
     if(active) {
-      if(confirm("You have been idle on Beacon for over 25 mins. Do you " +
-                 "wish to remain logged in?")) {
+      if(confirm("You have been idle on Beacon for over 25 mins. Do you wish to remain logged in?")) {
         hitApi();
-      }
-      else {
+      } else {
         cancelTimers();
         //they dont want to keep alive any more. set storage to false.
         chrome.storage.sync.set({
@@ -77,20 +72,19 @@ function keepaliveLoop() {
 }
 
 function checkBeaconStillActive(cb) {
-    chrome.storage.sync.get({
-        keepalive: false,
-    }, function(items) {
-        if (items.keepalive) //if the user has selected to keep their session alive
-        {
-            chrome.tabs.query({
-                    url: baseUri + "*",
-                },
-                function(tabs) {
-                    cb(tabs.length > 0);
-                }
-            );
+  chrome.storage.sync.get({
+    keepalive: false,
+  }, function(items) {
+    if (items.keepalive) { //if the user has selected to keep their session alive
+      chrome.tabs.query({
+          url: baseUri + "*",
+        },
+        function(tabs) {
+          cb(tabs.length > 0);
         }
-    });
+      );
+    }
+  });
 }
 
 

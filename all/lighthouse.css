@@ -1,4 +1,8 @@
-.tag-lighthouse{color:black !important;background-color:#33CCFF!important;border-color:black!important}
+.tag-lighthouse{
+  color: black !important;
+  background-color: #3CF !important;
+  border-color: black !important;
+}
 .tag-lighthouse > .tag-text:before {
 }
 .tag-lighthouse > .tag-text:after {
