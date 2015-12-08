@@ -26,8 +26,7 @@
       <h4>date1 to date2</h4>
       <div class="dates"></div>
       <div class="events"></div>
-      <div class="total"></div>
-      
+      <span style="cursor: pointer;" href="#" class="total"></span>
     </header>
 
     <table class="graphs">
@@ -68,10 +67,10 @@
       <tr>
         <td colspan="3">
           <span class="span12" id="dc-timeopen-chart" style="float:inherit; padding-top:30px;display: inline-block;">
-            <h4>Jobs received per hour</h4>
+            <h4 id="receivedTitle">Jobs received per X</h4>
           </span>
           <span class="span12" id="dc-timeclosed-chart" style="float:inherit; padding-top:30px;display: inline-block;">
-            <h4>Jobs completed per hour</h4>
+            <h4 id="completedTitle">Jobs completed per X</h4>
           </span>
         </td>
       </tr>
