@@ -27,7 +27,13 @@ This version is updated when major changes are committed through the GitHub repo
 
 ##Development
 
-Please use the Google Chrome Store version, or, for the more adventurous, use the GitHub version as an "unpacked extension".
+Install:
+
+- NodeJS and npm
+- Gulp (`npm install -g gulp-cli`)
+
+Build:
+Run `npm install` in the root of this repository. You then should be able to run `gulp`. The extension will be built into `build` and bundled into `dist`. Use `build` for testing locally.
 
 Send through any problems (bugs) or any ideas for how we can make improvements.
 

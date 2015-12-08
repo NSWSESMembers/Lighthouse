@@ -1,1 +1,10 @@
+node_modules
+temp
+.tmp
+build
+dist
+.sass-cache
+package
+*.swp
+
 Lighthouse.zip

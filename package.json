@@ -1,0 +1,52 @@
+{
+  "name": "lighthouse",
+  "version": "1.0.0",
+  "description": "(Formerly \"*Beacon Enhancement Suite*\", \"*BES*\".)",
+  "main": "background.js",
+  "dependencies": {
+    "bootstrap": "^3.3.6",
+    "dc": "git+https://github.com/sdunster/dc.js.git#fix_browserify",
+    "elastic-progress": "git+https://github.com/sdunster/ElasticProgress.git",
+    "jqcloud-npm": "^3.0.1",
+    "jquery": "^2.1.4",
+    "jquery.marquee": "^1.3.2",
+    "stopwords": "0.0.5"
+  },
+  "devDependencies": {
+    "browserify": "^12.0.1",
+    "browserify-css": "git+https://github.com/sdunster/browserify-css.git",
+    "fs-extra": "^0.26.2",
+    "gulp": "^3.9.0",
+    "gulp-clean": "^0.3.1",
+    "gulp-cleanhtml": "^1.0.0",
+    "gulp-concat-css": "^2.2.0",
+    "gulp-foreach": "^0.1.0",
+    "gulp-jshint": "^2.0.0",
+    "gulp-minify-css": "^1.2.2",
+    "gulp-rename": "^1.2.2",
+    "gulp-size": "^2.0.0",
+    "gulp-sourcemaps": "^1.6.0",
+    "gulp-streamify": "^1.0.2",
+    "gulp-strip-debug": "^1.1.0",
+    "gulp-uglify": "^1.5.1",
+    "gulp-zip": "^3.0.2",
+    "jshint": "^2.8.0",
+    "underscore": "^1.8.3",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0",
+    "vinyl-transform": "^1.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OSPFNeighbour/Lighthouse.git"
+  },
+  "author": "Tim Dykes",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/OSPFNeighbour/Lighthouse/issues"
+  },
+  "homepage": "https://github.com/OSPFNeighbour/Lighthouse#readme"
+}
