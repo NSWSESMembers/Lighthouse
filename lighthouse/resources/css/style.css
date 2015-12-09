@@ -85,7 +85,7 @@ p {
 	vertical-align: middle;
 }
 
-.teamtotals tr: nth-child(even) {
+.teamtotals tbody tr:nth-child(even) {
 	background-color: #F0F0F0;
 }
 
