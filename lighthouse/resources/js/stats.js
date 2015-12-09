@@ -356,6 +356,11 @@ function prepareCharts(jobs, start, end) {
     return d.JobCompleted;
   });
 
+  var timeOpenDimension = facts.dimension(function (d) {
+    return d.JobReceivedFixed;
+  });
+
+
   var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
   var timeDifference = (Math.round(Math.abs((start.getTime() - end.getTime())/(oneDay))));
   var timePeriodWord;
@@ -368,18 +373,39 @@ function prepareCharts(jobs, start, end) {
     var volumeClosedByPeriod = facts.dimension(function(d) {
       return d3.time.hour(d.JobCompleted);
     });
+    var volumeOpenByPeriod = facts.dimension(function(d) {
+    return d3.time.hour(d.JobReceivedFixed);
+  });
   } else {
     timePeriodWord = "day";
     timePeriodUnits = d3.time.days;
     var volumeClosedByPeriod = facts.dimension(function(d) {
       return d3.time.day(d.JobCompleted);
     });
+    var volumeOpenByPeriod = facts.dimension(function(d) {
+    return d3.time.day(d.JobReceivedFixed);
+  });
   }
 
   $('#receivedTitle').html("Jobs received per "+timePeriodWord);
   $('#completedTitle').html("Jobs completed per "+timePeriodWord);
 
   var volumeClosedByPeriodGroup = volumeClosedByPeriod.group().reduceCount(function(d) { return d.JobCompleted; });
+  var volumeOpenByPeriodGroup = volumeOpenByPeriod.group().reduceCount(function(d) { return d.JobReceivedFixed; });
+
+  timeOpenChart
+    .width(800)
+    .height(250)
+    .transitionDuration(500)
+    .brushOn(false)
+    .mouseZoomable(true)
+    .margins({top: 10, right: 10, bottom: 20, left: 40})
+    .dimension(timeOpenDimension)
+    .group(volumeOpenByPeriodGroup)
+    .xUnits(timePeriodUnits)
+    .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+    .elasticY(true)
+    .xAxis();
 
   timeClosedChart
     .width(800)
@@ -391,32 +417,6 @@ function prepareCharts(jobs, start, end) {
     .dimension(closeTimeDimension)
     .group(volumeClosedByPeriodGroup)
     .xUnits(timePeriodUnits)
-    .x(d3.time.scale().domain([new Date(start), new Date(end)]))
-    .elasticY(true)
-    .xAxis();
-
-  // Create datatable dimension
-  var timeOpenDimension = facts.dimension(function (d) {
-    return d.JobReceivedFixed;
-  });
-
-  var volumeOpenByHour = facts.dimension(function(d) {
-    return d3.time.hour(d.JobReceivedFixed);
-  });
-
-  var volumeOpenByHourGroup = volumeOpenByHour.group().reduceCount(function(d) { return d.JobReceivedFixed; });
-
-
-  timeOpenChart
-    .width(800)
-    .height(250)
-    .transitionDuration(500)
-    .brushOn(true)
-    .mouseZoomable(false)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
-    .dimension(timeOpenDimension)
-    .group(volumeOpenByHourGroup)
-    .xUnits(d3.time.hours)
     .x(d3.time.scale().domain([new Date(start), new Date(end)]))
     .elasticY(true)
     .xAxis();
