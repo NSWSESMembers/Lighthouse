@@ -187,29 +187,29 @@ function HackTheMatrix(unit, host, progressBar) {
         console.log(d.key + " " + d.value);
         switch (d.key) {
           case "New":
-            newJob = d.value;
-            break;
+          newJob = d.value;
+          break;
           case "Acknowledged":
-            ackJob = d.value;
-            break;
+          ackJob = d.value;
+          break;
           case "Tasked":
-            tskJob = d.value;
-            break;
+          tskJob = d.value;
+          break;
           case "Complete":
-            completeJob = d.value;
-            break;
+          completeJob = d.value;
+          break;
           case "Finalised":
-            finJob = d.value;
-            break;
+          finJob = d.value;
+          break;
           case "Referred":
-            refJob = d.value;
-            break;
+          refJob = d.value;
+          break;
           case "Rejected":
-            rejJob = d.value;
-            break;
+          rejJob = d.value;
+          break;
           case "Cancelled":
-            canJob = d.value;
-            break;
+          canJob = d.value;
+          break;
         }
       });
 
@@ -219,41 +219,46 @@ function HackTheMatrix(unit, host, progressBar) {
       var support = 0;
 
       JobTypeGroup.top(Infinity).forEach(function(d) {
-          switch (d.key) {
+        switch (d.key) {
             case 1: // Parent: Storm
-              storm = d.value;
-              break;
+            storm = d.value;
+            break;
             case 2: // Parent: Support
-              support = d.value;
-              break;
+            support = d.value;
+            break;
             case 4: // Parent: Flood Assistance
-              flood = d.value;
-              break;
+            flood = d.value;
+            break;
             case 5: // Parent: Rescue
-              rescue = d.value;
-              break;
+            rescue = d.value;
+            break;
           }
-      });
+        });
 
-      document.getElementById("new").innerHTML = newJob + "<h6>" + Math.round(newJob / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("ack").innerHTML = ackJob + "<h6>" + Math.round(ackJob / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("comp").innerHTML = completeJob + "<h6>" + Math.round(completeJob / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("ref").innerHTML = refJob + "<h6>" + Math.round(refJob / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("can").innerHTML = canJob + "<h6>" + Math.round(canJob / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("rej").innerHTML = rejJob + "<h6>" + Math.round(rejJob / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("tsk").innerHTML = tskJob + "<h6>" + Math.round(tskJob / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("fin").innerHTML = finJob + "<h6>" + Math.round(finJob / jobs.Results.length * 100) + "%</h6>";
-
-      document.getElementById("support").innerHTML = support + "<h6>" + Math.round(support / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("flood").innerHTML = flood + "<h6>" + Math.round(flood / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("rescue").innerHTML = rescue + "<h6>" + Math.round(rescue / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("storm").innerHTML = storm + "<h6>" + Math.round(storm / jobs.Results.length * 100) + "%</h6>";
       var open = newJob + ackJob + tskJob + refJob;
       var closed = canJob + completeJob + finJob + rejJob;
 
-      document.getElementById("open").innerHTML = open + "<h6>" + Math.round(open / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("closed").innerHTML = closed + "<h6>" + Math.round(closed / jobs.Results.length * 100) + "%</h6>";
-      document.getElementById("totalnumber").innerHTML = jobs.Results.length + "<h6>" + Math.round(jobs.Results.length / jobs.Results.length * 100) + "%</h6>";
+      document.getElementById("open").innerHTML = (jobs.Results.length && open) ? (storm + "<h6>" + Math.round(open / jobs.Results.length * 100) + "%</h6>"):(open+"<h6>&ndash; %</h6>");
+      document.getElementById("closed").innerHTML = (jobs.Results.length && closed) ? (closed + "<h6>" + Math.round(closed / jobs.Results.length * 100) + "%</h6>"):(closed+"<h6>&ndash; %</h6>");
+      document.getElementById("totalnumber").innerHTML = jobs.Results.length+ "<h6>&ndash; %</h6>";
+
+      document.getElementById("new").innerHTML = (jobs.Results.length && newJob) ? (newJob + "<h6>" + Math.round(newJob / jobs.Results.length * 100) + "%</h6>"):(newJob+"<h6>&ndash; %</h6>");
+      document.getElementById("ack").innerHTML = (jobs.Results.length && ackJob) ? (ackJob + "<h6>" + Math.round(ackJob / jobs.Results.length * 100) + "%</h6>"):(ackJob+"<h6>&ndash; %</h6>");
+      document.getElementById("tsk").innerHTML = (jobs.Results.length && tskJob) ? (tskJob + "<h6>" + Math.round(tskJob / jobs.Results.length * 100) + "%</h6>"):(tskJob+"<h6>&ndash; %</h6>");
+      document.getElementById("comp").innerHTML = (jobs.Results.length && completeJob) ? (completeJob + "<h6>" + Math.round(completeJob / jobs.Results.length * 100) + "%</h6>"):(completeJob+"<h6>&ndash; %</h6>");
+      
+      document.getElementById("ref").innerHTML = (jobs.Results.length && refJob) ? (refJob + "<h6>" + Math.round(refJob / jobs.Results.length * 100) + "%</h6>"):(refJob+"<h6>&ndash; %</h6>");
+      document.getElementById("can").innerHTML = (jobs.Results.length && canJob) ? (canJob + "<h6>" + Math.round(canJob / jobs.Results.length * 100) + "%</h6>"):(canJob+"<h6>&ndash; %</h6>");
+      document.getElementById("rej").innerHTML = (jobs.Results.length && rejJob) ? (rejJob + "<h6>" + Math.round(rejJob / jobs.Results.length * 100) + "%</h6>"):(rejJob+"<h6>&ndash; %</h6>");
+      document.getElementById("fin").innerHTML = (jobs.Results.length && finJob) ? (finJob + "<h6>" + Math.round(finJob / jobs.Results.length * 100) + "%</h6>"):(finJob+"<h6>&ndash; %</h6>");
+
+      document.getElementById("support").innerHTML = (jobs.Results.length && support) ? (support + "<h6>" + Math.round(finJob / jobs.Results.length * 100) + "%</h6>"):(support+"<h6>&ndash; %</h6>");
+      document.getElementById("flood").innerHTML = (jobs.Results.length && flood) ? (flood + "<h6>" + Math.round(flood / jobs.Results.length * 100) + "%</h6>"):(flood+"<h6>&ndash; %</h6>");
+      document.getElementById("rescue").innerHTML = (jobs.Results.length && rescue) ? (rescue + "<h6>" + Math.round(rescue / jobs.Results.length * 100) + "%</h6>"):(rescue+"<h6>&ndash; %</h6>");
+      document.getElementById("storm").innerHTML = (jobs.Results.length && storm) ? (storm + "<h6>" + Math.round(storm / jobs.Results.length * 100) + "%</h6>"):(storm+"<h6>&ndash; %</h6>");
+
+
+
       
       var options = {
         weekday: "short",
@@ -293,6 +298,6 @@ function HackTheMatrix(unit, host, progressBar) {
         }
       }
     }
-  );
+    );
 
 }
