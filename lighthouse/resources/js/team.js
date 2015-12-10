@@ -178,20 +178,20 @@ function HackTheMatrix(unit, host) {
 
         switch (d.TeamStatusType.Id) { //color the callsign by team status
           case 3: //active
-            callsign.className = "callsign-active";
-            break;
+          callsign.className = "callsign-active";
+          break;
           case 1: //standby
-            callsign.className = "callsign-standby";
-            break;
+          callsign.className = "callsign-standby";
+          break;
           case 4: //rest
-            callsign.className = "callsign-rest";
-            break;
+          callsign.className = "callsign-rest";
+          break;
           case 2: //alert
-            callsign.className = "callsign-alert";
-            break;
+          callsign.className = "callsign-alert";
+          break;
           default:
-            callsign.className = "callsign";
-            break;
+          callsign.className = "callsign";
+          break;
         }
 
         if (d.Members.length == 0) {
@@ -230,11 +230,15 @@ function HackTheMatrix(unit, host) {
             f.CurrentStatus == "Complete" && completed++;
             var rawdate = new Date(f.CurrentStatusTime);
             var thistime = new Date(rawdate.getTime() + (rawdate.getTimezoneOffset() * 60000));
+
+
             if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") {
-              latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options);
-              oldesttime = thistime;
-            }
-          });
+             var diff = (new Date) - thistime;
+             diff = diff  / 60 / 60 / 1000;
+             latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff.toFixed(2)+" hrs ago";
+             oldesttime = thistime;
+           }
+         });
 
           if (latest == null) {
             latest = "No Updates";
