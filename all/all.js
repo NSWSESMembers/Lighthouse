@@ -6,7 +6,12 @@ chrome.runtime.sendMessage({activity: true});
 // notify keep alive system whenever we click on something. We let the event
 // propagate because we don't want to interfere with regular operation of <a>
 $('a').click(function(e) {
-  chrome.runtime.sendMessage({activity: true});
+  chrome.runtime.sendMessage({activity: true, link: this});
+});
+// notify keepalive system 
+$(window).focus(function(){
+  console.log('Focus');
+  chrome.runtime.sendMessage({focus: true});
 });
 
 // inject JS that is to run on every page in page context

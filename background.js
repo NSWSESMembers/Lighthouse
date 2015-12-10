@@ -5,13 +5,18 @@
 var baseUri = "https://beacon.ses.nsw.gov.au/";
 var statusCheckInterval = 60 * 1000;
 var keepaliveInterval = 25 * 60 * 1000;
+var lastActivity = null;
 
 var statusTimer = null;
 var keepaliveTimer = null;
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.focus) {
+    console.log("Received FOCUS message from beacon page. Updating lastActivity.");
+    lastActivity = new Date().getTime();
+  }
   if (request.activity) {
-    console.log("Received message from beacon page. Setting timer...");
+    console.log("Received ACTIVITY message from beacon page. Setting timer...");
     startTimers();
   }
 });
@@ -58,14 +63,21 @@ function statusLoop() {
 function keepaliveLoop() {
   checkBeaconStillActive(function(active) {
     if(active) {
-      if(confirm("You have been idle on Beacon for over 25 mins. Do you wish to remain logged in?")) {
+      if( ( new Date().getTime() - lastActivity ) <= keepaliveInterval ){
+        console.info( 'Beacon Page had focus within last 25 minutes. Maintaining session.' );
         hitApi();
       } else {
-        cancelTimers();
-        //they dont want to keep alive any more. set storage to false.
-        chrome.storage.sync.set({
-          keepalive: false,
-        });
+        console.time('KeepAlive Prompt');
+        if( confirm( 'You have been idle on Beacon for over 25 mins. Do you wish to remain logged in?' ) ) {
+          hitApi();
+        } else {
+          cancelTimers();
+          //they dont want to keep alive any more. set storage to false.
+          chrome.storage.sync.set({
+            keepalive: false,
+          });
+        }
+        console.timeEnd('KeepAlive Prompt');
       }
     }
   });
