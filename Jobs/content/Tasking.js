@@ -60,21 +60,3 @@ function initializeDateTimePicker(n, t) {
   });
   $("#reportrange span").html(moment(n).format("MMMM D, YYYY H:mm") + " - " + moment(t).format("MMMM D, YYYY H:mm"))
 }
-
-var $lighthouse_mapblock;
-
-$(document).ready(function(){
-
-  $lighthouse_mapblock = $('<div id="lighthouse_mapblock"><div>Click to zoom or move map</div></div>');
-  $lighthouse_mapblock
-    .click(function(e){
-      $(this).hide();
-      e.stopPropagation();
-    });
-  $('#map')
-    .append($lighthouse_mapblock)
-    .mouseleave(function(e){
-      $lighthouse_mapblock.show();
-    });
-
-});
