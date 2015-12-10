@@ -135,3 +135,22 @@ function taskFill(parent, child) {
     }
   });
 }
+
+var $lighthouse_mapblock;
+
+$(document).ready(function(){
+
+  $lighthouse_mapblock = $('<div id="lighthouse_mapblock"><div>Click to zoom or move map</div></div>');
+  $lighthouse_mapblock
+    .on('click',function(e){
+      var $t = $(this);
+      $t.hide();
+      e.stopPropagation();
+    });
+  $('#map')
+    .append($lighthouse_mapblock)
+    .on('mouseleave',function(e){
+      $lighthouse_mapblock.show();
+    });
+
+});
