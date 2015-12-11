@@ -234,14 +234,13 @@ $(function(){
   // Shortcuts search box - if Job Number entered, jump straight to that job
   $('form#layoutJobSearchForm')
     .on('submit',function(e){
-      e.preventDefault();
       var $t = $(this) ,
           $q = $('#layoutJobSearchFormJobQuery',$t) ,
           val = $q.val();
-      if ( val.match(/^\d{0,4}\-?\d{4}$/) ) { // If Keydown is "Enter" and the field contains 4 or more digits and nothing else
+      if ( /^\d{0,4}\-?\d{4}$/.test( val ) ) { // If Keydown is "Enter" and the field contains 4 or more digits and nothing else
         document.location.pathname = '/Jobs/' + parseInt( val.replace(/\D/g,'') , 10 );
-      } else {
-        document.location.href = '/Jobs?q=' + encodeURIComponent( val );
+        e.preventDefault();
+        e.stopImmediatePropagation();
       }
     });
 
