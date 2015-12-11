@@ -38,3 +38,24 @@ var s = document.createElement('script');
 s.setAttribute('type', 'text/javascript');
 s.innerHTML = "var lighthouseUrl = \"" + chrome.extension.getURL("") + "\"";
 (document.head || document.documentElement).appendChild(s)
+
+
+var $lighthouse_mapblock;
+
+$(document).ready(function(){
+
+  if( ( $map = $('#map') ).length && ('#map_zoom_slider',$map).length ){
+    $lighthouse_mapblock = $('<div id="lighthouse_mapblock"><div>Click to zoom or move map</div></div>');
+    $lighthouse_mapblock
+      .click(function(e){
+        $(this).hide();
+        e.stopPropagation();
+      });
+    $('#map')
+      .append($lighthouse_mapblock)
+      .mouseleave(function(e){
+        $lighthouse_mapblock.show();
+      });
+  }
+
+});

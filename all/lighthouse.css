@@ -8,3 +8,29 @@
 .tag-lighthouse > .tag-text:after {
 	content:"";
 }
+
+#lighthouse_mapblock {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000; /* Excessive, but needed to get ahead of ERSI Controls */)
+}
+#lighthouse_mapblock div {
+  display: none;
+  color: #000;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  text-align: center;
+  font-weight: bold;
+}
+#lighthouse_mapblock:hover {
+  background: rgba(255,255,255,0.4);
+  box-shadow: inset 0 0 20px 0 rgba(0,0,0,0.4);
+}
+#lighthouse_mapblock:hover div {
+  display: block;
+}
