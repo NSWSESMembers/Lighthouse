@@ -235,9 +235,6 @@ function HackTheMatrix(unit, host) {
             if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") {
              var diff = (new Date) - thistime;
              diff = diff / 1000 / 60;
-             console.log(thistime);
-             console.log(new Date);
-             console.log(diff);
              latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+secondsToHms(Math.round(diff))+" hrs ago";
              oldesttime = thistime;
            }
