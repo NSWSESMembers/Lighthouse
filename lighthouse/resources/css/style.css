@@ -384,19 +384,19 @@ label {
 	text-decoration: none;
 }
 
-.StatsmainStats > div: nth-child(1) {
+.StatsmainStats > div:nth-child(1) {
 	margin: 0 0 0 5em;
 }
 
-.StatsmainStats > div: nth-child(2) {
+.StatsmainStats > div:nth-child(2) {
 	margin: 0 10em 0 10em;
 }
 
-.StatsmainStats > div: nth-child(3) {
+.StatsmainStats > div:nth-child(3) {
 	margin: 0 10em 0 0;
 }
 
-.StatsmainStats > div: nth-child(4) {
+.StatsmainStats > div:nth-child(4) {
 	margin: 0 5em 0 0;
 }
 
@@ -411,19 +411,19 @@ label {
 	text-decoration: none;
 }
 
-.StatsminorStats > div: nth-child(1) {
+.StatsminorStats > div:nth-child(1) {
 	margin: 0 0 0 5em;
 }
 
-.StatsminorStats > div: nth-child(2) {
+.StatsminorStats > div:nth-child(2) {
 	margin: 0 10em 0 10em;
 }
 
-.StatsminorStats > div: nth-child(3) {
+.StatsminorStats > div:nth-child(3) {
 	margin: 0 10em 0 0;
 }
 
-.StatsminorStats > div: nth-child(4) {
+.StatsminorStats > div:nth-child(4) {
 	margin: 0 5em 0 0;
 }
 
@@ -438,18 +438,18 @@ label {
 	text-decoration: none;
 }
 
-.StatsjobStats > div: nth-child(1) {
+.StatsjobStats > div:nth-child(1) {
 	margin: 0 0 0 5em;
 }
 
-.StatsjobStats > div: nth-child(2) {
+.StatsjobStats > div:nth-child(2) {
 	margin: 0 10em 0 10em;
 }
 
-.StatsjobStats > div: nth-child(3) {
+.StatsjobStats > div:nth-child(3) {
 	margin: 0 10em 0 0;
 }
 
-.StatsjobStats > div: nth-child(4) {
+.StatsjobStats > div:nth-child(4) {
 	margin: 0 5em 0 0;
 }
