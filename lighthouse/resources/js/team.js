@@ -234,8 +234,11 @@ function HackTheMatrix(unit, host) {
 
             if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") {
              var diff = (new Date) - thistime;
-             diff = diff  / 60 / 60 / 1000;
-             latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff.toFixed(2)+" hrs ago";
+             diff = diff / 1000 / 60;
+             console.log(thistime);
+             console.log(new Date);
+             console.log(diff);
+             latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+secondsToHms(Math.round(diff))+" hrs ago";
              oldesttime = thistime;
            }
          });
@@ -272,3 +275,12 @@ function HackTheMatrix(unit, host) {
     document.getElementById("loading").style.visibility = 'hidden';
   });
 }
+
+
+function secondsToHms(d) {
+d = Number(d);
+var h = Math.floor(d / 3600);
+var m = Math.floor(d % 3600 / 60);
+var s = Math.floor(d % 3600 % 60);
+return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s); }
+
