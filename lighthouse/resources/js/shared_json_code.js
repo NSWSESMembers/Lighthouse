@@ -9,7 +9,7 @@ function goGetMeSomeJSONFromBeacon(url, progresscb, cb) { //take url and a page 
     console.log("Results Returned:" + result.Results.length)
     console.log(result);
 
-    if (result.Results.length > 1) { //add it to the array
+    if (result.Results.length >= 1) { //add it to the array
       totalResults.push.apply(totalResults, result.Results);
       progresscb(totalResults.length,result.TotalItems)
       console.log("Total collected:"+totalResults.length+" of "+result.TotalItems);
