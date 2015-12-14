@@ -1,5 +1,4 @@
 //More pageination choices!
-taskingViewModel.pageSizeChoices.push(200);
 taskingViewModel.pageSizeChoices.push(500);
 taskingViewModel.pageSizeChoices.push(1000);
 
