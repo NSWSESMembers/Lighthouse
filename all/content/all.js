@@ -227,3 +227,21 @@ function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
     }
   }, 200);
 }
+
+
+$(function(){
+
+  // Shortcuts search box - if Job Number entered, jump straight to that job
+  $('form#layoutJobSearchForm')
+    .on('submit',function(e){
+      var $t = $(this) ,
+          $q = $('#layoutJobSearchFormJobQuery',$t) ,
+          val = $q.val();
+      if ( /^\d{0,4}\-?\d{4}$/.test( val ) ) { // If Keydown is "Enter" and the field contains 4 or more digits and nothing else
+        document.location.pathname = '/Jobs/' + parseInt( val.replace(/\D/g,'') , 10 );
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    });
+
+});
