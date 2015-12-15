@@ -37,7 +37,6 @@ Send through any problems (bugs) or any ideas for how we can make improvements.
 
 
 - Christmas theme :p
-- Quick Filters. Allows for fast access to complex filter groups when searching. eg, "All Open Jobs" selects all the job tags that mean open (New,Ack, Tasked, Refered)
 
 
 ###To Do
@@ -47,6 +46,8 @@ Send through any problems (bugs) or any ideas for how we can make improvements.
 
 ###Tested:
 
+- Map overlay to prevent theft of mouse when scrolling.
+- Quick Filters. Allows for fast access to complex filter groups when searching. eg, "All Open Jobs" selects all the job tags that mean open (New,Ack, Tasked, Refered)
 - Idle session detection with popup to warn user.
 - Time picker options of 'this year' and 'all time' added.
 - Team summary screen.
@@ -59,7 +60,7 @@ Send through any problems (bugs) or any ideas for how we can make improvements.
 - Quick Text on team completion and job finalisation
 - Quick Task on team completion
 - Fixed message line breaks. Instead of showing `<br>` an actual line break is inserted into the message correctly.
-- Added 200 and 500 to pagination choices to tasking and job list
+- Added more pagination choices to tasking and job list
 
 
 
