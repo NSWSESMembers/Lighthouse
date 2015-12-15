@@ -267,21 +267,24 @@ function HackTheMatrix(unit, host, progressBar) {
         day: "numeric",
         hour12: false
       };
+
+      var banner;
+      
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
-        document.getElementById("banner").innerHTML = "<h3>Job summary for NSW</h3>";
+        banner = "<h3>Job summary for NSW</h3>";
       } else {
         if (Array.isArray(unit) == false) { //1 lga
           document.title = unit.Name + " Job Summary";
-          document.getElementById("banner").innerHTML = '<h3>Job summary for ' + unit.Name + "</h3>";
+          banner = '<h3>Job summary for ' + unit.Name + "</h3>";
         }
         if (unit.length > 1) { //more than one
           document.title = "Group Job Summary";
-          document.getElementById("banner").innerHTML = "<h3>Job summary for Group</h3>";
+          banner = "<h3>Job summary for Group</h3>";
         };
       }
 
-      document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
+      document.getElementById("banner").innerHTML = banner + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
 
       progressBar && progressBar.setValue(1);
       progressBar && progressBar.close();
