@@ -233,7 +233,7 @@ function prepareData(jobs, unit, start, end) {
       document.title = unit.Name + " Job Statistics";
       $('.stats header h2').text('Job statistics for '+unit.Name);
     }
-    if (unit.length == 1) { //more than one
+    if (unit.length > 1) { //more than one
       document.title = "Group Job Statistics";
       $('.stats header h2').text('Job statistics for Group');
     }

@@ -267,7 +267,6 @@ function HackTheMatrix(unit, host, progressBar) {
         day: "numeric",
         hour12: false
       };
-
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
         document.getElementById("banner").innerHTML = "<h3>Job summary for NSW</h3>";
@@ -276,7 +275,7 @@ function HackTheMatrix(unit, host, progressBar) {
           document.title = unit.Name + " Job Summary";
           document.getElementById("banner").innerHTML = '<h3>Job summary for ' + unit.Name + "</h3>";
         }
-        if (unit.length == 1) { //more than one
+        if (unit.length > 1) { //more than one
           document.title = "Group Job Summary";
           document.getElementById("banner").innerHTML = "<h3>Job summary for Group</h3>";
         };
