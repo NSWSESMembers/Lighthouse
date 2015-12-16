@@ -627,7 +627,7 @@ function prepareCharts(jobs, start, end) {
     if (Array.isArray(unit) == false) { //1 lga
       return d.Address.Locality;
     }
-    if (unit.length == 1) { //more than one
+    if (unit.length > 1) { //more than one
       return d.LGA;
     }
   });
