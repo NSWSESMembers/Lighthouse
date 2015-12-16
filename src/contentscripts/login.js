@@ -1,4 +1,5 @@
-$ = require('jquery');
+var $ = require('jquery');
+var DOM = require('jsx-dom-factory');
 
 // inject login.css (browserify-css takes care of this)
 require('../styles/login.css');
@@ -8,9 +9,23 @@ $('head')
   .append('<link rel="SHORTCUT ICON" src="/Content/images/favicon.ico">'); // Fix missing favicon on login page
 
 var url = chrome.extension.getURL("icons/lighthouse128.png");
-$('#loginForm > fieldset > .row:nth-last-child(2)')
-  .before('<div id="lighthouse-keepalive" class="lighthouse-keepalive" style="display:none"><img src="' + url + '" /><label><input autocomplete="off" id="lighthouseKeepLogin" type="checkbox">  Try keep my session active</label><div class="text">If your beacon session idles for 25 minutes you will be promped to extend your session.</div></div>');
-$('#lighthouse-keepalive').slideDown();
+var keepalivePanel = (
+  <div id="lighthouse-keepalive" class="lighthouse-keepalive"
+      style="display:none">
+    <img src={url} />
+    <label>
+      <input autocomplete="off" id="lighthouseKeepLogin" type="checkbox" />
+      Try keep my session active
+    </label>
+    <div class="text">
+      If your beacon session idles for 25 minutes you will be prompted to
+      extend your session.
+    </div>
+  </div>
+);
+
+$('#loginForm > fieldset > .row:nth-last-child(2)').before(keepalivePanel);
+$(keepalivePanel).slideDown();
 
 chrome.storage.sync.get({
     keepalive: false,

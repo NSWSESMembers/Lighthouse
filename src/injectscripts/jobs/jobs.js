@@ -46,11 +46,11 @@ function stats(){
 }
 
 
-$("#lighthousExportButton").mouseenter(function(ev){
+$("#lighthouseExportButton").mouseenter(function(ev){
   advexport();
 });
 
-document.getElementById("lighthousExportButton").onclick = function() {
+document.getElementById("lighthouseExportButton").onclick = function() {
   summary();
 }
 
@@ -58,9 +58,9 @@ document.getElementById("lighthousExportButton").onclick = function() {
 function advexport() {
     var exports = JSON.parse(filterDataForExport());
     if (exports.hasOwnProperty("Hq")){
-      $("#lighthousExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+      $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
     } else {
-      $("#lighthousExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+      $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
     }
 }
 

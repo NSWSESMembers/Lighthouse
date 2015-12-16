@@ -1,5 +1,6 @@
 var inject = require('../../lib/inject.js');
 var $ = require('jquery');
+var DOM = require('jsx-dom-factory');
 
 // inject all.css - browserify-css takes care of this
 require('../styles/all.css');
@@ -51,22 +52,24 @@ s.innerHTML = "var lighthouseUrl = \"" + chrome.extension.getURL("") + "\"";
 (document.head || document.documentElement).appendChild(s)
 
 
-var $lighthouse_mapblock;
-
 $(document).ready(function(){
-
   if( ( $map = $('#map') ).length && ('#map_zoom_slider',$map).length ){
-    $lighthouse_mapblock = $('<div id="lighthouse_mapblock"><div>Click to zoom or move map</div></div>');
-    $lighthouse_mapblock
+    var $mapblock = $(
+      <div id="lighthouse_mapblock">
+        <div>Click to zoom or move map</div>
+      </div>
+    );
+
+    $mapblock
       .click(function(e){
         $(this).hide();
         e.stopPropagation();
       });
+
     $('#map')
-      .append($lighthouse_mapblock)
-      .mouseleave(function(e){
-        $lighthouse_mapblock.show();
+      .append($mapblock)
+      .mouseleave(function(e) {
+        $mapblock.show();
       });
   }
-
 });

@@ -1,4 +1,4 @@
-$("#lighthouseTeamSummaryButton").mouseenter(function(ev){
+$("#lighthouseTeamSummaryButton").mouseenter(function(ev) {
   summary();
 });
 
@@ -20,5 +20,4 @@ function summary(){
   } else {
     $("#lighthouseTeamSummaryButton").attr("href",lighthouseUrl+"pages/teamsummary.html?host="+location.hostname+"&start="+encodeURIComponent(start.toISOString())+"&end="+encodeURIComponent(end.toISOString()));
   }
-
 }
