@@ -238,7 +238,7 @@ function HackTheMatrix(unit, host, progressBar) {
       var open = newJob + ackJob + tskJob + refJob;
       var closed = canJob + completeJob + finJob + rejJob;
 
-      document.getElementById("open").innerHTML = (jobs.Results.length && open) ? (storm + "<h6>" + Math.round(open / jobs.Results.length * 100) + "%</h6>"):(open+"<h6>&ndash; %</h6>");
+      document.getElementById("open").innerHTML = (jobs.Results.length && open) ? (open + "<h6>" + Math.round(open / jobs.Results.length * 100) + "%</h6>"):(open+"<h6>&ndash; %</h6>");
       document.getElementById("closed").innerHTML = (jobs.Results.length && closed) ? (closed + "<h6>" + Math.round(closed / jobs.Results.length * 100) + "%</h6>"):(closed+"<h6>&ndash; %</h6>");
       document.getElementById("totalnumber").innerHTML = jobs.Results.length+ "<h6>&ndash; %</h6>";
 
