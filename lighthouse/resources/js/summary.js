@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // SET ON CLOSE TO RUN THIS
 
   //run every X period of time the main loop.
-  startTimer(180);
+  startTimer(60);
 
   RunForestRun(mp);
 });

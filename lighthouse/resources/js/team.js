@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   //run every X period of time the main loop.
   display = document.querySelector('#time');
-  startTimer(180, display);
+  startTimer(60, display);
 
   RunForestRun()
 });
@@ -255,20 +255,22 @@ function HackTheMatrix(unit, host) {
       }
     });
 
+    var banner;
+
     if (unit.length == 0) { //whole nsw state
       document.title = "NSW Team Summary";
-      document.getElementById("banner").innerHTML = "<h2>Team summary for NSW</h2>";
+      banner = "<h2>Team summary for NSW</h2>";
     } else {
       if (Array.isArray(unit) == false) { //1 lga
         document.title = unit.Name + " Team Summary";
-        document.getElementById("banner").innerHTML = '<h2>Team summary for ' + unit.Name + "</h2>";
+        banner = '<h2>Team summary for ' + unit.Name + "</h2>";
       };
-      if (unit.length == 1) { //more than one
+      if (unit.length > 1) { //more than one
         document.title = "Group Team Summary";
-        document.getElementById("banner").innerHTML = "<h2>Team summary for Group</h2>";
+        banner = "<h2>Team summary for Group</h2>";
       };
     }
-    document.getElementById("banner").innerHTML = document.getElementById("banner").innerHTML + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + " | Total Active Teams: "+totalTeamsActive+"</h4>";
+    document.getElementById("banner").innerHTML = banner + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + " | Total Active Teams: "+totalTeamsActive+"</h4>";
     document.getElementById("loading").style.visibility = 'hidden';
   });
 }
