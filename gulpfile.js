@@ -20,6 +20,7 @@ var gulp = require('gulp'),
   sourcemaps = require('gulp-sourcemaps'),
   concatCss = require('gulp-concat-css'),
   source = require('vinyl-source-stream');
+var jsxify = require('jsx-transform').browserifyTransform;
 var fse = require('fs-extra');
 var _ = require('underscore');
 
@@ -76,6 +77,9 @@ function getBundler(file, options) {
 
   // Initialize browserify with the file and options provided.
   var bundler = browserify(file.path, options);
+
+  // Transpile JSX
+  bundler.transform(jsxify, {factory: "DOM"});
 
   // setup CSS
   bundler.transform('browserify-css', {
