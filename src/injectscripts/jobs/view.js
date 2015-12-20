@@ -88,11 +88,9 @@ function removeOptions(selectbox) {
   }
 }
 
+//take the clicked list option and set the complete action the value of this.
 document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
-  console.log(this.value)
-
   var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
-
   masterViewModel.completeTeamViewModel.actionTaken(this.value);
 }
 
