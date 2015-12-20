@@ -169,7 +169,7 @@ function prepareData(jobs, unit, start, end) {
   var avgOpenTotal =0;
   var avgAckCount =0;
   var avgAckTotal =0; 
-  var EventwordCounts = [];
+  var eventIdAndDescription = [];
 
   jobs.Results.forEach(function(d) {
     var thisJobisAck = false;
@@ -177,7 +177,7 @@ function prepareData(jobs, unit, start, end) {
 
     if (d.Event) {
       var words = d.Event.Identifier +" - "+ d.Event.Description;
-      EventwordCounts[words] = (EventwordCounts[words] || 0) + 1;
+      eventIdAndDescription[words] = (eventIdAndDescription[words] || 0) + 1;
     }
 
     if (d.LGA == null) {
@@ -284,8 +284,8 @@ function prepareData(jobs, unit, start, end) {
 
   var banner = "";
 
-  for (var i = 0; i < Object.keys(EventwordCounts).length; ++i) {
-    banner = i == 0 ? banner + Object.keys(EventwordCounts)[i] : banner + " | " + Object.keys(EventwordCounts)[i] ;
+  for (var i = 0; i < Object.keys(eventIdAndDescription).length; ++i) {
+    banner = i == 0 ? banner + Object.keys(eventIdAndDescription)[i] : banner + " | " + Object.keys(eventIdAndDescription)[i] ;
   }
 
 
@@ -662,7 +662,7 @@ function prepareCharts(jobs, start, end) {
     if (Array.isArray(unit) == false) { //1 lga
       return d.Address.Locality;
     }
-    if (unit.length == 1) { //more than one
+    if (unit.length > 1) { //more than one
       return d.LGA;
     }
   });
