@@ -194,6 +194,7 @@ function makeButton(text, id, icon) {
   var outterspan = document.createElement("span");
   outterspan.classList.add("label");
   outterspan.classList.add("tag");
+  outterspan.classList.add("tag-disabled");
   outterspan.classList.add(icon);
 
   outterspan.id = id;
