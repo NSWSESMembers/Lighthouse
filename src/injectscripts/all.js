@@ -15,17 +15,16 @@ whenWeAreReady(user,function() {
 
       var tonight = new Date();
 
-      tonight = new Date(tonight.getTime() + (tonight.getTimezoneOffset() * 60000)); //DST offset because beacon has stupid times
-
       tonight.setHours(23, 59, 59, 0);
+
+      tonight = new Date(tonight.getTime());
 
 
       var thismorning = new Date();
-      thismorning.setDate(thismorning.getDate()); //then
-
-      thismorning = new Date(thismorning.getTime() + (thismorning.getTimezoneOffset() * 60000)); //DST offset because beacon has stupid times
 
       thismorning.setHours(0, 0, 0, 0);
+
+      thismorning = new Date(thismorning.getTime());
 
 
       var vars = "?host=" + location.hostname + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString());
@@ -176,19 +175,19 @@ whenWeAreReady(user,function() {
 
 function filtershowallmyregion() {
   filterViewModel.selectedEntities.destroyAll() //flush first :-)
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (xhttp.readyState == 4 && xhttp.status == 200) {
-      results = JSON.parse(xhttp.responseText);
-      console.log(results);
-      results.forEach(function(d) {
-        filterViewModel.selectedEntities.push(d);
-      });
-      filterViewModel.updateFilters();
-    }
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+  if (xhttp.readyState == 4 && xhttp.status == 200) {
+    results = JSON.parse(xhttp.responseText);
+    console.log(results);
+    results.forEach(function(d) {
+      filterViewModel.selectedEntities.push(d);
+    });
+    filterViewModel.updateFilters();
   }
-  xhttp.open("GET", "https://" + location.hostname + "/Api/v1/Entities/" + user.currentRegionId + "/Children", true);
-  xhttp.send();
+}
+xhttp.open("GET", "https://" + location.hostname + "/Api/v1/Entities/" + user.currentRegionId + "/Children", true);
+xhttp.send();
 }
 
 
@@ -207,10 +206,10 @@ $(function(){
 
   // Shortcuts search box - if Job Number entered, jump straight to that job
   $('form#layoutJobSearchForm')
-    .on('submit',function(e){
-      var $t = $(this) ,
-          $q = $('#layoutJobSearchFormJobQuery',$t) ,
-          val = $q.val();
+  .on('submit',function(e){
+    var $t = $(this) ,
+    $q = $('#layoutJobSearchFormJobQuery',$t) ,
+    val = $q.val();
       if ( /^\d{0,4}\-?\d{4}$/.test( val ) ) { // if the field contains 4 or more digits and nothing else
         document.location = '/Jobs/' + parseInt( val.replace(/\D/g,'') , 10 );
         e.preventDefault();
