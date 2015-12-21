@@ -359,14 +359,20 @@ function makeSituationOnSceneCloud(jobs) {
 
   function calculateSituationOnSceneCloud(wordCount) {
     var purdyColor = tinygradient('black', 'red', 'orange', 'blue', 'LightBlue');
-
+    if (wordCount.length > 15)
+    {
     console.log(wordCount);
-    wordCount[0].text == '' && wordCount.splice(0, 1);
+
     $('#cloud').jQCloud(wordCount, {
       width: 500,
       height: 350,
       colors: purdyColor.rgb(10)
     });
+
+  } else {
+console.log("Not enough words for cloud");
+$('#cloud').html("<h4>Not enough words to make a cloud</h4>");
+  }
 
     console.log("Total word count: "+wordCount.length);
   };
