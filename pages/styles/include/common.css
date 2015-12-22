@@ -11,6 +11,10 @@ body {
 @-webkit-keyframes dots-2 { from { opacity: 0; } 50% { opacity: 1; } }
 @-webkit-keyframes dots-3 { from { opacity: 0; } 75% { opacity: 1; } }
 
+#results .dc-chart {
+  float: inherit;
+}
+
 .dots span {
   animation: dots-1 1s infinite steps(1);
   -webkit-animation: dots-1 1s infinite steps(1);

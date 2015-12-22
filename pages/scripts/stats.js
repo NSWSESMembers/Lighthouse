@@ -47,10 +47,10 @@ $(function() {
     colorBg: "#ccb2e6",
     colorFg: "#4c2673",
     onClose:function(){
-       $('#loading').hide();
-       $('#results').show();
-    }
-  });
+     $('#loading').hide();
+     $('#results').show();
+   }
+ });
 
   //run every X seconds the main loop.
   startTimer(180, $('#time'));
@@ -154,8 +154,8 @@ function makePie(elem, w, h, dimension, group) {
   .innerRadius(0)
   .dimension(dimension)
   .legend(dc.legend())
-    .group(group);
-    return chart;
+  .group(group);
+  return chart;
 }
 
 // gather and organise all of the data
@@ -196,21 +196,21 @@ function prepareData(jobs, unit, start, end) {
     var rawdate = new Date(d.JobReceived);
     d.JobReceivedFixed = new Date(
       rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 )
-    );
+      );
     d.hazardTags = [];
     d.treeTags = [];
     d.propertyTags = [];
     d.Tags.forEach(function(d2){
       switch (d2.TagGroupId) {
         case 5:
-          d.treeTags.push(d2.Name);
-          break;
+        d.treeTags.push(d2.Name);
+        break;
         case 7:
-          d.hazardTags.push(d2.Name);
-          break
+        d.hazardTags.push(d2.Name);
+        break
         case 13:
-          d.propertyTags.push(d2.Name);
-          break;
+        d.propertyTags.push(d2.Name);
+        break;
       }
     });
     d.JobOpenFor=0;
@@ -219,40 +219,40 @@ function prepareData(jobs, unit, start, end) {
     for(var counter=d.JobStatusTypeHistory.length - 1; counter >= 0;counter--){
       switch (d.JobStatusTypeHistory[counter].Type) {
         case 1: // New
-          break;
+        break;
         case 2: // Acknowledged
-          if (thisJobisAck == false) {
-            thisJobisAck = true;
-            ++avgAckCount;
-            var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
-            var fixeddate = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
-            d.TimeToAck = Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000;
-            avgAckTotal=avgAckTotal+(Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000);
-          }          
-          break;
+        if (thisJobisAck == false) {
+          thisJobisAck = true;
+          ++avgAckCount;
+          var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
+          var fixeddate = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+          d.TimeToAck = Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000;
+          avgAckTotal=avgAckTotal+(Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000);
+        }          
+        break;
         case 6: // Complete
-          if (thisJobisComp == false) {
-            thisJobisComp = true;
-            ++avgOpenCount;
-            var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
-            d.JobCompleted = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
-            avgOpenTotal=avgOpenTotal+(Math.abs(d.JobCompleted - (new Date(d.JobReceivedFixed)))/1000);
-          }
-          break;
+        if (thisJobisComp == false) {
+          thisJobisComp = true;
+          ++avgOpenCount;
+          var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
+          d.JobCompleted = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+          avgOpenTotal=avgOpenTotal+(Math.abs(d.JobCompleted - (new Date(d.JobReceivedFixed)))/1000);
+        }
+        break;
         case 7: // Cancelled
-          break;
+        break;
       }
     }
   });
 
 
-  var options = {
-    weekday: "short",
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-    hour12: false
-  };
+var options = {
+  weekday: "short",
+  year: "numeric",
+  month: "2-digit",
+  day: "numeric",
+  hour12: false
+};
 
   if (unit.length == 0) { //whole nsw state
     document.title = "NSW Job Statistics";
@@ -271,7 +271,7 @@ function prepareData(jobs, unit, start, end) {
   $('.stats header h4').text(
     start.toLocaleTimeString("en-au", options) + " to " +
     end.toLocaleTimeString("en-au", options)
-  );
+    );
 
   console.log(avgOpenCount);
   console.log(avgAckCount);
@@ -326,11 +326,11 @@ function walkSituationOnSceneWords(jobs){ //take array and make word:frequency a
 
     // strip stringified objects and punctuations from the string
     var words = d.SituationOnScene
-      .toLowerCase()
-      .replace(/object Object/g, '')
-      .replace(/\//g,' ')
-      .replace(/[\+\.,\/#!$%\^&\*{}=_`~]/g,'')
-      .replace(/[0-9]/g, '');
+    .toLowerCase()
+    .replace(/object Object/g, '')
+    .replace(/\//g,' ')
+    .replace(/[\+\.,\/#!$%\^&\*{}=_`~]/g,'')
+    .replace(/[0-9]/g, '');
 
     // this returns an array of words pre-split
     words = removeStopwords(words);
@@ -359,23 +359,22 @@ function makeSituationOnSceneCloud(jobs) {
 
   function calculateSituationOnSceneCloud(wordCount) {
     var purdyColor = tinygradient('black', 'red', 'orange', 'blue', 'LightBlue');
-    if (wordCount.length > 15)
-    {
-    console.log(wordCount);
 
-    $('#cloud').jQCloud(wordCount, {
-      width: 500,
-      height: 350,
-      colors: purdyColor.rgb(10)
-    });
+      console.log(wordCount); 
+      setTimeout(function(){
 
-  } else {
-console.log("Not enough words for cloud");
-$('#cloud').html("<h4>Not enough words to make a cloud</h4>");
-  }
+      $('#cloud').jQCloud(wordCount, {
+        width: 500,
+        height: 350,
+        colors: purdyColor.rgb(10)
+      });
 
+},2000);
     console.log("Total word count: "+wordCount.length);
   };
+
+
+
 }
 
 
@@ -415,8 +414,8 @@ function prepareCharts(jobs, start, end) {
       return d3.time.hour(d.JobCompleted);
     });
     var volumeOpenByPeriod = facts.dimension(function(d) {
-    return d3.time.hour(d.JobReceivedFixed);
-  });
+      return d3.time.hour(d.JobReceivedFixed);
+    });
   } else {
     timePeriodWord = "day";
     timePeriodUnits = d3.time.days;
@@ -424,8 +423,8 @@ function prepareCharts(jobs, start, end) {
       return d3.time.day(d.JobCompleted);
     });
     var volumeOpenByPeriod = facts.dimension(function(d) {
-    return d3.time.day(d.JobReceivedFixed);
-  });
+      return d3.time.day(d.JobReceivedFixed);
+    });
   }
 
   $('#receivedTitle').html("Jobs received per "+timePeriodWord);
@@ -435,186 +434,186 @@ function prepareCharts(jobs, start, end) {
   var volumeOpenByPeriodGroup = volumeOpenByPeriod.group().reduceCount(function(d) { return d.JobReceivedFixed; });
 
   timeOpenChart
-    .width(800)
-    .height(250)
-    .transitionDuration(500)
-    .brushOn(true)
-    .mouseZoomable(false)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
-    .dimension(timeOpenDimension)
-    .group(volumeOpenByPeriodGroup)
-    .xUnits(timePeriodUnits)
-    .x(d3.time.scale().domain([new Date(start), new Date(end)]))
-    .elasticY(true)
-    .xAxis();
+  .width(800)
+  .height(250)
+  .transitionDuration(500)
+  .brushOn(true)
+  .mouseZoomable(false)
+  .margins({top: 10, right: 10, bottom: 20, left: 40})
+  .dimension(timeOpenDimension)
+  .group(volumeOpenByPeriodGroup)
+  .xUnits(timePeriodUnits)
+  .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+  .elasticY(true)
+  .xAxis();
 
   timeClosedChart
-    .width(800)
-    .height(250)
-    .transitionDuration(500)
-    .brushOn(true)
-    .mouseZoomable(false)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
-    .dimension(closeTimeDimension)
-    .group(volumeClosedByPeriodGroup)
-    .xUnits(timePeriodUnits)
-    .x(d3.time.scale().domain([new Date(start), new Date(end)]))
-    .elasticY(true)
-    .xAxis();
+  .width(800)
+  .height(250)
+  .transitionDuration(500)
+  .brushOn(true)
+  .mouseZoomable(false)
+  .margins({top: 10, right: 10, bottom: 20, left: 40})
+  .dimension(closeTimeDimension)
+  .group(volumeClosedByPeriodGroup)
+  .xUnits(timePeriodUnits)
+  .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+  .elasticY(true)
+  .xAxis();
 
   countchart
-    .dimension(facts)
-    .group(all)
-    .html({
-      some:"%filter-count selected out of %total-count",
-      all:"%total-count job(s) total"
-    });
+  .dimension(facts)
+  .group(all)
+  .html({
+    some:"%filter-count selected out of %total-count",
+    all:"%total-count job(s) total"
+  });
 
   var options = {
-     year: "numeric",
-     month: "2-digit",
-     day: "numeric",
-     hour12: false
-   };
+   year: "numeric",
+   month: "2-digit",
+   day: "numeric",
+   hour12: false
+ };
 
   // Table of  data
   dataTable
-    .width(1200)
-    .height(800)
-    .dimension(timeOpenDimension)
-    .group(function(d) { return "First 10"  })
-    .size(10)
-    .columns([
-      function(d) { return "<a href=\"https://beacon.ses.nsw.gov.au/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
-      function(d) { return d.Type; },
-      function(d) { return d.JobReceivedFixed.toLocaleTimeString("en-au", options); },
-      function(d) { return (new Date(d.JobCompleted).getTime() !== new Date(0).getTime() ? d.JobCompleted.toLocaleTimeString("en-au", options):"") },
-      function(d) { return d.Address.PrettyAddress; },
+  .width(1200)
+  .height(800)
+  .dimension(timeOpenDimension)
+  .group(function(d) { return "First 10"  })
+  .size(10)
+  .columns([
+    function(d) { return "<a href=\"https://beacon.ses.nsw.gov.au/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
+    function(d) { return d.Type; },
+    function(d) { return d.JobReceivedFixed.toLocaleTimeString("en-au", options); },
+    function(d) { return (new Date(d.JobCompleted).getTime() !== new Date(0).getTime() ? d.JobCompleted.toLocaleTimeString("en-au", options):"") },
+    function(d) { return d.Address.PrettyAddress; },
     ])
-    .sortBy(function(d){ return d.JobReceivedFixed; })
-    .order(d3.ascending);
+  .sortBy(function(d){ return d.JobReceivedFixed; })
+  .order(d3.ascending);
 
   // produces a 'group' for tag pie charts, switch on the key in the object that needs to be walked
   function makeTagGroup(dim, targetfact) {
 
     switch (targetfact) {
       case "treeTags":
-        var group = dim.groupAll().reduce(
-          function(p, v) {
-            v.treeTags.forEach(function(val, idx) {
+      var group = dim.groupAll().reduce(
+        function(p, v) {
+          v.treeTags.forEach(function(val, idx) {
               p[val] = (p[val] || 0) + 1; //increment counts
             });
-            return p;
-          },
-          function(p, v) {
-            v.treeTags.forEach(function(val, idx) {
+          return p;
+        },
+        function(p, v) {
+          v.treeTags.forEach(function(val, idx) {
               p[val] = (p[val] || 0) - 1; //decrement counts
             });
-            return p;
-          },
-          function() {
-            return {};
-          }
+          return p;
+        },
+        function() {
+          return {};
+        }
         ).value();
-        group.all = function() {
-          var newObject = [];
-          for (var key in this) {
-            if (this.hasOwnProperty(key) && key != "all" && key != "top") {
-              newObject.push({
-                key: key,
-                value: this[key]
-              });
-            }
+      group.all = function() {
+        var newObject = [];
+        for (var key in this) {
+          if (this.hasOwnProperty(key) && key != "all" && key != "top") {
+            newObject.push({
+              key: key,
+              value: this[key]
+            });
           }
-          return newObject;
-        };
-        group.top = function(count) {
-          var newObject = this.all();
-          newObject.sort(function(a, b) {
-            return b.value - a.value
-          });
-          return newObject.slice(0, count);
-        };
-        return group;
-        break;
+        }
+        return newObject;
+      };
+      group.top = function(count) {
+        var newObject = this.all();
+        newObject.sort(function(a, b) {
+          return b.value - a.value
+        });
+        return newObject.slice(0, count);
+      };
+      return group;
+      break;
       case "hazardTags":
-        var group = dim.groupAll().reduce(
-          function(p, v) {
-            v.hazardTags.forEach(function(val, idx) {
+      var group = dim.groupAll().reduce(
+        function(p, v) {
+          v.hazardTags.forEach(function(val, idx) {
               p[val] = (p[val] || 0) + 1; //increment counts
             });
-            return p;
-          },
-          function(p, v) {
-            v.hazardTags.forEach(function(val, idx) {
+          return p;
+        },
+        function(p, v) {
+          v.hazardTags.forEach(function(val, idx) {
               p[val] = (p[val] || 0) - 1; //decrement counts
             });
-            return p;
-          },
-          function() {
-            return {};
+          return p;
+        },
+        function() {
+          return {};
+        }
+        ).value()
+      group.all = function() {
+        var newObject = [];
+        for (var key in this) {
+          if (this.hasOwnProperty(key) && key != "all" && key != "top") {
+            newObject.push({
+              key: key,
+              value: this[key]
+            });
           }
-          ).value()
-        group.all = function() {
-          var newObject = [];
-          for (var key in this) {
-            if (this.hasOwnProperty(key) && key != "all" && key != "top") {
-              newObject.push({
-                key: key,
-                value: this[key]
-              });
-            }
-          }
-          return newObject;
-        };
-        group.top = function(count) {
-          var newObject = this.all();
-          newObject.sort(function(a, b) {
-            return b.value - a.value
-          });
-          return newObject.slice(0, count);
-        };
-        return group;
-        break;
+        }
+        return newObject;
+      };
+      group.top = function(count) {
+        var newObject = this.all();
+        newObject.sort(function(a, b) {
+          return b.value - a.value
+        });
+        return newObject.slice(0, count);
+      };
+      return group;
+      break;
       case "propertyTags":
-        var group = dim.groupAll().reduce(
-          function(p, v) {
-            v.propertyTags.forEach(function(val, idx) {
+      var group = dim.groupAll().reduce(
+        function(p, v) {
+          v.propertyTags.forEach(function(val, idx) {
               p[val] = (p[val] || 0) + 1; //increment counts
             });
-            return p;
-          },
-          function(p, v) {
-            v.propertyTags.forEach(function(val, idx) {
+          return p;
+        },
+        function(p, v) {
+          v.propertyTags.forEach(function(val, idx) {
               p[val] = (p[val] || 0) - 1; //decrement counts
             });
-            return p;
-          },
-          function() {
-            return {};
+          return p;
+        },
+        function() {
+          return {};
+        }
+        ).value()
+      group.all = function() {
+        var newObject = [];
+        for (var key in this) {
+          if (this.hasOwnProperty(key) && key != "all" && key != "top") {
+            newObject.push({
+              key: key,
+              value: this[key]
+            });
           }
-          ).value()
-        group.all = function() {
-          var newObject = [];
-          for (var key in this) {
-            if (this.hasOwnProperty(key) && key != "all" && key != "top") {
-              newObject.push({
-                key: key,
-                value: this[key]
-              });
-            }
-          }
-          return newObject;
-        };
-        group.top = function(count) {
-          var newObject = this.all();
-          newObject.sort(function(a, b) {
-            return b.value - a.value
-          });
-          return newObject.slice(0, count);
-        };
-        return group;
-        break;              
+        }
+        return newObject;
+      };
+      group.top = function(count) {
+        var newObject = this.all();
+        newObject.sort(function(a, b) {
+          return b.value - a.value
+        });
+        return newObject.slice(0, count);
+      };
+      return group;
+      break;              
     }
 
   }
@@ -772,22 +771,22 @@ function RunForestRun(mp) {
   $.fn.marquee = function(args) {
     var that = $(this);
     var textWidth = that.textWidth(),
-        offset = that.width(),
-        width = offset,
-        css = {
-          'text-indent' : that.css('text-indent'),
-          'overflow' : that.css('overflow'),
-          'white-space' : that.css('white-space')
-        },
-        marqueeCss = {
-          'text-indent' : width,
-          'overflow' : 'hidden',
-          'white-space' : 'nowrap'
-        },
-        args = $.extend(true, { count: -1, speed: 1e1, leftToRight: false }, args),
-        i = 0,
-        stop = textWidth*-1,
-        dfd = $.Deferred();
+    offset = that.width(),
+    width = offset,
+    css = {
+      'text-indent' : that.css('text-indent'),
+      'overflow' : that.css('overflow'),
+      'white-space' : that.css('white-space')
+    },
+    marqueeCss = {
+      'text-indent' : width,
+      'overflow' : 'hidden',
+      'white-space' : 'nowrap'
+    },
+    args = $.extend(true, { count: -1, speed: 1e1, leftToRight: false }, args),
+    i = 0,
+    stop = textWidth*-1,
+    dfd = $.Deferred();
 
     function go() {
       if(!that.length)
