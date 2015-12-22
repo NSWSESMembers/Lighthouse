@@ -10,7 +10,7 @@
     "jqcloud-npm": "^3.0.1",
     "jquery": "^2.1.4",
     "jquery.marquee": "^1.3.2",
-    "jsx-dom-factory": "^1.0.1",
+    "jsx-dom-factory": "^1.1.0",
     "stopwords": "0.0.5"
   },
   "devDependencies": {

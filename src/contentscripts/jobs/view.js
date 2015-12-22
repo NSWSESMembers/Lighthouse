@@ -9,10 +9,6 @@ s.setAttribute('type', 'text/javascript');
 s.innerHTML = "document.title = \"#\"+jobId";
 (document.head || document.documentElement).appendChild(s)
 
-//inject the coded needed to fix visual problems
-//needs to be injected so that it runs after the DOMs are created
-inject('jobs/view.js');
-
 function renderQuickText(id, selections) {
   return (
     <div class="form-group">
@@ -47,7 +43,12 @@ $('#finaliseJobModal .modal-body .form-group:nth-child(1)').after(
 );
 
 // Quick Text - Job - Complete
-$('#completeRescueModal .modal-body .form-group:nth-child(5)').after(
+// this is nth-child(1) even though there are more elements because
+// at the time this code _usually_ runs knockout hasn't been initialised
+// yet so there are less elements than after it has rendered.
+// TODO: make this more intelligent by searching for the appropriate
+// label and inserting before/after that.
+$('#completeRescueModal .modal-body .form-group:nth-child(1)').after(
   renderQuickText("CompleteQuickTextBox", [
     "",
     "All paperwork and documentation completed",
@@ -98,3 +99,9 @@ var html2 = renderQuickText("CompleteTeamQuickTextBox", [
 ])
 
 $('#completeTeamModal .modal-body .form-group:nth-child(12)').after([html, html2]);
+
+// inject the coded needed to fix visual problems
+// needs to be injected so that it runs after the DOMs are created
+// We run this last because we want to ensure the elements created above have
+// been loaded into the DOM before the injected script runs
+inject('jobs/view.js');
