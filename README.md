@@ -33,9 +33,9 @@ Install:
 - Gulp (`npm install -g gulp-cli`)
 
 Build:
-Run `npm install` in the root of this repository. You then should be able to run `gulp`. The extension will be built into `build` and bundled into `dist`. Use `build` for testing locally.
+Run `npm install` in the root of this repository. You then should be able to run `gulp`. The extension will be built into `build` and bundled into `dist`. Load the `build` directory as an unpacked Chrome extension and then execute `gulp watch` while developing to have gulp automatically rebuild JS/JSX as you edit the files.
 
-Send through any problems (bugs) or any ideas for how we can make improvements.
+Pull requests are welcome!
 
 ## Changes
 
