@@ -50,6 +50,7 @@ $(function() {
     onClose:function(){
      $('#loading').hide();
      $('#results').show();
+     $('footer').show();
    }
  });
 
