@@ -24,8 +24,6 @@ function removeStopwords(string) {
   var length = words.length;
   for (var i = 0; i < length; i++) {
     var word = words[i].trim();
-    var word = word.replace(/[.,-\/#!$%\^&\*;:{}=\-_`~()]/g,"");
-
     if(word != "" && stopwords.indexOf(word) == -1) {
       filteredWords.push(word);
     }
@@ -51,7 +49,6 @@ $(function() {
     onClose:function(){
      $('#loading').hide();
      $('#results').show();
-     $('footer').show();
    }
  });
 
