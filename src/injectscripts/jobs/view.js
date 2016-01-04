@@ -13,6 +13,71 @@ masterViewModel.messagesViewModel.messages.subscribe(function(d) {
 //call on run
 cleanupBr();
 
+//rotate page title
+
+document.title = masterViewModel.entityAssignedTo.peek().Code + " | " + masterViewModel.jobType.peek().Name +" | #"+jobId + " | ";
+
+(function ($) {
+    var shift = {
+        "left": function (a) {
+            a.push(a.shift());
+        },
+        "right": function (a) {
+            a.unshift(a.pop());
+        }
+    };
+    $.marqueeTitle = function (options) {
+        var opts = $.extend({},
+        {
+            text: "",
+            dir: "left",
+            speed: 200
+        }, options),
+            t = (opts.text || document.title).split("");
+        if (!t) {
+            return;
+        }
+        t.push(" ");
+        setInterval(function () {
+            var f = shift[opts.dir];
+            if (f) {
+                f(t);
+                document.title = t.join("");
+            }
+        }, opts.speed);
+    };
+}(jQuery));
+
+
+$.marqueeTitle({
+  dir: "left",
+  speed: 100
+});
+
+
+// tabtitle = (function () {
+
+//     var msg = masterViewModel.entityAssignedTo.peek().Code + " #"+jobId;
+//     var msg1 = masterViewModel.jobType.peek().Name + " #"+jobId;
+
+// var timerId;
+
+// flashTitle();
+
+
+// function flashTitle() {
+//   var state = false;
+//   timerId = setInterval(flash, 2000);
+
+//   function flash() {
+//     // switch between old and new titles
+//     document.title = state ? msg : msg1;
+//     state = !state;
+//   }
+// }
+
+// }());
+
 
 function cleanupBr() {
 console.log("BR cleanup called")

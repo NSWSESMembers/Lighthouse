@@ -3,12 +3,6 @@ var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
 var $ = require('jquery');
 
-//replace window title with job number
-var s = document.createElement('script');
-s.setAttribute('type', 'text/javascript');
-s.innerHTML = "document.title = \"#\"+jobId";
-(document.head || document.documentElement).appendChild(s)
-
 function renderQuickText(id, selections) {
   return (
     <div class="form-group">
