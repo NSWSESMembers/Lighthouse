@@ -43,11 +43,42 @@ whenWeAreReady(user,function() {
       $('.nav .navbar-nav:not(".navbar-right")').append(li);
 
 
-      //lighthouse menu
+        //lighthouse menu for teams
+        if (location.pathname == "/Teams") {
+
+          var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
+
+          filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
+          filtermenu = filtermenu.replace(/\$UNIT/g, user.hq.Code);
+          filtermenu = filtermenu.replace(/\$REGION/g, user.hq.ParentEntity.Code);
+
+          $('.main-menu > li:nth-child(1)').after(filtermenu);
+
+          $("#filterallmyregion").click(function() {
+            filterViewModel.selectedEntities.removeAll();
+            filtershowallmyregion();
+          });
+
+          $("#filtermyhq").click(function() {
+            filterViewModel.selectedEntities.removeAll();
+            filterViewModel.selectedEntities.push(user.hq);
+            filterViewModel.updateFilters();
+          });
+
+          $("#clearlocator").click(function() {
+            filterViewModel.selectedEntities.removeAll();
+            filterViewModel.updateFilters();
+          });
+
+
+
+        }
+
+      //lighthouse menu for jobs
 
       if (location.pathname == "/Jobs") {
 
-        var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="fileropen"><span class="tag-text">Open Jobs</span></span> <span class="label tag tag-job-status tag-disabled" id="filerclosed"><span class="tag-text">Closed Jobs</span></span> <span class="label tag tag-lighthouse" id="filerallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All Jobs</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filerrescue"><span class="tag-text">Rescue Jobs</span></span> <span class="label tag tag-job-type tag-disabled" id="filerstorm"><span class="tag-text">Storm Jobs</span></span> <span class="label tag tag-lighthouse" id="fileralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All Job Types</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filerallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
+        var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Open Jobs</span></span> <span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed Jobs</span></span> <span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All Jobs</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue Jobs</span></span> <span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm Jobs</span></span> <span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All Job Types</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
 
         filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
         filtermenu = filtermenu.replace(/\$UNIT/g, user.hq.Code);
@@ -55,7 +86,7 @@ whenWeAreReady(user,function() {
 
         $('.main-menu > li:nth-child(1)').after(filtermenu);
 
-        $("#filerrescue").click(function() {
+        $("#filterrescue").click(function() {
           filterViewModel.selectedParentJobTypes.removeAll();
           filterViewModel.parentJobTypeClicked({
             Id: 5,
@@ -66,7 +97,7 @@ whenWeAreReady(user,function() {
           filterViewModel.updateFilters();
         });
 
-        $("#filerstorm").click(function() {
+        $("#filterstorm").click(function() {
           filterViewModel.selectedParentJobTypes.removeAll();
           filterViewModel.selectedRescueTypes.removeAll();
           filterViewModel.parentJobTypeClicked({
@@ -78,13 +109,13 @@ whenWeAreReady(user,function() {
           filterViewModel.updateFilters();
         });
 
-        $("#fileralltype").click(function() {
+        $("#filteralltype").click(function() {
           filterViewModel.selectedParentJobTypes.removeAll();
           filterViewModel.selectedRescueTypes.removeAll();
           filterViewModel.updateFilters();
         });
 
-        $("#fileropen").click(function() {
+        $("#filteropen").click(function() {
           filterViewModel.selectedStatusTypes.removeAll();
           filterViewModel.selectedStatusTypes.push({
             Id: 2,
@@ -113,7 +144,7 @@ whenWeAreReady(user,function() {
           filterViewModel.updateFilters();
         });
 
-        $("#filerclosed").click(function() {
+        $("#filterclosed").click(function() {
           filterViewModel.selectedStatusTypes.removeAll();
           filterViewModel.selectedStatusTypes.push({
             Id: 6,
@@ -142,17 +173,17 @@ whenWeAreReady(user,function() {
           filterViewModel.updateFilters();
         });
 
-        $("#filerallstatus").click(function() {
+        $("#filterallstatus").click(function() {
           filterViewModel.selectedStatusTypes.removeAll();
           filterViewModel.updateFilters();
         });
 
-        $("#filerallmyregion").click(function() {
+        $("#filterallmyregion").click(function() {
           filterViewModel.selectedEntities.removeAll();
           filtershowallmyregion();
         });
 
-        $("#filermyhq").click(function() {
+        $("#filtermyhq").click(function() {
           filterViewModel.selectedEntities.removeAll();
           filterViewModel.selectedEntities.push(user.hq);
           filterViewModel.updateFilters();
