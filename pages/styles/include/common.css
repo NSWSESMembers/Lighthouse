@@ -4,30 +4,26 @@ body {
 	margin-bottom: 60px;
 }
 
-@keyframes dots-1 { from { opacity: 0; } 25% { opacity: 1; } }
-@keyframes dots-2 { from { opacity: 0; } 50% { opacity: 1; } }
-@keyframes dots-3 { from { opacity: 0; } 75% { opacity: 1; } }
-@-webkit-keyframes dots-1 { from { opacity: 0; } 25% { opacity: 1; } }
-@-webkit-keyframes dots-2 { from { opacity: 0; } 50% { opacity: 1; } }
-@-webkit-keyframes dots-3 { from { opacity: 0; } 75% { opacity: 1; } }
+@keyframes dots { from { opacity: 0; } 50% { opacity: 1; } }
 
 #results .dc-chart {
   float: inherit;
 }
 
 .dots span {
-  animation: dots-1 1s infinite steps(1);
-  -webkit-animation: dots-1 1s infinite steps(1);
+  animation: dots 1s infinite;
 }
 
-.dots span: first-child + span {
-  animation-name: dots-2;
-  -webkit-animation-name: dots-2;
+.dots span:nth-of-type(1) {
+  animation-delay: 0s;
 }
 
-.dots span: first-child + span + span {
-  animation-name: dots-3;
-  -webkit-animation-name: dots-3;
+.dots span:nth-of-type(2) {
+  animation-delay: 0.25s;
+}
+
+.dots span:nth-of-type(3) {
+  animation-delay: 0.5s;
 }
 
 .stats header {
