@@ -90,7 +90,7 @@ function startTimer(duration, display) {
 //Get times vars for the call
 function RunForestRun() {
 
-  if (timeoverride !== null) { //we are using a time override
+  if (timeoverride != null) { //we are using a time override
 
     var end = new Date();
 
@@ -114,7 +114,7 @@ function RunForestRun() {
   if (unit == null) {
     console.log("firstrun...will fetch vars");
 
-    if (typeof params.hq !== 'undefined') {  //if not no hqs
+    if (typeof params.hq != 'undefined') {  //if not no hqs
       if (params.hq.split(",").length == 1) { //if only one HQ
         LighthouseUnit.get_unit_name(params.hq,params.host, function(result) {
           unit = result;
@@ -170,7 +170,7 @@ function HackTheMatrix(unit, host) {
 
     teams.Results.forEach(function(d) { //for every team
 
-      if (d.TeamStatusType.Name !== "Stood Down") { //that has not stood down
+      if (d.TeamStatusType.Name != "Stood Down" && d.TeamStatusType.Name != "Rest" && d.TeamStatusType.Name != "Standby" && d.TeamStatusType.Name != "On Alert")  { //that has not stood down
 
         totalTeamsActive++;
 
