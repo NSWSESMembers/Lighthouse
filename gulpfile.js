@@ -221,7 +221,7 @@ gulp.task('pages_html', function() {
 
 // copy static folders to build directory
 gulp.task('pages_static', function() {
-  gulp.src('pages/icons/**')
+  gulp.src('pages/images/**')
     .pipe(gulp.dest('build/pages/images'));
   return gulp.src('src/manifest.json')
     .pipe(gulp.dest('build'));
