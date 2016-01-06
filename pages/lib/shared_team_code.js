@@ -11,8 +11,7 @@ function GetTaskingfromBeacon(Id, host, callback) {
     if (xhttp.readyState == 4 && xhttp.status == 200) {
       results = JSON.parse(xhttp.responseText);
       if (typeof callback === "function") {
-        console.log("GetTaskingfromBeacon call back with:");
-        console.log(results);
+        console.log("GetTaskingfromBeacon call back");
         callback(results);
       }
     }
