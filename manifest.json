@@ -45,7 +45,7 @@
     {
       "matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": [
-        "Lighthouse/vendors/jquery/jquery-2.1.4.min.js",
+        "lighthouse/vendors/jquery/jquery-2.1.4.min.js",
         "Account/Login.js"
       ],
       "css": [
@@ -75,7 +75,7 @@
       "matches": ["https://*.ses.nsw.gov.au/*"],
       "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": [
-      "Lighthouse/vendors/jquery/jquery-2.1.4.min.js",
+      "lighthouse/vendors/jquery/jquery-2.1.4.min.js",
         "all/all.js"
       ],
       "css": [
