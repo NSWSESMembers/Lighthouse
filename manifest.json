@@ -72,6 +72,10 @@
       "js": ["Teams/Teams.js"]
     },
     {
+      "matches": ["https://*.ses.nsw.gov.au/nitc"],
+      "js": ["nitc/nitc.js"]
+    },
+    {
       "matches": ["https://*.ses.nsw.gov.au/*"],
       "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": [
