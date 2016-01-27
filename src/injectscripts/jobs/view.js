@@ -1,4 +1,4 @@
-console.log("Running content scriptz");
+console.log("Running content script");
 
 //if ops logs update
 masterViewModel.notesViewModel.opsLogEntries.subscribe(function(d) {
