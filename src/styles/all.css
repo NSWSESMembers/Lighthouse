@@ -34,3 +34,11 @@
 #lighthouse_mapblock:hover div {
   display: block;
 }
+
+#job_view_history table {
+  width: 100%;
+}
+#job_view_history table thead tr ,
+#job_view_history table tbody tr:nth-child(odd) {
+  background: #F4F4F4;
+}
