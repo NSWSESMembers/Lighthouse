@@ -14,18 +14,6 @@ if (saved != selected){
   taskingViewModel.jobPageSizeChoice(saved);
 }
 
-$(document).ready(function(){
-
-  // Add Handy Action Buttons to Table Button Bars
-  $button_createnewteam = $('<a href="/Teams/Create" role="button" class="btn btn-sm btn-success" target="_blank" data-bind="css: {disabled: !user.isInRole(Enum.RoleEnum.TeamManagement.Id)}"><i class="fa fa-plus"></i> Create new Team</a>');
-  $button_createnewjob = $('<a class="btn btn-sm btn-success create-new-btn" href="/Jobs/Create" data-bind="css: {disabled: !user.isInRole(Enum.RoleEnum.JobCreator.Id) &amp;&amp; !user.isInRole(Enum.RoleEnum.RescueCreator.Id)}"><i class="fa fa-plus"></i> Create new Job</a>');
-  $('#team > div > div > div.widget-header')
-    .append($button_createnewteam);
-  $('#job > div > div > div.widget-header')
-    .append($button_createnewjob);
-
-});
-
 
 initializeDateTimePicker(filterViewModel.startDate.peek(),filterViewModel.endDate.peek());
 
