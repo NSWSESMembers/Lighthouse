@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Beacon Stats</title>
+<!--
+<script src="vendors/d3/d3.min.js" type="text/javascript"></script>
+<script src="vendors/crossfilter/crossfilter.min.js" type="text/javascript"></script>
+<script src="vendors/dc/dc.min.js" type="text/javascript">></script>
+<script src="vendors/jquery/jquery-2.1.4.min.js" type="text/javascript">></script>
+<script src="vendors/bootstrap/js/bootstrap.min.js" type="text/javascript">></script>
+<script src="resources/js/team.js" type="text/javascript">></script>
+<script src="resources/js/shared_team_code.js" type="text/javascript">></script>
+<script src="resources/js/shared_job_code.js" type="text/javascript">></script>
+<script src="resources/js/shared_unit_code.js" type="text/javascript">></script>
+<script src="resources/js/shared_json_code.js" type="text/javascript">></script>
+-->
+</head>
+<body>
+<div id="loading">
+  <img alt="Loading..." id="loading-image" src="images/loader.gif"><br>
+  Loading...
+</div>
+<div align="center" id="results" class="teamresults">
+  <p id="banner">Team Summary For X</p>
+  <br>
+  <div id="scrollbounds">
+    <table id="resultstable" class="teamtotals">
+      <thead>
+        <tr class="header">
+          <td>Team<br>Call Sign</td>
+          <td>Team<br>Members</td>
+          <td>Team<br>Status</td>
+          <td>Tasking<br>Open/Closed</td>
+          <td>Team<br>Latest Update</td>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+  </div>
+</div>
+<footer>
+  <form>
+    Override time frame with<br>
+    <label>
+      <input id="radio1" name="slide" type="radio" value="24">
+      Last 24Hrs
+    </label>
+    <label>
+      <input id="radio2" name="slide" type="radio" value="48">
+      Last 48hrs
+    </label>
+    <label>
+      <input id="radio3" name="slide" type="radio" value="72">
+      Last 72 Hrs
+    </label>
+    <label>
+      <input id="radio3" name="slide" type="radio" value="reset">
+      Reset
+    </label>
+  </form>
+  Designed &amp; developed by volunteers of the NSW SES.
+  Lighthouse is distributed under a <a href= "https://github.com/OSPFNeighbour/BeaconEnhanced/blob/master/LICENSE.md" rel="license">MIT Licence</a>.
+  <div style="float:right;">
+    <a href="#" id="refresh">
+      <span class="glyphicon glyphicon-refresh"></span>
+      <span id="time">00:00</span>
+    </a>
+  </div>
+</footer>
+<script src="scripts/teamsummary.js" type="text/javascript"></script>
+</body>
+</html>
