@@ -14,8 +14,23 @@ masterViewModel.messagesViewModel.messages.subscribe(function(d) {
 cleanupBr();
 
 //rotate page title
-
-document.title = masterViewModel.entityAssignedTo.peek().Code + " | " + masterViewModel.jobType.peek().Name +" | #"+jobId + " | ";
+var setPageTitle_delay = 500;
+function setPageTitle(){
+  if( typeof masterViewModel.entityAssignedTo.peek() == 'undefined' || typeof masterViewModel.jobType.peek() == 'undefined' ){
+    console.info( 'setPageTitle - delaying' );
+    setPageTitle_delay += 500;
+    setTimeout( setPageTitle , 500 );
+    return;
+  }else{
+    console.log( 'setPageTitle - running (total delay: %ds)' , setPageTitle_delay );
+  }
+  document.title = masterViewModel.entityAssignedTo.peek().Code + " | " + masterViewModel.jobType.peek().Name +" | #"+jobId + " | ";
+  $.marqueeTitle({
+    dir: "left",
+    speed: 100
+  });
+}
+setTimeout( setPageTitle , setPageTitle_delay );
 
 (function ($) {
     var shift = {
@@ -48,35 +63,6 @@ document.title = masterViewModel.entityAssignedTo.peek().Code + " | " + masterVi
     };
 }(jQuery));
 
-
-$.marqueeTitle({
-  dir: "left",
-  speed: 100
-});
-
-
-// tabtitle = (function () {
-
-//     var msg = masterViewModel.entityAssignedTo.peek().Code + " #"+jobId;
-//     var msg1 = masterViewModel.jobType.peek().Name + " #"+jobId;
-
-// var timerId;
-
-// flashTitle();
-
-
-// function flashTitle() {
-//   var state = false;
-//   timerId = setInterval(flash, 2000);
-
-//   function flash() {
-//     // switch between old and new titles
-//     document.title = state ? msg : msg1;
-//     state = !state;
-//   }
-// }
-
-// }());
 
 
 function cleanupBr() {
@@ -198,3 +184,113 @@ function taskFill(parent, child) {
     }
   });
 }
+
+
+
+function checkAddressHistory(){
+  var address = masterViewModel.enteredAddress.peek();
+  if( typeof address == 'undefined' ){
+    setTimeout( checkAddressHistory , 500 );
+    return;
+  }
+  //console.log('address: %s',address);
+  var now = new Date();
+  var tmp = /^(\d{2})\/(\d{2})\/(\d{4}),\s+(\d{2}:\d{2}:\d{2})$/.exec(now.toLocaleString());
+  var timeFrameEnd   = tmp[3]+'-'+tmp[2]+'-'+tmp[1]+'T'+tmp[4];
+  now.setYear(now.getFullYear()-1);
+  tmp = /^(\d{2})\/(\d{2})\/(\d{4}),\s+(\d{2}:\d{2}:\d{2})$/.exec(now.toLocaleString());
+  var timeFrameStart = tmp[3]+'-'+tmp[2]+'-'+tmp[1]+'T'+tmp[4];
+  //console.log('timeFrameEnd: %s, timeFrameStart: %s',timeFrameEnd,timeFrameStart);
+
+  $.ajax({
+    type: 'GET' ,
+    url: '/Api/v1/Jobs/Search' ,
+    data: {
+      'Q' : address.substring( 0 , 30 ) ,
+      'StartDate' : timeFrameStart ,
+      'EndDate' : timeFrameEnd ,
+      'ViewModelType' : 2 ,
+      'PageIndex' : 1 ,
+      'PageSize' : 100 ,
+      'SortField' : 'JobReceived' ,
+      'SortOrder' : 'desc'
+    } ,
+    cache: false ,
+    dataType: 'json' ,
+    complete: function(response, textStatus){
+      console.log( 'response' , response );
+      console.log( 'textStatus' , textStatus );
+      var content = '<em>No Previous Reports found for this address</em>';
+      switch( textStatus ){
+        case 'success' :
+          if( response.responseJSON.Results.length ){
+            var history_rows = new Array();
+            $.each( response.responseJSON.Results , function( k , v ){
+              //console.log( k , v );
+              if( v.Address.PrettyAddress != address ){
+                //console.log( 'Imperfect Address Match' , v.Address.PrettyAddress , address );
+                return true;
+              }else if( v.Id == jobId ){
+                //console.log( 'Current Job Match' );
+                return true;
+              }
+              //console.log( 'History Hit' );
+              var newRow = '<tr class="job-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
+                             '<th><a href="/Jobs/'+v.Id+'">'+v.Identifier+'</a></th>'+
+                             '<td>'+v.JobStatusType.Name+'</td>'+
+                             '<td>'+v.JobReceived+'</td>'+
+                             '<td>'+v.SituationOnScene+'</td>'+
+                           '</tr>';
+              history_rows.push( newRow );
+            });
+            if( history_rows.length ){
+              content = '<table>'+
+                          '<thead>'+
+                            '<tr>'+
+                              '<th>Job #</th><th>Status</th><th>Date</th><th>Details</th>'+
+                            '</tr>'+
+                          '</thead>'+
+                          '<tbody>'+
+                            history_rows.join('')+
+                          '</tbody>'+
+                        '</table>';
+            }
+          }else{
+            console.log( 'Address Search - No History' );
+          }
+          break;
+        case 'error' :
+          content = '<em>Unable to Perform Address Search</em>';
+          break;
+        case 'nocontent' :
+          content = '<em>Address Search returned Unexpected Data</em>';
+          break;
+        case 'timeout' :
+          content = '<em>Address Search Timed Out</em>';
+          break;
+        case 'abort' :
+          content = '<em>Address Search Aborted</em>';
+          break;
+        case 'parsererror' :
+          content = '<em>Address Search returned Unexpected Data</em>';
+          break;
+      }
+      $('fieldset.col-md-12 legend , fieldset.col-md-4 legend').each(function(k,v){
+        var $v = $(v);
+        var $p = $v.closest('fieldset');
+        var section_title = $v.text().trim();
+        if( section_title.indexOf( 'Notes' ) === 0 || section_title.indexOf( 'Messages' ) === 0 ){
+          $p.before('<fieldset id="job_view_history" class="col-md-12">'+
+                      '<legend>Job History for Address (12 Months)</legend>'+
+                      '<div class="form-group col-xs-12">'+
+                        content+
+                      '</div>'+
+                    '</fieldset>');
+          return;
+        }
+      });
+
+    }
+  });
+}
+setTimeout( checkAddressHistory , 1000 );
