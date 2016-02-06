@@ -13,56 +13,9 @@ masterViewModel.messagesViewModel.messages.subscribe(function(d) {
 //call on run
 cleanupBr();
 
-//rotate page title
-var setPageTitle_delay = 500;
-function setPageTitle(){
-  if( typeof masterViewModel.entityAssignedTo.peek() == 'undefined' || typeof masterViewModel.jobType.peek() == 'undefined' ){
-    console.info( 'setPageTitle - delaying' );
-    setPageTitle_delay += 500;
-    setTimeout( setPageTitle , 500 );
-    return;
-  }else{
-    console.log( 'setPageTitle - running (total delay: %ds)' , setPageTitle_delay );
-  }
-  document.title = masterViewModel.entityAssignedTo.peek().Code + " | " + masterViewModel.jobType.peek().Name +" | #"+jobId + " | ";
-  $.marqueeTitle({
-    dir: "left",
-    speed: 100
-  });
-}
-setTimeout( setPageTitle , setPageTitle_delay );
 
-(function ($) {
-    var shift = {
-        "left": function (a) {
-            a.push(a.shift());
-        },
-        "right": function (a) {
-            a.unshift(a.pop());
-        }
-    };
-    $.marqueeTitle = function (options) {
-        var opts = $.extend({},
-        {
-            text: "",
-            dir: "left",
-            speed: 200
-        }, options),
-            t = (opts.text || document.title).split("");
-        if (!t) {
-            return;
-        }
-        t.push(" ");
-        setInterval(function () {
-            var f = shift[opts.dir];
-            if (f) {
-                f(t);
-                document.title = t.join("");
-            }
-        }, opts.speed);
-    };
-}(jQuery));
 
+document.title = "#"+jobId;
 
 
 function cleanupBr() {
