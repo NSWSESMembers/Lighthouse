@@ -91,6 +91,7 @@ whenWeAreReady(user,function() {
 
         $("#filterrescue").click(function() {
           filterViewModel.selectedParentJobTypes.removeAll();
+          filterViewModel.selectedFloodAssTypes.removeAll();
           filterViewModel.parentJobTypeClicked({
             Id: 5,
             Name: "Rescue",
@@ -103,6 +104,7 @@ whenWeAreReady(user,function() {
         $("#filterstorm").click(function() {
           filterViewModel.selectedParentJobTypes.removeAll();
           filterViewModel.selectedRescueTypes.removeAll();
+          filterViewModel.selectedFloodAssTypes.removeAll();
           filterViewModel.parentJobTypeClicked({
             Id: 1,
             Name: "Storm",
@@ -131,6 +133,7 @@ whenWeAreReady(user,function() {
         $("#filteralltype").click(function() {
           filterViewModel.selectedParentJobTypes.removeAll();
           filterViewModel.selectedRescueTypes.removeAll();
+          filterViewModel.selectedFloodAssTypes.removeAll();
           filterViewModel.updateFilters();
         });
 
