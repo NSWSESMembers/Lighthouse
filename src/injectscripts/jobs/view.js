@@ -19,7 +19,7 @@ document.title = "#"+jobId;
 
 
 function cleanupBr() {
-console.log("BR cleanup called")
+  console.log("BR cleanup called")
   //only run if messages and notes have loaded in (causes problems overwise and won't load)
   var selector = '.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: Text"]';
 
@@ -56,26 +56,26 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
     if (newValue !== null) {
       switch (newValue.Name) {
         case "Storm":
-          removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
-          var quickText = ["", "No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.", "Branch/tree sectioned; resident/owner to organize removal"]
-          document.getElementById("CompleteTeamQuickTextBox").removed
-          for (var i = 0; i < quickText.length; i++) {
-            var opt = document.createElement('option');
-            opt.text = quickText[i];
-            opt.value = quickText[i];
-            document.getElementById("CompleteTeamQuickTextBox").add(opt);
-          }
-          break;
+        removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
+        var quickText = ["", "No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.", "Branch/tree sectioned; resident/owner to organize removal"]
+        document.getElementById("CompleteTeamQuickTextBox").removed
+        for (var i = 0; i < quickText.length; i++) {
+          var opt = document.createElement('option');
+          opt.text = quickText[i];
+          opt.value = quickText[i];
+          document.getElementById("CompleteTeamQuickTextBox").add(opt);
+        }
+        break;
         case "Search":
-            removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
-            var quickText = ["", "All teams complete on search, person found safe and well.", "All teams complete on search, nothing found."]
-            for (var i = 0; i < quickText.length; i++) {
-              var opt = document.createElement('option');
-              opt.text = quickText[i];
-              opt.value = quickText[i];
-              document.getElementById("CompleteTeamQuickTextBox").add(opt);
-            }
-            break;
+        removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
+        var quickText = ["", "All teams complete on search, person found safe and well.", "All teams complete on search, nothing found."]
+        for (var i = 0; i < quickText.length; i++) {
+          var opt = document.createElement('option');
+          opt.text = quickText[i];
+          opt.value = quickText[i];
+          document.getElementById("CompleteTeamQuickTextBox").add(opt);
+        }
+        break;
       }
     }
   }
@@ -130,7 +130,7 @@ function taskFill(parent, child) {
       masterViewModel.completeTeamViewModel.availablePrimaryTasks.subscribe(function(d) {
         d.forEach(function(d) {
           if (d.Name == child) {
-              masterViewModel.completeTeamViewModel.primaryTask(d)
+            masterViewModel.completeTeamViewModel.primaryTask(d)
           }
         });
       })
@@ -141,6 +141,16 @@ function taskFill(parent, child) {
 
 
 function checkAddressHistory(){
+
+  var options = {
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric",
+    hour12: false
+  };
+
+
   var address = masterViewModel.enteredAddress.peek();
   if( typeof address == 'undefined' ){
     setTimeout( checkAddressHistory , 500 );
@@ -148,11 +158,16 @@ function checkAddressHistory(){
   }
   //console.log('address: %s',address);
   var now = new Date();
-  var tmp = /^(\d{2})\/(\d{2})\/(\d{4}),\s+(\d{2}:\d{2}:\d{2})$/.exec(now.toLocaleString());
-  var timeFrameEnd   = tmp[3]+'-'+tmp[2]+'-'+tmp[1]+'T'+tmp[4];
-  now.setYear(now.getFullYear()-1);
-  tmp = /^(\d{2})\/(\d{2})\/(\d{4}),\s+(\d{2}:\d{2}:\d{2})$/.exec(now.toLocaleString());
-  var timeFrameStart = tmp[3]+'-'+tmp[2]+'-'+tmp[1]+'T'+tmp[4];
+  var end = new Date();
+
+  end.setYear(end.getFullYear()-1);
+
+
+
+  var timeFrameEnd   = now.toLocaleString();
+  var timeFrameStart  = end.toLocaleString();
+
+
   //console.log('timeFrameEnd: %s, timeFrameStart: %s',timeFrameEnd,timeFrameStart);
 
   $.ajax({
@@ -176,9 +191,9 @@ function checkAddressHistory(){
       var content = '<em>No Previous Reports found for this address</em>';
       switch( textStatus ){
         case 'success' :
-          if( response.responseJSON.Results.length ){
-            var history_rows = new Array();
-            $.each( response.responseJSON.Results , function( k , v ){
+        if( response.responseJSON.Results.length ){
+          var history_rows = new Array();
+          $.each( response.responseJSON.Results , function( k , v ){
               //console.log( k , v );
               if( v.Address.PrettyAddress != address ){
                 //console.log( 'Imperfect Address Match' , v.Address.PrettyAddress , address );
@@ -187,46 +202,47 @@ function checkAddressHistory(){
                 //console.log( 'Current Job Match' );
                 return true;
               }
+              var thedate = new Date(new Date(v.JobReceived).getTime() + (new Date(v.JobReceived).getTimezoneOffset() * 60000));
               //console.log( 'History Hit' );
               var newRow = '<tr class="job-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
-                             '<th><a href="/Jobs/'+v.Id+'">'+v.Identifier+'</a></th>'+
-                             '<td>'+v.JobStatusType.Name+'</td>'+
-                             '<td>'+v.JobReceived+'</td>'+
-                             '<td>'+v.SituationOnScene+'</td>'+
-                           '</tr>';
+              '<th><a href="/Jobs/'+v.Id+'">'+v.Identifier+'</a></th>'+
+              '<td>'+v.JobStatusType.Name+'</td>'+
+              '<td>'+thedate.toLocaleTimeString("en-au", options)+'</td>'+
+              '<td>'+v.SituationOnScene+'</td>'+
+              '</tr>';
               history_rows.push( newRow );
             });
-            if( history_rows.length ){
-              content = '<table>'+
-                          '<thead>'+
-                            '<tr>'+
-                              '<th>Job #</th><th>Status</th><th>Date</th><th>Details</th>'+
-                            '</tr>'+
-                          '</thead>'+
-                          '<tbody>'+
-                            history_rows.join('')+
-                          '</tbody>'+
-                        '</table>';
-            }
-          }else{
-            console.log( 'Address Search - No History' );
+          if( history_rows.length ){
+            content = '<table>'+
+            '<thead>'+
+            '<tr>'+
+            '<th>Job #</th><th>Status</th><th>Date</th><th>Details</th>'+
+            '</tr>'+
+            '</thead>'+
+            '<tbody>'+
+            history_rows.join('')+
+            '</tbody>'+
+            '</table>';
           }
-          break;
+        }else{
+          console.log( 'Address Search - No History' );
+        }
+        break;
         case 'error' :
-          content = '<em>Unable to Perform Address Search</em>';
-          break;
+        content = '<em>Unable to Perform Address Search</em>';
+        break;
         case 'nocontent' :
-          content = '<em>Address Search returned Unexpected Data</em>';
-          break;
+        content = '<em>Address Search returned Unexpected Data</em>';
+        break;
         case 'timeout' :
-          content = '<em>Address Search Timed Out</em>';
-          break;
+        content = '<em>Address Search Timed Out</em>';
+        break;
         case 'abort' :
-          content = '<em>Address Search Aborted</em>';
-          break;
+        content = '<em>Address Search Aborted</em>';
+        break;
         case 'parsererror' :
-          content = '<em>Address Search returned Unexpected Data</em>';
-          break;
+        content = '<em>Address Search returned Unexpected Data</em>';
+        break;
       }
       $('fieldset.col-md-12 legend , fieldset.col-md-4 legend').each(function(k,v){
         var $v = $(v);
@@ -234,11 +250,11 @@ function checkAddressHistory(){
         var section_title = $v.text().trim();
         if( section_title.indexOf( 'Notes' ) === 0 || section_title.indexOf( 'Messages' ) === 0 ){
           $p.before('<fieldset id="job_view_history" class="col-md-12">'+
-                      '<legend>Job History for Address (12 Months)</legend>'+
-                      '<div class="form-group col-xs-12">'+
-                        content+
-                      '</div>'+
-                    '</fieldset>');
+            '<legend>Job History for Address (12 Months)</legend>'+
+            '<div class="form-group col-xs-12">'+
+            content+
+            '</div>'+
+            '</fieldset>');
           return false; // break out of $.each()
         }
       });
