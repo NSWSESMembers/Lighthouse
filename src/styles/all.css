@@ -39,6 +39,6 @@
   width: 100%;
 }
 #job_view_history table thead tr ,
-#job_view_history table tbody tr:nth-child(odd) {
+#job_view_history table tbody tr:nth-child(even) {
   background: #F4F4F4;
 }

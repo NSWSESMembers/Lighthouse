@@ -157,17 +157,13 @@ function checkAddressHistory(){
     return;
   }
   //console.log('address: %s',address);
+
   var now = new Date();
   var end = new Date();
-
   end.setYear(end.getFullYear()-1);
-
-
 
   var timeFrameEnd   = now.toLocaleString();
   var timeFrameStart  = end.toLocaleString();
-
-
   //console.log('timeFrameEnd: %s, timeFrameStart: %s',timeFrameEnd,timeFrameStart);
 
   $.ajax({
@@ -181,7 +177,8 @@ function checkAddressHistory(){
       'PageIndex' : 1 ,
       'PageSize' : 100 ,
       'SortField' : 'JobReceived' ,
-      'SortOrder' : 'desc'
+      'SortOrder' : 'desc' ,
+      'LighthouseFunction' : 'checkAddressHistory'
     } ,
     cache: false ,
     dataType: 'json' ,
@@ -244,20 +241,9 @@ function checkAddressHistory(){
         content = '<em>Address Search returned Unexpected Data</em>';
         break;
       }
-      $('fieldset.col-md-12 legend , fieldset.col-md-4 legend').each(function(k,v){
-        var $v = $(v);
-        var $p = $v.closest('fieldset');
-        var section_title = $v.text().trim();
-        if( section_title.indexOf( 'Notes' ) === 0 || section_title.indexOf( 'Messages' ) === 0 ){
-          $p.before('<fieldset id="job_view_history" class="col-md-12">'+
-            '<legend>Job History for Address (12 Months)</legend>'+
-            '<div class="form-group col-xs-12">'+
-            content+
-            '</div>'+
-            '</fieldset>');
-          return false; // break out of $.each()
-        }
-      });
+      // Insert content into DOM element
+      $('#job_view_history div.form-group')
+        .html(content);
 
     }
   });

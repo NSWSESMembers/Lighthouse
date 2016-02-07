@@ -94,6 +94,30 @@ var html2 = renderQuickText("CompleteTeamQuickTextBox", [
 
 $('#completeTeamModal .modal-body .form-group:nth-child(12)').after([html, html2]);
 
+
+// Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
+$job_view_history = (
+  <fieldset id="job_view_history" class="col-md-12">
+    <legend>Job History for Address (12 Months)</legend>
+    <div class="form-group col-xs-12">
+      <div style="text-align:center">
+        Searching&hellip;<br/>
+        <img style="width:220px;height:19px"
+             src={chrome.extension.getURL("icons/loading-bar.gif")} />
+      </div>
+    </div>
+  </fieldset>
+);
+$('fieldset.col-md-12 legend , fieldset.col-md-4 legend').each(function(k,v){
+  var $v = $(v);
+  var $p = $v.closest('fieldset');
+  var section_title = $v.text().trim();
+  if( section_title.indexOf( 'Notes' ) === 0 || section_title.indexOf( 'Messages' ) === 0 ){
+    $p.before($job_view_history);
+    return false; // break out of $.each()
+  }
+});
+
 // inject the coded needed to fix visual problems
 // needs to be injected so that it runs after the DOMs are created
 // We run this last because we want to ensure the elements created above have
