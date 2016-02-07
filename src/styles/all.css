@@ -39,6 +39,10 @@
   width: 100%;
 }
 #job_view_history table thead tr ,
-#job_view_history table tbody tr:nth-child(even) {
+#job_view_history table tbody tr.job-view-history-section {
   background: #F4F4F4;
+}
+#job_view_history table tbody tr.job-view-history-section th ,
+#job_view_history table tbody tr.job-view-history-none td {
+  text-align: center;
 }
