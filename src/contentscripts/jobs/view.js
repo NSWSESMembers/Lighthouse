@@ -12,7 +12,7 @@ function renderQuickText(id, selections) {
                src={chrome.extension.getURL("icons/lh-black.png")} />
           Quick Text
         </label>
-        <div class="col-lg-9">
+        <div class="col-md-8 col-lg-9">
           <select class="form-control" id={id} style="width:100%">
             {
               _.map(selections, function(selection) {
@@ -66,12 +66,12 @@ var options = [
 var html = (
   <div class="form-group">
     <div class="row">
-      <label class="col-md-3 control-label">
+      <label class="col-md-4 col-lg-3 control-label">
         <img style="width:16px;vertical-align:top;margin-right:5px"
              src={chrome.extension.getURL("icons/lh-black.png")} />
         Quick Tasks
       </label>
-      <div class="col-md-9">
+      <div class="col-md-8 col-lg-9">
         {
           _.map(options, function(option) {
             return (
