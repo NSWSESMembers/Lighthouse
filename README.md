@@ -41,8 +41,7 @@ Pull requests are welcome!
 
 ###In developement:
 
-
-- Christmas theme :p
+- Address hisory - display other jobs with same address.
 
 
 ###To Do
@@ -67,6 +66,8 @@ Pull requests are welcome!
 - Quick Task on team completion
 - Fixed message line breaks. Instead of showing `<br>` an actual line break is inserted into the message correctly.
 - Added more pagination choices to tasking and job list
+- Christmas theme :p
+
 
 
 
