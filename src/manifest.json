@@ -35,7 +35,10 @@
       "js": ["contentscripts/jobs/view.js"]
     },
     {
-      "matches": ["https://*.ses.nsw.gov.au/Jobs/Tasking"],
+      "matches": [
+        "https://*.ses.nsw.gov.au/Jobs/Tasking",
+        "https://*.ses.nsw.gov.au/Jobs/Tasking/"
+      ],
       "js": ["contentscripts/jobs/tasking.js"]
     },
     {
@@ -49,26 +52,40 @@
       ]
     },
     {
-      "matches": ["https://*.ses.nsw.gov.au/Messages/Create"],
+      "matches": [
+        "https://*.ses.nsw.gov.au/Messages/Create",
+        "https://*.ses.nsw.gov.au/Messages/Create/"
+      ],
       "js": ["contentscripts/messages/create.js"]
     },
     {
       "matches": [
         "https://*.ses.nsw.gov.au/Teams/Create",
-        "https://beacon.ses.nsw.gov.au/Teams/*/Edit"
+        "https://*.ses.nsw.gov.au/Teams/Create/",
+        "https://*.ses.nsw.gov.au/Teams/*/Edit",
+        "https://*.ses.nsw.gov.au/Teams/*/Edit/"
       ],
       "js": ["contentscripts/teams/edit.js"]
     },
     {
-      "matches": ["https://*.ses.nsw.gov.au/Teams/*/Jobs"],
+      "matches": [
+        "https://*.ses.nsw.gov.au/Teams/*/Jobs",
+        "https://*.ses.nsw.gov.au/Teams/*/Jobs/"
+      ],
       "js": ["contentscripts/teams/jobs.js"]
     },
     {
-      "matches": ["https://*.ses.nsw.gov.au/Teams"],
+      "matches": [
+        "https://*.ses.nsw.gov.au/Teams",
+        "https://*.ses.nsw.gov.au/Teams/"
+      ],
       "js": ["contentscripts/teams/teams.js"]
     },
     {
-      "matches": ["https://*.ses.nsw.gov.au/nitc"],
+      "matches": [
+        "https://*.ses.nsw.gov.au/nitc",
+        "https://*.ses.nsw.gov.au/nitc/"
+      ],
       "js": ["contentscripts/nitc.js"]
     },
     {
