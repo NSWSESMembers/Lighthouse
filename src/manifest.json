@@ -69,7 +69,7 @@
     },
     {
       "matches": ["https://*.ses.nsw.gov.au/nitc"],
-      "js": ["nitc/nitc.js"]
+      "js": ["contentscripts/nitc.js"]
     },
     {
       "matches": ["https://*.ses.nsw.gov.au/*"],

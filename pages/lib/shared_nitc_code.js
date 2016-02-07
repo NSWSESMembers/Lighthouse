@@ -1,3 +1,5 @@
+var LighthouseJson = require('./shared_json_code.js');
+
 //make the call to beacon
 function GetJSONfromBeacon(params, StartDate, EndDate, callback, progressCallBack) {
 
@@ -35,7 +37,7 @@ function GetJSONfromBeacon(params, StartDate, EndDate, callback, progressCallBac
 
 
   var lastDisplayedVal = 0 ;
-  goGetMeSomeJSONFromBeacon(
+  LighthouseJson.get_json(
     url,
     function(count,total){
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
@@ -55,4 +57,8 @@ function GetJSONfromBeacon(params, StartDate, EndDate, callback, progressCallBac
       callback(obj);
     }
   );
+}
+
+module.exports = {
+  get_json: GetJSONfromBeacon
 }

@@ -1,3 +1,11 @@
+var nitc = require('../lib/shared_nitc_code.js');
+var $ = require('jquery');
+global.jQuery = $;
+var ElasticProgress = require('elastic-progress');
+
+// inject css c/o browserify-css
+require('../styles/nitcexport.css');
+
 var timeoverride = null;
 
 window.onerror = function(message, url, lineNumber) {
@@ -8,7 +16,6 @@ window.onerror = function(message, url, lineNumber) {
 
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById("goButton").addEventListener("click", function(){
-    console.log("test");
     var element = document.querySelector('.loadprogress');
     var mp = new ElasticProgress(element, {
       buttonSize: 60,
@@ -48,8 +55,6 @@ var params = getSearchParameters();
 function RunForestRun(mp) {
   mp && mp.open();
   document.getElementById("loading").style.visibility = 'visible';
-  console.log("params");
-  console.log(params);
   HackTheMatrix(mp); // expand to include NonIncidentTypeIds, IncludeCompleted - params is global
 }
 
@@ -58,7 +63,7 @@ function HackTheMatrix(progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  GetJSONfromBeacon(params, start, end, function(nitcs) {
+  nitc.get_json(params, start, end, function(nitcs) {
 
     if (document.getElementById("Activity").checked) {  // Activity list export
         var exports = nitcs.Results.map(function(d){
@@ -93,7 +98,6 @@ function HackTheMatrix(progressBar) {
         var listOfActivities = [];
         nitcs.Results.map(function(d) {
             var activities = d.Tags.map(function(t){return t.Name});
-            console.log(activities);
             d.Participants.map(function(p) {
                 var i = 0;
                 var name = p.Person.FullName;
@@ -124,13 +128,11 @@ function HackTheMatrix(progressBar) {
     }
     progressBar.setValue(1);
     progressBar.close();
-    console.log("Downloading:");
-    console.log(exports);
-    downloadCSV("LighthouseExport.csv",exports);
+    downloadCSV("LighthouseExport.csv", exports);
 
     progressBar.close();
 
-  },function(val,total){
+  }, function(val,total){
     progressBar.setValue(val/total);
   });
 }
