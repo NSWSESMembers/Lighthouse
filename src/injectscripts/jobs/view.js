@@ -142,88 +142,118 @@ function taskFill(parent, child) {
 
 function checkAddressHistory(){
 
-  var options = {
-    weekday: "short",
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-    hour12: false
-  };
-
-
-  var address = masterViewModel.enteredAddress.peek();
+  var address = masterViewModel.geocodedAddress();
   if( typeof address == 'undefined' ){
     setTimeout( checkAddressHistory , 500 );
     return;
   }
-  //console.log('address: %s',address);
+  //console.log('address: %o',address);
+
   var now = new Date();
   var end = new Date();
-
   end.setYear(end.getFullYear()-1);
-
-
 
   var timeFrameEnd   = now.toLocaleString();
   var timeFrameStart  = end.toLocaleString();
-
-
   //console.log('timeFrameEnd: %s, timeFrameStart: %s',timeFrameEnd,timeFrameStart);
 
   $.ajax({
     type: 'GET' ,
     url: '/Api/v1/Jobs/Search' ,
     data: {
-      'Q' : address.substring( 0 , 30 ) ,
+      'Q' : ( address.Street+', '+address.Locality ).substring( 0 , 30 ) ,
       'StartDate' : timeFrameStart ,
       'EndDate' : timeFrameEnd ,
       'ViewModelType' : 2 ,
       'PageIndex' : 1 ,
       'PageSize' : 100 ,
       'SortField' : 'JobReceived' ,
-      'SortOrder' : 'desc'
+      'SortOrder' : 'desc' ,
+      'LighthouseFunction' : 'checkAddressHistory'
     } ,
     cache: false ,
     dataType: 'json' ,
     complete: function(response, textStatus){
       console.log( 'response' , response );
       console.log( 'textStatus' , textStatus );
-      var content = '<em>No Previous Reports found for this address</em>';
+      var content = '<em>No Previous Reports found for this address, or street</em>';
       switch( textStatus ){
         case 'success' :
         if( response.responseJSON.Results.length ){
-          var history_rows = new Array();
+          var history_rows = {
+            'exact' : new Array() ,
+            'partial' : new Array() ,
+            'neighbour' : new Array() ,
+            'street' : new Array()
+          };
+          var re_StreetNumber_Parts = /^(?:(\d+)\D)?(\d+)\D*/;
+          var jobAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( address.StreetNumber );
+          var jobAddress_StreetNumber_Max = parseInt( jobAddress_StreetNumber_tmp[2] , 10 );
+          var jobAddress_StreetNumber_Min = parseInt( jobAddress_StreetNumber_tmp[( typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
           $.each( response.responseJSON.Results , function( k , v ){
-              //console.log( k , v );
-              if( v.Address.PrettyAddress != address ){
-                //console.log( 'Imperfect Address Match' , v.Address.PrettyAddress , address );
-                return true;
-              }else if( v.Id == jobId ){
-                //console.log( 'Current Job Match' );
+              console.log( k , v );
+              if( v.Id == jobId ){
+                console.log( 'Current Job Match' );
                 return true;
               }
-              var thedate = new Date(new Date(v.JobReceived).getTime() + (new Date(v.JobReceived).getTimezoneOffset() * 60000));
-              //console.log( 'History Hit' );
-              var newRow = '<tr class="job-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
-              '<th><a href="/Jobs/'+v.Id+'">'+v.Identifier+'</a></th>'+
-              '<td>'+v.JobStatusType.Name+'</td>'+
-              '<td>'+thedate.toLocaleTimeString("en-au", options)+'</td>'+
-              '<td>'+v.SituationOnScene+'</td>'+
-              '</tr>';
-              history_rows.push( newRow );
+              // Construct Row
+              if( v.Address.PrettyAddress == address.PrettyAddress ){
+                console.log( 'Perfect Address Match' );
+                history_rows.exact.push( checkAddressHistory_constructRow( v , true ) );
+                return true;
+              }
+              // Not an exact address match, so include the address in the result row
+              if( v.Address.StreetNumber.replace(/\D+/g,'') == address.StreetNumber.replace(/\D+/g,'') ){
+                console.log( 'Partial Address Match - Possible Townhouses/Apartments' );
+                history_rows.partial.push( checkAddressHistory_constructRow( v ) );
+                return true;
+              }
+              var rowAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( v.Address.StreetNumber );
+              var rowAddress_StreetNumber_Max = parseInt( rowAddress_StreetNumber_tmp[2] , 10 );
+              var rowAddress_StreetNumber_Min = parseInt( rowAddress_StreetNumber_tmp[( typeof rowAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
+              if( Math.abs( jobAddress_StreetNumber_Min - rowAddress_StreetNumber_Max ) == 2 || Math.abs( jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min ) == 2 ){
+                console.log( 'Immediate Neighour' );
+                history_rows.neighbour.push( checkAddressHistory_constructRow( v ) );
+                return true;
+              }
+              console.log( 'Street Address Match' );
+              history_rows.street.push( checkAddressHistory_constructRow( v ) );
             });
-          if( history_rows.length ){
-            content = '<table>'+
-            '<thead>'+
-            '<tr>'+
-            '<th>Job #</th><th>Status</th><th>Date</th><th>Details</th>'+
-            '</tr>'+
-            '</thead>'+
-            '<tbody>'+
-            history_rows.join('')+
-            '</tbody>'+
-            '</table>';
-          }
+          content = '<table>'+
+          '<thead>'+
+          '<tr><th>Job #</th><th>Address</th><th rowspan="2">Details</th></tr>'+
+          '<tr><th>Status</th><th>Date</th></tr>'+
+          '</thead>'+
+          '<tbody>';
+          $.each(history_rows,function(k,v){
+            var section_heading = false;
+            var section_always = false;
+            switch(k){
+              case 'exact' :
+              section_heading = 'Exact Address';
+              section_always = true;
+              break;
+              case 'partial' :
+              section_heading = 'Townhouse, Apartment or Battleaxe';
+              break;
+              case 'neighbour' :
+              section_heading = 'Neighbouring Address';
+              break;
+              case 'street' :
+              section_heading = 'Same Street';
+              break;
+            }
+            if( ( v.length || section_always ) && section_heading ){
+              content += '<tr class="job-view-history-section job-view-history-'+k+'"><th colspan="3">'+section_heading+'</th></tr>';
+            }
+            if( v.length ){
+              content += v.join('');
+            }else if( section_always ){
+              content += '<tr class="job-view-history-none"><td colspan="3"><em>No Previous Reports</em></td></tr>';
+            }
+          });
+          content += '</tbody>'+
+          '</table>';
         }else{
           console.log( 'Address Search - No History' );
         }
@@ -244,22 +274,35 @@ function checkAddressHistory(){
         content = '<em>Address Search returned Unexpected Data</em>';
         break;
       }
-      $('fieldset.col-md-12 legend , fieldset.col-md-4 legend').each(function(k,v){
-        var $v = $(v);
-        var $p = $v.closest('fieldset');
-        var section_title = $v.text().trim();
-        if( section_title.indexOf( 'Notes' ) === 0 || section_title.indexOf( 'Messages' ) === 0 ){
-          $p.before('<fieldset id="job_view_history" class="col-md-12">'+
-            '<legend>Job History for Address (12 Months)</legend>'+
-            '<div class="form-group col-xs-12">'+
-            content+
-            '</div>'+
-            '</fieldset>');
-          return false; // break out of $.each()
-        }
-      });
+      // Insert content into DOM element
+      $('#job_view_history div.form-group')
+        .html(content);
 
     }
   });
 }
 setTimeout( checkAddressHistory , 1000 );
+
+function checkAddressHistory_constructRow( v , sameAddress ){
+
+  var options = {
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric",
+    hour12: false
+  };
+
+  var thedate = new Date(new Date(v.JobReceived).getTime() + (new Date(v.JobReceived).getTimezoneOffset() * 60000));
+  var address = ( typeof sameAddress == 'undefined' ? v.Address.StreetNumber+' '+v.Address.Street : 'Same Address' );
+
+  return '<tr class="job-view-history job-view-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
+  '<th><a href="/Jobs/'+v.Id+'">'+v.Identifier+'</a></th>'+
+  '<td>'+address+'</td>'+
+  '<td rowspan="2" valign="top">'+( v.SituationOnScene == null ? 'View job for more detail' : v.SituationOnScene )+'</td>'+
+  '</tr>'+
+  '<tr class="job-view-history job-view-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
+  '<td>'+v.JobStatusType.Name+'</td>'+
+  '<td title="'+thedate.toLocaleTimeString("en-au", options)+'">'+moment(thedate).fromNow()+'</td>'+
+  '</tr>';
+}
