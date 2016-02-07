@@ -2,6 +2,7 @@ var LighthouseJob = require('../lib/shared_job_code.js');
 var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseTeam = require('../lib/shared_team_code.js');
+var moment = require('moment');
 var $ = require('jquery');
 global.jQuery = $;
 var crossfilter = require('crossfilter');
@@ -241,9 +242,8 @@ function HackTheMatrix(unit, host) {
 
 
             if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") {
-             var diff = (new Date) - thistime;
-             diff = diff / 1000 / 60;
-             latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+secondsToHms(Math.round(diff))+" hrs ago";
+             var diff = moment(thistime).fromNow();
+             latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff;
              oldesttime = thistime;
            }
          });
