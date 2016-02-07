@@ -35,7 +35,7 @@ whenWeAreReady(user,function() {
 
       var teamsummaryUrl = lighthouseUrl + "pages/teamsummary.html" + vars;
 
-      var aboutURL = "https://github.com/OSPFNeighbour/Lighthouse/blob/master/README.md" //chrome.extension.getURL("lighthouse/about.html");
+      var aboutURL = "https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md";
 
 
       li.innerHTML = "<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\"><span class=\"nav-text\"><img width=\"16px\" style=\"vertical-align: text-bottom;margin-right:5px\" src=\"" + lighthouseUrl + "icons/lh.png" + "\">Lighthouse</span></a><ul class=\"dropdown-menu\"><li role=\"presentation\" class=\"dropdown-header\">Jobs</li><li><a href=\"" + jobsummaryUrl + "\">Job Summary (" + results.Code + " Today)</a></li><li><a href=\"" + jobstatsUrl + "\">Job Statistics (" + results.Code + " Today)</a></li><li><a href=\"" + jobexportUrl + "\">Job Export (" + results.Code + " Today)</a></li><li role=\"presentation\" class=\"divider\"></li><li role=\"presentation\" class=\"dropdown-header\">Teams</li><li><a href=\"" + teamsummaryUrl + "\">Team Summary (" + results.Code + " Today)</a></li><li role=\"presentation\" class=\"divider\"></li><li role=\"presentation\" class=\"dropdown-header\">About</li><li><a href=\"" + aboutURL + "\">About Lighthouse</a></li>";
