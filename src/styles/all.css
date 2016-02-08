@@ -42,7 +42,13 @@
 #job_view_history table tbody tr.job-view-history-section {
   background: #F4F4F4;
 }
+#job_view_history table tbody tr.oddRow {
+    background-color: #FBF5EF;
+}
+
+
 #job_view_history table tbody tr.job-view-history-section th ,
 #job_view_history table tbody tr.job-view-history-none td {
   text-align: center;
 }
+
