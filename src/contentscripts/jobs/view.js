@@ -99,7 +99,7 @@ $('#completeTeamModal .modal-body .form-group:nth-child(12)').after([html, html2
 $job_view_history = (
   <fieldset id="job_view_history" class="col-md-12">
     <legend><img style="width:16px;vertical-align:inherit;margin-right:5px"
-             src={chrome.extension.getURL("icons/lh-black.png")} />Job History for Address, Neighbours and Street (12 Months)<span class="pull-right h6"><span id="job_view_history_check" class="fa fa-lg fa-check-square-o"></span> Nearby Open Jobs Only</span></legend>
+             src={chrome.extension.getURL("icons/lh-black.png")} />Job History for Address, Neighbours and Street (12 Months)</legend>
     <div class="form-group col-xs-12">
       <div style="text-align:center">
         Searching&hellip;<br/>

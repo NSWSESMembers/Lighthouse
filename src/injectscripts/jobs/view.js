@@ -102,25 +102,6 @@ document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
 
 
 $(document).ready(function() {
-
-if (localStorage.getItem("LighthouseJobViewHistoryOpenOnly") == "false"){
-$(this).toggleClass('fa-check-square-o fa-square-o');
-}
-
-
-  document.getElementById("job_view_history_check").onclick = function() {
-    if ($(this).hasClass("fa-square-o")) {
-      console.log("enabling");
-      localStorage.setItem("LighthouseJobViewHistoryOpenOnly", true);
-    } else {
-            console.log("disabling");
-            localStorage.setItem("LighthouseJobViewHistoryOpenOnly", false);
-    }
-    $(this).toggleClass('fa-check-square-o fa-square-o');
-    checkAddressHistory();
-
-    
-  };
   document.getElementById("stormtree").onclick = function() {
     taskFill("Storm","Tree Operations/Removal")
   };
@@ -165,10 +146,6 @@ function checkAddressHistory(){
 
 console.log(content);
 console.log(content);
-
-  var showOnlyOpen = localStorage.getItem("LighthouseJobViewHistoryOpenOnly");
-
-console.log(showOnlyOpen);
 
   var address = masterViewModel.geocodedAddress();
   if( typeof address == 'undefined' ){
@@ -268,19 +245,19 @@ console.log(showOnlyOpen);
             }
             //No street number so it can only be the same road
             if (v.Address.StreetNumber == null || address.StreetNumber == null) {
-              history_rows.street.push( checkAddressHistory_constructRow( v, false, k, showOnlyOpen) );
+              history_rows.street.push( checkAddressHistory_constructRow( v, false, k) );
               return true;
             }
               // Construct Row
               if( v.Address.PrettyAddress == address.PrettyAddress ){
                 console.log( 'Perfect Address Match' );
-                history_rows.exact.push( checkAddressHistory_constructRow( v , true, k, showOnlyOpen) );
+                history_rows.exact.push( checkAddressHistory_constructRow( v , true, k) );
                 return true;
               }
               // Not an exact address match, so include the address in the result row
               if( v.Address.StreetNumber.replace(/\D+/g,'') == address.StreetNumber.replace(/\D+/g,'') ){
                 console.log( 'Partial Address Match - Possible Townhouses/Apartments' );
-                history_rows.partial.push( checkAddressHistory_constructRow( v, false, k, showOnlyOpen) );
+                history_rows.partial.push( checkAddressHistory_constructRow( v, false, k) );
                 return true;
               }
               var rowAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( v.Address.StreetNumber );
@@ -288,11 +265,11 @@ console.log(showOnlyOpen);
               var rowAddress_StreetNumber_Min = parseInt( rowAddress_StreetNumber_tmp[( typeof rowAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
               if( Math.abs( jobAddress_StreetNumber_Min - rowAddress_StreetNumber_Max ) == 2 || Math.abs( jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min ) == 2 ){
                 console.log( 'Immediate Neighour' );
-                history_rows.neighbour.push( checkAddressHistory_constructRow( v, false, k, showOnlyOpen) );
+                history_rows.neighbour.push( checkAddressHistory_constructRow( v, false, k) );
                 return true;
               }
               console.log( 'Street Address Match' );
-              history_rows.street.push( checkAddressHistory_constructRow( v, false, k, showOnlyOpen) );
+              history_rows.street.push( checkAddressHistory_constructRow( v, false, k) );
             });
 content = '<table>'+
 '<thead>'+
@@ -357,14 +334,7 @@ break;
 }
 setTimeout( checkAddressHistory , 1000 );
 
-function checkAddressHistory_constructRow( v , sameAddress, oddEvenCount, showOnlyOpen){
-console.log(showOnlyOpen);
-  if (showOnlyOpen == "true") {
-      if (v.JobStatusType.Name == "Closed" || v.JobStatusType.Name == "Finalised" || v.JobStatusType.Name == "Complete") {
-        console.log("Open only dude");
-        return
-      }
-  }
+function checkAddressHistory_constructRow( v , sameAddress, oddEvenCount){
 
   var options = {
     weekday: "short",
