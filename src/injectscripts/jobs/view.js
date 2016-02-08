@@ -99,7 +99,28 @@ document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
 }
 
 
+
+
 $(document).ready(function() {
+
+if (localStorage.getItem("LighthouseJobViewHistoryOpenOnly") == "false"){
+$(this).toggleClass('fa-check-square-o fa-square-o');
+}
+
+
+  document.getElementById("job_view_history_check").onclick = function() {
+    if ($(this).hasClass("fa-square-o")) {
+      console.log("enabling");
+      localStorage.setItem("LighthouseJobViewHistoryOpenOnly", true);
+    } else {
+            console.log("disabling");
+            localStorage.setItem("LighthouseJobViewHistoryOpenOnly", false);
+    }
+    $(this).toggleClass('fa-check-square-o fa-square-o');
+    checkAddressHistory();
+
+    
+  };
   document.getElementById("stormtree").onclick = function() {
     taskFill("Storm","Tree Operations/Removal")
   };
@@ -142,12 +163,47 @@ function taskFill(parent, child) {
 
 function checkAddressHistory(){
 
+console.log(content);
+console.log(content);
+
+  var showOnlyOpen = localStorage.getItem("LighthouseJobViewHistoryOpenOnly");
+
+console.log(showOnlyOpen);
+
   var address = masterViewModel.geocodedAddress();
   if( typeof address == 'undefined' ){
     setTimeout( checkAddressHistory , 500 );
     return;
   }
   //console.log('address: %o',address);
+
+  //dont allow searches if the job has not been geocoded
+  if (address.Street == null && address.Locality == null && address.Latitude == null && address.Longitude== null ) {
+    content = '<em>Unable to Perform Address Search. Address is not Geocoded. Please edit the job and geocode the job location.</em>';
+      // Insert content into DOM element
+      $('#job_view_history div.form-group')
+      .html(content);
+      return
+    }
+
+    //addresses with only GPS
+    if (address.Street == null && address.Locality == null) {
+      content = '<em>Unable to Perform Address Search. Job location does not appear to be at a street address</em>';
+      // Insert content into DOM element
+      $('#job_view_history div.form-group')
+      .html(content);
+      return
+    }
+
+  //address without a street or address but still geocoded
+  var q;
+  if (address.Street == null && address.Locality == null) {
+    q = address.PrettyAddress.substring( 0 , 30 );
+  } else
+  {
+    q = ( address.Street+', '+address.Locality ).substring( 0 , 30 );
+  }
+
 
   var now = new Date();
   var end = new Date();
@@ -156,12 +212,23 @@ function checkAddressHistory(){
   var timeFrameEnd   = now.toLocaleString();
   var timeFrameStart  = end.toLocaleString();
   //console.log('timeFrameEnd: %s, timeFrameStart: %s',timeFrameEnd,timeFrameStart);
+  console.log({
+    'Q' :  q,
+    'StartDate' : timeFrameStart ,
+    'EndDate' : timeFrameEnd ,
+    'ViewModelType' : 2 ,
+    'PageIndex' : 1 ,
+    'PageSize' : 100 ,
+    'SortField' : 'JobReceived' ,
+    'SortOrder' : 'desc' ,
+    'LighthouseFunction' : 'checkAddressHistory'
+  })
 
   $.ajax({
     type: 'GET' ,
     url: '/Api/v1/Jobs/Search' ,
     data: {
-      'Q' : ( address.Street+', '+address.Locality ).substring( 0 , 30 ) ,
+      'Q' : q ,
       'StartDate' : timeFrameStart ,
       'EndDate' : timeFrameEnd ,
       'ViewModelType' : 2 ,
@@ -186,31 +253,34 @@ function checkAddressHistory(){
             'neighbour' : new Array() ,
             'street' : new Array()
           };
-          var re_StreetNumber_Parts = /^(?:(\d+)\D)?(\d+)\D*/;
-          var jobAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( address.StreetNumber );
-          var jobAddress_StreetNumber_Max = parseInt( jobAddress_StreetNumber_tmp[2] , 10 );
-          var jobAddress_StreetNumber_Min = parseInt( jobAddress_StreetNumber_tmp[( typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
+          if (address.StreetNumber != null)
+          {
+            var re_StreetNumber_Parts = /^(?:(\d+)\D)?(\d+)\D*/;
+            var jobAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( address.StreetNumber );
+            var jobAddress_StreetNumber_Max = parseInt( jobAddress_StreetNumber_tmp[2] , 10 );
+            var jobAddress_StreetNumber_Min = parseInt( jobAddress_StreetNumber_tmp[( typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
+          }
           $.each( response.responseJSON.Results , function( k , v ){
             console.log( k , v );
             if( v.Id == jobId ){
               console.log( 'Current Job Match' );
               return true;
             }
-            //No street number so its the same road
-            if (v.Address.StreetNumber == null) {
-              history_rows.street.push( checkAddressHistory_constructRow( v, false, k) );
+            //No street number so it can only be the same road
+            if (v.Address.StreetNumber == null || address.StreetNumber == null) {
+              history_rows.street.push( checkAddressHistory_constructRow( v, false, k, showOnlyOpen) );
               return true;
             }
               // Construct Row
               if( v.Address.PrettyAddress == address.PrettyAddress ){
                 console.log( 'Perfect Address Match' );
-                history_rows.exact.push( checkAddressHistory_constructRow( v , true, k) );
+                history_rows.exact.push( checkAddressHistory_constructRow( v , true, k, showOnlyOpen) );
                 return true;
               }
               // Not an exact address match, so include the address in the result row
               if( v.Address.StreetNumber.replace(/\D+/g,'') == address.StreetNumber.replace(/\D+/g,'') ){
                 console.log( 'Partial Address Match - Possible Townhouses/Apartments' );
-                history_rows.partial.push( checkAddressHistory_constructRow( v, false, k) );
+                history_rows.partial.push( checkAddressHistory_constructRow( v, false, k, showOnlyOpen) );
                 return true;
               }
               var rowAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( v.Address.StreetNumber );
@@ -218,11 +288,11 @@ function checkAddressHistory(){
               var rowAddress_StreetNumber_Min = parseInt( rowAddress_StreetNumber_tmp[( typeof rowAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
               if( Math.abs( jobAddress_StreetNumber_Min - rowAddress_StreetNumber_Max ) == 2 || Math.abs( jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min ) == 2 ){
                 console.log( 'Immediate Neighour' );
-                history_rows.neighbour.push( checkAddressHistory_constructRow( v, false, k) );
+                history_rows.neighbour.push( checkAddressHistory_constructRow( v, false, k, showOnlyOpen) );
                 return true;
               }
               console.log( 'Street Address Match' );
-              history_rows.street.push( checkAddressHistory_constructRow( v, false, k) );
+              history_rows.street.push( checkAddressHistory_constructRow( v, false, k, showOnlyOpen) );
             });
 content = '<table>'+
 '<thead>'+
@@ -282,13 +352,19 @@ break;
       // Insert content into DOM element
       $('#job_view_history div.form-group')
       .html(content);
-
     }
   });
 }
 setTimeout( checkAddressHistory , 1000 );
 
-function checkAddressHistory_constructRow( v , sameAddress, oddEvenCount ){
+function checkAddressHistory_constructRow( v , sameAddress, oddEvenCount, showOnlyOpen){
+console.log(showOnlyOpen);
+  if (showOnlyOpen == "true") {
+      if (v.JobStatusType.Name == "Closed" || v.JobStatusType.Name == "Finalised" || v.JobStatusType.Name == "Complete") {
+        console.log("Open only dude");
+        return
+      }
+  }
 
   var options = {
     weekday: "short",
@@ -303,15 +379,16 @@ function checkAddressHistory_constructRow( v , sameAddress, oddEvenCount ){
   if (RowisEven) {RowColor = 'evenRow'} else {RowColor = 'oddRow'};
 
   //trim down common street prefix to save space
-  v.Address.Street = v.Address.Street.replace("ROAD","RD");
-  v.Address.Street = v.Address.Street.replace("STREET","ST");
-  v.Address.Street = v.Address.Street.replace("AVENUE","AVE");
-
+  if (v.Address.Street != null) {
+    v.Address.Street = v.Address.Street.replace("ROAD","RD");
+    v.Address.Street = v.Address.Street.replace("STREET","ST");
+    v.Address.Street = v.Address.Street.replace("AVENUE","AVE");
+  }
 
 
 
   var thedate = new Date(new Date(v.JobReceived).getTime() + (new Date(v.JobReceived).getTimezoneOffset() * 60000));
-  var address = ( v.Address.StreetNumber != null ? (sameAddress == false ? v.Address.StreetNumber+' '+v.Address.Street : 'Same Address' ) : v.Address.Street );
+  var address = (v.Address.Street != null ? ( v.Address.StreetNumber != null ? (sameAddress == false ? v.Address.StreetNumber+' '+v.Address.Street : 'Same Address' ) : v.Address.Street ) : v.Address.PrettyAddress);
 
   return '<tr class="job-view-history '+RowColor+' job-view-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
   '<th><a href="/Jobs/'+v.Id+'">'+v.Identifier+'</a></th>'+
