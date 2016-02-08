@@ -191,40 +191,45 @@ function checkAddressHistory(){
           var jobAddress_StreetNumber_Max = parseInt( jobAddress_StreetNumber_tmp[2] , 10 );
           var jobAddress_StreetNumber_Min = parseInt( jobAddress_StreetNumber_tmp[( typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
           $.each( response.responseJSON.Results , function( k , v ){
-              console.log( k , v );
-              if( v.Id == jobId ){
-                console.log( 'Current Job Match' );
-                return true;
-              }
-              // Construct Row
-              if( v.Address.PrettyAddress == address.PrettyAddress ){
-                console.log( 'Perfect Address Match' );
-                history_rows.exact.push( checkAddressHistory_constructRow( v , true ) );
-                return true;
-              }
-              // Not an exact address match, so include the address in the result row
-              if( v.Address.StreetNumber.replace(/\D+/g,'') == address.StreetNumber.replace(/\D+/g,'') ){
-                console.log( 'Partial Address Match - Possible Townhouses/Apartments' );
-                history_rows.partial.push( checkAddressHistory_constructRow( v ) );
-                return true;
-              }
-              var rowAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( v.Address.StreetNumber );
-              var rowAddress_StreetNumber_Max = parseInt( rowAddress_StreetNumber_tmp[2] , 10 );
-              var rowAddress_StreetNumber_Min = parseInt( rowAddress_StreetNumber_tmp[( typeof rowAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
-              if( Math.abs( jobAddress_StreetNumber_Min - rowAddress_StreetNumber_Max ) == 2 || Math.abs( jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min ) == 2 ){
-                console.log( 'Immediate Neighour' );
-                history_rows.neighbour.push( checkAddressHistory_constructRow( v ) );
-                return true;
-              }
-              console.log( 'Street Address Match' );
-              history_rows.street.push( checkAddressHistory_constructRow( v ) );
-            });
+            console.log( k , v );
+            if( v.Id == jobId ){
+              console.log( 'Current Job Match' );
+              return true;
+            }
+            //No street number so its the same road
+            if (v.Address.StreetNumber == null) {
+              history_rows.street.push( checkAddressHistory_constructRow( v, false, k) );
+              return true;
+            }
+            // Construct Row
+            if( v.Address.PrettyAddress == address.PrettyAddress ){
+              console.log( 'Perfect Address Match' );
+              history_rows.exact.push( checkAddressHistory_constructRow( v , true, k) );
+              return true;
+            }
+            // Not an exact address match, so include the address in the result row
+            if( v.Address.StreetNumber.replace(/\D+/g,'') == address.StreetNumber.replace(/\D+/g,'') ){
+              console.log( 'Partial Address Match - Possible Townhouses/Apartments' );
+              history_rows.partial.push( checkAddressHistory_constructRow( v, false, k) );
+              return true;
+            }
+            var rowAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( v.Address.StreetNumber );
+            var rowAddress_StreetNumber_Max = parseInt( rowAddress_StreetNumber_tmp[2] , 10 );
+            var rowAddress_StreetNumber_Min = parseInt( rowAddress_StreetNumber_tmp[( typeof rowAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
+            if( Math.abs( jobAddress_StreetNumber_Min - rowAddress_StreetNumber_Max ) == 2 || Math.abs( jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min ) == 2 ){
+              console.log( 'Immediate Neighour' );
+              history_rows.neighbour.push( checkAddressHistory_constructRow( v, false, k) );
+              return true;
+            }
+            console.log( 'Street Address Match' );
+            history_rows.street.push( checkAddressHistory_constructRow( v, false, k) );
+          });
           content = '<table>'+
-          '<thead>'+
-          '<tr><th>Job #</th><th>Address</th><th rowspan="2">Details</th></tr>'+
-          '<tr><th>Status</th><th>Date</th></tr>'+
-          '</thead>'+
-          '<tbody>';
+            '<thead>'+
+            '<tr><th>Job #</th><th>Address</th><th rowspan="2">Details</th></tr>'+
+            '<tr><th>Status</th><th>Date</th></tr>'+
+            '</thead>'+
+            '<tbody>';
           $.each(history_rows,function(k,v){
             var section_heading = false;
             var section_always = false;
@@ -253,7 +258,7 @@ function checkAddressHistory(){
             }
           });
           content += '</tbody>'+
-          '</table>';
+           '</table>';
         }else{
           console.log( 'Address Search - No History' );
         }
@@ -283,7 +288,7 @@ function checkAddressHistory(){
 }
 setTimeout( checkAddressHistory , 1000 );
 
-function checkAddressHistory_constructRow( v , sameAddress ){
+function checkAddressHistory_constructRow( v , sameAddress, oddEvenCount ){
 
   var options = {
     weekday: "short",
@@ -293,16 +298,162 @@ function checkAddressHistory_constructRow( v , sameAddress ){
     hour12: false
   };
 
-  var thedate = new Date(new Date(v.JobReceived).getTime() + (new Date(v.JobReceived).getTimezoneOffset() * 60000));
-  var address = ( typeof sameAddress == 'undefined' ? v.Address.StreetNumber+' '+v.Address.Street : 'Same Address' );
+  //Trim job ID
 
-  return '<tr class="job-view-history job-view-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
-  '<th><a href="/Jobs/'+v.Id+'">'+v.Identifier+'</a></th>'+
-  '<td>'+address+'</td>'+
-  '<td rowspan="2" valign="top">'+( v.SituationOnScene == null ? 'View job for more detail' : v.SituationOnScene )+'</td>'+
-  '</tr>'+
-  '<tr class="job-view-history job-view-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
-  '<td>'+v.JobStatusType.Name+'</td>'+
-  '<td title="'+thedate.toLocaleTimeString("en-au", options)+'">'+moment(thedate).fromNow()+'</td>'+
-  '</tr>';
+  var RowisEven = !!(oddEvenCount && !(oddEvenCount%2))
+  var RowColor =  ( RowisEven ? 'even' : 'odd' )+'Row';
+
+  v.Address.Street = checkAddressHistory_shortenStreetType( v.Address.Street );
+
+  var thedate = new Date(new Date(v.JobReceived).getTime() + (new Date(v.JobReceived).getTimezoneOffset() * 60000));
+  var address = ( v.Address.StreetNumber != null ? (sameAddress == false ? v.Address.StreetNumber+' '+v.Address.Street : 'Same Address' ) : v.Address.Street );
+
+  return '<tr class="job-view-history '+RowColor+' job-view-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
+    '<th><a href="/Jobs/'+v.Id+'">'+v.Identifier+'</a></th>'+
+    '<td>'+address+'</td>'+
+    '<td rowspan="2" valign="top">'+( v.SituationOnScene == null ? 'View job for more detail' : ( v.SituationOnScene.length > 80 ? v.SituationOnScene.substring(0,78)+"..." : v.SituationOnScene ) )+'</td>'+
+    '</tr>'+
+    '<tr class="job-view-history '+RowColor+' job-view-history-status-'+v.JobStatusType.Name.toLowerCase()+'">'+
+    '<td>'+v.JobStatusType.Name+'</td>'+
+    '<td title="'+thedate.toLocaleTimeString("en-au", options)+'">'+moment(thedate).fromNow()+'</td>'+
+    '</tr>';
+}
+
+function checkAddressHistory_shortenStreetType( addressRaw ){
+
+  var streetTypePatterns = [
+    [/\bALLEY\b/i,'AL'] ,
+    [/\bAMBLE\b/i,'AMB'] ,
+    [/\bAPPROACH\b/i,'APPR'] ,
+    [/\bARCADE\b/i,'ARC'] ,
+    [/\bARTERIAL\b/i,'ART'] ,
+    [/\bAVENUE\b/i,'AVE'] ,
+    [/\bBAY\b/i,'BAY'] ,
+    [/\bBEND\b/i,'BEND'] ,
+    [/\bBRAE\b/i,'BRAE'] ,
+    [/\bBREAK\b/i,'BRK'] ,
+    [/\bBOULEVARD\b/i,'BVD'] ,
+    [/\bBOARDWALK\b/i,'BWK'] ,
+    [/\bBOWL\b/i,'BWL'] ,
+    [/\bBYPASS\b/i,'BYP'] ,
+    [/\bCIRCLE\b/i,'CCL'] ,
+    [/\bCIRCUS\b/i,'CCS'] ,
+    [/\bCIRCUIT\b/i,'CCT'] ,
+    [/\bCHASE\b/i,'CHA'] ,
+    [/\bCLOSE\b/i,'CL'] ,
+    [/\bCORNER\b/i,'CNR'] ,
+    [/\bCOMMON\b/i,'COM'] ,
+    [/\bCONCOURSE\b/i,'CON'] ,
+    [/\bCRESCENT\b/i,'CR'] ,
+    [/\bCROSS\b/i,'CROS'] ,
+    [/\bCOURSE\b/i,'CRSE'] ,
+    [/\bCREST\b/i,'CRST'] ,
+    [/\bCRUISEWAY\b/i,'CRY'] ,
+    [/\bCOURTS?\b/i,'CT'] ,
+    [/\bCOVE\b/i,'CV'] ,
+    [/\bDALE\b/i,'DALE'] ,
+    [/\bDELL\b/i,'DELL'] ,
+    [/\bDENE\b/i,'DENE'] ,
+    [/\bDIVIDE\b/i,'DIV'] ,
+    [/\bDOMAIN\b/i,'DOM'] ,
+    [/\bDRIVE\b/i,'DR'] ,
+    [/\bEAST\b/i,'EAST'] ,
+    [/\bEDGE\b/i,'EDG'] ,
+    [/\bENTRANCE\b/i,'ENT'] ,
+    [/\bESPLANADE\b/i,'ESP'] ,
+    [/\bEXTENSION\b/i,'EXTN'] ,
+    [/\bFLATS\b/i,'FLTS'] ,
+    [/\bFORD\b/i,'FORD'] ,
+    [/\bFREEWAY\b/i,'FWY'] ,
+    [/\bGATE\b/i,'GATE'] ,
+    [/\bGARDENS?\b/i,'GDN'] ,
+    [/\bGLADES?\b/i,'GLA'] ,
+    [/\bGLEN\b/i,'GLN'] ,
+    [/\bGULLY\b/i,'GLY'] ,
+    [/\bGRANGE\b/i,'GRA'] ,
+    [/\bGREEN\b/i,'GRN'] ,
+    [/\bGROVE\b/i,'GV'] ,
+    [/\bGATEWAY\b/i,'GWY'] ,
+    [/\bHILL\b/i,'HILL'] ,
+    [/\bHOLLOW\b/i,'HLW'] ,
+    [/\bHEATH\b/i,'HTH'] ,
+    [/\bHEIGHTS\b/i,'HTS'] ,
+    [/\bHUB\b/i,'HUB'] ,
+    [/\bHIGHWAY\b/i,'HWY'] ,
+    [/\bISLAND\b/i,'ID'] ,
+    [/\bJUNCTION\b/i,'JCT'] ,
+    [/\bLANE\b/i,'LA'] ,
+    [/\bLINK\b/i,'LNK'] ,
+    [/\bLOOP\b/i,'LOOP'] ,
+    [/\bLOWER\b/i,'LWR'] ,
+    [/\bLANEWAY\b/i,'LWY'] ,
+    [/\bMALL\b/i,'MALL'] ,
+    [/\bMEW\b/i,'MEW'] ,
+    [/\bMEWS\b/i,'MWS'] ,
+    [/\bNOOK\b/i,'NOOK'] ,
+    [/\bNORTH\b/i,'NTH'] ,
+    [/\bOUTLOOK\b/i,'OUT'] ,
+    [/\bPATH\b/i,'PATH'] ,
+    [/\bPARADE\b/i,'PD/PDE'] ,
+    [/\bPOCKET\b/i,'PKT'] ,
+    [/\bPARKWAY\b/i,'PKW'] ,
+    [/\bPLACE\b/i,'PL'] ,
+    [/\bPLAZA\b/i,'PLZ'] ,
+    [/\bPROMENADE\b/i,'PRM'] ,
+    [/\bPASS\b/i,'PS'] ,
+    [/\bPASSAGE\b/i,'PSG'] ,
+    [/\bPOINT\b/i,'PT'] ,
+    [/\bPURSUIT\b/i,'PUR'] ,
+    [/\bPATHWAY\b/i,'PWAY'] ,
+    [/\bQUADRANT\b/i,'QD'] ,
+    [/\bQUAY\b/i,'QU'] ,
+    [/\bREACH\b/i,'RCH'] ,
+    [/\bROAD\b/i,'RD'] ,
+    [/\bRIDGE\b/i,'RDG'] ,
+    [/\bRESERVE\b/i,'REST'] ,
+    [/\bREST\b/i,'REST'] ,
+    [/\bRETREAT\b/i,'RET'] ,
+    [/\bRIDE\b/i,'RIDE'] ,
+    [/\bRISE\b/i,'RISE'] ,
+    [/\bROUND\b/i,'RND'] ,
+    [/\bROW\b/i,'ROW'] ,
+    [/\bRISING\b/i,'RSG'] ,
+    [/\bRETURN\b/i,'RTN'] ,
+    [/\bRUN\b/i,'RUN'] ,
+    [/\bSLOPE\b/i,'SLO'] ,
+    [/\bSQUARE\b/i,'SQ'] ,
+    [/\bSTREET\b/i,'ST'] ,
+    [/\bSOUTH\b/i,'STH'] ,
+    [/\bSTRIP\b/i,'STP'] ,
+    [/\bSTEPS\b/i,'STPS'] ,
+    [/\bSUBWAY\b/i,'SUB'] ,
+    [/\bTERRACE\b/i,'TCE'] ,
+    [/\bTHROUGHWAY\b/i,'THRU'] ,
+    [/\bTOR\b/i,'TOR'] ,
+    [/\bTRACK\b/i,'TRK'] ,
+    [/\bTRAIL\b/i,'TRL'] ,
+    [/\bTURN\b/i,'TURN'] ,
+    [/\bTOLLWAY\b/i,'TWY'] ,
+    [/\bUPPER\b/i,'UPR'] ,
+    [/\bVALLEY\b/i,'VLY'] ,
+    [/\bVISTA\b/i,'VST'] ,
+    [/\bVIEWS?\b/i,'VW'] ,
+    [/\bWAY\b/i,'WAY'] ,
+    [/\bWOOD\b/i,'WD'] ,
+    [/\bWEST\b/i,'WEST'] ,
+    [/\bWALK\b/i,'WK'] ,
+    [/\bWALKWAY\b/i,'WKWY'] ,
+    [/\bWATERS\b/i,'WTRS'] ,
+    [/\bWATERWAY\b/i,'WRY'] ,
+    [/\bWYND\b/i,'WYD']
+  ];
+
+  var addressShort = addressRaw;
+
+  for( var i in streetTypePatterns ){
+    addressShort = addressShort.replace( streetTypePatterns[i][0] , streetTypePatterns[i][1] );
+  }
+
+  return addressShort;
+
 }
