@@ -197,10 +197,10 @@ function checkAddressHistory(){
               return true;
             }
             //No street number so its the same road
-              if (v.Address.StreetNumber == null) {
-                history_rows.street.push( checkAddressHistory_constructRow( v, false, k) );
-                return true;
-              }
+            if (v.Address.StreetNumber == null) {
+              history_rows.street.push( checkAddressHistory_constructRow( v, false, k) );
+              return true;
+            }
               // Construct Row
               if( v.Address.PrettyAddress == address.PrettyAddress ){
                 console.log( 'Perfect Address Match' );
@@ -298,15 +298,14 @@ function checkAddressHistory_constructRow( v , sameAddress, oddEvenCount ){
     hour12: false
   };
 
-  //Trim job ID
-
+  //work out if its an odd or even row, then make that plain text so we can use it in css
   var RowisEven = !!(oddEvenCount && !(oddEvenCount%2))
   if (RowisEven) {RowColor = 'evenRow'} else {RowColor = 'oddRow'};
 
-
-v.Address.Street = v.Address.Street.replace("ROAD","RD");
-v.Address.Street = v.Address.Street.replace("STREET","ST");
-v.Address.Street = v.Address.Street.replace("AVENUE","AVE");
+  //trim down common street prefix to save space
+  v.Address.Street = v.Address.Street.replace("ROAD","RD");
+  v.Address.Street = v.Address.Street.replace("STREET","ST");
+  v.Address.Street = v.Address.Street.replace("AVENUE","AVE");
 
 
 
