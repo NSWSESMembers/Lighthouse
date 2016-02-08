@@ -98,7 +98,8 @@ $('#completeTeamModal .modal-body .form-group:nth-child(12)').after([html, html2
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
 $job_view_history = (
   <fieldset id="job_view_history" class="col-md-12">
-    <legend>Job History for Address, Neighbours and Street (12 Months)</legend>
+    <legend><img style="width:16px;vertical-align:inherit;margin-right:5px"
+             src={chrome.extension.getURL("icons/lh-black.png")} />Job History for Address, Neighbours and Street (12 Months)</legend>
     <div class="form-group col-xs-12">
       <div style="text-align:center">
         Searching&hellip;<br/>
