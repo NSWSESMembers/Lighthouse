@@ -144,8 +144,8 @@ function taskFill(parent, child) {
 
 function checkAddressHistory(){
 
-console.log(content);
-console.log(content);
+  console.log(content);
+  console.log(content);
 
   var address = masterViewModel.geocodedAddress();
   if( typeof address == 'undefined' ){
@@ -277,6 +277,14 @@ content = '<table>'+
 '<tr><th>Status</th><th>Date</th></tr>'+
 '</thead>'+
 '<tbody>';
+
+if (history_rows.exact.length == 0 && history_rows.exact.length == 0 && history_rows.partial.length == 0 && history_rows.neighbour.length == 0 && history_rows.street.length == 0) {
+  var content = '<em>No Previous Reports found for this address, or street</em>';
+  $('#job_view_history div.form-group')
+  .html(content);
+  return
+}
+
 $.each(history_rows,function(k,v){
   var section_heading = false;
   var section_always = false;
