@@ -21,9 +21,15 @@ Lighthouse simply interfaces with the same information and functionality as norm
 
 ##Usage
 
-A compiled version of the Lighthouse system is available through the [Google Chrome Store](https://chrome.google.com/webstore/detail/lighthouse/eheijalihofgiaoeanmnjceefmcpajnb "Lighthouse in the Google Chrome Store").
+A compiled stable version of the Lighthouse system is available through the [Google Chrome Store](https://chrome.google.com/webstore/detail/lighthouse/eheijalihofgiaoeanmnjceefmcpajnb "Lighthouse in the Google Chrome Store").
 
-This version is updated when major changes are committed through the GitHub repository, and/or it is convenient to distribute an updated version.
+This version is updated when major changes are committed through the GitHub repository, and/or it is convenient ans safe to distribute an updated version.
+
+
+A compiled developer version of the Lighthouse system is available through the [Google Chrome Store](https://chrome.google.com/webstore/detail/lighthouse-development-pr/jcmiinngebdojjbcjlpjpdhiankmjbda "Lighthouse Development Preview in the Google Chrome Store").
+
+This version is updated when minor changes are committed through the GitHub repository, and/or there is something in the pipeline that we want to test on a wider audience.
+
 
 ##Development
 
