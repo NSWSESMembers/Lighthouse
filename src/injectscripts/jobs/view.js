@@ -289,34 +289,47 @@ console.log(HistoryItems);
 // }
 
 
-var first_perfect = true;
-var first_fuzzy = true;
+
+
+var perfect = $("<div></div>");
+
+var fuzzy = $("<div></div>");
+
+
 
 HistoryItems.forEach(function(v){
   switch (v.Proximity){
     case "Same Address" :
-    if(first_perfect){
-      $('#job_view_history div.form-group').html(renderHistory(v));
-      first_perfect = false;
+    if (perfect.children().length > 0) {
+      perfect.append("<hr>");
+      perfect.append(renderHistory(v));
     } else {
-      $('#job_view_history div.form-group').append(renderHistory(v));
-    }
-    break;
-    default:
-    if(first_fuzzy){
-      $('#job_view_history_fuzzy div.form-group').html(renderHistory(v));
-      first_fuzzy = false;
-    } else {
-      $('#job_view_history_fuzzy div.form-group').html(renderHistory(v));
-      console.log($('#job_view_history_fuzzy div.form-group'));
-    } 
-    break;
-  }
-
-
+     perfect.append(renderHistory(v));
+   }    
+   break;
+   default:
+   if (fuzzy.children().length > 0) {
+    fuzzy.append("<hr>");
+    fuzzy.append(renderHistory(v));
+  } else {
+   fuzzy.append(renderHistory(v));
+ }
+ break;
+}
 });
 
+console.log(fuzzy);
 
+if(perfect.children().length == 0){
+  $('#job_view_history div.form-group').html(renderHistoryError("No Previous Reports found for this address"));
+} else {
+  $('#job_view_history div.form-group').html(perfect);
+}
+if(fuzzy.children().length == 0){
+  $('#job_view_history_fuzzy div.form-group').html(renderHistoryError("No Previous Reports found for this street"));
+} else {
+  $('#job_view_history_fuzzy div.form-group').html(fuzzy);
+}
 
 }else{
   console.log( 'Address Search - No History' );
@@ -338,16 +351,24 @@ case 'parsererror' :
 content = '<em>Address Search returned Unexpected Data</em>';
 break;
 }
-      // Insert content into DOM element
-      
-      $('#job_view_history_fuzzy div.form-group')
-      .html(contentFuzzy);
-    }
-  });
+
+}
+});
 }
 setTimeout( checkAddressHistory , 1000 );
 
 function checkAddressHistory_constructRow( v , sameAddress, resemblance){
+
+
+}
+
+function renderHistoryError(text) {
+  return (
+    <div>
+    <em>{text}</em>
+    </div>
+
+    );
 
 
 }
@@ -368,7 +389,13 @@ function renderHistory(item) {
     item.Address.Street = item.Address.Street.replace("AVENUE","AVE");
   }
 
+  var tagarray = [];
 
+    for (i=1; i<item.Tags.length; i++) {
+        tagarray.push(item.Tags[i].Name);
+      }
+
+      var tags = tagarray.join(', ');
 
   var thedate = new Date(new Date(item.JobReceived).getTime() + (new Date(item.JobReceived).getTimezoneOffset() * 60000));
   var address = item.Address.PrettyAddress;
@@ -376,10 +403,13 @@ function renderHistory(item) {
   return (
     <div>
     <div>
-    <span class="fa"></span><em><strong><a href="{'/Jobs/'+item.Id}">{item.Identifier}</a> -{item.JobStatusType.Name}-</strong></em>
+    <span class="fa"></span><em><strong><a href={'/Jobs/'+item.Id}>{item.Identifier}</a> -{item.JobStatusType.Name}-</strong></em>
     </div>
     <div>
     {address} ({item.Proximity})
+    </div>
+    <div>
+    {tags}
     </div>
     <div>
     {( item.SituationOnScene == null ? 'View job for more detail' : item.SituationOnScene )}
