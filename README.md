@@ -39,9 +39,9 @@ Pull requests are welcome!
 
 ## Changes
 
-###In developement:
+###In development:
 
-- Address hisory - display other jobs with same address.
+- Address history - display other jobs with same address.
 - NITC exports
 
 
