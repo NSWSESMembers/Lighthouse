@@ -99,22 +99,39 @@ $('#completeTeamModal .modal-body .form-group:nth-child(12)').after([html, html2
 $job_view_history = (
   <fieldset id="job_view_history" class="col-md-12">
     <legend><img style="width:16px;vertical-align:inherit;margin-right:5px"
-             src={chrome.extension.getURL("icons/lh-black.png")} />Job History for Address, Neighbours and Street (12 Months)</legend>
+             src={chrome.extension.getURL("icons/lh-black.png")} />Job History for Address</legend>
     <div class="form-group col-xs-12">
       <div style="text-align:center">
-        Searching&hellip;<br/>
-        <img style="width:220px;height:19px"
-             src={chrome.extension.getURL("icons/loading-bar.gif")} />
+        <img
+             src="/Content/images/loading_30.gif" />
       </div>
     </div>
   </fieldset>
 );
+
+$job_view_history_fuzzy = (
+    <fieldset id="job_view_history_fuzzy" class="col-md-12">
+    <legend><img style="width:16px;vertical-align:inherit;margin-right:5px"
+             src={chrome.extension.getURL("icons/lh-black.png")} />Job History for Neighbours and Street (12 Months)</legend>
+    <div class="form-group col-xs-12">
+      <div style="text-align:center">
+        <img
+             src="/Content/images/loading_30.gif" />
+      </div>
+    </div>
+    </fieldset>
+);
+
+
+
+
 $('fieldset.col-md-12 legend , fieldset.col-md-4 legend').each(function(k,v){
   var $v = $(v);
   var $p = $v.closest('fieldset');
   var section_title = $v.text().trim();
   if( section_title.indexOf( 'Notes' ) === 0 || section_title.indexOf( 'Messages' ) === 0 ){
     $p.before($job_view_history);
+    $p.before($job_view_history_fuzzy);
     return false; // break out of $.each()
   }
 });
