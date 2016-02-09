@@ -268,29 +268,6 @@ function checkAddressHistory(){
               HistoryItems.push(v);
             });
 
-
-var content = "";
-var contentFuzzy = "";
-
-
-console.log(HistoryItems);
-
-// if (history_rows.exact.length == 0) {
-//   console.log("There is no data");
-//   var content = '<em>No Previous Reports found for this address</em>';
-//   $('#job_view_history div.form-group')
-//   .html(content);
-// }
-
-// if (history_rows.exact.length == 0 && history_rows.partial.length == 0 && history_rows.neighbour.length == 0 && history_rows.street.length == 0) {
-//   var contentFuzzy = '<em>No Previous Reports found for this street</em>';
-//   $('#job_view_history_fuzzy div.form-group')
-//   .html(content);
-// }
-
-
-
-
 var perfect = $("<div></div>");
 
 var fuzzy = $("<div></div>");
@@ -321,12 +298,12 @@ HistoryItems.forEach(function(v){
 console.log(fuzzy);
 
 if(perfect.children().length == 0){
-  $('#job_view_history div.form-group').html(renderHistoryError("No Previous Reports found for this address"));
+  $('#job_view_history div.form-group').html(renderHistoryError("No previous RFAs found for this address"));
 } else {
   $('#job_view_history div.form-group').html(perfect);
 }
 if(fuzzy.children().length == 0){
-  $('#job_view_history_fuzzy div.form-group').html(renderHistoryError("No Previous Reports found for this street"));
+  $('#job_view_history_fuzzy div.form-group').html(renderHistoryError("No previous RFAs found for this street"));
 } else {
   $('#job_view_history_fuzzy div.form-group').html(fuzzy);
 }
@@ -406,7 +383,7 @@ function renderHistory(item) {
     <span class="fa"></span><em><strong><a href={'/Jobs/'+item.Id}>{item.Identifier}</a> -{item.JobStatusType.Name}-</strong></em>
     </div>
     <div>
-    {address} ({item.Proximity})
+    <strong>{address}</strong> ({item.Proximity})
     </div>
     <div>
     {tags}
@@ -414,7 +391,7 @@ function renderHistory(item) {
     <div>
     {( item.SituationOnScene == null ? 'View job for more detail' : item.SituationOnScene )}
     </div> 
-    <span class="pull-right"><em><small class="text-muted">{moment(thedate).fromNow()}</small></em></span>
+    <span class="pull-right"><em><small class="text-muted">Opened {moment(thedate).fromNow()}</small></em></span>
     </div>
     );
 }
