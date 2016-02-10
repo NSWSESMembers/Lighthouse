@@ -284,14 +284,22 @@ HistoryItems.forEach(function(v){
      perfect.append(renderHistory(v));
    }    
    break;
-   default:
+   case "Sub Address" :
    if (fuzzy.children().length > 0) {
-    fuzzy.append("<hr>");
-    fuzzy.append(renderHistory(v));
+    fuzzy.prepend("<hr>");
+    fuzzy.prepend(renderHistory(v));
   } else {
-   fuzzy.append(renderHistory(v));
+   fuzzy.prepend(renderHistory(v));
  }
  break;
+ default:
+ if (fuzzy.children().length > 0) {
+  fuzzy.append("<hr>");
+  fuzzy.append(renderHistory(v));
+} else {
+ fuzzy.append(renderHistory(v));
+}
+break;
 }
 });
 
@@ -368,11 +376,11 @@ function renderHistory(item) {
 
   var tagarray = [];
 
-    for (i=1; i<item.Tags.length; i++) {
-        tagarray.push(item.Tags[i].Name);
-      }
+  for (i=1; i<item.Tags.length; i++) {
+    tagarray.push(item.Tags[i].Name);
+  }
 
-      var tags = tagarray.join(', ');
+  var tags = tagarray.join(', ');
 
   var thedate = new Date(new Date(item.JobReceived).getTime() + (new Date(item.JobReceived).getTimezoneOffset() * 60000));
   var address = item.Address.PrettyAddress;
