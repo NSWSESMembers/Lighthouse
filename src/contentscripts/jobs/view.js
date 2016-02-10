@@ -96,7 +96,18 @@ $('#completeTeamModal .modal-body .form-group:nth-child(12)').after([html, html2
 
 
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
-$job_view_history = (
+job_view_history = (
+  <fieldset id="job_view_history_groups" class="col-md-12">
+    <legend class="main"><img style="width:16px;vertical-align:inherit;margin-right:5px"
+                 src={chrome.extension.getURL("icons/lh-black.png")} />Job History <span>12 Months search by Address</span></legend>
+    <div id="job_view_history_container" data-phase="loading">
+      <div style="text-align:center">
+        <img src="/Content/images/loading_30.gif" />
+      </div>
+    </div>
+  </fieldset>
+);
+$job_view_history_perfect = (
   <fieldset id="job_view_history" class="col-md-12">
     <legend><img style="width:16px;vertical-align:inherit;margin-right:5px"
              src={chrome.extension.getURL("icons/lh-black.png")} />Job History for Address</legend>
@@ -125,13 +136,14 @@ $job_view_history_fuzzy = (
 
 
 
-$('fieldset.col-md-12 legend , fieldset.col-md-4 legend').each(function(k,v){
+$('fieldset.col-md-12 legend').each(function(k,v){
   var $v = $(v);
   var $p = $v.closest('fieldset');
   var section_title = $v.text().trim();
   if( section_title.indexOf( 'Notes' ) === 0 || section_title.indexOf( 'Messages' ) === 0 ){
-    $p.before($job_view_history);
-    $p.before($job_view_history_fuzzy);
+    $p.before(job_view_history);
+    //$p.before($job_view_history_perfect);
+    //$p.before($job_view_history_fuzzy);
     return false; // break out of $.each()
   }
 });

@@ -51,3 +51,65 @@
   text-align: center;
 }
 
+
+#job_view_history_groups legend.main span {
+  display: block;
+  font-size: 0.7em;
+}
+#job_view_history_groups #job_view_history_group_street div.job_view_history_item_old {
+  display: none;
+}
+#job_view_history_groups fieldset.job_view_history_group div.job_view_history_item_statusgroup_active {
+  display: block !important;
+}
+#job_view_history_groups fieldset {
+  margin-bottom: 0;
+}
+#job_view_history_groups fieldset legend {
+  font-size: 1.3em;
+  position: relative;
+}
+#job_view_history_groups fieldset legend span.group_size {
+  font-size: 0.8em;
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+}
+#job_view_history_groups div.job_view_history_item {
+  border-bottom: 1px solid #e5e5e5;
+  padding: 3px 0 5px;
+  position: relative;
+  padding-right: 80px;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_title {
+  font-weight: bold;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_title a.job_view_history_id {
+  margin-right: 5px;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_title span.job_view_history_status {
+  float: right;
+  margin-right: -80px;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_tags {
+  font-size: 0.9em;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_tags i.fa {
+  margin-right: 3px;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_time {
+  position: absolute;
+  right: 0px;
+  bottom: 3px;
+  font-size: 0.9em;
+}
+
+#job_view_history_groups div.job_view_history_toggle_old {
+  text-align: center;
+  padding: 3px;
+  background: #f5f5f5;
+}
+#job_view_history_groups div.job_view_history_toggle_old:hover {
+  background: #e5e5e5;
+}
+
