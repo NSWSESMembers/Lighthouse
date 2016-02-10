@@ -48,13 +48,13 @@ Pull requests are welcome!
 ###In development:
 
 - Address history - display other jobs with same address.
-- NITC exports
+- NITC exports.
 
 
 ###To Do
 
-- Prefill "Primary Action" on job completion based of job type (you know, because of all the RCR we do on landsearch jobs)
-- Prefill "Contact" on send message screen to fill with users HQ
+- Prefill "Primary Action" on job completion based of job type (you know, because of all the RCR we do on landsearch jobs).
+- Prefill "Contact" on send message screen to fill with users HQ.
 
 ###Tested:
 
@@ -67,15 +67,19 @@ Pull requests are welcome!
 - Change page title to team name when viewing a team.
 - Fixed missing favicon on the login page.
 - Fixed missing page title on the login page.
-- Hide maximise  button on popup on situational awareness map
-- Job summary and statistics page that feeds directly from beacon filters
-- Quick Text on team completion and job finalisation
-- Quick Task on team completion
+- Hide maximise  button on popup on situational awareness map.
+- Job summary and statistics page that feeds directly from beacon filters.
+- Quick Text on team completion and job finalisation.
+- Quick Task on team completion.
 - Fixed message line breaks. Instead of showing `<br>` an actual line break is inserted into the message correctly.
-- Added more pagination choices to tasking and job list
+- Added more pagination choices to tasking and job list.
 - Christmas theme :p
 
 
+##Known Limitations
+
+- All summary, statistics and export screens will only follow HQ and time/date filters, eg if you filter by job type then generate a summary it will be everything not just that job type.
+- Lighthouse menu - If you are a region user it will only show your region, not all units within your region. You need to generate this screens from the Job Register to get around this.
 
 
 
