@@ -19,7 +19,7 @@ function makeButton(id, background, border, text) {
 }
 
 makeButton("lighthouseSummaryButton", "#175781", "#0f3a57", "Summary (Filtered)");
-makeButton("lighthouseStatsButton", "rebeccapurple", "#4c2673", "Stastics (Filtered)");
+makeButton("lighthouseStatsButton", "rebeccapurple", "#4c2673", "Statistics (Filtered)");
 makeButton("lighthouseExportButton", "#d2322d", "#edadab", "Advanced Export (Filtered)");
 
 //inject our JS resource
