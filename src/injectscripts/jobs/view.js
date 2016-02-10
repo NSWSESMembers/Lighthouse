@@ -336,7 +336,7 @@ function checkAddressHistory(){
                   $('div.form-group',$job_view_history_section).append(
                     <div class={cssarray.join(' ')}>
                       <div class="job_view_history_title">
-                        <a href="#" class="job_view_history_id">{job.Identifier}</a>
+                        <a href={"/Jobs/"+job.Id} class="job_view_history_id">{job.Identifier}</a>
                         <span class="job_view_history_address">{job.Address.PrettyAddress}</span>
                         <span class="job_view_history_status">{job.JobStatusType.Name}</span>
                       </div>
@@ -393,7 +393,6 @@ function checkAddressHistory(){
 
             $('#job_view_history_groups div.job_view_history_toggle_old')
               .click(function(){
-                console.log( 'Cliky Click' );
                 var $t = $(this);
                 var $p = $t.closest('fieldset.job_view_history_group');
                 var $old_rows = $('div.job_view_history_item_old:not(.job_view_history_item_statusgroup_active)',$p);
@@ -403,7 +402,7 @@ function checkAddressHistory(){
               });
 
           }else{
-            content = 'Address Search - No History';
+            content = '<em>Address Search - No History</em>';
           }
           break;
         case 'error' :
