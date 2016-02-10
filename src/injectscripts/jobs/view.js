@@ -147,8 +147,13 @@ function taskFill(parent, child) {
 
 
 function checkAddressHistory(){
-
-  var HistoryItems = [];
+  var date_options = {
+    weekday: "short",
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric",
+    hour12: false
+  };
 
   var address = masterViewModel.geocodedAddress();
   if( typeof address == 'undefined' ){
@@ -162,7 +167,7 @@ function checkAddressHistory(){
     content = '<em>Unable to Perform Address Search. Address is not Geocoded. Please edit the job and geocode the job location.</em>';
       // Insert content into DOM element
       $('#job_view_history div.form-group')
-      .html(content);
+        .html(content);
       return
     }
 
@@ -171,181 +176,260 @@ function checkAddressHistory(){
       content = '<em>Unable to Perform Address Search. Job location does not appear to be at a street address</em>';
       // Insert content into DOM element
       $('#job_view_history div.form-group')
-      .html(content);
+        .html(content);
       return
     }
 
-  //address without a street or address but still geocoded
   var q;
-  if (address.Street == null && address.Locality == null) {
-    q = address.PrettyAddress.substring( 0 , 30 );
-  } else
-  {
-    q = ( address.Street+', '+address.Locality ).substring( 0 , 30 );
+  if( address.Street == null && address.Locality == null ){
+    // address without a street or address but still geocoded
+    q = address.PrettyAddress;
+  }else{
+    q = address.Street+', '+address.Locality;
   }
+  q = q.substring( 0 , 30 );
 
 
   var now = new Date();
   var end = new Date();
   end.setYear(end.getFullYear()-1);
 
-  var timeFrameEnd   = now.toLocaleString();
-  var timeFrameStart  = end.toLocaleString();
-
   $.ajax({
     type: 'GET' ,
     url: '/Api/v1/Jobs/Search' ,
     data: {
-      'Q' : q ,
-      'StartDate' : timeFrameStart ,
-      'EndDate' : timeFrameEnd ,
-      'ViewModelType' : 2 ,
-      'PageIndex' : 1 ,
-      'PageSize' : 100 ,
-      'SortField' : 'JobReceived' ,
-      'SortOrder' : 'desc' ,
+      'Q' :                  q.substring( 0 , 30 ) ,
+      'StartDate' :          end.toLocaleString() ,
+      'EndDate' :            now.toLocaleString() ,
+      'ViewModelType' :      2 ,
+      'PageIndex' :          1 ,
+      'PageSize' :           1000 ,
+      'SortField' :          'JobReceived' ,
+      'SortOrder' :          'desc' ,
       'LighthouseFunction' : 'checkAddressHistory'
     } ,
     cache: false ,
     dataType: 'json' ,
     complete: function(response, textStatus){
-      console.log( 'response' , response );
-      console.log( 'textStatus' , textStatus );
 
       switch( textStatus ){
         case 'success' :
-        if( response.responseJSON.Results.length ){
-          var history_rows = {
-            'exact' : new Array() ,
-            'partial' : new Array() ,
-            'neighbour' : new Array() ,
-            'street' : new Array(),
-          };
-          if (address.StreetNumber != null)
-          {
-            var re_StreetNumber_Parts = /^(?:(\d+)\D)?(\d+)\D*/;
-            var jobAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( address.StreetNumber );
-            var jobAddress_StreetNumber_Max = parseInt( jobAddress_StreetNumber_tmp[2] , 10 );
-            var jobAddress_StreetNumber_Min = parseInt( jobAddress_StreetNumber_tmp[( typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
-          }
-          $.each( response.responseJSON.Results , function( k , v ){
-            console.log( k , v );
-            if( v.Id == jobId ){
-              console.log( 'Current Job Match' );
-              return true;
+          if( response.responseJSON.Results.length ){
+            var history_rows = {
+              'exact' : {
+                title : 'Same Address' ,
+                always_show : true ,
+                jobs : new Array()
+              } ,
+              'partial' : {
+                title : 'Apartment, Townhouse or Battleaxe' ,
+                always_show : false ,
+                jobs : new Array()
+              } ,
+              'neighbour' : {
+                title : 'Immediate Neighbours' ,
+                always_show : false ,
+                jobs : new Array()
+              } ,
+              'street' : {
+                title : 'Same Street' ,
+                always_show : false ,
+                jobs : new Array()
+              }
+            };
+            status_groups = {
+              'active' : [ 'new' , 'acknowledged' , 'tasked' , 'referred' ] ,
+              'complete' : [ 'complete' , 'finalised' ] ,
+              'cancelled' : [ 'cancelled' , 'rejected' ]
+            };
+
+            if( address.StreetNumber != null ){
+              var re_StreetNumber_Parts = /^(?:(\d+)\D)?(\d+)\D*/;
+              var jobAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( address.StreetNumber );
+              var jobAddress_StreetNumber_Max = parseInt( jobAddress_StreetNumber_tmp[2] , 10 );
+              var jobAddress_StreetNumber_Min = parseInt( jobAddress_StreetNumber_tmp[( typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
             }
-            //No street number so it can only be the same road
-            if (v.Address.StreetNumber == null || address.StreetNumber == null) {
-              v.Proximity = "Same Street";
-              HistoryItems.push(v);
-              return true;
-            }
+            $.each( response.responseJSON.Results , function( k , v ){
+              // console.log( k , v );
+              if( v.Id == jobId ){
+                // console.log( 'Current Job Match' );
+                return true;
+              }
+              //No street number so it can only be the same road
+              if (v.Address.StreetNumber == null || address.StreetNumber == null) {
+                // console.log( 'No Street Number = Street Match' );
+                history_rows.street.jobs.push(v);
+                return true;
+              }
               // Construct Row
               if( v.Address.PrettyAddress == address.PrettyAddress ){
-                console.log( 'Perfect Address Match' );
-                v.Proximity = "Same Address";
-                HistoryItems.push(v);
+                // console.log( 'Perfect Address Match' );
+                history_rows.exact.jobs.push(v);
                 return true;
               }
               // Not an exact address match, so include the address in the result row
               if( v.Address.StreetNumber.replace(/\D+/g,'') == address.StreetNumber.replace(/\D+/g,'') ){
-                console.log( 'Partial Address Match - Possible Townhouses/Apartments' );
-                v.Proximity = "Sub Address";
-                HistoryItems.push(v);
+                // console.log( 'Partial Address Match - Possible Townhouses/Apartments' );
+                history_rows.partial.jobs.push(v);
                 return true;
               }
               var rowAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec( v.Address.StreetNumber );
               var rowAddress_StreetNumber_Max = parseInt( rowAddress_StreetNumber_tmp[2] , 10 );
               var rowAddress_StreetNumber_Min = parseInt( rowAddress_StreetNumber_tmp[( typeof rowAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1 )] , 10 );
               if( Math.abs( jobAddress_StreetNumber_Min - rowAddress_StreetNumber_Max ) == 2 || Math.abs( jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min ) == 2 ){
-                console.log( 'Immediate Neighour' );
-                v.Proximity = "Neighbour";
-                HistoryItems.push(v);
+                // console.log( 'Immediate Neighour' );
+                history_rows.neighbour.jobs.push(v);
                 return true;
               }
-              console.log( 'Street Address Match' );
-              v.Proximity = "Same Street";
-              HistoryItems.push(v);
+              // console.log( 'Street Address Match' );
+              history_rows.street.jobs.push(v);
             });
 
-var perfect = $("<div></div>");
+            $job_view_history_container = $('#job_view_history_container');
 
-var fuzzy = $("<div></div>");
+            $.each( history_rows , function( group , d ){
+              // console.log( group , d );
+
+              if( d.jobs.length || d.always_show ){
+                
+                $job_view_history_section = $(
+                  <fieldset id={"job_view_history_group_"+group} class="job_view_history_group col-md-12">
+                    <legend>
+                      {d.title}
+                      <span class="group_size">{d.jobs.length.toString()} {'Job'+( d.jobs.length==1 ? '' : 's' )}</span>
+                    </legend>
+                    <div class="form-group col-xs-12"></div>
+                  </fieldset>
+                );
+
+              }
+
+              if( d.jobs.length ){
+
+                var has_old = false;
+
+                $.each( d.jobs , function( idx , job ){
+                  // Each Job in Group
+                  // console.log( group , idx , job );
+
+                  var thedate = new Date(new Date(job.JobReceived).getTime() + (new Date(job.JobReceived).getTimezoneOffset() * 60000));
+                  // Older than 14 days - consider "old"
+                  var isold = ( thedate.getTime() < ( now.getTime() - 14 * 24 * 60 * 60 * 1000 ) );
+                  var tagarray = new Array();
+                  $.each( job.Tags , function( tagIdx , tagObj ){
+                    tagarray.push( tagObj.Name );
+                  });
+                  var cssarray = new Array(
+                    'job_view_history_item' ,
+                    'job_view_history_item_status_'+job.JobStatusType.Name.toLowerCase()
+                  );
+                  if( isold ){
+                    cssarray.push( 'job_view_history_item_old' );
+                    has_old = true;
+                  }
+                  $.each( status_groups , function( status_group , statuses ){
+                    if( statuses.indexOf( job.JobStatusType.Name.toLowerCase() ) >= 0 ){
+                      cssarray.push( 'job_view_history_item_statusgroup_'+status_group );
+                    }
+                  });
+
+                  $('div.form-group',$job_view_history_section).append(
+                    <div class={cssarray.join(' ')}>
+                      <div class="job_view_history_title">
+                        <a href={"/Jobs/"+job.Id} class="job_view_history_id">{job.Identifier}</a>
+                        <span class="job_view_history_address">{job.Address.PrettyAddress}</span>
+                        <span class="job_view_history_status">{job.JobStatusType.Name}</span>
+                      </div>
+                      <div class="job_view_history_situation">
+                        {( job.SituationOnScene == null ? <em>View job for more detail</em> : job.SituationOnScene )}
+                      </div>
+                      <div class="job_view_history_tags">
+                        <i class="fa fa-tags"></i>
+                        {( tagarray.length ? tagarray.join(', ') : <em>No Tags</em> )}
+                      </div>
+                      <div class="job_view_history_time">{moment(thedate).fromNow()}</div>
+                    </div>
+                  );
+
+                });
+
+                if( has_old ){
+                  $('div.form-group',$job_view_history_section).append(
+                    <div class="job_view_history_toggle_old">
+                      <span>Show</span> Older Reports
+                    </div>
+                  );
+                }
+
+              }else if( d.always_show ){
+
+                $('div.form-group',$job_view_history_section).append(
+                    <div class="job_view_history_none">
+                      <em>No Reports Found</em>
+                    </div>
+                  );
+
+              }
 
 
 
-HistoryItems.forEach(function(v){
-  switch (v.Proximity){
-    case "Same Address" :
-    if (perfect.children().length > 0) {
-      perfect.append("<hr>");
-      perfect.append(renderHistory(v));
-    } else {
-     perfect.append(renderHistory(v));
-   }    
-   break;
-   case "Sub Address" :
-   if (fuzzy.children().length > 0) {
-    fuzzy.prepend("<hr>");
-    fuzzy.prepend(renderHistory(v));
-  } else {
-   fuzzy.prepend(renderHistory(v));
- }
- break;
- default:
- if (fuzzy.children().length > 0) {
-  fuzzy.append("<hr>");
-  fuzzy.append(renderHistory(v));
-} else {
- fuzzy.append(renderHistory(v));
+              if( $job_view_history_container.data( 'phase' ) == 'loading' ){
+                $job_view_history_container.html( '' ).data( 'phase' , 'rendering' );
+              }
+              $job_view_history_container.append( $job_view_history_section );
+              $job_view_history_container.data( 'phase' , 'complete' );
+
+            });
+
+            //console.log(fuzzy);
+
+            /*
+            $( '#job_view_history div.form-group' )
+              .html( perfect.children().length ? renderHistoryError( 'No Previous Reports found for this address' ) : perfect );
+            $( '#job_view_history_fuzzy div.form-group' )
+              .html( fuzzy.children().length ? renderHistoryError( 'No Previous Reports found for this street' ) : fuzzy );
+            */
+
+            $('#job_view_history_groups div.job_view_history_toggle_old')
+              .click(function(){
+                var $t = $(this);
+                var $p = $t.closest('fieldset.job_view_history_group');
+                var $old_rows = $('div.job_view_history_item_old:not(.job_view_history_item_statusgroup_active)',$p);
+                var toshow = $old_rows.filter(':hidden').length > 0;
+                $old_rows.toggle(toshow);
+                $('span',$t).text( toshow ? 'Hide' : 'Show' );
+              });
+
+          }else{
+            content = '<em>Address Search - No History</em>';
+          }
+          break;
+        case 'error' :
+          content = '<em>Unable to Perform Address Search</em>';
+          break;
+        case 'nocontent' :
+          content = '<em>Address Search returned Unexpected Data</em>';
+          break;
+        case 'timeout' :
+          content = '<em>Address Search Timed Out</em>';
+          break;
+        case 'abort' :
+          content = '<em>Address Search Aborted</em>';
+          break;
+        case 'parsererror' :
+          content = '<em>Address Search returned Unexpected Data</em>';
+          break;
+      }
+
+    }
+
+  });
+
 }
-break;
-}
-});
-
-console.log(fuzzy);
-
-if(perfect.children().length == 0){
-  $('#job_view_history div.form-group').html(renderHistoryError("No previous RFAs found for this address"));
-} else {
-  $('#job_view_history div.form-group').html(perfect);
-}
-if(fuzzy.children().length == 0){
-  $('#job_view_history_fuzzy div.form-group').html(renderHistoryError("No previous RFAs found for this street"));
-} else {
-  $('#job_view_history_fuzzy div.form-group').html(fuzzy);
-}
-
-}else{
-  console.log( 'Address Search - No History' );
-}
-break;
-case 'error' :
-content = '<em>Unable to Perform Address Search</em>';
-break;
-case 'nocontent' :
-content = '<em>Address Search returned Unexpected Data</em>';
-break;
-case 'timeout' :
-content = '<em>Address Search Timed Out</em>';
-break;
-case 'abort' :
-content = '<em>Address Search Aborted</em>';
-break;
-case 'parsererror' :
-content = '<em>Address Search returned Unexpected Data</em>';
-break;
-}
-
-}
-});
-}
-setTimeout( checkAddressHistory , 1000 );
-
-function checkAddressHistory_constructRow( v , sameAddress, resemblance){
+setTimeout( checkAddressHistory , 400 );
 
 
-}
+
 
 function renderHistoryError(text) {
   return (
@@ -356,50 +440,4 @@ function renderHistoryError(text) {
     );
 
 
-}
-
-function renderHistory(item) {
-  var options = {
-    weekday: "short",
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-    hour12: false
-  };
-
-  //trim down common street prefix to save space
-  if (item.Address.Street != null) {
-    item.Address.Street = item.Address.Street.replace("ROAD","RD");
-    item.Address.Street = item.Address.Street.replace("STREET","ST");
-    item.Address.Street = item.Address.Street.replace("AVENUE","AVE");
-  }
-
-  var tagarray = [];
-
-  for (i=1; i<item.Tags.length; i++) {
-    tagarray.push(item.Tags[i].Name);
-  }
-
-  var tags = tagarray.join(', ');
-
-  var thedate = new Date(new Date(item.JobReceived).getTime() + (new Date(item.JobReceived).getTimezoneOffset() * 60000));
-  var address = item.Address.PrettyAddress;
-  
-  return (
-    <div>
-    <div>
-    <span class="fa"></span><em><strong><a href={'/Jobs/'+item.Id}>{item.Identifier}</a> -{item.JobStatusType.Name}-</strong></em>
-    </div>
-    <div>
-    <strong>{address}</strong> ({item.Proximity})
-    </div>
-    <div>
-    {tags}
-    </div>
-    <div>
-    {( item.SituationOnScene == null ? 'View job for more detail' : item.SituationOnScene )}
-    </div> 
-    <span class="pull-right"><em><small class="text-muted">Opened {moment(thedate).fromNow()}</small></em></span>
-    </div>
-    );
 }
