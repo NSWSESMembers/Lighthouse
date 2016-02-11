@@ -94,7 +94,6 @@ var html2 = renderQuickText("CompleteTeamQuickTextBox", [
 
 $('#completeTeamModal .modal-body .form-group:nth-child(12)').after([html, html2]);
 
-
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
 job_view_history = (
   <fieldset id="job_view_history_groups" class="col-md-12">
@@ -107,6 +106,7 @@ job_view_history = (
     </div>
   </fieldset>
 );
+
 $job_view_history_perfect = (
   <fieldset id="job_view_history" class="col-md-12">
     <legend><img style="width:16px;vertical-align:inherit;margin-right:5px"
@@ -132,9 +132,6 @@ $job_view_history_fuzzy = (
     </div>
     </fieldset>
 );
-
-
-
 
 $('fieldset.col-md-12 legend').each(function(k,v){
   var $v = $(v);
