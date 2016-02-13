@@ -174,59 +174,63 @@ function checkAddressHistory(){
   else {
     q = address.Street + ', ' + address.Locality;
   }
-  q = q.substring(0 , 30);
+  q = q.substring(0, 30);
 
   var now = new Date();
   var end = new Date();
   end.setYear(end.getFullYear() - 1);
 
   $.ajax({
-    type: 'GET' ,
-    url: '/Api/v1/Jobs/Search' ,
-    data: {
-      'Q':                  q.substring(0, 30),
-      'StartDate':          end.toLocaleString(),
-      'EndDate':            now.toLocaleString(),
-      'ViewModelType':      2,
-      'PageIndex':          1,
-      'PageSize':           1000,
-      'SortField':          'JobReceived',
-      'SortOrder':          'desc',
-      'LighthouseFunction': 'checkAddressHistory'
-    } ,
-    cache: false ,
-    dataType: 'json' ,
-    complete: function(response, textStatus) {
+    type: 'GET'
+    , url: '/Api/v1/Jobs/Search'
+    , data: {
+      'Q':                    q.substring(0, 30)
+      , 'StartDate':          end.toLocaleString()
+      , 'EndDate':            now.toLocaleString()
+      , 'ViewModelType':      2
+      , 'PageIndex':          1
+      , 'PageSize':           1000
+      , 'SortField':          'JobReceived'
+      , 'SortOrder':          'desc'
+      , 'LighthouseFunction': 'checkAddressHistory'
+    }
+    , cache: false
+    , dataType: 'json'
+    , complete: function(response, textStatus) {
       var $job_view_history_container = $('#job_view_history_container');
       switch(textStatus){
         case 'success':
           if(response.responseJSON.Results.length) {
             var history_rows = {
               'exact': {
-                title: 'Same Address',
-                always_show: true,
-                jobs: new Array()
+                title:        'Same Address'
+                , always_show: true
+                , hide_old:    false
+                , jobs:        new Array()
               } ,
               'partial': {
-                title: 'Apartment, Townhouse or Battleaxe',
-                always_show: false,
-                jobs: new Array()
+                title:         'Apartment, Townhouse or Battleaxe'
+                , always_show: false
+                , hide_old:    false
+                , jobs:        new Array()
               } ,
               'neighbour': {
-                title: 'Immediate Neighbours',
-                always_show: false,
-                jobs: new Array()
+                title:         'Immediate Neighbours'
+                , always_show: false
+                , hide_old:    false
+                , jobs:        new Array()
               } ,
               'street': {
-                title: 'Same Street',
-                always_show: false,
-                jobs: new Array()
+                title:         'Same Street'
+                , always_show: false
+                , hide_old:    true
+                , jobs:        new Array()
               }
             };
             status_groups = {
-              'active': ['new', 'acknowledged', 'tasked', 'referred'],
-              'complete': ['complete', 'finalised'],
-              'cancelled': ['cancelled', 'rejected']
+              'active':      ['new', 'acknowledged', 'tasked', 'referred']
+              , 'complete':  ['complete', 'finalised']
+              , 'cancelled': ['cancelled', 'rejected']
             };
 
             if(address.StreetNumber != null){
@@ -240,11 +244,10 @@ function checkAddressHistory(){
                 jobAddress_StreetNumber_tmp[index], 10);
             }
             $.each(response.responseJSON.Results, function(k, v) {
-              if(v.Id == jobId) {
-                return true;
-              }
+              // History Job is Current Job
+              if(v.Id == jobId) return true;
  
-              //No street number so it can only be the same road
+              // No street number so it can only be the same road
               if(v.Address.StreetNumber == null || address.StreetNumber == null) {
                 history_rows.street.jobs.push(v);
                 return true;
@@ -330,7 +333,7 @@ function checkAddressHistory(){
                   );
                 });
 
-                if(has_old) {
+                if(d.hide_old && has_old) {
                   section_inner.push(
                     <div class="job_view_history_toggle_old">
                       <span>Show</span> Older Reports
@@ -350,7 +353,7 @@ function checkAddressHistory(){
 
               // now render the whole section
               if(d.jobs.length || d.always_show) {
-                var jobs = d.jobs.length.toString() + ' Job' + (d.jobs.length == 1 ? 'job' : 'jobs');
+                var jobs = d.jobs.length.toString() + ' Job' + (d.jobs.length == 1 ? '' : 's');
                 history_section = (
                   <fieldset id={"job_view_history_group_" + group} class="job_view_history_group col-md-12">
                     <legend>
