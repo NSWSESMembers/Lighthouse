@@ -269,12 +269,18 @@ function checkAddressHistory(){
               v.tagString = ( tagArray.length ? tagArray.join(', ') : (<em>No Tags</em>) );
               // Job CSS Classes
               v.cssClasses = 'job_view_history_item job_view_history_item_status_' + v.JobStatusType.Name.toLowerCase();
+              var jobGroups = new Array();
               $.each(status_groups, function(status_group, statuses) {
                 if(statuses.indexOf(v.JobStatusType.Name.toLowerCase()) >= 0)
-                  v.cssClasses += ' job_view_history_item_statusgroup_' + status_group;
+                  jobGroups.push(status_group);
               });
-              if(v.isold) v.cssClasses += ' job_view_history_item_old';
-              console.log('v.isold = "%s", v.cssClasses = "%s"', v.isold, v.cssClasses);
+              if(jobGroups.length) v.cssClasses += ' job_view_history_item_statusgroup_' + jobGroups.join(' job_view_history_item_statusgroup_');
+              if(v.isold) {
+                v.cssClasses += ' job_view_history_item_old';
+                if(jobGroups.indexOf('active') == -1) {
+                  v.cssClasses += ' job_view_history_item_toggle';
+                }
+              }
 
               // Unless we have a Street Number for Current and Historic, we can only match the street
               if(v.Address.StreetNumber != null && address.StreetNumber != null) {
@@ -301,6 +307,7 @@ function checkAddressHistory(){
 
               }
               
+              // Push Job to Job Array
               history_rows[result_group].jobs.push(v);
               if(v.isold) history_rows[result_group].has_old = true;
             }); // Loop End - response.responseJSON.Results
@@ -311,7 +318,7 @@ function checkAddressHistory(){
               <div>
               {_.map(_.filter(history_rows, function(row) { return row.always_show || row.jobs.length; }), function(groupData, groupKey){
                 return (
-                  <fieldset id={"job_view_history_group_" + groupData.key } class="job_view_history_group col-md-12">
+                  <fieldset id={"job_view_history_group_" + groupData.key } class={"job_view_history_group col-md-12" + (groupData.hide_old ? " job_view_history_showtoggle" : "")}>
                     <legend>
                       {groupData.title}
                       <span class="group_size">{groupData.jobs.length + ' Job' + (groupData.jobs.length == 1 ? '' : 's')}</span>
@@ -349,16 +356,16 @@ function checkAddressHistory(){
               .click(function() {
                 var $t = $(this);
                 var $p = $t.closest('fieldset.job_view_history_group');
-                var $old_rows = $('div.job_view_history_item_old:not(.job_view_history_item_statusgroup_active)', $p);
+                var $old_rows = $('div.job_view_history_item_toggle', $p);
                 var toshow = $old_rows.filter(':hidden').length > 0;
                 $old_rows.toggle(toshow);
                 $('span', $t).text(toshow ? 'Hide' : 'Show');
               });
-            $('fieldset.job_view_history_group')
-              .each(function(k, v){
-                var $t = $(this);
-                if($('div.job_view_history_item_old:not(.job_view_history_item_statusgroup_active)', $t).length){
-                  $('div.form-group', $t).append($job_view_history_toggle_old);
+            $('fieldset.job_view_history_showtoggle')
+              .each(function(k ,v){
+                var $v = $(v);
+                if($('div.job_view_history_item_toggle', $v).length){
+                  $('div.form-group', $v).append($job_view_history_toggle_old);
                 }
               });
 
