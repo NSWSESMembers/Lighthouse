@@ -107,40 +107,12 @@ job_view_history = (
   </fieldset>
 );
 
-$job_view_history_perfect = (
-  <fieldset id="job_view_history" class="col-md-12">
-    <legend><img style="width:16px;vertical-align:inherit;margin-right:5px"
-             src={chrome.extension.getURL("icons/lh-black.png")} />Job History for Address</legend>
-    <div class="form-group col-xs-12">
-      <div style="text-align:center">
-        <img
-             src="/Content/images/loading_30.gif" />
-      </div>
-    </div>
-  </fieldset>
-);
-
-$job_view_history_fuzzy = (
-    <fieldset id="job_view_history_fuzzy" class="col-md-12">
-    <legend><img style="width:16px;vertical-align:inherit;margin-right:5px"
-             src={chrome.extension.getURL("icons/lh-black.png")} />Job History for Neighbours and Street (12 Months)</legend>
-    <div class="form-group col-xs-12">
-      <div style="text-align:center">
-        <img
-             src="/Content/images/loading_30.gif" />
-      </div>
-    </div>
-    </fieldset>
-);
-
 $('fieldset.col-md-12 legend').each(function(k,v){
   var $v = $(v);
   var $p = $v.closest('fieldset');
   var section_title = $v.text().trim();
   if( section_title.indexOf( 'Notes' ) === 0 || section_title.indexOf( 'Messages' ) === 0 ){
     $p.before(job_view_history);
-    //$p.before($job_view_history_perfect);
-    //$p.before($job_view_history_fuzzy);
     return false; // break out of $.each()
   }
 });
