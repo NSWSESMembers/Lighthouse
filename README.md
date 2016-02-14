@@ -60,6 +60,7 @@ Pull requests are welcome!
 
 - Map overlay to prevent theft of mouse when scrolling.
 - Quick Filters. Allows for fast access to complex filter groups when searching. eg, "All Open Jobs" selects all the job tags that mean open (New,Ack, Tasked, Refered)
+- Improvements to the search box - searching for a job ID will take you straight to that job
 - Idle session detection with popup to warn user.
 - Time picker options of 'this year' and 'all time' added.
 - Team summary screen.
