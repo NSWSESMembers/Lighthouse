@@ -56,11 +56,8 @@
   display: block;
   font-size: 0.7em;
 }
-#job_view_history_groups #job_view_history_group_street div.job_view_history_item_old {
+#job_view_history_groups fieldset.job_view_history_showtoggle div.job_view_history_item_toggle {
   display: none;
-}
-#job_view_history_groups fieldset.job_view_history_group div.job_view_history_item_statusgroup_active {
-  display: block !important;
 }
 #job_view_history_groups fieldset {
   margin-bottom: 0;
