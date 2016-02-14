@@ -8,3 +8,5 @@ package
 *.swp
 
 Lighthouse.zip
+.DS_Store
+*.DS_Store
