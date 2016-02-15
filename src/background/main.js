@@ -10,13 +10,31 @@ var lastActivity = null;
 var statusTimer = null;
 var keepaliveTimer = null;
 
+
+//Message Create JS Fetch
+var messageCreate;
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+  if (xhttp.readyState == 4 && xhttp.status == 200) {
+    var result = xhttp.responseText;
+    var newresult = result.replace("CreateMessageViewModel,f,t,i,r,u;","CreateMessageViewModel,f,t,i,r,u;msgsystem = n;");
+    var resultobj = { redirectUrl: "data:text/javascript," 
+    + encodeURIComponent("var msgsystem;\n"+newresult) };
+    messageCreate = resultobj;
+    console.log("Fetched js/messages/create")
+  }
+};
+console.log("Fetching js/messages/create")
+xhttp.open("GET", "https://beacon.ses.nsw.gov.au/js/messages/create", true);
+xhttp.send();
+
+
 chrome.webRequest.onBeforeRequest.addListener(
   function (details) {
-    console.log(details);
-       return { redirectUrl: chrome.extension.getURL("redirected/messages/create.js")};
- },
- { urls: ["https://beacon.ses.nsw.gov.au/js/messages/create?v=*"] },
- ["blocking"]);
+    return(messageCreate);
+     },
+     { urls: ["https://beacon.ses.nsw.gov.au/js/messages/create?v=*"] },
+     ["blocking"]);
 
 
 

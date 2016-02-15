@@ -149,8 +149,6 @@ gulp.task('copy', function() {
     .pipe(gulp.dest('build/icons'));
   gulp.src('src/_locales/**')
     .pipe(gulp.dest('build/_locales'));
-  gulp.src('src/redirected/**')
-    .pipe(gulp.dest('build/redirected'));
   return gulp.src('src/manifest.json')
     .pipe(gulp.dest('build'));
 });

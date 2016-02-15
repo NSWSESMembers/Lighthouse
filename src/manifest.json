@@ -101,8 +101,7 @@
   "web_accessible_resources": [
     "injectscripts/*",
     "icons/*",
-    "pages/*",
-    "redirected/*"
+    "pages/*"
   ],
   "background": {
     "scripts": ["background.js"]
