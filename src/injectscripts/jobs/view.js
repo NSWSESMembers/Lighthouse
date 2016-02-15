@@ -352,7 +352,7 @@ function checkAddressHistory(){
             );
 
             // Show/Hide Handler
-            var $job_view_history_toggle_old = $( <div class="job_view_history_toggle_old"><span>Show</span> old Jobs</div> )
+            var $job_view_history_toggle_old = $( <div class="job_view_history_toggle_old"><span>Show</span> Older Jobs</div> )
               .click(function() {
                 var $t = $(this);
                 var $p = $t.closest('fieldset.job_view_history_group');
