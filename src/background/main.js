@@ -10,6 +10,7 @@ var lastActivity = null;
 var statusTimer = null;
 var keepaliveTimer = null;
 
+<<<<<<< HEAD
 
 //Message Create JS Fetch
 var messageCreate;
@@ -35,6 +36,15 @@ chrome.webRequest.onBeforeRequest.addListener(
      },
      { urls: ["https://beacon.ses.nsw.gov.au/js/messages/create?v=*"] },
      ["blocking"]);
+=======
+chrome.webRequest.onBeforeRequest.addListener(
+  function (details) {
+    console.log(details);
+       return { redirectUrl: chrome.extension.getURL("redirected/messages/create.js")};
+ },
+ { urls: ["https://beacon.ses.nsw.gov.au/js/messages/create?v=*"] },
+ ["blocking"]);
+>>>>>>> 2a2fc3a52e9c02b7a0f6c231734cc2b06bd2fdb0
 
 
 
