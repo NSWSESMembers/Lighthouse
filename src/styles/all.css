@@ -108,5 +108,6 @@
 }
 #job_view_history_groups div.job_view_history_toggle_old:hover {
   background: #e5e5e5;
+  cursor: pointer;
 }
 
