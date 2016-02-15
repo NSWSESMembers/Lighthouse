@@ -11,8 +11,10 @@
   },
   "permissions": [
     "storage",
-    "https://beacon.ses.nsw.gov.au/",
-    "https://trainbeacon.ses.nsw.gov.au/"
+    "https://beacon.ses.nsw.gov.au/*",
+    "https://trainbeacon.ses.nsw.gov.au/*",
+    "webRequest",
+    "webRequestBlocking"
   ],
   "content_scripts": [
     {
@@ -99,7 +101,8 @@
   "web_accessible_resources": [
     "injectscripts/*",
     "icons/*",
-    "pages/*"
+    "pages/*",
+    "redirected/*"
   ],
   "background": {
     "scripts": ["background.js"]
