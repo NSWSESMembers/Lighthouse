@@ -10,6 +10,16 @@ var lastActivity = null;
 var statusTimer = null;
 var keepaliveTimer = null;
 
+chrome.webRequest.onBeforeRequest.addListener(
+  function (details) {
+    console.log(details);
+       return { redirectUrl: chrome.extension.getURL("redirected/messages/create.js")};
+ },
+ { urls: ["https://beacon.ses.nsw.gov.au/js/messages/create?v=*"] },
+ ["blocking"]);
+
+
+
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.focus) {
     console.log("Received FOCUS message from beacon page. Updating lastActivity.");
@@ -89,11 +99,11 @@ function checkBeaconStillActive(cb) {
   }, function(items) {
     if (items.keepalive) { //if the user has selected to keep their session alive
       chrome.tabs.query({
-          url: baseUri + "*",
-        },
-        function(tabs) {
-          cb(tabs.length > 0);
-        }
+        url: baseUri + "*",
+      },
+      function(tabs) {
+        cb(tabs.length > 0);
+      }
       );
     }
   });
