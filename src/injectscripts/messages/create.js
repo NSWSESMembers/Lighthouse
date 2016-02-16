@@ -1,4 +1,8 @@
 console.log("inject running");
+
+
+if (localStorage.getItem("LighthouseMessagesEnabled") == "true") {
+
 whenWeAreReady(msgsystem,function() {
 	
 	//Home HQ
@@ -13,9 +17,9 @@ whenWeAreReady(msgsystem,function() {
 });
 
 function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
-  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-  	if (typeof varToCheck != "undefined") {
-  		console.log("We are ready");
+	var waiting = setInterval(function() {
+		if (typeof varToCheck != "undefined") {
+			console.log("We are ready");
       clearInterval(waiting); //stop timer
       cb(); //call back
   }
@@ -25,18 +29,40 @@ function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
 
 msgsystem.loadingContacts.subscribe(function(status) {
 	console.log(status);
-if (status == false)
-{
-	msgsystem.availableContactGroups.peek().forEach(function(item){
-	console.log(item);
+	if (status == false)
+	{
+		msgsystem.availableContactGroups.peek().forEach(function(item){
+			console.log(item);
 
-		if (item.Name.indexOf("(default)") > -1){
-		msgsystem.addContactGroup(item);
+			if (item.Name.indexOf("(default)") > -1){
+				msgsystem.addContactGroup(item);
+			}
+
+
+		})
+
 	}
-
-
 })
 
 }
-})
+
+$(document).ready(function() {
+	$('#lighthouseEnabled').click(function() {
+	if (localStorage.getItem("LighthouseMessagesEnabled") == "true") //its true so uncheck it
+	{
+		$(this).toggleClass("fa-check-square-o fa-square-o")
+		localStorage.setItem("LighthouseMessagesEnabled", false);
+
+	} else //its false so uncheck it
+	{
+		$(this).toggleClass("fa-square-o fa-check-square-o")
+		localStorage.setItem("LighthouseMessagesEnabled", true);
+
+
+	}
+});
+});
+
+
+
 
