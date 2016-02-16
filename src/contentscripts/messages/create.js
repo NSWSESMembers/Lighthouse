@@ -1,8 +1,9 @@
 var inject = require('../../../lib/inject.js');
 var $ = require('jquery');
-
-
 var xhttp = new XMLHttpRequest();
+var DOM = require('jsx-dom-factory');
+
+
 xhttp.onreadystatechange = function() {
 	if (xhttp.readyState == 4 && xhttp.status == 200) {
 		var result = xhttp.responseText;
@@ -16,3 +17,19 @@ xhttp.onreadystatechange = function() {
 };
 xhttp.open("GET", "https://beacon.ses.nsw.gov.au/js/messages/create#", true);
 xhttp.send();
+
+
+
+function renderBox() {
+	var selected = (localStorage.getItem("LighthouseMessagesEnabled") == "true") ? "fa-check-square-o" : "fa-square-o";
+	return (
+		<span class="pull-right h6">
+			<span id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 
+			<img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+             src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill On Load
+		</span>
+		);
+}
+
+
+$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(1) legend').append(renderBox);
