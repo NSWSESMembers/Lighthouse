@@ -152,17 +152,19 @@ function checkAddressHistory(){
 
   //dont allow searches if the job has not been geocoded
   if(address.Street == null && address.Locality == null && address.Latitude == null && address.Longitude== null) {
-    return renderError(
-      'Unable to Perform Address Search. Address is not Geocoded.' +
-      'Please edit the job and geocode the job location.'
+    return $('#job_view_history_container').empty().append(
+      '<em>Unable to Perform Address Search. Address does not appear valid (Not Geocoded).<br/>' +
+      ( masterViewModel.canEdit()
+        ? '<a href="/Jobs/' + jobId + '/Edit' + '">Please edit the job and geocode the job location.</a>'
+        : 'Have an authorised user edit the job and geocode the job location.' ) + '</em>'
     );
   }
 
   //addresses with only GPS
   if(address.Street == null && address.Locality == null) {
-    return renderError(
-      'Unable to Perform Address Search. Job location does not appear to ' +
-      'at a street address.'
+    return $('#job_view_history_container').empty().append(
+      '<em>Unable to Perform Address Search. Address does not appear valid (Only GPS Lat/Long).<br/>' +
+      'Please edit the job and geocode the job location.</em>'
     );
   }
 
@@ -196,6 +198,7 @@ function checkAddressHistory(){
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
+      console.log('textStatus = "%s"', textStatus, response);
       var $job_view_history_container = $('#job_view_history_container');
       switch(textStatus){
         case 'success':
@@ -313,7 +316,7 @@ function checkAddressHistory(){
             }); // Loop End - response.responseJSON.Results
 
             // Use JSX to Render
-            console.log('history_rows', history_rows);
+            //console.log('history_rows', history_rows);
             $job_view_history_container.html(
               <div>
               {_.map(_.filter(history_rows, function(row) { return row.always_show || row.jobs.length; }), function(groupData, groupKey){
@@ -398,17 +401,3 @@ function checkAddressHistory(){
 }
 
 setTimeout(checkAddressHistory, 400);
-
-function renderHistoryError(text) {
-  return (
-    <div>
-      <em>{text}</em>
-    </div>
-  );
-}
-
-function renderError(text) {
-  $('#job_view_history div.form-group').empty().append(
-    <em>{text}</em>
-  );
-}

@@ -99,7 +99,7 @@ job_view_history = (
   <fieldset id="job_view_history_groups" class="col-md-12">
     <legend class="main"><img style="width:16px;vertical-align:inherit;margin-right:5px"
                  src={chrome.extension.getURL("icons/lh-black.png")} />Job History <span>12 Months search by Address</span></legend>
-    <div id="job_view_history_container" data-phase="loading">
+    <div id="job_view_history_container">
       <div style="text-align:center">
         <img src="/Content/images/loading_30.gif" />
       </div>
