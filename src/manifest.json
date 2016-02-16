@@ -58,7 +58,8 @@
         "https://*.ses.nsw.gov.au/Messages/Create",
         "https://*.ses.nsw.gov.au/Messages/Create/"
       ],
-      "js": ["contentscripts/messages/create.js"]
+      "js": ["contentscripts/messages/create.js"],
+      "run_at" : "document_end"
     },
     {
       "matches": [

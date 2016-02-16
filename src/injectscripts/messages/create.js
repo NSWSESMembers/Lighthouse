@@ -7,16 +7,10 @@ whenWeAreReady(msgsystem,function() {
 		msgsystem.setSelectedHeadquarters(user.hq);
 	});
 
-
 	//Operational = true
 	msgsystem.operational(true);
 
 });
-
-
-
-
-
 
 function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
