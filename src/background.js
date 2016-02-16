@@ -11,38 +11,65 @@ var statusTimer = null;
 var keepaliveTimer = null;
 
 //Message Create JS Fetch
-var messageCreate;
-var xhttp = new XMLHttpRequest();
-xhttp.onreadystatechange = function() {
-  if (xhttp.readyState == 4 && xhttp.status == 200) {
-    var result = xhttp.responseText;
-    var newresult = result.replace("CreateMessageViewModel,f,t,i,r,u;","CreateMessageViewModel,f,t,i,r,u;msgsystem = n;");
-    var resultobj = { redirectUrl: "data:text/javascript," 
-    + encodeURIComponent("var msgsystem;\n"+newresult) };
-    messageCreate = resultobj;
-    console.log("Fetched js/messages/create")
+
+var CoreJS = {};
+
+function alterMessageJS(raw,cb) {
+  console.log("Alterning JS")
+  var replaced = raw.replace("CreateMessageViewModel,f,t,i,r,u;","CreateMessageViewModel,f,t,i,r,u;msgsystem = n;");
+  replaced = "var msgsystem;\n"+replaced;
+  console.log("Altered JS")
+  cb(replaced);
+
+
+}
+
+
+function returnCoreJS(path, cb) {
+
+  console.log(path);
+  if (typeof CoreJS.path == 'undefined') {
+    console.log("Dont have that in the cache, Ill get it");
+
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function() {
+      if (xhttp.readyState == 4 && xhttp.status == 200) {
+        var result = xhttp.responseText;
+        CoreJS.path = result
+        console.log("Fetched "+ path)
+        cb(CoreJS.path)
+      }
+    };
+    var safeURL = path.replace("?v=","#?v=");
+    console.log("Fetching " + safeURL)
+    xhttp.open("GET", safeURL, true);
+    xhttp.send();
+
+  } else {
+    console.log("I have that, Ill return it");
+    cb(CoreJS.path)
   }
-};
-console.log("Fetching js/messages/create")
-xhttp.open("GET", "https://beacon.ses.nsw.gov.au/js/messages/create", true);
-xhttp.send();
 
 
-chrome.webRequest.onBeforeRequest.addListener(
-  function (details) {
-    return(messageCreate);
-     },
-     { urls: ["https://beacon.ses.nsw.gov.au/js/messages/create?v=*"] },
-     ["blocking"]);
+
+
+
+}
+
+
 
 chrome.webRequest.onBeforeRequest.addListener(
   function (details) {
-    console.log(details);
-       return { redirectUrl: chrome.extension.getURL("redirected/messages/create.js")};
- },
- { urls: ["https://beacon.ses.nsw.gov.au/js/messages/create?v=*"] },
- ["blocking"]);
-
+    returnCoreJS(details.url,function(content) {
+     alterMessageJS(content,function(c) {
+      return {
+        redirectUrl: "data:text/javascript,"+ encodeURIComponent((c))
+      }
+    })
+   })
+  },
+  { urls: ["https://beacon.ses.nsw.gov.au/js/messages/create?v=*"] },
+  ["blocking"]);
 
 
 

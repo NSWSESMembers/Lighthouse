@@ -149,8 +149,6 @@ gulp.task('copy', function() {
     .pipe(gulp.dest('build/icons'));
   gulp.src('src/_locales/**')
     .pipe(gulp.dest('build/_locales'));
-  gulp.src('src/redirected/**')
-    .pipe(gulp.dest('build/redirected'));
   return gulp.src('src/manifest.json')
     .pipe(gulp.dest('build'));
 });
@@ -170,9 +168,9 @@ gulp.task('injectscripts', function() {
 });
 
 gulp.task('background', function() {
-  return browserify('src/background/main.js')
+  return browserify('src/background.js')
     .bundle()
-    .pipe(source('src/background/main.js'))
+    .pipe(source('src/background.js'))
     .pipe(streamify(uglify()))
     .pipe(rename('background.js'))
     .pipe(gulp.dest('build'));
