@@ -21,3 +21,22 @@ function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
   }
 }, 200);
 }
+
+
+msgsystem.loadingContacts.subscribe(function(status) {
+	console.log(status);
+if (status == false)
+{
+	msgsystem.availableContactGroups.peek().forEach(function(item){
+	console.log(item);
+
+		if (item.Name.indexOf("(default)") > -1){
+		msgsystem.addContactGroup(item);
+	}
+
+
+})
+
+}
+})
+
