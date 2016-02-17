@@ -28,7 +28,6 @@ function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
 
 
 msgsystem.loadingContacts.subscribe(function(status) {
-	console.log(status);
 	if (status == false)
 	{
 		msgsystem.availableContactGroups.peek().forEach(function(item){

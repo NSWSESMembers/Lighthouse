@@ -26,7 +26,7 @@ function renderBox() {
 		<span class="pull-right h6">
 			<span id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 
 			<img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
-             src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill With LHQ & Default On Load
+             src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill With LHQ & Default Recipients
 		</span>
 		);
 }
