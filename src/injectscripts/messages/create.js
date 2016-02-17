@@ -3,8 +3,8 @@ console.log("inject running");
 
 if (localStorage.getItem("LighthouseMessagesEnabled") == "true") {
 
-whenWeAreReady(msgsystem,function() {
-	
+	whenWeAreReady(msgsystem,function() {
+
 	//Home HQ
 	whenWeAreReady(user,function() {
 		console.log("Setting Selected HQ to user HQ");
@@ -32,13 +32,15 @@ msgsystem.loadingContacts.subscribe(function(status) {
 	if (status == false)
 	{
 		msgsystem.availableContactGroups.peek().forEach(function(item){
-			console.log(item);
-
 			if (item.Name.indexOf("(default)") > -1){
 				msgsystem.addContactGroup(item);
 			}
+		})
 
-
+		msgsystem.availableContacts.peek().forEach(function(item){
+			if (item.Description.indexOf("(default)") > -1){
+				msgsystem.addContact(item);
+			}
 		})
 
 	}
