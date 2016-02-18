@@ -103,7 +103,6 @@
     "injectscripts/*",
     "icons/*",
     "pages/*",
-    "redirected/*"
   ],
   "background": {
     "scripts": ["background.js"]
