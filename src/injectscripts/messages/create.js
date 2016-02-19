@@ -19,9 +19,6 @@ $(document).ready(function() {
                 }, 200);
             });
 
-            //Operational = true
-            msgsystem.operational(true);
-
         });
         msgsystem.loadingContacts.subscribe(function(status) {
             if (status == false) {
@@ -40,8 +37,12 @@ $(document).ready(function() {
             }
         })
 
+    } else {
+    	console.log("Not running due to preference setting")
     }
 
+    //Operational = true
+    msgsystem.operational(true);
 
     $('#lighthouseEnabled').click(function() {
         if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) //its true so uncheck it
