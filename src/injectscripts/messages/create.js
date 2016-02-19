@@ -1,7 +1,7 @@
 console.log("inject running");
 
 
-if (localStorage.getItem("LighthouseMessagesEnabled") == "true") {
+if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) {
 
 	whenWeAreReady(msgsystem,function() {
 

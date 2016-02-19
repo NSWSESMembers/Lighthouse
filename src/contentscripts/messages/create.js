@@ -25,8 +25,8 @@ function findMessageUrl(cb) {
 }
 
 findMessageUrl(function(url){
-	console.log("Fetching https://beacon.ses.nsw.gov.au/js/messages/create#?"+url);
-	xhttp.open("GET", "https://beacon.ses.nsw.gov.au/js/messages/create#?"+url, true);
+	console.log("Fetching "+window.location.origin+"/js/messages/create#?"+url);
+	xhttp.open("GET", window.location.origin+"/js/messages/create#?"+url, true);
 	xhttp.send();
 })
 
@@ -34,7 +34,7 @@ findMessageUrl(function(url){
 
 
 function renderCheckBox() {
-	var selected = (localStorage.getItem("LighthouseMessagesEnabled") == "true") ? "fa-check-square-o" : "fa-square-o";
+	var selected = (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) ? "fa-check-square-o" : "fa-square-o";
 	return (
 		<span class="pull-right h6">
 		<span id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 

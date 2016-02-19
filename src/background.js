@@ -18,7 +18,7 @@ chrome.webRequest.onBeforeRequest.addListener(
   function (details) {
     return {cancel: true};
   },
-  { urls: ["https://beacon.ses.nsw.gov.au/js/messages/create?v=*"] },
+  { urls: ["https://*.ses.nsw.gov.au/js/messages/create?v=*"] },
   ["blocking"]);
 
 
