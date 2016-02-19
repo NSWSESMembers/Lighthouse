@@ -19,7 +19,6 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true") {
 function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
 	var waiting = setInterval(function() {
 		if (typeof varToCheck != "undefined") {
-			console.log("We are ready");
       clearInterval(waiting); //stop timer
       cb(); //call back
   }

@@ -17,17 +17,17 @@ xhttp.onreadystatechange = function() {
 };
 
 function findMessageUrl(cb) {
-$('script').each(function(){
-	if(this.src.indexOf("/js/messages/create?v=") != -1){
-		cb(this.src.replace(/^[^\?]+\??/,''));
-	}
-});
+	$('script').each(function(){
+		if(this.src.indexOf("/js/messages/create?v=") != -1){
+			cb(this.src.replace(/^[^\?]+\??/,''));
+		}
+	});
 }
 
 findMessageUrl(function(url){
-console.log("Fetching https://beacon.ses.nsw.gov.au/js/messages/create#?"+url);
-xhttp.open("GET", "https://beacon.ses.nsw.gov.au/js/messages/create#?"+url, true);
-xhttp.send();
+	console.log("Fetching https://beacon.ses.nsw.gov.au/js/messages/create#?"+url);
+	xhttp.open("GET", "https://beacon.ses.nsw.gov.au/js/messages/create#?"+url, true);
+	xhttp.send();
 })
 
 
