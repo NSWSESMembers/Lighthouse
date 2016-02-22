@@ -168,9 +168,9 @@ gulp.task('injectscripts', function() {
 });
 
 gulp.task('background', function() {
-  return browserify('src/background/main.js')
+  return browserify('src/background.js')
     .bundle()
-    .pipe(source('src/background/main.js'))
+    .pipe(source('src/background.js'))
     .pipe(streamify(uglify()))
     .pipe(rename('background.js'))
     .pipe(gulp.dest('build'));
