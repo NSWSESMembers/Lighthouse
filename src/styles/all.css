@@ -111,3 +111,7 @@
   cursor: pointer;
 }
 
+.lighthouseKeeper-modified abbr {
+  font-weight: bold;
+}
+
