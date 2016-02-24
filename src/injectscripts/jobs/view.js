@@ -6,37 +6,60 @@ console.log("Running content script");
 
 //if ops logs update
 masterViewModel.notesViewModel.opsLogEntries.subscribe(function(d) {
-  cleanupBr();
+  lighthouseKeeper();
 });
 
 //if messages update
 masterViewModel.messagesViewModel.messages.subscribe(function(d) {
-  cleanupBr();
+  lighthouseKeeper();
 });
 
 //call on run
-cleanupBr();
+lighthouseKeeper();
 
 
 document.title = "#"+jobId;
 
-function cleanupBr() {
-  console.log("BR cleanup called")
-  //only run if messages and notes have loaded in (causes problems overwise and won't load)
-  var selector = '.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: Text"]';
+function lighthouseKeeper(){
 
-  $(selector).each(function() {
-    var text = $(this).html();
-    var replaced = text.replace(/&lt;br&gt;/g, '<br />');
-    $(this).html(replaced);
+  var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: Text"]');
+
+  var ICEMS_Dictionary = {
+    'ASNSW'   : 'NSW Ambulance' ,
+    'FRNSW'   : 'NSW Fire &amp; Rescue' ,
+    'NSWPF'   : 'NSW Police Force' ,
+
+    'AA'      : 'As Above' ,
+    'INFT'    : 'Informant/Caller' ,
+    '\dPOBS?' : 'Person(s) On Board' ,
+    'POIS?'   : 'Person(s) Of Interest' ,
+    'POSS'    : 'Possible' ,
+    'PTS?'    : 'Patient(s)' ,
+    'VEHS?'   : 'Vehicle(s)' ,
+    'VICT?'   : 'Victim' ,
+    'Y[OR]'   : 'Years Old'
+  };
+
+  $targetElements.each(function(v){
+    var $t = $(this);
+    var contentOrig = $t.html();
+    var contentRepl = contentOrig;
+    // '<br>' to HTML LineBreaks
+    contentRepl = contentRepl.replace(/&lt;br(?:\s*\/)?&gt;/g, '<br />');
+    // '\n' to HTML LineBreaks
+    contentRepl = contentRepl.replace(/\s*\\n/, '<br />');
+    // ICEMS Dictionary
+    _.each(ICEMS_Dictionary, function(clearText, abbrText){
+      var contentTemp = contentRepl;
+      contentRepl = contentRepl.replace(new RegExp('\\b(' + abbrText + ')\\b', 'gi'), '<abbr title="' + clearText + '">$1</abbr>');
+    });
+    if(contentRepl != contentOrig){
+      $t.html(contentRepl).addClass('lighthouseKeeper-modified');
+    }else{
+      $t.addClass('lighthouseKeeper-nomodifications');
+    }
   });
 
-  try { //get rid of the loading image which some times gets suck. i assume a race condition it the cause
-    var progress = document.getElementById("editRfaForm").getElementsByClassName("col-xs-12 text-center");
-    progress[0].parentNode.removeChild(progress[0]);
-  } catch (err) {
-    console.log(err.messages);
-  }
 }
 
 
