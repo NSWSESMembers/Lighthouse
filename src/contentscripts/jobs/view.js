@@ -3,6 +3,19 @@ var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
 var $ = require('jquery');
 
+
+function renderCheckBox() {
+  var selected = (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") ? "fa-check-square-o" : "fa-square-o";
+  return (
+    <span class="pull-right h6">
+    <span id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 
+    <img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+    src={chrome.extension.getURL("icons/lh-black.png")} /> Hide Completed Tasking
+    </span>
+    );
+}
+
+
 function renderQuickText(id, selections) {
   return (
     <div class="form-group">
@@ -25,6 +38,12 @@ function renderQuickText(id, selections) {
     </div>
   );
 }
+
+
+
+$('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox);
+
+
 
 // Quick Text - Job - Finalise
 $('#finaliseJobModal .modal-body .form-group:nth-child(1)').after(

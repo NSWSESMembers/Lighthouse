@@ -18,6 +18,43 @@ masterViewModel.messagesViewModel.messages.subscribe(function(d) {
 lighthouseKeeper();
 
 
+if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") {
+
+whenTeamsAreReady(function(){
+cleanUPTasking();
+
+});
+
+}
+
+function cleanUPTasking(){
+
+var taskedTeams = masterViewModel.teamsViewModel.taskedTeams.peek();
+var hidden = 0;
+//taskedTeams.forEach(function(team){
+      masterViewModel.teamsViewModel.taskedTeams.remove(function (item) { 
+        if (item.Complete != null) {hidden++};
+        return item.Complete != null});
+      console.log("Hidden "+hidden);
+$('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header h3').html('<i class="fa fa-users"></i> Teams - '+hidden+' Hidden');
+
+//}
+//   console.log(team.Complete);
+//   if (team.Complete!=null) {
+//     console.log("Remove");
+//     masterViewModel.teamsViewModel.taskedTeams.remove(team);
+//   }
+// })
+
+
+// $('div[data-bind="foreach: taskedTeams"] div.list-group-item.clearfix').each(function() {
+//   console.log(this);
+// });
+
+
+
+}
+
 document.title = "#"+jobId;
 
 function lighthouseKeeper(){
@@ -125,6 +162,27 @@ document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
 
 
 $(document).ready(function() {
+
+
+      $('#lighthouseEnabled').click(function() {
+        if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true" || localStorage.getItem("LighthouseHideCompletedEnabled") == null) //its true so uncheck it
+        {
+            $(this).toggleClass("fa-check-square-o fa-square-o")
+            localStorage.setItem("LighthouseHideCompletedEnabled", false);
+            location.reload();
+
+        } else //its false so uncheck it
+        {
+            $(this).toggleClass("fa-square-o fa-check-square-o")
+            localStorage.setItem("LighthouseHideCompletedEnabled", true);
+            location.reload();
+
+
+        }
+    });
+
+
+
   _.each([
     ["#stormtree", "Storm", "Tree Operations/Removal"],
     ["#stormproperty", "Storm", "Property Protection"],
@@ -424,3 +482,14 @@ function checkAddressHistory(){
 }
 
 setTimeout(checkAddressHistory, 400);
+
+
+function whenTeamsAreReady(cb) { //when external vars have loaded
+  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
+    if (typeof masterViewModel != "undefined" & masterViewModel.teamsViewModel.teamsLoaded.peek() == true) {
+      console.log("teams are ready");
+      clearInterval(waiting); //stop timer
+      cb(); //call back
+    }
+  }, 200);
+}
