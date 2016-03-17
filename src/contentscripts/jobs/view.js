@@ -4,6 +4,8 @@ var _ = require('underscore');
 var $ = require('jquery');
 
 
+//checkbox for hide completed tasking
+
 function renderCheckBox() {
   var selected = (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") ? "fa-check-square-o" : "fa-square-o";
   return (
@@ -40,7 +42,7 @@ function renderQuickText(id, selections) {
 }
 
 
-
+//checkbox for hide completed tasking
 $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox);
 
 

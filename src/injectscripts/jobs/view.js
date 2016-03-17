@@ -18,40 +18,20 @@ masterViewModel.messagesViewModel.messages.subscribe(function(d) {
 lighthouseKeeper();
 
 
-if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") {
-
+if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") { //if enabled, hide completed tasking
 whenTeamsAreReady(function(){
 cleanUPTasking();
-
 });
-
 }
 
-function cleanUPTasking(){
-
+function cleanUPTasking(){ //for every tasked team hide if they have completed the tasking
 var taskedTeams = masterViewModel.teamsViewModel.taskedTeams.peek();
 var hidden = 0;
-//taskedTeams.forEach(function(team){
       masterViewModel.teamsViewModel.taskedTeams.remove(function (item) { 
         if (item.Complete != null) {hidden++};
         return item.Complete != null});
       console.log("Hidden "+hidden);
 $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header h3').html('<i class="fa fa-users"></i> Teams - '+hidden+' Hidden');
-
-//}
-//   console.log(team.Complete);
-//   if (team.Complete!=null) {
-//     console.log("Remove");
-//     masterViewModel.teamsViewModel.taskedTeams.remove(team);
-//   }
-// })
-
-
-// $('div[data-bind="foreach: taskedTeams"] div.list-group-item.clearfix').each(function() {
-//   console.log(this);
-// });
-
-
 
 }
 
@@ -484,6 +464,7 @@ function checkAddressHistory(){
 setTimeout(checkAddressHistory, 400);
 
 
+// wait for teams to have loaded
 function whenTeamsAreReady(cb) { //when external vars have loaded
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
     if (typeof masterViewModel != "undefined" & masterViewModel.teamsViewModel.teamsLoaded.peek() == true) {
