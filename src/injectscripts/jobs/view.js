@@ -17,21 +17,46 @@ masterViewModel.messagesViewModel.messages.subscribe(function(d) {
 //call on run
 lighthouseKeeper();
 
+whenTeamsAreReady(function(){
+
+
+
+//checkbox for hide completed tasking
+$('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox);
+
+
+$('#lighthouseEnabled').click(function() {
+        if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true" || localStorage.getItem("LighthouseHideCompletedEnabled") == null) //its true so uncheck it
+        {
+          $(this).toggleClass("fa-check-square-o fa-square-o")
+          localStorage.setItem("LighthouseHideCompletedEnabled", false);
+          location.reload();
+
+        } else //its false so uncheck it
+        {
+          $(this).toggleClass("fa-square-o fa-check-square-o")
+          localStorage.setItem("LighthouseHideCompletedEnabled", true);
+          location.reload();
+
+
+        }
+      });
+
 
 if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") { //if enabled, hide completed tasking
-whenTeamsAreReady(function(){
-cleanUPTasking();
-});
+  cleanUPTasking();
 }
 
+});
+
 function cleanUPTasking(){ //for every tasked team hide if they have completed the tasking
-var taskedTeams = masterViewModel.teamsViewModel.taskedTeams.peek();
-var hidden = 0;
-      masterViewModel.teamsViewModel.taskedTeams.remove(function (item) { 
-        if (item.Complete != null) {hidden++};
-        return item.Complete != null});
-      console.log("Hidden "+hidden);
-$('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header h3').html('<i class="fa fa-users"></i> Teams - '+hidden+' Hidden');
+  var taskedTeams = masterViewModel.teamsViewModel.taskedTeams.peek();
+  var hidden = 0;
+  masterViewModel.teamsViewModel.taskedTeams.remove(function (item) { 
+    if (item.Complete != null) {hidden++};
+    return item.Complete != null});
+  console.log("Hidden "+hidden);
+  $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header h3').html('<i class="fa fa-users"></i> Teams - '+hidden+' Hidden');
 
 }
 
@@ -98,26 +123,26 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
     if (newValue !== null) {
       switch (newValue.Name) {
         case "Storm":
-          removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
-          var quickText = ["", "No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.", "Branch/tree sectioned; resident/owner to organize removal"]
-          document.getElementById("CompleteTeamQuickTextBox").removed
-          for (var i = 0; i < quickText.length; i++) {
-            var opt = document.createElement('option');
-            opt.text = quickText[i];
-            opt.value = quickText[i];
-            document.getElementById("CompleteTeamQuickTextBox").add(opt);
-          }
-          break;
+        removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
+        var quickText = ["", "No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.", "Branch/tree sectioned; resident/owner to organize removal"]
+        document.getElementById("CompleteTeamQuickTextBox").removed
+        for (var i = 0; i < quickText.length; i++) {
+          var opt = document.createElement('option');
+          opt.text = quickText[i];
+          opt.value = quickText[i];
+          document.getElementById("CompleteTeamQuickTextBox").add(opt);
+        }
+        break;
         case "Search":
-          removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
-          var quickText = ["", "All teams complete on search, person found safe and well.", "All teams complete on search, nothing found."]
-          for (var i = 0; i < quickText.length; i++) {
-            var opt = document.createElement('option');
-            opt.text = quickText[i];
-            opt.value = quickText[i];
-            document.getElementById("CompleteTeamQuickTextBox").add(opt);
-          }
-          break;
+        removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
+        var quickText = ["", "All teams complete on search, person found safe and well.", "All teams complete on search, nothing found."]
+        for (var i = 0; i < quickText.length; i++) {
+          var opt = document.createElement('option');
+          opt.text = quickText[i];
+          opt.value = quickText[i];
+          document.getElementById("CompleteTeamQuickTextBox").add(opt);
+        }
+        break;
       }
     }
   }
@@ -143,26 +168,6 @@ document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
 
 $(document).ready(function() {
 
-
-      $('#lighthouseEnabled').click(function() {
-        if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true" || localStorage.getItem("LighthouseHideCompletedEnabled") == null) //its true so uncheck it
-        {
-            $(this).toggleClass("fa-check-square-o fa-square-o")
-            localStorage.setItem("LighthouseHideCompletedEnabled", false);
-            location.reload();
-
-        } else //its false so uncheck it
-        {
-            $(this).toggleClass("fa-square-o fa-check-square-o")
-            localStorage.setItem("LighthouseHideCompletedEnabled", true);
-            location.reload();
-
-
-        }
-    });
-
-
-
   _.each([
     ["#stormtree", "Storm", "Tree Operations/Removal"],
     ["#stormproperty", "Storm", "Property Protection"],
@@ -171,26 +176,26 @@ $(document).ready(function() {
     ["#stormrecon", "Storm", "Reconnaissance"],
     ["#rcrcallof", "RoadCrashRescue", "Call Off"],
     ["#rcrcallextricate", "RoadCrashRescue", "Extrication"],
-  ], function(args) {
-    var selector = args[0]
+    ], function(args) {
+      var selector = args[0]
       , parent = args[1]
       , child = args[2];
 
-    $(args[0]).click(function() {
-      masterViewModel.completeTeamViewModel.availablePrimaryActivities.peek().forEach(function(d){
-        if (d.Name == parent) {
-          masterViewModel.completeTeamViewModel.primaryActivity(d);
-          masterViewModel.completeTeamViewModel.availablePrimaryTasks.subscribe(function(d) {
-            d.forEach(function(d) {
-              if (d.Name == child) {
-                masterViewModel.completeTeamViewModel.primaryTask(d)
-              }
-            });
-          })
-        }
+      $(args[0]).click(function() {
+        masterViewModel.completeTeamViewModel.availablePrimaryActivities.peek().forEach(function(d){
+          if (d.Name == parent) {
+            masterViewModel.completeTeamViewModel.primaryActivity(d);
+            masterViewModel.completeTeamViewModel.availablePrimaryTasks.subscribe(function(d) {
+              d.forEach(function(d) {
+                if (d.Name == child) {
+                  masterViewModel.completeTeamViewModel.primaryTask(d)
+                }
+              });
+            })
+          }
+        });
       });
     });
-  });
 });
 
 
@@ -218,7 +223,7 @@ function checkAddressHistory(){
       ( masterViewModel.canEdit()
         ? '<a href="/Jobs/' + jobId + '/Edit' + '">Please edit the job and geocode the job location.</a>'
         : 'Have an authorised user edit the job and geocode the job location.' ) + '</em>'
-    );
+      );
   }
 
   //addresses with only GPS
@@ -226,7 +231,7 @@ function checkAddressHistory(){
     return $('#job_view_history_container').empty().append(
       '<em>Unable to Perform Address Search. Address does not appear valid (Only GPS Lat/Long).<br/>' +
       'Please edit the job and geocode the job location.</em>'
-    );
+      );
   }
 
   var q;
@@ -263,54 +268,54 @@ function checkAddressHistory(){
       var $job_view_history_container = $('#job_view_history_container');
       switch(textStatus){
         case 'success':
-          if(response.responseJSON.Results.length) {
-            var history_rows = { 'exact':     { title :       'Same Address'
-                                              , key :         'exact'
-                                              , always_show : true
-                                              , hide_old :    false
-                                              , has_old :     false
-                                              , jobs :        new Array() }
-                               , 'partial':   { title :       'Apartment, Townhouse or Battleaxe'
-                                              , key :         'partial'
-                                              , always_show : false
-                                              , hide_old :    false
-                                              , has_old :     false
-                                              , jobs :        new Array() }
-                               , 'neighbour': { title :       'Immediate Neighbours'
-                                              , key :         'neighbour'
-                                              , always_show : false
-                                              , hide_old :    false
-                                              , has_old :     false
-                                              , jobs :        new Array() }
-                               , 'street':    { title :       'Same Street'
-                                              , key :         'street'
-                                              , always_show : false
-                                              , hide_old :    true
-                                              , has_old :     false
-                                              , jobs :        new Array() } };
-            status_groups = {
-                'active' :    ['new', 'acknowledged', 'active', 'tasked', 'referred']
-              , 'complete' :  ['complete', 'finalised']
-              , 'cancelled' : ['cancelled', 'rejected']
-            };
+        if(response.responseJSON.Results.length) {
+          var history_rows = { 'exact':     { title :       'Same Address'
+          , key :         'exact'
+          , always_show : true
+          , hide_old :    false
+          , has_old :     false
+          , jobs :        new Array() }
+          , 'partial':   { title :       'Apartment, Townhouse or Battleaxe'
+          , key :         'partial'
+          , always_show : false
+          , hide_old :    false
+          , has_old :     false
+          , jobs :        new Array() }
+          , 'neighbour': { title :       'Immediate Neighbours'
+          , key :         'neighbour'
+          , always_show : false
+          , hide_old :    false
+          , has_old :     false
+          , jobs :        new Array() }
+          , 'street':    { title :       'Same Street'
+          , key :         'street'
+          , always_show : false
+          , hide_old :    true
+          , has_old :     false
+          , jobs :        new Array() } };
+          status_groups = {
+            'active' :    ['new', 'acknowledged', 'active', 'tasked', 'referred']
+            , 'complete' :  ['complete', 'finalised']
+            , 'cancelled' : ['cancelled', 'rejected']
+          };
 
-            if(address.StreetNumber != null){
-              var re_StreetNumber_Parts = /^(?:(\d+)\D)?(\d+)\D*/;
-              var jobAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec(
-                address.StreetNumber);
-              var jobAddress_StreetNumber_Max = parseInt(
-                jobAddress_StreetNumber_tmp[2], 10);
-              var index = typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1;
-              var jobAddress_StreetNumber_Min = parseInt(
-                jobAddress_StreetNumber_tmp[index], 10);
-            }
-            $.each(response.responseJSON.Results, function(k, v) {
+          if(address.StreetNumber != null){
+            var re_StreetNumber_Parts = /^(?:(\d+)\D)?(\d+)\D*/;
+            var jobAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec(
+              address.StreetNumber);
+            var jobAddress_StreetNumber_Max = parseInt(
+              jobAddress_StreetNumber_tmp[2], 10);
+            var index = typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1;
+            var jobAddress_StreetNumber_Min = parseInt(
+              jobAddress_StreetNumber_tmp[index], 10);
+          }
+          $.each(response.responseJSON.Results, function(k, v) {
               // Job Group
               var result_group = 'street';
 
               // History Job is Current Job
               if(v.Id == jobId) return true;
- 
+              
               // Santitise and Pre-Process Job Details (for later display)
               // Job URL
               v.url = '/Jobs/'+v.Id;
@@ -318,7 +323,7 @@ function checkAddressHistory(){
               v.JobReceived = new Date(
                 new Date(v.JobReceived).getTime() +
                 (new Date(v.JobReceived).getTimezoneOffset() * 60000)
-              );
+                );
               // Generate the Relative Time
               v.relativeTime = moment(v.JobReceived).fromNow();
               // Is the Job Older than 14 Days
@@ -348,7 +353,7 @@ function checkAddressHistory(){
 
               // Unless we have a Street Number for Current and Historic, we can only match the street
               if(v.Address.StreetNumber != null && address.StreetNumber != null) {
- 
+               
                 if(v.Address.PrettyAddress == address.PrettyAddress) {
                   // Perfect Match
                   result_group = 'exact';
@@ -364,13 +369,13 @@ function checkAddressHistory(){
                   var rowAddress_StreetNumber_Min = parseInt(
                     rowAddress_StreetNumber_tmp[index], 10);
                   if (Math.abs(jobAddress_StreetNumber_Min - rowAddress_StreetNumber_Max) == 2 ||
-                      Math.abs(jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min) == 2) {
+                    Math.abs(jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min) == 2) {
                     result_group = 'neighbour';
-                  }
                 }
-
               }
-              
+
+            }
+            
               // Push Job to Job Array
               history_rows[result_group].jobs.push(v);
               if(v.isold) history_rows[result_group].has_old = true;
@@ -383,77 +388,77 @@ function checkAddressHistory(){
               {_.map(_.filter(history_rows, function(row) { return row.always_show || row.jobs.length; }), function(groupData, groupKey){
                 return (
                   <fieldset id={"job_view_history_group_" + groupData.key } class={"job_view_history_group col-md-12" + (groupData.hide_old ? " job_view_history_showtoggle" : "")}>
-                    <legend>
-                      {groupData.title}
-                      <span class="group_size">{groupData.jobs.length + ' Job' + (groupData.jobs.length == 1 ? '' : 's')}</span>
-                    </legend>
-                    <div class="form-group col-xs-12">
-                      {(groupData.jobs.length == 0
-                        ? <div class="job_view_history_none"><em>No Jobs Found</em></div>
-                        : _.map(groupData.jobs, function(j){
-                            return (
-                              <div class={j.cssClasses}>
-                                <div class="job_view_history_title">
-                                  <a href={j.url} class="job_view_history_id">{j.Identifier}</a>
-                                  <span class="job_view_history_address">{j.Address.PrettyAddress}</span>
-                                  <span class="job_view_history_status">{j.JobStatusType.Name}</span>
-                                </div>
-                                <div class="job_view_history_situation">{j.SituationOnScene}</div>
-                                <div class="job_view_history_tags">
-                                  <i class="fa fa-tags"></i>
-                                  {j.tagString}
-                                </div>
-                                <div class="job_view_history_time">{j.relativeTime}</div>
-                              </div>
-                            );
-                          })
-                      )}
-                    </div>
-                  </fieldset>
-                );
-              })}
-              </div>
-            );
+                  <legend>
+                  {groupData.title}
+                  <span class="group_size">{groupData.jobs.length + ' Job' + (groupData.jobs.length == 1 ? '' : 's')}</span>
+                  </legend>
+                  <div class="form-group col-xs-12">
+                  {(groupData.jobs.length == 0
+                    ? <div class="job_view_history_none"><em>No Jobs Found</em></div>
+                    : _.map(groupData.jobs, function(j){
+                      return (
+                        <div class={j.cssClasses}>
+                        <div class="job_view_history_title">
+                        <a href={j.url} class="job_view_history_id">{j.Identifier}</a>
+                        <span class="job_view_history_address">{j.Address.PrettyAddress}</span>
+                        <span class="job_view_history_status">{j.JobStatusType.Name}</span>
+                        </div>
+                        <div class="job_view_history_situation">{j.SituationOnScene}</div>
+                        <div class="job_view_history_tags">
+                        <i class="fa fa-tags"></i>
+                        {j.tagString}
+                        </div>
+                        <div class="job_view_history_time">{j.relativeTime}</div>
+                        </div>
+                        );
+                    })
+                    )}
+</div>
+</fieldset>
+);
+})}
+</div>
+);
 
             // Show/Hide Handler
             var $job_view_history_toggle_old = $( <div class="job_view_history_toggle_old"><span>Show</span> Older Jobs</div> )
-              .click(function() {
-                var $t = $(this);
-                var $p = $t.closest('fieldset.job_view_history_group');
-                var $old_rows = $('div.job_view_history_item_toggle', $p);
-                var toshow = $old_rows.filter(':hidden').length > 0;
-                $old_rows.toggle(toshow);
-                $('span', $t).text(toshow ? 'Hide' : 'Show');
-              });
+            .click(function() {
+              var $t = $(this);
+              var $p = $t.closest('fieldset.job_view_history_group');
+              var $old_rows = $('div.job_view_history_item_toggle', $p);
+              var toshow = $old_rows.filter(':hidden').length > 0;
+              $old_rows.toggle(toshow);
+              $('span', $t).text(toshow ? 'Hide' : 'Show');
+            });
             $('fieldset.job_view_history_showtoggle')
-              .each(function(k ,v){
-                var $v = $(v);
-                if($('div.job_view_history_item_toggle', $v).length){
-                  $('div.form-group', $v).append($job_view_history_toggle_old);
-                }
-              });
+            .each(function(k ,v){
+              var $v = $(v);
+              if($('div.job_view_history_item_toggle', $v).length){
+                $('div.form-group', $v).append($job_view_history_toggle_old);
+              }
+            });
 
             // We've Inserted the History - Stop Here
             return;
           }
           content = '<em>Address Search - No History</em>';
           break;
-        case 'error' :
+          case 'error' :
           content = '<em>Unable to Perform Address Search</em>';
           break;
-        case 'nocontent' :
+          case 'nocontent' :
           content = '<em>Address Search returned Unexpected Data</em>';
           break;
-        case 'timeout' :
+          case 'timeout' :
           content = '<em>Address Search Timed Out</em>';
           break;
-        case 'abort' :
+          case 'abort' :
           content = '<em>Address Search Aborted</em>';
           break;
-        case 'parsererror' :
+          case 'parsererror' :
           content = '<em>Address Search returned Unexpected Data</em>';
           break;
-      }
+        }
 
       // Showing an Error Message
       $job_view_history_container.html(content);
@@ -473,4 +478,18 @@ function whenTeamsAreReady(cb) { //when external vars have loaded
       cb(); //call back
     }
   }, 200);
+}
+
+//checkbox for hide completed tasking
+
+function renderCheckBox() {
+  var selected = (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") ? "fa-check-square-o" : "fa-square-o";
+  console.log(selected);
+  return (
+    <span class="pull-right h6">
+    <span id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 
+    <img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+    src={lighthouseUrl+"icons/lh-black.png"} /> Hide Completed Tasking
+    </span>
+    );
 }
