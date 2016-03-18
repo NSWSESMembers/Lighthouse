@@ -50,12 +50,20 @@ if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") { //if ena
 });
 
 function cleanUPTasking(){ //for every tasked team hide if they have completed the tasking
-  var taskedTeams = masterViewModel.teamsViewModel.taskedTeams.peek();
   var hidden = 0;
-  masterViewModel.teamsViewModel.taskedTeams.remove(function (item) { 
-    if (item.Complete != null) {hidden++};
-    return item.Complete != null});
-  console.log("Hidden "+hidden);
+  $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-content div.list-group div.list-group-item.clearfix').each(function(item) {
+
+      //console.log($(this));
+
+      var part1 = $(this).find('div.row div.col-xs-6.small.text-right span')[0].innerText.split(" ")[0];
+      
+      if (part1 == "Complete") {
+        $(this).hide();
+        hidden++;
+      }
+
+    });
+
   $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header h3').html('<i class="fa fa-users"></i> Teams - '+hidden+' Hidden');
 
 }
