@@ -1,0 +1,110 @@
+{
+  "manifest_version": 2,
+
+  "name": "Lighthouse",
+  "short_name": "Lighthouse",
+  "description": "Provides multiple enhancements to NSW SES beacon.",
+  "version": "2016.3.18.1",
+  "icons": {
+    "128": "icons/lighthouse128.png",
+    "64":"icons/lighthouse64.png"
+  },
+  "permissions": [
+    "storage",
+    "https://beacon.ses.nsw.gov.au/*",
+    "https://trainbeacon.ses.nsw.gov.au/*",
+    "webRequest",
+    "webRequestBlocking"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Jobs?q=*",
+        "https://*.ses.nsw.gov.au/Jobs"
+      ],
+      "js": ["contentscripts/jobs/jobs.js"]
+    },
+    {
+      "matches": ["https://*.ses.nsw.gov.au/Jobs/*"],
+      "exclude_matches": [
+        "https://*.ses.nsw.gov.au/Jobs/SituationalAwareness*",
+        "https://*.ses.nsw.gov.au/Jobs/Tasking*",
+        "https://*.ses.nsw.gov.au/Jobs/Sectors*",
+        "https://*.ses.nsw.gov.au/Jobs/",
+        "https://*.ses.nsw.gov.au/Jobs",
+        "https://*.ses.nsw.gov.au/Jobs/Create"
+      ],
+      "js": ["contentscripts/jobs/view.js"]
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Jobs/Tasking",
+        "https://*.ses.nsw.gov.au/Jobs/Tasking/"
+      ],
+      "js": ["contentscripts/jobs/tasking.js"]
+    },
+    {
+      "matches": ["https://*.ses.nsw.gov.au/Jobs/SituationalAwareness"],
+      "js": ["contentscripts/jobs/situational_awareness.js"]
+    },
+    {
+      "matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
+      "js": [
+        "contentscripts/login.js"
+      ]
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Messages/Create",
+        "https://*.ses.nsw.gov.au/Messages/Create/"
+      ],
+      "js": ["contentscripts/messages/create.js"],
+      "run_at" : "document_end"
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Teams/Create",
+        "https://*.ses.nsw.gov.au/Teams/Create/",
+        "https://*.ses.nsw.gov.au/Teams/*/Edit",
+        "https://*.ses.nsw.gov.au/Teams/*/Edit/"
+      ],
+      "js": ["contentscripts/teams/edit.js"]
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Teams/*/Jobs",
+        "https://*.ses.nsw.gov.au/Teams/*/Jobs/"
+      ],
+      "js": ["contentscripts/teams/jobs.js"]
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Teams",
+        "https://*.ses.nsw.gov.au/Teams/"
+      ],
+      "js": ["contentscripts/teams/teams.js"]
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/nitc",
+        "https://*.ses.nsw.gov.au/nitc/"
+      ],
+      "js": ["contentscripts/nitc.js"]
+    },
+    {
+      "matches": ["https://*.ses.nsw.gov.au/*"],
+      "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
+      "js": [
+        "contentscripts/all.js"
+      ]
+    }
+  ],
+  "web_accessible_resources": [
+    "injectscripts/*",
+    "icons/*",
+    "pages/*"
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  }
+}

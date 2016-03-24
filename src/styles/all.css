@@ -1,0 +1,117 @@
+.tag-lighthouse{
+  color: black !important;
+  background-color: #3CF !important;
+  border-color: black !important;
+}
+.tag-lighthouse > .tag-text:before {
+}
+.tag-lighthouse > .tag-text:after {
+	content:"";
+}
+
+#lighthouse_mapblock {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 1000; /* Excessive, but needed to get ahead of ERSI Controls */
+}
+#lighthouse_mapblock div {
+  display: none;
+  color: #000;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  text-align: center;
+  font-weight: bold;
+}
+#lighthouse_mapblock:hover {
+  background: rgba(255,255,255,0.4);
+  box-shadow: inset 0 0 20px 0 rgba(0,0,0,0.4);
+}
+#lighthouse_mapblock:hover div {
+  display: block;
+}
+
+#job_view_history table {
+  width: 100%;
+}
+#job_view_history table thead tr ,
+#job_view_history table tbody tr.job-view-history-section {
+  background: #F4F4F4;
+}
+
+
+
+
+#job_view_history table tbody tr.job-view-history-section th ,
+#job_view_history table tbody tr.job-view-history-none td {
+  text-align: center;
+}
+
+
+#job_view_history_groups legend.main span {
+  display: block;
+  font-size: 0.7em;
+}
+#job_view_history_groups fieldset.job_view_history_showtoggle div.job_view_history_item_toggle {
+  display: none;
+}
+#job_view_history_groups fieldset {
+  margin-bottom: 0;
+}
+#job_view_history_groups fieldset legend {
+  font-size: 1.3em;
+  position: relative;
+}
+#job_view_history_groups fieldset legend span.group_size {
+  font-size: 0.8em;
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+}
+#job_view_history_groups div.job_view_history_item {
+  border-bottom: 1px solid #e5e5e5;
+  padding: 3px 0 5px;
+  position: relative;
+  padding-right: 80px;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_title {
+  font-weight: bold;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_title a.job_view_history_id {
+  margin-right: 5px;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_title span.job_view_history_status {
+  float: right;
+  margin-right: -80px;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_tags {
+  font-size: 0.9em;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_tags i.fa {
+  margin-right: 3px;
+}
+#job_view_history_groups div.job_view_history_item div.job_view_history_time {
+  position: absolute;
+  right: 0px;
+  bottom: 3px;
+  font-size: 0.9em;
+}
+
+#job_view_history_groups div.job_view_history_toggle_old {
+  text-align: center;
+  padding: 3px;
+  background: #f5f5f5;
+}
+#job_view_history_groups div.job_view_history_toggle_old:hover {
+  background: #e5e5e5;
+  cursor: pointer;
+}
+
+.lighthouseKeeper-modified abbr {
+  font-weight: bold;
+}
+

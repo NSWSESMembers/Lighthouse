@@ -1,0 +1,32 @@
+@import url("include/common.css");
+
+.small_foot_body {
+  min-width: auto;
+}
+
+fieldset {
+  float: left;
+  width: 33%;
+  padding: .35em .625em .75em;
+}
+legend {
+  padding: .35em 0 0 0;
+  margin-bottom: 0;
+}
+label.checkbox-inline {
+  display: block;
+  padding: 3px 3px 3px 5px;
+  margin: 10px;
+  border-radius: 3px;
+  background: #F0F0F0;
+}
+label.checkbox-inline input[type="checkbox"] {
+  position: relative;
+  margin-left: 0;
+  margin-right: 5px;
+}
+#button_holder {
+  clear: both;
+  padding: 30px 20px 0;
+  text-align: right;
+}

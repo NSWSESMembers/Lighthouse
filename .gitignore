@@ -1,1 +1,12 @@
+node_modules
+temp
+.tmp
+build
+dist
+.sass-cache
+package
+*.swp
+
 Lighthouse.zip
+.DS_Store
+*.DS_Store
