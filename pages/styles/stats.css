@@ -1,3 +1,7 @@
 @import url("include/common.css");
 @import url("node_modules/dc/dc.css");
 @import url("node_modules/jqcloud-npm/dist/jqcloud.css");
+
+#dc-type-chart svg { height: 450px; }
+#dc-training-chart svg { height: 450px; }
+#dc-other-chart svg { height: 450px; }
