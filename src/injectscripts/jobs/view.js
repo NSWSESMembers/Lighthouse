@@ -180,10 +180,10 @@ $(document).ready(function() {
     ["#stormtree", "Storm", "Tree Operations/Removal"],
     ["#stormproperty", "Storm", "Property Protection"],
     ["#stormsafety", "Storm", "Public Safety"],
-    ["#stormacccess", "Storm", "Road/Access Clearance"],
+    ["#stormaccess", "Storm", "Road/Access Clearance"],
     ["#stormrecon", "Storm", "Reconnaissance"],
-    ["#rcrcallof", "RoadCrashRescue", "Call Off"],
-    ["#rcrcallextricate", "RoadCrashRescue", "Extrication"],
+    ["#rcrcalloff", "RoadCrashRescue", "Call Off"],
+    ["#rcrcallextricate", "RoadCrashRescue", "Extrication "],
     ], function(args) {
       var selector = args[0]
       , parent = args[1]

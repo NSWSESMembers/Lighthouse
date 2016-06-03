@@ -15,8 +15,8 @@ var timeoverride = null;
 
 window.onerror = function(message, url, lineNumber) {
   $('#loading')
-    .html('Error loading page<br>' + message + ' Line ' + lineNumber)
-    .show();
+  .html('Error loading page<br>' + message + ' Line ' + lineNumber)
+  .show();
   return true;
 };
 
@@ -59,20 +59,20 @@ var lighthouse_fieldArray = {
   }
 };
 var lighthouse_fieldDefaults = [
-  'Id' ,
-  'Received' ,
-  'Priority' ,
-  'Type' ,
-  'Status' ,
-  'Situation On Scene' ,
-  'Tags' ,
-  'HQ' ,
-  'Level' ,
-  'Street Number' ,
-  'Street Name' ,
-  'Locality' ,
-  'Postcode' ,
-  'Additional Address Info' ,
+'Id' ,
+'Received' ,
+'Priority' ,
+'Type' ,
+'Status' ,
+'Situation On Scene' ,
+'Tags' ,
+'HQ' ,
+'Level' ,
+'Street Number' ,
+'Street Name' ,
+'Locality' ,
+'Postcode' ,
+'Additional Address Info' ,
   /*
   'Premises Access - Permission Given' ,
   'Premises Access - Info' ,
@@ -83,36 +83,36 @@ var lighthouse_fieldDefaults = [
   'Job Contact - First Name' ,
   'Job Contact - Last Name' ,
   'Job Contact - Phone Number'
-];
+  ];
 
 
 
-$(document).ready(function() {
+  $(document).ready(function() {
 
-  var $fieldsetContainer = $('#advexport_fieldsets');
-  $.each(lighthouse_fieldArray,function(k,v){
-    var fieldset = (
-      <fieldset>
+    var $fieldsetContainer = $('#advexport_fieldsets');
+    $.each(lighthouse_fieldArray,function(k,v){
+      var fieldset = (
+        <fieldset>
         <legend>{k}</legend>
         {_.map(v,function(label,key){
           return (
             <label class="checkbox-inline">
-              <input type="checkbox"
-                     name="advexportfields[]"
-                     value={key}
-                     checked={lighthouse_fieldDefaults.indexOf(label)>=0} />
-              {label}
+            <input type="checkbox"
+            name="advexportfields[]"
+            value={key}
+            checked={lighthouse_fieldDefaults.indexOf(label)>=0} />
+            {label}
             </label>
-          );
+            );
         })}
-      </fieldset>
-    );
-    $fieldsetContainer.append(fieldset);
-  });
-  $('input[type="checkbox"][checked="false"]', $fieldsetContainer)
+        </fieldset>
+        );
+      $fieldsetContainer.append(fieldset);
+    });
+    $('input[type="checkbox"][checked="false"]', $fieldsetContainer)
     .prop('checked', false);
 
-  $('#goButton')
+    $('#goButton')
     .click(function(){
       var element = document.querySelector('.loadprogress');
       var mp = new ElasticProgress(element, {
@@ -122,13 +122,13 @@ $(document).ready(function() {
         colorFg:    '#d2322d',
         onClose:function(){
           $('#loading')
-            .hide();
+          .hide();
         }
       });
       RunForestRun(mp);
     });
 
-});
+  });
 
 
 function getSearchParameters() {
@@ -155,7 +155,7 @@ var params = getSearchParameters();
 function RunForestRun(mp) {
   mp && mp.open();
   $('#loading')
-    .show();
+  .show();
   HackTheMatrix(params.hq, params.host, mp);
 }
 
@@ -168,8 +168,8 @@ function HackTheMatrix(id, host, progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
   var selectedcolumns = $('input[name="advexportfields[]"]:checked')
-    .map(function(){return this.value;})
-    .get();
+  .map(function(){return this.value;})
+  .get();
 
   if(selectedcolumns.length == 0){
     console.log('No Fields Selected');
@@ -203,12 +203,14 @@ function HackTheMatrix(id, host, progressBar) {
         // Special Cases
         switch(key){
           case 'JobReceived':
-            var rawdate = new Date(d.JobReceived);
-            rawValue = Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
-            break;
+          var rawdate = new Date(d.JobReceived);
+
+          rawValue = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+
+          break;
           case 'Tags':
-            rawValue = d.Tags.map(function(d){return d.Name}).join(',');
-            break;
+          rawValue = d.Tags.map(function(d){return d.Name}).join(',');
+          break;
         }
         if(rawValue == null || rawValue === ''){
           jobRow.push('');
@@ -231,6 +233,7 @@ function HackTheMatrix(id, host, progressBar) {
 }
 
 function convertArrayOfObjectsToCSV(data, selectedcolumns) {  
+
   var result, ctr, keys, columnDelimiter, lineDelimiter, data;
 
   if (data == null || !data.length) {
@@ -272,13 +275,21 @@ function downloadCSV(file, dataIn, keyIn) {
   if (csv == null)
     return;
 
-  if (!csv.match(/^data:text\/csv/i)) {
-    csv = 'data:text/csv;charset=utf-8,' + csv;
-  }
-  data = encodeURI(csv);
+var saveData = (function () {
+    var a = document.createElement("a");
+    document.body.appendChild(a);
+    a.style = "display: none";
+    return function (data, fileName) {
+            blob = new Blob([data], {type: "octet/stream"}),
+            url = window.URL.createObjectURL(blob);
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    };
+}());
 
-  link = document.createElement('a');
-  link.setAttribute('href', data);
-  link.setAttribute('download', file);
-  link.click();
+
+saveData(csv, file);
+
 }
