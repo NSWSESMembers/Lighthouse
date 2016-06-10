@@ -51,6 +51,8 @@ $(function() {
      $('#loading').hide();
      $('#results').show();
      $('footer').show();
+     var $mq = $('.events').marquee();
+
    }
  });
 
@@ -138,6 +140,8 @@ function renderPage(unit, jobs) {
 
   prepareData(jobs, unit, start, end);
   dc.renderAll();
+
+
 
   $( ".total" ).click(function() {
     console.log("clicky clicky")
@@ -291,9 +295,8 @@ var options = {
   }
 
 
-  $('.events').html(banner);
+  $('.events').text(banner);
 
-  $('.events').marquee();
 
   prepareCharts(jobs, start, end);
 
@@ -362,8 +365,8 @@ function makeSituationOnSceneCloud(jobs) {
   function calculateSituationOnSceneCloud(wordCount) {
     var purdyColor = tinygradient('black', 'red', 'orange', 'blue', 'LightBlue');
 
-      console.log(wordCount); 
-      setTimeout(function(){
+    console.log(wordCount); 
+    setTimeout(function(){
 
       $('#cloud').jQCloud(wordCount, {
         width: 500,
@@ -371,7 +374,7 @@ function makeSituationOnSceneCloud(jobs) {
         colors: purdyColor.rgb(10)
       });
 
-},2000);
+    },2000);
     console.log("Total word count: "+wordCount.length);
   };
 
