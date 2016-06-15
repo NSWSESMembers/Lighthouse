@@ -209,7 +209,6 @@ $(document).ready(function() {
 
 function checkAddressHistory(){
   var date_options = {
-    weekday: "short",
     year: "numeric",
     month: "2-digit",
     day: "numeric",
@@ -260,8 +259,8 @@ function checkAddressHistory(){
     , url: '/Api/v1/Jobs/Search'
     , data: {
       'Q':                    q.substring(0, 30)
-      , 'StartDate':          end.toLocaleString()
-      , 'EndDate':            now.toLocaleString()
+      , 'StartDate':          end.toLocaleTimeString("en-us", date_options)
+      , 'EndDate':            now.toLocaleTimeString("en-us", date_options)
       , 'ViewModelType':      2
       , 'PageIndex':          1
       , 'PageSize':           1000
