@@ -9,6 +9,13 @@
 	content:"";
 }
 
+div.team_complete_hidden div.list-group div.team_complete {
+  cursor: pointer;
+}
+div.team_complete_hidden div.list-group div.team_complete div.row.clearfix {
+  display: none;
+}
+
 #lighthouse_mapblock {
   position: absolute;
   top: 0;
