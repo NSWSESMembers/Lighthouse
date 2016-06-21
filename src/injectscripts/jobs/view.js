@@ -68,6 +68,7 @@ function lighthouseKeeper(){
     'ASNSW'   : 'NSW Ambulance' ,
     'FRNSW'   : 'NSW Fire &amp; Rescue' ,
     'NSWPF'   : 'NSW Police Force' ,
+    'TMC'     : 'Transport Management Center',
 
     'AA'      : 'As Above' ,
     'INFTS?'  : 'Informant/Caller' ,
@@ -77,7 +78,12 @@ function lighthouseKeeper(){
     'PTS?'    : 'Patient(s)' ,
     'VEHS?'   : 'Vehicle(s)' ,
     'VICT?'   : 'Victim' ,
-    'Y[OR]'   : 'Years Old'
+    'Y[OR]'   : 'Years Old',
+    'NPI'     : 'No Person(s) Injured',
+    'NPT'     : 'No Person(s) Trapped',
+    'NFI'     : 'No Further Information',
+    'THX'     : 'Thanks'
+
   };
 
   $targetElements.each(function(v){
