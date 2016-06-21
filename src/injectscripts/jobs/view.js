@@ -5,67 +5,57 @@ var $ = require('jquery');
 console.log("Running content script");
 
 //if ops logs update
-masterViewModel.notesViewModel.opsLogEntries.subscribe(function(d) {
-  lighthouseKeeper();
-});
+masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseKeeper);
 
 //if messages update
-masterViewModel.messagesViewModel.messages.subscribe(function(d) {
-  lighthouseKeeper();
-});
+masterViewModel.messagesViewModel.messages.subscribe(lighthouseKeeper);
 
 //call on run
 lighthouseKeeper();
 
 whenTeamsAreReady(function(){
 
+  //checkbox for hide completed tasking
+  $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox);
 
-
-//checkbox for hide completed tasking
-$('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox);
-
-
-$('#lighthouseEnabled').click(function() {
-        if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true" || localStorage.getItem("LighthouseHideCompletedEnabled") == null) //its true so uncheck it
-        {
-          $(this).toggleClass("fa-check-square-o fa-square-o")
-          localStorage.setItem("LighthouseHideCompletedEnabled", false);
-          location.reload();
-
-        } else //its false so uncheck it
-        {
-          $(this).toggleClass("fa-square-o fa-check-square-o")
-          localStorage.setItem("LighthouseHideCompletedEnabled", true);
-          location.reload();
-
-
-        }
-      });
-
-
-if (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") { //if enabled, hide completed tasking
-  cleanUPTasking();
-}
+  $('#lighthouseEnabled').click(function() {
+    // Toggle Value
+    var lh_hideComplete = !( localStorage.getItem('LighthouseHideCompletedEnabled') == 'true' || localStorage.getItem('LighthouseHideCompletedEnabled') == null );
+    // Save Value
+    localStorage.setItem('LighthouseHideCompletedEnabled', lh_hideComplete);
+    // Trigger Display Change
+    taskingItems_switch();
+  });
+  
+  taskingItems_prepare();
 
 });
 
-function cleanUPTasking(){ //for every tasked team hide if they have completed the tasking
-  var hidden = 0;
-  $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-content div.list-group div.list-group-item.clearfix').each(function(item) {
-
-      //console.log($(this));
-
-      var part1 = $(this).find('div.row div.col-xs-6.small.text-right span')[0].innerText.split(" ")[0];
-      
-      if (part1 == "Complete") {
-        $(this).hide();
-        hidden++;
-      }
-
-    });
-
-  $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header h3').html('<i class="fa fa-users"></i> Teams - '+hidden+' Hidden');
-
+function taskingItems_prepare(){
+  $('#content > div.col-md-5 > div:nth-child(2) > div.widget-content > div > div')
+    .each(function(k,v){
+      var $t = $(v);
+      var isComplete = $('div:nth-child(1) > div.col-xs-6.small.text-right > span',$t).text().indexOf('Complete') === 0;
+      // Add class "team_complete" to any Tasked Items where the status starts with "Complete"
+      $t.toggleClass('team_complete', isComplete);
+    })
+    .click(taskingItems_individual);
+  taskingItems_switch();
+}
+function taskingItems_switch(){
+  // Set flag
+  var hideComplete = localStorage.getItem('LighthouseHideCompletedEnabled') == 'true';
+  // Toggle class for container
+  $('#content > div.col-md-5 > div:nth-child(2)').toggleClass('team_complete_hidden', hideComplete);
+  // Toggle class for checkbox
+  $('#lighthouseEnabled')
+    .toggleClass('fa-check-square-o', hideComplete)
+    .toggleClass('fa-square-o', !hideComplete);
+}
+function taskingItems_individual(e){
+  console.log('e', e);
+  var $t = $(e.currentTarget);
+  $('div.row.clearfix', $t).slideToggle();
 }
 
 document.title = "#"+jobId;
@@ -80,7 +70,7 @@ function lighthouseKeeper(){
     'NSWPF'   : 'NSW Police Force' ,
 
     'AA'      : 'As Above' ,
-    'INFT'    : 'Informant/Caller' ,
+    'INFTS?'  : 'Informant/Caller' ,
     '\dPOBS?' : 'Person(s) On Board' ,
     'POIS?'   : 'Person(s) Of Interest' ,
     'POSS'    : 'Possible' ,
@@ -490,13 +480,11 @@ function whenTeamsAreReady(cb) { //when external vars have loaded
 //checkbox for hide completed tasking
 
 function renderCheckBox() {
-  var selected = (localStorage.getItem("LighthouseHideCompletedEnabled") == "true") ? "fa-check-square-o" : "fa-square-o";
-  console.log(selected);
   return (
     <span class="pull-right h6">
-    <span id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 
+    <span id="lighthouseEnabled" class="fa fa-lg"></span> 
     <img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
-    src={lighthouseUrl+"icons/lh-black.png"} /> Hide Completed Tasking
+    src={lighthouseUrl+"icons/lh-black.png"} /> Collapse Completed Tasking
     </span>
     );
 }
