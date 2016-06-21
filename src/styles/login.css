@@ -1,3 +1,11 @@
+body.previewbeacon .login-page i.icon-beacon-logo {
+  color: #007FFF;
+}
+
+#lighthouse-keepalive {
+  display: none;
+}
+
 .lighthouse-keepalive {
   text-align: center;
   background-color: red;
