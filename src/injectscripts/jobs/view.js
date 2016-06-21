@@ -69,6 +69,7 @@ function lighthouseKeeper(){
     'FRNSW'   : 'NSW Fire &amp; Rescue' ,
     'NSWPF'   : 'NSW Police Force' ,
     'TMC'     : 'Transport Management Center',
+    'NSWTMC'  : 'NSW Transport Management Center',
 
     'AA'      : 'As Above' ,
     'INFTS?'  : 'Informant/Caller' ,
