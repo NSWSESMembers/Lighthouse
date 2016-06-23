@@ -10,8 +10,7 @@ $('head')
 
 var url = chrome.extension.getURL("icons/lighthouse128.png");
 var keepalivePanel = (
-  <div id="lighthouse-keepalive" class="lighthouse-keepalive"
-      style="display:none">
+  <div id="lighthouse-keepalive" class="lighthouse-keepalive">
     <img src={url} />
     <label>
       <input autocomplete="off" id="lighthouseKeepLogin" type="checkbox" />
@@ -36,8 +35,15 @@ chrome.storage.sync.get({
 
 //event listener for keepalive box
 $('#lighthouseKeepLogin').on('click', function() {
-  console.log("Lighthouse: Storing KeepAlive Setting:"+this.checked);
+  //console.log("Lighthouse: Storing KeepAlive Setting:"+this.checked);
   chrome.storage.sync.set({
     keepalive: this.checked
   });
 });
+
+// Adds CSS Classes to BODY
+$('body')
+  // Start of the Hostname "beacon", "trainbeacon", "previewbeacon"
+  .addClass(location.hostname.substring(0,location.hostname.indexOf('.')))
+  // If Christmas
+  .toggleClass('xmas', new Date().getMonth()==11);

@@ -13,6 +13,7 @@
     "storage",
     "https://beacon.ses.nsw.gov.au/*",
     "https://trainbeacon.ses.nsw.gov.au/*",
+    "https://previewbeacon.ses.nsw.gov.au/*",
     "webRequest",
     "webRequestBlocking"
   ],
