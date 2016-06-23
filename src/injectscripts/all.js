@@ -257,12 +257,21 @@ function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
 
 $(function(){
 
+  // Adds CSS Classes to BODY
+  $('body')
+    // Start of the Hostname "beacon", "trainbeacon", "previewbeacon"
+    .addClass(location.hostname.substring(0,location.hostname.indexOf('.')))
+    // If Christmas
+    .toggleClass('xmas', new Date().getMonth()==11);
+  
+  // Adds CSS Class to BODY
+
   // Shortcuts search box - if Job Number entered, jump straight to that job
   $('form#layoutJobSearchForm')
-  .on('submit',function(e){
-    var $t = $(this) ,
-    $q = $('#layoutJobSearchFormJobQuery',$t) ,
-    val = $q.val();
+    .on('submit',function(e){
+      var $t = $(this) ,
+      $q = $('#layoutJobSearchFormJobQuery',$t) ,
+      val = $q.val();
       if ( /^\d{0,4}\-?\d{4}$/.test( val ) ) { // if the field contains 4 or more digits and nothing else
         document.location = '/Jobs/' + parseInt( val.replace(/\D/g,'') , 10 );
         e.preventDefault();

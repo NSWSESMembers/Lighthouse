@@ -24,27 +24,6 @@ $(window).focus(function(){
 // inject JS that is to run on every page in page context
 inject('all.js');
 
-if (location.hostname == "beacon.ses.nsw.gov.au" && (new Date().getMonth() == 11))
-{
-console.log("Ho Ho Ho");
-var logo = document.getElementsByClassName("navbar-brand");
-logo[0].style.background="transparent url('"+chrome.extension.getURL("icons/xmas.png")+"') 0% 50% no-repeat";
-logo[0].style.backgroundSize="105px 35px";
-logo[0].style.width="120px";
-logo[0].style.height="50px";
-logo[0].style.margin="0 0 0 10px";
-logo[0].style.padding="0";
-
-}
-
-if (location.hostname == "trainbeacon.ses.nsw.gov.au" && (new Date().getMonth() == 11))
-{
-console.log("Ho Ho Ho");
-var logo = document.getElementsByClassName("navbar-brand");
-logo[0].style.background="transparent url('"+chrome.extension.getURL("icons/training-xmas.png")+"') 0% 50% no-repeat";
-}
-
-
 //set the extension code var into the head
 var s = document.createElement('script');
 s.setAttribute('type', 'text/javascript');
@@ -53,6 +32,8 @@ s.innerHTML = "var lighthouseUrl = \"" + chrome.extension.getURL("") + "\"";
 
 
 $(document).ready(function(){
+
+  // Map Mouse Eating Stopper
   if( ( $map = $('#map') ).length && ('#map_zoom_slider',$map).length ){
     var $mapblock = $(
       <div id="lighthouse_mapblock">
@@ -72,4 +53,5 @@ $(document).ready(function(){
         $mapblock.show();
       });
   }
+
 });
