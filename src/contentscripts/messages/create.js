@@ -46,3 +46,32 @@ function renderCheckBox() {
 
 
 $('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(1) legend').append(renderCheckBox);
+
+function saveCollectionButton() {
+	return (
+		<div class="panel-footer">
+		<button id="collectionsave" class="btn btn-default">
+		<img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+		src={chrome.extension.getURL("icons/lh.png")} />
+		Save As Collection</button>
+		</div>
+		);
+}
+
+$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2) div.panel.panel-default').append(saveCollectionButton);
+
+function renderCollections() {
+	return (
+		<fieldset>
+		<legend><img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+		src={chrome.extension.getURL("icons/lh-black.png")} />Lighthouse Collections</legend>
+		<div class="panel panel-default">
+		<div class="panel-heading"><span>Lighthouse Collections</span><span id="collectionscount" class="pull-right badge">0</span></div>
+		<div id="lighthousecollections" class="panel-body">
+		</div>
+		</div>
+		</fieldset>
+		);
+}
+
+$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2)').after(renderCollections);
