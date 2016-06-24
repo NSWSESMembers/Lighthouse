@@ -47,10 +47,15 @@ function renderCheckBox() {
 
 $('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(1) legend').append(renderCheckBox);
 
-function saveCollectionButton() {
+
+function recipientsButtons() {
 	return (
 		<div class="panel-footer">
-		<button id="collectionsave" class="btn btn-default">
+		<button id="recipientsdel" class="btn btn-default">
+		<img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+		src={chrome.extension.getURL("icons/lh.png")} />
+		Remove All Recipients</button>
+		<button style="margin-left: 5px" id="collectionsave" class="btn btn-default">
 		<img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
 		src={chrome.extension.getURL("icons/lh.png")} />
 		Save As Collection</button>
@@ -58,7 +63,7 @@ function saveCollectionButton() {
 		);
 }
 
-$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2) div.panel.panel-default').append(saveCollectionButton);
+$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2) div.panel.panel-default').append(recipientsButtons);
 
 function renderCollections() {
 	return (

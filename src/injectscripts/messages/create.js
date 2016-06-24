@@ -64,41 +64,46 @@ $(document).ready(function() {
         }
     });
 
-    document.getElementById("collectionsave").onclick = function() {
-        theSelected = msgsystem.selectedRecipients.peek();
-        theCollection = [];
-        CollectionParent = {};
-        theSelected.forEach(function(item) {
-            thisItem = {};
-            if (item.Contact == null)
-            {
-                console.log(item.Recipient+" Is a group");
-                thisItem.type = "group";
-                thisItem.OwnerId = item.ContactGroup.Entity.Id;
-                thisItem.Id = item.ContactGroup.Id;
+    document.getElementById("recipientsdel").onclick = function() {
+        msgsystem.selectedRecipients.removeAll();
+    }
 
-            } else if (item.ContactGroup == null)
-            {
-                if (item.Contact.PersonId == null)
-                {
-                    console.log(item.Recipient+" Is a contact for a entity");
-                    thisItem.type = "entity";
-                    thisItem.OwnerId = item.Contact.EntityId;
-                    thisItem.Id = item.Contact.Id;
-                } else
-                {
-                    console.log(item.Recipient+" Is a contact for a person");
-                    thisItem.type = "person";
-                    thisItem.OwnerId = item.Contact.PersonId;
-                    thisItem.Id = item.Contact.Id;
-                }
-            }
-            theCollection.push(thisItem);
-        });
-var SaveName = prompt("Please enter a name for the collection", "");
-if (SaveName == null) {
-    SaveName = "lighthouse collection";
-}
+    document.getElementById("collectionsave").onclick = function() {
+        if (msgsystem.selectedRecipients.peek().length > 0)
+        {
+            var SaveName = prompt("Please enter a name for the collection", "");
+            if (SaveName != null) {
+
+
+                theSelected = msgsystem.selectedRecipients.peek();
+                theCollection = [];
+                CollectionParent = {};
+                theSelected.forEach(function(item) {
+                    thisItem = {};
+                    if (item.Contact == null)
+                    {
+                        thisItem.type = "group";
+                        thisItem.OwnerId = item.ContactGroup.Entity.Id;
+                        thisItem.Id = item.ContactGroup.Id;
+
+                    } else if (item.ContactGroup == null)
+                    {
+                        if (item.Contact.PersonId == null)
+                        {
+                            thisItem.type = "entity";
+                            thisItem.OwnerId = item.Contact.EntityId;
+                            thisItem.Id = item.Contact.Id;
+                        } else
+                        {
+                            thisItem.type = "person";
+                            thisItem.OwnerId = item.Contact.PersonId;
+                            thisItem.Id = item.Contact.Id;
+                        }
+                    }
+                    theCollection.push(thisItem);
+                });
+
+
 CollectionParent.name = SaveName;
 CollectionParent.description = SaveName;
 CollectionParent.items = theCollection;
@@ -106,15 +111,20 @@ console.log(CollectionParent);
 currentCollections = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
 if (currentCollections == null)
 {
-    currentCollections = []
+    currentCollections = [];
 }
 currentCollections.push(CollectionParent);
-console.log(currentCollections);
 localStorage.setItem("lighthouseContactCollections", JSON.stringify(currentCollections));
 LoadAllCollections();
+}
 
 //console.log(theCollection);
+
 }
+}
+
+
+//Load all the Collections on page load
 
 LoadAllCollections();
 
@@ -124,6 +134,9 @@ LoadAllCollections();
 function LoadAllCollections() {
 
     var myNode = document.getElementById("lighthousecollections");
+    while (myNode.firstChild) {
+        myNode.removeChild(myNode.firstChild);
+    }
         //Load the saved Collections
         theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
         console.log(theLoadedCollection);
@@ -135,15 +148,42 @@ function LoadAllCollections() {
                 $($button).click(function() {
                     LoadCollection(item);
                 })
+                $($button).find('span.delbutton').click(function() {
+                    event.stopImmediatePropagation();
+                    var r = confirm("Are you sure you want to delete this collection?");
+                    if (r == true) {
+                        DeleteCollection(item);
+                    } else {
+                        txt = "You pressed Cancel!";
+                    }
+
+                })
                 $($button).appendTo('#lighthousecollections');
             });
         }
     }
 
+    function DeleteCollection(col) {
+        theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
+        theLoadedCollection.forEach(function(item)
+        {
+            if (JSON.stringify(col) == JSON.stringify(item))
+            {
+                console.log("This one")
+                theLoadedCollection.splice(theLoadedCollection.indexOf(item),1)
+            } else {
+                console.log("NOT This one")
+
+            }
+        })
+        localStorage.setItem("lighthouseContactCollections", JSON.stringify(theLoadedCollection));
+        LoadAllCollections();
+
+    }
+
     function LoadCollection(col,cb) {
 
 
-        console.log(col);
         msgsystem.selectedRecipients.destroyAll();
         col.items.forEach(function(itm) {
             switch (itm.type) {
@@ -155,38 +195,41 @@ function LoadAllCollections() {
                     , cache: false
                     , dataType: 'json'
                     , complete: function(response, textStatus) {
-                        console.log(response);
                         switch(textStatus){
                             case 'success':
                             groupOwner = response.responseJSON.Name;
-                            break;
-                        }
-                    }
-                })
-                $.ajax({
-                    type: 'GET'
-                    , url: '/Api/v1/ContactGroups/headquarters/'+itm.OwnerId
-                    , cache: false
-                    , dataType: 'json'
-                    , complete: function(response, textStatus) {
-                        switch(textStatus){
-                            case 'success':
-                            if(response.responseJSON.Results.length) {
-                                $.each(response.responseJSON.Results, function(k, v) { 
-                                    if (v.Id == itm.Id)
-                                    {
-                                        BuildNew = {};
-                                        BuildNew.ContactGroup = v;
-                                        BuildNew.Description = groupOwner;
-                                        BuildNew.Recipient = v.Name;
-                                        msgsystem.selectedRecipients.push(BuildNew)
+                            $.ajax({
+                                type: 'GET'
+                                , url: '/Api/v1/ContactGroups/headquarters/'+itm.OwnerId
+                                , cache: false
+                                , dataType: 'json'
+                                , complete: function(response, textStatus) {
+                                    switch(textStatus){
+                                        case 'success':
+                                        if(response.responseJSON.Results.length) {
+                                            $.each(response.responseJSON.Results, function(k, v) { 
+                                                if (v.Id == itm.Id)
+                                                {
+                                                    BuildNew = {};
+                                                    BuildNew.ContactGroup = v;
+                                                    BuildNew.Description = groupOwner;
+                                                    BuildNew.Recipient = v.Name;
+                                                    msgsystem.selectedRecipients.push(BuildNew)
 
+                                                }
+                                            })
+                                        }
+                                        break;
                                     }
-                                })
-                            }
-                            break;
-                        }
-                    }})
+                                }})
+
+
+
+break;
+}
+}
+})
+
 break;
 case "person":
 $.ajax({
@@ -198,7 +241,6 @@ $.ajax({
         switch(textStatus){
             case 'success':
             if(response.responseJSON.Results.length) {
-                console.log(response.responseJSON.Results);
                 $.each(response.responseJSON.Results, function(k, v) { 
                     if (v.Id == itm.Id)
                     {
@@ -225,7 +267,6 @@ $.ajax({
         switch(textStatus){
             case 'success':
             if(response.responseJSON.Results.length) {
-                console.log(response.responseJSON.Results);
                 $.each(response.responseJSON.Results, function(k, v) { 
                     if (v.Id == itm.Id)
                     {
@@ -249,7 +290,7 @@ break;
 function make_collection_button(name, description) {
     return (
         <span class="label label tag">
-        <span>{description}</span>
+        <span>{description} <span class="delbutton"><sup style="margin-left: 5px;margin-right: -5px;">[X]</sup></span></span>
         </span>
         )
 }
