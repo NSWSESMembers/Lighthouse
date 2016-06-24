@@ -161,6 +161,6 @@ body.previewbeacon .navbar-header {
 body.previewbeacon .navbar-default .navbar-nav>li>a:hover {
   background: #0040E6;
 }
-body.previewbeacon .navbar-default .navbar-nav>.open>a, .navbar-default .navbar-nav>.open>a:hover, .navbar-default .navbar-nav>.open>a:focus {
+body.previewbeacon .navbar-default .navbar-nav>.open>a,body.previewbeacon .navbar-default .navbar-nav>.open>a:hover,body.previewbeacon .navbar-default .navbar-nav>.open>a:focus {
   background: #0055EE;
 }
