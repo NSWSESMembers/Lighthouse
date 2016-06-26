@@ -103,25 +103,25 @@ $(document).ready(function() {
                     theCollection.push(thisItem);
                 });
 
-
-CollectionParent.name = SaveName;
-CollectionParent.description = SaveName;
-CollectionParent.items = theCollection;
-console.log(CollectionParent);
-currentCollections = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
-if (currentCollections == null)
-{
-    currentCollections = [];
-}
-currentCollections.push(CollectionParent);
-localStorage.setItem("lighthouseContactCollections", JSON.stringify(currentCollections));
-LoadAllCollections();
-}
-
-//console.log(theCollection);
-
-}
-}
+                //Collection Save Stuff
+                CollectionParent.name = SaveName;
+                CollectionParent.description = SaveName;
+                CollectionParent.items = theCollection;
+                console.log(CollectionParent);
+                currentCollections = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
+                if (currentCollections == null)
+                {
+                    currentCollections = [];
+                }
+                currentCollections.push(CollectionParent);
+                localStorage.setItem("lighthouseContactCollections", JSON.stringify(currentCollections));
+                LoadAllCollections();
+            }
+            
+            //console.log(theCollection);
+            
+        }
+    }
 
 
 //Load all the Collections on page load
@@ -143,10 +143,25 @@ function LoadAllCollections() {
         if (theLoadedCollection) {
             document.getElementById("collectionscount").textContent = theLoadedCollection.length;
             theLoadedCollection.forEach(function(item) {
+                var $button = make_collection_button(item.name,item.description,item.items.length+"")
+                var $spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
-                var $button = make_collection_button(item.name,item.description)
                 $($button).click(function() {
-                    LoadCollection(item);
+                    var nodes = $button.childNodes;
+                    for(i=0; i<nodes.length; i++) {
+                        nodes[i].style.display="none";
+                    }
+                    $($spinner).appendTo($button);
+                    LoadCollection(item, function() {
+                        console.log("collection load complete")
+                        $button.removeChild($spinner);
+                        //cb for when they are loaded
+                        var nodes = $button.childNodes;
+                        for(i=0; i<nodes.length; i++) {
+                            nodes[i].removeAttribute("style");
+                        }
+
+                    });
                 })
                 $($button).find('span.delbutton').click(function() {
                     event.stopImmediatePropagation();
@@ -159,69 +174,76 @@ function LoadAllCollections() {
 
                 })
                 $($button).appendTo('#lighthousecollections');
+                $button.style.width = $button.offsetWidth+"px";
+                $button.style.height = $button.offsetHeight+"px";
             });
-        }
-    }
+}
+}
 
-    function DeleteCollection(col) {
-        theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
-        theLoadedCollection.forEach(function(item)
+function DeleteCollection(col) {
+    theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
+    theLoadedCollection.forEach(function(item)
+    {
+        if (JSON.stringify(col) == JSON.stringify(item))
         {
-            if (JSON.stringify(col) == JSON.stringify(item))
-            {
-                console.log("This one")
-                theLoadedCollection.splice(theLoadedCollection.indexOf(item),1)
-            } else {
-                console.log("NOT This one")
+            console.log("This one")
+            theLoadedCollection.splice(theLoadedCollection.indexOf(item),1)
+        } else {
+            console.log("NOT This one")
 
-            }
-        })
-        localStorage.setItem("lighthouseContactCollections", JSON.stringify(theLoadedCollection));
-        LoadAllCollections();
+        }
+    })
+    localStorage.setItem("lighthouseContactCollections", JSON.stringify(theLoadedCollection));
+    LoadAllCollections();
 
-    }
+}
 
-    function LoadCollection(col,cb) {
+function LoadCollection(col,cb) {
+    $total = col.items.length;
 
-
-        msgsystem.selectedRecipients.destroyAll();
-        col.items.forEach(function(itm) {
-            switch (itm.type) {
-                case "group":
-                var groupOwner;
-                $.ajax({
-                    type: 'GET'
-                    , url: '/Api/v1/Entities/'+itm.OwnerId
-                    , cache: false
-                    , dataType: 'json'
-                    , complete: function(response, textStatus) {
-                        switch(textStatus){
-                            case 'success':
-                            groupOwner = response.responseJSON.Name;
-                            $.ajax({
-                                type: 'GET'
-                                , url: '/Api/v1/ContactGroups/headquarters/'+itm.OwnerId
-                                , cache: false
-                                , dataType: 'json'
-                                , complete: function(response, textStatus) {
-                                    switch(textStatus){
-                                        case 'success':
-                                        if(response.responseJSON.Results.length) {
-                                            $.each(response.responseJSON.Results, function(k, v) { 
-                                                if (v.Id == itm.Id)
+    msgsystem.selectedRecipients.destroyAll();
+    col.items.forEach(function(itm) {
+        switch (itm.type) {
+            case "group":
+            var groupOwner;
+            $.ajax({
+                type: 'GET'
+                , url: '/Api/v1/Entities/'+itm.OwnerId
+                , cache: false
+                , dataType: 'json'
+                , complete: function(response, textStatus) {
+                    switch(textStatus){
+                        case 'success':
+                        groupOwner = response.responseJSON.Name;
+                        $.ajax({
+                            type: 'GET'
+                            , url: '/Api/v1/ContactGroups/headquarters/'+itm.OwnerId
+                            , cache: false
+                            , dataType: 'json'
+                            , complete: function(response, textStatus) {
+                                switch(textStatus){
+                                    case 'success':
+                                    if(response.responseJSON.Results.length) {
+                                        $.each(response.responseJSON.Results, function(k, v) { 
+                                            if (v.Id == itm.Id)
+                                            {
+                                                BuildNew = {};
+                                                BuildNew.ContactGroup = v;
+                                                BuildNew.Description = groupOwner;
+                                                BuildNew.Recipient = v.Name;
+                                                msgsystem.selectedRecipients.push(BuildNew)
+                                                $total = $total - 1;
+                                                if ($total == 0 )
                                                 {
-                                                    BuildNew = {};
-                                                    BuildNew.ContactGroup = v;
-                                                    BuildNew.Description = groupOwner;
-                                                    BuildNew.Recipient = v.Name;
-                                                    msgsystem.selectedRecipients.push(BuildNew)
-
+                                                    cb();
                                                 }
-                                            })
-                                        }
-                                        break;
+
+                                            }
+                                        })
                                     }
-                                }})
+                                    break;
+                                }
+                            }})
 
 
 
@@ -249,6 +271,11 @@ $.ajax({
                         BuildNew.Description = v.FirstName+" "+v.LastName+ " ("+v.Description+")";
                         BuildNew.Recipient = v.Detail;
                         msgsystem.selectedRecipients.push(BuildNew)
+                        $total = $total - 1;
+                        if ($total == 0 )
+                        {
+                            cb();
+                        }
 
                     }
                 })
@@ -275,6 +302,11 @@ $.ajax({
                         BuildNew.Description = v.EntityName+ " ("+v.Description+")";
                         BuildNew.Recipient = v.Detail;
                         msgsystem.selectedRecipients.push(BuildNew)
+                        $total = $total - 1;
+                        if ($total == 0 )
+                        {
+                            cb();
+                        }
 
                     }
                 })
@@ -287,10 +319,11 @@ break;
 })
 }
 
-function make_collection_button(name, description) {
+function make_collection_button(name, description,count) {
     return (
-        <span class="label label tag">
-        <span>{description} <span class="delbutton"><sup style="margin-left: 5px;margin-right: -5px;">[X]</sup></span></span>
+        <span class="label label tag-rebecca">
+        <span><p  style="margin-bottom:5px"><i class="fa fa-users" aria-hidden="true" style="padding-right: 5px;"></i>{description}<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>
+        <span>{count} recipients</span>
         </span>
         )
 }

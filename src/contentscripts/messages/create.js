@@ -37,9 +37,9 @@ function renderCheckBox() {
 	var selected = (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) ? "fa-check-square-o" : "fa-square-o";
 	return (
 		<span class="pull-right h6">
-		<span id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 
-		<img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
-		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill With LHQ & Default Recipients
+		<span style="vertical-align:text-top" id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 
+		<img style="width:16px;vertical-align:bottom;margin-right:5px;margin-left:5px"
+		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill With LHQ & Select Default Recipients
 		</span>
 		);
 }
@@ -68,7 +68,7 @@ $('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2) div.panel.p
 function renderCollections() {
 	return (
 		<fieldset>
-		<legend><img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:5px"
 		src={chrome.extension.getURL("icons/lh-black.png")} />Lighthouse Collections</legend>
 		<div class="panel panel-default">
 		<div class="panel-heading"><span>Lighthouse Collections</span><span id="collectionscount" class="pull-right badge">0</span></div>
