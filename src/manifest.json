@@ -4,7 +4,7 @@
   "name": "Lighthouse Development Preview",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2016.6.15.1",
+  "version": "2016.6.26.1",
   "icons": {
     "128": "icons/lighthouse128_dev.png",
     "64":"icons/lighthouse64_dev.png"
