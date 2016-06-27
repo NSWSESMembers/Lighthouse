@@ -19,30 +19,35 @@ function lighthouseTasking() {
   console.log("Tasking Changes")
   ///Horrible nasty code for untasking
 
-  $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function(k, v) {
+  $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function(k, v) { //for every dom
+
+    //pull out the call sign and the status
     DOMCallsign = ($(this)[0].parentNode.children[0].children[0].href.split("/")[4])
     DOMStatus = ($(this)[0].parentNode.children[1].innerText.split(" ")[0])
 
+    //for every tasked team
     $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,vv){
 
+      //match against this DOM
       if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) //only show for tasking that can be deleted (tasked only)
-      {
-
+      { 
+        //attached a X button if its matched and deletable
         test = return_untask_button()
         $(v).append(test)
 
+        //click function
         $(test).click(function() {
           DOMCallsign = ($(this)[0].parentNode.parentNode.children[0].children[0].href.split("/")[4])
-          event.stopImmediatePropagation();
+          DOMStatus = ($(this)[0].parentNode.parentNode.children[1].innerText.split(" ")[0])
 
+          event.stopImmediatePropagation();
           $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
-      //console.log(v);
-      if (v.Team.Id == DOMCallsign)
-      {
-        console.log(v)
-        untaskTeamFromJob(v.Team.Id, jobId, v.Id) 
-      }
-    })
+
+            if (v.Team.Id == DOMCallsign && v.CurrentStatus == DOMStatus) //match it again
+            {
+              untaskTeamFromJob(v.Team.Id, jobId, v.Id)  //untask it
+            }
+          })
         })
       }
     })
