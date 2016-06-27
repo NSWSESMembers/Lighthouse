@@ -66,7 +66,24 @@ whenTeamsAreReady(function(){
   lighthouseTasking()
 
   //checkbox for hide completed tasking
-  $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox);
+  $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox());
+
+  if (masterViewModel.sector.peek() !== null)
+  {
+    $('#content div.col-md-5 div[data-bind="visible: jobLoaded()"] div.widget-header').append(renderSectorFilterCheckBox());
+
+    $('#lighthouseSectorFilterEnabled').click(function() {
+    // Toggle Value
+    var lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
+    // Save Value
+    localStorage.setItem('LighthouseSectorFilterEnabled', lh_SectorFilterEnabled);
+
+    sectorfilter_switch()
+
+
+  });
+    sectorfilter_switch()
+  }
 
   $('#lighthouseEnabled').click(function() {
     // Toggle Value
@@ -96,6 +113,16 @@ whenTeamsAreReady(function(){
 
 });
 
+function sectorfilter_switch(){
+  // Set flag
+  var lh_SectorFilterEnabled = localStorage.getItem('LighthouseSectorFilterEnabled') == 'false';
+  console.log(lh_SectorFilterEnabled);
+  // Toggle class for checkbox
+  $('#lighthouseSectorFilterEnabled')
+  .toggleClass('fa-check-square-o', lh_SectorFilterEnabled)
+  .toggleClass('fa-square-o', !lh_SectorFilterEnabled);
+}
+
 function taskingItems_prepare(){
   $('#content > div.col-md-5 > div:nth-child(2) > div.widget-content > div > div')
   .each(function(k,v){
@@ -109,7 +136,7 @@ function taskingItems_prepare(){
 }
 function taskingItems_switch(){
   // Set flag
-  var hideComplete = localStorage.getItem('LighthouseHideCompletedEnabled') == 'true';
+  var hideComplete = localStorage.getItem('LighthouseHideCompletedEnabled') == 'false';
   // Toggle class for container
   $('#content > div.col-md-5 > div:nth-child(2)').toggleClass('team_complete_hidden', hideComplete);
   // Toggle class for checkbox
@@ -117,6 +144,7 @@ function taskingItems_switch(){
   .toggleClass('fa-check-square-o', hideComplete)
   .toggleClass('fa-square-o', !hideComplete);
 }
+
 function taskingItems_individual(e){
   console.log('e', e);
   var $t = $(e.currentTarget);
@@ -245,22 +273,36 @@ function InstantTaskButton() {
   loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
   $(quickTask).find('ul').append(loading)
 
+  theData = {
+    'StartDate':          end.toLocaleTimeString("en-us", date_options)
+    , 'EndDate':            now.toLocaleTimeString("en-us", date_options)
+    , 'AssignedToId[]':     user.currentHqId
+    , 'CreatedAtId[]':      user.currentHqId
+    , 'TypeIds[]':          1
+    , 'IncludeDeleted':     false
+    , 'StatusTypeId[]':     3
+    , 'PageIndex':          1
+    , 'PageSize':           1000
+    , 'SortField':          'Callsign'
+    , 'SortOrder':          'asc'
+  }
+
+  lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
+
+  console.log(lh_SectorFilterEnabled);
+  console.log(masterViewModel.sector.peek());
+
+
+  if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true )
+  {
+    console.log(lh_SectorFilterEnabled);
+    theData.SectorIds = masterViewModel.sector.peek().Id
+  }
+
   $.ajax({
     type: 'GET'
     , url: '/Api/v1/Teams/Search'
-    , data: {
-      'StartDate':          end.toLocaleTimeString("en-us", date_options)
-      , 'EndDate':            now.toLocaleTimeString("en-us", date_options)
-      , 'AssignedToId[]':     user.currentHqId
-      , 'CreatedAtId[]':      user.currentHqId
-      , 'TypeIds[]':          1
-      , 'IncludeDeleted':     false
-      , 'StatusTypeId[]':     3
-      , 'PageIndex':          1
-      , 'PageSize':           1000
-      , 'SortField':          'Callsign'
-      , 'SortOrder':          'asc'
-    }
+    , data: theData
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
@@ -270,7 +312,7 @@ function InstantTaskButton() {
         $(quickTask).find('ul').empty();
         if(response.responseJSON.Results.length) {
           $.each(response.responseJSON.Results, function(k, v) {
-            console.log(v.Id+","+v.Callsign)
+            //console.log(v.Id+","+v.Callsign)
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
             $(v.Members).each(function(k, vv) {
@@ -677,6 +719,16 @@ function whenTeamsAreReady(cb) { //when external vars have loaded
 }
 
 //checkbox for hide completed tasking
+
+function renderSectorFilterCheckBox() {
+  return (
+    <span class="pull-right h6">
+    <span id="lighthouseSectorFilterEnabled" class="fa fa-lg"></span> 
+    <img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+    src={lighthouseUrl+"icons/lh-black.png"} /> Instant Filter by Sector
+    </span>
+    );
+}
 
 function renderCheckBox() {
   return (
