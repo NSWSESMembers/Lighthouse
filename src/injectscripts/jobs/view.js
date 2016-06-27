@@ -202,6 +202,7 @@ function InstantTaskButton() {
       , 'EndDate':            now.toLocaleTimeString("en-us", date_options)
       , 'AssignedToId[]':     user.currentHqId
       , 'CreatedAtId[]':      user.currentHqId
+      , 'TypeIds[]':          1
       , 'IncludeDeleted':     false
       , 'StatusTypeId[]':     3
       , 'PageIndex':          1
@@ -222,7 +223,7 @@ function InstantTaskButton() {
             $(v.Members).each(function(k, vv) {
               if (vv.TeamLeader)
               {
-                item = return_li(v.Id,v.Callsign,vv.Person.FirstName+" "+vv.Person.LastName);
+                item = return_li(v.Id,v.Callsign.toUpperCase(),vv.Person.FirstName+" "+vv.Person.LastName);
                 $(item).click(function () {
                   TaskTeam(v.Id)
                 })
