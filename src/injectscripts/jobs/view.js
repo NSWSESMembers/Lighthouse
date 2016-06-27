@@ -20,26 +20,26 @@ function lighthouseTasking() {
   ///Horrible nasty code for untasking
 
   $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function(k, v) {
-    DOMCallsign = ($(this)[0].parentNode.children[0].children[0].innerText)
+    DOMCallsign = ($(this)[0].parentNode.children[0].children[0].href.split("/")[4])
+        console.log(DOMCallsign);
 
     $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,vv){
       //console.log(v);
 
-      if (vv.Team.Callsign == DOMCallsign && vv.CurrentStatusId == 1)
+      if (vv.Team.Id == DOMCallsign && vv.CurrentStatusId == 1)
       {
-        console.log(vv);
 
         test = return_untask_button()
         $(v).append(test)
 
 
         $(test).click(function() {
-          DOMCallsign = ($(this)[0].parentNode.parentNode.children[0].children[0].innerText)
+          DOMCallsign = ($(this)[0].parentNode.parentNode.children[0].children[0].href.split("/")[4])
           event.stopImmediatePropagation();
 
           $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
       //console.log(v);
-      if (v.Team.Callsign == DOMCallsign)
+      if (v.Team.Id == DOMCallsign)
       {
         console.log(v)
         untaskTeamFromJob(v.Team.Id, jobId, v.Id) 
