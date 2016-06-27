@@ -6,28 +6,27 @@ var $ = require('jquery');
 
 
 
-
 function renderQuickText(id, selections) {
   return (
     <div class="form-group">
-      <div class="row">
-        <label class="col-md-4 col-lg-3 control-label">
-          <img style="width:16px;vertical-align:top;margin-right:5px"
-               src={chrome.extension.getURL("icons/lh-black.png")} />
-          Quick Text
-        </label>
-        <div class="col-md-8 col-lg-9">
-          <select class="form-control" id={id} style="width:100%">
-            {
-              _.map(selections, function(selection) {
-                return <option>{selection}</option>;
-              })
-            }
-          </select>
-        </div>
-      </div>
+    <div class="row">
+    <label class="col-md-4 col-lg-3 control-label">
+    <img style="width:16px;vertical-align:top;margin-right:5px"
+    src={chrome.extension.getURL("icons/lh-black.png")} />
+    Quick Text
+    </label>
+    <div class="col-md-8 col-lg-9">
+    <select class="form-control" id={id} style="width:100%">
+    {
+      _.map(selections, function(selection) {
+        return <option>{selection}</option>;
+      })
+    }
+    </select>
     </div>
-  );
+    </div>
+    </div>
+    );
 }
 
 
@@ -41,8 +40,8 @@ $('#finaliseJobModal .modal-body .form-group:nth-child(1)').after(
     "All paperwork and documentation completed",
     "NFA",
     "Job completed"
-  ])
-);
+    ])
+  );
 
 // Quick Text - Job - Complete
 // this is nth-child(1) even though there are more elements because
@@ -57,63 +56,63 @@ $('#completeRescueModal .modal-body .form-group:nth-child(1)').after(
     "NFA",
     "NFA SES. Referred to council",
     "Job completed"
-  ])
-);
+    ])
+  );
 
 // Quick Actions - Job - Team Complete
 var options = [
-  ["Storm/Tree Ops",         "stormtree",        "tag-task"],
-  ["Storm/Property Protect", "stormproperty",    "tag-task"],
-  ["Storm/Public Safety",    "stormsafety",      "tag-task"],
-  ["Storm/Road Access",      "stormaccess",      "tag-task"],
-  ["Storm/Recon",            "stormrecon",       "tag-task"],
-  ["RCR/Calloff",            "rcrcalloff",       "tag-rescue"],
-  ["RCR/Extricate",          "rcrcallextricate", "tag-rescue"]
+["Storm/Tree Ops",         "stormtree",        "tag-task"],
+["Storm/Property Protect", "stormproperty",    "tag-task"],
+["Storm/Public Safety",    "stormsafety",      "tag-task"],
+["Storm/Road Access",      "stormaccess",      "tag-task"],
+["Storm/Recon",            "stormrecon",       "tag-task"],
+["RCR/Calloff",            "rcrcalloff",       "tag-rescue"],
+["RCR/Extricate",          "rcrcallextricate", "tag-rescue"]
 ];
 
 var html = (
   <div class="form-group">
-    <div class="row">
-      <label class="col-md-4 col-lg-3 control-label">
-        <img style="width:16px;vertical-align:top;margin-right:5px"
-             src={chrome.extension.getURL("icons/lh-black.png")} />
-        Quick Tasks
-      </label>
-      <div class="col-md-8 col-lg-9">
-        {
-          _.map(options, function(option) {
-            return (
-              <span id={option[1]} class={'label tag tag-disabled '+option[2]}>
-                <span class="tag-text">{option[0]}</span>
-              </span>
-            );
-          })
-        }
-      </div>
-    </div>
+  <div class="row">
+  <label class="col-md-4 col-lg-3 control-label">
+  <img style="width:16px;vertical-align:top;margin-right:5px"
+  src={chrome.extension.getURL("icons/lh-black.png")} />
+  Quick Tasks
+  </label>
+  <div class="col-md-8 col-lg-9">
+  {
+    _.map(options, function(option) {
+      return (
+        <span id={option[1]} class={'label tag tag-disabled '+option[2]}>
+        <span class="tag-text">{option[0]}</span>
+        </span>
+        );
+    })
+  }
   </div>
-);
+  </div>
+  </div>
+  );
 
 // Quick Text - Job - Team Complete
 var html2 = renderQuickText("CompleteTeamQuickTextBox", [
   "",
   "NSW SES volunteers attended scene and resident no longer required assistance.",
-])
+  ])
 
 $('#completeTeamModal .modal-body .form-group:nth-child(12)').after([html, html2]);
 
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
 job_view_history = (
   <fieldset id="job_view_history_groups" class="col-md-12">
-    <legend class="main"><img style="width:16px;vertical-align:inherit;margin-right:5px"
-                 src={chrome.extension.getURL("icons/lh-black.png")} />Job History <span>12 Months search by Address</span></legend>
-    <div id="job_view_history_container">
-      <div style="text-align:center">
-        <img src="/Content/images/loading_30.gif" />
-      </div>
-    </div>
+  <legend class="main"><img style="width:16px;vertical-align:inherit;margin-right:5px"
+  src={chrome.extension.getURL("icons/lh-black.png")} />Job History <span>12 Months search by Address</span></legend>
+  <div id="job_view_history_container">
+  <div style="text-align:center">
+  <img src="/Content/images/loading_30.gif" />
+  </div>
+  </div>
   </fieldset>
-);
+  );
 
 $('fieldset.col-md-12 legend').each(function(k,v){
   var $v = $(v);
@@ -124,6 +123,8 @@ $('fieldset.col-md-12 legend').each(function(k,v){
     return false; // break out of $.each()
   }
 });
+
+
 
 // inject the coded needed to fix visual problems
 // needs to be injected so that it runs after the DOMs are created

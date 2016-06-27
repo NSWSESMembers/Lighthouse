@@ -29,17 +29,32 @@ whenTeamsAreReady(function(){
   
   taskingItems_prepare();
 
+  quickTask = return_quicktaskbutton()
+
+  //the quicktask button
+  $(quickTask).find('button').click(function() {
+    if ($(quickTask).hasClass("open") == false)
+    {
+      InstantTaskButton()
+    }
+  })
+
+  if (masterViewModel.canTask.peek() == true)
+  {
+    $('div.widget.actions-box div.widget-content').append(quickTask);
+  }
+
 });
 
 function taskingItems_prepare(){
   $('#content > div.col-md-5 > div:nth-child(2) > div.widget-content > div > div')
-    .each(function(k,v){
-      var $t = $(v);
-      var isComplete = $('div:nth-child(1) > div.col-xs-6.small.text-right > span',$t).text().indexOf('Complete') === 0;
+  .each(function(k,v){
+    var $t = $(v);
+    var isComplete = $('div:nth-child(1) > div.col-xs-6.small.text-right > span',$t).text().indexOf('Complete') === 0;
       // Add class "team_complete" to any Tasked Items where the status starts with "Complete"
       $t.toggleClass('team_complete', isComplete);
     })
-    .click(taskingItems_individual);
+  .click(taskingItems_individual);
   taskingItems_switch();
 }
 function taskingItems_switch(){
@@ -49,8 +64,8 @@ function taskingItems_switch(){
   $('#content > div.col-md-5 > div:nth-child(2)').toggleClass('team_complete_hidden', hideComplete);
   // Toggle class for checkbox
   $('#lighthouseEnabled')
-    .toggleClass('fa-check-square-o', hideComplete)
-    .toggleClass('fa-square-o', !hideComplete);
+  .toggleClass('fa-check-square-o', hideComplete)
+  .toggleClass('fa-square-o', !hideComplete);
 }
 function taskingItems_individual(e){
   console.log('e', e);
@@ -61,6 +76,9 @@ function taskingItems_individual(e){
 document.title = "#"+jobId;
 
 function lighthouseKeeper(){
+
+  ////Quick Task Stuff
+
 
   var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: Text"]');
 
@@ -153,6 +171,95 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
   }
 });
 
+function InstantTaskButton() {
+  var date_options = {
+    year: "numeric",
+    month: "2-digit",
+    day: "numeric",
+    hour12: false
+  };
+  var now = new Date();
+  var end = new Date();
+  end.setYear(end.getFullYear() - 1);
+  var teams = []
+
+  alreadyTasked = []
+  $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
+    if(v.CurrentStatusId != 6)
+    {
+      alreadyTasked.push(v.Team.Id)
+    }
+  })
+
+  $.ajax({
+    type: 'GET'
+    , url: '/Api/v1/Teams/Search'
+    , data: {
+      'StartDate':          end.toLocaleTimeString("en-us", date_options)
+      , 'EndDate':            now.toLocaleTimeString("en-us", date_options)
+      , 'AssignedToId':       user.currentHqId
+      , 'ViewModelType':      2
+      , 'PageIndex':          1
+      , 'PageSize':           1000
+      , 'SortField':          'Callsign'
+      , 'SortOrder':          'desc'
+    }
+    , cache: false
+    , dataType: 'json'
+    , complete: function(response, textStatus) {
+      console.log('textStatus = "%s"', textStatus, response);
+      $(quickTask).find('ul').empty();
+      $.each(response.responseJSON.Results, function(k, v) {
+        console.log(v.Id+","+v.Callsign)
+
+        if ($.inArray(v.Id,alreadyTasked) == -1)
+        {
+          item = return_li(v.Id,v.Callsign);
+          $(item).click(function () {
+            TaskTeam(v.Id)
+          })
+          $(quickTask).find('ul').append(item)
+        }
+      })
+    }
+  })
+}
+
+
+function TaskTeam(teamID) {
+  var data = {};
+  var TeamIds = [];
+  TeamIds.push(teamID);
+  var JobIds = [];
+  JobIds.push(jobId);
+  data.TeamIds = TeamIds;
+  data.JobIds = JobIds;
+  datastring = JSON.stringify(data);
+  console.log(JSON.stringify(data))
+  $.ajax({
+    type: 'POST'
+    , url: '/Api/v1/Tasking'
+    , data: {TeamIds: TeamIds, JobIds: JobIds}
+    , cache: false
+    , dataType: 'json'
+    , complete: function(response, textStatus) {
+      console.log('textStatus = "%s"', textStatus, response);
+      switch(textStatus){
+        case 'success':
+        masterViewModel.teamsViewModel.loadTaskedTeams()
+      }
+
+    }
+  })
+}
+
+
+function return_li(id, callsign) {
+  return(
+    <li><a href="#">{callsign}</a></li>
+    )
+}
+
 function replaceAll(str, find, replace) {
   return str.replace(new RegExp(find, 'g'), replace);
 }
@@ -203,6 +310,18 @@ $(document).ready(function() {
     });
 });
 
+function return_quicktaskbutton() {
+  return (
+    <div style="position: relative;
+    display: inline-block;
+    vertical-align: middle;" class="dropdown">
+    <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu">
+    </ul>
+    </div>
+    )
+}
 
 function checkAddressHistory(){
   var date_options = {
@@ -357,7 +476,7 @@ function checkAddressHistory(){
 
               // Unless we have a Street Number for Current and Historic, we can only match the street
               if(v.Address.StreetNumber != null && address.StreetNumber != null) {
-               
+
                 if(v.Address.PrettyAddress == address.PrettyAddress) {
                   // Perfect Match
                   result_group = 'exact';
