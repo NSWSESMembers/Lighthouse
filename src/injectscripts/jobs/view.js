@@ -10,10 +10,57 @@ masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseKeeper);
 //if messages update
 masterViewModel.messagesViewModel.messages.subscribe(lighthouseKeeper);
 
+//if tasking update
+
+masterViewModel.teamsViewModel.taskedTeams.subscribe(lighthouseTasking);
+
+
+function lighthouseTasking() {
+  console.log("Tasking Changes")
+  ///Horrible nasty code for untasking
+
+  $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function(k, v) {
+    DOMCallsign = ($(this)[0].parentNode.children[0].children[0].innerText)
+
+    $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,vv){
+      //console.log(v);
+
+      if (vv.Team.Callsign == DOMCallsign && vv.CurrentStatusId == 1)
+      {
+        console.log(vv);
+
+        test = return_untask_button()
+        $(v).append(test)
+
+
+        $(test).click(function() {
+          DOMCallsign = ($(this)[0].parentNode.parentNode.children[0].children[0].innerText)
+          event.stopImmediatePropagation();
+
+          $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
+      //console.log(v);
+      if (v.Team.Callsign == DOMCallsign)
+      {
+        console.log(v)
+        untaskTeamFromJob(v.Team.Id, jobId, v.Id) 
+      }
+    })
+        })
+      }
+    })
+  })
+
+////END horrible untask code
+
+}
+
+
 //call on run
 lighthouseKeeper();
 
 whenTeamsAreReady(function(){
+
+  lighthouseTasking()
 
   //checkbox for hide completed tasking
   $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox);
@@ -214,10 +261,12 @@ function InstantTaskButton() {
     , dataType: 'json'
     , complete: function(response, textStatus) {
       console.log('textStatus = "%s"', textStatus, response);
-      $(quickTask).find('ul').empty();
-      if(response.responseJSON.Results.length) {
-        $.each(response.responseJSON.Results, function(k, v) {
-          console.log(v.Id+","+v.Callsign)
+      if(textStatus == 'success')
+      {
+        $(quickTask).find('ul').empty();
+        if(response.responseJSON.Results.length) {
+          $.each(response.responseJSON.Results, function(k, v) {
+            console.log(v.Id+","+v.Callsign)
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
             $(v.Members).each(function(k, vv) {
@@ -229,12 +278,13 @@ function InstantTaskButton() {
                 })
                 $(quickTask).find('ul').append(item)
               }
-           })
+            })
           }
         })
-      } else {
-        no_results = (<li><a href="#">No Active Field Teams</a></li>)
-        $(quickTask).find('ul').append(no_results)
+        } else {
+          no_results = (<li><a href="#">No Active Field Teams</a></li>)
+          $(quickTask).find('ul').append(no_results)
+        }
       }
     }
   })
@@ -259,11 +309,10 @@ function TaskTeam(teamID) {
     , dataType: 'json'
     , complete: function(response, textStatus) {
       console.log('textStatus = "%s"', textStatus, response);
-      switch(textStatus){
-        case 'success':
+      if (textStatus == 'success')
+      {
         masterViewModel.teamsViewModel.loadTaskedTeams()
       }
-
     }
   })
 }
@@ -292,8 +341,13 @@ document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
   masterViewModel.completeTeamViewModel.actionTaken(this.value);
 }
 
-
+function return_untask_button() {
+  return (<sup style="margin-left: 10px;margin-right: -5px; cursor: pointer;">X</sup>)
+}
 $(document).ready(function() {
+
+
+
 
   _.each([
     ["#stormtree", "Storm", "Tree Operations/Removal"],
@@ -628,4 +682,26 @@ function renderCheckBox() {
     src={lighthouseUrl+"icons/lh-black.png"} /> Collapse Completed Tasking
     </span>
     );
+}
+
+function untaskTeamFromJob(TeamID, JobID, TaskingID) {
+  $.ajax({
+    type: 'DELETE'
+    , url: '/Api/v1/Tasking/'+TaskingID
+    , data: {
+      'Id':       TaskingID
+      ,'TeamId':    TeamID    
+      , 'JobId':    JobID       
+    }
+    , cache: false
+    , dataType: 'json'
+    , complete: function(response, textStatus) {
+      console.log('textStatus = "%s"', textStatus, response);  
+      if (textStatus == 'success')
+      {
+        masterViewModel.teamsViewModel.loadTaskedTeams()
+      }
+
+    }
+  })
 }
