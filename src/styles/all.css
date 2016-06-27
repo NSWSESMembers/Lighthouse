@@ -151,6 +151,16 @@ div.team_complete_hidden div.list-group div.team_complete div.row.clearfix {
   font-weight: bold;
 }
 
+.tag-rebecca{
+  padding-top:5px;
+  padding-bottom:5px;
+  margin: 5px 5px 0 0;
+  cursor: pointer;
+  float: left;
+  border: 1px solid  #4c2673;
+  color: white;
+  background-color: rebeccapurple;
+}
 
 
 body.previewbeacon {}
