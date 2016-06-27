@@ -207,7 +207,7 @@ function InstantTaskButton() {
       , 'PageIndex':          1
       , 'PageSize':           1000
       , 'SortField':          'Callsign'
-      , 'SortOrder':          'desc'
+      , 'SortOrder':          'asc'
     }
     , cache: false
     , dataType: 'json'
@@ -217,13 +217,18 @@ function InstantTaskButton() {
       if(response.responseJSON.Results.length) {
         $.each(response.responseJSON.Results, function(k, v) {
           console.log(v.Id+","+v.Callsign)
-          if ($.inArray(v.Id,alreadyTasked) == -1)
+          if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
-            item = return_li(v.Id,v.Callsign);
-            $(item).click(function () {
-              TaskTeam(v.Id)
-            })
-            $(quickTask).find('ul').append(item)
+            $(v.Members).each(function(k, vv) {
+              if (vv.TeamLeader)
+              {
+                item = return_li(v.Id,v.Callsign,vv.Person.FirstName+" "+vv.Person.LastName);
+                $(item).click(function () {
+                  TaskTeam(v.Id)
+                })
+                $(quickTask).find('ul').append(item)
+              }
+           })
           }
         })
       } else {
@@ -263,9 +268,9 @@ function TaskTeam(teamID) {
 }
 
 
-function return_li(id, callsign) {
+function return_li(id, callsign, teamleader) {
   return(
-    <li><a href="#">{callsign}</a></li>
+    <li><a style="text-align:left" href="#"><b>{callsign}</b> - <small>{teamleader}</small></a></li>
     )
 }
 
