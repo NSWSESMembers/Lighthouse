@@ -21,17 +21,15 @@ function lighthouseTasking() {
 
   $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function(k, v) {
     DOMCallsign = ($(this)[0].parentNode.children[0].children[0].href.split("/")[4])
-        console.log(DOMCallsign);
+    DOMStatus = ($(this)[0].parentNode.children[1].innerText.split(" ")[0])
 
     $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,vv){
-      //console.log(v);
 
-      if (vv.Team.Id == DOMCallsign && vv.CurrentStatusId == 1)
+      if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) //only show for tasking that can be deleted (tasked only)
       {
 
         test = return_untask_button()
         $(v).append(test)
-
 
         $(test).click(function() {
           DOMCallsign = ($(this)[0].parentNode.parentNode.children[0].children[0].href.split("/")[4])
