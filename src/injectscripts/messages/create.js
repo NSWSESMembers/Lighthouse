@@ -72,7 +72,7 @@ $(document).ready(function() {
         if (msgsystem.selectedRecipients.peek().length > 0)
         {
             var SaveName = prompt("Please enter a name for the collection", "");
-            if (SaveName !== null) {
+            if (SaveName !== null && SaveName != "") {
 
 
                 theSelected = msgsystem.selectedRecipients.peek();
