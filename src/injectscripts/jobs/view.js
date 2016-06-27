@@ -190,6 +190,9 @@ function InstantTaskButton() {
       alreadyTasked.push(v.Team.Id)
     }
   })
+  $(quickTask).find('ul').empty();
+  loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
+  $(quickTask).find('ul').append(loading)
 
   $.ajax({
     type: 'GET'
@@ -197,8 +200,10 @@ function InstantTaskButton() {
     , data: {
       'StartDate':          end.toLocaleTimeString("en-us", date_options)
       , 'EndDate':            now.toLocaleTimeString("en-us", date_options)
-      , 'AssignedToId':       user.currentHqId
-      , 'ViewModelType':      2
+      , 'AssignedToId[]':     user.currentHqId
+      , 'CreatedAtId[]':      user.currentHqId
+      , 'IncludeDeleted':     false
+      , 'StatusTypeId[]':     3
       , 'PageIndex':          1
       , 'PageSize':           1000
       , 'SortField':          'Callsign'
@@ -209,18 +214,22 @@ function InstantTaskButton() {
     , complete: function(response, textStatus) {
       console.log('textStatus = "%s"', textStatus, response);
       $(quickTask).find('ul').empty();
-      $.each(response.responseJSON.Results, function(k, v) {
-        console.log(v.Id+","+v.Callsign)
-
-        if ($.inArray(v.Id,alreadyTasked) == -1)
-        {
-          item = return_li(v.Id,v.Callsign);
-          $(item).click(function () {
-            TaskTeam(v.Id)
-          })
-          $(quickTask).find('ul').append(item)
-        }
-      })
+      if(response.responseJSON.Results.length) {
+        $.each(response.responseJSON.Results, function(k, v) {
+          console.log(v.Id+","+v.Callsign)
+          if ($.inArray(v.Id,alreadyTasked) == -1)
+          {
+            item = return_li(v.Id,v.Callsign);
+            $(item).click(function () {
+              TaskTeam(v.Id)
+            })
+            $(quickTask).find('ul').append(item)
+          }
+        })
+      } else {
+        no_results = (<li><a href="#">No Active Field Teams</a></li>)
+        $(quickTask).find('ul').append(no_results)
+      }
     }
   })
 }
