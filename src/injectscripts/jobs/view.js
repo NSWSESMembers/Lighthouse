@@ -120,8 +120,9 @@ function taskingItems_switch(){
 function taskingItems_individual(e){
   console.log('e', e);
   var $t = $(e.currentTarget);
-  $('div.row.clearfix', $t).slideToggle();
+  $('div.row.clearfix:not(:contains("Set"))', $t).slideToggle();
 }
+
 
 document.title = "#"+jobId;
 
