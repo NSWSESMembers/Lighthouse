@@ -12,7 +12,7 @@ $(document).ready(function() {
             //Home HQ - with a wait to catch possible race condition where the page is still loading
             whenWeAreReady(user, function() {
                 var waiting = setInterval(function() {
-                    if (msgsystem.loadingContacts.peek() == false) { //check if the core js is still searching for something
+                    if (msgsystem.loadingContacts.peek() === false) { //check if the core js is still searching for something
                         clearInterval(waiting); //stop timer
                         console.log("Setting Selected HQ to user HQ");
                         msgsystem.setSelectedHeadquarters(user.hq);
@@ -48,7 +48,7 @@ $(document).ready(function() {
     msgsystem.operational(true);
 
     $('#lighthouseEnabled').click(function() {
-        if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) //its true so uncheck it
+        if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") === null) //its true so uncheck it
         {
             $(this).toggleClass("fa-check-square-o fa-square-o")
             localStorage.setItem("LighthouseMessagesEnabled", false);
@@ -64,15 +64,15 @@ $(document).ready(function() {
         }
     });
 
-    $("#recipientsdel").onclick = function() {
+    $("#recipientsdel").click(function() {
         msgsystem.selectedRecipients.removeAll();
-    }
+    })
 
-    $("#collectionsave").onclick = function() {
+    $("#collectionsave").click(function() {
         if (msgsystem.selectedRecipients.peek().length > 0)
         {
             var SaveName = prompt("Please enter a name for the collection", "");
-            if (SaveName != null) {
+            if (SaveName !== null) {
 
 
                 theSelected = msgsystem.selectedRecipients.peek();
@@ -80,15 +80,15 @@ $(document).ready(function() {
                 CollectionParent = {};
                 theSelected.forEach(function(item) {
                     thisItem = {};
-                    if (item.Contact == null)
+                    if (item.Contact === null)
                     {
                         thisItem.type = "group";
                         thisItem.OwnerId = item.ContactGroup.Entity.Id;
                         thisItem.Id = item.ContactGroup.Id;
 
-                    } else if (item.ContactGroup == null)
+                    } else if (item.ContactGroup === null)
                     {
-                        if (item.Contact.PersonId == null)
+                        if (item.Contact.PersonId === null)
                         {
                             thisItem.type = "entity";
                             thisItem.OwnerId = item.Contact.EntityId;
@@ -109,7 +109,7 @@ $(document).ready(function() {
                 CollectionParent.items = theCollection;
                 console.log(CollectionParent);
                 currentCollections = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
-                if (currentCollections == null)
+                if (currentCollections === null)
                 {
                     currentCollections = [];
                 }
@@ -121,7 +121,7 @@ $(document).ready(function() {
             //console.log(theCollection);
             
         }
-    }
+    })
 
 
 //Load all the Collections on page load
@@ -133,10 +133,8 @@ LoadAllCollections();
 
 function LoadAllCollections() {
 
-    var myNode = $("#lighthousecollections");
-    while (myNode.firstChild) {
-        myNode.removeChild(myNode.firstChild);
-    }
+    $("#lighthousecollections").empty();
+
         //Load the saved Collections
         theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
         console.log(theLoadedCollection);
@@ -168,10 +166,7 @@ function LoadAllCollections() {
                     var r = confirm("Are you sure you want to delete this collection?");
                     if (r == true) {
                         DeleteCollection(item);
-                    } else {
-                        txt = "You pressed Cancel!";
                     }
-
                 })
                 $($button).appendTo('#lighthousecollections');
                 $button.style.width = $button.offsetWidth+"px";
@@ -200,7 +195,6 @@ function DeleteCollection(col) {
 
 function LoadCollection(col,cb) {
     $total = col.items.length;
-
     msgsystem.selectedRecipients.destroyAll();
     col.items.forEach(function(itm) {
         switch (itm.type) {
@@ -221,37 +215,28 @@ function LoadCollection(col,cb) {
                             , cache: false
                             , dataType: 'json'
                             , complete: function(response, textStatus) {
-                                switch(textStatus){
-                                    case 'success':
+                                if(textStatus == 'success')
+                                {
                                     if(response.responseJSON.Results.length) {
                                         $.each(response.responseJSON.Results, function(k, v) { 
                                             if (v.Id == itm.Id)
                                             {
-                                                BuildNew = {};
-                                                BuildNew.ContactGroup = v;
-                                                BuildNew.Description = groupOwner;
-                                                BuildNew.Recipient = v.Name;
-                                                msgsystem.selectedRecipients.push(BuildNew)
+                                                build_recipient(v,groupOwner,v.Name)
                                                 $total = $total - 1;
                                                 if ($total == 0 )
                                                 {
                                                     cb();
                                                 }
-
                                             }
                                         })
                                     }
-                                    break;
                                 }
-                            }})
-
-
-
+                            }
+                        })
 break;
 }
 }
 })
-
 break;
 case "person":
 $.ajax({
@@ -260,17 +245,13 @@ $.ajax({
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
-        switch(textStatus){
-            case 'success':
+        if(textStatus == 'success')
+        {
             if(response.responseJSON.Results.length) {
                 $.each(response.responseJSON.Results, function(k, v) { 
                     if (v.Id == itm.Id)
                     {
-                        BuildNew = {};
-                        BuildNew.Contact = v;
-                        BuildNew.Description = v.FirstName+" "+v.LastName+ " ("+v.Description+")";
-                        BuildNew.Recipient = v.Detail;
-                        msgsystem.selectedRecipients.push(BuildNew)
+                        build_recipient(v,v.FirstName+" "+v.LastName+ " ("+v.Description+")",v.Detail)
                         $total = $total - 1;
                         if ($total == 0 )
                         {
@@ -280,28 +261,24 @@ $.ajax({
                     }
                 })
             }
-            break;
         }
-    }})
+    }
+})
 break;
 case "entity":
+console.log("entity")
 $.ajax({
     type: 'GET'
     , url: '/Api/v1/Entities/'+itm.OwnerId+'/Contacts'
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
-        switch(textStatus){
-            case 'success':
+        if(textStatus == 'success'){
             if(response.responseJSON.Results.length) {
                 $.each(response.responseJSON.Results, function(k, v) { 
                     if (v.Id == itm.Id)
                     {
-                        BuildNew = {};
-                        BuildNew.Contact = v;
-                        BuildNew.Description = v.EntityName+ " ("+v.Description+")";
-                        BuildNew.Recipient = v.Detail;
-                        msgsystem.selectedRecipients.push(BuildNew)
+                        build_recipient(v,v.EntityName+ " ("+v.Description+")",v.Detail)
                         $total = $total - 1;
                         if ($total == 0 )
                         {
@@ -311,12 +288,20 @@ $.ajax({
                     }
                 })
             }
-            break;
         }
-    }})
+    }
+})
 break;
 }
 })
+}
+
+function build_recipient (contact,description,recipient) {
+    BuildNew = {};
+    BuildNew.Contact = contact;
+    BuildNew.Description = description;
+    BuildNew.Recipient = recipient;
+    msgsystem.selectedRecipients.push(BuildNew)
 }
 
 function make_collection_button(name, description,count) {
