@@ -64,11 +64,11 @@ $(document).ready(function() {
         }
     });
 
-    document.getElementById("recipientsdel").onclick = function() {
+    $("#recipientsdel").onclick = function() {
         msgsystem.selectedRecipients.removeAll();
     }
 
-    document.getElementById("collectionsave").onclick = function() {
+    $("#collectionsave").onclick = function() {
         if (msgsystem.selectedRecipients.peek().length > 0)
         {
             var SaveName = prompt("Please enter a name for the collection", "");
@@ -133,7 +133,7 @@ LoadAllCollections();
 
 function LoadAllCollections() {
 
-    var myNode = document.getElementById("lighthousecollections");
+    var myNode = $("#lighthousecollections");
     while (myNode.firstChild) {
         myNode.removeChild(myNode.firstChild);
     }
@@ -141,7 +141,7 @@ function LoadAllCollections() {
         theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
         console.log(theLoadedCollection);
         if (theLoadedCollection) {
-            document.getElementById("collectionscount").textContent = theLoadedCollection.length;
+            $("#collectionscount").textContent = theLoadedCollection.length;
             theLoadedCollection.forEach(function(item) {
                 var $button = make_collection_button(item.name,item.description,item.items.length+"")
                 var $spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
