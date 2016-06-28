@@ -187,7 +187,7 @@ function HackTheMatrix(unit, host, progressBar) {
 
       var completeJob = 0;
       var newJob = 0;
-      var ackJob = 0;
+      var activeJob = 0;
       var refJob = 0;
       var finJob = 0;
       var canJob = 0;
@@ -200,8 +200,8 @@ function HackTheMatrix(unit, host, progressBar) {
           case "New":
           newJob = d.value;
           break;
-          case "Acknowledged":
-          ackJob = d.value;
+          case "Active":
+          activeJob = d.value;
           break;
           case "Tasked":
           tskJob = d.value;
@@ -246,7 +246,7 @@ function HackTheMatrix(unit, host, progressBar) {
           }
         });
 
-      var open = newJob + ackJob + tskJob + refJob;
+      var open = newJob + activeJob + tskJob + refJob;
       var closed = canJob + completeJob + finJob + rejJob;
 
       document.getElementById("open").innerHTML = (jobs.Results.length && open) ? (open + "<h6>" + Math.round(open / jobs.Results.length * 100) + "%</h6>"):(open+"<h6>&ndash; %</h6>");
@@ -254,7 +254,7 @@ function HackTheMatrix(unit, host, progressBar) {
       document.getElementById("totalnumber").innerHTML = jobs.Results.length+ "<h6>&ndash; %</h6>";
 
       document.getElementById("new").innerHTML = (jobs.Results.length && newJob) ? (newJob + "<h6>" + Math.round(newJob / jobs.Results.length * 100) + "%</h6>"):(newJob+"<h6>&ndash; %</h6>");
-      document.getElementById("ack").innerHTML = (jobs.Results.length && ackJob) ? (ackJob + "<h6>" + Math.round(ackJob / jobs.Results.length * 100) + "%</h6>"):(ackJob+"<h6>&ndash; %</h6>");
+      document.getElementById("active").innerHTML = (jobs.Results.length && activeJob) ? (activeJob + "<h6>" + Math.round(activeJob / jobs.Results.length * 100) + "%</h6>"):(activeJob+"<h6>&ndash; %</h6>");
       document.getElementById("tsk").innerHTML = (jobs.Results.length && tskJob) ? (tskJob + "<h6>" + Math.round(tskJob / jobs.Results.length * 100) + "%</h6>"):(tskJob+"<h6>&ndash; %</h6>");
       document.getElementById("comp").innerHTML = (jobs.Results.length && completeJob) ? (completeJob + "<h6>" + Math.round(completeJob / jobs.Results.length * 100) + "%</h6>"):(completeJob+"<h6>&ndash; %</h6>");
       
