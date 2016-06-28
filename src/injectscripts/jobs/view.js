@@ -116,7 +116,6 @@ whenTeamsAreReady(function(){
 function sectorfilter_switch(){
   // Set flag
   var lh_SectorFilterEnabled = localStorage.getItem('LighthouseSectorFilterEnabled') == 'false';
-  console.log(lh_SectorFilterEnabled);
   // Toggle class for checkbox
   $('#lighthouseSectorFilterEnabled')
   .toggleClass('fa-check-square-o', lh_SectorFilterEnabled)
@@ -146,7 +145,7 @@ function taskingItems_switch(){
 }
 
 function taskingItems_individual(e){
-  console.log('e', e);
+  //console.log('e', e);
   var $t = $(e.currentTarget);
   $('div.row.clearfix:not(:contains("Set"))', $t).slideToggle();
 }
@@ -208,13 +207,11 @@ function lighthouseKeeper(){
 
 
 document.getElementById("FinaliseQuickTextBox").onchange = function() {
-  console.log(this.value);
   var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
   masterViewModel.finalisationText(this.value);
 }
 
 document.getElementById("CompleteQuickTextBox").onchange = function() {
-  console.log(this.value);
   var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
   masterViewModel.finalisationText(this.value);
 }
@@ -289,13 +286,10 @@ function InstantTaskButton() {
 
   lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
 
-  console.log(lh_SectorFilterEnabled);
-  console.log(masterViewModel.sector.peek());
 
 
   if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true )
   {
-    console.log(lh_SectorFilterEnabled);
     theData.SectorIds = masterViewModel.sector.peek().Id
     theData.Unsectorised = true
   }
@@ -315,7 +309,6 @@ function InstantTaskButton() {
           sector = {}
           nonsector = []
           $.each(response.responseJSON.Results, function(k, v) {
-            //console.log(v.Id+","+v.Callsign)
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
             var item;
@@ -328,7 +321,6 @@ function InstantTaskButton() {
                 })
               }
             })
-            console.log(v)
             if (v.Sector === null)
             {
               nonsector.push(item)
@@ -344,7 +336,6 @@ function InstantTaskButton() {
             
           }
         })
-          console.log(sector)
           finalli = []
           drawnsectors = []
           //finalli.push(return_lipres(masterViewModel.sector.peek().Name+" Sector Teams"));
@@ -385,7 +376,6 @@ function TaskTeam(teamID) {
   data.TeamIds = TeamIds;
   data.JobIds = JobIds;
   datastring = JSON.stringify(data);
-  console.log(JSON.stringify(data))
   $.ajax({
     type: 'POST'
     , url: '/Api/v1/Tasking'
@@ -671,7 +661,6 @@ function checkAddressHistory(){
             }); // Loop End - response.responseJSON.Results
 
             // Use JSX to Render
-            //console.log('history_rows', history_rows);
             $job_view_history_container.html(
               <div>
               {_.map(_.filter(history_rows, function(row) { return row.always_show || row.jobs.length; }), function(groupData, groupKey){
