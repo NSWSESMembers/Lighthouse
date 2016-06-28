@@ -266,12 +266,18 @@ $.ajax({
 })
 break;
 case "entity":
-console.log("entity")
 $.ajax({
     type: 'GET'
-    , url: '/Api/v1/Entities/'+itm.OwnerId+'/Contacts'
+    , url: '/Api/v1/Contacts/Search'
     , cache: false
     , dataType: 'json'
+    , data: {
+      'PageIndex':          1
+      ,'PageSize':          1000
+      ,'HeadquarterIds[]':  itm.OwnerId
+      ,'SortField':         "createdon"
+      ,'SortOrder':         "asc"
+    }
     , complete: function(response, textStatus) {
         if(textStatus == 'success'){
             if(response.responseJSON.Results.length) {
