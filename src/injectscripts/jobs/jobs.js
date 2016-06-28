@@ -1,4 +1,4 @@
-function finallselected(words,beaconStringDate) { // Never ever use the following function for any purpose.
+window.FinaliseSelected = function FinaliseSelected(words,beaconStringDate) { // Never ever use the following function for any purpose.
   if( !confirm( "WARNING - Never ever use the following function for any purpose!\nAre you absolutely sure you want to proceed?" ) ){
     return false;
   }
