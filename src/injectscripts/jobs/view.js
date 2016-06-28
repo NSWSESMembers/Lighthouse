@@ -297,6 +297,7 @@ function InstantTaskButton() {
   {
     console.log(lh_SectorFilterEnabled);
     theData.SectorIds = masterViewModel.sector.peek().Id
+    theData.Unsectorised = true
   }
 
   $.ajax({
@@ -311,22 +312,60 @@ function InstantTaskButton() {
       {
         $(quickTask).find('ul').empty();
         if(response.responseJSON.Results.length) {
+          sector = {}
+          nonsector = []
           $.each(response.responseJSON.Results, function(k, v) {
             //console.log(v.Id+","+v.Callsign)
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
+            var item;
             $(v.Members).each(function(k, vv) {
               if (vv.TeamLeader)
               {
-                item = return_li(v.Id,v.Callsign.toUpperCase(),vv.Person.FirstName+" "+vv.Person.LastName);
+                item = return_li(v.Id,v.Callsign.toUpperCase(),vv.Person.FirstName+" "+vv.Person.LastName,v.TaskedJobCount+"");
                 $(item).click(function () {
                   TaskTeam(v.Id)
                 })
-                $(quickTask).find('ul').append(item)
               }
             })
+            console.log(v)
+            if (v.Sector === null)
+            {
+              nonsector.push(item)
+            } else {
+              var sectorName = v.Sector.Name;
+              if (sectorName in sector)
+              {
+                sector[sectorName].push(item)
+              } else {
+                sector[sectorName] = [item]
+              }
+            }
+            
           }
         })
+          console.log(sector)
+          finalli = []
+          drawnsectors = []
+          //finalli.push(return_lipres(masterViewModel.sector.peek().Name+" Sector Teams"));
+          $.each(sector, function(k, v){
+            if (k in drawnsectors)
+            {
+              finalli.push(v)
+            } else {
+              drawnsectors.push(k)
+              //if (finalli.length != 0) { finalli.push(return_lidivider()) };
+              finalli.push(return_lipres(k+ " Sector"))
+              finalli.push($(v))
+            }
+          })
+          //finalli.push(return_lidivider());
+          finalli.push(return_lipres("Unsectorised Teams"));
+          $.each(nonsector, function(k, v){
+            finalli.push(v)
+          })
+          $(quickTask).find('ul').append(finalli)
+
         } else {
           no_results = (<li><a href="#">No Active Field Teams</a></li>)
           $(quickTask).find('ul').append(no_results)
@@ -364,9 +403,21 @@ function TaskTeam(teamID) {
 }
 
 
-function return_li(id, callsign, teamleader) {
+function return_li(id, callsign, teamleader, JobCount) {
   return(
-    <li><a style="text-align:left" href="#"><b>{callsign}</b> - <small>{teamleader}</small></a></li>
+    <li><a style="text-align:left" href="#"><b>{callsign}</b> - <small>{teamleader}<sup>TL</sup></small></a></li>
+    )
+}
+
+function return_lipres(title) {
+  return(
+    <li style="text-align:left" role="presentation" class="dropdown-header">{title}</li>
+    )
+}
+
+function return_lidivider() {
+  return(
+    <li role="presentation" class="divider"></li>
     )
 }
 
