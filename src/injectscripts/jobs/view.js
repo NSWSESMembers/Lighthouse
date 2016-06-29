@@ -248,16 +248,10 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 });
 
 function InstantTaskButton() {
-  var date_options = {
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-    hour12: false
-  };
-  var now = new Date();
-  var end = new Date();
-  end.setYear(end.getFullYear() - 1);
-  var teams = []
+
+  var now = moment();
+  var end = moment();
+  end.subtract(1, 'y');
 
   alreadyTasked = []
   $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
@@ -271,8 +265,8 @@ function InstantTaskButton() {
   $(quickTask).find('ul').append(loading)
 
   theData = {
-    'StartDate':          end.toLocaleTimeString("en-us", date_options)
-    , 'EndDate':            now.toLocaleTimeString("en-us", date_options)
+    'StartDate':          end.toISOString()
+    , 'EndDate':            now.toISOString()
     , 'AssignedToId[]':     user.currentHqId
     , 'CreatedAtId[]':      user.currentHqId
     , 'TypeIds[]':          1
@@ -282,6 +276,7 @@ function InstantTaskButton() {
     , 'PageSize':           1000
     , 'SortField':          'Callsign'
     , 'SortOrder':          'asc'
+    ,'LighthouseFunction': 'InstantTaskButton' 
   }
 
   lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
@@ -379,7 +374,7 @@ function TaskTeam(teamID) {
   $.ajax({
     type: 'POST'
     , url: '/Api/v1/Tasking'
-    , data: {TeamIds: TeamIds, JobIds: JobIds}
+    , data: {TeamIds: TeamIds, JobIds: JobIds, LighthouseFunction: 'TaskTeam'}
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
@@ -522,17 +517,18 @@ function checkAddressHistory(){
   }
   q = q.substring(0, 30);
 
-  var now = new Date();
-  var end = new Date();
-  end.setYear(end.getFullYear() - 1);
+  var start = moment();
+  var now = new Date;
+  var end = moment();
+  end.subtract(1, 'y');
 
   $.ajax({
     type: 'GET'
     , url: '/Api/v1/Jobs/Search'
     , data: {
       'Q':                    q.substring(0, 30)
-      , 'StartDate':          end.toLocaleTimeString("en-us", date_options)
-      , 'EndDate':            now.toLocaleTimeString("en-us", date_options)
+      , 'StartDate':          end.toISOString()
+      , 'EndDate':            start.toISOString()
       , 'ViewModelType':      2
       , 'PageIndex':          1
       , 'PageSize':           1000
@@ -787,7 +783,8 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
     , data: {
       'Id':       TaskingID
       ,'TeamId':    TeamID    
-      , 'JobId':    JobID       
+      , 'JobId':    JobID
+      ,'LighthouseFunction': 'untaskTeamFromJob'       
     }
     , cache: false
     , dataType: 'json'

@@ -203,6 +203,7 @@ function LoadCollection(col,cb) {
             $.ajax({
                 type: 'GET'
                 , url: '/Api/v1/Entities/'+itm.OwnerId
+                , data: {LighthouseFunction: 'CollectionLoadCollection'}
                 , cache: false
                 , dataType: 'json'
                 , complete: function(response, textStatus) {
@@ -212,6 +213,7 @@ function LoadCollection(col,cb) {
                         $.ajax({
                             type: 'GET'
                             , url: '/Api/v1/ContactGroups/headquarters/'+itm.OwnerId
+                            , data: {LighthouseFunction: 'CollectionLoadHQ'}
                             , cache: false
                             , dataType: 'json'
                             , complete: function(response, textStatus) {
@@ -242,6 +244,7 @@ case "person":
 $.ajax({
     type: 'GET'
     , url: '/Api/v1/People/'+itm.OwnerId+'/Contacts'
+    , data: {LighthouseFunction: 'LoadPerson'}
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
@@ -277,6 +280,7 @@ $.ajax({
       ,'HeadquarterIds[]':  itm.OwnerId
       ,'SortField':         "createdon"
       ,'SortOrder':         "asc"
+      , 'LighthouseFunction': 'CollectionLoadEntity'
     }
     , complete: function(response, textStatus) {
         if(textStatus == 'success'){
