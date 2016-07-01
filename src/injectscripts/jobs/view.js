@@ -345,30 +345,32 @@ function InstantTaskButton() {
           if(response.responseJSON.Results.length) {
             $(quickTask).find('ul').empty();
 
+            /////
+            ///// Search Box
+            /////
             theSearch = return_search_box()
 
             $(theSearch).click(function (e) {
               e.stopPropagation();
             });
 
-
             $(theSearch).keyup(function (e) {
               e.stopPropagation();
               console.log(e.target.value)
-
-              $.each($(quickTask).find('ul').find('li'),function(k,v){
+              $.each($(quickTask).find('ul').find('li[role!="presentation"]'),function(k,v){
                 if (($(v)[0].innerText).toUpperCase().indexOf(e.target.value.toUpperCase()) == -1)
                 {
                   $(v).hide()
                 } else {
-                  $(v).show()
-                }
-                console.log($(v)[0].innerText);
-              })
+                 $(v).show()
+               }
+             })
 
             });
 
-
+            /////
+            ///// END Search Box
+            /////
 
 
             $(quickTask).find('ul').append(theSearch);
