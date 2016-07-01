@@ -264,46 +264,119 @@ function InstantTaskButton() {
   loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
   $(quickTask).find('ul').append(loading)
 
-  theData = {
-    'StartDate':          end.toISOString()
-    , 'EndDate':            now.toISOString()
-    , 'AssignedToId[]':     user.currentHqId
-    , 'CreatedAtId[]':      user.currentHqId
-    , 'TypeIds[]':          1
-    , 'IncludeDeleted':     false
-    , 'StatusTypeId[]':     3
-    , 'PageIndex':          1
-    , 'PageSize':           1000
-    , 'SortField':          'Callsign'
-    , 'SortOrder':          'asc'
-    ,'LighthouseFunction': 'InstantTaskButton' 
+  UnitsToSearch = []
+
+  if (user.hq.EntityTypeId != 1) {
+    console.log("HQ Entity is not a unit, will resolve group")
+    $.ajax({
+      type: 'GET'
+      , url: '/Api/v1/Entities/'+user.hq.Id+'/Children'
+      , data: {LighthouseFunction: 'QuickTaskResolveChildrenOfEntity'}
+      , cache: false
+      , dataType: 'json'
+      , complete: function(response, textStatus) {
+        console.log('textStatus = "%s"', textStatus, response);
+        if(textStatus == 'success')
+        {
+          if(response.responseJSON.length) {
+            $.each(response.responseJSON, function(k,v){
+              UnitsToSearch.push(v.Id);
+            })
+          }
+          GetQuickTaskTeams(UnitsToSearch)
+        }
+      }
+    })
+
+  } else {
+    UnitsToSearch.push(user.currentHqId)
+    GetQuickTaskTeams(UnitsToSearch)
+
   }
 
-  lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
+
+  function GetQuickTaskTeams(UnitsToSearch) {
 
 
 
-  if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true )
-  {
-    theData.SectorIds = masterViewModel.sector.peek().Id
-    theData.Unsectorised = true
-  }
+    theData = {
+      'StartDate':          end.toISOString()
+      , 'EndDate':            now.toISOString()
+      , 'TypeIds[]':          1
+      , 'IncludeDeleted':     false
+      , 'StatusTypeId[]':     3
+      , 'PageIndex':          1
+      , 'PageSize':           1000
+      , 'SortField':          'Callsign'
+      , 'SortOrder':          'asc'
+      ,'LighthouseFunction': 'InstantTaskButton' 
+    }
 
-  $.ajax({
-    type: 'GET'
-    , url: '/Api/v1/Teams/Search'
-    , data: theData
-    , cache: false
-    , dataType: 'json'
-    , complete: function(response, textStatus) {
-      console.log('textStatus = "%s"', textStatus, response);
-      if(textStatus == 'success')
-      {
-        $(quickTask).find('ul').empty();
-        if(response.responseJSON.Results.length) {
-          sector = {}
-          nonsector = []
-          $.each(response.responseJSON.Results, function(k, v) {
+    AssignedToId = []
+    CreatedAtId = []
+    $.each(UnitsToSearch, function(k,v){
+      AssignedToId.push(v)
+      CreatedAtId.push(v)
+    })
+
+    theData.AssignedToId = AssignedToId
+    theData.CreatedAtId = CreatedAtId
+
+    lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
+
+
+
+    if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true )
+    {
+      theData.SectorIds = masterViewModel.sector.peek().Id
+      theData.Unsectorised = true
+    }
+
+    $.ajax({
+      type: 'GET'
+      , url: '/Api/v1/Teams/Search'
+      , data: theData
+      , cache: false
+      , dataType: 'json'
+      , complete: function(response, textStatus) {
+        console.log('textStatus = "%s"', textStatus, response);
+        if(textStatus == 'success')
+        {
+          if(response.responseJSON.Results.length) {
+            $(quickTask).find('ul').empty();
+
+            theSearch = return_search_box()
+
+            $(theSearch).click(function (e) {
+              e.stopPropagation();
+            });
+
+
+            $(theSearch).keyup(function (e) {
+              e.stopPropagation();
+              console.log(e.target.value)
+
+              $.each($(quickTask).find('ul').find('li'),function(k,v){
+                if (($(v)[0].innerText).toUpperCase().indexOf(e.target.value.toUpperCase()) == -1)
+                {
+                  $(v).hide()
+                } else {
+                  $(v).show()
+                }
+                console.log($(v)[0].innerText);
+              })
+
+            });
+
+
+
+
+            $(quickTask).find('ul').append(theSearch);
+
+
+            sector = {}
+            nonsector = []
+            $.each(response.responseJSON.Results, function(k, v) {
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
             var item;
@@ -331,8 +404,10 @@ function InstantTaskButton() {
             
           }
         })
-          finalli = []
-          drawnsectors = []
+            finalli = []
+            drawnsectors = []
+
+
           //finalli.push(return_lipres(masterViewModel.sector.peek().Name+" Sector Teams"));
           $.each(sector, function(k, v){
             if (k in drawnsectors)
@@ -359,6 +434,7 @@ function InstantTaskButton() {
       }
     }
   })
+}
 }
 
 
@@ -387,6 +463,11 @@ function TaskTeam(teamID) {
   })
 }
 
+function return_search_box() {
+  return (
+    <input type="text" style="width: 95%; margin:auto" id="filterquicksearch" maxlength="30" class="form-control input-sm" placeholder="Filter"></input>
+    )
+}
 
 function return_li(id, callsign, teamleader, JobCount) {
   return(
@@ -426,6 +507,9 @@ document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
 function return_untask_button() {
   return (<sup style="margin-left: 10px;margin-right: -5px; cursor: pointer;">X</sup>)
 }
+
+
+
 $(document).ready(function() {
 
 
