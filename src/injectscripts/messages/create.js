@@ -195,7 +195,7 @@ function DeleteCollection(col) {
 
 function LoadCollection(col,cb) {
     $total = col.items.length;
-    msgsystem.selectedRecipients.destroyAll();
+    msgsystem.selectedRecipients.removeAll();
     col.items.forEach(function(itm) {
         switch (itm.type) {
             case "group":
@@ -281,25 +281,25 @@ $.ajax({
       ,'SortField':         "createdon"
       ,'SortOrder':         "asc"
       , 'LighthouseFunction': 'CollectionLoadEntity'
-    }
-    , complete: function(response, textStatus) {
-        if(textStatus == 'success'){
-            if(response.responseJSON.Results.length) {
-                $.each(response.responseJSON.Results, function(k, v) { 
-                    if (v.Id == itm.Id)
+  }
+  , complete: function(response, textStatus) {
+    if(textStatus == 'success'){
+        if(response.responseJSON.Results.length) {
+            $.each(response.responseJSON.Results, function(k, v) { 
+                if (v.Id == itm.Id)
+                {
+                    build_recipient(v,v.EntityName+ " ("+v.Description+")",v.Detail)
+                    $total = $total - 1;
+                    if ($total == 0 )
                     {
-                        build_recipient(v,v.EntityName+ " ("+v.Description+")",v.Detail)
-                        $total = $total - 1;
-                        if ($total == 0 )
-                        {
-                            cb();
-                        }
-
+                        cb();
                     }
-                })
-            }
+
+                }
+            })
         }
     }
+}
 })
 break;
 }
