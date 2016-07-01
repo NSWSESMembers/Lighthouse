@@ -53,11 +53,12 @@ Pull requests are welcome!
 
 ###To Do
 
-- Prefill "Primary Action" on job completion based of job type (you know, because of all the RCR we do on landsearch jobs).
-- Prefill "Contact" on send message screen to fill with users HQ.
+- Anything and everything we can think of
 
 ###Tested:
 
+- Message collections (quicksaves of message recipients)
+- Instant job to team tasking from job view screen
 - Map overlay to prevent theft of mouse when scrolling.
 - Quick Filters. Allows for fast access to complex filter groups when searching. eg, "All Open Jobs" selects all the job tags that mean open (New,Ack, Tasked, Refered)
 - Improvements to the search box - searching for a job ID will take you straight to that job
