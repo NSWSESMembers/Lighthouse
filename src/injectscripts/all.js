@@ -49,10 +49,21 @@ whenWeAreReady(user,function() {
           var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
 
           filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
+
           filtermenu = filtermenu.replace(/\$UNIT/g, user.hq.Code);
-          filtermenu = filtermenu.replace(/\$REGION/g, user.hq.ParentEntity.Code);
+
+
+
+          if (user.hq.EntityTypeId != 1) {
+            //make region level more obvious
+            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.ParentEntity.Code+" Units");
+          } else {
+            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.ParentEntity.Code);
+
+          }
 
           $('.main-menu > li:nth-child(1)').after(filtermenu);
+
 
           $("#filterallmyregion").click(function() {
             filterViewModel.selectedEntities.removeAll();
@@ -81,140 +92,145 @@ whenWeAreReady(user,function() {
        //with dates var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Time Range</a> <span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span> <span class="label tag tag-task tag-disabled" id="filter3day"><span class="tag-text">3 Days</span></span> <span class="label tag tag-task tag-disabled" id="filter7day"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30day"><span class="tag-text">30 Days</span></span> </span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Open</span></span> <span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span> <span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span> <span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span> <span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span> <span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
 
 
-        var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Open</span></span> <span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span> <span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span> <span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span> <span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span> <span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
+       var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Open</span></span> <span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span> <span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span> <span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span> <span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span> <span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
 
-        filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
-        filtermenu = filtermenu.replace(/\$UNIT/g, user.hq.Code);
-        filtermenu = filtermenu.replace(/\$REGION/g, user.hq.ParentEntity.Code);
+       filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
+       filtermenu = filtermenu.replace(/\$UNIT/g, user.hq.Code);
+       if (user.hq.EntityTypeId != 1) {
+            //make region level more obvious
+            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.Code+" Units");
+          } else {
+            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.ParentEntity.Code);
 
-        $('.main-menu > li:nth-child(1)').after(filtermenu);
+          }
+          $('.main-menu > li:nth-child(1)').after(filtermenu);
 
-        $("#filterrescue").click(function() {
-          filterViewModel.selectedParentJobTypes.removeAll();
-          filterViewModel.selectedFloodAssTypes.removeAll();
-          filterViewModel.parentJobTypeClicked({
-            Id: 5,
-            Name: "Rescue",
-            Description: "Rescue",
-            ParentId: null
+          $("#filterrescue").click(function() {
+            filterViewModel.selectedParentJobTypes.removeAll();
+            filterViewModel.selectedFloodAssTypes.removeAll();
+            filterViewModel.parentJobTypeClicked({
+              Id: 5,
+              Name: "Rescue",
+              Description: "Rescue",
+              ParentId: null
+            });
+            filterViewModel.updateFilters();
           });
-          filterViewModel.updateFilters();
-        });
 
-        $("#filterstorm").click(function() {
-          filterViewModel.selectedParentJobTypes.removeAll();
-          filterViewModel.selectedRescueTypes.removeAll();
-          filterViewModel.selectedFloodAssTypes.removeAll();
-          filterViewModel.parentJobTypeClicked({
-            Id: 1,
-            Name: "Storm",
-            Description: "Storm",
-            ParentId: null
+          $("#filterstorm").click(function() {
+            filterViewModel.selectedParentJobTypes.removeAll();
+            filterViewModel.selectedRescueTypes.removeAll();
+            filterViewModel.selectedFloodAssTypes.removeAll();
+            filterViewModel.parentJobTypeClicked({
+              Id: 1,
+              Name: "Storm",
+              Description: "Storm",
+              ParentId: null
+            });
+            filterViewModel.updateFilters();
           });
-          filterViewModel.updateFilters();
-        });
-        $("#filterflood").click(function() {
-          filterViewModel.selectedParentJobTypes.removeAll();
-          filterViewModel.selectedRescueTypes.removeAll();
-          filterViewModel.parentJobTypeClicked({
-            Id: 4,
-            Name: "Flood Assistance",
-            Description: "FloodAssistance",
-            ParentId: null
+          $("#filterflood").click(function() {
+            filterViewModel.selectedParentJobTypes.removeAll();
+            filterViewModel.selectedRescueTypes.removeAll();
+            filterViewModel.parentJobTypeClicked({
+              Id: 4,
+              Name: "Flood Assistance",
+              Description: "FloodAssistance",
+              ParentId: null
+            });
+            filterViewModel.rescueTypeClicked({
+              Id: 4,
+              Name: "FR",
+              Description: "Flood Rescue",
+              ParentId: 5
+            });
+            filterViewModel.updateFilters();
           });
-          filterViewModel.rescueTypeClicked({
-            Id: 4,
-            Name: "FR",
-            Description: "Flood Rescue",
-            ParentId: 5
+          $("#filteralltype").click(function() {
+            filterViewModel.selectedParentJobTypes.removeAll();
+            filterViewModel.selectedRescueTypes.removeAll();
+            filterViewModel.selectedFloodAssTypes.removeAll();
+            filterViewModel.updateFilters();
           });
-          filterViewModel.updateFilters();
-        });
-        $("#filteralltype").click(function() {
-          filterViewModel.selectedParentJobTypes.removeAll();
-          filterViewModel.selectedRescueTypes.removeAll();
-          filterViewModel.selectedFloodAssTypes.removeAll();
-          filterViewModel.updateFilters();
-        });
 
-        $("#filteropen").click(function() {
-          filterViewModel.selectedStatusTypes.removeAll();
-          filterViewModel.selectedStatusTypes.push({
-            Id: 2,
-            Name: "Acknowledged",
-            Description: "Acknowledged",
-            ParentId: null
+          $("#filteropen").click(function() {
+            filterViewModel.selectedStatusTypes.removeAll();
+            filterViewModel.selectedStatusTypes.push({
+              Id: 2,
+              Name: "Acknowledged",
+              Description: "Acknowledged",
+              ParentId: null
+            });
+            filterViewModel.selectedStatusTypes.push({
+              Id: 1,
+              Name: "New",
+              Description: "New",
+              ParentId: null
+            });
+            filterViewModel.selectedStatusTypes.push({
+              Id: 4,
+              Name: "Tasked",
+              Description: "Tasked",
+              ParentId: null
+            });
+            filterViewModel.selectedStatusTypes.push({
+              Id: 5,
+              Name: "Referred",
+              Description: "Referred",
+              ParentId: null
+            });
+            filterViewModel.updateFilters();
           });
-          filterViewModel.selectedStatusTypes.push({
-            Id: 1,
-            Name: "New",
-            Description: "New",
-            ParentId: null
-          });
-          filterViewModel.selectedStatusTypes.push({
-            Id: 4,
-            Name: "Tasked",
-            Description: "Tasked",
-            ParentId: null
-          });
-          filterViewModel.selectedStatusTypes.push({
-            Id: 5,
-            Name: "Referred",
-            Description: "Referred",
-            ParentId: null
-          });
-          filterViewModel.updateFilters();
-        });
 
-        $("#filterclosed").click(function() {
-          filterViewModel.selectedStatusTypes.removeAll();
-          filterViewModel.selectedStatusTypes.push({
-            Id: 6,
-            Name: "Complete",
-            Description: "Complete",
-            ParentId: null
+          $("#filterclosed").click(function() {
+            filterViewModel.selectedStatusTypes.removeAll();
+            filterViewModel.selectedStatusTypes.push({
+              Id: 6,
+              Name: "Complete",
+              Description: "Complete",
+              ParentId: null
+            });
+            filterViewModel.selectedStatusTypes.push({
+              Id: 7,
+              Name: "Cancelled",
+              Description: "Cancelled",
+              ParentId: null
+            });
+            filterViewModel.selectedStatusTypes.push({
+              Id: 3,
+              Name: "Rejected",
+              Description: "Rejected",
+              ParentId: null
+            });
+            filterViewModel.selectedStatusTypes.push({
+              Id: 8,
+              Name: "Finalised",
+              Description: "Finalised",
+              ParentId: null
+            });
+            filterViewModel.updateFilters();
           });
-          filterViewModel.selectedStatusTypes.push({
-            Id: 7,
-            Name: "Cancelled",
-            Description: "Cancelled",
-            ParentId: null
+
+          $("#filterallstatus").click(function() {
+            filterViewModel.selectedStatusTypes.removeAll();
+            filterViewModel.updateFilters();
           });
-          filterViewModel.selectedStatusTypes.push({
-            Id: 3,
-            Name: "Rejected",
-            Description: "Rejected",
-            ParentId: null
+
+          $("#filterallmyregion").click(function() {
+            filterViewModel.selectedEntities.removeAll();
+            filtershowallmyregion();
           });
-          filterViewModel.selectedStatusTypes.push({
-            Id: 8,
-            Name: "Finalised",
-            Description: "Finalised",
-            ParentId: null
+
+          $("#filtermyhq").click(function() {
+            filterViewModel.selectedEntities.removeAll();
+            filterViewModel.selectedEntities.push(user.hq);
+            filterViewModel.updateFilters();
           });
-          filterViewModel.updateFilters();
-        });
 
-        $("#filterallstatus").click(function() {
-          filterViewModel.selectedStatusTypes.removeAll();
-          filterViewModel.updateFilters();
-        });
-
-        $("#filterallmyregion").click(function() {
-          filterViewModel.selectedEntities.removeAll();
-          filtershowallmyregion();
-        });
-
-        $("#filtermyhq").click(function() {
-          filterViewModel.selectedEntities.removeAll();
-          filterViewModel.selectedEntities.push(user.hq);
-          filterViewModel.updateFilters();
-        });
-
-        $("#clearlocator").click(function() {
-          filterViewModel.selectedEntities.removeAll();
-          filterViewModel.updateFilters();
-        });
+          $("#clearlocator").click(function() {
+            filterViewModel.selectedEntities.removeAll();
+            filterViewModel.updateFilters();
+          });
 
       } // location.pathname == "/Jobs"
     } // xhttp.readyState == 4 && xhttp.status == 200
@@ -263,15 +279,15 @@ $(function(){
     .addClass(location.hostname.substring(0,location.hostname.indexOf('.')))
     // If Christmas
     .toggleClass('xmas', new Date().getMonth()==11);
-  
+
   // Adds CSS Class to BODY
 
   // Shortcuts search box - if Job Number entered, jump straight to that job
   $('form#layoutJobSearchForm')
-    .on('submit',function(e){
-      var $t = $(this) ,
-      $q = $('#layoutJobSearchFormJobQuery',$t) ,
-      val = $q.val();
+  .on('submit',function(e){
+    var $t = $(this) ,
+    $q = $('#layoutJobSearchFormJobQuery',$t) ,
+    val = $q.val();
       if ( /^\d{0,4}\-?\d{4}$/.test( val ) ) { // if the field contains 4 or more digits and nothing else
         document.location = '/Jobs/' + parseInt( val.replace(/\D/g,'') , 10 );
         e.preventDefault();
