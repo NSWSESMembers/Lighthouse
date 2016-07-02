@@ -430,6 +430,8 @@ function InstantTaskButton() {
           $(quickTask).find('ul').append(finalli)
 
         } else {
+                      $(quickTask).find('ul').empty();
+
           no_results = (<li><a href="#">No Active Field Teams</a></li>)
           $(quickTask).find('ul').append(no_results)
         }
