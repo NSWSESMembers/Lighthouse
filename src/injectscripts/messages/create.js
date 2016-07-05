@@ -71,7 +71,7 @@ $(document).ready(function() {
     $("#collectionsave").click(function() {
         if (msgsystem.selectedRecipients.peek().length > 0)
         {
-            var SaveName = prompt("Please enter a name for the collection", "");
+            var SaveName = prompt("Please enter a name for the collection. If the name already exists it will be overwritten.", "");
             if (SaveName !== null && SaveName != "") {
 
 
@@ -107,12 +107,21 @@ $(document).ready(function() {
                 CollectionParent.name = SaveName;
                 CollectionParent.description = SaveName;
                 CollectionParent.items = theCollection;
-                console.log(CollectionParent);
                 currentCollections = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
                 if (currentCollections === null)
                 {
                     currentCollections = [];
                 }
+                console.log(currentCollections);
+                newcurrentCollections = []
+                $.each(currentCollections,function(k,v){
+                    console.log(v)
+                    if (v.name != CollectionParent.name) //catch the dupes
+                    {
+                        newcurrentCollections.push(v) //delete the duplicate
+                    }
+                })
+                currentCollections = newcurrentCollections;
                 currentCollections.push(CollectionParent);
                 localStorage.setItem("lighthouseContactCollections", JSON.stringify(currentCollections));
                 LoadAllCollections();

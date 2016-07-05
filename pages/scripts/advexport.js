@@ -33,6 +33,7 @@ var lighthouse_fieldArray = {
     'SituationOnScene'                     : 'Situation On Scene' ,
     'Tags'                                 : 'Tags' ,
     'EntityAssignedTo.Code'                : 'HQ' ,
+    'LGA'                                  : 'LGA' ,
     'd.EntityAssignedTo.ParentEntity.Code' : 'Region' ,
     'd.Event.Identifier'                   : 'Event'
   } ,
