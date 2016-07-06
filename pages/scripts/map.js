@@ -2,12 +2,16 @@ var LighthouseJob = require('../lib/shared_job_code.js');
 var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseTeam = require('../lib/shared_team_code.js');
-
 var $ = require('jquery');
+
+global.jQuery = $;
+
+require('bootstrap');
+
+
 // inject css c/o browserify-css
 require('../styles/map.css');
 
-global.jQuery = $;
 
 var allMarkers = [];
 var map;
@@ -17,9 +21,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	//refresh button
 	$(document).ready(function() {
-		document.getElementById("refresh").onclick = function() {
+		$("#refresh").click(function() {
 			DoEverything();
-		}
+		})
+		$("#settings").click(function() {
+			$('#settingsmodal').modal('show');
+			$('#username').val(localStorage.getItem("LighthouseMapUserName"));
+			$('#apikey').val(localStorage.getItem("LighthouseMapAPIKey"));
+			$("#submitButton").click(function() {
+				localStorage.setItem("LighthouseMapUserName",$('#username').val())
+				localStorage.setItem("LighthouseMapAPIKey",$('#apikey').val())
+				$('#settingsmodal').modal('hide');
+				DoEverything()
+			})
+		})
 	});
 
 	GoogleMapsLoader = require("google-maps")
@@ -33,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		var mapCanvas = document.getElementById('map');
 
 		var mapOptions = {
-			center: 'New South Wales',
+			center: new google.maps.LatLng(0, 0),
 			zoom: 8,
 			zoomControl: true,
 			mapTypeControl: true,
@@ -59,8 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 //update every X seconds
 function startTimer(duration, display) {
-	var timer = duration,
-	minutes, seconds;
+	var timer = duration, minutes, seconds;
 	setInterval(function() {
 		minutes = parseInt(timer / 60, 10)
 		seconds = parseInt(timer % 60, 10);
@@ -86,12 +100,38 @@ function DoEverything() {
 				//we have loaded them all
 				console.log("All data sources have loaded")
 
-				//cleanup
+				//cleanup jobs and keep gps targets
+				tmpMarkers = [];
 				for (var i = 0; i < allMarkers.length; i++) {
-					allMarkers[i].setMap(null);
+
+					if (!(allMarkers[i].hasOwnProperty("DeviceID"))) //if its a RFA not a thing/person
+					{
+						allMarkers[i].setMap(null); //remove it. no point updating as they will not really move.
+					} else
+					{
+						found = -1;
+						for (var ii = 0; ii < teams.length; ii++) { //this should delete any markers that no longer exist in the teams resources
+							for (var iii = 0; iii < teams[ii].Resources.length; ii++) { //for every resouce iii in team ii
+								if (teams[ii].Resources[iii].Name.indexOf("Followmee:") != -1) { // if its a followmee resouce
+									if (allMarkers[i].DeviceID == teams[ii].Resources[iii].Description && found == -1)
+									{
+										found = iii;
+										tmpMarkers.push(allMarkers[i])
+									}
+								}
+							}
+						}
+						if (found == -1) //if there was no match in any team
+						{
+							console.log("deleting marker #" +allMarkers[i].DeviceID);
+							allMarkers[i].setMap(null); //remove it
+						}
+					}
 				}
 
-				allMarkers = [];
+
+
+				allMarkers = tmpMarkers;
 
 
 
@@ -107,29 +147,46 @@ function DoEverything() {
 										// var image = {
 										// 	url: 'https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=glyphish_map-marker|FFFFFF',
 										// };
-										var marker = new MarkerWithLabel({
-											position: {lat: v.Latitude, lng: v.Longitude},
-											map: map,
-											labelAnchor: new google.maps.Point(20, 0),
-											labelClass: "labels",
-											labelStyle: {opacity: 0.75},
-											labelContent: tv.Callsign,
-											icon: "/pages/images/truck.png"
-										});
-										allMarkers.push(marker);
+										found = -1;
+										for (var i = 0; i < allMarkers.length; i++) {
+											if (allMarkers[i].DeviceID == v.DeviceID && found == -1)
+											{
+												found = i;
+												allMarkers[i].setPosition({lat: v.Latitude, lng: v.Longitude})
+												console.log("Will update "+tv.Callsign+" marker")
+											}
+										}
+
+										if (found == -1)
+										{
+											console.log("Will draw "+tv.Callsign+" marker")
+											var marker = new MarkerWithLabel({
+												position: {lat: v.Latitude, lng: v.Longitude},
+												map: map,
+												labelAnchor: new google.maps.Point(20, 0),
+												labelClass: "labels",
+												labelStyle: {opacity: 0.75},
+												labelContent: tv.Callsign,
+												DeviceID: v.DeviceID,
+												icon: "/pages/images/truck.png"
+											});
+											allMarkers.push(marker);
+										}
 									}
 								}
 							})
-						}
-					})
+}
+})
 
-				})
+})
 
-				$.each(jobs, function(k, v) { 
-					console.log("Will draw")
-					console.log(v)
-					switch (v.JobPriorityType.Id){
-						case 1:
+$.each(jobs, function(k, v) { 
+	console.log("Will draw")
+	console.log(v)
+	switch (v.JobPriorityType.Id){
+		case 1:
+		var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="23" height="22"><path id="svg_1" fill-rule="evenodd" d="m10.499995,1.499995l9,9l-9,9l-9,-9l9,-9z" stroke-miterlimit="4" stroke-width="2" stroke="rgb(0, 0, 0)" fill="rgb(255, 0, 0)"/></svg>'
+						//red diamond
 						marker = new MarkerWithLabel({
 							position: {lat: v.Address.Latitude, lng: v.Address.Longitude},
 							map: map,
@@ -138,11 +195,33 @@ function DoEverything() {
 							labelClass: "rfalabels",
 							labelStyle: {opacity: 0.75},
 							labelContent: v.Id+"",
-							icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752125_en_v0" //red
+							JobId: v.Id,
+							icon: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(svg),
+
+							//icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752125_en_v0" //red
+							//icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAiklEQVR42mNgQIAoIF4NxGegdCCSHAMzEC+NUlH5v9rF5f+ZoCAwHaig8B8oPhOmKC1NU/P//7Q0DByrqgpSGAtSdOCAry9WRXt9fECK9oIUPXwYFYVV0e2ICJCi20SbFAuyG5uiECUlkKIQmOPng3y30d0d7Lt1bm4w301jQAOgcNoIDad1yOEEAFm9fSv/VqtJAAAAAElFTkSuQmCC"
+						});
+						break;
+						case 2:
+						var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="19" height="19"><path id="svg_1" fill-rule="evenodd" d="m1.992919,1.249204l13,0l-6.5,13l-6.5,-13z" stroke-miterlimit="4" stroke-width="2" stroke="rgb(0, 0, 0)" fill="rgb(79, 146, 255)"/></svg>'
+						//blue triangle
+						marker = new MarkerWithLabel({
+							position: {lat: v.Address.Latitude, lng: v.Address.Longitude},
+							map: map,
+							title: v.Id+"",
+							labelAnchor: new google.maps.Point(22, 0),
+							labelClass: "rfalabels",
+							labelStyle: {opacity: 0.75},
+							labelContent: v.Id+"",
+							JobId: v.Id,
+							icon: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(svg),
+							//icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752063_en_v0" //yellow
 							//icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAiklEQVR42mNgQIAoIF4NxGegdCCSHAMzEC+NUlH5v9rF5f+ZoCAwHaig8B8oPhOmKC1NU/P//7Q0DByrqgpSGAtSdOCAry9WRXt9fECK9oIUPXwYFYVV0e2ICJCi20SbFAuyG5uiECUlkKIQmOPng3y30d0d7Lt1bm4w301jQAOgcNoIDad1yOEEAFm9fSv/VqtJAAAAAElFTkSuQmCC"
 						});
 						break;
 						case 3:
+						var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="17" height="16"><path id="svg_1" fill-rule="evenodd" d="m1.50002,1.500018l12,0l0,12l-12,0l0,-12z" stroke-miterlimit="4" stroke-width="2" stroke="rgb(0, 0, 0)" fill="rgb(255, 165, 0)"/></svg>'
+						//orange square
 						marker = new MarkerWithLabel({
 							position: {lat: v.Address.Latitude, lng: v.Address.Longitude},
 							map: map,
@@ -151,20 +230,26 @@ function DoEverything() {
 							labelClass: "rfalabels",
 							labelStyle: {opacity: 0.75},
 							labelContent: v.Id+"",
-							icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752063_en_v0" //yellow
+							JobId: v.Id,
+							icon: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(svg),
+							//icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752063_en_v0" //yellow
 							//icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAiklEQVR42mNgQIAoIF4NxGegdCCSHAMzEC+NUlH5v9rF5f+ZoCAwHaig8B8oPhOmKC1NU/P//7Q0DByrqgpSGAtSdOCAry9WRXt9fECK9oIUPXwYFYVV0e2ICJCi20SbFAuyG5uiECUlkKIQmOPng3y30d0d7Lt1bm4w301jQAOgcNoIDad1yOEEAFm9fSv/VqtJAAAAAElFTkSuQmCC"
 						});
 						break;
 						case 4:
+						var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="15"><circle fill="rgb(102, 204, 0)" fill-opacity="1" stroke="rgb(0, 0, 0)" stroke-opacity="1" stroke-width="2" stroke-linecap="butt" stroke-linejoin="miter" stroke-miterlimit="4" cx="7" cy="7" r="6" fill-rule="evenodd" stroke-dasharray="none" dojoGfxStrokeStyle="solid"></circle></svg>';
+						//green dot
 						marker = new MarkerWithLabel({
 							position: {lat: v.Address.Latitude, lng: v.Address.Longitude},
 							title: v.Id+"",
 							map: map,
-							labelAnchor: new google.maps.Point(22, 0),
+							labelAnchor: new google.maps.Point(20, 0),
 							labelClass: "rfalabels",
 							labelStyle: {opacity: 0.75},
 							labelContent: v.Id+"",
-							icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752129_en_v0" //green
+							JobId: v.Id,
+							//icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752129_en_v0" //green
+							icon: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(svg),
 							//icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAiklEQVR42mNgQIAoIF4NxGegdCCSHAMzEC+NUlH5v9rF5f+ZoCAwHaig8B8oPhOmKC1NU/P//7Q0DByrqgpSGAtSdOCAry9WRXt9fECK9oIUPXwYFYVV0e2ICJCi20SbFAuyG5uiECUlkKIQmOPng3y30d0d7Lt1bm4w301jQAOgcNoIDad1yOEEAFm9fSv/VqtJAAAAAElFTkSuQmCC"
 						});
 						break;
@@ -177,13 +262,14 @@ function DoEverything() {
 							labelClass: "rfalabels",
 							labelStyle: {opacity: 0.75},
 							labelContent: v.Id+"",
+							JobId: v.Id,
 							icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752129_en_v0" //green
 							//icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAiklEQVR42mNgQIAoIF4NxGegdCCSHAMzEC+NUlH5v9rF5f+ZoCAwHaig8B8oPhOmKC1NU/P//7Q0DByrqgpSGAtSdOCAry9WRXt9fECK9oIUPXwYFYVV0e2ICJCi20SbFAuyG5uiECUlkKIQmOPng3y30d0d7Lt1bm4w301jQAOgcNoIDad1yOEEAFm9fSv/VqtJAAAAAElFTkSuQmCC"
 						});
 					}
 
 					var iw = new google.maps.InfoWindow({
-						content: "<b>#"+v.Id+""</b>"<br>"+v.SituationOnScene
+						content: "<b>#"+v.Id+"</b><br>"+v.SituationOnScene
 					});
 					google.maps.event.addListener(marker, "click", function (e) { iw.open(map, this); });
 
@@ -252,7 +338,7 @@ function LoadAllData(cb) {
 
 		LoadFollowMee(function(data) {
 			console.log(data);
-			if(data.length) {
+			if(data !== undefined) {
 				allFollowmee = data;
 			}
 			LoadComplete();
@@ -261,18 +347,31 @@ function LoadAllData(cb) {
 }
 
 function LoadFollowMee(cb) {
-	$.ajax({
-		url: 'https://www.followmee.com/api/tracks.aspx',
-		data: {key: 'a63af6c5258e9d9498810e5f23e38fe5', username: 'ttdykes', output: 'json', function: 'currentforalldevices'},
-		dataType: 'jsonp',
-		complete: function(response, textStatus) {
-			if(textStatus == 'success')
-			{
-				cb(response.responseJSON.Data);
-			}
-		},
+	username = localStorage.getItem("LighthouseMapUserName");
+	key = localStorage.getItem("LighthouseMapAPIKey");
+	console.log(key)
+	if (key == "undefined" || username == "undefined")
+	{
+		console.log("No Followmee Key or Username. Will not talk to Followmee")		
+		cb({})
+	} else 
+	{
+		console.log("Will talk to Followmee with "+key)		
 
-	});
+		$('#apikey').val(localStorage.getItem("LighthouseMapAPIKey"));
+		$.ajax({
+			url: 'https://www.followmee.com/api/tracks.aspx',
+			data: {key: key, username: username, output: 'json', function: 'currentforalldevices'},
+			dataType: 'jsonp',
+			complete: function(response, textStatus) {
+				if(textStatus == 'success')
+				{
+					cb(response.responseJSON.Data);
+				}
+			},
+
+		});
+	}
 }
 
 
