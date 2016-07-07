@@ -107,5 +107,5 @@
   "background": {
     "scripts": ["background.js"]
   },
-    "content_security_policy": "script-src 'self' https://maps.googleapis.com https://www.followmee.com; object-src 'self'" 
+    "content_security_policy": "script-src 'self' https://maps.googleapis.com https://www.followmee.com/api/; object-src 'self'" 
 }

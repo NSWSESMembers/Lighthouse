@@ -2,6 +2,7 @@ var LighthouseJob = require('../lib/shared_job_code.js');
 var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseTeam = require('../lib/shared_team_code.js');
+var LighthouseResource = require('../lib/shared_resources_code.js');
 var $ = require('jquery');
 
 global.jQuery = $;
@@ -17,23 +18,33 @@ var allMarkers = [];
 var map;
 var MarkerWithLabel;
 document.addEventListener('DOMContentLoaded', function() {
+
+	if (localStorage.getItem("LighthouseMapDisplayAll") === null)
+	{
+		localStorage.setItem("LighthouseMapDisplayAll",'yes')
+	}
+
 	console.log("maps ready")
 
 	//refresh button
 	$(document).ready(function() {
 		$("#refresh").click(function() {
-			DoEverything();
+			DoEverything(map);
 		})
 		$("#settings").click(function() {
 			$('#settingsmodal').modal('show');
 			$('#username').val(localStorage.getItem("LighthouseMapUserName"));
 			$('#apikey').val(localStorage.getItem("LighthouseMapAPIKey"));
-			$("#submitButton").click(function() {
-				localStorage.setItem("LighthouseMapUserName",$('#username').val())
-				localStorage.setItem("LighthouseMapAPIKey",$('#apikey').val())
-				$('#settingsmodal').modal('hide');
-				DoEverything()
-			})
+			$('input[name=displayAll]').val([localStorage.getItem("LighthouseMapDisplayAll")]);
+
+		})
+		$("#submitButton").click(function() {
+			localStorage.setItem("LighthouseMapUserName",$('#username').val())
+			localStorage.setItem("LighthouseMapAPIKey",$('#apikey').val())
+			localStorage.setItem("LighthouseMapDisplayAll",$('input[name=displayAll]:checked').val())
+			$('#settingsmodal').modal('hide');
+			DoEverything(map)
+
 		})
 	});
 
@@ -63,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		MarkerWithLabel = require('markerwithlabel')(google.maps);
 
 
-		DoEverything()
+		DoEverything(map)
 
 		  //run every X period of time the main loop.
 		  display = document.querySelector('#time');
@@ -86,104 +97,147 @@ function startTimer(duration, display) {
 
     if (--timer < 0) { //when the timer is 0 run the code
     	timer = duration;
-    	DoEverything();
+    	DoEverything(map);
     }
 }, 1000);
 }
 
-function DoEverything() {
+function DoEverything(map) {
 
 
 
-	LoadAllData(function(teams,followmee,jobs) {
-		
-				//we have loaded them all
-				console.log("All data sources have loaded")
+	LoadAllData(map,function() {
 
-				//cleanup jobs and keep gps targets
-				tmpMarkers = [];
-				for (var i = 0; i < allMarkers.length; i++) {
+		var bounds = new google.maps.LatLngBounds();
+		for (var i = 0; i < allMarkers.length; i++) {
+			bounds.extend(allMarkers[i].getPosition());
+		}
 
-					if (!(allMarkers[i].hasOwnProperty("DeviceID"))) //if its a RFA not a thing/person
+		map.fitBounds(bounds);
+
+		google.maps.event.addListenerOnce(map, 'bounds_changed', function(event) {
+			if (this.getZoom() > 15) {
+				this.setZoom(15);
+			}
+		});
+
+
+	});
+
+}
+
+
+function LoadAllData(map, cb) {
+
+	DataSourceLoadCount = 2; //Trackables and jobs
+	allTrackableIds = [];
+
+	function LoadComplete() {
+		console.log("something finished")
+		DataSourceLoadCount = DataSourceLoadCount - 1;
+		if (DataSourceLoadCount == 0)
+		{
+			console.log("All finished")
+			CleanupDeletedTrackables(map,allTrackableIds)
+			cb()
+		}
+	}
+
+
+	params = getSearchParameters();
+
+
+	LighthouseUnit.get_unit_name(params.hq, params.host, function(unit) {
+
+		LighthouseResource.get_unit_resouces(params.hq, params.host, function(resources) {
+			
+			TotalToProcess = 0
+			$.each(resources.Results,function (rk,rv) { //for every resource ifset
+				console.log(rv)
+				if (rv.Name.substring(0, 4) == ("LHM:")) { //if its a trackable
+
+					if (localStorage.getItem("LighthouseMapDisplayAll") == 'no' && rv.TeamAttachedTo === null)
+					{
+						return false;
+					}
+					TotalToProcess++;
+					allTrackableIds.push(rv.Description.split(":")[1])
+					switch (rv.Description.split(":")[0])
+					{
+						case "FollowMee":
+						description = rv.Description.split(":");
+						LoadFollowMee(description[1],function(result) {
+							callsign = (rv.TeamAttachedTo === null) ? result.DeviceName : rv.TeamAttachedTo.Text;
+							console.log(result);
+							tmpTrackable = {};
+							tmpTrackable.Callsign = callsign;
+							tmpTrackable.Accuracy = result.Accuracy;
+							//tmpTrackable.Altitude(m) = result.Altitude(m);
+							tmpTrackable.DeviceID = result.DeviceID;
+							tmpTrackable.DeviceName = result.DeviceName;
+							tmpTrackable.Latitude = result.Latitude;
+							tmpTrackable.Longitude = result.Longitude;
+							//tmpTrackable.Speed(km/h) = result.Speed(km/h);
+							tmpTrackable.Type = result.Type;
+							console.log(tmpTrackable);
+							drawTrackable(map,tmpTrackable)
+							TotalToProcess--;
+							console.log(TotalToProcess)
+							if (TotalToProcess == 0)  //cleanup after each pull if its the last
+							{
+								
+								LoadComplete()
+							}
+						})
+						break;
+					}
+				}
+				
+			})
+			if (TotalToProcess == 0) //cleanup after the for loop of all resources
+			{
+				LoadComplete()
+			}
+
+		})
+
+
+LoadJobs(unit,params,function(data) {
+
+
+	tmpMarkers = [];
+	for (var i = 0; i < allMarkers.length; i++) {
+
+					if (!("DeviceID" in allMarkers[i])) //if its a RFA not a thing/person
 					{
 						allMarkers[i].setMap(null); //remove it. no point updating as they will not really move.
 					} else
 					{
-						found = -1;
-						for (var ii = 0; ii < teams.length; ii++) { //this should delete any markers that no longer exist in the teams resources
-							for (var iii = 0; iii < teams[ii].Resources.length; ii++) { //for every resouce iii in team ii
-								if (teams[ii].Resources[iii].Name.indexOf("Followmee:") != -1) { // if its a followmee resouce
-									if (allMarkers[i].DeviceID == teams[ii].Resources[iii].Description && found == -1)
-									{
-										found = iii;
-										tmpMarkers.push(allMarkers[i])
-									}
-								}
-							}
-						}
-						if (found == -1) //if there was no match in any team
-						{
-							console.log("deleting marker #" +allMarkers[i].DeviceID);
-							allMarkers[i].setMap(null); //remove it
-						}
+
+						tmpMarkers.push(allMarkers[i])
 					}
 				}
-
-
-
 				allMarkers = tmpMarkers;
 
-
-
-				$.each(followmee, function (k, v) { //for every followmee result
-					$.each(teams, function (tk,tv) { //for every team
-						if (tv.Resources.length) { 
-							$.each(tv.Resources,function (rk,rv) { //for every resouce ifset
-								console.log(rv)
-
-								if (rv.Name.indexOf("Followmee:") != -1) {
-									if (rv.Description == v.DeviceID) { //match
-										console.log(v)
-										// var image = {
-										// 	url: 'https://chart.googleapis.com/chart?chst=d_map_pin_icon&chld=glyphish_map-marker|FFFFFF',
-										// };
-										found = -1;
-										for (var i = 0; i < allMarkers.length; i++) {
-											if (allMarkers[i].DeviceID == v.DeviceID && found == -1)
-											{
-												found = i;
-												allMarkers[i].setPosition({lat: v.Latitude, lng: v.Longitude})
-												console.log("Will update "+tv.Callsign+" marker")
-											}
-										}
-
-										if (found == -1)
-										{
-											console.log("Will draw "+tv.Callsign+" marker")
-											var marker = new MarkerWithLabel({
-												position: {lat: v.Latitude, lng: v.Longitude},
-												map: map,
-												labelAnchor: new google.maps.Point(20, 0),
-												labelClass: "labels",
-												labelStyle: {opacity: 0.75},
-												labelContent: tv.Callsign,
-												DeviceID: v.DeviceID,
-												icon: "/pages/images/truck.png"
-											});
-											allMarkers.push(marker);
-										}
-									}
-								}
-							})
+				$.each(data, function(k, v) { 
+					if (v.JobStatusType.Id != 8 & v.JobStatusType.Id != 6 & v.JobStatusType.Id != 7)
+					{
+						console.log("Will draw job")
+						if (v.Address.Latitude && v.Address.Longitude) {
+							drawJob(map,v)
+						}
+					}
+				})
+				LoadComplete();
+			})
+})
 }
-})
 
-})
 
-$.each(jobs, function(k, v) { 
-	console.log("Will draw")
-	console.log(v)
-	switch (v.JobPriorityType.Id){
+
+function drawJob(map, v) {
+
+	switch (v.JobPriorityType.Id) {
 		case 1:
 		var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="23" height="22"><path id="svg_1" fill-rule="evenodd" d="m10.499995,1.499995l9,9l-9,9l-9,-9l9,-9z" stroke-miterlimit="4" stroke-width="2" stroke="rgb(0, 0, 0)" fill="rgb(255, 0, 0)"/></svg>'
 						//red diamond
@@ -267,89 +321,87 @@ $.each(jobs, function(k, v) {
 							//icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAiklEQVR42mNgQIAoIF4NxGegdCCSHAMzEC+NUlH5v9rF5f+ZoCAwHaig8B8oPhOmKC1NU/P//7Q0DByrqgpSGAtSdOCAry9WRXt9fECK9oIUPXwYFYVV0e2ICJCi20SbFAuyG5uiECUlkKIQmOPng3y30d0d7Lt1bm4w301jQAOgcNoIDad1yOEEAFm9fSv/VqtJAAAAAElFTkSuQmCC"
 						});
 					}
-
+					sis = (v.SituationOnScene === null) ? "" : v.SituationOnScene;
 					var iw = new google.maps.InfoWindow({
-						content: "<b>#"+v.Id+"</b><br>"+v.SituationOnScene
+						content: "<div align=center><b>#"+v.Id+"</b><br>"+v.Address.PrettyAddress+"<br><small>"+v.Tags.map(function(elem){return elem.Name;}).join(",")+"</small><br>"+sis+"</div>"
 					});
 					google.maps.event.addListener(marker, "click", function (e) { iw.open(map, this); });
 
 					allMarkers.push(marker);
 
-				})
-
-var bounds = new google.maps.LatLngBounds();
-for (var i = 0; i < allMarkers.length; i++) {
-	bounds.extend(allMarkers[i].getPosition());
-}
-
-map.fitBounds(bounds);
+				}
 
 
-})
-}
 
+				function drawTrackable(map, item) {
+					found = -1;
+					for (var i = 0; i < allMarkers.length; i++) {
 
-function LoadAllData(cb) {
-
-	allJobs = [];
-	allFollowmee = [];
-	allTeams = [];
-	DataSourceLoadCount = 3;
-
-	function LoadComplete() {
-		console.log("something finished")
-		DataSourceLoadCount = DataSourceLoadCount - 1;
-		if (DataSourceLoadCount == 0)
+		if ("DeviceID" in allMarkers[i]) //if its a trackable
 		{
-			console.log("All finished")
+			if (allMarkers[i].DeviceID == item.DeviceID && found == -1)
+			{
+				found = i;
+				allMarkers[i].setPosition({lat: item.Latitude, lng: item.Longitude})
+				console.log("Will update "+item.DeviceID+" marker")
+				if (allMarkers[i].labelContent != item.Callsign)
+				{
+					allMarkers[i].setMap(null)
+					allMarkers.splice(i,1)
+					allMarkers.push(makeTrackableMarker(item));
 
-			cb(allTeams,allFollowmee,allJobs)
+				}
+			}
 		}
 	}
 
+	if (found == -1)
+	{
+		console.log("Will draw "+item.DeviceID+" marker")
+		allMarkers.push(makeTrackableMarker(item));
+	}
+}
 
-	params = getSearchParameters();
-
-
-	LighthouseUnit.get_unit_name(params.hq, params.host, function(unit) {
-
-
-		LoadTeams(unit,params,function(data) {
-
-			console.log(data)
-			allTeams = data;
-			LoadComplete();
-
-		})
-
-		LoadJobs(unit,params,function(data) {
-			$.each(data, function(k, v) { 
-				if (v.JobStatusType.Id != 8 & v.JobStatusType.Id != 6 & v.JobStatusType.Id != 7)
-				{
-
-					console.log("Will save job")
-					if (v.Address.Latitude && v.Address.Longitude) {
-						allJobs.push(v);
-					}
-				}
-			})
-			LoadComplete();
-		})
-
-		LoadFollowMee(function(data) {
-			console.log(data);
-			if(data !== undefined) {
-				allFollowmee = data;
-			}
-			LoadComplete();
-		})
+function makeTrackableMarker(item)
+{
+	return new MarkerWithLabel({
+		position: {lat: item.Latitude, lng: item.Longitude},
+		map: map,
+		labelAnchor: new google.maps.Point(20, 0),
+		labelClass: "labels",
+		labelStyle: {opacity: 0.75},
+		labelContent: item.Callsign,
+		DeviceID: item.DeviceID,
+		icon: "/pages/images/truck.png"
 	})
 }
 
-function LoadFollowMee(cb) {
+function CleanupDeletedTrackables(map,alltrackable){
+	console.log("Cleaning up markers")
+	newMarkerArray = []
+	for (var i = 0; i < allMarkers.length; i++) {
+		if ("DeviceID" in allMarkers[i]) //if its a trackable
+		{
+			console.log(allMarkers[i]+" Is Device")
+			if (alltrackable.indexOf(allMarkers[i].DeviceID) == -1) //and its not in the list
+			{
+				allMarkers[i].setMap(null); //pull it from the map and dont add it to the new array
+				console.log(allMarkers[i]+" will be deleted")
+			} else {
+				newMarkerArray.push(allMarkers[i]) //its valid so keep it
+				console.log(allMarkers[i]+" will NOT be deleted")
+
+			}
+		} else {
+			newMarkerArray.push(allMarkers[i]) //its not a trackable so keep it
+		}
+	}
+	allMarkers = newMarkerArray;
+}
+
+function LoadFollowMee(theID, cb) {
 	username = localStorage.getItem("LighthouseMapUserName");
 	key = localStorage.getItem("LighthouseMapAPIKey");
-	console.log(key)
 	if (key == "undefined" || username == "undefined")
 	{
 		console.log("No Followmee Key or Username. Will not talk to Followmee")		
@@ -358,15 +410,14 @@ function LoadFollowMee(cb) {
 	{
 		console.log("Will talk to Followmee with "+key)		
 
-		$('#apikey').val(localStorage.getItem("LighthouseMapAPIKey"));
-		$.ajax({
+		$.get({
 			url: 'https://www.followmee.com/api/tracks.aspx',
-			data: {key: key, username: username, output: 'json', function: 'currentforalldevices'},
+			data: {key: key, username: username, output: 'json', function: 'currentfordevice', deviceid: theID},
 			dataType: 'jsonp',
 			complete: function(response, textStatus) {
 				if(textStatus == 'success')
 				{
-					cb(response.responseJSON.Data);
+					cb(response.responseJSON.Data[0]);
 				}
 			},
 
@@ -377,7 +428,6 @@ function LoadFollowMee(cb) {
 
 function fetchComplete(jobsData,cb) {
 	console.log("Done fetching from beacon");
-	console.log(jobsData);
 	cb(jobsData.Results)
 
 }
