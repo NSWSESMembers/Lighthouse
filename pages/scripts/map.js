@@ -155,23 +155,30 @@ function LoadAllData(map, cb) {
 			$.each(resources.Results,function (rk,rv) { //for every resource ifset
 				console.log(rv)
 				if (rv.Name.substring(0, 4) == ("LHM:")) { //if its a trackable
-
+					console.log("Found a LHM");
 					if (localStorage.getItem("LighthouseMapDisplayAll") == 'no' && rv.TeamAttachedTo === null)
 					{
+						console.log("Ignoring this one")
 						return false;
 					}
-					TotalToProcess++;
+					
 					allTrackableIds.push(rv.Description.split(":")[1])
+					console.log(rv.Description.split(":")[0]);
 					switch (rv.Description.split(":")[0])
 					{
 						case "FollowMee":
+						TotalToProcess++;
+						console.log("Requesting Followmee:"+rv.Description.split(":")[1])
 						description = rv.Description.split(":");
 						LoadFollowMee(description[1],function(result) {
-							callsign = (rv.TeamAttachedTo === null) ? result.DeviceName : rv.TeamAttachedTo.Text;
-							console.log(result);
-							tmpTrackable = {};
-							tmpTrackable.Callsign = callsign;
-							tmpTrackable.Accuracy = result.Accuracy;
+							console.log(result)
+							if ('Latitude' in result) //assume its valid
+							{
+								callsign = (rv.TeamAttachedTo === null) ? result.DeviceName : rv.TeamAttachedTo.Text;
+								console.log(result);
+								tmpTrackable = {};
+								tmpTrackable.Callsign = callsign;
+								tmpTrackable.Accuracy = result.Accuracy;
 							//tmpTrackable.Altitude(m) = result.Altitude(m);
 							tmpTrackable.DeviceID = result.DeviceID;
 							tmpTrackable.DeviceName = result.DeviceName;
@@ -188,8 +195,22 @@ function LoadAllData(map, cb) {
 								
 								LoadComplete()
 							}
-						})
+						} else { //got a error back from API. lets just ignore this one!
+							TotalToProcess--;
+							if (TotalToProcess == 0)  //cleanup after each pull if its the last
+							{
+								
+								LoadComplete()
+							}
+						}
+					})
 						break;
+						default:
+						if (TotalToProcess == 0)  //cleanup after each pull if its the last
+						{
+
+							LoadComplete()
+						}
 					}
 				}
 				
@@ -210,10 +231,9 @@ LoadJobs(unit,params,function(data) {
 
 					if (!("DeviceID" in allMarkers[i])) //if its a RFA not a thing/person
 					{
-						allMarkers[i].setMap(null); //remove it. no point updating as they will not really move.
+						allMarkers[i].setMap(null); //remove it. no point updating as they will not really move but their stats will change
 					} else
 					{
-
 						tmpMarkers.push(allMarkers[i])
 					}
 				}
@@ -228,6 +248,7 @@ LoadJobs(unit,params,function(data) {
 						}
 					}
 				})
+				console.log("jobs complete")
 				LoadComplete();
 			})
 })
@@ -415,9 +436,17 @@ function LoadFollowMee(theID, cb) {
 			data: {key: key, username: username, output: 'json', function: 'currentfordevice', deviceid: theID},
 			dataType: 'jsonp',
 			complete: function(response, textStatus) {
+
 				if(textStatus == 'success')
 				{
-					cb(response.responseJSON.Data[0]);
+					if ("Error" in response.responseJSON)
+					{
+						console.log("Followme error:" +response.responseJSON.Error)
+						cb({})
+					} else
+					{
+						cb(response.responseJSON.Data[0]);
+					}
 				}
 			},
 
