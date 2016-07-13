@@ -378,19 +378,25 @@ function InstantTaskButton() {
 
             sector = {}
             nonsector = []
-            $.each(response.responseJSON.Results, function(k, v) {
+            $.each(response.responseJSON.Results, function(k, v) { //for every team that came back
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
             var item;
-            $(v.Members).each(function(k, vv) {
-              if (vv.TeamLeader)
-              {
-                item = return_li(v.Id,v.Callsign.toUpperCase(),vv.Person.FirstName+" "+vv.Person.LastName,v.TaskedJobCount+"");
-                $(item).click(function () {
-                  TaskTeam(v.Id)
-                })
-              }
-            })
+            if (v.Members.length == 0)
+            {
+              item = return_li(v.Id,v.Callsign.toUpperCase(),null,v.TaskedJobCount+"");
+            } else
+            {
+              $(v.Members).each(function(k, vv) {
+                if (vv.TeamLeader)
+                {
+                  item = return_li(v.Id,v.Callsign.toUpperCase(),vv.Person.FirstName+" "+vv.Person.LastName,v.TaskedJobCount+"");
+                  $(item).click(function () {
+                    TaskTeam(v.Id)
+                  })
+                }
+              })
+            }
             if (v.Sector === null)
             {
               nonsector.push(item)
@@ -406,8 +412,8 @@ function InstantTaskButton() {
             
           }
         })
-            finalli = []
-            drawnsectors = []
+finalli = []
+drawnsectors = []
 
 
           //finalli.push(return_lipres(masterViewModel.sector.peek().Name+" Sector Teams"));
@@ -430,7 +436,7 @@ function InstantTaskButton() {
           $(quickTask).find('ul').append(finalli)
 
         } else {
-                      $(quickTask).find('ul').empty();
+          $(quickTask).find('ul').empty();
 
           no_results = (<li><a href="#">No Active Field Teams</a></li>)
           $(quickTask).find('ul').append(no_results)
@@ -474,9 +480,17 @@ function return_search_box() {
 }
 
 function return_li(id, callsign, teamleader, JobCount) {
-  return(
-    <li><a style="text-align:left" href="#"><b>{callsign}</b> - <small>{teamleader}<sup>TL</sup></small></a></li>
-    )
+  console.log(teamleader)
+  if (teamleader != null)
+  {
+    return(
+      <li><a style="text-align:left" href="#"><b>{callsign}</b> - <small>{teamleader}<sup>TL</sup></small></a></li>
+      )
+  } else {
+    return(
+      <li><a style="text-align:left" href="#"><b>{callsign}</b> - <i><small>No Members</small></i></a></li>
+      )
+  }
 }
 
 function return_lipres(title) {
