@@ -73,7 +73,7 @@ Pull requests are welcome!
 - Job summary and statistics page that feeds directly from beacon filters.
 - Quick Text on team completion and job finalisation.
 - Quick Task on team completion.
-- Fixed message line breaks. Instead of showing `<br>` an actual line break is inserted into the message correctly.
+- ~~Fixed message line breaks. Instead of showing `<br>` an actual line break is inserted into the message correctly.~~
 - Added more pagination choices to tasking and job list.
 - Christmas theme :p
 
