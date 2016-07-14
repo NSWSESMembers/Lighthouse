@@ -1,9 +1,10 @@
-var DOM = require('jsx-dom-factory');
-
 whenWeAreReady(user,function() {
 
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
+
+
+
     if (xhttp.readyState == 4 && xhttp.status == 200) {
       results = JSON.parse(xhttp.responseText);
 
@@ -30,6 +31,9 @@ whenWeAreReady(user,function() {
       lighthouseMenu = MakeMenu(lighthouseUrl,vars,user.hq.Code)
 
       function MakeMenu(lighthouseUrl, vars, unitName) {
+        DOM = require('jsx-dom-factory');
+
+
         return (
           <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">

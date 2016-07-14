@@ -1,6 +1,6 @@
 var inject = require('../../../lib/inject.js');
-var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
+var DOM = require('jsx-dom-factory');
 var $ = require('jquery');
 
 

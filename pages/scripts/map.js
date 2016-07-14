@@ -77,7 +77,6 @@ console.log("maps ready")
 		var tour = new Tour({
 			smartPlacement: true,
 			placement: "right",
-			storage: false,
 			debug: true,
 			steps: [
 			{
@@ -589,7 +588,7 @@ function makeTrackableMarker(item)
 	});
 
 	var image = {
-        url: '/pages/images/map_icons/SESYeam_v1.png', // image is 512 x 512
+        url: '/pages/images/map_icons/TruckSES_v3.png', // image is 512 x 512
         scaledSize : new google.maps.Size(30, 34)
     };
     var theMarker =  new MarkerWithLabel({
