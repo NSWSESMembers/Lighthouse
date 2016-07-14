@@ -31,43 +31,41 @@ whenWeAreReady(user,function() {
       lighthouseMenu = MakeMenu(lighthouseUrl,vars,user.hq.Code)
 
       function MakeMenu(lighthouseUrl, vars, unitName) {
-        DOM = require('jsx-dom-factory');
-
-
-        return (
-          <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-          <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src={lighthouseUrl+"icons/lh.png"}></img>Lighthouse</span>
-          </a>
-          <ul class="dropdown-menu">
-          <li role="presentation" class="dropdown-header">Jobs</li>
-          <li>
-          <a href={lighthouseUrl+"pages/summary.html"+vars}>Job Summary ({unitName} Today)</a>
-          </li>
-          <li>
-          <a href={lighthouseUrl+"pages/stats.html"+vars}>Job Statistics ({unitName} Today)</a>
-          </li>
-          <li>
-          <a href={lighthouseUrl+"pages/advexport.html"+vars}>Job Export ({unitName} Today)</a>
-          </li>
-          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams
-          </li>
-          <li>
-          <a href={lighthouseUrl+"pages/teamsummary.html"+vars}>Team Summary ({unitName} Today)</a>
-          </li>
-          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Maps
-          </li>
-          <li>
-          <a href={lighthouseUrl+"pages/map.html"+vars}>Live Map ({unitName})</a>
-          </li>
-          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About
-          </li>
-          <li>
-          <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>
-          </li>
-          </ul>
-          </li>
-          )
+        //cant use DOMFactory without causing a JIS coflict
+        return $.parseHTML('\
+          <li class="dropdown">\
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
+          <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="'+lighthouseUrl+'icons/lh.png"></img>Lighthouse</span>\
+          </a>\
+          <ul class="dropdown-menu">\
+          <li role="presentation" class="dropdown-header">Jobs</li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
+          </li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
+          </li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
+          </li>\
+          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
+          </li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
+          </li>\
+          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Maps\
+          </li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/map.html'+vars+'">Live Map ('+unitName+')</a>\
+          </li>\
+          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
+          </li>\
+          <li>\
+          <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
+          </li>\
+          </ul>\
+          </li>\
+          ')
 }
 
 
