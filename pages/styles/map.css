@@ -11,6 +11,10 @@
 	font-size: 10px;
 }
 
+.tinytext {
+	font-size: 8px;
+}
+
 #errorTable tr:nth-child(even) {background: #efefef}
 #errorTable tr:nth-child(odd) {background: #FFF}
 
@@ -51,6 +55,20 @@
 	text-align: center;
 	width: 40px;
 	border: 2px solid black;
+	white-space: nowrap;
+	text-overflow:ellipsis;
+	border-radius: 5px;
+}
+
+.selectedrfalabels {
+	color: red;
+	background-color: white;
+	font-family: "Lucida Grande", "Arial", sans-serif;
+	font-size: 8px;
+	font-weight: bold;
+	text-align: center;
+	width: 40px;
+	border: 2px solid red;
 	white-space: nowrap;
 	text-overflow:ellipsis;
 	border-radius: 5px;

@@ -3,10 +3,14 @@ var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseTeam = require('../lib/shared_team_code.js');
 var LighthouseResource = require('../lib/shared_resources_code.js');
+
+var moment = require('moment');
+
 var $ = require('jquery');
 
 global.jQuery = $;
 
+require('bootstrap-tour')
 require('bootstrap');
 
 
@@ -19,6 +23,7 @@ var allErrors = [];
 var map;
 var MarkerWithLabel;
 params = getSearchParameters();
+
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -46,13 +51,167 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	}
 
-	console.log("maps ready")
+
+	// if (localStorage.getItem("LighthouseMapTourMain") === null)
+	// {
+		
+
+
+
+
+
+
+
+//}
+
+
+
+
+console.log("maps ready")
 
 	//refresh button
 	$(document).ready(function() {
 
-		$("#errorsbutton").click(function() {
-			console.log("test")
+
+		// Instance the tour
+		var tour = new Tour({
+			smartPlacement: true,
+			placement: "right",
+			storage: false,
+			debug: true,
+			steps: [
+			{
+				element: "",
+				placement: "top",
+				orphan: true,
+				backdrop: true,
+				title: "Welcome",
+				content: "Welcome to the Live Map. As this is your first time here lets quickly run through how this all works"
+			},
+			{
+				element: "#settings",
+				title: "Settings",
+				placement: "top",
+				backdrop: true,
+				content: "Here you will find display settings and mapping options",
+				onNext: function (tour) {showSettingsModal();}
+			},
+			{
+				element: "#username",
+				delay: 500,
+				title: "FollowMee API Username",
+				placement: "auto",
+				backdrop: true,
+				content: "If you are using the FollowMee service you will need to enter your username here. If you are not then just leave it blank.",
+			},
+			{
+				element: "#apikey",
+				title: "FollowMee API Key",
+				placement: "auto",
+				backdrop: true,
+				content: "If you are using the FollowMee service you will need to enter your API Access Key here. If you are not then just leave it blank.",
+			},
+			{
+				element: "#displayheader",
+				title: "Display All Filter",
+				placement: "auto",
+				backdrop: true,
+				content: "This allows you to hide trackable objects that are not assigned to a team. Selecting 'Yes' will show all available trackables regardless of wether they are assigned to a Beacon team.",
+			},
+			{
+				element: "#displayjobheader",
+				title: "Job Status Filter",
+				placement: "auto",
+				backdrop: true,
+				onNext: function (tour) {hideSettingsModal();},
+				content: "This allows you to hide or show jobs by status. Statuses are grouped into three groups. Ticking the box will show jobs with that status on the map.",
+			},
+			{
+				element: "#errorsbutton",
+				title: "Errors",
+				placement: "auto",
+				backdrop: true,
+				content: "This button is normally hidden. If it shows up it means there were errors creating the map. Errors may be caused by wrong usernames or passwords, or wrong API keys. Click the button to display the errors",
+				onShow: function (tour) {$('#errorsbutton').css('visibility', 'visible');},
+				onHide: function (tour) {$('#errorsbutton').css('visibility', 'hidden');},
+			},
+			{
+				element: "#refresh",
+				title: "Refresh",
+				placement: "auto",
+				backdrop: true,
+				onNext: function (tour) {$('#examplemodal').modal('show');},
+				content: "The map will automatically update when the timer reaches 0. You can force an update by clicking here at any time.",
+			},
+			{
+				element: "#image",
+				delay: 500,
+				placement: "top",
+				orphan: true,
+				backdrop: true,
+				title: "Trackables",
+				content: "Trackables (an icon on the map that tracks something) are created from the Beacon Critical Resource Register. If the resouce is assiged to a Beacon team (via the team edit screen in Beacon) the map will reflect this by showing the callsign of the team."
+			},
+			{
+				element: "#image",
+				placement: "left",
+				orphan: true,
+				backdrop: true,
+				title: "Trackable Names",
+				content: "If a Resources name starts with 'LHM:' the map will try draw it. Anything after the ':' in the name is ignored and is just so you can keep track of what the item is. An example of a resource name would be <b>LHM:Tabops644</b> 'LHM:' is case sensitive"
+			},
+			{
+				element: "#image",
+				placement: "right",
+				orphan: true,
+				backdrop: true,
+				title: "Trackable Descriptions",
+				onNext: function (tour) {$('#image').attr("src", 'images/tour/followmee.png');},
+				content: "The resouce description is used to specify how the item is tracked. the format is &ltprovider&gt:&ltpassword&gt"
+			},
+			{
+				element: "#image",
+				placement: "left",
+				orphan: true,
+				backdrop: true,
+				title: "FollowMee",
+				onNext: function (tour) {$('#image').attr("src", 'images/tour/viewranger.png');},
+				content: "If using FollowMee the description for the resource would look like this <b>FollowMee:1234567890</b> FollowMee is the provider and the clientID is used as the password"
+			},
+			{
+				element: "#image",
+				placement: "right",
+				orphan: true,
+				backdrop: true,
+				title: "ViewRanger",
+				onNext: function (tour) {$('#examplemodal').modal('hide');},
+				content: "If using ViewRanger the description for the resource would look like this <b>ViewRanger:email@address.com:1234</b> ViewRanger is the provider, the email address and the device PIN are used as the password"
+			},
+			{
+				element: "",
+				placement: "top",
+				orphan: true,
+				backdrop: true,
+				title: "Google Maps",
+				content: "Teams, Trackables and jobs will show on the map and further information on each can be found by clicking the map markers."
+			},
+			{
+				element: "",
+				placement: "top",
+				orphan: true,
+				backdrop: true,
+				title: "Thanks",
+				content: "This covers the basic operation of Lighthouse Live Map. If you have problems please feel free to ask on the Lighthouse facebook group."
+			}
+			]});
+
+/// Initialize the tour
+tour.init();
+
+// Start the tour
+tour.start();
+
+$("#errorsbutton").click(function() {
 			//$('#errorTable').empty()
 //error.date = new Date
 //error.string = "Followme error:" +response.responseJSON.Error
@@ -64,32 +223,39 @@ $('#errormodal').modal('show');
 
 })
 
-		$("#refresh").click(function() {
-			DoEverything(map);
-		})
-		$("#settings").click(function() {
-			$('#settingsmodal').modal('show');
-			$('#username').val(localStorage.getItem("LighthouseMapUserName"));
-			$('#apikey').val(localStorage.getItem("LighthouseMapAPIKey"));
-			$('input[name=displayAll]').val([localStorage.getItem("LighthouseMapDisplayAll")]);
-			$('#UnactionedCheck').prop('checked',(localStorage.getItem("LighthouseDisplayUnactioned") == "true") ? true : false);
-			$('#ActionedCheck').prop('checked',(localStorage.getItem("LighthouseDisplayActioned") == "true") ? true : false);
-			$('#ClosedCheck').prop('checked',(localStorage.getItem("LighthouseDisplayClosed") == "true") ? true : false);
-		})
-		$("#submitButton").click(function() {
-			localStorage.setItem("LighthouseMapUserName",$('#username').val())
-			localStorage.setItem("LighthouseMapAPIKey",$('#apikey').val())
-			localStorage.setItem("LighthouseMapDisplayAll",$('input[name=displayAll]:checked').val())
-			localStorage.setItem("LighthouseDisplayUnactioned",($('#UnactionedCheck').is(':checked') ? 'true' : 'false'))
-			localStorage.setItem("LighthouseDisplayActioned",($('#ActionedCheck').is(':checked') ? 'true' : 'false'))
-			localStorage.setItem("LighthouseDisplayClosed",($('#ClosedCheck').is(':checked') ? 'true' : 'false'))
+$("#refresh").click(function() {
+	DoEverything(map);
+})
+$("#settings").click(function() {
+	showSettingsModal()
+})
+$("#submitButton").click(function() {
+	hideSettingsModal()
+	DoEverything(map)
 
+})
+});
 
-			$('#settingsmodal').modal('hide');
-			DoEverything(map)
+function showSettingsModal() {
+	$('#settingsmodal').modal('show');
+	$('#username').val(localStorage.getItem("LighthouseMapUserName"));
+	$('#apikey').val(localStorage.getItem("LighthouseMapAPIKey"));
+	$('input[name=displayAll]').val([localStorage.getItem("LighthouseMapDisplayAll")]);
+	$('#UnactionedCheck').prop('checked',(localStorage.getItem("LighthouseDisplayUnactioned") == "true") ? true : false);
+	$('#ActionedCheck').prop('checked',(localStorage.getItem("LighthouseDisplayActioned") == "true") ? true : false);
+	$('#ClosedCheck').prop('checked',(localStorage.getItem("LighthouseDisplayClosed") == "true") ? true : false);
+}
 
-		})
-	});
+function hideSettingsModal() {
+	localStorage.setItem("LighthouseMapUserName",$('#username').val())
+	localStorage.setItem("LighthouseMapAPIKey",$('#apikey').val())
+	localStorage.setItem("LighthouseMapDisplayAll",$('input[name=displayAll]:checked').val())
+	localStorage.setItem("LighthouseDisplayUnactioned",($('#UnactionedCheck').is(':checked') ? 'true' : 'false'))
+	localStorage.setItem("LighthouseDisplayActioned",($('#ActionedCheck').is(':checked') ? 'true' : 'false'))
+	localStorage.setItem("LighthouseDisplayClosed",($('#ClosedCheck').is(':checked') ? 'true' : 'false'))	
+
+	$('#settingsmodal').modal('hide');
+}
 
 GoogleMapsLoader = require("google-maps")
 GoogleMapsLoader.KEY = 'AIzaSyA-3RPOUmctBNYFoDYuPvqfi5Cy-QLmG4s'
@@ -164,22 +330,22 @@ function DoEverything(map) {
 
 function LoadAllData(map, cb) {
 	//Promise.all([FindTrackables()]).then(function(result){ //no jobs
-	Promise.all([FindTrackables(),FindJobs()]).then(function(result){
-		console.log("All data sources have finished loading")
-		CleanupDeletedTrackables(map,allTrackableIds)
-		cb()
-	})
+		Promise.all([FindTrackables(),FindJobs()]).then(function(result){
+			console.log("All data sources have finished loading")
+			CleanupDeletedTrackables(map,allTrackableIds)
+			cb()
+		})
 
 
 
-	function FindTrackables() {
+		function FindTrackables() {
 
-		allTrackableIds = [];
+			allTrackableIds = [];
 
-		return new Promise(function(resolve, reject) {
-			LighthouseResource.get_unit_resouces(params.hq, params.host, function(resources) {
+			return new Promise(function(resolve, reject) {
+				LighthouseResource.get_unit_resouces(params.hq, params.host, function(resources) {
 
-				trackablePromises = [];
+					trackablePromises = [];
 			$.each(resources.Results,function (rk,rv) { //for every resource ifset
 				console.log(rv)
 				if (rv.Name.substring(0, 4) == ("LHM:")) { //if its a trackable
@@ -416,8 +582,10 @@ function drawJob(map, v) {
 
 function makeTrackableMarker(item)
 {
+	destinationMarker = null;
+
 	var iw = new google.maps.InfoWindow({
-		content: "<div align=center>Test</div>"
+		content: "<div align=center>Loading...</div>"
 	});
 
 	var image = {
@@ -435,17 +603,93 @@ function makeTrackableMarker(item)
     	icon: image
     })
 
-    google.maps.event.addListener(theMarker, "click", function (e) {
-    	LighthouseTeam.get_tasking(item.Original.TeamAttachedTo.Id,params.host, function(e) {
-    		console.log(e);
-    	})
-    	console.log(iw)
-    	iw.setContent("test123")
-    	iw.open(map, this); 
+    google.maps.event.addListener(iw,'closeclick',function(){
+    	if (destinationMarker !== null)
+    	{
+    		destinationMarker.labelClass = "rfalabels";
+    		destinationMarker.label.setStyles();
+    	}
+
     });
 
+    //click handle for the marker
+    google.maps.event.addListener(theMarker, "click", function (e) {
+    	var trackablediff = moment(item.Date).fromNow(); //date of gps location
+    	if (item.Original.TeamAttachedTo !== null)
+    	{
+    		LighthouseTeam.get_tasking(item.Original.TeamAttachedTo.Id,params.host, function(e) {
 
-    return theMarker
+    			e.Results.reverse().forEach(function(f) {
+    				console.log(f.CurrentStatusTime);
+    			})    			
+    			var latest = null;
+    			var oldesttime = null;
+    			var completed = 0;
+    			e.Results.forEach(function(f) {
+    				var options = {
+    					weekday: "short",
+    					year: "numeric",
+    					month: "2-digit",
+    					day: "numeric",
+    					hour12: false
+    				};
+    				var rawdate = new Date(f.CurrentStatusTime);
+    				var thistime = new Date(rawdate.getTime() + (rawdate.getTimezoneOffset() * 60000));
+    				var diff = moment(thistime).fromNow();
+    				if (oldesttime < thistime) {
+    					oldesttime = thistime;
+    					if  (f.CurrentStatus == "Enroute")
+    					{
+    						allMarkers.forEach(function(k,v){
+    							if (k.JobId == f.Job.Id)
+    							{
+    								console.log("Going to")
+    								destinationMarker = k;
+    								k.labelClass = "selectedrfalabels"
+    								k.label.setStyles();
+    							}
+    						})
+
+    						if (item.Latitude !== null && item.Longitude !== null) //job is geo coded
+    						{
+    							var service = new google.maps.DistanceMatrixService();
+    							service.getDistanceMatrix(
+    							{
+    								origins: [{lat: item.Latitude, lng: item.Longitude}],
+    								destinations: [{lat: f.Job.Address.Latitude ,lng: f.Job.Address.Longitude} ],
+    								travelMode: google.maps.TravelMode.DRIVING,
+    							}, function(response, status) {
+    								if (response.rows[0].elements[0].status == "OK")
+    								{ //if google gave a result
+    									iw.setContent("<div align=center>"+f.CurrentStatus + " to #" + f.Job.Id + "<br>" + f.Job.Address.PrettyAddress + "<br><small>Status set "+diff+"</small><br><br>"+response.rows[0].elements[0].distance.text+" away, ETA "+response.rows[0].elements[0].duration.text+"<br><span class='tinytext'>Calculated via Google Distance Matrix</span><br><br><span class='tinytext'>Location updated "+trackablediff+"</span></div>");
+    								}
+
+    								console.log(response)
+    							})
+    						} else {
+    							iw.setContent("<div align=center>"+f.CurrentStatus + " to #" + f.Job.Id + "<br>" + f.Job.Address.PrettyAddress + "<br><span class='tinytext'>Unable to calculate travel via Google Distance Matrix</span><br><small>Status set "+diff+"</small><br><span class='tinytext'>Last location update "+trackablediff+"</span></div>");
+    						}
+    					}
+    				}
+    				if (oldesttime === null)
+    				{
+    					iw.setContent("<div align=center>"+f.CurrentStatus + " at #" + f.Job.Id + "<br>" + f.Job.Address.PrettyAddress + "<br><small>Status set "+diff+"</small><br><span class='tinytext'>Last location update "+trackablediff+"</span></div>");
+
+    				}
+    			});
+})
+} else { //marker is not with a team
+
+	iw.setContent("<div align=center><span class='tinytext'>Last location update "+trackablediff+"</span></div>"); 
+
+}
+iw.open(map, this); 
+});
+
+
+
+
+return theMarker
 }
 
 function CleanupDeletedTrackables(map,alltrackable){
@@ -501,6 +745,7 @@ function LoadViewRanger(theID,thePin,original) {
 								callsign = (newItem.Original.TeamAttachedTo === null) ? newItem.Original.Name.split(":")[1] : newItem.Original.TeamAttachedTo.Text;
 								newItem.Callsign = callsign;
 								newItem.DeviceID = theID;
+								newItem.Date = newItem.API.DATE
 
 								newItem.Altitude = Number(newItem.API.ALTITUDE);
 								newItem.Latitude = Number(newItem.API.LATITUDE);
@@ -557,7 +802,7 @@ function LoadFollowMee(theID,original) {
 							newItem = {};
 							newItem.API = response.responseJSON.Data[0]
 							newItem.Original = original
-
+							newItem.Date = newItem.API.Date
 							callsign = (newItem.Original.TeamAttachedTo === null) ? newItem.Original.Name.split(":")[1] : newItem.Original.TeamAttachedTo.Text;
 							newItem.Callsign = callsign;
 							newItem.Accuracy = newItem.API.Accuracy;
