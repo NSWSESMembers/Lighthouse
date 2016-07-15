@@ -65,6 +65,9 @@ whenTeamsAreReady(function(){
 
   lighthouseTasking()
 
+
+
+
   //checkbox for hide completed tasking
   $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox());
 
@@ -568,7 +571,7 @@ function return_quicktaskbutton() {
     <div style="position: relative;
     display: inline-block;
     vertical-align: middle;" class="dropdown">
-    <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
+    <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
     <span class="caret"></span></button>
     <ul class="dropdown-menu">
     </ul>
@@ -843,7 +846,7 @@ function checkAddressHistory(){
 }
 
 setTimeout(checkAddressHistory, 400);
-
+DoTour()
 
 // wait for teams to have loaded
 function whenTeamsAreReady(cb) { //when external vars have loaded
@@ -899,4 +902,88 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
 
     }
   })
+}
+
+
+
+function DoTour() {
+  require('bootstrap-tour')
+
+  //this thing needs an id - its the page length box
+  $('#content > div.widget.clearfix.job-reg-widget > div.widget-content > div > div.col-xs-4.text-right.job-reg-padding-fix > span').attr("id","pageination")
+
+
+
+    // Instance the tour
+    var tour = new Tour({
+      name: "LHJobView",
+      smartPlacement: true,
+      placement: "right",
+      debug: true,
+      steps: [
+      {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Lighthouse Welcome",
+        content: "Lighthouse has made some changes to this page. would you like a tour?"
+      },
+      {
+        element: "#job_view_history_groups",
+        title: "Lighthouse Job History",
+        placement: "top",
+        backdrop: false,
+        content: "Lighthouse will search for jobs with the same or similar address to this job. the results will be displayed here.",
+      },
+      {
+        element: "#lhtaskbutton",
+        placement: "left",
+        orphan: true,
+        backdrop: false,
+        title: "Instant Task",
+        content: "If the job is taskable there will be a grey button 'Instant Task' in the Actions box. This will allow you to task the job without leaving the job overview page."
+      },
+      {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Untask",
+        content: "If a team can be untasked from the job there will be a little x button next to them in the list of tasked teams."
+      },
+      {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Quick Text and Tasks",
+        onNext: function(tour) {
+          $('#completeProviderModal').modal('hide');
+        },
+        content: "There are numerous Quick Text and Quick Task addons for team and job completion, as well as job finalisation. This saves having to click or type common tasks and actions. They appear on the completion popups"
+      },
+      {
+        element: "#lighthouse_mapblock",
+        title: "Lighthouse Map Tweak",
+        placement: "top",
+        backdrop: false,
+        content: "To scroll the map you will need to click on it first. this stops the map 'stealing' the cursor when you scroll past",
+      },
+      {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Questions?",
+        content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
+    }
+      ]
+    })
+
+    /// Initialize the tour
+    tour.init();
+
+// Start the tour
+tour.start();
 }

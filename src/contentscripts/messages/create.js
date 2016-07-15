@@ -1,7 +1,8 @@
 var inject = require('../../../lib/inject.js');
-var $ = require('jquery');
-var xhttp = new XMLHttpRequest();
 var DOM = require('jsx-dom-factory');
+var $ = require('jquery');
+
+var xhttp = new XMLHttpRequest();
 
 
 xhttp.onreadystatechange = function() {
@@ -80,3 +81,6 @@ function renderCollections() {
 }
 
 $('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2)').after(renderCollections);
+
+
+

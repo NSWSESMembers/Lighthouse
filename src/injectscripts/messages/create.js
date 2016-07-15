@@ -5,6 +5,8 @@ console.log("inject running");
 
 $(document).ready(function() {
 
+
+
     if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) {
 
         whenWeAreReady(msgsystem, function() {
@@ -41,8 +43,8 @@ $(document).ready(function() {
         })
 
     } else {
-    	console.log("Not running due to preference setting")
-    }
+       console.log("Not running due to preference setting")
+   }
 
     //Operational = true
     msgsystem.operational(true);
@@ -136,6 +138,9 @@ $(document).ready(function() {
 //Load all the Collections on page load
 
 LoadAllCollections();
+
+DoTour()
+
 
 
 });
@@ -341,4 +346,83 @@ function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
 }, 200);
 }
 
+function DoTour() {
+    require('bootstrap-tour')
+
+
+    // Instance the tour
+    var tour = new Tour({
+      name: "LHMessages",
+      smartPlacement: true,
+      placement: "right",
+      debug: true,
+      steps: [
+      {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Lighthouse Welcome",
+        content: "Lighthouse has made some changes to this page. would you like a tour?"
+    },
+    {
+        element: "#lighthouseEnabled",
+        title: "Lighthouse Load",
+        placement: "bottom",
+        backdrop: false,
+        content: "Lighthouse call prefill the Available Contacts from you unit. Ticking this box enables this behavour. It will also select 'Operational' - 'Yes' for you",
+    },
+    {
+        element: "#recipientsdel",
+        title: "Lighthouse Delete",
+        placement: "auto",
+        backdrop: false,
+        content: "We have added a button to remove all the selected message recipients",
+    },
+    {
+        element: "#lighthousecollections",
+        title: "Lighthouse Collections",
+        placement: "top",
+        backdrop: false,
+        content: "Lighthouse Collections allow you to save a group of message recipients for quick selection later. Collections can contain any combination of recipients (including groups from different units or regions) and are saved locally on your computer.",
+    },
+    {
+        element: "#collectionsave",
+        title: "Lighthouse Collections - Save",
+        placement: "top",
+        backdrop: false,
+        onNext: function (tour) {
+            $button = make_collection_button("Tour Example","Tour Example","13")
+            $($button).attr("id","tourbutton")
+            $($button).appendTo('#lighthousecollections');
+        },
+        content: "Once you have selected some message recipients click 'Save As Collection' to save them for later. using a name that already exists will replace the old collection.",
+    },
+    {
+        element: "#tourbutton",
+        title: "Lighthouse Collections - Load",
+        placement: "top",
+        backdrop: false,
+        onNext: function (tour) {
+            $('#lighthousecollections').empty();
+        },
+        content: "This is a saved collection. Click it to load its contents into 'Selected Recipients'",
+    },
+    {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Questions?",
+        content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
+    }
+    ]
+})
+
+    /// Initialize the tour
+    tour.init();
+
+// Start the tour
+tour.start();
+}
 

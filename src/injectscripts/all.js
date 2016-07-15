@@ -33,29 +33,29 @@ whenWeAreReady(user,function() {
       function MakeMenu(lighthouseUrl, vars, unitName) {
         //cant use DOMFactory without causing a JIS coflict
         return $.parseHTML('\
-          <li class="dropdown">\
+          <li class="dropdown" id="lhmenu">\
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
           <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="'+lighthouseUrl+'icons/lh.png"></img>Lighthouse</span>\
           </a>\
           <ul class="dropdown-menu">\
           <li role="presentation" class="dropdown-header">Jobs</li>\
-          <li>\
+          <li id="lhsummarymenuitem">\
           <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
           </li>\
-          <li>\
+          <li id="lhstatsmenuitem">\
           <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
           </li>\
-          <li>\
+          <li id="lhexportmenuitem">\
           <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
           </li>\
           <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
           </li>\
-          <li>\
+          <li id="lhteammenuitem">\
           <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
           </li>\
           <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Maps\
           </li>\
-          <li>\
+          <li id="lhmapmenuitem">\
           <a href="'+lighthouseUrl+'pages/map.html'+vars+'">Live Map ('+unitName+')</a>\
           </li>\
           <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
@@ -71,11 +71,14 @@ whenWeAreReady(user,function() {
 
 $('.nav .navbar-nav:not(".navbar-right")').append(lighthouseMenu);
 
+if (location.pathname == "/") {
+DoTour()
+}
 
         //lighthouse menu for teams
         if (location.pathname == "/Teams") {
 
-          var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
+          var filtermenu = '<li class="" id="lhquickfilter"> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
 
           filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
 
@@ -121,7 +124,7 @@ $('.nav .navbar-nav:not(".navbar-right")').append(lighthouseMenu);
        //with dates var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Time Range</a> <span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span> <span class="label tag tag-task tag-disabled" id="filter3day"><span class="tag-text">3 Days</span></span> <span class="label tag tag-task tag-disabled" id="filter7day"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30day"><span class="tag-text">30 Days</span></span> </span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Open</span></span> <span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span> <span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span> <span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span> <span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span> <span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
 
 
-       var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Open</span></span> <span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span> <span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span> <span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span> <span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span> <span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
+       var filtermenu = '<li class="" id="lhquickfilter"> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Open</span></span> <span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span> <span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span> <span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span> <span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span> <span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
 
        filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
        filtermenu = filtermenu.replace(/\$UNIT/g, user.hq.Code);
@@ -325,3 +328,106 @@ $(function(){
     });
 
 });
+
+
+function DoTour() {
+    require('bootstrap-tour')
+
+
+    // Instance the tour
+    var tour = new Tour({
+      name: "LHAll",
+      smartPlacement: true,
+      placement: "right",
+      debug: true,
+      steps: [
+      {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Lighthouse Welcome",
+        content: "Lighthouse has made some changes to this page. would you like a tour?"
+    },
+    {
+        element: "#lhmenu",
+        title: "Lighthouse Menu",
+        placement: "bottom",
+        backdrop: false,
+        onNext: function (tour) {
+            $('#lhmenu > ul').show();
+        },
+        content: "The Lighthouse menu gives quick access to several lighthouse features.",
+    },
+    {
+        element: "#lhsummarymenuitem",
+        title: "Lighthouse Menu - Summary",
+        placement: "left",
+        backdrop: true,
+        onShown: function (tour) {
+        $('.popover').css("z-index", "9999999");
+      },
+        content: "Lighthouse Summary provides a simple to read screen that gives a summary of all jobs. It will default to jobs at your HQ and a 24 hour filter.",
+    },
+    {
+        element: "#lhstatsmenuitem",
+        title: "Lighthouse Menu - Statistics",
+        placement: "right",
+        backdrop: true,
+        onShown: function (tour) {
+        $('.popover').css("z-index", "9999999");
+      },
+        content: "Lighthouse Statistics provides a simple statistics (pie charts and bar graphs) breakdown for all jobs. It will default to jobs at your HQ and a 24 hour filter.",
+    },
+    {
+        element: "#lhexportmenuitem",
+        title: "Lighthouse Menu - Job Export",
+        placement: "left",
+        backdrop: true,
+        content: "Lighthouse Advanced Export allows you to export jobs and includes almost all the available data for the job - 31 data fields in total.",
+    },
+    {
+        element: "#lhteammenuitem",
+        title: "Lighthouse Menu - Team Summary",
+        placement: "right",
+        backdrop: true,
+        content: "Lighthouse Summary provides a simple to read screen that gives a summary of all job. It will default to teams at your HQ.",
+    },
+    {
+        element: "#lhmapmenuitem",
+        title: "Lighthouse Menu - Live Map",
+        placement: "left",
+        backdrop: true,
+        onNext: function (tour) {
+            $('#lhmenu > ul').hide();
+        },
+        content: "Lighthouse Live Map provides a live and interactive map that can plot jobs, teams, ipads, and people.",
+    },
+    {
+        element: "#layoutJobSearchFormJobQuery",
+        title: "Job Search",
+        placement: "left",
+        backdrop: false,
+        onShown: function (tour) {
+        $('.popover').css("z-index", "9999999");
+      },
+        content: "If you search for a job number that is found you will be taken straight to that job",
+    },
+    {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Questions?",
+        content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
+    }
+    ]
+})
+
+    /// Initialize the tour
+    tour.init();
+
+// Start the tour
+tour.start();
+}
+
