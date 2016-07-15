@@ -241,7 +241,7 @@ function HackTheMatrix(unit, host) {
             var thistime = new Date(rawdate.getTime() + (rawdate.getTimezoneOffset() * 60000));
 
 
-            if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") {
+            if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") { //it wasnt an untask or a tasking (so its a action the team made like on route or onsite)
              var diff = moment(thistime).fromNow();
              latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff;
              oldesttime = thistime;

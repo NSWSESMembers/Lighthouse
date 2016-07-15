@@ -1,7 +1,7 @@
 @import url("node_modules/bootstrap/dist/css/bootstrap.css");
 
 body {
-	margin-bottom: 60px;
+	margin-bottom: 20px;
 }
 
 @keyframes dots { from { opacity: 0; } 50% { opacity: 1; } }

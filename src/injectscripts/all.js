@@ -2,6 +2,9 @@ whenWeAreReady(user,function() {
 
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
+
+
+
     if (xhttp.readyState == 4 && xhttp.status == 200) {
       results = JSON.parse(xhttp.responseText);
 
@@ -10,15 +13,11 @@ whenWeAreReady(user,function() {
       //menu bar code
       var ul = document.getElementsByClassName("nav navbar-nav");
 
-      var li = document.createElement("li");
-      li.classList.add("dropdown");
-
       var tonight = new Date();
 
       tonight.setHours(23, 59, 59, 0);
 
       tonight = new Date(tonight.getTime());
-
 
       var thismorning = new Date();
 
@@ -27,20 +26,50 @@ whenWeAreReady(user,function() {
       thismorning = new Date(thismorning.getTime());
 
 
-      var vars = "?host=" + location.hostname + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString());
+      vars = "?host=" + location.hostname + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString());
 
-      var jobsummaryUrl = lighthouseUrl + "pages/summary.html" + vars;
-      var jobstatsUrl = lighthouseUrl + "pages/stats.html" + vars;
-      var jobexportUrl = lighthouseUrl + "pages/advexport.html" + vars;
+      lighthouseMenu = MakeMenu(lighthouseUrl,vars,user.hq.Code)
 
-      var teamsummaryUrl = lighthouseUrl + "pages/teamsummary.html" + vars;
+      function MakeMenu(lighthouseUrl, vars, unitName) {
+        //cant use DOMFactory without causing a JIS coflict
+        return $.parseHTML('\
+          <li class="dropdown">\
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
+          <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="'+lighthouseUrl+'icons/lh.png"></img>Lighthouse</span>\
+          </a>\
+          <ul class="dropdown-menu">\
+          <li role="presentation" class="dropdown-header">Jobs</li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
+          </li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
+          </li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
+          </li>\
+          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
+          </li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
+          </li>\
+          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Maps\
+          </li>\
+          <li>\
+          <a href="'+lighthouseUrl+'pages/map.html'+vars+'">Live Map ('+unitName+')</a>\
+          </li>\
+          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
+          </li>\
+          <li>\
+          <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
+          </li>\
+          </ul>\
+          </li>\
+          ')
+}
 
-      var aboutURL = "https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md";
 
-
-      li.innerHTML = "<a href=\"#\" class=\"dropdown-toggle\" data-toggle=\"dropdown\"><span class=\"nav-text\"><img width=\"16px\" style=\"vertical-align: text-bottom;margin-right:5px\" src=\"" + lighthouseUrl + "icons/lh.png" + "\">Lighthouse</span></a><ul class=\"dropdown-menu\"><li role=\"presentation\" class=\"dropdown-header\">Jobs</li><li><a href=\"" + jobsummaryUrl + "\">Job Summary (" + results.Code + " Today)</a></li><li><a href=\"" + jobstatsUrl + "\">Job Statistics (" + results.Code + " Today)</a></li><li><a href=\"" + jobexportUrl + "\">Job Export (" + results.Code + " Today)</a></li><li role=\"presentation\" class=\"divider\"></li><li role=\"presentation\" class=\"dropdown-header\">Teams</li><li><a href=\"" + teamsummaryUrl + "\">Team Summary (" + results.Code + " Today)</a></li><li role=\"presentation\" class=\"divider\"></li><li role=\"presentation\" class=\"dropdown-header\">About</li><li><a href=\"" + aboutURL + "\">About Lighthouse</a></li>";
-
-      $('.nav .navbar-nav:not(".navbar-right")').append(li);
+$('.nav .navbar-nav:not(".navbar-right")').append(lighthouseMenu);
 
 
         //lighthouse menu for teams

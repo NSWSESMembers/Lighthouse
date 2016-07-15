@@ -3,7 +3,7 @@
   "name": "Lighthouse Development Preview",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2016.6.26.2",
+  "version": "2016.7.1.3",
   "icons": {
     "128": "icons/lighthouse128_dev.png",
     "64":"icons/lighthouse64_dev.png"
@@ -106,5 +106,6 @@
   ],
   "background": {
     "scripts": ["background.js"]
-  }
+  },
+    "content_security_policy": "script-src 'self' https://maps.googleapis.com https://www.followmee.com/api/ https://tdykes.com/viewranger/index.php; object-src 'self'" 
 }

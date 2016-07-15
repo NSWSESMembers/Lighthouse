@@ -2,6 +2,9 @@ var inject = require('../../lib/inject.js');
 var $ = require('jquery');
 var DOM = require('jsx-dom-factory');
 
+  // inject JS that is to run on every page in page context
+inject('all.js');
+
 // inject all.css - browserify-css takes care of this
 require('../styles/all.css');
 
@@ -13,16 +16,15 @@ chrome.runtime.sendMessage({activity: true});
 // notify keep alive system whenever we click on something. We let the event
 // propagate because we don't want to interfere with regular operation of <a>
 $('a').click(function(e) {
-  chrome.runtime.sendMessage({activity: true, link: this});
+  chrome.runtime.sendMessage({activity: true, link: this},function(){});
 });
 // notify keepalive system 
 $(window).focus(function(){
   console.log('Focus');
-  chrome.runtime.sendMessage({focus: true});
+  chrome.runtime.sendMessage({focus: true},function(){});
 });
 
-// inject JS that is to run on every page in page context
-inject('all.js');
+
 
 //set the extension code var into the head
 var s = document.createElement('script');
@@ -32,6 +34,8 @@ s.innerHTML = "var lighthouseUrl = \"" + chrome.extension.getURL("") + "\"";
 
 
 $(document).ready(function(){
+
+
 
   // Map Mouse Eating Stopper
   if( ( $map = $('#map') ).length && ('#map_zoom_slider',$map).length ){
