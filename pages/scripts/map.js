@@ -744,7 +744,14 @@ function LoadViewRanger(theID,thePin,original) {
 								callsign = (newItem.Original.TeamAttachedTo === null) ? newItem.Original.Name.split(":")[1] : newItem.Original.TeamAttachedTo.Text;
 								newItem.Callsign = callsign;
 								newItem.DeviceID = theID;
-								newItem.Date = newItem.API.DATE
+								newItem.Date = new Date(newItem.API.DATE)
+																console.log(newItem.Date)
+
+								newItem.Date.setHours(newItem.Date.getHours() - 1) 
+																console.log(newItem.Date)
+
+								newItem.Date.setTime( newItem.Date.getTime() - newItem.Date.getTimezoneOffset()*60*1000 );
+								console.log(newItem.Date)
 
 								newItem.Altitude = Number(newItem.API.ALTITUDE);
 								newItem.Latitude = Number(newItem.API.LATITUDE);
