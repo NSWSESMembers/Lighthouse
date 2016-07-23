@@ -486,7 +486,7 @@ function prepareCharts(jobs, start, end) {
   .width(1200)
   .height(800)
   .dimension(timeOpenDimension)
-  .group(function(d) { return "First 10"  })
+  .group(function(d) { return "Last 10"  })
   .size(10)
   .columns([
     function(d) { return "<a href=\"https://beacon.ses.nsw.gov.au/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
@@ -496,7 +496,7 @@ function prepareCharts(jobs, start, end) {
     function(d) { return d.Address.PrettyAddress; },
     ])
   .sortBy(function(d){ return d.JobReceivedFixed; })
-  .order(d3.ascending);
+  .order(d3.descending);
 
   // produces a 'group' for tag pie charts, switch on the key in the object that needs to be walked
   function makeTagGroup(dim, targetfact) {
