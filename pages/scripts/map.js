@@ -581,6 +581,11 @@ function drawJob(map, v) {
 
 function makeTrackableMarker(item)
 {
+
+	directionsDisplay = new google.maps.DirectionsRenderer({
+		suppressMarkers: true
+	});
+
 	destinationMarker = null;
 
 	var iw = new google.maps.InfoWindow({
@@ -607,6 +612,7 @@ function makeTrackableMarker(item)
     	{
     		destinationMarker.labelClass = "rfalabels";
     		destinationMarker.label.setStyles();
+    		directionsDisplay.setMap(null);
     	}
 
     });
@@ -651,6 +657,26 @@ function makeTrackableMarker(item)
 
     						if (item.Latitude !== null && item.Longitude !== null) //job is geo coded
     						{
+    							var start = new google.maps.LatLng(item.Latitude, item.Longitude);
+    							var end = new google.maps.LatLng(f.Job.Address.Latitude, f.Job.Address.Longitude);
+    							var request = {
+    								origin: start,
+    								destination: end,
+    								travelMode: google.maps.TravelMode.DRIVING
+    							};
+    							directionsService = new google.maps.DirectionsService();
+    							directionsService.route(request, function (response, status) {
+    								if (status == google.maps.DirectionsStatus.OK) {
+    									
+
+    									directionsDisplay.setDirections(response);
+    									directionsDisplay.setMap(map);
+    								} else {
+    									alert("Directions Request from " + start.toUrlValue(6) + " to " + end.toUrlValue(6) + " failed: " + status);
+    								}
+    							});
+
+
     							var service = new google.maps.DistanceMatrixService();
     							service.getDistanceMatrix(
     							{
@@ -745,10 +771,10 @@ function LoadViewRanger(theID,thePin,original) {
 								newItem.Callsign = callsign;
 								newItem.DeviceID = theID;
 								newItem.Date = new Date(newItem.API.DATE)
-																console.log(newItem.Date)
+								console.log(newItem.Date)
 
 								newItem.Date.setHours(newItem.Date.getHours() - 1) 
-																console.log(newItem.Date)
+								console.log(newItem.Date)
 
 								newItem.Date.setTime( newItem.Date.getTime() - newItem.Date.getTimezoneOffset()*60*1000 );
 								console.log(newItem.Date)
