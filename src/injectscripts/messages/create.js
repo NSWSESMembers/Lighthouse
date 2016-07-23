@@ -43,8 +43,8 @@ $(document).ready(function() {
         })
 
     } else {
-       console.log("Not running due to preference setting")
-   }
+     console.log("Not running due to preference setting")
+ }
 
     //Operational = true
     msgsystem.operational(true);
@@ -237,7 +237,15 @@ function LoadCollection(col,cb) {
                                         $.each(response.responseJSON.Results, function(k, v) { 
                                             if (v.Id == itm.Id)
                                             {
-                                                build_recipient(v,groupOwner,v.Name)
+
+                                                BuildNew = {};
+                                                BuildNew.Contact = null;
+                                                BuildNew.ContactGroup = v
+                                                BuildNew.ContactTypeId = null;
+                                                BuildNew.Description = groupOwner;
+                                                BuildNew.Recipient = v.Name;
+                                                msgsystem.selectedRecipients.push(BuildNew)
+                                                
                                                 $total = $total - 1;
                                                 if ($total == 0 )
                                                 {
@@ -245,10 +253,10 @@ function LoadCollection(col,cb) {
                                                 }
                                             }
                                         })
-                                    }
-                                }
-                            }
-                        })
+}
+}
+}
+})
 break;
 }
 }
@@ -268,7 +276,15 @@ $.ajax({
                 $.each(response.responseJSON.Results, function(k, v) { 
                     if (v.Id == itm.Id)
                     {
-                        build_recipient(v,v.FirstName+" "+v.LastName+ " ("+v.Description+")",v.Detail)
+
+                        BuildNew = {};
+                        BuildNew.Contact = v;
+                        BuildNew.ContactTypeId = contact.ContactTypeId;
+                        BuildNew.Description = v.FirstName+" "+v.LastName+ " ("+v.Description+")";
+                        BuildNew.Recipient = v.Detail;
+                        msgsystem.selectedRecipients.push(BuildNew)
+
+
                         $total = $total - 1;
                         if ($total == 0 )
                         {
@@ -303,6 +319,14 @@ $.ajax({
                 if (v.Id == itm.Id)
                 {
                     build_recipient(v,v.EntityName+ " ("+v.Description+")",v.Detail)
+
+                    BuildNew = {};
+                    BuildNew.Contact = v;
+                    BuildNew.ContactTypeId = contact.ContactTypeId;
+                    BuildNew.Description = v.EntityName+ " ("+v.Description+")";
+                    BuildNew.Recipient = v.Detail;
+                    msgsystem.selectedRecipients.push(BuildNew)
+
                     $total = $total - 1;
                     if ($total == 0 )
                     {
@@ -320,7 +344,7 @@ break;
 })
 }
 
-function build_recipient (contact,description,recipient) {
+function build_recipient (type,contact,description,recipient) {
     BuildNew = {};
     BuildNew.Contact = contact;
     BuildNew.ContactTypeId = contact.ContactTypeId;
