@@ -323,6 +323,7 @@ break;
 function build_recipient (contact,description,recipient) {
     BuildNew = {};
     BuildNew.Contact = contact;
+    BuildNew.ContactTypeId = contact.ContactTypeId;
     BuildNew.Description = description;
     BuildNew.Recipient = recipient;
     msgsystem.selectedRecipients.push(BuildNew)

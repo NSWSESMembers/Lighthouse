@@ -589,7 +589,10 @@ function makeTrackableMarker(item)
 	destinationMarker = null;
 
 	var iw = new google.maps.InfoWindow({
-		content: "<div align=center>Loading...</div>"
+		content: "<div align=center>Loading...</div>",
+		boxStyle: {
+			opacity: 0.75,
+		},
 	});
 
 	var image = {
@@ -694,6 +697,9 @@ function makeTrackableMarker(item)
     						} else {
     							iw.setContent("<div align=center>"+f.CurrentStatus + " to #" + f.Job.Id + "<br>" + f.Job.Address.PrettyAddress + "<br><span class='tinytext'>Unable to calculate travel via Google Distance Matrix</span><br><small>Status set "+diff+"</small><br><span class='tinytext'>Last location update "+trackablediff+"</span></div>");
     						}
+    					} else {
+    						iw.setContent("<div align=center>"+f.CurrentStatus + " at #" + f.Job.Id + "<br>" + f.Job.Address.PrettyAddress + "<br><small>Status set "+diff+"</small><br><span class='tinytext'>Last location update "+trackablediff+"</span></div>");
+
     					}
     				}
     				if (oldesttime === null)
