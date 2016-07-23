@@ -34,7 +34,6 @@ function DoTour() {
       smartPlacement: true,
       placement: "right",
       debug: true,
-      storage: false,
       steps: [
       {
         element: "",
