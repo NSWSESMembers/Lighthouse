@@ -344,15 +344,6 @@ break;
 })
 }
 
-function build_recipient (type,contact,description,recipient) {
-    BuildNew = {};
-    BuildNew.Contact = contact;
-    BuildNew.ContactTypeId = contact.ContactTypeId;
-    BuildNew.Description = description;
-    BuildNew.Recipient = recipient;
-    msgsystem.selectedRecipients.push(BuildNew)
-}
-
 function make_collection_button(name, description,count) {
     return (
         <span class="label label tag-rebecca">
