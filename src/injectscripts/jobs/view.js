@@ -161,7 +161,9 @@ function lighthouseKeeper(){
   ////Quick Task Stuff
 
 
-  var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: Text"]');
+  var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: $data"]');
+
+console.log($targetElements)
 
   var ICEMS_Dictionary = {
     'ASNSW'   : 'NSW Ambulance' ,
