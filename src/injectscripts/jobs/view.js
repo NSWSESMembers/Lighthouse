@@ -148,9 +148,11 @@ function taskingItems_switch(){
 }
 
 function taskingItems_individual(e){
-  //console.log('e', e);
+  // Tasked Team Clicked On
   var $t = $(e.currentTarget);
-  $('div.row.clearfix:not(:contains("Set"))', $t).slideToggle();
+  // Only Toggle Content if the Clicked Team is Complete
+  if( $t.hasClass('team_complete') )
+    $('div.row.clearfix:not(:contains("Set"))', $t).slideToggle();
 }
 
 
