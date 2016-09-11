@@ -318,11 +318,10 @@ $.ajax({
             $.each(response.responseJSON.Results, function(k, v) { 
                 if (v.Id == itm.Id)
                 {
-                    build_recipient(v,v.EntityName+ " ("+v.Description+")",v.Detail)
-
                     BuildNew = {};
                     BuildNew.Contact = v;
-                    BuildNew.ContactTypeId = contact.ContactTypeId;
+                    BuildNew.ContactTypeId = v.ContactTypeId;
+                    BuildNew.ContactGroup = null;
                     BuildNew.Description = v.EntityName+ " ("+v.Description+")";
                     BuildNew.Recipient = v.Detail;
                     msgsystem.selectedRecipients.push(BuildNew)
