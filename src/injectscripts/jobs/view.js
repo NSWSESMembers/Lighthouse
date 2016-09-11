@@ -570,9 +570,7 @@ $(document).ready(function() {
 
 function return_quicktaskbutton() {
   return (
-    <div style="position: relative;
-    display: inline-block;
-    vertical-align: middle;" class="dropdown">
+    <div id="lighthouse_instanttask" style="position:relative;display:inline-block;vertical-align:middle" class="dropdown">
     <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
     <span class="caret"></span></button>
     <ul class="dropdown-menu">

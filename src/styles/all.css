@@ -145,6 +145,11 @@ div.team_complete_hidden div.list-group div.team_complete div.row.clearfix {
   cursor: pointer;
 }
 
+#lighthouse_instanttask .dropdown-menu {
+  left: auto;
+  right: 0;
+}
+
 
 
 .lighthouseKeeper-modified abbr {
