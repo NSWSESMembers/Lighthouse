@@ -32,6 +32,38 @@ whenWeAreReady(user,function() {
 
       function MakeMenu(lighthouseUrl, vars, unitName) {
         //cant use DOMFactory without causing a JIS coflict
+        // return $.parseHTML('\
+        //   <li class="dropdown" id="lhmenu">\
+        //   <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
+        //   <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="'+lighthouseUrl+'icons/lh.png"></img>Lighthouse</span>\
+        //   </a>\
+        //   <ul class="dropdown-menu">\
+        //   <li role="presentation" class="dropdown-header">Jobs</li>\
+        //   <li id="lhsummarymenuitem">\
+        //   <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
+        //   </li>\
+        //   <li id="lhstatsmenuitem">\
+        //   <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
+        //   </li>\
+        //   <li id="lhexportmenuitem">\
+        //   <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
+        //   </li>\
+        //   <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
+        //   </li>\
+        //   <li id="lhteammenuitem">\
+        //   <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
+        //   </li>\
+        //   <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
+        //   </li>\
+        //   <li>\
+        //   <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
+        //   </li>\
+        //   </ul>\
+        //   </li>\
+        //   ')
+
+
+
         return $.parseHTML('\
           <li class="dropdown" id="lhmenu">\
           <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
@@ -66,6 +98,9 @@ whenWeAreReady(user,function() {
           </ul>\
           </li>\
           ')
+
+
+
 }
 
 
