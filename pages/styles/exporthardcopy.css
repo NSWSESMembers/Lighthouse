@@ -1,0 +1,65 @@
+@import url("include/common.css");
+
+.small_foot_body {
+  min-width: auto;
+}
+
+fieldset {
+  max-width: 800px;
+  padding: .35em .625em .75em;
+  margin: 2em auto 0;
+}
+legend {
+  padding: .35em 0 0 0;
+  margin-bottom: 0;
+}
+label.checkbox-inline {
+  display: block;
+  padding: 3px 3px 3px 5px;
+  margin: 10px;
+  border-radius: 3px;
+  background: #F0F0F0;
+}
+label.checkbox-inline input[type="checkbox"] {
+  position: relative;
+  margin-left: 0;
+  margin-right: 5px;
+}
+#button_holder {
+  clear: both;
+  padding: 30px 20px 0;
+  text-align: right;
+}
+
+hr {
+  page-break-after: always;
+  visibility: hidden;
+}
+table.jobHardcopy {
+  width: 100%;
+}
+table.jobHardcopy .lh_jhc_ref {
+  font-size: 1.1em;
+  font-weight: bold;
+}
+table.jobHardcopy .lh_jhc_recd {
+  text-align: right;
+}
+table.jobHardcopy .lh_jhc_addr {
+  font-size: 2em;
+  font-weight: bold;
+}
+table.jobHardcopy .lh_jhc_addr_addl {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+table.jobHardcopy .lh_jhc_attend_head {
+  font-size: 1.2em;
+  text-align: center;
+}
+table.jobHardcopy .lh_jhc_form th ,
+table.jobHardcopy .lh_jhc_form td {
+  font-weight: bold;
+  height: 40px;
+  border-bottom: 1px solid #CCC;
+}
