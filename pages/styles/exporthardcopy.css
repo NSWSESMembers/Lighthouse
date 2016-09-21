@@ -1,5 +1,9 @@
 @import url("include/common.css");
 
+body {
+  overflow: hidden;
+}
+
 .small_foot_body {
   min-width: auto;
 }

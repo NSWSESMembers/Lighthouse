@@ -198,7 +198,9 @@ function HackTheMatrix(id, host, progressBar) {
     //downloadCSV("LighthouseExport.csv", beacon_jobs, selectedcolumns);
 
     //progressBar && progressBar.close();
-    
+
+    $('#loadinner p').text('Loaded');
+
     window.print();
 
   },function(val,total){
