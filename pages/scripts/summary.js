@@ -9,6 +9,29 @@ var crossfilter = require('crossfilter');
 // inject css c/o browserify-css
 require('../styles/summary.css');
 
+chrome.manifest = (function() {
+
+  var manifestObject = false;
+  var xhr = new XMLHttpRequest();
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == 4) {
+      manifestObject = JSON.parse(xhr.responseText);
+    }
+  };
+  xhr.open("GET", chrome.extension.getURL('/manifest.json'), false);
+
+  try {
+    xhr.send();
+  } catch(e) {
+    console.log('Couldn\'t load manifest.json');
+  }
+
+  return manifestObject;
+
+})();
+
+
 var timeoverride = null;
 
 window.onerror = function(message, url, lineNumber) {
@@ -50,6 +73,12 @@ $(document).on('change', 'input[name=slide]:radio', function() {
 
 //refresh button
 $(document).ready(function() {
+
+  if (chrome.manifest.name.includes("Development")) {
+    $('body').addClass("watermark");
+  }
+
+
   document.getElementById("refresh").onclick = function() {
     RunForestRun();
   }
