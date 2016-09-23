@@ -114,10 +114,8 @@ $(document).ready(function() {
                 {
                     currentCollections = [];
                 }
-                console.log(currentCollections);
                 newcurrentCollections = []
                 $.each(currentCollections,function(k,v){
-                    console.log(v)
                     if (v.name != CollectionParent.name) //catch the dupes
                     {
                         newcurrentCollections.push(v) //delete the duplicate
@@ -127,10 +125,7 @@ $(document).ready(function() {
                 currentCollections.push(CollectionParent);
                 localStorage.setItem("lighthouseContactCollections", JSON.stringify(currentCollections));
                 LoadAllCollections();
-            }
-            
-            //console.log(theCollection);
-            
+            }            
         }
     })
 
@@ -151,7 +146,6 @@ function LoadAllCollections() {
 
         //Load the saved Collections
         theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
-        console.log(theLoadedCollection);
         if (theLoadedCollection) {
             $("#collectionscount").textContent = theLoadedCollection.length;
             theLoadedCollection.forEach(function(item) {
