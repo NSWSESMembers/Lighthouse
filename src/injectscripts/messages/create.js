@@ -276,10 +276,9 @@ $.ajax({
                 $.each(response.responseJSON.Results, function(k, v) { 
                     if (v.Id == itm.Id)
                     {
-
                         BuildNew = {};
                         BuildNew.Contact = v;
-                        BuildNew.ContactTypeId = contact.ContactTypeId;
+                        BuildNew.ContactTypeId = v.ContactTypeId;
                         BuildNew.Description = v.FirstName+" "+v.LastName+ " ("+v.Description+")";
                         BuildNew.Recipient = v.Detail;
                         msgsystem.selectedRecipients.push(BuildNew)
