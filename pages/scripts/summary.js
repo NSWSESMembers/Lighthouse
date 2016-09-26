@@ -1,6 +1,8 @@
 var LighthouseJob = require('../lib/shared_job_code.js');
 var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
+var LighthouseChrome = require('../lib/shared_chrome_code.js');
+
 var $ = require('jquery');
 global.jQuery = $;
 var ElasticProgress = require('elastic-progress');
@@ -8,28 +10,6 @@ var crossfilter = require('crossfilter');
 
 // inject css c/o browserify-css
 require('../styles/summary.css');
-
-chrome.manifest = (function() {
-
-  var manifestObject = false;
-  var xhr = new XMLHttpRequest();
-
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4) {
-      manifestObject = JSON.parse(xhr.responseText);
-    }
-  };
-  xhr.open("GET", chrome.extension.getURL('/manifest.json'), false);
-
-  try {
-    xhr.send();
-  } catch(e) {
-    console.log('Couldn\'t load manifest.json');
-  }
-
-  return manifestObject;
-
-})();
 
 
 var timeoverride = null;
