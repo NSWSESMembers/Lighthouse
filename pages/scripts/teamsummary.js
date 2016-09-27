@@ -2,6 +2,8 @@ var LighthouseJob = require('../lib/shared_job_code.js');
 var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseTeam = require('../lib/shared_team_code.js');
+var LighthouseChrome = require('../lib/shared_chrome_code.js');
+
 var moment = require('moment');
 var $ = require('jquery');
 global.jQuery = $;
@@ -35,6 +37,12 @@ $(document).on('change', 'input[name=slide]:radio', function() {
 
 //refresh button
 $(document).ready(function() {
+
+    if (chrome.manifest.name.includes("Development")) {
+    $('body').addClass("watermark");
+  }
+
+  
   document.getElementById("refresh").onclick = function() {
     RunForestRun();
   }

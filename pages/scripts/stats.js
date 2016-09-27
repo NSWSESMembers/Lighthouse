@@ -1,6 +1,8 @@
 var LighthouseJob = require('../lib/shared_job_code.js');
 var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
+var LighthouseChrome = require('../lib/shared_chrome_code.js');
+
 var $ = require('jquery');
 global.jQuery = $;
 require('jquery.marquee');
@@ -17,6 +19,7 @@ require('../styles/stats.css');
 var timeoverride = null;
 var timeperiod;
 var unit = null;
+
 
 function removeStopwords(string) {
   var filteredWords = [];
@@ -40,6 +43,12 @@ function removeStopwords(string) {
 
 // init
 $(function() {
+
+  if (chrome.manifest.name.includes("Development")) {
+    $('body').addClass("watermark");
+  }
+
+ 
   var element = document.querySelector('.loadprogress');
 
   var mp = new ElasticProgress(element, {

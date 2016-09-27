@@ -1,6 +1,8 @@
 var LighthouseJob = require('../lib/shared_job_code.js');
 var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
+var LighthouseChrome = require('../lib/shared_chrome_code.js');
+
 var $ = require('jquery');
 global.jQuery = $;
 var ElasticProgress = require('elastic-progress');
@@ -8,6 +10,7 @@ var crossfilter = require('crossfilter');
 
 // inject css c/o browserify-css
 require('../styles/summary.css');
+
 
 var timeoverride = null;
 
@@ -50,6 +53,12 @@ $(document).on('change', 'input[name=slide]:radio', function() {
 
 //refresh button
 $(document).ready(function() {
+
+  if (chrome.manifest.name.includes("Development")) {
+    $('body').addClass("watermark");
+  }
+
+
   document.getElementById("refresh").onclick = function() {
     RunForestRun();
   }

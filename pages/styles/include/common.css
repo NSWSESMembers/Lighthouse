@@ -1,7 +1,13 @@
 @import url("node_modules/bootstrap/dist/css/bootstrap.css");
+html {
+	height: 100%;
+}
 
-body {
+body.watermark {
 	margin-bottom: 20px;
+	min-height: 100%;
+	background-image: url('/pages/images/dev_watermark.png');
+
 }
 
 @keyframes dots { from { opacity: 0; } 50% { opacity: 1; } }
