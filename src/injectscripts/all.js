@@ -62,46 +62,80 @@ whenWeAreReady(user,function() {
         //   </li>\
         //   ')
 
-
-
-        return $.parseHTML('\
-          <li class="dropdown" id="lhmenu">\
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
-          <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="'+lighthouseUrl+'icons/lh.png"></img>Lighthouse</span>\
-          </a>\
-          <ul class="dropdown-menu">\
-          <li role="presentation" class="dropdown-header">Jobs</li>\
-          <li id="lhsummarymenuitem">\
-          <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
-          </li>\
-          <li id="lhstatsmenuitem">\
-          <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
-          </li>\
-          <li id="lhexportmenuitem">\
-          <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
-          </li>\
-          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
-          </li>\
-          <li id="lhteammenuitem">\
-          <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
-          </li>\
-          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Maps\
-          </li>\
-          <li id="lhmapmenuitem">\
-          <a href="'+lighthouseUrl+'pages/map.html'+vars+'">Live Map ('+unitName+')</a>\
-          </li>\
-          <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
-          </li>\
-          <li id="lhtourmenuitem">\
-          <a href="#" id="LHTourRestart">Restart All Tours</a>\
-          </li>\
-          <li>\
-          <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
-          </li>\
-          </ul>\
-          </li>\
-          ')
-
+if (lighthouseEnviroment == "Development") {
+  //dev version
+  return $.parseHTML('\
+    <li class="dropdown" id="lhmenu">\
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
+    <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="'+lighthouseUrl+'icons/lh.png"></img>Lighthouse</span>\
+    </a>\
+    <ul class="dropdown-menu">\
+    <li role="presentation" class="dropdown-header">Jobs</li>\
+    <li id="lhsummarymenuitem">\
+    <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
+    </li>\
+    <li id="lhstatsmenuitem">\
+    <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
+    </li>\
+    <li id="lhexportmenuitem">\
+    <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
+    </li>\
+    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
+    </li>\
+    <li id="lhteammenuitem">\
+    <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
+    </li>\
+    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Maps\
+    </li>\
+    <li id="lhmapmenuitem">\
+    <a href="'+lighthouseUrl+'pages/map.html'+vars+'">Live Map ('+unitName+')</a>\
+    </li>\
+    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
+    </li>\
+    <li id="lhtourmenuitem">\
+    <a href="#" id="LHTourRestart">Restart All Tours</a>\
+    </li>\
+    <li>\
+    <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
+    </li>\
+    </ul>\
+    </li>\
+    ')
+} else if (lighthouseEnviroment == "Production") {
+  //prod version
+  return $.parseHTML('\
+    <li class="dropdown" id="lhmenu">\
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
+    <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="'+lighthouseUrl+'icons/lh.png"></img>Lighthouse</span>\
+    </a>\
+    <ul class="dropdown-menu">\
+    <li role="presentation" class="dropdown-header">Jobs</li>\
+    <li id="lhsummarymenuitem">\
+    <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
+    </li>\
+    <li id="lhstatsmenuitem">\
+    <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
+    </li>\
+    <li id="lhexportmenuitem">\
+    <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
+    </li>\
+    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
+    </li>\
+    <li id="lhteammenuitem">\
+    <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
+    </li>\
+    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
+    </li>\
+    <li id="lhtourmenuitem">\
+    <a href="#" id="LHTourRestart">Restart All Tours</a>\
+    </li>\
+    <li>\
+    <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
+    </li>\
+    </ul>\
+    </li>\
+    ')
+}
 
 
 }
@@ -120,7 +154,7 @@ $("#LHTourRestart").click(function() {
 });
 
 if (location.pathname == "/") {
-DoTour()
+  DoTour()
 }
 
         //lighthouse menu for teams
@@ -379,7 +413,7 @@ $(function(){
 
 
 function DoTour() {
-    require('bootstrap-tour')
+  require('bootstrap-tour')
 
 
     // Instance the tour
@@ -396,52 +430,52 @@ function DoTour() {
         backdrop: true,
         title: "Lighthouse Welcome",
         content: "Lighthouse has made some changes to this page. would you like a tour?"
-    },
-    {
+      },
+      {
         element: "#lhmenu",
         title: "Lighthouse Menu",
         placement: "bottom",
         backdrop: false,
         onNext: function (tour) {
-            $('#lhmenu > ul').show();
+          $('#lhmenu > ul').show();
         },
         content: "The Lighthouse menu gives quick access to several lighthouse features.",
-    },
-    {
+      },
+      {
         element: "#lhsummarymenuitem",
         title: "Lighthouse Menu - Summary",
         placement: "left",
         backdrop: true,
         onShown: function (tour) {
-        $('.popover').css("z-index", "9999999");
-      },
+          $('.popover').css("z-index", "9999999");
+        },
         content: "Lighthouse Summary provides a simple to read screen that gives a summary of all jobs. It will default to jobs at your HQ and a 24 hour filter.",
-    },
-    {
+      },
+      {
         element: "#lhstatsmenuitem",
         title: "Lighthouse Menu - Statistics",
         placement: "right",
         backdrop: true,
         onShown: function (tour) {
-        $('.popover').css("z-index", "9999999");
-      },
+          $('.popover').css("z-index", "9999999");
+        },
         content: "Lighthouse Statistics provides a simple statistics (pie charts and bar graphs) breakdown for all jobs. It will default to jobs at your HQ and a 24 hour filter.",
-    },
-    {
+      },
+      {
         element: "#lhexportmenuitem",
         title: "Lighthouse Menu - Job Export",
         placement: "left",
         backdrop: true,
         content: "Lighthouse Advanced Export allows you to export jobs and includes almost all the available data for the job - 31 data fields in total.",
-    },
-    {
+      },
+      {
         element: "#lhteammenuitem",
         title: "Lighthouse Menu - Team Summary",
         placement: "right",
         backdrop: true,
         content: "Lighthouse Summary provides a simple to read screen that gives a summary of all job. It will default to teams at your HQ.",
-    },
-    {
+      },
+      {
         element: "#lhmapmenuitem",
         title: "Lighthouse Menu - Live Map",
         placement: "left",
@@ -465,17 +499,17 @@ function DoTour() {
         $('.popover').css("z-index", "9999999");
       },
         content: "If you search for a job number that is found you will be taken straight to that job",
-    },
-    {
+      },
+      {
         element: "",
         placement: "top",
         orphan: true,
         backdrop: true,
         title: "Questions?",
         content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
-    }
-    ]
-})
+      }
+      ]
+    })
 
     /// Initialize the tour
     tour.init();
