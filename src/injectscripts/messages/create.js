@@ -360,7 +360,7 @@ function DoTour() {
 
     // Instance the tour
     var tour = new Tour({
-      name: "LHMessages",
+      name: "LHTourMessages",
       smartPlacement: true,
       placement: "right",
       debug: true,
@@ -378,7 +378,7 @@ function DoTour() {
         title: "Lighthouse Load",
         placement: "bottom",
         backdrop: false,
-        content: "Lighthouse call prefill the Available Contacts from you unit. Ticking this box enables this behavour. It will also select 'Operational' - 'Yes' for you",
+        content: "Lighthouse can prefill the Available Contacts from you unit. Ticking this box enables this behavour. It will also select 'Operational' - 'Yes' by default",
     },
     {
         element: "#recipientsdel",

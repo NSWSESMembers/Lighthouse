@@ -918,7 +918,7 @@ function DoTour() {
 
     // Instance the tour
     var tour = new Tour({
-      name: "LHJobView",
+      name: "LHTourJobView",
       smartPlacement: true,
       placement: "right",
       debug: true,

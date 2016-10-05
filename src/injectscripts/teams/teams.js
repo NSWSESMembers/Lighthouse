@@ -30,7 +30,7 @@ function DoTour() {
 
     // Instance the tour
     var tour = new Tour({
-      name: "LHTeams",
+      name: "LHTourTeams",
       smartPlacement: true,
       placement: "right",
       debug: true,

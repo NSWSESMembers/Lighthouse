@@ -131,7 +131,7 @@ function DoTour() {
 
     // Instance the tour
     var tour = new Tour({
-      name: "LHJobs",
+      name: "LHTourJobs",
       smartPlacement: true,
       placement: "right",
       debug: true,

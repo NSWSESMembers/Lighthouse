@@ -92,6 +92,9 @@ whenWeAreReady(user,function() {
           </li>\
           <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
           </li>\
+          <li id="lhtourmenuitem">\
+          <a href="#" id="LHTourRestart">Restart All Tours</a>\
+          </li>\
           <li>\
           <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
           </li>\
@@ -103,8 +106,18 @@ whenWeAreReady(user,function() {
 
 }
 
-
 $('.nav .navbar-nav:not(".navbar-right")').append(lighthouseMenu);
+
+$("#LHTourRestart").click(function() {
+ Object.keys(localStorage)
+      .forEach(function(key){
+           if (/^LHTour/.test(key)) {
+               console.log("Removing localstorage key..."+key);
+               localStorage.removeItem(key);
+           }
+       });
+  location.reload();    
+});
 
 if (location.pathname == "/") {
 DoTour()
@@ -371,7 +384,7 @@ function DoTour() {
 
     // Instance the tour
     var tour = new Tour({
-      name: "LHAll",
+      name: "LHTourAll",
       smartPlacement: true,
       placement: "right",
       debug: true,
@@ -433,10 +446,14 @@ function DoTour() {
         title: "Lighthouse Menu - Live Map",
         placement: "left",
         backdrop: true,
-        onNext: function (tour) {
-            $('#lhmenu > ul').hide();
-        },
         content: "Lighthouse Live Map provides a live and interactive map that can plot jobs, teams, ipads, and people.",
+    },
+    {
+        element: "#lhtourmenuitem",
+        title: "Lighthouse Menu - Restart Tour",
+        placement: "right",
+        backdrop: true,
+        content: "If you would like to replay the tour at any time, click here.",
     },
     {
         element: "#layoutJobSearchFormJobQuery",
@@ -444,6 +461,7 @@ function DoTour() {
         placement: "left",
         backdrop: false,
         onShown: function (tour) {
+        $('#lhmenu ul').toggle();
         $('.popover').css("z-index", "9999999");
       },
         content: "If you search for a job number that is found you will be taken straight to that job",
