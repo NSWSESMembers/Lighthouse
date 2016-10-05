@@ -1,6 +1,7 @@
 var inject = require('../../lib/inject.js');
 var $ = require('jquery');
 var DOM = require('jsx-dom-factory');
+var LighthouseChrome = require('../../pages/lib/shared_chrome_code.js');
 
   // inject JS that is to run on every page in page context
 inject('all.js');
@@ -11,7 +12,8 @@ require('../styles/all.css');
 //set the extension code var into the head
 var s = document.createElement('script');
 s.setAttribute('type', 'text/javascript');
-s.innerHTML = "var lighthouseUrl = \"" + chrome.extension.getURL("") + "\"";
+s.innerHTML = "var lighthouseUrl = \"" + chrome.extension.getURL("") + "\";\n var lighthouseEnviroment = \"" +(chrome.manifest.name.includes("Development") ? "Development" : "Production")+"\";\n";
+
 (document.head || document.documentElement).appendChild(s)
 
 
