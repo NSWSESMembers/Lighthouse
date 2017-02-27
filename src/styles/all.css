@@ -71,7 +71,10 @@ div.team_complete_hidden div.list-group div.team_complete div.row.clearfix {
   display: block;
 }
 
-
+#job_view_asbestos_groups legend.main span {
+  display: block;
+  font-size: 0.7em;
+}
 
 #job_view_history table {
   width: 100%;
@@ -90,6 +93,7 @@ div.team_complete_hidden div.list-group div.team_complete div.row.clearfix {
   display: block;
   font-size: 0.7em;
 }
+
 #job_view_history_groups fieldset.job_view_history_showtoggle div.job_view_history_item_toggle {
   display: none;
 }
