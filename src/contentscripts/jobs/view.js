@@ -17,6 +17,12 @@ window.addEventListener("message", function(event) {
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
       console.log(response);
       $('#asbestos-register-flag').text(response.result);
+      if (response.colour != "") {
+        console.log($('#asbestos-register-flag'));
+        $('#asbestos-register-flag')[0].style.color = "white"
+        $('#asbestos-register-flag')[0].style.backgroundColor = response.colour;
+
+      }
 
     });
 
@@ -135,7 +141,8 @@ job_view_history = (
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
 job_asbestos_history = (
   <div class="form-group">
-  <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label">FT Asbestos Register</label>
+  <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
+  src={chrome.extension.getURL("icons/lh-black.png")} />Fairtrade Register</label>
   <div class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
   <p id="asbestos-register-flag" class="form-control-static">Unknown</p>
   </div>
