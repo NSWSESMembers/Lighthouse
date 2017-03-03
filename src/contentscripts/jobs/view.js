@@ -12,15 +12,24 @@ window.addEventListener("message", function(event) {
 
   if (event.data.type && (event.data.type == "FROM_PAGE")) {
 
-    
+
     console.log(event.data.address);
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
       console.log(response);
       $('#asbestos-register-flag').text(response.result);
       if (response.colour != "") {
-        console.log($('#asbestos-register-flag'));
         $('#asbestos-register-flag')[0].style.color = "white"
         $('#asbestos-register-flag')[0].style.backgroundColor = response.colour;
+
+        if (response.resultbool == true)
+        {
+          taggedasbestos = false
+          $('span.label.tag.tag-disabled.tag-hazard').each(function(k,v){
+            console.log(v)
+
+
+            })
+        }
 
       }
 
@@ -144,7 +153,7 @@ job_asbestos_history = (
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
   src={chrome.extension.getURL("icons/lh-black.png")} />Fairtrade Register</label>
   <div class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
-  <p id="asbestos-register-flag" class="form-control-static">Unknown</p>
+  <p id="asbestos-register-flag" class="form-control-static">Searching...</p>
   </div>
   </div>
   );
