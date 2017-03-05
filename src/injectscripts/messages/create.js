@@ -155,16 +155,24 @@ DoTour()
 
 
 function LoadTeams() {
-    console.log(msgsystem.selectedHeadquarters.peek())
     ReturnTeamsActiveAtLHQ(msgsystem.selectedHeadquarters.peek(),null,function(response){
         console.log(response);
         $('#teamscount').text(response.responseJSON.Results.length)
         if(response.responseJSON.Results.length) {
-            $('#lighthouseteams').empty()
+            $('#lighthouseteams').empty() //empty to prevent dupes
             $.each(response.responseJSON.Results, function(k, v) {
-                if (v.Members.length > 0)
+                if (v.Members.length > 0) //only show teams with members
             {
-                var $button = make_team_button(v.Callsign,v.Members.length+"")
+                TL = ""
+                $.each(v.Members,function(kk,vv) {
+                    console.log(vv)
+                    if (vv.TeamLeader == true)
+                    {
+                        TL = vv.Person.FirstName+" "+vv.Person.LastName
+                    }
+                })
+                //length + "" to make it a string
+                var $button = make_team_button(v.Callsign,TL,v.Members.length+"")
                 $($button).click(function() { 
                     var $spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
                     var nodes = $button.childNodes;
@@ -429,11 +437,11 @@ function make_collection_button(name, description,count) {
         )
 }
 
-function make_team_button(name,count) {
+function make_team_button(name,TL,counts) {
     return (
         <span class="label label tag-darkgoldenrod">
-        <span><p  style="margin-bottom:5px"><i class="fa fa-users" aria-hidden="true" style="padding-right: 5px;"></i>{name}<span class="delbutton"></span></p></span>
-        <span>{count} recipients</span>
+        <span><p  style="margin-bottom:5px"><i class="fa fa-users" aria-hidden="true" style="padding-right: 5px;"></i>{name}</p></span>
+        <span><p>{TL}<sup>TL</sup></p>{counts} Members</span>
         </span>
         )
 }
