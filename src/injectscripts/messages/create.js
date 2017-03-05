@@ -1,27 +1,15 @@
 var DOM = require('jsx-dom-factory');
-var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
-
 
 
 console.log("inject running");
 
 $(document).ready(function() {
 
+
+
     if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) {
 
         whenWeAreReady(msgsystem, function() {
-
-            msgsystem.selectedHeadquarters.subscribe(function(status){
-                console.log("Picked something")
-                if (status !== null)
-                {
-                    LoadTeams()
-                } else {
-                    console.log("Not a HQ. Cleaning up")
-                    $('#HQTeamsSet').hide()
-
-                }
-            });
 
             //Home HQ - with a wait to catch possible race condition where the page is still loading
             whenWeAreReady(user, function() {
@@ -37,7 +25,6 @@ $(document).ready(function() {
             });
 
         });
-        //auto select ones that have the world default in them
         msgsystem.loadingContacts.subscribe(function(status) {
             if (status == false) {
                 msgsystem.availableContactGroups.peek().forEach(function(item) {
@@ -153,71 +140,14 @@ DoTour()
 
 });
 
-
-function LoadTeams() {
-    console.log(msgsystem.selectedHeadquarters.peek())
-    ReturnTeamsActiveAtLHQ(msgsystem.selectedHeadquarters.peek(),null,function(response){
-        console.log(response);
-        $('#teamscount').text(response.responseJSON.Results.length)
-        if(response.responseJSON.Results.length) {
-            $('#lighthouseteams').empty()
-            $.each(response.responseJSON.Results, function(k, v) {
-                var $button = make_team_button(v.Callsign,v.Members.length+"")
-                $($button).click(function() { 
-                    console.log("clicked "+v.Callsign)
-                    $.each(v.Members, function(kk,vv) {
-                        $.ajax({
-                            type: 'GET'
-                            , url: '/Api/v1/People/'+vv.Person.Id+'/Contacts'
-                            , data: {LighthouseFunction: 'LoadPerson'}
-                            , cache: false
-                            , dataType: 'json'
-                            , complete: function(response, textStatus) {
-                                if(textStatus == 'success')
-                                {
-                                    if(response.responseJSON.Results.length) {
-                                        $.each(response.responseJSON.Results, function(k, v) { 
-                                            if (v.ContactTypeId == 2)
-                                            {
-                                                BuildNew = {};
-                                                BuildNew.Contact = v;
-                                                BuildNew.ContactTypeId = v.ContactTypeId
-                                                if (vv.TeamLeader) {
-                                                    BuildNew.Description = v.FirstName+" "+v.LastName+" (TL)";
-
-                                                } else {
-                                                    BuildNew.Description = v.FirstName+" "+v.LastName;
-
-                                                }
-                                                BuildNew.Recipient = v.Detail;
-                                                msgsystem.selectedRecipients.push(BuildNew)
-                                            }
-                                        })
-}
-}
-}
-})
-})
-})
-$($button).appendTo('#lighthouseteams');
-
-})
-$('#teamshq').text("Teams Active At "+msgsystem.selectedHeadquarters.peek().Name)
-$('#HQTeamsSet').show()
-
-}
-});
-}
-
-
-function LoadAllCollections() {collectionscount
+function LoadAllCollections() {
 
     $("#lighthousecollections").empty();
 
         //Load the saved Collections
         theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
         if (theLoadedCollection) {
-            $("#collectionscount").text(theLoadedCollection.length);
+            $("#collectionscount").textContent = theLoadedCollection.length;
             theLoadedCollection.forEach(function(item) {
                 var $button = make_collection_button(item.name,item.description,item.items.length+"")
                 var $spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
@@ -409,16 +339,7 @@ break;
 function make_collection_button(name, description,count) {
     return (
         <span class="label label tag-rebecca">
-        <span><p  style="margin-bottom:5px"><i class="fa fa-object-group" aria-hidden="true" style="padding-right: 5px;"></i>{description}<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>
-        <span>{count} recipients</span>
-        </span>
-        )
-}
-
-function make_team_button(name,count) {
-    return (
-        <span class="label label tag-darkgoldenrod">
-        <span><p  style="margin-bottom:5px"><i class="fa fa-users" aria-hidden="true" style="padding-right: 5px;"></i>{name}<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>
+        <span><p  style="margin-bottom:5px"><i class="fa fa-users" aria-hidden="true" style="padding-right: 5px;"></i>{description}<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>
         <span>{count} recipients</span>
         </span>
         )
@@ -459,15 +380,12 @@ function DoTour() {
         backdrop: false,
         content: "Lighthouse can prefill the Available Contacts from you unit. Ticking this box enables this behavour. It will also select 'Operational' - 'Yes' by default",
     },
-        {
-        element: "#lighthouseteams",
-        title: "Active Teams",
+    {
+        element: "#recipientsdel",
+        title: "Lighthouse Delete",
         placement: "auto",
         backdrop: false,
-        onShown: function (tour) {
-          $('#HQTeamsSet').show();
-        },
-        content: "All active teams at the selected HQ will be shown here. Click the team to message the members. Team leader of the clicked team will have (TL) in his name in the Selected Receipients box.",
+        content: "We have added a button to remove all the selected message recipients",
     },
     {
         element: "#lighthousecollections",
@@ -497,13 +415,6 @@ function DoTour() {
             $('#lighthousecollections').empty();
         },
         content: "This is a saved collection. Click it to load its contents into 'Selected Recipients'",
-    },
-        {
-        element: "#recipientsdel",
-        title: "Lighthouse Delete",
-        placement: "auto",
-        backdrop: false,
-        content: "We have added a button to remove all the selected message recipients",
     },
     {
         element: "",
