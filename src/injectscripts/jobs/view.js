@@ -1,6 +1,8 @@
 var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
 var $ = require('jquery');
+var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
+
 
 console.log("Running content script");
 
@@ -160,12 +162,11 @@ document.title = "#"+jobId;
 
 function lighthouseKeeper(){
 
-  ////Quick Task Stuff
 
 
   var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: $data"]');
 
-console.log($targetElements)
+  console.log($targetElements)
 
   var ICEMS_Dictionary = {
     'ASNSW'   : 'NSW Ambulance' ,
@@ -254,103 +255,39 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
   }
 });
 
-function InstantTaskButton() {
+  ////Quick Task Stuff
 
-  var now = moment();
-  var end = moment();
-  end.subtract(1, 'y');
+  function InstantTaskButton() {
 
-  alreadyTasked = []
-  $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
-    if(v.CurrentStatusId != 6)
-    {
-      alreadyTasked.push(v.Team.Id)
-    }
-  })
-  $(quickTask).find('ul').empty();
-  loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
-  $(quickTask).find('ul').append(loading)
 
-  UnitsToSearch = []
-
-  if (user.hq.EntityTypeId != 1) {
-    console.log("HQ Entity is not a unit, will resolve group")
-    $.ajax({
-      type: 'GET'
-      , url: '/Api/v1/Entities/'+user.hq.Id+'/Children'
-      , data: {LighthouseFunction: 'QuickTaskResolveChildrenOfEntity'}
-      , cache: false
-      , dataType: 'json'
-      , complete: function(response, textStatus) {
-        console.log('textStatus = "%s"', textStatus, response);
-        if(textStatus == 'success')
-        {
-          if(response.responseJSON.length) {
-            $.each(response.responseJSON, function(k,v){
-              UnitsToSearch.push(v.Id);
-            })
-          }
-          GetQuickTaskTeams(UnitsToSearch)
-        }
+    alreadyTasked = []
+    $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
+      if(v.CurrentStatusId != 6)
+      {
+        alreadyTasked.push(v.Team.Id)
       }
     })
-
-  } else {
-    UnitsToSearch.push(user.currentHqId)
-    GetQuickTaskTeams(UnitsToSearch)
-
-  }
-
-
-  function GetQuickTaskTeams(UnitsToSearch) {
-
-
-
-    theData = {
-      'StartDate':          end.toISOString()
-      , 'EndDate':            now.toISOString()
-      , 'TypeIds[]':          1
-      , 'IncludeDeleted':     false
-      , 'StatusTypeId[]':     3
-      , 'PageIndex':          1
-      , 'PageSize':           1000
-      , 'SortField':          'Callsign'
-      , 'SortOrder':          'asc'
-      ,'LighthouseFunction': 'InstantTaskButton' 
-    }
-
-    AssignedToId = []
-    CreatedAtId = []
-    $.each(UnitsToSearch, function(k,v){
-      AssignedToId.push(v)
-      CreatedAtId.push(v)
-    })
-
-    theData.AssignedToId = AssignedToId
-    theData.CreatedAtId = CreatedAtId
+    $(quickTask).find('ul').empty();
+    loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
+    $(quickTask).find('ul').append(loading)
 
     lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
 
 
-
+    sectorFilter = null
     if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true )
     {
-      theData.SectorIds = masterViewModel.sector.peek().Id
-      theData.Unsectorised = true
-    }
+     sectorFilter = masterViewModel.sector.peek().Id
+   } 
 
-    $.ajax({
-      type: 'GET'
-      , url: '/Api/v1/Teams/Search'
-      , data: theData
-      , cache: false
-      , dataType: 'json'
-      , complete: function(response, textStatus) {
-        console.log('textStatus = "%s"', textStatus, response);
-        if(textStatus == 'success')
-        {
-          if(response.responseJSON.Results.length) {
-            $(quickTask).find('ul').empty();
+   console.log("Sector Filter is:"+sectorFilter)
+   console.log("Already Tasked is:")
+   console.log(alreadyTasked)
+   ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
+
+
+    if(response.responseJSON.Results.length) {
+      $(quickTask).find('ul').empty();
 
             /////
             ///// Search Box
@@ -398,12 +335,18 @@ function InstantTaskButton() {
                 if (vv.TeamLeader)
                 {
                   item = return_li(v.Id,v.Callsign.toUpperCase(),vv.Person.FirstName+" "+vv.Person.LastName,v.TaskedJobCount+"");
-                  $(item).click(function () {
-                    TaskTeam(v.Id)
-                  })
                 }
               })
             }
+            //still create teams that have no TL
+            if (typeof(item) == "undefined") {
+              item = return_li(v.Id,v.Callsign.toUpperCase(),"No TL",v.TaskedJobCount+"");
+            }
+
+            //allow teams with no members to be tasked
+            $(item).click(function () {
+              TaskTeam(v.Id)
+            })
             if (v.Sector === null)
             {
               nonsector.push(item)
@@ -416,12 +359,10 @@ function InstantTaskButton() {
                 sector[sectorName] = [item]
               }
             }
-            
           }
         })
 finalli = []
 drawnsectors = []
-
 
           //finalli.push(return_lipres(masterViewModel.sector.peek().Name+" Sector Teams"));
           $.each(sector, function(k, v){
@@ -448,11 +389,10 @@ drawnsectors = []
           no_results = (<li><a href="#">No Active Field Teams</a></li>)
           $(quickTask).find('ul').append(no_results)
         }
-      }
-    }
-  })
+
+      })
 }
-}
+
 
 
 function TaskTeam(teamID) {
@@ -487,7 +427,6 @@ function return_search_box() {
 }
 
 function return_li(id, callsign, teamleader, JobCount) {
-  console.log(teamleader)
   if (teamleader != null)
   {
     return(
@@ -979,7 +918,7 @@ function DoTour() {
         backdrop: true,
         title: "Questions?",
         content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
-    }
+      }
       ]
     })
 
