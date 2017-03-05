@@ -164,6 +164,12 @@ function LoadTeams() {
             $.each(response.responseJSON.Results, function(k, v) {
                 var $button = make_team_button(v.Callsign,v.Members.length+"")
                 $($button).click(function() { 
+                    var $spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
+                    var nodes = $button.childNodes;
+                    for(i=0; i<nodes.length; i++) {
+                        nodes[i].style.display="none";
+                    }
+                    $($spinner).appendTo($button);
                     console.log("clicked "+v.Callsign)
                     $.each(v.Members, function(kk,vv) {
                         $.ajax({
@@ -195,8 +201,14 @@ function LoadTeams() {
                                         })
 }
 }
-}
-})
+$button.removeChild($spinner);
+                        //cb for when they are loaded
+                        var nodes = $button.childNodes;
+                        for(i=0; i<nodes.length; i++) {
+                            nodes[i].removeAttribute("style");
+                        }
+                    }
+                })
 })
 })
 $($button).appendTo('#lighthouseteams');
@@ -459,61 +471,61 @@ function DoTour() {
         backdrop: false,
         content: "Lighthouse can prefill the Available Contacts from you unit. Ticking this box enables this behavour. It will also select 'Operational' - 'Yes' by default",
     },
-        {
+    {
         element: "#lighthouseteams",
         title: "Active Teams",
         placement: "auto",
         backdrop: false,
         onShown: function (tour) {
           $('#HQTeamsSet').show();
-        },
-        content: "All active teams at the selected HQ will be shown here. Click the team to SMS the members. Team leader of the clicked team will have (TL) in his name in the Selected Receipients box.",
+      },
+      content: "All active teams at the selected HQ will be shown here. Click the team to SMS the members. Team leader of the clicked team will have (TL) in his name in the Selected Receipients box.",
+  },
+  {
+    element: "#lighthousecollections",
+    title: "Lighthouse Collections",
+    placement: "top",
+    backdrop: false,
+    content: "Lighthouse Collections allow you to save a group of message recipients for quick selection later. Collections can contain any combination of recipients (including groups from different units or regions) and are saved locally on your computer.",
+},
+{
+    element: "#collectionsave",
+    title: "Lighthouse Collections - Save",
+    placement: "top",
+    backdrop: false,
+    onNext: function (tour) {
+        $button = make_collection_button("Tour Example","Tour Example","13")
+        $($button).attr("id","tourbutton")
+        $($button).appendTo('#lighthousecollections');
     },
-    {
-        element: "#lighthousecollections",
-        title: "Lighthouse Collections",
-        placement: "top",
-        backdrop: false,
-        content: "Lighthouse Collections allow you to save a group of message recipients for quick selection later. Collections can contain any combination of recipients (including groups from different units or regions) and are saved locally on your computer.",
+    content: "Once you have selected some message recipients click 'Save As Collection' to save them for later. using a name that already exists will replace the old collection.",
+},
+{
+    element: "#tourbutton",
+    title: "Lighthouse Collections - Load",
+    placement: "top",
+    backdrop: false,
+    onNext: function (tour) {
+        $('#lighthousecollections').empty();
     },
-    {
-        element: "#collectionsave",
-        title: "Lighthouse Collections - Save",
-        placement: "top",
-        backdrop: false,
-        onNext: function (tour) {
-            $button = make_collection_button("Tour Example","Tour Example","13")
-            $($button).attr("id","tourbutton")
-            $($button).appendTo('#lighthousecollections');
-        },
-        content: "Once you have selected some message recipients click 'Save As Collection' to save them for later. using a name that already exists will replace the old collection.",
-    },
-    {
-        element: "#tourbutton",
-        title: "Lighthouse Collections - Load",
-        placement: "top",
-        backdrop: false,
-        onNext: function (tour) {
-            $('#lighthousecollections').empty();
-        },
-        content: "This is a saved collection. Click it to load its contents into 'Selected Recipients'",
-    },
-        {
-        element: "#recipientsdel",
-        title: "Lighthouse Delete",
-        placement: "auto",
-        backdrop: false,
-        content: "We have added a button to remove all the selected message recipients",
-    },
-    {
-        element: "",
-        placement: "top",
-        orphan: true,
-        backdrop: true,
-        title: "Questions?",
-        content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
-    }
-    ]
+    content: "This is a saved collection. Click it to load its contents into 'Selected Recipients'",
+},
+{
+    element: "#recipientsdel",
+    title: "Lighthouse Delete",
+    placement: "auto",
+    backdrop: false,
+    content: "We have added a button to remove all the selected message recipients",
+},
+{
+    element: "",
+    placement: "top",
+    orphan: true,
+    backdrop: true,
+    title: "Questions?",
+    content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
+}
+]
 })
 
     /// Initialize the tour
