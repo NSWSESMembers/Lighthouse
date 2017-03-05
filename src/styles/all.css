@@ -169,6 +169,17 @@ div[data-bind="text: $data"] {
   background-color: rebeccapurple;
 }
 
+.tag-darkgoldenrod{
+  padding-top:5px;
+  padding-bottom:5px;
+  margin: 5px 5px 0 0;
+  cursor: pointer;
+  float: left;
+  border: 1px solid  #b8860b;
+  color: white;
+  background-color: darkgoldenrod;
+}
+
 
 body.previewbeacon {}
 body.previewbeacon #navbar,

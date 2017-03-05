@@ -66,6 +66,26 @@ function recipientsButtons() {
 
 $('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2) div.panel.panel-default').append(recipientsButtons);
 
+function renderHQTeams() {
+	return (
+		<fieldset id="HQTeamsSet" >
+		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:5px"
+		src={chrome.extension.getURL("icons/lh-black.png")} />Teams Attached to HQ</legend>
+		<div class="panel panel-default">
+		<div class="panel-heading"><span id="teamshq">HQ Teams</span><span id="teamscount" class="pull-right badge">0</span></div>
+		<div id="lighthouseteams" class="panel-body">
+		</div>
+		</div>
+		</fieldset>
+		);
+}
+
+hqgroup = renderHQTeams()
+$(hqgroup).hide()
+
+
+$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(1)').after(hqgroup);
+
 function renderCollections() {
 	return (
 		<fieldset>
@@ -81,6 +101,8 @@ function renderCollections() {
 }
 
 $('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2)').after(renderCollections);
+
+
 
 
 
