@@ -155,31 +155,39 @@ DoTour()
 
 
 function LoadTeams() {
+    $('#lighthouseteams').empty() //empty to prevent dupes
+
+    var $spinner = (<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
+
+    $($spinner).appendTo($('#lighthouseteams'));
+    $('#teamshq').text("Active Teams (With Members) At "+msgsystem.selectedHeadquarters.peek().Name)
+    $('#HQTeamsSet').show()
     ReturnTeamsActiveAtLHQ(msgsystem.selectedHeadquarters.peek(),null,function(response){
         console.log(response);
         $('#teamscount').text(response.responseJSON.Results.length)
         if(response.responseJSON.Results.length) {
-            $('#lighthouseteams').empty() //empty to prevent dupes
-            $.each(response.responseJSON.Results, function(k, v) {
+                $('#lighthouseteams').empty() //empty to prevent dupes
+
+                $.each(response.responseJSON.Results, function(k, v) {
                 if (v.Members.length > 0) //only show teams with members
-            {
-                TL = ""
-                $.each(v.Members,function(kk,vv) {
-                    console.log(vv)
-                    if (vv.TeamLeader == true)
-                    {
-                        TL = vv.Person.FirstName+" "+vv.Person.LastName
-                    }
-                })
+                {
+                    TL = ""
+                    $.each(v.Members,function(kk,vv) {
+                        console.log(vv)
+                        if (vv.TeamLeader == true)
+                        {
+                            TL = vv.Person.FirstName+" "+vv.Person.LastName
+                        }
+                    })
                 //length + "" to make it a string
-                var $button = make_team_button(v.Callsign,TL,v.Members.length+"")
-                $($button).click(function() { 
-                    var $spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
-                    var nodes = $button.childNodes;
+                var button = make_team_button(v.Callsign,TL,v.Members.length+"")
+                $(button).click(function() { 
+                    var spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
+                    var nodes = button.childNodes;
                     for(i=0; i<nodes.length; i++) {
                         nodes[i].style.display="none";
                     }
-                    $($spinner).appendTo($button);
+                    $(spinner).appendTo(button);
                     console.log("clicked "+v.Callsign)
                     $.each(v.Members, function(kk,vv) {
                         $.ajax({
@@ -211,23 +219,27 @@ function LoadTeams() {
                                         })
 }
 }
-$button.removeChild($spinner);
-                        //cb for when they are loaded
-                        var nodes = $button.childNodes;
-                        for(i=0; i<nodes.length; i++) {
-                            nodes[i].removeAttribute("style");
-                        }
-                    }
-                })
-})
-})
-$($button).appendTo('#lighthouseteams');
+button.removeChild(spinner);
+ //cb for when they are loaded
+ var nodes = button.childNodes;
+ for(i=0; i<nodes.length; i++) {
+   nodes[i].removeAttribute("style");
+}
 }
 })
-$('#teamshq').text("Active Teams (With Members) At "+msgsystem.selectedHeadquarters.peek().Name)
-$('#HQTeamsSet').show()
+})
+})
 
+$(button).appendTo('#lighthouseteams');
+button.style.width = button.offsetWidth+"px";
+button.style.height = button.offsetHeight+"px";
 }
+})
+} else {
+    //nothing found
+     $('#lighthouseteams').empty() //empty to prevent dupes
+
+ }
 });
 }
 
