@@ -56,8 +56,8 @@ $(document).ready(function() {
         })
 
     } else {
-     console.log("Not running due to preference setting")
- }
+       console.log("Not running due to preference setting")
+   }
 
     //Operational = true
     msgsystem.operational(true);
@@ -162,6 +162,8 @@ function LoadTeams() {
         if(response.responseJSON.Results.length) {
             $('#lighthouseteams').empty()
             $.each(response.responseJSON.Results, function(k, v) {
+                if (v.Members.length > 0)
+            {
                 var $button = make_team_button(v.Callsign,v.Members.length+"")
                 $($button).click(function() { 
                     var $spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
@@ -212,9 +214,9 @@ $button.removeChild($spinner);
 })
 })
 $($button).appendTo('#lighthouseteams');
-
+}
 })
-$('#teamshq').text("Teams Active At "+msgsystem.selectedHeadquarters.peek().Name)
+$('#teamshq').text("Active Teams (With Members) At "+msgsystem.selectedHeadquarters.peek().Name)
 $('#HQTeamsSet').show()
 
 }
@@ -430,7 +432,7 @@ function make_collection_button(name, description,count) {
 function make_team_button(name,count) {
     return (
         <span class="label label tag-darkgoldenrod">
-        <span><p  style="margin-bottom:5px"><i class="fa fa-users" aria-hidden="true" style="padding-right: 5px;"></i>{name}<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>
+        <span><p  style="margin-bottom:5px"><i class="fa fa-users" aria-hidden="true" style="padding-right: 5px;"></i>{name}<span class="delbutton"></span></p></span>
         <span>{count} recipients</span>
         </span>
         )
