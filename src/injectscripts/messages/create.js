@@ -467,7 +467,7 @@ function DoTour() {
         onShown: function (tour) {
           $('#HQTeamsSet').show();
         },
-        content: "All active teams at the selected HQ will be shown here. Click the team to message the members. Team leader of the clicked team will have (TL) in his name in the Selected Receipients box.",
+        content: "All active teams at the selected HQ will be shown here. Click the team to SMS the members. Team leader of the clicked team will have (TL) in his name in the Selected Receipients box.",
     },
     {
         element: "#lighthousecollections",
