@@ -173,7 +173,6 @@ function LoadTeams() {
                 {
                     TL = ""
                     $.each(v.Members,function(kk,vv) {
-                        console.log(vv)
                         if (vv.TeamLeader == true)
                         {
                             TL = vv.Person.FirstName+" "+vv.Person.LastName
