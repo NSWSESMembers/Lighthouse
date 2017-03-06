@@ -15,21 +15,11 @@ window.addEventListener("message", function(event) {
     console.log(event.data.address);
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
       console.log(response);
-      $('#asbestos-register-flag').text(response.result);
+      $('#asbestos-register-text').text(response.result);
+
       if (response.colour != "") {
-        $('#asbestos-register-flag')[0].style.color = "white"
-        $('#asbestos-register-flag')[0].style.backgroundColor = response.colour;
-
-        if (response.resultbool == true)
-        {
-          taggedasbestos = false
-          $('span.label.tag.tag-disabled.tag-hazard').each(function(k,v){
-            console.log(v)
-
-
-            })
-        }
-
+        $('#asbestos-register-box')[0].style.color = "white"
+        $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px'});
       }
 
     });
@@ -151,8 +141,8 @@ job_asbestos_history = (
   <div class="form-group">
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
   src={chrome.extension.getURL("icons/lh-black.png")} />Fairtrade Register</label>
-  <div class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
-  <p id="asbestos-register-flag" class="form-control-static">Searching...</p>
+  <div id="asbestos-register-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9" style="width:inherit">
+  <p id="asbestos-register-text" class="form-control-static">Searching...</p>
   </div>
   </div>
   );

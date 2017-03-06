@@ -10,19 +10,20 @@ window.addEventListener("message", function(event) {
   if (event.data.type && (event.data.type == "FROM_PAGE")) {
     console.log(event.data.address);
     //reset the colors
-    $('#asbestos-register-flag')[0].style.color = "black"
-    $('#asbestos-register-flag')[0].style.backgroundColor = "";
+    $('#asbestos-register-box')[0].style.color = "black"
+    $('#asbestos-register-box').css({'background' :'','margin-left':'0px'})
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
       console.log(response);
-      $('#asbestos-register-flag').text(response.result);
+      $('#asbestos-register-text').text(response.result);
       if (response.colour != "") {
         //has asbestos
         window.postMessage({ type: "FROM_LH", result: true }, "*");
-        $('#asbestos-register-flag')[0].style.color = "white"
-        $('#asbestos-register-flag')[0].style.backgroundColor = response.colour;
+        $('#asbestos-register-box')[0].style.color = "white"
+        $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px','margin-left':'17px'})
       } else {
-        $('#asbestos-register-flag')[0].style.color = "black"
-        $('#asbestos-register-flag')[0].style.backgroundColor = "";
+        window.postMessage({ type: "FROM_LH", result: false }, "*");
+        $('#asbestos-register-box')[0].style.color = "black"
+        $('#asbestos-register-box').css({'background' :''})
       }
 
     });
@@ -40,8 +41,8 @@ $(document).ready(function(){
 job_asbestos_history = (
   <div class="form-group">
   <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px" src={chrome.extension.getURL("icons/lh-black.png")} />Fairtrade Register</label>
-  <div class="col-md-10 col-lg-8">
-  <p id="asbestos-register-flag" class="form-control-static">Waiting For An Address</p>
+  <div id="asbestos-register-box" class="col-md-10 col-lg-8" style="width:inherit">
+  <p id="asbestos-register-text" class="form-control-static">Waiting For An Address</p>
   </div>
   </div>
   );

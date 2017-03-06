@@ -1,6 +1,6 @@
 var DOM = require('jsx-dom-factory');
 
-console.log("inject running");
+console.log("jobs/create.js inject running");
 
 $(document).ready(function() {
 
@@ -15,6 +15,14 @@ $(document).ready(function() {
     {
       console.log("Applying Fibro/Asbestos tag")
       $.each(jobsystem.availableJobTags.peek(),function(k,v){
+        if(v.Name == "Fibro/Asbestos"){
+          jobsystem.jobTagClicked(v);
+          return false
+        }
+      })
+    } else {
+      console.log("Removing Fibro/Asbestos tag if present")
+      $.each(jobsystem.selectedJobTags.peek(),function(k,v){
         if(v.Name == "Fibro/Asbestos"){
           jobsystem.jobTagClicked(v);
           return false
