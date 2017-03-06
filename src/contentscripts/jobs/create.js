@@ -16,6 +16,8 @@ window.addEventListener("message", function(event) {
       console.log(response);
       $('#asbestos-register-flag').text(response.result);
       if (response.colour != "") {
+        //has asbestos
+        window.postMessage({ type: "FROM_LH", result: true }, "*");
         $('#asbestos-register-flag')[0].style.color = "white"
         $('#asbestos-register-flag')[0].style.backgroundColor = response.colour;
       } else {
