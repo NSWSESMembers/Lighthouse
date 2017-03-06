@@ -5,7 +5,6 @@
 //block message js core requests
 chrome.webRequest.onBeforeRequest.addListener(
 	function (details) {
-		console.log(details)
 		var javascriptCode = loadSynchronously(details.url);
 		var replaced = "var msgsystem;"+javascriptCode.replace("CreateMessageViewModel,f,t,i,r,u;","CreateMessageViewModel,f,t,i,r,u;msgsystem = n;");
 		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
@@ -16,10 +15,9 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 function loadSynchronously(url) {
 	var request = new XMLHttpRequest();
-request.open('GET', url, false);  // `false` makes the request synchronous
-request.send(null);
-
-if (request.status === 200) {
-	return(request.responseText);
-}
+	request.open('GET', url, false);  // `false` makes the request synchronous
+	request.send(null);
+	if (request.status === 200) {
+		return(request.responseText);
+	}
 }
