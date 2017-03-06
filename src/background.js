@@ -69,7 +69,7 @@ function checkAsbestosRegister( inAddressObject, cb ){
 			}
 			if( /Confirmed\sMatch/.test( this.responseText ) ){
 				console.log( 'On the Register' );
-				cb("Address Has Confirmed Loose Fill Asbestos Contamination","red",true)
+				cb(inAddressObject.PrettyAddress+" Has Confirmed Loose Fill Asbestos Contamination","red",true)
 			}
 			if( /No\sMatch\sFound/.test( this.responseText ) ){
 				console.log( 'Not the Register' );

@@ -9,9 +9,6 @@ window.addEventListener("message", function(event) {
 
   if (event.data.type && (event.data.type == "FROM_PAGE")) {
     console.log(event.data.address);
-    //reset the colors
-    $('#asbestos-register-box')[0].style.color = "black"
-    $('#asbestos-register-box').css({'background' :'','margin-left':'0px'})
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
       console.log(response);
       $('#asbestos-register-text').text(response.result);

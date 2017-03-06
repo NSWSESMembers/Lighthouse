@@ -19,7 +19,7 @@ window.addEventListener("message", function(event) {
 
       if (response.colour != "") {
         $('#asbestos-register-box')[0].style.color = "white"
-        $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px'});
+        $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px','margin-left':'17px'});
       }
 
     });

@@ -48,17 +48,19 @@ $(document).ready(function() {
           address.Locality = address.locality
           address.Flat = address.flat
 
+    //reset the colors
+    $('#asbestos-register-box')[0].style.color = "black"
+    $('#asbestos-register-box').css({'background' :'','margin-left':'0px'})
 
 
-
-          window.postMessage({ type: "FROM_PAGE", address: address }, "*");
-        } else {
-          $('#asbestos-register-flag').text("Not A Searchable Address");
-        }
-      } else {
-        $('#asbestos-register-flag').text("Waiting For An Address");
-      }
-    })
+    window.postMessage({ type: "FROM_PAGE", address: address }, "*");
+  } else {
+    $('#asbestos-register-flag').text("Not A Searchable Address");
+  }
+} else {
+  $('#asbestos-register-flag').text("Waiting For An Address");
+}
+})
 
 
   });
