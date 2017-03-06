@@ -3,7 +3,6 @@ var _ = require('underscore');
 var DOM = require('jsx-dom-factory');
 var $ = require('jquery');
 
-var port = chrome.runtime.connect();
 
 window.addEventListener("message", function(event) {
   // We only accept messages from ourselves

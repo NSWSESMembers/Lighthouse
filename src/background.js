@@ -10,12 +10,23 @@ chrome.webRequest.onBeforeRequest.addListener(
 		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
 	},
 	{ urls: ["https://*.ses.nsw.gov.au/js/messages/create?v=*"] },
-	["blocking"]);
+	["blocking"]
+);
+
+//block job create js core requests
+chrome.webRequest.onBeforeRequest.addListener(
+	function (details) {
+		var javascriptCode = loadSynchronously(details.url);
+		var replaced = "var jobsystem;"+javascriptCode.replace("var n=this,t,i;n.MessageTemplateManager","var n=this,t,i;jobsystem=n;n.MessageTemplateManager");
+		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+	},
+	{ urls: ["https://*.ses.nsw.gov.au/js/jobs/create?v=*"] },
+	["blocking"]
+);
 
 
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
-
 		console.log(request)
 		if (request.type == "asbestos"){
 			checkAsbestosRegister(request.address,function(result,colour,bool){
@@ -33,6 +44,7 @@ function loadSynchronously(url) {
 	if (request.status === 200) {
 		return(request.responseText);
 	}
+}
 
 
 function checkAsbestosRegister( inAddressObject, cb ){

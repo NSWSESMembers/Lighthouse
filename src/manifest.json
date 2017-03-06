@@ -20,6 +20,13 @@
   "content_scripts": [
     {
       "matches": [
+        "https://*.ses.nsw.gov.au/Jobs/Create",
+        "https://*.ses.nsw.gov.au/Jobs/Create/"
+      ],
+      "js": ["contentscripts/jobs/create.js"]
+    },
+    {
+      "matches": [
         "https://*.ses.nsw.gov.au/Jobs?q=*",
         "https://*.ses.nsw.gov.au/Jobs"
       ],
