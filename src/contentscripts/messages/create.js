@@ -2,37 +2,7 @@ var inject = require('../../../lib/inject.js');
 var DOM = require('jsx-dom-factory');
 var $ = require('jquery');
 
-var xhttp = new XMLHttpRequest();
-
-
-xhttp.onreadystatechange = function() {
-	if (xhttp.readyState == 4 && xhttp.status == 200) {
-		var result = xhttp.responseText;
-		var replaced = result.replace("CreateMessageViewModel,f,t,i,r,u;","CreateMessageViewModel,f,t,i,r,u;msgsystem = n;");
-		var script = document.createElement("script");
-		script.innerHTML = "var msgsystem;"+replaced;
-		document.head.appendChild(script);
-		//inject our JS resource
-		inject('messages/create.js');
-	}
-};
-
-function findMessageUrl(cb) {
-	$('script').each(function(){
-		if(this.src.indexOf("/js/messages/create?v=") != -1){
-			cb(this.src.replace(/^[^\?]+\??/,''));
-		}
-	});
-}
-
-findMessageUrl(function(url){
-	console.log("Fetching "+window.location.origin+"/js/messages/create#?"+url);
-	xhttp.open("GET", window.location.origin+"/js/messages/create#?"+url, true);
-	xhttp.send();
-})
-
-
-
+inject('messages/create.js');
 
 function renderCheckBox() {
 	var selected = (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) ? "fa-check-square-o" : "fa-square-o";
