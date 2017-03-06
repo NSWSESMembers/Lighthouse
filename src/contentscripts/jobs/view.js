@@ -3,7 +3,25 @@ var _ = require('underscore');
 var DOM = require('jsx-dom-factory');
 var $ = require('jquery');
 
+var port = chrome.runtime.connect();
 
+window.addEventListener("message", function(event) {
+  // We only accept messages from ourselves
+  if (event.source != window)
+    return;
+
+  if (event.data.type && (event.data.type == "FROM_PAGE")) {
+
+    
+    console.log(event.data.address);
+    chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
+      console.log(response);
+      $('#asbestos-register-flag').text(response.result);
+
+    });
+
+  }
+}, false);
 
 
 function renderQuickText(id, selections) {
@@ -114,7 +132,17 @@ job_view_history = (
   </fieldset>
   );
 
-$('fieldset.col-md-12 legend').each(function(k,v){
+// Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
+job_asbestos_history = (
+  <div class="form-group">
+  <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label">FT Asbestos Register</label>
+  <div class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
+  <p id="asbestos-register-flag" class="form-control-static">Unknown</p>
+  </div>
+  </div>
+  );
+
+$('fieldset.col-md-12').each(function(k,v){
   var $v = $(v);
   var $p = $v.closest('fieldset');
   var section_title = $v.text().trim();
@@ -123,6 +151,19 @@ $('fieldset.col-md-12 legend').each(function(k,v){
     return false; // break out of $.each()
   }
 });
+
+$('fieldset.col-md-12').each(function(k,v){
+  var $v = $(v);
+  var section_title = $v[0].children[0].innerText;
+
+  if(section_title.indexOf( 'Job Details' ) === 0 ) {
+    $v.append(job_asbestos_history)
+    return false;
+  }
+
+})
+
+
 
 
 
