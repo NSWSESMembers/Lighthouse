@@ -13,7 +13,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 	["blocking"]
 	);
 
-//block job create js core requests
+//block job create js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
 chrome.webRequest.onBeforeRequest.addListener(
 	function (details) {
 		var javascriptCode = loadSynchronously(details.url);
