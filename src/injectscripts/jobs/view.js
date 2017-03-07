@@ -268,13 +268,13 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
       }
     })
     $(quickTask).find('ul').empty();
-    loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
+    var loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
     $(quickTask).find('ul').append(loading)
 
     lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
 
 
-    sectorFilter = null
+    var sectorFilter = null
     if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true )
     {
      sectorFilter = masterViewModel.sector.peek().Id
@@ -325,7 +325,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
             $.each(response.responseJSON.Results, function(k, v) { //for every team that came back
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
-            var item;
+            var item = null;
             if (v.Members.length == 0)
             {
               item = return_li(v.Id,v.Callsign.toUpperCase(),null,v.TaskedJobCount+"");
@@ -339,7 +339,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
               })
             }
             //still create teams that have no TL
-            if (typeof(item) == "undefined") {
+            if (item === null) {
               item = return_li(v.Id,v.Callsign.toUpperCase(),"No TL",v.TaskedJobCount+"");
             }
 

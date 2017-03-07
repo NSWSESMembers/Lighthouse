@@ -150,9 +150,9 @@ $(document).ready(function() {
 function LoadTeams() {
     $('#lighthouseteams').empty() //empty to prevent dupes
 
-    var $spinner = (<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
+    var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
-    $($spinner).appendTo($('#lighthouseteams'));
+    spinner.appendTo($('#lighthouseteams'));
     $('#teamshq').text("Active Teams (With Members) At " + msgsystem.selectedHeadquarters.peek().Name)
     $('#HQTeamsSet').show()
     ReturnTeamsActiveAtLHQ(msgsystem.selectedHeadquarters.peek(), null, function(response) {
@@ -164,7 +164,7 @@ function LoadTeams() {
             $.each(response.responseJSON.Results, function(k, v) {
                 if (v.Members.length > 0) //only show teams with members
                 {
-                    TL = ""
+                    var TL = ""
                     $.each(v.Members, function(kk, vv) {
                         if (vv.TeamLeader == true) {
                             TL = vv.Person.FirstName + " " + vv.Person.LastName
@@ -173,12 +173,10 @@ function LoadTeams() {
                     //length + "" to make it a string
                     var button = make_team_button(v.Callsign, TL, v.Members.length + "")
                     $(button).click(function() {
-                        var spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
-                        var nodes = button.childNodes;
-                        for (i = 0; i < nodes.length; i++) {
-                            nodes[i].style.display = "none";
-                        }
-                        $(spinner).appendTo(button);
+                        var spinner = $(<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
+
+                        $(button).children().css('display','none')
+                        spinner.appendTo(button);
                         console.log("clicked " + v.Callsign)
                         $.each(v.Members, function(kk, vv) {
                             $.ajax({
@@ -194,7 +192,7 @@ function LoadTeams() {
                                         if (response.responseJSON.Results.length) {
                                             $.each(response.responseJSON.Results, function(k, v) {
                                                 if (v.ContactTypeId == 2) {
-                                                    BuildNew = {};
+                                                    var BuildNew = {};
                                                     BuildNew.Contact = v;
                                                     BuildNew.ContactTypeId = v.ContactTypeId
                                                     if (vv.TeamLeader) {
@@ -210,12 +208,9 @@ function LoadTeams() {
                                             })
                                         }
                                     }
-                                    button.removeChild(spinner);
+                                    spinner.remove();
                                     //cb for when they are loaded
-                                    var nodes = button.childNodes;
-                                    for (i = 0; i < nodes.length; i++) {
-                                        nodes[i].removeAttribute("style");
-                                    }
+                                    $(button).children().css('display','')
                                 }
                             })
                         })
@@ -236,7 +231,6 @@ function LoadTeams() {
 
 
 function LoadAllCollections() {
-    collectionscount
 
     $("#lighthousecollections").empty();
 
@@ -246,17 +240,17 @@ function LoadAllCollections() {
         $("#collectionscount").text(theLoadedCollection.length);
         theLoadedCollection.forEach(function(item) {
             var $button = make_collection_button(item.name, item.description, item.items.length + "")
-            var $spinner = (<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
+            var spinner = $(<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
             $($button).click(function() {
                 var nodes = $button.childNodes;
                 for (i = 0; i < nodes.length; i++) {
                     nodes[i].style.display = "none";
                 }
-                $($spinner).appendTo($button);
+                spinner.appendTo($button);
                 LoadCollection(item, function() {
                     console.log("collection load complete")
-                    $button.removeChild($spinner);
+                    $button.removeChild(spinner);
                     //cb for when they are loaded
                     var nodes = $button.childNodes;
                     for (i = 0; i < nodes.length; i++) {

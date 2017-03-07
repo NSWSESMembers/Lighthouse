@@ -50,7 +50,7 @@ function renderHQTeams() {
 		);
 }
 
-hqgroup = renderHQTeams()
+var hqgroup = renderHQTeams()
 $(hqgroup).hide()
 
 
