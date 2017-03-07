@@ -1,4 +1,6 @@
 var $ = require('jquery');
+var DOM = require('jsx-dom-factory');
+var LighthouseChrome = require('../../pages/lib/shared_chrome_code.js');
 
 
 $('head')
@@ -11,3 +13,21 @@ $('body')
   .addClass(location.hostname.substring(0,location.hostname.indexOf('.')))
   // If Christmas
   .toggleClass('xmas', new Date().getMonth()==11);
+
+
+
+  $('body').css({ 'background-image': 'url('+chrome.extension.getURL("icons/lhbackdrop.png")+')','background-repeat': 'no-repeat', 'background-size': '80% 80%','background-position': 'bottom right'})
+
+
+// Team summary button
+version = 'v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
+$('body').append(
+	<div class="col-xs-12" style="position:fixed;bottom:0px;right:0px;width:550px;text-align:right;margin-right:-10px;color:white">
+	<small>Running Lighthouse {version} Edition.</small>
+	<div><small>Designed & developed by volunteers of the NSW SES. Lighthouse is distributed under an MIT Licence.</small></div>
+	</div>
+);
+
+
+
+
