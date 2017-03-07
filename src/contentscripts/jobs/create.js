@@ -11,7 +11,11 @@ window.addEventListener("message", function(event) {
     console.log(event.data.address);
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
       console.log(response);
-      $('#asbestos-register-text').text(response.result);
+      $('#asbestos-register-text').html(response.result);
+      $('#asbestos-register-box').click(function(){
+        window.open(response.requrl)
+      })
+      $('#asbestos-register-box').css('cursor','pointer');
       if (response.colour != "") {
         //has asbestos
         window.postMessage({ type: "FROM_LH", result: true }, "*");

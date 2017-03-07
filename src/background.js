@@ -29,8 +29,8 @@ chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
 		console.log(request)
 		if (request.type == "asbestos"){
-			checkAsbestosRegister(request.address,function(result,colour,bool){
-				sendResponse({result: result, colour: colour, resultbool: bool})
+			checkAsbestosRegister(request.address,function(result,colour,bool,url){
+				sendResponse({result: result, colour: colour, resultbool: bool, requrl: url})
 			})
 			return true;
 		}
@@ -65,19 +65,19 @@ function checkAsbestosRegister( inAddressObject, cb ){
 		if( this.readyState == 4 && this.status == 200 ){
 			if (!( /No\sMatch\sFound/.test( this.responseText ) ) && !( /Confirmed\sMatch/.test( this.responseText ))){
 				console.log( 'Error searching' );
-				cb("Error Searching The Asbestos Register","",false)
+				cb("Error Searching The Asbestos Register<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
 			}
 			if( /Confirmed\sMatch/.test( this.responseText ) ){
 				console.log( 'On the Register' );
-				cb(inAddressObject.PrettyAddress+" Has Confirmed Loose Fill Asbestos Contamination","red",true)
+				cb(inAddressObject.PrettyAddress+" Has Loose Fill Asbestos Contamination<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
 			}
 			if( /No\sMatch\sFound/.test( this.responseText ) ){
 				console.log( 'Not the Register' );
-				cb("Address Not Found On The Asbestos Register","",false)
+				cb("Address Not Found On The Asbestos Register<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
 			}
 		} else {
 			console.log( 'Error searching' );
-			cb("Error Searching The Asbestos Register","",false)
+			cb("Error Searching The Asbestos Register","",false,formAddress)
 		}
 	};
 	xhttp.open("GET", formAddress, true);
