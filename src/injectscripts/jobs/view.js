@@ -260,7 +260,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
   function InstantTaskButton() {
 
 
-    alreadyTasked = []
+    var alreadyTasked = []
     $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
       if(v.CurrentStatusId != 6)
       {
