@@ -11,7 +11,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 	},
 	{ urls: ["https://*.ses.nsw.gov.au/js/messages/create?v=*"] },
 	["blocking"]
-);
+	);
 
 //block job create js core requests
 chrome.webRequest.onBeforeRequest.addListener(
@@ -22,7 +22,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 	},
 	{ urls: ["https://*.ses.nsw.gov.au/js/jobs/create?v=*"] },
 	["blocking"]
-);
+	);
 
 
 chrome.runtime.onMessage.addListener(
@@ -65,19 +65,19 @@ function checkAsbestosRegister( inAddressObject, cb ){
 		if( this.readyState == 4 && this.status == 200 ){
 			if (!( /No\sMatch\sFound/.test( this.responseText ) ) && !( /Confirmed\sMatch/.test( this.responseText ))){
 				console.log( 'Error searching' );
-				cb("Error Searching The Asbestos Register<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+				cb("Error Searching The Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
 			}
 			if( /Confirmed\sMatch/.test( this.responseText ) ){
 				console.log( 'On the Register' );
-				cb(inAddressObject.PrettyAddress+" Is On Loose Fill Asbestos Register<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
+				cb(inAddressObject.PrettyAddress+" Is On Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
 			}
 			if( /No\sMatch\sFound/.test( this.responseText ) ){
 				console.log( 'Not the Register' );
-				cb(inAddressObject.PrettyAddress+" Was Not Found On The Loose Fill Asbestos Register<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+				cb(inAddressObject.PrettyAddress+" Was Not Found On The Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
 			}
 		} else {
 			console.log( 'Error searching' );
-			cb("Error Searching The Asbestos Register","",false,formAddress)
+			cb("Error Searching The Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
 		}
 	};
 	xhttp.open("GET", formAddress, true);
