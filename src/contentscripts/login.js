@@ -23,7 +23,7 @@ $('body')
 version = 'v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
 $('body').append(
 	<div class="col-xs-12" style="position:fixed;bottom:0px;right:0px;width:550px;text-align:right;margin-right:-10px;color:white">
-	<small>Running Lighthouse {version} Edition.</small>
+	<small>Running Lighthouse extension {version} edition.</small>
 	<div><small>Designed & developed by volunteers of the NSW SES. Lighthouse is distributed under an MIT Licence.</small></div>
 	</div>
 );
