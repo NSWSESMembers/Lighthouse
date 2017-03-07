@@ -69,11 +69,11 @@ function checkAsbestosRegister( inAddressObject, cb ){
 			}
 			if( /Confirmed\sMatch/.test( this.responseText ) ){
 				console.log( 'On the Register' );
-				cb(inAddressObject.PrettyAddress+" Has Loose Fill Asbestos Contamination<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
+				cb(inAddressObject.PrettyAddress+" Is On Loose Fill Asbestos Register<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
 			}
 			if( /No\sMatch\sFound/.test( this.responseText ) ){
 				console.log( 'Not the Register' );
-				cb("Address Not Found On The Asbestos Register<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+				cb(inAddressObject.PrettyAddress+" Was Not Found On The Loose Fill Asbestos Register<i class='fa fa-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
 			}
 		} else {
 			console.log( 'Error searching' );
