@@ -7,6 +7,7 @@ window.addEventListener("message", function(event) {
   if (event.source != window)
     return;
 
+  //send the address to the extensions content script
   if (event.data.type && (event.data.type == "FROM_PAGE")) {
     console.log(event.data.address);
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
@@ -22,6 +23,7 @@ window.addEventListener("message", function(event) {
         $('#asbestos-register-box')[0].style.color = "white"
         $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px','margin-left':'17px'})
       } else {
+        //no asbestos or error
         window.postMessage({ type: "FROM_LH", result: false }, "*");
         $('#asbestos-register-box')[0].style.color = "black"
         $('#asbestos-register-box').css({'background' :''})
@@ -34,8 +36,6 @@ window.addEventListener("message", function(event) {
 
 
 $(document).ready(function(){
-
-
 
 })
 

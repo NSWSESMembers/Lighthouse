@@ -5,12 +5,11 @@ var $ = require('jquery');
 
 
 window.addEventListener("message", function(event) {
-  // We only accept messages from ourselves
+  // We only accept messages from ourselves or the extension
   if (event.source != window)
     return;
 
   if (event.data.type && (event.data.type == "FROM_PAGE")) {
-
 
     console.log(event.data.address);
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
@@ -24,7 +23,6 @@ window.addEventListener("message", function(event) {
         $('#asbestos-register-box')[0].style.color = "white"
         $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px','margin-left':'17px'});
       }
-requrl
     });
 
   }
