@@ -5,6 +5,7 @@
 //block message js core request, fetch the file, inject our vars then serve it back to the requestor. :-)
 chrome.webRequest.onBeforeRequest.addListener(
 	function (details) {
+		console.log("blocking message js request")
 		var javascriptCode = loadSynchronously(details.url);
 		var replaced = "var msgsystem;"+javascriptCode.replace("CreateMessageViewModel,f,t,i,r,u;","CreateMessageViewModel,f,t,i,r,u;msgsystem = n;");
 		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
@@ -16,6 +17,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 //block job create js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
 chrome.webRequest.onBeforeRequest.addListener(
 	function (details) {
+		console.log("blocking jobs create js request")
 		var javascriptCode = loadSynchronously(details.url);
 		var replaced = "var jobsystem;"+javascriptCode.replace("var n=this,t,i;n.MessageTemplateManager","var n=this,t,i;jobsystem=n;n.MessageTemplateManager");
 		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
