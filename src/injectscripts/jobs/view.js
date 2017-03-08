@@ -891,6 +891,13 @@ function DoTour() {
         content: "Lighthouse has made some changes to this page. would you like a tour?"
       },
       {
+        element: "#asbestos-register-text",
+        title: "Lighthouse Loose Fill Asbestos Register",
+        placement: "top",
+        backdrop: false,
+        content: "Lighthouse will search the NSW Dept Of Fair Trading Loose Fill Abestos Register for the jobs address and display the results.",
+      },
+      {
         element: "#job_view_history_groups",
         title: "Lighthouse Job History",
         placement: "top",

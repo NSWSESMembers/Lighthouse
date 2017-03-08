@@ -62,6 +62,8 @@ $(document).ready(function() {
 }
 })
 
+    DoTour()
+
 
   });
 
@@ -76,5 +78,48 @@ function whenWeAreReady(varToCheck,cb) { //when external vars have loaded
       cb(); //call back
     }
   }, 200);
+}
+
+function DoTour() {
+  require('bootstrap-tour')
+
+    // Instance the tour
+    var tour = new Tour({
+      name: "LHTourJobCreate",
+      smartPlacement: true,
+      placement: "right",
+      debug: true,
+      steps: [
+      {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Lighthouse Welcome",
+        content: "Lighthouse has made some changes to this page. would you like a tour?"
+      },
+      {
+        element: "#asbestos-register-text",
+        title: "Lighthouse Loose Fill Asbestos Register",
+        placement: "top",
+        backdrop: false,
+        content: "Lighthouse will search the NSW Dept Of Fair Trading Loose Fill Abestos Register for the jobs address and display the results.",
+      },
+      {
+        element: "",
+        placement: "top",
+        orphan: true,
+        backdrop: true,
+        title: "Questions?",
+        content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
+      }
+      ]
+    })
+
+    /// Initialize the tour
+    tour.init();
+
+// Start the tour
+tour.start();
 }
 
