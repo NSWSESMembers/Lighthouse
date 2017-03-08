@@ -87,31 +87,37 @@ $(document).ready(function() {
             if (SaveName !== null && SaveName != "") {
 
 
-                theSelected = msgsystem.selectedRecipients.peek();
-                theCollection = [];
-                CollectionParent = {};
+                var theSelected = msgsystem.selectedRecipients.peek();
+                var theCollection = [];
+                var CollectionParent = {};
                 theSelected.forEach(function(item) {
-                    thisItem = {};
+                    var thisItem = {};
                     if (item.Contact === null) {
+                        console.log("group")
+
                         thisItem.type = "group";
                         thisItem.OwnerId = item.ContactGroup.Entity.Id;
                         thisItem.Id = item.ContactGroup.Id;
 
                     } else if (item.ContactGroup === null) {
                         if (item.Contact.PersonId === null) {
+                            console.log("entity")
+
                             thisItem.type = "entity";
                             thisItem.OwnerId = item.Contact.EntityId;
                             thisItem.Id = item.Contact.Id;
                         } else {
+                            console.log("person")
                             thisItem.type = "person";
                             thisItem.OwnerId = item.Contact.PersonId;
                             thisItem.Id = item.Contact.Id;
                         }
                     }
+                    console.log(thisItem)
+
                     theCollection.push(thisItem);
                 });
-
-                //Collection Save Stuff
+                //Collection Save code
                 CollectionParent.name = SaveName;
                 CollectionParent.description = SaveName;
                 CollectionParent.items = theCollection;
@@ -119,7 +125,7 @@ $(document).ready(function() {
                 if (currentCollections === null) {
                     currentCollections = [];
                 }
-                newcurrentCollections = []
+                var newcurrentCollections = []
                 $.each(currentCollections, function(k, v) {
                     if (v.name != CollectionParent.name) //catch the dupes
                     {
@@ -188,11 +194,13 @@ function LoadTeams() {
                                 dataType: 'json',
                                 complete: function(response, textStatus) {
                                     if (textStatus == 'success') {
+                                        console.log(response.responseJSON)
                                         if (response.responseJSON.Results.length) {
                                             $.each(response.responseJSON.Results, function(k, v) {
                                                 if (v.ContactTypeId == 2) {
                                                     var BuildNew = {};
-                                                    BuildNew.Contact = v;
+                                                    BuildNew.Contact = v
+                                                    BuildNew.ContactGroup = null
                                                     BuildNew.ContactTypeId = v.ContactTypeId
                                                     if (vv.TeamLeader) {
                                                         BuildNew.Description = v.FirstName + " " + v.LastName + " (TL)";
@@ -205,22 +213,22 @@ function LoadTeams() {
                                                     msgsystem.selectedRecipients.push(BuildNew)
                                                 }
                                             })
-                                        }
-                                    }
-                                    spinner.remove();
+}
+}
+spinner.remove();
                                     //cb for when they are loaded
                                     $(button).children().css('display','')
                                 }
                             })
-                        })
-                    })
+})
+})
 
-                    $(button).appendTo('#lighthouseteams');
-                    button.style.width = button.offsetWidth + "px";
-                    button.style.height = button.offsetHeight + "px";
-                }
-            })
-        } else {
+$(button).appendTo('#lighthouseteams');
+button.style.width = button.offsetWidth + "px";
+button.style.height = button.offsetHeight + "px";
+}
+})
+} else {
             //nothing found
             $('#lighthouseteams').empty() //empty to prevent dupes
 
@@ -238,38 +246,34 @@ function LoadAllCollections() {
     if (theLoadedCollection) {
         $("#collectionscount").text(theLoadedCollection.length);
         theLoadedCollection.forEach(function(item) {
-            var $button = make_collection_button(item.name, item.description, item.items.length + "")
+            var button = make_collection_button(item.name, item.description, item.items.length + "")
             var spinner = $(<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
-            $($button).click(function() {
-                var nodes = $button.childNodes;
-                for (i = 0; i < nodes.length; i++) {
-                    nodes[i].style.display = "none";
-                }
-                spinner.appendTo($button);
+            //click fuction for a collection box
+            $(button).click(function() {
+                $(button).children().css('display','none')
+
+                spinner.appendTo(button);
+                console.log("loading collection")
                 LoadCollection(item, function() {
                     console.log("collection load complete")
-                    $button.removeChild(spinner);
+                    spinner.remove();
                     //cb for when they are loaded
-                    var nodes = $button.childNodes;
-                    for (i = 0; i < nodes.length; i++) {
-                        nodes[i].removeAttribute("style");
-                    }
-
+                    $(button).children().css('display','')
                 });
             })
-            $($button).find('span.delbutton').click(function() {
+            $(button).find('span.delbutton').click(function() {
                 event.stopImmediatePropagation();
                 var r = confirm("Are you sure you want to delete this collection?");
                 if (r == true) {
                     DeleteCollection(item);
                 }
             })
-            $($button).appendTo('#lighthousecollections');
-            $button.style.width = $button.offsetWidth + "px";
-            $button.style.height = $button.offsetHeight + "px";
+            $(button).appendTo('#lighthousecollections');
+            button.style.width = button.offsetWidth + "px";
+            button.style.height = button.offsetHeight + "px";
         });
-    }
+}
 }
 
 function DeleteCollection(col) {
@@ -289,136 +293,137 @@ function DeleteCollection(col) {
 }
 
 function LoadCollection(col, cb) {
+    console.log(col)
     $total = col.items.length;
     msgsystem.selectedRecipients.removeAll();
     col.items.forEach(function(itm) {
         switch (itm.type) {
             case "group":
-                var groupOwner;
-                $.ajax({
-                    type: 'GET',
-                    url: '/Api/v1/Entities/' + itm.OwnerId,
-                    data: {
-                        LighthouseFunction: 'CollectionLoadCollection'
-                    },
-                    cache: false,
-                    dataType: 'json',
-                    complete: function(response, textStatus) {
-                        switch (textStatus) {
-                            case 'success':
-                                groupOwner = response.responseJSON.Name;
-                                $.ajax({
-                                    type: 'GET',
-                                    url: '/Api/v1/ContactGroups/headquarters/' + itm.OwnerId,
-                                    data: {
-                                        LighthouseFunction: 'CollectionLoadHQ'
-                                    },
-                                    cache: false,
-                                    dataType: 'json',
-                                    complete: function(response, textStatus) {
-                                        if (textStatus == 'success') {
-                                            if (response.responseJSON.Results.length) {
-                                                $.each(response.responseJSON.Results, function(k, v) {
-                                                    if (v.Id == itm.Id) {
+            var groupOwner;
+            $.ajax({
+                type: 'GET',
+                url: '/Api/v1/Entities/' + itm.OwnerId,
+                data: {
+                    LighthouseFunction: 'CollectionLoadCollection'
+                },
+                cache: false,
+                dataType: 'json',
+                complete: function(response, textStatus) {
+                    switch (textStatus) {
+                        case 'success':
+                        groupOwner = response.responseJSON.Name;
+                        $.ajax({
+                            type: 'GET',
+                            url: '/Api/v1/ContactGroups/headquarters/' + itm.OwnerId,
+                            data: {
+                                LighthouseFunction: 'CollectionLoadHQ'
+                            },
+                            cache: false,
+                            dataType: 'json',
+                            complete: function(response, textStatus) {
+                                if (textStatus == 'success') {
+                                    if (response.responseJSON.Results.length) {
+                                        $.each(response.responseJSON.Results, function(k, v) {
+                                            if (v.Id == itm.Id) {
 
-                                                        BuildNew = {};
-                                                        BuildNew.Contact = null;
-                                                        BuildNew.ContactGroup = v
-                                                        BuildNew.ContactTypeId = null;
-                                                        BuildNew.Description = groupOwner;
-                                                        BuildNew.Recipient = v.Name;
-                                                        msgsystem.selectedRecipients.push(BuildNew)
+                                                BuildNew = {};
+                                                BuildNew.Contact = null;
+                                                BuildNew.ContactGroup = v
+                                                BuildNew.ContactTypeId = null;
+                                                BuildNew.Description = groupOwner;
+                                                BuildNew.Recipient = v.Name;
+                                                msgsystem.selectedRecipients.push(BuildNew)
 
-                                                        $total = $total - 1;
-                                                        if ($total == 0) {
-                                                            cb();
-                                                        }
-                                                    }
-                                                })
+                                                $total = $total - 1;
+                                                if ($total == 0) {
+                                                    cb();
+                                                }
                                             }
-                                        }
+                                        })
                                     }
-                                })
-                                break;
-                        }
-                    }
-                })
-                break;
-            case "person":
-                $.ajax({
-                    type: 'GET',
-                    url: '/Api/v1/People/' + itm.OwnerId + '/Contacts',
-                    data: {
-                        LighthouseFunction: 'LoadPerson'
-                    },
-                    cache: false,
-                    dataType: 'json',
-                    complete: function(response, textStatus) {
-                        if (textStatus == 'success') {
-                            if (response.responseJSON.Results.length) {
-                                $.each(response.responseJSON.Results, function(k, v) {
-                                    if (v.Id == itm.Id) {
-                                        BuildNew = {};
-                                        BuildNew.Contact = v;
-                                        BuildNew.ContactTypeId = v.ContactTypeId;
-                                        BuildNew.Description = v.FirstName + " " + v.LastName + " (" + v.Description + ")";
-                                        BuildNew.Recipient = v.Detail;
-                                        msgsystem.selectedRecipients.push(BuildNew)
-
-
-                                        $total = $total - 1;
-                                        if ($total == 0) {
-                                            cb();
-                                        }
-
-                                    }
-                                })
+                                }
                             }
+                        })
+break;
+}
+}
+})
+break;
+case "person":
+$.ajax({
+    type: 'GET',
+    url: '/Api/v1/People/' + itm.OwnerId + '/Contacts',
+    data: {
+        LighthouseFunction: 'LoadPerson'
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            if (response.responseJSON.Results.length) {
+                $.each(response.responseJSON.Results, function(k, v) {
+                    if (v.Id == itm.Id) {
+                        BuildNew = {};
+                        BuildNew.Contact = v;
+                        BuildNew.ContactTypeId = v.ContactTypeId;
+                        BuildNew.Description = v.FirstName + " " + v.LastName + " (" + v.Description + ")";
+                        BuildNew.Recipient = v.Detail;
+                        msgsystem.selectedRecipients.push(BuildNew)
+
+
+                        $total = $total - 1;
+                        if ($total == 0) {
+                            cb();
                         }
+
                     }
                 })
-                break;
-            case "entity":
-                $.ajax({
-                    type: 'GET',
-                    url: '/Api/v1/Contacts/Search',
-                    cache: false,
-                    dataType: 'json',
-                    data: {
-                        'PageIndex': 1,
-                        'PageSize': 1000,
-                        'HeadquarterIds[]': itm.OwnerId,
-                        'SortField': "createdon",
-                        'SortOrder': "asc",
-                        'LighthouseFunction': 'CollectionLoadEntity'
-                    },
-                    complete: function(response, textStatus) {
-                        if (textStatus == 'success') {
-                            if (response.responseJSON.Results.length) {
-                                $.each(response.responseJSON.Results, function(k, v) {
-                                    if (v.Id == itm.Id) {
-                                        BuildNew = {};
-                                        BuildNew.Contact = v;
-                                        BuildNew.ContactTypeId = v.ContactTypeId;
-                                        BuildNew.ContactGroup = null;
-                                        BuildNew.Description = v.EntityName + " (" + v.Description + ")";
-                                        BuildNew.Recipient = v.Detail;
-                                        msgsystem.selectedRecipients.push(BuildNew)
-
-                                        $total = $total - 1;
-                                        if ($total == 0) {
-                                            cb();
-                                        }
-
-                                    }
-                                })
-                            }
-                        }
-                    }
-                })
-                break;
+            }
         }
-    })
+    }
+})
+break;
+case "entity":
+$.ajax({
+    type: 'GET',
+    url: '/Api/v1/Contacts/Search',
+    cache: false,
+    dataType: 'json',
+    data: {
+        'PageIndex': 1,
+        'PageSize': 1000,
+        'HeadquarterIds[]': itm.OwnerId,
+        'SortField': "createdon",
+        'SortOrder': "asc",
+        'LighthouseFunction': 'CollectionLoadEntity'
+    },
+    complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            if (response.responseJSON.Results.length) {
+                $.each(response.responseJSON.Results, function(k, v) {
+                    if (v.Id == itm.Id) {
+                        BuildNew = {};
+                        BuildNew.Contact = v;
+                        BuildNew.ContactTypeId = v.ContactTypeId;
+                        BuildNew.ContactGroup = null;
+                        BuildNew.Description = v.EntityName + " (" + v.Description + ")";
+                        BuildNew.Recipient = v.Detail;
+                        msgsystem.selectedRecipients.push(BuildNew)
+
+                        $total = $total - 1;
+                        if ($total == 0) {
+                            cb();
+                        }
+
+                    }
+                })
+            }
+        }
+    }
+})
+break;
+}
+})
 }
 
 function make_collection_button(name, description, count) {
@@ -427,7 +432,7 @@ function make_collection_button(name, description, count) {
         <span><p  style="margin-bottom:5px"><i class="fa fa-object-group" aria-hidden="true" style="padding-right: 5px;"></i>{description}<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>
         <span>{count} recipients</span>
         </span>
-    )
+        )
 }
 
 function make_team_button(name, TL, counts) {
@@ -436,7 +441,7 @@ function make_team_button(name, TL, counts) {
         <span><p  style="margin-bottom:5px">{name}</p></span>
         <span><p>{TL}<sup>TL</sup></p>{counts} Members</span>
         </span>
-    )
+        )
 }
 
 function whenWeAreReady(varToCheck, cb) { //when external vars have loaded
@@ -459,74 +464,74 @@ function DoTour() {
         placement: "right",
         debug: true,
         steps: [{
-                element: "",
-                placement: "top",
-                orphan: true,
-                backdrop: true,
-                title: "Lighthouse Welcome",
-                content: "Lighthouse has made some changes to this page. would you like a tour?"
+            element: "",
+            placement: "top",
+            orphan: true,
+            backdrop: true,
+            title: "Lighthouse Welcome",
+            content: "Lighthouse has made some changes to this page. would you like a tour?"
+        },
+        {
+            element: "#lighthouseEnabled",
+            title: "Lighthouse Load",
+            placement: "bottom",
+            backdrop: false,
+            content: "Lighthouse can prefill the Available Contacts from you unit. Ticking this box enables this behavour. It will also select 'Operational' - 'Yes' by default",
+        },
+        {
+            element: "#lighthouseteams",
+            title: "Active Teams",
+            placement: "auto",
+            backdrop: false,
+            onShown: function(tour) {
+                $('#HQTeamsSet').show();
             },
-            {
-                element: "#lighthouseEnabled",
-                title: "Lighthouse Load",
-                placement: "bottom",
-                backdrop: false,
-                content: "Lighthouse can prefill the Available Contacts from you unit. Ticking this box enables this behavour. It will also select 'Operational' - 'Yes' by default",
+            content: "All active teams at the selected HQ will be shown here. Click the team to SMS the members. Team leader of the clicked team will have (TL) in his name in the Selected Receipients box.",
+        },
+        {
+            element: "#lighthousecollections",
+            title: "Lighthouse Collections",
+            placement: "top",
+            backdrop: false,
+            content: "Lighthouse Collections allow you to save a group of message recipients for quick selection later. Collections can contain any combination of recipients (including groups from different units or regions) and are saved locally on your computer.",
+        },
+        {
+            element: "#collectionsave",
+            title: "Lighthouse Collections - Save",
+            placement: "top",
+            backdrop: false,
+            onNext: function(tour) {
+                $button = make_collection_button("Tour Example", "Tour Example", "13")
+                $($button).attr("id", "tourbutton")
+                $($button).appendTo('#lighthousecollections');
             },
-            {
-                element: "#lighthouseteams",
-                title: "Active Teams",
-                placement: "auto",
-                backdrop: false,
-                onShown: function(tour) {
-                    $('#HQTeamsSet').show();
-                },
-                content: "All active teams at the selected HQ will be shown here. Click the team to SMS the members. Team leader of the clicked team will have (TL) in his name in the Selected Receipients box.",
+            content: "Once you have selected some message recipients click 'Save As Collection' to save them for later. using a name that already exists will replace the old collection.",
+        },
+        {
+            element: "#tourbutton",
+            title: "Lighthouse Collections - Load",
+            placement: "top",
+            backdrop: false,
+            onNext: function(tour) {
+                $('#lighthousecollections').empty();
             },
-            {
-                element: "#lighthousecollections",
-                title: "Lighthouse Collections",
-                placement: "top",
-                backdrop: false,
-                content: "Lighthouse Collections allow you to save a group of message recipients for quick selection later. Collections can contain any combination of recipients (including groups from different units or regions) and are saved locally on your computer.",
-            },
-            {
-                element: "#collectionsave",
-                title: "Lighthouse Collections - Save",
-                placement: "top",
-                backdrop: false,
-                onNext: function(tour) {
-                    $button = make_collection_button("Tour Example", "Tour Example", "13")
-                    $($button).attr("id", "tourbutton")
-                    $($button).appendTo('#lighthousecollections');
-                },
-                content: "Once you have selected some message recipients click 'Save As Collection' to save them for later. using a name that already exists will replace the old collection.",
-            },
-            {
-                element: "#tourbutton",
-                title: "Lighthouse Collections - Load",
-                placement: "top",
-                backdrop: false,
-                onNext: function(tour) {
-                    $('#lighthousecollections').empty();
-                },
-                content: "This is a saved collection. Click it to load its contents into 'Selected Recipients'",
-            },
-            {
-                element: "#recipientsdel",
-                title: "Lighthouse Delete",
-                placement: "auto",
-                backdrop: false,
-                content: "We have added a button to remove all the selected message recipients",
-            },
-            {
-                element: "",
-                placement: "top",
-                orphan: true,
-                backdrop: true,
-                title: "Questions?",
-                content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
-            }
+            content: "This is a saved collection. Click it to load its contents into 'Selected Recipients'",
+        },
+        {
+            element: "#recipientsdel",
+            title: "Lighthouse Delete",
+            placement: "auto",
+            backdrop: false,
+            content: "We have added a button to remove all the selected message recipients",
+        },
+        {
+            element: "",
+            placement: "top",
+            orphan: true,
+            backdrop: true,
+            title: "Questions?",
+            content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
+        }
         ]
     })
 
