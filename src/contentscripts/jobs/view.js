@@ -12,19 +12,24 @@ window.addEventListener("message", function(event) {
   if (event.data.type && (event.data.type == "FROM_PAGE")) {
 
     console.log(event.data.address);
-    chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
-      console.log(response);
-      $('#asbestos-register-text').html(response.result);
-      $('#asbestos-register-box').click(function(){
-        window.open(response.requrl)
-      })
-      $('#asbestos-register-box').css('cursor','pointer');
-      if (response.colour != "") {
-        $('#asbestos-register-box')[0].style.color = "white"
-        $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px','margin-left':'17px'});
-      }
-    });
-
+    if (event.data.address.Street == null)
+    {
+      //we need at least an street name to search
+      $('#asbestos-register-text').html("Not A Searchable Address");
+    } else {
+      chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
+        console.log(response);
+        $('#asbestos-register-text').html(response.result);
+        $('#asbestos-register-box').click(function(){
+          window.open(response.requrl)
+        })
+        $('#asbestos-register-box').css('cursor','pointer');
+        if (response.colour != "") {
+          $('#asbestos-register-box')[0].style.color = "white"
+          $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px','margin-left':'17px'});
+        }
+      });
+    }
   }
 }, false);
 

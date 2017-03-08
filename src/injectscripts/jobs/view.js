@@ -64,6 +64,7 @@ lighthouseKeeper();
 
 //call when the address exists
 whenAddressIsReady(function() {
+  console.log(masterViewModel.geocodedAddress.peek());
   window.postMessage({ type: "FROM_PAGE", address: masterViewModel.geocodedAddress.peek() }, "*");
 })
 

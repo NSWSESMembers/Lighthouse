@@ -48,6 +48,7 @@ function loadSynchronously(url) {
 
 
 function checkAsbestosRegister( inAddressObject, cb ){
+
 	var AddressParts = /^(.+)\s(.+)$/.exec( inAddressObject.Street );
 	if( !inAddressObject.Flat )
 		inAddressObject.Flat = "";
@@ -60,26 +61,145 @@ function checkAsbestosRegister( inAddressObject, cb ){
 	"form-suburb="+encodeURI(inAddressObject.Locality)+"&"+
 	"propertyaddress=Property%3A%28"+encodeURI(inAddressObject.Flat+" "+inAddressObject.StreetNumber+" "+inAddressObject.Street+" "+inAddressObject.Locality)+"%29";
 
+	console.log("loading cache")
+	var ftCache = JSON.parse(localStorage.getItem("lighthouseFTCache"));
+	var needToWriteChange = false;
+	if (ftCache) {
+
+		//walk the cache and clean it up first
+		
+		var foundinCache = false
+		ftCache.forEach(function(item) {
+
+			if (item.url == formAddress)
+			{
+				console.log("found url in the cache")
+				foundinCache = true
+				console.log( 'cache is '+((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60)+'mins old')
+				if (((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60) < 5)
+				{
+						//its in the cache
+						console.log( 'using it');
+						processResult(item.result)
+					} else {
+						//oooooold
+						console.log("cached item is stale. fetching new result")
+						ftCache.splice(ftCache.indexOf(item),1) //remove this item from the cache
+						needToWriteChange = true
+						pullFTRegister(function(result){
+							if (result != 0) //dont cache error results
+							{
+								var cacheItem = {}
+								cacheItem.url = formAddress
+								cacheItem.timestamp = (new Date().toString())
+								cacheItem.result = result
+								ftCache.push(cacheItem)
+								needToWriteChange = true
+							}
+							//return result
+							processResult(result)
+
+						})
+
+					}
+				} else {
+					if (((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60) > 5)
+					{
+						console.log("cleaning stale cache item "+item.url+" age:"+((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60)+'mins old')
+		ftCache.splice(ftCache.indexOf(item),1) //remove this item from the cache
+		needToWriteChange = true
+	}
+}
+})
+
+if (foundinCache == false)
+{
+	console.log("did not find url in the cache")
+	pullFTRegister(function(result){
+		if (result != 0) //dont cache error results
+		{
+			var cacheItem = {}
+			cacheItem.url = formAddress
+			cacheItem.timestamp = (new Date().toString())
+			cacheItem.result = result
+			ftCache.push(cacheItem)
+			needToWriteChange = true
+		}
+		//return result
+		processResult(result)
+	})
+}
+} else {
+	//there is no cache so make one
+	console.log("no cache object. creating a new one")
+	var ftCache = []
+	pullFTRegister(function(result){
+		if (result != 0) //dont cache error results
+		{
+			var cacheItem = {}
+			cacheItem.url = formAddress
+			cacheItem.timestamp = (new Date().toString())
+			cacheItem.result = result
+			ftCache.push(cacheItem)
+			needToWriteChange = true
+		}
+		//return result
+		processResult(result)
+
+	})
+}
+
+//if we never call processResult we should write the changes out here.
+if (needToWriteChange)
+{
+	console.log("writing out lighthouseFTCache")
+	localStorage.setItem("lighthouseFTCache", JSON.stringify(ftCache));
+}
+
+
+function processResult(result){
+	switch(result) {
+		case 0: //error
+		console.log( 'Error searching' );
+		cb("Error Searching The Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+		break
+		case 1: //positive/found
+		console.log( 'On the Register' );
+		cb(inAddressObject.PrettyAddress+" Is On Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
+		break
+		case 2: //negative/not found
+		console.log( 'Not the Register' );
+		cb(inAddressObject.PrettyAddress+" Was Not Found On The Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+		break
+	}
+	if (needToWriteChange)
+	{
+		needToWriteChange = false;
+		console.log("writing out lighthouseFTCache")
+		localStorage.setItem("lighthouseFTCache", JSON.stringify(ftCache));
+	}
+}
+
+
+function pullFTRegister(cb){
 	var xhttp = new XMLHttpRequest();
 	xhttp.onloadend = function(){
 		if( this.readyState == 4 && this.status == 200 ){
 			if (!( /No\sMatch\sFound/.test( this.responseText ) ) && !( /Confirmed\sMatch/.test( this.responseText ))){
-				console.log( 'Error searching' );
-				cb("Error Searching The Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+				cb(0) //error
 			}
 			if( /Confirmed\sMatch/.test( this.responseText ) ){
-				console.log( 'On the Register' );
-				cb(inAddressObject.PrettyAddress+" Is On Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
+				cb(1) //found
 			}
 			if( /No\sMatch\sFound/.test( this.responseText ) ){
-				console.log( 'Not the Register' );
-				cb(inAddressObject.PrettyAddress+" Was Not Found On The Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+				cb(2) //not found
 			}
 		} else {
-			console.log( 'Error searching' );
-			cb("Error Searching The Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+			cb(0) //error
 		}
 	};
 	xhttp.open("GET", formAddress, true);
 	xhttp.send();
+}
+
 }
