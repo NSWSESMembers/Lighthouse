@@ -365,6 +365,7 @@ $.ajax({
                     if (v.Id == itm.Id) {
                         BuildNew = {};
                         BuildNew.Contact = v;
+                        BuildNew.ContactGroup = null;
                         BuildNew.ContactTypeId = v.ContactTypeId;
                         BuildNew.Description = v.FirstName + " " + v.LastName + " (" + v.Description + ")";
                         BuildNew.Recipient = v.Detail;
