@@ -76,7 +76,7 @@ function checkAsbestosRegister( inAddressObject, cb ){
 				console.log("found url in the cache")
 				foundinCache = true
 				console.log( 'cache is '+((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60)+'mins old')
-				if (((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60) < 5)
+				if (((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60) < 4320) //3 days
 				{
 						//its in the cache
 						console.log( 'using it');
@@ -103,7 +103,7 @@ function checkAsbestosRegister( inAddressObject, cb ){
 
 					}
 				} else {
-					if (((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60) > 5)
+					if (((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60) > 4320) //3 days
 					{
 						console.log("cleaning stale cache item "+item.url+" age:"+((new Date().getTime() - new Date(item.timestamp).getTime())/1000/60)+'mins old')
 		ftCache.splice(ftCache.indexOf(item),1) //remove this item from the cache
