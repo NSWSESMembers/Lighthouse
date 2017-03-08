@@ -1,22 +1,30 @@
 {
   "manifest_version": 2,
-  "name": "Lighthouse Development Preview",
+  "name": "Lighthouse",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2016.7.1.3",
+  "version": "2016.10.12.1",
   "icons": {
-    "128": "icons/lighthouse128_dev.png",
-    "64":"icons/lighthouse64_dev.png"
+    "128": "icons/lighthouse128.png",
+    "64":"icons/lighthouse64.png"
   },
   "permissions": [
     "storage",
     "https://beacon.ses.nsw.gov.au/*",
     "https://trainbeacon.ses.nsw.gov.au/*",
     "https://previewbeacon.ses.nsw.gov.au/*",
+    "http://www.fairtrading.nsw.gov.au/*",
     "webRequest",
     "webRequestBlocking"
   ],
   "content_scripts": [
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Jobs/Create",
+        "https://*.ses.nsw.gov.au/Jobs/Create/"
+      ],
+      "js": ["contentscripts/jobs/create.js"]
+    },
     {
       "matches": [
         "https://*.ses.nsw.gov.au/Jobs?q=*",
@@ -30,7 +38,7 @@
         "https://*.ses.nsw.gov.au/Jobs/SituationalAwareness*",
         "https://*.ses.nsw.gov.au/Jobs/Tasking*",
         "https://*.ses.nsw.gov.au/Jobs/Sectors*",
-        "https://*.ses.nsw.gov.au/Jobs/",
+        "https://*.ses.nsw.gov.au/Jobs/*/Edit",
         "https://*.ses.nsw.gov.au/Jobs",
         "https://*.ses.nsw.gov.au/Jobs/Create"
       ],

@@ -7,7 +7,6 @@ function goGetMeSomeJSONFromBeacon(url, progresscb, cb) { //take url and a page 
 
   function HandleResults(result) { //check the length of the return
     console.log("Results Returned:" + result.Results.length)
-    console.log(result);
 
     if (result.Results.length >= 1) { //add it to the array
       totalResults.push.apply(totalResults, result.Results);

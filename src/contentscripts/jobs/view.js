@@ -4,6 +4,34 @@ var DOM = require('jsx-dom-factory');
 var $ = require('jquery');
 
 
+window.addEventListener("message", function(event) {
+  // We only accept messages from ourselves or the extension
+  if (event.source != window)
+    return;
+
+  if (event.data.type && (event.data.type == "FROM_PAGE")) {
+
+    console.log(event.data.address);
+    if (event.data.address.Street == null)
+    {
+      //we need at least an street name to search
+      $('#asbestos-register-text').html("Not A Searchable Address");
+    } else {
+      chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
+        console.log(response);
+        $('#asbestos-register-text').html(response.result);
+        $('#asbestos-register-box').click(function(){
+          window.open(response.requrl)
+        })
+        $('#asbestos-register-box').css('cursor','pointer');
+        if (response.colour != "") {
+          $('#asbestos-register-box')[0].style.color = "white"
+          $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px','margin-left':'17px'});
+        }
+      });
+    }
+  }
+}, false);
 
 
 function renderQuickText(id, selections) {
@@ -114,7 +142,18 @@ job_view_history = (
   </fieldset>
   );
 
-$('fieldset.col-md-12 legend').each(function(k,v){
+// Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
+job_asbestos_history = (
+  <div class="form-group">
+  <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
+  src={chrome.extension.getURL("icons/lh-black.png")} />Fairtrade Register</label>
+  <div id="asbestos-register-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9" style="width:inherit">
+  <p id="asbestos-register-text" class="form-control-static">Searching...</p>
+  </div>
+  </div>
+  );
+
+$('fieldset.col-md-12').each(function(k,v){
   var $v = $(v);
   var $p = $v.closest('fieldset');
   var section_title = $v.text().trim();
@@ -123,6 +162,19 @@ $('fieldset.col-md-12 legend').each(function(k,v){
     return false; // break out of $.each()
   }
 });
+
+$('fieldset.col-md-12').each(function(k,v){
+  var $v = $(v);
+  var section_title = $v[0].children[0].innerText;
+
+  if(section_title.indexOf( 'Job Details' ) === 0 ) {
+    $v.append(job_asbestos_history)
+    return false;
+  }
+
+})
+
+
 
 
 

@@ -61,7 +61,16 @@ function lighthouseTasking() {
 //call on run
 lighthouseKeeper();
 
+
+//call when the address exists
+whenAddressIsReady(function() {
+  console.log(masterViewModel.geocodedAddress.peek());
+  window.postMessage({ type: "FROM_PAGE", address: masterViewModel.geocodedAddress.peek() }, "*");
+})
+
 whenTeamsAreReady(function(){
+
+
 
   lighthouseTasking()
 
@@ -855,6 +864,17 @@ function whenTeamsAreReady(cb) { //when external vars have loaded
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
     if (typeof masterViewModel != "undefined" & masterViewModel.teamsViewModel.teamsLoaded.peek() == true) {
       console.log("teams are ready");
+      clearInterval(waiting); //stop timer
+      cb(); //call back
+    }
+  }, 200);
+}
+
+// wait for address to have loaded
+function whenAddressIsReady(cb) { //when external vars have loaded
+  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
+    if (typeof masterViewModel != "undefined" & masterViewModel.geocodedAddress != "undefined") {
+      console.log("address is ready");
       clearInterval(waiting); //stop timer
       cb(); //call back
     }

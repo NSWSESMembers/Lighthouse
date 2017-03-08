@@ -5,10 +5,7 @@ console.log("inject running");
 
 $(document).ready(function() {
 
-
-
     if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) {
-
         whenWeAreReady(msgsystem, function() {
 
             //Home HQ - with a wait to catch possible race condition where the page is still loading

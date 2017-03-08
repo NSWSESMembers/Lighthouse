@@ -5,12 +5,6 @@ function GetJSONfromBeacon(unit, host, StartDate, EndDate, callback, progressCal
 
   var url = "";
   console.log("GetJSONfromBeacon called with:" + StartDate + "," + EndDate + ", " + host);
-  console.log("telling the keep alive system we are still active");
-  chrome.runtime.sendMessage({
-    activity: true
-  }, function(response) {
-    console.log(response)
-  });
 
   if (unit !== null || typeof unit == undefined) {
     if (Array.isArray(unit) == false) {
@@ -46,7 +40,6 @@ function GetJSONfromBeacon(unit, host, StartDate, EndDate, callback, progressCal
       var obj = {
         "Results": results
       }
-      console.log(obj)
       callback(obj);
     }
   );
