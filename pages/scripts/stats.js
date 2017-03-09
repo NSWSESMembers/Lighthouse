@@ -74,7 +74,6 @@ $(function() {
 
 // redraw when the slide radio buttons change
 $(document).on('change', 'input[name=slide]:radio', function() {
-  console.log(this.value);
   timeoverride = (this.value == "reset" ? null : this.value);
   RunForestRun();
 });
@@ -153,7 +152,6 @@ function renderPage(unit, jobs) {
 
 
   $( ".total" ).click(function() {
-    console.log("clicky clicky")
     dc.filterAll();
     dc.renderAll();
   });
@@ -288,14 +286,10 @@ var options = {
     end.toLocaleTimeString("en-au", options)
     );
 
-  console.log(avgOpenCount);
-  console.log(avgAckCount);
 
   var jobavg = Math.round(avgOpenTotal/avgOpenCount).toString();
   var ackavg = Math.round(avgAckTotal/avgAckCount).toString();
 
-  console.log(jobavg);
-  console.log(ackavg);
 
   var banner = "";
 
@@ -374,7 +368,6 @@ function makeSituationOnSceneCloud(jobs) {
   function calculateSituationOnSceneCloud(wordCount) {
     var purdyColor = tinygradient('black', 'red', 'orange', 'blue', 'LightBlue');
 
-    console.log(wordCount); 
     setTimeout(function(){
 
       $('#cloud').jQCloud(wordCount, {
@@ -419,7 +412,6 @@ function prepareCharts(jobs, start, end) {
   var timeDifference = (Math.round(Math.abs((start.getTime() - end.getTime())/(oneDay))));
   var timePeriodWord;
   var timePeriodUnits;
-  console.log(timeDifference);
 
   if (timeDifference <= 1) {
     timePeriodWord = "hour";
@@ -717,9 +709,6 @@ function RunForestRun(mp) {
 
     starttime = start.toISOString();
     endtime = end.toISOString();
-
-    console.log(starttime);
-    console.log(endtime);
 
     params.start = starttime;
     params.end = endtime;

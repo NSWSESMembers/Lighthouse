@@ -8,8 +8,7 @@ function GetUnitNamefromBeacon(Id, host, callback) {
     if (xhttp.readyState == 4 && xhttp.status == 200) {
       results = JSON.parse(xhttp.responseText);
       if (typeof callback === "function") {
-        console.log("GetUnitNamefromBeacon call back with:");
-        console.log(results);//.Results);
+        console.log("GetUnitNamefromBeacon call back");
         callback(results);
       }
     }

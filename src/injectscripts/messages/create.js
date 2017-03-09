@@ -440,7 +440,8 @@ function make_team_button(name, TL, counts) {
     return (
         <span class="label label tag-darkgoldenrod">
         <span><p  style="margin-bottom:5px">{name}</p></span>
-        <span><p>{TL}<sup>TL</sup></p>{counts} Members</span>
+        <span><p style="margin-bottom:5px;font-size:12px">{TL}<sup>TL</sup></p></span>
+        <span><p style="margin-bottom:0px;font-size:11px;margin-top: 4px">{counts} Members</p></span>
         </span>
         )
 }

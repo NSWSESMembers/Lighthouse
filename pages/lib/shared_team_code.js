@@ -3,9 +3,6 @@ var LighthouseJson = require('./shared_json_code.js');
 function GetTaskingfromBeacon(Id, host, callback) {
   console.log("GetTaskingfromBeacon called with:" + Id+", "+host);
 
-  console.log("telling the keep alive system we are still active")
-  chrome.runtime.sendMessage({activity: true}, function(response) {console.log(response)});   
-
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (xhttp.readyState == 4 && xhttp.status == 200) {
@@ -47,11 +44,10 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, callback) {
       console.log("Progress CB");
     },
     function(results) { //call for the JSON, rebuild the array and return it when done.
-      console.log("GetJSONfromBeacon call back with: ");
+      console.log("GetJSONfromBeacon call back");
       var obj = {
         "Results": results
       }
-      console.log(obj)
       callback(obj);
     }
   );

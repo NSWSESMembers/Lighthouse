@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 $(document).on('change', 'input[name=slide]:radio', function() {
-  console.log(this.value);
   timeoverride = (this.value == "reset" ? null : this.value);
   RunForestRun();
 });
@@ -124,9 +123,6 @@ function RunForestRun(mp) {
     starttime = start.toISOString();
     endtime = end.toISOString();
 
-    console.log(starttime);
-    console.log(endtime);
-
     params.start = starttime;
     params.end = endtime;
 
@@ -147,7 +143,6 @@ function RunForestRun(mp) {
         unit = [];
         console.log("passed array of units");
         var hqsGiven = params.hq.split(",");
-        console.log(hqsGiven);
         hqsGiven.forEach(function(d) {
           LighthouseUnit.get_unit_name(d, params.host, function(result) {
             unit.push(result);
@@ -204,7 +199,6 @@ function HackTheMatrix(unit, host, progressBar) {
       var tskJob = 0;
 
       JobStatusGroup.top(Infinity).forEach(function(d) {
-        console.log(d.key + " " + d.value);
         switch (d.key) {
           case "New":
           newJob = d.value;
