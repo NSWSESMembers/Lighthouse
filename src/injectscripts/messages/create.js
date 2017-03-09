@@ -94,7 +94,6 @@ $(document).ready(function() {
                     var thisItem = {};
                     if (item.Contact === null) {
                         console.log("group")
-
                         thisItem.type = "group";
                         thisItem.OwnerId = item.ContactGroup.Entity.Id;
                         thisItem.Id = item.ContactGroup.Id;
@@ -102,7 +101,6 @@ $(document).ready(function() {
                     } else if (item.ContactGroup === null) {
                         if (item.Contact.PersonId === null) {
                             console.log("entity")
-
                             thisItem.type = "entity";
                             thisItem.OwnerId = item.Contact.EntityId;
                             thisItem.Id = item.Contact.Id;
@@ -113,7 +111,6 @@ $(document).ready(function() {
                             thisItem.Id = item.Contact.Id;
                         }
                     }
-                    console.log(thisItem)
 
                     theCollection.push(thisItem);
                 });
@@ -161,7 +158,6 @@ function LoadTeams() {
     $('#teamshq').text("Active Teams (With Members) At " + msgsystem.selectedHeadquarters.peek().Name)
     $('#HQTeamsSet').show()
     ReturnTeamsActiveAtLHQ(msgsystem.selectedHeadquarters.peek(), null, function(response) {
-        console.log(response);
         $('#teamscount').text(response.responseJSON.Results.length)
         if (response.responseJSON.Results.length) {
             $('#lighthouseteams').empty() //empty to prevent dupes
@@ -194,7 +190,6 @@ function LoadTeams() {
                                 dataType: 'json',
                                 complete: function(response, textStatus) {
                                     if (textStatus == 'success') {
-                                        console.log(response.responseJSON)
                                         if (response.responseJSON.Results.length) {
                                             $.each(response.responseJSON.Results, function(k, v) {
                                                 if (v.ContactTypeId == 2) {
@@ -280,11 +275,7 @@ function DeleteCollection(col) {
     theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
     theLoadedCollection.forEach(function(item) {
         if (JSON.stringify(col) == JSON.stringify(item)) {
-            console.log("This one")
             theLoadedCollection.splice(theLoadedCollection.indexOf(item), 1)
-        } else {
-            console.log("NOT This one")
-
         }
     })
     localStorage.setItem("lighthouseContactCollections", JSON.stringify(theLoadedCollection));
@@ -293,7 +284,6 @@ function DeleteCollection(col) {
 }
 
 function LoadCollection(col, cb) {
-    console.log(col)
     $total = col.items.length;
     msgsystem.selectedRecipients.removeAll();
     col.items.forEach(function(itm) {
