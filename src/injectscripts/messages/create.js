@@ -158,14 +158,14 @@ function LoadTeams() {
     $('#teamshq').text("Active Teams (With Members) At " + msgsystem.selectedHeadquarters.peek().Name)
     $('#HQTeamsSet').show()
     ReturnTeamsActiveAtLHQ(msgsystem.selectedHeadquarters.peek(), null, function(response) {
-        $('#teamscount').text(response.responseJSON.Results.length)
+        var numberOfTeam = 0
         if (response.responseJSON.Results.length) {
             $('#lighthouseteams').empty() //empty to prevent dupes
-
             $.each(response.responseJSON.Results, function(k, v) {
                 if (v.Members.length > 0) //only show teams with members
                 {
                     var TL = ""
+                    numberOfTeam++
                     $.each(v.Members, function(kk, vv) {
                         if (vv.TeamLeader == true) {
                             TL = vv.Person.FirstName + " " + vv.Person.LastName
@@ -228,9 +228,11 @@ button.style.height = button.offsetHeight + "px";
             $('#lighthouseteams').empty() //empty to prevent dupes
 
         }
+$('#teamscount').text(numberOfTeam)
     });
 }
 
+        
 
 function LoadAllCollections() {
 
