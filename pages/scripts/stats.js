@@ -213,6 +213,7 @@ function prepareData(jobs, unit, start, end) {
     d.hazardTags = [];
     d.treeTags = [];
     d.propertyTags = [];
+
     d.Tags.forEach(function(d2){
       switch (d2.TagGroupId) {
         case 5:
@@ -226,6 +227,21 @@ function prepareData(jobs, unit, start, end) {
         break;
       }
     });
+
+    if (d.ReferringAgency == null)
+    {
+      d.ReferringAgencyID = "N/A"
+    } else {
+      d.ReferringAgencyID = d.ReferringAgency
+    }
+
+if (d.Event == null)
+    {
+      d.EventID = "N/A"
+    } else {
+      d.EventID = d.Event.Identifier
+    }
+
     d.JobOpenFor=0;
     d.JobCompleted=new Date(0);
 
@@ -676,6 +692,17 @@ function prepareCharts(jobs, start, end) {
     if (unit.length > 1) { //more than one
       return d.LGA;
     }
+  });
+
+  makeSimplePie("#dc-jobstatus-chart", 350, 220, function(d) {
+    return d.JobStatusType.Name;
+  });
+
+  makeSimplePie("#dc-agency-chart", 350, 220, function(d) {
+    return d.ReferringAgencyID;
+  });
+  makeSimplePie("#dc-event-chart", 350, 220, function(d) {
+    return d.EventID;
   });
 
   makeSimplePie("#dc-priority-chart", 350, 220, function(d) {
