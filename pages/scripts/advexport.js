@@ -34,8 +34,8 @@ var lighthouse_fieldArray = {
     'Tags'                                 : 'Tags' ,
     'EntityAssignedTo.Code'                : 'HQ' ,
     'LGA'                                  : 'LGA' ,
-    'd.EntityAssignedTo.ParentEntity.Code' : 'Region' ,
-    'd.Event.Identifier'                   : 'Event'
+    'EntityAssignedTo.ParentEntity.Code' : 'Region' ,
+    'Event.Identifier'                   : 'Event'
   } ,
   'Address Details' : {
     'Address.Level'                 : 'Level' ,
@@ -194,13 +194,21 @@ function HackTheMatrix(id, host, progressBar) {
 
 
   LighthouseJob.get_json(unit, host, start, end, function(jobs) {
-
+    console.log(jobs);
+          // $(jobs.Results).each(function(j,k){
+          //   console.log(k)
+          //   console.log(k.Event)
+          // })
     var beacon_jobs = jobs.Results.map(function(d){
       var jobRow = [];
 
       _.each(selectedcolumns, function(key){
         // Raw Value
+        try {
         var rawValue = key.split('.').reduce(function(obj,i) {return obj[i]}, d);
+      } catch(err) {
+        var rawValue = ''
+      }
         // Special Cases
         switch(key){
           case 'JobReceived':
