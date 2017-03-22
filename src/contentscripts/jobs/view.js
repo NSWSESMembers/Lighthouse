@@ -18,7 +18,6 @@ window.addEventListener("message", function(event) {
       $('#asbestos-register-text').html("Not A Searchable Address");
     } else {
       chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
-        console.log(response);
         $('#asbestos-register-text').html(response.result);
         $('#asbestos-register-box').click(function(){
           window.open(response.requrl)
