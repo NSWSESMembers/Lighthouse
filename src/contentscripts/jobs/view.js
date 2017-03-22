@@ -12,7 +12,7 @@ window.addEventListener("message", function(event) {
   if (event.data.type && (event.data.type == "FROM_PAGE")) {
 
     console.log(event.data.address);
-    if (event.data.address.Street == null)
+    if (event.data.address.Street == null || event.data.address.StreetNumber == null)
     {
       //we need at least an street name to search
       $('#asbestos-register-text').html("Not A Searchable Address");
