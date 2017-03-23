@@ -66,7 +66,6 @@ lighthouseKeeper();
 
 //call when the address exists
 whenAddressIsReady(function() {
-  console.log(masterViewModel.geocodedAddress.peek());
   window.postMessage({ type: "FROM_PAGE", address: masterViewModel.geocodedAddress.peek() }, "*");
 })
 
@@ -222,15 +221,18 @@ function lighthouseKeeper(){
 
 }
 
-
-document.getElementById("FinaliseQuickTextBox").onchange = function() {
-  var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
-  masterViewModel.finalisationText(this.value);
+if (document.getElementById("FinaliseQuickTextBox")) {
+  document.getElementById("FinaliseQuickTextBox").onchange = function() {
+    var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
+    masterViewModel.finalisationText(this.value);
+  }
 }
 
-document.getElementById("CompleteQuickTextBox").onchange = function() {
-  var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
-  masterViewModel.finalisationText(this.value);
+if (document.getElementById("CompleteQuickTextBox")) {
+  document.getElementById("CompleteQuickTextBox").onchange = function() {
+    var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
+    masterViewModel.finalisationText(this.value);
+  }
 }
 
 
@@ -415,7 +417,10 @@ function TaskTeam(teamID) {
   datastring = JSON.stringify(data);
   $.ajax({
     type: 'POST'
-    , url: '/Api/v1/Tasking'
+    , url: urls.Base+'/Api/v1/Tasking'
+    , beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
     , data: {TeamIds: TeamIds, JobIds: JobIds, LighthouseFunction: 'TaskTeam'}
     , cache: false
     , dataType: 'json'
@@ -579,7 +584,10 @@ function checkAddressHistory(){
 
   $.ajax({
     type: 'GET'
-    , url: '/Api/v1/Jobs/Search'
+    , url: urls.Base+'/Api/v1/Jobs/Search'
+    , beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
     , data: {
       'Q':                    q.substring(0, 30)
       , 'StartDate':          end.toISOString()
@@ -845,7 +853,10 @@ function renderCheckBox() {
 function untaskTeamFromJob(TeamID, JobID, TaskingID) {
   $.ajax({
     type: 'DELETE'
-    , url: '/Api/v1/Tasking/'+TaskingID
+    , url: urls.Base+'/Api/v1/Tasking/'+TaskingID
+    , beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
     , data: {
       'Id':       TaskingID
       ,'TeamId':    TeamID    
