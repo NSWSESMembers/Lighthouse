@@ -1,14 +1,14 @@
 whenWeAreReady(user,function() {
 
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
 
-  if (typeof urls.Base == "undefined") {
-    urls.Base = "https://"+location.hostname
-  }
 
-  $.get( urls.Base+"/Api/v1/Entities/"+user.currentHqId, function( data ) {
-    results = data;
 
-    user.hq = results;
+    if (xhttp.readyState == 4 && xhttp.status == 200) {
+      results = JSON.parse(xhttp.responseText);
+
+      user.hq = results;
 
       //menu bar code
       var ul = document.getElementsByClassName("nav navbar-nav");
@@ -26,13 +26,43 @@ whenWeAreReady(user,function() {
       thismorning = new Date(thismorning.getTime());
 
 
-      vars = "?host=" + location.hostname + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString() + "&token=" +encodeURIComponent(user.accessToken);
+      vars = "?host=" + location.hostname + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString());
 
       lighthouseMenu = MakeMenu(lighthouseUrl,vars,user.hq.Code)
 
       function MakeMenu(lighthouseUrl, vars, unitName) {
+        //cant use DOMFactory without causing a JIS coflict
+        // return $.parseHTML('\
+        //   <li class="dropdown" id="lhmenu">\
+        //   <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
+        //   <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="'+lighthouseUrl+'icons/lh.png"></img>Lighthouse</span>\
+        //   </a>\
+        //   <ul class="dropdown-menu">\
+        //   <li role="presentation" class="dropdown-header">Jobs</li>\
+        //   <li id="lhsummarymenuitem">\
+        //   <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
+        //   </li>\
+        //   <li id="lhstatsmenuitem">\
+        //   <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
+        //   </li>\
+        //   <li id="lhexportmenuitem">\
+        //   <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
+        //   </li>\
+        //   <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
+        //   </li>\
+        //   <li id="lhteammenuitem">\
+        //   <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
+        //   </li>\
+        //   <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
+        //   </li>\
+        //   <li>\
+        //   <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
+        //   </li>\
+        //   </ul>\
+        //   </li>\
+        //   ')
 
-        if (lighthouseEnviroment == "Development") {
+if (lighthouseEnviroment == "Development") {
   //dev version
   return $.parseHTML('\
     <li class="dropdown" id="lhmenu">\
@@ -131,7 +161,7 @@ if (location.pathname == "/") {
         if (location.pathname == "/Teams") {
 
           //var filtermenu = '<li class="" id="lhquickfilter"> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">All</span></span> <br> </span> </ul> </li>';
-          var filtermenu = '<li class="" id="lhquickfilter"> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a><ul class="sub-menu" style="display: none;"><li class="active"><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span></span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span><li></ul></li>';
+       var filtermenu = '<li class="" id="lhquickfilter"> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a><ul class="sub-menu" style="display: none;"><li class="active"><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span></span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span><li></ul></li>';
 
           filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
 
@@ -166,7 +196,7 @@ if (location.pathname == "/") {
             filterViewModel.updateFilters();
           });
 
-          $("#filtertoday").click(function() {
+           $("#filtertoday").click(function() {
             filterViewModel.startDate(utility.dateRanges.Today.StartDate())
             filterViewModel.endDate(utility.dateRanges.Today.EndDate())
             filterViewModel.dateRangeType('Today')
@@ -203,15 +233,15 @@ if (location.pathname == "/") {
            filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
            filterViewModel.dateRangeType('Last 30 Days')
            $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
-           $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-            if ($(this).text() == "Last 30 Days")
-            {
-              $(this).addClass('active')
-            } else {
-              $(this).removeClass('active')
-            }
-          })
-           filterViewModel.updateFilters();
+            $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
+              if ($(this).text() == "Last 30 Days")
+              {
+                $(this).addClass('active')
+              } else {
+                $(this).removeClass('active')
+              }
+            })
+            filterViewModel.updateFilters();
          });
 
         }
@@ -400,33 +430,41 @@ if (location.pathname == "/") {
            filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
            filterViewModel.dateRangeType('Last 30 Days')
            $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
-           $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-            if ($(this).text() == "Last 30 Days")
-            {
-              $(this).addClass('active')
-            } else {
-              $(this).removeClass('active')
-            }
-          })
-           filterViewModel.updateFilters();
+            $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
+              if ($(this).text() == "Last 30 Days")
+              {
+                $(this).addClass('active')
+              } else {
+                $(this).removeClass('active')
+              }
+            })
+            filterViewModel.updateFilters();
          });
 
       } // location.pathname == "/Jobs"
-  }) // xhttp.onreadystatechange
+    } // xhttp.readyState == 4 && xhttp.status == 200
+  } // xhttp.onreadystatechange
 
+  xhttp.open("GET", "https://" + location.hostname + "/Api/v1/Entities/" + user.currentHqId, true);
+  xhttp.send();
 
 });
 
 
 function filtershowallmyregion() {
   filterViewModel.selectedEntities.destroyAll() //flush first :-)
-$.get( urls.Base+"/Api/v1/Entities/"+user.currentRegionId+"/Children", function( data ) {
-  results = data;
-  results.forEach(function(d) {
-    filterViewModel.selectedEntities.push(d);
-  });
-  filterViewModel.updateFilters();
+var xhttp = new XMLHttpRequest();
+xhttp.onreadystatechange = function() {
+  if (xhttp.readyState == 4 && xhttp.status == 200) {
+    results = JSON.parse(xhttp.responseText);
+    results.forEach(function(d) {
+      filterViewModel.selectedEntities.push(d);
+    });
+    filterViewModel.updateFilters();
+  }
 }
+xhttp.open("GET", "https://" + location.hostname + "/Api/v1/Entities/" + user.currentRegionId + "/Children", true);
+xhttp.send();
 }
 
 
