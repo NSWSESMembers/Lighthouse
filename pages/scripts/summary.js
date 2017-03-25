@@ -135,41 +135,41 @@ function RunForestRun(mp) {
 
     if (typeof params.hq !== 'undefined') {
       if (params.hq.split(",").length == 1) { //one HQ was passed
-        LighthouseUnit.get_unit_name(params.hq, params.host, function(result) {
+        LighthouseUnit.get_unit_name(params.hq, params.host, params.token, function(result) {
           unit = result;
-          HackTheMatrix(unit, params.host,mp);
+          HackTheMatrix(unit, params.host,params.token,mp);
         });
       } else {
         unit = [];
         console.log("passed array of units");
         var hqsGiven = params.hq.split(",");
         hqsGiven.forEach(function(d) {
-          LighthouseUnit.get_unit_name(d, params.host, function(result) {
+          LighthouseUnit.get_unit_name(d, params.host, params.token, function(result) {
             unit.push(result);
             if (unit.length == params.hq.split(",").length) {
-              HackTheMatrix(unit, params.host,mp);
+              HackTheMatrix(unit, params.host,params.token,mp);
             }
           });
         });
       }
     } else { //no hq was sent, get them all
       unit = [];
-      HackTheMatrix(unit, params.host,mp);
+      HackTheMatrix(unit, params.host,params.token,mp);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
-    HackTheMatrix(unit, params.host);
+    HackTheMatrix(unit, params.host,params.token);
   }
 
 }
 
 //make the call to beacon
-function HackTheMatrix(unit, host, progressBar) {
+function HackTheMatrix(unit, host, token, progressBar) {
 
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  LighthouseJob.get_json(unit, host, start, end,
+  LighthouseJob.get_json(unit, host, start, end, token,
     function(jobs) {
       var facts = crossfilter(jobs.Results);
       var all = facts.groupAll();
