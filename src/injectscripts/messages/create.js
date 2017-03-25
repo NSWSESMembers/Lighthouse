@@ -28,6 +28,7 @@ $(document).ready(function() {
                         clearInterval(waiting); //stop timer
                         console.log("Setting Selected HQ to user HQ");
                         msgsystem.setSelectedHeadquarters(user.hq);
+                        $('#contact').val(user.hq.Name)
                     } else {
                         console.log("still loading")
                     }
@@ -182,7 +183,10 @@ function LoadTeams() {
                         $.each(v.Members, function(kk, vv) {
                             $.ajax({
                                 type: 'GET',
-                                url: '/Api/v1/People/' + vv.Person.Id + '/Contacts',
+                                url: urls.Base+'/Api/v1/People/' + vv.Person.Id + '/Contacts',
+                                beforeSend: function(n) {
+                                    n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+                                },
                                 data: {
                                     LighthouseFunction: 'LoadPerson'
                                 },
@@ -228,11 +232,11 @@ button.style.height = button.offsetHeight + "px";
             $('#lighthouseteams').empty() //empty to prevent dupes
 
         }
-$('#teamscount').text(numberOfTeam)
+        $('#teamscount').text(numberOfTeam)
     });
 }
 
-        
+
 
 function LoadAllCollections() {
 
@@ -294,7 +298,10 @@ function LoadCollection(col, cb) {
             var groupOwner;
             $.ajax({
                 type: 'GET',
-                url: '/Api/v1/Entities/' + itm.OwnerId,
+                url: urls.Base+'/Api/v1/Entities/' + itm.OwnerId,
+                beforeSend: function(n) {
+                    n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+                },
                 data: {
                     LighthouseFunction: 'CollectionLoadCollection'
                 },
@@ -306,7 +313,10 @@ function LoadCollection(col, cb) {
                         groupOwner = response.responseJSON.Name;
                         $.ajax({
                             type: 'GET',
-                            url: '/Api/v1/ContactGroups/headquarters/' + itm.OwnerId,
+                            url: urls.Base+'/Api/v1/ContactGroups/headquarters/' + itm.OwnerId,
+                            beforeSend: function(n) {
+                                n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+                            },
                             data: {
                                 LighthouseFunction: 'CollectionLoadHQ'
                             },
@@ -344,7 +354,10 @@ break;
 case "person":
 $.ajax({
     type: 'GET',
-    url: '/Api/v1/People/' + itm.OwnerId + '/Contacts',
+    url: urls.Base+'/Api/v1/People/' + itm.OwnerId + '/Contacts',
+    beforeSend: function(n) {
+        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    },
     data: {
         LighthouseFunction: 'LoadPerson'
     },
@@ -379,7 +392,10 @@ break;
 case "entity":
 $.ajax({
     type: 'GET',
-    url: '/Api/v1/Contacts/Search',
+    url: urls.Base+'/Api/v1/Contacts/Search',
+    beforeSend: function(n) {
+        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    },
     cache: false,
     dataType: 'json',
     data: {

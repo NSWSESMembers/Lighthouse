@@ -26,7 +26,7 @@ whenWeAreReady(user,function() {
       thismorning = new Date(thismorning.getTime());
 
 
-      var vars = "?host=" + location.hostname + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString()) + "&token=" + encodeURIComponent(user.accessToken);
+      var vars = "?host=" + urls.Base + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString()) + "&token=" + encodeURIComponent(user.accessToken);
 
       lighthouseMenu = MakeMenu(lighthouseUrl,vars,user.hq.Code)
 
