@@ -11,11 +11,9 @@ $(document).ready(function() {
         whenWeAreReady(msgsystem, function() {
 
             msgsystem.selectedHeadquarters.subscribe(function(status) {
-                console.log("Picked something")
                 if (status !== null) {
                     LoadTeams()
                 } else {
-                    console.log("Not a HQ. Cleaning up")
                     $('#HQTeamsSet').hide()
 
                 }
