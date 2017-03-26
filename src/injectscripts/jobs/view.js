@@ -75,8 +75,8 @@ whenTeamsAreReady(function(){
 
   lighthouseTasking()
 
-
-
+ //Bold the team action taken
+  $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css("font-weight", "bold")
 
   //checkbox for hide completed tasking
   $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox());
