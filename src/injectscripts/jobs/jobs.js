@@ -9,60 +9,18 @@ window.FinaliseSelected = function FinaliseSelected(words,beaconStringDate) { //
 }
 
 
-$("#lighthouseSummaryButton").mouseenter(function(ev){
-  summary();
-});
-
-document.getElementById("lighthouseSummaryButton").onclick = function() {
-  summary();
-}
-
-
-function summary() {
+function updateFilterParameters(event){
+  var $t = $(event.target);
   var exports = JSON.parse(filterDataForExport());
-  if (exports.hasOwnProperty("Hq")) {
-    $("#lighthouseSummaryButton").attr("href",lighthouseUrl+"pages/summary.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
-  } else {
-    $("#lighthouseSummaryButton").attr("href",lighthouseUrl+"pages/summary.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
-  }
+  var page = lighthouseUrl + 'pages/' + $t.data('page') + '.html';
+  var queryString = 'host='+location.hostname+'&start='+encodeURIComponent(exports.StartDate)+'&end='+encodeURIComponent(exports.EndDate);
+  if (exports.hasOwnProperty("Hq"))
+    queryString += '&hq='+exports.Hq;
+  $t.attr( 'href' , page + '?' + queryString );
 }
 
-$("#lighthouseStatsButton").mouseenter(function(ev){
-  stats();
-});
-
-document.getElementById("lighthouseStatsButton").onclick = function() {
-  stats();
-}
-
-
-function stats(){
-  var exports = JSON.parse(filterDataForExport());
-  if (exports.hasOwnProperty("Hq")){
-    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"pages/stats.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
-  } else {
-    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"pages/stats.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
-  }
-}
-
-
-$("#lighthouseExportButton").mouseenter(function(ev){
-  advexport();
-});
-
-document.getElementById("lighthouseExportButton").onclick = function() {
-  summary();
-}
-
-
-function advexport() {
-  var exports = JSON.parse(filterDataForExport());
-  if (exports.hasOwnProperty("Hq")){
-    $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
-  } else {
-    $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
-  }
-}
+$('#lighthouseSummaryButton , #lighthouseStatsButton , #lighthouseExportButton , #lighthouseHardcopyButton')
+  .on('mouseenter click',updateFilterParameters);
 
 
 //More pageination choices!
