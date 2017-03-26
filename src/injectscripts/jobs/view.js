@@ -292,13 +292,17 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
    } 
 
    console.log("Sector Filter is:"+sectorFilter)
-   console.log("Already Tasked is:")
-   console.log(alreadyTasked)
-   ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
+
+//Check to make sure the job is still taskable (stale page or something)
+$.get( urls.Base+'/Api/v1/Jobs/'+jobId+'?viewModelType=2', function( data ) {
+if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
+{
+
+ ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
 
 
-    if(response.responseJSON.Results.length) {
-      $(quickTask).find('ul').empty();
+  if(response.responseJSON.Results.length) {
+    $(quickTask).find('ul').empty();
 
             /////
             ///// Search Box
@@ -402,6 +406,14 @@ drawnsectors = []
         }
 
       })
+} else {
+  //job has changed status since it was opened so warn them
+  $(quickTask).find('ul').empty();
+  no_results = (<li><a href="#">Cannot task when job status is {masterViewModel.jobStatus.peek().Name}. Refresh the page!</a></li>)
+  $(quickTask).find('ul').append(no_results)
+}
+})
+
 }
 
 
