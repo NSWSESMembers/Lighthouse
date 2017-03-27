@@ -76,7 +76,7 @@ whenTeamsAreReady(function(){
   lighthouseTasking()
 
  //Bold the team action taken
-  $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css("font-weight", "bold")
+ $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css("font-weight", "bold")
 
   //checkbox for hide completed tasking
   $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox());
@@ -293,9 +293,21 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 
    console.log("Sector Filter is:"+sectorFilter)
 
-//Check to make sure the job is still taskable (stale page or something)
-$.get( urls.Base+'/Api/v1/Jobs/'+jobId+'?viewModelType=2', function( data ) {
-if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
+   $.ajax({
+    type: 'GET'
+    , url: urls.Base+'/Api/v1/Jobs/'+jobId+'?viewModelType=2'
+    , beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
+    , cache: false
+    , dataType: 'json'
+    , complete: function(response, textStatus) {
+      console.log('textStatus = "%s"', textStatus, response);
+      if (textStatus == 'success')
+      {
+        var data = response.responseJSON
+
+      if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
 {
 
  ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
@@ -411,6 +423,8 @@ drawnsectors = []
   $(quickTask).find('ul').empty();
   no_results = (<li><a href="#">Cannot task when job status is {masterViewModel.jobStatus.peek().Name}. Refresh the page!</a></li>)
   $(quickTask).find('ul').append(no_results)
+}
+}
 }
 })
 
