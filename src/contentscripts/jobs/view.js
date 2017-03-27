@@ -8,11 +8,12 @@ window.addEventListener("message", function(event) {
   // We only accept messages from ourselves or the extension
   if (event.source != window)
     return;
-
   if (event.data.type && (event.data.type == "FROM_PAGE")) {
-
-    if (event.data.address.Street == null || event.data.address.StreetNumber == null)
-    {
+        if(typeof event.data == 'undefined') { //address passed is defined
+          $('#asbestos-register-text').html("Not A Searchable Address");
+        } else {
+          if (event.data.address.Street == null || event.data.address.StreetNumber == null)
+          {
       //we need at least an street name to search
       $('#asbestos-register-text').html("Not A Searchable Address");
     } else {
@@ -29,6 +30,7 @@ window.addEventListener("message", function(event) {
       });
     }
   }
+}
 }, false);
 
 
