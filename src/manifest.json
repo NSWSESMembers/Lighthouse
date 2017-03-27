@@ -3,7 +3,7 @@
   "name": "Lighthouse Development Preview",
   "short_name": "Lighthouse Development Preview",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2017.3.22.1",
+  "version": "2017.3.22.2",
   "icons": {
     "128": "icons/lighthouse128_dev.png",
     "64":"icons/lighthouse64_dev.png"
@@ -13,6 +13,7 @@
     "https://beacon.ses.nsw.gov.au/*",
     "https://trainbeacon.ses.nsw.gov.au/*",
     "https://previewbeacon.ses.nsw.gov.au/*",
+    "https://testbeaconau.ses.nsw.gov.au/*",
     "http://www.fairtrading.nsw.gov.au/*",
     "webRequest",
     "webRequestBlocking"

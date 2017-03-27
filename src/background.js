@@ -13,7 +13,6 @@ chrome.webRequest.onBeforeRequest.addListener(
 	{ urls: ["https://*.ses.nsw.gov.au/js/messages/create?v=*"] },
 	["blocking"]
 	);
-
 //block job create js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
 chrome.webRequest.onBeforeRequest.addListener(
 	function (details) {
@@ -46,6 +45,8 @@ function loadSynchronously(url) {
 	request.send(null);
 	if (request.status === 200) {
 		return(request.responseText);
+	} else {
+		console.log("error downloading resource")
 	}
 }
 

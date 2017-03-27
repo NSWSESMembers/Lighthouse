@@ -3,7 +3,7 @@ var LighthouseJson = require('./shared_json_code.js');
 //make the call to beacon
 function GetJSONfromBeacon(params, StartDate, EndDate, callback, progressCallBack) {
 
-    var url = "https://" + params.host + "/Api/v1/NonIncident/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString();
+    var url = params.host + "/Api/v1/NonIncident/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString();
     var s = "";
     if (typeof params.EntityIds !== "undefined") {
         params.EntityIds.split(",").forEach(function(d){
@@ -38,7 +38,7 @@ function GetJSONfromBeacon(params, StartDate, EndDate, callback, progressCallBac
 
   var lastDisplayedVal = 0 ;
   LighthouseJson.get_json(
-    url,
+    url, params.token,
     function(count,total){
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
         lastDisplayedVal = count;

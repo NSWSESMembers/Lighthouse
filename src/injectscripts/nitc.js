@@ -1,8 +1,8 @@
 
 $("#lighthouseExportButton").on('click mouseenter', function() {
   var exports = JSON.parse(filterDataForExport());
-  var href = lighthouseUrl + "pages/nitcexport.html?host=" + location.hostname + 
-      "&start=" + encodeURIComponent(exports.StartDate) + "&end=" +
+  var href = lighthouseUrl + "pages/nitcexport.html?host=" + urls.Base + 
+      "&start=" + encodeURIComponent(exports.StartDate) + "&token="+user.accessToken +"&end=" +
       encodeURIComponent(exports.EndDate);
   if (exports.hasOwnProperty("EntityIds"))
       href += "&EntityIds=" + exports.EntityIds;

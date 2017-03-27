@@ -16,9 +16,9 @@ function summary(){
   })
 
   if (hq.length !== 0) {
-    $("#lighthouseTeamSummaryButton").attr("href",lighthouseUrl+"pages/teamsummary.html?host="+location.hostname+"&hq="+hq+"&start="+encodeURIComponent(start.toISOString())+"&end="+encodeURIComponent(end.toISOString()));
+    $("#lighthouseTeamSummaryButton").attr("href",lighthouseUrl+"pages/teamsummary.html?host="+urls.Base+"&hq="+hq+"&start="+encodeURIComponent(start.toISOString())+"&end="+encodeURIComponent(end.toISOString())+ "&token=" + encodeURIComponent(user.accessToken));
   } else {
-    $("#lighthouseTeamSummaryButton").attr("href",lighthouseUrl+"pages/teamsummary.html?host="+location.hostname+"&start="+encodeURIComponent(start.toISOString())+"&end="+encodeURIComponent(end.toISOString()));
+    $("#lighthouseTeamSummaryButton").attr("href",lighthouseUrl+"pages/teamsummary.html?host="+urls.Base+"&start="+encodeURIComponent(start.toISOString())+"&end="+encodeURIComponent(end.toISOString())+ "&token=" + encodeURIComponent(user.accessToken));
   }
 }
 
