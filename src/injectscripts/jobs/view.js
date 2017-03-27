@@ -628,7 +628,7 @@ function checkAddressHistory(){
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
-      console.log('textStatus = "%s"', textStatus, response);
+      //console.log('textStatus = "%s"', textStatus, response);
       var $job_view_history_container = $('#job_view_history_container');
       switch(textStatus){
         case 'success':
