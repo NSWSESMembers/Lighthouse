@@ -9,7 +9,7 @@ window.addEventListener("message", function(event) {
   if (event.source != window)
     return;
   if (event.data.type && (event.data.type == "FROM_PAGE")) {
-        if(typeof event.data == 'undefined') { //address passed is defined
+        if(typeof event.data == 'undefined' || typeof event.data.address == 'undefined') { //passed data is defined
           $('#asbestos-register-text').html("Not A Searchable Address");
         } else {
           if (event.data.address.Street == null || event.data.address.StreetNumber == null)

@@ -308,13 +308,13 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
         var data = response.responseJSON
 
       if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
-{
+      {
 
- ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
+       ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
 
 
-  if(response.responseJSON.Results.length) {
-    $(quickTask).find('ul').empty();
+        if(response.responseJSON.Results.length) {
+          $(quickTask).find('ul').empty();
 
             /////
             ///// Search Box
@@ -847,11 +847,14 @@ function whenTeamsAreReady(cb) { //when external vars have loaded
 function whenAddressIsReady(cb) { //when external vars have loaded
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
     if (typeof masterViewModel != "undefined" & masterViewModel.geocodedAddress != "undefined") {
-      console.log("address is ready");
+      if (masterViewModel.geocodedAddress.peek() !== null)
+      {
+        console.log("address is ready");
       clearInterval(waiting); //stop timer
       cb(); //call back
     }
-  }, 200);
+  }
+}, 200);
 }
 
 //checkbox for hide completed tasking
