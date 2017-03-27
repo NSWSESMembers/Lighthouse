@@ -21,9 +21,9 @@ document.getElementById("lighthouseSummaryButton").onclick = function() {
 function summary() {
   var exports = JSON.parse(filterDataForExport());
   if (exports.hasOwnProperty("Hq")) {
-    $("#lighthouseSummaryButton").attr("href",lighthouseUrl+"pages/summary.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    $("#lighthouseSummaryButton").attr("href",lighthouseUrl+"pages/summary.html?host="+urls.Base+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
   } else {
-    $("#lighthouseSummaryButton").attr("href",lighthouseUrl+"pages/summary.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    $("#lighthouseSummaryButton").attr("href",lighthouseUrl+"pages/summary.html?host="+urls.Base+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
   }
 }
 
@@ -39,9 +39,9 @@ document.getElementById("lighthouseStatsButton").onclick = function() {
 function stats(){
   var exports = JSON.parse(filterDataForExport());
   if (exports.hasOwnProperty("Hq")){
-    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"pages/stats.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"pages/stats.html?host="+urls.Base+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
   } else {
-    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"pages/stats.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"pages/stats.html?host="+urls.Base+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
   }
 }
 
@@ -58,9 +58,9 @@ document.getElementById("lighthouseExportButton").onclick = function() {
 function advexport() {
   var exports = JSON.parse(filterDataForExport());
   if (exports.hasOwnProperty("Hq")){
-    $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+location.hostname+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+urls.Base+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
   } else {
-    $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+location.hostname+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate));
+    $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+urls.Base+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
   }
 }
 

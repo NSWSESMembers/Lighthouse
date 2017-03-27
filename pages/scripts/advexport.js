@@ -193,7 +193,7 @@ function HackTheMatrix(id, host, progressBar) {
   }
 
 
-  LighthouseJob.get_json(unit, host, start, end, function(jobs) {
+  LighthouseJob.get_json(unit, host, start, end, params.token, function(jobs) {
     console.log(jobs);
           // $(jobs.Results).each(function(j,k){
           //   console.log(k)

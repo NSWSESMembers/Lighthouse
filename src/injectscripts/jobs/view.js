@@ -66,7 +66,6 @@ lighthouseKeeper();
 
 //call when the address exists
 whenAddressIsReady(function() {
-  console.log(masterViewModel.geocodedAddress.peek());
   window.postMessage({ type: "FROM_PAGE", address: masterViewModel.geocodedAddress.peek() }, "*");
 })
 
@@ -76,8 +75,8 @@ whenTeamsAreReady(function(){
 
   lighthouseTasking()
 
-
-
+ //Bold the team action taken
+  $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css("font-weight", "bold")
 
   //checkbox for hide completed tasking
   $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox());
@@ -222,15 +221,18 @@ function lighthouseKeeper(){
 
 }
 
-
-document.getElementById("FinaliseQuickTextBox").onchange = function() {
-  var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
-  masterViewModel.finalisationText(this.value);
+if (document.getElementById("FinaliseQuickTextBox")) {
+  document.getElementById("FinaliseQuickTextBox").onchange = function() {
+    var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
+    masterViewModel.finalisationText(this.value);
+  }
 }
 
-document.getElementById("CompleteQuickTextBox").onchange = function() {
-  var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
-  masterViewModel.finalisationText(this.value);
+if (document.getElementById("CompleteQuickTextBox")) {
+  document.getElementById("CompleteQuickTextBox").onchange = function() {
+    var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
+    masterViewModel.finalisationText(this.value);
+  }
 }
 
 
@@ -290,13 +292,17 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
    } 
 
    console.log("Sector Filter is:"+sectorFilter)
-   console.log("Already Tasked is:")
-   console.log(alreadyTasked)
-   ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
+
+//Check to make sure the job is still taskable (stale page or something)
+$.get( urls.Base+'/Api/v1/Jobs/'+jobId+'?viewModelType=2', function( data ) {
+if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
+{
+
+ ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
 
 
-    if(response.responseJSON.Results.length) {
-      $(quickTask).find('ul').empty();
+  if(response.responseJSON.Results.length) {
+    $(quickTask).find('ul').empty();
 
             /////
             ///// Search Box
@@ -400,6 +406,14 @@ drawnsectors = []
         }
 
       })
+} else {
+  //job has changed status since it was opened so warn them
+  $(quickTask).find('ul').empty();
+  no_results = (<li><a href="#">Cannot task when job status is {masterViewModel.jobStatus.peek().Name}. Refresh the page!</a></li>)
+  $(quickTask).find('ul').append(no_results)
+}
+})
+
 }
 
 
@@ -415,7 +429,10 @@ function TaskTeam(teamID) {
   datastring = JSON.stringify(data);
   $.ajax({
     type: 'POST'
-    , url: '/Api/v1/Tasking'
+    , url: urls.Base+'/Api/v1/Tasking'
+    , beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
     , data: {TeamIds: TeamIds, JobIds: JobIds, LighthouseFunction: 'TaskTeam'}
     , cache: false
     , dataType: 'json'
@@ -579,7 +596,10 @@ function checkAddressHistory(){
 
   $.ajax({
     type: 'GET'
-    , url: '/Api/v1/Jobs/Search'
+    , url: urls.Base+'/Api/v1/Jobs/Search'
+    , beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
     , data: {
       'Q':                    q.substring(0, 30)
       , 'StartDate':          end.toISOString()
@@ -845,7 +865,10 @@ function renderCheckBox() {
 function untaskTeamFromJob(TeamID, JobID, TaskingID) {
   $.ajax({
     type: 'DELETE'
-    , url: '/Api/v1/Tasking/'+TaskingID
+    , url: urls.Base+'/Api/v1/Tasking/'+TaskingID
+    , beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
     , data: {
       'Id':       TaskingID
       ,'TeamId':    TeamID    

@@ -125,9 +125,9 @@ function RunForestRun() {
 
     if (typeof params.hq != 'undefined') {  //if not no hqs
       if (params.hq.split(",").length == 1) { //if only one HQ
-        LighthouseUnit.get_unit_name(params.hq,params.host, function(result) {
+        LighthouseUnit.get_unit_name(params.hq,params.host, params.token, function(result) {
           unit = result;
-          HackTheMatrix(unit,params.host);
+          HackTheMatrix(unit,params.host, params.token);
         });
       } else {
         unit = [];
@@ -135,34 +135,34 @@ function RunForestRun() {
         var hqsGiven = params.hq.split(",");
         console.log(hqsGiven);
         hqsGiven.forEach(function(d){
-          LighthouseUnit.get_unit_name(d, params.host, function(result) {
+          LighthouseUnit.get_unit_name(d, params.host,params.token, function(result) {
             unit.push(result);
             if (unit.length == params.hq.split(",").length) {
-              HackTheMatrix(unit, params.host);
+              HackTheMatrix(unit, params.host, params.token);
             }
           });
         });
       }
     } else { //no hq was sent, get them all
       unit = [];
-      HackTheMatrix(unit,params.host);
+      HackTheMatrix(unit,params.host, params.token);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
-    HackTheMatrix(unit, params.host);
+    HackTheMatrix(unit, params.host, params.token);
   }
 
 }
 
 //make the call to beacon
-function HackTheMatrix(unit, host) {
+function HackTheMatrix(unit, host, token) {
 
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
   var totalMembersActive = 0;
   var totalTeamsActive = 0;
 
-  LighthouseTeam.get_teams(unit, host, start, end, function(teams) {
+  LighthouseTeam.get_teams(unit, host, start, end, token , function(teams) {
 
     var options = {
       weekday: "short",
@@ -242,7 +242,7 @@ function HackTheMatrix(unit, host) {
         var oldesttime = null;
         var completed = 0;
 
-        LighthouseTeam.get_tasking(d.Id,host, function(e) {
+        LighthouseTeam.get_tasking(d.Id,host,token, function(e) {
           e.Results.forEach(function(f) {
             f.CurrentStatus == "Complete" && completed++;
             var rawdate = new Date(f.CurrentStatusTime);
