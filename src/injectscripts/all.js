@@ -66,7 +66,7 @@ whenWeAreReady(user,function() {
     <a href="#" id="LHTourRestart">Restart All Tours</a>\
     </li>\
     <li>\
-    <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
+    <a href="http://lighthouse.ses.nsw.gov.au">About Lighthouse</a>\
     </li>\
     </ul>\
     </li>\

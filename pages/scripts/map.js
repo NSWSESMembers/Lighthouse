@@ -342,7 +342,7 @@ function LoadAllData(map, cb) {
 			allTrackableIds = [];
 
 			return new Promise(function(resolve, reject) {
-				LighthouseResource.get_unit_resouces(params.hq, params.host, function(resources) {
+				LighthouseResource.get_unit_resouces(params.hq, params.host, params.token, function(resources) {
 
 					trackablePromises = [];
 			$.each(resources.Results,function (rk,rv) { //for every resource ifset
@@ -464,7 +464,7 @@ function drawJob(map, v) {
 							labelAnchor: new google.maps.Point(22, 0),
 							labelClass: "rfalabels",
 							labelStyle: {opacity: 0.75},
-							labelContent: v.Id+"",
+							labelContent: v.Id+"<br>"+v.JobStatusType.Name,
 							JobId: v.Id,
 							icon: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(svg),
 
@@ -479,10 +479,10 @@ function drawJob(map, v) {
 							position: {lat: v.Address.Latitude, lng: v.Address.Longitude},
 							map: map,
 							title: v.Id+"",
-							labelAnchor: new google.maps.Point(22, 0),
+							labelAnchor: new google.maps.Point(25, 0),
 							labelClass: "rfalabels",
 							labelStyle: {opacity: 0.75},
-							labelContent: v.Id+"",
+							labelContent: v.Id+"<br>"+v.JobStatusType.Name,
 							JobId: v.Id,
 							icon: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(svg),
 							//icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752063_en_v0" //yellow
@@ -496,10 +496,10 @@ function drawJob(map, v) {
 							position: {lat: v.Address.Latitude, lng: v.Address.Longitude},
 							map: map,
 							title: v.Id+"",
-							labelAnchor: new google.maps.Point(22, 0),
+							labelAnchor: new google.maps.Point(25, 0),
 							labelClass: "rfalabels",
 							labelStyle: {opacity: 0.75},
-							labelContent: v.Id+"",
+							labelContent: v.Id+"<br>"+v.JobStatusType.Name,
 							JobId: v.Id,
 							icon: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(svg),
 							//icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752063_en_v0" //yellow
@@ -513,10 +513,10 @@ function drawJob(map, v) {
 							position: {lat: v.Address.Latitude, lng: v.Address.Longitude},
 							title: v.Id+"",
 							map: map,
-							labelAnchor: new google.maps.Point(20, 0),
+							labelAnchor: new google.maps.Point(25, 0),
 							labelClass: "rfalabels",
 							labelStyle: {opacity: 0.75},
-							labelContent: v.Id+"",
+							labelContent: v.Id+"<br>"+v.JobStatusType.Name,
 							JobId: v.Id,
 							//icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752129_en_v0" //green
 							icon: 'data:image/svg+xml;charset=UTF-8;base64,' + btoa(svg),
@@ -531,7 +531,7 @@ function drawJob(map, v) {
 							labelAnchor: new google.maps.Point(22, 0),
 							labelClass: "rfalabels",
 							labelStyle: {opacity: 0.75},
-							labelContent: v.Id+"",
+							labelContent: v.Id+"<br>"+v.JobStatusType.Name,
 							JobId: v.Id,
 							icon: "https://storage.googleapis.com/support-kms-prod/SNP_2752129_en_v0" //green
 							//icon: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAJCAYAAADgkQYQAAAAiklEQVR42mNgQIAoIF4NxGegdCCSHAMzEC+NUlH5v9rF5f+ZoCAwHaig8B8oPhOmKC1NU/P//7Q0DByrqgpSGAtSdOCAry9WRXt9fECK9oIUPXwYFYVV0e2ICJCi20SbFAuyG5uiECUlkKIQmOPng3y30d0d7Lt1bm4w301jQAOgcNoIDad1yOEEAFm9fSv/VqtJAAAAAElFTkSuQmCC"
@@ -879,7 +879,7 @@ function fetchJobsFromBeacon(cb, cbProgress) {
 	host = params.host
 	start.setMonth(start.getMonth() - 3)
 
-	LighthouseJob.get_json(tmpUnit, host, start, end, function(data) {
+	LighthouseJob.get_json(tmpUnit, host, start, end, params.token,  function(data) {
 		cb(data.Results)
 	},function(val,total){cbProgress()});
 }
