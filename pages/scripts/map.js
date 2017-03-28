@@ -216,7 +216,6 @@ $("#errorsbutton").click(function() {
 //error.string = "Followme error:" +response.responseJSON.Error
 $.each(allErrors,function(k,v) {
 	$('#errorTable tr:last').after('<tr><td>'+v.date.toISOString()+'</td><td>'+v.string+'</td></tr>');
-	console.log(v)
 })
 $('#errormodal').modal('show');
 
@@ -625,7 +624,7 @@ function makeTrackableMarker(item)
     	var trackablediff = moment(item.Date).fromNow(); //date of gps location
     	if (item.Original.TeamAttachedTo !== null)
     	{
-    		LighthouseTeam.get_tasking(item.Original.TeamAttachedTo.Id,params.host, function(e) {
+    		LighthouseTeam.get_tasking(item.Original.TeamAttachedTo.Id,params.host, params.token, function(e) {
 
     			e.Results.reverse().forEach(function(f) {
     				console.log(f.CurrentStatusTime);
@@ -777,13 +776,10 @@ function LoadViewRanger(theID,thePin,original) {
 								newItem.Callsign = callsign;
 								newItem.DeviceID = theID;
 								newItem.Date = new Date(newItem.API.DATE)
-								console.log(newItem.Date)
 
 								newItem.Date.setHours(newItem.Date.getHours() - 1) 
-								console.log(newItem.Date)
 
 								newItem.Date.setTime( newItem.Date.getTime() - newItem.Date.getTimezoneOffset()*60*1000 );
-								console.log(newItem.Date)
 
 								newItem.Altitude = Number(newItem.API.ALTITUDE);
 								newItem.Latitude = Number(newItem.API.LATITUDE);
