@@ -147,7 +147,7 @@ job_asbestos_history = (
   <div class="form-group">
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
   src={chrome.extension.getURL("icons/lh-black.png")} />Fairtrade Register</label>
-  <div id="asbestos-register-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9" style="width:inherit">
+  <div id="asbestos-register-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
   <p id="asbestos-register-text" class="form-control-static">Searching...</p>
   </div>
   </div>
