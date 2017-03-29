@@ -48,7 +48,7 @@ $(function() {
     $('body').addClass("watermark");
   }
 
- 
+
   var element = document.querySelector('.loadprogress');
 
   var mp = new ElasticProgress(element, {
@@ -213,6 +213,56 @@ function prepareData(jobs, unit, start, end) {
     d.hazardTags = [];
     d.treeTags = [];
     d.propertyTags = [];
+    d.jobtype = "";
+    var jobtype = [];
+    var JobTypeDict = {
+      'Tree': ['Tree Down', 'Branch Down','Tree Threatening','Branch Threatening'],
+      'Damage': ['Roof Damage', 'Ceiling Damage', 'Door Damage', 'Wall Damage', 'Window Damage','Threat of Collapse'],
+      'Leak': ['Leaking Roof']
+    }
+
+    for (var key in JobTypeDict) { //for each key
+      var value = JobTypeDict[key]
+
+      $.each(value, function(d3){ //for each value
+        if (FindTag(value[d3]))
+        {
+          jobtype.push(key)
+        }
+      })
+    }
+
+    jobtype = Array.from(new Set(jobtype)); // #=> ["foo", "bar"]
+
+
+    jobtype.sort();
+
+    d.jobtype = jobtype.join("+")
+
+
+    if (d.jobtype == "")
+    {
+      d.jobtype = "N/A"
+    }
+
+    function FindTag(name) {
+      var found = false;
+      d.Tags.forEach(function(d2){
+        if (d2.Name == name)
+        {
+          found = true;
+        }
+      })
+
+      if (found == false)
+      {
+        return false
+      } else
+      {
+        return true
+      }
+      
+    }
 
     d.Tags.forEach(function(d2){
       switch (d2.TagGroupId) {
@@ -228,6 +278,7 @@ function prepareData(jobs, unit, start, end) {
       }
     });
 
+
     if (d.ReferringAgency == null)
     {
       d.ReferringAgencyID = "N/A"
@@ -235,7 +286,7 @@ function prepareData(jobs, unit, start, end) {
       d.ReferringAgencyID = d.ReferringAgency
     }
 
-if (d.Event == null)
+    if (d.Event == null)
     {
       d.EventID = "N/A"
     } else {
@@ -503,8 +554,8 @@ function prepareCharts(jobs, start, end) {
   .width(1200)
   .height(800)
   .dimension(timeOpenDimension)
-  .group(function(d) { return "Last 10"  })
-  .size(10)
+  .group(function(d) { return "Results (15 Max)"  })
+  .size(15)
   .columns([
     function(d) { return "<a href=\"https://beacon.ses.nsw.gov.au/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
     function(d) { return d.Type; },
@@ -651,6 +702,7 @@ function prepareCharts(jobs, start, end) {
     var chart = makePie(elem, 450, 220, dimension, group);
 
     chart.slicesCap(10);
+    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }))
 
     chart.filterHandler (function (dimension, filters) {
       dimension.filter(null);   
@@ -675,14 +727,35 @@ function prepareCharts(jobs, start, end) {
     });
     var group = dimension.group();
     var chart = makePie(elem, w, h, dimension, group);
-    chart.slicesCap(10);
+    chart
+    .slicesCap(10);
+    chart.legend(dc.legend().x(0))
+    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }))
+
   }
 
-  makeSimplePie("#dc-jobtype-chart", 350, 220, function(d) {
+  function makeSimplePieAbrev(elem, w, h, selector) {
+    var dimension = facts.dimension(function (d) {
+      return selector(d);
+    });
+    var group = dimension.group();
+    var chart = makePie(elem, w, h, dimension, group);
+    chart
+    .slicesCap(10);
+    chart.label(function(d) {
+      var matches = d.key.match(/\b(\w|\+)/g);              // ['J','S','O','N']
+      var acronym = matches.join(''); 
+      return acronym;
+    })
+    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }))
+
+  }
+
+  makeSimplePie("#dc-jobtype-chart", 450, 200, function(d) {
     return d.Type;
   });
 
-  makeSimplePie("#dc-local-chart", 450, 220, function(d) {
+  makeSimplePie("#dc-local-chart", 450, 200, function(d) {
     if (unit.length == 0) { //whole nsw state
       return d.LGA;
     }
@@ -694,24 +767,24 @@ function prepareCharts(jobs, start, end) {
     }
   });
 
-  makeSimplePie("#dc-jobstatus-chart", 350, 220, function(d) {
+  makeSimplePie("#dc-jobstatus-chart", 450, 200, function(d) {
     return d.JobStatusType.Name;
   });
 
-  makeSimplePie("#dc-agency-chart", 350, 220, function(d) {
+  makeSimplePie("#dc-agency-chart", 450, 200, function(d) {
     return d.ReferringAgencyID;
   });
-  makeSimplePie("#dc-event-chart", 350, 220, function(d) {
+  makeSimplePie("#dc-event-chart", 450, 200, function(d) {
     return d.EventID;
   });
 
-  makeSimplePie("#dc-priority-chart", 350, 220, function(d) {
+  makeSimplePie("#dc-priority-chart", 450, 200, function(d) {
     return d.JobPriorityType.Name;
   });
 
-  makeTagPie('#dc-treetags-chart', function(d) {
-    return d.treeTags;
-  },"treeTags");
+  makeSimplePieAbrev("#dc-tasktype-chart", 450, 200, function(d) {
+    return d.jobtype;
+  });
 
   makeTagPie('#dc-hazardtags-chart', function(d) {
     return d.hazardTags;
