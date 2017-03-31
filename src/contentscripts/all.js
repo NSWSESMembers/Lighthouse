@@ -4,7 +4,7 @@ var DOM = require('jsx-dom-factory');
 var LighthouseChrome = require('../../pages/lib/shared_chrome_code.js');
 
   // inject JS that is to run on every page in page context
-inject('all.js');
+  inject('all.js');
 
 // inject all.css - browserify-css takes care of this
 require('../styles/all.css');
@@ -22,24 +22,26 @@ $(document).ready(function(){
 
 
   // Map Mouse Eating Stopper
-  if( ( $map = $('#map') ).length && ('#map_zoom_slider',$map).length ){
-    var $mapblock = $(
-      <div id="lighthouse_mapblock">
+  if (location.pathname != "/Jobs/SituationalAwareness") {
+    if( ( $map = $('#map') ).length && ('#map_zoom_slider',$map).length ){
+      var $mapblock = $(
+        <div id="lighthouse_mapblock">
         <div>Click to zoom or move map</div>
-      </div>
-    );
+        </div>
+        );
 
-    $mapblock
+      $mapblock
       .click(function(e){
         $(this).hide();
         e.stopPropagation();
       });
 
-    $('#map')
+      $('#map')
       .append($mapblock)
       .mouseleave(function(e) {
         $mapblock.show();
       });
+    }
   }
 
 });
