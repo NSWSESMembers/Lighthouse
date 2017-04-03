@@ -594,7 +594,7 @@ function prepareCharts(jobs, start, end) {
     .dimension(closeTimeDimension)
     .colors('blue')
     .group(runningclosedGroup, "Accumulative Jobs Closed")
-    .dashStyle([5,5])
+    .dashStyle([5,1])
     .xyTipsOn(true)
     .renderDataPoints({radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8})
     ])
