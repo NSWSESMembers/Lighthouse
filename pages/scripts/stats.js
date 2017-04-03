@@ -575,21 +575,24 @@ function prepareCharts(jobs, start, end) {
   .legend(dc.legend().x(80).y(20).itemHeight(13).gap(5))
   .renderHorizontalGridLines(true)
   .xUnits(timePeriodUnits)
-
   .compose([
             dc.lineChart(runningChart)
                 .dimension(timeOpenDimension)
                 .colors('red')
+                .renderDataPoints({radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8})
                 .group(runningtotalGroup, "Accumulative Job Count"),
             dc.lineChart(runningChart)
                 .dimension(closeTimeDimension)
                 .colors('blue')
                 .group(runningclosedGroup, "Accumulative Jobs Closed")
                 .dashStyle([5,5])
+                .xyTipsOn(true)
+                .renderDataPoints({radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8})
             ])
 
   .x(d3.time.scale().domain([new Date(start), new Date(end)]))
   .elasticY(true)
+  .brushOn(false)
   .xAxis();
 
 
