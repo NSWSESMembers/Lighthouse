@@ -12,6 +12,8 @@
     "storage",
     "https://beacon.ses.nsw.gov.au/*",
     "https://trainbeacon.ses.nsw.gov.au/*",
+    "https://previewbeacon.ses.nsw.gov.au/*",
+    "https://testbeaconau.ses.nsw.gov.au/*",
     "http://www.fairtrading.nsw.gov.au/*",
     "webRequest",
     "webRequestBlocking"
