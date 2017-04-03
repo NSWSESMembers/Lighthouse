@@ -297,8 +297,7 @@ function prepareData(jobs, unit, start, end) {
 
     d.JobOpenFor=0;
     d.JobCompleted = new Date(0);
-
-    for(var counter=d.JobStatusTypeHistory.length - 1; counter >= 0;counter--){
+    for(var counter=0 ; counter < (d.JobStatusTypeHistory.length);counter++){
       switch (d.JobStatusTypeHistory[counter].Type) {
         case 1: // New
         break;
@@ -312,7 +311,7 @@ function prepareData(jobs, unit, start, end) {
           avgAckTotal=avgAckTotal+(Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000);
         }          
         break;
-        case 6: case 7: case 8: // Complete, Ca, Ref, Fin
+        case 3: case 6: case 7: case 8: //REJ, COMP+ // anything past completed is all we care about
         if (thisJobisComp == false) {
           thisJobisComp = true;
           ++avgOpenCount;
@@ -321,10 +320,13 @@ function prepareData(jobs, unit, start, end) {
           avgOpenTotal=avgOpenTotal+(Math.abs(d.JobCompleted - (new Date(d.JobReceivedFixed)))/1000);
         }
         break;
-        case 7: // Cancelled
-        break;
       }
+
     }
+
+    //console.log(d.Id +" - Opened "+d.JobReceivedFixed+" Closed "+ d.JobCompleted)
+
+
   });
 
 
@@ -485,7 +487,7 @@ function prepareCharts(jobs, start, end) {
   var timePeriodWord;
   var timePeriodUnits;
 
-  if (timeDifference <= 1) {
+  if (timeDifference <= 7) {
     timePeriodWord = "hour";
     timePeriodUnits = d3.time.hours;
     var volumeClosedByPeriod = facts.dimension(function(d) {
@@ -505,9 +507,9 @@ function prepareCharts(jobs, start, end) {
     });
   }
 
-  $('#receivedTitle').html("Jobs received per "+timePeriodWord);
-  $('#completedTitle').html("Jobs completed per "+timePeriodWord);
-  $('#runningTitle').html("Running totals per "+timePeriodWord);
+  $('#receivedTitle').html("Jobs Received Per "+timePeriodWord);
+  $('#completedTitle').html("Jobs Completed Per "+timePeriodWord);
+  $('#runningTitle').html("Running Totals Per "+timePeriodWord);
 
 
 
@@ -536,6 +538,10 @@ function prepareCharts(jobs, start, end) {
     };
   }
 
+  // console.log(closeTimeDimension)
+
+  // var minDate = closeTimeDimension.bottom(1)[0].JobCompleted;
+  // var maxDate = closeTimeDimension.top(1)[0].JobCompleted;
 
   timeOpenChart
   .width(800)
@@ -575,22 +581,27 @@ function prepareCharts(jobs, start, end) {
   .legend(dc.legend().x(80).y(20).itemHeight(13).gap(5))
   .renderHorizontalGridLines(true)
   .xUnits(timePeriodUnits)
+  .renderlet(function(chart) {
+    chart.svg().selectAll('.chart-body').attr('clip-path', null)
+  })
   .compose([
-            dc.lineChart(runningChart)
-                .dimension(timeOpenDimension)
-                .colors('red')
-                .renderDataPoints({radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8})
-                .group(runningtotalGroup, "Accumulative Job Count"),
-            dc.lineChart(runningChart)
-                .dimension(closeTimeDimension)
-                .colors('blue')
-                .group(runningclosedGroup, "Accumulative Jobs Closed")
-                .dashStyle([5,5])
-                .xyTipsOn(true)
-                .renderDataPoints({radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8})
-            ])
+    dc.lineChart(runningChart)
+    .dimension(timeOpenDimension)
+    .colors('red')
+    .renderDataPoints({radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8})
+    .group(runningtotalGroup, "Accumulative Job Count"),
+    dc.lineChart(runningChart)
+    .dimension(closeTimeDimension)
+    .colors('blue')
+    .group(runningclosedGroup, "Accumulative Jobs Closed")
+    .dashStyle([5,5])
+    .xyTipsOn(true)
+    .renderDataPoints({radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8})
+    ])
 
   .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+  //.x(d3.time.scale().domain([minDate,maxDate])) //these are the dates we created before this step so that the scale fits according to our data
+
   .elasticY(true)
   .brushOn(false)
   .xAxis();
