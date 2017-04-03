@@ -210,6 +210,8 @@ function prepareData(jobs, unit, start, end) {
     d.JobReceivedFixed = new Date(
       rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 )
       );
+
+
     d.hazardTags = [];
     d.treeTags = [];
     d.propertyTags = [];
@@ -294,7 +296,7 @@ function prepareData(jobs, unit, start, end) {
     }
 
     d.JobOpenFor=0;
-    d.JobCompleted=new Date(0);
+    d.JobCompleted = new Date(0);
 
     for(var counter=d.JobStatusTypeHistory.length - 1; counter >= 0;counter--){
       switch (d.JobStatusTypeHistory[counter].Type) {
@@ -310,7 +312,7 @@ function prepareData(jobs, unit, start, end) {
           avgAckTotal=avgAckTotal+(Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000);
         }          
         break;
-        case 6: // Complete
+        case 6: case 7: case 8: // Complete, Ca, Ref, Fin
         if (thisJobisComp == false) {
           thisJobisComp = true;
           ++avgOpenCount;
@@ -462,9 +464,10 @@ function prepareCharts(jobs, start, end) {
 
   // jobs per hour time chart
   var timeOpenChart = dc.barChart("#dc-timeopen-chart");
+  var runningChart = dc.compositeChart("#dc-running-chart");
+
   var timeClosedChart = dc.barChart("#dc-timeclosed-chart");
   var dataTable = dc.dataTable("#dc-table-graph");
-
 
   var closeTimeDimension = facts.dimension(function (d) {
     return d.JobCompleted;
@@ -473,6 +476,8 @@ function prepareCharts(jobs, start, end) {
   var timeOpenDimension = facts.dimension(function (d) {
     return d.JobReceivedFixed;
   });
+
+
 
 
   var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
@@ -502,9 +507,35 @@ function prepareCharts(jobs, start, end) {
 
   $('#receivedTitle').html("Jobs received per "+timePeriodWord);
   $('#completedTitle').html("Jobs completed per "+timePeriodWord);
+  $('#runningTitle').html("Running totals per "+timePeriodWord);
+
+
 
   var volumeClosedByPeriodGroup = volumeClosedByPeriod.group().reduceCount(function(d) { return d.JobCompleted; });
+
   var volumeOpenByPeriodGroup = volumeOpenByPeriod.group().reduceCount(function(d) { return d.JobReceivedFixed; });
+
+  
+  var runningtotalGroup = accumulate_group(volumeOpenByPeriodGroup) 
+
+  var runningclosedGroup = accumulate_group(volumeClosedByPeriodGroup) 
+
+
+  function accumulate_group(source_group) {
+    return {
+      all:function () {
+        var cumulate = 0;
+        return source_group.all().map(function(d) {
+          if (new Date(d.key).getTime() != new Date(0).getTime()) //ignore jobs not completed
+          {
+            cumulate += d.value;
+          }
+          return {key:d.key, value:cumulate};
+        });
+      }
+    };
+  }
+
 
   timeOpenChart
   .width(800)
@@ -533,6 +564,34 @@ function prepareCharts(jobs, start, end) {
   .x(d3.time.scale().domain([new Date(start), new Date(end)]))
   .elasticY(true)
   .xAxis();
+
+
+  runningChart
+  .width(1200)
+  .height(250)
+  .transitionDuration(500)
+  .mouseZoomable(false)
+  .margins({top: 10, right: 10, bottom: 20, left: 40})
+  .legend(dc.legend().x(80).y(20).itemHeight(13).gap(5))
+  .renderHorizontalGridLines(true)
+  .xUnits(timePeriodUnits)
+
+  .compose([
+            dc.lineChart(runningChart)
+                .dimension(timeOpenDimension)
+                .colors('red')
+                .group(runningtotalGroup, "Accumulative Job Count"),
+            dc.lineChart(runningChart)
+                .dimension(closeTimeDimension)
+                .colors('blue')
+                .group(runningclosedGroup, "Accumulative Jobs Closed")
+                .dashStyle([5,5])
+            ])
+
+  .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+  .elasticY(true)
+  .xAxis();
+
 
   countchart
   .dimension(facts)
