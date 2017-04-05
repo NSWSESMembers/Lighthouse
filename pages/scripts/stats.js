@@ -2,16 +2,18 @@ var LighthouseJob = require('../lib/shared_job_code.js');
 var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseChrome = require('../lib/shared_chrome_code.js');
+var LighthouseWordCloud = require('../lib/stats/wordcloud.js');
+var LighthouseStatsJobsCleanup = require('../lib/stats/jobparsing.js');
+
+
 
 var $ = require('jquery');
 global.jQuery = $;
 require('jquery.marquee');
-require('jqcloud-npm');
 var ElasticProgress = require('elastic-progress');
 var crossfilter = require('crossfilter');
 var d3 = require('d3');
 var dc = require('dc');
-var stopwords = require('stopwords').english;
 
 // inject css c/o browserify-css
 require('../styles/stats.css');
@@ -19,26 +21,11 @@ require('../styles/stats.css');
 var timeoverride = null;
 var timeperiod;
 var unit = null;
+var facts = null;
 
+//get passed page params
+var params = getSearchParameters();
 
-function removeStopwords(string) {
-  var filteredWords = [];
-  var words = string.split(/\s+/);
-  var length = words.length;
-  for (var i = 0; i < length; i++) {
-    var word = words[i].trim();
-    var word = word.replace(/[.,-\/#!$%\^&\*;:{}=\-_`~()]/g,"");
-    if(word != "" && stopwords.indexOf(word) == -1) {
-      filteredWords.push(word);
-    }
-  }
-  return filteredWords;
-}
-
-// window.onerror = function(message, url, lineNumber) {  
-//   document.getElementById("loading").innerHTML = "Error loading page<br>"+message+"<br> line:"+lineNumber;
-//   return true;
-// }; 
 
 
 // init
@@ -70,6 +57,7 @@ $(function() {
 
   // main
   RunForestRun(mp)
+
 });
 
 // redraw when the slide radio buttons change
@@ -88,19 +76,20 @@ $(document).ready(function() {
 function getSearchParameters() {
   var prmstr = window.location.search.substr(1);
   return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
-}
 
-function transformToAssocArray( prmstr ) {
-  var params = {};
-  var prmarr = prmstr.split("&");
-  for (var i = 0; i < prmarr.length; i++) {
-    var tmparr = prmarr[i].split("=");
-    params[tmparr[0]] = tmparr[1];
+  function transformToAssocArray( prmstr ) {
+    var params = {};
+    var prmarr = prmstr.split("&");
+    for (var i = 0; i < prmarr.length; i++) {
+      var tmparr = prmarr[i].split("=");
+      params[tmparr[0]] = tmparr[1];
+    }
+    return params;
   }
-  return params;
+
 }
 
-var params = getSearchParameters();
+
 
 //update every X seconds
 function startTimer(duration, display) {
@@ -121,13 +110,89 @@ function startTimer(duration, display) {
   }, 1000);
 }
 
+//Get times vars for the call
+function RunForestRun(mp) {
+  mp && mp.open();
+
+  if (timeoverride !== null) { //we are using a time override
+    var end = new Date();
+    var start = new Date();
+
+    start.setDate(start.getDate() - (timeoverride/24));
+
+    starttime = start.toISOString();
+    endtime = end.toISOString();
+
+    params.start = starttime;
+    params.end = endtime;
+  } else {
+    params = getSearchParameters();
+  }
+
+  if (unit == null)
+  {
+    var firstrun = true
+  } else {
+    var firstrun = false
+
+  }
+
+  function fetchComplete(jobsData, progressBar, firstrun) {
+    console.log("Done fetching from beacon, rendering graphs...");
+    renderPage(unit, jobsData, firstrun);
+    console.log("Graphs rendered.");
+    progressBar &&  progressBar.setValue(1);
+    progressBar && progressBar.close();
+  }
+
+  if (unit == null) {
+    console.log("firstrun...will fetch vars");
+    firstrun = true;
+
+    if (typeof params.hq !== 'undefined') { //HQ was sent (so no filter)
+
+      if (params.hq.split(",").length == 1) { //if only one HQ
+
+        LighthouseUnit.get_unit_name(params.hq, params.host, params.token, function(result) {
+          unit = result;
+
+          fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
+        });
+
+      } else { //if more than one HQ
+        unit = []; 
+        console.log("passed array of units");
+        var hqsGiven = params.hq.split(",");
+        console.log(hqsGiven);
+        hqsGiven.forEach(function(d){
+          LighthouseUnit.get_unit_name(d, params.host, params.token, function(result) {
+            unit.push(result);
+            if (unit.length == params.hq.split(",").length) {
+              fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
+            }
+          });
+        });
+      }
+    } else { //no hq was sent, get them all
+      unit = [];
+      fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
+    }
+  } else {
+    firstrun = false;
+    console.log("rerun...will NOT fetch vars");
+    fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
+  }
+}
+
+
+
 // fetch jobs from beacon
-function fetchFromBeacon(unit, host, token, cb, progressBar) {
+function fetchFromBeacon(unit, host, token, cb, progressBar, firstrun) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
   LighthouseJob.get_json(unit, host, start, end, token, function(data) {
-    cb && cb(data,progressBar);
+    cb && cb(data,progressBar,firstrun);
   },function(val,total){
     if (progressBar) { //if its a first load
       if (val == -1 && total == -1) {
@@ -137,247 +202,42 @@ function fetchFromBeacon(unit, host, token, cb, progressBar) {
       }
     }
   });
-  
-
 }
 
 // render the page using the data provided
-function renderPage(unit, jobs) {
+function renderPage(unit, jobs, firstrun) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  prepareData(jobs, unit, start, end);
-  dc.renderAll();
+  cleanJobs = LighthouseStatsJobsCleanup.prepareData(jobs, unit, start, end);
 
+  prepareCharts(cleanJobs, start, end, firstrun);
 
+  LighthouseWordCloud.makeSituationOnSceneCloud(cleanJobs,'#cloud');
 
-  $( ".total" ).click(function() {
-    dc.filterAll();
+  if (firstrun) {
+    console.log("Will Render All")
     dc.renderAll();
-  });
+  } else {
+    console.log("Will Redraw All")
+    dc.redrawAll();
+  }
 
-}
-
-// make pie chart using our standard parameters
-function makePie(elem, w, h, dimension, group) {
-  var chart = dc.pieChart(elem);
-  chart.width(w)
-  .height(h)
-  .radius(100)
-  .innerRadius(0)
-  .dimension(dimension)
-  .legend(dc.legend())
-  .group(group);
-  return chart;
-}
-
-// gather and organise all of the data
-// build charts and feed data
-// render
-function prepareData(jobs, unit, start, end) {
-
-  // convert timestamps to Date()s
-
-  var avgOpenCount =0;
-  var avgOpenTotal =0;
-  var avgAckCount =0;
-  var avgAckTotal =0; 
-  var eventIdAndDescription = [];
-
-  jobs.Results.forEach(function(d) {
-    var thisJobisAck = false;
-    var thisJobisComp = false;
-
-    if (d.Event) {
-      var words = d.Event.Identifier +" - "+ d.Event.Description;
-      eventIdAndDescription[words] = (eventIdAndDescription[words] || 0) + 1;
-    }
-
-    if (d.LGA == null) {
-      d.LGA = "N/A";
-    }
-
-    if (d.SituationOnScene == null) {
-      d.SituationOnScene = "N/A";
-    }
-
-    if (d.Address.Locality == null) {
-      d.Address.Locality = "N/A";
-    }
+  
 
 
-    var rawdate = new Date(d.JobReceived);
-    d.JobReceivedFixed = new Date(
-      rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 )
-      );
-
-
-    d.hazardTags = [];
-    d.treeTags = [];
-    d.propertyTags = [];
-    d.jobtype = "";
-    var jobtype = [];
-    var JobTypeDict = {
-      'Tree': ['Tree Down', 'Branch Down','Tree Threatening','Branch Threatening'],
-      'Damage': ['Roof Damage', 'Ceiling Damage', 'Door Damage', 'Wall Damage', 'Window Damage','Threat of Collapse'],
-      'Leak': ['Leaking Roof']
-    }
-
-    for (var key in JobTypeDict) { //for each key
-      var value = JobTypeDict[key]
-
-      $.each(value, function(d3){ //for each value
-        if (FindTag(value[d3]))
-        {
-          jobtype.push(key)
-        }
-      })
-    }
-
-    jobtype = Array.from(new Set(jobtype)); // #=> ["foo", "bar"]
-
-
-    jobtype.sort();
-
-    d.jobtype = jobtype.join("+")
-
-
-    if (d.jobtype == "")
-    {
-      d.jobtype = "N/A"
-    }
-
-    function FindTag(name) {
-      var found = false;
-      d.Tags.forEach(function(d2){
-        if (d2.Name == name)
-        {
-          found = true;
-        }
-      })
-
-      if (found == false)
-      {
-        return false
-      } else
-      {
-        return true
-      }
-      
-    }
-
-    d.Tags.forEach(function(d2){
-      switch (d2.TagGroupId) {
-        case 5:
-        d.treeTags.push(d2.Name);
-        break;
-        case 7:
-        d.hazardTags.push(d2.Name);
-        break
-        case 13:
-        d.propertyTags.push(d2.Name);
-        break;
-      }
+    //click to reset the filters that are applied
+    $( ".total" ).click(function() {
+      dc.filterAll();
+      dc.renderAll();
     });
 
-
-    if (d.ReferringAgency == null)
-    {
-      d.ReferringAgencyID = "N/A"
-    } else {
-      d.ReferringAgencyID = d.ReferringAgency
-    }
-
-    if (d.Event == null)
-    {
-      d.EventID = "N/A"
-    } else {
-      d.EventID = d.Event.Identifier
-    }
-
-    d.JobOpenFor=0;
-    d.JobCompleted = new Date(0);
-    for(var counter=0 ; counter < (d.JobStatusTypeHistory.length);counter++){
-      switch (d.JobStatusTypeHistory[counter].Type) {
-        case 1: // New
-        break;
-        case 2: // Acknowledged
-        if (thisJobisAck == false) {
-          thisJobisAck = true;
-          ++avgAckCount;
-          var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
-          var fixeddate = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
-          d.TimeToAck = Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000;
-          avgAckTotal=avgAckTotal+(Math.abs(fixeddate - (new Date(d.JobReceivedFixed)))/1000);
-        }          
-        break;
-        case 3: case 6: case 7: case 8: //REJ, COMP+ // anything past completed is all we care about
-        if (thisJobisComp == false) {
-          thisJobisComp = true;
-          ++avgOpenCount;
-          var rawdate = new Date(d.JobStatusTypeHistory[counter].Timelogged);
-          d.JobCompleted = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
-          avgOpenTotal=avgOpenTotal+(Math.abs(d.JobCompleted - (new Date(d.JobReceivedFixed)))/1000);
-        }
-        break;
-      }
-
-    }
-
-    //console.log(d.Id +" - Opened "+d.JobReceivedFixed+" Closed "+ d.JobCompleted)
-
-
-  });
-
-
-var options = {
-  weekday: "short",
-  year: "numeric",
-  month: "2-digit",
-  day: "numeric",
-  hour12: false
-};
-
-  if (unit.length == 0) { //whole nsw state
-    document.title = "NSW Job Statistics";
-    $('.stats header h2').text('Job statistics for NSW');
-  } else {
-    if (Array.isArray(unit) == false) { //1 lga
-      document.title = unit.Name + " Job Statistics";
-      $('.stats header h2').text('Job statistics for '+unit.Name);
-    }
-    if (unit.length > 1) { //more than one
-      document.title = "Group Job Statistics";
-      $('.stats header h2').text('Job statistics for Group');
-    }
-  }
-
-  $('.stats header h4').text(
-    start.toLocaleTimeString("en-au", options) + " to " +
-    end.toLocaleTimeString("en-au", options)
-    );
-
-
-  var jobavg = Math.round(avgOpenTotal/avgOpenCount).toString();
-  var ackavg = Math.round(avgAckTotal/avgAckCount).toString();
-
-
-  var banner = "";
-
-  for (var i = 0; i < Object.keys(eventIdAndDescription).length; ++i) {
-    banner = i == 0 ? banner + Object.keys(eventIdAndDescription)[i] : banner + " | " + Object.keys(eventIdAndDescription)[i] ;
   }
 
 
-  $('.events').text(banner);
 
 
-  prepareCharts(jobs, start, end);
-
-  makeSituationOnSceneCloud(jobs);
-}
-
-String.prototype.toHHMMSS = function () {
+  String.prototype.toHHMMSS = function () {
   var sec_num = parseInt(this, 10); // don't forget the second param
   var hours   = Math.floor(sec_num / 3600);
   var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
@@ -397,79 +257,41 @@ String.prototype.toHHMMSS = function () {
 }
 
 
-function walkSituationOnSceneWords(jobs){ //take array and make word:frequency array
-
-  var wordCount = {};
-
-  jobs.Results.forEach(function(d) {
-
-    // strip stringified objects and punctuations from the string
-    var words = d.SituationOnScene
-    .toLowerCase()
-    .replace(/object Object/g, '')
-    .replace(/\//g,' ')
-    .replace(/[\+\.,\/#!$%\^&\*{}=_`~]/g,'')
-    .replace(/[0-9]/g, '');
-
-    // this returns an array of words pre-split
-    words = removeStopwords(words);
-
-    // Count frequency of word occurance
-
-    for(var i = 0; i < words.length; i++) {
-      if(!wordCount[words[i]])
-        wordCount[words[i]] = 0;
-      wordCount[words[i]]++; // {'hi': 12, 'foo': 2 ...}
-    }
-  });
-
-  var wordCountArr = [];
-
-  for(var prop in wordCount) {
-    wordCountArr.push({text: prop, weight: wordCount[prop]});
-  }
-
-  return wordCountArr;
-
-}
-
-function makeSituationOnSceneCloud(jobs) {
-  calculateSituationOnSceneCloud(walkSituationOnSceneWords(jobs));
-
-  function calculateSituationOnSceneCloud(wordCount) {
-    var purdyColor = tinygradient('black', 'red', 'orange', 'blue', 'LightBlue');
-
-    setTimeout(function(){
-
-      $('#cloud').jQCloud(wordCount, {
-        width: 500,
-        height: 350,
-        colors: purdyColor.rgb(10)
-      });
-
-    },2000);
-    console.log("Total word count: "+wordCount.length);
-  };
 
 
+//null these at this scope so they persist and we can refresh the data display
+var timeOpenChart = null;
+var runningChart = null;
+var timeClosedChart = null;
+var dataTable = null;
+var statusChart = null;
+var agencyChart = null;
+var eventChart = null;
+var priorityChart = null;
+var jobTypeChart = null;
+var hazardChart = null;
+var propertyChart = null;
+var jobtypeChart = null;
+var localChart = null;
 
-}
+function prepareCharts(jobs, start, end, firstRun) {
 
+  if (firstRun) //if its the first run expect everything to not exist, and draw it all
+  {
+    facts = crossfilter(jobs.Results)
 
-// draw all of the pie charts
-function prepareCharts(jobs, start, end) {
-  var facts = crossfilter(jobs.Results);
-  var all = facts.groupAll();
+    var all = facts.groupAll();
+
 
   //display totals
-  var countchart = dc.dataCount(".total");
+  countchart = dc.dataCount(".total");
 
   // jobs per hour time chart
-  var timeOpenChart = dc.barChart("#dc-timeopen-chart");
-  var runningChart = dc.compositeChart("#dc-running-chart");
+  timeOpenChart = dc.barChart("#dc-timeopen-chart");
+  runningChart = dc.compositeChart("#dc-running-chart");
 
-  var timeClosedChart = dc.barChart("#dc-timeclosed-chart");
-  var dataTable = dc.dataTable("#dc-table-graph");
+  timeClosedChart = dc.barChart("#dc-timeclosed-chart");
+  dataTable = dc.dataTable("#dc-table-graph");
 
   var closeTimeDimension = facts.dimension(function (d) {
     return d.JobCompleted;
@@ -598,7 +420,6 @@ function prepareCharts(jobs, start, end) {
     .xyTipsOn(true)
     .renderDataPoints({radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8})
     ])
-
   .x(d3.time.scale().domain([new Date(start), new Date(end)]))
   //.x(d3.time.scale().domain([minDate,maxDate])) //these are the dates we created before this step so that the scale fits according to our data
 
@@ -616,7 +437,7 @@ function prepareCharts(jobs, start, end) {
   });
 
   var options = {
-   year: "numeric",
+   year: "2-digit",
    month: "2-digit",
    day: "numeric",
    hour12: false
@@ -627,7 +448,7 @@ function prepareCharts(jobs, start, end) {
   .width(1200)
   .height(800)
   .dimension(timeOpenDimension)
-  .group(function(d) { return "Results (15 Max)"  })
+  .group(function(d) { return "Filtered Results (15 Max)"  })
   .size(15)
   .columns([
     function(d) { return "<a href=\""+params.host+"/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
@@ -635,9 +456,108 @@ function prepareCharts(jobs, start, end) {
     function(d) { return d.JobReceivedFixed.toLocaleTimeString("en-au", options); },
     function(d) { return (new Date(d.JobCompleted).getTime() !== new Date(0).getTime() ? d.JobCompleted.toLocaleTimeString("en-au", options):"") },
     function(d) { return d.Address.PrettyAddress; },
+    function(d) { return d.SituationOnScene; },
     ])
   .sortBy(function(d){ return d.JobReceivedFixed; })
   .order(d3.descending);
+
+
+  
+
+
+  jobtypeChart = makeSimplePie("#dc-jobtype-chart", 460, 240, function(d) {
+    return d.Type;
+  });
+
+  localChart = makeSimplePie("#dc-local-chart", 460, 240, function(d) {
+    if (unit.length == 0) { //whole nsw state
+      return d.LGA;
+    }
+    if (Array.isArray(unit) == false) { //1 lga
+      return d.Address.Locality;
+    }
+    if (unit.length > 1) { //more than one
+      return d.LGA;
+    }
+  });
+
+  statusChart = makeSimplePie("#dc-jobstatus-chart", 460, 240, function(d) {
+    return d.JobStatusType.Name;
+  });
+
+  agencyChart = makeSimplePie("#dc-agency-chart", 460, 240, function(d) {
+    return d.ReferringAgencyID;
+  });
+
+  eventChart = makeSimplePie("#dc-event-chart", 460, 240, function(d) {
+    return d.EventID;
+  });
+
+  priorityChart = makeSimplePie("#dc-priority-chart", 460, 240, function(d) {
+    return d.JobPriorityType.Name;
+  });
+
+  jobTypeChart = makeSimplePieAbrev("#dc-tasktype-chart", 460, 240, function(d) {
+    return d.jobtype;
+  });
+
+  hazardChart = makeTagPie('#dc-hazardtags-chart', function(d) {
+    return d.hazardTags;
+  },"hazardTags");
+
+  propertyChart = makeTagPie('#dc-propertytags-chart', function(d) {
+    return d.propertyTags;
+  },"propertyTags");
+
+  } else { //its not the first run so things will exists, just refresh the data
+
+
+    //remember the set filters
+    statusChartFilters = statusChart.filters();
+    agencyChartFilters = agencyChart.filters();
+    eventChartFilters = eventChart.filters();
+    priorityChartFilters = priorityChart.filters();
+    jobTypeChartFilters = jobTypeChart.filters();
+    hazardChartFilters = hazardChart.filters();
+    propertyChartFilters = propertyChart.filters();
+    jobtypeChartFilters = jobtypeChart.filters();
+    localChartFilters = localChart.filters();
+
+
+    //remove the filters
+    statusChart.filter(null)
+    agencyChart.filter(null)
+    eventChart.filter(null)
+    priorityChart.filter(null)
+    jobTypeChart.filter(null)
+    hazardChart.filter(null)
+    propertyChart.filter(null)
+    jobtypeChart.filter(null)
+    localChart.filter(null)
+
+    //flush all the jobs stored in the facts
+    facts.remove();
+
+
+    //reapply the filters
+    statusChart.filter([statusChartFilters])
+    agencyChart.filter([agencyChartFilters])
+    eventChart.filter([eventChartFilters])
+    priorityChart.filter([priorityChartFilters])
+    jobTypeChart.filter([jobtypeChartFilters])
+    hazardChart.filter([hazardChartFilters])
+    propertyChart.filter([propertyChartFilters])
+    jobtypeChart.filter([jobtypeChartFilters])
+    localChart.filter([localChartFilters])
+
+
+
+    //add the data back in
+    facts.add(jobs.Results)
+  };
+
+}
+
 
   // produces a 'group' for tag pie charts, switch on the key in the object that needs to be walked
   function makeTagGroup(dim, targetfact) {
@@ -764,6 +684,23 @@ function prepareCharts(jobs, start, end) {
 
   }
 
+  
+
+
+// make pie chart using our standard parameters
+function makePie(elem, w, h, dimension, group) {
+  var chart = dc.pieChart(elem);
+  chart.width(w)
+  .height(h)
+  .radius(100)
+  .innerRadius(0)
+  .dimension(dimension)
+  .legend(dc.legend())
+  .group(group);
+  return chart;
+}
+
+
 
   // produces a pie chart for displaying tags
   function makeTagPie(elem, fact, location) {
@@ -772,13 +709,12 @@ function prepareCharts(jobs, start, end) {
     });
 
     var group = makeTagGroup(dimension,location);
-    var chart = makePie(elem, 450, 220, dimension, group);
+    var chart = makePie(elem, 460, 240, dimension, group);
 
     chart.slicesCap(10);
     chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }))
 
     chart.filterHandler (function (dimension, filters) {
-      dimension.filter(null);   
       if (filters.length === 0)
         dimension.filter(null);
       else
@@ -791,6 +727,7 @@ function prepareCharts(jobs, start, end) {
         });
       return filters; 
     });
+    return chart
   }
 
   // produces a simple pie chart
@@ -804,7 +741,7 @@ function prepareCharts(jobs, start, end) {
     .slicesCap(10);
     chart.legend(dc.legend().x(0))
     chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }))
-
+    return chart
   }
 
   function makeSimplePieAbrev(elem, w, h, selector) {
@@ -821,183 +758,72 @@ function prepareCharts(jobs, start, end) {
       return acronym;
     })
     chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }))
-
+    return chart
   }
 
-  makeSimplePie("#dc-jobtype-chart", 450, 200, function(d) {
-    return d.Type;
-  });
+  (function($) {
 
-  makeSimplePie("#dc-local-chart", 450, 200, function(d) {
-    if (unit.length == 0) { //whole nsw state
-      return d.LGA;
-    }
-    if (Array.isArray(unit) == false) { //1 lga
-      return d.Address.Locality;
-    }
-    if (unit.length > 1) { //more than one
-      return d.LGA;
-    }
-  });
+    $.fn.textWidth = function(){
+      var calc = '<span style="display:none">' + $(this).text() + '</span>';
+      $('body').append(calc);
+      var width = $('body').find('span:last').width();
+      $('body').find('span:last').remove();
+      return width;
+    };
 
-  makeSimplePie("#dc-jobstatus-chart", 450, 200, function(d) {
-    return d.JobStatusType.Name;
-  });
+    $.fn.marquee = function(args) {
+      var that = $(this);
+      var textWidth = that.textWidth(),
+      offset = that.width(),
+      width = offset,
+      css = {
+        'text-indent' : that.css('text-indent'),
+        'overflow' : that.css('overflow'),
+        'white-space' : that.css('white-space')
+      },
+      marqueeCss = {
+        'text-indent' : width,
+        'overflow' : 'hidden',
+        'white-space' : 'nowrap'
+      },
+      args = $.extend(true, { count: -1, speed: 1e1, leftToRight: false }, args),
+      i = 0,
+      stop = textWidth*-1,
+      dfd = $.Deferred();
 
-  makeSimplePie("#dc-agency-chart", 450, 200, function(d) {
-    return d.ReferringAgencyID;
-  });
-  makeSimplePie("#dc-event-chart", 450, 200, function(d) {
-    return d.EventID;
-  });
-
-  makeSimplePie("#dc-priority-chart", 450, 200, function(d) {
-    return d.JobPriorityType.Name;
-  });
-
-  makeSimplePieAbrev("#dc-tasktype-chart", 450, 200, function(d) {
-    return d.jobtype;
-  });
-
-  makeTagPie('#dc-hazardtags-chart', function(d) {
-    return d.hazardTags;
-  },"hazardTags");
-
-  makeTagPie('#dc-propertytags-chart', function(d) {
-    return d.propertyTags;
-  },"propertyTags");
-
-
-}
-
-//Get times vars for the call
-function RunForestRun(mp) {
-  mp && mp.open();
-
-  if (timeoverride !== null) { //we are using a time override
-    var end = new Date();
-    var start = new Date();
-
-    start.setDate(start.getDate() - (timeoverride/24));
-
-    starttime = start.toISOString();
-    endtime = end.toISOString();
-
-    params.start = starttime;
-    params.end = endtime;
-  } else {
-    params = getSearchParameters();
-  }
-
-  function fetchComplete(jobsData, progressBar) {
-    console.log("Done fetching from beacon, rendering graphs...");
-    renderPage(unit, jobsData);
-    console.log("Graphs rendered.");
-    progressBar &&  progressBar.setValue(1);
-    progressBar && progressBar.close();
-  }
-
-  if (unit == null) {
-    console.log("firstrun...will fetch vars");
-
-    if (typeof params.hq !== 'undefined') { //HQ was sent (so no filter)
-
-      if (params.hq.split(",").length == 1) { //if only one HQ
-
-        LighthouseUnit.get_unit_name(params.hq, params.host, params.token, function(result) {
-          unit = result;
-
-          fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp);
-        });
-
-      } else { //if more than one HQ
-        unit = []; 
-        console.log("passed array of units");
-        var hqsGiven = params.hq.split(",");
-        console.log(hqsGiven);
-        hqsGiven.forEach(function(d){
-          LighthouseUnit.get_unit_name(d, params.host, params.token, function(result) {
-            unit.push(result);
-            if (unit.length == params.hq.split(",").length) {
-              fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp);
-            }
-          });
-        });
-      }
-    } else { //no hq was sent, get them all
-      unit = [];
-      fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp);
-    }
-  } else {
-    console.log("rerun...will NOT fetch vars");
-    fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp);
-  }
-}
-
-(function($) {
-
-  $.fn.textWidth = function(){
-    var calc = '<span style="display:none">' + $(this).text() + '</span>';
-    $('body').append(calc);
-    var width = $('body').find('span:last').width();
-    $('body').find('span:last').remove();
-    return width;
-  };
-
-  $.fn.marquee = function(args) {
-    var that = $(this);
-    var textWidth = that.textWidth(),
-    offset = that.width(),
-    width = offset,
-    css = {
-      'text-indent' : that.css('text-indent'),
-      'overflow' : that.css('overflow'),
-      'white-space' : that.css('white-space')
-    },
-    marqueeCss = {
-      'text-indent' : width,
-      'overflow' : 'hidden',
-      'white-space' : 'nowrap'
-    },
-    args = $.extend(true, { count: -1, speed: 1e1, leftToRight: false }, args),
-    i = 0,
-    stop = textWidth*-1,
-    dfd = $.Deferred();
-
-    function go() {
-      if(!that.length)
-        return dfd.reject();
-      if(width == stop) {
-        i++;
-        if(i == args.count) {
-          that.css(css);
-          return dfd.resolve();
+      function go() {
+        if(!that.length)
+          return dfd.reject();
+        if(width == stop) {
+          i++;
+          if(i == args.count) {
+            that.css(css);
+            return dfd.resolve();
+          }
+          if(args.leftToRight) {
+            width = textWidth*-1;
+          } else {
+            width = offset;
+          }
         }
+        that.css('text-indent', width + 'px');
         if(args.leftToRight) {
-          width = textWidth*-1;
+          width++;
         } else {
-          width = offset;
+          width--;
         }
+        setTimeout(go, args.speed);
       }
-      that.css('text-indent', width + 'px');
+
       if(args.leftToRight) {
+        width = textWidth*-1;
         width++;
+        stop = offset;
       } else {
-        width--;
+        width--;            
       }
-      setTimeout(go, args.speed);
+      that.css(marqueeCss);
+      go();
+      return dfd.promise();
     }
-
-    if(args.leftToRight) {
-      width = textWidth*-1;
-      width++;
-      stop = offset;
-    } else {
-      width--;            
-    }
-    that.css(marqueeCss);
-    go();
-    return dfd.promise();
-  }
-
-})(jQuery);
+  })(jQuery);
