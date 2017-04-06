@@ -39,12 +39,7 @@ body.watermark {
 
 .stats header div {}
 
-.stats header .events {
-	width: 500px;
-	height: 25px;
-	margin: auto;
-	font-size: 15px;
-}
+
 
 .stats header .total {
 	font-size: 25px;

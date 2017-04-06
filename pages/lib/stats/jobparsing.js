@@ -151,14 +151,26 @@ var options = {
   if (unit.length == 0) { //whole nsw state
     document.title = "NSW Job Statistics";
     $('.stats header h2').text('Job statistics for NSW');
-  } else {
-    if (Array.isArray(unit) == false) { //1 lga
+  } else { //multiple units
+    if (Array.isArray(unit) == false) { //single unit
       document.title = unit.Name + " Job Statistics";
       $('.stats header h2').text('Job statistics for '+unit.Name);
     }
     if (unit.length > 1) { //more than one
+
+      var unitParents = []
+      unit.forEach(function(d2){
+            unitParents[d2.ParentEntity.Code] = (unitParents[d2.ParentEntity.Code] || 0) + 1;
+      })
+      if (Object.keys(unitParents).length == 1) //if theres only 1 LHQ
+      {
+        $('.stats header h2').text('Job statistics for ('+unitParents[Object.keys(unitParents)[0]]+') '+Object.keys(unitParents)[0]+' units');
+      } else {
+              $('.stats header h2').text('Job statistics for Group');
+
+      }
+
       document.title = "Group Job Statistics";
-      $('.stats header h2').text('Job statistics for Group');
     }
   }
 
@@ -174,7 +186,7 @@ var options = {
   }
 
 
-  $('.events').text(banner);
+  $('#events').text(banner);
 
   return jobs
 

@@ -9,7 +9,7 @@ var LighthouseStatsJobsCleanup = require('../lib/stats/jobparsing.js');
 
 var $ = require('jquery');
 global.jQuery = $;
-require('jquery.marquee');
+
 var ElasticProgress = require('elastic-progress');
 var crossfilter = require('crossfilter');
 var d3 = require('d3');
@@ -22,6 +22,7 @@ var timeoverride = null;
 var timeperiod;
 var unit = null;
 var facts = null;
+var firstrun = true; 
 
 //get passed page params
 var params = getSearchParameters();
@@ -31,9 +32,11 @@ var params = getSearchParameters();
 // init
 $(function() {
 
+
   if (chrome.manifest.name.includes("Development")) {
     $('body').addClass("watermark");
   }
+
 
 
   var element = document.querySelector('.loadprogress');
@@ -47,7 +50,6 @@ $(function() {
      $('#loading').hide();
      $('#results').show();
      $('footer').show();
-     var $mq = $('.events').marquee();
 
    }
  });
@@ -68,9 +70,10 @@ $(document).on('change', 'input[name=slide]:radio', function() {
 
 //refresh button
 $(document).ready(function() {
-  document.getElementById("refresh").onclick = function() {
+  $("#refresh").click(function($e) {
+    $e.preventDefault();
     RunForestRun();
-  }
+  })
 });
 
 function getSearchParameters() {
@@ -112,6 +115,7 @@ function startTimer(duration, display) {
 
 //Get times vars for the call
 function RunForestRun(mp) {
+
   mp && mp.open();
 
   if (timeoverride !== null) { //we are using a time override
@@ -129,14 +133,6 @@ function RunForestRun(mp) {
     params = getSearchParameters();
   }
 
-  if (unit == null)
-  {
-    var firstrun = true
-  } else {
-    var firstrun = false
-
-  }
-
   function fetchComplete(jobsData, progressBar, firstrun) {
     console.log("Done fetching from beacon, rendering graphs...");
     renderPage(unit, jobsData, firstrun);
@@ -145,9 +141,8 @@ function RunForestRun(mp) {
     progressBar && progressBar.close();
   }
 
-  if (unit == null) {
+  if (firstrun) {
     console.log("firstrun...will fetch vars");
-    firstrun = true;
 
     if (typeof params.hq !== 'undefined') { //HQ was sent (so no filter)
 
@@ -178,8 +173,8 @@ function RunForestRun(mp) {
       fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
     }
   } else {
-    firstrun = false;
     console.log("rerun...will NOT fetch vars");
+    $('#loadinginline').css('visibility', 'visible');
     fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
   }
 }
@@ -205,7 +200,7 @@ function fetchFromBeacon(unit, host, token, cb, progressBar, firstrun) {
 }
 
 // render the page using the data provided
-function renderPage(unit, jobs, firstrun) {
+function renderPage(unit, jobs, firstrunlocal) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
@@ -215,22 +210,30 @@ function renderPage(unit, jobs, firstrun) {
 
   LighthouseWordCloud.makeSituationOnSceneCloud(cleanJobs,'#cloud');
 
-  if (firstrun) {
-    console.log("Will Render All")
+  if (firstrunlocal) {
+    console.log("First Run - We Will Render All")
     dc.renderAll();
   } else {
-    console.log("Will Redraw All")
+    console.log("NOT first run - Will Redraw All")
     dc.redrawAll();
+    $('#loadinginline').css('visibility', 'hidden');
   }
 
-  
+  //WE ARE DONE WILL ALL LOADING
 
+  if (firstrunlocal)
+  {
+    firstrun = false
+  }
 
     //click to reset the filters that are applied
-    $( ".total" ).click(function() {
+    $( ".total" ).click(function($e) {
+      $e.preventDefault();
       dc.filterAll();
       dc.renderAll();
     });
+
+
 
   }
 
@@ -360,10 +363,6 @@ function prepareCharts(jobs, start, end, firstRun) {
     };
   }
 
-  // console.log(closeTimeDimension)
-
-  // var minDate = closeTimeDimension.bottom(1)[0].JobCompleted;
-  // var maxDate = closeTimeDimension.top(1)[0].JobCompleted;
 
   timeOpenChart
   .width(800)
@@ -421,8 +420,6 @@ function prepareCharts(jobs, start, end, firstRun) {
     .renderDataPoints({radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8})
     ])
   .x(d3.time.scale().domain([new Date(start), new Date(end)]))
-  //.x(d3.time.scale().domain([minDate,maxDate])) //these are the dates we created before this step so that the scale fits according to our data
-
   .elasticY(true)
   .brushOn(false)
   .xAxis();
@@ -761,69 +758,6 @@ function makePie(elem, w, h, dimension, group) {
     return chart
   }
 
-  (function($) {
 
-    $.fn.textWidth = function(){
-      var calc = '<span style="display:none">' + $(this).text() + '</span>';
-      $('body').append(calc);
-      var width = $('body').find('span:last').width();
-      $('body').find('span:last').remove();
-      return width;
-    };
 
-    $.fn.marquee = function(args) {
-      var that = $(this);
-      var textWidth = that.textWidth(),
-      offset = that.width(),
-      width = offset,
-      css = {
-        'text-indent' : that.css('text-indent'),
-        'overflow' : that.css('overflow'),
-        'white-space' : that.css('white-space')
-      },
-      marqueeCss = {
-        'text-indent' : width,
-        'overflow' : 'hidden',
-        'white-space' : 'nowrap'
-      },
-      args = $.extend(true, { count: -1, speed: 1e1, leftToRight: false }, args),
-      i = 0,
-      stop = textWidth*-1,
-      dfd = $.Deferred();
 
-      function go() {
-        if(!that.length)
-          return dfd.reject();
-        if(width == stop) {
-          i++;
-          if(i == args.count) {
-            that.css(css);
-            return dfd.resolve();
-          }
-          if(args.leftToRight) {
-            width = textWidth*-1;
-          } else {
-            width = offset;
-          }
-        }
-        that.css('text-indent', width + 'px');
-        if(args.leftToRight) {
-          width++;
-        } else {
-          width--;
-        }
-        setTimeout(go, args.speed);
-      }
-
-      if(args.leftToRight) {
-        width = textWidth*-1;
-        width++;
-        stop = offset;
-      } else {
-        width--;            
-      }
-      that.css(marqueeCss);
-      go();
-      return dfd.promise();
-    }
-  })(jQuery);

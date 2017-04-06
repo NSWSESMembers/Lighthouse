@@ -4,7 +4,65 @@
 
 
 .dc-chart .pie-slice {
-    fill: black;
-    font-size: 10px;
-    cursor: pointer;
+	fill: black;
+	font-size: 10px;
+	cursor: pointer;
+}
+
+
+#loadinginline {
+	position: fixed;
+	visibility: hidden;
+	top: 0;
+	left: 0;
+	right: 0;
+	width: 100%;
+	background: white;
+}
+
+
+#loadmiddleinline
+{
+	margin: 0 auto;
+	display: table;
+	font-size: 20px;
+}
+
+#loadinnerinline > p
+{
+	font-size: 20px;
+}
+
+.marquee {
+	width: 50%;
+	margin: 0 auto;
+	white-space: nowrap;
+	overflow: hidden;
+	box-sizing: border-box;
+	height: 25px;
+}
+
+.marquee p {
+	line-height: 15px;
+}
+
+.marquee span {
+	display: inline-block;
+	padding-left: 100%;  /* show the marquee just outside the paragraph */
+	animation: marquee 15s linear infinite;
+}
+
+#events {
+	font-size: 15px;
+	line-height: 25px
+}
+
+.marquee span:hover {
+	animation-play-state: paused
+}
+
+/* Make it move */
+@keyframes marquee {
+	0%   { transform: translate(0, 0); }
+	100% { transform: translate(-100%, 0); }
 }
