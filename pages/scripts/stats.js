@@ -212,7 +212,10 @@ function renderPage(unit, jobs, firstrunlocal) {
 
   if (firstrunlocal) {
     console.log("First Run - We Will Render All")
+
     dc.renderAll();
+
+
   } else {
     console.log("NOT first run - Will Redraw All")
     dc.redrawAll();
@@ -692,7 +695,6 @@ function makePie(elem, w, h, dimension, group) {
   .radius(100)
   .innerRadius(0)
   .dimension(dimension)
-  .legend(dc.legend())
   .group(group);
   return chart;
 }
@@ -709,7 +711,7 @@ function makePie(elem, w, h, dimension, group) {
     var chart = makePie(elem, 460, 240, dimension, group);
 
     chart.slicesCap(10);
-    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }))
+    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }).x(0).y(20))
 
     chart.filterHandler (function (dimension, filters) {
       if (filters.length === 0)
@@ -736,8 +738,7 @@ function makePie(elem, w, h, dimension, group) {
     var chart = makePie(elem, w, h, dimension, group);
     chart
     .slicesCap(10);
-    chart.legend(dc.legend().x(0))
-    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }))
+    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }).x(0).y(20))
     return chart
   }
 
@@ -754,7 +755,7 @@ function makePie(elem, w, h, dimension, group) {
       var acronym = matches.join(''); 
       return acronym;
     })
-    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }))
+    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }).x(0).y(20))
     return chart
   }
 

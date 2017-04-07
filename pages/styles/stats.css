@@ -9,6 +9,41 @@
 	cursor: pointer;
 }
 
+#dc-jobtype-chart > svg > g:nth-child(1) {
+transform: translate(260px,120px)
+}
+
+#dc-local-chart > svg > g:nth-child(1) {
+transform: translate(260px,120px)
+}
+
+#dc-jobstatus-chart> svg > g:nth-child(1) {
+transform: translate(260px,120px)
+}
+
+#dc-agency-chart > svg > g:nth-child(1) {
+transform: translate(260px,120px)
+}
+
+#dc-event-chart > svg > g:nth-child(1) {
+transform: translate(260px,120px)
+}
+
+#dc-priority-chart > svg > g:nth-child(1) {
+transform: translate(260px,120px)
+}
+
+#dc-tasktype-chart > svg > g:nth-child(1) {
+transform: translate(260px,120px)
+}
+
+#dc-hazardtags-chart > svg > g:nth-child(1) {
+transform: translate(260px,120px)
+}
+
+#dc-propertytags-chart > svg > g:nth-child(1) {
+transform: translate(260px,120px)
+}
 
 #loadinginline {
 	position: fixed;
