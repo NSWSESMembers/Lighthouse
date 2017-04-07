@@ -171,6 +171,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
 
   LighthouseJob.get_json(unit, host, start, end, token,
     function(jobs) {
+      console.log(jobs)
       var facts = crossfilter(jobs.Results);
       var all = facts.groupAll();
 
@@ -313,7 +314,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
           progressBar.setValue(val/total)
         }
       }
-    }
+    }, "1" //send an override for view mode, this will reduce server load a tiny bit
     );
 
 }
