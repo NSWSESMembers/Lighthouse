@@ -1,24 +1,29 @@
 var LighthouseJson = require('./shared_json_code.js');
 
 //make the call to beacon
-function GetJSONfromBeacon(unit, host, StartDate, EndDate, token, callback, progressCallBack) {
+function GetJSONfromBeacon(unit, host, StartDate, EndDate, token, callback, progressCallBack, viewmodel) {
+
+  if (typeof viewmodel === 'undefined') //if they dont specify a viewmodel to load, pull the big one down.
+   {
+    viewmodel = "6";
+  }
 
   var url = "";
   console.log("GetJSONfromBeacon called with:" + StartDate + "," + EndDate + ", " + host);
 
   if (unit !== null || typeof unit == undefined) {
     if (Array.isArray(unit) == false) {
-      url = host + "/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType=6&SortField=Id&SortOrder=desc";
+      url = host + "/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
     } else {
       var hqString = "";
       unit.forEach(function(d) {
         hqString = hqString + "&Hq=" + d.Id
       });
       console.log(hqString)
-      url = host + "/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType=6&SortField=Id&SortOrder=desc";
+      url = host + "/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
     }
   } else {
-      url = host + "/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType=6&SortField=Id&SortOrder=desc";
+    url = host + "/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
 
   }
 
@@ -42,7 +47,7 @@ function GetJSONfromBeacon(unit, host, StartDate, EndDate, token, callback, prog
       }
       callback(obj);
     }
-  );
+    );
 
 }
 
