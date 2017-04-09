@@ -2,6 +2,7 @@ var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
 var $ = require('jquery');
 var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
+var postCodeLib = require('../../../lib/postcodes.js');
 
 
 console.log("Running content script");
@@ -67,6 +68,23 @@ lighthouseKeeper();
 //call when the address exists
 whenAddressIsReady(function() {
   window.postMessage({ type: "FROM_PAGE", address: masterViewModel.geocodedAddress.peek() }, "*");
+
+  //postcode checking code
+  var lastChar = masterViewModel.geocodedAddress.peek().PrettyAddress.substr(masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4)
+
+  if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true))
+  {
+    postcode = postCodeLib.returnPostCode(masterViewModel.geocodedAddress.peek().Locality)
+    if (typeof postcode !== 'undefined')
+    {
+      $('p[data-bind="text: enteredAddress"]').text($('p[data-bind="text: enteredAddress"]').text()+" "+postcode)
+    } else {
+      console.log("Postcode not found")
+    }
+  }
+
+  //end postcode
+
 })
 
 whenTeamsAreReady(function(){
@@ -174,7 +192,6 @@ function lighthouseKeeper(){
 
   var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: $data"]');
 
-  console.log($targetElements)
 
   var ICEMS_Dictionary = {
     'ASNSW'   : 'NSW Ambulance' ,
