@@ -692,7 +692,7 @@ function makePie(elem, w, h, dimension, group) {
   var chart = dc.pieChart(elem);
   chart.width(w)
   .height(h)
-  .radius(100)
+  .radius(110)
   .innerRadius(0)
   .dimension(dimension)
   .group(group);
@@ -755,7 +755,7 @@ function makePie(elem, w, h, dimension, group) {
       var acronym = matches.join(''); 
       return acronym;
     })
-    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')'; }).x(0).y(20))
+    chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')';}).x(0).y(20))
     return chart
   }
 
