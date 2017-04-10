@@ -2,7 +2,8 @@ var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
 var $ = require('jquery');
 var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
-var postCodeLib = require('../../../lib/postcodes.js');
+var postCodeLib1 = require('../../../lib/postcodepart1.js');
+var postCodeLib2 = require('../../../lib/postcodepart2.js');
 
 
 console.log("Running content script");
@@ -74,7 +75,12 @@ whenAddressIsReady(function() {
 
   if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true))
   {
-    postcode = postCodeLib.returnPostCode(masterViewModel.geocodedAddress.peek().Locality)
+    postcode = postCodeLib1.returnPostCode1(masterViewModel.geocodedAddress.peek().Locality)
+    if (typeof postcode === 'undefined')
+    {
+      postcode = postCodeLib2.returnPostCode2(masterViewModel.geocodedAddress.peek().Locality)
+    }
+
     if (typeof postcode !== 'undefined')
     {
       $('p[data-bind="text: enteredAddress"]').text($('p[data-bind="text: enteredAddress"]').text()+" "+postcode)
