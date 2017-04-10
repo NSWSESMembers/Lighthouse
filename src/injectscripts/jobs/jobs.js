@@ -65,20 +65,20 @@ function advexport() {
 }
 
 
-//More pageination choices!
-contentViewModel.pageSizeChoices.push(200);
-contentViewModel.pageSizeChoices.push(500);
-contentViewModel.pageSizeChoices.push(1000);
+//More pageination choices! --currently broken due to beacon not returning more than 250 per page--
+// contentViewModel.pageSizeChoices.push(200);
+// contentViewModel.pageSizeChoices.push(500);
+// contentViewModel.pageSizeChoices.push(1000);
 
-var saved = utility.getPrimitiveFromLocalStorage(contentViewModel.localStorageKeys.PageSize);
-var selected = contentViewModel.selectedPageSizeChoice.peek();
+// var saved = utility.getPrimitiveFromLocalStorage(contentViewModel.localStorageKeys.PageSize);
+// var selected = contentViewModel.selectedPageSizeChoice.peek();
 
-console.log("saved:"+saved);
-console.log("selected:"+selected);
-if( saved != selected ){
-  console.log("Fixing page size difference");
-  contentViewModel.selectedPageSizeChoice(saved);
-}
+// console.log("saved:"+saved);
+// console.log("selected:"+selected);
+// if( saved != selected ){
+//   console.log("Fixing page size difference");
+//   contentViewModel.selectedPageSizeChoice(saved);
+// }
 
 initializeDateTimePicker(filterViewModel.startDate.peek(),filterViewModel.endDate.peek());
 
