@@ -93,6 +93,7 @@ function initializeDateTimePicker(n, t) {
     timePicker: !0,
     timePickerIncrement: 1,
     timePicker12Hour: !1,
+    linkedCalendars: !1,
     ranges: {
       Today: [utility.dateRanges.Today.StartDate(), utility.dateRanges.Today.EndDate()],
       Yesterday: [utility.dateRanges.Yesterday.StartDate(), utility.dateRanges.Yesterday.EndDate()],
