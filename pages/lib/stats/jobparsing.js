@@ -117,7 +117,7 @@ function prepareData(jobs, unit, start, end) {
     }
 
     d.JobOpenFor=0;
-    d.JobCompleted = new Date(0);
+    d.JobCompleted = new Date(0); //do it with a 1970 so that its a valid date. will filter out later
     for(var counter=0 ; counter < (d.JobStatusTypeHistory.length);counter++){
       switch (d.JobStatusTypeHistory[counter].Type) {
         case 1: // New

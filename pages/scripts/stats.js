@@ -315,9 +315,9 @@ function prepareCharts(jobs, start, end, firstRun) {
   var timePeriodWord;
   var timePeriodUnits;
 
-  if (timeDifference <= 7) {
-    timePeriodWord = "hour";
-    timePeriodUnits = d3.time.hours;
+  if (timeDifference <= 14) {
+    var timePeriodWord = "Hour";
+    var timePeriodUnits = d3.time.hours;
     var volumeClosedByPeriod = facts.dimension(function(d) {
       return d3.time.hour(d.JobCompleted);
     });
@@ -325,8 +325,8 @@ function prepareCharts(jobs, start, end, firstRun) {
       return d3.time.hour(d.JobReceivedFixed);
     });
   } else {
-    timePeriodWord = "day";
-    timePeriodUnits = d3.time.days;
+    var timePeriodWord = "Day";
+    var timePeriodUnits = d3.time.days;
     var volumeClosedByPeriod = facts.dimension(function(d) {
       return d3.time.day(d.JobCompleted);
     });
@@ -341,7 +341,10 @@ function prepareCharts(jobs, start, end, firstRun) {
 
 
 
+console.log("closed")
   var volumeClosedByPeriodGroup = volumeClosedByPeriod.group().reduceCount(function(d) { return d.JobCompleted; });
+
+console.log("open")
 
   var volumeOpenByPeriodGroup = volumeOpenByPeriod.group().reduceCount(function(d) { return d.JobReceivedFixed; });
 
@@ -356,7 +359,7 @@ function prepareCharts(jobs, start, end, firstRun) {
       all:function () {
         var cumulate = 0;
         return source_group.all().map(function(d) {
-          if (new Date(d.key).getTime() != new Date(0).getTime()) //ignore jobs not completed
+          if (new Date(d.key).getFullYear() != new Date(0).getFullYear()) //ignore jobs not completed by seeing if they are in the year 1970
           {
             cumulate += d.value;
           }
@@ -534,6 +537,12 @@ function prepareCharts(jobs, start, end, firstRun) {
     propertyChart.filter(null)
     jobtypeChart.filter(null)
     localChart.filter(null)
+
+    //temporary until I can get filter sets working on bar charts
+    //remove the filters
+    timeOpenChart.filter(null)
+    timeClosedChart.filter(null)
+
 
     //flush all the jobs stored in the facts
     facts.remove();
