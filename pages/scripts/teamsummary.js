@@ -234,7 +234,7 @@ function HackTheMatrix(unit, host, token) {
         members.className = "members";
 
         var rawteamdate = new Date(d.TeamStatusStartDate);
-        var teamdate = new Date(rawteamdate.getTime() + (rawteamdate.getTimezoneOffset() * 60000));
+        var teamdate = new Date(rawteamdate.getTime());
         status.innerHTML = d.TeamStatusType.Name +"<br>"+teamdate.toLocaleTimeString("en-au", options);
         status.className = "status";
 
@@ -246,7 +246,7 @@ function HackTheMatrix(unit, host, token) {
           e.Results.forEach(function(f) {
             f.CurrentStatus == "Complete" && completed++;
             var rawdate = new Date(f.CurrentStatusTime);
-            var thistime = new Date(rawdate.getTime() + (rawdate.getTimezoneOffset() * 60000));
+            var thistime = new Date(rawdate.getTime());
 
 
             if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") { //it wasnt an untask or a tasking (so its a action the team made like on route or onsite)

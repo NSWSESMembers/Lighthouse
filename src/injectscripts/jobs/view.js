@@ -707,10 +707,7 @@ function checkAddressHistory(){
               // Job URL
               v.url = '/Jobs/'+v.Id;
               // Adjust the Job Recieved Time
-              v.JobReceived = new Date(
-                new Date(v.JobReceived).getTime() +
-                (new Date(v.JobReceived).getTimezoneOffset() * 60000)
-                );
+              v.JobReceived = new Date(v.JobReceived);
               // Generate the Relative Time
               v.relativeTime = moment(v.JobReceived).fromNow();
               // Is the Job Older than 14 Days
