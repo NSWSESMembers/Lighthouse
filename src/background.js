@@ -13,6 +13,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 	{ urls: ["https://*.ses.nsw.gov.au/js/messages/create?v=*"] },
 	["blocking"]
 	);
+
 //block job create js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
 chrome.webRequest.onBeforeRequest.addListener(
 	function (details) {
@@ -22,6 +23,19 @@ chrome.webRequest.onBeforeRequest.addListener(
 		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
 	},
 	{ urls: ["https://*.ses.nsw.gov.au/js/jobs/create?v=*"] },
+	["blocking"]
+	);
+
+//block job register js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
+// Reaplce the date picker with more options
+chrome.webRequest.onBeforeRequest.addListener(
+	function (details) {
+		console.log("blocking jobs register js request")
+		var javascriptCode = loadSynchronously(details.url);
+		var replaced = javascriptCode.replace('"Last Month":[utility.dateRanges.LastMonth.StartDate(),utility.dateRanges.LastMonth.EndDate()]','"Last Month":[utility.dateRanges.LastMonth.StartDate(), utility.dateRanges.LastMonth.EndDate()],"This Calendar Year":[moment().startOf(\'year\'), moment().endOf(\'year\')],"All":\n [utility.minDate, moment().endOf(\'year\')]');
+		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+	},
+	{ urls: ["https://*.ses.nsw.gov.au/js/jobs/register?v=*"] },
 	["blocking"]
 	);
 
