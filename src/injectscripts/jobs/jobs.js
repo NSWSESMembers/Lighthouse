@@ -91,7 +91,6 @@ function DoTour() {
       name: "LHTourJobs",
       smartPlacement: true,
       placement: "right",
-      debug: true,
       steps: [
       {
         element: "",
