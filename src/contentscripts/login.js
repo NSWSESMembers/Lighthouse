@@ -16,7 +16,7 @@ $('body')
 
 
 
-  $('body').css({ 'background-image': 'url('+chrome.extension.getURL("icons/lhbackdrop.png")+')','background-repeat': 'no-repeat', 'background-size': '80% 80%','background-position': 'bottom right'})
+  $('body').css({ 'background-image': 'url('+chrome.extension.getURL("icons/lhbackdrop.png")+')','background-repeat': 'no-repeat', 'background-size': 'contain','background-position': 'bottom right'})
 
 
 // Team summary button
