@@ -940,7 +940,6 @@ function DoTour() {
       name: "LHTourJobView",
       smartPlacement: true,
       placement: "right",
-      debug: true,
       steps: [
       {
         element: "",
