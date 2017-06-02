@@ -35,7 +35,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 		var replaced = javascriptCode.replace('"Last Month":[utility.dateRanges.LastMonth.StartDate(),utility.dateRanges.LastMonth.EndDate()]','"Last Month":[utility.dateRanges.LastMonth.StartDate(), utility.dateRanges.LastMonth.EndDate()],"This Calendar Year":[moment().startOf(\'year\'), moment().endOf(\'year\')],"All":\n [utility.minDate, moment().endOf(\'year\')]');
 		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
 	},
-	{ urls: ["https://*.ses.nsw.gov.au/js/jobs/register?v=*"] },
+	{ urls: ["https://*.ses.nsw.gov.au/js/jobs/register?v=*","https://*.ses.nsw.gov.au/js/jobs/tasking?v=*"] },
 	["blocking"]
 	);
 
