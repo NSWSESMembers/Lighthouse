@@ -3,6 +3,9 @@ vm.pagedList.subscribe(lighthouseKeeper)
 
 function lighthouseKeeper(){
 
+
+  $('div.admin-page.ops-log-page.full-height > div.col-lg-10.col-md-9 > div.widget > div.widget-content.clearfix > table > tbody > tr:nth-child(4) > td > div:nth-child(1) > div:nth-child(1)').append('<small>Test</small>')
+
   //Mouseover for permission spans to give a basic descrition.
 
   var $targetElementsSelected = $('div[data-bind="foreach: RolesForAuthorizationZone"] span');
