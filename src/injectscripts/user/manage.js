@@ -43,7 +43,6 @@ function lighthouseKeeper(){
   $targetElements.each(function(v){
 
     var $t = $(this);
-    var contentOrig = $t.html();
 
     // ICEMS Dictionary
     _.each(role_Dictionary, function(clearText, abbrText){

@@ -1,12 +1,17 @@
 
+
 lighthouseKeeper()
 
+
+
 function lighthouseKeeper(){
+
   console.log('Adding tool text')
 
   //Mouseover for permission spans to give a basic descrition.
 
-  var $targetElements = $('#roleEntity_12 span');
+  //hacky fix for windows.
+  var $targetElements = $('[id^=roleEntity_] span');
 
   var role_Dictionary = {
     'Accreditation Management' : 'Vertical Rescue, Community First Responder, General Land Rescue and Flood Rescue Level 3 accreditation management. Refer to SOP beacon HQ Availability and Accreditation.',
@@ -37,8 +42,8 @@ function lighthouseKeeper(){
   };
 
   $targetElements.each(function(v){
+
     var $t = $(this);
-    var contentOrig = $t.html();
 
     // ICEMS Dictionary
     _.each(role_Dictionary, function(clearText, abbrText){
@@ -50,17 +55,4 @@ function lighthouseKeeper(){
 
 
   });
-
-
-}
-
-
-function whenPageIsReady(cb) { //when external vars have loaded
-var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-  if (typeof vm != "undefined" & vm.pagedList.peek().length > 0) {
-    console.log("vm is ready");
-      clearInterval(waiting); //stop timer
-      cb(); //call back
-    }
-  }, 200);
 }
