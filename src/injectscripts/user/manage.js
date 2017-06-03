@@ -3,8 +3,8 @@ vm.pagedList.subscribe(lighthouseKeeper)
 
 function lighthouseKeeper(){
 
-
-  $('div.admin-page.ops-log-page.full-height > div.col-lg-10.col-md-9 > div.widget > div.widget-content.clearfix > table > tbody > tr:nth-child(4) > td > div:nth-child(1) > div:nth-child(1)').append('<small>Test</small>')
+  whenPageIsReady(function() { //check theres stuff in it because windows is weird
+    console.log('Adding tool text')
 
   //Mouseover for permission spans to give a basic descrition.
 
@@ -42,7 +42,6 @@ function lighthouseKeeper(){
 
   $targetElements.each(function(v){
 
-
     var $t = $(this);
     var contentOrig = $t.html();
 
@@ -73,13 +72,13 @@ function lighthouseKeeper(){
 
 
   });
-
+})
 }
 
 
 function whenPageIsReady(cb) { //when external vars have loaded
 var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-  if (typeof vm != "undefined" & vm.availableRoleGroups != "undefined") {
+  if (typeof vm != "undefined" & vm.pagedList.peek().length > 0) {
     console.log("vm is ready");
       clearInterval(waiting); //stop timer
       cb(); //call back
