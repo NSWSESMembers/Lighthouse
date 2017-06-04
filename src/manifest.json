@@ -104,7 +104,7 @@
         "https://*.ses.nsw.gov.au/nitc",
         "https://*.ses.nsw.gov.au/nitc/"
       ],
-      "js": ["contentscripts/nitc.js"]
+      "js": ["contentscripts/nitc/nitc.js"]
     },
     {
       "matches": [

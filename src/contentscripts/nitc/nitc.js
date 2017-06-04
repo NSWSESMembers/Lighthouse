@@ -1,5 +1,5 @@
 var $ = require('jquery');
-var inject = require('../../lib/inject.js');
+var inject = require('../../../lib/inject.js');
 var DOM = require('jsx-dom-factory');
 
 //NITC Screen specific Code
@@ -19,4 +19,4 @@ $(
 )
 .appendTo(bar);
 
-inject('nitc.js');
+inject('nitc/nitc.js');
