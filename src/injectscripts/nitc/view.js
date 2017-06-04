@@ -17,7 +17,6 @@ var hrDisplay = $('#content > div:nth-child(2) > div.col-xs-7 > div > div.widget
 var current = hrDisplay.text()
 totalhrs = totalhrs.toFixed(2)+""
 hrDisplay.text(current+" ("+totalhrs+" summed hrs)")
-console.log(hrDisplay.text())
 
 // Instance the tour
 require('bootstrap-tour')
