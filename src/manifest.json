@@ -108,6 +108,12 @@
     },
     {
       "matches": [
+        "https://*.ses.nsw.gov.au/nitc/*"
+      ],
+      "js": ["contentscripts/nitc/view.js"]
+    },
+    {
+      "matches": [
         "https://*.ses.nsw.gov.au/User/Manage",
         "https://*.ses.nsw.gov.au/User/Manage/"
       ],
