@@ -2,14 +2,12 @@
 
 whenVmIsReady(function() {
 
-  console.log(vm.participants.peek())
   var totalhrs = 0;
   vm.participants.peek().forEach(function(v){
    // console.log(v);
     var start = new Date(v.StartDate)
     var end = new Date(v.EndDate)
     var diff = Math.abs(end - start) / 36e5;
-    console.log(diff)
     totalhrs=totalhrs+diff
   })
 console.log("Total Hrs:"+totalhrs)
