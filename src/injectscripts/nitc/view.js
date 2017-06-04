@@ -16,7 +16,7 @@ var hrDisplay = $('#content > div:nth-child(2) > div.col-xs-7 > div > div.widget
 
 var current = hrDisplay.text()
 totalhrs = totalhrs.toFixed(2)+""
-hrDisplay.text(current+" ("+totalhrs+" summed hrs)")
+hrDisplay.append(" ("+totalhrs+" summed hrs)")
 
 // Instance the tour
 require('bootstrap-tour')
@@ -65,7 +65,7 @@ function whenVmIsReady(cb) { //when external vars have loaded
       clearInterval(waiting); //stop timer
       cb(); //call back
     }
-  }, 200);
+  }, 400);
 }
 
 
