@@ -191,7 +191,7 @@ function HackTheMatrix(unit, host, token) {
         var latestupdate = row.insertCell(4);
         latestupdate.className = "update";
 
-        callsign.innerHTML = "<a href=\"https://"+host+"/Teams/"+d.Id+"/Edit\" target=\"_blank\">"+d.Callsign+"</a>";
+        callsign.innerHTML = "<a href=\""+host+"/Teams/"+d.Id+"/Edit\" target=\"_blank\">"+d.Callsign+"</a>";
 
         switch (d.TeamStatusType.Id) { //color the callsign by team status
           case 3: //active
@@ -251,7 +251,7 @@ function HackTheMatrix(unit, host, token) {
 
             if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") { //it wasnt an untask or a tasking (so its a action the team made like on route or onsite)
              var diff = moment(thistime).fromNow();
-             latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff;
+             latest = f.CurrentStatus + " #" + "<a style=\"color: inherit;\" href=\""+host+"/Jobs/"+f.Job.Id+"\" target=\"_blank\">"+f.Job.Identifier+"</a>" + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff;
              oldesttime = thistime;
            }
          });
