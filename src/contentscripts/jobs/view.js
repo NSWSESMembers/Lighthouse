@@ -8,30 +8,36 @@ window.addEventListener("message", function(event) {
   // We only accept messages from ourselves or the extension
   if (event.source != window)
     return;
-  if (event.data.type && (event.data.type == "FROM_PAGE")) {
-        if(typeof event.data == 'undefined' || typeof event.data.address == 'undefined') { //passed data is defined
-          $('#asbestos-register-text').html("Not A Searchable Address");
-        } else {
-          if (event.data.address.Street == null || event.data.address.StreetNumber == null)
-          {
-      //we need at least an street name to search
-      $('#asbestos-register-text').html("Not A Searchable Address");
-    } else {
-      chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
-        $('#asbestos-register-text').html(response.result);
-        $('#asbestos-register-box').click(function(){
-          window.open(response.requrl)
-        })
-        $('#asbestos-register-box').css('cursor','pointer');
-        if (response.colour != "") {
-          $('#asbestos-register-box')[0].style.color = "white"
-          $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+response.colour+' -10px','margin-left':'17px'});
-        }
-      });
-    }
+  if (event.data.type && (event.data.type == "FROM_PAGE_FTASBESTOS_SEARCH")) {
+    chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
+      if (response.resultbool == false)
+      {
+        response.requrl = ''
+      }
+      asbestosBoxColor(response.result,response.colour,response.requrl)
+    });
+  } else if (event.data.type && (event.data.type == "FROM_PAGE_SESASBESTOS_RESULT")) {
+    asbestosBoxColor(event.data.address.PrettyAddress+" was FOUND on the SES asbestos register.",'red','')
+
+
+  }
+}, false);
+
+function asbestosBoxColor(text, color, url) {
+  $('#asbestos-register-text').html(text);
+  if (url != '')
+  {
+    console.log("got url")
+    $('#asbestos-register-box').css('cursor','pointer');
+    $('#asbestos-register-box').click(function(){
+      window.open(url)
+    })
+  }
+  if (color != "") {
+    $('#asbestos-register-box')[0].style.color = "white"
+    $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+color+' -10px'});
   }
 }
-}, false);
 
 
 function renderQuickText(id, selections) {
@@ -146,7 +152,7 @@ job_view_history = (
 job_asbestos_history = (
   <div class="form-group">
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.extension.getURL("icons/lh-black.png")} />Fairtrade Register</label>
+  src={chrome.extension.getURL("icons/lh-black.png")} />Asbestos Register</label>
   <div id="asbestos-register-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
   <p id="asbestos-register-text" class="form-control-static">Searching...</p>
   </div>

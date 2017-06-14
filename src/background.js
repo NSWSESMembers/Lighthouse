@@ -183,11 +183,11 @@ function processResult(result){
 		break
 		case 1: //positive/found
 		console.log( 'On the Register' );
-		cb(inAddressObject.PrettyAddress+" Is On The Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
+		cb(inAddressObject.PrettyAddress+" was FOUND on the loose fill insulation asbestos register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
 		break
 		case 2: //negative/not found
 		console.log( 'Not the Register' );
-		cb(inAddressObject.PrettyAddress+" Was Not Found On The Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+		cb(inAddressObject.PrettyAddress+" was not found on any register.","",false,formAddress)
 		break
 	}
 	if (needToWriteChange)

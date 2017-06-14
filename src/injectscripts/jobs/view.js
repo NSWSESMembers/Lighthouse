@@ -4,6 +4,8 @@ var $ = require('jquery');
 var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
 var postCodeLib1 = require('../../../lib/postcodepart1.js');
 var postCodeLib2 = require('../../../lib/postcodepart2.js');
+var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
+
 
 
 console.log("Running content script");
@@ -68,9 +70,33 @@ lighthouseKeeper();
 
 //call when the address exists
 whenAddressIsReady(function() {
-  window.postMessage({ type: "FROM_PAGE", address: masterViewModel.geocodedAddress.peek() }, "*");
+  whenUrlIsReady(function() {
+   if(typeof masterViewModel.geocodedAddress.peek() == 'undefined')
+   {
+    $('#asbestos-register-text').html("Not A Searchable Address");
 
+  } else {
+    if (masterViewModel.geocodedAddress.peek().Street == null || masterViewModel.geocodedAddress.peek().StreetNumber == null)
+    {
+      $('#asbestos-register-text').html("Not A Searchable Address");
+    } else {
+      sesAsbestosSearch(masterViewModel.geocodedAddress.peek(), function(res) {
+        if (res == true)
+        {
+          window.postMessage({ type: "FROM_PAGE_SESASBESTOS_RESULT", address: masterViewModel.geocodedAddress.peek(), result: true, color: 'red' }, "*");
+
+        } else {
+          window.postMessage({ type: "FROM_PAGE_FTASBESTOS_SEARCH", address: masterViewModel.geocodedAddress.peek() }, "*");
+        }
+      })
+
+    }
+  }
+})
+
+  //
   //postcode checking code
+  //
   var lastChar = masterViewModel.geocodedAddress.peek().PrettyAddress.substr(masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4)
 
   if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true))
@@ -870,6 +896,20 @@ function whenAddressIsReady(cb) { //when external vars have loaded
       if (masterViewModel.geocodedAddress.peek() !== null)
       {
         console.log("address is ready");
+      clearInterval(waiting); //stop timer
+      cb(); //call back
+    }
+  }
+}, 200);
+}
+
+// wait for urls to have loaded
+function whenUrlIsReady(cb) { //when external vars have loaded
+  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
+    if (typeof urls != "undefined" & urls.Base != "undefined") {
+      if (urls.Base !== null)
+      {
+        console.log("urls is ready");
       clearInterval(waiting); //stop timer
       cb(); //call back
     }
