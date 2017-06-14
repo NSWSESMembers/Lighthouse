@@ -4,6 +4,7 @@ var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseChrome = require('../lib/shared_chrome_code.js');
 
 var $ = require('jquery');
+var _ = require('underscore');
 global.jQuery = $;
 var ElasticProgress = require('elastic-progress');
 var crossfilter = require('crossfilter');
@@ -46,6 +47,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 $(document).on('change', 'input[name=slide]:radio', function() {
+  console.log(this.value);
   timeoverride = (this.value == "reset" ? null : this.value);
   RunForestRun();
 });
@@ -171,7 +173,6 @@ function HackTheMatrix(unit, host, token, progressBar) {
 
   LighthouseJob.get_json(unit, host, start, end, token,
     function(jobs) {
-      console.log(jobs)
       var facts = crossfilter(jobs.Results);
       var all = facts.groupAll();
 
@@ -200,6 +201,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
       var tskJob = 0;
 
       JobStatusGroup.top(Infinity).forEach(function(d) {
+        console.log(d.key + " " + d.value);
         switch (d.key) {
           case "New":
           newJob = d.value;
@@ -250,30 +252,35 @@ function HackTheMatrix(unit, host, token, progressBar) {
           }
         });
 
-      var open = newJob + activeJob + tskJob + refJob;
-      var closed = canJob + completeJob + finJob + rejJob;
+      var outstanding = newJob + activeJob + tskJob + refJob;
+      var completed = canJob + completeJob + finJob + rejJob;
 
-      document.getElementById("open").innerHTML = (jobs.Results.length && open) ? (open + "<h6>" + Math.round(open / jobs.Results.length * 100) + "%</h6>"):(open+"<h6>&ndash; %</h6>");
-      document.getElementById("closed").innerHTML = (jobs.Results.length && closed) ? (closed + "<h6>" + Math.round(closed / jobs.Results.length * 100) + "%</h6>"):(closed+"<h6>&ndash; %</h6>");
-      document.getElementById("totalnumber").innerHTML = jobs.Results.length+ "<h6>&ndash; %</h6>";
-
-      document.getElementById("new").innerHTML = (jobs.Results.length && newJob) ? (newJob + "<h6>" + Math.round(newJob / jobs.Results.length * 100) + "%</h6>"):(newJob+"<h6>&ndash; %</h6>");
-      document.getElementById("active").innerHTML = (jobs.Results.length && activeJob) ? (activeJob + "<h6>" + Math.round(activeJob / jobs.Results.length * 100) + "%</h6>"):(activeJob+"<h6>&ndash; %</h6>");
-      document.getElementById("tsk").innerHTML = (jobs.Results.length && tskJob) ? (tskJob + "<h6>" + Math.round(tskJob / jobs.Results.length * 100) + "%</h6>"):(tskJob+"<h6>&ndash; %</h6>");
-      document.getElementById("comp").innerHTML = (jobs.Results.length && completeJob) ? (completeJob + "<h6>" + Math.round(completeJob / jobs.Results.length * 100) + "%</h6>"):(completeJob+"<h6>&ndash; %</h6>");
-      
-      document.getElementById("ref").innerHTML = (jobs.Results.length && refJob) ? (refJob + "<h6>" + Math.round(refJob / jobs.Results.length * 100) + "%</h6>"):(refJob+"<h6>&ndash; %</h6>");
-      document.getElementById("can").innerHTML = (jobs.Results.length && canJob) ? (canJob + "<h6>" + Math.round(canJob / jobs.Results.length * 100) + "%</h6>"):(canJob+"<h6>&ndash; %</h6>");
-      document.getElementById("rej").innerHTML = (jobs.Results.length && rejJob) ? (rejJob + "<h6>" + Math.round(rejJob / jobs.Results.length * 100) + "%</h6>"):(rejJob+"<h6>&ndash; %</h6>");
-      document.getElementById("fin").innerHTML = (jobs.Results.length && finJob) ? (finJob + "<h6>" + Math.round(finJob / jobs.Results.length * 100) + "%</h6>"):(finJob+"<h6>&ndash; %</h6>");
-
-      document.getElementById("support").innerHTML = (jobs.Results.length && support) ? (support + "<h6>" + Math.round(finJob / jobs.Results.length * 100) + "%</h6>"):(support+"<h6>&ndash; %</h6>");
-      document.getElementById("flood").innerHTML = (jobs.Results.length && flood) ? (flood + "<h6>" + Math.round(flood / jobs.Results.length * 100) + "%</h6>"):(flood+"<h6>&ndash; %</h6>");
-      document.getElementById("rescue").innerHTML = (jobs.Results.length && rescue) ? (rescue + "<h6>" + Math.round(rescue / jobs.Results.length * 100) + "%</h6>"):(rescue+"<h6>&ndash; %</h6>");
-      document.getElementById("storm").innerHTML = (jobs.Results.length && storm) ? (storm + "<h6>" + Math.round(storm / jobs.Results.length * 100) + "%</h6>"):(storm+"<h6>&ndash; %</h6>");
-
-
-
+      _.each([
+        ['#outstanding', outstanding],
+        ['#completed', completed],
+        ['#totalnumber', jobs.Results.length],
+        ['#new', newJob],
+        ['#active', activeJob],
+        ['#tasked', tskJob],
+        ['#completed', completeJob],
+        ['#referred', refJob],
+        ['#cancelled', canJob],
+        ['#rejected', rejJob],
+        ['#finalised', finJob],
+        ['#support', support],
+        ['#flood', flood],
+        ['#rescue', rescue],
+        ['#storm', storm],
+      ], function(params) {
+        var [elem, jobCount] = params;
+        $(elem + ' .lh-value').text('' + jobCount)
+        if(jobCount > 0) {
+          $(elem + ' .lh-subscript').text(Math.round(jobCount / jobs.Results.length * 100) + '%')
+        }
+        else {
+          $(elem + ' .lh-subscript').html('&mdash;%')
+        }
+      });
       
       var options = {
         weekday: "short",
@@ -283,28 +290,29 @@ function HackTheMatrix(unit, host, token, progressBar) {
         hour12: false
       };
 
-      var banner;
+      var title;
       
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
-        banner = "<h3>Job summary for NSW</h3>";
+        title = "State: Jobs";
       } else {
         if (Array.isArray(unit) == false) { //1 lga
           document.title = unit.Name + " Job Summary";
-          banner = '<h3>Job summary for ' + unit.Name + "</h3>";
+          title = unit.Name + ": Jobs";
         }
         if (unit.length > 1) { //more than one
           document.title = "Group Job Summary";
-          banner = "<h3>Job summary for Group</h3>";
+          title = "Group: Jobs";
         };
       }
 
-      document.getElementById("banner").innerHTML = banner + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
+      var titleDetail = start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options);
+
+      $('#title').text(title)
+      $('#title-details').text(titleDetail);
 
       progressBar && progressBar.setValue(1);
       progressBar && progressBar.close();
-
-
     },
     function(val,total){
       if (progressBar) { //if its a first load
@@ -314,7 +322,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
           progressBar.setValue(val/total)
         }
       }
-    }, "1" //send an override for view mode, this will reduce server load a tiny bit
+    }
     );
 
 }
