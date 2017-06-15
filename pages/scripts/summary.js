@@ -375,21 +375,21 @@ function HackTheMatrix(unit, host, token, progressBar) {
       
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
-        title = "State: Jobs";
+          title = "Job Summary<br>NSW";
       } else {
         if (Array.isArray(unit) == false) { //1 lga
           document.title = unit.Name + " Job Summary";
-          title = unit.Name + ": Jobs";
+          title = "Job Summary<br>"+unit.Name;
         }
         if (unit.length > 1) { //more than one
           document.title = "Group Job Summary";
-          title = "Group: Jobs";
+          title = "Job Summary<br>"+unit.length+" Units";
         };
       }
 
       var titleDetail = start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options);
 
-      $('#title').text(title)
+      $('#title').html(title)
       $('#title-details').text(titleDetail);
 
       progressBar && progressBar.setValue(1);
