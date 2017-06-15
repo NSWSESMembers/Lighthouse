@@ -5,9 +5,13 @@ var LighthouseChrome = require('../lib/shared_chrome_code.js');
 
 var $ = require('jquery');
 var _ = require('underscore');
+
 global.jQuery = $;
 var ElasticProgress = require('elastic-progress');
 var crossfilter = require('crossfilter');
+
+require('bootstrap');
+
 
 // inject css c/o browserify-css
 require('../styles/summary.css');
@@ -32,8 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
     colorBg: "#7dbde8",
     colorFg: "#0f3a57",
     onClose:function(){
+
       document.getElementById("loading").style.visibility = 'hidden';
       document.getElementById("results").style.visibility = 'visible';
+      applyTheme([localStorage.getItem("LighthouseSummaryTheme")]);
+
     }
   });
 
@@ -51,6 +58,77 @@ $(document).on('change', 'input[name=slide]:radio', function() {
   timeoverride = (this.value == "reset" ? null : this.value);
   RunForestRun();
 });
+
+$(document).on('click',"#settings", function() {
+  $('input[name=themebox]').val([localStorage.getItem("LighthouseSummaryTheme")]);
+  $('#settingsmodal').modal('show');
+})
+
+$(document).on('click',"#submitButton",function() {
+  $('#settingsmodal').modal('hide');
+
+  localStorage.setItem("LighthouseSummaryTheme",$('input[name=themebox]:checked').val())
+  applyTheme($('input[name=themebox]:checked').val()) 
+
+
+
+})
+
+
+function applyTheme(themeName){
+  console.log('Apply theme:'+themeName)
+  switch (themeName+''){ //make it a string because storage objects is weird
+
+    case "wob":
+    $( "body" ).css( "background-color", "white" );
+    $( "footer" ).css( "background-color", "white" );
+
+    $( ".lh-box" ).css( "background-color", "black" );
+    $( ".lh-box .lh-title" ).css( "color", "white" );
+    $( ".lh-box .lh-details" ).css( "color", "white" );
+    $( "footer" ).css( "color", "black" );
+    $( ".lh-box .lh-heading" ).css( "color", "white" );
+    $( ".lh-box .lh-body" ).css( "background-color", "white" );
+
+    break;
+
+    case "boo":
+    $( "body" ).css( "background-color", "white" );
+    $( "footer" ).css( "background-color", "white" );
+    $( "footer" ).css( "color", "black" );
+    $( ".lh-box" ).css( "background-color", "#F7931D" );
+    $( ".lh-box .lh-title" ).css( "color", "black" );
+    $( ".lh-box .lh-details" ).css( "color", "black" );
+    $( ".lh-box .lh-heading" ).css( "color", "black" );
+    $( ".lh-box .lh-body" ).css( "background-color", "white" );
+
+    break;
+
+    case "night":
+    $( "body" ).css( "background-color", "black" );
+    $( "footer" ).css( "background-color", "black" );
+    $( ".lh-box" ).css( "background-color", "#2084ab" );
+    $( ".lh-box .lh-title" ).css( "color", "#2084ab" );
+    $( ".lh-box .lh-details" ).css( "color", "black" );
+    $( ".lh-box .lh-title" ).css( "color", "white" );
+    $( ".lh-box .lh-details" ).css( "color", "white" );
+    $( ".lh-box .lh-heading" ).css( "color", "white" );
+    $( "footer" ).css( "color", "white" );
+    s
+    $( ".lh-box .lh-body" ).css( "background-color", "grey" );
+
+    break;
+
+    default:
+    console.log("unknown theme. reseting")
+    localStorage.setItem("LighthouseSummaryTheme",'boo')
+
+    applyTheme("boo")
+
+
+    break;
+  }
+}
 
 //refresh button
 $(document).ready(function() {
@@ -200,7 +278,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
       var rejJob = 0;
       var tskJob = 0;
 
-      JobStatusGroup.top(Infinity).forEach(function(d) {
+      JobStatusGroup.all().forEach(function(d) {
         console.log(d.key + " " + d.value);
         switch (d.key) {
           case "New":
@@ -227,6 +305,9 @@ function HackTheMatrix(unit, host, token, progressBar) {
           case "Cancelled":
           canJob = d.value;
           break;
+          default:
+          console.log("unmatched status - "+d)
+          break;
         }
       });
 
@@ -235,7 +316,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
       var rescue = 0;
       var support = 0;
 
-      JobTypeGroup.top(Infinity).forEach(function(d) {
+      JobTypeGroup.all().forEach(function(d) {
         switch (d.key) {
             case 1: // Parent: Storm
             storm = d.value;
@@ -257,7 +338,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
 
       _.each([
         ['#outstanding', outstanding],
-        ['#completed', completed],
+        ['#completedsum', completed],
         ['#totalnumber', jobs.Results.length],
         ['#new', newJob],
         ['#active', activeJob],
@@ -271,16 +352,16 @@ function HackTheMatrix(unit, host, token, progressBar) {
         ['#flood', flood],
         ['#rescue', rescue],
         ['#storm', storm],
-      ], function(params) {
-        var [elem, jobCount] = params;
-        $(elem + ' .lh-value').text('' + jobCount)
-        if(jobCount > 0) {
-          $(elem + ' .lh-subscript').text(Math.round(jobCount / jobs.Results.length * 100) + '%')
-        }
-        else {
-          $(elem + ' .lh-subscript').html('&mdash;%')
-        }
-      });
+        ], function(params) {
+          var [elem, jobCount] = params;
+          $(elem + ' .lh-value').text('' + jobCount)
+          if(jobCount > 0) {
+            $(elem + ' .lh-subscript').text(Math.round(jobCount / jobs.Results.length * 100) + '%')
+          }
+          else {
+            $(elem + ' .lh-subscript').html('&mdash;%')
+          }
+        });
       
       var options = {
         weekday: "short",

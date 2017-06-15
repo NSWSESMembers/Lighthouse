@@ -1,10 +1,39 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>Beacon Stats</title>
+  <meta charset="utf-8">
+  <title>Beacon Job Stats</title>
 </head>
 <body>
+  <div class="modal fade"  id="settingsmodal" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">×</button>
+          <h4 class="modal-title">Settings</h4>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label id="themepicker">Visual Theme:</label>
+            <div class="radio">
+              <label><input type="radio" name="themebox" value="wob" >White on black</label>
+            </div>
+            <div class="radio">
+              <label><input type="radio" name="themebox" value="boo" >Black on orange</label>
+            </div>
+            <div class="radio">
+              <label><input type="radio" name="themebox" value="night" >Night mode (blue,grey,black)</label>
+            </div>
+          </div>
+          <br>          
+          <div class="modal-footer">
+            <button id="submitButton" type="button" class="btn btn-success">Save & Close</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Go Back</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div id="loading">
     <div id="loadmiddle">
       <div id="loadinner">
@@ -36,7 +65,7 @@
                 </div>
               </div>
               <div class="col-md-4">
-                <div class="lh-cell" id="completed">
+                <div class="lh-cell" id="completedsum">
                   <div class="lh-label">Completed</div>
                   <div class="lh-value"></div>
                   <div class="lh-subscript"></div>
@@ -54,7 +83,7 @@
         </div>
       </div>
     </div>
-  
+
     <div class="lh-box">
       <div class="lh-title">Job Status</div>
       <div class="lh-body">
@@ -164,33 +193,40 @@
     </div>
   </div>
   <footer>
-    <form>
-      Override time frame with<br>
-      <label>
-        <input id="radio1" name="slide" type="radio" value="24">
-        Last 24Hrs
-      </label>
-      <label>
-        <input id="radio2" name="slide" type="radio" value="48">
-        Last 48hrs
-      </label>
-      <label>
-        <input id="radio3" name="slide" type="radio" value="72">
-        Last 72 Hrs
-      </label>
-      <label>
-        <input id="radio3" name="slide" type="radio" value="reset">
-        Reset
-      </label>
-    </form>
-    Designed &amp; developed by volunteers of the NSW SES.
-    <a href="https://github.com/NSWSESMembers/Lighthouse" target="_blank">Lighthouse</a>
-    is distributed under an
-    <a href= "https://github.com/NSWSESMembers/Lighthouse/blob/master/LICENSE.txt" rel="license" target="_blank">MIT Licence</a>.
-    <div style="float:right;">
-      <a href="#" id="refresh">
-        <span class="glyphicon glyphicon-refresh"></span>
-        <span id="time">00:00</span>
+      <form>
+        Override time frame with<br>
+        <label>
+          <input id="radio1" name="slide" type="radio" value="24">
+          Last 24Hrs
+        </label>
+        <label>
+          <input id="radio2" name="slide" type="radio" value="48">
+          Last 48hrs
+        </label>
+        <label>
+          <input id="radio3" name="slide" type="radio" value="72">
+          Last 72 Hrs
+        </label>
+        <label>
+          <input id="radio3" name="slide" type="radio" value="reset">
+          Reset
+        </label>
+      </form>
+      Designed &amp; developed by volunteers of the NSW SES.
+      <a href="https://github.com/NSWSESMembers/Lighthouse" target="_blank">Lighthouse</a>
+      is distributed under an
+      <a href= "https://github.com/NSWSESMembers/Lighthouse/blob/master/LICENSE.txt" rel="license" target="_blank">MIT Licence</a>.
+    <div style="float:right;margin-right: 5px;margin-bottom:5px">
+      <div>
+        <a href="#" id="refresh">
+          <span class="glyphicon glyphicon-refresh"></span>
+          <span id="time">00:00</span>
+        </a>
+      </div>
+    </div>
+    <div style="float:left;margin-left: 5px;margin-bottom:5px">
+      <a href="#" id="settings">
+        <span style="vertical-align:middle;" class="glyphicon glyphicon-cog"></span>
       </a>
     </div>
   </footer>

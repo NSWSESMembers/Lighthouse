@@ -5,25 +5,28 @@ body {
 }
 
 .lh-box {
-  background-color: #F7931D;
+  background-color: black;
   border-radius: 5px;
   margin: 10px;
   padding-bottom: 10px;
 }
 
 .lh-box .lh-title {
+  color: white;
   text-align: center;
   font-weight: bold;
   font-size: 2.0em;
 }
 
 .lh-box .lh-heading {
+  color: white;
   font-size: 3.0em;
   font-weight: bold;
   text-align: center;
 }
 
 .lh-box .lh-details {
+  color: white;
   font-size: 1.0em;
   text-align: center;
   padding-top: 10px;
@@ -55,8 +58,12 @@ body {
   font-size: 1.5vmax;
 }
 
+.results {
+  margin-bottom: 20px
+}
+
 footer {
-	position: absolute;
+	position: relative;
 	bottom: 0px;
 	background-color: white;
 	width: 100%;

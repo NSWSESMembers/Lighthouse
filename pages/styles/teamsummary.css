@@ -1,7 +1,7 @@
 @import url("include/common.css");
 
 footer {
-	position: absolute;
+	position: relative;
 	bottom: 0px;
 	background-color: white;
 	width: 100%;
