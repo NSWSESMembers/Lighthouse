@@ -54,6 +54,7 @@ job_asbestos_history = (
   <div class="form-group">
   <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px" src={chrome.extension.getURL("icons/lh-black.png")} />Asbestos Register</label>
   <div id="asbestos-register-box" class="col-md-10 col-lg-8" style="width:inherit">
+  <a style="color:white;background-color:red" id="asbestos-register-error"></a>
   <p id="asbestos-register-text" class="form-control-static">Waiting For An Address</p>
   </div>
   </div>
