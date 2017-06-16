@@ -375,15 +375,15 @@ function HackTheMatrix(unit, host, token, progressBar) {
       
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
-          title = "Job Summary<br>NSW";
+          title = "<p>Job Summary</p>>NSW";
       } else {
         if (Array.isArray(unit) == false) { //1 lga
           document.title = unit.Name + " Job Summary";
-          title = "Job Summary<br>"+unit.Name;
+          title = "<p>Job Summary</p>"+unit.Code;
         }
         if (unit.length > 1) { //more than one
           document.title = "Group Job Summary";
-          title = "Job Summary<br>"+unit.length+" Units";
+          title = "<p>Job Summary</p>"+unit.length+" Units";
         };
       }
 
