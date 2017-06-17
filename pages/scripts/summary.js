@@ -79,43 +79,48 @@ function applyTheme(themeName){
   console.log('Apply theme:'+themeName)
   switch (themeName+''){ //make it a string because storage objects is weird
 
-    case "wob":
-    $( "body" ).css( "background-color", "white" );
-    $( "footer" ).css( "background-color", "white" );
+   case "wob":
+    // $( "body" ).css( "background-color", "white" );
+    // $( "footer" ).css( "background-color", "white" );
 
-    $( ".lh-box" ).css( "background-color", "black" );
-    $( ".lh-box .lh-title" ).css( "color", "white" );
-    $( ".lh-box .lh-details" ).css( "color", "white" );
-    $( ".footer" ).css( "color", "black" );
-    $( ".lh-box .lh-heading" ).css( "color", "white" );
-    $( ".lh-box .lh-body" ).css( "background-color", "white" );
+    // $( ".lh-box" ).css( "background-color", "black" );
+    // $( ".lh-box .lh-title" ).css( "color", "white" );
+    // $( ".lh-box .lh-details" ).css( "color", "white" );
+    // $( ".footer" ).css( "color", "black" );
+    // $( ".lh-box .lh-heading" ).css( "color", "white" );
+    // $( ".lh-box .lh-body" ).css( "background-color", "white" );
 
     break;
 
     case "boo":
-    $( "body" ).css( "background-color", "white" );
-    $( ".footer" ).css( "background-color", "white" );
-    $( ".footer" ).css( "color", "black" );
-    $( ".lh-box" ).css( "background-color", "#F7931D" );
-    $( ".lh-box .lh-title" ).css( "color", "black" );
-    $( ".lh-box .lh-details" ).css( "color", "black" );
-    $( ".lh-box .lh-heading" ).css( "color", "black" );
-    $( ".lh-box .lh-body" ).css( "background-color", "white" );
+    $( "body" ).removeClass('night');
+    $( "body" ).addClass('day');
+    // $( "body" ).css( "background-color", "white" );
+    // $( ".footer" ).css( "background-color", "white" );
+    // $( ".footer" ).css( "color", "black" );
+    // $( ".lh-box" ).css( "background-color", "#F7931D" );
+    // $( ".lh-box .lh-title" ).css( "color", "black" );
+    // $( ".lh-box .lh-details" ).css( "color", "black" );
+    // $( ".lh-box .lh-heading" ).css( "color", "black" );
+    // $( ".lh-box .lh-body" ).css( "background-color", "white" );
 
     break;
 
     case "night":
-    $( "body" ).css( "background-color", "black" );
-    $( ".footer" ).css( "background-color", "black" );
-    $( ".lh-box" ).css( "background-color", "#2084ab" );
-    $( ".lh-box .lh-title" ).css( "color", "#2084ab" );
-    $( ".lh-box .lh-details" ).css( "color", "black" );
-    $( ".lh-box .lh-title" ).css( "color", "white" );
-    $( ".lh-box .lh-details" ).css( "color", "white" );
-    $( ".lh-box .lh-heading" ).css( "color", "white" );
-    $( ".footer" ).css( "color", "white" );
-    s
-    $( ".lh-box .lh-body" ).css( "background-color", "grey" );
+    $( "body" ).removeClass('day');
+
+    $( "body" ).addClass('night');
+    // $( "body" ).css( "background-color", "black" );
+    // $( ".footer" ).css( "background-color", "black" );
+    // $( ".lh-box" ).css( "background-color", "#2084ab" );
+    // $( ".lh-box .lh-title" ).css( "color", "#2084ab" );
+    // $( ".lh-box .lh-details" ).css( "color", "black" );
+    // $( ".lh-box .lh-title" ).css( "color", "white" );
+    // $( ".lh-box .lh-details" ).css( "color", "white" );
+    // $( ".lh-box .lh-heading" ).css( "color", "white" );
+    // $( ".footer" ).css( "color", "white" );
+    // s
+    // $( ".lh-box .lh-body" ).css( "background-color", "grey" );
 
     break;
 
@@ -375,7 +380,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
       
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
-          title = "<p>Job Summary</p>NSW";
+        title = "<p>Job Summary</p>NSW";
       } else {
         if (Array.isArray(unit) == false) { //1 lga
           document.title = unit.Name + " Job Summary";
