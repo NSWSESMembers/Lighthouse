@@ -160,13 +160,13 @@ var options = {
 
       var unitParents = []
       unit.forEach(function(d2){
-            unitParents[d2.ParentEntity.Code] = (unitParents[d2.ParentEntity.Code] || 0) + 1;
+        unitParents[d2.ParentEntity.Code] = (unitParents[d2.ParentEntity.Code] || 0) + 1;
       })
       if (Object.keys(unitParents).length == 1) //if theres only 1 LHQ
       {
         $('.stats header h2').text('Job statistics for ('+unitParents[Object.keys(unitParents)[0]]+') '+Object.keys(unitParents)[0]+' units');
       } else {
-              $('.stats header h2').text('Job statistics for Group');
+        $('.stats header h2').text('Job statistics for Group');
 
       }
 
@@ -184,9 +184,19 @@ var options = {
   for (var i = 0; i < Object.keys(eventIdAndDescription).length; ++i) {
     banner = i == 0 ? banner + Object.keys(eventIdAndDescription)[i] : banner + " | " + Object.keys(eventIdAndDescription)[i] ;
   }
-
+  var speed = 15
+  if (banner.length > 1000)
+  {
+    speed = 70
+  } else if (banner.length > 500 && banner.length < 1000)
+  {
+    speed = 30
+  }
 
   $('#events').text(banner);
+
+  console.log(banner.length)
+ $('#events').css('animation', 'marquee '+speed+'s linear infinite')
 
   return jobs
 
