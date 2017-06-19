@@ -1,457 +1,466 @@
 @import url("node_modules/bootstrap/dist/css/bootstrap.css");
 
-
 body.watermark {
-	min-height: 100%;
-	background-image: url('/pages/images/dev_watermark.png');
+    min-height: 100%;
+    background-image: url('/pages/images/dev_watermark.png');
 
 }
 
-@keyframes dots { from { opacity: 0; } 50% { opacity: 1; } }
+@keyframes dots {
+    from {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+}
 
 #results {
-	margin-bottom: 0px;
+    margin-bottom: 0px;
 }
+
 #results .dc-chart {
-  float: inherit;
+    float: inherit;
 }
 
 .dots span {
-  animation: dots 1s infinite;
+    animation: dots 1s infinite;
 }
 
 .dots span:nth-of-type(1) {
-  animation-delay: 0s;
+    animation-delay: 0s;
 }
 
 .dots span:nth-of-type(2) {
-  animation-delay: 0.25s;
+    animation-delay: 0.25s;
 }
 
 .dots span:nth-of-type(3) {
-  animation-delay: 0.5s;
+    animation-delay: 0.5s;
 }
 
 .stats header {
-	text-align: center;
-	margin-bottom: 1.0em;
+    text-align: center;
+    margin-bottom: 1.0em;
 }
 
-.stats header div {}
-
-
+.stats header div {
+}
 
 .stats header .total {
-	font-size: 25px;
-	font-weight: bold;
-	margin-bottom: 2.0em;
+    font-size: 25px;
+    font-weight: bold;
+    margin-bottom: 2.0em;
 }
 
 .stats header .avg {
-	font-size: 15px;
-	font-weight: bold;
+    font-size: 15px;
+    font-weight: bold;
 }
 
-.small_foot_body{
-	min-width: 1300px; /* suppose you want minimun width of 1000px */
-	width: auto !important;  /* Firefox will set width as auto */
-	width: 1000px;             /* As IE ignores !important it will set width as 1000px; */
-	margin-bottom: 20px;
+.small_foot_body {
+    min-width: 1300px; /* suppose you want minimun width of 1000px */
+    width: auto !important; /* Firefox will set width as auto */
+    width: 1000px; /* As IE ignores !important it will set width as 1000px; */
+    margin-bottom: 20px;
 }
 
 .totals {
-	width: 50%;
-	text-align: center;
+    width: 50%;
+    text-align: center;
 }
 
 h1 {
-  font-size: 5.9vmax;
+    font-size: 5.9vmax;
 }
+
 h2 {
-  font-size: 3.0vmax;
+    font-size: 3.0vmax;
 }
 
 p {
-  font-size: 2vmax;
+    font-size: 2vmax;
 }
-
 
 /* Team Summary page START*/
 .teamtotals {
-	width: 100%;
-	text-align: center;
-	overflow: scroll;
+    width: 100%;
+    text-align: center;
+    overflow: scroll;
 }
 
 .teamtotals tbody tr td {
-	height: 8vmax;
-	vertical-align: middle;
+    height: 8vmax;
+    vertical-align: middle;
 }
 
 .teamtotals tbody tr:nth-child(even) {
-	background-color: #F0F0F0;
+    background-color: #F0F0F0;
 }
 
 .teamtotals .header {
-	font-size: 2vmax;
-	text-decoration: none;
-	font-weight: bold;
-	padding-bottom: 20px;
+    font-size: 2vmax;
+    text-decoration: none;
+    font-weight: bold;
+    padding-bottom: 20px;
 }
+
 .callsign {
-	font-size: 2vmax;
-	width: 15%;
-	font-weight: bold;
-	color: black;	
+    font-size: 2vmax;
+    width: 15%;
+    font-weight: bold;
+    color: black;
 }
 
 .callsign-active {
-	font-size: 2vmax;
-	width: 15%;
-	font-weight: bold;
-	color: green;	
+    font-size: 2vmax;
+    width: 15%;
+    font-weight: bold;
+    color: green;
 }
 
 .callsign-standby {
-	font-size: 2vmax;
-	width: 15%;
-	font-weight: bold;
-	color: blue;	
+    font-size: 2vmax;
+    width: 15%;
+    font-weight: bold;
+    color: blue;
 }
 
 .callsign-rest {
-	font-size: 2vmax;
-	width: 15%;
-	font-weight: bold;
-	color: Chocolate;	
+    font-size: 2vmax;
+    width: 15%;
+    font-weight: bold;
+    color: Chocolate;
 }
 
 .callsign-alert {
-	font-size: 2vmax;
-	width: 15%;
-	font-weight: bold;
-	color: orange;	
+    font-size: 2vmax;
+    width: 15%;
+    font-weight: bold;
+    color: orange;
 }
 
 .callsign > a, .callsign-alert > a, .callsign-rest > a, .callsign-standby > a, .callsign-active > a {
-	color: inherit;
-  text-decoration: none; /* no underline */
+    color: inherit;
+    text-decoration: none; /* no underline */
 }
 
 .members {
-	width: 35%;
-	font-size: 1vmax;
+    width: 35%;
+    font-size: 1vmax;
 }
 
-.status{
-	font-size: 1vmax;
-	width: 15%;
+.status {
+    font-size: 1vmax;
+    width: 15%;
 }
 
-.jobcount{
-	width: 10%;
-	font-size: 2vmax;
+.jobcount {
+    width: 10%;
+    font-size: 2vmax;
 }
 
-.update{
-	width: 25%;
-	font-size: 1vmax;
+.update {
+    width: 25%;
+    font-size: 1vmax;
 }
+
 /* Team Summary page END*/
 
-
 .totals tr td {
-	width: 33.33%;
+    width: 33.33%;
 }
+
 .totals .header {
-	font-size: 30px;
-	text-decoration: none;
-	font-weight: bold;
+    font-size: 30px;
+    text-decoration: none;
+    font-weight: bold;
 }
 
 .totals .rowresults {
-	font-size: 90px;
+    font-size: 90px;
 }
 
 .cloud {
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
 }
 
 .bigtbl {
-	width: 100%;
-	text-align: center;
+    width: 100%;
+    text-align: center;
 }
 
 .bigtbl tr td {
-	width: 25%;
+    width: 25%;
 }
+
 .bigtbl .header {
-	font-size: 40px;
-	text-decoration: none;
-	font-weight: bold;
+    font-size: 40px;
+    text-decoration: none;
+    font-weight: bold;
 }
 
 .bigtbl .rowresults {
-	font-size: 80px;
+    font-size: 80px;
 }
 
 .smltbl {
-	width: 100%;
-	text-align: center;
+    width: 100%;
+    text-align: center;
 }
 
 .smltbl tr td {
-	width: 25%;
+    width: 25%;
 }
 
 .smltbl .header {
-	font-size: 20px;
-	text-decoration: none;
-	font-weight: bold;
+    font-size: 20px;
+    text-decoration: none;
+    font-weight: bold;
 }
 
 .smltbl .rowresults {
-	font-size: 50px;
+    font-size: 50px;
 }
 
 .graphs {
-	width: 100%;
-	text-align: center;
+    width: 100%;
+    text-align: center;
 }
 
 .graphs tr td {
-	padding-bottom: 5em;
+    padding-bottom: 5em;
 }
 
 .tinytbl {
-	width: 100%;
-	text-align: center;
+    width: 100%;
+    text-align: center;
 }
 
 .tinytbl tr td {
-	width: 25%;
+    width: 25%;
 }
 
 .tinytbl .header {
-	font-size: 20px;
-	text-decoration: none;
-	font-weight: bold;
+    font-size: 20px;
+    text-decoration: none;
+    font-weight: bold;
 }
 
 .tinytbl .rowresults {
-	font-size: 30px;
+    font-size: 30px;
 }
 
 footer {
-	position: absolute;
-	background-color: white;
-	width: 100%;
-	height: 55px;
-	font-size: 12px;
-	text-align: center;
+    position: absolute;
+    background-color: white;
+    width: 100%;
+    height: 55px;
+    font-size: 12px;
+    text-align: center;
 }
 
 footer .lastline {
-	position: relative;
+    position: relative;
 }
 
 footer .timer {
-	position: absolute;
-	right: 0;
-	bottom: 0;
-	padding-right: 1px;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    padding-right: 1px;
 }
 
 .small_foot {
-	position: fixed;
-	background-color: white;
-	bottom: 0px;
-	width: 100%;
-	height: 20px;
-	font-size: 12px;
-	text-align: center;
+    position: fixed;
+    background-color: white;
+    bottom: 0px;
+    width: 100%;
+    height: 20px;
+    font-size: 12px;
+    text-align: center;
 }
 
 input[type="radio"] {
-	margin-right: 5px;
+    margin-right: 5px;
 }
 
 label, input {
-	display: inline;
-	margin-right: 2px;
+    display: inline;
+    margin-right: 2px;
 }
 
 label {
-	margin-left: 20px;
+    margin-left: 20px;
 }
 
 #loading {
-	width: 100%;
-	height: 100%;
-	top: 0px;
-	left: 0px;
-	position: absolute;
-	display: table;
-	opacity: 1;
-	font-size: 20px;
-	background-color: #fff;
-	z-index: 99;
-	text-align: center;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    position: absolute;
+    display: table;
+    opacity: 1;
+    font-size: 20px;
+    background-color: #fff;
+    z-index: 99;
+    text-align: center;
 }
 
 #loadmiddle {
-  display: table-cell;
-  vertical-align: middle;
+    display: table-cell;
+    vertical-align: middle;
 }
 
 #loadinner {
-	width: 20%;
-	height: 20%;
-	text-align: center;
-	margin: auto;
+    width: 20%;
+    height: 20%;
+    text-align: center;
+    margin: auto;
 }
 
 #loading-image {
-	position: absolute;
-	top: 100px;
-	left: 40%;
-	width: 20%;
-	z-index: 100;
+    position: absolute;
+    top: 100px;
+    left: 40%;
+    width: 20%;
+    z-index: 100;
 }
 
 .data {
-	margin: 0;
+    margin: 0;
 }
 
 .StatsmainStats, .StatsminorStats, .StatsjobStats {
-	display: flex;
-	flex-flow: row;
-	justify-content: center;
-	margin-bottom: 2em;
+    display: flex;
+    flex-flow: row;
+    justify-content: center;
+    margin-bottom: 2em;
 }
 
 .StatsTotals {
-	width: 50%;
-	display: flex;
-	flex-flow: row;
-	justify-content: center;
-  margin-bottom: 5em;
+    width: 50%;
+    display: flex;
+    flex-flow: row;
+    justify-content: center;
+    margin-bottom: 5em;
 }
 
-.StatsTotals > div{
-	width: 33.3%;
-	display: flex;
-	flex-flow: column;
-	align-items: center;
+.StatsTotals > div {
+    width: 33.3%;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
 }
 
-.StatsTotals > div > .header{
-	font-size: 2.5vmax;
-	text-decoration: none;
-	font-weight: bold;
+.StatsTotals > div > .header {
+    font-size: 2.5vmax;
+    text-decoration: none;
+    font-weight: bold;
 }
 
 .StatsTotals > div > #open {
-	font-size: 4vmax;
-	text-shadow: 1px 1px 6px red;
+    font-size: 4vmax;
+    text-shadow: 1px 1px 6px red;
 }
 
 .StatsTotals > div > #closed {
-	font-size: 4vmax;
-	text-shadow: 1px 1px 6px green;
+    font-size: 4vmax;
+    text-shadow: 1px 1px 6px green;
 }
 
 .StatsTotals > div > #totalnumber {
-	font-size: 4vmax;
-	text-shadow: 1px 1px 6px black;
+    font-size: 4vmax;
+    text-shadow: 1px 1px 6px black;
 }
 
-.StatsmainStats > div, .StatsminorStats > div, .StatsjobStats > div{
-	width: 25%;
-	display: flex;
-	flex-flow: column;
-	align-items: center;
+.StatsmainStats > div, .StatsminorStats > div, .StatsjobStats > div {
+    width: 25%;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
 }
 
-.StatsmainStats > div > .header{
-	font-size: 2.5vmax;
-	text-decoration: none;
-	font-weight: bold;
+.StatsmainStats > div > .header {
+    font-size: 2.5vmax;
+    text-decoration: none;
+    font-weight: bold;
 }
 
-.StatsmainStats > div > .data{
-	font-size: 3.5vmax;
-	text-decoration: none;
+.StatsmainStats > div > .data {
+    font-size: 3.5vmax;
+    text-decoration: none;
 }
 
 .StatsmainStats > div:nth-child(1) {
-	margin: 0 0 0 5em;
+    margin: 0 0 0 5em;
 }
 
 .StatsmainStats > div:nth-child(2) {
-	margin: 0 10em 0 10em;
+    margin: 0 10em 0 10em;
 }
 
 .StatsmainStats > div:nth-child(3) {
-	margin: 0 10em 0 0;
+    margin: 0 10em 0 0;
 }
 
 .StatsmainStats > div:nth-child(4) {
-	margin: 0 5em 0 0;
+    margin: 0 5em 0 0;
 }
 
-.StatsminorStats > div > .header{
-	font-size: 2vmax;
-	text-decoration: none;
-	font-weight: bold;
+.StatsminorStats > div > .header {
+    font-size: 2vmax;
+    text-decoration: none;
+    font-weight: bold;
 }
 
-.StatsminorStats > div > .data{
-	font-size: 2.5vmax;
-	text-decoration: none;
+.StatsminorStats > div > .data {
+    font-size: 2.5vmax;
+    text-decoration: none;
 }
 
 .StatsminorStats > div:nth-child(1) {
-	margin: 0 0 0 5em;
+    margin: 0 0 0 5em;
 }
 
 .StatsminorStats > div:nth-child(2) {
-	margin: 0 10em 0 10em;
+    margin: 0 10em 0 10em;
 }
 
 .StatsminorStats > div:nth-child(3) {
-	margin: 0 10em 0 0;
+    margin: 0 10em 0 0;
 }
 
 .StatsminorStats > div:nth-child(4) {
-	margin: 0 5em 0 0;
+    margin: 0 5em 0 0;
 }
 
-.StatsjobStats > div > .header{
-	font-size: 1.5vmax;
-	text-decoration: none;
-	font-weight: bold;
+.StatsjobStats > div > .header {
+    font-size: 1.5vmax;
+    text-decoration: none;
+    font-weight: bold;
 }
 
-.StatsjobStats > div > .data{
-	font-size: 2vmax;
-	text-decoration: none;
+.StatsjobStats > div > .data {
+    font-size: 2vmax;
+    text-decoration: none;
 }
 
 .StatsjobStats > div:nth-child(1) {
-	margin: 0 0 0 5em;
+    margin: 0 0 0 5em;
 }
 
 .StatsjobStats > div:nth-child(2) {
-	margin: 0 10em 0 10em;
+    margin: 0 10em 0 10em;
 }
 
 .StatsjobStats > div:nth-child(3) {
-	margin: 0 10em 0 0;
+    margin: 0 10em 0 0;
 }
 
 .StatsjobStats > div:nth-child(4) {
-	margin: 0 5em 0 0;
+    margin: 0 5em 0 0;
 }
