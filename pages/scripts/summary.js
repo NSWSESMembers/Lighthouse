@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById("loading").style.visibility = 'hidden';
       document.getElementById("results").style.visibility = 'visible';
       applyTheme([localStorage.getItem("LighthouseSummaryTheme")]);
+      resize()
 
     }
   });
@@ -52,6 +53,10 @@ document.addEventListener('DOMContentLoaded', function() {
   RunForestRun(mp);
 });
 
+window.addEventListener('resize', function(event){
+  console.log('resize')
+  resize()
+});
 
 $(document).on('change', 'input[name=slide]:radio', function() {
   console.log(this.value);
@@ -70,69 +75,45 @@ $(document).on('click',"#submitButton",function() {
   localStorage.setItem("LighthouseSummaryTheme",$('input[name=themebox]:checked').val())
   applyTheme($('input[name=themebox]:checked').val()) 
 
-
-
 })
 
+function resize() {
+  var neightbourHeight = $('#outstanding').parent().parent().parent().parent().parent().height()
+
+  neightbourHeight=parseInt(neightbourHeight)-10-10-10-10-10 //all the padding
+  $('#title').parent().height(neightbourHeight*0.6) //60%
+  ($('#title-details-start').parent().parent().height(neightbourHeight*0.4)) //40%
+
+}
 
 function applyTheme(themeName){
   console.log('Apply theme:'+themeName)
   switch (themeName+''){ //make it a string because storage objects is weird
 
    case "wob":
-    // $( "body" ).css( "background-color", "white" );
-    // $( "footer" ).css( "background-color", "white" );
+   $( "body" ).removeClass('night');
+   $( "body" ).removeClass('day');
+   break;
 
-    // $( ".lh-box" ).css( "background-color", "black" );
-    // $( ".lh-box .lh-title" ).css( "color", "white" );
-    // $( ".lh-box .lh-details" ).css( "color", "white" );
-    // $( ".footer" ).css( "color", "black" );
-    // $( ".lh-box .lh-heading" ).css( "color", "white" );
-    // $( ".lh-box .lh-body" ).css( "background-color", "white" );
+   case "boo":
+   $( "body" ).removeClass('night');
+   $( "body" ).addClass('day');
+   break;
 
-    break;
+   case "night":
+   $( "body" ).removeClass('day');
+   $( "body" ).addClass('night');
+   break;
 
-    case "boo":
-    $( "body" ).removeClass('night');
-    $( "body" ).addClass('day');
-    // $( "body" ).css( "background-color", "white" );
-    // $( ".footer" ).css( "background-color", "white" );
-    // $( ".footer" ).css( "color", "black" );
-    // $( ".lh-box" ).css( "background-color", "#F7931D" );
-    // $( ".lh-box .lh-title" ).css( "color", "black" );
-    // $( ".lh-box .lh-details" ).css( "color", "black" );
-    // $( ".lh-box .lh-heading" ).css( "color", "black" );
-    // $( ".lh-box .lh-body" ).css( "background-color", "white" );
+   default:
+   console.log("unknown theme. reseting")
+   localStorage.setItem("LighthouseSummaryTheme",'boo')
 
-    break;
-
-    case "night":
-    $( "body" ).removeClass('day');
-
-    $( "body" ).addClass('night');
-    // $( "body" ).css( "background-color", "black" );
-    // $( ".footer" ).css( "background-color", "black" );
-    // $( ".lh-box" ).css( "background-color", "#2084ab" );
-    // $( ".lh-box .lh-title" ).css( "color", "#2084ab" );
-    // $( ".lh-box .lh-details" ).css( "color", "black" );
-    // $( ".lh-box .lh-title" ).css( "color", "white" );
-    // $( ".lh-box .lh-details" ).css( "color", "white" );
-    // $( ".lh-box .lh-heading" ).css( "color", "white" );
-    // $( ".footer" ).css( "color", "white" );
-    // s
-    // $( ".lh-box .lh-body" ).css( "background-color", "grey" );
-
-    break;
-
-    default:
-    console.log("unknown theme. reseting")
-    localStorage.setItem("LighthouseSummaryTheme",'boo')
-
-    applyTheme("boo")
+   applyTheme("boo")
 
 
-    break;
-  }
+   break;
+ }
 }
 
 //refresh button
@@ -380,22 +361,31 @@ function HackTheMatrix(unit, host, token, progressBar) {
       
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
-        title = "<p>Job Summary</p>NSW";
+        title = "<p style='margin-bottom:0px'>Job Summary</p>NSW";
       } else {
         if (Array.isArray(unit) == false) { //1 lga
           document.title = unit.Name + " Job Summary";
-          title = "<p>Job Summary</p>"+unit.Code;
+          title = "<p style='margin-bottom:0px'>Job Summary</p>"+unit.Name;
         }
         if (unit.length > 1) { //more than one
           document.title = "Group Job Summary";
-          title = "<p>Job Summary</p>"+unit.length+" Units";
+          title = "<p style='margin-bottom:0px'>Job Summary</p>"+unit.length+" Units";
         };
       }
 
-      var titleDetail = start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options);
+      var weekday = new Array(7);
+      weekday[0] =  "Sunday";
+      weekday[1] = "Monday";
+      weekday[2] = "Tuesday";
+      weekday[3] = "Wednesday";
+      weekday[4] = "Thursday";
+      weekday[5] = "Friday";
+      weekday[6] = "Saturday";
+
+      $('#title-details-start').html('<div>'+weekday[start.getDay()]+'</div><div>'+start.getHours().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})+':'+start.getMinutes().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})+'</div><div>'+start.getDate()+'/'+(parseInt(start.getMonth())+1)+'/'+start.getFullYear()+'</div>')
+      $('#title-details-finish').html('<div>'+weekday[end.getDay()]+'</div><div>'+end.getHours().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})+':'+end.getMinutes().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})+'</div><div>'+end.getDate()+'/'+(parseInt(end.getMonth())+1)+'/'+end.getFullYear()+'</div>')
 
       $('#title').html(title)
-      $('#title-details').text(titleDetail);
 
       progressBar && progressBar.setValue(1);
       progressBar && progressBar.close();
