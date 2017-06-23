@@ -10,6 +10,8 @@ global.jQuery = $;
 var ElasticProgress = require('elastic-progress');
 var crossfilter = require('crossfilter');
 
+require('bootstrap-tour')
+
 require('bootstrap');
 
 
@@ -40,15 +42,29 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById("loading").style.visibility = 'hidden';
       document.getElementById("results").style.visibility = 'visible';
       applyTheme([localStorage.getItem("LighthouseSummaryTheme")]);
-      resize()
 
-    }
-  });
+
+
+      //This is called when the loading progress bar closes. good place for onload kinda code
+
+
+
+/// Initialize the tour
+summaryTour.init();
+
+// Start the tour
+summaryTour.start();
+console.log('Close finished')
+startTimer(60);
+
+resize()
+
+}
+});
 
   // SET ON CLOSE TO RUN THIS
 
   //run every X period of time the main loop.
-  startTimer(60);
 
   RunForestRun(mp);
 });
@@ -83,6 +99,8 @@ function resize() {
   neightbourHeight=parseInt(neightbourHeight)-10-10-10-10-10 //all the padding
   $('#title').parent().height(neightbourHeight*0.6) //60%
   ($('#title-details-start').parent().parent().height(neightbourHeight*0.4)) //40%
+
+  return true
 
 }
 
@@ -402,3 +420,77 @@ function HackTheMatrix(unit, host, token, progressBar) {
     );
 
 }
+
+
+      // Instance the tour
+      var summaryTour = new Tour({
+        name: "LHTJobSummary",
+        smartPlacement: true,
+        debug: true,
+        steps: [
+        {
+          element: "",
+          placement: "top",
+          orphan: true,
+          backdrop: true,
+          title: "Welcome",
+          content: "Welcome to the Job Summary Dashboard. As this is your first time here lets quickly run through how this all works. Most things are self explanatory so this will be quick."
+        },
+        {
+          element: "#title",
+          placement: "auto",
+          orphan: true,
+          backdrop: true,
+          title: "Selected unit",
+          content: "This represents which unit (or group of unit) the summary covers. A count will be shown if multiple units are sellected."
+        },
+        {
+          element: "#radio1",
+          delay: 500,
+          placement: "top",
+          orphan: true,
+          backdrop: true,
+          title: "Time override",
+          content: "Use these to ignore the selected time and automatically keep a sliding time window."
+        },
+        {
+          element: "#refresh",
+          title: "Refresh",
+          placement: "auto",
+          backdrop: true,
+          content: "The data will automatically update when the timer reaches 0. You can force an update by clicking here at any time.",
+        },
+        {
+          element: "#settings",
+          title: "Settings",
+          placement: "top",
+          backdrop: true,
+          content: "Here you will find display settings.",
+          onNext: function (tour) {$('#settingsmodal').modal('show');}
+        },
+        {
+          element: "#themepicker",
+          title: "Colour Theme",
+          placement: "right",
+          delay: 500,
+          backdrop: true,
+          content: "This changes the colour theme of the dashboard."
+        },
+        {
+          element: "#submitButton",
+          title: "Save",
+          placement: "auto",
+          backdrop: true,
+          onNext: function (tour) {$('#settingsmodal').modal('hide');},
+          content: "Don't forget to save."
+        },
+        {
+          element: "",
+          delay: 500,
+          placement: "top",
+          orphan: true,
+          backdrop: true,
+          title: "Thanks",
+          content: "This covers the basic operation of the Job Summary Dashboard."
+        }
+        ]});
