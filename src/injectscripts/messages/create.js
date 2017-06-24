@@ -341,9 +341,14 @@ function LoadCollection(col, cb) {
                                             }
                                         })
                                     }
-                                }
+                                } else { //fail safe
+                                  $total = $total - 1;
+                                  if ($total == 0) {
+                                    cb();
+                                }  
                             }
-                        })
+                        }
+                    })
 break;
 }
 }
@@ -383,8 +388,13 @@ $.ajax({
                     }
                 })
             }
-        }
+        } else { //fail safe
+          $total = $total - 1;
+          if ($total == 0) {
+            cb();
+        }  
     }
+}
 })
 break;
 case "entity":
@@ -425,9 +435,22 @@ $.ajax({
                     }
                 })
             }
-        }
+        } else { //fail safe
+          $total = $total - 1;
+          if ($total == 0) {
+            cb();
+        }  
     }
+}
 })
+break;
+
+default: //something bad. we should never end up here
+$total = $total - 1;
+if ($total == 0) {
+    cb();
+}
+
 break;
 }
 })
