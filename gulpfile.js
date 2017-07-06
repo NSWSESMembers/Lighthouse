@@ -50,7 +50,7 @@ function getBundler(file, dest, options) {
 
   options = _.extend(options || {}, {
     // Enable source maps.
-    debug: true,
+    debug: false,
     // Configure transforms.
     transform: BROWSERIFY_TRANSFORMS
   });
