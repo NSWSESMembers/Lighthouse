@@ -3,7 +3,7 @@
   "name": "Lighthouse",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2017.7.4.1",
+  "version": "2017.7.6.1",
     "browser_action": {
       "default_icon": {
         "16": "icons/lighthouse64.png"
@@ -112,7 +112,8 @@
       ],
       "exclude_matches": [
         "https://*.ses.nsw.gov.au/nitc",
-        "https://*.ses.nsw.gov.au/nitc/"
+        "https://*.ses.nsw.gov.au/nitc/",
+        "https://*.ses.nsw.gov.au/nitc/create"
       ],
       "js": ["contentscripts/nitc/view.js"]
     },
