@@ -1,19 +1,71 @@
-window.addEventListener("load", pageFullyLoaded, false);
+window.addEventListener('load', pageFullyLoaded, false);
 
 function pageFullyLoaded(e) {
     //hide the maximize button
-    var max = document.getElementsByClassName("titleButton maximize");
-    max[0].classList.add("hidden");
+    var max = document.getElementsByClassName('titleButton maximize');
+    max[0].classList.add('hidden');
 
-    let map = window["map"];
+    let map = window['map'];
     let lighthouseMap = new LighthouseMap(map);
     //showRtaIncidents(lighthouseMap);
     //showRuralFires(lighthouseMap);
-    window["lighthouseMap"] = lighthouseMap;
+    showRescueHelicopters(lighthouseMap);
+    window['lighthouseMap'] = lighthouseMap;
 }
 
+/**
+ * Shows the current position of known rescue helicopters on the map.
+ *
+ * @param lighthouseMap the map.
+ */
 function showRescueHelicopters(lighthouseMap) {
-    //https://opensky-network.org/api/states/all
+
+    // Build the query url
+    let url = 'https://opensky-network.org/api/states/all';
+    for (let i = 0; i < helicopters.length; i++) {
+        url += i === 0 ? '?' : '&';
+        url += 'icao24=' + helicopters[i].icao24.toLowerCase();
+    }
+
+    fetch(url)
+        .then((resp) => resp.json())
+        .then(function(data) {
+            if (data && data.states) {
+                for (let i = 0; i < data.states.length; i++) {
+                    let icao24 = data.states[i][0];
+                    let lon = data.states[i][5];
+                    let lat = data.states[i][6];
+                    let alt = data.states[i][7];
+
+                    let heli = findHelicopterById(icao24);
+                    let name = heli.name + ' ' + heli.rego;
+                    let details = heli.model + '<br/>Lat: ' + lat + ' Lon:' + lon + ' Alt:' + alt;
+
+                    lighthouseMap.addImageMarker(lat, lon,
+                        chrome.extension.getURL("icons/helicopter.png"),
+                        name, details);
+                }
+            }
+        })
+        .catch(function(error) {
+            console.error(error);
+        });
+}
+
+/**
+ * Finds a helicopter by it's ICAO-24 ID.
+ *
+ * @param icao24 the ID.
+ * @returns the helicopter, or {@code null} if no match is found.
+ */
+function findHelicopterById(icao24) {
+    for (let i = 0; i < helicopters.length; i++) {
+        if (helicopters[i].icao24 === icao24) {
+            return helicopters[i];
+        }
+    }
+
+    return null;
 }
 
 /**
@@ -64,12 +116,12 @@ const helicopters = [
 ];
 
 // Load all the arcgis classes
-const GraphicsLayer = eval("require(\"esri/layers/GraphicsLayer\");");
-const SimpleMarkerSymbol = eval("require(\"esri/symbols/SimpleMarkerSymbol\");");
-const PictureMarkerSymbol = eval("require(\"esri/symbols/PictureMarkerSymbol\");");
-const Point = eval("require(\"esri/geometry/Point\");");
-const Graphic = eval("require(\"esri/graphic\");");
-const InfoTemplate = eval("require(\"esri/InfoTemplate\");");
+const GraphicsLayer = eval('require("esri/layers/GraphicsLayer");');
+const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
+const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
+const Point = eval('require("esri/geometry/Point");');
+const Graphic = eval('require("esri/graphic");');
+const InfoTemplate = eval('require("esri/InfoTemplate");');
 
 /**
  * A class for helping out with map access.
@@ -86,7 +138,7 @@ class LighthouseMap {
 
         this.graphicsLayer = new GraphicsLayer();
         this.graphicsLayer.id = 'lighthouseLayer';
-        this.graphicsLayer.on("click", this._handleClick);
+        this.graphicsLayer.on('click', this._handleClick);
 
         this.map.addLayer(this.graphicsLayer);
     }
