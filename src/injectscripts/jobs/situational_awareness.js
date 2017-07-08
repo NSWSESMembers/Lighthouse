@@ -4,16 +4,13 @@ function pageFullyLoaded(e) {
     //hide the maximize button
     var max = document.getElementsByClassName("titleButton maximize");
     max[0].classList.add("hidden");
-}
 
-$ = require('jquery');
-
-$(document).ready(function() {
     let map = window["map"];
     let lighthouseMap = new LighthouseMap(map);
-    //lighthouseMap.addImageMarker(-33.896628, 151.165709, "http://m.livetraffic.rta.nsw.gov.au/Assets/img/icon_warning.png");
+    //showRtaIncidents(lighthouseMap);
+    //showRuralFires(lighthouseMap);
     window["lighthouseMap"] = lighthouseMap;
-});
+}
 
 // Load all the arcgis classes
 const GraphicsLayer = eval("require(\"esri/layers/GraphicsLayer\");");
@@ -37,10 +34,47 @@ class LighthouseMap {
         this.map = map;
 
         this.graphicsLayer = new GraphicsLayer();
-        this.graphicsLayer.id = 'customLayer';
-        this.graphicsLayer.infoTempalate = this.template;
+        this.graphicsLayer.id = 'lighthouseLayer';
+        this.graphicsLayer.on("click", this._handleClick);
 
         this.map.addLayer(this.graphicsLayer);
+    }
+
+    /**
+     * Handles a click event from the our map graphics layer.
+     *
+     * @param event the event.
+     * @private
+     */
+    _handleClick(event) {
+        // Show the info window for our point
+        this._map.infoWindow.setTitle(event.graphic.symbol.title);
+        this._map.infoWindow.setContent(event.graphic.symbol.details);
+        this._map.infoWindow.show(event.mapPoint);
+    }
+
+    /**
+     * Adds a symbol marker to the map.
+     *
+     * @param lat the latitude.
+     * @param lon the longitude.
+     * @param style the marker style, e.g. SimpleMarkerSymbol.STYLE_SQUARE.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
+     * @return the marker to customise.
+     */
+    addSymbolMarker(lat, lon, style, title='', details='') {
+        let point = new Point({
+            latitude: lat,
+            longitude: lon
+        });
+
+        let marker = new SimpleMarkerSymbol(style);
+        marker.title = title;
+        marker.details = title;
+
+        this.graphicsLayer.add(new Graphic(point, marker));
+        return marker;
     }
 
     /**
@@ -49,8 +83,11 @@ class LighthouseMap {
      * @param lat the latitude.
      * @param lon the longitude.
      * @param imageUrl the URL for the marker's image.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
+     * @return the marker to customise.
      */
-    addImageMarker(lat, lon, imageUrl) {
+    addImageMarker(lat, lon, imageUrl, title='', details='') {
         let point = new Point({
             latitude: lat,
             longitude: lon
@@ -60,7 +97,10 @@ class LighthouseMap {
         marker.setHeight(16);
         marker.setWidth(16);
         marker.setUrl(imageUrl);
+        marker.title = title;
+        marker.details = title;
 
         this.graphicsLayer.add(new Graphic(point, marker));
+        return marker;
     }
 }
