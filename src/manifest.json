@@ -3,7 +3,14 @@
   "name": "Lighthouse Development Preview",
   "short_name": "Lighthouse Development Preview",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2017.3.30.1",
+  "version": "2017.6.24.1",
+    "browser_action": {
+      "default_icon": {
+        "16": "icons/lighthouse64_dev.png"
+        },
+        "default_title": "Lighthouse",
+        "default_popup": "pages/popup.html"
+    },
   "icons": {
     "128": "icons/lighthouse128_dev.png",
     "64":"icons/lighthouse64_dev.png"
@@ -97,7 +104,31 @@
         "https://*.ses.nsw.gov.au/nitc",
         "https://*.ses.nsw.gov.au/nitc/"
       ],
-      "js": ["contentscripts/nitc.js"]
+      "js": ["contentscripts/nitc/nitc.js"]
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/nitc/*"
+      ],
+      "exclude_matches": [
+        "https://*.ses.nsw.gov.au/nitc",
+        "https://*.ses.nsw.gov.au/nitc/"
+      ],
+      "js": ["contentscripts/nitc/view.js"]
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/User/Manage",
+        "https://*.ses.nsw.gov.au/User/Manage/"
+      ],
+      "js": ["contentscripts/user/manage.js"]
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Account/Manage",
+        "https://*.ses.nsw.gov.au/Account/Manage/"
+      ],
+      "js": ["contentscripts/account/manage.js"]
     },
     {
       "matches": ["https://*.ses.nsw.gov.au/*"],

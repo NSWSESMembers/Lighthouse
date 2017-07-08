@@ -13,6 +13,7 @@ chrome.webRequest.onBeforeRequest.addListener(
 	{ urls: ["https://*.ses.nsw.gov.au/js/messages/create?v=*"] },
 	["blocking"]
 	);
+
 //block job create js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
 chrome.webRequest.onBeforeRequest.addListener(
 	function (details) {
@@ -22,6 +23,19 @@ chrome.webRequest.onBeforeRequest.addListener(
 		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
 	},
 	{ urls: ["https://*.ses.nsw.gov.au/js/jobs/create?v=*"] },
+	["blocking"]
+	);
+
+//block job register js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
+// Reaplce the date picker with more options
+chrome.webRequest.onBeforeRequest.addListener(
+	function (details) {
+		console.log("blocking jobs register js request")
+		var javascriptCode = loadSynchronously(details.url);
+		var replaced = javascriptCode.replace('"Last Month":[utility.dateRanges.LastMonth.StartDate(),utility.dateRanges.LastMonth.EndDate()]','"Last Month":[utility.dateRanges.LastMonth.StartDate(), utility.dateRanges.LastMonth.EndDate()],"This Calendar Year":[moment().startOf(\'year\'), moment().endOf(\'year\')],"All":\n [utility.minDate, moment().endOf(\'year\')]');
+		return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+	},
+	{ urls: ["https://*.ses.nsw.gov.au/js/jobs/register?v=*","https://*.ses.nsw.gov.au/js/jobs/tasking?v=*"] },
 	["blocking"]
 	);
 
@@ -169,11 +183,11 @@ function processResult(result){
 		break
 		case 1: //positive/found
 		console.log( 'On the Register' );
-		cb(inAddressObject.PrettyAddress+" Is On The Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
+		cb(inAddressObject.PrettyAddress+" was FOUND on the loose fill insulation asbestos register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","red",true,formAddress)
 		break
 		case 2: //negative/not found
 		console.log( 'Not the Register' );
-		cb(inAddressObject.PrettyAddress+" Was Not Found On The Loose Fill Asbestos Register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>","",false,formAddress)
+		cb(inAddressObject.PrettyAddress+" was not found on any register.","",false,formAddress)
 		break
 	}
 	if (needToWriteChange)

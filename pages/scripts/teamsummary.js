@@ -191,7 +191,7 @@ function HackTheMatrix(unit, host, token) {
         var latestupdate = row.insertCell(4);
         latestupdate.className = "update";
 
-        callsign.innerHTML = "<a href=\"https://"+host+"/Teams/"+d.Id+"/Edit\" target=\"_blank\">"+d.Callsign+"</a>";
+        callsign.innerHTML = "<a href=\""+host+"/Teams/"+d.Id+"/Edit\" target=\"_blank\">"+d.Callsign+"</a>";
 
         switch (d.TeamStatusType.Id) { //color the callsign by team status
           case 3: //active
@@ -234,7 +234,7 @@ function HackTheMatrix(unit, host, token) {
         members.className = "members";
 
         var rawteamdate = new Date(d.TeamStatusStartDate);
-        var teamdate = new Date(rawteamdate.getTime() + (rawteamdate.getTimezoneOffset() * 60000));
+        var teamdate = new Date(rawteamdate.getTime());
         status.innerHTML = d.TeamStatusType.Name +"<br>"+teamdate.toLocaleTimeString("en-au", options);
         status.className = "status";
 
@@ -246,12 +246,12 @@ function HackTheMatrix(unit, host, token) {
           e.Results.forEach(function(f) {
             f.CurrentStatus == "Complete" && completed++;
             var rawdate = new Date(f.CurrentStatusTime);
-            var thistime = new Date(rawdate.getTime() + (rawdate.getTimezoneOffset() * 60000));
+            var thistime = new Date(rawdate.getTime());
 
 
             if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") { //it wasnt an untask or a tasking (so its a action the team made like on route or onsite)
              var diff = moment(thistime).fromNow();
-             latest = f.CurrentStatus + " #" + f.Job.Identifier + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff;
+             latest = f.CurrentStatus + " #" + "<a style=\"color: inherit;\" href=\""+host+"/Jobs/"+f.Job.Id+"\" target=\"_blank\">"+f.Job.Identifier+"</a>" + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff;
              oldesttime = thistime;
            }
          });

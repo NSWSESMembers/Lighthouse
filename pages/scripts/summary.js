@@ -4,9 +4,16 @@ var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseChrome = require('../lib/shared_chrome_code.js');
 
 var $ = require('jquery');
+var _ = require('underscore');
+
 global.jQuery = $;
 var ElasticProgress = require('elastic-progress');
 var crossfilter = require('crossfilter');
+
+require('bootstrap-tour')
+
+require('bootstrap');
+
 
 // inject css c/o browserify-css
 require('../styles/summary.css');
@@ -31,24 +38,101 @@ document.addEventListener('DOMContentLoaded', function() {
     colorBg: "#7dbde8",
     colorFg: "#0f3a57",
     onClose:function(){
+
       document.getElementById("loading").style.visibility = 'hidden';
       document.getElementById("results").style.visibility = 'visible';
-    }
-  });
+      applyTheme([localStorage.getItem("LighthouseSummaryTheme")]);
+
+
+
+      //This is called when the loading progress bar closes. good place for onload kinda code
+
+
+
+/// Initialize the tour
+summaryTour.init();
+
+// Start the tour
+summaryTour.start();
+console.log('Close finished')
+startTimer(60);
+
+resize()
+
+}
+});
 
   // SET ON CLOSE TO RUN THIS
 
   //run every X period of time the main loop.
-  startTimer(60);
 
   RunForestRun(mp);
 });
 
+window.addEventListener('resize', function(event){
+  console.log('resize')
+  resize()
+});
 
 $(document).on('change', 'input[name=slide]:radio', function() {
+  console.log(this.value);
   timeoverride = (this.value == "reset" ? null : this.value);
   RunForestRun();
 });
+
+$(document).on('click',"#settings", function() {
+  $('input[name=themebox]').val([localStorage.getItem("LighthouseSummaryTheme")]);
+  $('#settingsmodal').modal('show');
+})
+
+$(document).on('click',"#submitButton",function() {
+  $('#settingsmodal').modal('hide');
+
+  localStorage.setItem("LighthouseSummaryTheme",$('input[name=themebox]:checked').val())
+  applyTheme($('input[name=themebox]:checked').val()) 
+
+})
+
+function resize() {
+  var neightbourHeight = $('#outstanding').parent().parent().parent().parent().parent().height()
+
+  neightbourHeight=parseInt(neightbourHeight)-10-10-10-10-10 //all the padding
+  $('#title').parent().height(neightbourHeight*0.6) //60%
+  ($('#title-details-start').parent().parent().height(neightbourHeight*0.4)) //40%
+
+  return true
+
+}
+
+function applyTheme(themeName){
+  console.log('Apply theme:'+themeName)
+  switch (themeName+''){ //make it a string because storage objects is weird
+
+   case "wob":
+   $( "body" ).removeClass('night');
+   $( "body" ).removeClass('day');
+   break;
+
+   case "boo":
+   $( "body" ).removeClass('night');
+   $( "body" ).addClass('day');
+   break;
+
+   case "night":
+   $( "body" ).removeClass('day');
+   $( "body" ).addClass('night');
+   break;
+
+   default:
+   console.log("unknown theme. reseting")
+   localStorage.setItem("LighthouseSummaryTheme",'boo')
+
+   applyTheme("boo")
+
+
+   break;
+ }
+}
 
 //refresh button
 $(document).ready(function() {
@@ -198,7 +282,8 @@ function HackTheMatrix(unit, host, token, progressBar) {
       var rejJob = 0;
       var tskJob = 0;
 
-      JobStatusGroup.top(Infinity).forEach(function(d) {
+      JobStatusGroup.all().forEach(function(d) {
+        console.log(d.key + " " + d.value);
         switch (d.key) {
           case "New":
           newJob = d.value;
@@ -224,6 +309,9 @@ function HackTheMatrix(unit, host, token, progressBar) {
           case "Cancelled":
           canJob = d.value;
           break;
+          default:
+          console.log("unmatched status - "+d)
+          break;
         }
       });
 
@@ -232,7 +320,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
       var rescue = 0;
       var support = 0;
 
-      JobTypeGroup.top(Infinity).forEach(function(d) {
+      JobTypeGroup.all().forEach(function(d) {
         switch (d.key) {
             case 1: // Parent: Storm
             storm = d.value;
@@ -249,30 +337,35 @@ function HackTheMatrix(unit, host, token, progressBar) {
           }
         });
 
-      var open = newJob + activeJob + tskJob + refJob;
-      var closed = canJob + completeJob + finJob + rejJob;
+      var outstanding = newJob + activeJob + tskJob + refJob;
+      var completed = canJob + completeJob + finJob + rejJob;
 
-      document.getElementById("open").innerHTML = (jobs.Results.length && open) ? (open + "<h6>" + Math.round(open / jobs.Results.length * 100) + "%</h6>"):(open+"<h6>&ndash; %</h6>");
-      document.getElementById("closed").innerHTML = (jobs.Results.length && closed) ? (closed + "<h6>" + Math.round(closed / jobs.Results.length * 100) + "%</h6>"):(closed+"<h6>&ndash; %</h6>");
-      document.getElementById("totalnumber").innerHTML = jobs.Results.length+ "<h6>&ndash; %</h6>";
-
-      document.getElementById("new").innerHTML = (jobs.Results.length && newJob) ? (newJob + "<h6>" + Math.round(newJob / jobs.Results.length * 100) + "%</h6>"):(newJob+"<h6>&ndash; %</h6>");
-      document.getElementById("active").innerHTML = (jobs.Results.length && activeJob) ? (activeJob + "<h6>" + Math.round(activeJob / jobs.Results.length * 100) + "%</h6>"):(activeJob+"<h6>&ndash; %</h6>");
-      document.getElementById("tsk").innerHTML = (jobs.Results.length && tskJob) ? (tskJob + "<h6>" + Math.round(tskJob / jobs.Results.length * 100) + "%</h6>"):(tskJob+"<h6>&ndash; %</h6>");
-      document.getElementById("comp").innerHTML = (jobs.Results.length && completeJob) ? (completeJob + "<h6>" + Math.round(completeJob / jobs.Results.length * 100) + "%</h6>"):(completeJob+"<h6>&ndash; %</h6>");
-      
-      document.getElementById("ref").innerHTML = (jobs.Results.length && refJob) ? (refJob + "<h6>" + Math.round(refJob / jobs.Results.length * 100) + "%</h6>"):(refJob+"<h6>&ndash; %</h6>");
-      document.getElementById("can").innerHTML = (jobs.Results.length && canJob) ? (canJob + "<h6>" + Math.round(canJob / jobs.Results.length * 100) + "%</h6>"):(canJob+"<h6>&ndash; %</h6>");
-      document.getElementById("rej").innerHTML = (jobs.Results.length && rejJob) ? (rejJob + "<h6>" + Math.round(rejJob / jobs.Results.length * 100) + "%</h6>"):(rejJob+"<h6>&ndash; %</h6>");
-      document.getElementById("fin").innerHTML = (jobs.Results.length && finJob) ? (finJob + "<h6>" + Math.round(finJob / jobs.Results.length * 100) + "%</h6>"):(finJob+"<h6>&ndash; %</h6>");
-
-      document.getElementById("support").innerHTML = (jobs.Results.length && support) ? (support + "<h6>" + Math.round(finJob / jobs.Results.length * 100) + "%</h6>"):(support+"<h6>&ndash; %</h6>");
-      document.getElementById("flood").innerHTML = (jobs.Results.length && flood) ? (flood + "<h6>" + Math.round(flood / jobs.Results.length * 100) + "%</h6>"):(flood+"<h6>&ndash; %</h6>");
-      document.getElementById("rescue").innerHTML = (jobs.Results.length && rescue) ? (rescue + "<h6>" + Math.round(rescue / jobs.Results.length * 100) + "%</h6>"):(rescue+"<h6>&ndash; %</h6>");
-      document.getElementById("storm").innerHTML = (jobs.Results.length && storm) ? (storm + "<h6>" + Math.round(storm / jobs.Results.length * 100) + "%</h6>"):(storm+"<h6>&ndash; %</h6>");
-
-
-
+      _.each([
+        ['#outstanding', outstanding],
+        ['#completedsum', completed],
+        ['#totalnumber', jobs.Results.length],
+        ['#new', newJob],
+        ['#active', activeJob],
+        ['#tasked', tskJob],
+        ['#completed', completeJob],
+        ['#referred', refJob],
+        ['#cancelled', canJob],
+        ['#rejected', rejJob],
+        ['#finalised', finJob],
+        ['#support', support],
+        ['#flood', flood],
+        ['#rescue', rescue],
+        ['#storm', storm],
+        ], function(params) {
+          var [elem, jobCount] = params;
+          $(elem + ' .lh-value').text('' + jobCount)
+          if(jobCount > 0) {
+            $(elem + ' .lh-subscript').text(Math.round(jobCount / jobs.Results.length * 100) + '%')
+          }
+          else {
+            $(elem + ' .lh-subscript').html('&mdash;%')
+          }
+        });
       
       var options = {
         weekday: "short",
@@ -282,28 +375,38 @@ function HackTheMatrix(unit, host, token, progressBar) {
         hour12: false
       };
 
-      var banner;
+      var title;
       
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
-        banner = "<h3>Job summary for NSW</h3>";
+        title = "<p style='margin-bottom:0px'>Job Summary</p>NSW";
       } else {
         if (Array.isArray(unit) == false) { //1 lga
           document.title = unit.Name + " Job Summary";
-          banner = '<h3>Job summary for ' + unit.Name + "</h3>";
+          title = "<p style='margin-bottom:0px'>Job Summary</p>"+unit.Name;
         }
         if (unit.length > 1) { //more than one
           document.title = "Group Job Summary";
-          banner = "<h3>Job summary for Group</h3>";
+          title = "<p style='margin-bottom:0px'>Job Summary</p>"+unit.length+" Units";
         };
       }
 
-      document.getElementById("banner").innerHTML = banner + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "</h4>";
+      var weekday = new Array(7);
+      weekday[0] =  "Sunday";
+      weekday[1] = "Monday";
+      weekday[2] = "Tuesday";
+      weekday[3] = "Wednesday";
+      weekday[4] = "Thursday";
+      weekday[5] = "Friday";
+      weekday[6] = "Saturday";
+
+      $('#title-details-start').html('<div>'+weekday[start.getDay()]+'</div><div>'+start.getHours().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})+':'+start.getMinutes().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})+'</div><div>'+start.getDate()+'/'+(parseInt(start.getMonth())+1)+'/'+start.getFullYear()+'</div>')
+      $('#title-details-finish').html('<div>'+weekday[end.getDay()]+'</div><div>'+end.getHours().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})+':'+end.getMinutes().toLocaleString('en-US', {minimumIntegerDigits: 2, useGrouping:false})+'</div><div>'+end.getDate()+'/'+(parseInt(end.getMonth())+1)+'/'+end.getFullYear()+'</div>')
+
+      $('#title').html(title)
 
       progressBar && progressBar.setValue(1);
       progressBar && progressBar.close();
-
-
     },
     function(val,total){
       if (progressBar) { //if its a first load
@@ -317,3 +420,77 @@ function HackTheMatrix(unit, host, token, progressBar) {
     );
 
 }
+
+
+      // Instance the tour
+      var summaryTour = new Tour({
+        name: "LHTJobSummary",
+        smartPlacement: true,
+        debug: true,
+        steps: [
+        {
+          element: "",
+          placement: "top",
+          orphan: true,
+          backdrop: true,
+          title: "Welcome",
+          content: "Welcome to the Job Summary Dashboard. As this is your first time here lets quickly run through how this all works. Most things are self explanatory so this will be quick."
+        },
+        {
+          element: "#title",
+          placement: "auto",
+          orphan: true,
+          backdrop: true,
+          title: "Selected unit",
+          content: "This represents which unit (or group of unit) the summary covers. A count will be shown if multiple units are sellected."
+        },
+        {
+          element: "#radio1",
+          delay: 500,
+          placement: "top",
+          orphan: true,
+          backdrop: true,
+          title: "Time override",
+          content: "Use these to ignore the selected time and automatically keep a sliding time window."
+        },
+        {
+          element: "#refresh",
+          title: "Refresh",
+          placement: "auto",
+          backdrop: true,
+          content: "The data will automatically update when the timer reaches 0. You can force an update by clicking here at any time.",
+        },
+        {
+          element: "#settings",
+          title: "Settings",
+          placement: "top",
+          backdrop: true,
+          content: "Here you will find display settings.",
+          onNext: function (tour) {$('#settingsmodal').modal('show');}
+        },
+        {
+          element: "#themepicker",
+          title: "Colour Theme",
+          placement: "right",
+          delay: 500,
+          backdrop: true,
+          content: "This changes the colour theme of the dashboard."
+        },
+        {
+          element: "#submitButton",
+          title: "Save",
+          placement: "auto",
+          backdrop: true,
+          onNext: function (tour) {$('#settingsmodal').modal('hide');},
+          content: "Don't forget to save."
+        },
+        {
+          element: "",
+          delay: 500,
+          placement: "top",
+          orphan: true,
+          backdrop: true,
+          title: "Thanks",
+          content: "This covers the basic operation of the Job Summary Dashboard."
+        }
+        ]});

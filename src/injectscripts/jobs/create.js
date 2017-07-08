@@ -1,4 +1,5 @@
 var DOM = require('jsx-dom-factory');
+var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 
 console.log("jobs/create.js inject running");
 
@@ -52,8 +53,16 @@ $(document).ready(function() {
     $('#asbestos-register-box')[0].style.color = "black"
     $('#asbestos-register-box').css({'background' :'','margin-left':'0px'})
 
+      sesAsbestosSearch(jobsystem.geocodedAddress.peek(), function(res) {
+        if (res == true)
+        {
+          window.postMessage({ type: "FROM_PAGE_SESASBESTOS_RESULT", address: address, result: true, color: 'red' }, "*");
 
-    window.postMessage({ type: "FROM_PAGE", address: address }, "*");
+        } else {
+          window.postMessage({ type: "FROM_PAGE_FTASBESTOS_SEARCH", address: address }, "*");
+        }
+      })
+
   } else {
     $('#asbestos-register-flag').text("Not A Searchable Address");
   }

@@ -14,13 +14,23 @@
   </div>
 </div>
 
+<div id="loadinginline">
+  <div id="loadmiddleinline">
+    <div id="loadinnerinline">
+      <p>Updating<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+    </div>
+  </div>
+</div>
+
 <div align="center" id="results" style="display: none">
   <header>
+    <div>
     <h2>Job Stats For X</h2>
     <h4>date1 to date2</h4>
     <div class="dates"></div>
-    <div class="events"></div>
+    <div class="marquee"><p><span id="events"></span></p></div>
     <span style="cursor: pointer;" href="#" class="total"></span>
+    <div>
   </header>
 
   <table class="graphs">
@@ -49,7 +59,7 @@
       </td>
       <td>
         <div class="span4" id="dc-local-chart">
-          <h4>Top 10 Job Localities</h4>
+          <h4>Job Localities</h4>
         </div>
       </td>
       <td>
@@ -71,24 +81,31 @@
       </td>
       <td>
         <div class="span4" id="dc-propertytags-chart">
-          <h4>Job Location Tags</h4>
+          <h4>Property Tags</h4>
         </div>
       </td>
     </tr>
     <tr>
       <td colspan="3">
         <span class="span12" id="dc-timeopen-chart" style="float:inherit; padding-top:30px;display: inline-block;">
-          <h4 id="receivedTitle">Jobs received per X</h4>
+          <h4 id="receivedTitle">Jobs Received Per X</h4>
         </span>
         <span class="span12" id="dc-timeclosed-chart" style="float:inherit; padding-top:30px;display: inline-block;">
-          <h4 id="completedTitle">Jobs completed per X</h4>
+          <h4 id="completedTitle">Jobs Completed Per X</h4>
         </span>
       </td>
     </tr>
     <tr>
       <td colspan="3">
+    <span class="span12" id="dc-running-chart" style="float:inherit; padding-top:30px;display: inline-block;">
+          <h4 id="runningTitle">Jobs received per X</h4>
+        </span>
+        </td>
+    </tr>
+    <tr>
+      <td colspan="3">
         <span>
-          <table class="table table-hover" id="dc-table-graph" style="width:1200px;margin-left:auto;margin-right:auto;align;text-align:left;">
+          <table class="table table-hover" id="dc-table-graph" style="width:90%;margin-left:auto;margin-right:auto;align;text-align:left;">
             <thead>
               <tr class="header">
                 <th>Job Number</th>
