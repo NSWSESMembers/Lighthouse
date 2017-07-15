@@ -7,13 +7,20 @@ function pageFullyLoaded(e) {
 
     let map = window['map'];
     let lighthouseMap = new LighthouseMap(map);
-    //showRtaIncidents(lighthouseMap);
+    showTransportFlooding(lighthouseMap);
+    showTransportIncidents(lighthouseMap);
     showRuralFires(lighthouseMap);
     showRescueHelicopters(lighthouseMap);
-    lighthouseMap.addImageMarker(-33.896628, 151.165709, 'http://m.livetraffic.rta.nsw.gov.au/Assets/img/icon_warning.png');
+
+    if (developmentMode) {
+        // Add a test point
+        lighthouseMap.addImageMarker(-33.798796, 150.997393, testIcon);
+    }
     window['lighthouseMap'] = lighthouseMap;
 }
 
+const developmentMode = lighthouseEnviroment === 'Development';
+const testIcon = lighthouseUrl + 'icons/lh-black.png';
 const helicopterIcon = lighthouseUrl + 'icons/helicopter.png';
 
 // A map of RFS categories to icons
@@ -27,6 +34,82 @@ const rfsIcons = {
 };
 
 /**
+ * Shows flooding as reported by RMS.
+ *
+ * @param lighthouseMap the lighthouse map
+ */
+function showTransportFlooding(lighthouseMap) {
+    console.info('showing RMS reported flooding');
+
+    let url = 'https://neutrino.x73e.net/transport/v1/live/hazards/flood/open';
+    fetch(url)
+        .then((resp) => resp.json())
+        .then(function(data) {
+            let count = 0;
+            if (data && data.features) {
+                for (let i = 0; i < data.features.length; i++) {
+                    let feature = data.features[i];
+
+                    if (feature.geometry.type.toLowerCase() === 'point') {
+                        let lat = feature.geometry.coordinates[1];
+                        let lon = feature.geometry.coordinates[0];
+
+                        let name = feature.properties.displayName;
+                        let details = feature.properties.otherAdvice;
+                        let icon = 'https://www.livetraffic.com/images/icons/hazard/weather-flood.gif';
+
+                        console.debug(`RMS reported flood at [${lat},${lon}]: ${name}`);
+                        lighthouseMap.addImageMarker(lat, lon, icon, name, details);
+                        count++;
+                    }
+                }
+            }
+            console.info(`added ${count} RMS flooding markers`);
+        })
+        .catch(function(error) {
+            console.error(error);
+        });
+}
+
+/**
+ * Shows RMS incidents.
+ *
+ * @param lighthouseMap the lighthouse map.
+ */
+function showTransportIncidents(lighthouseMap) {
+    console.info('showing RMS incidents');
+
+    let url = 'https://neutrino.x73e.net/transport/v1/live/hazards/incident/open';
+    fetch(url)
+        .then((resp) => resp.json())
+        .then(function(data) {
+            let count = 0;
+            if (data && data.features) {
+                for (let i = 0; i < data.features.length; i++) {
+                    let feature = data.features[i];
+
+                    if (feature.geometry.type.toLowerCase() === 'point') {
+                        let lat = feature.geometry.coordinates[1];
+                        let lon = feature.geometry.coordinates[0];
+
+                        let name = feature.properties.displayName;
+                        let details = feature.properties.otherAdvice;
+                        let icon = 'https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif';
+
+                        console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
+                        lighthouseMap.addImageMarker(lat, lon, icon, name, details);
+                        count++;
+                    }
+                }
+            }
+            console.info(`added ${count} RMS incidents`);
+        })
+        .catch(function(error) {
+            console.error(error);
+        });
+}
+
+/**
  * Show rural fires on the map.
  *
  * @param lighthouseMap the Lighthouse map.
@@ -38,11 +121,12 @@ function showRuralFires(lighthouseMap) {
     fetch(url)
         .then((resp) => resp.json())
         .then(function(data) {
+            let count = 0;
             if (data && data.features) {
                 for (let i = 0; i < data.features.length; i++) {
                     let fire = data.features[i];
 
-                    if (fire.geometry.type === 'Point') {
+                    if (fire.geometry.type.toLowerCase() === 'point') {
                         let lat = fire.geometry.coordinates[1];
                         let lon = fire.geometry.coordinates[0];
 
@@ -55,9 +139,11 @@ function showRuralFires(lighthouseMap) {
 
                         console.debug(`RFS incident at [${lat},${lon}]: ${name}`);
                         lighthouseMap.addImageMarker(lat, lon, icon, name, details);
+                        count++;
                     }
                 }
             }
+            console.info(`added ${count} RFS incidents`);
         })
     .catch(function(error) {
         console.error(error);
@@ -70,6 +156,7 @@ function showRuralFires(lighthouseMap) {
  * @param lighthouseMap the map.
  */
 function showRescueHelicopters(lighthouseMap) {
+    console.info('showing rescue helicopters');
 
     // Build the query url
     let url = 'https://opensky-network.org/api/states/all';
@@ -81,6 +168,7 @@ function showRescueHelicopters(lighthouseMap) {
     fetch(url)
         .then((resp) => resp.json())
         .then(function(data) {
+            let count = 0;
             if (data && data.states) {
                 for (let i = 0; i < data.states.length; i++) {
                     let icao24 = data.states[i][0];
@@ -92,11 +180,12 @@ function showRescueHelicopters(lighthouseMap) {
                     let name = heli.name + ' ' + heli.rego;
                     let details = heli.model + '<br/>Lat: ' + lat + ' Lon:' + lon + ' Alt:' + alt;
 
-                    lighthouseMap.addImageMarker(lat, lon,
-                        helicopterIcon,
-                        name, details);
+                    console.debug(`helo at [${lat},${lon}]: ${name}`);
+                    lighthouseMap.addImageMarker(lat, lon, helicopterIcon, name, details);
+                    count++;
                 }
             }
+            console.info(`added ${count} rescue helicopters`);
         })
         .catch(function(error) {
             console.error(error);
@@ -175,7 +264,7 @@ const helicopters = [
 ];
 
 // Some extra data points for dev-time
-if (lighthouseEnviroment === 'Development') {
+if (developmentMode) {
     helicopters.push(
         // ASNSW fixed wing
         new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C'),
