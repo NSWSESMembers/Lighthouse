@@ -2,15 +2,66 @@ window.addEventListener('load', pageFullyLoaded, false);
 
 function pageFullyLoaded(e) {
     //hide the maximize button
-    var max = document.getElementsByClassName('titleButton maximize');
+    let max = document.getElementsByClassName('titleButton maximize');
     max[0].classList.add('hidden');
 
     let map = window['map'];
     let lighthouseMap = new LighthouseMap(map);
     //showRtaIncidents(lighthouseMap);
-    //showRuralFires(lighthouseMap);
+    showRuralFires(lighthouseMap);
     showRescueHelicopters(lighthouseMap);
+    lighthouseMap.addImageMarker(-33.896628, 151.165709, 'http://m.livetraffic.rta.nsw.gov.au/Assets/img/icon_warning.png');
     window['lighthouseMap'] = lighthouseMap;
+}
+
+const helicopterIcon = lighthouseUrl + 'icons/helicopter.png';
+
+// A map of RFS categories to icons
+const rfsIcons = {
+    'Not Applicable': 'icons/rfs_not_applicable.png',
+    'Advice': 'icons/rfs_advice.png',
+
+    // TODO: what are these two values meant to be??
+    'watch': 'icons/rfs_watch_act.png',
+    'emergency': 'icons/rfs_emergency.png'
+};
+
+/**
+ * Show rural fires on the map.
+ *
+ * @param lighthouseMap the Lighthouse map.
+ */
+function showRuralFires(lighthouseMap) {
+    console.info('showing RFS incidents');
+
+    let url = 'https://neutrino.x73e.net/rfs/feeds/majorIncidents.json';
+    fetch(url)
+        .then((resp) => resp.json())
+        .then(function(data) {
+            if (data && data.features) {
+                for (let i = 0; i < data.features.length; i++) {
+                    let fire = data.features[i];
+
+                    if (fire.geometry.type === 'Point') {
+                        let lat = fire.geometry.coordinates[1];
+                        let lon = fire.geometry.coordinates[0];
+
+                        let name = fire.properties.title;
+                        let details = fire.properties.description;
+                        let category = fire.properties.category;
+
+                        let relativeIcon = rfsIcons[category] || rfsIcons['emergency'];
+                        let icon = lighthouseUrl + relativeIcon;
+
+                        console.debug(`RFS incident at [${lat},${lon}]: ${name}`);
+                        lighthouseMap.addImageMarker(lat, lon, icon, name, details);
+                    }
+                }
+            }
+        })
+    .catch(function(error) {
+        console.error(error);
+    });
 }
 
 /**
@@ -42,7 +93,7 @@ function showRescueHelicopters(lighthouseMap) {
                     let details = heli.model + '<br/>Lat: ' + lat + ' Lon:' + lon + ' Alt:' + alt;
 
                     lighthouseMap.addImageMarker(lat, lon,
-                        chrome.extension.getURL("icons/helicopter.png"),
+                        helicopterIcon,
                         name, details);
                 }
             }
@@ -60,11 +111,12 @@ function showRescueHelicopters(lighthouseMap) {
  */
 function findHelicopterById(icao24) {
     for (let i = 0; i < helicopters.length; i++) {
-        if (helicopters[i].icao24 === icao24) {
+        if (helicopters[i].icao24.toLowerCase() === icao24.toLowerCase()) {
             return helicopters[i];
         }
     }
 
+    console.warn('failed to find a helicopter for icao24: ' + icao24);
     return null;
 }
 
@@ -112,8 +164,26 @@ const helicopters = [
     // PolAir
     new Helicopter('7C4D03', 'VH-PHX', 'POLAIR1', 'EC-AS355'),
     new Helicopter('7C4CF8', 'VH-PHM', 'POLAIR4', 'EC-135'),
-    new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', '412EPI'),
+    new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'Bell 412EPI'),
+
+    // Some QLD based helicopters which may cross south
+    // QLD RAAF Rescue helicopter
+    new Helicopter('7C37B7', 'VH-LAH', 'CHOP41', 'Sikorsky S-76A'),
+
+    // RACQ Lifeflight
+    new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412')
 ];
+
+// Some extra data points for dev-time
+if (lighthouseEnviroment === 'Development') {
+    helicopters.push(
+        // ASNSW fixed wing
+        new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C'),
+
+        // Royal Flying Doctor's Service
+        new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C')
+    );
+}
 
 // Load all the arcgis classes
 const GraphicsLayer = eval('require("esri/layers/GraphicsLayer");');
@@ -135,6 +205,8 @@ class LighthouseMap {
      */
     constructor(map) {
         this.map = map;
+
+        console.debug('Setting up map');
 
         this.graphicsLayer = new GraphicsLayer();
         this.graphicsLayer.id = 'lighthouseLayer';
@@ -174,7 +246,7 @@ class LighthouseMap {
 
         let marker = new SimpleMarkerSymbol(style);
         marker.title = title;
-        marker.details = title;
+        marker.details = details;
 
         this.graphicsLayer.add(new Graphic(point, marker));
         return marker;
@@ -201,7 +273,7 @@ class LighthouseMap {
         marker.setWidth(16);
         marker.setUrl(imageUrl);
         marker.title = title;
-        marker.details = title;
+        marker.details = details;
 
         this.graphicsLayer.add(new Graphic(point, marker));
         return marker;
