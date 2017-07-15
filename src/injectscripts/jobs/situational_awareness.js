@@ -19,6 +19,9 @@ function pageFullyLoaded(e) {
     window['lighthouseMap'] = lighthouseMap;
 }
 
+// https://www.rfs.nsw.gov.au/__data/assets/image/0016/961/rfs-logo-main.png
+// https://www.livetraffic.com/images/misc/live-traffic-nsw-logo.png
+
 const developmentMode = lighthouseEnviroment === 'Development';
 const testIcon = lighthouseUrl + 'icons/lh-black.png';
 const helicopterIcon = lighthouseUrl + 'icons/helicopter.png';
@@ -260,7 +263,11 @@ const helicopters = [
     new Helicopter('7C37B7', 'VH-LAH', 'CHOP41', 'Sikorsky S-76A'),
 
     // RACQ Lifeflight
-    new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412')
+    new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412'),
+
+    // Some VIC base helicopters which may cross north
+    // Victoria Helicopter Emergency Medical Service (HEMS)
+    new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139')
 ];
 
 // Some extra data points for dev-time
