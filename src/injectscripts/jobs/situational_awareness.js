@@ -267,7 +267,9 @@ const helicopters = [
 
     // Some VIC base helicopters which may cross north
     // Victoria Helicopter Emergency Medical Service (HEMS)
-    new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139')
+    new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139'),
+    new Helicopter('7C7CC5', 'VH-YXJ', 'HEMS4', 'AW-139'),
+    new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139')
 ];
 
 // Some extra data points for dev-time
@@ -275,6 +277,7 @@ if (developmentMode) {
     helicopters.push(
         // ASNSW fixed wing
         new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C'),
+        new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C'),
 
         // Royal Flying Doctor's Service
         new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C')
@@ -373,5 +376,21 @@ class LighthouseMap {
 
         this.graphicsLayer.add(new Graphic(point, marker));
         return marker;
+    }
+
+    /**
+     * Removes a marker from the map.
+     *
+     * @param marker the marker to remove.
+     */
+    removeMarker(marker) {
+        this.graphicsLayer.remove(marker);
+    }
+
+    /**
+     * Clears all markers from the map.
+     */
+    clear() {
+        this.graphicsLayer.clear();
     }
 }
