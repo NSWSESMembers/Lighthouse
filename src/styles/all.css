@@ -184,6 +184,18 @@ div[data-bind="text: $data"] {
   background-color: darkgoldenrod;
 }
 
+.tag-lh-filter {
+  background-color: #fff;
+  color: #0000ba;
+  border-color: #0000ba
+}
+
+.tag-lh-filter.tag-disabled {
+  background-color: #1e53c5;
+  color: #fff;
+  border: 1px solid #0000ba;
+  cursor: default
+}
 
 body.previewbeacon {}
 body.previewbeacon #navbar,

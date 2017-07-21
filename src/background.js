@@ -42,12 +42,32 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.runtime.onMessage.addListener(
 	function(request, sender, sendResponse) {
-		console.log(request)
-		if (request.type == "asbestos"){
+		console.log(request);
+		if (request.type === "asbestos") {
 			checkAsbestosRegister(request.address,function(result,colour,bool,url){
 				sendResponse({result: result, colour: colour, resultbool: bool, requrl: url})
-			})
+			});
 			return true;
+		} else if (request.type === 'rfs') {
+			fetchRfsIncidents(function(data) {
+                sendResponse(data);
+            });
+            return true;
+		} else if (request.type === 'transport-incidents') {
+            fetchTransportResource('v1/live/hazards/incident/open', function(data) {
+            	sendResponse(data);
+			});
+            return true;
+		} else if (request.type === 'transport-flood-reports') {
+            fetchTransportResource('v1/live/hazards/flood/open', function(data) {
+                sendResponse(data);
+            });
+            return true;
+		} else if (request.type === 'helicopters') {
+            fetchHelicopterLocations(request.params, function(data) {
+                sendResponse(data);
+            });
+            return true;
 		}
 	});
 
@@ -64,6 +84,80 @@ function loadSynchronously(url) {
 	}
 }
 
+/**
+ * Fetches the current RFS incidents from their JSON feed.
+ *
+ * @param callback the callback to send the data to.
+ */
+function fetchRfsIncidents(callback) {
+	console.info('fetching RFS incidents');
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            callback(JSON.parse(xhttp.responseText));
+        } else {
+            // error
+            var response = {
+                error: 'Request failed',
+                httpCode: this.status
+            };
+            callback(response);
+        }
+    };
+    xhttp.open('GET', 'https://www.rfs.nsw.gov.au/feeds/majorIncidents.json', true);
+    xhttp.send();
+}
+
+/**
+ * Fetches a resource from the transport API.
+ *
+ * @param path the path to the resource, e.g. ''.
+ * @param callback the callback to send the data to.
+ */
+function fetchTransportResource(path, callback) {
+	console.info('fetching transport resource: ' + path);
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            callback(JSON.parse(xhttp.responseText));
+        } else {
+            // error
+            var response = {
+                error: 'Request failed',
+                httpCode: this.status
+            };
+            callback(response);
+        }
+    };
+    xhttp.open('GET', 'https://api.transport.nsw.gov.au/' + path, true);
+    xhttp.setRequestHeader('Authorization', 'apikey ');
+    xhttp.send();
+}
+
+/**
+ * Fetches the current rescue helicopter locations.
+ *
+ * @param params the HTTP URL parameters to add.
+ * @param callback the callback to send the data to.
+ */
+function fetchHelicopterLocations(params, callback) {
+    console.info('fetching helicopter locations');
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            callback(JSON.parse(xhttp.responseText));
+        } else {
+            // error
+            var response = {
+                error: 'Request failed',
+                httpCode: this.status
+            };
+            callback(response);
+        }
+    };
+    xhttp.open('GET', 'https://opensky-network.org/api/states/all' + params, true);
+    xhttp.send();
+}
 
 function checkAsbestosRegister( inAddressObject, cb ){
 

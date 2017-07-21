@@ -7,23 +7,58 @@ function pageFullyLoaded(e) {
 
     let map = window['map'];
     let lighthouseMap = new LighthouseMap(map);
-    showTransportFlooding(lighthouseMap);
-    showTransportIncidents(lighthouseMap);
-    showRuralFires(lighthouseMap);
-    showRescueHelicopters(lighthouseMap);
+    lighthouseMap.createLayer('rfs');
+    lighthouseMap.createLayer('transport-incidents');
+    lighthouseMap.createLayer('transport-flood-reports');
+    lighthouseMap.createLayer('helicopters');
 
     if (developmentMode) {
         // Add a test point
-        lighthouseMap.addImageMarker(-33.798796, 150.997393, testIcon);
+        lighthouseMap.layers['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon,  'Parramatta SES',
+            'This is a test marker. It is used to check whether the map access is working');
     }
     window['lighthouseMap'] = lighthouseMap;
 }
 
-// https://www.rfs.nsw.gov.au/__data/assets/image/0016/961/rfs-logo-main.png
-// https://www.livetraffic.com/images/misc/live-traffic-nsw-logo.png
+window.addEventListener("message", function(event) {
+    // We only accept messages from ourselves
+    if (event.source !== window)
+        return;
+
+    const lighthouseMap = window['lighthouseMap'];
+
+    if (event.data.type) {
+        if (event.data.type === "LH_REQUEST_HELI_PARAMS") {
+            let params = buildHeliParams();
+            window.postMessage({ type: 'LH_RESPONSE_HELI_PARAMS', params: params }, '*');
+
+        } else if (event.data.type === "LH_UPDATE_LAYERS_DATA") {
+            let mapLayerName = event.data.layer;
+            let mapLayer = lighthouseMap.layers[mapLayerName];
+            mapLayer.clear();
+
+            if (event.data.layer === 'rfs') {
+                showRuralFires(mapLayer, event.data.response);
+
+            } else if (event.data.layer === 'transport-incidents') {
+                showTransportIncidents(mapLayer, event.data.response);
+
+            } else if (event.data.layer === 'transport-flood-reports') {
+                showTransportFlooding(mapLayer, event.data.response);
+
+            } else if (event.data.layer === 'helicopters') {
+                showRescueHelicopters(mapLayer, event.data.response)
+            }
+
+        } else if (event.data.type === "LH_CLEAR_LAYER_DATA") {
+            console.info("clearing layer:" + event.data.layer);
+            lighthouseMap.layers[event.data.layer].clear();
+        }
+    }
+});
 
 const developmentMode = lighthouseEnviroment === 'Development';
-const testIcon = lighthouseUrl + 'icons/lh-black.png';
+const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
 const helicopterIcon = lighthouseUrl + 'icons/helicopter.png';
 
 // A map of RFS categories to icons
@@ -39,160 +74,142 @@ const rfsIcons = {
 /**
  * Shows flooding as reported by RMS.
  *
- * @param lighthouseMap the lighthouse map
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
  */
-function showTransportFlooding(lighthouseMap) {
+function showTransportFlooding(mapLayer, data) {
     console.info('showing RMS reported flooding');
 
-    let url = 'https://neutrino.x73e.net/transport/v1/live/hazards/flood/open';
-    fetch(url)
-        .then((resp) => resp.json())
-        .then(function(data) {
-            let count = 0;
-            if (data && data.features) {
-                for (let i = 0; i < data.features.length; i++) {
-                    let feature = data.features[i];
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let feature = data.features[i];
 
-                    if (feature.geometry.type.toLowerCase() === 'point') {
-                        let lat = feature.geometry.coordinates[1];
-                        let lon = feature.geometry.coordinates[0];
+            if (feature.geometry.type.toLowerCase() === 'point') {
+                let lat = feature.geometry.coordinates[1];
+                let lon = feature.geometry.coordinates[0];
 
-                        let name = feature.properties.displayName;
-                        let details = feature.properties.otherAdvice;
-                        let icon = 'https://www.livetraffic.com/images/icons/hazard/weather-flood.gif';
+                let name = feature.properties.displayName;
+                let details = feature.properties.otherAdvice;
+                let icon = 'https://www.livetraffic.com/images/icons/hazard/weather-flood.gif';
 
-                        console.debug(`RMS reported flood at [${lat},${lon}]: ${name}`);
-                        lighthouseMap.addImageMarker(lat, lon, icon, name, details);
-                        count++;
-                    }
-                }
+                console.debug(`RMS reported flood at [${lat},${lon}]: ${name}`);
+                mapLayer.addImageMarker(lat, lon, icon, name, details);
+                count++;
             }
-            console.info(`added ${count} RMS flooding markers`);
-        })
-        .catch(function(error) {
-            console.error(error);
-        });
+        }
+    }
+    console.info(`added ${count} RMS flooding markers`);
 }
 
 /**
  * Shows RMS incidents.
  *
- * @param lighthouseMap the lighthouse map.
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
  */
-function showTransportIncidents(lighthouseMap) {
+function showTransportIncidents(mapLayer, data) {
     console.info('showing RMS incidents');
 
-    let url = 'https://neutrino.x73e.net/transport/v1/live/hazards/incident/open';
-    fetch(url)
-        .then((resp) => resp.json())
-        .then(function(data) {
-            let count = 0;
-            if (data && data.features) {
-                for (let i = 0; i < data.features.length; i++) {
-                    let feature = data.features[i];
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let feature = data.features[i];
 
-                    if (feature.geometry.type.toLowerCase() === 'point') {
-                        let lat = feature.geometry.coordinates[1];
-                        let lon = feature.geometry.coordinates[0];
+            if (feature.geometry.type.toLowerCase() === 'point') {
+                let lat = feature.geometry.coordinates[1];
+                let lon = feature.geometry.coordinates[0];
 
-                        let name = feature.properties.displayName;
-                        let details = feature.properties.otherAdvice;
-                        let icon = 'https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif';
+                let name = feature.properties.displayName;
+                let details = feature.properties.otherAdvice;
+                let icon = 'https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif';
 
-                        console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
-                        lighthouseMap.addImageMarker(lat, lon, icon, name, details);
-                        count++;
-                    }
-                }
+                console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
+                mapLayer.addImageMarker(lat, lon, icon, name, details);
+                count++;
             }
-            console.info(`added ${count} RMS incidents`);
-        })
-        .catch(function(error) {
-            console.error(error);
-        });
+        }
+    }
+    console.info(`added ${count} RMS incidents`);
 }
 
 /**
  * Show rural fires on the map.
  *
- * @param lighthouseMap the Lighthouse map.
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
  */
-function showRuralFires(lighthouseMap) {
+function showRuralFires(mapLayer, data) {
     console.info('showing RFS incidents');
 
-    let url = 'https://neutrino.x73e.net/rfs/feeds/majorIncidents.json';
-    fetch(url)
-        .then((resp) => resp.json())
-        .then(function(data) {
-            let count = 0;
-            if (data && data.features) {
-                for (let i = 0; i < data.features.length; i++) {
-                    let fire = data.features[i];
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let fire = data.features[i];
 
-                    if (fire.geometry.type.toLowerCase() === 'point') {
-                        let lat = fire.geometry.coordinates[1];
-                        let lon = fire.geometry.coordinates[0];
+            if (fire.geometry.type.toLowerCase() === 'point') {
+                let lat = fire.geometry.coordinates[1];
+                let lon = fire.geometry.coordinates[0];
 
-                        let name = fire.properties.title;
-                        let details = fire.properties.description;
-                        let category = fire.properties.category;
+                let name = fire.properties.title;
+                let details = fire.properties.description;
+                let category = fire.properties.category;
 
-                        let relativeIcon = rfsIcons[category] || rfsIcons['emergency'];
-                        let icon = lighthouseUrl + relativeIcon;
+                let relativeIcon = rfsIcons[category] || rfsIcons['emergency'];
+                let icon = lighthouseUrl + relativeIcon;
 
-                        console.debug(`RFS incident at [${lat},${lon}]: ${name}`);
-                        lighthouseMap.addImageMarker(lat, lon, icon, name, details);
-                        count++;
-                    }
-                }
+                console.debug(`RFS incident at [${lat},${lon}]: ${name}`);
+                mapLayer.addImageMarker(lat, lon, icon, name, details);
+                count++;
             }
-            console.info(`added ${count} RFS incidents`);
-        })
-    .catch(function(error) {
-        console.error(error);
-    });
+        }
+    }
+    console.info(`added ${count} RFS incidents`);
+}
+
+/**
+ * Builds the params string for the helicopter's update request.
+ *
+ * @returns the params.
+ */
+function buildHeliParams() {
+    // Build the query url
+    let params = '';
+    for (let i = 0; i < helicopters.length; i++) {
+        params += i === 0 ? '?' : '&';
+        params += 'icao24=' + helicopters[i].icao24.toLowerCase();
+    }
+
+    return params
 }
 
 /**
  * Shows the current position of known rescue helicopters on the map.
  *
- * @param lighthouseMap the map.
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
  */
-function showRescueHelicopters(lighthouseMap) {
+function showRescueHelicopters(mapLayer, data) {
     console.info('showing rescue helicopters');
 
-    // Build the query url
-    let url = 'https://opensky-network.org/api/states/all';
-    for (let i = 0; i < helicopters.length; i++) {
-        url += i === 0 ? '?' : '&';
-        url += 'icao24=' + helicopters[i].icao24.toLowerCase();
+    let count = 0;
+    if (data && data.states) {
+        for (let i = 0; i < data.states.length; i++) {
+            let icao24 = data.states[i][0];
+            let lon = data.states[i][5];
+            let lat = data.states[i][6];
+            let alt = data.states[i][7];
+
+            let heli = findHelicopterById(icao24);
+            let name = heli.name + ' ' + heli.rego;
+            let details = heli.model + '<br/>Lat: ' + lat + ' Lon:' + lon + ' Alt:' + alt;
+
+            console.debug(`helo at [${lat},${lon}]: ${name}`);
+            mapLayer.addImageMarker(lat, lon, helicopterIcon, name, details);
+            count++;
+        }
     }
-
-    fetch(url)
-        .then((resp) => resp.json())
-        .then(function(data) {
-            let count = 0;
-            if (data && data.states) {
-                for (let i = 0; i < data.states.length; i++) {
-                    let icao24 = data.states[i][0];
-                    let lon = data.states[i][5];
-                    let lat = data.states[i][6];
-                    let alt = data.states[i][7];
-
-                    let heli = findHelicopterById(icao24);
-                    let name = heli.name + ' ' + heli.rego;
-                    let details = heli.model + '<br/>Lat: ' + lat + ' Lon:' + lon + ' Alt:' + alt;
-
-                    console.debug(`helo at [${lat},${lon}]: ${name}`);
-                    lighthouseMap.addImageMarker(lat, lon, helicopterIcon, name, details);
-                    count++;
-                }
-            }
-            console.info(`added ${count} rescue helicopters`);
-        })
-        .catch(function(error) {
-            console.error(error);
-        });
+    console.info(`added ${count} rescue helicopters`);
 }
 
 /**
@@ -258,11 +275,15 @@ const helicopters = [
     new Helicopter('7C4CF8', 'VH-PHM', 'POLAIR4', 'EC-135'),
     new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'Bell 412EPI'),
 
+    // Royal Australian Navy / CHC
+    new Helicopter('7C44C8', 'VH-NVE', 'CHOP26', 'AW-139'),
+
     // Some QLD based helicopters which may cross south
     // QLD RAAF Rescue helicopter
     new Helicopter('7C37B7', 'VH-LAH', 'CHOP41', 'Sikorsky S-76A'),
 
     // RACQ Lifeflight
+    new Helicopter('7C759B', 'VH-XIL', 'RSCU511', 'AW139'),
     new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412'),
 
     // Some VIC base helicopters which may cross north
@@ -277,7 +298,8 @@ if (developmentMode) {
     helicopters.push(
         // ASNSW fixed wing
         new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C'),
-        new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C'),
+        new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C'), // Also seen as AM271
+        new Helicopter('7C01C1', 'VH-AMR', 'AM207', 'Super King B200C'),
 
         // Royal Flying Doctor's Service
         new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C')
@@ -307,11 +329,30 @@ class LighthouseMap {
 
         console.debug('Setting up map');
 
-        this.graphicsLayer = new GraphicsLayer();
-        this.graphicsLayer.id = 'lighthouseLayer';
-        this.graphicsLayer.on('click', this._handleClick);
+        this.createLayer('default');
+    }
 
-        this.map.addLayer(this.graphicsLayer);
+    /**
+     * Creates a map layer.
+     *
+     * @param name the name of the layer.
+     */
+    createLayer(name) {
+        let graphicsLayer = new GraphicsLayer();
+        graphicsLayer.id = 'lighthouseLayer-' + name;
+        graphicsLayer.on('click', this._handleClick);
+
+        this.map.addLayer(graphicsLayer);
+        this.layers[name] = new MapLayer(graphicsLayer);
+    }
+
+    /**
+     * Gets the map layers.
+     *
+     * @returns the layers.
+     */
+    layers() {
+        return this._layers;
     }
 
     /**
@@ -325,6 +366,21 @@ class LighthouseMap {
         this._map.infoWindow.setTitle(event.graphic.symbol.title);
         this._map.infoWindow.setContent(event.graphic.symbol.details);
         this._map.infoWindow.show(event.mapPoint);
+    }
+}
+
+/**
+ * A class for helping out with map layer access.
+ */
+class MapLayer {
+
+    /**
+     * Constructs a new map layer.
+     *
+     * @param layer the arcgis graphics layer.
+     */
+    constructor(layer) {
+        this.graphicsLayer = layer;
     }
 
     /**
