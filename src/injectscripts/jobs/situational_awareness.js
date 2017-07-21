@@ -257,7 +257,7 @@ const helicopters = [
     new Helicopter('7C617A', 'VH-TJG', 'RSCU203', 'AW-139'),
     new Helicopter('7C617B', 'VH-TJH', 'RSCU204', 'AW-139'),
     new Helicopter('7C617C', 'VH-TJI', 'RSCU206', 'AW-139'),
-    //new Helicopter('7C617D', 'VH-TJJ', '??', 'AW-139'),
+    new Helicopter('7C617D', 'VH-TJJ', 'RSCU207', 'AW-139'),
     new Helicopter('7C617E', 'VH-TJK', 'RSCU208', 'AW-139'),
     new Helicopter('7C6182', 'VH-TJO', 'RSCU209', 'AW-139'),
 
@@ -284,10 +284,12 @@ const helicopters = [
 
     // RACQ Lifeflight
     new Helicopter('7C759B', 'VH-XIL', 'RSCU511', 'AW139'),
+    new Helicopter('7C7599', 'VH-XIJ', 'RSCU533', 'AW139'),
     new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412'),
 
     // Some VIC base helicopters which may cross north
     // Victoria Helicopter Emergency Medical Service (HEMS)
+    new Helicopter('7C7CC6', 'VH-YXK', 'HEMS1', 'AW-139'),
     new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139'),
     new Helicopter('7C7CC5', 'VH-YXJ', 'HEMS4', 'AW-139'),
     new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139')
@@ -299,6 +301,7 @@ if (developmentMode) {
         // ASNSW fixed wing
         new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C'),
         new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C'), // Also seen as AM271
+        new Helicopter('7C01C2', 'VH-AMS', 'AM203', 'Super King B200C'),
         new Helicopter('7C01C1', 'VH-AMR', 'AM207', 'Super King B200C'),
 
         // Royal Flying Doctor's Service
