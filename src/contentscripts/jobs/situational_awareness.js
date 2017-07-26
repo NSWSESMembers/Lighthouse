@@ -80,7 +80,7 @@ function registerClickHandler(buttonId, layer, timer, updateFunction, interval) 
 registerClickHandler('toggleRfsIncidentsBtn', 'rfs', pollRfsTimer, requestRfsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', pollTransportIncidentsTimer, requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', pollTransportFloodReportsTimer, requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
-registerClickHandler('toggleHelicoptersBtn', 'helicopters', pollHelicoptersTimer, requestHelicoptersLayerUpdate, 60000); // every min
+registerClickHandler('toggleHelicoptersBtn', 'helicopters', pollHelicoptersTimer, requestHelicoptersLayerUpdate, 10000); // every 10s
 
 /**
  * Sends a request to the background script to get the latest RFS incidents.

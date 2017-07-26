@@ -59,7 +59,6 @@ window.addEventListener("message", function(event) {
 
 const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
-const helicopterIcon = lighthouseUrl + 'icons/helicopter.png';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -192,9 +191,9 @@ function showRuralFires(mapLayer, data) {
 function buildHeliParams() {
     // Build the query url
     let params = '';
-    for (let i = 0; i < helicopters.length; i++) {
+    for (let i = 0; i < aircraft.length; i++) {
         params += i === 0 ? '?' : '&';
-        params += 'icao24=' + helicopters[i].icao24.toLowerCase();
+        params += 'icao24=' + aircraft[i].icao24.toLowerCase();
     }
 
     return params
@@ -213,16 +212,34 @@ function showRescueHelicopters(mapLayer, data) {
     if (data && data.states) {
         for (let i = 0; i < data.states.length; i++) {
             let icao24 = data.states[i][0];
+            let positionUpdated = data.states[i][3];
             let lon = data.states[i][5];
             let lat = data.states[i][6];
             let alt = data.states[i][7];
+            let heading = data.states[i][10] || 0;
 
-            let heli = findHelicopterById(icao24);
+            let updated = "unknown";
+            if (positionUpdated) {
+                updated = moment(positionUpdated * 1000).format('YYYY-MM-DD HH:mm:ss');
+            }
+            let dateDetails =
+                `<div class="dateDetails">\
+                 <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
+                 </div>`;
+
+            let heli = findAircraftById(icao24);
             let name = heli.name + ' ' + heli.rego;
-            let details = heli.model + '<br/>Lat: ' + lat + ' Lon:' + lon + ' Alt:' + alt;
+            let details =
+                `<div>${heli.model}</div>\
+                 <div>Lat: ${lat} Lon: ${lon} Alt: ${alt}</div>\
+                 ${dateDetails}`;
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
-            mapLayer.addImageMarker(lat, lon, helicopterIcon, name, details);
+            let marker = mapLayer.createImageMarker(heli.getIcon(), name, details);
+            marker.setWidth(32);
+            marker.setHeight(32);
+            marker.setAngle(heading);
+            mapLayer.addMarker(lat, lon, marker);
             count++;
         }
     }
@@ -230,15 +247,15 @@ function showRescueHelicopters(mapLayer, data) {
 }
 
 /**
- * Finds a helicopter by it's ICAO-24 ID.
+ * Finds an aircraft by it's ICAO-24 ID.
  *
  * @param icao24 the ID.
- * @returns the helicopter, or {@code null} if no match is found.
+ * @returns the aircraft, or {@code null} if no match is found.
  */
-function findHelicopterById(icao24) {
-    for (let i = 0; i < helicopters.length; i++) {
-        if (helicopters[i].icao24.toLowerCase() === icao24.toLowerCase()) {
-            return helicopters[i];
+function findAircraftById(icao24) {
+    for (let i = 0; i < aircraft.length; i++) {
+        if (aircraft[i].icao24.toLowerCase() === icao24.toLowerCase()) {
+            return aircraft[i];
         }
     }
 
@@ -247,27 +264,44 @@ function findHelicopterById(icao24) {
 }
 
 /**
- * A class for rescue helicopter details
+ * A class for rescue aircraft details
  */
 class Helicopter {
     /**
-     * Constructs a new helicopter.
+     * Constructs a new aircraft.
      *
      * @param icao24 the ICAO-24 hex code.
      * @param rego the registration tag, e.g. "VH-TJE".
      * @param name the flight name, e.g. "RSCU201".
      * @param model the model, e.g. "AW-139".
+     * @param colour the colour for the marker.
+     * @param heli {@code true} if this is a helicopter.
      */
-    constructor(icao24, rego, name, model) {
+    constructor(icao24, rego, name, model, colour = '#ffffff', heli = true) {
         this.icao24 = icao24;
         this.rego = rego;
         this.name = name;
         this.model = model;
+        this.colour = colour;
+        this.heli = heli;
+    }
+
+    /**
+     * Gets an icon for this aircraft.
+     *
+     * @returns {string} the URL to the icon.
+     */
+    getIcon() {
+        if (this.heli) {
+            return lighthouseUrl + 'icons/helicopter.png';
+        } else {
+            return lighthouseUrl + 'icons/plane.png';
+        }
     }
 }
 
 // A list of rescue helicopters
-const helicopters = [
+const aircraft = [
     // Toll Air Ambulance
     new Helicopter('7C6178', 'VH-TJE', 'RSCU201', 'AW-139'),
     new Helicopter('7C6179', 'VH-TJF', 'RSCU202', 'AW-139'),
@@ -314,21 +348,26 @@ const helicopters = [
     new Helicopter('7C7CC6', 'VH-YXK', 'HEMS1', 'AW-139'),
     new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139'),
     new Helicopter('7C7CC5', 'VH-YXJ', 'HEMS4', 'AW-139'),
-    new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139')
+    new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139'),
+
+    // RFS fixed wing aircraft
+    new Helicopter('A4C031', 'N405LC', 'Thor', 'C130'),
+    new Helicopter('ACC37A', 'N512AX', '', 'DC-10'), // Bomber 910?
+    // Whoa, there appear to be a lot of these...
 ];
 
 // Some extra data points for dev-time
 if (developmentMode) {
-    helicopters.push(
+    aircraft.push(
         // ASNSW fixed wing
-        new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C'),
-        new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C'), // Also seen as AM271
-        new Helicopter('7C01C2', 'VH-AMS', 'AM203', 'Super King B200C'),
-        new Helicopter('7C01C1', 'VH-AMR', 'AM207', 'Super King B200C'),
-        new Helicopter('7C01C0', 'VH-AMQ', 'AM297', 'Super King B200C'),
+        new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C', false),
+        new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C', false), // Also seen as AM271
+        new Helicopter('7C01C2', 'VH-AMS', 'AM203', 'Super King B200C', false),
+        new Helicopter('7C01C1', 'VH-AMR', 'AM207', 'Super King B200C', false),
+        new Helicopter('7C01C0', 'VH-AMQ', 'AM297', 'Super King B200C', false),
 
         // Royal Flying Doctor's Service
-        new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C')
+        new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C', false)
     );
 }
 
@@ -338,7 +377,7 @@ const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
 const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
 const Point = eval('require("esri/geometry/Point");');
 const Graphic = eval('require("esri/graphic");');
-const InfoTemplate = eval('require("esri/InfoTemplate");');
+const Color = eval('require("esri/Color");');
 
 /**
  * A class for helping out with map access.
@@ -434,6 +473,25 @@ class MapLayer {
     }
 
     /**
+     * Creates an image marker.
+     *
+     * @param imageUrl the URL for the marker's image.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
+     * @return the marker to customise.
+     */
+    createImageMarker(imageUrl, title='', details='') {
+        let marker = new PictureMarkerSymbol();
+        marker.setHeight(16);
+        marker.setWidth(16);
+        marker.setUrl(imageUrl);
+        marker.title = title;
+        marker.details = details;
+
+        return marker;
+    }
+
+    /**
      * Adds an image marker to the map.
      *
      * @param lat the latitude.
@@ -444,20 +502,25 @@ class MapLayer {
      * @return the marker to customise.
      */
     addImageMarker(lat, lon, imageUrl, title='', details='') {
+        let marker = this.createImageMarker(imageUrl, title, details);
+        this.addMarker(lat, lon, marker);
+        return marker;
+    }
+
+    /**
+     * Adds an marker to the map.
+     *
+     * @param lat the latitude.
+     * @param lon the longitude.
+     * @param marker the marker to add.
+     */
+    addMarker(lat, lon, marker) {
         let point = new Point({
             latitude: lat,
             longitude: lon
         });
 
-        let marker = new PictureMarkerSymbol();
-        marker.setHeight(16);
-        marker.setWidth(16);
-        marker.setUrl(imageUrl);
-        marker.title = title;
-        marker.details = details;
-
         this.graphicsLayer.add(new Graphic(point, marker));
-        return marker;
     }
 
     /**
