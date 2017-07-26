@@ -197,6 +197,14 @@ div[data-bind="text: $data"] {
   cursor: default
 }
 
+.dateDetails {
+  margin-top: 0.5em;
+}
+
+.dateDetailsLabel {
+  font-weight: bold;
+}
+
 body.previewbeacon {}
 body.previewbeacon #navbar,
 body.previewbeacon .navbar-header {

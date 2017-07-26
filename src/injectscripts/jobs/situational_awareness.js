@@ -65,11 +65,42 @@ const helicopterIcon = lighthouseUrl + 'icons/helicopter.png';
 const rfsIcons = {
     'Not Applicable': 'icons/rfs_not_applicable.png',
     'Advice': 'icons/rfs_advice.png',
-
-    // TODO: what are these two values meant to be??
-    'watch': 'icons/rfs_watch_act.png',
-    'emergency': 'icons/rfs_emergency.png'
+    'Watch and Act': 'icons/rfs_watch_act.png',
+    'Emergency Warning': 'icons/rfs_emergency.png',
+    'unknown': 'icons/rfs_emergency.png'
 };
+
+/**
+ * Adds a point from RMS data to the map layer.
+ *
+ * @param mapLayer the layer to add to.
+ * @param point the point to add.
+ * @param icon the icon.
+ */
+function addTransportPoint(mapLayer, point, icon) {
+
+    let lat = point.geometry.coordinates[1];
+    let lon = point.geometry.coordinates[0];
+
+    let name = point.properties.displayName;
+
+    let created = moment(point.properties.created).format('YYYY-MM-DD HH:mm:ss');
+    let updated = moment(point.properties.lastUpdated).format('YYYY-MM-DD HH:mm:ss');
+    let dateDetails =
+        `<div class="dateDetails">\
+           <div><span class="dateDetailsLabel">Created: </span> ${created}</div>\
+           <div><span class="dateDetailsLabel">Updated: </span> ${updated}</div>\
+         </div>`;
+
+    let details =
+        `<div>${point.properties.adviceA}</div>\
+         <div>${point.properties.adviceB}</div>\
+         <div>${point.properties.otherAdvice}</div>\
+         ${dateDetails}`;
+
+    console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
+    mapLayer.addImageMarker(lat, lon, icon, name, details);
+}
 
 /**
  * Shows flooding as reported by RMS.
@@ -86,15 +117,8 @@ function showTransportFlooding(mapLayer, data) {
             let feature = data.features[i];
 
             if (feature.geometry.type.toLowerCase() === 'point') {
-                let lat = feature.geometry.coordinates[1];
-                let lon = feature.geometry.coordinates[0];
-
-                let name = feature.properties.displayName;
-                let details = feature.properties.otherAdvice;
                 let icon = 'https://www.livetraffic.com/images/icons/hazard/weather-flood.gif';
-
-                console.debug(`RMS reported flood at [${lat},${lon}]: ${name}`);
-                mapLayer.addImageMarker(lat, lon, icon, name, details);
+                addTransportPoint(mapLayer, feature, icon);
                 count++;
             }
         }
@@ -117,15 +141,8 @@ function showTransportIncidents(mapLayer, data) {
             let feature = data.features[i];
 
             if (feature.geometry.type.toLowerCase() === 'point') {
-                let lat = feature.geometry.coordinates[1];
-                let lon = feature.geometry.coordinates[0];
-
-                let name = feature.properties.displayName;
-                let details = feature.properties.otherAdvice;
                 let icon = 'https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif';
-
-                console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
-                mapLayer.addImageMarker(lat, lon, icon, name, details);
+                addTransportPoint(mapLayer, feature, icon);
                 count++;
             }
         }
@@ -155,7 +172,7 @@ function showRuralFires(mapLayer, data) {
                 let details = fire.properties.description;
                 let category = fire.properties.category;
 
-                let relativeIcon = rfsIcons[category] || rfsIcons['emergency'];
+                let relativeIcon = rfsIcons[category] || rfsIcons['unknown'];
                 let icon = lighthouseUrl + relativeIcon;
 
                 console.debug(`RFS incident at [${lat},${lon}]: ${name}`);
@@ -265,6 +282,7 @@ const helicopters = [
     new Helicopter('7C0635', 'VH-BIF', 'CFH4', 'BK117'),
 
     // Westpac
+    new Helicopter('7C5CC0', 'VH-SLU', 'LIFE21', 'BK117'),
     new Helicopter('7C81CC', 'VH-ZXA', 'WP1', 'AW-139'),
     new Helicopter('7C81CD', 'VH-ZXB', 'WP2', 'AW-139'),
     new Helicopter('7C81CE', 'VH-ZXC', 'WP3', 'AW-139'),
@@ -276,9 +294,13 @@ const helicopters = [
     new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'Bell 412EPI'),
 
     // Royal Australian Navy / CHC
+    new Helicopter('7C37B8', 'VH-LAI', 'CHOP22', 'Sikorsky S-76A'),
     new Helicopter('7C44C8', 'VH-NVE', 'CHOP26', 'AW-139'),
 
     // Some QLD based helicopters which may cross south
+    // QLD Westpac
+    new Helicopter('7C44CA', 'VH-NVG', 'LIFE45', 'EC-135'),
+
     // QLD RAAF Rescue helicopter
     new Helicopter('7C37B7', 'VH-LAH', 'CHOP41', 'Sikorsky S-76A'),
 
@@ -303,6 +325,7 @@ if (developmentMode) {
         new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C'), // Also seen as AM271
         new Helicopter('7C01C2', 'VH-AMS', 'AM203', 'Super King B200C'),
         new Helicopter('7C01C1', 'VH-AMR', 'AM207', 'Super King B200C'),
+        new Helicopter('7C01C0', 'VH-AMQ', 'AM297', 'Super King B200C'),
 
         // Royal Flying Doctor's Service
         new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C')
