@@ -65,6 +65,8 @@ function registerClickHandler(buttonId, layer, timer, updateFunction, interval) 
             var button = $(`#${buttonId}`);
             var disabled = button.hasClass('tag-disabled');
 
+            localStorage.setItem('Lighthouse-' + buttonId, disabled);
+
             if (disabled) {
                 updateFunction();
                 timer = setInterval(updateFunction, interval);
@@ -81,6 +83,19 @@ registerClickHandler('toggleRfsIncidentsBtn', 'rfs', pollRfsTimer, requestRfsLay
 registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', pollTransportIncidentsTimer, requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', pollTransportFloodReportsTimer, requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleHelicoptersBtn', 'helicopters', pollHelicoptersTimer, requestHelicoptersLayerUpdate, 10000); // every 10s
+
+//Clear all lighthouse filters when click. A little hacky by changing the button class then calling the click to clear inbuild timers and layers.
+//saves recreating functions outside of registerClickHandler
+$('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
+    function () {
+        console.log('resetting lighthouse layers');
+        var buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleHelicoptersBtn']
+        buttons.forEach(function (buttonId) {
+            var button = $(`#${buttonId}`);
+            button.removeClass('tag-disabled');
+            button.trigger('click');
+        })
+    });
 
 /**
  * Sends a request to the background script to get the latest RFS incidents.

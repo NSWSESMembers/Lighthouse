@@ -16,10 +16,20 @@ function pageFullyLoaded(e) {
 
     if (developmentMode) {
         // Add a test point
-        lighthouseMap.layers['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon,  'Parramatta SES',
+        lighthouseMap.layers['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon, 'Parramatta SES',
             'This is a test marker. It is used to check whether the map access is working');
     }
     window['lighthouseMap'] = lighthouseMap;
+
+    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleHelicoptersBtn'];
+    buttons.forEach(function (buttonId) {
+        if (localStorage.getItem('Lighthouse-' + buttonId) == 'true') {
+            let button = $(`#${buttonId}`);
+            console.log(button);
+            console.debug(buttonId + ' restoring saved state of clicked');
+            button.trigger('click');
+        }
+    });
 }
 
 window.addEventListener("message", function(event) {
