@@ -1,4 +1,3 @@
-const DOM = require('jsx-dom-factory');
 
 window.addEventListener('load', pageFullyLoaded, false);
 
@@ -141,19 +140,17 @@ const rfsIcons = {
     let created = moment(point.properties.created).format('YYYY-MM-DD HH:mm:ss');
     let updated = moment(point.properties.lastUpdated).format('YYYY-MM-DD HH:mm:ss');
 
-    let details = function() {
-        return (
-            <div>
-                <div>{point.properties.adviceA}</div>
-                <div>{point.properties.adviceB}</div>
-                <div>{point.properties.otherAdvice}</div>
-                <div class="dateDetails">
-                    <div><span class="dateDetailsLabel">Created: </span> {created}</div>
-                    <div><span class="dateDetailsLabel">Updated: </span> {updated}</div>
-                </div>
-            </div>
-            )
-    };
+    let dateDetails =
+    `<div class="dateDetails">\
+    <div><span class="dateDetailsLabel">Created: </span> ${created}</div>\
+    <div><span class="dateDetailsLabel">Updated: </span> ${updated}</div>\
+    </div>`;
+
+    let details =
+    `<div>${point.properties.adviceA}</div>\
+    <div>${point.properties.adviceB}</div>\
+    <div>${point.properties.otherAdvice}</div>\
+    ${dateDetails}`;
 
     console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
     mapLayer.addImageMarker(lat, lon, icon, name, details);
@@ -284,18 +281,15 @@ const rfsIcons = {
             let heli = findAircraftById(icao24);
             let name = heli.name + ' ' + heli.rego;
 
-            let details = function() 
-            {
-                return (
-                        <div>
-                            <div>{heli.model}</div>
-                            <div>Lat: {lat} Lon: {lon} Alt: {alt}</div>
-                            <div class="dateDetails">
-                                <div><span class="dateDetailsLabel">Last Position Update: </span> {updated}</div>
-                            </div>
-                        </div>
-                    )
-            };
+            let dateDetails =
+                `<div class="dateDetails">\
+                 <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
+                 </div>`;
+
+            let details =
+                `<div>${heli.model}</div>\
+                 <div>Lat: ${lat} Lon: ${lon} Alt: ${alt}</div>\
+                 ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
             let marker = mapLayer.createImageMarker(heli.getIcon(), name, details);
