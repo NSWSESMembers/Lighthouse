@@ -65,7 +65,7 @@ function whenVmIsReady(cb) { //when external vars have loaded
       clearInterval(waiting); //stop timer
       cb(); //call back
     }
-  }, 400);
+  }, 1000);
 }
 
 
