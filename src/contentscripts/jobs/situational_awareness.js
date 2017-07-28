@@ -43,21 +43,19 @@ $(<li>
     </ul>
   </li>).appendTo('#currentSituationLayers');
 
-var pollRfsTimer;
-var pollTransportIncidentsTimer;
-var pollTransportFloodReportsTimer;
-var pollHelicoptersTimer;
+// The map of timers which will update the lighthouse map layers when enabled
+var timers = {};
 
 /**
  * Registers the click handler on the filter buttons.
  *
  * @param buttonId the button ID.
  * @param layer the map layer to update.
- * @param timer the timer which refreshes the layer.
  * @param updateFunction the update function.
  * @param interval the refresh interval.
+ * @return timer the timer which refreshes the layer.
  */
-function registerClickHandler(buttonId, layer, timer, updateFunction, interval) {
+function registerClickHandler(buttonId, layer, updateFunction, interval) {
     document.getElementById(buttonId).addEventListener('click',
         function () {
             console.debug(`toggle ${buttonId} clicked`);
@@ -69,20 +67,20 @@ function registerClickHandler(buttonId, layer, timer, updateFunction, interval) 
 
             if (disabled) {
                 updateFunction();
-                timer = setInterval(updateFunction, interval);
+                timers[layer] = setInterval(updateFunction, interval);
                 button.removeClass('tag-disabled');
             } else {
-                clearInterval(timer);
+                clearInterval(timers[layer]);
                 window.postMessage({type: 'LH_CLEAR_LAYER_DATA', layer: layer}, '*');
                 button.addClass('tag-disabled');
             }
         }, false);
 }
 
-registerClickHandler('toggleRfsIncidentsBtn', 'rfs', pollRfsTimer, requestRfsLayerUpdate, 5 * 60000); // every 5 mins
-registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', pollTransportIncidentsTimer, requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
-registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', pollTransportFloodReportsTimer, requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
-registerClickHandler('toggleHelicoptersBtn', 'helicopters', pollHelicoptersTimer, requestHelicoptersLayerUpdate, 10000); // every 10s
+registerClickHandler('toggleRfsIncidentsBtn', 'rfs', requestRfsLayerUpdate, 5 * 60000); // every 5 mins
+registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
+registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
+registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLayerUpdate, 10000); // every 10s
 
 //Clear all lighthouse filters when click. A little hacky by changing the button class then calling the click to clear inbuild timers and layers.
 //saves recreating functions outside of registerClickHandler
