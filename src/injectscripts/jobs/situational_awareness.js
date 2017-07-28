@@ -53,9 +53,53 @@ window.addEventListener("message", function(event) {
         } else if (event.data.type === "LH_CLEAR_LAYER_DATA") {
             console.info("clearing layer:" + event.data.layer);
             lighthouseMap.layers[event.data.layer].clear();
+        } else if (event.data.type === "LH_GET_TRANSPORT_KEY") {
+            let transportApiKeyOpsLog = 515061;
+            let layer = event.data.layer;
+
+            // Fetch the API key from an ops log and pass it back
+            getOpsLog(transportApiKeyOpsLog, function(response) {
+                let content = JSON.parse(response.responseText);
+                let key = content.Text;
+                window.postMessage({ type: 'LH_RESPONSE_TRANSPORT_KEY', key: key, layer: layer }, '*');
+            });
         }
     }
 });
+
+/**
+ * Gets an ops log from beacon.
+ *
+ * @param id the ID of the ops log.
+ * @param cb the callback to send the response to.
+ */
+function getOpsLog(id, cb) {
+    var urls = window.urls;
+    var user = window.user;
+
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base + '/Api/v1/OperationsLog/' + id
+        , beforeSend: function (n) {
+            n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+        }
+        , cache: true
+        , dataType: 'json'
+        , complete: function (response, textStatus) {
+            if (textStatus === 'success') {
+                cb(response)
+            } else {
+                console.log("ajax text problem");
+                cb(false)
+            }
+
+        }
+        , error: function (ajaxContext) {
+            console.log("ajax http problem");
+            cb(false)
+        }
+    })
+}
 
 const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';

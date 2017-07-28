@@ -95,7 +95,7 @@ function requestRfsLayerUpdate() {
  */
 function requestTransportIncidentsLayerUpdate() {
     console.debug('updating transport incidents layer');
-    window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'transport-incidents' }, '*');
+    fetchTransportResource('transport-incidents');
 }
 
 /**
@@ -103,7 +103,38 @@ function requestTransportIncidentsLayerUpdate() {
  */
 function requestTransportFloodReportsLayerUpdate() {
     console.debug('updating transport incidents layer');
-    window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'transport-flood-reports' }, '*');
+    fetchTransportResource('transport-flood-reports');
+}
+
+/**
+ * Fetches a resource from the transport API.
+ *
+ * @param layer the layer to fetch, e.g. 'transport-incidents'.
+ */
+function fetchTransportResource(layer) {
+    var sessionKey = 'lighthouseTransportApiKeyCache';
+    var transportApiKeyCache = sessionStorage.getItem(sessionKey);
+
+    if (transportApiKeyCache) {
+        console.debug('Using cached key: ' + transportApiKeyCache);
+        fetchTransportResourceWithKey(transportApiKeyCache, layer);
+
+    } else {
+        console.debug('Fetching ops log key');
+        window.postMessage({ type: 'LH_GET_TRANSPORT_KEY', layer: layer }, '*');
+    }
+}
+
+/**
+ * Fetches a resource from the transport API.
+ *
+ * @param layer the layer to fetch.
+ * @param apiKey the transport.nsw.gov.au API key.
+ */
+function fetchTransportResourceWithKey(apiKey, layer) {
+    console.info(`fetching transport resource: ${apiKey} ${layer}`);
+    var params = { apiKey: apiKey };
+    window.postMessage({ type: 'LH_UPDATE_LAYERS', params: params, layer: layer }, '*');
 }
 
 /**
@@ -127,6 +158,7 @@ window.addEventListener('message', function(event) {
 
         } else if (event.data.type === 'LH_UPDATE_LAYERS') {
             var layer = event.data.layer;
+            let type = event.data.type;
             chrome.runtime.sendMessage({type: layer, params: event.data.params}, function (response) {
                 if (response.error) {
                     console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
@@ -134,6 +166,14 @@ window.addEventListener('message', function(event) {
                     window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: layer, response: response}, '*');
                 }
             });
+        } else if (event.data.type === 'LH_RESPONSE_TRANSPORT_KEY') {
+
+            var sessionKey = 'lighthouseTransportApiKeyCache';
+            var transportApiKeyCache = event.data.key;
+
+            console.debug('got transport key: ' + transportApiKeyCache);
+            sessionStorage.setItem(sessionKey, transportApiKeyCache);
+            fetchTransportResourceWithKey(transportApiKeyCache, event.data.layer);
         }
     }
 }, false);

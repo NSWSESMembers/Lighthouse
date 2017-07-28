@@ -56,12 +56,12 @@ chrome.runtime.onMessage.addListener(
 		} else if (request.type === 'transport-incidents') {
             fetchTransportResource('v1/live/hazards/incident/open', function(data) {
             	sendResponse(data);
-			});
+			}, request.params.apiKey);
             return true;
 		} else if (request.type === 'transport-flood-reports') {
             fetchTransportResource('v1/live/hazards/flood/open', function(data) {
                 sendResponse(data);
-            });
+            }, request.params.apiKey);
             return true;
 		} else if (request.type === 'helicopters') {
             fetchHelicopterLocations(request.params, function(data) {
@@ -113,9 +113,10 @@ function fetchRfsIncidents(callback) {
  *
  * @param path the path to the resource, e.g. ''.
  * @param callback the callback to send the data to.
+ * @param apiKey the transport.nsw.gov.au API key.
  */
-function fetchTransportResource(path, callback) {
-	console.info('fetching transport resource: ' + path);
+function fetchTransportResource(path, callback, apiKey) {
+    console.info('fetching transport resource: ' + path);
     var xhttp = new XMLHttpRequest();
     xhttp.onloadend = function () {
         if (this.readyState === 4 && this.status === 200) {
@@ -130,7 +131,7 @@ function fetchTransportResource(path, callback) {
         }
     };
     xhttp.open('GET', 'https://api.transport.nsw.gov.au/' + path, true);
-    xhttp.setRequestHeader('Authorization', 'apikey ');
+    xhttp.setRequestHeader('Authorization', 'apikey ' + apiKey);
     xhttp.send();
 }
 
