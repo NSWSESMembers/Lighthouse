@@ -1,4 +1,3 @@
-const DOM = require('jsx-dom-factory');
 
 window.addEventListener('load', pageFullyLoaded, false);
 
