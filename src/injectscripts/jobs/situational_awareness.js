@@ -428,6 +428,8 @@ if (developmentMode) {
 }
 
 // Load all the arcgis classes
+// These need to be called in 'eval' wrappers because the JS already in the
+// page will have loaded these already, and require doesn't double load modules by-design
 const GraphicsLayer = eval('require("esri/layers/GraphicsLayer");');
 const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
 const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
