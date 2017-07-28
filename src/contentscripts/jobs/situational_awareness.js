@@ -22,20 +22,20 @@ $(<li>
       <div class="text btn-toolbar" role="toolbar">
         <div>
           <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-            <img style="max-width: 16px" src={rfsIcon} />
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
             <span class="tag-text">RFS</span>
           </span>
           <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-            <img style="max-width: 16px" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
             <span class="tag-text">RMS Incidents</span>
           </span>
           <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
-            <img style="max-width: 16px" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
             <span class="tag-text">RMS Flood Reports</span>
           </span>
           <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
-            <img style="max-width: 16px; background: #fff;" src={helicopterIcon} />
-            <span class="tag-text">Helicopters</span>
+            <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
+            <span class="tag-text">Rescue Helicopters</span>
           </span>
         </div>
       </div>

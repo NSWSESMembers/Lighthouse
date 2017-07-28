@@ -25,7 +25,6 @@ function pageFullyLoaded(e) {
     buttons.forEach(function (buttonId) {
         if (localStorage.getItem('Lighthouse-' + buttonId) == 'true') {
             let button = $(`#${buttonId}`);
-            console.log(button);
             console.debug(buttonId + ' restoring saved state of clicked');
             button.trigger('click');
         }
@@ -85,7 +84,7 @@ window.addEventListener("message", function(event) {
  * @param id the ID of the ops log.
  * @param cb the callback to send the response to.
  */
-function getOpsLog(id, cb) {
+ function getOpsLog(id, cb) {
     var urls = window.urls;
     var user = window.user;
 
@@ -132,7 +131,7 @@ const rfsIcons = {
  * @param point the point to add.
  * @param icon the icon.
  */
-function addTransportPoint(mapLayer, point, icon) {
+ function addTransportPoint(mapLayer, point, icon) {
 
     let lat = point.geometry.coordinates[1];
     let lon = point.geometry.coordinates[0];
@@ -142,16 +141,19 @@ function addTransportPoint(mapLayer, point, icon) {
     let created = moment(point.properties.created).format('YYYY-MM-DD HH:mm:ss');
     let updated = moment(point.properties.lastUpdated).format('YYYY-MM-DD HH:mm:ss');
 
-    let details = (
-        <div>
-            <div>{point.properties.adviceA}</div>
-            <div>{point.properties.adviceB}</div>
-            <div>{point.properties.otherAdvice}</div>
-            <div class="dateDetails">
-                <div><span class="dateDetailsLabel">Created: </span> {created}</div>
-                <div><span class="dateDetailsLabel">Updated: </span> {updated}</div>
+    let details = function() {
+        return (
+            <div>
+                <div>{point.properties.adviceA}</div>
+                <div>{point.properties.adviceB}</div>
+                <div>{point.properties.otherAdvice}</div>
+                <div class="dateDetails">
+                    <div><span class="dateDetailsLabel">Created: </span> {created}</div>
+                    <div><span class="dateDetailsLabel">Updated: </span> {updated}</div>
+                </div>
             </div>
-        </div>);
+            )
+    };
 
     console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
     mapLayer.addImageMarker(lat, lon, icon, name, details);
@@ -163,7 +165,7 @@ function addTransportPoint(mapLayer, point, icon) {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showTransportFlooding(mapLayer, data) {
+ function showTransportFlooding(mapLayer, data) {
     console.info('showing RMS reported flooding');
 
     let count = 0;
@@ -187,7 +189,7 @@ function showTransportFlooding(mapLayer, data) {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showTransportIncidents(mapLayer, data) {
+ function showTransportIncidents(mapLayer, data) {
     console.info('showing RMS incidents');
 
     let count = 0;
@@ -211,7 +213,7 @@ function showTransportIncidents(mapLayer, data) {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showRuralFires(mapLayer, data) {
+ function showRuralFires(mapLayer, data) {
     console.info('showing RFS incidents');
 
     let count = 0;
@@ -244,7 +246,7 @@ function showRuralFires(mapLayer, data) {
  *
  * @returns the params.
  */
-function buildHeliParams() {
+ function buildHeliParams() {
     // Build the query url
     let params = '';
     for (let i = 0; i < aircraft.length; i++) {
@@ -261,7 +263,7 @@ function buildHeliParams() {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showRescueHelicopters(mapLayer, data) {
+ function showRescueHelicopters(mapLayer, data) {
     console.info('showing rescue helicopters');
 
     let count = 0;
@@ -281,14 +283,19 @@ function showRescueHelicopters(mapLayer, data) {
 
             let heli = findAircraftById(icao24);
             let name = heli.name + ' ' + heli.rego;
-            let details = (
-                <div>
-                    <div>{heli.model}</div>
-                    <div>Lat: {lat} Lon: {lon} Alt: {alt}</div>
-                    <div class="dateDetails">
-                        <div><span class="dateDetailsLabel">Last Position Update: </span> {updated}</div>
-                    </div>
-                </div>);
+
+            let details = function() 
+            {
+                return (
+                        <div>
+                            <div>{heli.model}</div>
+                            <div>Lat: {lat} Lon: {lon} Alt: {alt}</div>
+                            <div class="dateDetails">
+                                <div><span class="dateDetailsLabel">Last Position Update: </span> {updated}</div>
+                            </div>
+                        </div>
+                    )
+            };
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
             let marker = mapLayer.createImageMarker(heli.getIcon(), name, details);
@@ -308,7 +315,7 @@ function showRescueHelicopters(mapLayer, data) {
  * @param icao24 the ID.
  * @returns the aircraft, or {@code null} if no match is found.
  */
-function findAircraftById(icao24) {
+ function findAircraftById(icao24) {
     for (let i = 0; i < aircraft.length; i++) {
         if (aircraft[i].icao24.toLowerCase() === icao24.toLowerCase()) {
             return aircraft[i];
@@ -322,7 +329,7 @@ function findAircraftById(icao24) {
 /**
  * A class for rescue aircraft details
  */
-class Helicopter {
+ class Helicopter {
     /**
      * Constructs a new aircraft.
      *
@@ -333,7 +340,7 @@ class Helicopter {
      * @param colour the colour for the marker.
      * @param heli {@code true} if this is a helicopter.
      */
-    constructor(icao24, rego, name, model, colour = '#ffffff', heli = true) {
+     constructor(icao24, rego, name, model, colour = '#ffffff', heli = true) {
         this.icao24 = icao24;
         this.rego = rego;
         this.name = name;
@@ -347,7 +354,7 @@ class Helicopter {
      *
      * @returns {string} the URL to the icon.
      */
-    getIcon() {
+     getIcon() {
         if (this.heli) {
             return lighthouseUrl + 'icons/helicopter.png';
         } else {
@@ -410,7 +417,7 @@ const aircraft = [
     new Helicopter('A4C031', 'N405LC', 'Thor', 'C130'),
     new Helicopter('ACC37A', 'N512AX', '', 'DC-10'), // Bomber 910?
     // Whoa, there appear to be a lot of these...
-];
+    ];
 
 // Some extra data points for dev-time
 if (developmentMode) {
@@ -424,7 +431,7 @@ if (developmentMode) {
 
         // Royal Flying Doctor's Service
         new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C', false)
-    );
+        );
 }
 
 // Load all the arcgis classes
@@ -440,14 +447,14 @@ const Color = eval('require("esri/Color");');
 /**
  * A class for helping out with map access.
  */
-class LighthouseMap {
+ class LighthouseMap {
 
     /**
      * Constructs a new map.
      *
      * @param map the arcgis map.
      */
-    constructor(map) {
+     constructor(map) {
         this.map = map;
 
         console.debug('Setting up map');
@@ -460,7 +467,7 @@ class LighthouseMap {
      *
      * @param name the name of the layer.
      */
-    createLayer(name) {
+     createLayer(name) {
         let graphicsLayer = new GraphicsLayer();
         graphicsLayer.id = 'lighthouseLayer-' + name;
         graphicsLayer.on('click', this._handleClick);
@@ -474,7 +481,7 @@ class LighthouseMap {
      *
      * @returns the layers.
      */
-    layers() {
+     layers() {
         return this._layers;
     }
 
@@ -484,7 +491,7 @@ class LighthouseMap {
      * @param event the event.
      * @private
      */
-    _handleClick(event) {
+     _handleClick(event) {
         // Show the info window for our point
         this._map.infoWindow.setTitle(event.graphic.symbol.title);
         this._map.infoWindow.setContent(event.graphic.symbol.details);
@@ -495,14 +502,14 @@ class LighthouseMap {
 /**
  * A class for helping out with map layer access.
  */
-class MapLayer {
+ class MapLayer {
 
     /**
      * Constructs a new map layer.
      *
      * @param layer the arcgis graphics layer.
      */
-    constructor(layer) {
+     constructor(layer) {
         this.graphicsLayer = layer;
     }
 
@@ -516,7 +523,7 @@ class MapLayer {
      * @param details the details for this marker's info pop-up.
      * @return the marker to customise.
      */
-    addSymbolMarker(lat, lon, style, title='', details='') {
+     addSymbolMarker(lat, lon, style, title='', details='') {
         let point = new Point({
             latitude: lat,
             longitude: lon
@@ -538,7 +545,7 @@ class MapLayer {
      * @param details the details for this marker's info pop-up.
      * @return the marker to customise.
      */
-    createImageMarker(imageUrl, title='', details='') {
+     createImageMarker(imageUrl, title='', details='') {
         let marker = new PictureMarkerSymbol();
         marker.setHeight(16);
         marker.setWidth(16);
@@ -559,7 +566,7 @@ class MapLayer {
      * @param details the details for this marker's info pop-up.
      * @return the marker to customise.
      */
-    addImageMarker(lat, lon, imageUrl, title='', details='') {
+     addImageMarker(lat, lon, imageUrl, title='', details='') {
         let marker = this.createImageMarker(imageUrl, title, details);
         this.addMarker(lat, lon, marker);
         return marker;
@@ -572,7 +579,7 @@ class MapLayer {
      * @param lon the longitude.
      * @param marker the marker to add.
      */
-    addMarker(lat, lon, marker) {
+     addMarker(lat, lon, marker) {
         let point = new Point({
             latitude: lat,
             longitude: lon
@@ -586,14 +593,14 @@ class MapLayer {
      *
      * @param marker the marker to remove.
      */
-    removeMarker(marker) {
+     removeMarker(marker) {
         this.graphicsLayer.remove(marker);
     }
 
     /**
      * Clears all markers from the map.
      */
-    clear() {
+     clear() {
         this.graphicsLayer.clear();
     }
 }
