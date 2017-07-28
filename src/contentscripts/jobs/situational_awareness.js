@@ -1,47 +1,47 @@
 const $ = require('jquery');
+const DOM = require('jsx-dom-factory');
 const inject = require('../../../lib/inject.js');
 
 //inject the coded needed to fix visual problems
 //needs to be injected so that it runs after the DOMs are created
 inject('jobs/situational_awareness.js');
 
-const lighthouseIcon = chrome.extension.getURL("") + 'icons/lh-black.png';
-const helicopterIcon = chrome.extension.getURL("") + 'icons/helicopter.png';
-const rfsIcon = chrome.extension.getURL("") + 'icons/rfs_emergency.png';
+const lighthouseIcon = chrome.extension.getURL('icons/lh-black.png');
+const helicopterIcon = chrome.extension.getURL('icons/helicopter.png');
+const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');
 
 // Add the buttons for the extra layers
-$('#currentSituationLayers')
-    .append('<li>\
-        <a href="#" class="js-sub-menu-toggle">\
-          <img src="' + lighthouseIcon + '" style="width: 16px">\
-          <span class="text">Lighthouse</span>\
-          <i class="toggle-icon fa fa-angle-left"></i>\
-        </a>\
-        <ul class="sub-menu ">\
-          <li>\
-          <div class="text btn-toolbar" role="toolbar">\
-            <div>\
-              <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">\
-                <img style="max-width: 16px" src="' + rfsIcon + '" />\
-                <span class="tag-text">RFS</span>\
-              </span>\
-              <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">\
-                <img style="max-width: 16px" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />\
-                <span class="tag-text">RMS Incidents</span>\
-              </span>\
-              <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">\
-                <img style="max-width: 16px" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />\
-                <span class="tag-text">RMS Flood Reports</span>\
-              </span>\
-              <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">\
-                <img style="max-width: 16px; background: #fff;" src="' + helicopterIcon + '" />\
-                <span class="tag-text">Helicopters</span>\
-              </span>\
-            </div>\
-          </div>\
-          </li>\
-        </ul>\
-        </li>');
+$(<li>
+    <a href="#" class="js-sub-menu-toggle">
+      <img src={lighthouseIcon} style="width: 16px" />
+      <span class="text">Lighthouse</span>
+      <i class="toggle-icon fa fa-angle-left"></i>
+    </a>
+    <ul class="sub-menu ">
+      <li>
+      <div class="text btn-toolbar" role="toolbar">
+        <div>
+          <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px" src={rfsIcon} />
+            <span class="tag-text">RFS</span>
+          </span>
+          <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
+            <span class="tag-text">RMS Incidents</span>
+          </span>
+          <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
+            <span class="tag-text">RMS Flood Reports</span>
+          </span>
+          <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px; background: #fff;" src={helicopterIcon} />
+            <span class="tag-text">Helicopters</span>
+          </span>
+        </div>
+      </div>
+      </li>
+    </ul>
+  </li>).appendTo('#currentSituationLayers');
 
 var pollRfsTimer;
 var pollTransportIncidentsTimer;
