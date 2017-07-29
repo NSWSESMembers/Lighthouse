@@ -11,6 +11,8 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('rfs');
     lighthouseMap.createLayer('transport-incidents');
     lighthouseMap.createLayer('transport-flood-reports');
+    lighthouseMap.createLayer('transport-cameras');
+
     lighthouseMap.createLayer('helicopters');
 
     if (developmentMode) {
@@ -20,7 +22,7 @@ function pageFullyLoaded(e) {
     }
     window['lighthouseMap'] = lighthouseMap;
 
-    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleHelicoptersBtn'];
+    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn'];
     buttons.forEach(function (buttonId) {
         if (localStorage.getItem('Lighthouse-' + buttonId) == 'true') {
             let button = $(`#${buttonId}`);
@@ -55,7 +57,8 @@ window.addEventListener("message", function(event) {
 
             } else if (event.data.layer === 'transport-flood-reports') {
                 showTransportFlooding(mapLayer, event.data.response);
-
+            } else if (event.data.layer === 'transport-cameras') {
+                showTransportCameras(mapLayer, event.data.response);
             } else if (event.data.layer === 'helicopters') {
                 showRescueHelicopters(mapLayer, event.data.response)
             }
@@ -64,7 +67,7 @@ window.addEventListener("message", function(event) {
             console.info("clearing layer:" + event.data.layer);
             lighthouseMap.layers[event.data.layer].clear();
         } else if (event.data.type === "LH_GET_TRANSPORT_KEY") {
-            let transportApiKeyOpsLog = 515061;
+            let transportApiKeyOpsLog = 515514;
             let layer = event.data.layer;
 
             // Fetch the API key from an ops log and pass it back
@@ -131,19 +134,23 @@ const rfsIcons = {
  * @param icon the icon.
  */
  function addTransportPoint(mapLayer, point, icon) {
-
     let lat = point.geometry.coordinates[1];
     let lon = point.geometry.coordinates[0];
 
     let name = point.properties.displayName;
 
     let created = moment(point.properties.created).format('YYYY-MM-DD HH:mm:ss');
+    let createddiff = moment(point.properties.created).fromNow();
+
     let updated = moment(point.properties.lastUpdated).format('YYYY-MM-DD HH:mm:ss');
+    let updateddiff = moment(point.properties.lastUpdated).fromNow();
 
     let dateDetails =
     `<div class="dateDetails">\
     <div><span class="dateDetailsLabel">Created: </span> ${created}</div>\
+    <div><span class="dateDetailsLabel">Created: </span> ${createddiff}</div>\
     <div><span class="dateDetailsLabel">Updated: </span> ${updated}</div>\
+    <div><span class="dateDetailsLabel">Updated: </span> ${updateddiff}</div>\
     </div>`;
 
     let details =
@@ -155,6 +162,59 @@ const rfsIcons = {
     console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
     mapLayer.addImageMarker(lat, lon, icon, name, details);
 }
+
+/**
+ * Shows cameras from RMS.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+ function showTransportCameras(mapLayer, data) {
+    console.info('showing RMS cameras');
+
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let feature = data.features[i];
+
+            if (feature.geometry.type.toLowerCase() === 'point') {
+                //default incase that fucks up.
+                var icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-w.gif';
+
+
+                switch (feature.properties.direction)
+                {
+                    case "N":
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-n.gif';
+                    break;
+                    case "S":
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-s.gif';
+                    break;
+                    case "E":
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-e.gif';
+                    break;
+                    case "W":
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-w.gif';
+                    break;
+                }
+
+                let lat = feature.geometry.coordinates[1];
+                let lon = feature.geometry.coordinates[0];
+
+                let name = feature.properties.title;
+                let details = feature.properties.view + "<br><br><div style='height:190px;width:200px;display:block'><a target='_blank' href='"+feature.properties.href+"'><img width='95%' src="+feature.properties.href+"></img></a><br><sub>Click image to enlarge</sub></div>";
+
+                console.debug(`Camera at [${lat},${lon}]: ${name}`);
+                mapLayer.addImageMarker(lat, lon, icon, name, details);
+
+
+                count++;
+            }
+        }
+    }
+    console.info(`added ${count} RMS camera markers`);
+}
+
 
 /**
  * Shows flooding as reported by RMS.
@@ -282,14 +342,14 @@ const rfsIcons = {
             let name = heli.name + ' ' + heli.rego;
 
             let dateDetails =
-                `<div class="dateDetails">\
-                 <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
-                 </div>`;
+            `<div class="dateDetails">\
+            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
+            </div>`;
 
             let details =
-                `<div>${heli.model}</div>\
-                 <div>Lat: ${lat} Lon: ${lon} Alt: ${alt}</div>\
-                 ${dateDetails}`;     
+            `<div>${heli.model}</div>\
+            <div>Lat: ${lat} Lon: ${lon} Alt: ${alt}</div>\
+            ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
             let marker = mapLayer.createImageMarker(heli.getIcon(), name, details);

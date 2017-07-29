@@ -33,6 +33,10 @@ $(<li>
             <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
             <span class="tag-text">RMS Flood Reports</span>
           </span>
+          <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
+            <span class="tag-text">RMS Cameras</span>
+          </span>
           <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
             <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
             <span class="tag-text">Rescue Helicopters</span>
@@ -80,6 +84,8 @@ function registerClickHandler(buttonId, layer, updateFunction, interval) {
 registerClickHandler('toggleRfsIncidentsBtn', 'rfs', requestRfsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
+registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 5 * 60000); // every 5 mins
+
 registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLayerUpdate, 10000); // every 10s
 
 //Clear all lighthouse filters when click. A little hacky by changing the button class then calling the click to clear inbuild timers and layers.
@@ -87,7 +93,7 @@ registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLa
 $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
     function () {
         console.log('resetting lighthouse layers');
-        var buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleHelicoptersBtn']
+        var buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn']
         buttons.forEach(function (buttonId) {
             var button = $(`#${buttonId}`);
             button.removeClass('tag-disabled');
@@ -117,6 +123,11 @@ function requestTransportIncidentsLayerUpdate() {
 function requestTransportFloodReportsLayerUpdate() {
     console.debug('updating transport incidents layer');
     fetchTransportResource('transport-flood-reports');
+}
+
+function requestTransportCamerasLayerUpdate() {
+    console.debug('updating transport cameras layer');
+    fetchTransportResource('transport-cameras');
 }
 
 /**
