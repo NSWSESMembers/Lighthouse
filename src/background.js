@@ -68,6 +68,11 @@ chrome.runtime.onMessage.addListener(
                 sendResponse(data);
             }, request.params.apiKey);
             return true;
+        } else if (request.type === 'transport-cameras') {
+            fetchTransportResource('v1/live/cameras', function(data) {
+                sendResponse(data);
+            }, request.params.apiKey);
+            return true;    
 		} else if (request.type === 'helicopters') {
             fetchHelicopterLocations(request.params, function(data) {
                 sendResponse(data);

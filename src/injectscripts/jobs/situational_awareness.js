@@ -11,6 +11,8 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('rfs');
     lighthouseMap.createLayer('transport-incidents');
     lighthouseMap.createLayer('transport-flood-reports');
+    lighthouseMap.createLayer('transport-cameras');
+
     lighthouseMap.createLayer('helicopters');
 
     if (developmentMode) {
@@ -20,7 +22,7 @@ function pageFullyLoaded(e) {
     }
     window['lighthouseMap'] = lighthouseMap;
 
-    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleHelicoptersBtn'];
+    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn'];
     buttons.forEach(function (buttonId) {
         if (localStorage.getItem('Lighthouse-' + buttonId) == 'true') {
             let button = $(`#${buttonId}`);
@@ -55,7 +57,8 @@ window.addEventListener("message", function(event) {
 
             } else if (event.data.layer === 'transport-flood-reports') {
                 showTransportFlooding(mapLayer, event.data.response);
-
+            } else if (event.data.layer === 'transport-cameras') {
+                showTransportCameras(mapLayer, event.data.response);
             } else if (event.data.layer === 'helicopters') {
                 showRescueHelicopters(mapLayer, event.data.response)
             }
@@ -64,7 +67,7 @@ window.addEventListener("message", function(event) {
             console.info("clearing layer:" + event.data.layer);
             lighthouseMap.layers[event.data.layer].clear();
         } else if (event.data.type === "LH_GET_TRANSPORT_KEY") {
-            let transportApiKeyOpsLog = 515061;
+            let transportApiKeyOpsLog = 515514;
             let layer = event.data.layer;
 
             // Fetch the API key from an ops log and pass it back
@@ -155,6 +158,42 @@ const rfsIcons = {
     console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
     mapLayer.addImageMarker(lat, lon, icon, name, details);
 }
+
+/**
+ * Shows cameras from RMS.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+ function showTransportCameras(mapLayer, data) {
+    console.info('showing RMS cameras');
+
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            console.log(data)
+            let feature = data.features[i];
+
+            if (feature.geometry.type.toLowerCase() === 'point') {
+                let icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-w.gif';
+
+                let lat = feature.geometry.coordinates[1];
+                let lon = feature.geometry.coordinates[0];
+
+                let name = feature.properties.title;
+                let details = feature.properties.view + "<a href='"+feature.properties.href+"'><img width='90%' src="+feature.properties.href+"></img></a>";
+
+                console.debug(`Camera at [${lat},${lon}]: ${name}`);
+                mapLayer.addImageMarker(lat, lon, icon, name, details);
+
+
+                count++;
+            }
+        }
+    }
+    console.info(`added ${count} RMS flooding markers`);
+}
+
 
 /**
  * Shows flooding as reported by RMS.
@@ -282,14 +321,14 @@ const rfsIcons = {
             let name = heli.name + ' ' + heli.rego;
 
             let dateDetails =
-                `<div class="dateDetails">\
-                 <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
-                 </div>`;
+            `<div class="dateDetails">\
+            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
+            </div>`;
 
             let details =
-                `<div>${heli.model}</div>\
-                 <div>Lat: ${lat} Lon: ${lon} Alt: ${alt}</div>\
-                 ${dateDetails}`;     
+            `<div>${heli.model}</div>\
+            <div>Lat: ${lat} Lon: ${lon} Alt: ${alt}</div>\
+            ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
             let marker = mapLayer.createImageMarker(heli.getIcon(), name, details);
