@@ -212,7 +212,7 @@ const rfsIcons = {
             }
         }
     }
-    console.info(`added ${count} RMS flooding markers`);
+    console.info(`added ${count} RMS camera markers`);
 }
 
 
