@@ -2,6 +2,11 @@
 // separate to all other pages.
 
 
+//Sit Aware Map Data Feeds
+const rfsMajorIncidentsFeed = "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json"
+const transportFeed = "https://api.transport.nsw.gov.au/"
+const openSkyFeed = "https://opensky-network.org/api/states/all"
+
 //block message js core request, fetch the file, inject our vars then serve it back to the requestor. :-)
 chrome.webRequest.onBeforeRequest.addListener(
 	function (details) {
@@ -104,7 +109,7 @@ function fetchRfsIncidents(callback) {
             callback(response);
         }
     };
-    xhttp.open('GET', 'https://www.rfs.nsw.gov.au/feeds/majorIncidents.json', true);
+    xhttp.open('GET', rfsMajorIncidentsFeed, true);
     xhttp.send();
 }
 
@@ -130,7 +135,7 @@ function fetchTransportResource(path, callback, apiKey) {
             callback(response);
         }
     };
-    xhttp.open('GET', 'https://api.transport.nsw.gov.au/' + path, true);
+    xhttp.open('GET', transportFeed + path, true);
     xhttp.setRequestHeader('Authorization', 'apikey ' + apiKey);
     xhttp.send();
 }
@@ -156,7 +161,7 @@ function fetchHelicopterLocations(params, callback) {
             callback(response);
         }
     };
-    xhttp.open('GET', 'https://opensky-network.org/api/states/all' + params, true);
+    xhttp.open('GET', openSkyFeed + params, true);
     xhttp.send();
 }
 
