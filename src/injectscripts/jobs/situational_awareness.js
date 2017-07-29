@@ -171,17 +171,34 @@ const rfsIcons = {
     let count = 0;
     if (data && data.features) {
         for (let i = 0; i < data.features.length; i++) {
-            console.log(data)
             let feature = data.features[i];
 
             if (feature.geometry.type.toLowerCase() === 'point') {
-                let icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-w.gif';
+                //default incase that fucks up.
+                var icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-w.gif';
+
+
+                switch (feature.properties.direction)
+                {
+                    case "N":
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-n.gif';
+                    break;
+                    case "S":
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-s.gif';
+                    break;
+                    case "E":
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-e.gif';
+                    break;
+                    case "W":
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-w.gif';
+                    break;
+                }
 
                 let lat = feature.geometry.coordinates[1];
                 let lon = feature.geometry.coordinates[0];
 
                 let name = feature.properties.title;
-                let details = feature.properties.view + "<a href='"+feature.properties.href+"'><img width='90%' src="+feature.properties.href+"></img></a>";
+                let details = feature.properties.view + "<br><br><div style='height:190px;width:200px;display:block'><a target='_blank' href='"+feature.properties.href+"'><img width='95%' src="+feature.properties.href+"></img></a><br><sub>Click image to enlarge</sub></div>";
 
                 console.debug(`Camera at [${lat},${lon}]: ${name}`);
                 mapLayer.addImageMarker(lat, lon, icon, name, details);
