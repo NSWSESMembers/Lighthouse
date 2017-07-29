@@ -134,19 +134,23 @@ const rfsIcons = {
  * @param icon the icon.
  */
  function addTransportPoint(mapLayer, point, icon) {
-
     let lat = point.geometry.coordinates[1];
     let lon = point.geometry.coordinates[0];
 
     let name = point.properties.displayName;
 
     let created = moment(point.properties.created).format('YYYY-MM-DD HH:mm:ss');
+    let createddiff = moment(point.properties.created).fromNow();
+
     let updated = moment(point.properties.lastUpdated).format('YYYY-MM-DD HH:mm:ss');
+    let updateddiff = moment(point.properties.lastUpdated).fromNow();
 
     let dateDetails =
     `<div class="dateDetails">\
     <div><span class="dateDetailsLabel">Created: </span> ${created}</div>\
+    <div><span class="dateDetailsLabel">Created: </span> ${createddiff}</div>\
     <div><span class="dateDetailsLabel">Updated: </span> ${updated}</div>\
+    <div><span class="dateDetailsLabel">Updated: </span> ${updateddiff}</div>\
     </div>`;
 
     let details =
