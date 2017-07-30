@@ -354,7 +354,7 @@ const rfsIcons = {
             }
 
             let heli = findAircraftById(icao24);
-            let name = heli.name + ' ' + heli.rego;
+            let name = heli.name + ' ' + heli.rego + ' - ' +heli.operator;
 
             let dateDetails =
             `<div class="dateDetails">\
@@ -362,7 +362,7 @@ const rfsIcons = {
             </div>`;
 
             let details =
-            `<div>${heli.model}</div>\
+            `<div>Model: ${heli.model}</div>\
             <div>Lat: ${lat} Lon: ${lon} Alt: ${alt}</div>\
             ${dateDetails}`;     
 
@@ -409,11 +409,12 @@ const rfsIcons = {
      * @param colour the colour for the marker.
      * @param heli {@code true} if this is a helicopter.
      */
-     constructor(icao24, rego, name, model, colour = '#ffffff', heli = true) {
+     constructor(icao24, rego, name, model, operator, colour = '#ffffff', heli = true) {
         this.icao24 = icao24;
         this.rego = rego;
         this.name = name;
         this.model = model;
+        this.operator = operator
         this.colour = colour;
         this.heli = heli;
     }
@@ -435,56 +436,56 @@ const rfsIcons = {
 // A list of rescue helicopters
 const aircraft = [
     // Toll Air Ambulance
-    new Helicopter('7C6178', 'VH-TJE', 'RSCU201', 'AW-139'),
-    new Helicopter('7C6179', 'VH-TJF', 'RSCU202', 'AW-139'),
-    new Helicopter('7C617A', 'VH-TJG', 'RSCU203', 'AW-139'),
-    new Helicopter('7C617B', 'VH-TJH', 'RSCU204', 'AW-139'),
-    new Helicopter('7C617C', 'VH-TJI', 'RSCU206', 'AW-139'),
-    new Helicopter('7C617D', 'VH-TJJ', 'RSCU207', 'AW-139'),
-    new Helicopter('7C617E', 'VH-TJK', 'RSCU208', 'AW-139'),
-    new Helicopter('7C6182', 'VH-TJO', 'RSCU209', 'AW-139'),
+    new Helicopter('7C6178', 'VH-TJE', 'RSCU201', 'AW-139', 'Toll Air'),
+    new Helicopter('7C6179', 'VH-TJF', 'RSCU202', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617A', 'VH-TJG', 'RSCU203', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617B', 'VH-TJH', 'RSCU204', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617C', 'VH-TJI', 'RSCU206', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617D', 'VH-TJJ', 'RSCU207', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617E', 'VH-TJK', 'RSCU208', 'AW-139', 'Toll Air'),
+    new Helicopter('7C6182', 'VH-TJO', 'RSCU209', 'AW-139', 'Toll Air'),
 
     // Careflight
-    new Helicopter('7C0635', 'VH-BIF', 'CFH4', 'BK117'),
+    new Helicopter('7C0635', 'VH-BIF', 'CFH4', 'BK117', 'Careflight'),
 
     // Westpac
-    new Helicopter('7C5CC0', 'VH-SLU', 'LIFE21', 'BK117'),
-    new Helicopter('7C81CC', 'VH-ZXA', 'WP1', 'AW-139'),
-    new Helicopter('7C81CD', 'VH-ZXB', 'WP2', 'AW-139'),
-    new Helicopter('7C81CE', 'VH-ZXC', 'WP3', 'AW-139'),
-    new Helicopter('7C81CF', 'VH-ZXD', 'WP4', 'AW-139'),
+    new Helicopter('7C5CC0', 'VH-SLU', 'LIFE21', 'BK117', 'Westpac'),
+    new Helicopter('7C81CC', 'VH-ZXA', 'WP1', 'AW-139', 'Westpac'),
+    new Helicopter('7C81CD', 'VH-ZXB', 'WP2', 'AW-139', 'Westpac'),
+    new Helicopter('7C81CE', 'VH-ZXC', 'WP3', 'AW-139', 'Westpac'),
+    new Helicopter('7C81CF', 'VH-ZXD', 'WP4', 'AW-139', 'Westpac'),
 
     // PolAir
-    new Helicopter('7C4D03', 'VH-PHX', 'POLAIR1', 'EC-AS355'),
-    new Helicopter('7C4CF8', 'VH-PHM', 'POLAIR4', 'EC-135'),
-    new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'Bell 412EPI'),
+    new Helicopter('7C4D03', 'VH-PHX', 'POLAIR1', 'EC-AS355', 'PolAir'),
+    new Helicopter('7C4CF8', 'VH-PHM', 'POLAIR4', 'EC-135', 'PolAir'),
+    new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'Bell 412EPI', 'PolAir'),
 
     // Royal Australian Navy / CHC
-    new Helicopter('7C37B8', 'VH-LAI', 'CHOP22', 'Sikorsky S-76A'),
-    new Helicopter('7C44C8', 'VH-NVE', 'CHOP26', 'AW-139'),
+    new Helicopter('7C37B8', 'VH-LAI', 'CHOP22', 'Sikorsky S-76A', 'Royal Australian Navy'),
+    new Helicopter('7C44C8', 'VH-NVE', 'CHOP26', 'AW-139', 'Royal Australian Navy'),
 
     // Some QLD based helicopters which may cross south
     // QLD Westpac
-    new Helicopter('7C44CA', 'VH-NVG', 'LIFE45', 'EC-135'),
+    new Helicopter('7C44CA', 'VH-NVG', 'LIFE45', 'EC-135', 'Westpac'),
 
     // QLD RAAF Rescue helicopter
-    new Helicopter('7C37B7', 'VH-LAH', 'CHOP41', 'Sikorsky S-76A'),
+    new Helicopter('7C37B7', 'VH-LAH', 'CHOP41', 'Sikorsky S-76A', 'RAAF'),
 
     // RACQ Lifeflight
-    new Helicopter('7C759B', 'VH-XIL', 'RSCU511', 'AW139'),
-    new Helicopter('7C7599', 'VH-XIJ', 'RSCU533', 'AW139'),
-    new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412'),
+    new Helicopter('7C759B', 'VH-XIL', 'RSCU511', 'AW139', 'RACQ Lifeflight'),
+    new Helicopter('7C7599', 'VH-XIJ', 'RSCU533', 'AW139', 'RACQ Lifeflight'),
+    new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412', 'RACQ Lifeflight'),
 
     // Some VIC base helicopters which may cross north
     // Victoria Helicopter Emergency Medical Service (HEMS)
-    new Helicopter('7C7CC6', 'VH-YXK', 'HEMS1', 'AW-139'),
-    new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139'),
-    new Helicopter('7C7CC5', 'VH-YXJ', 'HEMS4', 'AW-139'),
-    new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139'),
+    new Helicopter('7C7CC6', 'VH-YXK', 'HEMS1', 'AW-139', 'HEMS'),
+    new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139', 'HEMS'),
+    new Helicopter('7C7CC5', 'VH-YXJ', 'HEMS4', 'AW-139', 'HEMS'),
+    new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139', 'HEMS'),
 
     // RFS fixed wing aircraft
-    new Helicopter('A4C031', 'N405LC', 'Thor', 'C130'),
-    new Helicopter('ACC37A', 'N512AX', '', 'DC-10'), // Bomber 910?
+    new Helicopter('A4C031', 'N405LC', 'Thor', 'C130', 'RFS'),
+    new Helicopter('ACC37A', 'N512AX', '', 'DC-10', 'RFS'), // Bomber 910?
     // Whoa, there appear to be a lot of these...
     ];
 
@@ -492,14 +493,14 @@ const aircraft = [
 if (developmentMode) {
     aircraft.push(
         // ASNSW fixed wing
-        new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C', false),
-        new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C', false), // Also seen as AM271
-        new Helicopter('7C01C2', 'VH-AMS', 'AM203', 'Super King B200C', false),
-        new Helicopter('7C01C1', 'VH-AMR', 'AM207', 'Super King B200C', false),
-        new Helicopter('7C01C0', 'VH-AMQ', 'AM297', 'Super King B200C', false),
+        new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C', 'ASNSW', false),
+        new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C', 'ASNSW', false), // Also seen as AM271
+        new Helicopter('7C01C2', 'VH-AMS', 'AM203', 'Super King B200C', 'ASNSW', false),
+        new Helicopter('7C01C1', 'VH-AMR', 'AM207', 'Super King B200C', 'ASNSW', false),
+        new Helicopter('7C01C0', 'VH-AMQ', 'AM297', 'Super King B200C', 'ASNSW', false),
 
         // Royal Flying Doctor's Service
-        new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C', false)
+        new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C', 'RFDS', false)
         );
 }
 
