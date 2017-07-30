@@ -349,8 +349,11 @@ const rfsIcons = {
             let heading = data.states[i][10] || 0;
 
             let updated = "unknown";
+            let updatedMoment = "unknown";
+
             if (positionUpdated) {
-                updated = moment(positionUpdated * 1000).format('YYYY-MM-DD HH:mm:ss');
+                updated = moment(positionUpdated * 1000).format('DD/MM/YY HH:mm:ss');
+                updatedMoment = moment(positionUpdated * 1000).fromNow()
             }
 
             let heli = findAircraftById(icao24);
@@ -359,11 +362,13 @@ const rfsIcons = {
             let dateDetails =
             `<div class="dateDetails">\
             <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
+            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
+
             </div>`;
 
             let details =
             `<div>Model: ${heli.model}</div>\
-            <div>Lat: ${lat} Lon: ${lon} Alt: ${alt}</div>\
+            <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
             ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
