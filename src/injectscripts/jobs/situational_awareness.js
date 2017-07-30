@@ -564,6 +564,7 @@ const Color = eval('require("esri/Color");');
      _handleClick(event) {
         // Show the info window for our point
         this._map.infoWindow.setTitle(event.graphic.symbol.title);
+        $(this._map.infoWindow.domNode).find('.actionList').addClass('hidden') //massive hack to remove the Zoom To actionlist dom.
         this._map.infoWindow.setContent(event.graphic.symbol.details);
         this._map.infoWindow.show(event.mapPoint);
     }
