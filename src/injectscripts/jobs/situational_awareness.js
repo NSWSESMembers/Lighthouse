@@ -67,7 +67,22 @@ window.addEventListener("message", function(event) {
             console.info("clearing layer:" + event.data.layer);
             lighthouseMap.layers[event.data.layer].clear();
         } else if (event.data.type === "LH_GET_TRANSPORT_KEY") {
-            let transportApiKeyOpsLog = 515514;
+            var transportApiKeyOpsLog = ''
+            switch (urls.Base)
+            {
+                case 'https://previewbeacon.ses.nsw.gov.au':
+                transportApiKeyOpsLog = '46273'
+                break
+                case 'https://beacon.ses.nsw.gov.au':
+                transportApiKeyOpsLog = '515514'
+                break
+                case 'https://trainbeacon.ses.nsw.gov.au':
+                transportApiKeyOpsLog = '36753'
+                break
+                default:
+                transportApiKeyOpsLog = '0'
+            }
+
             let layer = event.data.layer;
 
             // Fetch the API key from an ops log and pass it back
@@ -202,7 +217,7 @@ const rfsIcons = {
                 let lon = feature.geometry.coordinates[0];
 
                 let name = feature.properties.title;
-                let details = feature.properties.view + "<br><br><div style='height:190px;width:200px;display:block'><a target='_blank' href='"+feature.properties.href+"'><img width='95%' src="+feature.properties.href+"></img></a></div><br><sub>Click image to enlarge</sub>";
+                let details = feature.properties.view + "<br><br><div style='height:190px;width:240px;display:block'><a target='_blank' href='"+feature.properties.href+"'><img width='100%' src="+feature.properties.href+"></img></a></div><sub>Click image to enlarge</sub>";
 
                 console.debug(`Camera at [${lat},${lon}]: ${name}`);
                 mapLayer.addImageMarker(lat, lon, icon, name, details);
@@ -663,53 +678,53 @@ const Color = eval('require("esri/Color");');
 // Instance the tour
 require('bootstrap-tour')
 
-    var tour = new Tour({
-      name: "LHTourSituationalAwareness",
-      smartPlacement: true,
-      placement: "right",
-      steps: [
-      {
-        element: "",
-        placement: "top",
-        orphan: true,
-        backdrop: true,
-        title: "Lighthouse Welcome",
-        onNext: function (tour) {
-          $('#lhquickfilter > ul').show();
-        },
-        content: "Lighthouse has made some changes to this page. would you like a tour?"
-      },
-      {
-        element: "#lhquickfilter",
-        title: "Lighthouse Quickfilters",
-        placement: "right",
-        backdrop: false,
-        onNext: function (tour) {
-          $('#lhquickfilter > ul').hide();
-          $('#lhlayers > ul').show();
-        },
-        content: "Lighthouse adds a new filter menu that groups together common filters.eg 'Rescue Jobs' covers RCR, Flood, and VR.",
-      },
-      {
-        element: "#lhlayers",
-        title: "Lighthouse Layers",
-        placement: "right",
-        backdrop: false,
-        onNext: function (tour) {
-          $('#lhlayers > ul').hide();
-        },
-        content: "Lighthouse adds a number of new map layers. These layers will add icons to the map which can be clicked for further information.",
-      },
-      {
-        element: "",
-        placement: "top",
-        orphan: true,
-        backdrop: true,
-        title: "Questions?",
-        content: "Thats about it. If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
-      },
-      ]
-    })
+var tour = new Tour({
+  name: "LHTourSituationalAwareness",
+  smartPlacement: true,
+  placement: "right",
+  steps: [
+  {
+    element: "",
+    placement: "top",
+    orphan: true,
+    backdrop: true,
+    title: "Lighthouse Welcome",
+    onNext: function (tour) {
+      $('#lhquickfilter > ul').show();
+  },
+  content: "Lighthouse has made some changes to this page. would you like a tour?"
+},
+{
+    element: "#lhquickfilter",
+    title: "Lighthouse Quickfilters",
+    placement: "right",
+    backdrop: false,
+    onNext: function (tour) {
+      $('#lhquickfilter > ul').hide();
+      $('#lhlayers > ul').show();
+  },
+  content: "Lighthouse adds a new filter menu that groups together common filters.eg 'Rescue Jobs' covers RCR, Flood, and VR.",
+},
+{
+    element: "#lhlayers",
+    title: "Lighthouse Layers",
+    placement: "right",
+    backdrop: false,
+    onNext: function (tour) {
+      $('#lhlayers > ul').hide();
+  },
+  content: "Lighthouse adds a number of new map layers. These layers will add icons to the map which can be clicked for further information.",
+},
+{
+    element: "",
+    placement: "top",
+    orphan: true,
+    backdrop: true,
+    title: "Questions?",
+    content: "Thats about it. If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
+},
+]
+})
 
     /// Initialize the tour
     tour.init();
