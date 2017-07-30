@@ -11,7 +11,7 @@ const helicopterIcon = chrome.extension.getURL('icons/helicopter.png');
 const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');
 
 // Add the buttons for the extra layers
-$(<li>
+$(<li id="lhlayers">
     <a href="#" class="js-sub-menu-toggle">
       <img src={lighthouseIcon} style="width: 16px" />
       <span class="text">Lighthouse</span>
