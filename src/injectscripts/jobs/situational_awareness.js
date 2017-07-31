@@ -169,7 +169,8 @@ const rfsIcons = {
     </div>`;
 
     let details =
-    `<div>${point.properties.adviceA}</div>\
+    `<div><strong>${point.properties.headline}</strong></div>\
+    <div style="margin-top:0.5em">${point.properties.adviceA}</div>\
     <div>${point.properties.adviceB}</div>\
     <div>${point.properties.otherAdvice}</div>\
     ${dateDetails}`;
