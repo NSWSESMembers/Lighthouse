@@ -15,6 +15,9 @@ function pageFullyLoaded(e) {
 
     lighthouseMap.createLayer('helicopters');
 
+        lighthouseMap.createLayer('lhqs');
+
+
     if (developmentMode) {
         // Add a test point
         lighthouseMap.layers['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon, 'Parramatta SES',
@@ -22,7 +25,7 @@ function pageFullyLoaded(e) {
     }
     window['lighthouseMap'] = lighthouseMap;
 
-    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn'];
+    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn'];
     buttons.forEach(function (buttonId) {
         if (localStorage.getItem('Lighthouse-' + buttonId) == 'true') {
             let button = $(`#${buttonId}`);
@@ -61,6 +64,8 @@ window.addEventListener("message", function(event) {
                 showTransportCameras(mapLayer, event.data.response);
             } else if (event.data.layer === 'helicopters') {
                 showRescueHelicopters(mapLayer, event.data.response)
+            } else if (event.data.layer === 'lhqs') {
+                showLhqs(mapLayer, event.data.response)
             }
 
         } else if (event.data.type === "LH_CLEAR_LAYER_DATA") {
@@ -278,6 +283,36 @@ const rfsIcons = {
         }
     }
     console.info(`added ${count} RMS incidents`);
+}
+
+/**
+ * Shows SES LHQ's.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+
+function showLhqs(mapLayer, data) {
+    console.info('showing LHQs');
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let hq = data.features[i];
+
+                let x = hq.geometry.x;
+                let y = hq.geometry.y;
+
+                let name = hq.attributes.HQNAME;
+                let details = hq.attributes.UNIT_CODE;
+
+                let icon = lighthouseUrl + "icons/ses.png";
+
+                console.debug(`SES LHQ at [${x},${y}]: ${name}`);
+                mapLayer.addImageMarkerByxy(x, y, data.spatialReference, icon, name, details);
+                count++;
+        }
+    }
+    console.info(`added ${count} SES LHQs`);
 }
 
 /**
@@ -519,6 +554,8 @@ const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");')
 const Point = eval('require("esri/geometry/Point");');
 const Graphic = eval('require("esri/graphic");');
 const Color = eval('require("esri/Color");');
+const SpatialReference = eval('require("esri/SpatialReference");');
+
 
 /**
  * A class for helping out with map access.
@@ -650,6 +687,23 @@ const Color = eval('require("esri/Color");');
     }
 
     /**
+     * Adds an image marker to the map by x/y and spatial ref.
+     *
+     * @param x the x.
+     * @param x the y.
+     * @param SpatialReference the SpatialReference object.
+     * @param imageUrl the URL for the marker's image.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
+     * @return the marker to customise.
+     */
+     addImageMarkerByxy(x, y, SpatialReference, imageUrl, title='', details='') {
+        let marker = this.createImageMarker(imageUrl, title, details);
+        this.addMarkerByxy(x, y, SpatialReference, marker);
+        return marker;
+    }    
+
+    /**
      * Adds an marker to the map.
      *
      * @param lat the latitude.
@@ -661,6 +715,20 @@ const Color = eval('require("esri/Color");');
             latitude: lat,
             longitude: lon
         });
+
+        this.graphicsLayer.add(new Graphic(point, marker));
+    }
+
+    /**
+     * Adds an marker to the map by xy and spatial ref.
+     *
+     * @param x the x.
+     * @param y the y.
+     * @param SpatialReferencePassed the SpatialReferencePassed object
+     * @param marker the marker to add.
+     */
+     addMarkerByxy(x, y, SpatialReferencePassed, marker) {
+        let point = new Point(x,y,new SpatialReference(SpatialReferencePassed));
 
         this.graphicsLayer.add(new Graphic(point, marker));
     }
