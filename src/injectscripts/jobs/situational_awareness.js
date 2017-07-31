@@ -218,6 +218,7 @@ const rfsIcons = {
                 let lon = feature.geometry.coordinates[0];
 
                 let name = feature.properties.title;
+
                 let details = feature.properties.view + "<br><br><div style='height:190px;width:240px;display:block'><a target='_blank' href='"+feature.properties.href+"'><img width='100%' src="+feature.properties.href+"></img></a></div><sub>Click image to enlarge</sub>";
 
                 console.debug(`Camera at [${lat},${lon}]: ${name}`);
@@ -363,6 +364,7 @@ const rfsIcons = {
             let dateDetails =
             `<div class="dateDetails">\
             <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
+
             <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
 
             </div>`;
@@ -370,6 +372,7 @@ const rfsIcons = {
             let details =
             `<div>Model: ${heli.model}</div>\
             <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
+
             ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
@@ -416,6 +419,7 @@ const rfsIcons = {
      * @param heli {@code true} if this is a helicopter.
      */
      constructor(icao24, rego, name, model, operator, colour = '#ffffff', heli = true) {
+
         this.icao24 = icao24;
         this.rego = rego;
         this.name = name;
@@ -492,6 +496,7 @@ const aircraft = [
     // RFS fixed wing aircraft
     new Helicopter('A4C031', 'N405LC', 'Thor', 'C130', 'RFS'),
     new Helicopter('ACC37A', 'N512AX', '', 'DC-10', 'RFS'), // Bomber 910?
+
     // Whoa, there appear to be a lot of these...
     ];
 
@@ -508,6 +513,177 @@ if (developmentMode) {
         // Royal Flying Doctor's Service
         new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C', 'RFDS', false)
         );
+}
+
+// Load all the arcgis classes
+// These need to be called in 'eval' wrappers because the JS already in the
+// page will have loaded these already, and require doesn't double load modules by-design
+const GraphicsLayer = eval('require("esri/layers/GraphicsLayer");');
+const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
+const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
+const Point = eval('require("esri/geometry/Point");');
+const Graphic = eval('require("esri/graphic");');
+const Color = eval('require("esri/Color");');
+
+/**
+ * A class for helping out with map access.
+ */
+ class LighthouseMap {
+
+    /**
+     * Constructs a new map.
+     *
+     * @param map the arcgis map.
+     */
+     constructor(map) {
+        this.map = map;
+
+        console.debug('Setting up map');
+
+        this.createLayer('default');
+    }
+
+    /**
+     * Creates a map layer.
+     *
+     * @param name the name of the layer.
+     */
+     createLayer(name) {
+        let graphicsLayer = new GraphicsLayer();
+        graphicsLayer.id = 'lighthouseLayer-' + name;
+        graphicsLayer.on('click', this._handleClick);
+
+        this.map.addLayer(graphicsLayer);
+        this.layers[name] = new MapLayer(graphicsLayer);
+    }
+
+    /**
+     * Gets the map layers.
+     *
+     * @returns the layers.
+     */
+     layers() {
+        return this._layers;
+    }
+
+    /**
+     * Handles a click event from the our map graphics layer.
+     *
+     * @param event the event.
+     * @private
+     */
+     _handleClick(event) {
+        // Show the info window for our point
+        this._map.infoWindow.setTitle(event.graphic.symbol.title);
+        this._map.infoWindow.setContent(event.graphic.symbol.details);
+        this._map.infoWindow.show(event.mapPoint);
+    }
+}
+
+/**
+ * A class for helping out with map layer access.
+ */
+ class MapLayer {
+
+    /**
+     * Constructs a new map layer.
+     *
+     * @param layer the arcgis graphics layer.
+     */
+     constructor(layer) {
+        this.graphicsLayer = layer;
+    }
+
+    /**
+     * Adds a symbol marker to the map.
+     *
+     * @param lat the latitude.
+     * @param lon the longitude.
+     * @param style the marker style, e.g. SimpleMarkerSymbol.STYLE_SQUARE.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
+     * @return the marker to customise.
+     */
+     addSymbolMarker(lat, lon, style, title='', details='') {
+        let point = new Point({
+            latitude: lat,
+            longitude: lon
+        });
+
+        let marker = new SimpleMarkerSymbol(style);
+        marker.title = title;
+        marker.details = details;
+
+        this.graphicsLayer.add(new Graphic(point, marker));
+        return marker;
+    }
+
+    /**
+     * Creates an image marker.
+     *
+     * @param imageUrl the URL for the marker's image.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
+     * @return the marker to customise.
+     */
+     createImageMarker(imageUrl, title='', details='') {
+        let marker = new PictureMarkerSymbol();
+        marker.setHeight(16);
+        marker.setWidth(16);
+        marker.setUrl(imageUrl);
+        marker.title = title;
+        marker.details = details;
+
+        return marker;
+    }
+
+    /**
+     * Adds an image marker to the map.
+     *
+     * @param lat the latitude.
+     * @param lon the longitude.
+     * @param imageUrl the URL for the marker's image.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
+     * @return the marker to customise.
+     */
+     addImageMarker(lat, lon, imageUrl, title='', details='') {
+        let marker = this.createImageMarker(imageUrl, title, details);
+        this.addMarker(lat, lon, marker);
+        return marker;
+    }
+
+    /**
+     * Adds an marker to the map.
+     *
+     * @param lat the latitude.
+     * @param lon the longitude.
+     * @param marker the marker to add.
+     */
+     addMarker(lat, lon, marker) {
+        let point = new Point({
+            latitude: lat,
+            longitude: lon
+        });
+
+        this.graphicsLayer.add(new Graphic(point, marker));
+    }
+
+    /**
+     * Removes a marker from the map.
+     *
+     * @param marker the marker to remove.
+     */
+     removeMarker(marker) {
+        this.graphicsLayer.remove(marker);
+    }
+
+    /**
+     * Clears all markers from the map.
+     */
+     clear() {
+        this.graphicsLayer.clear();
+    }
 }
 
 // Load all the arcgis classes
