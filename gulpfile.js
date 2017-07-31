@@ -143,6 +143,8 @@ function getBundler(file, dest, options) {
 
 // copy static folders to build directory
 gulp.task('copy', function() {
+  gulp.src('src/resources/**')
+    .pipe(gulp.dest('build/resources'));
   gulp.src('src/fonts/**')
     .pipe(gulp.dest('build/fonts'));
   gulp.src('src/icons/**')
