@@ -314,7 +314,7 @@ const rfsIcons = {
             <div id='lhqacredHolder' style="padding-top:10px;width:100%;margin:auto">\
             <table id='lhqacred' style="width:100%;text-align: center;">\
             <tr>\
-            <th style="text-align: center;width:100%">Available SRB Accreditations</th>\
+            <th style="text-align: center;width:100%">Available SRB Roles</th>\
             </tr>\
             </table>\
             </div>\
@@ -332,6 +332,9 @@ const rfsIcons = {
 
             <div id='lhqContactsHolder' style="padding-top:10px;width:100%;margin:auto">\
             <table id='lhqContacts' style="width:100%;text-align: center;">\
+            <tr>\
+            <td colspan="2" style="font-weight: bold">Contact Details</td>
+            </tr>\
             <tr>\
             <th style="text-align: center;width:50%">Name</th>\
             <th style="text-align: center;width:50%">Detail</th>\
@@ -786,7 +789,12 @@ const SpatialReference = eval('require("esri/SpatialReference");');
                 $.each(hqdeets.contacts,function(k,v){
                     if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
                     {
-                        $('#lhqContacts').append('<tr><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                        if (k%2) //every other row
+                        {
+                            $('#lhqContacts').append('<tr><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                        } else {
+                            $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                        }
                     }
                 })
                 if (hqdeets.acred.length > 0) //fill otherwise placeholder
@@ -800,7 +808,7 @@ const SpatialReference = eval('require("esri/SpatialReference");');
                 $('#lhqStatus').text(hqdeets.HeadquartersStatus)
                 $('#lhqJobCount').text(hqdeets.currentJobCount)
             })
-        }
+}
         this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
     }
 }
