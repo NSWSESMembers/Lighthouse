@@ -827,7 +827,7 @@ const SpatialReference = eval('require("esri/SpatialReference");');
                         c++
                         if (c%2 || c==0) //every other row
                         {
-                            $('#lhqContacts').append('<tr><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                            $('#lhqContacts').append('<tr><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
                         } else {
                             $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
                         }
