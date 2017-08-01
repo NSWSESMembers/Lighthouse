@@ -778,7 +778,30 @@ const SpatialReference = eval('require("esri/SpatialReference");');
         // Show the info window for our point
         this._map.infoWindow.setTitle(event.graphic.symbol.title);
         this._map.infoWindow.setContent(event.graphic.symbol.details);
-        this._map.infoWindow.show(event.mapPoint);
+
+        if ($(this._map.infoWindow.domNode).find('#lhqPopUp').length) //if this is a HL popup box //TODO extend the object and hold the type in there
+        {
+            console.log('this is a hq popup')
+            fetchHqDetails($('#lhqName').text(), function(hqdeets){
+                $.each(hqdeets.contacts,function(k,v){
+                    if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
+                    {
+                        $('#lhqContacts').append('<tr><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                    }
+                })
+                if (hqdeets.acred.length > 0) //fill otherwise placeholder
+                {
+                    $.each(hqdeets.acred,function(k,v){
+                        $('#lhqacred').append('<tr><td>'+v+'</td></tr>');
+                    })
+                } else {
+                    $('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
+                }
+                $('#lhqStatus').text(hqdeets.HeadquartersStatus)
+                $('#lhqJobCount').text(hqdeets.currentJobCount)
+            })
+        }
+        this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
     }
 }
 
@@ -856,6 +879,23 @@ const SpatialReference = eval('require("esri/SpatialReference");');
     }
 
     /**
+     * Adds an image marker to the map by x/y and spatial ref.
+     *
+     * @param x the x.
+     * @param x the y.
+     * @param SpatialReference the SpatialReference object.
+     * @param imageUrl the URL for the marker's image.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
+     * @return the marker to customise.
+     */
+     addImageMarkerByxy(x, y, SpatialReference, imageUrl, title='', details='') {
+        let marker = this.createImageMarker(imageUrl, title, details);
+        this.addMarkerByxy(x, y, SpatialReference, marker);
+        return marker;
+    }    
+
+    /**
      * Adds an marker to the map.
      *
      * @param lat the latitude.
@@ -867,6 +907,20 @@ const SpatialReference = eval('require("esri/SpatialReference");');
             latitude: lat,
             longitude: lon
         });
+
+        this.graphicsLayer.add(new Graphic(point, marker));
+    }
+
+    /**
+     * Adds an marker to the map by xy and spatial ref.
+     *
+     * @param x the x.
+     * @param y the y.
+     * @param SpatialReferencePassed the SpatialReferencePassed object
+     * @param marker the marker to add.
+     */
+     addMarkerByxy(x, y, SpatialReferencePassed, marker) {
+        let point = new Point(x,y,new SpatialReference(SpatialReferencePassed));
 
         this.graphicsLayer.add(new Graphic(point, marker));
     }
