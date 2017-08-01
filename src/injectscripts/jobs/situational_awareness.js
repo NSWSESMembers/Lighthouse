@@ -12,8 +12,8 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('transport-incidents');
     lighthouseMap.createLayer('transport-flood-reports');
     lighthouseMap.createLayer('transport-cameras');
-
     lighthouseMap.createLayer('helicopters');
+    lighthouseMap.createLayer('power-outages');
 
     if (developmentMode) {
         // Add a test point
@@ -61,6 +61,8 @@ window.addEventListener("message", function(event) {
                 showTransportCameras(mapLayer, event.data.response);
             } else if (event.data.layer === 'helicopters') {
                 showRescueHelicopters(mapLayer, event.data.response)
+            } else if (event.data.layer === 'power-outages') {
+                showPowerOutages(mapLayer, event.data.response)
             }
 
         } else if (event.data.type === "LH_CLEAR_LAYER_DATA") {
@@ -364,6 +366,39 @@ const rfsIcons = {
 }
 
 /**
+ * Shows the current power outages on the map.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+function showPowerOutages(mapLayer, data) {
+    console.info('showing power outages');
+
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let feature = data.features[i];
+
+            if (feature.geometry.type.toLowerCase() === 'geometrycollection') {
+                for (let j = 0; j < feature.geometry.geometries.length; j++) {
+                    let geometry = feature.geometry.geometries[j];
+
+                    if (geometry.type.toLowerCase() === 'polygon') {
+                        let polygonPoints = geometry.coordinates[0];
+                        console.log(polygonPoints);
+                        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3);
+                    }
+                }
+
+                count++;
+            }
+        }
+    }
+
+    console.info(`added ${count} power outages`);
+}
+
+/**
  * Finds an aircraft by it's ICAO-24 ID.
  *
  * @param icao24 the ID.
@@ -493,7 +528,11 @@ if (developmentMode) {
 // page will have loaded these already, and require doesn't double load modules by-design
 const GraphicsLayer = eval('require("esri/layers/GraphicsLayer");');
 const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
+const SimpleFillSymbol = eval('require("esri/symbols/SimpleFillSymbol");');
+const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
 const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
+const SpatialReference = eval('require("esri/SpatialReference");');
+const Polyline = eval('require("esri/geometry/Polyline");');
 const Point = eval('require("esri/geometry/Point");');
 const Graphic = eval('require("esri/graphic");');
 const Color = eval('require("esri/Color");');
@@ -650,6 +689,30 @@ const Color = eval('require("esri/Color");');
      removeMarker(marker) {
         this.graphicsLayer.remove(marker);
     }
+
+    /**
+     * Adds a polygon.
+     *
+     * @param points the array of arrays of [lon/lat] points.
+     * @param outlineColour the outline colour.
+     * @param fillColour the fill colour.
+     * @param thickness the line thickness.
+     * @param style the line style.
+     */
+    addPolygon(points, outlineColour, fillColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID) {
+
+        let polySymbol = new SimpleFillSymbol();
+        polySymbol.setOutline(new SimpleLineSymbol(style, new Color(outlineColour), thickness));
+        polySymbol.setColor(new Color(fillColour));
+
+        // expect GPS lat/long data
+        let lineGeometry = new Polyline(new SpatialReference({wkid:4326}));
+        lineGeometry.addPath(points);
+
+        let lineGraphic = new Graphic(lineGeometry, polySymbol);
+        this.graphicsLayer.add(lineGraphic);
+    }
+
 
     /**
      * Clears all markers from the map.

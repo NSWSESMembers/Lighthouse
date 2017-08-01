@@ -41,6 +41,10 @@ $(<li>
             <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
             <span class="tag-text">Rescue Helicopters</span>
           </span>
+          <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
+            <span class="tag-text">Power Outages</span>
+          </span>
         </div>
       </div>
       </li>
@@ -87,13 +91,14 @@ registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', requestT
 registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 5 * 60000); // every 5 mins
 
 registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLayerUpdate, 10000); // every 10s
+registerClickHandler('togglePowerOutagesBtn', 'power-outages', requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
 
 //Clear all lighthouse filters when click. A little hacky by changing the button class then calling the click to clear inbuild timers and layers.
 //saves recreating functions outside of registerClickHandler
 $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
     function () {
         console.log('resetting lighthouse layers');
-        var buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn']
+        var buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglePowerOutagesBtn'];
         buttons.forEach(function (buttonId) {
             var button = $(`#${buttonId}`);
             button.removeClass('tag-disabled');
@@ -128,6 +133,11 @@ function requestTransportFloodReportsLayerUpdate() {
 function requestTransportCamerasLayerUpdate() {
     console.debug('updating transport cameras layer');
     fetchTransportResource('transport-cameras');
+}
+
+function requestPowerOutagesLayerUpdate() {
+    console.debug('updating power-outages layer');
+    window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'power-outages' }, '*');
 }
 
 /**

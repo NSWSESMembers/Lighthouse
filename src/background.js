@@ -1,11 +1,13 @@
 // This background script is initialised and executed once and exists
 // separate to all other pages.
 
+const tj = require('togeojson');
 
 //Sit Aware Map Data Feeds
 const rfsMajorIncidentsFeed = "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json"
 const transportFeed = "https://api.transport.nsw.gov.au/"
 const openSkyFeed = "https://opensky-network.org/api/states/all"
+const essentialEnergyOutagesFeed = "http://www.essentialenergy.com.au/Asset/kmz/current.kml";
 
 //block message js core request, fetch the file, inject our vars then serve it back to the requestor. :-)
 chrome.webRequest.onBeforeRequest.addListener(
@@ -75,6 +77,11 @@ chrome.runtime.onMessage.addListener(
             return true;    
         } else if (request.type === 'helicopters') {
             fetchHelicopterLocations(request.params, function(data) {
+                sendResponse(data);
+            });
+            return true;
+        } else if (request.type === 'power-outages') {
+            fetchPowerOutages(function(data) {
                 sendResponse(data);
             });
             return true;
@@ -167,6 +174,32 @@ function loadSynchronously(url) {
         }
     };
     xhttp.open('GET', openSkyFeed + params, true);
+    xhttp.send();
+}
+
+/**
+ * Fetches the current power outage details.
+ *
+ * @param callback the callback to send the data to.
+ */
+ function fetchPowerOutages(callback) {
+    console.info('fetching power outage locations');
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            var kml = xhttp.responseXML;
+            var geoJson = tj.kml(kml);
+            callback(geoJson);
+        } else {
+            // error
+            var response = {
+                error: 'Request failed',
+                httpCode: this.status
+            };
+            callback(response);
+        }
+    };
+    xhttp.open('GET', essentialEnergyOutagesFeed, true);
     xhttp.send();
 }
 
