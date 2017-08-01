@@ -462,7 +462,6 @@ const rfsIcons = {
  */
 
  function fetchHqDetails(HQName, cb) {
-    console.log(HQName)
     var hq = {}
     $.ajax({
         type: 'GET'
