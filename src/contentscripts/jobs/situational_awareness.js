@@ -75,9 +75,9 @@ $(<li id="lhlayers">
                     </span>
 
                     <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
-            <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
-            <span class="tag-text">Power Outages</span>
-          </span>
+                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
+                        <span class="tag-text">Power Outages</span>
+                    </span>
                 </li>
             </ul>
         </li>
@@ -180,6 +180,11 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
 function requestTransportCamerasLayerUpdate() {
     console.debug('updating transport cameras layer');
     fetchTransportResource('transport-cameras');
+}
+
+function requestPowerOutagesLayerUpdate() {
+    console.debug('updating power-outages layer');
+    window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'power-outages' }, '*');
 }
 
 /**
