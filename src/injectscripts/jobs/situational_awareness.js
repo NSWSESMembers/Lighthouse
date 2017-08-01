@@ -819,7 +819,7 @@ const SpatialReference = eval('require("esri/SpatialReference");');
         {
             console.log('this is a hq popup')
             fetchHqDetails($('#lhqName').text(), function(hqdeets){
-                console.log(hqdeets)
+                console.debug(hqdeets)
                 var c = 0
                 $.each(hqdeets.contacts,function(k,v){
                     if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
