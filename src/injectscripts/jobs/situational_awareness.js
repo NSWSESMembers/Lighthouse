@@ -305,9 +305,17 @@ const rfsIcons = {
 
             let name = hq.attributes.HQNAME;
 
+            var unitCode = ''
+            if (hq.attributes.UNIT_CODE != ' ')
+            {
+                unitCode = hq.attributes.UNIT_CODE
+            } else {
+                unitCode = hq.attributes.REGCODE
+            }
+
             let details =
             `<div id='lhqPopUp'>\
-            <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${hq.attributes.UNIT_CODE} &mdash; ${hq.attributes.REGCODE}</div>\
+            <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${unitCode} &mdash; ${hq.attributes.REGCODE}</div>\
             <div id='lhqNameHolder' style="display:none">Unit Name: <span id='lhqName'>${hq.attributes.HQNAME}</span></div>\
             <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
 
