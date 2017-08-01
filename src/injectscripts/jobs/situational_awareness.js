@@ -477,24 +477,24 @@ const rfsIcons = {
         if (textStatus == 'success') {
             if (response.responseJSON.Results.length) {
                 var v = response.responseJSON.Results[0]
-                    console.log('Unit ID is:'+v.Id)
-                    console.log('Unit is:'+v.HeadquartersStatusType.Name)
-                    hq.HeadquartersStatus = v.HeadquartersStatusType.Name
-                    fetchHqAccreditations(v.Id,function(acred){
-                        hq.acred = []
-                        $.each(acred,function(k,v){
+                console.log('Unit ID is:'+v.Id)
+                console.log('Unit is:'+v.HeadquartersStatusType.Name)
+                hq.HeadquartersStatus = v.HeadquartersStatusType.Name
+                fetchHqAccreditations(v.Id,function(acred){
+                    hq.acred = []
+                    $.each(acred,function(k,v){
                             if (v.HeadquarterAccreditationStatusType.Id == 1) //1 is available
                             {
                                 hq.acred.push(v.HeadquarterAccreditationType.Name)
                             }
                         })
-                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined')
-                        {
-                            cb(hq)
-                        }
-                    })
-                    fetchHqJobCount(v.Id,function(jobcount){
-                        hq.currentJobCount = jobcount
+                    if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined')
+                    {
+                        cb(hq)
+                    }
+                })
+                fetchHqJobCount(v.Id,function(jobcount){
+                    hq.currentJobCount = jobcount
                         if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined') //lazy mans way to only return once all the data is back
                         {
                             cb(hq)
@@ -507,10 +507,10 @@ const rfsIcons = {
                             cb(hq)
                         }
                     })
-}
-}
-}
-})
+                }
+            }
+        }
+    })
 }
 
 /**
