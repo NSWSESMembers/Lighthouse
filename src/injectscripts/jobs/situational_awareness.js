@@ -15,6 +15,9 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('helicopters');
     lighthouseMap.createLayer('power-outages');
 
+    lighthouseMap.createLayer('lhqs');
+
+
     if (developmentMode) {
         // Add a test point
         lighthouseMap.layers['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon, 'Parramatta SES',
@@ -22,7 +25,8 @@ function pageFullyLoaded(e) {
     }
     window['lighthouseMap'] = lighthouseMap;
 
-    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn'];
+    // TODO: outages
+    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn'];
     buttons.forEach(function (buttonId) {
         if (localStorage.getItem('Lighthouse-' + buttonId) == 'true') {
             let button = $(`#${buttonId}`);
@@ -61,6 +65,8 @@ window.addEventListener("message", function(event) {
                 showTransportCameras(mapLayer, event.data.response);
             } else if (event.data.layer === 'helicopters') {
                 showRescueHelicopters(mapLayer, event.data.response)
+            } else if (event.data.layer === 'lhqs') {
+                showLhqs(mapLayer, event.data.response)
             } else if (event.data.layer === 'power-outages') {
                 showPowerOutages(mapLayer, event.data.response)
             }
@@ -69,7 +75,22 @@ window.addEventListener("message", function(event) {
             console.info("clearing layer:" + event.data.layer);
             lighthouseMap.layers[event.data.layer].clear();
         } else if (event.data.type === "LH_GET_TRANSPORT_KEY") {
-            let transportApiKeyOpsLog = 515514;
+            var transportApiKeyOpsLog = ''
+            switch (urls.Base)
+            {
+                case 'https://previewbeacon.ses.nsw.gov.au':
+                transportApiKeyOpsLog = '46273'
+                break
+                case 'https://beacon.ses.nsw.gov.au':
+                transportApiKeyOpsLog = '515514'
+                break
+                case 'https://trainbeacon.ses.nsw.gov.au':
+                transportApiKeyOpsLog = '36753'
+                break
+                default:
+                transportApiKeyOpsLog = '0'
+            }
+
             let layer = event.data.layer;
 
             // Fetch the API key from an ops log and pass it back
@@ -156,7 +177,8 @@ const rfsIcons = {
     </div>`;
 
     let details =
-    `<div>${point.properties.adviceA}</div>\
+    `<div><strong>${point.properties.headline}</strong></div>\
+    <div style="margin-top:0.5em">${point.properties.adviceA}</div>\
     <div>${point.properties.adviceB}</div>\
     <div>${point.properties.otherAdvice}</div>\
     ${dateDetails}`;
@@ -204,7 +226,8 @@ const rfsIcons = {
                 let lon = feature.geometry.coordinates[0];
 
                 let name = feature.properties.title;
-                let details = feature.properties.view + "<br><br><div style='height:190px;width:200px;display:block'><a target='_blank' href='"+feature.properties.href+"'><img width='95%' src="+feature.properties.href+"></img></a><br><sub>Click image to enlarge</sub></div>";
+
+                let details = feature.properties.view + "<br><br><div style='height:190px;width:240px;display:block'><a target='_blank' href='"+feature.properties.href+"'><img width='100%' src="+feature.properties.href+"></img></a></div><sub>Click image to enlarge</sub>";
 
                 console.debug(`Camera at [${lat},${lon}]: ${name}`);
                 mapLayer.addImageMarker(lat, lon, icon, name, details);
@@ -264,6 +287,70 @@ const rfsIcons = {
         }
     }
     console.info(`added ${count} RMS incidents`);
+}
+
+/**
+ * Shows SES LHQ's.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+
+ function showLhqs(mapLayer, data) {
+    console.info('showing LHQs');
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let hq = data.features[i];
+
+            let x = hq.geometry.x;
+            let y = hq.geometry.y;
+
+            let name = hq.attributes.HQNAME;
+
+            let details =
+            `<div id='lhqPopUp'>\
+            <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${hq.attributes.UNIT_CODE} &mdash; ${hq.attributes.REGCODE}</div>\
+            <div id='lhqNameHolder' style="display:none">Unit Name: <span id='lhqName'>${hq.attributes.HQNAME}</span></div>\
+            <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
+
+            <div id='lhqacredHolder' style="padding-top:10px;width:100%;margin:auto">\
+            <table id='lhqacred' style="width:100%;text-align: center;">\
+            <tr>\
+            <th style="text-align: center;width:100%">Available SRB Accreditations</th>\
+            </tr>\
+            </table>\
+            </div>\
+
+            <div id='lhqJobCountHolder' style="padding-top:10px;width:100%;margin:auto">\
+            <table style="width:100%;text-align: center;">\
+            <tr>\
+            <th style="text-align: center;width:50%">Current Jobs</th>\
+            </tr>\
+            <tr>\
+            <td id='lhqJobCount'>-Loading-</td>\
+            </tr>\
+            </table>\
+            </div>\
+
+            <div id='lhqContactsHolder' style="padding-top:10px;width:100%;margin:auto">\
+            <table id='lhqContacts' style="width:100%;text-align: center;">\
+            <tr>\
+            <th style="text-align: center;width:50%">Name</th>\
+            <th style="text-align: center;width:50%">Detail</th>\
+            </tr>\
+            </table>\
+            </div>\
+            </div>`;
+
+            let icon = lighthouseUrl + "icons/ses.png";
+
+            console.debug(`SES LHQ at [${x},${y}]: ${name}`);
+            mapLayer.addImageMarkerByxy(x, y, data.spatialReference, icon, name, details);
+            count++;
+        }
+    }
+    console.info(`added ${count} SES LHQs`);
 }
 
 /**
@@ -336,21 +423,28 @@ const rfsIcons = {
             let heading = data.states[i][10] || 0;
 
             let updated = "unknown";
+            let updatedMoment = "unknown";
+
             if (positionUpdated) {
-                updated = moment(positionUpdated * 1000).format('YYYY-MM-DD HH:mm:ss');
+                updated = moment(positionUpdated * 1000).format('DD/MM/YY HH:mm:ss');
+                updatedMoment = moment(positionUpdated * 1000).fromNow()
             }
 
             let heli = findAircraftById(icao24);
-            let name = heli.name + ' ' + heli.rego;
+            let name = heli.name + ' ' + heli.rego + ' - ' +heli.operator;
 
             let dateDetails =
             `<div class="dateDetails">\
             <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
+
+            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
+
             </div>`;
 
             let details =
-            `<div>${heli.model}</div>\
-            <div>Lat: ${lat} Lon: ${lon} Alt: ${alt}</div>\
+            `<div>Model: ${heli.model}</div>\
+            <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
+
             ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
@@ -399,6 +493,137 @@ function showPowerOutages(mapLayer, data) {
 }
 
 /**
+ * Fetch HQ details.
+ *
+ * @param HQName FULLNAME of HQ. code is too hard to search for without multiple results.
+ * @param cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchHqDetails(HQName, cb) {
+    var hq = {}
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Headquarters/Search?Name='+HQName
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            if (response.responseJSON.Results.length) {
+                var v = response.responseJSON.Results[0]
+                hq.HeadquartersStatus = v.HeadquartersStatusType.Name
+                fetchHqAccreditations(v.Id,function(acred){
+                    hq.acred = []
+                    $.each(acred,function(k,v){
+                            if (v.HeadquarterAccreditationStatusType.Id == 1) //1 is available. everything else is bad. only return what is avail
+                            {
+                                hq.acred.push(v.HeadquarterAccreditationType.Name)
+                            }
+                        })
+                    if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined') //lazy mans way to only return once all the data is back
+                    {
+                        cb(hq)
+                    }
+                })
+                fetchHqJobCount(v.Id,function(jobcount){
+                    hq.currentJobCount = jobcount //return a count
+                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined') //lazy mans way to only return once all the data is back
+                        {
+                            cb(hq)
+                        }
+                    })
+                    fetchHqContacts(v.Id,function(contacts){ //lazy mans way to only return once all the data is back
+                        hq.contacts = contacts //return them all
+                        if (typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.acred) !== 'undefined')
+                        {
+                            cb(hq)
+                        }
+                    })
+                }
+            }
+        }
+    })
+}
+
+/**
+ * Fetch HQ Job Counts.
+ *
+ * @param HQId code of HQ.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchHqJobCount(HQId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Jobs/Search?StartDate=&EndDate=&Hq='+HQId+'&JobStatusTypeIds%5B%5D=2&JobStatusTypeIds%5B%5D=1&JobStatusTypeIds%5B%5D=5&JobStatusTypeIds%5B%5D=4&ViewModelType=5&PageIndex=1&PageSize=100'
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            cb(response.responseJSON.TotalItems) //return the count of how many results.
+        }
+    }
+})
+}
+
+/**
+ * Fetch HQ Contacts.
+ *
+ * @param HQId code of HQ.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchHqContacts(HQId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Contacts/Search?HeadquarterIds='+HQId+'&PageIndex=1&PageSize=50&SortField=createdon&SortOrder=asc'
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            cb(response.responseJSON.Results) //return everything as they are all useful
+        }
+    }
+})
+}
+
+/**
+ * Fetch HQ Accreditations.
+ *
+ * @param HQId code of HQ.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchHqAccreditations(HQId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/HeadquarterAccreditations/'+HQId
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            cb(response.responseJSON.HeadquarterAccreditationMappings)
+        }
+    }
+})
+}
+
+/**
  * Finds an aircraft by it's ICAO-24 ID.
  *
  * @param icao24 the ID.
@@ -429,11 +654,13 @@ function showPowerOutages(mapLayer, data) {
      * @param colour the colour for the marker.
      * @param heli {@code true} if this is a helicopter.
      */
-     constructor(icao24, rego, name, model, colour = '#ffffff', heli = true) {
+     constructor(icao24, rego, name, model, operator, colour = '#ffffff', heli = true) {
+
         this.icao24 = icao24;
         this.rego = rego;
         this.name = name;
         this.model = model;
+        this.operator = operator
         this.colour = colour;
         this.heli = heli;
     }
@@ -455,56 +682,57 @@ function showPowerOutages(mapLayer, data) {
 // A list of rescue helicopters
 const aircraft = [
     // Toll Air Ambulance
-    new Helicopter('7C6178', 'VH-TJE', 'RSCU201', 'AW-139'),
-    new Helicopter('7C6179', 'VH-TJF', 'RSCU202', 'AW-139'),
-    new Helicopter('7C617A', 'VH-TJG', 'RSCU203', 'AW-139'),
-    new Helicopter('7C617B', 'VH-TJH', 'RSCU204', 'AW-139'),
-    new Helicopter('7C617C', 'VH-TJI', 'RSCU206', 'AW-139'),
-    new Helicopter('7C617D', 'VH-TJJ', 'RSCU207', 'AW-139'),
-    new Helicopter('7C617E', 'VH-TJK', 'RSCU208', 'AW-139'),
-    new Helicopter('7C6182', 'VH-TJO', 'RSCU209', 'AW-139'),
+    new Helicopter('7C6178', 'VH-TJE', 'RSCU201', 'AW-139', 'Toll Air'),
+    new Helicopter('7C6179', 'VH-TJF', 'RSCU202', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617A', 'VH-TJG', 'RSCU203', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617B', 'VH-TJH', 'RSCU204', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617C', 'VH-TJI', 'RSCU206', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617D', 'VH-TJJ', 'RSCU207', 'AW-139', 'Toll Air'),
+    new Helicopter('7C617E', 'VH-TJK', 'RSCU208', 'AW-139', 'Toll Air'),
+    new Helicopter('7C6182', 'VH-TJO', 'RSCU209', 'AW-139', 'Toll Air'),
 
     // Careflight
-    new Helicopter('7C0635', 'VH-BIF', 'CFH4', 'BK117'),
+    new Helicopter('7C0635', 'VH-BIF', 'CFH4', 'BK117', 'Careflight'),
 
     // Westpac
-    new Helicopter('7C5CC0', 'VH-SLU', 'LIFE21', 'BK117'),
-    new Helicopter('7C81CC', 'VH-ZXA', 'WP1', 'AW-139'),
-    new Helicopter('7C81CD', 'VH-ZXB', 'WP2', 'AW-139'),
-    new Helicopter('7C81CE', 'VH-ZXC', 'WP3', 'AW-139'),
-    new Helicopter('7C81CF', 'VH-ZXD', 'WP4', 'AW-139'),
+    new Helicopter('7C5CC0', 'VH-SLU', 'LIFE21', 'BK117', 'Westpac'),
+    new Helicopter('7C81CC', 'VH-ZXA', 'WP1', 'AW-139', 'Westpac'),
+    new Helicopter('7C81CD', 'VH-ZXB', 'WP2', 'AW-139', 'Westpac'),
+    new Helicopter('7C81CE', 'VH-ZXC', 'WP3', 'AW-139', 'Westpac'),
+    new Helicopter('7C81CF', 'VH-ZXD', 'WP4', 'AW-139', 'Westpac'),
 
     // PolAir
-    new Helicopter('7C4D03', 'VH-PHX', 'POLAIR1', 'EC-AS355'),
-    new Helicopter('7C4CF8', 'VH-PHM', 'POLAIR4', 'EC-135'),
-    new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'Bell 412EPI'),
+    new Helicopter('7C4D03', 'VH-PHX', 'POLAIR1', 'EC-AS355', 'PolAir'),
+    new Helicopter('7C4CF8', 'VH-PHM', 'POLAIR4', 'EC-135', 'PolAir'),
+    new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'Bell 412EPI', 'PolAir'),
 
     // Royal Australian Navy / CHC
-    new Helicopter('7C37B8', 'VH-LAI', 'CHOP22', 'Sikorsky S-76A'),
-    new Helicopter('7C44C8', 'VH-NVE', 'CHOP26', 'AW-139'),
+    new Helicopter('7C37B8', 'VH-LAI', 'CHOP22', 'Sikorsky S-76A', 'Royal Australian Navy'),
+    new Helicopter('7C44C8', 'VH-NVE', 'CHOP26', 'AW-139', 'Royal Australian Navy'),
 
     // Some QLD based helicopters which may cross south
     // QLD Westpac
-    new Helicopter('7C44CA', 'VH-NVG', 'LIFE45', 'EC-135'),
+    new Helicopter('7C44CA', 'VH-NVG', 'LIFE45', 'EC-135', 'Westpac'),
 
     // QLD RAAF Rescue helicopter
-    new Helicopter('7C37B7', 'VH-LAH', 'CHOP41', 'Sikorsky S-76A'),
+    new Helicopter('7C37B7', 'VH-LAH', 'CHOP41', 'Sikorsky S-76A', 'RAAF'),
 
     // RACQ Lifeflight
-    new Helicopter('7C759B', 'VH-XIL', 'RSCU511', 'AW139'),
-    new Helicopter('7C7599', 'VH-XIJ', 'RSCU533', 'AW139'),
-    new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412'),
+    new Helicopter('7C759B', 'VH-XIL', 'RSCU511', 'AW139', 'RACQ Lifeflight'),
+    new Helicopter('7C7599', 'VH-XIJ', 'RSCU533', 'AW139', 'RACQ Lifeflight'),
+    new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412', 'RACQ Lifeflight'),
 
     // Some VIC base helicopters which may cross north
     // Victoria Helicopter Emergency Medical Service (HEMS)
-    new Helicopter('7C7CC6', 'VH-YXK', 'HEMS1', 'AW-139'),
-    new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139'),
-    new Helicopter('7C7CC5', 'VH-YXJ', 'HEMS4', 'AW-139'),
-    new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139'),
+    new Helicopter('7C7CC6', 'VH-YXK', 'HEMS1', 'AW-139', 'HEMS'),
+    new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139', 'HEMS'),
+    new Helicopter('7C7CC5', 'VH-YXJ', 'HEMS4', 'AW-139', 'HEMS'),
+    new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139', 'HEMS'),
 
     // RFS fixed wing aircraft
-    new Helicopter('A4C031', 'N405LC', 'Thor', 'C130'),
-    new Helicopter('ACC37A', 'N512AX', '', 'DC-10'), // Bomber 910?
+    new Helicopter('A4C031', 'N405LC', 'Thor', 'C130', 'RFS'),
+    new Helicopter('ACC37A', 'N512AX', '', 'DC-10', 'RFS'), // Bomber 910?
+
     // Whoa, there appear to be a lot of these...
     ];
 
@@ -512,14 +740,14 @@ const aircraft = [
 if (developmentMode) {
     aircraft.push(
         // ASNSW fixed wing
-        new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C', false),
-        new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C', false), // Also seen as AM271
-        new Helicopter('7C01C2', 'VH-AMS', 'AM203', 'Super King B200C', false),
-        new Helicopter('7C01C1', 'VH-AMR', 'AM207', 'Super King B200C', false),
-        new Helicopter('7C01C0', 'VH-AMQ', 'AM297', 'Super King B200C', false),
+        new Helicopter('7C41DE', 'VH-NAO', 'AM262', 'Super King 350C', 'ASNSW', false),
+        new Helicopter('7C41D9', 'VH-NAJ', 'AM292', 'Super King 350C', 'ASNSW', false), // Also seen as AM271
+        new Helicopter('7C01C2', 'VH-AMS', 'AM203', 'Super King B200C', 'ASNSW', false),
+        new Helicopter('7C01C1', 'VH-AMR', 'AM207', 'Super King B200C', 'ASNSW', false),
+        new Helicopter('7C01C0', 'VH-AMQ', 'AM297', 'Super King B200C', 'ASNSW', false),
 
         // Royal Flying Doctor's Service
-        new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C', false)
+        new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C', 'RFDS', false)
         );
 }
 
@@ -588,7 +816,30 @@ const Color = eval('require("esri/Color");');
         // Show the info window for our point
         this._map.infoWindow.setTitle(event.graphic.symbol.title);
         this._map.infoWindow.setContent(event.graphic.symbol.details);
-        this._map.infoWindow.show(event.mapPoint);
+
+        if ($(this._map.infoWindow.domNode).find('#lhqPopUp').length) //if this is a HL popup box //TODO extend the object and hold the type in there
+        {
+            console.log('this is a hq popup')
+            fetchHqDetails($('#lhqName').text(), function(hqdeets){
+                $.each(hqdeets.contacts,function(k,v){
+                    if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
+                    {
+                        $('#lhqContacts').append('<tr><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                    }
+                })
+                if (hqdeets.acred.length > 0) //fill otherwise placeholder
+                {
+                    $.each(hqdeets.acred,function(k,v){
+                        $('#lhqacred').append('<tr><td>'+v+'</td></tr>');
+                    })
+                } else {
+                    $('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
+                }
+                $('#lhqStatus').text(hqdeets.HeadquartersStatus)
+                $('#lhqJobCount').text(hqdeets.currentJobCount)
+            })
+        }
+        this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
     }
 }
 
@@ -666,6 +917,23 @@ const Color = eval('require("esri/Color");');
     }
 
     /**
+     * Adds an image marker to the map by x/y and spatial ref.
+     *
+     * @param x the x.
+     * @param x the y.
+     * @param SpatialReference the SpatialReference object.
+     * @param imageUrl the URL for the marker's image.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
+     * @return the marker to customise.
+     */
+     addImageMarkerByxy(x, y, SpatialReference, imageUrl, title='', details='') {
+        let marker = this.createImageMarker(imageUrl, title, details);
+        this.addMarkerByxy(x, y, SpatialReference, marker);
+        return marker;
+    }
+
+    /**
      * Adds an marker to the map.
      *
      * @param lat the latitude.
@@ -677,6 +945,20 @@ const Color = eval('require("esri/Color");');
             latitude: lat,
             longitude: lon
         });
+
+        this.graphicsLayer.add(new Graphic(point, marker));
+    }
+
+    /**
+     * Adds an marker to the map by xy and spatial ref.
+     *
+     * @param x the x.
+     * @param y the y.
+     * @param SpatialReferencePassed the SpatialReferencePassed object
+     * @param marker the marker to add.
+     */
+     addMarkerByxy(x, y, SpatialReferencePassed, marker) {
+        let point = new Point(x,y,new SpatialReference(SpatialReferencePassed));
 
         this.graphicsLayer.add(new Graphic(point, marker));
     }

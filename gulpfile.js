@@ -50,7 +50,7 @@ function getBundler(file, dest, options) {
 
   options = _.extend(options || {}, {
     // Enable source maps.
-    debug: true,
+    debug: false,
     // Configure transforms.
     transform: BROWSERIFY_TRANSFORMS
   });
@@ -143,6 +143,8 @@ function getBundler(file, dest, options) {
 
 // copy static folders to build directory
 gulp.task('copy', function() {
+  gulp.src('src/resources/**')
+    .pipe(gulp.dest('build/resources'));
   gulp.src('src/fonts/**')
     .pipe(gulp.dest('build/fonts'));
   gulp.src('src/icons/**')
