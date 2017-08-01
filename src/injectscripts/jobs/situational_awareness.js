@@ -15,7 +15,7 @@ function pageFullyLoaded(e) {
 
     lighthouseMap.createLayer('helicopters');
 
-        lighthouseMap.createLayer('lhqs');
+    lighthouseMap.createLayer('lhqs');
 
 
     if (developmentMode) {
@@ -292,24 +292,58 @@ const rfsIcons = {
  * @param data the data to add to the layer.
  */
 
-function showLhqs(mapLayer, data) {
+ function showLhqs(mapLayer, data) {
     console.info('showing LHQs');
     let count = 0;
     if (data && data.features) {
         for (let i = 0; i < data.features.length; i++) {
             let hq = data.features[i];
 
-                let x = hq.geometry.x;
-                let y = hq.geometry.y;
+            let x = hq.geometry.x;
+            let y = hq.geometry.y;
 
-                let name = hq.attributes.HQNAME;
-                let details = hq.attributes.UNIT_CODE;
+            let name = hq.attributes.HQNAME;
 
-                let icon = lighthouseUrl + "icons/ses.png";
+            let details =
+            `<div id='lhqPopUp'>\
+            <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${hq.attributes.UNIT_CODE} &mdash; ${hq.attributes.REGCODE}</div>\
+            <div id='lhqNameHolder' style="display:none">Unit Name: <span id='lhqName'>${hq.attributes.HQNAME}</span></div>\
+            <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
 
-                console.debug(`SES LHQ at [${x},${y}]: ${name}`);
-                mapLayer.addImageMarkerByxy(x, y, data.spatialReference, icon, name, details);
-                count++;
+            <div id='lhqacredHolder' style="padding-top:10px;width:100%;margin:auto">\
+            <table id='lhqacred' style="width:100%;text-align: center;">\
+            <tr>\
+            <th style="text-align: center;width:100%">Available SRB Accreditations</th>\
+            </tr>\
+            </table>\
+            </div>\
+
+            <div id='lhqJobCountHolder' style="padding-top:10px;width:100%;margin:auto">\
+            <table style="width:100%;text-align: center;">\
+            <tr>\
+            <th style="text-align: center;width:50%">Current Jobs</th>\
+            </tr>\
+            <tr>\
+            <td id='lhqJobCount'>-Loading-</td>\
+            </tr>\
+            </table>\
+            </div>\
+
+            <div id='lhqContactsHolder' style="padding-top:10px;width:100%;margin:auto">\
+            <table id='lhqContacts' style="width:100%;text-align: center;">\
+            <tr>\
+            <th style="text-align: center;width:50%">Name</th>\
+            <th style="text-align: center;width:50%">Detail</th>\
+            </tr>\
+            </table>\
+            </div>\
+            </div>`;     
+
+            let icon = lighthouseUrl + "icons/ses.png";
+
+            console.debug(`SES LHQ at [${x},${y}]: ${name}`);
+            mapLayer.addImageMarkerByxy(x, y, data.spatialReference, icon, name, details);
+            count++;
         }
     }
     console.info(`added ${count} SES LHQs`);
@@ -417,6 +451,144 @@ function showLhqs(mapLayer, data) {
         }
     }
     console.info(`added ${count} rescue helicopters`);
+}
+
+/**
+ * Fetch HQ details.
+ *
+ * @param HQName FULLNAME of HQ. code is too hard to search for without multiple results.
+ * @param cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchHqDetails(HQName, cb) {
+    console.log(HQName)
+    var hq = {}
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Headquarters/Search?Name='+HQName
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        console.log(response)
+        if (textStatus == 'success') {
+            if (response.responseJSON.Results.length) {
+                var v = response.responseJSON.Results[0]
+                    console.log('Unit ID is:'+v.Id)
+                    console.log('Unit is:'+v.HeadquartersStatusType.Name)
+                    hq.HeadquartersStatus = v.HeadquartersStatusType.Name
+                    fetchHqAccreditations(v.Id,function(acred){
+                        hq.acred = []
+                        $.each(acred,function(k,v){
+                            if (v.HeadquarterAccreditationStatusType.Id == 1) //1 is available
+                            {
+                                hq.acred.push(v.HeadquarterAccreditationType.Name)
+                            }
+                        })
+                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined')
+                        {
+                            cb(hq)
+                        }
+                    })
+                    fetchHqJobCount(v.Id,function(jobcount){
+                        hq.currentJobCount = jobcount
+                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined') //lazy mans way to only return once all the data is back
+                        {
+                            cb(hq)
+                        }
+                    })
+                    fetchHqContacts(v.Id,function(contacts){ //lazy mans way to only return once all the data is back
+                        hq.contacts = contacts
+                        if (typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.acred) !== 'undefined')
+                        {
+                            cb(hq)
+                        }
+                    })
+}
+}
+}
+})
+}
+
+/**
+ * Fetch HQ Job Counts.
+ *
+ * @param HQId code of HQ.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchHqJobCount(HQId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Jobs/Search?StartDate=&EndDate=&Hq='+HQId+'&JobStatusTypeIds%5B%5D=2&JobStatusTypeIds%5B%5D=1&JobStatusTypeIds%5B%5D=5&JobStatusTypeIds%5B%5D=4&ViewModelType=5&PageIndex=1&PageSize=100'
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        console.log(response)
+        if (textStatus == 'success') {
+            cb(response.responseJSON.TotalItems)
+        }
+    }
+})
+}
+
+/**
+ * Fetch HQ Contacts.
+ *
+ * @param HQId code of HQ.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchHqContacts(HQId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Contacts/Search?HeadquarterIds='+HQId+'&PageIndex=1&PageSize=50&SortField=createdon&SortOrder=asc'
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        console.log(response)
+        if (textStatus == 'success') {
+            cb(response.responseJSON.Results)
+        }
+    }
+})
+}
+
+/**
+ * Fetch HQ Accreditations.
+ *
+ * @param HQId code of HQ.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchHqAccreditations(HQId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/HeadquarterAccreditations/'+HQId
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        console.log(response)
+        if (textStatus == 'success') {
+            cb(response.responseJSON.HeadquarterAccreditationMappings)
+        }
+    }
+})
 }
 
 /**
@@ -609,6 +781,34 @@ const SpatialReference = eval('require("esri/SpatialReference");');
         this._map.infoWindow.setTitle(event.graphic.symbol.title);
         $(this._map.infoWindow.domNode).find('.actionList').addClass('hidden') //massive hack to remove the Zoom To actionlist dom.
         this._map.infoWindow.setContent(event.graphic.symbol.details);
+        if ($(this._map.infoWindow.domNode).find('#lhqPopUp').length)
+        {
+            console.log('this is a hq popup')
+            fetchHqDetails($('#lhqName').text(), function(hqdeets){
+                $.each(hqdeets.contacts,function(k,v){
+                    if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
+                    {
+                        $('#lhqContacts').append('<tr><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                    }
+                })
+                console.log(hqdeets.acred)
+                if (hqdeets.acred.length > 0)
+                {
+                    $.each(hqdeets.acred,function(k,v){
+                        $('#lhqacred').append('<tr><td>'+v+'</td></tr>');
+                    })
+                } else {
+                    $('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
+                }
+                
+
+                $('#lhqStatus').text(hqdeets.HeadquartersStatus)
+                $('#lhqJobCount').text(hqdeets.currentJobCount)
+
+            })
+
+        }
+
         this._map.infoWindow.show(event.mapPoint);
     }
 }
