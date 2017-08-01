@@ -323,9 +323,11 @@ const rfsIcons = {
             <table style="width:100%;text-align: center;">\
             <tr>\
             <th style="text-align: center;width:50%">Current Jobs</th>\
+            <th style="text-align: center;width:50%">Current Teams</th>\
             </tr>\
             <tr>\
             <td id='lhqJobCount'>-Loading-</td>\
+            <td id='lhqTeamCount'>-Loading-</td>\
             </tr>\
             </table>\
             </div>\
@@ -490,21 +492,28 @@ const rfsIcons = {
                                 hq.acred.push(v.HeadquarterAccreditationType.Name)
                             }
                         })
-                    if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined') //lazy mans way to only return once all the data is back
+                    if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.currentTeamCount) !== 'undefined') //lazy mans way to only return once all the data is back
                     {
                         cb(hq)
                     }
                 })
                 fetchHqJobCount(v.Id,function(jobcount){
                     hq.currentJobCount = jobcount //return a count
-                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined') //lazy mans way to only return once all the data is back
+                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined'  && typeof(hq.currentTeamCount) !== 'undefined') //lazy mans way to only return once all the data is back
+                        {
+                            cb(hq)
+                        }
+                    })
+                fetchHqTeamCount(v.Id,function(teamcount){
+                    hq.currentTeamCount = teamcount //return a count
+                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined') //lazy mans way to only return once all the data is back
                         {
                             cb(hq)
                         }
                     })
                     fetchHqContacts(v.Id,function(contacts){ //lazy mans way to only return once all the data is back
                         hq.contacts = contacts //return them all
-                        if (typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.acred) !== 'undefined')
+                        if (typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.acred) !== 'undefined'  && typeof(hq.currentTeamCount) !== 'undefined')
                         {
                             cb(hq)
                         }
@@ -527,6 +536,30 @@ const rfsIcons = {
     $.ajax({
         type: 'GET'
         , url: urls.Base+'/Api/v1/Jobs/Search?StartDate=&EndDate=&Hq='+HQId+'&JobStatusTypeIds%5B%5D=2&JobStatusTypeIds%5B%5D=1&JobStatusTypeIds%5B%5D=5&JobStatusTypeIds%5B%5D=4&ViewModelType=5&PageIndex=1&PageSize=100'
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            cb(response.responseJSON.TotalItems) //return the count of how many results.
+        }
+    }
+})
+}
+
+/**
+ * Fetch HQ Team Counts.
+ *
+ * @param HQId code of HQ.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+ function fetchHqTeamCount(HQId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Teams/Search?StatusStartDate=&StatusEndDate=&AssignedToId='+HQId+'&StatusTypeId%5B%5D=3&IncludeDeleted=false&PageIndex=1&PageSize=200&SortField=CreatedOn&SortOrder=desc'
         , beforeSend: function(n) {
           n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
       },
@@ -786,10 +819,13 @@ const SpatialReference = eval('require("esri/SpatialReference");');
         {
             console.log('this is a hq popup')
             fetchHqDetails($('#lhqName').text(), function(hqdeets){
+                console.log(hqdeets)
+                var c = 0
                 $.each(hqdeets.contacts,function(k,v){
                     if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
                     {
-                        if (k%2) //every other row
+                        c++
+                        if (c%2 || c==0) //every other row
                         {
                             $('#lhqContacts').append('<tr><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
                         } else {
@@ -807,6 +843,7 @@ const SpatialReference = eval('require("esri/SpatialReference");');
                 }
                 $('#lhqStatus').text(hqdeets.HeadquartersStatus)
                 $('#lhqJobCount').text(hqdeets.currentJobCount)
+                $('#lhqTeamCount').text(hqdeets.currentTeamCount)
             })
 }
         this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
