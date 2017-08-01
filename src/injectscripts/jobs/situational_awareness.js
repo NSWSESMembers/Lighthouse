@@ -473,35 +473,32 @@ const rfsIcons = {
       cache: false,
       dataType: 'json',
       complete: function(response, textStatus) {
-        console.log(response)
         if (textStatus == 'success') {
             if (response.responseJSON.Results.length) {
                 var v = response.responseJSON.Results[0]
-                console.log('Unit ID is:'+v.Id)
-                console.log('Unit is:'+v.HeadquartersStatusType.Name)
                 hq.HeadquartersStatus = v.HeadquartersStatusType.Name
                 fetchHqAccreditations(v.Id,function(acred){
                     hq.acred = []
                     $.each(acred,function(k,v){
-                            if (v.HeadquarterAccreditationStatusType.Id == 1) //1 is available
+                            if (v.HeadquarterAccreditationStatusType.Id == 1) //1 is available. everything else is bad. only return what is avail
                             {
                                 hq.acred.push(v.HeadquarterAccreditationType.Name)
                             }
                         })
-                    if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined')
+                    if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined') //lazy mans way to only return once all the data is back
                     {
                         cb(hq)
                     }
                 })
                 fetchHqJobCount(v.Id,function(jobcount){
-                    hq.currentJobCount = jobcount
+                    hq.currentJobCount = jobcount //return a count
                         if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined') //lazy mans way to only return once all the data is back
                         {
                             cb(hq)
                         }
                     })
                     fetchHqContacts(v.Id,function(contacts){ //lazy mans way to only return once all the data is back
-                        hq.contacts = contacts
+                        hq.contacts = contacts //return them all
                         if (typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.acred) !== 'undefined')
                         {
                             cb(hq)
@@ -531,9 +528,8 @@ const rfsIcons = {
       cache: false,
       dataType: 'json',
       complete: function(response, textStatus) {
-        console.log(response)
         if (textStatus == 'success') {
-            cb(response.responseJSON.TotalItems)
+            cb(response.responseJSON.TotalItems) //return the count of how many results.
         }
     }
 })
@@ -557,9 +553,8 @@ const rfsIcons = {
       cache: false,
       dataType: 'json',
       complete: function(response, textStatus) {
-        console.log(response)
         if (textStatus == 'success') {
-            cb(response.responseJSON.Results)
+            cb(response.responseJSON.Results) //return everything as they are all useful
         }
     }
 })
@@ -583,7 +578,6 @@ const rfsIcons = {
       cache: false,
       dataType: 'json',
       complete: function(response, textStatus) {
-        console.log(response)
         if (textStatus == 'success') {
             cb(response.responseJSON.HeadquarterAccreditationMappings)
         }
@@ -781,7 +775,8 @@ const SpatialReference = eval('require("esri/SpatialReference");');
         this._map.infoWindow.setTitle(event.graphic.symbol.title);
         $(this._map.infoWindow.domNode).find('.actionList').addClass('hidden') //massive hack to remove the Zoom To actionlist dom.
         this._map.infoWindow.setContent(event.graphic.symbol.details);
-        if ($(this._map.infoWindow.domNode).find('#lhqPopUp').length)
+
+        if ($(this._map.infoWindow.domNode).find('#lhqPopUp').length) //if this is a HL popup box //TODO extend the object and hold the type in there
         {
             console.log('this is a hq popup')
             fetchHqDetails($('#lhqName').text(), function(hqdeets){
@@ -791,8 +786,7 @@ const SpatialReference = eval('require("esri/SpatialReference");');
                         $('#lhqContacts').append('<tr><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
                     }
                 })
-                console.log(hqdeets.acred)
-                if (hqdeets.acred.length > 0)
+                if (hqdeets.acred.length > 0) //fill otherwise placeholder
                 {
                     $.each(hqdeets.acred,function(k,v){
                         $('#lhqacred').append('<tr><td>'+v+'</td></tr>');
@@ -800,16 +794,11 @@ const SpatialReference = eval('require("esri/SpatialReference");');
                 } else {
                     $('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
                 }
-                
-
                 $('#lhqStatus').text(hqdeets.HeadquartersStatus)
                 $('#lhqJobCount').text(hqdeets.currentJobCount)
-
             })
-
         }
-
-        this._map.infoWindow.show(event.mapPoint);
+        this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
     }
 }
 
