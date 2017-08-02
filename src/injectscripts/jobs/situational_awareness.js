@@ -14,7 +14,7 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('transport-cameras');
 
     lighthouseMap.createLayer('helicopters');
-    lighthouseMap.createLayer('power-outages');
+    lighthouseMap.createLayer('power-outages', 1);
 
     lighthouseMap.createLayer('lhqs');
 
@@ -138,6 +138,7 @@ window.addEventListener("message", function(event) {
 
 const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
+const powerIcon = lighthouseUrl + 'icons/power.png';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -447,7 +448,7 @@ const rfsIcons = {
             ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
-            let marker = mapLayer.createImageMarker(heli.getIcon(), name, details);
+            let marker = MapLayer.createImageMarker(heli.getIcon(), name, details);
             marker.setWidth(32);
             marker.setHeight(32);
             marker.setAngle(heading);
@@ -480,6 +481,14 @@ function showPowerOutages(mapLayer, data) {
                         let polygonPoints = geometry.coordinates[0];
                         console.log(polygonPoints);
                         mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3);
+
+                    } else if (geometry.type.toLowerCase() === 'point') {
+                        let lat = geometry.coordinates[1];
+                        let lon = geometry.coordinates[0];
+
+                        let name = feature.id;
+                        let details = feature.properties.description;
+                        mapLayer.addImageMarker(lat, lon, powerIcon, name, details);
                     }
                 }
 
@@ -784,13 +793,15 @@ const Color = eval('require("esri/Color");');
      * Creates a map layer.
      *
      * @param name the name of the layer.
+     * @param optionalIndex the optional index to insert the layer at. If undefined the layer is added to the top of
+     *   the map.
      */
-     createLayer(name) {
+     createLayer(name, optionalIndex) {
         let graphicsLayer = new GraphicsLayer();
         graphicsLayer.id = 'lighthouseLayer-' + name;
         graphicsLayer.on('click', this._handleClick);
 
-        this.map.addLayer(graphicsLayer);
+        this.map.addLayer(graphicsLayer, optionalIndex);
         this.layers[name] = new MapLayer(graphicsLayer);
     }
 
@@ -886,7 +897,7 @@ const Color = eval('require("esri/Color");');
      * @param details the details for this marker's info pop-up.
      * @return the marker to customise.
      */
-     createImageMarker(imageUrl, title='', details='') {
+    static createImageMarker(imageUrl, title='', details='') {
         let marker = new PictureMarkerSymbol();
         marker.setHeight(16);
         marker.setWidth(16);
@@ -908,7 +919,7 @@ const Color = eval('require("esri/Color");');
      * @return the marker to customise.
      */
      addImageMarker(lat, lon, imageUrl, title='', details='') {
-        let marker = this.createImageMarker(imageUrl, title, details);
+        let marker = MapLayer.createImageMarker(imageUrl, title, details);
         this.addMarker(lat, lon, marker);
         return marker;
     }
@@ -925,7 +936,7 @@ const Color = eval('require("esri/Color");');
      * @return the marker to customise.
      */
      addImageMarkerByxy(x, y, SpatialReference, imageUrl, title='', details='') {
-        let marker = this.createImageMarker(imageUrl, title, details);
+        let marker = MapLayer.createImageMarker(imageUrl, title, details);
         this.addMarkerByxy(x, y, SpatialReference, marker);
         return marker;
     }

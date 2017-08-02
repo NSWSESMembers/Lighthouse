@@ -75,7 +75,7 @@ $(<li id="lhlayers">
                     </span>
 
                     <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
+                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
                         <span class="tag-text">Power Outages</span>
                     </span>
                 </li>
