@@ -55,11 +55,6 @@ whenWeAreReady(user,function() {
     <li id="lhteammenuitem">\
     <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
     </li>\
-    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Maps\
-    </li>\
-    <li id="lhmapmenuitem">\
-    <a href="'+lighthouseUrl+'pages/map.html'+vars+'">Live Map ('+unitName+')</a>\
-    </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
     <li id="lhtourmenuitem">\

@@ -351,6 +351,9 @@ const rfsIcons = {
             </tr>\
             </table>\
             </div>\
+            <div id='filterTo' style="text-align: center;padding-top:10px;width:100%;margin:auto;color: blue;text-decoration: underline;cursor:cell">\
+            <span>Set HQ Filter To ${unitCode}</span>
+            </div>\
             </div>`;     
 
             let icon = lighthouseUrl + "icons/ses.png";
@@ -491,6 +494,9 @@ const rfsIcons = {
         if (textStatus == 'success') {
             if (response.responseJSON.Results.length) {
                 var v = response.responseJSON.Results[0]
+                console.log(v)
+                hq.Entity = v.Entity
+                v.Entity.EntityTypeId = 1 //shouldnt be using entity for filters, so add the missing things
                 hq.HeadquartersStatus = v.HeadquartersStatusType.Name
                 fetchHqAccreditations(v.Id,function(acred){
                     hq.acred = []
@@ -852,8 +858,19 @@ const SpatialReference = eval('require("esri/SpatialReference");');
                 $('#lhqStatus').text(hqdeets.HeadquartersStatus)
                 $('#lhqJobCount').text(hqdeets.currentJobCount)
                 $('#lhqTeamCount').text(hqdeets.currentTeamCount)
+
+
+                $("#filterTo").click(function() {
+                    filterViewModel.selectedEntities.removeAll();
+                    filterViewModel.selectedEntities.push(hqdeets.Entity);
+                    filterViewModel.updateFilters();
+                    this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
+
+                 });
+
             })
 }
+        $(this._map.infoWindow.domNode).find('.actionList').addClass('hidden') //massive hack to remove the Zoom To actionlist dom.
         this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
     }
 }
