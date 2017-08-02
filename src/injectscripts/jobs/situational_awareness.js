@@ -351,8 +351,9 @@ const rfsIcons = {
             </tr>\
             </table>\
             </div>\
-            <div id='filterTo' style="text-align: center;padding-top:10px;width:100%;margin:auto;color: blue;text-decoration: underline;cursor:cell">\
-            <span>Set HQ Filter To ${unitCode}</span>
+            <div style="text-align: center;padding-top:10px;width:100%;margin:auto;color: blue;text-decoration: underline;cursor:cell">\
+            <div id='filterTo' >Set HQ Filter To ${unitCode}</div>\
+            <div id='filterClear' >Clear HQ Filter</div>
             </div>\
             </div>`;     
 
@@ -866,7 +867,14 @@ const SpatialReference = eval('require("esri/SpatialReference");');
                     filterViewModel.updateFilters();
                     this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
 
-                 });
+                });
+
+                $("#filterClear").click(function() {
+                    filterViewModel.selectedEntities.removeAll();
+                    filterViewModel.updateFilters();
+                    this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
+
+                });
 
             })
 }
