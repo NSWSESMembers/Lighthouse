@@ -650,17 +650,15 @@ function showPowerOutages(mapLayer, data) {
      * @param rego the registration tag, e.g. "VH-TJE".
      * @param name the flight name, e.g. "RSCU201".
      * @param model the model, e.g. "AW-139".
-     * @param colour the colour for the marker.
      * @param heli {@code true} if this is a helicopter.
      */
-     constructor(icao24, rego, name, model, operator, colour = '#ffffff', heli = true) {
+     constructor(icao24, rego, name, model, operator, heli = true) {
 
         this.icao24 = icao24;
         this.rego = rego;
         this.name = name;
         this.model = model;
-        this.operator = operator
-        this.colour = colour;
+        this.operator = operator;
         this.heli = heli;
     }
 
