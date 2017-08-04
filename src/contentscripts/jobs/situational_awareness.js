@@ -17,9 +17,9 @@ const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
 // Add the buttons for the extra layers
 $(<li id="lhlayers">
     <a href="#" class="js-sub-menu-toggle">
-    <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
-    <span class="text">Lighthouse</span>
-    <i class="toggle-icon fa fa-angle-left"></i>
+        <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
+        <span class="text">Lighthouse</span>
+        <i class="toggle-icon fa fa-angle-left"></i>
     </a>
     <ul class="sub-menu ">
         <li>
@@ -73,7 +73,6 @@ $(<li id="lhlayers">
                         <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
                         <span class="tag-text">SES LHQs</span>
                     </span>
-
                     <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
                         <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
                         <span class="tag-text">Power Outages</span>
