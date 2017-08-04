@@ -123,7 +123,7 @@ function getBundler(file, dest, options) {
       //.pipe(uglify())
       //.on('error', gutil.log.bind(gutil, 'Uglify error'))
       .pipe(size(SIZE_OPTS))
-      .pipe(sourcemaps.write('./'))
+      //.pipe(sourcemaps.write('./'))
       .pipe(gulp.dest(dest));
   }
 
