@@ -486,12 +486,37 @@ function showPowerOutages(mapLayer, data) {
                         let lat = geometry.coordinates[1];
                         let lon = geometry.coordinates[0];
 
-                        let name = feature.id;
+                        let name = 'Essential Energy: ' + feature.id;
                         let details = feature.properties.description;
                         mapLayer.addImageMarker(lat, lon, powerIcon, name, details);
                     }
                 }
 
+                count++;
+
+            } else if (feature.geometry.type.toLowerCase() === 'point') {
+                let lat = feature.geometry.coordinates[1];
+                let lon = feature.geometry.coordinates[0];
+
+                let name = 'Endeavour Energy: ' + feature.properties.incidentId;
+                let creation = feature.properties.creationDateTime;
+                let start = feature.properties.startDateTime;
+                let end = feature.properties.endDateTime;
+
+                let dateDetails =
+                    `<div class="dateDetails">\
+                    <div><span class="dateDetailsLabel">Creation: </span> ${creation}</div>\
+                    <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
+                    <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
+                    </div>`;
+                let details =
+                    `<div>Number of Affected Customers: ${feature.properties.numberCustomerAffected}</div>\
+                    <div>Outage Type: ${feature.properties.outageType}</div>\
+                    <div>Reason: ${feature.properties.reason}</div>\
+                    <div>Status: ${feature.properties.status}</div>\
+                    ${dateDetails}`;
+
+                mapLayer.addImageMarker(lat, lon, powerIcon, name, details);
                 count++;
             }
         }
