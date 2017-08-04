@@ -186,15 +186,30 @@ function loadSynchronously(url) {
  */
  function fetchPowerOutages(callback) {
     console.info('fetching power outage locations');
-
+    var finalData = {}
     fetchEssentialEnergyOutages(function(essentialEnergyData) {
-        fetchEndeavourEnergyOutages(function(endeavourEnergyData) {
-            var merged = essentialEnergyData.features.concat(endeavourEnergyData.features);
-            essentialEnergyData.features = merged;
-            callback(essentialEnergyData);
-        });
-    });
+        finalData.essential = essentialEnergyData
+        merge()
+    })
 
+    var endeavour = {}
+    fetchEndeavourEnergyOutages(function(endeavourEnergyData) {
+        finalData.endeavour = endeavourEnergyData
+        merge()
+    })
+
+    function merge() {
+        if (finalData.essential && finalData.endeavour)
+        {
+            var merged = {}
+            merged.features = []
+            //if you just push you end up with an array of the array not a merged array like you might want.
+            merged.features.push.apply(merged.features,finalData.essential.features)
+            merged.features.push.apply(merged.features,finalData.endeavour.features)
+            console.log(merged)
+            callback(merged);
+        }
+    }
     //fetchAusgridOutages(callback);
 }
 
@@ -247,11 +262,12 @@ function loadSynchronously(url) {
 
                 var feature = {
                     'type': 'Feature',
+                    'owner': 'EndeavourEnergy',
                     'geometry': {
                         'type': 'Point',
                         'coordinates': [
-                            incident.longitude,
-                            incident.latitude
+                        incident.longitude,
+                        incident.latitude
                         ]
                     },
                     'properties': {
@@ -298,6 +314,9 @@ function loadSynchronously(url) {
         if (this.readyState === 4 && this.status === 200) {
             var kml = xhttp.responseXML;
             var geoJson = tj.kml(kml);
+            for (var i = 0; i < geoJson.features.length; i++) {
+                geoJson.features[i].owner='EssentialEnergy'
+            }
             callback(geoJson);
         } else {
             // error
