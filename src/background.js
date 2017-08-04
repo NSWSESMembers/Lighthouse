@@ -1,11 +1,15 @@
 // This background script is initialised and executed once and exists
 // separate to all other pages.
 
+const tj = require('togeojson');
 
 //Sit Aware Map Data Feeds
-const rfsMajorIncidentsFeed = "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json"
-const transportFeed = "https://api.transport.nsw.gov.au/"
-const openSkyFeed = "https://opensky-network.org/api/states/all"
+const rfsMajorIncidentsFeed = "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json";
+const transportFeed = "https://api.transport.nsw.gov.au/";
+const openSkyFeed = "https://opensky-network.org/api/states/all";
+const essentialEnergyOutagesFeed = 'http://www.essentialenergy.com.au/Asset/kmz/current.kml';
+const endeavourEnergyOutagesFeed = 'http://www.endeavourenergy.com.au/mobileapp/outage/outages/listBoth/current';
+const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
 
 //block message js core request, fetch the file, inject our vars then serve it back to the requestor. :-)
 chrome.webRequest.onBeforeRequest.addListener(
@@ -75,6 +79,11 @@ chrome.runtime.onMessage.addListener(
             return true;    
         } else if (request.type === 'helicopters') {
             fetchHelicopterLocations(request.params, function(data) {
+                sendResponse(data);
+            });
+            return true;
+        } else if (request.type === 'power-outages') {
+            fetchPowerOutages(function(data) {
                 sendResponse(data);
             });
             return true;
@@ -167,6 +176,139 @@ function loadSynchronously(url) {
         }
     };
     xhttp.open('GET', openSkyFeed + params, true);
+    xhttp.send();
+}
+
+/**
+ * Fetches the current power outage details.
+ *
+ * @param callback the callback to send the data to.
+ */
+ function fetchPowerOutages(callback) {
+    console.info('fetching power outage locations');
+
+    fetchEssentialEnergyOutages(function(essentialEnergyData) {
+        fetchEndeavourEnergyOutages(function(endeavourEnergyData) {
+            var merged = essentialEnergyData.features.concat(endeavourEnergyData.features);
+            essentialEnergyData.features = merged;
+            callback(essentialEnergyData);
+        });
+    });
+
+    //fetchAusgridOutages(callback);
+}
+
+/**
+ * Fetches the current power outages for Ausgrid.
+ *
+ * @param callback the callback to send the data to.
+ */
+ function fetchAusgridOutages(callback) {
+    console.info('fetching ausgrid power outage locations');
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            callback(JSON.parse(xhttp.responseText));
+        } else {
+            // error
+            var response = {
+                error: 'Request failed',
+                httpCode: this.status
+            };
+            callback(response);
+        }
+    };
+    xhttp.open('POST', ausgridBaseUrl + 'services/Outage/Outage.asmx/GetOutages', true);
+    xhttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+    var blob = new Blob(['{"box":{"bottomleft":{"lat":-33.92009635482019,"lng":144.91065627494675},"topright":{"lat":-30.557037696178075,"lng":156.95167189994675},"zoom":7}}'], {type: 'text/plain'});
+    xhttp.send(blob);
+}
+
+/**
+ * Fetches the current power outages for Endeavour Energy.
+ *
+ * @param callback the callback to send the geoJSON data to.
+ */
+ function fetchEndeavourEnergyOutages(callback) {
+    console.info('fetching endeavour energy power outage locations');
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            var json = JSON.parse(xhttp.responseText);
+
+            geoJson = {
+                'type': 'FeatureCollection',
+                'features': []
+            };
+
+            // Convert the feed to geoJSON
+            for (var i = 0; i < json.length; i++) {
+                var incident = json[i];
+
+                var feature = {
+                    'type': 'Feature',
+                    'geometry': {
+                        'type': 'Point',
+                        'coordinates': [
+                            incident.longitude,
+                            incident.latitude
+                        ]
+                    },
+                    'properties': {
+                        'creationDateTime': incident.creationDateTime,
+                        'endDateTime': incident.endDateTime,
+                        'incidentId': incident.incidentId,
+                        'numberCustomerAffected': incident.numberCustomerAffected,
+                        'outageType': incident.outageType,
+                        'postcode': incident.postcode,
+                        'reason': incident.reason,
+                        'startDateTime': incident.startDateTime,
+                        'status': incident.status,
+                        'streetName': incident.streetName,
+                        'suburb': incident.suburb
+                    }
+                };
+
+                geoJson.features.push(feature);
+            }
+
+            callback(geoJson);
+        } else {
+            // error
+            var response = {
+                error: 'Request failed',
+                httpCode: this.status
+            };
+            callback(response);
+        }
+    };
+    xhttp.open('GET', endeavourEnergyOutagesFeed, true);
+    xhttp.send();
+}
+
+/**
+ * Fetches the current power outages for Essential Energy.
+ *
+ * @param callback the callback to send the geoJSON data to.
+ */
+ function fetchEssentialEnergyOutages(callback) {
+    console.info('fetching essential energy power outage locations');
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            var kml = xhttp.responseXML;
+            var geoJson = tj.kml(kml);
+            callback(geoJson);
+        } else {
+            // error
+            var response = {
+                error: 'Request failed',
+                httpCode: this.status
+            };
+            callback(response);
+        }
+    };
+    xhttp.open('GET', essentialEnergyOutagesFeed, true);
     xhttp.send();
 }
 

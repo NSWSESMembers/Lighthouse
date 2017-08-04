@@ -73,6 +73,11 @@ $(<li id="lhlayers">
                         <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
                         <span class="tag-text">SES LHQs</span>
                     </span>
+
+                    <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
+                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+                        <span class="tag-text">Power Outages</span>
+                    </span>
                 </li>
             </ul>
         </li>
@@ -119,6 +124,7 @@ registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', requestTran
 registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 10 * 60000); // every 5 mins
 registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLayerUpdate, 10000); // every 10s
+registerClickHandler('togglePowerOutagesBtn', 'power-outages', requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
 
 registerClickHandler('togglelhqsBtn', 'lhqs', requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
 
@@ -128,7 +134,7 @@ registerClickHandler('togglelhqsBtn', 'lhqs', requestLhqsLayerUpdate, 60 * 60000
 $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
     function () {
         console.log('resetting lighthouse layers');
-        var buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn']
+        var buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglePowerOutagesBtn', 'togglelhqsBtn'];
         buttons.forEach(function (buttonId) {
             var button = $(`#${buttonId}`);
             button.removeClass('tag-disabled');
@@ -174,6 +180,11 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
 function requestTransportCamerasLayerUpdate() {
     console.debug('updating transport cameras layer');
     fetchTransportResource('transport-cameras');
+}
+
+function requestPowerOutagesLayerUpdate() {
+    console.debug('updating power-outages layer');
+    window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'power-outages' }, '*');
 }
 
 /**

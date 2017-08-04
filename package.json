@@ -22,11 +22,13 @@
     "markerwithlabel": "^2.0.0",
     "moment": "^2.18.1",
     "stopwords": "0.0.5",
+    "togeojson": "0.16.0",
     "underscore": "^1.8.3",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0"
   },
   "devDependencies": {
+    "brfs": "1.4.3",
     "browserify": "^12.0.1",
     "browserify-css": "git+https://github.com/sdunster/browserify-css.git",
     "fs-extra": "^0.26.7",

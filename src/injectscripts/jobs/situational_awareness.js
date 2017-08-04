@@ -14,9 +14,9 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('transport-cameras');
 
     lighthouseMap.createLayer('helicopters');
+    lighthouseMap.createLayer('power-outages', 1);
 
     lighthouseMap.createLayer('lhqs');
-
 
     if (developmentMode) {
         // Add a test point
@@ -25,7 +25,7 @@ function pageFullyLoaded(e) {
     }
     window['lighthouseMap'] = lighthouseMap;
 
-    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn'];
+    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn', 'togglePowerOutagesBtn'];
     buttons.forEach(function (buttonId) {
         if (localStorage.getItem('Lighthouse-' + buttonId) == 'true') {
             let button = $(`#${buttonId}`);
@@ -66,6 +66,8 @@ window.addEventListener("message", function(event) {
                 showRescueHelicopters(mapLayer, event.data.response)
             } else if (event.data.layer === 'lhqs') {
                 showLhqs(mapLayer, event.data.response)
+            } else if (event.data.layer === 'power-outages') {
+                showPowerOutages(mapLayer, event.data.response)
             }
 
         } else if (event.data.type === "LH_CLEAR_LAYER_DATA") {
@@ -136,6 +138,7 @@ window.addEventListener("message", function(event) {
 
 const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
+const powerIcon = lighthouseUrl + 'icons/power.png';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -355,7 +358,7 @@ const rfsIcons = {
             <div id='filterTo' >Set HQ Filter To ${unitCode}</div>\
             <div id='filterClear' >Clear HQ Filter</div>
             </div>\
-            </div>`;     
+            </div>`;
 
             let icon = lighthouseUrl + "icons/ses.png";
 
@@ -471,6 +474,72 @@ const rfsIcons = {
         }
     }
     console.info(`added ${count} rescue helicopters`);
+}
+
+/**
+ * Shows the current power outages on the map.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+function showPowerOutages(mapLayer, data) {
+    console.info('showing power outages');
+
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let feature = data.features[i];
+
+            if (feature.geometry.type.toLowerCase() === 'geometrycollection') {
+                for (let j = 0; j < feature.geometry.geometries.length; j++) {
+                    let geometry = feature.geometry.geometries[j];
+
+                    if (geometry.type.toLowerCase() === 'polygon') {
+                        let polygonPoints = geometry.coordinates[0];
+                        console.log(polygonPoints);
+                        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3);
+
+                    } else if (geometry.type.toLowerCase() === 'point') {
+                        let lat = geometry.coordinates[1];
+                        let lon = geometry.coordinates[0];
+
+                        let name = 'Essential Energy: ' + feature.id;
+                        let details = feature.properties.description;
+                        mapLayer.addImageMarker(lat, lon, powerIcon, name, details);
+                    }
+                }
+
+                count++;
+
+            } else if (feature.geometry.type.toLowerCase() === 'point') {
+                let lat = feature.geometry.coordinates[1];
+                let lon = feature.geometry.coordinates[0];
+
+                let name = 'Endeavour Energy: ' + feature.properties.incidentId;
+                let creation = feature.properties.creationDateTime;
+                let start = feature.properties.startDateTime;
+                let end = feature.properties.endDateTime;
+
+                let dateDetails =
+                    `<div class="dateDetails">\
+                    <div><span class="dateDetailsLabel">Creation: </span> ${creation}</div>\
+                    <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
+                    <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
+                    </div>`;
+                let details =
+                    `<div>Number of Affected Customers: ${feature.properties.numberCustomerAffected}</div>\
+                    <div>Outage Type: ${feature.properties.outageType}</div>\
+                    <div>Reason: ${feature.properties.reason}</div>\
+                    <div>Status: ${feature.properties.status}</div>\
+                    ${dateDetails}`;
+
+                mapLayer.addImageMarker(lat, lon, powerIcon, name, details);
+                count++;
+            }
+        }
+    }
+
+    console.info(`added ${count} power outages`);
 }
 
 /**
@@ -666,17 +735,15 @@ const rfsIcons = {
      * @param rego the registration tag, e.g. "VH-TJE".
      * @param name the flight name, e.g. "RSCU201".
      * @param model the model, e.g. "AW-139".
-     * @param colour the colour for the marker.
      * @param heli {@code true} if this is a helicopter.
      */
-     constructor(icao24, rego, name, model, operator, colour = '#ffffff', heli = true) {
+     constructor(icao24, rego, name, model, operator, heli = true) {
 
         this.icao24 = icao24;
         this.rego = rego;
         this.name = name;
         this.model = model;
-        this.operator = operator
-        this.colour = colour;
+        this.operator = operator;
         this.heli = heli;
     }
 
@@ -771,12 +838,14 @@ if (developmentMode) {
 // page will have loaded these already, and require doesn't double load modules by-design
 const GraphicsLayer = eval('require("esri/layers/GraphicsLayer");');
 const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
+const SimpleFillSymbol = eval('require("esri/symbols/SimpleFillSymbol");');
+const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
 const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
+const SpatialReference = eval('require("esri/SpatialReference");');
+const Polyline = eval('require("esri/geometry/Polyline");');
 const Point = eval('require("esri/geometry/Point");');
 const Graphic = eval('require("esri/graphic");');
 const Color = eval('require("esri/Color");');
-const SpatialReference = eval('require("esri/SpatialReference");');
-
 
 /**
  * A class for helping out with map access.
@@ -800,13 +869,15 @@ const SpatialReference = eval('require("esri/SpatialReference");');
      * Creates a map layer.
      *
      * @param name the name of the layer.
+     * @param optionalIndex the optional index to insert the layer at. If undefined the layer is added to the top of
+     *   the map.
      */
-     createLayer(name) {
+     createLayer(name, optionalIndex) {
         let graphicsLayer = new GraphicsLayer();
         graphicsLayer.id = 'lighthouseLayer-' + name;
         graphicsLayer.on('click', this._handleClick);
 
-        this.map.addLayer(graphicsLayer);
+        this.map.addLayer(graphicsLayer, optionalIndex);
         this.layers[name] = new MapLayer(graphicsLayer);
     }
 
@@ -929,7 +1000,7 @@ const SpatialReference = eval('require("esri/SpatialReference");');
      * @param details the details for this marker's info pop-up.
      * @return the marker to customise.
      */
-     createImageMarker(imageUrl, title='', details='') {
+    static createImageMarker(imageUrl, title='', details='') {
         let marker = new PictureMarkerSymbol();
         marker.setHeight(16);
         marker.setWidth(16);
@@ -951,7 +1022,7 @@ const SpatialReference = eval('require("esri/SpatialReference");');
      * @return the marker to customise.
      */
      addImageMarker(lat, lon, imageUrl, title='', details='') {
-        let marker = this.createImageMarker(imageUrl, title, details);
+        let marker = MapLayer.createImageMarker(imageUrl, title, details);
         this.addMarker(lat, lon, marker);
         return marker;
     }
@@ -968,10 +1039,10 @@ const SpatialReference = eval('require("esri/SpatialReference");');
      * @return the marker to customise.
      */
      addImageMarkerByxy(x, y, SpatialReference, imageUrl, title='', details='') {
-        let marker = this.createImageMarker(imageUrl, title, details);
+        let marker = MapLayer.createImageMarker(imageUrl, title, details);
         this.addMarkerByxy(x, y, SpatialReference, marker);
         return marker;
-    }    
+    }
 
     /**
      * Adds an marker to the map.
@@ -1013,13 +1084,36 @@ const SpatialReference = eval('require("esri/SpatialReference");');
     }
 
     /**
+     * Adds a polygon.
+     *
+     * @param points the array of arrays of [lon/lat] points.
+     * @param outlineColour the outline colour.
+     * @param fillColour the fill colour.
+     * @param thickness the line thickness.
+     * @param style the line style.
+     */
+    addPolygon(points, outlineColour, fillColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID) {
+
+        let polySymbol = new SimpleFillSymbol();
+        polySymbol.setOutline(new SimpleLineSymbol(style, new Color(outlineColour), thickness));
+        polySymbol.setColor(new Color(fillColour));
+
+        // expect GPS lat/long data
+        let lineGeometry = new Polyline(new SpatialReference({wkid:4326}));
+        lineGeometry.addPath(points);
+
+        let lineGraphic = new Graphic(lineGeometry, polySymbol);
+        this.graphicsLayer.add(lineGraphic);
+    }
+
+
+    /**
      * Clears all markers from the map.
      */
      clear() {
         this.graphicsLayer.clear();
     }
 }
-
 
 // Instance the tour
 require('bootstrap-tour')

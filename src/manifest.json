@@ -24,6 +24,8 @@
     "http://www.fairtrading.nsw.gov.au/*",
     "https://www.rfs.nsw.gov.au/*",
     "https://api.transport.nsw.gov.au/*",
+    "https://www.ausgrid.com.au/*",
+    "http://www.endeavourenergy.com.au/*",
     "webRequest",
     "webRequestBlocking"
   ],
