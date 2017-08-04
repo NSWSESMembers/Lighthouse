@@ -12,10 +12,8 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('transport-incidents');
     lighthouseMap.createLayer('transport-flood-reports');
     lighthouseMap.createLayer('transport-cameras');
-
     lighthouseMap.createLayer('helicopters');
     lighthouseMap.createLayer('power-outages', 1);
-
     lighthouseMap.createLayer('lhqs');
 
     if (developmentMode) {
@@ -36,7 +34,7 @@ function pageFullyLoaded(e) {
 }
 
 window.addEventListener("message", function(event) {
-    // We only accept messages from ourselves
+    // We only accept messages from content scrip
     if (event.source !== window)
         return;
 
@@ -54,10 +52,8 @@ window.addEventListener("message", function(event) {
 
             if (event.data.layer === 'rfs') {
                 showRuralFires(mapLayer, event.data.response);
-
             } else if (event.data.layer === 'transport-incidents') {
                 showTransportIncidents(mapLayer, event.data.response);
-
             } else if (event.data.layer === 'transport-flood-reports') {
                 showTransportFlooding(mapLayer, event.data.response);
             } else if (event.data.layer === 'transport-cameras') {
