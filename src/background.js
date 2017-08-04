@@ -212,7 +212,6 @@ function loadSynchronously(url) {
             //if you just push you end up with an array of the array not a merged array like you might want.
             merged.features.push.apply(merged.features,finalData.essential.features)
             merged.features.push.apply(merged.features,finalData.endeavour.features)
-            console.log(merged)
             callback(merged);
         }
     }
