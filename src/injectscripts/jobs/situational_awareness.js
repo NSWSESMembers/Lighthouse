@@ -158,10 +158,10 @@ const rfsIcons = {
 
     let name = point.properties.displayName;
 
-    let created = moment(point.properties.created).format('YYYY-MM-DD HH:mm:ss');
+    let created = moment(point.properties.created).format('DD/MM/YYYY HH:mm:ss');
     let createddiff = moment(point.properties.created).fromNow();
 
-    let updated = moment(point.properties.lastUpdated).format('YYYY-MM-DD HH:mm:ss');
+    let updated = moment(point.properties.lastUpdated).format('DD/MM/YYYY HH:mm:ss');
     let updateddiff = moment(point.properties.lastUpdated).fromNow();
 
     let dateDetails =
@@ -485,24 +485,24 @@ const rfsIcons = {
     if (data && data.features) {
         for (let i = 0; i < data.features.length; i++) {
             let feature = data.features[i];
-
             if (feature.geometry.type.toLowerCase() === 'geometrycollection') {
+
+                let details = PowerOutageDetails(feature)
+
+
                 for (let j = 0; j < feature.geometry.geometries.length; j++) {
                     let geometry = feature.geometry.geometries[j];
 
                     if (geometry.type.toLowerCase() === 'polygon') {
-                        let name = 'Essential Energy: ' + feature.id;
-                        let details = feature.properties.description;
+
                         let polygonPoints = geometry.coordinates[0];
-                        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3,SimpleLineSymbol.STYLE_SOLID, name, details);
+                        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3,SimpleLineSymbol.STYLE_SOLID, details.name, details.details);
 
                     } else if (geometry.type.toLowerCase() === 'point') {
                         let lat = geometry.coordinates[1];
                         let lon = geometry.coordinates[0];
 
-                        let name = 'Essential Energy: ' + feature.id;
-                        let details = feature.properties.description;
-                        mapLayer.addImageMarker(lat, lon, powerIcon, name, details);
+                        mapLayer.addImageMarker(lat, lon, powerIcon, details.name, details.details);
                     }
                 }
 
@@ -511,28 +511,70 @@ const rfsIcons = {
             } else if (feature.geometry.type.toLowerCase() === 'point') {
                 let lat = feature.geometry.coordinates[1];
                 let lon = feature.geometry.coordinates[0];
+                
+                let details = PowerOutageDetails(feature)
 
-                let name = 'Endeavour Energy: ' + feature.properties.incidentId;
-                let creation = feature.properties.creationDateTime;
-                let start = feature.properties.startDateTime;
-                let end = feature.properties.endDateTime;
+                mapLayer.addImageMarker(lat, lon, powerIcon, details.name, details.details);
+                count++;
+            }
+
+            function PowerOutageDetails(source){
+                var name,creation,start,end,reason,status,type,CustomerAffected,contact = 'Unknown'
+                switch (source.owner)
+                {
+                    case 'EndeavourEnergy':
+                    name = 'Endeavour Energy: ' + source.properties.incidentId;
+                    creation = source.properties.creationDateTime;
+                    start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
+                    end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
+                    reason = source.properties.reason;
+                    status = source.properties.status;
+                    type = source.properties.outageType;
+                    if (type = "U") type="Unknown";
+                    if (type = "P") type="Planned";  
+                    CustomerAffected = source.properties.numberCustomerAffected;
+                    contact = "Endeavour Energy 131 003"
+                    break
+                    case 'EssentialEnergy':
+                    let details = $(source.properties.description);
+
+                    name = 'Essential Energy: ' + source.id;
+                    start = /Time Off\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    end = /Time On\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    if (end == "") end = "Unknown";
+                    status = /Status\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    type = source.properties.outageType;
+                    if (source.properties.styleUrl.match("unplanned"))
+                    {
+                        type = "Unplanned"
+                        reason = "Unknown"
+                    }
+                    CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
+                    contact = "Essential Energy 132 080"
+                    break
+                }
 
                 let dateDetails =
                 `<div class="dateDetails">\
-                <div><span class="dateDetailsLabel">Creation: </span> ${creation}</div>\
                 <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
                 <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
                 </div>`;
                 let details =
-                `<div>Number of Affected Customers: ${feature.properties.numberCustomerAffected}</div>\
-                <div>Outage Type: ${feature.properties.outageType}</div>\
-                <div>Reason: ${feature.properties.reason}</div>\
-                <div>Status: ${feature.properties.status}</div>\
-                ${dateDetails}`;
+                `<div>Affected Customers: ${CustomerAffected}</div>\
+                <div>Outage Type: ${type}</div>\
+                <div>Reason: ${reason}</div>\
+                <div>Status: ${status}</div>\
+                ${dateDetails}\
+                <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+                <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+                ${contact}\
+                </span>`;
 
-                mapLayer.addImageMarker(lat, lon, powerIcon, name, details);
-                count++;
+                return({name:name,details:details})
+
             }
+
+
         }
     }
 
@@ -894,7 +936,6 @@ const Color = eval('require("esri/Color");');
      * @private
      */
      _handleClick(event) {
-        console.log(event)
         // Show the info window for our point
         this._map.infoWindow.setTitle(event.graphic.attributes.title);
         this._map.infoWindow.setContent(event.graphic.attributes.details);
@@ -1066,10 +1107,11 @@ const Color = eval('require("esri/Color");');
      * @param SpatialReferencePassed the SpatialReferencePassed object
      * @param marker the marker to add.
      */
-     addMarkerByxy(x, y, SpatialReferencePassed, marker) {
+     addMarkerByxy(x, y, SpatialReferencePassed, marker, title='', details='') {
         let point = new Point(x,y,new SpatialReference(SpatialReferencePassed));
-
-        this.graphicsLayer.add(new Graphic(point, marker));
+        var graphic = new Graphic(point, marker)
+        graphic.setAttributes({title:title,details:details})
+        this.graphicsLayer.add(graphic);
     }
 
     /**
