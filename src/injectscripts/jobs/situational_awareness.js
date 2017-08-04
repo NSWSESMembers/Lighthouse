@@ -308,16 +308,24 @@ const rfsIcons = {
 
             let name = hq.attributes.HQNAME;
 
+            var unitCode = ''
+            if (hq.attributes.UNIT_CODE != ' ')
+            {
+                unitCode = hq.attributes.UNIT_CODE
+            } else {
+                unitCode = hq.attributes.REGCODE
+            }
+
             let details =
             `<div id='lhqPopUp'>\
-            <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${hq.attributes.UNIT_CODE} &mdash; ${hq.attributes.REGCODE}</div>\
+            <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${unitCode} &mdash; ${hq.attributes.REGCODE}</div>\
             <div id='lhqNameHolder' style="display:none">Unit Name: <span id='lhqName'>${hq.attributes.HQNAME}</span></div>\
             <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
 
             <div id='lhqacredHolder' style="padding-top:10px;width:100%;margin:auto">\
             <table id='lhqacred' style="width:100%;text-align: center;">\
             <tr>\
-            <th style="text-align: center;width:100%">Available SRB Accreditations</th>\
+            <th style="text-align: center;width:100%">Available SRB Roles</th>\
             </tr>\
             </table>\
             </div>\
@@ -326,9 +334,11 @@ const rfsIcons = {
             <table style="width:100%;text-align: center;">\
             <tr>\
             <th style="text-align: center;width:50%">Current Jobs</th>\
+            <th style="text-align: center;width:50%">Current Teams</th>\
             </tr>\
             <tr>\
             <td id='lhqJobCount'>-Loading-</td>\
+            <td id='lhqTeamCount'>-Loading-</td>\
             </tr>\
             </table>\
             </div>\
@@ -336,10 +346,17 @@ const rfsIcons = {
             <div id='lhqContactsHolder' style="padding-top:10px;width:100%;margin:auto">\
             <table id='lhqContacts' style="width:100%;text-align: center;">\
             <tr>\
+            <td colspan="2" style="font-weight: bold">Contact Details</td>
+            </tr>\
+            <tr>\
             <th style="text-align: center;width:50%">Name</th>\
             <th style="text-align: center;width:50%">Detail</th>\
             </tr>\
             </table>\
+            </div>\
+            <div style="text-align: center;padding-top:10px;width:100%;margin:auto;color: blue;text-decoration: underline;cursor:cell">\
+            <div id='filterTo' >Set HQ Filter To ${unitCode}</div>\
+            <div id='filterClear' >Clear HQ Filter</div>
             </div>\
             </div>`;
 
@@ -448,7 +465,7 @@ const rfsIcons = {
             ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
-            let marker = MapLayer.createImageMarker(heli.getIcon(), name, details);
+            let marker = mapLayer.createImageMarker(heli.getIcon(), name, details);
             marker.setWidth(32);
             marker.setHeight(32);
             marker.setAngle(heading);
@@ -547,6 +564,9 @@ function showPowerOutages(mapLayer, data) {
         if (textStatus == 'success') {
             if (response.responseJSON.Results.length) {
                 var v = response.responseJSON.Results[0]
+                console.log(v)
+                hq.Entity = v.Entity
+                v.Entity.EntityTypeId = 1 //shouldnt be using entity for filters, so add the missing things
                 hq.HeadquartersStatus = v.HeadquartersStatusType.Name
                 fetchHqAccreditations(v.Id,function(acred){
                     hq.acred = []
@@ -556,21 +576,28 @@ function showPowerOutages(mapLayer, data) {
                                 hq.acred.push(v.HeadquarterAccreditationType.Name)
                             }
                         })
-                    if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined') //lazy mans way to only return once all the data is back
+                    if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.currentTeamCount) !== 'undefined') //lazy mans way to only return once all the data is back
                     {
                         cb(hq)
                     }
                 })
                 fetchHqJobCount(v.Id,function(jobcount){
                     hq.currentJobCount = jobcount //return a count
-                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined') //lazy mans way to only return once all the data is back
+                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined'  && typeof(hq.currentTeamCount) !== 'undefined') //lazy mans way to only return once all the data is back
+                        {
+                            cb(hq)
+                        }
+                    })
+                fetchHqTeamCount(v.Id,function(teamcount){
+                    hq.currentTeamCount = teamcount //return a count
+                        if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined') //lazy mans way to only return once all the data is back
                         {
                             cb(hq)
                         }
                     })
                     fetchHqContacts(v.Id,function(contacts){ //lazy mans way to only return once all the data is back
                         hq.contacts = contacts //return them all
-                        if (typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.acred) !== 'undefined')
+                        if (typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.acred) !== 'undefined'  && typeof(hq.currentTeamCount) !== 'undefined')
                         {
                             cb(hq)
                         }
@@ -593,6 +620,30 @@ function showPowerOutages(mapLayer, data) {
     $.ajax({
         type: 'GET'
         , url: urls.Base+'/Api/v1/Jobs/Search?StartDate=&EndDate=&Hq='+HQId+'&JobStatusTypeIds%5B%5D=2&JobStatusTypeIds%5B%5D=1&JobStatusTypeIds%5B%5D=5&JobStatusTypeIds%5B%5D=4&ViewModelType=5&PageIndex=1&PageSize=100'
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            cb(response.responseJSON.TotalItems) //return the count of how many results.
+        }
+    }
+})
+}
+
+/**
+ * Fetch HQ Team Counts.
+ *
+ * @param HQId code of HQ.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+ function fetchHqTeamCount(HQId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Teams/Search?StatusStartDate=&StatusEndDate=&AssignedToId='+HQId+'&StatusTypeId%5B%5D=3&IncludeDeleted=false&PageIndex=1&PageSize=200&SortField=CreatedOn&SortOrder=desc'
         , beforeSend: function(n) {
           n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
       },
@@ -854,10 +905,18 @@ const Color = eval('require("esri/Color");');
         {
             console.log('this is a hq popup')
             fetchHqDetails($('#lhqName').text(), function(hqdeets){
+                console.debug(hqdeets)
+                var c = 0
                 $.each(hqdeets.contacts,function(k,v){
                     if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
                     {
-                        $('#lhqContacts').append('<tr><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                        c++
+                        if (c%2 || c==0) //every other row
+                        {
+                            $('#lhqContacts').append('<tr><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
+                        } else {
+                            $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                        }
                     }
                 })
                 if (hqdeets.acred.length > 0) //fill otherwise placeholder
@@ -870,8 +929,27 @@ const Color = eval('require("esri/Color");');
                 }
                 $('#lhqStatus').text(hqdeets.HeadquartersStatus)
                 $('#lhqJobCount').text(hqdeets.currentJobCount)
+                $('#lhqTeamCount').text(hqdeets.currentTeamCount)
+
+
+                $("#filterTo").click(function() {
+                    filterViewModel.selectedEntities.removeAll();
+                    filterViewModel.selectedEntities.push(hqdeets.Entity);
+                    filterViewModel.updateFilters();
+                    this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
+
+                });
+
+                $("#filterClear").click(function() {
+                    filterViewModel.selectedEntities.removeAll();
+                    filterViewModel.updateFilters();
+                    this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
+
+                });
+
             })
-        }
+}
+        $(this._map.infoWindow.domNode).find('.actionList').addClass('hidden') //massive hack to remove the Zoom To actionlist dom.
         this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
     }
 }

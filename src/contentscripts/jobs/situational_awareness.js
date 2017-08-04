@@ -147,7 +147,7 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
  */
  function requestLhqsLayerUpdate() {
     console.debug('updating LHQs layer');
-    $.getJSON( chrome.extension.getURL('resources/SES_HQs.json'), function( data ) {
+    $.getJSON( chrome.extension.getURL('resources/SES_HQs.geojson'), function( data ) {
         window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: 'lhqs', response: data}, '*');
     })
 
