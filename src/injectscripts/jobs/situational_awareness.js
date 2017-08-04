@@ -478,7 +478,7 @@ const rfsIcons = {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showPowerOutages(mapLayer, data) {
+ function showPowerOutages(mapLayer, data) {
     console.info('showing power outages');
 
     let count = 0;
@@ -491,9 +491,10 @@ function showPowerOutages(mapLayer, data) {
                     let geometry = feature.geometry.geometries[j];
 
                     if (geometry.type.toLowerCase() === 'polygon') {
+                        let name = 'Essential Energy: ' + feature.id;
+                        let details = feature.properties.description;
                         let polygonPoints = geometry.coordinates[0];
-                        console.log(polygonPoints);
-                        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3);
+                        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3,SimpleLineSymbol.STYLE_SOLID, name, details);
 
                     } else if (geometry.type.toLowerCase() === 'point') {
                         let lat = geometry.coordinates[1];
@@ -517,17 +518,17 @@ function showPowerOutages(mapLayer, data) {
                 let end = feature.properties.endDateTime;
 
                 let dateDetails =
-                    `<div class="dateDetails">\
-                    <div><span class="dateDetailsLabel">Creation: </span> ${creation}</div>\
-                    <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
-                    <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
-                    </div>`;
+                `<div class="dateDetails">\
+                <div><span class="dateDetailsLabel">Creation: </span> ${creation}</div>\
+                <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
+                <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
+                </div>`;
                 let details =
-                    `<div>Number of Affected Customers: ${feature.properties.numberCustomerAffected}</div>\
-                    <div>Outage Type: ${feature.properties.outageType}</div>\
-                    <div>Reason: ${feature.properties.reason}</div>\
-                    <div>Status: ${feature.properties.status}</div>\
-                    ${dateDetails}`;
+                `<div>Number of Affected Customers: ${feature.properties.numberCustomerAffected}</div>\
+                <div>Outage Type: ${feature.properties.outageType}</div>\
+                <div>Reason: ${feature.properties.reason}</div>\
+                <div>Status: ${feature.properties.status}</div>\
+                ${dateDetails}`;
 
                 mapLayer.addImageMarker(lat, lon, powerIcon, name, details);
                 count++;
@@ -893,9 +894,10 @@ const Color = eval('require("esri/Color");');
      * @private
      */
      _handleClick(event) {
+        console.log(event)
         // Show the info window for our point
-        this._map.infoWindow.setTitle(event.graphic.symbol.title);
-        this._map.infoWindow.setContent(event.graphic.symbol.details);
+        this._map.infoWindow.setTitle(event.graphic.attributes.title);
+        this._map.infoWindow.setContent(event.graphic.attributes.details);
 
         if ($(this._map.infoWindow.domNode).find('#lhqPopUp').length) //if this is a HL popup box //TODO extend the object and hold the type in there
         {
@@ -981,10 +983,11 @@ const Color = eval('require("esri/Color");');
         });
 
         let marker = new SimpleMarkerSymbol(style);
-        marker.title = title;
-        marker.details = details;
+        var graphic = new Graphic(point, marker)
+        graphic.setAttributes({title:title,details:details})
 
-        this.graphicsLayer.add(new Graphic(point, marker));
+
+        this.graphicsLayer.add(graphic);
         return marker;
     }
 
@@ -996,14 +999,11 @@ const Color = eval('require("esri/Color");');
      * @param details the details for this marker's info pop-up.
      * @return the marker to customise.
      */
-    static createImageMarker(imageUrl, title='', details='') {
+     static createImageMarker(imageUrl) {
         let marker = new PictureMarkerSymbol();
         marker.setHeight(16);
         marker.setWidth(16);
         marker.setUrl(imageUrl);
-        marker.title = title;
-        marker.details = details;
-
         return marker;
     }
 
@@ -1018,8 +1018,8 @@ const Color = eval('require("esri/Color");');
      * @return the marker to customise.
      */
      addImageMarker(lat, lon, imageUrl, title='', details='') {
-        let marker = MapLayer.createImageMarker(imageUrl, title, details);
-        this.addMarker(lat, lon, marker);
+        let marker = MapLayer.createImageMarker(imageUrl);
+        this.addMarker(lat, lon, marker, title, details);
         return marker;
     }
 
@@ -1036,7 +1036,7 @@ const Color = eval('require("esri/Color");');
      */
      addImageMarkerByxy(x, y, SpatialReference, imageUrl, title='', details='') {
         let marker = MapLayer.createImageMarker(imageUrl, title, details);
-        this.addMarkerByxy(x, y, SpatialReference, marker);
+        this.addMarkerByxy(x, y, SpatialReference, marker, title, details);
         return marker;
     }
 
@@ -1047,13 +1047,15 @@ const Color = eval('require("esri/Color");');
      * @param lon the longitude.
      * @param marker the marker to add.
      */
-     addMarker(lat, lon, marker) {
+     addMarker(lat, lon, marker, title='', details='') {
         let point = new Point({
             latitude: lat,
             longitude: lon
         });
+        var graphic = new Graphic(point, marker)
+        graphic.setAttributes({title:title,details:details})
 
-        this.graphicsLayer.add(new Graphic(point, marker));
+        this.graphicsLayer.add(graphic);
     }
 
     /**
@@ -1088,17 +1090,20 @@ const Color = eval('require("esri/Color");');
      * @param thickness the line thickness.
      * @param style the line style.
      */
-    addPolygon(points, outlineColour, fillColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID) {
-
+     addPolygon(points, outlineColour, fillColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID, title='', details='') {
         let polySymbol = new SimpleFillSymbol();
         polySymbol.setOutline(new SimpleLineSymbol(style, new Color(outlineColour), thickness));
         polySymbol.setColor(new Color(fillColour));
+
 
         // expect GPS lat/long data
         let lineGeometry = new Polyline(new SpatialReference({wkid:4326}));
         lineGeometry.addPath(points);
 
         let lineGraphic = new Graphic(lineGeometry, polySymbol);
+        lineGraphic.setAttributes({title:title,details:details})
+        
+
         this.graphicsLayer.add(lineGraphic);
     }
 
