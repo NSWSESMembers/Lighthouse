@@ -187,6 +187,7 @@ function requestTransportCamerasLayerUpdate() {
     fetchTransportResource('transport-cameras');
 }
 
+
 function requestPowerOutagesLayerUpdate() {
     console.debug('updating power-outages layer');
     window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'power-outages' }, '*');
