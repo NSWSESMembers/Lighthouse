@@ -17,67 +17,67 @@ const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
 // Add the buttons for the extra layers
 $(<li id="lhlayers">
     <a href="#" class="js-sub-menu-toggle">
-        <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
-        <span class="text">Lighthouse</span>
-        <i class="toggle-icon fa fa-angle-left"></i>
+    <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
+    <span class="text">Lighthouse</span>
+    <i class="toggle-icon fa fa-angle-left"></i>
     </a>
     <ul class="sub-menu ">
-        <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;margin-left:-12px;float:left" />
-                <span class="text toggle-tag-text">Roads and Maritime Services</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
-                        <span class="tag-text">RMS Incidents</span>
-                    </span>
-                    <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
-                        <span class="tag-text">RMS Flood Reports</span>
-                    </span>
-                    <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
-                        <span class="tag-text">RMS Cameras</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <img src={rfscorpIcon} style="width:14px;vertical-align:top;margin-left:-12px;float:left" />
-                <span class="text toggle-tag-text">NSW Rural Fire Service</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
-                        <span class="tag-text">RFS Incidents</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <i class="toggle-icon-sub fa fa-bell"></i>
-                <span class="text toggle-tag-text">Other</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
-                        <span class="tag-text">Rescue Helicopters</span>
-                    </span>
-                    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
-                        <span class="tag-text">SES LHQs</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
+    <li>
+    <a class="js-sub-sub-menu-toggle" href="#">
+    <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;margin-left:-12px;float:left" />
+    <span class="text toggle-tag-text">Roads and Maritime Services</span>
+    </a>
+    <ul class="sub-sub-menu">
+    <li class="clearfix">
+    <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
+    <span class="tag-text">RMS Incidents</span>
+    </span>
+    <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
+    <span class="tag-text">RMS Flood Reports</span>
+    </span>
+    <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
+    <span class="tag-text">RMS Cameras</span>
+    </span>
+    </li>
     </ul>
-</li>).appendTo('#currentSituationLayers');
+    </li>
+    <li>
+    <a class="js-sub-sub-menu-toggle" href="#">
+    <img src={rfscorpIcon} style="width:14px;vertical-align:top;margin-left:-12px;float:left" />
+    <span class="text toggle-tag-text">NSW Rural Fire Service</span>
+    </a>
+    <ul class="sub-sub-menu">
+    <li class="clearfix">
+    <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
+    <span class="tag-text">RFS Incidents</span>
+    </span>
+    </li>
+    </ul>
+    </li>
+    <li>
+    <a class="js-sub-sub-menu-toggle" href="#">
+    <i class="toggle-icon-sub fa fa-bell"></i>
+    <span class="text toggle-tag-text">Other</span>
+    </a>
+    <ul class="sub-sub-menu">
+    <li class="clearfix">
+    <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
+    <span class="tag-text">Rescue Helicopters</span>
+    </span>
+    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
+    <span class="tag-text">SES LHQs</span>
+    </span>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>).appendTo('#currentSituationLayers');
 
 // The map of timers which will update the lighthouse map layers when enabled
 var timers = {};
@@ -142,7 +142,7 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
  function requestLhqsLayerUpdate() {
     console.debug('updating LHQs layer');
     $.getJSON( chrome.extension.getURL('resources/SES_HQs.geojson'), function( data ) {
-        window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: 'lhqs', response: data}, '*');
+        passLayerDataToInject('lhqs',data)
     })
 
 }
@@ -152,7 +152,8 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
  */
  function requestRfsLayerUpdate() {
     console.debug('updating RFS layer');
-    window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'rfs' }, '*');
+    requestLayerUpdate('rfs')
+
 }
 
 /**
@@ -171,10 +172,16 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
     fetchTransportResource('transport-flood-reports');
 }
 
+
+/**
+ * asks for the cameras via the fetchTransportResource function
+ *
+ */
 function requestTransportCamerasLayerUpdate() {
     console.debug('updating transport cameras layer');
     fetchTransportResource('transport-cameras');
 }
+
 
 /**
  * Fetches a resource from the transport API.
@@ -195,6 +202,7 @@ function requestTransportCamerasLayerUpdate() {
     }
 }
 
+
 /**
  * Fetches a resource from the transport API.
  *
@@ -204,8 +212,9 @@ function requestTransportCamerasLayerUpdate() {
  function fetchTransportResourceWithKey(apiKey, layer) {
     console.info(`fetching transport resource: ${apiKey} ${layer}`);
     var params = { apiKey: apiKey };
-    window.postMessage({ type: 'LH_UPDATE_LAYERS', params: params, layer: layer }, '*');
+    requestLayerUpdate(layer,params)
 }
+
 
 /**
  * Sends a request to the background script to get the latest helicopter positions.
@@ -216,26 +225,45 @@ function requestTransportCamerasLayerUpdate() {
     window.postMessage({ type: 'LH_REQUEST_HELI_PARAMS' }, '*');
 }
 
+
+/**
+ * Sends a message to the background script with layer name and params.
+ * background should reply with a data set or error. reply of data is forwarded
+ * to a function to the injected script to be used.
+ * @param layer the layer to fetch.
+ * @param params an API key or something needed to fetch the resource.
+ */
+function requestLayerUpdate(layer,params = {}) {
+    chrome.runtime.sendMessage({type: layer, params: params}, function (response) {
+        if (response.error) {
+            console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
+        } else {
+            passLayerDataToInject(layer,response)
+        }
+    });
+}
+
+/**
+ * Sends a message to the injected script with layer name and data.
+ * dont expect a response.
+ * @param layer the layer to own the data.
+ * @param response the data to use.
+ */
+function passLayerDataToInject(layer,response) {
+    window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: layer, response: response}, '*');
+}
+
+
 window.addEventListener('message', function(event) {
-    // We only accept messages from ourselves
+    // We only accept messages from background
     if (event.source !== window)
         return;
 
     if (event.data.type) {
         if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
             var params = event.data.params;
-            window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'helicopters', params: params }, '*');
+            passLayerDataToInject('helicopters',params)
 
-        } else if (event.data.type === 'LH_UPDATE_LAYERS') {
-            var layer = event.data.layer;
-            let type = event.data.type;
-            chrome.runtime.sendMessage({type: layer, params: event.data.params}, function (response) {
-                if (response.error) {
-                    console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
-                } else {
-                    window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: layer, response: response}, '*');
-                }
-            });
         } else if (event.data.type === 'LH_RESPONSE_TRANSPORT_KEY') {
 
             var sessionKey = 'lighthouseTransportApiKeyCache';
