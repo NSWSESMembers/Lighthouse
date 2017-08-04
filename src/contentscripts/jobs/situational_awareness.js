@@ -17,67 +17,67 @@ const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
 // Add the buttons for the extra layers
 $(<li id="lhlayers">
     <a href="#" class="js-sub-menu-toggle">
-    <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
-    <span class="text">Lighthouse</span>
-    <i class="toggle-icon fa fa-angle-left"></i>
+        <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
+        <span class="text">Lighthouse</span>
+        <i class="toggle-icon fa fa-angle-left"></i>
     </a>
     <ul class="sub-menu ">
-    <li>
-    <a class="js-sub-sub-menu-toggle" href="#">
-    <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;margin-left:-12px;float:left" />
-    <span class="text toggle-tag-text">Roads and Maritime Services</span>
-    </a>
-    <ul class="sub-sub-menu">
-    <li class="clearfix">
-    <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
-    <span class="tag-text">RMS Incidents</span>
-    </span>
-    <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
-    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
-    <span class="tag-text">RMS Flood Reports</span>
-    </span>
-    <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
-    <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
-    <span class="tag-text">RMS Cameras</span>
-    </span>
-    </li>
+        <li>
+            <a class="js-sub-sub-menu-toggle" href="#">
+                <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;margin-left:-12px;float:left" />
+                <span class="text toggle-tag-text">Roads and Maritime Services</span>
+            </a>
+            <ul class="sub-sub-menu">
+                <li class="clearfix">
+                    <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
+                        <span class="tag-text">RMS Incidents</span>
+                    </span>
+                    <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
+                        <span class="tag-text">RMS Flood Reports</span>
+                    </span>
+                    <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
+                        <span class="tag-text">RMS Cameras</span>
+                    </span>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <a class="js-sub-sub-menu-toggle" href="#">
+                <img src={rfscorpIcon} style="width:14px;vertical-align:top;margin-left:-12px;float:left" />
+                <span class="text toggle-tag-text">NSW Rural Fire Service</span>
+            </a>
+            <ul class="sub-sub-menu">
+                <li class="clearfix">
+                    <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
+                        <span class="tag-text">RFS Incidents</span>
+                    </span>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <a class="js-sub-sub-menu-toggle" href="#">
+                <i class="toggle-icon-sub fa fa-bell"></i>
+                <span class="text toggle-tag-text">Other</span>
+            </a>
+            <ul class="sub-sub-menu">
+                <li class="clearfix">
+                    <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
+                        <span class="tag-text">Rescue Helicopters</span>
+                    </span>
+                    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
+                        <span class="tag-text">SES LHQs</span>
+                    </span>
+                </li>
+            </ul>
+        </li>
     </ul>
-    </li>
-    <li>
-    <a class="js-sub-sub-menu-toggle" href="#">
-    <img src={rfscorpIcon} style="width:14px;vertical-align:top;margin-left:-12px;float:left" />
-    <span class="text toggle-tag-text">NSW Rural Fire Service</span>
-    </a>
-    <ul class="sub-sub-menu">
-    <li class="clearfix">
-    <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
-    <span class="tag-text">RFS Incidents</span>
-    </span>
-    </li>
-    </ul>
-    </li>
-    <li>
-    <a class="js-sub-sub-menu-toggle" href="#">
-    <i class="toggle-icon-sub fa fa-bell"></i>
-    <span class="text toggle-tag-text">Other</span>
-    </a>
-    <ul class="sub-sub-menu">
-    <li class="clearfix">
-    <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
-    <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
-    <span class="tag-text">Rescue Helicopters</span>
-    </span>
-    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
-    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
-    <span class="tag-text">SES LHQs</span>
-    </span>
-    </li>
-    </ul>
-    </li>
-    </ul>
-    </li>).appendTo('#currentSituationLayers');
+</li>).appendTo('#currentSituationLayers');
 
 // The map of timers which will update the lighthouse map layers when enabled
 var timers = {};
