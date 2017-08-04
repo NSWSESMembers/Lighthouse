@@ -73,7 +73,6 @@ $(<li id="lhlayers">
                         <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
                         <span class="tag-text">SES LHQs</span>
                     </span>
-
                     <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
                         <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
                         <span class="tag-text">Power Outages</span>
@@ -119,13 +118,11 @@ var timers = {};
 }
 
 registerClickHandler('toggleRfsIncidentsBtn', 'rfs', requestRfsLayerUpdate, 5 * 60000); // every 5 mins
-
 registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 10 * 60000); // every 5 mins
 registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLayerUpdate, 10000); // every 10s
 registerClickHandler('togglePowerOutagesBtn', 'power-outages', requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
-
 registerClickHandler('togglelhqsBtn', 'lhqs', requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
 
 
@@ -148,7 +145,7 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
  function requestLhqsLayerUpdate() {
     console.debug('updating LHQs layer');
     $.getJSON( chrome.extension.getURL('resources/SES_HQs.geojson'), function( data ) {
-        window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: 'lhqs', response: data}, '*');
+        passLayerDataToInject('lhqs',data)
     })
 
 }
@@ -158,7 +155,8 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
  */
  function requestRfsLayerUpdate() {
     console.debug('updating RFS layer');
-    window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'rfs' }, '*');
+    requestLayerUpdate('rfs')
+
 }
 
 /**
@@ -177,14 +175,20 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
     fetchTransportResource('transport-flood-reports');
 }
 
+
+/**
+ * asks for the cameras via the fetchTransportResource function
+ *
+ */
 function requestTransportCamerasLayerUpdate() {
     console.debug('updating transport cameras layer');
     fetchTransportResource('transport-cameras');
 }
 
+
 function requestPowerOutagesLayerUpdate() {
     console.debug('updating power-outages layer');
-    window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'power-outages' }, '*');
+    requestLayerUpdate('power-outages')
 }
 
 /**
@@ -206,6 +210,7 @@ function requestPowerOutagesLayerUpdate() {
     }
 }
 
+
 /**
  * Fetches a resource from the transport API.
  *
@@ -215,8 +220,9 @@ function requestPowerOutagesLayerUpdate() {
  function fetchTransportResourceWithKey(apiKey, layer) {
     console.info(`fetching transport resource: ${apiKey} ${layer}`);
     var params = { apiKey: apiKey };
-    window.postMessage({ type: 'LH_UPDATE_LAYERS', params: params, layer: layer }, '*');
+    requestLayerUpdate(layer,params)
 }
+
 
 /**
  * Sends a request to the background script to get the latest helicopter positions.
@@ -227,26 +233,45 @@ function requestPowerOutagesLayerUpdate() {
     window.postMessage({ type: 'LH_REQUEST_HELI_PARAMS' }, '*');
 }
 
+
+/**
+ * Sends a message to the background script with layer name and params.
+ * background should reply with a data set or error. reply of data is forwarded
+ * to a function to the injected script to be used.
+ * @param layer the layer to fetch.
+ * @param params an API key or something needed to fetch the resource.
+ */
+function requestLayerUpdate(layer,params = {}) {
+    chrome.runtime.sendMessage({type: layer, params: params}, function (response) {
+        if (response.error) {
+            console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
+        } else {
+            passLayerDataToInject(layer,response)
+        }
+    });
+}
+
+/**
+ * Sends a message to the injected script with layer name and data.
+ * dont expect a response.
+ * @param layer the layer to own the data.
+ * @param response the data to use.
+ */
+function passLayerDataToInject(layer,response) {
+    window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: layer, response: response}, '*');
+}
+
+
 window.addEventListener('message', function(event) {
-    // We only accept messages from ourselves
+    // We only accept messages from background
     if (event.source !== window)
         return;
 
     if (event.data.type) {
         if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
             var params = event.data.params;
-            window.postMessage({ type: 'LH_UPDATE_LAYERS', layer: 'helicopters', params: params }, '*');
+            passLayerDataToInject('helicopters',params)
 
-        } else if (event.data.type === 'LH_UPDATE_LAYERS') {
-            var layer = event.data.layer;
-            let type = event.data.type;
-            chrome.runtime.sendMessage({type: layer, params: event.data.params}, function (response) {
-                if (response.error) {
-                    console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
-                } else {
-                    window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: layer, response: response}, '*');
-                }
-            });
         } else if (event.data.type === 'LH_RESPONSE_TRANSPORT_KEY') {
 
             var sessionKey = 'lighthouseTransportApiKeyCache';
