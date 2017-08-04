@@ -187,16 +187,22 @@ function loadSynchronously(url) {
  function fetchPowerOutages(callback) {
     console.info('fetching power outage locations');
     var finalData = {}
+
     fetchEssentialEnergyOutages(function(essentialEnergyData) {
         finalData.essential = essentialEnergyData
         merge()
     })
 
-    var endeavour = {}
     fetchEndeavourEnergyOutages(function(endeavourEnergyData) {
         finalData.endeavour = endeavourEnergyData
         merge()
     })
+
+    fetchAusgridOutages(function(AusgridData){
+        console.log(AusgridData)
+    });
+
+
 
     function merge() {
         if (finalData.essential && finalData.endeavour)
@@ -210,7 +216,6 @@ function loadSynchronously(url) {
             callback(merged);
         }
     }
-    //fetchAusgridOutages(callback);
 }
 
 /**
