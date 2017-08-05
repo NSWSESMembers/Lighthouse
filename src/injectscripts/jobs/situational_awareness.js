@@ -16,7 +16,68 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('power-outages', 1);
     lighthouseMap.createLayer('lhqs');
 
-    if (developmentMode) {
+    //bind to the click event for the jobs and fiddle with the popups Onclick
+    lighthouseMap.map._layers.graphicsLayer3.onClick.after.advice = function(event){
+        var jobid = /\/Jobs\/(\d.*?)\"/g.exec(event.graphic.infoTemplate.content)[1]
+
+
+        fetchJob(jobid,function(data){
+
+            // Job Tags
+            var tagArray = new Array();
+            $.each( data.Tags , function( tagIdx , tagObj ){
+                tagArray.push( tagObj.Name );
+            });
+            var tagString = ( tagArray.length ? tagArray.join(', ') : ('No Tags') );
+
+            var bgcolor = 'none'
+            var txtcolor = 'black'
+
+            switch (data.JobPriorityType.Description)
+            {
+                case "Life Threatening":
+                bgcolor = "red"
+                txtcolor = 'white'
+                break
+                case "Priority Response":
+                bgcolor = "rgb(255, 165, 0)"
+                txtcolor = 'white'
+                break
+                case "Immediate Response":
+                bgcolor = "rgb(79, 146, 255)"
+                txtcolor = 'white'
+                break
+            }
+
+            let details =
+            `<div id='jobPopUp'>\
+            <div id='jobType' style="margin:auto;text-align:center;font-weight: bold;background-color:${bgcolor};color:${txtcolor}">${data.JobType.Name} - ${data.JobStatusType.Name}</div>\
+            <div id='jobPriority' style="margin:auto;text-align:center;background-color:${bgcolor};color:${txtcolor}"><span id='lhqStatus'>${data.JobPriorityType.Description}</span></div>\
+            <div style="display:block;text-align: center;font-weight:bold;margin-top:10px">${data.Address.PrettyAddress}</div>\
+            <div id='JobDetails' style="padding-top:10px;width:100%;margin:auto">\
+            <div style="display:block;text-align:center">${data.SituationOnScene}</div>
+            <div style="display:block;text-align:center;padding-top:10px">${tagString}</div>
+            <div style="display:block;text-align:center;padding-top:10px"><a href=${urls.Base}/Jobs/${data.Id} target='_blank'>View Job Details</a></div>
+
+            <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+            <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+            Job recieved at ${moment(data.JobReceived).format('HH:mm:ss DD/MM/YYYY')}<br>
+            ${data.EntityAssignedTo.Code} - ${data.EntityAssignedTo.ParentEntity.Code}
+            </span>
+
+            </div>\
+
+            </div>`;
+
+        // Show the info window for our point
+        lighthouseMap.map.infoWindow.setTitle(event.graphic.infoTemplate.title);
+        lighthouseMap.map.infoWindow.setContent(details);
+        lighthouseMap.map.infoWindow.show(event.mapPoint); //show the popup
+
+    })
+}
+
+if (developmentMode) {
         // Add a test point
         lighthouseMap.layers['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon, 'Parramatta SES',
             'This is a test marker. It is used to check whether the map access is working');
@@ -667,6 +728,31 @@ const rfsIcons = {
       complete: function(response, textStatus) {
         if (textStatus == 'success') {
             cb(response.responseJSON.TotalItems) //return the count of how many results.
+        }
+    }
+})
+}
+
+/**
+ * Fetch Job.
+ *
+ * @param jobId code of HQ.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchJob(jobId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Jobs/'+jobId+'?viewModelType=1'
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            cb(response.responseJSON) //return the count of how many results.
         }
     }
 })
