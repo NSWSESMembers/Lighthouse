@@ -196,6 +196,7 @@ window.addEventListener("message", function(event) {
 const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
 const powerIcon = lighthouseUrl + 'icons/power.png';
+const helicopterLastKnownIcon = lighthouseUrl + 'icons/helicopter-last-known.png';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -528,7 +529,7 @@ const rfsIcons = {
                 let alt = lastKnownPosition.alt;
                 let heading = lastKnownPosition.heading;
 
-                addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading);
+                addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading, helicopterLastKnownIcon);
             }
         }
     }
