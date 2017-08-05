@@ -487,6 +487,8 @@ const rfsIcons = {
     console.info('showing rescue helicopters');
 
     let count = 0;
+    let updatedAircraft = new Set();
+
     if (data && data.states) {
         for (let i = 0; i < data.states.length; i++) {
             let icao24 = data.states[i][0];
@@ -496,41 +498,88 @@ const rfsIcons = {
             let alt = data.states[i][7];
             let heading = data.states[i][10] || 0;
 
-            let updated = "unknown";
-            let updatedMoment = "unknown";
-
+            // Save off the updated position
             if (positionUpdated) {
-                updated = moment(positionUpdated * 1000).format('DD/MM/YY HH:mm:ss');
-                updatedMoment = moment(positionUpdated * 1000).fromNow()
+                let heli = findAircraftById(icao24);
+                updatedAircraft.add(icao24.toLowerCase());
+                new AircraftPosition(heli, positionUpdated, lat, lon, alt, heading).save();
             }
 
-            let heli = findAircraftById(icao24);
-            let name = heli.name + ' ' + heli.rego + ' - ' +heli.operator;
+            addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading);
 
-            let dateDetails =
-            `<div class="dateDetails">\
+            count++;
+        }
+    }
+
+    console.info(`added ${count} rescue helicopters`);
+
+    // Go through the known aircraft, and put down markers for any we didn't just see
+    for (let i = 0; i < aircraft.length; i++) {
+        let currentAircraft = aircraft[i];
+        let icao24 = currentAircraft.icao24;
+
+        if (!updatedAircraft.has(icao24.toLowerCase())) {
+            let lastKnownPosition = AircraftPosition.load(icao24);
+
+            if (lastKnownPosition) {
+                let positionUpdated = lastKnownPosition.lastUpdate;
+                let lat = lastKnownPosition.lat;
+                let lon = lastKnownPosition.lon;
+                let alt = lastKnownPosition.alt;
+                let heading = lastKnownPosition.heading;
+
+                addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading);
+            }
+        }
+    }
+}
+
+/**
+ * Adds an aircraft marker to the map layer.
+ *
+ * @param mapLayer the layer to add to.
+ * @param icao24 the ICAO24 address.
+ * @param positionUpdated the
+ * @param lat the aircraft latitude.
+ * @param lon the aircraft longitude.
+ * @param alt the aircraft altitude.
+ * @param heading the aircraft heading.
+ */
+function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading, icon) {
+    let updated = "unknown";
+    let updatedMoment = "unknown";
+
+    if (positionUpdated) {
+        updated = moment(positionUpdated * 1000).format('DD/MM/YY HH:mm:ss');
+        updatedMoment = moment(positionUpdated * 1000).fromNow()
+    }
+
+    let heli = findAircraftById(icao24);
+    let name = heli.name + ' ' + heli.rego + ' - ' +heli.operator;
+    if (!icon) {
+        icon = heli.getIcon();
+    }
+
+    let dateDetails =
+        `<div class="dateDetails">\
             <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
 
             <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
 
             </div>`;
 
-            let details =
-            `<div>Model: ${heli.model}</div>\
+    let details =
+        `<div>Model: ${heli.model}</div>\
             <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
 
-            ${dateDetails}`;     
+            ${dateDetails}`;
 
-            console.debug(`helo at [${lat},${lon}]: ${name}`);
-            let marker = MapLayer.createImageMarker(heli.getIcon(), name, details);
-            marker.setWidth(32);
-            marker.setHeight(32);
-            marker.setAngle(heading);
-            mapLayer.addMarker(lat, lon, marker,name, details);
-            count++;
-        }
-    }
-    console.info(`added ${count} rescue helicopters`);
+    console.debug(`aircraft at [${lat},${lon}]: ${name}`);
+    let marker = MapLayer.createImageMarker(icon, name, details);
+    marker.setWidth(32);
+    marker.setHeight(32);
+    marker.setAngle(heading);
+    mapLayer.addMarker(lat, lon, marker, name, details);
 }
 
 /**
@@ -901,6 +950,51 @@ const rfsIcons = {
     }
 }
 
+/**
+ * A class for a holding details of an aircraft position.
+ */
+class AircraftPosition {
+    /**
+     * Constructs a new aircraft position.
+     *
+     * @param aircraft the aircraft details.
+     * @param lastUpdate the last update time.
+     * @param lat the last known latitude.
+     * @param lon the last known longitude.
+     * @param alt the last known altitude.
+     * @param heading the last known heading.
+     */
+    constructor(aircraft, lastUpdate, lat, lon, alt, heading) {
+        this.aircraft = aircraft;
+        this.lastUpdate = lastUpdate;
+        this.lat = lat;
+        this.lon = lon;
+        this.alt = alt;
+        this.heading = heading;
+    }
+
+    /**
+     * Saves this position into local storage.
+     */
+    save() {
+        let icao24 = this.aircraft.icao24;
+        localStorage.setItem('lighthouse-last-position-' + icao24, JSON.stringify(this));
+    }
+
+    /**
+     * Loads a position from local storage.
+     *
+     * @param icao24 the ICAO24 address.
+     * @return an AircraftPosition, or undefined.
+     */
+    static load(icao24) {
+        let cachedLastPosition = localStorage.getItem('lighthouse-last-position-' + icao24);
+        if (cachedLastPosition) {
+            return JSON.parse(cachedLastPosition);
+        }
+    }
+}
+
 // A list of rescue helicopters
 const aircraft = [
     // Toll Air Ambulance
@@ -971,6 +1065,16 @@ if (developmentMode) {
         // Royal Flying Doctor's Service
         new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C', 'RFDS', false)
         );
+}
+
+let aircraftLastPositions = {};
+
+// Load the last known position of all the aircraft
+for (let i = 0; i < aircraft.length; i++) {
+    let currentAircraft = aircraft[i];
+    let icao24 = currentAircraft.icao24.toLowerCase();
+
+    aircraftLastPositions[icao24] = AircraftPosition.load(icao24);
 }
 
 // Load all the arcgis classes
