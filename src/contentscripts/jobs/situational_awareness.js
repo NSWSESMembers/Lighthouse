@@ -270,7 +270,7 @@ window.addEventListener('message', function(event) {
     if (event.data.type) {
         if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
             var params = event.data.params;
-            passLayerDataToInject('helicopters',params)
+            requestLayerUpdate('helicopters',params);
 
         } else if (event.data.type === 'LH_RESPONSE_TRANSPORT_KEY') {
 

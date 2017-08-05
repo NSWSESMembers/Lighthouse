@@ -522,7 +522,7 @@ const rfsIcons = {
             ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
-            let marker = mapLayer.createImageMarker(heli.getIcon(), name, details);
+            let marker = MapLayer.createImageMarker(heli.getIcon(), name, details);
             marker.setWidth(32);
             marker.setHeight(32);
             marker.setAngle(heading);
