@@ -526,7 +526,7 @@ const rfsIcons = {
             marker.setWidth(32);
             marker.setHeight(32);
             marker.setAngle(heading);
-            mapLayer.addMarker(lat, lon, marker);
+            mapLayer.addMarker(lat, lon, marker,name, details);
             count++;
         }
     }
@@ -1177,7 +1177,7 @@ const Color = eval('require("esri/Color");');
      * @return the marker to customise.
      */
      addImageMarkerByxy(x, y, SpatialReference, imageUrl, title='', details='') {
-        let marker = MapLayer.createImageMarker(imageUrl, title, details);
+        let marker = MapLayer.createImageMarker(imageUrl);
         this.addMarkerByxy(x, y, SpatialReference, marker, title, details);
         return marker;
     }
