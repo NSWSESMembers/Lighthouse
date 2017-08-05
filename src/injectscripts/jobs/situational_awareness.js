@@ -522,7 +522,7 @@ const rfsIcons = {
             ${dateDetails}`;     
 
             console.debug(`helo at [${lat},${lon}]: ${name}`);
-            let marker = MapLayer.createImageMarker(heli.getIcon(), name, details);
+            let marker = MapLayer.createImageMarker(heli.getIcon());
             marker.setWidth(32);
             marker.setHeight(32);
             marker.setAngle(heading);
@@ -1177,7 +1177,7 @@ const Color = eval('require("esri/Color");');
      * @return the marker to customise.
      */
      addImageMarkerByxy(x, y, SpatialReference, imageUrl, title='', details='') {
-        let marker = MapLayer.createImageMarker(imageUrl, title, details);
+        let marker = MapLayer.createImageMarker(imageUrl);
         this.addMarkerByxy(x, y, SpatialReference, marker, title, details);
         return marker;
     }
