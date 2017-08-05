@@ -21,6 +21,20 @@ function pageFullyLoaded(e) {
         var jobid = /\/Jobs\/(\d.*?)\"/g.exec(event.graphic.infoTemplate.content)[1]
 
 
+
+        var details =
+        `<div id='jobPopUp'>\
+        <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+        Loading...
+        </span>
+        </div>`
+
+       // Show the info window for our point
+       lighthouseMap.map.infoWindow.setTitle(event.graphic.infoTemplate.title);
+       lighthouseMap.map.infoWindow.setContent(details);
+        lighthouseMap.map.infoWindow.show(event.mapPoint); //show the popup
+
+
         fetchJob(jobid,function(data){
 
             // Job Tags
@@ -49,9 +63,8 @@ function pageFullyLoaded(e) {
                 break
             }
 
-            let details =
-            `<div id='jobPopUp'>\
-            <div id='jobType' style="margin:auto;text-align:center;font-weight: bold;background-color:${bgcolor};color:${txtcolor}">${data.JobType.Name} - ${data.JobStatusType.Name}</div>\
+            details =
+            `<div id='jobType' style="margin:auto;text-align:center;font-weight: bold;background-color:${bgcolor};color:${txtcolor}">${data.JobType.Name} - ${data.JobStatusType.Name}</div>\
             <div id='jobPriority' style="margin:auto;text-align:center;background-color:${bgcolor};color:${txtcolor}"><span id='lhqStatus'>${data.JobPriorityType.Description}</span></div>\
             <div style="display:block;text-align: center;font-weight:bold;margin-top:10px">${data.Address.PrettyAddress}</div>\
             <div id='JobDetails' style="padding-top:10px;width:100%;margin:auto">\
@@ -63,18 +76,11 @@ function pageFullyLoaded(e) {
             <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
             Job recieved at ${moment(data.JobReceived).format('HH:mm:ss DD/MM/YYYY')}<br>
             ${data.EntityAssignedTo.Code} - ${data.EntityAssignedTo.ParentEntity.Code}
-            </span>
+            </span>`;
 
-            </div>\
+            $('#jobPopUp').html(details)
 
-            </div>`;
-
-        // Show the info window for our point
-        lighthouseMap.map.infoWindow.setTitle(event.graphic.infoTemplate.title);
-        lighthouseMap.map.infoWindow.setContent(details);
-        lighthouseMap.map.infoWindow.show(event.mapPoint); //show the popup
-
-    })
+        })
 }
 
 if (developmentMode) {
@@ -560,7 +566,7 @@ const rfsIcons = {
                         mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3,SimpleLineSymbol.STYLE_SOLID, details.name, details.details);
 
                     } else if (geometry.type.toLowerCase() === 'point') {
-                        
+
                         let lat = geometry.coordinates[1];
                         let lon = geometry.coordinates[0];
 
