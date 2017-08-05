@@ -546,8 +546,8 @@ const rfsIcons = {
     if (data && data.features) {
         for (let i = 0; i < data.features.length; i++) {
             let feature = data.features[i];
+            
             if (feature.geometry.type.toLowerCase() === 'geometrycollection') {
-
                 let details = PowerOutageDetails(feature)
 
 
@@ -560,6 +560,7 @@ const rfsIcons = {
                         mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3,SimpleLineSymbol.STYLE_SOLID, details.name, details.details);
 
                     } else if (geometry.type.toLowerCase() === 'point') {
+                        
                         let lat = geometry.coordinates[1];
                         let lon = geometry.coordinates[0];
 
@@ -570,6 +571,7 @@ const rfsIcons = {
                 count++;
 
             } else if (feature.geometry.type.toLowerCase() === 'point') {
+
                 let lat = feature.geometry.coordinates[1];
                 let lon = feature.geometry.coordinates[0];
                 
@@ -595,6 +597,19 @@ const rfsIcons = {
                     if (type = "P") type="Planned";  
                     CustomerAffected = source.properties.numberCustomerAffected;
                     contact = "Endeavour Energy 131 003"
+                    break
+                    case 'Ausgrid':
+                    name = 'Ausgrid: ' + source.properties.incidentId;
+                    creation = source.properties.creationDateTime;
+                    start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
+                    end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
+                    reason = source.properties.reason;
+                    type = source.properties.outageType;
+                    status = source.properties.status
+                    if (status == "") status="Unknown";
+                    type = source.properties.type
+                    CustomerAffected = source.properties.numberCustomerAffected;
+                    contact = "Ausgrid 13 13 88"
                     break
                     case 'EssentialEnergy':
                     let details = $(source.properties.description);

@@ -199,19 +199,21 @@ function loadSynchronously(url) {
     })
 
     fetchAusgridOutages(function(AusgridData){
-        console.log(AusgridData)
+        finalData.ausgrid = AusgridData
+        merge()
     });
 
 
 
     function merge() {
-        if (finalData.essential && finalData.endeavour)
+        if (finalData.essential && finalData.endeavour && finalData.ausgrid)
         {
             var merged = {}
             merged.features = []
             //if you just push you end up with an array of the array not a merged array like you might want.
             merged.features.push.apply(merged.features,finalData.essential.features)
             merged.features.push.apply(merged.features,finalData.endeavour.features)
+            merged.features.push.apply(merged.features,finalData.ausgrid.features)
             callback(merged);
         }
     }
@@ -227,8 +229,80 @@ function loadSynchronously(url) {
     var xhttp = new XMLHttpRequest();
     xhttp.onloadend = function () {
         if (this.readyState === 4 && this.status === 200) {
-            callback(JSON.parse(xhttp.responseText));
-        } else {
+            geoJson = {
+                'type': 'FeatureCollection',
+                'features': []
+            };
+
+            var result = JSON.parse(xhttp.responseText)
+
+            var expectCount = 0
+
+            result.d.Data.forEach(function(item) {
+                if (item.WebId != 0)
+                {
+                    expectCount++
+                }
+            })
+
+            result.d.Data.forEach(function(item) {
+                if (item.WebId != 0)
+                {
+                    //build up some geojson from normal JSON
+                    var feature = {}
+                    feature.geometry = {}
+                    feature.geometry.type = "GeometryCollection"
+                    feature.geometry.geometries = []
+
+                    //make a polygon from each set
+                    var polygon = {}
+                    polygon.type = "Polygon"
+                    polygon.coordinates = []
+
+                    var ords = []
+                    item.Coords.forEach(function(point){
+                        ords.push([point.lng,point.lat])
+                    })
+
+                    ords.push([item.Coords[0].lng,item.Coords[0].lat]) //push the first item again at the end to complete the polygon
+
+                    polygon.coordinates.push(ords)
+
+                    feature.geometry.geometries.push(polygon)
+
+                    //make a point to go with the polygon //TODO - center this in the polygon - geo maths centroid
+                    var point = {}
+                    point.type = "Point"
+                    point.coordinates = []
+                    point.coordinates.push(item.Coords[0].lng,item.Coords[0].lat)
+
+                    feature.geometry.geometries.push(point)                    
+                    
+                    fetchAusgridOutage(item.WebId,item.OutageDisplayType, function(outageresult){ //for each outage ask their API for the deatils of the outage
+                        if (typeof(outageresult.error) === 'undefined') //if no error
+                        {
+                            feature.owner = "Ausgrid"
+                            feature.type = "Feature"
+                            feature.properties = {}
+                            feature.properties.numberCustomerAffected = outageresult.d.Data.Customers
+                            feature.properties.incidentId = outageresult.d.Data.WebId
+                            feature.properties.reason = outageresult.d.Data.Cause
+                            feature.properties.status = outageresult.d.Data.Status
+                            feature.properties.type = "Outage"
+                            feature.properties.startDateTime = outageresult.d.Data.StartDateTime
+                            feature.properties.endDateTime = outageresult.d.Data.EstRestTime
+                            geoJson.features.push(feature)
+                        } else {
+                            expectCount--
+                        }
+                        if (geoJson.features.length == expectCount) //return once all the data is back
+                        {
+                            callback(geoJson)
+                        }
+                    })
+}
+})
+} else {
             // error
             var response = {
                 error: 'Request failed',
@@ -239,9 +313,37 @@ function loadSynchronously(url) {
     };
     xhttp.open('POST', ausgridBaseUrl + 'services/Outage/Outage.asmx/GetOutages', true);
     xhttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-    var blob = new Blob(['{"box":{"bottomleft":{"lat":-33.92009635482019,"lng":144.91065627494675},"topright":{"lat":-30.557037696178075,"lng":156.95167189994675},"zoom":7}}'], {type: 'text/plain'});
+    var blob = new Blob(['{"box":{"bottomleft":{"lat":-33.77499909311501,"lng":149.5178374449364},"topright":{"lat":-33.08275780283044,"lng":152.50337211290514},"zoom":9}}'], {type: 'text/plain'});
     xhttp.send(blob);
 }
+
+/**
+ * Fetche Ausgrid power outage detail.
+ * @param webId web ID
+ * @param type OutageDisplayType 
+ * @param callback the callback to send the data to.
+ */
+ function fetchAusgridOutage(id,type,callback) {
+    console.info('fetching ausgrid power outage detail');
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            callback(JSON.parse(xhttp.responseText));
+        } else {
+            // error
+            var response = {
+                error: 'Request failed',
+                httpCode: this.status
+            };
+            callback(response);
+        }
+    };
+    xhttp.open('POST', ausgridBaseUrl + 'services/Outage/Outage.asmx/GetOutage', true);
+    xhttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+    var blob = new Blob(['{"id":{"WebId":"'+id+'","OutageDisplayType":"'+type+'"}}'], {type: 'text/plain'});
+    xhttp.send(blob);
+}
+
 
 /**
  * Fetches the current power outages for Endeavour Energy.
