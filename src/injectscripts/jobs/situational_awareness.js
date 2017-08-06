@@ -81,7 +81,7 @@ function pageFullyLoaded(e) {
             $('#jobPopUp').html(details)
 
         })
-}
+};
 
 if (developmentMode) {
         // Add a test point
@@ -98,6 +98,8 @@ if (developmentMode) {
             button.trigger('click');
         }
     });
+
+    loadAircraftLastKnownPositions();
 }
 
 window.addEventListener("message", function(event) {
@@ -498,7 +500,7 @@ const rfsIcons = {
 
     if (data && data.states) {
         for (let i = 0; i < data.states.length; i++) {
-            let icao24 = data.states[i][0];
+            let icao24 = data.states[i][0].toLowerCase();
             let positionUpdated = data.states[i][3];
             let lon = data.states[i][5];
             let lat = data.states[i][6];
@@ -508,8 +510,10 @@ const rfsIcons = {
             // Save off the updated position
             if (positionUpdated) {
                 let heli = findAircraftById(icao24);
-                updatedAircraft.add(icao24.toLowerCase());
-                new AircraftPosition(heli, positionUpdated, lat, lon, alt, heading).save();
+                updatedAircraft.add(icao24);
+                let position = new AircraftPosition(heli, positionUpdated, lat, lon, alt, heading);
+                position.save();
+                aircraftLastPositions[icao24] = position;
             }
 
             addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading);
@@ -523,12 +527,12 @@ const rfsIcons = {
     // Go through the known aircraft, and put down markers for any we didn't just see
     for (let i = 0; i < aircraft.length; i++) {
         let currentAircraft = aircraft[i];
-        let icao24 = currentAircraft.icao24;
+        let icao24 = currentAircraft.icao24.toLowerCase();
 
-        if (!updatedAircraft.has(icao24.toLowerCase())) {
-            let lastKnownPosition = AircraftPosition.load(icao24);
+        if (!updatedAircraft.has(icao24)) {
+            let lastKnownPosition = aircraftLastPositions[icao24];
 
-            if (lastKnownPosition) {
+            if (lastKnownPosition && lastKnownPosition.aircraft.heli) {
                 let positionUpdated = lastKnownPosition.lastUpdate;
                 let lat = lastKnownPosition.lat;
                 let lon = lastKnownPosition.lon;
@@ -935,7 +939,7 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
      */
      constructor(icao24, rego, name, model, operator, heli = true) {
 
-        this.icao24 = icao24;
+        this.icao24 = icao24.toLowerCase();
         this.rego = rego;
         this.name = name;
         this.model = model;
@@ -995,6 +999,7 @@ class AircraftPosition {
      * @return an AircraftPosition, or undefined.
      */
     static load(icao24) {
+        icao24 = icao24.toLowerCase();
         let cachedLastPosition = localStorage.getItem('lighthouse-last-position-' + icao24);
         if (cachedLastPosition) {
             return JSON.parse(cachedLastPosition);
@@ -1074,14 +1079,20 @@ if (developmentMode) {
         );
 }
 
-let aircraftLastPositions = {};
+var aircraftLastPositions = {};
 
-// Load the last known position of all the aircraft
-for (let i = 0; i < aircraft.length; i++) {
-    let currentAircraft = aircraft[i];
-    let icao24 = currentAircraft.icao24.toLowerCase();
+/**
+ * Loads the last known aircraft positions.
+ */
+function loadAircraftLastKnownPositions() {
+    console.debug('loading aircraft last known positions');
 
-    aircraftLastPositions[icao24] = AircraftPosition.load(icao24);
+    for (let i = 0; i < aircraft.length; i++) {
+        let currentAircraft = aircraft[i];
+        let icao24 = currentAircraft.icao24.toLowerCase();
+
+        aircraftLastPositions[icao24] = AircraftPosition.load(icao24);
+    }
 }
 
 // Load all the arcgis classes
