@@ -571,19 +571,17 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
         icon = heli.getIcon();
     }
 
-    let dateDetails =
-        `<div class="dateDetails">\
-            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
-
-            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
-
-            </div>`;
-
     let details =
         `<div>Model: ${heli.model}</div>\
-            <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
-
-            ${dateDetails}`;
+        <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
+        <div class="dateDetails">\
+            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
+            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
+        </div>\
+        <div>Flightradar24: \
+            <a href="https://www.flightradar24.com/${heli.name}">[current]</a>\
+            <a href="https://www.flightradar24.com/data/aircraft/${heli.rego}">[history]</a>\
+        </div>`;
 
     console.debug(`aircraft at [${lat},${lon}]: ${name}`);
     let marker = MapLayer.createImageMarker(icon, name, details);
@@ -1020,6 +1018,7 @@ const aircraft = [
     new Helicopter('7C6182', 'VH-TJO', 'RSCU209', 'AW-139', 'Toll Air'),
 
     // Careflight
+    new Helicopter('7C2A34', 'VH-IME', 'CFH3', 'BK117', 'Careflight'),
     new Helicopter('7C0635', 'VH-BIF', 'CFH4', 'BK117', 'Careflight'),
 
     // Westpac
@@ -1030,7 +1029,9 @@ const aircraft = [
     new Helicopter('7C81CF', 'VH-ZXD', 'WP4', 'AW-139', 'Westpac'),
 
     // PolAir
-    new Helicopter('7C4D03', 'VH-PHX', 'POLAIR1', 'EC-AS355', 'PolAir'),
+    new Helicopter('7C4D02', 'VH-PHW', 'POLAIR1', 'EC-AS350B2', 'PolAir'),
+    new Helicopter('7C4D03', 'VH-PHX', 'POLAIR2', 'EC-AS355', 'PolAir'),
+    new Helicopter('7C4CED', 'VH-PHB', 'POLAIR3', 'EC-AS350B2', 'PolAir'),
     new Helicopter('7C4CF8', 'VH-PHM', 'POLAIR4', 'EC-135', 'PolAir'),
     new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'Bell 412EPI', 'PolAir'),
 
