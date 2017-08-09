@@ -206,8 +206,10 @@ function loadSynchronously(url) {
 
 
     function merge() {
+        console.log("checking if all power outage data is back")
         if (finalData.essential && finalData.endeavour && finalData.ausgrid)
         {
+            console.log("merging power outages")
             var merged = {}
             merged.features = []
             //if you just push you end up with an array of the array not a merged array like you might want.
@@ -215,6 +217,8 @@ function loadSynchronously(url) {
             merged.features.push.apply(merged.features,finalData.endeavour.features)
             merged.features.push.apply(merged.features,finalData.ausgrid.features)
             callback(merged);
+        } else {
+            console.log("missing some power outage data")
         }
     }
 }
@@ -244,6 +248,11 @@ function loadSynchronously(url) {
                     expectCount++
                 }
             })
+
+            if (expectCount == 0) //call back if theres none.
+            {
+                callback(geoJson)
+            }
 
             result.d.Data.forEach(function(item) {
                 if (item.WebId != 0)

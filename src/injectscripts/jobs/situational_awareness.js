@@ -618,8 +618,7 @@ const rfsIcons = {
                     contact = "Ausgrid 13 13 88"
                     break
                     case 'EssentialEnergy':
-                    let details = $(source.properties.description);
-
+                    console.log(source.properties.description)
                     name = 'Essential Energy: ' + source.id;
                     start = /Time Off\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
                     end = /Time On\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
