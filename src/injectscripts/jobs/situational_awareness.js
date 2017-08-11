@@ -670,7 +670,6 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
                     contact = "Ausgrid 13 13 88"
                     break
                     case 'EssentialEnergy':
-                    console.log(source.properties)
                     name = 'Essential Energy: ' + source.id;
                     start = /Time Off\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
                     end = /Time On\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
