@@ -670,17 +670,26 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
                     contact = "Ausgrid 13 13 88"
                     break
                     case 'EssentialEnergy':
-                    console.log(source.properties.description)
+                    console.log(source.properties)
                     name = 'Essential Energy: ' + source.id;
                     start = /Time Off\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
                     end = /Time On\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
                     if (end == "") end = "Unknown";
-                    status = /Status\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    status = /Status\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)
+                    if (status)
+                    {
+                      status = status[1]  
+                    } else {
+                        status = "NA"
+                    }
                     type = source.properties.outageType;
                     if (source.properties.styleUrl.match("unplanned"))
                     {
                         type = "Unplanned"
                         reason = "Unknown"
+                    } else {
+                       type = "Planned"
+                        reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1] 
                     }
                     CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
                     contact = "Essential Energy 132 080"
