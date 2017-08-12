@@ -579,8 +579,8 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
             <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
         </div>\
         <div>Flightradar24: \
-            <a href="https://www.flightradar24.com/${heli.name}">[current]</a>\
-            <a href="https://www.flightradar24.com/data/aircraft/${heli.rego}">[history]</a>\
+            <a target='_blank' href="https://www.flightradar24.com/${heli.name}">[current]</a>\
+            <a target='_blank' href="https://www.flightradar24.com/data/aircraft/${heli.rego}">[history]</a>\
         </div>`;
 
     console.debug(`aircraft at [${lat},${lon}]: ${name}`);
