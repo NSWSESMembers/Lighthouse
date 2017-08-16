@@ -56,6 +56,11 @@ function pageFullyLoaded(e) {
                         }
                     })
 
+            if (rows.length == 0)
+            {
+                rows.push('<td colspan="2" style="font-style: italic">No Taskings</td>')
+            }
+
             taskingTable =
             `<div id='taskingHolder' style="padding-top:10px;width:100%;margin:auto">\
             <table id='taskingTable' style="width:100%;text-align: center;">\
