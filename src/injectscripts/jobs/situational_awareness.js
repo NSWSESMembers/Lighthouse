@@ -36,6 +36,39 @@ function pageFullyLoaded(e) {
 
 
         fetchJob(jobid,function(data){
+            fetchJobTasking(jobid,function(taskingdata){
+                console.log(taskingdata)
+
+            //Tasking
+
+
+
+            var c = 0
+            var rows = []
+            $.each(taskingdata.Results,function(k,v){
+                console.log(v)
+                c++
+                        if (c%2 || c==0) //every other row
+                        {
+                            rows.push('<tr style="text-transform:uppercase"><td>'+v.Team.Callsign+'</td><td>'+v.CurrentStatus+'</td></tr>');
+                        } else {
+                            rows.push('<tr style="background-color:#e8e8e8;text-transform:uppercase"><td>'+v.Team.Callsign+'</td><td>'+v.CurrentStatus+'</td></tr>');
+                        }
+                    })
+
+            taskingTable =
+            `<div id='taskingHolder' style="padding-top:10px;width:100%;margin:auto">\
+            <table id='taskingTable' style="width:100%;text-align: center;">\
+            <tr>\
+            <td colspan="2" style="font-weight: bold">Job Tasking</td>
+            </tr>\
+            <tr>\
+            <th style="text-align: center;width:50%">Callsign</th>\
+            <th style="text-align: center;width:50%">Status</th>\
+            </tr>\
+            ${rows.join('\r')}
+            </table>\
+            </div>`
 
             // Job Tags
             var tagArray = new Array();
@@ -70,6 +103,7 @@ function pageFullyLoaded(e) {
             <div id='JobDetails' style="padding-top:10px;width:100%;margin:auto">\
             <div style="display:block;text-align:center">${data.SituationOnScene}</div>
             <div style="display:block;text-align:center;padding-top:10px">${tagString}</div>
+            ${taskingTable}
             <div style="display:block;text-align:center;padding-top:10px"><a href=${urls.Base}/Jobs/${data.Id} target='_blank'>View Job Details</a></div>
 
             <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
@@ -79,8 +113,8 @@ function pageFullyLoaded(e) {
             </span>`;
 
             $('#jobPopUp').html(details)
-
         })
+})
 };
 
 if (developmentMode) {
@@ -556,7 +590,7 @@ const rfsIcons = {
  * @param alt the aircraft altitude.
  * @param heading the aircraft heading.
  */
-function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading, icon) {
+ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading, icon) {
     let updated = "unknown";
     let updatedMoment = "unknown";
 
@@ -572,16 +606,16 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
     }
 
     let details =
-        `<div>Model: ${heli.model}</div>\
-        <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
-        <div class="dateDetails">\
-            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
-            <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
-        </div>\
-        <div>Flightradar24: \
-            <a target='_blank' href="https://www.flightradar24.com/${heli.name}">[current]</a>\
-            <a target='_blank' href="https://www.flightradar24.com/data/aircraft/${heli.rego}">[history]</a>\
-        </div>`;
+    `<div>Model: ${heli.model}</div>\
+    <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
+    <div class="dateDetails">\
+    <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
+    <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
+    </div>\
+    <div>Flightradar24: \
+    <a target='_blank' href="https://www.flightradar24.com/${heli.name}">[current]</a>\
+    <a target='_blank' href="https://www.flightradar24.com/data/aircraft/${heli.rego}">[history]</a>\
+    </div>`;
 
     console.debug(`aircraft at [${lat},${lon}]: ${name}`);
     let marker = MapLayer.createImageMarker(icon, name, details);
@@ -678,48 +712,48 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
                     if (status)
                     {
                       status = status[1]  
-                    } else {
-                        status = "NA"
-                    }
-                    type = source.properties.outageType;
-                    if (source.properties.styleUrl.match("unplanned"))
-                    {
-                        type = "Unplanned"
-                        reason = "Unknown"
-                    } else {
-                       type = "Planned"
-                        reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1] 
-                    }
-                    CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
-                    contact = "Essential Energy 132 080"
-                    break
+                  } else {
+                    status = "NA"
                 }
+                type = source.properties.outageType;
+                if (source.properties.styleUrl.match("unplanned"))
+                {
+                    type = "Unplanned"
+                    reason = "Unknown"
+                } else {
+                 type = "Planned"
+                 reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1] 
+             }
+             CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
+             contact = "Essential Energy 132 080"
+             break
+         }
 
-                let dateDetails =
-                `<div class="dateDetails">\
-                <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
-                <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
-                </div>`;
-                let details =
-                `<div>Affected Customers: ${CustomerAffected}</div>\
-                <div>Outage Type: ${type}</div>\
-                <div>Reason: ${reason}</div>\
-                <div>Status: ${status}</div>\
-                ${dateDetails}\
-                <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
-                <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
-                ${contact}\
-                </span>`;
+         let dateDetails =
+         `<div class="dateDetails">\
+         <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
+         <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
+         </div>`;
+         let details =
+         `<div>Affected Customers: ${CustomerAffected}</div>\
+         <div>Outage Type: ${type}</div>\
+         <div>Reason: ${reason}</div>\
+         <div>Status: ${status}</div>\
+         ${dateDetails}\
+         <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+         <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+         ${contact}\
+         </span>`;
 
-                return({name:name,details:details})
+         return({name:name,details:details})
 
-            }
+     }
 
 
-        }
-    }
+ }
+}
 
-    console.info(`added ${count} power outages`);
+console.info(`added ${count} power outages`);
 }
 
 /**
@@ -816,7 +850,7 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
 /**
  * Fetch Job.
  *
- * @param jobId code of HQ.
+ * @param jobId.
  * @para cb cb
  * @returns something. or null. //TODO
  */
@@ -825,6 +859,31 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
     $.ajax({
         type: 'GET'
         , url: urls.Base+'/Api/v1/Jobs/'+jobId+'?viewModelType=1'
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        if (textStatus == 'success') {
+            cb(response.responseJSON) //return the count of how many results.
+        }
+    }
+})
+}
+
+/**
+ * Fetch Job Tasking.
+ *
+ * @param jobId.
+ * @para cb cb
+ * @returns something. or null. //TODO
+ */
+
+ function fetchJobTasking(jobId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/Tasking/Search?JobIds%5B%5D='+jobId
         , beforeSend: function(n) {
           n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
       },
@@ -969,7 +1028,7 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
 /**
  * A class for a holding details of an aircraft position.
  */
-class AircraftPosition {
+ class AircraftPosition {
     /**
      * Constructs a new aircraft position.
      *
@@ -980,7 +1039,7 @@ class AircraftPosition {
      * @param alt the last known altitude.
      * @param heading the last known heading.
      */
-    constructor(aircraft, lastUpdate, lat, lon, alt, heading) {
+     constructor(aircraft, lastUpdate, lat, lon, alt, heading) {
         this.aircraft = aircraft;
         this.lastUpdate = lastUpdate;
         this.lat = lat;
@@ -992,7 +1051,7 @@ class AircraftPosition {
     /**
      * Saves this position into local storage.
      */
-    save() {
+     save() {
         let icao24 = this.aircraft.icao24;
         localStorage.setItem('lighthouse-last-position-' + icao24, JSON.stringify(this));
     }
@@ -1003,7 +1062,7 @@ class AircraftPosition {
      * @param icao24 the ICAO24 address.
      * @return an AircraftPosition, or undefined.
      */
-    static load(icao24) {
+     static load(icao24) {
         icao24 = icao24.toLowerCase();
         let cachedLastPosition = localStorage.getItem('lighthouse-last-position-' + icao24);
         if (cachedLastPosition) {
@@ -1092,7 +1151,7 @@ var aircraftLastPositions = {};
 /**
  * Loads the last known aircraft positions.
  */
-function loadAircraftLastKnownPositions() {
+ function loadAircraftLastKnownPositions() {
     console.debug('loading aircraft last known positions');
 
     for (let i = 0; i < aircraft.length; i++) {
@@ -1175,7 +1234,6 @@ const Color = eval('require("esri/Color");');
         {
             console.log('this is a hq popup')
             fetchHqDetails($('#lhqName').text(), function(hqdeets){
-                console.debug(hqdeets)
                 var c = 0
                 $.each(hqdeets.contacts,function(k,v){
                     if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
