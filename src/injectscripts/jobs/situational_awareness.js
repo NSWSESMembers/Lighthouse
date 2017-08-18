@@ -37,21 +37,22 @@ function pageFullyLoaded(e) {
 
         fetchJob(jobid,function(data){
             fetchJobTasking(jobid,function(taskingdata){
-                console.log(taskingdata)
 
             //Tasking
-
-
 
             var c = 0
             var rows = []
             $.each(taskingdata.Results,function(k,v){
-                console.log(v)
-                var members = $.map(v.Team.Members, function(obj){console.log(obj);return obj.Person.FirstName +" "+ obj.Person.LastName}).join(', ')
+                var timeDiff = moment(v.CurrentStatusTime).fromNow()
+                var members = $.map(v.Team.Members, function(obj){return obj.Person.FirstName +" "+ obj.Person.LastName}).join(', ')
+                if (members == "")
+                {
+                    members = "Empty team"
+                }
                 c++
                         if (c%2 || c==0) //every other row
                         {
-                            rows.push('<tr style="text-transform:uppercase"><td><abbr title="'+members+'">'+v.Team.Callsign+'</abbr></td><td>'+v.CurrentStatus+'</td></tr>');
+                            rows.push('<tr style="text-transform:uppercase"><td><abbr title="'+members+'">'+v.Team.Callsign+'</abbr></td><td><abbr title="'+timeDiff+'">'+v.CurrentStatus+'</abbr></td></tr>');
                         } else {
                             rows.push('<tr style="background-color:#f0f0f0;text-transform:uppercase"><td><abbr title="'+members+'">'+v.Team.Callsign+'</abbr></td><td>'+v.CurrentStatus+'</td></tr>');
                         }
@@ -727,36 +728,36 @@ const rfsIcons = {
                     type = "Unplanned"
                     reason = "Unknown"
                 } else {
-                 type = "Planned"
-                 reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1] 
-             }
-             CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
-             contact = "Essential Energy 132 080"
-             break
-         }
+                   type = "Planned"
+                   reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1] 
+               }
+               CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
+               contact = "Essential Energy 132 080"
+               break
+           }
 
-         let dateDetails =
-         `<div class="dateDetails">\
-         <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
-         <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
-         </div>`;
-         let details =
-         `<div>Affected Customers: ${CustomerAffected}</div>\
-         <div>Outage Type: ${type}</div>\
-         <div>Reason: ${reason}</div>\
-         <div>Status: ${status}</div>\
-         ${dateDetails}\
-         <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
-         <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
-         ${contact}\
-         </span>`;
+           let dateDetails =
+           `<div class="dateDetails">\
+           <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
+           <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
+           </div>`;
+           let details =
+           `<div>Affected Customers: ${CustomerAffected}</div>\
+           <div>Outage Type: ${type}</div>\
+           <div>Reason: ${reason}</div>\
+           <div>Status: ${status}</div>\
+           ${dateDetails}\
+           <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+           <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+           ${contact}\
+           </span>`;
 
-         return({name:name,details:details})
+           return({name:name,details:details})
 
-     }
+       }
 
 
- }
+   }
 }
 
 console.info(`added ${count} power outages`);
