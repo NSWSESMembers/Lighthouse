@@ -47,12 +47,13 @@ function pageFullyLoaded(e) {
             var rows = []
             $.each(taskingdata.Results,function(k,v){
                 console.log(v)
+                var members = $.map(v.Team.Members, function(obj){console.log(obj);return obj.Person.FirstName +" "+ obj.Person.LastName}).join(', ')
                 c++
                         if (c%2 || c==0) //every other row
                         {
-                            rows.push('<tr style="text-transform:uppercase"><td>'+v.Team.Callsign+'</td><td>'+v.CurrentStatus+'</td></tr>');
+                            rows.push('<tr style="text-transform:uppercase"><td><abbr title="'+members+'">'+v.Team.Callsign+'</abbr></td><td>'+v.CurrentStatus+'</td></tr>');
                         } else {
-                            rows.push('<tr style="background-color:#e8e8e8;text-transform:uppercase"><td>'+v.Team.Callsign+'</td><td>'+v.CurrentStatus+'</td></tr>');
+                            rows.push('<tr style="background-color:#f0f0f0;text-transform:uppercase"><td><abbr title="'+members+'">'+v.Team.Callsign+'</abbr></td><td>'+v.CurrentStatus+'</td></tr>');
                         }
                     })
 
