@@ -23,7 +23,7 @@ function pageFullyLoaded(e) {
 
 
         var details =
-        `<div id='jobPopUp'>\
+        `<div id='jobPopUp' style="margin-top:-5px">\
         <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
         Loading...
         </span>
