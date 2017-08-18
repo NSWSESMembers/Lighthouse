@@ -7,7 +7,7 @@ var LighthouseChrome = require('../lib/shared_chrome_code.js');
 var moment = require('moment');
 var $ = require('jquery');
 global.jQuery = $;
-var crossfilter = require('crossfilter');
+
 var timeoverride = null;
 
 // inject css c/o browserify-css
@@ -47,11 +47,6 @@ $(document).ready(function() {
     RunForestRun();
   }
 });
-
-
-function myScript() {
-  console.log("radio");
-}
 
 function getSearchParameters() {
   var prmstr = window.location.search.substr(1);
