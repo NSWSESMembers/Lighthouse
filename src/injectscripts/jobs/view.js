@@ -38,11 +38,11 @@ function lighthouseTasking() {
       if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) //only show for tasking that can be deleted (tasked only)
       { 
         //attached a X button if its matched and deletable
-        test = return_untask_button()
-        $(v).append(test)
+        untask = return_untask_button()
+        $(v).append(untask)
 
         //click function
-        $(test).click(function() {
+        $(untask).click(function() {
           DOMCallsign = ($(this)[0].parentNode.parentNode.children[0].children[0].href.split("/")[4])
           DOMStatus = ($(this)[0].parentNode.parentNode.children[1].innerText.split(" ")[0])
 
