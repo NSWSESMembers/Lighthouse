@@ -197,7 +197,7 @@ function HackTheMatrix(id, host, progressBar) {
 
 
   LighthouseJob.get_json(unit, host, start, end, params.token, function(jobs) {
-    console.log(jobs);
+    //console.log(jobs);
           // $(jobs.Results).each(function(j,k){
           //   console.log(k)
           //   console.log(k.Event)
@@ -213,7 +213,7 @@ var beacon_jobs = jobs.Results.map(function(d){
           var rawValue = ''
         }
         // Special Cases
-        console.log(key)
+        //console.log(key)
         switch(key){
           case 'JobReceived':
           var rawdate = new Date(d.JobReceived);
