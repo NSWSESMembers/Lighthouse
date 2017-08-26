@@ -111,7 +111,7 @@ whenWeAreReady(user,function() {
 
 }
 
-$('.nav .navbar-nav:not(".navbar-right")').append(lighthouseMenu);
+$('ul.nav.navbar-nav.navbar-left').append(lighthouseMenu);
 
 $("#LHTourRestart").click(function() {
  Object.keys(localStorage)
