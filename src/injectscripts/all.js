@@ -134,11 +134,11 @@ if (location.pathname == "/") {
 
 
 
-          if (user.hq.EntityTypeId != 1) {
+          if (user.hq.EntityTypeId == 2 || user.hq.EntityTypeId == 3) {
             //make region level more obvious
-            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.ParentEntity.Code+" Units");
+            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.Code+" Units");
           } else {
-            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.ParentEntity.Code);
+            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.Code);
 
           }
 
