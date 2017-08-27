@@ -353,14 +353,14 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
     , dataType: 'json'
     , data: {LighthouseFunction: 'QuickTaskGetJob'}
     , complete: function(response, textStatus) {
-      console.log('textStatus = "%s"', textStatus, response);
+      //console.log('textStatus = "%s"', textStatus, response);
       if (textStatus == 'success')
       {
         var data = response.responseJSON
 
       if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
       {
-
+      
        ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
 
 
