@@ -67,7 +67,7 @@ function pageFullyLoaded(e) {
             `<div id='taskingHolder' style="padding-top:10px;width:100%;margin:auto">\
             <table id='taskingTable' style="width:100%;text-align: center;">\
             <tr>\
-            <td colspan="2" style="font-weight: bold">Job Tasking</td>
+            <td colspan="2" style="font-weight: bold">Team Tasking</td>
             </tr>\
             <tr>\
             <th style="text-align: center;width:50%">Callsign</th>\
@@ -108,8 +108,8 @@ function pageFullyLoaded(e) {
             <div id='jobPriority' style="margin:auto;text-align:center;background-color:${bgcolor};color:${txtcolor}"><span id='lhqStatus'>${data.JobPriorityType.Description}</span></div>\
             <div style="display:block;text-align: center;font-weight:bold;margin-top:10px">${data.Address.PrettyAddress}</div>\
             <div id='JobDetails' style="padding-top:10px;width:100%;margin:auto">\
-            <div style="display:block;text-align:center">${data.SituationOnScene}</div>
-            <div style="display:block;text-align:center;padding-top:10px">${tagString}</div>
+            <div id='JobSoS' style="display:block;text-align:center">${(data.SituationOnScene != null) ? data.SituationOnScene : "<i>No situation on scene available.</i>" }</div>
+            <div id='JobTags' style="display:block;text-align:center;padding-top:10px">${tagString}</div>
             ${taskingTable}
             <div style="display:block;text-align:center;padding-top:10px"><a href=${urls.Base}/Jobs/${data.Id} target='_blank'>View Job Details</a></div>
 
