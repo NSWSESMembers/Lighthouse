@@ -50,7 +50,7 @@ function getBundler(file, dest, options) {
 
   options = _.extend(options || {}, {
     // Enable source maps.
-    debug: true,
+    debug: false,
     // Configure transforms.
     transform: BROWSERIFY_TRANSFORMS
   });
@@ -119,7 +119,7 @@ function getBundler(file, dest, options) {
       // Convert stream to a buffer
       .pipe(buffer())
       // save sourcemaps
-      .pipe(sourcemaps.init({loadMaps: true}))
+      //.pipe(sourcemaps.init({loadMaps: true}))
       //.pipe(uglify())
       //.on('error', gutil.log.bind(gutil, 'Uglify error'))
       .pipe(size(SIZE_OPTS))
