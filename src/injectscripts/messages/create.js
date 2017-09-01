@@ -157,6 +157,8 @@ function LoadNitc() {
 
     function FetchNITC(size) {
 
+        $('#nitcFooter').remove() // remove the footer if exists
+
          $('#lighthousenitc').empty() //empty to prevent dupes
 
          var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
@@ -280,8 +282,6 @@ button.style.height = button.offsetHeight + "px";
                 FetchNITC(response.responseJSON.TotalItems)
             })
             $(loadall).appendTo('#lighthousenitcpanel');
-        } else {
-            $('#nitcFooter').remove()
         }
 
 
