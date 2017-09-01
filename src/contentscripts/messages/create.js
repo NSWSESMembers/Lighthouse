@@ -50,11 +50,29 @@ function renderHQTeams() {
 		);
 }
 
-var hqgroup = renderHQTeams()
-$(hqgroup).hide()
+var hqTeamsgroup = renderHQTeams()
+$(hqTeamsgroup).hide() // hide it untill there is something to show
+$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(1)').after(hqTeamsgroup);
 
+function renderHQNitc() {
+	return (
+		<fieldset id="HQNitcSet">
+		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:5px"
+		src={chrome.extension.getURL("icons/lh-black.png")} />NITC Events At HQ</legend>
+		<div class="panel panel-default"  id="lighthousenitcpanel">
+		<div class="panel-heading"><span id="nitchq">NITC Events</span><span id="nitccount" class="pull-right badge">0</span></div>
+		<div id="lighthousenitc" class="panel-body">
+		</div>
+		</div>
+		</fieldset>
+		);
+}
 
-$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(1)').after(hqgroup);
+var hqNitcgroup = renderHQNitc()
+$(hqNitcgroup).hide() // hide it untill there is something to show
+
+$(hqTeamsgroup).after(hqNitcgroup);
+
 
 function renderCollections() {
 	return (
@@ -62,7 +80,7 @@ function renderCollections() {
 		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:5px"
 		src={chrome.extension.getURL("icons/lh-black.png")} />Lighthouse Collections</legend>
 		<div class="panel panel-default">
-		<div class="panel-heading"><span>Lighthouse Collections</span><span id="collectionscount" class="pull-right badge">0</span></div>
+		<div class="panel-heading"><span>Local Lighthouse Collections</span><span id="collectionscount" class="pull-right badge">0</span></div>
 		<div id="lighthousecollections" class="panel-body">
 		</div>
 		</div>
@@ -70,7 +88,7 @@ function renderCollections() {
 		);
 }
 
-$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2)').after(renderCollections);
+$(hqNitcgroup).after(renderCollections);
 
 
 

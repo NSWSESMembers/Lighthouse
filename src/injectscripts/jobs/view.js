@@ -404,13 +404,6 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
             var item = null;
-
-
-              if (user.hq.EntityTypeId != 1) { //thats a region, or state, not unit
-                console.log(v)
-                v.Callsign = '('+v.CreatedAt.Code+') '+v.Callsign
-              }
-
               
             if (v.Members.length == 0)
             {

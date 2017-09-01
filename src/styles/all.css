@@ -201,6 +201,17 @@ div[data-bind="text: $data"] {
   background-color: darkgoldenrod;
 }
 
+.tag-darkgreen{
+  padding-top:5px;
+  padding-bottom:5px;
+  margin: 5px 5px 0 0;
+  cursor: pointer;
+  float: left;
+  border: 1px solid  #006600;
+  color: white;
+  background-color: #339933;
+}
+
 .tag-lh-filter {
   background-color: #fff;
   color: #0000ba;
