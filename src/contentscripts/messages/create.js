@@ -10,7 +10,7 @@ function renderCheckBox() {
 		<span class="pull-right h6">
 		<span style="vertical-align:text-top" id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 
 		<img style="width:16px;vertical-align:bottom;margin-right:5px;margin-left:5px"
-		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill With LHQ & Select Default Recipients
+		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill With Home LHQ & Select Default Recipients
 		</span>
 		);
 }

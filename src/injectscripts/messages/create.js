@@ -164,7 +164,7 @@ function LoadNitc() {
          var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
          spinner.appendTo($('#lighthousenitc'));
-         $('#nitchq').text("NITC Events (With Participants) At " + msgsystem.selectedHeadquarters.peek().Name)
+         $('#nitchq').text("NITC Events (with Participants) at " + msgsystem.selectedHeadquarters.peek().Name)
          $('#HQNitcSet').show()
 
          ReturnNitcAtLHQ(msgsystem.selectedHeadquarters.peek(),size,function(response) {
@@ -297,7 +297,7 @@ function LoadTeams() {
     var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
     spinner.appendTo($('#lighthouseteams'));
-    $('#teamshq').text("Active Teams (With Members) At " + msgsystem.selectedHeadquarters.peek().Name)
+    $('#teamshq').text("Active Teams (with Members) at " + msgsystem.selectedHeadquarters.peek().Name)
     $('#HQTeamsSet').show()
     ReturnTeamsActiveAtLHQ(msgsystem.selectedHeadquarters.peek(), null, function(response) {
         var numberOfTeam = 0
@@ -642,7 +642,7 @@ function make_collection_button(name, description, count) {
     return (
         <span class="label label tag-rebecca">
         <span><p  style="margin-bottom:5px"><i class="fa fa-object-group" aria-hidden="true" style="padding-right: 5px;"></i>{description}<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>
-        <span>{count} recipients</span>
+        <span>{count} Recipients</span>
         </span>
         )
 }
