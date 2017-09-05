@@ -509,7 +509,11 @@ function TaskTeam(teamID) {
     , complete: function(response, textStatus) {
       if (textStatus == 'success')
       {
-        masterViewModel.teamsViewModel.loadTaskedTeams()
+        masterViewModel.teamsViewModel.loadTaskedTeams() //load teams
+        masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
+
+
       }
     }
   })
@@ -963,7 +967,9 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
     , complete: function(response, textStatus) {
       if (textStatus == 'success')
       {
-        masterViewModel.teamsViewModel.loadTaskedTeams()
+        masterViewModel.teamsViewModel.loadTaskedTeams() //load teams
+        masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
       }
 
     }
