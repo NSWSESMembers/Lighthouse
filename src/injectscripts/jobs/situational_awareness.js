@@ -1030,10 +1030,12 @@ const aircraft = [
 
     // Westpac
     new Helicopter('7C5CC0', 'VH-SLU', 'LIFE21', 'BK117', 'Westpac'),
+    new Helicopter('7C5CAC', 'VH-SLA', 'LIFE23', 'BK117', 'Westpac'),
     new Helicopter('7C81CC', 'VH-ZXA', 'WP1', 'AW-139', 'Westpac'),
     new Helicopter('7C81CD', 'VH-ZXB', 'WP2', 'AW-139', 'Westpac'),
     new Helicopter('7C81CE', 'VH-ZXC', 'WP3', 'AW-139', 'Westpac'),
     new Helicopter('7C81CF', 'VH-ZXD', 'WP4', 'AW-139', 'Westpac'),
+    new Helicopter('7C25E5', 'VH-HRR', 'WP6', 'BK117', 'Westpac'),
 
     // PolAir
     new Helicopter('7C4D02', 'VH-PHW', 'POLAIR1', 'EC-AS350B2', 'PolAir'),
