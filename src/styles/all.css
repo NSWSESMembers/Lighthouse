@@ -45,6 +45,23 @@ div.team_complete_hidden div.list-group div.team_complete div.row.clearfix {
   display: none;
 }
 
+.scrollable-menu {
+    height: auto;
+    max-height: 400px;
+    overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+    -webkit-appearance: none;
+    width: 7px;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(0,0,0,.5);
+    -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+}
+
 #lighthouse_mapblock {
   position: absolute;
   top: 0;
@@ -182,6 +199,17 @@ div[data-bind="text: $data"] {
   border: 1px solid  #b8860b;
   color: white;
   background-color: darkgoldenrod;
+}
+
+.tag-darkgreen{
+  padding-top:5px;
+  padding-bottom:5px;
+  margin: 5px 5px 0 0;
+  cursor: pointer;
+  float: left;
+  border: 1px solid  #006600;
+  color: white;
+  background-color: #339933;
 }
 
 .tag-lh-filter {

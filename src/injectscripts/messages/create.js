@@ -1,5 +1,6 @@
 var DOM = require('jsx-dom-factory');
 var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
+var ReturnNitcAtLHQ = require('../../../lib/getnitc.js');
 
 
 
@@ -13,8 +14,11 @@ $(document).ready(function() {
             msgsystem.selectedHeadquarters.subscribe(function(status) {
                 if (status !== null) {
                     LoadTeams()
+                    LoadNitc()
+
                 } else {
                     $('#HQTeamsSet').hide()
+                    $('#HQNitcSet').hide()
 
                 }
             });
@@ -22,13 +26,13 @@ $(document).ready(function() {
             //Home HQ - with a wait to catch possible race condition where the page is still loading
             whenWeAreReady(user, function() {
                 var waiting = setInterval(function() {
-                    if (msgsystem.loadingContacts.peek() === false) { //check if the core js is still searching for something
+                    if (msgsystem.loadingContacts.peek() === false && typeof user.hq != "undefined") { //check if the core js is still searching for something
                         clearInterval(waiting); //stop timer
                         console.log("Setting Selected HQ to user HQ");
                         msgsystem.setSelectedHeadquarters(user.hq);
                         $('#contact').val(user.hq.Name)
                     } else {
-                        console.log("still loading")
+                        console.log("messages is still loading")
                     }
                 }, 200);
             });
@@ -147,6 +151,145 @@ $(document).ready(function() {
 
 });
 
+function LoadNitc() {
+
+    FetchNITC(5)
+
+    function FetchNITC(size) {
+
+        $('#nitcFooter').remove() // remove the footer if exists
+
+         $('#lighthousenitc').empty() //empty to prevent dupes
+
+         var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
+
+         spinner.appendTo($('#lighthousenitc'));
+         $('#nitchq').text("NITC Events (with Participants) at " + msgsystem.selectedHeadquarters.peek().Name)
+         $('#HQNitcSet').show()
+
+         ReturnNitcAtLHQ(msgsystem.selectedHeadquarters.peek(),size,function(response) {
+            var numberOfevents = 0 //count number with participants
+            if (response.responseJSON.Results.length) {
+            $('#lighthousenitc').empty() //empty to prevent dupes and spinners
+            $.each(response.responseJSON.Results, function(k, v) {
+                if (v.Participants.length > 0)
+                {
+                    numberOfevents++
+                    var members = $.map(v.Participants, function(obj){return obj.Person.FirstName +" "+ obj.Person.LastName}).join(', ')
+
+                    var button = make_nitc_button(v.Name, moment(v.StartDate).format('HH:mm:ss DD/MM/YYYY'), v.Description+' - '+members, v.Participants.length + "")
+
+                    $(button).click(function() {
+                        var total = v.Participants.length
+
+                            //Operational = false - probably
+                            msgsystem.operational(false);
+
+                            var spinner = $(<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
+
+                            $(button).children().css('display','none')
+                            spinner.appendTo(button);
+                            console.log("clicked " + v.Id)
+                            $.each(v.Participants, function(kk, vv) {
+                                $.ajax({
+                                    type: 'GET',
+                                    url: urls.Base+'/Api/v1/People/' + vv.Person.Id + '/Contacts',
+                                    beforeSend: function(n) {
+                                        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+                                    },
+                                    data: {
+                                        LighthouseFunction: 'LoadPerson'
+                                    },
+                                    cache: false,
+                                    dataType: 'json',
+                                    complete: function(response, textStatus) {
+                                        if (textStatus == 'success') {
+                                            var wasAdded = false
+                                            if (response.responseJSON.Results.length) {
+                                                $.each(response.responseJSON.Results, function(k, v) {
+                                                    if (v.ContactTypeId == 2) {
+                                                        wasAdded = true
+                                                        total--
+                                                        var BuildNew = {};
+                                                        BuildNew.Contact = v
+                                                        BuildNew.ContactGroup = null
+                                                        BuildNew.ContactTypeId = v.ContactTypeId
+                                                        BuildNew.Description = v.FirstName + " " + v.LastName;
+                                                        BuildNew.Recipient = v.Detail;
+                                                        msgsystem.selectedRecipients.push(BuildNew)
+                                                        console.log(total)
+                                                        if (total == 0) //when they have all loaded, stop spinning.
+                                                        {
+                                                            spinner.remove();
+                                                            //cb for when they are loaded
+                                                            $(button).children().css('display','')
+                                                        }
+
+
+                                                    }
+                                                })
+if (wasAdded == false)
+{
+   total--
+                                                        if (total == 0) //when they have all loaded, stop spinning.
+                                                        {
+                                                            spinner.remove();
+                                                            //cb for when they are loaded
+                                                            $(button).children().css('display','')
+                                                        }
+                                                    }
+                                                } else {
+  //no results for this guy. thats ok, skip it.  
+
+    if ($total == 0) //when they have all loaded, stop spinning.
+    {
+        console.log('done loading team')
+        spinner.remove();
+        //cb for when they are loaded
+        $(button).children().css('display','')
+    }  
+}
+} else {
+  //bad answer from the server. thats ok, skip it.  
+
+    if ($total == 0) //when they have all loaded, stop spinning.
+    {
+        console.log('done loading team')
+        spinner.remove();
+        //cb for when they are loaded
+        $(button).children().css('display','')
+    }  
+}
+}
+})
+})
+})
+$(button).appendTo('#lighthousenitc');
+button.style.width = button.offsetWidth + "px";
+button.style.height = button.offsetHeight + "px";
+}
+})
+} else {
+            //nothing found
+            $('#lighthousenitc').empty() //empty to prevent dupes
+
+        }
+        $('#nitccount').text(numberOfevents)
+        if (response.responseJSON.TotalItems >  response.responseJSON.PageSize)
+        {
+            var loadall = make_nitc_load_all_button(response.responseJSON.TotalItems)
+            $(loadall).find('#nitcloadall').click(function() {
+                FetchNITC(response.responseJSON.TotalItems)
+            })
+            $(loadall).appendTo('#lighthousenitcpanel');
+        }
+
+
+    })
+}
+
+}
+
 
 function LoadTeams() {
     $('#lighthouseteams').empty() //empty to prevent dupes
@@ -154,12 +297,12 @@ function LoadTeams() {
     var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
     spinner.appendTo($('#lighthouseteams'));
-    $('#teamshq').text("Active Teams (With Members) At " + msgsystem.selectedHeadquarters.peek().Name)
+    $('#teamshq').text("Active Teams (with Members) at " + msgsystem.selectedHeadquarters.peek().Name)
     $('#HQTeamsSet').show()
     ReturnTeamsActiveAtLHQ(msgsystem.selectedHeadquarters.peek(), null, function(response) {
         var numberOfTeam = 0
         if (response.responseJSON.Results.length) {
-            $('#lighthouseteams').empty() //empty to prevent dupes
+            $('#lighthouseteams').empty() //empty to prevent dupes and spinners
             $.each(response.responseJSON.Results, function(k, v) {
                 if (v.Members.length > 0) //only show teams with members
                 {
@@ -171,13 +314,16 @@ function LoadTeams() {
                         }
                     })
                     //length + "" to make it a string
-                    var button = make_team_button(v.Callsign, TL, v.Members.length + "")
+                    var members = $.map(v.Members, function(obj){return obj.Person.FirstName +" "+ obj.Person.LastName}).join(', ')
+
+                    var button = make_team_button(v.Callsign, TL, members, v.Members.length + "")
                     $(button).click(function() {
                         var spinner = $(<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
                         $(button).children().css('display','none')
                         spinner.appendTo(button);
                         console.log("clicked " + v.Callsign)
+                        var total = v.Members.length
                         $.each(v.Members, function(kk, vv) {
                             $.ajax({
                                 type: 'GET',
@@ -193,8 +339,11 @@ function LoadTeams() {
                                 complete: function(response, textStatus) {
                                     if (textStatus == 'success') {
                                         if (response.responseJSON.Results.length) {
+                                            var wasAdded = false
                                             $.each(response.responseJSON.Results, function(k, v) {
                                                 if (v.ContactTypeId == 2) {
+                                                    wasAdded = true
+                                                    total--
                                                     var BuildNew = {};
                                                     BuildNew.Contact = v
                                                     BuildNew.ContactGroup = null
@@ -208,15 +357,49 @@ function LoadTeams() {
                                                     }
                                                     BuildNew.Recipient = v.Detail;
                                                     msgsystem.selectedRecipients.push(BuildNew)
+                                                    if (total == 0) //when they have all loaded, stop spinning.
+                                                    {
+                                                        spinner.remove();
+                                                        //cb for when they are loaded
+                                                        $(button).children().css('display','')
+                                                    }
                                                 }
                                             })
+if (wasAdded == false)
+{
+    total--
+                                                    if (total == 0) //when they have all loaded, stop spinning.
+                                                    {
+                                                        spinner.remove();
+                                                            //cb for when they are loaded
+                                                            $(button).children().css('display','')
+                                                        }
+                                                    }
+                                                } else {
+  //no results for this guy. thats ok, skip it.  
+
+    if (total == 0) //when they have all loaded, stop spinning.
+    {
+        console.log('done loading team')
+        spinner.remove();
+        //cb for when they are loaded
+        $(button).children().css('display','')
+    }  
+}
+} else {
+  total-- 
+  //bad answer from the server. thats ok, skip it.  
+
+    if ($total == 0) //when they have all loaded, stop spinning.
+    {
+        console.log('done loading team')
+        spinner.remove();
+        //cb for when they are loaded
+        $(button).children().css('display','')
+    }
 }
 }
-spinner.remove();
-                                    //cb for when they are loaded
-                                    $(button).children().css('display','')
-                                }
-                            })
+})
 })
 })
 
@@ -233,7 +416,6 @@ button.style.height = button.offsetHeight + "px";
         $('#teamscount').text(numberOfTeam)
     });
 }
-
 
 
 function LoadAllCollections() {
@@ -460,18 +642,36 @@ function make_collection_button(name, description, count) {
     return (
         <span class="label label tag-rebecca">
         <span><p  style="margin-bottom:5px"><i class="fa fa-object-group" aria-hidden="true" style="padding-right: 5px;"></i>{description}<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>
-        <span>{count} recipients</span>
+        <span>{count} Recipients</span>
         </span>
         )
 }
 
-function make_team_button(name, TL, counts) {
+function make_team_button(name, TL, members, counts) {
     return (
-        <span class="label label tag-darkgoldenrod">
+        <span class="label tag-darkgreen" title={members}>
         <span><p  style="margin-bottom:5px">{name}</p></span>
         <span><p style="margin-bottom:5px;font-size:12px">{TL}<sup>TL</sup></p></span>
         <span><p style="margin-bottom:0px;font-size:11px;margin-top: 4px">{counts} Members</p></span>
         </span>
+        )
+}
+
+function make_nitc_button(name, tags, description, counts) {
+    return (
+        <span class="label tag-darkgoldenrod" title={description}>
+        <span><p  style="margin-bottom:5px">{name}</p></span>
+        <span><p style="margin-bottom:5px;font-size:12px">{tags}</p></span>
+        <span><p style="margin-bottom:0px;font-size:11px;margin-top: 4px">{counts} Participants</p></span>
+        </span>
+        )
+}
+
+function make_nitc_load_all_button(total) {
+    return (
+        <div class="panel-footer" id="nitcFooter">
+        <button id="nitcloadall" class="btn btn-default">Load All ({total+""})</button>
+        </div>
         )
 }
 
@@ -520,6 +720,16 @@ function DoTour() {
             content: "All active teams at the selected HQ will be shown here. Click the team to SMS the members. Team leader of the clicked team will have (TL) in his name in the Selected Receipients box.",
         },
         {
+            element: "#lighthousenitc",
+            title: "NITC Events",
+            placement: "auto",
+            backdrop: false,
+            onShown: function(tour) {
+                $('#HQNitcSet').show();
+            },
+            content: "NITC attached to the selected HQ will be shown here. Click the event to SMS the participants.",
+        },
+        {
             element: "#lighthousecollections",
             title: "Lighthouse Collections",
             placement: "top",
@@ -544,7 +754,8 @@ function DoTour() {
             placement: "top",
             backdrop: false,
             onNext: function(tour) {
-                $('#lighthousecollections').empty();
+                LoadAllCollections();
+
             },
             content: "This is a saved collection. Click it to load its contents into 'Selected Recipients'",
         },

@@ -38,11 +38,11 @@ function lighthouseTasking() {
       if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) //only show for tasking that can be deleted (tasked only)
       { 
         //attached a X button if its matched and deletable
-        test = return_untask_button()
-        $(v).append(test)
+        untask = return_untask_button()
+        $(v).append(untask)
 
         //click function
-        $(test).click(function() {
+        $(untask).click(function() {
           DOMCallsign = ($(this)[0].parentNode.parentNode.children[0].children[0].href.split("/")[4])
           DOMStatus = ($(this)[0].parentNode.parentNode.children[1].innerText.split(" ")[0])
 
@@ -57,7 +57,7 @@ function lighthouseTasking() {
         })
       }
     })
-  })
+})
 
 ////END horrible untask code
 
@@ -342,6 +342,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 
    console.log("Sector Filter is:"+sectorFilter)
 
+   //fetch the job and check its tasking status to ensure the data is fresh and not stale on page.
    $.ajax({
     type: 'GET'
     , url: urls.Base+'/Api/v1/Jobs/'+jobId+'?viewModelType=2'
@@ -350,15 +351,16 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
     }
     , cache: false
     , dataType: 'json'
+    , data: {LighthouseFunction: 'QuickTaskGetJob'}
     , complete: function(response, textStatus) {
-      console.log('textStatus = "%s"', textStatus, response);
+      //console.log('textStatus = "%s"', textStatus, response);
       if (textStatus == 'success')
       {
         var data = response.responseJSON
 
       if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
       {
-
+      
        ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
 
 
@@ -402,11 +404,13 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
             var item = null;
+              
             if (v.Members.length == 0)
             {
               item = return_li(v.Id,v.Callsign.toUpperCase(),null,v.TaskedJobCount+"");
             } else
             {
+
               $(v.Members).each(function(k, vv) {
                 if (vv.TeamLeader)
                 {
@@ -419,10 +423,6 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
               item = return_li(v.Id,v.Callsign.toUpperCase(),"No TL",v.TaskedJobCount+"");
             }
 
-            //allow teams with no members to be tasked
-            $(item).click(function () {
-              TaskTeam(v.Id)
-            })
             if (v.Sector === null)
             {
               nonsector.push(item)
@@ -435,6 +435,13 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
                 sector[sectorName] = [item]
               }
             }
+
+
+            //click handler
+            $(item).click(function () {
+              TaskTeam(v.Id)
+            })
+
           }
         })
 finalli = []
@@ -500,10 +507,13 @@ function TaskTeam(teamID) {
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
-      console.log('textStatus = "%s"', textStatus, response);
       if (textStatus == 'success')
       {
-        masterViewModel.teamsViewModel.loadTaskedTeams()
+        masterViewModel.teamsViewModel.loadTaskedTeams() //load teams
+        masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
+
+
       }
     }
   })
@@ -603,7 +613,7 @@ function return_quicktaskbutton() {
     <div id="lighthouse_instanttask" style="position:relative;display:inline-block;vertical-align:middle" class="dropdown">
     <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
     <span class="caret"></span></button>
-    <ul class="dropdown-menu">
+    <ul class="dropdown-menu scrollable-menu">
     </ul>
     </div>
     )
@@ -955,10 +965,11 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
-      console.log('textStatus = "%s"', textStatus, response);  
       if (textStatus == 'success')
       {
-        masterViewModel.teamsViewModel.loadTaskedTeams()
+        masterViewModel.teamsViewModel.loadTaskedTeams() //load teams
+        masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
       }
 
     }

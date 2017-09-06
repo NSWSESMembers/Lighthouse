@@ -26,6 +26,9 @@ var lighthouse_fieldArray = {
     'ICEMSIncidentIdentifier'              : 'ICEMS Id' ,
     'ReferringAgency'                      : 'ICEMS Originator' ,
     'JobReceived'                          : 'Received' ,
+    'JobAcknowledged'                      : 'Acknowledged' ,
+    'JobCompleted'                         : 'Completed' ,
+    'JobFinalised'                         : 'Finalised' ,
     'JobPriorityType.Name'                 : 'Priority' ,
     'JobType.Name'                         : 'Type' ,
     'JobStatusType.Name'                   : 'Status' ,
@@ -194,31 +197,64 @@ function HackTheMatrix(id, host, progressBar) {
 
 
   LighthouseJob.get_json(unit, host, start, end, params.token, function(jobs) {
-    console.log(jobs);
+    //console.log(jobs);
           // $(jobs.Results).each(function(j,k){
           //   console.log(k)
           //   console.log(k.Event)
           // })
-    var beacon_jobs = jobs.Results.map(function(d){
-      var jobRow = [];
+var beacon_jobs = jobs.Results.map(function(d){
+  var jobRow = [];
 
-      _.each(selectedcolumns, function(key){
+  _.each(selectedcolumns, function(key){
         // Raw Value
         try {
-        var rawValue = key.split('.').reduce(function(obj,i) {return obj[i]}, d);
-      } catch(err) {
-        var rawValue = ''
-      }
+          var rawValue = key.split('.').reduce(function(obj,i) {return obj[i]}, d);
+        } catch(err) {
+          var rawValue = ''
+        }
         // Special Cases
+        //console.log(key)
         switch(key){
           case 'JobReceived':
           var rawdate = new Date(d.JobReceived);
 
-          rawValue = new Date(rawdate.getTime() + ( rawdate.getTimezoneOffset() * 60000 ));
+          rawValue = rawdate;
 
           break;
           case 'Tags':
           rawValue = d.Tags.map(function(d){return d.Name}).join(',');
+          break;
+
+
+          case 'JobAcknowledged':
+          _.each(d.JobStatusTypeHistory.reverse(), function(history){
+            if (history.Name == 'Active')
+            {
+             var rawdate = new Date(history.Timelogged);
+             rawValue = rawdate; 
+             return false; 
+           }
+         }) 
+          break;
+          case 'JobCompleted':
+          _.each(d.JobStatusTypeHistory, function(history){
+            if (history.Name == 'Complete')
+            {
+             var rawdate = new Date(history.Timelogged);
+             rawValue = rawdate; 
+             return false; 
+           }
+         }) 
+          break;
+          case 'JobFinalised':
+          _.each(d.JobStatusTypeHistory, function(history){
+            if (history.Name == 'Finalised')
+            {
+             var rawdate = new Date(history.Timelogged);
+             rawValue = rawdate; 
+             return false; 
+           }
+         })    
           break;
         }
         if(rawValue == null || rawValue === ''){
@@ -228,17 +264,17 @@ function HackTheMatrix(id, host, progressBar) {
         jobRow.push(rawValue);
       });
 
-      return jobRow;
-    });
-    progressBar.setValue(1);
-    progressBar.close();
-    downloadCSV("LighthouseExport.csv", beacon_jobs, selectedcolumns);
+return jobRow;
+});
+progressBar.setValue(1);
+progressBar.close();
+downloadCSV("LighthouseExport.csv", beacon_jobs, selectedcolumns);
 
-    progressBar.close();
+progressBar.close();
 
-  },function(val,total){
-    progressBar.setValue(val/total);
-  });
+},function(val,total){
+  progressBar.setValue(val/total);
+});
 }
 
 function convertArrayOfObjectsToCSV(data, selectedcolumns) {  
@@ -284,21 +320,21 @@ function downloadCSV(file, dataIn, keyIn) {
   if (csv == null)
     return;
 
-var saveData = (function () {
+  var saveData = (function () {
     var a = document.createElement("a");
     document.body.appendChild(a);
     a.style = "display: none";
     return function (data, fileName) {
-            blob = new Blob([data], {type: "octet/stream"}),
-            url = window.URL.createObjectURL(blob);
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        window.URL.revokeObjectURL(url);
+      blob = new Blob([data], {type: "octet/stream"}),
+      url = window.URL.createObjectURL(blob);
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      window.URL.revokeObjectURL(url);
     };
-}());
+  }());
 
 
-saveData(csv, file);
+  saveData(csv, file);
 
 }
