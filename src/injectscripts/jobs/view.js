@@ -568,7 +568,11 @@ document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
 }
 
 function return_untask_button() {
-  return (<sup style="margin-left: 10px;margin-right: -5px; cursor: pointer;">X</sup>)
+  return (<span class="close" style="
+    margin-right: -12px;
+    margin-top: -12px;
+    margin-left: 10px;
+">×</span>)
 }
 
 
