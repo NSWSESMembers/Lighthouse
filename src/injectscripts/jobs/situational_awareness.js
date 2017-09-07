@@ -8,13 +8,17 @@ function pageFullyLoaded(e) {
 
     let map = window['map'];
     let lighthouseMap = new LighthouseMap(map);
-    lighthouseMap.createLayer('rfs');
+    // Layers to show above beacon jobs
     lighthouseMap.createLayer('transport-incidents');
     lighthouseMap.createLayer('transport-flood-reports');
     lighthouseMap.createLayer('transport-cameras');
     lighthouseMap.createLayer('helicopters');
+    lighthouseMap.createLayer('vehicles');
+
+    // Layers to show under beacon jobs
     lighthouseMap.createLayer('power-outages', 1);
-    lighthouseMap.createLayer('lhqs');
+    lighthouseMap.createLayer('rfs', 1);
+    lighthouseMap.createLayer('lhqs', 3);
 
     //bind to the click event for the jobs and fiddle with the popups Onclick
     lighthouseMap.map._layers.graphicsLayer3.onClick.after.advice = function(event){
@@ -124,16 +128,16 @@ function pageFullyLoaded(e) {
 })
 };
 
-if (developmentMode) {
+    if (developmentMode) {
         // Add a test point
         lighthouseMap.layers['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon, 'Parramatta SES',
             'This is a test marker. It is used to check whether the map access is working');
     }
     window['lighthouseMap'] = lighthouseMap;
 
-    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn', 'togglePowerOutagesBtn'];
+    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleVehiclesBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn', 'togglePowerOutagesBtn'];
     buttons.forEach(function (buttonId) {
-        if (localStorage.getItem('Lighthouse-' + buttonId) == 'true') {
+        if (localStorage.getItem('Lighthouse-' + buttonId) === 'true') {
             let button = $(`#${buttonId}`);
             console.debug(buttonId + ' restoring saved state of clicked');
             button.trigger('click');
@@ -170,6 +174,8 @@ window.addEventListener("message", function(event) {
                 showTransportCameras(mapLayer, event.data.response);
             } else if (event.data.layer === 'helicopters') {
                 showRescueHelicopters(mapLayer, event.data.response)
+            } else if (event.data.layer === 'vehicles') {
+                showVehicleLocations(mapLayer, event.data.response)
             } else if (event.data.layer === 'lhqs') {
                 showLhqs(mapLayer, event.data.response)
             } else if (event.data.layer === 'power-outages') {
@@ -180,18 +186,18 @@ window.addEventListener("message", function(event) {
             console.info("clearing layer:" + event.data.layer);
             lighthouseMap.layers[event.data.layer].clear();
         } else if (event.data.type === "LH_GET_TRANSPORT_KEY") {
-            var transportApiKeyOpsLog = ''
+            var transportApiKeyOpsLog = '';
             switch (urls.Base)
             {
                 case 'https://previewbeacon.ses.nsw.gov.au':
-                transportApiKeyOpsLog = '46273'
-                break
+                transportApiKeyOpsLog = '46273';
+                break;
                 case 'https://beacon.ses.nsw.gov.au':
-                transportApiKeyOpsLog = '515514'
-                break
+                transportApiKeyOpsLog = '515514';
+                break;
                 case 'https://trainbeacon.ses.nsw.gov.au':
-                transportApiKeyOpsLog = '36753'
-                break
+                transportApiKeyOpsLog = '36753';
+                break;
                 default:
                 transportApiKeyOpsLog = '0'
             }
@@ -246,6 +252,7 @@ const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
 const powerIcon = lighthouseUrl + 'icons/power.png';
 const helicopterLastKnownIcon = lighthouseUrl + 'icons/helicopter-last-known.png';
+const vehicleIcon = lighthouseUrl + 'icons/bus.png';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -509,6 +516,36 @@ const rfsIcons = {
         }
     }
     console.info(`added ${count} RFS incidents`);
+}
+
+/**
+ * Show vehicle locations on the map.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+ function showVehicleLocations(mapLayer, data) {
+    console.info('showing SES vehicles');
+
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let vehicle = data.features[i];
+
+            if (vehicle.geometry.type.toLowerCase() === 'point') {
+                let lat = vehicle.geometry.coordinates[1];
+                let lon = vehicle.geometry.coordinates[0];
+
+                let name = vehicle.properties.teamId;
+                let details = vehicle.properties.situationOnScene;
+
+                console.debug(`SES vehicle at [${lat},${lon}]: ${name}`);
+                mapLayer.addImageMarker(lat, lon, vehicleIcon, name, details);
+                count++;
+            }
+        }
+    }
+    console.info(`added ${count} SES vehicles`);
 }
 
 /**

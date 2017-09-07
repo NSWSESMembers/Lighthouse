@@ -1,12 +1,15 @@
 const $ = require('jquery');
 const DOM = require('jsx-dom-factory');
+const moment = require('moment');
 const inject = require('../../../lib/inject.js');
+const LighthouseTeam = require('../../../pages/lib/shared_team_code.js');
 
 //inject the coded needed to fix visual problems
 //needs to be injected so that it runs after the DOMs are created
 inject('jobs/situational_awareness.js');
 
 const lighthouseIcon = chrome.extension.getURL('icons/lh-black.png');
+const vehicleIcon = chrome.extension.getURL('icons/bus.png');
 const helicopterIcon = chrome.extension.getURL('icons/helicopter.png');
 const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');
 const lhqIcon = chrome.extension.getURL('icons/ses.png');
@@ -65,6 +68,10 @@ $(<li id="lhlayers">
             </a>
             <ul class="sub-sub-menu">
                 <li class="clearfix">
+                    <span id="toggleVehiclesBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={vehicleIcon} />
+                        <span class="tag-text">SES Vehicles</span>
+                    </span>
                     <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
                         <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
                         <span class="tag-text">Rescue Helicopters</span>
@@ -120,8 +127,9 @@ var timers = {};
 registerClickHandler('toggleRfsIncidentsBtn', 'rfs', requestRfsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
-registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 10 * 60000); // every 5 mins
+registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 10 * 60000); // every 10 mins
 registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLayerUpdate, 10000); // every 10s
+registerClickHandler('toggleVehiclesBtn', 'vehicles', requestVehicleLayerUpdate, 10 * 60000); // every minute
 registerClickHandler('togglePowerOutagesBtn', 'power-outages', requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('togglelhqsBtn', 'lhqs', requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
 
@@ -189,6 +197,133 @@ function requestTransportCamerasLayerUpdate() {
 function requestPowerOutagesLayerUpdate() {
     console.debug('updating power-outages layer');
     requestLayerUpdate('power-outages')
+}
+
+
+function getSearchParameters() {
+    var prmstr = window.location.search.substr(1);
+    return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
+}
+
+function transformToAssocArray(prmstr) {
+    var params = {};
+    var prmarr = prmstr.split("&");
+    for (var i = 0; i < prmarr.length; i++) {
+        var tmparr = prmarr[i].split("=");
+        params[tmparr[0]] = tmparr[1];
+    }
+    return params;
+}
+
+/**
+ * Requests an update to the vehicle location layer.
+ */
+function requestVehicleLayerUpdate() {
+    console.debug('updating vehicles layer');
+
+    params = getSearchParameters();
+
+    // Get all units
+    let unit = [];
+    let host = location.origin;
+    let token = params.token;
+
+    // Grab the last 24 hours
+    let start = new Date();
+    start.setDate(start.getDate() - 1);
+    let end = new Date();
+
+    LighthouseTeam.get_teams(unit, host, start, end, token, function(teams) {
+
+        // Make a promise to collect all the team details in promises
+        new Promise((mainResolve) => {
+            let promises = [];
+
+            teams.Results.forEach(function (team) {
+
+                if (team.TeamStatusType.Name === "Stood Down" || team.TeamStatusType.Name === "Rest" || team.TeamStatusType.Name === "Standby" || team.TeamStatusType.Name === "On Alert") {
+                    // Filter any teams which aren't active
+                    return;
+                }
+
+                // Create a promise for this team to check its tasking and details
+                promises.push(new Promise((resolve) => {
+                    LighthouseTeam.get_tasking(team.Id, host, token, function (teamTasking) {
+                        let latestTasking = null;
+                        let latestTime = null;
+
+                        // Find the latest tasking
+                        teamTasking.Results.forEach(function (task) {
+                            let rawStatusTime = new Date(task.CurrentStatusTime);
+                            let taskTime = new Date(rawStatusTime.getTime());
+
+                            // it wasn't an un-task or a tasking (so its a action the team made like on route or onsite)
+                            if (latestTime < taskTime && task.CurrentStatus !== "Tasked" && task.CurrentStatus !== "Untasked") {
+                                latestTasking = task;
+                                latestTime = taskTime;
+                            }
+                        });
+
+                        // If valid tasking was found, add that into a geoJson feature
+                        if (latestTasking !== null) {
+                            let feature = {
+                                'type': 'Feature',
+                                'geometry': {
+                                    'type': 'Point',
+                                    'coordinates': [
+                                        latestTasking.Job.Address.Longitude,
+                                        latestTasking.Job.Address.Latitude
+                                    ]
+                                },
+                                'properties': {
+                                    'teamId': latestTasking.Team.Id,
+                                    'teamCallsign': latestTasking.Team.Callsign,
+                                    'onsite': latestTasking.Onsite,
+                                    'offsite': latestTasking.Offsite,
+                                    'currentStatusTime': latestTasking.CurrentStatusTime,
+                                    'jobId': latestTasking.Job.Id,
+                                }
+                            };
+
+                            if (latestTasking.PrimaryTaskType) {
+                                feature.properties.primaryTask = latestTasking.PrimaryTaskType.Name;
+                            }
+
+                            resolve(feature);
+                        }
+
+                        // No relevant tasking for this team
+                        resolve(null);
+                    });
+                }));
+            });
+
+            mainResolve(promises);
+
+        }).then((promises) => {
+
+            // Wait for all the team tasking promises to complete
+            Promise.all(promises).then(function (features) {
+
+                let geoJson = {
+                    'type': 'FeatureCollection',
+                    'features': []
+                };
+
+                // Collect all non-null features
+                features.forEach(function (feature) {
+                    if (feature) {
+                        geoJson.features.push(feature);
+                    }
+                });
+
+                passLayerDataToInject('vehicles', geoJson);
+
+            }, function (error) {
+                passLayerDataToInject('vehicles', error);
+            });
+        });
+    });
 }
 
 /**
