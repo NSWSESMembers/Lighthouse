@@ -2,8 +2,7 @@ var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
 var $ = require('jquery');
 var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
-var postCodeLib1 = require('../../../lib/postcodepart1.js');
-var postCodeLib2 = require('../../../lib/postcodepart2.js');
+var postCodes = require('../../../lib/postcodes.js');
 var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 
 
@@ -97,22 +96,23 @@ whenAddressIsReady(function() {
   //
   //postcode checking code
   //
+
   var lastChar = masterViewModel.geocodedAddress.peek().PrettyAddress.substr(masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4)
 
-  if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true))
+  if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true)) //if no postcode set
   {
-    postcode = postCodeLib1.returnPostCode1(masterViewModel.geocodedAddress.peek().Locality)
-    if (typeof postcode === 'undefined')
-    {
-      postcode = postCodeLib2.returnPostCode2(masterViewModel.geocodedAddress.peek().Locality)
-    }
 
-    if (typeof postcode !== 'undefined')
-    {
-      $('p[data-bind="text: enteredAddress"]').text($('p[data-bind="text: enteredAddress"]').text()+" "+postcode)
-    } else {
-      console.log("Postcode not found")
-    }
+
+    postCodes.returnPostCode(masterViewModel.geocodedAddress.peek().Locality, function(postcode){
+      if (typeof postcode !== 'undefined')
+      {
+        $('p[data-bind="text: enteredAddress"]').text($('p[data-bind="text: enteredAddress"]').text()+" "+postcode)
+      } else {
+        console.log("Postcode not found")
+      }
+    })
+
+
   }
 
   //end postcode
@@ -133,7 +133,7 @@ whenTeamsAreReady(function(){
 
   if (masterViewModel.sector.peek() !== null)
   {
-    $('#content div.col-md-5 div[data-bind="visible: jobLoaded()"] div.widget-header').append(renderSectorFilterCheckBox());
+    $('#content div.col-md-5 div[data-bind="visible: jobLoaded()"] div.widget-header')[0].append(renderSectorFilterCheckBox());
 
     $('#lighthouseSectorFilterEnabled').click(function() {
     // Toggle Value
@@ -360,7 +360,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 
       if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
       {
-      
+
        ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
 
 
@@ -404,7 +404,7 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
           if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
           {
             var item = null;
-              
+
             if (v.Members.length == 0)
             {
               item = return_li(v.Id,v.Callsign.toUpperCase(),null,v.TaskedJobCount+"");
@@ -903,7 +903,7 @@ function whenTeamsAreReady(cb) { //when external vars have loaded
 function whenAddressIsReady(cb) { //when external vars have loaded
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
     if (typeof masterViewModel != "undefined" & masterViewModel.geocodedAddress != "undefined") {
-      if (masterViewModel.geocodedAddress.peek() !== null)
+      if (typeof masterViewModel.geocodedAddress.peek() != "undefined" && masterViewModel.geocodedAddress.peek() !== null)
       {
         console.log("address is ready");
       clearInterval(waiting); //stop timer
