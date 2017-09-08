@@ -1252,7 +1252,7 @@ const Color = eval('require("esri/Color");');
                         {
                             $('#lhqContacts').append('<tr><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
                         } else {
-                            $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                            $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
                         }
                     }
                 })
