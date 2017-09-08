@@ -527,6 +527,7 @@ const rfsIcons = {
  function showVehicleLocations(mapLayer, data) {
     console.info('showing SES vehicles');
 
+    let jobOffsets = {};
     let count = 0;
     if (data && data.features) {
         for (let i = 0; i < data.features.length; i++) {
@@ -536,11 +537,18 @@ const rfsIcons = {
                 let lat = vehicle.geometry.coordinates[1];
                 let lon = vehicle.geometry.coordinates[0];
 
-                let name = vehicle.properties.teamId;
+                let jobId = vehicle.properties.jobId;
+                let name = vehicle.properties.teamCallsign;
                 let details = vehicle.properties.situationOnScene;
 
+                let jobOffset = jobOffsets[jobId] || 0;
+                jobOffsets[jobId] = jobOffset + 1;
+
                 console.debug(`SES vehicle at [${lat},${lon}]: ${name}`);
-                mapLayer.addImageMarker(lat, lon, vehicleIcon, name, details);
+                let marker = MapLayer.createImageMarker(vehicleIcon);
+                marker.setOffset(16, -16 * jobOffset);
+                mapLayer.addMarker(lat, lon, marker, name, details);
+                mapLayer.addTextSymbol(lat, lon, name, 32, -16 * jobOffset);
                 count++;
             }
         }
@@ -1216,6 +1224,7 @@ const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
 const SimpleFillSymbol = eval('require("esri/symbols/SimpleFillSymbol");');
 const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
 const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
+const TextSymbol = eval('require("esri/symbols/TextSymbol");');
 const SpatialReference = eval('require("esri/SpatialReference");');
 const Polyline = eval('require("esri/geometry/Polyline");');
 const Point = eval('require("esri/geometry/Point");');
@@ -1484,6 +1493,28 @@ const Color = eval('require("esri/Color");');
         this.graphicsLayer.add(lineGraphic);
     }
 
+    /**
+     * Adds a symbol marker to the map.
+     *
+     * @param lat the latitude.
+     * @param lon the longitude.
+     * @return the text symbol to customise.
+     */
+    addTextSymbol(lat, lon, text, offsetX, offsetY) {
+        let point = new Point({
+            latitude: lat,
+            longitude: lon
+        });
+
+        let textSymbol = new TextSymbol(text);
+        textSymbol.setOffset(offsetX, offsetY);
+        textSymbol.setHorizontalAlignment('left');
+
+        let graphic = new Graphic(point, textSymbol);
+
+        this.graphicsLayer.add(graphic);
+        return textSymbol;
+    }
 
     /**
      * Clears all markers from the map.
