@@ -2,6 +2,10 @@
 window.addEventListener('load', pageFullyLoaded, false);
 
 function pageFullyLoaded(e) {
+    // Send the auth token to the content script
+    console.debug('Sending access-token: ' + user.accessToken);
+    window.postMessage({ type: 'LH_USER_ACCESS_TOKEN', token: user.accessToken }, '*');
+
     //hide the maximize button
     let max = document.getElementsByClassName('titleButton maximize');
     max[0].classList.add('hidden');
@@ -1368,8 +1372,8 @@ const Color = eval('require("esri/Color");');
         });
 
         let marker = new SimpleMarkerSymbol(style);
-        var graphic = new Graphic(point, marker)
-        graphic.setAttributes({title:title,details:details})
+        let graphic = new Graphic(point, marker);
+        graphic.setAttributes({title:title,details:details});
 
 
         this.graphicsLayer.add(graphic);
@@ -1380,8 +1384,6 @@ const Color = eval('require("esri/Color");');
      * Creates an image marker.
      *
      * @param imageUrl the URL for the marker's image.
-     * @param title the title for this marker.
-     * @param details the details for this marker's info pop-up.
      * @return the marker to customise.
      */
      static createImageMarker(imageUrl) {
@@ -1498,9 +1500,12 @@ const Color = eval('require("esri/Color");');
      *
      * @param lat the latitude.
      * @param lon the longitude.
+     * @param text the text for the symbol.
+     * @param offsetX the offset (in pixels) to place the text relative to the point.
+     * @param offsetY the offset (in pixels) to place the text relative to the point.
      * @return the text symbol to customise.
      */
-    addTextSymbol(lat, lon, text, offsetX, offsetY) {
+    addTextSymbol(lat, lon, text, offsetX = 0, offsetY = 0) {
         let point = new Point({
             latitude: lat,
             longitude: lon

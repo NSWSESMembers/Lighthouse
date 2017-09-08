@@ -16,6 +16,7 @@ const lhqIcon = chrome.extension.getURL('icons/ses.png');
 const rmsIcon = chrome.extension.getURL('icons/rms.png');
 const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
 
+var token = null;
 
 // Add the buttons for the extra layers
 $(<li id="lhlayers">
@@ -199,34 +200,15 @@ function requestPowerOutagesLayerUpdate() {
     requestLayerUpdate('power-outages')
 }
 
-
-function getSearchParameters() {
-    var prmstr = window.location.search.substr(1);
-    return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
-}
-
-function transformToAssocArray(prmstr) {
-    var params = {};
-    var prmarr = prmstr.split("&");
-    for (var i = 0; i < prmarr.length; i++) {
-        var tmparr = prmarr[i].split("=");
-        params[tmparr[0]] = tmparr[1];
-    }
-    return params;
-}
-
 /**
  * Requests an update to the vehicle location layer.
  */
 function requestVehicleLayerUpdate() {
     console.debug('updating vehicles layer');
 
-    params = getSearchParameters();
-
     // Get all units
     let unit = [];
     let host = location.origin;
-    let token = params.token;
 
     // Grab the last 24 hours
     let start = new Date();
@@ -403,7 +385,11 @@ window.addEventListener('message', function(event) {
         return;
 
     if (event.data.type) {
-        if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
+        if (event.data.type === 'LH_USER_ACCESS_TOKEN') {
+            token = event.data.token;
+            console.debug('Got access-token: ' + token);
+
+        } else if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
             var params = event.data.params;
             requestLayerUpdate('helicopters',params);
 
