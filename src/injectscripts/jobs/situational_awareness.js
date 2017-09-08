@@ -17,7 +17,7 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('transport-flood-reports');
     lighthouseMap.createLayer('transport-cameras');
     lighthouseMap.createLayer('helicopters');
-    lighthouseMap.createLayer('vehicles');
+    lighthouseMap.createLayer('ses-teams');
 
     // Layers to show under beacon jobs
     lighthouseMap.createLayer('power-outages', 1);
@@ -139,7 +139,7 @@ function pageFullyLoaded(e) {
     }
     window['lighthouseMap'] = lighthouseMap;
 
-    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleVehiclesBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn', 'togglePowerOutagesBtn'];
+    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleSesTeamsBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn', 'togglePowerOutagesBtn'];
     buttons.forEach(function (buttonId) {
         if (localStorage.getItem('Lighthouse-' + buttonId) === 'true') {
             let button = $(`#${buttonId}`);
@@ -178,8 +178,8 @@ window.addEventListener("message", function(event) {
                 showTransportCameras(mapLayer, event.data.response);
             } else if (event.data.layer === 'helicopters') {
                 showRescueHelicopters(mapLayer, event.data.response)
-            } else if (event.data.layer === 'vehicles') {
-                showVehicleLocations(mapLayer, event.data.response)
+            } else if (event.data.layer === 'ses-teams') {
+                showSesTeamsLocations(mapLayer, event.data.response)
             } else if (event.data.layer === 'lhqs') {
                 showLhqs(mapLayer, event.data.response)
             } else if (event.data.layer === 'power-outages') {
@@ -256,7 +256,7 @@ const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
 const powerIcon = lighthouseUrl + 'icons/power.png';
 const helicopterLastKnownIcon = lighthouseUrl + 'icons/helicopter-last-known.png';
-const vehicleIcon = lighthouseUrl + 'icons/bus.png';
+const teamIcon = lighthouseUrl + 'icons/bus.png';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -523,33 +523,33 @@ const rfsIcons = {
 }
 
 /**
- * Show vehicle locations on the map.
+ * Show SES team locations on the map.
  *
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
- function showVehicleLocations(mapLayer, data) {
-    console.info('showing SES vehicles');
+ function showSesTeamsLocations(mapLayer, data) {
+    console.info('showing SES teams');
 
     let jobOffsets = {};
     let count = 0;
     if (data && data.features) {
         for (let i = 0; i < data.features.length; i++) {
-            let vehicle = data.features[i];
+            let team = data.features[i];
 
-            if (vehicle.geometry.type.toLowerCase() === 'point') {
-                let lat = vehicle.geometry.coordinates[1];
-                let lon = vehicle.geometry.coordinates[0];
+            if (team.geometry.type.toLowerCase() === 'point') {
+                let lat = team.geometry.coordinates[1];
+                let lon = team.geometry.coordinates[0];
 
-                let jobId = vehicle.properties.jobId;
-                let name = vehicle.properties.teamCallsign;
-                let details = vehicle.properties.situationOnScene;
+                let jobId = team.properties.jobId;
+                let name = team.properties.teamCallsign;
+                let details = team.properties.situationOnScene;
 
                 let jobOffset = jobOffsets[jobId] || 0;
                 jobOffsets[jobId] = jobOffset + 1;
 
-                console.debug(`SES vehicle at [${lat},${lon}]: ${name}`);
-                let marker = MapLayer.createImageMarker(vehicleIcon);
+                console.debug(`SES team at [${lat},${lon}]: ${name}`);
+                let marker = MapLayer.createImageMarker(teamIcon);
                 marker.setOffset(16, -16 * jobOffset);
                 mapLayer.addMarker(lat, lon, marker, name, details);
                 mapLayer.addTextSymbol(lat, lon, name, 32, -16 * jobOffset);
@@ -557,7 +557,7 @@ const rfsIcons = {
             }
         }
     }
-    console.info(`added ${count} SES vehicles`);
+    console.info(`added ${count} SES teams`);
 }
 
 /**

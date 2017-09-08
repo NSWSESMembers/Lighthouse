@@ -9,7 +9,7 @@ const LighthouseTeam = require('../../../pages/lib/shared_team_code.js');
 inject('jobs/situational_awareness.js');
 
 const lighthouseIcon = chrome.extension.getURL('icons/lh-black.png');
-const vehicleIcon = chrome.extension.getURL('icons/bus.png');
+const teamIcon = chrome.extension.getURL('icons/bus.png');
 const helicopterIcon = chrome.extension.getURL('icons/helicopter.png');
 const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');
 const lhqIcon = chrome.extension.getURL('icons/ses.png');
@@ -69,9 +69,9 @@ $(<li id="lhlayers">
             </a>
             <ul class="sub-sub-menu">
                 <li class="clearfix">
-                    <span id="toggleVehiclesBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={vehicleIcon} />
-                        <span class="tag-text">SES Vehicles</span>
+                    <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
+                        <span class="tag-text">SES Team Locations</span>
                     </span>
                     <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
                         <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
@@ -130,7 +130,7 @@ registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', requestTran
 registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 10 * 60000); // every 10 mins
 registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLayerUpdate, 10000); // every 10s
-registerClickHandler('toggleVehiclesBtn', 'vehicles', requestVehicleLayerUpdate, 10 * 60000); // every minute
+registerClickHandler('toggleSesTeamsBtn', 'ses-teams', requestSesTeamsLayerUpdate, 10 * 60000); // every minute
 registerClickHandler('togglePowerOutagesBtn', 'power-outages', requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('togglelhqsBtn', 'lhqs', requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
 
@@ -201,10 +201,10 @@ function requestPowerOutagesLayerUpdate() {
 }
 
 /**
- * Requests an update to the vehicle location layer.
+ * Requests an update to the SES teams location layer.
  */
-function requestVehicleLayerUpdate() {
-    console.debug('updating vehicles layer');
+function requestSesTeamsLayerUpdate() {
+    console.debug('updating SES teams layer');
 
     // Get all units
     let unit = [];
@@ -299,10 +299,10 @@ function requestVehicleLayerUpdate() {
                     }
                 });
 
-                passLayerDataToInject('vehicles', geoJson);
+                passLayerDataToInject('ses-teams', geoJson);
 
             }, function (error) {
-                passLayerDataToInject('vehicles', error);
+                passLayerDataToInject('ses-teams', error);
             });
         });
     });
