@@ -376,6 +376,11 @@ function HackTheMatrix(unit, host, token, progressBar) {
       };
 
       var title;
+      //nasty hack to cleanup long unit names
+      var code = unit.Name
+      if (code.length > 15) {
+        code = unit.Code
+      }
       
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
@@ -383,7 +388,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
       } else {
         if (Array.isArray(unit) == false) { //1 lga
           document.title = unit.Name + " Job Summary";
-          title = "<p style='margin-bottom:0px'>Job Summary</p>"+unit.Name;
+          title = "<p style='margin-bottom:0px'>Job Summary</p>"+code;
         }
         if (unit.length > 1) { //more than one
           document.title = "Group Job Summary";
