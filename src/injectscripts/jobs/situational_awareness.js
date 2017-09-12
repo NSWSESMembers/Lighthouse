@@ -256,7 +256,9 @@ const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
 const powerIcon = lighthouseUrl + 'icons/power.png';
 const helicopterLastKnownIcon = lighthouseUrl + 'icons/helicopter-last-known.png';
-const teamIcon = lighthouseUrl + 'icons/bus.png';
+const teamEnrouteIcon = lighthouseUrl + 'icons/enroute.png';
+const teamOnsiteIcon = lighthouseUrl + 'icons/bus.png';
+const teamOffsiteIcon = lighthouseUrl + 'icons/offsite.png';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -544,6 +546,14 @@ const rfsIcons = {
                 let jobId = team.properties.jobId;
                 let name = team.properties.teamCallsign;
                 let details = team.properties.situationOnScene;
+
+                let teamIcon = teamEnrouteIcon;
+                if (team.properties.onsite) {
+                    teamIcon = teamOnsiteIcon;
+                }
+                if (team.properties.offsite) {
+                    teamIcon = teamOffsiteIcon;
+                }
 
                 let jobOffset = jobOffsets[jobId] || 0;
                 jobOffsets[jobId] = jobOffset + 1;
