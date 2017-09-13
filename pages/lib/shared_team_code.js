@@ -1,4 +1,5 @@
-var LighthouseJson = require('./shared_json_code.js');
+const $ = require('jquery');
+const LighthouseJson = require('./shared_json_code.js');
 
 function GetTaskingfromBeacon(Id, host, token, callback) {
   console.log("GetTaskingfromBeacon called with:" + Id+", "+host);
@@ -12,7 +13,7 @@ function GetTaskingfromBeacon(Id, host, token, callback) {
       console.log("GetJSONfromBeacon call back");
       var obj = {
         "Results": results
-      }
+      };
       callback(obj);
     }
   );
@@ -20,35 +21,45 @@ function GetTaskingfromBeacon(Id, host, token, callback) {
 }
 
 //make the call to beacon
-function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback) {
-  console.log("GetJSONTeamsfromBeacon called with:" + unit + "," + host+", "+StartDate + "," + EndDate);
-  var url = "";
+function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback, statusTypes = []) {
+  console.debug("GetJSONTeamsfromBeacon called with:" + unit + "," + host+", "+StartDate + "," + EndDate);
+  let params = {};
+  params['StatusStartDate'] = StartDate.toISOString();
+  params['StatusEndDate'] = EndDate.toISOString();
+  params['SortField'] = 'CreatedOn';
+  params['SortOrder'] = 'desc';
+  params['StatusTypeId'] = statusTypes;
 
   if (unit !== null || typeof unit == undefined) {
     if (Array.isArray(unit) == false) {
-      url = host+"/Api/v1/Teams/Search?StatusStartDate=" + StartDate.toISOString() + "&StatusEndDate=" + EndDate.toISOString() + "&AssignedToId=" + unit.Id + "&CreatedAtId=" + unit.Id + "&SortField=CreatedOn&SortOrder=desc";
+      params['AssignedToId'] = unit.Id;
+      params['CreatedAtId'] = unit.Id;
     } else {
-      var hqString = "";
+      let assignedToId = [];
+      let createdAtId = [];
+
       unit.forEach(function(d){
-        hqString=hqString+"&AssignedToId="+d.Id+"&CreatedAtId="+d.Id
+        assignedToId.push(d.Id);
+        createdAtId.push(d.Id);
       });
-      console.log(hqString)
-      url =  host+"/Api/v1/Teams/Search?StatusStartDate=" + StartDate.toISOString() + "&StatusEndDate=" + EndDate.toISOString() + hqString + "&SortField=CreatedOn&SortOrder=desc";
+
+      params['AssignedToId'] = assignedToId;
+      params['CreatedAtId'] = createdAtId;
     }
-  } else {
-    url = host+"/Api/v1/Teams/Search?StatusStartDate=" + StartDate.toISOString() + "&StatusEndDate=" + EndDate.toISOString() + "&SortField=CreatedOn&SortOrder=desc";
   }
+
+  var url = host+"/Api/v1/Teams/Search?" + $.param(params, true);
     
   LighthouseJson.get_json(
     url, token,
     function(res){
-      console.log("Progress CB");
+      console.debug("Progress CB");
     },
     function(results) { //call for the JSON, rebuild the array and return it when done.
-      console.log("GetJSONfromBeacon call back");
+      console.debug("GetJSONfromBeacon call back");
       var obj = {
         "Results": results
-      }
+      };
       callback(obj);
     }
   );
@@ -58,5 +69,5 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback)
 module.exports = {
   get_tasking: GetTaskingfromBeacon,
   get_teams: GetJSONTeamsfromBeacon
-}
+};
 

@@ -130,7 +130,7 @@ registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', requestTran
 registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 10 * 60000); // every 10 mins
 registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLayerUpdate, 10000); // every 10s
-registerClickHandler('toggleSesTeamsBtn', 'ses-teams', requestSesTeamsLayerUpdate, 10 * 60000); // every minute
+registerClickHandler('toggleSesTeamsBtn', 'ses-teams', requestSesTeamsLayerUpdate, 5 * 60000); // every 5 minutes
 registerClickHandler('togglePowerOutagesBtn', 'power-outages', requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('togglelhqsBtn', 'lhqs', requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
 
@@ -206,27 +206,22 @@ function requestPowerOutagesLayerUpdate() {
 function requestSesTeamsLayerUpdate() {
     console.debug('updating SES teams layer');
 
-    // Get all units
-    let unit = [];
+    let hqs = [];
     let host = location.origin;
 
-    // Grab the last 24 hours
+    // Grab the last 30 days
     let start = new Date();
-    start.setDate(start.getDate() - 1);
+    start.setDate(start.getDate() - 30);
     let end = new Date();
+    let statusTypes = [3]; // Only get activated teams
 
-    LighthouseTeam.get_teams(unit, host, start, end, token, function(teams) {
+    LighthouseTeam.get_teams(hqs, host, start, end, token, function(teams) {
 
         // Make a promise to collect all the team details in promises
         new Promise((mainResolve) => {
             let promises = [];
 
             teams.Results.forEach(function (team) {
-
-                if (team.TeamStatusType.Name === "Stood Down" || team.TeamStatusType.Name === "Rest" || team.TeamStatusType.Name === "Standby" || team.TeamStatusType.Name === "On Alert") {
-                    // Filter any teams which aren't active
-                    return;
-                }
 
                 // Create a promise for this team to check its tasking and details
                 promises.push(new Promise((resolve) => {
@@ -299,13 +294,14 @@ function requestSesTeamsLayerUpdate() {
                     }
                 });
 
+                console.debug('Found ' + geoJson.features.length + ' teams');
                 passLayerDataToInject('ses-teams', geoJson);
 
             }, function (error) {
                 passLayerDataToInject('ses-teams', error);
             });
         });
-    });
+    }, statusTypes);
 }
 
 /**
