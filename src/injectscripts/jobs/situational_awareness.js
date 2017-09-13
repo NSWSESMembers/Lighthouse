@@ -491,7 +491,42 @@ const rfsIcons = {
         for (let i = 0; i < data.features.length; i++) {
             let fire = data.features[i];
 
-            if (fire.geometry.type.toLowerCase() === 'point') {
+            if (fire.geometry.type.toLowerCase() === 'geometrycollection') {
+
+              let name = fire.properties.title;
+              let details = fire.properties.description;
+              let category = fire.properties.category;
+
+              let relativeIcon = rfsIcons[category] || rfsIcons['unknown'];
+              let icon = lighthouseUrl + relativeIcon;
+
+              fire.geometry.geometries.reverse() //draw the point first then the polygon (rfs seem to always list point last)
+              for (let j = 0; j < fire.geometry.geometries.length; j++) {
+                let geometry = fire.geometry.geometries[j];
+
+                if (geometry.type.toLowerCase() === 'polygon') {
+
+                    let polygonPoints = geometry.coordinates[0];
+                    mapLayer.addPolygon(polygonPoints, '#FF4500', [100, 100, 100, 0.5], 3,SimpleLineSymbol.STYLE_SOLID, name, details);
+
+                
+                } else if (geometry.type.toLowerCase() === 'geometrycollection') {
+                    for (let k = 0; k < geometry.geometries.length; k++) {
+
+                        mapLayer.addPolygon(geometry.geometries[k].coordinates[0], '#FF4500', [100, 100, 100, 0.5], 3,SimpleLineSymbol.STYLE_SOLID, name, details);
+
+                    }
+
+                }  else if (geometry.type.toLowerCase() === 'point') {
+
+                    let lat = geometry.coordinates[1];
+                    let lon = geometry.coordinates[0];
+
+                    mapLayer.addImageMarker(lat, lon, icon, name, details);
+                }
+            }
+
+        } else if (fire.geometry.type.toLowerCase() === 'point') {
                 let lat = fire.geometry.coordinates[1];
                 let lon = fire.geometry.coordinates[0];
 
@@ -506,9 +541,9 @@ const rfsIcons = {
                 mapLayer.addImageMarker(lat, lon, icon, name, details);
                 count++;
             }
-        }
     }
-    console.info(`added ${count} RFS incidents`);
+}
+console.info(`added ${count} RFS incidents`);
 }
 
 /**
@@ -728,36 +763,36 @@ const rfsIcons = {
                     type = "Unplanned"
                     reason = "Unknown"
                 } else {
-                   type = "Planned"
-                   reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1] 
-               }
-               CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
-               contact = "Essential Energy 132 080"
-               break
-           }
+                 type = "Planned"
+                 reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1] 
+             }
+             CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
+             contact = "Essential Energy 132 080"
+             break
+         }
 
-           let dateDetails =
-           `<div class="dateDetails">\
-           <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
-           <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
-           </div>`;
-           let details =
-           `<div>Affected Customers: ${CustomerAffected}</div>\
-           <div>Outage Type: ${type}</div>\
-           <div>Reason: ${reason}</div>\
-           <div>Status: ${status}</div>\
-           ${dateDetails}\
-           <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
-           <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
-           ${contact}\
-           </span>`;
+         let dateDetails =
+         `<div class="dateDetails">\
+         <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
+         <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
+         </div>`;
+         let details =
+         `<div>Affected Customers: ${CustomerAffected}</div>\
+         <div>Outage Type: ${type}</div>\
+         <div>Reason: ${reason}</div>\
+         <div>Status: ${status}</div>\
+         ${dateDetails}\
+         <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+         <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+         ${contact}\
+         </span>`;
 
-           return({name:name,details:details})
+         return({name:name,details:details})
 
-       }
+     }
 
 
-   }
+ }
 }
 
 console.info(`added ${count} power outages`);
