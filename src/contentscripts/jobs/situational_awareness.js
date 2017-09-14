@@ -207,11 +207,17 @@ function requestPowerOutagesLayerUpdate() {
 function requestSesTeamsLayerUpdate() {
     console.debug('updating SES teams layer');
 
+    if (!hqs) {
+        // If the inject script hasn't sent over the HQs wait a few seconds then retry
+        setTimeout(requestSesTeamsLayerUpdate, 2000);
+        return;
+    }
+
     let host = location.origin;
 
-    // Grab the last 30 days
+    // Grab teams from the last year
     let start = new Date();
-    start.setDate(start.getDate() - 30);
+    start.setFullYear(start.getFullYear() - 1);
     let end = new Date();
     let statusTypes = [3]; // Only get activated teams
 
