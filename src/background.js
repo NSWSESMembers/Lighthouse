@@ -337,7 +337,15 @@ function loadSynchronously(url) {
     var xhttp = new XMLHttpRequest();
     xhttp.onloadend = function () {
         if (this.readyState === 4 && this.status === 200) {
-            callback(JSON.parse(xhttp.responseText));
+
+            try {
+                var json = JSON.parse(xhttp.responseText);
+            } catch(err) {
+                console.log("ausgrid feed is invalid. discarding")
+                var json = []
+
+            }
+            callback(json)
         } else {
             // error
             var response = {
@@ -364,8 +372,13 @@ function loadSynchronously(url) {
     var xhttp = new XMLHttpRequest();
     xhttp.onloadend = function () {
         if (this.readyState === 4 && this.status === 200) {
-            var json = JSON.parse(xhttp.responseText);
+            try {
+                var json = JSON.parse(xhttp.responseText);
+            } catch(err) {
+                console.log("endeavour energy feed is invalid. discarding")
+                var json = []
 
+            }
             geoJson = {
                 'type': 'FeatureCollection',
                 'features': []

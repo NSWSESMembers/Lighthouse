@@ -15,6 +15,7 @@ const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');
 const lhqIcon = chrome.extension.getURL('icons/ses.png');
 const rmsIcon = chrome.extension.getURL('icons/rms.png');
 const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
+const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
 
 var token = null;
 var hqs = null;
@@ -27,6 +28,20 @@ $(<li id="lhlayers">
         <i class="toggle-icon fa fa-angle-left"></i>
     </a>
     <ul class="sub-menu ">
+    <li>
+            <a class="js-sub-sub-menu-toggle" href="#">
+                <img src={sesIcon} style="width:14px;vertical-align:sub;margin-left:-12px;" />
+                <span class="text toggle-tag-text">NSW SES</span>
+            </a>
+            <ul class="sub-sub-menu">
+                <li class="clearfix">
+                    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
+                        <span class="tag-text">SES LHQs</span>
+                    </span>
+                </li>
+            </ul>
+        </li>
         <li>
             <a class="js-sub-sub-menu-toggle" href="#">
                 <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;margin-left:-12px;float:left" />
@@ -77,10 +92,6 @@ $(<li id="lhlayers">
                     <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
                         <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
                         <span class="tag-text">Rescue Helicopters</span>
-                    </span>
-                    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
-                        <span class="tag-text">SES LHQs</span>
                     </span>
                     <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
                         <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
