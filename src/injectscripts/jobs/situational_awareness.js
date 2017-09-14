@@ -1248,8 +1248,8 @@ const aircraft = [
     new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139', 'HEMS'),
 
     // RFS fixed wing aircraft
-    new Helicopter('A4C031', 'N405LC', 'Thor', 'C130', 'RFS'),
-    new Helicopter('ACC37A', 'N512AX', '', 'DC-10', 'RFS'), // Bomber 910?
+    new Helicopter('A4C031', 'N405LC', 'Thor', 'C130', 'RFS', false),
+    new Helicopter('ACC37A', 'N512AX', '', 'DC-10', 'RFS', false), // Bomber 910?
 
     // Whoa, there appear to be a lot of these...
     ];

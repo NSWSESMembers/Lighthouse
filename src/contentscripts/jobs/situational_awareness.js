@@ -39,6 +39,10 @@ $(<li id="lhlayers">
                         <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
                         <span class="tag-text">SES LHQs</span>
                     </span>
+                    <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
+                        <span class="tag-text">SES Team Locations</span>
+                    </span>
                 </li>
             </ul>
         </li>
@@ -85,10 +89,6 @@ $(<li id="lhlayers">
             </a>
             <ul class="sub-sub-menu">
                 <li class="clearfix">
-                    <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
-                        <span class="tag-text">SES Team Locations</span>
-                    </span>
                     <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
                         <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
                         <span class="tag-text">Rescue Helicopters</span>
