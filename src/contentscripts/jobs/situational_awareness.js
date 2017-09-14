@@ -17,6 +17,7 @@ const rmsIcon = chrome.extension.getURL('icons/rms.png');
 const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
 
 var token = null;
+var hqs = null;
 
 // Add the buttons for the extra layers
 $(<li id="lhlayers">
@@ -206,7 +207,6 @@ function requestPowerOutagesLayerUpdate() {
 function requestSesTeamsLayerUpdate() {
     console.debug('updating SES teams layer');
 
-    let hqs = [];
     let host = location.origin;
 
     // Grab the last 30 days
@@ -384,6 +384,10 @@ window.addEventListener('message', function(event) {
         if (event.data.type === 'LH_USER_ACCESS_TOKEN') {
             token = event.data.token;
             console.debug('Got access-token: ' + token);
+
+        } else if (event.data.type === 'LH_SELECTED_HQS') {
+            hqs = event.data.hqs;
+            console.debug('Got hqs: ' + hqs);
 
         } else if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
             var params = event.data.params;

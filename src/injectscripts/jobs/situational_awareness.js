@@ -6,6 +6,11 @@ function pageFullyLoaded(e) {
     console.debug('Sending access-token: ' + user.accessToken);
     window.postMessage({ type: 'LH_USER_ACCESS_TOKEN', token: user.accessToken }, '*');
 
+    contentViewModel.filterViewModel.selectedEntities.subscribe(function() {
+        sendHqToContentScript();
+    });
+    sendHqToContentScript();
+
     //hide the maximize button
     let max = document.getElementsByClassName('titleButton maximize');
     max[0].classList.add('hidden');
@@ -149,6 +154,13 @@ function pageFullyLoaded(e) {
     });
 
     loadAircraftLastKnownPositions();
+}
+
+/**
+ * Sends the selected HQs to the content script.
+ */
+function sendHqToContentScript() {
+    window.postMessage({ type: 'LH_SELECTED_HQS', hqs: contentViewModel.filterViewModel.selectedEntities.peek() }, '*');
 }
 
 window.addEventListener("message", function(event) {
