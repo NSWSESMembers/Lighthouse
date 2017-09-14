@@ -557,15 +557,23 @@ const rfsIcons = {
 
                 let jobId = team.properties.jobId;
                 let name = team.properties.teamCallsign;
-                let details = team.properties.situationOnScene;
 
                 let teamIcon = teamEnrouteIcon;
+                let status = 'Enroute';
                 if (team.properties.onsite) {
                     teamIcon = teamOnsiteIcon;
+                    status = 'On-site';
                 }
                 if (team.properties.offsite) {
                     teamIcon = teamOffsiteIcon;
+                    status = 'Off-site';
                 }
+
+                let details =
+                    `<div>\
+                    <div>${team.properties.teamCallsign} - ${status}</div>\
+                    <div>${team.properties.jobId}</div>\
+                    </div>`;
 
                 let jobOffset = jobOffsets[jobId] || 0;
                 jobOffsets[jobId] = jobOffset + 1;
