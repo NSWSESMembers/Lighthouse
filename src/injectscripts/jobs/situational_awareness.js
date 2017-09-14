@@ -1315,31 +1315,34 @@ const Color = eval('require("esri/Color");');
      * @private
      */
      _handleClick(event) {
+        if (!event.graphic.attributes) {
+            return;
+        }
+
         // Show the info window for our point
         this._map.infoWindow.setTitle(event.graphic.attributes.title);
         this._map.infoWindow.setContent(event.graphic.attributes.details);
 
         if ($(this._map.infoWindow.domNode).find('#lhqPopUp').length) //if this is a HL popup box //TODO extend the object and hold the type in there
         {
-            console.log('this is a hq popup')
-            fetchHqDetails($('#lhqName').text(), function(hqdeets){
-                var c = 0
-                $.each(hqdeets.contacts,function(k,v){
-                    if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
-                    {
-                        c++
-                        if (c%2 || c==0) //every other row
+            console.log('this is a hq popup');
+            fetchHqDetails($('#lhqName').text(), function (hqdeets) {
+                var c = 0;
+                $.each(hqdeets.contacts, function (k, v) {
+                    if (v.ContactTypeId == 4 || v.ContactTypeId == 3) {
+                        c++;
+                        if (c % 2 || c == 0) //every other row
                         {
-                            $('#lhqContacts').append('<tr><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
+                            $('#lhqContacts').append('<tr><td>' + v.Description.replace('Phone', '').replace('Number', '') + '</td><td>' + v.Detail + '</td></tr>');
                         } else {
-                            $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description+'</td><td>'+v.Detail+'</td></tr>');
+                            $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>' + v.Description + '</td><td>' + v.Detail + '</td></tr>');
                         }
                     }
-                })
+                });
                 if (hqdeets.acred.length > 0) //fill otherwise placeholder
                 {
-                    $.each(hqdeets.acred,function(k,v){
-                        $('#lhqacred').append('<tr><td>'+v+'</td></tr>');
+                    $.each(hqdeets.acred, function (k, v) {
+                        $('#lhqacred').append('<tr><td>' + v + '</td></tr>');
                     })
                 } else {
                     $('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
@@ -1349,7 +1352,7 @@ const Color = eval('require("esri/Color");');
                 $('#lhqTeamCount').text(hqdeets.currentTeamCount)
 
 
-                $("#filterTo").click(function() {
+                $("#filterTo").click(function () {
                     filterViewModel.selectedEntities.removeAll();
                     filterViewModel.selectedEntities.push(hqdeets.Entity);
                     filterViewModel.updateFilters();
@@ -1357,7 +1360,7 @@ const Color = eval('require("esri/Color");');
 
                 });
 
-                $("#filterClear").click(function() {
+                $("#filterClear").click(function () {
                     filterViewModel.selectedEntities.removeAll();
                     filterViewModel.updateFilters();
                     this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
@@ -1365,7 +1368,7 @@ const Color = eval('require("esri/Color");');
                 });
 
             })
-}
+        }
         $(this._map.infoWindow.domNode).find('.actionList').addClass('hidden') //massive hack to remove the Zoom To actionlist dom.
         this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
     }
