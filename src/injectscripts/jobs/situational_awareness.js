@@ -7,9 +7,9 @@ function pageFullyLoaded(e) {
     window.postMessage({ type: 'LH_USER_ACCESS_TOKEN', token: user.accessToken }, '*');
 
     contentViewModel.filterViewModel.selectedEntities.subscribe(function() {
-        sendHqToContentScript();
+        sendStateToContentScript();
     });
-    sendHqToContentScript();
+    sendStateToContentScript();
 
     //hide the maximize button
     let max = document.getElementsByClassName('titleButton maximize');
@@ -157,10 +157,15 @@ function pageFullyLoaded(e) {
 }
 
 /**
- * Sends the selected HQs to the content script.
+ * Sends the selected HQs & start/end date range to the content script.
  */
-function sendHqToContentScript() {
-    window.postMessage({ type: 'LH_SELECTED_HQS', hqs: contentViewModel.filterViewModel.selectedEntities.peek() }, '*');
+function sendStateToContentScript() {
+    let params = {
+        hqs: contentViewModel.filterViewModel.selectedEntities.peek(),
+        startDate: contentViewModel.filterViewModel.startDate().toDate(),
+        endDate: contentViewModel.filterViewModel.endDate().toDate()
+    };
+    window.postMessage({ type: 'LH_SELECTED_STATE', params: params }, '*');
 }
 
 window.addEventListener("message", function(event) {

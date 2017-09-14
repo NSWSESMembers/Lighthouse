@@ -19,6 +19,8 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
 
 var token = null;
 var hqs = null;
+var startDate = null;
+var endDate = null;
 
 // Add the buttons for the extra layers
 $(<li id="lhlayers">
@@ -230,12 +232,12 @@ function requestSesTeamsLayerUpdate() {
     lastDay.setDate(lastDay.getDate() - 1);
 
     // Grab teams from the last year
-    let start = new Date();
-    start.setFullYear(start.getFullYear() - 1);
-    let end = new Date();
+    let teamStartRange = new Date();
+    teamStartRange.setFullYear(teamStartRange.getFullYear() - 1);
+    let teamEndRange = new Date();
     let statusTypes = [3]; // Only get activated teams
 
-    LighthouseTeam.get_teams(hqs, host, start, end, token, function(teams) {
+    LighthouseTeam.get_teams(hqs, host, teamStartRange, teamEndRange, token, function(teams) {
 
         // Make a promise to collect all the team details in promises
         new Promise((mainResolve) => {
@@ -254,13 +256,15 @@ function requestSesTeamsLayerUpdate() {
                             let rawStatusTime = new Date(task.CurrentStatusTime);
                             let taskTime = new Date(rawStatusTime.getTime());
 
+                            if (taskTime < startDate || taskTime > endDate) {
+                                // Filter any tasking outside the start / end date range
+                                return;
+                            }
+
                             // it wasn't an un-task or a tasking (so its a action the team made like on route or onsite)
                             if (latestTime < taskTime && task.CurrentStatus !== "Tasked" && task.CurrentStatus !== "Untasked") {
-                                // If the job isn't finalised, or was finalised in the last 24 hrs let it be the active tasking
-                                if (task.Job.JobStatusType.Name !== 'Finalised' || taskTime > lastDay) {
-                                    latestTasking = task;
-                                    latestTime = taskTime;
-                                }
+                                latestTasking = task;
+                                latestTime = taskTime;
                             }
                         });
 
@@ -298,6 +302,7 @@ function requestSesTeamsLayerUpdate() {
                 }));
             });
 
+            console.debug(`Found ${promises.length} teams to query tasking for`);
             mainResolve(promises);
 
         }).then((promises) => {
@@ -408,9 +413,13 @@ window.addEventListener('message', function(event) {
             token = event.data.token;
             console.debug('Got access-token: ' + token);
 
-        } else if (event.data.type === 'LH_SELECTED_HQS') {
-            hqs = event.data.hqs;
+        } else if (event.data.type === 'LH_SELECTED_STATE') {
+            hqs = event.data.params.hqs;
+            startDate = event.data.params.startDate;
+            endDate = event.data.params.endDate;
             console.debug('Got hqs: ' + hqs);
+            console.debug('Got start: ' + startDate);
+            console.debug('Got end: ' + endDate);
 
         } else if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
             var params = event.data.params;
