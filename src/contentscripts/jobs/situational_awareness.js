@@ -215,6 +215,9 @@ function requestSesTeamsLayerUpdate() {
 
     let host = location.origin;
 
+    let lastDay = new Date();
+    lastDay.setDate(lastDay.getDate() - 1);
+
     // Grab teams from the last year
     let start = new Date();
     start.setFullYear(start.getFullYear() - 1);
@@ -242,8 +245,11 @@ function requestSesTeamsLayerUpdate() {
 
                             // it wasn't an un-task or a tasking (so its a action the team made like on route or onsite)
                             if (latestTime < taskTime && task.CurrentStatus !== "Tasked" && task.CurrentStatus !== "Untasked") {
-                                latestTasking = task;
-                                latestTime = taskTime;
+                                // If the job isn't finalised, or was finalised in the last 24 hrs let it be the active tasking
+                                if (task.Job.JobStatusType.Name !== 'Finalised' || taskTime > lastDay) {
+                                    latestTasking = task;
+                                    latestTime = taskTime;
+                                }
                             }
                         });
 
