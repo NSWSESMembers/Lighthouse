@@ -571,8 +571,8 @@ const rfsIcons = {
 
                 let details =
                     `<div>\
-                    <div>${team.properties.teamCallsign} - ${status}</div>\
-                    <div>${team.properties.jobId}</div>\
+                    <div><a target='_blank' href="${urls.Base}/Teams/${team.properties.teamId}/Edit">${team.properties.teamCallsign}</a> - ${status}</div>\
+                    <div>Job ID: ${team.properties.jobId} <a href=${urls.Base}/Jobs/${team.properties.jobId} target='_blank'>View Job Details</a></div>\
                     </div>`;
 
                 let jobOffset = jobOffsets[jobId] || 0;
