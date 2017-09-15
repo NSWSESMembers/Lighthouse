@@ -1,12 +1,15 @@
 const $ = require('jquery');
 const DOM = require('jsx-dom-factory');
+const moment = require('moment');
 const inject = require('../../../lib/inject.js');
+const LighthouseTeam = require('../../../pages/lib/shared_team_code.js');
 
 //inject the coded needed to fix visual problems
 //needs to be injected so that it runs after the DOMs are created
 inject('jobs/situational_awareness.js');
 
 const lighthouseIcon = chrome.extension.getURL('icons/lh-black.png');
+const teamIcon = chrome.extension.getURL('icons/bus.png');
 const helicopterIcon = chrome.extension.getURL('icons/helicopter.png');
 const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');
 const lhqIcon = chrome.extension.getURL('icons/ses.png');
@@ -14,6 +17,10 @@ const rmsIcon = chrome.extension.getURL('icons/rms.png');
 const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
 const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
 
+var token = null;
+var hqs = null;
+var startDate = null;
+var endDate = null;
 
 // Add the buttons for the extra layers
 $(<li id="lhlayers">
@@ -33,6 +40,10 @@ $(<li id="lhlayers">
                     <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
                         <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
                         <span class="tag-text">SES LHQs</span>
+                    </span>
+                    <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
+                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
+                        <span class="tag-text">SES Team Locations</span>
                     </span>
                 </li>
             </ul>
@@ -106,7 +117,7 @@ var timers = {};
  * @param interval the refresh interval.
  * @return timer the timer which refreshes the layer.
  */
- function registerClickHandler(buttonId, layer, updateFunction, interval) {
+function registerClickHandler(buttonId, layer, updateFunction, interval) {
     document.getElementById(buttonId).addEventListener('click',
         function () {
             console.debug(`toggle ${buttonId} clicked`);
@@ -131,8 +142,9 @@ var timers = {};
 registerClickHandler('toggleRfsIncidentsBtn', 'rfs', requestRfsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
-registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 10 * 60000); // every 5 mins
+registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', requestTransportCamerasLayerUpdate, 10 * 60000); // every 10 mins
 registerClickHandler('toggleHelicoptersBtn', 'helicopters', requestHelicoptersLayerUpdate, 10000); // every 10s
+registerClickHandler('toggleSesTeamsBtn', 'ses-teams', requestSesTeamsLayerUpdate, 5 * 60000); // every 5 minutes
 registerClickHandler('togglePowerOutagesBtn', 'power-outages', requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
 registerClickHandler('togglelhqsBtn', 'lhqs', requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
 
@@ -153,10 +165,10 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
 /**
  * Sends a request to the background script to get the LHQ locations.
  */
- function requestLhqsLayerUpdate() {
+function requestLhqsLayerUpdate() {
     console.debug('updating LHQs layer');
-    $.getJSON( chrome.extension.getURL('resources/SES_HQs.geojson'), function( data ) {
-        passLayerDataToInject('lhqs',data)
+    $.getJSON(chrome.extension.getURL('resources/SES_HQs.geojson'), function (data) {
+        passLayerDataToInject('lhqs', data)
     })
 
 }
@@ -164,7 +176,7 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
 /**
  * Sends a request to the background script to get the latest RFS incidents.
  */
- function requestRfsLayerUpdate() {
+function requestRfsLayerUpdate() {
     console.debug('updating RFS layer');
     requestLayerUpdate('rfs')
 
@@ -173,7 +185,7 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
 /**
  * Sends a request to the background script to get the latest transport incidents.
  */
- function requestTransportIncidentsLayerUpdate() {
+function requestTransportIncidentsLayerUpdate() {
     console.debug('updating transport incidents layer');
     fetchTransportResource('transport-incidents');
 }
@@ -181,7 +193,7 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
 /**
  * Sends a request to the background script to get the latest transport flood reports.
  */
- function requestTransportFloodReportsLayerUpdate() {
+function requestTransportFloodReportsLayerUpdate() {
     console.debug('updating transport incidents layer');
     fetchTransportResource('transport-flood-reports');
 }
@@ -203,11 +215,135 @@ function requestPowerOutagesLayerUpdate() {
 }
 
 /**
+ * Requests an update to the SES teams location layer.
+ */
+function requestSesTeamsLayerUpdate() {
+    console.debug('updating SES teams layer');
+
+    if (!hqs) {
+        // If the inject script hasn't sent over the HQs wait a few seconds then retry
+        setTimeout(requestSesTeamsLayerUpdate, 2000);
+        return;
+    }
+
+    let host = location.origin;
+
+    let lastDay = new Date();
+    lastDay.setDate(lastDay.getDate() - 1);
+
+    // Grab teams from the last year
+    let teamStartRange = new Date();
+    teamStartRange.setFullYear(teamStartRange.getFullYear() - 1);
+    let teamEndRange = new Date();
+    let statusTypes = [3]; // Only get activated teams
+
+    LighthouseTeam.get_teams(hqs, host, teamStartRange, teamEndRange, token, function (teams) {
+
+        // Make a promise to collect all the team details in promises
+        new Promise((mainResolve) => {
+            let promises = [];
+
+            teams.Results.forEach(function (team) {
+
+                // Create a promise for this team to check its tasking and details
+                promises.push(new Promise((resolve) => {
+                    LighthouseTeam.get_tasking(team.Id, host, token, function (teamTasking) {
+                        let latestTasking = null;
+                        let latestTime = null;
+
+                        // Find the latest tasking
+                        teamTasking.Results.forEach(function (task) {
+                            let rawStatusTime = new Date(task.CurrentStatusTime);
+                            let taskTime = new Date(rawStatusTime.getTime());
+
+                            if (startDate != null && endDate != null) { //not null when viewing a date range, so all jobs are in play
+                                if (taskTime < startDate || taskTime > endDate) {
+                                    // Filter any tasking outside the start / end date range
+                                    return;
+                                }
+                            } else { //viewing "current" which means finalised are hidden
+                                if (task.Job.JobStatusType.Name == "Complete" || task.Job.JobStatusType.Name == "Finalised" || task.Job.JobStatusType.Name == "Cancelled" || task.Job.JobStatusType.Name == "Rejected") {
+                                    return;
+                                }
+                            }
+
+                            // it wasn't an un-task or a tasking (so its a action the team made like on route or onsite)
+                            if (latestTime < taskTime && task.CurrentStatus !== "Tasked" && task.CurrentStatus !== "Untasked") {
+                                latestTasking = task;
+                                latestTime = taskTime;
+                            }
+                        });
+
+                        // If valid tasking was found, add that into a geoJson feature
+                        if (latestTasking !== null) {
+                            let feature = {
+                                'type': 'Feature',
+                                'geometry': {
+                                    'type': 'Point',
+                                    'coordinates': [
+                                        latestTasking.Job.Address.Longitude,
+                                        latestTasking.Job.Address.Latitude
+                                    ]
+                                },
+                                'properties': {
+                                    'teamId': latestTasking.Team.Id,
+                                    'teamCallsign': latestTasking.Team.Callsign,
+                                    'onsite': latestTasking.Onsite,
+                                    'offsite': latestTasking.Offsite,
+                                    'currentStatusTime': latestTasking.CurrentStatusTime,
+                                    'jobId': latestTasking.Job.Id,
+                                }
+                            };
+
+                            if (latestTasking.PrimaryTaskType) {
+                                feature.properties.primaryTask = latestTasking.PrimaryTaskType.Name;
+                            }
+
+                            resolve(feature);
+                        }
+
+                        // No relevant tasking for this team
+                        resolve(null);
+                    });
+                }));
+            });
+
+            console.debug(`Found ${promises.length} teams to query tasking for`);
+            mainResolve(promises);
+
+        }).then((promises) => {
+
+            // Wait for all the team tasking promises to complete
+            Promise.all(promises).then(function (features) {
+
+                let geoJson = {
+                    'type': 'FeatureCollection',
+                    'features': []
+                };
+
+                // Collect all non-null features
+                features.forEach(function (feature) {
+                    if (feature) {
+                        geoJson.features.push(feature);
+                    }
+                });
+
+                console.debug('Found ' + geoJson.features.length + ' teams');
+                passLayerDataToInject('ses-teams', geoJson);
+
+            }, function (error) {
+                passLayerDataToInject('ses-teams', error);
+            });
+        });
+    }, statusTypes);
+}
+
+/**
  * Fetches a resource from the transport API.
  *
  * @param layer the layer to fetch, e.g. 'transport-incidents'.
  */
- function fetchTransportResource(layer) {
+function fetchTransportResource(layer) {
     var sessionKey = 'lighthouseTransportApiKeyCache';
     var transportApiKeyCache = sessionStorage.getItem(sessionKey);
 
@@ -217,7 +353,7 @@ function requestPowerOutagesLayerUpdate() {
 
     } else {
         console.debug('Fetching ops log key');
-        window.postMessage({ type: 'LH_GET_TRANSPORT_KEY', layer: layer }, '*');
+        window.postMessage({type: 'LH_GET_TRANSPORT_KEY', layer: layer}, '*');
     }
 }
 
@@ -228,20 +364,20 @@ function requestPowerOutagesLayerUpdate() {
  * @param layer the layer to fetch.
  * @param apiKey the transport.nsw.gov.au API key.
  */
- function fetchTransportResourceWithKey(apiKey, layer) {
+function fetchTransportResourceWithKey(apiKey, layer) {
     console.info(`fetching transport resource: ${apiKey} ${layer}`);
-    var params = { apiKey: apiKey };
-    requestLayerUpdate(layer,params)
+    var params = {apiKey: apiKey};
+    requestLayerUpdate(layer, params)
 }
 
 
 /**
  * Sends a request to the background script to get the latest helicopter positions.
  */
- function requestHelicoptersLayerUpdate() {
+function requestHelicoptersLayerUpdate() {
     console.debug('updating transport incidents layer');
     var params = '';
-    window.postMessage({ type: 'LH_REQUEST_HELI_PARAMS' }, '*');
+    window.postMessage({type: 'LH_REQUEST_HELI_PARAMS'}, '*');
 }
 
 
@@ -252,12 +388,12 @@ function requestPowerOutagesLayerUpdate() {
  * @param layer the layer to fetch.
  * @param params an API key or something needed to fetch the resource.
  */
-function requestLayerUpdate(layer,params = {}) {
+function requestLayerUpdate(layer, params = {}) {
     chrome.runtime.sendMessage({type: layer, params: params}, function (response) {
         if (response.error) {
             console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
         } else {
-            passLayerDataToInject(layer,response)
+            passLayerDataToInject(layer, response)
         }
     });
 }
@@ -268,20 +404,32 @@ function requestLayerUpdate(layer,params = {}) {
  * @param layer the layer to own the data.
  * @param response the data to use.
  */
-function passLayerDataToInject(layer,response) {
+function passLayerDataToInject(layer, response) {
     window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: layer, response: response}, '*');
 }
 
 
-window.addEventListener('message', function(event) {
+window.addEventListener('message', function (event) {
     // We only accept messages from background
     if (event.source !== window)
         return;
 
     if (event.data.type) {
-        if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
+        if (event.data.type === 'LH_USER_ACCESS_TOKEN') {
+            token = event.data.token;
+            console.debug('Got access-token: ' + token);
+
+        } else if (event.data.type === 'LH_SELECTED_STATE') {
+            hqs = event.data.params.hqs;
+            startDate = event.data.params.startDate;
+            endDate = event.data.params.endDate;
+            console.debug('Got hqs: ' + hqs);
+            console.debug('Got start: ' + startDate);
+            console.debug('Got end: ' + endDate);
+
+        } else if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
             var params = event.data.params;
-            requestLayerUpdate('helicopters',params);
+            requestLayerUpdate('helicopters', params);
 
         } else if (event.data.type === 'LH_RESPONSE_TRANSPORT_KEY') {
 

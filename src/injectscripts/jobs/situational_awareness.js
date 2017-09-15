@@ -2,19 +2,34 @@
 window.addEventListener('load', pageFullyLoaded, false);
 
 function pageFullyLoaded(e) {
+    // Send the auth token to the content script
+    console.debug('Sending access-token: ' + user.accessToken);
+    window.postMessage({ type: 'LH_USER_ACCESS_TOKEN', token: user.accessToken }, '*');
+
+    contentViewModel.filterViewModel.selectedEntities.subscribe(function() {
+        sendStateToContentScript();
+        console.log('sending entities')
+    });
+
+    sendStateToContentScript();
+
     //hide the maximize button
     let max = document.getElementsByClassName('titleButton maximize');
     max[0].classList.add('hidden');
 
     let map = window['map'];
     let lighthouseMap = new LighthouseMap(map);
-    lighthouseMap.createLayer('rfs');
+    // Layers to show above beacon jobs
     lighthouseMap.createLayer('transport-incidents');
     lighthouseMap.createLayer('transport-flood-reports');
     lighthouseMap.createLayer('transport-cameras');
     lighthouseMap.createLayer('helicopters');
+    lighthouseMap.createLayer('ses-teams');
+
+    // Layers to show under beacon jobs
     lighthouseMap.createLayer('power-outages', 1);
-    lighthouseMap.createLayer('lhqs');
+    lighthouseMap.createLayer('rfs', 1);
+    lighthouseMap.createLayer('lhqs', 3);
 
     //bind to the click event for the jobs and fiddle with the popups Onclick
     lighthouseMap.map._layers.graphicsLayer3.onClick.after.advice = function(event){
@@ -124,16 +139,16 @@ function pageFullyLoaded(e) {
 })
 };
 
-if (developmentMode) {
+    if (developmentMode) {
         // Add a test point
         lighthouseMap.layers['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon, 'Parramatta SES',
             'This is a test marker. It is used to check whether the map access is working');
     }
     window['lighthouseMap'] = lighthouseMap;
 
-    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn', 'togglePowerOutagesBtn'];
+    let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleSesTeamsBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn', 'togglePowerOutagesBtn'];
     buttons.forEach(function (buttonId) {
-        if (localStorage.getItem('Lighthouse-' + buttonId) == 'true') {
+        if (localStorage.getItem('Lighthouse-' + buttonId) === 'true') {
             let button = $(`#${buttonId}`);
             console.debug(buttonId + ' restoring saved state of clicked');
             button.trigger('click');
@@ -141,6 +156,23 @@ if (developmentMode) {
     });
 
     loadAircraftLastKnownPositions();
+}
+
+/**
+ * Sends the selected HQs & start/end date range to the content script.
+ */
+function sendStateToContentScript() {
+    let startMoment = contentViewModel.filterViewModel.startDate();
+    let endMoment = contentViewModel.filterViewModel.endDate();
+    let startDate = startMoment ? startMoment.toDate() : null;
+    let endDate = endMoment ? endMoment.toDate() : null;
+
+    let params = {
+        hqs: contentViewModel.filterViewModel.selectedEntities.peek(),
+        startDate: startDate,
+        endDate: endDate
+    };
+    window.postMessage({ type: 'LH_SELECTED_STATE', params: params }, '*');
 }
 
 window.addEventListener("message", function(event) {
@@ -170,6 +202,8 @@ window.addEventListener("message", function(event) {
                 showTransportCameras(mapLayer, event.data.response);
             } else if (event.data.layer === 'helicopters') {
                 showRescueHelicopters(mapLayer, event.data.response)
+            } else if (event.data.layer === 'ses-teams') {
+                showSesTeamsLocations(mapLayer, event.data.response)
             } else if (event.data.layer === 'lhqs') {
                 showLhqs(mapLayer, event.data.response)
             } else if (event.data.layer === 'power-outages') {
@@ -180,18 +214,18 @@ window.addEventListener("message", function(event) {
             console.info("clearing layer:" + event.data.layer);
             lighthouseMap.layers[event.data.layer].clear();
         } else if (event.data.type === "LH_GET_TRANSPORT_KEY") {
-            var transportApiKeyOpsLog = ''
+            var transportApiKeyOpsLog = '';
             switch (urls.Base)
             {
                 case 'https://previewbeacon.ses.nsw.gov.au':
-                transportApiKeyOpsLog = '46273'
-                break
+                transportApiKeyOpsLog = '46273';
+                break;
                 case 'https://beacon.ses.nsw.gov.au':
-                transportApiKeyOpsLog = '515514'
-                break
+                transportApiKeyOpsLog = '515514';
+                break;
                 case 'https://trainbeacon.ses.nsw.gov.au':
-                transportApiKeyOpsLog = '36753'
-                break
+                transportApiKeyOpsLog = '36753';
+                break;
                 default:
                 transportApiKeyOpsLog = '0'
             }
@@ -246,6 +280,9 @@ const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
 const powerIcon = lighthouseUrl + 'icons/power.png';
 const helicopterLastKnownIcon = lighthouseUrl + 'icons/helicopter-last-known.png';
+const teamEnrouteIcon = lighthouseUrl + 'icons/enroute.png';
+const teamOnsiteIcon = lighthouseUrl + 'icons/bus.png';
+const teamOffsiteIcon = lighthouseUrl + 'icons/offsite.png';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -509,7 +546,7 @@ const rfsIcons = {
                     let polygonPoints = geometry.coordinates[0];
                     mapLayer.addPolygon(polygonPoints, '#FF4500', [100, 100, 100, 0.5], 3,SimpleLineSymbol.STYLE_SOLID, name, details);
 
-                
+
                 } else if (geometry.type.toLowerCase() === 'geometrycollection') {
                     for (let k = 0; k < geometry.geometries.length; k++) {
 
@@ -544,6 +581,60 @@ const rfsIcons = {
     }
 }
 console.info(`added ${count} RFS incidents`);
+}
+
+/**
+ * Show SES team locations on the map.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+ function showSesTeamsLocations(mapLayer, data) {
+    console.info('showing SES teams');
+
+    let jobOffsets = {};
+    let count = 0;
+    if (data && data.features) {
+        for (let i = 0; i < data.features.length; i++) {
+            let team = data.features[i];
+
+            if (team.geometry.type.toLowerCase() === 'point') {
+                let lat = team.geometry.coordinates[1];
+                let lon = team.geometry.coordinates[0];
+
+                let jobId = team.properties.jobId;
+                let name = team.properties.teamCallsign;
+
+                let teamIcon = teamEnrouteIcon;
+                let status = 'Enroute';
+                if (team.properties.onsite) {
+                    teamIcon = teamOnsiteIcon;
+                    status = 'On-site';
+                }
+                if (team.properties.offsite) {
+                    teamIcon = teamOffsiteIcon;
+                    status = 'Off-site';
+                }
+
+                let details =
+                    `<div>\
+                    <div><a target='_blank' href="${urls.Base}/Teams/${team.properties.teamId}/Edit">${team.properties.teamCallsign}</a> - ${status}</div>\
+                    <div>Job ID: ${team.properties.jobId} <a href=${urls.Base}/Jobs/${team.properties.jobId} target='_blank'>View Job Details</a></div>\
+                    </div>`;
+
+                let jobOffset = jobOffsets[jobId] || 0;
+                jobOffsets[jobId] = jobOffset + 1;
+
+                console.debug(`SES team at [${lat},${lon}]: ${name}`);
+                let marker = MapLayer.createImageMarker(teamIcon);
+                marker.setOffset(16, -16 * jobOffset);
+                mapLayer.addMarker(lat, lon, marker, name, details);
+                mapLayer.addTextSymbol(lat, lon, name, 32, -16 * jobOffset);
+                count++;
+            }
+        }
+    }
+    console.info(`added ${count} SES teams`);
 }
 
 /**
@@ -764,7 +855,7 @@ console.info(`added ${count} RFS incidents`);
                     reason = "Unknown"
                 } else {
                  type = "Planned"
-                 reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1] 
+                 reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
              }
              CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
              contact = "Essential Energy 132 080"
@@ -1169,8 +1260,8 @@ const aircraft = [
     new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139', 'HEMS'),
 
     // RFS fixed wing aircraft
-    new Helicopter('A4C031', 'N405LC', 'Thor', 'C130', 'RFS'),
-    new Helicopter('ACC37A', 'N512AX', '', 'DC-10', 'RFS'), // Bomber 910?
+    new Helicopter('A4C031', 'N405LC', 'Thor', 'C130', 'RFS', false),
+    new Helicopter('ACC37A', 'N512AX', '', 'DC-10', 'RFS', false), // Bomber 910?
 
     // Whoa, there appear to be a lot of these...
     ];
@@ -1214,6 +1305,7 @@ const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
 const SimpleFillSymbol = eval('require("esri/symbols/SimpleFillSymbol");');
 const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
 const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
+const TextSymbol = eval('require("esri/symbols/TextSymbol");');
 const SpatialReference = eval('require("esri/SpatialReference");');
 const Polyline = eval('require("esri/geometry/Polyline");');
 const Point = eval('require("esri/geometry/Point");');
@@ -1270,31 +1362,34 @@ const Color = eval('require("esri/Color");');
      * @private
      */
      _handleClick(event) {
+        if (!event.graphic.attributes) {
+            return;
+        }
+
         // Show the info window for our point
         this._map.infoWindow.setTitle(event.graphic.attributes.title);
         this._map.infoWindow.setContent(event.graphic.attributes.details);
 
         if ($(this._map.infoWindow.domNode).find('#lhqPopUp').length) //if this is a HL popup box //TODO extend the object and hold the type in there
         {
-            console.log('this is a hq popup')
-            fetchHqDetails($('#lhqName').text(), function(hqdeets){
-                var c = 0
-                $.each(hqdeets.contacts,function(k,v){
-                    if (v.ContactTypeId == 4 || v.ContactTypeId == 3)
-                    {
-                        c++
-                        if (c%2 || c==0) //every other row
+            console.log('this is a hq popup');
+            fetchHqDetails($('#lhqName').text(), function (hqdeets) {
+                var c = 0;
+                $.each(hqdeets.contacts, function (k, v) {
+                    if (v.ContactTypeId == 4 || v.ContactTypeId == 3) {
+                        c++;
+                        if (c % 2 || c == 0) //every other row
                         {
-                            $('#lhqContacts').append('<tr><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
+                            $('#lhqContacts').append('<tr><td>' + v.Description.replace('Phone', '').replace('Number', '') + '</td><td>' + v.Detail + '</td></tr>');
                         } else {
                             $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
                         }
                     }
-                })
+                });
                 if (hqdeets.acred.length > 0) //fill otherwise placeholder
                 {
-                    $.each(hqdeets.acred,function(k,v){
-                        $('#lhqacred').append('<tr><td>'+v+'</td></tr>');
+                    $.each(hqdeets.acred, function (k, v) {
+                        $('#lhqacred').append('<tr><td>' + v + '</td></tr>');
                     })
                 } else {
                     $('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
@@ -1304,7 +1399,7 @@ const Color = eval('require("esri/Color");');
                 $('#lhqTeamCount').text(hqdeets.currentTeamCount)
 
 
-                $("#filterTo").click(function() {
+                $("#filterTo").click(function () {
                     filterViewModel.selectedEntities.removeAll();
                     filterViewModel.selectedEntities.push(hqdeets.Entity);
                     filterViewModel.updateFilters();
@@ -1312,7 +1407,7 @@ const Color = eval('require("esri/Color");');
 
                 });
 
-                $("#filterClear").click(function() {
+                $("#filterClear").click(function () {
                     filterViewModel.selectedEntities.removeAll();
                     filterViewModel.updateFilters();
                     this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
@@ -1320,7 +1415,7 @@ const Color = eval('require("esri/Color");');
                 });
 
             })
-}
+        }
         $(this._map.infoWindow.domNode).find('.actionList').addClass('hidden') //massive hack to remove the Zoom To actionlist dom.
         this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
     }
@@ -1357,8 +1452,8 @@ const Color = eval('require("esri/Color");');
         });
 
         let marker = new SimpleMarkerSymbol(style);
-        var graphic = new Graphic(point, marker)
-        graphic.setAttributes({title:title,details:details})
+        let graphic = new Graphic(point, marker);
+        graphic.setAttributes({title:title,details:details});
 
 
         this.graphicsLayer.add(graphic);
@@ -1369,8 +1464,6 @@ const Color = eval('require("esri/Color");');
      * Creates an image marker.
      *
      * @param imageUrl the URL for the marker's image.
-     * @param title the title for this marker.
-     * @param details the details for this marker's info pop-up.
      * @return the marker to customise.
      */
      static createImageMarker(imageUrl) {
@@ -1482,6 +1575,31 @@ const Color = eval('require("esri/Color");');
         this.graphicsLayer.add(lineGraphic);
     }
 
+    /**
+     * Adds a symbol marker to the map.
+     *
+     * @param lat the latitude.
+     * @param lon the longitude.
+     * @param text the text for the symbol.
+     * @param offsetX the offset (in pixels) to place the text relative to the point.
+     * @param offsetY the offset (in pixels) to place the text relative to the point.
+     * @return the text symbol to customise.
+     */
+    addTextSymbol(lat, lon, text, offsetX = 0, offsetY = 0) {
+        let point = new Point({
+            latitude: lat,
+            longitude: lon
+        });
+
+        let textSymbol = new TextSymbol(text);
+        textSymbol.setOffset(offsetX, offsetY);
+        textSymbol.setHorizontalAlignment('left');
+
+        let graphic = new Graphic(point, textSymbol);
+
+        this.graphicsLayer.add(graphic);
+        return textSymbol;
+    }
 
     /**
      * Clears all markers from the map.
