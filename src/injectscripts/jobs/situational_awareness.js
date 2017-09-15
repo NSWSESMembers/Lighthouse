@@ -160,10 +160,15 @@ function pageFullyLoaded(e) {
  * Sends the selected HQs & start/end date range to the content script.
  */
 function sendStateToContentScript() {
+    let startMoment = contentViewModel.filterViewModel.startDate();
+    let endMoment = contentViewModel.filterViewModel.endDate();
+    let startDate = startMoment ? startMoment.toDate() : null;
+    let endDate = endMoment ? endMoment.toDate() : null;
+
     let params = {
         hqs: contentViewModel.filterViewModel.selectedEntities.peek(),
-        startDate: contentViewModel.filterViewModel.startDate().toDate(),
-        endDate: contentViewModel.filterViewModel.endDate().toDate()
+        startDate: startDate,
+        endDate: endDate
     };
     window.postMessage({ type: 'LH_SELECTED_STATE', params: params }, '*');
 }
