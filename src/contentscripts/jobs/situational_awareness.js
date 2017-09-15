@@ -25,85 +25,85 @@ var endDate = null;
 // Add the buttons for the extra layers
 $(<li id="lhlayers">
     <a href="#" class="js-sub-menu-toggle">
-        <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
-        <span class="text">Lighthouse</span>
-        <i class="toggle-icon fa fa-angle-left"></i>
+    <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
+    <span class="text">Lighthouse</span>
+    <i class="toggle-icon fa fa-angle-left"></i>
     </a>
     <ul class="sub-menu ">
     <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <img src={sesIcon} style="width:14px;vertical-align:sub;margin-left:-12px;" />
-                <span class="text toggle-tag-text">NSW SES</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
-                        <span class="tag-text">SES LHQs</span>
-                    </span>
-                    <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
-                        <span class="tag-text">SES Team Locations</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;margin-left:-12px;float:left" />
-                <span class="text toggle-tag-text">Roads and Maritime Services</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
-                        <span class="tag-text">RMS Incidents</span>
-                    </span>
-                    <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
-                        <span class="tag-text">RMS Flood Reports</span>
-                    </span>
-                    <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
-                        <span class="tag-text">RMS Cameras</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <img src={rfscorpIcon} style="width:14px;vertical-align:top;margin-left:-12px;float:left" />
-                <span class="text toggle-tag-text">NSW Rural Fire Service</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
-                        <span class="tag-text">RFS Incidents</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <i class="toggle-icon-sub fa fa-bell"></i>
-                <span class="text toggle-tag-text">Other</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
-                        <span class="tag-text">Rescue Helicopters</span>
-                    </span>
-                    <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
-                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                        <span class="tag-text">Power Outages</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
+    <a class="js-sub-sub-menu-toggle" href="#">
+    <img src={sesIcon} style="width:14px;vertical-align:sub;margin-left:-12px;" />
+    <span class="text toggle-tag-text">NSW SES</span>
+    </a>
+    <ul class="sub-sub-menu">
+    <li class="clearfix">
+    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
+    <span class="tag-text">SES LHQs</span>
+    </span>
+    <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
+    <span class="tag-text">SES Team Locations</span>
+    </span>
+    </li>
     </ul>
-</li>).appendTo('#currentSituationLayers');
+    </li>
+    <li>
+    <a class="js-sub-sub-menu-toggle" href="#">
+    <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;margin-left:-12px;float:left" />
+    <span class="text toggle-tag-text">Roads and Maritime Services</span>
+    </a>
+    <ul class="sub-sub-menu">
+    <li class="clearfix">
+    <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
+    <span class="tag-text">RMS Incidents</span>
+    </span>
+    <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
+    <span class="tag-text">RMS Flood Reports</span>
+    </span>
+    <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
+    <span class="tag-text">RMS Cameras</span>
+    </span>
+    </li>
+    </ul>
+    </li>
+    <li>
+    <a class="js-sub-sub-menu-toggle" href="#">
+    <img src={rfscorpIcon} style="width:14px;vertical-align:top;margin-left:-12px;float:left" />
+    <span class="text toggle-tag-text">NSW Rural Fire Service</span>
+    </a>
+    <ul class="sub-sub-menu">
+    <li class="clearfix">
+    <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
+    <span class="tag-text">RFS Incidents</span>
+    </span>
+    </li>
+    </ul>
+    </li>
+    <li>
+    <a class="js-sub-sub-menu-toggle" href="#">
+    <i class="toggle-icon-sub fa fa-bell"></i>
+    <span class="text toggle-tag-text">Other</span>
+    </a>
+    <ul class="sub-sub-menu">
+    <li class="clearfix">
+    <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
+    <span class="tag-text">Rescue Helicopters</span>
+    </span>
+    <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
+    <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+    <span class="tag-text">Power Outages</span>
+    </span>
+    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>).appendTo('#currentSituationLayers');
 
 // The map of timers which will update the lighthouse map layers when enabled
 var timers = {};
@@ -203,7 +203,7 @@ $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
  * asks for the cameras via the fetchTransportResource function
  *
  */
-function requestTransportCamerasLayerUpdate() {
+ function requestTransportCamerasLayerUpdate() {
     console.debug('updating transport cameras layer');
     fetchTransportResource('transport-cameras');
 }
@@ -217,7 +217,7 @@ function requestPowerOutagesLayerUpdate() {
 /**
  * Requests an update to the SES teams location layer.
  */
-function requestSesTeamsLayerUpdate() {
+ function requestSesTeamsLayerUpdate() {
     console.debug('updating SES teams layer');
 
     if (!hqs) {
@@ -256,10 +256,16 @@ function requestSesTeamsLayerUpdate() {
                             let rawStatusTime = new Date(task.CurrentStatusTime);
                             let taskTime = new Date(rawStatusTime.getTime());
 
-                            if (taskTime < startDate || taskTime > endDate) {
+                            if (startDate != null && endDate != null) { //not null when viewing a date range, so all jobs are in play
+                                if (taskTime < startDate || taskTime > endDate) {
                                 // Filter any tasking outside the start / end date range
                                 return;
                             }
+                        }  else { //viewing "current" which means finalised are hidden
+                        if (task.Job.JobStatusType.Name == "Complete" || task.Job.JobStatusType.Name == "Finalised" || task.Job.JobStatusType.Name == "Cancelled" || task.Job.JobStatusType.Name == "Rejected") {
+                            return;
+                        }
+                    }
 
                             // it wasn't an un-task or a tasking (so its a action the team made like on route or onsite)
                             if (latestTime < taskTime && task.CurrentStatus !== "Tasked" && task.CurrentStatus !== "Untasked") {
@@ -275,8 +281,8 @@ function requestSesTeamsLayerUpdate() {
                                 'geometry': {
                                     'type': 'Point',
                                     'coordinates': [
-                                        latestTasking.Job.Address.Longitude,
-                                        latestTasking.Job.Address.Latitude
+                                    latestTasking.Job.Address.Longitude,
+                                    latestTasking.Job.Address.Latitude
                                     ]
                                 },
                                 'properties': {
@@ -299,13 +305,13 @@ function requestSesTeamsLayerUpdate() {
                         // No relevant tasking for this team
                         resolve(null);
                     });
-                }));
-            });
+}));
+});
 
-            console.debug(`Found ${promises.length} teams to query tasking for`);
-            mainResolve(promises);
+console.debug(`Found ${promises.length} teams to query tasking for`);
+mainResolve(promises);
 
-        }).then((promises) => {
+}).then((promises) => {
 
             // Wait for all the team tasking promises to complete
             Promise.all(promises).then(function (features) {
@@ -329,7 +335,7 @@ function requestSesTeamsLayerUpdate() {
                 passLayerDataToInject('ses-teams', error);
             });
         });
-    }, statusTypes);
+}, statusTypes);
 }
 
 /**
@@ -382,7 +388,7 @@ function requestSesTeamsLayerUpdate() {
  * @param layer the layer to fetch.
  * @param params an API key or something needed to fetch the resource.
  */
-function requestLayerUpdate(layer,params = {}) {
+ function requestLayerUpdate(layer,params = {}) {
     chrome.runtime.sendMessage({type: layer, params: params}, function (response) {
         if (response.error) {
             console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
@@ -398,7 +404,7 @@ function requestLayerUpdate(layer,params = {}) {
  * @param layer the layer to own the data.
  * @param response the data to use.
  */
-function passLayerDataToInject(layer,response) {
+ function passLayerDataToInject(layer,response) {
     window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: layer, response: response}, '*');
 }
 

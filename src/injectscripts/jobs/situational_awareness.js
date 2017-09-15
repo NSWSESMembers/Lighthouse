@@ -8,7 +8,9 @@ function pageFullyLoaded(e) {
 
     contentViewModel.filterViewModel.selectedEntities.subscribe(function() {
         sendStateToContentScript();
+        console.log('sending entities')
     });
+
     sendStateToContentScript();
 
     //hide the maximize button
