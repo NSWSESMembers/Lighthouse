@@ -629,7 +629,7 @@ console.info(`added ${count} RFS incidents`);
                 let marker = MapLayer.createImageMarker(teamIcon);
                 marker.setOffset(16, -16 * jobOffset);
                 mapLayer.addMarker(lat, lon, marker, name, details);
-                mapLayer.addTextSymbol(lat, lon, name, 32, -16 * jobOffset);
+                mapLayer.addTextSymbol(lat, lon, name, 28, -16 * jobOffset - 4);
                 count++;
             }
         }
@@ -1305,6 +1305,7 @@ const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
 const SimpleFillSymbol = eval('require("esri/symbols/SimpleFillSymbol");');
 const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
 const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
+const Font = eval('require("esri/symbols/Font");');
 const TextSymbol = eval('require("esri/symbols/TextSymbol");');
 const SpatialReference = eval('require("esri/SpatialReference");');
 const Polyline = eval('require("esri/geometry/Polyline");');
@@ -1494,7 +1495,7 @@ const Color = eval('require("esri/Color");');
      * Adds an image marker to the map by x/y and spatial ref.
      *
      * @param x the x.
-     * @param x the y.
+     * @param y the y.
      * @param SpatialReference the SpatialReference object.
      * @param imageUrl the URL for the marker's image.
      * @param title the title for this marker.
@@ -1512,6 +1513,8 @@ const Color = eval('require("esri/Color");');
      *
      * @param lat the latitude.
      * @param lon the longitude.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
      * @param marker the marker to add.
      */
      addMarker(lat, lon, marker, title='', details='') {
@@ -1530,6 +1533,8 @@ const Color = eval('require("esri/Color");');
      *
      * @param x the x.
      * @param y the y.
+     * @param title the title for this marker.
+     * @param details the details for this marker's info pop-up.
      * @param SpatialReferencePassed the SpatialReferencePassed object
      * @param marker the marker to add.
      */
@@ -1591,9 +1596,10 @@ const Color = eval('require("esri/Color");');
             longitude: lon
         });
 
-        let textSymbol = new TextSymbol(text);
-        textSymbol.setOffset(offsetX, offsetY);
-        textSymbol.setHorizontalAlignment('left');
+        let textSymbol = new TextSymbol(text)
+            .setOffset(offsetX, offsetY)
+            .setHorizontalAlignment('left')
+            .setFont(new Font().setFamily('monospace'));
 
         let graphic = new Graphic(point, textSymbol);
 
