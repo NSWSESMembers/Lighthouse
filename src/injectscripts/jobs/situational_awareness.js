@@ -1,12 +1,14 @@
+const LighthouseMap = require('../../../pages/lib/map/LighthouseMap.js');
+const MapLayer = require('../../../pages/lib/map/MapLayer.js');
 
 window.addEventListener('load', pageFullyLoaded, false);
 
 function pageFullyLoaded(e) {
     // Send the auth token to the content script
     console.debug('Sending access-token: ' + user.accessToken);
-    window.postMessage({ type: 'LH_USER_ACCESS_TOKEN', token: user.accessToken }, '*');
+    window.postMessage({type: 'LH_USER_ACCESS_TOKEN', token: user.accessToken}, '*');
 
-    contentViewModel.filterViewModel.selectedEntities.subscribe(function() {
+    contentViewModel.filterViewModel.selectedEntities.subscribe(function () {
         sendStateToContentScript();
         console.log('sending entities')
     });
@@ -32,54 +34,53 @@ function pageFullyLoaded(e) {
     lighthouseMap.createLayer('lhqs', 3);
 
     //bind to the click event for the jobs and fiddle with the popups Onclick
-    lighthouseMap.map._layers.graphicsLayer3.onClick.after.advice = function(event){
+    lighthouseMap._map._layers.graphicsLayer3.onClick.after.advice = function (event) {
         var jobid = /\/Jobs\/(\d.*?)\"/g.exec(event.graphic.infoTemplate.content)[1]
 
 
-
         var details =
-        `<div id='jobPopUp' style="margin-top:-5px">\
+            `<div id='jobPopUp' style="margin-top:-5px">\
         <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
         Loading...
         </span>
         </div>`
 
-       // Show the info window for our point
-       lighthouseMap.map.infoWindow.setTitle(event.graphic.infoTemplate.title);
-       lighthouseMap.map.infoWindow.setContent(details);
-        lighthouseMap.map.infoWindow.show(event.mapPoint); //show the popup
+        // Show the info window for our point
+        lighthouseMap._map.infoWindow.setTitle(event.graphic.infoTemplate.title);
+        lighthouseMap._map.infoWindow.setContent(details);
+        lighthouseMap._map.infoWindow.show(event.mapPoint); //show the popup
 
 
-        fetchJob(jobid,function(data){
-            fetchJobTasking(jobid,function(taskingdata){
+        fetchJob(jobid, function (data) {
+            fetchJobTasking(jobid, function (taskingdata) {
 
-            //Tasking
+                //Tasking
 
-            var c = 0
-            var rows = []
-            $.each(taskingdata.Results,function(k,v){
-                var timeDiff = moment(v.CurrentStatusTime).fromNow()
-                var members = $.map(v.Team.Members, function(obj){return obj.Person.FirstName +" "+ obj.Person.LastName}).join(', ')
-                if (members == "")
-                {
-                    members = "Empty team"
+                var c = 0
+                var rows = []
+                $.each(taskingdata.Results, function (k, v) {
+                    var timeDiff = moment(v.CurrentStatusTime).fromNow()
+                    var members = $.map(v.Team.Members, function (obj) {
+                        return obj.Person.FirstName + " " + obj.Person.LastName
+                    }).join(', ')
+                    if (members == "") {
+                        members = "Empty team"
+                    }
+                    c++
+                    if (c % 2 || c == 0) //every other row
+                    {
+                        rows.push('<tr style="text-transform:uppercase"><td><abbr title="' + members + '">' + v.Team.Callsign + '</abbr></td><td><abbr title="' + timeDiff + '">' + v.CurrentStatus + '</abbr></td></tr>');
+                    } else {
+                        rows.push('<tr style="background-color:#f0f0f0;text-transform:uppercase"><td><abbr title="' + members + '">' + v.Team.Callsign + '</abbr></td><td>' + v.CurrentStatus + '</td></tr>');
+                    }
+                })
+
+                if (rows.length == 0) {
+                    rows.push('<td colspan="2" style="font-style: italic">No Taskings</td>')
                 }
-                c++
-                        if (c%2 || c==0) //every other row
-                        {
-                            rows.push('<tr style="text-transform:uppercase"><td><abbr title="'+members+'">'+v.Team.Callsign+'</abbr></td><td><abbr title="'+timeDiff+'">'+v.CurrentStatus+'</abbr></td></tr>');
-                        } else {
-                            rows.push('<tr style="background-color:#f0f0f0;text-transform:uppercase"><td><abbr title="'+members+'">'+v.Team.Callsign+'</abbr></td><td>'+v.CurrentStatus+'</td></tr>');
-                        }
-                    })
 
-            if (rows.length == 0)
-            {
-                rows.push('<td colspan="2" style="font-style: italic">No Taskings</td>')
-            }
-
-            taskingTable =
-            `<div id='taskingHolder' style="padding-top:10px;width:100%;margin:auto">\
+                taskingTable =
+                    `<div id='taskingHolder' style="padding-top:10px;width:100%;margin:auto">\
             <table id='taskingTable' style="width:100%;text-align: center;">\
             <tr>\
             <td colspan="2" style="font-weight: bold">Team Tasking</td>
@@ -92,34 +93,33 @@ function pageFullyLoaded(e) {
             </table>\
             </div>`
 
-            // Job Tags
-            var tagArray = new Array();
-            $.each( data.Tags , function( tagIdx , tagObj ){
-                tagArray.push( tagObj.Name );
-            });
-            var tagString = ( tagArray.length ? tagArray.join(', ') : ('No Tags') );
+                // Job Tags
+                var tagArray = new Array();
+                $.each(data.Tags, function (tagIdx, tagObj) {
+                    tagArray.push(tagObj.Name);
+                });
+                var tagString = ( tagArray.length ? tagArray.join(', ') : ('No Tags') );
 
-            var bgcolor = 'none'
-            var txtcolor = 'black'
+                var bgcolor = 'none'
+                var txtcolor = 'black'
 
-            switch (data.JobPriorityType.Description)
-            {
-                case "Life Threatening":
-                bgcolor = "red"
-                txtcolor = 'white'
-                break
-                case "Priority Response":
-                bgcolor = "rgb(255, 165, 0)"
-                txtcolor = 'white'
-                break
-                case "Immediate Response":
-                bgcolor = "rgb(79, 146, 255)"
-                txtcolor = 'white'
-                break
-            }
+                switch (data.JobPriorityType.Description) {
+                    case "Life Threatening":
+                        bgcolor = "red"
+                        txtcolor = 'white'
+                        break
+                    case "Priority Response":
+                        bgcolor = "rgb(255, 165, 0)"
+                        txtcolor = 'white'
+                        break
+                    case "Immediate Response":
+                        bgcolor = "rgb(79, 146, 255)"
+                        txtcolor = 'white'
+                        break
+                }
 
-            details =
-            `<div id='jobType' style="margin:auto;text-align:center;font-weight: bold;background-color:${bgcolor};color:${txtcolor}">${data.JobType.Name} - ${data.JobStatusType.Name}</div>\
+                details =
+                    `<div id='jobType' style="margin:auto;text-align:center;font-weight: bold;background-color:${bgcolor};color:${txtcolor}">${data.JobType.Name} - ${data.JobStatusType.Name}</div>\
             <div id='jobPriority' style="margin:auto;text-align:center;background-color:${bgcolor};color:${txtcolor}"><span id='lhqStatus'>${data.JobPriorityType.Description}</span></div>\
             <div style="display:block;text-align: center;font-weight:bold;margin-top:10px">${data.Address.PrettyAddress}</div>\
             <div id='JobDetails' style="padding-top:10px;width:100%;margin:auto">\
@@ -134,14 +134,63 @@ function pageFullyLoaded(e) {
             ${data.EntityAssignedTo.Code} - ${data.EntityAssignedTo.ParentEntity.Code}
             </span>`;
 
-            $('#jobPopUp').html(details)
+                $('#jobPopUp').html(details)
+            })
         })
-})
-};
+    };
+
+    lighthouseMap.addClickHandler(function (event) {
+        if ($(lighthouseMap._map.infoWindow.domNode).find('#lhqPopUp').length) //if this is a HL popup box //TODO extend the object and hold the type in there
+        {
+            console.log('this is a hq popup');
+            fetchHqDetails($('#lhqName').text(), function (hqdeets) {
+                var c = 0;
+                $.each(hqdeets.contacts, function (k, v) {
+                    if (v.ContactTypeId == 4 || v.ContactTypeId == 3) {
+                        c++;
+                        if (c % 2 || c == 0) //every other row
+                        {
+                            $('#lhqContacts').append('<tr><td>' + v.Description.replace('Phone', '').replace('Number', '') + '</td><td>' + v.Detail + '</td></tr>');
+                        } else {
+                            $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
+                        }
+                    }
+                });
+                if (hqdeets.acred.length > 0) //fill otherwise placeholder
+                {
+                    $.each(hqdeets.acred, function (k, v) {
+                        $('#lhqacred').append('<tr><td>' + v + '</td></tr>');
+                    })
+                } else {
+                    $('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
+                }
+                $('#lhqStatus').text(hqdeets.HeadquartersStatus)
+                $('#lhqJobCount').text(hqdeets.currentJobCount)
+                $('#lhqTeamCount').text(hqdeets.currentTeamCount)
+
+
+                $("#filterTo").click(function () {
+                    filterViewModel.selectedEntities.removeAll();
+                    filterViewModel.selectedEntities.push(hqdeets.Entity);
+                    filterViewModel.updateFilters();
+                    lighthouseMap._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
+
+                });
+
+                $("#filterClear").click(function () {
+                    filterViewModel.selectedEntities.removeAll();
+                    filterViewModel.updateFilters();
+                    lighthouseMap._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
+
+                });
+
+            })
+        }
+    });
 
     if (developmentMode) {
         // Add a test point
-        lighthouseMap.layers['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon, 'Parramatta SES',
+        lighthouseMap.layers()['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon, 'Parramatta SES',
             'This is a test marker. It is used to check whether the map access is working');
     }
     window['lighthouseMap'] = lighthouseMap;
@@ -189,7 +238,7 @@ window.addEventListener("message", function(event) {
 
         } else if (event.data.type === "LH_UPDATE_LAYERS_DATA") {
             let mapLayerName = event.data.layer;
-            let mapLayer = lighthouseMap.layers[mapLayerName];
+            let mapLayer = lighthouseMap.layers()[mapLayerName];
             mapLayer.clear();
 
             if (event.data.layer === 'rfs') {
@@ -212,7 +261,7 @@ window.addEventListener("message", function(event) {
 
         } else if (event.data.type === "LH_CLEAR_LAYER_DATA") {
             console.info("clearing layer:" + event.data.layer);
-            lighthouseMap.layers[event.data.layer].clear();
+            lighthouseMap.layers()[event.data.layer].clear();
         } else if (event.data.type === "LH_GET_TRANSPORT_KEY") {
             var transportApiKeyOpsLog = '';
             switch (urls.Base)
@@ -1300,320 +1349,7 @@ var aircraftLastPositions = {};
 // Load all the arcgis classes
 // These need to be called in 'eval' wrappers because the JS already in the
 // page will have loaded these already, and require doesn't double load modules by-design
-const GraphicsLayer = eval('require("esri/layers/GraphicsLayer");');
-const SimpleMarkerSymbol = eval('require("esri/symbols/SimpleMarkerSymbol");');
-const SimpleFillSymbol = eval('require("esri/symbols/SimpleFillSymbol");');
 const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
-const PictureMarkerSymbol = eval('require("esri/symbols/PictureMarkerSymbol");');
-const Font = eval('require("esri/symbols/Font");');
-const TextSymbol = eval('require("esri/symbols/TextSymbol");');
-const SpatialReference = eval('require("esri/SpatialReference");');
-const Polyline = eval('require("esri/geometry/Polyline");');
-const Point = eval('require("esri/geometry/Point");');
-const Graphic = eval('require("esri/graphic");');
-const Color = eval('require("esri/Color");');
-
-/**
- * A class for helping out with map access.
- */
- class LighthouseMap {
-
-    /**
-     * Constructs a new map.
-     *
-     * @param map the arcgis map.
-     */
-     constructor(map) {
-        this.map = map;
-
-        console.debug('Setting up map');
-
-        this.createLayer('default');
-    }
-
-    /**
-     * Creates a map layer.
-     *
-     * @param name the name of the layer.
-     * @param optionalIndex the optional index to insert the layer at. If undefined the layer is added to the top of
-     *   the map.
-     */
-     createLayer(name, optionalIndex) {
-        let graphicsLayer = new GraphicsLayer();
-        graphicsLayer.id = 'lighthouseLayer-' + name;
-        graphicsLayer.on('click', this._handleClick);
-
-        this.map.addLayer(graphicsLayer, optionalIndex);
-        this.layers[name] = new MapLayer(graphicsLayer);
-    }
-
-    /**
-     * Gets the map layers.
-     *
-     * @returns the layers.
-     */
-     layers() {
-        return this._layers;
-    }
-
-    /**
-     * Handles a click event from the our map graphics layer.
-     *
-     * @param event the event.
-     * @private
-     */
-     _handleClick(event) {
-        if (!event.graphic.attributes) {
-            return;
-        }
-
-        // Show the info window for our point
-        this._map.infoWindow.setTitle(event.graphic.attributes.title);
-        this._map.infoWindow.setContent(event.graphic.attributes.details);
-
-        if ($(this._map.infoWindow.domNode).find('#lhqPopUp').length) //if this is a HL popup box //TODO extend the object and hold the type in there
-        {
-            console.log('this is a hq popup');
-            fetchHqDetails($('#lhqName').text(), function (hqdeets) {
-                var c = 0;
-                $.each(hqdeets.contacts, function (k, v) {
-                    if (v.ContactTypeId == 4 || v.ContactTypeId == 3) {
-                        c++;
-                        if (c % 2 || c == 0) //every other row
-                        {
-                            $('#lhqContacts').append('<tr><td>' + v.Description.replace('Phone', '').replace('Number', '') + '</td><td>' + v.Detail + '</td></tr>');
-                        } else {
-                            $('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
-                        }
-                    }
-                });
-                if (hqdeets.acred.length > 0) //fill otherwise placeholder
-                {
-                    $.each(hqdeets.acred, function (k, v) {
-                        $('#lhqacred').append('<tr><td>' + v + '</td></tr>');
-                    })
-                } else {
-                    $('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
-                }
-                $('#lhqStatus').text(hqdeets.HeadquartersStatus)
-                $('#lhqJobCount').text(hqdeets.currentJobCount)
-                $('#lhqTeamCount').text(hqdeets.currentTeamCount)
-
-
-                $("#filterTo").click(function () {
-                    filterViewModel.selectedEntities.removeAll();
-                    filterViewModel.selectedEntities.push(hqdeets.Entity);
-                    filterViewModel.updateFilters();
-                    this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
-
-                });
-
-                $("#filterClear").click(function () {
-                    filterViewModel.selectedEntities.removeAll();
-                    filterViewModel.updateFilters();
-                    this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
-
-                });
-
-            })
-        }
-        $(this._map.infoWindow.domNode).find('.actionList').addClass('hidden') //massive hack to remove the Zoom To actionlist dom.
-        this._map.infoWindow.show(event.mapPoint); //show the popup, callsbacks will fill data as it comes in
-    }
-}
-
-/**
- * A class for helping out with map layer access.
- */
- class MapLayer {
-
-    /**
-     * Constructs a new map layer.
-     *
-     * @param layer the arcgis graphics layer.
-     */
-     constructor(layer) {
-        this.graphicsLayer = layer;
-    }
-
-    /**
-     * Adds a symbol marker to the map.
-     *
-     * @param lat the latitude.
-     * @param lon the longitude.
-     * @param style the marker style, e.g. SimpleMarkerSymbol.STYLE_SQUARE.
-     * @param title the title for this marker.
-     * @param details the details for this marker's info pop-up.
-     * @return the marker to customise.
-     */
-     addSymbolMarker(lat, lon, style, title='', details='') {
-        let point = new Point({
-            latitude: lat,
-            longitude: lon
-        });
-
-        let marker = new SimpleMarkerSymbol(style);
-        let graphic = new Graphic(point, marker);
-        graphic.setAttributes({title:title,details:details});
-
-
-        this.graphicsLayer.add(graphic);
-        return marker;
-    }
-
-    /**
-     * Creates an image marker.
-     *
-     * @param imageUrl the URL for the marker's image.
-     * @return the marker to customise.
-     */
-     static createImageMarker(imageUrl) {
-        let marker = new PictureMarkerSymbol();
-        marker.setHeight(16);
-        marker.setWidth(16);
-        marker.setUrl(imageUrl);
-        return marker;
-    }
-
-    /**
-     * Adds an image marker to the map.
-     *
-     * @param lat the latitude.
-     * @param lon the longitude.
-     * @param imageUrl the URL for the marker's image.
-     * @param title the title for this marker.
-     * @param details the details for this marker's info pop-up.
-     * @return the marker to customise.
-     */
-     addImageMarker(lat, lon, imageUrl, title='', details='') {
-        let marker = MapLayer.createImageMarker(imageUrl);
-        this.addMarker(lat, lon, marker, title, details);
-        return marker;
-    }
-
-    /**
-     * Adds an image marker to the map by x/y and spatial ref.
-     *
-     * @param x the x.
-     * @param y the y.
-     * @param SpatialReference the SpatialReference object.
-     * @param imageUrl the URL for the marker's image.
-     * @param title the title for this marker.
-     * @param details the details for this marker's info pop-up.
-     * @return the marker to customise.
-     */
-     addImageMarkerByxy(x, y, SpatialReference, imageUrl, title='', details='') {
-        let marker = MapLayer.createImageMarker(imageUrl);
-        this.addMarkerByxy(x, y, SpatialReference, marker, title, details);
-        return marker;
-    }
-
-    /**
-     * Adds an marker to the map.
-     *
-     * @param lat the latitude.
-     * @param lon the longitude.
-     * @param title the title for this marker.
-     * @param details the details for this marker's info pop-up.
-     * @param marker the marker to add.
-     */
-     addMarker(lat, lon, marker, title='', details='') {
-        let point = new Point({
-            latitude: lat,
-            longitude: lon
-        });
-        var graphic = new Graphic(point, marker)
-        graphic.setAttributes({title:title,details:details})
-
-        this.graphicsLayer.add(graphic);
-    }
-
-    /**
-     * Adds an marker to the map by xy and spatial ref.
-     *
-     * @param x the x.
-     * @param y the y.
-     * @param title the title for this marker.
-     * @param details the details for this marker's info pop-up.
-     * @param SpatialReferencePassed the SpatialReferencePassed object
-     * @param marker the marker to add.
-     */
-     addMarkerByxy(x, y, SpatialReferencePassed, marker, title='', details='') {
-        let point = new Point(x,y,new SpatialReference(SpatialReferencePassed));
-        var graphic = new Graphic(point, marker)
-        graphic.setAttributes({title:title,details:details})
-        this.graphicsLayer.add(graphic);
-    }
-
-    /**
-     * Removes a marker from the map.
-     *
-     * @param marker the marker to remove.
-     */
-     removeMarker(marker) {
-        this.graphicsLayer.remove(marker);
-    }
-
-    /**
-     * Adds a polygon.
-     *
-     * @param points the array of arrays of [lon/lat] points.
-     * @param outlineColour the outline colour.
-     * @param fillColour the fill colour.
-     * @param thickness the line thickness.
-     * @param style the line style.
-     */
-     addPolygon(points, outlineColour, fillColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID, title='', details='') {
-        let polySymbol = new SimpleFillSymbol();
-        polySymbol.setOutline(new SimpleLineSymbol(style, new Color(outlineColour), thickness));
-        polySymbol.setColor(new Color(fillColour));
-
-
-        // expect GPS lat/long data
-        let lineGeometry = new Polyline(new SpatialReference({wkid:4326}));
-        lineGeometry.addPath(points);
-
-        let lineGraphic = new Graphic(lineGeometry, polySymbol);
-        lineGraphic.setAttributes({title:title,details:details})
-        
-
-        this.graphicsLayer.add(lineGraphic);
-    }
-
-    /**
-     * Adds a symbol marker to the map.
-     *
-     * @param lat the latitude.
-     * @param lon the longitude.
-     * @param text the text for the symbol.
-     * @param offsetX the offset (in pixels) to place the text relative to the point.
-     * @param offsetY the offset (in pixels) to place the text relative to the point.
-     * @return the text symbol to customise.
-     */
-    addTextSymbol(lat, lon, text, offsetX = 0, offsetY = 0) {
-        let point = new Point({
-            latitude: lat,
-            longitude: lon
-        });
-
-        let textSymbol = new TextSymbol(text)
-            .setOffset(offsetX, offsetY)
-            .setHorizontalAlignment('left')
-            .setFont(new Font().setFamily('monospace'));
-
-        let graphic = new Graphic(point, textSymbol);
-
-        this.graphicsLayer.add(graphic);
-        return textSymbol;
-    }
-
-    /**
-     * Clears all markers from the map.
-     */
-     clear() {
-        this.graphicsLayer.clear();
-    }
-}
 
 // Instance the tour
 require('bootstrap-tour')
