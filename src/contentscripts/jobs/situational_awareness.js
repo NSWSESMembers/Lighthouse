@@ -2,7 +2,7 @@ const $ = require('jquery');
 const DOM = require('jsx-dom-factory');
 const moment = require('moment');
 const inject = require('../../../lib/inject.js');
-const MapManager = require('../../../pages/lib/map/MapManager.js');
+const MapManager = require('../../../pages/lib/map/ContentScriptMapManager.js');
 
 //inject the coded needed to fix visual problems
 //needs to be injected so that it runs after the DOMs are created

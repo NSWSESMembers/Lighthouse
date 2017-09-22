@@ -13,9 +13,9 @@ const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
 const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
 
 /**
- * A class for helping out with map layer access.
+ * A class for helping out with map layer access on the content script side.
  */
-module.exports = class MapManager {
+module.exports = class ContentScriptMapManager {
 
     /**
      * Constructs a new map manager.
@@ -122,7 +122,7 @@ module.exports = class MapManager {
         this._registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', this._requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', this._requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', this._requestTransportCamerasLayerUpdate, 10 * 60000); // every 10 mins
-        this._registerClickHandler('toggleHelicoptersBtn', 'helicopters', MapManager._requestHelicoptersLayerUpdate, 10000); // every 10s
+        this._registerClickHandler('toggleHelicoptersBtn', 'helicopters', ContentScriptMapManager._requestHelicoptersLayerUpdate, 10000); // every 10s
         this._registerClickHandler('toggleSesTeamsBtn', 'ses-teams', this._requestSesTeamsLayerUpdate, 5 * 60000); // every 5 minutes
         this._registerClickHandler('togglePowerOutagesBtn', 'power-outages', this._requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('togglelhqsBtn', 'lhqs', this._requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
@@ -200,7 +200,7 @@ module.exports = class MapManager {
     _requestLhqsLayerUpdate() {
         console.debug('updating LHQs layer');
         $.getJSON(chrome.extension.getURL('resources/SES_HQs.geojson'), function (data) {
-            MapManager._passLayerDataToInject('lhqs', data);
+            ContentScriptMapManager._passLayerDataToInject('lhqs', data);
         }.bind(this))
     }
 
@@ -255,7 +255,7 @@ module.exports = class MapManager {
         }
 
         LighthouseTeam.getTeamGeoJson(this._hqs, this._startDate, this._endDate, this._token, function(result) {
-            MapManager._passLayerDataToInject('ses-teams', result);
+            ContentScriptMapManager._passLayerDataToInject('ses-teams', result);
         }.bind(this));
     }
 
@@ -310,7 +310,7 @@ module.exports = class MapManager {
             if (response.error) {
                 console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
             } else {
-                MapManager._passLayerDataToInject(layer, response)
+                ContentScriptMapManager._passLayerDataToInject(layer, response)
             }
         }.bind(this));
     }
