@@ -3,19 +3,11 @@ const DOM = require('jsx-dom-factory');
 const moment = require('moment');
 const inject = require('../../../lib/inject.js');
 const LighthouseTeam = require('../../../pages/lib/shared_team_code.js');
+const MapManager = require('../../../pages/lib/map/MapManager.js');
 
 //inject the coded needed to fix visual problems
 //needs to be injected so that it runs after the DOMs are created
 inject('jobs/situational_awareness.js');
-
-const lighthouseIcon = chrome.extension.getURL('icons/lh-black.png');
-const teamIcon = chrome.extension.getURL('icons/bus.png');
-const helicopterIcon = chrome.extension.getURL('icons/helicopter.png');
-const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');
-const lhqIcon = chrome.extension.getURL('icons/ses.png');
-const rmsIcon = chrome.extension.getURL('icons/rms.png');
-const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
-const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
 
 var token = null;
 var hqs = null;
@@ -23,87 +15,7 @@ var startDate = null;
 var endDate = null;
 
 // Add the buttons for the extra layers
-$(<li id="lhlayers">
-    <a href="#" class="js-sub-menu-toggle">
-        <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
-        <span class="text">Lighthouse</span>
-        <i class="toggle-icon fa fa-angle-left"></i>
-    </a>
-    <ul class="sub-menu ">
-    <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <img src={sesIcon} style="width:14px;vertical-align:sub;margin-left:-12px;" />
-                <span class="text toggle-tag-text">NSW SES</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
-                        <span class="tag-text">SES LHQs</span>
-                    </span>
-                    <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
-                        <span class="tag-text">SES Team Locations</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;margin-left:-12px;float:left" />
-                <span class="text toggle-tag-text">Roads and Maritime Services</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
-                        <span class="tag-text">RMS Incidents</span>
-                    </span>
-                    <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
-                        <span class="tag-text">RMS Flood Reports</span>
-                    </span>
-                    <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
-                        <span class="tag-text">RMS Cameras</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <img src={rfscorpIcon} style="width:14px;vertical-align:top;margin-left:-12px;float:left" />
-                <span class="text toggle-tag-text">NSW Rural Fire Service</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
-                        <span class="tag-text">RFS Incidents</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a class="js-sub-sub-menu-toggle" href="#">
-                <i class="toggle-icon-sub fa fa-bell"></i>
-                <span class="text toggle-tag-text">Other</span>
-            </a>
-            <ul class="sub-sub-menu">
-                <li class="clearfix">
-                    <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
-                        <span class="tag-text">Rescue Helicopters</span>
-                    </span>
-                    <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
-                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                        <span class="tag-text">Power Outages</span>
-                    </span>
-                </li>
-            </ul>
-        </li>
-    </ul>
-</li>).appendTo('#currentSituationLayers');
+MapManager.createLayerMenu().appendTo('#currentSituationLayers');
 
 // The map of timers which will update the lighthouse map layers when enabled
 var timers = {};
@@ -226,116 +138,9 @@ function requestSesTeamsLayerUpdate() {
         return;
     }
 
-    let host = location.origin;
-
-    let lastDay = new Date();
-    lastDay.setDate(lastDay.getDate() - 1);
-
-    // Grab teams from the last year
-    let teamStartRange = new Date();
-    teamStartRange.setFullYear(teamStartRange.getFullYear() - 1);
-    let teamEndRange = new Date();
-    let statusTypes = [3]; // Only get activated teams
-
-    LighthouseTeam.get_teams(hqs, host, teamStartRange, teamEndRange, token, function (teams) {
-
-        // Make a promise to collect all the team details in promises
-        new Promise((mainResolve) => {
-            let promises = [];
-
-            teams.Results.forEach(function (team) {
-
-                // Create a promise for this team to check its tasking and details
-                promises.push(new Promise((resolve) => {
-                    LighthouseTeam.get_tasking(team.Id, host, token, function (teamTasking) {
-                        let latestTasking = null;
-                        let latestTime = null;
-
-                        // Find the latest tasking
-                        teamTasking.Results.forEach(function (task) {
-                            let rawStatusTime = new Date(task.CurrentStatusTime);
-                            let taskTime = new Date(rawStatusTime.getTime());
-
-                            if (startDate != null && endDate != null) { //not null when viewing a date range, so all jobs are in play
-                                if (taskTime < startDate || taskTime > endDate) {
-                                    // Filter any tasking outside the start / end date range
-                                    return;
-                                }
-                            } else { //viewing "current" which means finalised are hidden
-                                if (task.Job.JobStatusType.Name == "Complete" || task.Job.JobStatusType.Name == "Finalised" || task.Job.JobStatusType.Name == "Cancelled" || task.Job.JobStatusType.Name == "Rejected") {
-                                    return;
-                                }
-                            }
-
-                            // it wasn't an un-task or a tasking (so its a action the team made like on route or onsite)
-                            if (latestTime < taskTime && task.CurrentStatus !== "Tasked" && task.CurrentStatus !== "Untasked") {
-                                latestTasking = task;
-                                latestTime = taskTime;
-                            }
-                        });
-
-                        // If valid tasking was found, add that into a geoJson feature
-                        if (latestTasking !== null) {
-                            let feature = {
-                                'type': 'Feature',
-                                'geometry': {
-                                    'type': 'Point',
-                                    'coordinates': [
-                                        latestTasking.Job.Address.Longitude,
-                                        latestTasking.Job.Address.Latitude
-                                    ]
-                                },
-                                'properties': {
-                                    'teamId': latestTasking.Team.Id,
-                                    'teamCallsign': latestTasking.Team.Callsign,
-                                    'onsite': latestTasking.Onsite,
-                                    'offsite': latestTasking.Offsite,
-                                    'currentStatusTime': latestTasking.CurrentStatusTime,
-                                    'jobId': latestTasking.Job.Id,
-                                }
-                            };
-
-                            if (latestTasking.PrimaryTaskType) {
-                                feature.properties.primaryTask = latestTasking.PrimaryTaskType.Name;
-                            }
-
-                            resolve(feature);
-                        }
-
-                        // No relevant tasking for this team
-                        resolve(null);
-                    });
-                }));
-            });
-
-            console.debug(`Found ${promises.length} teams to query tasking for`);
-            mainResolve(promises);
-
-        }).then((promises) => {
-
-            // Wait for all the team tasking promises to complete
-            Promise.all(promises).then(function (features) {
-
-                let geoJson = {
-                    'type': 'FeatureCollection',
-                    'features': []
-                };
-
-                // Collect all non-null features
-                features.forEach(function (feature) {
-                    if (feature) {
-                        geoJson.features.push(feature);
-                    }
-                });
-
-                console.debug('Found ' + geoJson.features.length + ' teams');
-                passLayerDataToInject('ses-teams', geoJson);
-
-            }, function (error) {
-                passLayerDataToInject('ses-teams', error);
-            });
-        });
-    }, statusTypes);
+    LighthouseTeam.getTeamGeoJson(hqs, startDate, endDate, token, function(result) {
+        passLayerDataToInject('ses-teams', result);
+    });
 }
 
 /**
