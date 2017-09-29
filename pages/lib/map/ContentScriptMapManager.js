@@ -40,7 +40,7 @@ module.exports = class ContentScriptMapManager {
             <ul class="sub-menu ">
                 <li>
                     <a class="js-sub-sub-menu-toggle" href="#">
-                        <img src={sesIcon} style="width:14px;vertical-align:sub;margin-left:-12px;" />
+                        <img src={sesIcon} style="width:14px;vertical-align:sub;margin-right:7px;" />
                         <span class="text toggle-tag-text">NSW SES</span>
                     </a>
                     <ul class="sub-sub-menu">
@@ -58,7 +58,7 @@ module.exports = class ContentScriptMapManager {
                 </li>
                 <li>
                     <a class="js-sub-sub-menu-toggle" href="#">
-                        <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;margin-left:-12px;float:left" />
+                        <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;float:left;margin-right:7px;" />
                         <span class="text toggle-tag-text">Roads and Maritime Services</span>
                     </a>
                     <ul class="sub-sub-menu">
@@ -80,7 +80,7 @@ module.exports = class ContentScriptMapManager {
                 </li>
                 <li>
                     <a class="js-sub-sub-menu-toggle" href="#">
-                        <img src={rfscorpIcon} style="width:14px;vertical-align:top;margin-left:-12px;float:left" />
+                        <img src={rfscorpIcon} style="width:14px;vertical-align:top;float:left;margin-right:7px;" />
                         <span class="text toggle-tag-text">NSW Rural Fire Service</span>
                     </a>
                     <ul class="sub-sub-menu">
