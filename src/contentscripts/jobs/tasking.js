@@ -1,6 +1,7 @@
 var inject = require('../../../lib/inject.js');
 var $ = require('jquery');
 var DOM = require('jsx-dom-factory');
+const MapManager = require('../../../pages/lib/map/ContentScriptMapManager.js');
 
 // Add team create button to team tab
 $(
@@ -24,3 +25,10 @@ $(
 //inject the coded needed to fix visual problems
 //needs to be injected so that it runs after the DOMs are created
 inject('jobs/tasking.js');
+
+const mapManager = new MapManager();
+
+// Add the buttons for the extra layers
+let mapButton = $('li.menu-heading').eq(2).next();
+MapManager.createLayerMenu().insertAfter(mapButton).last();
+mapManager.initialise();
