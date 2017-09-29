@@ -181,8 +181,18 @@ $('fieldset.col-md-12').each(function(k,v){
 
 })
 
+job_lighthouse_actions = (
+  <div id="lighthouse_actions" class="widget actions-box" style="">
+    <div class="widget-header">
+        <h3><img style="width:16px;vertical-align:inherit;margin-right:5px"
+  src={chrome.extension.getURL("icons/lh-black.png")} /> Lighthouse Actions</h3>
+    </div>
+    <div class="widget-content" id="lighthouse_actions_content">
+    </div>
+  </div>
+)
 
-
+$('div.widget.actions-box').after(job_lighthouse_actions)
 
 
 // inject the coded needed to fix visual problems
