@@ -101,7 +101,7 @@ module.exports = class ContentScriptMapManager {
                         <li class="clearfix">
                     <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
                         <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
-                        <span class="tag-text">Rescue Helicopters</span>
+                        <span class="tag-text">Rescue Aircraft</span>
                     </span>
                             <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
                         <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
