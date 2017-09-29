@@ -160,6 +160,8 @@ whenTeamsAreReady(function(){
   taskingItems_prepare();
 
   quickTask = return_quicktaskbutton()
+  quickSector = return_quicksectorbutton()
+  quickCategory = return_quickcategorybutton()
 
   //the quicktask button
   $(quickTask).find('button').click(function() {
@@ -169,9 +171,28 @@ whenTeamsAreReady(function(){
     }
   })
 
-  if (masterViewModel.canTask.peek() == true)
+    //the quicktask button
+    $(quickSector).find('button').click(function() {
+      if ($(quickSector).hasClass("open") == false)
+      {
+        InstantSectorButton()
+      }
+    })
+
+    //the quicktask button
+    $(quickCategory).find('button').click(function() {
+      if ($(quickCategory).hasClass("open") == false)
+      {
+        InstantCategoryButton()
+      }
+    })
+
+  if (masterViewModel.canTask.peek() == true) //this role covers sectors and category as well
   {
-    $('div.widget.actions-box div.widget-content').append(quickTask);
+    $('#lighthouse_actions_content').append(quickTask);
+    $('#lighthouse_actions_content').append(quickSector);
+    $('#lighthouse_actions_content').append(quickCategory);
+
   }
 
 });
@@ -315,6 +336,150 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
   }
 });
 
+
+function InstantCategoryButton() {
+  if ( $(quickCategory).find('li').length < 1 ) {
+    var categories = ["NA", "1", "2", "3", "4", "5"];
+    finalli = []
+    categories.forEach(function(entry) {
+
+      item = (<li><a style="text-align:left" href="#">{entry}</a></li>);
+    //click handler
+    $(item).click(function (e) {
+      SetCategory(entry)
+      e.preventDefault();
+    })
+    finalli.push(item)
+  })
+    $(quickCategory).find('ul').append(finalli)
+  }
+
+  function SetCategory(id) {
+    if (id == 'NA')
+    {
+      id = 0
+    } else {
+      id = parseInt(id)
+    }
+    $.ajax({
+      type: 'POST'
+      , url: urls.Base+'/Api/v1/Jobs/BulkCategorise'
+      , beforeSend: function(n) {
+        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      }
+      , data: {Id: id, Ids: [jobId], LighthouseFunction: 'SetCategory'}
+      , cache: false
+      , dataType: 'json'
+      , complete: function(response, textStatus) {
+        if (response.status == 204)
+        {
+        masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
+      }
+    }
+  })
+  }
+
+}
+
+function InstantSectorButton() {
+
+  $(quickSector).find('ul').empty();
+  var loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
+  $(quickSector).find('ul').append(loading)
+
+   //fetch the job and check its tasking status to ensure the data is fresh and not stale on page.
+   $.ajax({
+    type: 'GET'
+    , url: urls.Base+'/Api/v1/Sectors/Search?entityIds[]='+user.currentHqId+'&statusIds=1&viewModelType=2&pageSize=100&pageIndex=1'
+    , beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
+    , cache: false
+    , dataType: 'json'
+    , data: {LighthouseFunction: 'InstantSectorButton'}
+    , complete: function(response, textStatus) {
+     // console.log('textStatus = "%s"', textStatus, response);
+      if (textStatus == 'success')
+      {
+
+        if(response.responseJSON.Results.length) {
+          $(quickSector).find('ul').empty();
+
+          var data = response.responseJSON
+
+          finalli = []
+          data.Results.forEach(function(entry) {
+            if (masterViewModel.sector.peek() != null)
+            {
+              currentsector = masterViewModel.sector.peek().Id
+            } else {
+              currentsector = null
+
+            }
+            if (entry.Id != currentsector) //if its not the same as the current sector
+            {
+              item = (<li><a style="text-align:left" href="#">{entry.Name}</a></li>);
+            } else { //if it is the same, make it bold.
+              item = (<li><a style="text-align:left" href="#"><b>{entry.Name}</b></a></li>);
+            }
+            $(item).click(function (e) {
+              SetSector(entry,currentsector)
+              e.preventDefault();
+            })
+            finalli.push(item)
+          })
+          $(quickSector).find('ul').append(finalli)
+        } else {
+          no_results = (<li><a href="#">No Open Sectors</a></li>)
+          $(quickTask).find('ul').append(no_results)
+        }
+      }
+    }
+  })
+
+function SetSector(sector,currentsector) {
+  if (sector.Id != currentsector) //if its not the same as the current sector
+  {
+    $.ajax({
+      type: 'PUT'
+      , url: urls.Base+'/Api/v1/Sectors/'+sector.Id+'/Jobs'
+      , beforeSend: function(n) {
+        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      }
+      , data: {IdsToAdd: [jobId], LighthouseFunction: 'SetSector'}
+      , cache: false
+      , dataType: 'json'
+      , complete: function(response, textStatus) {
+        if (response.status == 200)
+        {
+        masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
+      }
+    }
+  })
+  } else { //if its the same, then remove it.
+    $.ajax({
+      type: 'PUT'
+      , url: urls.Base+'/Api/v1/Sectors/RemoveJobFromSector/'+jobId
+      , beforeSend: function(n) {
+        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+      }
+      , data: {LighthouseFunction: 'SetSector'}
+      , cache: false
+      , dataType: 'json'
+      , complete: function(response, textStatus) {
+        if (response.status == 200)
+        {
+        masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
+      }
+    }
+  })
+  }
+}
+}
+
   ////Quick Task Stuff
 
   function InstantTaskButton() {
@@ -438,8 +603,9 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 
 
             //click handler
-            $(item).click(function () {
+            $(item).click(function (e) {
               TaskTeam(v.Id)
+              e.preventDefault();
             })
 
           }
@@ -512,8 +678,6 @@ function TaskTeam(teamID) {
         masterViewModel.teamsViewModel.loadTaskedTeams() //load teams
         masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
         masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
-
-
       }
     }
   })
@@ -572,7 +736,7 @@ function return_untask_button() {
     margin-right: -12px;
     margin-top: -12px;
     margin-left: 10px;
-">×</span>)
+    ">×</span>)
 }
 
 
@@ -614,8 +778,30 @@ $(document).ready(function() {
 
 function return_quicktaskbutton() {
   return (
-    <div id="lighthouse_instanttask" style="position:relative;display:inline-block;vertical-align:middle" class="dropdown">
-    <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
+    <div id="lighthouse_instanttask" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
+    <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu scrollable-menu">
+    </ul>
+    </div>
+    )
+}
+
+function return_quicksectorbutton() {
+  return (
+    <div id="lighthouse_instantsector" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
+    <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" id="lhsectorbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Sector
+    <span class="caret"></span></button>
+    <ul class="dropdown-menu scrollable-menu">
+    </ul>
+    </div>
+    )
+}
+
+function return_quickcategorybutton() {
+  return (
+    <div id="lighthouse_instantcategory" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
+    <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhcategorybutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Category
     <span class="caret"></span></button>
     <ul class="dropdown-menu scrollable-menu">
     </ul>
