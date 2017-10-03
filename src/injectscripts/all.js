@@ -523,7 +523,9 @@ function LoadTeamFilterCollections() {
 //Load the saved Collections
 theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseTeamFilterCollections"));
 if (theLoadedCollection) {
+
   theLoadedCollection.forEach(function(item) {
+    console.log()
     var button = make_collection_button(item.name, item.items.length + "")
 
     $(button).click(function() {
