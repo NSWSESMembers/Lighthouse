@@ -495,7 +495,7 @@ function LoadTeamFilterCollections() {
     if (event.source !== window)
       return;
     if (event.data.type) {
-      if (event.data.type === "RETURN_TEAM_FILTER_COLLECTION") {
+      if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseTeamFilterCollections") {
         try {
           var items = JSON.parse(event.data.dataresult)
         } catch (e)
@@ -506,7 +506,7 @@ function LoadTeamFilterCollections() {
       }
     }
   })
-  window.postMessage({ type: 'FETCH_TEAM_FILTER_COLLECTION'}, '*');
+  window.postMessage({ type: 'FETCH_COLLECTION',name: 'lighthouseTeamFilterCollections' }, '*');
 
   function ProcessData(theLoadedCollection) { //Load the saved Collections
 
@@ -648,7 +648,7 @@ function LoadJobFilterCollections() {
     if (event.source !== window)
       return;
     if (event.data.type) {
-      if (event.data.type === "RETURN_JOB_FILTER_COLLECTION") {
+      if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseJobFilterCollections") {
         try {
           var items = JSON.parse(event.data.dataresult)
         } catch (e)
@@ -660,7 +660,7 @@ function LoadJobFilterCollections() {
     }
   })
 
-  window.postMessage({ type: 'FETCH_JOB_FILTER_COLLECTION'}, '*');
+  window.postMessage({ type: 'FETCH_COLLECTION', name: 'lighthouseJobFilterCollections'}, '*');
 
 
   function ProcessData(theLoadedCollection) { //Load the saved Collections
