@@ -78,9 +78,9 @@ function renderCollections() {
 	return (
 		<fieldset>
 		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:5px"
-		src={chrome.extension.getURL("icons/lh-black.png")} />Lighthouse Collections</legend>
+		src={chrome.extension.getURL("icons/lh-black.png")} />Lighthouse Recipient Collections</legend>
 		<div class="panel panel-default">
-		<div class="panel-heading"><span>Local Lighthouse Collections</span><span id="collectionscount" class="pull-right badge">0</span></div>
+		<div class="panel-heading"><span>Lighthouse Recipient Collections</span><span id="collectionscount" class="pull-right badge">0</span></div>
 		<div id="lighthousecollections" class="panel-body">
 		</div>
 		</div>

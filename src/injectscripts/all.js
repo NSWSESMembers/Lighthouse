@@ -235,7 +235,7 @@ $("#lhfiltercollectionsave").click(function() {
     CollectionParent.description = SaveName;
     CollectionParent.items = saveObject;
 
-    window.postMessage({ type: 'SAVE_TEAM_FILTER_COLLECTION', newdata:JSON.stringify(CollectionParent)}, '*');
+    window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(CollectionParent),name: 'lighthouseTeamFilterCollections'}, '*');
 
   }
 
@@ -472,7 +472,7 @@ if (user.hq.EntityTypeId != 1) {
               CollectionParent.description = SaveName;
               CollectionParent.items = saveObject;
 
-              window.postMessage({ type: 'SAVE_JOB_FILTER_COLLECTION', newdata:JSON.stringify(CollectionParent)}, '*');
+              window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(CollectionParent), name: 'lighthouseJobFilterCollections'}, '*');
             }
 
           })
@@ -842,13 +842,11 @@ $('#lhfiltercollections').append(button)
 }
 
 function DeleteTeamCollection(col) {
-  window.postMessage({ type: 'DELETE_TEAM_FILTER_COLLECTION', target:JSON.stringify(col)}, '*');
-  LoadTeamFilterCollections();
+  window.postMessage({ type: 'DELETE_COLLECTION', target:JSON.stringify(col), name:'lighthouseTeamFilterCollections'}, '*');
 }
 
 function DeleteJobCollection(col) {
-  window.postMessage({ type: 'DELETE_JOB_FILTER_COLLECTION', target:JSON.stringify(col)}, '*');
-  LoadJobFilterCollections();
+  window.postMessage({ type: 'DELETE_COLLECTION', target:JSON.stringify(col), name:'lighthouseJobFilterCollections'}, '*');
 }
 
 function make_collection_button(name, count) {

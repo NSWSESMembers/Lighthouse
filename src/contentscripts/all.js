@@ -18,13 +18,11 @@ s.innerHTML = "var lighthouseUrl = \"" + chrome.extension.getURL("") + "\";\n va
 
 
 window.addEventListener("message", function(event) {
-  console.log(event)
   // We only accept messages from ourselves or the extension
   if (event.source != window)
     return;
   if (event.data.type && (event.data.type == "FETCH_COLLECTION")) {
     chrome.storage.sync.get([event.data.name], function (data){
-      console.log(data)
       window.postMessage({type: 'RETURN_COLLECTION', name: event.data.name, dataresult: data[event.data.name]}, '*');
     })
   } else if (event.data.type && (event.data.type == "SAVE_COLLECTION")) {
@@ -45,7 +43,7 @@ window.addEventListener("message", function(event) {
   } else if (event.data.type && (event.data.type == "DELETE_COLLECTION")) {
     chrome.storage.sync.get([event.data.name], function (existingdata){
       try {
-        var items = JSON.parse(existingdata.lighthouseJobFilterCollections)
+        var items = JSON.parse(existingdata[event.data.name])
       } catch (e)
       {
         var items = []
