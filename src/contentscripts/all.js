@@ -28,7 +28,7 @@ window.addEventListener("message", function(event) {
   } else if (event.data.type && (event.data.type == "SAVE_COLLECTION")) {
     chrome.storage.sync.get([event.data.name+'-'+location.hostname], function (existingdata){
       try {
-        var items = JSON.parse(existingdata[event.data.name])
+        var items = JSON.parse(existingdata[event.data.name+'-'+location.hostname])
       } catch (e)
       {
         var items = []
@@ -43,7 +43,7 @@ window.addEventListener("message", function(event) {
   } else if (event.data.type && (event.data.type == "DELETE_COLLECTION")) {
     chrome.storage.sync.get([event.data.name+'-'+location.hostname], function (existingdata){
       try {
-        var items = JSON.parse(existingdata[event.data.name])
+        var items = JSON.parse(existingdata[event.data.name+'-'+location.hostname])
       } catch (e)
       {
         var items = []
