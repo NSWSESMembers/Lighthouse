@@ -218,9 +218,9 @@ $("#lhfiltercollectionsave").click(function() {
 
   saveObject = {}
 
-  saveObject.selectedTeamTypes = filterViewModel.selectedTeamTypes.peek()
-  saveObject.selectedTeamStatusTypes = filterViewModel.selectedTeamStatusTypes.peek()
-  saveObject.selectedCapabilities = filterViewModel.selectedCapabilities.peek()
+  saveObject.selectedTeamTypes = filterViewModel.selectedTeamTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+  saveObject.selectedTeamStatusTypes = filterViewModel.selectedTeamStatusTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+  saveObject.selectedCapabilities = filterViewModel.selectedCapabilities.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
   saveObject.dateRangeType = filterViewModel.dateRangeType.peek()
   saveObject.startDate = filterViewModel.startDate.peek()
   saveObject.endDate = filterViewModel.endDate.peek()
@@ -445,12 +445,12 @@ if (user.hq.EntityTypeId != 1) {
 
             saveObject = {}
 
-            saveObject.selectedTags = filterViewModel.selectedTags.peek()
-            saveObject.selectedRescueTypes = filterViewModel.selectedRescueTypes.peek()
-            saveObject.selectedFloodAssTypes = filterViewModel.selectedFloodAssTypes.peek()
-            saveObject.selectedPriorityTypes = filterViewModel.selectedPriorityTypes.peek()
-            saveObject.selectedStatusTypes = filterViewModel.selectedStatusTypes.peek()
-            saveObject.selectedParentJobTypes = filterViewModel.selectedParentJobTypes.peek()
+            saveObject.selectedTags = filterViewModel.selectedTags.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedRescueTypes = filterViewModel.selectedRescueTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedFloodAssTypes = filterViewModel.selectedFloodAssTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedPriorityTypes = filterViewModel.selectedPriorityTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedStatusTypes = filterViewModel.selectedStatusTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedParentJobTypes = filterViewModel.selectedParentJobTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
 
             saveObject.dateRangeType = filterViewModel.dateRangeType.peek()
             saveObject.startDate = filterViewModel.startDate.peek()
@@ -471,7 +471,7 @@ if (user.hq.EntityTypeId != 1) {
               CollectionParent.name = SaveName;
               CollectionParent.description = SaveName;
               CollectionParent.items = saveObject;
-
+              console.log(CollectionParent)
               window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(CollectionParent), name: 'lighthouseJobFilterCollections'}, '*');
             }
 

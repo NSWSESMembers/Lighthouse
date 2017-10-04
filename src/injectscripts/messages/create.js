@@ -150,7 +150,7 @@ function LoadNitc() {
          var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
          spinner.appendTo($('#lighthousenitc'));
-         $('#nitchq').text("NITC Events (with Participants) at " + msgsystem.selectedHeadquarters.peek().Name)
+         $('#nitchq').text("NITC Events (with Participants) at " + msgsystem.selectedHeadquarters.peek().Name + " (±30 Days)")
          $('#HQNitcSet').show()
 
          ReturnNitcAtLHQ(msgsystem.selectedHeadquarters.peek(),size,function(response) {

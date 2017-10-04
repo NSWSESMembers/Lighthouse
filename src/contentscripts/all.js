@@ -28,7 +28,7 @@ window.addEventListener("message", function(event) {
   } else if (event.data.type && (event.data.type == "SAVE_COLLECTION")) {
     chrome.storage.sync.get(event.data.name, function (existingdata){
       try {
-        var items = JSON.parse(existingdata.lighthouseJobFilterCollections)
+        var items = JSON.parse(existingdata[event.data.name])
       } catch (e)
       {
         var items = []

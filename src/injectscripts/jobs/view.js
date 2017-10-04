@@ -1092,7 +1092,7 @@ function whenTeamsAreReady(cb) { //when external vars have loaded
 // wait for address to have loaded
 function whenAddressIsReady(cb) { //when external vars have loaded
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-    if (typeof masterViewModel != "undefined" & masterViewModel.geocodedAddress != "undefined") {
+    if (typeof masterViewModel !== "undefined" & masterViewModel.geocodedAddress != "undefined") {
       if (typeof masterViewModel.geocodedAddress.peek() != "undefined" && masterViewModel.geocodedAddress.peek() !== null)
       {
         console.log("address is ready");
@@ -1106,7 +1106,7 @@ function whenAddressIsReady(cb) { //when external vars have loaded
 // wait for urls to have loaded
 function whenUrlIsReady(cb) { //when external vars have loaded
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-    if (typeof urls != "undefined" & urls.Base != "undefined") {
+    if (typeof urls !== "undefined" & typeof urls.Base !== "undefined") {
       if (urls.Base !== null)
       {
         console.log("urls is ready");
