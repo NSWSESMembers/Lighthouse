@@ -22,11 +22,11 @@ window.addEventListener("message", function(event) {
   if (event.source != window)
     return;
   if (event.data.type && (event.data.type == "FETCH_COLLECTION")) {
-    chrome.storage.sync.get([event.data.name], function (data){
-      window.postMessage({type: 'RETURN_COLLECTION', name: event.data.name, dataresult: data[event.data.name]}, '*');
+    chrome.storage.sync.get([event.data.name+'-'+location.hostname], function (data){ //append hostname so that storage is specific to host (trainbeacon/production/preview)
+      window.postMessage({type: 'RETURN_COLLECTION', name: event.data.name, dataresult: data[event.data.name+'-'+location.hostname]}, '*'); //return object can be removed (name+lostname)
     })
   } else if (event.data.type && (event.data.type == "SAVE_COLLECTION")) {
-    chrome.storage.sync.get(event.data.name, function (existingdata){
+    chrome.storage.sync.get([event.data.name+'-'+location.hostname], function (existingdata){
       try {
         var items = JSON.parse(existingdata[event.data.name])
       } catch (e)
@@ -35,13 +35,13 @@ window.addEventListener("message", function(event) {
       }
       items.push(JSON.parse(event.data.newdata))
 
-      chrome.storage.sync.set({[event.data.name]:JSON.stringify(items)}, function (data){
+      chrome.storage.sync.set({[event.data.name+'-'+location.hostname]:JSON.stringify(items)}, function (data){
         window.postMessage({type: 'RETURN_COLLECTION', name: event.data.name, dataresult: JSON.stringify(items)}, '*');
 
       })
     })
   } else if (event.data.type && (event.data.type == "DELETE_COLLECTION")) {
-    chrome.storage.sync.get([event.data.name], function (existingdata){
+    chrome.storage.sync.get([event.data.name+'-'+location.hostname], function (existingdata){
       try {
         var items = JSON.parse(existingdata[event.data.name])
       } catch (e)
@@ -54,7 +54,7 @@ window.addEventListener("message", function(event) {
           items.splice(items.indexOf(item), 1)
         }
       })
-      chrome.storage.sync.set({[event.data.name]:JSON.stringify(items)}, function (data){
+      chrome.storage.sync.set({[event.data.name+'-'+location.hostname]:JSON.stringify(items)}, function (data){
         window.postMessage({type: 'RETURN_COLLECTION', name: event.data.name, dataresult: JSON.stringify(items)}, '*');
       })
     })
