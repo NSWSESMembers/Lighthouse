@@ -129,10 +129,16 @@ function DoTour() {
         title: "Lighthouse Quickfilters",
         placement: "right",
         backdrop: false,
+        content: "Lighthouse adds a new filter menu that groups together common filters.eg 'Rescue Jobs' covers RCR, Flood, and VR.",
+      },
+      {
+        element: "#lhfiltercollections",
+        title: "Filter Collections",
+        placement: "right",
         onNext: function (tour) {
           $('#lhquickfilter > ul').hide();
         },
-        content: "Lighthouse adds a new filter menu that groups together common filters.eg 'Rescue Jobs' covers RCR, Flood, and VR.",
+        content: "Lighthouse Filter Collections allow you to save your current filter selection for later use.",
       },
       {
         element: "",

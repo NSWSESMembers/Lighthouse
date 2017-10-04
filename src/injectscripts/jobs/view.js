@@ -1205,12 +1205,12 @@ function DoTour() {
         content: "Lighthouse will search for jobs with the same or similar address to this job. the results will be displayed here.",
       },
       {
-        element: "#lhtaskbutton",
+        element: "#lighthouse_actions_content",
         placement: "left",
         orphan: true,
         backdrop: false,
-        title: "Instant Task",
-        content: "If the job is taskable there will be a grey button 'Instant Task' in the Actions box. This will allow you to task the job without leaving the job overview page."
+        title: "Instant Actions",
+        content: "If your permissions allow, you will be able to Task, Sector or Categorise the job without leaving the job details page."
       },
       {
         element: "",
