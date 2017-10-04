@@ -152,6 +152,5 @@
   ],
   "background": {
     "scripts": ["background.js"]
-  },
-    "content_security_policy": "script-src 'self' https://maps.googleapis.com https://www.followmee.com/api/ https://tdykes.com/viewranger/index.php; object-src 'self'" 
+  }
 }

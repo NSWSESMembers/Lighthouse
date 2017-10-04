@@ -96,19 +96,16 @@ $(document).ready(function() {
                 theSelected.forEach(function(item) {
                     var thisItem = {};
                     if (item.Contact === null) {
-                        console.log("group")
                         thisItem.type = "group";
                         thisItem.OwnerId = item.ContactGroup.Entity.Id;
                         thisItem.Id = item.ContactGroup.Id;
 
                     } else if (item.ContactGroup === null) {
                         if (item.Contact.PersonId === null) {
-                            console.log("entity")
                             thisItem.type = "entity";
                             thisItem.OwnerId = item.Contact.EntityId;
                             thisItem.Id = item.Contact.Id;
                         } else {
-                            console.log("person")
                             thisItem.type = "person";
                             thisItem.OwnerId = item.Contact.PersonId;
                             thisItem.Id = item.Contact.Id;
@@ -121,21 +118,10 @@ $(document).ready(function() {
                 CollectionParent.name = SaveName;
                 CollectionParent.description = SaveName;
                 CollectionParent.items = theCollection;
-                currentCollections = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
-                if (currentCollections === null) {
-                    currentCollections = [];
-                }
-                var newcurrentCollections = []
-                $.each(currentCollections, function(k, v) {
-                    if (v.name != CollectionParent.name) //catch the dupes
-                    {
-                        newcurrentCollections.push(v) //delete the duplicate
-                    }
-                })
-                currentCollections = newcurrentCollections;
-                currentCollections.push(CollectionParent);
-                localStorage.setItem("lighthouseContactCollections", JSON.stringify(currentCollections));
-                LoadAllCollections();
+
+                window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(CollectionParent), name: 'lighthouseMessageCollections'}, '*');
+
+
             }
         }
     })
@@ -164,7 +150,7 @@ function LoadNitc() {
          var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
          spinner.appendTo($('#lighthousenitc'));
-         $('#nitchq').text("NITC Events (with Participants) at " + msgsystem.selectedHeadquarters.peek().Name)
+         $('#nitchq').text("NITC Events (with Participants) at " + msgsystem.selectedHeadquarters.peek().Name + " (±30 Days)")
          $('#HQNitcSet').show()
 
          ReturnNitcAtLHQ(msgsystem.selectedHeadquarters.peek(),size,function(response) {
@@ -420,10 +406,40 @@ button.style.height = button.offsetHeight + "px";
 
 function LoadAllCollections() {
 
+  window.addEventListener("message", function(event) {
+    // We only accept messages from content scrip
+    if (event.source !== window)
+      return;
+  if (event.data.type) {
+      if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseMessageCollections") {
+        try {
+          var items = JSON.parse(event.data.dataresult)
+      } catch (e)
+      {
+          var items = []
+      }
+      ProcessData(items)
+  }
+}
+})
+  window.postMessage({ type: 'FETCH_COLLECTION',name: 'lighthouseMessageCollections' }, '*');
+
+  //Quick little code to move local storage to chrome storage
+  currentCollections = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
+  if (currentCollections !== null) {
+    $.each(currentCollections, function(k, v) {
+        window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(v), name: 'lighthouseMessageCollections'}, '*');
+
+    })
+    localStorage.removeItem("lighthouseContactCollections")
+}
+
+  function ProcessData(theLoadedCollection) { //Load the saved Collections
+
     $("#lighthousecollections").empty();
 
     //Load the saved Collections
-    theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
+
     if (theLoadedCollection) {
         $("#collectionscount").text(theLoadedCollection.length);
         theLoadedCollection.forEach(function(item) {
@@ -456,15 +472,11 @@ function LoadAllCollections() {
         });
 }
 }
+}
 
 function DeleteCollection(col) {
-    theLoadedCollection = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
-    theLoadedCollection.forEach(function(item) {
-        if (JSON.stringify(col) == JSON.stringify(item)) {
-            theLoadedCollection.splice(theLoadedCollection.indexOf(item), 1)
-        }
-    })
-    localStorage.setItem("lighthouseContactCollections", JSON.stringify(theLoadedCollection));
+    window.postMessage({ type: 'DELETE_COLLECTION', target:JSON.stringify(col), name:'lighthouseMessageCollections'}, '*');
+
     LoadAllCollections();
 
 }

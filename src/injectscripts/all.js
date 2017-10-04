@@ -122,117 +122,160 @@ if (location.pathname == "/") {
   DoTour()
 }
 
-        //lighthouse menu for teams
-        if (location.pathname == "/Teams") {
+  //lighthouse menu for teams
+  if (location.pathname == "/Teams") {
 
-          //var filtermenu = '<li class="" id="lhquickfilter"> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">All</span></span> <br> </span> </ul> </li>';
-          var filtermenu = '<li class="" id="lhquickfilter"> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a><ul class="sub-menu" style="display: none;"><li class="active"><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span></span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span><li></ul></li>';
+    if (user.hq.EntityTypeId != 1) {
+  //make region level more obvious
+  regionfilter = user.hq.Code+" Units";
+} else {
+  regionfilter = user.hq.ParentEntity.Code;
+}
 
-          filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
-
-          filtermenu = filtermenu.replace(/\$UNIT/g, user.hq.Code);
 
 
+var filtermenu = `\
+<li class="" id="lhquickfilter">\
+<a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
+<ul class="sub-menu" style="display: none;">\
+<li class="active">\
+<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">${user.hq.Code}</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">${regionfilter}</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span>\
+<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-object-group"></i><a style="font-size: .9em; margin-left: 7px">Filter Collections</a><div id="lhfiltercollections" style="display: inline-block;"></div><div><button type="button" class="btn btn-primary btn-xs" id="lhfiltercollectionsave"></i>Save Current</button></div></span>\
+<li>\
+</ul>\
+</li>`;
 
-          if (user.hq.EntityTypeId == 2 || user.hq.EntityTypeId == 3) {
+
+$('.main-menu > li:nth-child(1)').after(filtermenu);
+
+
+$("#filterallmyregion").click(function() {
+  filterViewModel.selectedEntities.removeAll();
+  filtershowallmyregion();
+});
+
+$("#filtermyhq").click(function() {
+  filterViewModel.selectedEntities.removeAll();
+  filterViewModel.selectedEntities.push(user.hq);
+  filterViewModel.updateFilters();
+});
+
+$("#clearlocator").click(function() {
+  filterViewModel.selectedEntities.removeAll();
+  filterViewModel.updateFilters();
+});
+
+$("#filtertoday").click(function() {
+  filterViewModel.startDate(utility.dateRanges.Today.StartDate())
+  filterViewModel.endDate(utility.dateRanges.Today.EndDate())
+  filterViewModel.dateRangeType('Today')
+  $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm"));
+  $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
+    if ($(this).text() == "Today")
+    {
+      $(this).addClass('active')
+    } else {
+      $(this).removeClass('active')
+    }
+  })
+  filterViewModel.updateFilters();
+});
+
+$("#filter7days").click(function() {
+  filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
+  filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
+  filterViewModel.dateRangeType('Last 7 Days')
+  $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm"));
+  $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
+    if ($(this).text() == "Last 7 Days")
+    {
+      $(this).addClass('active')
+    } else {
+      $(this).removeClass('active')
+    }
+  })
+  filterViewModel.updateFilters();
+});
+
+$("#filter30days").click(function() {
+ filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
+ filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
+ filterViewModel.dateRangeType('Last 30 Days')
+ $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
+ $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
+  if ($(this).text() == "Last 30 Days")
+  {
+    $(this).addClass('active')
+  } else {
+    $(this).removeClass('active')
+  }
+})
+ filterViewModel.updateFilters();
+});
+
+$("#lhfiltercollectionsave").click(function() {
+
+  saveObject = {}
+
+  saveObject.selectedTeamTypes = filterViewModel.selectedTeamTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+  saveObject.selectedTeamStatusTypes = filterViewModel.selectedTeamStatusTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+  saveObject.selectedCapabilities = filterViewModel.selectedCapabilities.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+  saveObject.dateRangeType = filterViewModel.dateRangeType.peek()
+  saveObject.startDate = filterViewModel.startDate.peek()
+  saveObject.endDate = filterViewModel.endDate.peek()
+
+  saveObject.selectedEntities = filterViewModel.selectedEntities.peek().map(function(x) {return {Id:x.Id,Name:x.Name,EntityTypeId:x.EntityTypeId}}) //lets make it shorter
+
+  var SaveName = prompt("Please enter a name for the collection. If the name already exists it will be overwritten.", "");
+  if (SaveName !== null && SaveName != "") {
+
+    CollectionParent = {}
+    CollectionParent.name = SaveName;
+    CollectionParent.description = SaveName;
+    CollectionParent.items = saveObject;
+
+    window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(CollectionParent),name: 'lighthouseTeamFilterCollections'}, '*');
+
+  }
+
+})
+
+LoadTeamFilterCollections()
+
+}
+
+//lighthouse menu for jobs
+
+if (location.pathname === "/Jobs" || location.pathname === "/Jobs/SituationalAwareness") {
+
+  if (location.pathname === "/Jobs/SituationalAwareness") {
+    filterViewModel = window.contentViewModel.filterViewModel;
+  }
+
+//with dates var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Time Range</a> <span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span> <span class="label tag tag-task tag-disabled" id="filter3day"><span class="tag-text">3 Days</span></span> <span class="label tag tag-task tag-disabled" id="filter7day"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30day"><span class="tag-text">30 Days</span></span> </span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Open</span></span> <span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span> <span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span> <span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span> <span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span> <span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
+
+
+if (user.hq.EntityTypeId != 1) {
             //make region level more obvious
-            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.Code+" Units");
+            regionfilter = user.hq.Code+" Units";
           } else {
-            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.Code);
-
+            regionfilter = user.hq.ParentEntity.Code;
           }
 
-          $('.main-menu > li:nth-child(1)').after(filtermenu);
-
-
-          $("#filterallmyregion").click(function() {
-            filterViewModel.selectedEntities.removeAll();
-            filtershowallmyregion();
-          });
-
-          $("#filtermyhq").click(function() {
-            filterViewModel.selectedEntities.removeAll();
-            filterViewModel.selectedEntities.push(user.hq);
-            filterViewModel.updateFilters();
-          });
-
-          $("#clearlocator").click(function() {
-            filterViewModel.selectedEntities.removeAll();
-            filterViewModel.updateFilters();
-          });
-
-          $("#filtertoday").click(function() {
-            filterViewModel.startDate(utility.dateRanges.Today.StartDate())
-            filterViewModel.endDate(utility.dateRanges.Today.EndDate())
-            filterViewModel.dateRangeType('Today')
-            $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm"));
-            $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-              if ($(this).text() == "Today")
-              {
-                $(this).addClass('active')
-              } else {
-                $(this).removeClass('active')
-              }
-            })
-            filterViewModel.updateFilters();
-          });
-
-          $("#filter7days").click(function() {
-            filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
-            filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
-            filterViewModel.dateRangeType('Last 7 Days')
-            $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm"));
-            $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-              if ($(this).text() == "Last 7 Days")
-              {
-                $(this).addClass('active')
-              } else {
-                $(this).removeClass('active')
-              }
-            })
-            filterViewModel.updateFilters();
-          });
-
-          $("#filter30days").click(function() {
-           filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
-           filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
-           filterViewModel.dateRangeType('Last 30 Days')
-           $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
-           $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-            if ($(this).text() == "Last 30 Days")
-            {
-              $(this).addClass('active')
-            } else {
-              $(this).removeClass('active')
-            }
-          })
-           filterViewModel.updateFilters();
-         });
-
-        }
-
-      //lighthouse menu for jobs
-
-      if (location.pathname === "/Jobs" || location.pathname === "/Jobs/SituationalAwareness") {
-
-          if (location.pathname === "/Jobs/SituationalAwareness") {
-            filterViewModel = window.contentViewModel.filterViewModel;
-          }
-
-       //with dates var filtermenu = '<li class=""> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span> <i class="toggle-icon fa fa-angle-left"></i> </a> <ul class="sub-menu " style="display: none;"> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Time Range</a> <span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span> <span class="label tag tag-task tag-disabled" id="filter3day"><span class="tag-text">3 Days</span></span> <span class="label tag tag-task tag-disabled" id="filter7day"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30day"><span class="tag-text">30 Days</span></span> </span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Open</span></span> <span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span> <span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Job Type</a> <span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span> <span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span> <span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span> <span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span> </span> <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"> <a>Locations</a> <span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span> <span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span> <span class="label tag tag-property tag-disabled" id="clearlocator"><span class="tag-text">NSW</span></span> <br> </span> </ul> </li>';
-
-
-          var filtermenu = '<li class="" id="lhquickfilter"> <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="$LHURLicons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a><ul class="sub-menu" style="display: none;"><li class="active"><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-flag"></i><a style="font-size: .9em;margin-left: 5px">Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Outstanding</span></span><span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span><span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span></span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-file-text-o"></i><a style="font-size: .9em;margin-left: 5px">Job Type</a><span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span><span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span><span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span><span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span></span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">$UNIT</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">$REGION</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="$LHURLicons/lh-black.png">All</span></span></span><span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span><li></ul></li>';
-
-          filtermenu = filtermenu.replace(/\$LHURL/g, lighthouseUrl);
-          filtermenu = filtermenu.replace(/\$UNIT/g, user.hq.Code);
-
-          if (user.hq.EntityTypeId != 1) {
-            //make region level more obvious
-            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.Code+" Units");
-          } else {
-            filtermenu = filtermenu.replace(/\$REGION/g, user.hq.ParentEntity.Code);
-          }
+          var filtermenu = `\
+          <li class="" id="lhquickfilter">\
+          <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
+          <ul class="sub-menu" style="display: none;">\
+          <li class="active">\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-flag"></i><a style="font-size: .9em;margin-left: 5px">Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Outstanding</span></span><span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span><span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-file-text-o"></i><a style="font-size: .9em;margin-left: 5px">Job Type</a><span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span><span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span><span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span><span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">${user.hq.Code}</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">${regionfilter}</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span>\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-object-group"></i><a style="font-size: .9em; margin-left: 7px">Filter Collections</a><div id="lhfiltercollections" style="display: inline-block;"></div><div><button type="button" class="btn btn-primary btn-xs" id="lhfiltercollectionsave"></i>Save Current</button></div></span>\
+          </li>
+          </ul>
+          </li>`;
 
           if (location.pathname === "/Jobs") {
             $('.main-menu > li:nth-child(1)').after(filtermenu);
@@ -371,56 +414,448 @@ if (location.pathname == "/") {
             filterViewModel.startDate(utility.dateRanges.Today.StartDate())
             filterViewModel.endDate(utility.dateRanges.Today.EndDate())
             filterViewModel.dateRangeType('Today')
-            $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm"));
-            $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-              if ($(this).text() == "Today")
-              {
-                $(this).addClass('active')
-              } else {
-                $(this).removeClass('active')
-              }
-            })
+            $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Today.StartDate()
+            $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Today.EndDate()
+            $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.EndDate().format("MMMM D, YYYY H:mm"));
             filterViewModel.updateFilters();
           });
 
           $("#filter7days").click(function() {
             filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
             filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
+            $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last7Days.StartDate()
+            $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last7Days.EndDate()
             filterViewModel.dateRangeType('Last 7 Days')
-            $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm"));
-            $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-              if ($(this).text() == "Last 7 Days")
-              {
-                $(this).addClass('active')
-              } else {
-                $(this).removeClass('active')
-              }
-            })
+            $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.EndDate().format("MMMM D, YYYY H:mm"));
             filterViewModel.updateFilters();
           });
 
           $("#filter30days").click(function() {
            filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
            filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
+           $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last30Days.StartDate()
+           $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last30Days.EndDate()
            filterViewModel.dateRangeType('Last 30 Days')
-           $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
-           $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-            if ($(this).text() == "Last 30 Days")
-            {
-              $(this).addClass('active')
-            } else {
-              $(this).removeClass('active')
-            }
-          })
+           $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.EndDate().format("MMMM D, YYYY H:mm"));
            filterViewModel.updateFilters();
          });
 
+
+          $("#lhfiltercollectionsave").click(function() {
+
+            saveObject = {}
+
+            saveObject.selectedTags = filterViewModel.selectedTags.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedRescueTypes = filterViewModel.selectedRescueTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedFloodAssTypes = filterViewModel.selectedFloodAssTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedPriorityTypes = filterViewModel.selectedPriorityTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedStatusTypes = filterViewModel.selectedStatusTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+            saveObject.selectedParentJobTypes = filterViewModel.selectedParentJobTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
+
+            saveObject.dateRangeType = filterViewModel.dateRangeType.peek()
+            saveObject.startDate = filterViewModel.startDate.peek()
+            saveObject.endDate = filterViewModel.endDate.peek()
+
+            saveObject.selectedEvents = filterViewModel.selectedEvents.peek()
+
+            saveObject.icemsIInIds = filterViewModel.icemsIInIds.peek().map(function(x) {return x.ReferringAgencyReference}) //scrub out the private details and just return the ID, we will fetch job details on load.
+
+            saveObject.selectedTeams = filterViewModel.selectedTeams.peek() //already really short
+
+            saveObject.selectedEntities = filterViewModel.selectedEntities.peek().map(function(x) {return {Id:x.Id,Name:x.Name,EntityTypeId:x.EntityTypeId}}) //lets make it shorter
+            saveObject.selectedPeople = filterViewModel.selectedPeople.peek().map(function(x) {return {Id:x.Id,FullName:x.FullName}}) //lets make it shorter
+
+            var SaveName = prompt("Please enter a name for the collection. If the name already exists it will be overwritten.", "");
+            if (SaveName !== null && SaveName != "") {
+              CollectionParent = {}
+              CollectionParent.name = SaveName;
+              CollectionParent.description = SaveName;
+              CollectionParent.items = saveObject;
+              console.log(CollectionParent)
+              window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(CollectionParent), name: 'lighthouseJobFilterCollections'}, '*');
+            }
+
+          })
+
+LoadJobFilterCollections()
+
+
       } // location.pathname == "/Jobs"
+
+
   }) // xhttp.onreadystatechange
 
 
 });
 
+function LoadTeamFilterCollections() {
+
+  window.addEventListener("message", function(event) {
+    // We only accept messages from content scrip
+    if (event.source !== window)
+      return;
+    if (event.data.type) {
+      if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseTeamFilterCollections") {
+        try {
+          var items = JSON.parse(event.data.dataresult)
+        } catch (e)
+        {
+          var items = []
+        }
+        ProcessData(items)
+      }
+    }
+  })
+  window.postMessage({ type: 'FETCH_COLLECTION',name: 'lighthouseTeamFilterCollections' }, '*');
+
+  function ProcessData(theLoadedCollection) { //Load the saved Collections
+
+
+    $("#lhfiltercollections").empty();
+
+//Load the saved Collections
+if (theLoadedCollection) {
+
+  theLoadedCollection.forEach(function(item) {
+    console.log()
+    var button = make_collection_button(item.name, item.items.length + "")
+
+    $(button).click(function() {
+      filterViewModel.selectedTeamTypes.removeAll()
+      item.items.selectedTeamTypes.forEach(function(itm) {
+        filterViewModel.selectedTeamTypes.push(itm)
+      })
+      filterViewModel.selectedTeamStatusTypes.removeAll()
+      item.items.selectedTeamStatusTypes.forEach(function(itm) {
+        filterViewModel.selectedTeamStatusTypes.push(itm)
+      })
+      filterViewModel.selectedCapabilities.removeAll()
+      item.items.selectedCapabilities.forEach(function(itm) {
+        filterViewModel.selectedCapabilities.push(itm)
+      })
+
+      switch (item.items.dateRangeType)
+      {
+        case "Today":
+        filterViewModel.startDate(utility.dateRanges.Today.StartDate())
+        filterViewModel.endDate(utility.dateRanges.Today.EndDate())
+        filterViewModel.dateRangeType('Today')
+        $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Today.StartDate()
+        $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Today.EndDate()
+        $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.EndDate().format("MMMM D, YYYY H:mm"));
+        break
+        case "Yesterday":
+        filterViewModel.startDate(utility.dateRanges.Yesterday.StartDate())
+        filterViewModel.endDate(utility.dateRanges.Yesterday.EndDate())
+        filterViewModel.dateRangeType('Yesterday')
+        $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Yesterday.StartDate()
+        $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Yesterday.EndDate()
+        $("#reportrange span").html(utility.dateRanges.Yesterday.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Yesterday.EndDate().format("MMMM D, YYYY H:mm"));
+        break
+        case "Last 7 Days":
+        filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
+        filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
+        filterViewModel.dateRangeType('Last 7 Days')
+        $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last7Days.StartDate()
+        $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last7Days.EndDate()
+        $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.EndDate().format("MMMM D, YYYY H:mm"));
+        break
+        case "Last 30 Days":
+        filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
+        filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
+        filterViewModel.dateRangeType('Last 30 Days')
+        $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last30Days.StartDate()
+        $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last30Days.EndDate()
+        $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.EndDate().format("MMMM D, YYYY H:mm"));
+        break
+        case "This Month":
+        filterViewModel.startDate(utility.dateRanges.ThisMonth.StartDate())
+        filterViewModel.endDate(utility.dateRanges.ThisMonth.EndDate())
+        filterViewModel.dateRangeType('This Month')
+        $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.ThisMonth.StartDate()
+        $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.ThisMonth.EndDate()
+        $("#reportrange span").html(utility.dateRanges.ThisMonth.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.ThisMonth.EndDate().format("MMMM D, YYYY H:mm"));
+        break
+        case "Last Month":
+        filterViewModel.startDate(utility.dateRanges.LastMonth.StartDate())
+        filterViewModel.endDate(utility.dateRanges.LastMonth.EndDate())
+        filterViewModel.dateRangeType('Last Month')
+        $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.LastMonth.StartDate()
+        $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.LastMonth.EndDate()
+        $("#reportrange span").html(utility.dateRanges.LastMonth.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.LastMonth.EndDate().format("MMMM D, YYYY H:mm"));
+        break
+        case "This Calendar Year":
+        filterViewModel.startDate(moment().startOf('year'))
+        filterViewModel.endDate(moment().endOf('year'))
+        filterViewModel.dateRangeType('This Calendar Year')
+        $("#reportrange").data().daterangepicker.startDate = moment().startOf('year')
+        $("#reportrange").data().daterangepicker.endDate = moment().endOf('year')
+        $("#reportrange span").html(moment().startOf('year').format("MMMM D, YYYY H:mm") + " - " + moment().endOf('year').format("MMMM D, YYYY H:mm"));
+        break
+        case "All":
+        filterViewModel.startDate(utility.minDate)
+        filterViewModel.endDate(moment().endOf('year'))
+        filterViewModel.dateRangeType('All')
+        $("#reportrange").data().daterangepicker.startDate = utility.minDate
+        $("#reportrange").data().daterangepicker.endDate = moment().endOf('year')
+        $("#reportrange span").html(utility.minDate.format("MMMM D, YYYY H:mm") + " - " + moment().endOf('year').format("MMMM D, YYYY H:mm"));
+        break
+        case "Custom Range":
+        var start = moment(item.items.startDate)
+        var end = moment(item.items.endDate)
+        filterViewModel.startDate(start)
+        filterViewModel.endDate(end)
+        filterViewModel.dateRangeType('Custom Range')
+        $("#reportrange").data().daterangepicker.startDate = start
+        $("#reportrange").data().daterangepicker.endDate = end
+        $("#reportrange span").html(start.format("MMMM D, YYYY H:mm") + " - " + end.format("MMMM D, YYYY H:mm"));
+        break
+      }
+
+      filterViewModel.selectedEntities.removeAll()
+      item.items.selectedEntities.forEach(function(itm) {
+        filterViewModel.selectedEntities.push(itm)
+      })
+
+      filterViewModel.updateFilters();
+
+
+    })
+
+$(button).find('span.delbutton').click(function() {
+  event.stopImmediatePropagation();
+  var r = confirm("Are you sure you want to delete this collection?");
+  if (r == true) {
+    DeleteTeamCollection(item);
+  }
+})
+
+$('#lhfiltercollections').append(button)
+
+})
+
+}
+}
+
+}
+
+
+
+function LoadJobFilterCollections() {
+
+  window.addEventListener("message", function(event) {
+    // We only accept messages from content scrip
+    if (event.source !== window)
+      return;
+    if (event.data.type) {
+      if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseJobFilterCollections") {
+        try {
+          var items = JSON.parse(event.data.dataresult)
+        } catch (e)
+        {
+          var items = []
+        }
+        ProcessData(items)
+      }
+    }
+  })
+
+  window.postMessage({ type: 'FETCH_COLLECTION', name: 'lighthouseJobFilterCollections'}, '*');
+
+
+  function ProcessData(theLoadedCollection) { //Load the saved Collections
+    $("#lhfiltercollections").empty();
+    
+    if (theLoadedCollection) {
+      theLoadedCollection.forEach(function(item) {
+        var button = make_collection_button(item.name, item.items.length + "")
+
+        $(button).click(function() {
+          filterViewModel.selectedTags.removeAll()
+          item.items.selectedTags.forEach(function(itm) {
+            filterViewModel.selectedTags.push(itm)
+          })
+          filterViewModel.selectedRescueTypes.removeAll()
+          item.items.selectedRescueTypes.forEach(function(itm) {
+            filterViewModel.selectedRescueTypes.push(itm)
+          })
+          filterViewModel.selectedFloodAssTypes.removeAll()
+          item.items.selectedFloodAssTypes.forEach(function(itm) {
+            filterViewModel.selectedFloodAssTypes.push(itm)
+          })
+          filterViewModel.selectedPriorityTypes.removeAll()
+          item.items.selectedPriorityTypes.forEach(function(itm) {
+            filterViewModel.selectedPriorityTypes.push(itm)
+          })
+          filterViewModel.selectedStatusTypes.removeAll()
+          item.items.selectedStatusTypes.forEach(function(itm) {
+            filterViewModel.selectedStatusTypes.push(itm)
+          })
+          filterViewModel.selectedParentJobTypes.removeAll()
+          item.items.selectedParentJobTypes.forEach(function(itm) {
+            filterViewModel.selectedParentJobTypes.push(itm)
+          })
+
+          switch (item.items.dateRangeType)
+          {
+            case "Today":
+            filterViewModel.startDate(utility.dateRanges.Today.StartDate())
+            filterViewModel.endDate(utility.dateRanges.Today.EndDate())
+            filterViewModel.dateRangeType('Today')
+            $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Today.StartDate()
+            $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Today.EndDate()
+            $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.EndDate().format("MMMM D, YYYY H:mm"));
+            break
+            case "Yesterday":
+            filterViewModel.startDate(utility.dateRanges.Yesterday.StartDate())
+            filterViewModel.endDate(utility.dateRanges.Yesterday.EndDate())
+            filterViewModel.dateRangeType('Yesterday')
+            $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Yesterday.StartDate()
+            $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Yesterday.EndDate()
+            $("#reportrange span").html(utility.dateRanges.Yesterday.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Yesterday.EndDate().format("MMMM D, YYYY H:mm"));
+            break
+            case "Last 7 Days":
+            filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
+            filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
+            filterViewModel.dateRangeType('Last 7 Days')
+            $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last7Days.StartDate()
+            $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last7Days.EndDate()
+            $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.EndDate().format("MMMM D, YYYY H:mm"));
+            break
+            case "Last 30 Days":
+            filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
+            filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
+            filterViewModel.dateRangeType('Last 30 Days')
+            $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last30Days.StartDate()
+            $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last30Days.EndDate()
+            $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.EndDate().format("MMMM D, YYYY H:mm"));
+            break
+            case "This Month":
+            filterViewModel.startDate(utility.dateRanges.ThisMonth.StartDate())
+            filterViewModel.endDate(utility.dateRanges.ThisMonth.EndDate())
+            filterViewModel.dateRangeType('This Month')
+            $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.ThisMonth.StartDate()
+            $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.ThisMonth.EndDate()
+            $("#reportrange span").html(utility.dateRanges.ThisMonth.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.ThisMonth.EndDate().format("MMMM D, YYYY H:mm"));
+            break
+            case "Last Month":
+            filterViewModel.startDate(utility.dateRanges.LastMonth.StartDate())
+            filterViewModel.endDate(utility.dateRanges.LastMonth.EndDate())
+            filterViewModel.dateRangeType('Last Month')
+            $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.LastMonth.StartDate()
+            $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.LastMonth.EndDate()
+            $("#reportrange span").html(utility.dateRanges.LastMonth.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.LastMonth.EndDate().format("MMMM D, YYYY H:mm"));
+            break
+            case "This Calendar Year":
+            filterViewModel.startDate(moment().startOf('year'))
+            filterViewModel.endDate(moment().endOf('year'))
+            filterViewModel.dateRangeType('This Calendar Year')
+            $("#reportrange").data().daterangepicker.startDate = moment().startOf('year')
+            $("#reportrange").data().daterangepicker.endDate = moment().endOf('year')
+            $("#reportrange span").html(moment().startOf('year').format("MMMM D, YYYY H:mm") + " - " + moment().endOf('year').format("MMMM D, YYYY H:mm"));
+            break
+            case "All":
+            filterViewModel.startDate(utility.minDate)
+            filterViewModel.endDate(moment().endOf('year'))
+            filterViewModel.dateRangeType('All')
+            $("#reportrange").data().daterangepicker.startDate = utility.minDate
+            $("#reportrange").data().daterangepicker.endDate = moment().endOf('year')
+            $("#reportrange span").html(utility.minDate.format("MMMM D, YYYY H:mm") + " - " + moment().endOf('year').format("MMMM D, YYYY H:mm"));
+            break
+            case "Custom Range":
+            var start = moment(item.items.startDate)
+            var end = moment(item.items.endDate)
+            filterViewModel.startDate(start)
+            filterViewModel.endDate(end)
+            filterViewModel.dateRangeType('Custom Range')
+            $("#reportrange").data().daterangepicker.startDate = start
+            $("#reportrange").data().daterangepicker.endDate = end
+            $("#reportrange span").html(start.format("MMMM D, YYYY H:mm") + " - " + end.format("MMMM D, YYYY H:mm"));
+            break
+          }
+
+          filterViewModel.selectedEvents.removeAll()
+          item.items.selectedEvents.forEach(function(itm) {
+            filterViewModel.selectedEvents.push(itm)
+          })
+
+      //Fetch ICEMS jobs by Refering ID
+      filterViewModel.icemsIInIds.removeAll()
+      item.items.icemsIInIds.forEach(function(itm) {
+        $.ajax({
+          type: 'GET',
+          url: urls.Base+'/Api/v1/Jobs/Search?ICEMSIncidentIdentifier=' + itm + '&PageSize=1',
+          beforeSend: function(n) {
+            n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+          },
+          data: {
+            LighthouseFunction: 'LighthouseLoadICEMSFromCollection'
+          },
+          cache: false,
+          dataType: 'json',
+          complete: function(response, textStatus) {
+            if (textStatus == 'success') {
+              if (response.responseJSON.Results.length)
+              {
+                filterViewModel.icemsIInIds.push(response.responseJSON.Results[0])
+              }
+            }
+          }
+        })
+      })
+
+      filterViewModel.selectedTeams.removeAll()
+      item.items.selectedTeams.forEach(function(itm) {
+        filterViewModel.selectedTeams.push(itm)
+      })
+
+      filterViewModel.selectedEntities.removeAll()
+      item.items.selectedEntities.forEach(function(itm) {
+        filterViewModel.selectedEntities.push(itm)
+      })
+
+      filterViewModel.selectedPeople.removeAll()
+      item.items.selectedPeople.forEach(function(itm) {
+        filterViewModel.selectedPeople.push(itm)
+      })
+
+      filterViewModel.updateFilters();
+
+
+    })
+
+$(button).find('span.delbutton').click(function() {
+  event.stopImmediatePropagation();
+  var r = confirm("Are you sure you want to delete this collection?");
+  if (r == true) {
+    DeleteJobCollection(item);
+  }
+})
+
+$('#lhfiltercollections').append(button)
+
+})
+
+}
+}
+
+}
+
+function DeleteTeamCollection(col) {
+  window.postMessage({ type: 'DELETE_COLLECTION', target:JSON.stringify(col), name:'lighthouseTeamFilterCollections'}, '*');
+}
+
+function DeleteJobCollection(col) {
+  window.postMessage({ type: 'DELETE_COLLECTION', target:JSON.stringify(col), name:'lighthouseJobFilterCollections'}, '*');
+}
+
+function make_collection_button(name, count) {
+  return $.parseHTML(`
+    <span class="label tag tag-rebecca tag-disabled">\
+    <span><p  style="margin-bottom:0px"><i class="fa fa-object-group" aria-hidden="true" style="margin-right: 5px;"></i>`+name+`<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>\
+    </span>\
+    `)
+}
 
 function filtershowallmyregion() {
   filterViewModel.selectedEntities.destroyAll() //flush first :-)
