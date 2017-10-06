@@ -60,6 +60,9 @@ whenWeAreReady(user,function() {
     <li id="lhtourmenuitem">\
     <a href="#" id="LHTourRestart">Restart All Tours</a>\
     </li>\
+    <li id="lhstoragemenuitem">\
+    <a href="#" id="LHClearStorage">Delete All Collections</a>\
+    </li>\
     <li>\
     <a href="http://lighthouse.ses.nsw.gov.au">About Lighthouse</a>\
     </li>\
@@ -94,6 +97,9 @@ whenWeAreReady(user,function() {
     <li id="lhtourmenuitem">\
     <a href="#" id="LHTourRestart">Restart All Tours</a>\
     </li>\
+    <li id="lhstoragemenuitem">\
+    <a href="#" id="LHClearStorage">Delete All Collections</a>\
+    </li>\
     <li>\
     <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
     </li>\
@@ -116,6 +122,13 @@ $("#LHTourRestart").click(function() {
    }
  });
  location.reload();    
+});
+
+$("#LHClearStorage").click(function() {
+  window.postMessage({ type: 'PURGE_COLLECTION', name: 'lighthouseMessageCollections'}, '*');
+  window.postMessage({ type: 'PURGE_COLLECTION', name: 'lighthouseTeamFilterCollections'}, '*');
+  window.postMessage({ type: 'PURGE_COLLECTION', name: 'lighthouseJobFilterCollections'}, '*');
+  location.reload();
 });
 
 if (location.pathname == "/") {

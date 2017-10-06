@@ -244,3 +244,22 @@ body.previewbeacon .navbar-default .navbar-nav>li>a:hover {
 body.previewbeacon .navbar-default .navbar-nav>.open>a,body.previewbeacon .navbar-default .navbar-nav>.open>a:hover,body.previewbeacon .navbar-default .navbar-nav>.open>a:focus {
   background: #0055EE;
 }
+
+/* animation duration and fill mode */
+.cssanimation {
+  animation-duration: 1s;
+  animation-fill-mode: both;
+  display: inline-block;
+}
+
+/* fadeOutTop animation declaration & iteration counting */
+.fadeOutTop { animation-name: fadeOutTop }
+
+/* fadeOutTop animation keyframes */
+@keyframes fadeOutTop {
+    from { opacity: 1 }
+    to {
+        opacity: 0;
+        transform: translateY(-100%);
+    }
+}

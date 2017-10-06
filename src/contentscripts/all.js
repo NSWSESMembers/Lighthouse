@@ -58,6 +58,8 @@ window.addEventListener("message", function(event) {
         window.postMessage({type: 'RETURN_COLLECTION', name: event.data.name, dataresult: JSON.stringify(items)}, '*');
       })
     })
+  } else if (event.data.type && (event.data.type == "PURGE_COLLECTION")) {
+    chrome.storage.sync.remove([event.data.name+'-'+location.hostname])
   } 
 }, false);
 
