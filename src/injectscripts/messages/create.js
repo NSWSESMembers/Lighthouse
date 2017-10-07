@@ -17,8 +17,6 @@ $(document).ready(function() {
     var query = window.location.search.substring(1);
     var qs = parse_query_string(query);
 
-    console.log(qs)
-
     $.each(qs, function(value, key){
         switch (value)
         {
@@ -365,7 +363,7 @@ function LoadNitc() {
                                                 })
 if (wasAdded == false)
 {
-   total--
+ total--
                                                         if (total == 0) //when they have all loaded, stop spinning.
                                                         {
                                                             spinner.remove();
@@ -577,9 +575,12 @@ function LoadAllCollections() {
   currentCollections = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
   if (currentCollections !== null) {
     $.each(currentCollections, function(k, v) {
+        console.log('pushing local to sync storage')
+        console.log(v)
         window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(v), name: 'lighthouseMessageCollections'}, '*');
 
     })
+    console.log('removing localstorage')
     localStorage.removeItem("lighthouseContactCollections")
 }
 
@@ -630,7 +631,7 @@ function LoadAllCollections() {
             })
             $(button).appendTo('#lighthousecollections');
             console.log()
-            button.style.width = (($(button).find('span.delbutton')[0].offsetWidth*2)+button.offsetWidth) + "px"; //add the width of the X button to the width, to avoid overlap
+            button.style.width = (($(button).find('span.sharebutton')[0].offsetWidth)+($(button).find('span.delbutton')[0].offsetWidth)+button.offsetWidth) + "px"; //add the width of the X button to the width, to avoid overlap
             button.style.height = button.offsetHeight + "px";
         });
 }
@@ -950,7 +951,7 @@ function DoTour() {
         name: "LHTourMessages",
         smartPlacement: true,
         placement: "right",
-        debug: true,
+        debug: false,
         steps: [{
             element: "",
             placement: "top",
@@ -991,7 +992,7 @@ function DoTour() {
             title: "Lighthouse Collections",
             placement: "top",
             backdrop: false,
-            content: "Lighthouse Collections allow you to save a group of message recipients for quick selection later. Collections can contain any combination of recipients (including groups from different units or regions) and are saved locally on your computer.",
+            content: "Lighthouse Collections allow you to save a group of message recipients for quick selection later. Collections can contain any combination of recipients (including groups from different units or regions) and are synced between chrome profiles.",
         },
         {
             element: "#collectionsave",
@@ -999,29 +1000,42 @@ function DoTour() {
             placement: "top",
             backdrop: false,
             onNext: function(tour) {
-                $button = make_collection_button("Tour Example", "Tour Example", "13")
-                $($button).attr("id", "tourbutton")
-                $($button).appendTo('#lighthousecollections');
+                button = make_collection_button("Example", "Tour Example", "13")
+                $(button).appendTo('#lighthousecollections');
+                button.style.width = (($(button).find('span.sharebutton')[0].offsetWidth)+($(button).find('span.delbutton')[0].offsetWidth)+button.offsetWidth) + "px"; //add the width of the X button to the width, to avoid overlap
+                button.style.height = button.offsetHeight + "px";
+                $(button).attr("id", "tourbutton")
+                $(button).find('span.sharebutton').attr("id", "sharebutton")
+                $(button).find('span.delbutton').attr("id", "delbutton")
+                
             },
-            content: "Once you have selected some message recipients click 'Save As Collection' to save them for later. using a name that already exists will replace the old collection.",
+            content: "Once you have selected some message recipients click 'Save Current As Collection' to save them for later. using a name that already exists will replace the old collection.",
         },
         {
             element: "#tourbutton",
             title: "Lighthouse Collections - Load",
             placement: "top",
             backdrop: false,
-            onNext: function(tour) {
-                LoadAllCollections();
-
-            },
             content: "This is a saved collection. Click it to load its contents into 'Selected Recipients'",
         },
         {
-            element: "#recipientsdel",
-            title: "Lighthouse Delete",
-            placement: "auto",
+            element: "#sharebutton",
+            title: "Lighthouse Collections - Share",
+            placement: "top",
             backdrop: false,
-            content: "We have added a button to remove all the selected message recipients",
+            content: "Click the 'S' to share the collection with other lighthouse users",
+        },
+        {
+            element: "#delbutton",
+            title: "Lighthouse Collections - Delete",
+            placement: "top",
+            backdrop: false,
+            onNext: function(tour) {
+                LoadAllCollections();
+                $('#tourbutton').remove()
+
+            },
+            content: "Click the 'X' to delete this collection",
         },
         {
             element: "",
