@@ -32,8 +32,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.ses.nsw.gov.au/Jobs/Create",
-        "https://*.ses.nsw.gov.au/Jobs/Create/"
+        "https://*.ses.nsw.gov.au/Jobs/Create*"
       ],
       "js": ["contentscripts/jobs/create.js"]
     },
@@ -76,7 +75,8 @@
     {
       "matches": [
         "https://*.ses.nsw.gov.au/Messages/Create",
-        "https://*.ses.nsw.gov.au/Messages/Create/"
+        "https://*.ses.nsw.gov.au/Messages/Create/",
+        "https://*.ses.nsw.gov.au/Messages/Create?*"
       ],
       "js": ["contentscripts/messages/create.js"]
     },

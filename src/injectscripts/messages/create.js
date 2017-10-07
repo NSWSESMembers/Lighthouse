@@ -14,6 +14,32 @@ $(document).ready(function() {
 
     $( "body" ).append(make_collection_share_modal())
 
+    var query = window.location.search.substring(1);
+    var qs = parse_query_string(query);
+
+    console.log(qs)
+
+    $.each(qs, function(value, key){
+        switch (value)
+        {
+            case "importcollection":
+            $('#LHImportCollectionErrorText').hide()
+            DownloadedObject = {}
+            $('#LHCodeBox').val(key)
+            $('#LGCollectionImportGroup').find('span').remove()
+            $('#LHCodeBox').show()
+            $('#LHImportCollectionCode').text('Download Collection')
+            $('#LHCollectionImportModal').modal();
+
+
+            window.history.pushState("object or string", "Title", window.location.pathname );
+
+
+            break
+        }
+
+    })
+
     $('#LHGenerateShareCollectionLink').click(function() {
         var spinner = $(<i style="width:100%; margin-top:12px; margin-left:auto; margin-right:auto; margin-bottom:12px" class="fa fa-refresh fa-spin fa-3x fa-fw"></i>)
         $('#LHGenerateShareCollectionCodeBox').css('display','table');
@@ -36,17 +62,24 @@ $(document).ready(function() {
                 console.log(response)
                 if (response.responseJSON.result == 'OK')
                 {
+
+                    $('#LHGenerateShareCollectionCodeURLBox').css('display','table');
                     $('#LHGenerateShareCollectionCode').css('display','')
+                    $('#LHGenerateShareCollectionCodeURL').css('display','')
+
                     spinner.remove()
                     $('#LHGenerateShareCollectionCode').text(response.responseJSON.code)
+                    $('#LHGenerateShareCollectionCodeURL').text(window.location.href+"?importcollection="+response.responseJSON.code)
+
                 }
             }
         })
-    })
+})
 
 $('#LHImportCollectionCode').click(function() {
     if ($('#LHImportCollectionCode').text() == "Download Collection")
     {
+        var code = $('#LHCodeBox').val()
         var code = $('#LHCodeBox').val()
         console.log(code)
         $.ajax({
@@ -99,12 +132,20 @@ $('#LHImportCollectionCode').click(function() {
 
 })
 
-$('#LHGenerateShareCollectionCode').click(function() {
+$('#LHGenerateShareCollectionCode').click(function(e) {
   //  
-    copyToClipboard($('#LHGenerateShareCollectionCode').text())
-    $('#clicktocopy').text('Copied to clipboard')
-    e.stopPropagation();
+  copyToClipboard($('#LHGenerateShareCollectionCode').text())
+  $('#clicktocopy').text('Copied to clipboard')
+  e.stopPropagation();
 })
+
+$('#LHGenerateShareCollectionCodeURL').click(function(e) {
+  //  
+  copyToClipboard($('#LHGenerateShareCollectionCodeURL').text())
+  $('#clicktocopyURL').text('Copied to clipboard')
+  e.stopPropagation();
+})
+
 
 $('#LHCollectionImport').click(function() {
     $('#LHImportCollectionErrorText').hide()
@@ -324,7 +365,7 @@ function LoadNitc() {
                                                 })
 if (wasAdded == false)
 {
- total--
+   total--
                                                         if (total == 0) //when they have all loaded, stop spinning.
                                                         {
                                                             spinner.remove();
@@ -579,8 +620,12 @@ function LoadAllCollections() {
                 event.stopImmediatePropagation();
                 SharedCollection = item
                 $('#clicktocopy').text('Click to copy to clipboard')
+                $('#clicktocopyURL').text('Click to copy to clipboard')
                 $('#LHGenerateShareCollectionCodeBox').css('display','none')
+                $('#LHGenerateShareCollectionCodeURLBox').css('display','none')
                 $('#LHGenerateShareCollectionCode').text('')
+
+                $('#LHGenerateShareCollectionCodeURL').text('')
                 $('#LHCollectionShareModal').modal()
             })
             $(button).appendTo('#lighthousecollections');
@@ -829,6 +874,12 @@ function make_collection_share_modal() {
         </div>
         <p id="clicktocopy" style="text-align: center;">Click to copy to clipboard</p>
         </div>
+        <div id='LHGenerateShareCollectionCodeURLBox' style="display: none;margin:auto;">
+        <div style="margin-top:20px;border-style: dashed;border-width: 2px;">
+        <p style="font-family: 'Courier New';text-align: center;font-size: small;margin: 15px 15px;" id="LHGenerateShareCollectionCodeURL"></p>
+        </div>
+        <p id="clicktocopyURL" style="text-align: center;">Click to copy to clipboard</p>
+        </div>
         </div>
         <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -988,4 +1039,24 @@ function DoTour() {
 
     // Start the tour
     tour.start();
+}
+
+function parse_query_string(query) {
+  var vars = query.split("&");
+  var query_string = {};
+  for (var i = 0; i < vars.length; i++) {
+    var pair = vars[i].split("=");
+    // If first entry with this name
+    if (typeof query_string[pair[0]] === "undefined") {
+      query_string[pair[0]] = decodeURIComponent(pair[1]);
+      // If second entry with this name
+  } else if (typeof query_string[pair[0]] === "string") {
+      var arr = [query_string[pair[0]], decodeURIComponent(pair[1])];
+      query_string[pair[0]] = arr;
+      // If third or later entry with this name
+  } else {
+      query_string[pair[0]].push(decodeURIComponent(pair[1]));
+  }
+}
+return query_string;
 }
