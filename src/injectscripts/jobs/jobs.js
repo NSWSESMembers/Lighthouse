@@ -122,7 +122,7 @@ function DoTour() {
         onNext: function (tour) {
           $('#lhquickfilter > ul').show();
         },
-        content: "Lighthouse Advanced Export allows you to export jobs and includes almost all the available data for the job - 31 data fields in total.",
+        content: "Lighthouse Advanced Export allows you to export jobs and includes almost all the available data for the job - 33 data fields in total.",
       },
       {
         element: "#lhquickfilter",

@@ -48,7 +48,9 @@ window.addEventListener("message", function(event) {
       {
         var items = []
       }
-
+      console.log("existing")
+      console.log(items)
+      console.log(event.data.target)
       items.forEach(function(item) {
         if (event.data.target == JSON.stringify(item)) {
           items.splice(items.indexOf(item), 1)
@@ -60,6 +62,7 @@ window.addEventListener("message", function(event) {
     })
   } else if (event.data.type && (event.data.type == "PURGE_COLLECTION")) {
     chrome.storage.sync.remove([event.data.name+'-'+location.hostname])
+    chrome.storage.local.clear(function() {})
   } 
 }, false);
 
