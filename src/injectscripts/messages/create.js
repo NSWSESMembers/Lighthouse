@@ -117,8 +117,6 @@ $('#LHImportCollectionCode').click(function() {
                     $('#LHImportCollectionCode').text('Accept & Save')
                     console.log(DownloadedObject)
 
-                    //$('#LHGenerateShareCollectionCodeBox').css('display','table');
-                    //$('#LHGenerateShareCollectionCode').text(response.responseJSON.code)
                 } else if (response.responseJSON.result == 'NOTFOUND') {
                     $('#LHImportCollectionErrorText').show()
                     $('#LHImportCollectionErrorText').text('Code not found')
@@ -126,6 +124,9 @@ $('#LHImportCollectionCode').click(function() {
                 } else if (response.responseJSON.result == 'MISSMATCH') {
                     $('#LHImportCollectionErrorText').show()
                     $('#LHImportCollectionErrorText').text('Requested collection is not for '+location.hostname+' it is for '+response.responseJSON.source) 
+                } else if (response.responseJSON.result == 'EXPIRED') {
+                    $('#LHImportCollectionErrorText').show()
+                    $('#LHImportCollectionErrorText').text('Code has expired') 
                 }
             }
         })
