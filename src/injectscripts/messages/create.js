@@ -78,7 +78,14 @@ $('#LHImportCollectionCode').click(function() {
     if ($('#LHImportCollectionCode').text() == "Download Collection")
     {
         var code = $('#LHCodeBox').val()
-        var code = $('#LHCodeBox').val()
+
+        var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
+
+        $('#LHImportCollectionErrorText').text('')
+        $('#LHImportCollectionErrorText').show()
+        $('#LHImportCollectionErrorText').append(spinner)
+
+
         console.log(code)
         $.ajax({
             type: 'POST',
@@ -93,10 +100,10 @@ $('#LHImportCollectionCode').click(function() {
             dataType: 'json',
             complete: function(response, textStatus) {
                 console.log(response)
+                spinner.remove()
                 if (response.responseJSON.result == 'OK')
                 {
                     var object = JSON.parse(JSON.parse(response.responseJSON.object))
-                    console.log(object)
                     DownloadedObject = object
                     //$('#LHCodeBox').val(object.name)
                     $('#LHCodeBox').hide()
@@ -143,6 +150,11 @@ $('#LHGenerateShareCollectionCodeURL').click(function(e) {
   $('#clicktocopyURL').text('Copied to clipboard')
   e.stopPropagation();
 })
+
+$('#LHCodeBox').keypress(function(e){
+  if(e.keyCode==13)
+      $('#LHImportCollectionCode').click();
+});
 
 
 $('#LHCollectionImport').click(function() {
@@ -363,7 +375,7 @@ function LoadNitc() {
                                                 })
 if (wasAdded == false)
 {
- total--
+   total--
                                                         if (total == 0) //when they have all loaded, stop spinning.
                                                         {
                                                             spinner.remove();
@@ -817,8 +829,8 @@ break;
 function make_collection_button(name, description, count) {
     return (
         <span class="label label tag-rebecca">
-        <span class="sharebutton"  style="float:left;margin-left: -5px"><sup>S</sup></span>
-        <span class="delbutton"  style="float:right;margin-right: -5px"><sup>X</sup></span>
+        <span class="sharebutton"  style="float:left;margin-left: -6px;margin-top:-4px"><i class="fa fa-share fa1"></i></span>
+        <span class="delbutton"  style="float:right;margin-right: -6px;margin-top:-4px"><i class="fa fa-times"></i></span>
         <span><p  style="margin-bottom:5px"><i class="fa fa-object-group" aria-hidden="true" style="padding-right: 5px;"></i>{name}</p></span>
         <span>{count} Recipients</span>
         </span>
@@ -908,7 +920,7 @@ function make_collection_import_modal() {
         <div class="col-lg-3 center-block" style="width:100%">
         <div class="input-group" style="width:50%; margin: 0 auto">
         <div  id="LGCollectionImportGroup" style="display:flex;justify-content: center">
-        <input type="text" maxlength="4" class="form-control" id="LHCodeBox" style="text-align:center;font-size: -webkit-xxx-large;height: 80px;margin-bottom:10px"/>
+        <input type="text" maxlength="4" class="form-control" id="LHCodeBox" style="text-transform:uppercase;text-align:center;font-size: -webkit-xxx-large;height: 80px;margin-bottom:10px"/>
         </div>
         <p id="LHImportCollectionErrorText" style="text-align:center;display:hidden;color:red"></p>
         <button id="LHImportCollectionCode" style="margin: 0 auto;display:block" class="btn btn-primary" type="button">Download Collection</button>
@@ -1023,7 +1035,7 @@ function DoTour() {
             title: "Lighthouse Collections - Share",
             placement: "top",
             backdrop: false,
-            content: "Click the 'S' to share the collection with other lighthouse users",
+            content: "Click share icon to share the collection with other lighthouse users",
         },
         {
             element: "#delbutton",
