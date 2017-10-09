@@ -399,7 +399,7 @@ function InstantSectorButton() {
     , dataType: 'json'
     , data: {LighthouseFunction: 'InstantSectorButton'}
     , complete: function(response, textStatus) {
-     // console.log('textStatus = "%s"', textStatus, response);
+      //console.log('textStatus = "%s"', textStatus, response);
       if (textStatus == 'success')
       {
 
@@ -431,8 +431,9 @@ function InstantSectorButton() {
           })
           $(quickSector).find('ul').append(finalli)
         } else {
+          $(quickSector).find('ul').empty();
           no_results = (<li><a href="#">No Open Sectors</a></li>)
-          $(quickTask).find('ul').append(no_results)
+          $(quickSector).find('ul').append(no_results)
         }
       }
     }
