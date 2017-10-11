@@ -47,7 +47,7 @@ function renderHQTeams() {
 
 var hqTeamsgroup = renderHQTeams()
 $(hqTeamsgroup).hide() // hide it untill there is something to show
-$('#content > div > div > div:nth-child(2) fieldset:nth-child(2)').after(hqTeamsgroup);
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(1)').after(hqTeamsgroup);
 
 function renderHQNitc() {
 	return (
@@ -88,7 +88,7 @@ function renderCollections() {
 }
 
 
-$('#content > div > div > div:nth-child(2) fieldset:nth-child(2)').after(renderCollections);
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(3)').after(renderCollections);
 
 
 
