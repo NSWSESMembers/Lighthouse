@@ -111,7 +111,7 @@ whenWeAreReady(user,function() {
 
 }
 
-$('.nav .navbar-nav:not(".navbar-right")').append(lighthouseMenu);
+$('ul.nav.navbar-nav.navbar-left').append(lighthouseMenu);
 
 $("#LHTourRestart").click(function() {
  Object.keys(localStorage)
@@ -138,98 +138,96 @@ if (location.pathname == "/") {
   //lighthouse menu for teams
   if (location.pathname == "/Teams") {
 
-    if (user.hq.EntityTypeId != 1) {
-  //make region level more obvious
-  regionfilter = user.hq.Code+" Units";
-} else {
-  regionfilter = user.hq.ParentEntity.Code;
-}
-
-
-
-var filtermenu = `\
-<li class="" id="lhquickfilter">\
-<a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
-<ul class="sub-menu" style="display: none;">\
-<li class="active">\
-<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">${user.hq.Code}</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">${regionfilter}</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
-<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span>\
-<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-object-group"></i><a style="font-size: .9em; margin-left: 7px">Filter Collections</a><div id="lhfiltercollections" style="display: inline-block;"></div><div><button type="button" class="btn btn-primary btn-xs" id="lhfiltercollectionsave"></i>Save Current</button></div></span>\
-<li>\
-</ul>\
-</li>`;
-
-
-$('.main-menu > li:nth-child(1)').after(filtermenu);
-
-
-$("#filterallmyregion").click(function() {
-  filterViewModel.selectedEntities.removeAll();
-  filtershowallmyregion();
-});
-
-$("#filtermyhq").click(function() {
-  filterViewModel.selectedEntities.removeAll();
-  filterViewModel.selectedEntities.push(user.hq);
-  filterViewModel.updateFilters();
-});
-
-$("#clearlocator").click(function() {
-  filterViewModel.selectedEntities.removeAll();
-  filterViewModel.updateFilters();
-});
-
-$("#filtertoday").click(function() {
-  filterViewModel.startDate(utility.dateRanges.Today.StartDate())
-  filterViewModel.endDate(utility.dateRanges.Today.EndDate())
-  filterViewModel.dateRangeType('Today')
-  $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm"));
-  $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-    if ($(this).text() == "Today")
-    {
-      $(this).addClass('active')
+    if (user.hq.EntityTypeId != 1) {     //make region level more obvious
+      regionfilter = user.hq.Code+" Units";
     } else {
-      $(this).removeClass('active')
+      regionfilter = user.hq.ParentEntity.Code;
     }
-  })
-  filterViewModel.updateFilters();
-});
 
-$("#filter7days").click(function() {
-  filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
-  filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
-  filterViewModel.dateRangeType('Last 7 Days')
-  $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm"));
-  $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-    if ($(this).text() == "Last 7 Days")
-    {
-      $(this).addClass('active')
-    } else {
-      $(this).removeClass('active')
-    }
-  })
-  filterViewModel.updateFilters();
-});
 
-$("#filter30days").click(function() {
- filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
- filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
- filterViewModel.dateRangeType('Last 30 Days')
- $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
- $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
-  if ($(this).text() == "Last 30 Days")
-  {
-    $(this).addClass('active')
-  } else {
-    $(this).removeClass('active')
-  }
-})
- filterViewModel.updateFilters();
-});
+    var filtermenu = `\
+    <li class="" id="lhquickfilter">\
+    <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
+    <ul class="sub-menu" style="display: none;">\
+    <li class="active">\
+    <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">${user.hq.Code}</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">${regionfilter}</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+    <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span>\
+    <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-object-group" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 7px">Filter Collections</a><div id="lhfiltercollections" style="display: inline-block;"></div><div><button type="button" class="btn btn-primary btn-xs" id="lhfiltercollectionsave"></i>Save Current</button></div></span>\
+    <li>\
+    </ul>\
+    </li>`;
 
-$("#lhfiltercollectionsave").click(function() {
 
-  saveObject = {}
+    $('.main-menu > li:nth-child(1)').after(filtermenu);
+
+
+    $("#filterallmyregion").click(function() {
+      filterViewModel.selectedEntities.removeAll();
+      filtershowallmyregion();
+    });
+
+    $("#filtermyhq").click(function() {
+      filterViewModel.selectedEntities.removeAll();
+      filterViewModel.selectedEntities.push(user.hq);
+      filterViewModel.updateFilters();
+    });
+
+    $("#clearlocator").click(function() {
+      filterViewModel.selectedEntities.removeAll();
+      filterViewModel.updateFilters();
+    });
+
+    $("#filtertoday").click(function() {
+      filterViewModel.startDate(utility.dateRanges.Today.StartDate())
+      filterViewModel.endDate(utility.dateRanges.Today.EndDate())
+      filterViewModel.dateRangeType('Today')
+      $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm"));
+      $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
+        if ($(this).text() == "Today")
+        {
+          $(this).addClass('active')
+        } else {
+          $(this).removeClass('active')
+        }
+      })
+      filterViewModel.updateFilters();
+    });
+
+    $("#filter7days").click(function() {
+      filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
+      filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
+      filterViewModel.dateRangeType('Last 7 Days')
+      $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm"));
+      $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
+        if ($(this).text() == "Last 7 Days")
+        {
+          $(this).addClass('active')
+        } else {
+          $(this).removeClass('active')
+        }
+      })
+      filterViewModel.updateFilters();
+    });
+
+    $("#filter30days").click(function() {
+     filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
+     filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
+     filterViewModel.dateRangeType('Last 30 Days')
+     $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
+     $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j){
+      if ($(this).text() == "Last 30 Days")
+      {
+        $(this).addClass('active')
+      } else {
+        $(this).removeClass('active')
+      }
+    })
+     filterViewModel.updateFilters();
+   });
+
+    $("#lhfiltercollectionsave").click(function() {
+
+      saveObject = {}
 
   saveObject.selectedTeamTypes = filterViewModel.selectedTeamTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
   saveObject.selectedTeamStatusTypes = filterViewModel.selectedTeamStatusTypes.peek().map(function(x) {return {Id:x.Id}}) //lets make it shorter by only keeping the ID
@@ -281,11 +279,11 @@ if (user.hq.EntityTypeId != 1) {
           <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
           <ul class="sub-menu" style="display: none;">\
           <li class="active">\
-          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-flag"></i><a style="font-size: .9em;margin-left: 5px">Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Outstanding</span></span><span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span><span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
-          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-file-text-o"></i><a style="font-size: .9em;margin-left: 5px">Job Type</a><span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span><span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span><span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span><span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
-          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">${user.hq.Code}</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">${regionfilter}</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
-          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span>\
-          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-object-group"></i><a style="font-size: .9em; margin-left: 7px">Filter Collections</a><div id="lhfiltercollections" style="display: inline-block;"></div><div><button type="button" class="btn btn-primary btn-xs" id="lhfiltercollectionsave"></i>Save Current</button></div></span>\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-flag" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em;margin-left: 5px">Job Status</a> <span class="label tag tag-job-status tag-disabled" id="filteropen"><span class="tag-text">Outstanding</span></span><span class="label tag tag-job-status tag-disabled" id="filterclosed"><span class="tag-text">Closed</span></span><span class="label tag tag-lighthouse" id="filterallstatus"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-file-text-o" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em;margin-left: 5px">Job Type</a><span class="label tag tag-rescue tag-disabled" id="filterrescue"><span class="tag-text">Rescue</span></span><span class="label tag tag-job-type tag-disabled" id="filterstorm"><span class="tag-text">Storm</span></span><span class="label tag tag-flood-misc tag-disabled" id="filterflood"><span class="tag-text">Flood</span></span><span class="label tag tag-lighthouse" id="filteralltype"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">${user.hq.Code}</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">${regionfilter}</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span>\
+          <span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-object-group" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 7px">Filter Collections</a><div id="lhfiltercollections" style="display: inline-block;"></div><div><button type="button" class="btn btn-primary btn-xs" id="lhfiltercollectionsave"></i>Save Current</button></div></span>\
           </li>
           </ul>
           </li>`;

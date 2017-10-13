@@ -15,8 +15,7 @@ function renderCheckBox() {
 		);
 }
 
-
-$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(1) legend').append(renderCheckBox);
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(1) legend').append(renderCheckBox);
 
 
 function recipientsButtons() {
@@ -30,7 +29,7 @@ function recipientsButtons() {
 		);
 }
 
-$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(2) div.panel.panel-default').append(recipientsButtons);
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(2) div.panel.panel-default').append(recipientsButtons);
 
 function renderHQTeams() {
 	return (
@@ -48,7 +47,7 @@ function renderHQTeams() {
 
 var hqTeamsgroup = renderHQTeams()
 $(hqTeamsgroup).hide() // hide it untill there is something to show
-$('#content div.row div.col-md-10.col-lg-9 div fieldset:nth-child(1)').after(hqTeamsgroup);
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(1)').after(hqTeamsgroup);
 
 function renderHQNitc() {
 	return (
@@ -67,7 +66,7 @@ function renderHQNitc() {
 var hqNitcgroup = renderHQNitc()
 $(hqNitcgroup).hide() // hide it untill there is something to show
 
-$(hqTeamsgroup).after(hqNitcgroup);
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(2)').after(hqNitcgroup);
 
 
 function renderCollections() {
@@ -88,7 +87,8 @@ function renderCollections() {
 		);
 }
 
-$(hqNitcgroup).after(renderCollections);
+
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(3)').after(renderCollections);
 
 
 

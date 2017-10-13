@@ -4,7 +4,7 @@ var DOM = require('jsx-dom-factory');
 
 
 // Add buttons to top of job screen for summary, statistics and advanced export
-var buttonBar = $('.job-page .job-reg-widget .btn-group.pull-left.text-left');
+var buttonBar = $('div.widget.clearfix.table-widget > div.widget-header .btn-group.pull-left.text-left');
 
 function makeButton(id, background, border, text) {
   return $(
