@@ -466,8 +466,8 @@ function showSesTeamsLocations(mapLayer, data) {
 
                 let details =
                     `<div>\
-                    <div><a target='_blank' href="${urls.Base}/Teams/${team.properties.teamId}/Edit">${team.properties.teamCallsign}</a> - ${status}</div>\
-                    <div>Job ID: ${team.properties.jobId} <a href=${urls.Base}/Jobs/${team.properties.jobId} target='_blank'>View Job Details</a></div>\
+                    <div><a target='_blank' href="${location.origin}/Teams/${team.properties.teamId}/Edit">${team.properties.teamCallsign}</a> - ${status}</div>\
+                    <div>Job ID: ${team.properties.jobId} <a href=${location.origin}/Jobs/${team.properties.jobId} target='_blank'>View Job Details</a></div>\
                     </div>`;
 
                 let jobOffset = jobOffsets[jobId] || 0;
@@ -1285,7 +1285,7 @@ module.exports = class InjectScriptMapManager {
             <div id='JobSoS' style="display:block;text-align:center">${(data.SituationOnScene != null) ? data.SituationOnScene : "<i>No situation on scene available.</i>" }</div>
             <div id='JobTags' style="display:block;text-align:center;padding-top:10px">${tagString}</div>
             ${taskingTable}
-            <div style="display:block;text-align:center;padding-top:10px"><a href=${urls.Base}/Jobs/${data.Id} target='_blank'>View Job Details</a></div>
+            <div style="display:block;text-align:center;padding-top:10px"><a href=${location.origin}/Jobs/${data.Id} target='_blank'>View Job Details</a></div>
 
             <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
             <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
