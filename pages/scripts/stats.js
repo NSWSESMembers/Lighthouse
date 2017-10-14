@@ -454,7 +454,7 @@ console.log("open")
   .group(function(d) { return "Filtered Results (15 Max)"  })
   .size(15)
   .columns([
-    function(d) { return "<a href=\""+params.host+"/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
+    function(d) { return "<a href=\""+params.source+"/Jobs/"+d.Id+"\" target=\"_blank\">"+d.Identifier+"</a>"; },
     function(d) { return d.Type; },
     function(d) { return d.JobReceivedFixed.toLocaleTimeString("en-au", options); },
     function(d) { return (new Date(d.JobCompleted).getTime() !== new Date(0).getTime() ? d.JobCompleted.toLocaleTimeString("en-au", options):"") },

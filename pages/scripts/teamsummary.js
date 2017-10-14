@@ -120,9 +120,9 @@ function RunForestRun() {
 
     if (typeof params.hq != 'undefined') {  //if not no hqs
       if (params.hq.split(",").length == 1) { //if only one HQ
-        LighthouseUnit.get_unit_name(params.hq,params.host, params.token, function(result) {
+        LighthouseUnit.get_unit_name(params.hq,params.host, params.source, params.token, function(result) {
           unit = result;
-          HackTheMatrix(unit,params.host, params.token);
+          HackTheMatrix(unit,params.host, params.source, params.token);
         });
       } else {
         unit = [];
@@ -133,24 +133,24 @@ function RunForestRun() {
           LighthouseUnit.get_unit_name(d, params.host,params.token, function(result) {
             unit.push(result);
             if (unit.length == params.hq.split(",").length) {
-              HackTheMatrix(unit, params.host, params.token);
+              HackTheMatrix(unit, params.host, params.source, params.token);
             }
           });
         });
       }
     } else { //no hq was sent, get them all
       unit = [];
-      HackTheMatrix(unit,params.host, params.token);
+      HackTheMatrix(unit,params.host, params.source, params.token);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
-    HackTheMatrix(unit, params.host, params.token);
+    HackTheMatrix(unit, params.host, params.source, params.token);
   }
 
 }
 
 //make the call to beacon
-function HackTheMatrix(unit, host, token) {
+function HackTheMatrix(unit, host, source, token) {
 
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
@@ -186,7 +186,7 @@ function HackTheMatrix(unit, host, token) {
         var latestupdate = row.insertCell(4);
         latestupdate.className = "update";
 
-        callsign.innerHTML = "<a href=\""+host+"/Teams/"+d.Id+"/Edit\" target=\"_blank\">"+d.Callsign+"</a>";
+        callsign.innerHTML = "<a href=\""+source+"/Teams/"+d.Id+"/Edit\" target=\"_blank\">"+d.Callsign+"</a>";
 
         switch (d.TeamStatusType.Id) { //color the callsign by team status
           case 3: //active
@@ -246,7 +246,7 @@ function HackTheMatrix(unit, host, token) {
 
             if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") { //it wasnt an untask or a tasking (so its a action the team made like on route or onsite)
              var diff = moment(thistime).fromNow();
-             latest = f.CurrentStatus + " #" + "<a style=\"color: inherit;\" href=\""+host+"/Jobs/"+f.Job.Id+"\" target=\"_blank\">"+f.Job.Identifier+"</a>" + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff;
+             latest = f.CurrentStatus + " #" + "<a style=\"color: inherit;\" href=\""+source+"/Jobs/"+f.Job.Id+"\" target=\"_blank\">"+f.Job.Identifier+"</a>" + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff;
              oldesttime = thistime;
            }
          });
