@@ -63,7 +63,7 @@ window.addEventListener("message", function(event) {
             lighthouseMap.layers()[event.data.layer].clear();
         } else if (event.data.type === "LH_GET_TRANSPORT_KEY") {
             var transportApiKeyOpsLog = '';
-            switch (urls.Base)
+            switch (location.origin)
             {
                 case 'https://previewbeacon.ses.nsw.gov.au':
                     transportApiKeyOpsLog = '46273';

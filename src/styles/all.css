@@ -225,18 +225,6 @@ div[data-bind="text: $data"] {
   font-weight: bold;
 }
 
-body.previewbeacon {}
-body.previewbeacon #navbar,
-body.previewbeacon .navbar-header {
-  background: #007FFF;
-}
-body.previewbeacon .navbar-default .navbar-nav>li>a:hover {
-  background: #0040E6;
-}
-body.previewbeacon .navbar-default .navbar-nav>.open>a,body.previewbeacon .navbar-default .navbar-nav>.open>a:hover,body.previewbeacon .navbar-default .navbar-nav>.open>a:focus {
-  background: #0055EE;
-}
-
 /* animation duration and fill mode */
 .cssanimation {
   animation-duration: 1s;
