@@ -6,7 +6,6 @@ var postCodes = require('../../../lib/postcodes.js');
 var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 
 
-
 console.log("Running content script");
 
 //if ops logs update
@@ -385,7 +384,7 @@ function InstantCategoryButton() {
 function InstantSectorButton() {
 
   $(quickSector).find('ul').empty();
-  var loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
+  var loading = (<li><a href="#" style="text-align: center;"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
   $(quickSector).find('ul').append(loading)
 
    //fetch the job and check its tasking status to ensure the data is fresh and not stale on page.
@@ -494,7 +493,7 @@ function SetSector(sector,currentsector) {
       }
     })
     $(quickTask).find('ul').empty();
-    var loading = (<li><a href="#"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
+    var loading = (<li><a href="#" style="text-align: center;"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
     $(quickTask).find('ul').append(loading)
 
     lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
@@ -520,6 +519,7 @@ function SetSector(sector,currentsector) {
     , data: {LighthouseFunction: 'QuickTaskGetJob'}
     , complete: function(response, textStatus) {
       //console.log('textStatus = "%s"', textStatus, response);
+
       if (textStatus == 'success')
       {
         var data = response.responseJSON
@@ -529,7 +529,7 @@ function SetSector(sector,currentsector) {
 
        ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
 
-
+        console.log(response)
         if(response.responseJSON.Results.length) {
           $(quickTask).find('ul').empty();
 
@@ -544,7 +544,6 @@ function SetSector(sector,currentsector) {
 
             $(theSearch).keyup(function (e) {
               e.stopPropagation();
-              console.log(e.target.value)
               $.each($(quickTask).find('ul').find('li[role!="presentation"]'),function(k,v){
                 if (($(v)[0].innerText).toUpperCase().indexOf(e.target.value.toUpperCase()) == -1)
                 {
@@ -553,8 +552,34 @@ function SetSector(sector,currentsector) {
                  $(v).show()
                }
              })
+              $.each($(quickTask).find('ul').find('li[role="presentation"]'),function(k,v){
+                childrenVis = false
+                nextChild = $(v).next()
+                // walk the neighbours of the li, if they are displayed then dont hide the pres li, otherwise hide it. wish this was a nested DOM!
+                while (nextChild != null)
+                {
+                  if ($(nextChild).css('display') != undefined) //next might not be a valid dom, cause next seems to keep going when there is no next!
+                  {
+                    if ( $(nextChild).css('display') != 'none'){ //if hidden
+                      childrenVis = true
+                    }
+                  }
+                 if ($(nextChild).length == 0 || $(nextChild).next().attr('role') == 'presentation') //if this is a valid dom, and the next one isnt pres. next wont ever stop and will just return a 0 lenght 
+                 {
+                  nextChild = null
+                } else {
+                  nextChild = $(nextChild).next()
+                }
+                }
+                if (childrenVis != true) //hide or show the pres depending on its children
+                {
+                  $(v).hide()
+                } else {
+                 $(v).show()
+               }
 
-            });
+             })
+});
 
             /////
             ///// END Search Box
