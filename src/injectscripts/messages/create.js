@@ -53,25 +53,41 @@ $(document).ready(function() {
                 LighthouseFunction: 'CollectionLoadCollection',
                 source: location.hostname,
                 object: JSON.stringify(SharedCollection)
-            },
-            cache: false,
-            dataType: 'json',
-            complete: function(response, textStatus) {
-                console.log(response)
-                if (response.responseJSON.result == 'OK')
-                {
+            }, xhr: function() {
+            // Get new xhr object using default factory
+            var xhr = jQuery.ajaxSettings.xhr();
+            // Copy the browser's native setRequestHeader method
+            var setRequestHeader = xhr.setRequestHeader;
+            // Replace with a wrapper
+            xhr.setRequestHeader = function(name, value) {
+            // Ignore the X-Requested-With header
+            if (name == 'Authorization') return;
+            // Otherwise call the native setRequestHeader method
+            // Note: setRequestHeader requires its 'this' to be the xhr object,
+            // which is what 'this' is here when executed.
+            setRequestHeader.call(this, name, value);
+        }
+        // pass it on to jQuery
+        return xhr;
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function(response, textStatus) {
+        console.log(response)
+        if (response.responseJSON.result == 'OK')
+        {
 
-                    $('#LHGenerateShareCollectionCodeURLBox').css('display','table');
-                    $('#LHGenerateShareCollectionCode').css('display','')
-                    $('#LHGenerateShareCollectionCodeURL').css('display','')
+            $('#LHGenerateShareCollectionCodeURLBox').css('display','table');
+            $('#LHGenerateShareCollectionCode').css('display','')
+            $('#LHGenerateShareCollectionCodeURL').css('display','')
 
-                    spinner.remove()
-                    $('#LHGenerateShareCollectionCode').text(response.responseJSON.code)
-                    $('#LHGenerateShareCollectionCodeURL').text(window.location.href+"?importcollection="+response.responseJSON.code)
+            spinner.remove()
+            $('#LHGenerateShareCollectionCode').text(response.responseJSON.code)
+            $('#LHGenerateShareCollectionCodeURL').text(window.location.href+"?importcollection="+response.responseJSON.code)
 
-                }
-            }
-        })
+        }
+    }
+})
 })
 
 $('#LHImportCollectionCode').click(function() {
