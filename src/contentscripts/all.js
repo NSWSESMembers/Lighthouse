@@ -1,7 +1,9 @@
-var inject = require('../../lib/inject.js');
-var $ = require('jquery');
-var DOM = require('jsx-dom-factory');
-var LighthouseChrome = require('../../pages/lib/shared_chrome_code.js');
+if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1)
+{
+  var inject = require('../../lib/inject.js');
+  var $ = require('jquery');
+  var DOM = require('jsx-dom-factory');
+  var LighthouseChrome = require('../../pages/lib/shared_chrome_code.js');
 
   // inject JS that is to run on every page in page context
   inject('all.js');
@@ -67,7 +69,7 @@ window.addEventListener("message", function(event) {
 }, false);
 
 
-$(document).ready(function(){
+  $(document).ready(function(){
 
   // Map Mouse Eating Stopper
   if (location.pathname != "/Jobs/SituationalAwareness") {
@@ -93,3 +95,4 @@ $(document).ready(function(){
   }
 
 });
+}
