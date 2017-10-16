@@ -255,7 +255,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
         if (!this._token) {
             console.log('waiting',this._token)
             // If the inject script hasn't sent over the HQs wait a few seconds then retry
-            setTimeout(this._requestSesTeamsLayerUpdate, 2000);
+            setTimeout(this._requestSesTeamsLayerUpdate.bind(this), 2000);
             return;
         }
 
