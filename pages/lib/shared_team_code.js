@@ -75,10 +75,8 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback,
  * @param token the authorisation token.
  * @param callback the callback to send the data to after it is fetched.
  */
-function getTeamGeoJson(hqs, startDate, endDate, token, callback) {
+function getTeamGeoJson(hqs, host, startDate, endDate, token, callback) {
     console.debug('fetching SES teams geoJson');
-
-    let host = location.origin;
 
     let lastDay = new Date();
     lastDay.setDate(lastDay.getDate() - 1);

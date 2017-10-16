@@ -15,12 +15,12 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
 /**
  * A class for helping out with map layer access on the content script side.
  */
-module.exports = class ContentScriptMapManager {
+ module.exports = class ContentScriptMapManager {
 
     /**
      * Constructs a new map manager.
      */
-    constructor() {
+     constructor() {
         // The map of timers which will update the lighthouse map layers when enabled
         this._timers = {};
     }
@@ -30,94 +30,94 @@ module.exports = class ContentScriptMapManager {
      *
      * @returns {*|jQuery|HTMLElement}
      */
-    static createLayerMenu() {
+     static createLayerMenu() {
         return $(<li id="lhlayers">
             <a href="#" class="js-sub-menu-toggle">
-                <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
-                <span class="text">Lighthouse</span>
-                <i class="toggle-icon fa fa-angle-left"></i>
+            <img src={lighthouseIcon} style="width:14px;vertical-align:top;margin-right:10px;float:left" />
+            <span class="text">Lighthouse</span>
+            <i class="toggle-icon fa fa-angle-left"></i>
             </a>
             <ul class="sub-menu ">
-                <li>
-                    <a class="js-sub-sub-menu-toggle" href="#">
-                        <img src={sesIcon} style="width:14px;vertical-align:sub;margin-right:7px;" />
-                        <span class="text toggle-tag-text">NSW SES</span>
-                    </a>
-                    <ul class="sub-sub-menu">
-                        <li class="clearfix">
-                    <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
-                        <span class="tag-text">SES LHQs</span>
-                    </span>
-                            <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
-                        <span class="tag-text">SES Team Locations</span>
-                    </span>
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    <a class="js-sub-sub-menu-toggle" href="#">
-                        <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;float:left;margin-right:7px;" />
-                        <span class="text toggle-tag-text">Roads and Maritime Services</span>
-                    </a>
-                    <ul class="sub-sub-menu">
-                        <li class="clearfix">
-                    <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
-                        <span class="tag-text">RMS Incidents</span>
-                    </span>
-                            <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
-                        <span class="tag-text">RMS Flood Reports</span>
-                    </span>
-                            <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
-                        <span class="tag-text">RMS Cameras</span>
-                    </span>
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    <a class="js-sub-sub-menu-toggle" href="#">
-                        <img src={rfscorpIcon} style="width:14px;vertical-align:top;float:left;margin-right:7px;" />
-                        <span class="text toggle-tag-text">NSW Rural Fire Service</span>
-                    </a>
-                    <ul class="sub-sub-menu">
-                        <li class="clearfix">
-                    <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
-                        <span class="tag-text">RFS Incidents</span>
-                    </span>
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    <a class="js-sub-sub-menu-toggle" href="#">
-                        <i class="toggle-icon-sub fa fa-bell"></i>
-                        <span class="text toggle-tag-text">Other</span>
-                    </a>
-                    <ul class="sub-sub-menu">
-                        <li class="clearfix">
-                    <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
-                        <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
-                        <span class="tag-text">Rescue Aircraft</span>
-                    </span>
-                            <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
-                        <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-                        <span class="tag-text">Power Outages</span>
-                    </span>
-                        </li>
-                    </ul>
-                </li>
+            <li>
+            <a class="js-sub-sub-menu-toggle" href="#">
+            <img src={sesIcon} style="width:14px;vertical-align:sub;margin-right:7px;" />
+            <span class="text toggle-tag-text">NSW SES</span>
+            </a>
+            <ul class="sub-sub-menu">
+            <li class="clearfix">
+            <span id="togglelhqsBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={lhqIcon} />
+            <span class="tag-text">SES LHQs</span>
+            </span>
+            <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
+            <span class="tag-text">SES Team Locations</span>
+            </span>
+            </li>
             </ul>
-        </li>);
-    }
+            </li>
+            <li>
+            <a class="js-sub-sub-menu-toggle" href="#">
+            <img src={rmsIcon} style="margin-top:4px;width:14px;vertical-align:top;float:left;margin-right:7px;" />
+            <span class="text toggle-tag-text">Roads and Maritime Services</span>
+            </a>
+            <ul class="sub-sub-menu">
+            <li class="clearfix">
+            <span id="toggleRmsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/traffic-incident.gif" />
+            <span class="tag-text">RMS Incidents</span>
+            </span>
+            <span id="toggleRmsFloodingBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/hazard/weather-flood.gif" />
+            <span class="tag-text">RMS Flood Reports</span>
+            </span>
+            <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera.gif" />
+            <span class="tag-text">RMS Cameras</span>
+            </span>
+            </li>
+            </ul>
+            </li>
+            <li>
+            <a class="js-sub-sub-menu-toggle" href="#">
+            <img src={rfscorpIcon} style="width:14px;vertical-align:top;float:left;margin-right:7px;" />
+            <span class="text toggle-tag-text">NSW Rural Fire Service</span>
+            </a>
+            <ul class="sub-sub-menu">
+            <li class="clearfix">
+            <span id="toggleRfsIncidentsBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={rfsIcon} />
+            <span class="tag-text">RFS Incidents</span>
+            </span>
+            </li>
+            </ul>
+            </li>
+            <li>
+            <a class="js-sub-sub-menu-toggle" href="#">
+            <i class="toggle-icon-sub fa fa-bell"></i>
+            <span class="text toggle-tag-text">Other</span>
+            </a>
+            <ul class="sub-sub-menu">
+            <li class="clearfix">
+            <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
+            <span class="tag-text">Rescue Aircraft</span>
+            </span>
+            <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
+            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+            <span class="tag-text">Power Outages</span>
+            </span>
+            </li>
+            </ul>
+            </li>
+            </ul>
+            </li>);
+}
 
     /**
      * Initialises the map manager.
      */
-    initialise() {
+     initialise() {
         this._registerClickHandler('toggleRfsIncidentsBtn', 'rfs', this._requestRfsLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', this._requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', this._requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
@@ -133,7 +133,11 @@ module.exports = class ContentScriptMapManager {
                 return;
 
             if (event.data.type) {
-                if (event.data.type === 'LH_USER_ACCESS_TOKEN') {
+                if (event.data.type === 'LH_USER_API') {
+                    this._base = event.data.base;
+                    console.debug('Got base: ' + this._base);
+
+                } else if (event.data.type === 'LH_USER_ACCESS_TOKEN') {
                     this._token = event.data.token;
                     console.debug('Got access-token: ' + this._token);
 
@@ -160,7 +164,7 @@ module.exports = class ContentScriptMapManager {
                 }
             }
         }.bind(this), false);
-    }
+}
 
     /**
      * Registers the click handler on the filter buttons.
@@ -171,7 +175,7 @@ module.exports = class ContentScriptMapManager {
      * @param interval the refresh interval.
      * @return timer the timer which refreshes the layer.
      */
-    _registerClickHandler(buttonId, layer, updateFunction, interval) {
+     _registerClickHandler(buttonId, layer, updateFunction, interval) {
         document.getElementById(buttonId).addEventListener('click',
             function () {
                 console.debug(`toggle ${buttonId} clicked`);
@@ -197,7 +201,7 @@ module.exports = class ContentScriptMapManager {
     /**
      * Sends a request to the background script to get the LHQ locations.
      */
-    _requestLhqsLayerUpdate() {
+     _requestLhqsLayerUpdate() {
         console.debug('updating LHQs layer');
         $.getJSON(chrome.extension.getURL('resources/SES_HQs.geojson'), function (data) {
             ContentScriptMapManager._passLayerDataToInject('lhqs', data);
@@ -207,7 +211,7 @@ module.exports = class ContentScriptMapManager {
     /**
      * Sends a request to the background script to get the latest RFS incidents.
      */
-    _requestRfsLayerUpdate() {
+     _requestRfsLayerUpdate() {
         console.debug('updating RFS layer');
         this._requestLayerUpdate('rfs');
     }
@@ -215,7 +219,7 @@ module.exports = class ContentScriptMapManager {
     /**
      * Sends a request to the background script to get the latest transport incidents.
      */
-    _requestTransportIncidentsLayerUpdate() {
+     _requestTransportIncidentsLayerUpdate() {
         console.debug('updating transport incidents layer');
         this._fetchTransportResource('transport-incidents');
     }
@@ -223,7 +227,7 @@ module.exports = class ContentScriptMapManager {
     /**
      * Sends a request to the background script to get the latest transport flood reports.
      */
-    _requestTransportFloodReportsLayerUpdate() {
+     _requestTransportFloodReportsLayerUpdate() {
         console.debug('updating transport incidents layer');
         this._fetchTransportResource('transport-flood-reports');
     }
@@ -232,7 +236,7 @@ module.exports = class ContentScriptMapManager {
     /**
      * asks for the cameras via the fetchTransportResource function
      */
-    _requestTransportCamerasLayerUpdate() {
+     _requestTransportCamerasLayerUpdate() {
         console.debug('updating transport cameras layer');
         this._fetchTransportResource('transport-cameras');
     }
@@ -245,16 +249,17 @@ module.exports = class ContentScriptMapManager {
     /**
      * Requests an update to the SES teams location layer.
      */
-    _requestSesTeamsLayerUpdate() {
-        console.debug('updating SES teams layer');
+     _requestSesTeamsLayerUpdate() {
+        console.debug('updating SES teams layer',this);
 
-        if (!this._hqs) {
+        if (!this._token) {
+            console.log('waiting',this._token)
             // If the inject script hasn't sent over the HQs wait a few seconds then retry
             setTimeout(this._requestSesTeamsLayerUpdate, 2000);
             return;
         }
 
-        LighthouseTeam.getTeamGeoJson(this._hqs, this._startDate, this._endDate, this._token, function(result) {
+        LighthouseTeam.getTeamGeoJson(this._hqs, this._base, this._startDate, this._endDate, this._token, function(result) {
             ContentScriptMapManager._passLayerDataToInject('ses-teams', result);
         }.bind(this));
     }
@@ -264,7 +269,7 @@ module.exports = class ContentScriptMapManager {
      *
      * @param layer the layer to fetch, e.g. 'transport-incidents'.
      */
-    _fetchTransportResource(layer) {
+     _fetchTransportResource(layer) {
         let sessionKey = 'lighthouseTransportApiKeyCache';
         let transportApiKeyCache = sessionStorage.getItem(sessionKey);
 
@@ -284,7 +289,7 @@ module.exports = class ContentScriptMapManager {
      * @param layer the layer to fetch.
      * @param apiKey the transport.nsw.gov.au API key.
      */
-    _fetchTransportResourceWithKey(apiKey, layer) {
+     _fetchTransportResourceWithKey(apiKey, layer) {
         console.info(`fetching transport resource: ${apiKey} ${layer}`);
         let params = {apiKey: apiKey};
         this._requestLayerUpdate(layer, params)
@@ -293,7 +298,7 @@ module.exports = class ContentScriptMapManager {
     /**
      * Sends a request to the background script to get the latest helicopter positions.
      */
-    static _requestHelicoptersLayerUpdate() {
+     static _requestHelicoptersLayerUpdate() {
         console.debug('updating transport incidents layer');
         window.postMessage({type: 'LH_REQUEST_HELI_PARAMS'}, '*');
     }
@@ -305,7 +310,7 @@ module.exports = class ContentScriptMapManager {
      * @param layer the layer to fetch.
      * @param params an API key or something needed to fetch the resource.
      */
-    _requestLayerUpdate(layer, params = {}) {
+     _requestLayerUpdate(layer, params = {}) {
         chrome.runtime.sendMessage({type: layer, params: params}, function (response) {
             if (response.error) {
                 console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
@@ -321,7 +326,7 @@ module.exports = class ContentScriptMapManager {
      * @param layer the layer to own the data.
      * @param response the data to use.
      */
-    static _passLayerDataToInject(layer, response) {
+     static _passLayerDataToInject(layer, response) {
         window.postMessage({type: 'LH_UPDATE_LAYERS_DATA', layer: layer, response: response}, '*');
     }
 };

@@ -9,7 +9,7 @@ const MapLayer = require('./MapLayer.js');
  *
  * @param filterViewModel the filter view model.
  */
-function sendStateToContentScript(filterViewModel) {
+ function sendStateToContentScript(filterViewModel) {
     let startMoment = filterViewModel.startDate();
     let endMoment = filterViewModel.endDate();
     let startDate = startMoment ? startMoment.toDate() : null;
@@ -66,16 +66,16 @@ window.addEventListener("message", function(event) {
             switch (location.origin)
             {
                 case 'https://previewbeacon.ses.nsw.gov.au':
-                    transportApiKeyOpsLog = '46273';
-                    break;
+                transportApiKeyOpsLog = '46273';
+                break;
                 case 'https://beacon.ses.nsw.gov.au':
-                    transportApiKeyOpsLog = '515514';
-                    break;
+                transportApiKeyOpsLog = '515514';
+                break;
                 case 'https://trainbeacon.ses.nsw.gov.au':
-                    transportApiKeyOpsLog = '36753';
-                    break;
+                transportApiKeyOpsLog = '36753';
+                break;
                 default:
-                    transportApiKeyOpsLog = '0'
+                transportApiKeyOpsLog = '0'
             }
 
             let layer = event.data.layer;
@@ -96,7 +96,7 @@ window.addEventListener("message", function(event) {
  * @param id the ID of the ops log.
  * @param cb the callback to send the response to.
  */
-function getOpsLog(id, cb) {
+ function getOpsLog(id, cb) {
     var urls = window.urls;
     var user = window.user;
 
@@ -148,7 +148,7 @@ const rfsIcons = {
  * @param point the point to add.
  * @param icon the icon.
  */
-function addTransportPoint(mapLayer, point, icon) {
+ function addTransportPoint(mapLayer, point, icon) {
     let lat = point.geometry.coordinates[1];
     let lon = point.geometry.coordinates[0];
 
@@ -161,7 +161,7 @@ function addTransportPoint(mapLayer, point, icon) {
     let updateddiff = moment(point.properties.lastUpdated).fromNow();
 
     let dateDetails =
-        `<div class="dateDetails">\
+    `<div class="dateDetails">\
     <div><span class="dateDetailsLabel">Created: </span> ${created}</div>\
     <div><span class="dateDetailsLabel">Created: </span> ${createddiff}</div>\
     <div><span class="dateDetailsLabel">Updated: </span> ${updated}</div>\
@@ -169,7 +169,7 @@ function addTransportPoint(mapLayer, point, icon) {
     </div>`;
 
     let details =
-        `<div><strong>${point.properties.headline}</strong></div>\
+    `<div><strong>${point.properties.headline}</strong></div>\
     <div style="margin-top:0.5em">${point.properties.adviceA}</div>\
     <div>${point.properties.adviceB}</div>\
     <div>${point.properties.otherAdvice}</div>\
@@ -185,7 +185,7 @@ function addTransportPoint(mapLayer, point, icon) {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showTransportCameras(mapLayer, data) {
+ function showTransportCameras(mapLayer, data) {
     console.info('showing RMS cameras');
 
     let count = 0;
@@ -201,17 +201,17 @@ function showTransportCameras(mapLayer, data) {
                 switch (feature.properties.direction)
                 {
                     case "N":
-                        icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-n.gif';
-                        break;
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-n.gif';
+                    break;
                     case "S":
-                        icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-s.gif';
-                        break;
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-s.gif';
+                    break;
                     case "E":
-                        icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-e.gif';
-                        break;
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-e.gif';
+                    break;
                     case "W":
-                        icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-w.gif';
-                        break;
+                    icon = 'https://www.livetraffic.com/images/icons/traffic-conditions/traffic-web-camera-w.gif';
+                    break;
                 }
 
                 let lat = feature.geometry.coordinates[1];
@@ -239,7 +239,7 @@ function showTransportCameras(mapLayer, data) {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showTransportFlooding(mapLayer, data) {
+ function showTransportFlooding(mapLayer, data) {
     console.info('showing RMS reported flooding');
 
     let count = 0;
@@ -263,7 +263,7 @@ function showTransportFlooding(mapLayer, data) {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showTransportIncidents(mapLayer, data) {
+ function showTransportIncidents(mapLayer, data) {
     console.info('showing RMS incidents');
 
     let count = 0;
@@ -288,7 +288,7 @@ function showTransportIncidents(mapLayer, data) {
  * @param data the data to add to the layer.
  */
 
-function showLhqs(mapLayer, data) {
+ function showLhqs(mapLayer, data) {
     console.info('showing LHQs');
     let count = 0;
     if (data && data.features) {
@@ -309,7 +309,7 @@ function showLhqs(mapLayer, data) {
             }
 
             let details =
-                `<div id='lhqPopUp'>\
+            `<div id='lhqPopUp'>\
             <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${unitCode} &mdash; ${hq.attributes.REGCODE}</div>\
             <div id='lhqNameHolder' style="display:none">Unit Name: <span id='lhqName'>${hq.attributes.HQNAME}</span></div>\
             <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
@@ -368,7 +368,7 @@ function showLhqs(mapLayer, data) {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showRuralFires(mapLayer, data) {
+ function showRuralFires(mapLayer, data) {
     console.info('showing RFS incidents');
 
     let count = 0;
@@ -437,7 +437,7 @@ function showRuralFires(mapLayer, data) {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showSesTeamsLocations(mapLayer, data) {
+ function showSesTeamsLocations(mapLayer, data) {
     console.info('showing SES teams');
 
     let jobOffsets = {};
@@ -465,10 +465,10 @@ function showSesTeamsLocations(mapLayer, data) {
                 }
 
                 let details =
-                    `<div>\
-                    <div><a target='_blank' href="${location.origin}/Teams/${team.properties.teamId}/Edit">${team.properties.teamCallsign}</a> - ${status}</div>\
-                    <div>Job ID: ${team.properties.jobId} <a href=${location.origin}/Jobs/${team.properties.jobId} target='_blank'>View Job Details</a></div>\
-                    </div>`;
+                `<div>\
+                <div><a target='_blank' href="${location.origin}/Teams/${team.properties.teamId}/Edit">${team.properties.teamCallsign}</a> - ${status}</div>\
+                <div>Job ID: ${team.properties.jobId} <a href=${location.origin}/Jobs/${team.properties.jobId} target='_blank'>View Job Details</a></div>\
+                </div>`;
 
                 let jobOffset = jobOffsets[jobId] || 0;
                 jobOffsets[jobId] = jobOffset + 1;
@@ -490,7 +490,7 @@ function showSesTeamsLocations(mapLayer, data) {
  *
  * @returns the params.
  */
-function buildHeliParams() {
+ function buildHeliParams() {
     // Build the query url
     let params = '';
     for (let i = 0; i < aircraft.length; i++) {
@@ -507,7 +507,7 @@ function buildHeliParams() {
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showRescueHelicopters(mapLayer, data) {
+ function showRescueHelicopters(mapLayer, data) {
     console.info('showing rescue helicopters');
 
     let count = 0;
@@ -571,7 +571,7 @@ function showRescueHelicopters(mapLayer, data) {
  * @param alt the aircraft altitude.
  * @param heading the aircraft heading.
  */
-function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading, icon) {
+ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, heading, icon) {
     let updated = "unknown";
     let updatedMoment = "unknown";
 
@@ -587,7 +587,7 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
     }
 
     let details =
-        `<div>Model: ${heli.model}</div>\
+    `<div>Model: ${heli.model}</div>\
     <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
     <div class="dateDetails">\
     <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
@@ -612,7 +612,7 @@ function addAircraftMarker(mapLayer, icao24, positionUpdated, lat, lon, alt, hea
  * @param mapLayer the map layer to add to.
  * @param data the data to add to the layer.
  */
-function showPowerOutages(mapLayer, data) {
+ function showPowerOutages(mapLayer, data) {
     console.info('showing power outages');
 
     let count = 0;
@@ -659,72 +659,72 @@ function showPowerOutages(mapLayer, data) {
                 switch (source.owner)
                 {
                     case 'EndeavourEnergy':
-                        name = 'Endeavour Energy: ' + source.properties.incidentId;
-                        creation = source.properties.creationDateTime;
-                        start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
-                        end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
-                        reason = source.properties.reason;
-                        status = source.properties.status;
-                        type = source.properties.outageType;
-                        if (type = "U") type="Unknown";
-                        if (type = "P") type="Planned";
-                        CustomerAffected = source.properties.numberCustomerAffected;
-                        contact = "Endeavour Energy 131 003"
-                        break
+                    name = 'Endeavour Energy: ' + source.properties.incidentId;
+                    creation = source.properties.creationDateTime;
+                    start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
+                    end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
+                    reason = source.properties.reason;
+                    status = source.properties.status;
+                    type = source.properties.outageType;
+                    if (type = "U") type="Unknown";
+                    if (type = "P") type="Planned";
+                    CustomerAffected = source.properties.numberCustomerAffected;
+                    contact = "Endeavour Energy 131 003"
+                    break
                     case 'Ausgrid':
-                        name = 'Ausgrid: ' + source.properties.incidentId;
-                        creation = source.properties.creationDateTime;
-                        start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
-                        end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
-                        reason = source.properties.reason;
-                        type = source.properties.outageType;
-                        status = source.properties.status
-                        if (status == "") status="Unknown";
-                        type = source.properties.type
-                        CustomerAffected = source.properties.numberCustomerAffected;
-                        contact = "Ausgrid 13 13 88"
-                        break
+                    name = 'Ausgrid: ' + source.properties.incidentId;
+                    creation = source.properties.creationDateTime;
+                    start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
+                    end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
+                    reason = source.properties.reason;
+                    type = source.properties.outageType;
+                    status = source.properties.status
+                    if (status == "") status="Unknown";
+                    type = source.properties.type
+                    CustomerAffected = source.properties.numberCustomerAffected;
+                    contact = "Ausgrid 13 13 88"
+                    break
                     case 'EssentialEnergy':
-                        name = 'Essential Energy: ' + source.id;
-                        start = /Time Off\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
-                        end = /Time On\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
-                        if (end == "") end = "Unknown";
-                        status = /Status\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)
-                        if (status)
-                        {
-                            status = status[1]
-                        } else {
-                            status = "NA"
-                        }
-                        type = source.properties.outageType;
-                        if (source.properties.styleUrl.match("unplanned"))
-                        {
-                            type = "Unplanned"
-                            reason = "Unknown"
-                        } else {
-                            type = "Planned"
-                            reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
-                        }
-                        CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
-                        contact = "Essential Energy 132 080"
-                        break
+                    name = 'Essential Energy: ' + source.id;
+                    start = /Time Off\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    end = /Time On\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    if (end == "") end = "Unknown";
+                    status = /Status\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)
+                    if (status)
+                    {
+                        status = status[1]
+                    } else {
+                        status = "NA"
+                    }
+                    type = source.properties.outageType;
+                    if (source.properties.styleUrl.match("unplanned"))
+                    {
+                        type = "Unplanned"
+                        reason = "Unknown"
+                    } else {
+                        type = "Planned"
+                        reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    }
+                    CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
+                    contact = "Essential Energy 132 080"
+                    break
                 }
 
                 let dateDetails =
-                    `<div class="dateDetails">\
-         <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
-         <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
-         </div>`;
+                `<div class="dateDetails">\
+                <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
+                <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
+                </div>`;
                 let details =
-                    `<div>Affected Customers: ${CustomerAffected}</div>\
-         <div>Outage Type: ${type}</div>\
-         <div>Reason: ${reason}</div>\
-         <div>Status: ${status}</div>\
-         ${dateDetails}\
-         <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
-         <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
-         ${contact}\
-         </span>`;
+                `<div>Affected Customers: ${CustomerAffected}</div>\
+                <div>Outage Type: ${type}</div>\
+                <div>Reason: ${reason}</div>\
+                <div>Status: ${status}</div>\
+                ${dateDetails}\
+                <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+                <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+                ${contact}\
+                </span>`;
 
                 return({name:name,details:details})
 
@@ -745,7 +745,7 @@ function showPowerOutages(mapLayer, data) {
  * @returns something. or null. //TODO
  */
 
-function fetchHqDetails(HQName, cb) {
+ function fetchHqDetails(HQName, cb) {
     var hq = {}
     $.ajax({
         type: 'GET'
@@ -811,7 +811,7 @@ function fetchHqDetails(HQName, cb) {
  * @returns something. or null. //TODO
  */
 
-function fetchHqJobCount(HQId,cb) {
+ function fetchHqJobCount(HQId,cb) {
     $.ajax({
         type: 'GET'
         , url: urls.Base+'/Api/v1/Jobs/Search?StartDate=&EndDate=&Hq='+HQId+'&JobStatusTypeIds%5B%5D=2&JobStatusTypeIds%5B%5D=1&JobStatusTypeIds%5B%5D=5&JobStatusTypeIds%5B%5D=4&ViewModelType=5&PageIndex=1&PageSize=100'
@@ -836,7 +836,7 @@ function fetchHqJobCount(HQId,cb) {
  * @returns something. or null. //TODO
  */
 
-function fetchJob(jobId,cb) {
+ function fetchJob(jobId,cb) {
     $.ajax({
         type: 'GET'
         , url: urls.Base+'/Api/v1/Jobs/'+jobId+'?viewModelType=1'
@@ -861,7 +861,7 @@ function fetchJob(jobId,cb) {
  * @returns something. or null. //TODO
  */
 
-function fetchJobTasking(jobId,cb) {
+ function fetchJobTasking(jobId,cb) {
     $.ajax({
         type: 'GET'
         , url: urls.Base+'/Api/v1/Tasking/Search?JobIds%5B%5D='+jobId
@@ -885,7 +885,7 @@ function fetchJobTasking(jobId,cb) {
  * @para cb cb
  * @returns something. or null. //TODO
  */
-function fetchHqTeamCount(HQId,cb) {
+ function fetchHqTeamCount(HQId,cb) {
     $.ajax({
         type: 'GET'
         , url: urls.Base+'/Api/v1/Teams/Search?StatusStartDate=&StatusEndDate=&AssignedToId='+HQId+'&StatusTypeId%5B%5D=3&IncludeDeleted=false&PageIndex=1&PageSize=200&SortField=CreatedOn&SortOrder=desc'
@@ -910,7 +910,7 @@ function fetchHqTeamCount(HQId,cb) {
  * @returns something. or null. //TODO
  */
 
-function fetchHqContacts(HQId,cb) {
+ function fetchHqContacts(HQId,cb) {
     $.ajax({
         type: 'GET'
         , url: urls.Base+'/Api/v1/Contacts/Search?HeadquarterIds='+HQId+'&PageIndex=1&PageSize=50&SortField=createdon&SortOrder=asc'
@@ -935,7 +935,7 @@ function fetchHqContacts(HQId,cb) {
  * @returns something. or null. //TODO
  */
 
-function fetchHqAccreditations(HQId,cb) {
+ function fetchHqAccreditations(HQId,cb) {
     $.ajax({
         type: 'GET'
         , url: urls.Base+'/Api/v1/HeadquarterAccreditations/'+HQId
@@ -958,7 +958,7 @@ function fetchHqAccreditations(HQId,cb) {
  * @param icao24 the ID.
  * @returns the aircraft, or {@code null} if no match is found.
  */
-function findAircraftById(icao24) {
+ function findAircraftById(icao24) {
     for (let i = 0; i < aircraft.length; i++) {
         if (aircraft[i].icao24.toLowerCase() === icao24.toLowerCase()) {
             return aircraft[i];
@@ -972,7 +972,7 @@ function findAircraftById(icao24) {
 /**
  * A class for rescue aircraft details
  */
-class Helicopter {
+ class Helicopter {
     /**
      * Constructs a new aircraft.
      *
@@ -982,7 +982,7 @@ class Helicopter {
      * @param model the model, e.g. "AW-139".
      * @param heli {@code true} if this is a helicopter.
      */
-    constructor(icao24, rego, name, model, operator, heli = true) {
+     constructor(icao24, rego, name, model, operator, heli = true) {
 
         this.icao24 = icao24.toLowerCase();
         this.rego = rego;
@@ -997,7 +997,7 @@ class Helicopter {
      *
      * @returns {string} the URL to the icon.
      */
-    getIcon() {
+     getIcon() {
         if (this.heli) {
             return lighthouseUrl + 'icons/helicopter.png';
         } else {
@@ -1009,7 +1009,7 @@ class Helicopter {
 /**
  * A class for a holding details of an aircraft position.
  */
-class AircraftPosition {
+ class AircraftPosition {
     /**
      * Constructs a new aircraft position.
      *
@@ -1020,7 +1020,7 @@ class AircraftPosition {
      * @param alt the last known altitude.
      * @param heading the last known heading.
      */
-    constructor(aircraft, lastUpdate, lat, lon, alt, heading) {
+     constructor(aircraft, lastUpdate, lat, lon, alt, heading) {
         this.aircraft = aircraft;
         this.lastUpdate = lastUpdate;
         this.lat = lat;
@@ -1032,7 +1032,7 @@ class AircraftPosition {
     /**
      * Saves this position into local storage.
      */
-    save() {
+     save() {
         let icao24 = this.aircraft.icao24;
         localStorage.setItem('lighthouse-last-position-' + icao24, JSON.stringify(this));
     }
@@ -1043,7 +1043,7 @@ class AircraftPosition {
      * @param icao24 the ICAO24 address.
      * @return an AircraftPosition, or undefined.
      */
-    static load(icao24) {
+     static load(icao24) {
         icao24 = icao24.toLowerCase();
         let cachedLastPosition = localStorage.getItem('lighthouse-last-position-' + icao24);
         if (cachedLastPosition) {
@@ -1112,7 +1112,7 @@ const aircraft = [
     new Helicopter('ACC37A', 'N512AX', '', 'DC-10', 'RFS', false), // Bomber 910?
 
     // Whoa, there appear to be a lot of these...
-];
+    ];
 
 // Some extra data points for dev-time
 if (developmentMode) {
@@ -1126,7 +1126,7 @@ if (developmentMode) {
 
         // Royal Flying Doctor's Service
         new Helicopter('7C3FE2', 'VH-MWK', 'FD286', 'Super King B200C', 'RFDS', false)
-    );
+        );
 }
 
 var aircraftLastPositions = {};
@@ -1134,7 +1134,7 @@ var aircraftLastPositions = {};
 /**
  * Loads the last known aircraft positions.
  */
-function loadAircraftLastKnownPositions() {
+ function loadAircraftLastKnownPositions() {
     console.debug('loading aircraft last known positions');
 
     for (let i = 0; i < aircraft.length; i++) {
@@ -1155,17 +1155,20 @@ const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
 /**
  * A class for helping out with map layer access on the inject script side.
  */
-module.exports = class InjectScriptMapManager {
+ module.exports = class InjectScriptMapManager {
 
     /**
      * Initialises the map manager.
      *
      * @param filterViewModel the filter view model.
      */
-    initialise(filterViewModel) {
+     initialise(filterViewModel) {
         // Send the auth token to the content script
         console.debug('Sending access-token: ' + user.accessToken);
         window.postMessage({type: 'LH_USER_ACCESS_TOKEN', token: user.accessToken}, '*');
+
+        console.debug('Sending base: ' + urls.Base);
+        window.postMessage({type: 'LH_USER_API', base: urls.Base}, '*');
 
         filterViewModel.selectedEntities.subscribe(function () {
             sendStateToContentScript(filterViewModel);
@@ -1198,11 +1201,11 @@ module.exports = class InjectScriptMapManager {
 
 
             var details =
-                `<div id='jobPopUp' style="margin-top:-5px">\
-        <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
-        Loading...
-        </span>
-        </div>`
+            `<div id='jobPopUp' style="margin-top:-5px">\
+            <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+            Loading...
+            </span>
+            </div>`
 
             // Show the info window for our point
             lighthouseMap._map.infoWindow.setTitle(event.graphic.infoTemplate.title);
@@ -1234,23 +1237,23 @@ module.exports = class InjectScriptMapManager {
                         }
                     })
 
-                    if (rows.length == 0) {
-                        rows.push('<td colspan="2" style="font-style: italic">No Taskings</td>')
-                    }
+if (rows.length == 0) {
+    rows.push('<td colspan="2" style="font-style: italic">No Taskings</td>')
+}
 
-                    let taskingTable =
-                        `<div id='taskingHolder' style="padding-top:10px;width:100%;margin:auto">\
-            <table id='taskingTable' style="width:100%;text-align: center;">\
-            <tr>\
-            <td colspan="2" style="font-weight: bold">Team Tasking</td>
-            </tr>\
-            <tr>\
-            <th style="text-align: center;width:50%">Callsign</th>\
-            <th style="text-align: center;width:50%">Status</th>\
-            </tr>\
-            ${rows.join('\r')}
-            </table>\
-            </div>`
+let taskingTable =
+`<div id='taskingHolder' style="padding-top:10px;width:100%;margin:auto">\
+<table id='taskingTable' style="width:100%;text-align: center;">\
+<tr>\
+<td colspan="2" style="font-weight: bold">Team Tasking</td>
+</tr>\
+<tr>\
+<th style="text-align: center;width:50%">Callsign</th>\
+<th style="text-align: center;width:50%">Status</th>\
+</tr>\
+${rows.join('\r')}
+</table>\
+</div>`
 
                     // Job Tags
                     var tagArray = new Array();
@@ -1264,41 +1267,41 @@ module.exports = class InjectScriptMapManager {
 
                     switch (data.JobPriorityType.Description) {
                         case "Life Threatening":
-                            bgcolor = "red"
-                            txtcolor = 'white'
-                            break
+                        bgcolor = "red"
+                        txtcolor = 'white'
+                        break
                         case "Priority Response":
-                            bgcolor = "rgb(255, 165, 0)"
-                            txtcolor = 'white'
-                            break
+                        bgcolor = "rgb(255, 165, 0)"
+                        txtcolor = 'white'
+                        break
                         case "Immediate Response":
-                            bgcolor = "rgb(79, 146, 255)"
-                            txtcolor = 'white'
-                            break
+                        bgcolor = "rgb(79, 146, 255)"
+                        txtcolor = 'white'
+                        break
                     }
 
                     details =
-                        `<div id='jobType' style="margin:auto;text-align:center;font-weight: bold;background-color:${bgcolor};color:${txtcolor}">${data.JobType.Name} - ${data.JobStatusType.Name}</div>\
-            <div id='jobPriority' style="margin:auto;text-align:center;background-color:${bgcolor};color:${txtcolor}"><span id='lhqStatus'>${data.JobPriorityType.Description}</span></div>\
-            <div style="display:block;text-align: center;font-weight:bold;margin-top:10px">${data.Address.PrettyAddress}</div>\
-            <div id='JobDetails' style="padding-top:10px;width:100%;margin:auto">\
-            <div id='JobSoS' style="display:block;text-align:center">${(data.SituationOnScene != null) ? data.SituationOnScene : "<i>No situation on scene available.</i>" }</div>
-            <div id='JobTags' style="display:block;text-align:center;padding-top:10px">${tagString}</div>
-            ${taskingTable}
-            <div style="display:block;text-align:center;padding-top:10px"><a href=${location.origin}/Jobs/${data.Id} target='_blank'>View Job Details</a></div>
+                    `<div id='jobType' style="margin:auto;text-align:center;font-weight: bold;background-color:${bgcolor};color:${txtcolor}">${data.JobType.Name} - ${data.JobStatusType.Name}</div>\
+                    <div id='jobPriority' style="margin:auto;text-align:center;background-color:${bgcolor};color:${txtcolor}"><span id='lhqStatus'>${data.JobPriorityType.Description}</span></div>\
+                    <div style="display:block;text-align: center;font-weight:bold;margin-top:10px">${data.Address.PrettyAddress}</div>\
+                    <div id='JobDetails' style="padding-top:10px;width:100%;margin:auto">\
+                    <div id='JobSoS' style="display:block;text-align:center">${(data.SituationOnScene != null) ? data.SituationOnScene : "<i>No situation on scene available.</i>" }</div>
+                    <div id='JobTags' style="display:block;text-align:center;padding-top:10px">${tagString}</div>
+                    ${taskingTable}
+                    <div style="display:block;text-align:center;padding-top:10px"><a href=${location.origin}/Jobs/${data.Id} target='_blank'>View Job Details</a></div>
 
-            <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
-            <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
-            Job recieved at ${moment(data.JobReceived).format('HH:mm:ss DD/MM/YYYY')}<br>
-            ${data.EntityAssignedTo.Code} - ${data.EntityAssignedTo.ParentEntity.Code}
-            </span>`;
+                    <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+                    <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+                    Job recieved at ${moment(data.JobReceived).format('HH:mm:ss DD/MM/YYYY')}<br>
+                    ${data.EntityAssignedTo.Code} - ${data.EntityAssignedTo.ParentEntity.Code}
+                    </span>`;
 
                     $('#jobPopUp').html(details)
                 })
-            })
-        };
+})
+};
 
-        lighthouseMap.addClickHandler(function (event) {
+lighthouseMap.addClickHandler(function (event) {
             if ($(lighthouseMap._map.infoWindow.domNode).find('#lhqPopUp').length) //if this is a HL popup box //TODO extend the object and hold the type in there
             {
                 console.log('this is a hq popup');
@@ -1344,10 +1347,10 @@ module.exports = class InjectScriptMapManager {
                     });
 
                 })
-            }
-        });
+}
+});
 
-        if (developmentMode) {
+if (developmentMode) {
             // Add a test point
             lighthouseMap.layers()['default'].addImageMarker(-33.798796, 150.997393, lighthouseIcon, 'Parramatta SES',
                 'This is a test marker. It is used to check whether the map access is working');
