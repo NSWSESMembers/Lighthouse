@@ -67,12 +67,6 @@
       "js": ["contentscripts/jobs/situational_awareness.js"]
     },
     {
-      "matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
-      "js": [
-        "contentscripts/login.js"
-      ]
-    },
-    {
       "matches": [
         "https://*.ses.nsw.gov.au/Messages/Create",
         "https://*.ses.nsw.gov.au/Messages/Create/",
@@ -140,6 +134,13 @@
       "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": [
         "contentscripts/all.js"
+      ]
+    },
+    {
+      "matches": ["https://identity.ses.nsw.gov.au/core/login*",
+                  "https://identitypreview.ses.nsw.gov.au/core/login*"],
+      "js": [
+        "contentscripts/identity.js"
       ]
     }
   ],
