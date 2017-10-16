@@ -6,7 +6,7 @@ var postCodes = require('../../../lib/postcodes.js');
 var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 
 
-console.log("Running content script");
+console.log("Running inject script");
 
 //if ops logs update
 masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseKeeper);
@@ -17,6 +17,8 @@ masterViewModel.messagesViewModel.messages.subscribe(lighthouseKeeper);
 //if tasking update
 
 masterViewModel.teamsViewModel.taskedTeams.subscribe(lighthouseTasking);
+
+
 
 
 function lighthouseTasking() {
@@ -118,11 +120,47 @@ whenAddressIsReady(function() {
 
 })
 
-whenTeamsAreReady(function(){
+quickTask = return_quicktaskbutton()
+quickSector = return_quicksectorbutton()
+quickCategory = return_quickcategorybutton()
+
+  //the quicktask button
+  $(quickTask).find('button').click(function() {
+    if ($(quickTask).hasClass("open") == false)
+    {
+      InstantTaskButton()
+    }
+  })
+
+    //the quicktask button
+    $(quickSector).find('button').click(function() {
+      if ($(quickSector).hasClass("open") == false)
+      {
+        InstantSectorButton()
+      }
+    })
+
+    //the quicktask button
+    $(quickCategory).find('button').click(function() {
+      if ($(quickCategory).hasClass("open") == false)
+      {
+        InstantCategoryButton()
+      }
+    })
+
+    whenJobIsReady(function(){
+      if (masterViewModel.canTask.peek() == true) //this role covers sectors and category as well
+      {
+        $('#lighthouse_actions_content').append(quickTask);
+        $('#lighthouse_actions_content').append(quickSector);
+        $('#lighthouse_actions_content').append(quickCategory);
+      }
+    })
 
 
+    whenTeamsAreReady(function(){
 
-  lighthouseTasking()
+      lighthouseTasking()
 
  //Bold the team action taken
  $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css("font-weight", "bold")
@@ -157,42 +195,6 @@ whenTeamsAreReady(function(){
   });
   
   taskingItems_prepare();
-
-  quickTask = return_quicktaskbutton()
-  quickSector = return_quicksectorbutton()
-  quickCategory = return_quickcategorybutton()
-
-  //the quicktask button
-  $(quickTask).find('button').click(function() {
-    if ($(quickTask).hasClass("open") == false)
-    {
-      InstantTaskButton()
-    }
-  })
-
-    //the quicktask button
-    $(quickSector).find('button').click(function() {
-      if ($(quickSector).hasClass("open") == false)
-      {
-        InstantSectorButton()
-      }
-    })
-
-    //the quicktask button
-    $(quickCategory).find('button').click(function() {
-      if ($(quickCategory).hasClass("open") == false)
-      {
-        InstantCategoryButton()
-      }
-    })
-
-  if (masterViewModel.canTask.peek() == true) //this role covers sectors and category as well
-  {
-    $('#lighthouse_actions_content').append(quickTask);
-    $('#lighthouse_actions_content').append(quickSector);
-    $('#lighthouse_actions_content').append(quickCategory);
-
-  }
 
 });
 
@@ -570,7 +572,7 @@ function SetSector(sector,currentsector) {
                 } else {
                   nextChild = $(nextChild).next()
                 }
-                }
+              }
                 if (childrenVis != true) //hide or show the pres depending on its children
                 {
                   $(v).hide()
@@ -1140,6 +1142,18 @@ function whenUrlIsReady(cb) { //when external vars have loaded
       cb(); //call back
     }
   }
+}, 200);
+}
+
+// wait for job to have loaded
+function whenJobIsReady(cb) { //when external vars have loaded
+  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
+      if (masterViewModel.jobLoaded() == true)
+      {
+        console.log("job is ready");
+      clearInterval(waiting); //stop timer
+      cb(); //call back
+    }
 }, 200);
 }
 
