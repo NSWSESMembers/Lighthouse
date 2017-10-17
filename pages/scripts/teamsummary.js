@@ -120,7 +120,7 @@ function RunForestRun() {
 
     if (typeof params.hq != 'undefined') {  //if not no hqs
       if (params.hq.split(",").length == 1) { //if only one HQ
-        LighthouseUnit.get_unit_name(params.hq,params.host, params.source, params.token, function(result) {
+        LighthouseUnit.get_unit_name(params.hq,params.host, params.token, function(result) {
           unit = result;
           HackTheMatrix(unit,params.host, params.source, params.token);
         });
