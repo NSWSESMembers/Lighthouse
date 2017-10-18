@@ -9,60 +9,27 @@ window.FinaliseSelected = function FinaliseSelected(words,beaconStringDate) { //
 }
 
 
-$("#lighthouseSummaryButton").mouseenter(function(ev){
-  summary();
+
+/**
+ * Loops through anchor tags with the class "lh-update-filter" and a "data-page" attribute.
+ * Creates a Function to set the link's HREF, with the required parameters, and attaches same to the link to be executed on click and mouseenter
+ * @param {mixed} index - The index from the $.each() call. Ignored.
+ * @param {string} buttonSelector - A jQuery selector identifying the button
+ */
+$('a.lh-update-filter[data-page]').each(function(index, lighthouseButton) {
+  $(lighthouseButton)
+    .on("mouseenter click",function(){
+      console.log('setLighthouseButtonTarget()');
+      var exports = JSON.parse(filterDataForExport());
+      var $t = $(this);
+      var lighthousePageName = $t.data('page');
+      var h = lighthouseUrl+"pages/"+lighthousePageName+".html?host="+urls.Base+"&source="+location.origin+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken);
+      if (exports.hasOwnProperty("Hq"))
+        h += "&hq="+exports.Hq;
+      $t.attr('href',h);
+    });
 });
 
-document.getElementById("lighthouseSummaryButton").onclick = function() {
-  summary();
-}
-
-
-function summary() {
-  var exports = JSON.parse(filterDataForExport());
-  if (exports.hasOwnProperty("Hq")) {
-    $("#lighthouseSummaryButton").attr("href",lighthouseUrl+"pages/summary.html?host="+urls.Base+"&source="+location.origin+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
-  } else {
-    $("#lighthouseSummaryButton").attr("href",lighthouseUrl+"pages/summary.html?host="+urls.Base+"&source="+location.origin+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
-  }
-}
-
-$("#lighthouseStatsButton").mouseenter(function(ev){
-  stats();
-});
-
-document.getElementById("lighthouseStatsButton").onclick = function() {
-  stats();
-}
-
-
-function stats(){
-  var exports = JSON.parse(filterDataForExport());
-  if (exports.hasOwnProperty("Hq")){
-    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"pages/stats.html?host="+urls.Base+"&source="+location.origin+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
-  } else {
-    $("#lighthouseStatsButton").attr("href",lighthouseUrl+"pages/stats.html?host="+urls.Base+"&source="+location.origin+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
-  }
-}
-
-
-$("#lighthouseExportButton").mouseenter(function(ev){
-  advexport();
-});
-
-document.getElementById("lighthouseExportButton").onclick = function() {
-  summary();
-}
-
-
-function advexport() {
-  var exports = JSON.parse(filterDataForExport());
-  if (exports.hasOwnProperty("Hq")){
-    $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+urls.Base+"&hq="+exports.Hq+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
-  } else {
-    $("#lighthouseExportButton").attr("href",lighthouseUrl+"pages/advexport.html?host="+urls.Base+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken));
-  }
-}
 
 
 //More pageination choices! --currently broken due to beacon not returning more than 250 per page--
@@ -146,16 +113,14 @@ function DoTour() {
         orphan: true,
         backdrop: true,
         title: "Questions?",
-        content: "Thats about it. If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
+        content: "Thats about it. If you have any questions please seek help from the 'About Lighthouse' button under the lighthouse item on the top menu"
       },
       ]
     })
 
-    /// Initialize the tour
+    // Initialize the tour
     tour.init();
 
-// Start the tour
-tour.start();
+    // Start the tour
+    tour.start();
 }
-
-
