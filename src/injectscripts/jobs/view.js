@@ -192,6 +192,8 @@ function sectorfilter_switch(){
   jobView_teamsTasked_completedHiddenSwitch();
 }
 
+
+
 function jobView_teamsTasked_itemsPrepare(){
   // Loop through all Tasked Teams
   $('div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div')
@@ -199,6 +201,9 @@ function jobView_teamsTasked_itemsPrepare(){
       var $t = $(v);
       var lastUpdate = $('span[data-bind^="text: CurrentStatus"]', $t).text();
       var b = false;
+      // Strip Old Classes
+      $t.attr('class', $t.attr('class').replace(/\bteamStatus_\S+\b/,' '));
+      // Add new Class for Team Status
       if( b = /^(.+)\s+\(Logged:\s+([^\)]+)\)/.exec(lastUpdate) ){
         $t.addClass('teamStatus_'+b[1].replace(/\s+/,'-').toLowerCase());
       }else{
@@ -208,6 +213,7 @@ function jobView_teamsTasked_itemsPrepare(){
     .click(jobView_teamsTasked_showHiddenItem);
   jobView_teamsTasked_completedHiddenSwitch();
 }
+
 function jobView_teamsTasked_completedHiddenSwitch(){
   // Set flag
   var hideComplete = localStorage.getItem('LighthouseHideCompletedEnabled') == 'false';
@@ -229,6 +235,7 @@ function jobView_teamsTasked_showHiddenItem(e){
     $t.children('div.row:gt(0)').slideToggle();
 }
 
+masterViewModel.teamsViewModel.taskedTeams.subscribe(jobView_teamsTasked_itemsPrepare);
 
 document.title = "#"+jobId;
 
