@@ -94,13 +94,15 @@ $(document).on('click',"#submitButton",function() {
 })
 
 function resize() {
-  var neightbourHeight = $('#outstanding').parent().parent().parent().parent().parent().height()
+  if (typeof $('#outstanding').parent() === "function") {
+    var neightbourHeight = $('#outstanding').parent().parent().parent().parent().parent().height()
 
   neightbourHeight=parseInt(neightbourHeight)-10-10-10-10-10 //all the padding
   $('#title').parent().height(neightbourHeight*0.6) //60%
   ($('#title-details-start').parent().parent().height(neightbourHeight*0.4)) //40%
 
   return true
+}
 
 }
 
