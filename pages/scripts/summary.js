@@ -376,17 +376,16 @@ function HackTheMatrix(unit, host, token, progressBar) {
       };
 
       var title;
-      //nasty hack to cleanup long unit names
-      var code = unit.Name
-      if (code.length > 15) {
-        code = unit.Code
-      }
       
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
         title = "<p style='margin-bottom:0px'>Job Summary</p>NSW";
       } else {
         if (Array.isArray(unit) == false) { //1 lga
+          var code = unit.Name
+          if (code.length > 15) { //handle long unit names
+            code = unit.Code
+          }
           document.title = unit.Name + " Job Summary";
           title = "<p style='margin-bottom:0px'>Job Summary</p>"+code;
         }
