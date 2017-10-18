@@ -194,6 +194,9 @@ function sectorfilter_switch(){
 
 
 
+/**
+ * Job View - Tasked Teams - Loop through tasked teams and add CSS class related to Status
+ */
 function jobView_teamsTasked_itemsPrepare(){
   // Loop through all Tasked Teams
   $('div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div')
@@ -209,16 +212,16 @@ function jobView_teamsTasked_itemsPrepare(){
       }else{
         console.log('Unable to parse '+lastUpdate);
       }
-    })
-    .click(jobView_teamsTasked_showHiddenItem);
+    });
   jobView_teamsTasked_completedHiddenSwitch();
 }
 
+/**
+ * Job View - Show/Hide Teams based on whether Team Status is Completed an Option is On/Off
+ */
 function jobView_teamsTasked_completedHiddenSwitch(){
   // Set flag
   var hideComplete = localStorage.getItem('LighthouseHideCompletedEnabled') == 'false';
-  // Toggle class for container
-  //$('div.widget > div.widget-content > div[data-bind$="taskedTeams"]').toggleClass('team_complete_hidden', hideComplete);
   // Toggle Visibility of Tasked Teams
   // Non-Completed Crews
   $('div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div:not(.teamStatus_complete) > div.row:not(:first-child)').show();
@@ -230,15 +233,28 @@ function jobView_teamsTasked_completedHiddenSwitch(){
     .toggleClass('fa-square-o', !hideComplete);
 }
 
+/**
+ * Job View - Toggle Visibility of Job
+ */
 function jobView_teamsTasked_showHiddenItem(e){
   // Tasked Team Clicked On
   var $t = $(e.currentTarget);
   // Only Toggle Content if the Clicked Team is Complete
   if( $t.hasClass('teamStatus_complete') )
-    $t.children('div.row:gt(0)').slideToggle();
+    $t.children('div.row:gt(0)').stop(true).slideToggle();
 }
 
+/**
+ * Subscribe to Tasked Team List - Reprocess list on change
+ */
 masterViewModel.teamsViewModel.taskedTeams.subscribe(jobView_teamsTasked_itemsPrepare);
+
+/**
+ * Attach Function to toggle Team Visibility on Click
+ */
+$(document).on('click',  'div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div', jobView_teamsTasked_showHiddenItem);
+
+
 
 document.title = "#"+jobId;
 
