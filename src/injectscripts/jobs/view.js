@@ -22,7 +22,7 @@ masterViewModel.teamsViewModel.taskedTeams.subscribe(lighthouseTasking);
 
 
 function lighthouseTasking() {
-  console.log("Tasking Changes")
+  console.log("Tasking Changes");
   ///Horrible nasty code for untasking
 
   $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function(k, v) { //for every dom
@@ -36,7 +36,7 @@ function lighthouseTasking() {
 
       //match against this DOM
       if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) //only show for tasking that can be deleted (tasked only)
-      { 
+      {
         //attached a X button if its matched and deletable
         untask = return_untask_button()
         $(v).append(untask)
@@ -57,9 +57,9 @@ function lighthouseTasking() {
         })
       }
     })
-})
+  })
 
-////END horrible untask code
+  ////END horrible untask code
 
 }
 
@@ -71,12 +71,10 @@ lighthouseKeeper();
 //call when the address exists
 whenAddressIsReady(function() {
   whenUrlIsReady(function() {
-   if(typeof masterViewModel.geocodedAddress.peek() == 'undefined')
-   {
-    $('#asbestos-register-text').html("Not A Searchable Address");
-
-  } else {
-    if (masterViewModel.geocodedAddress.peek().Street == null || masterViewModel.geocodedAddress.peek().StreetNumber == null)
+    if(typeof masterViewModel.geocodedAddress.peek() == 'undefined')
+    {
+      $('#asbestos-register-text').html("Not A Searchable Address");
+    } else if (masterViewModel.geocodedAddress.peek().Street == null || masterViewModel.geocodedAddress.peek().StreetNumber == null)
     {
       $('#asbestos-register-text').html("Not A Searchable Address");
     } else {
@@ -84,15 +82,12 @@ whenAddressIsReady(function() {
         if (res == true)
         {
           window.postMessage({ type: "FROM_PAGE_SESASBESTOS_RESULT", address: masterViewModel.geocodedAddress.peek(), result: true, color: 'red' }, "*");
-
         } else {
           window.postMessage({ type: "FROM_PAGE_FTASBESTOS_SEARCH", address: masterViewModel.geocodedAddress.peek() }, "*");
         }
-      })
-
+      });
     }
-  }
-})
+  })
 
   //
   //postcode checking code
@@ -103,7 +98,6 @@ whenAddressIsReady(function() {
   if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true)) //if no postcode set
   {
 
-
     postCodes.returnPostCode(masterViewModel.geocodedAddress.peek().Locality, function(postcode){
       if (typeof postcode !== 'undefined')
       {
@@ -111,8 +105,7 @@ whenAddressIsReady(function() {
       } else {
         console.log("Postcode not found")
       }
-    })
-
+    });
 
   }
 
@@ -120,50 +113,48 @@ whenAddressIsReady(function() {
 
 })
 
-quickTask = return_quicktaskbutton()
-quickSector = return_quicksectorbutton()
-quickCategory = return_quickcategorybutton()
+quickTask = return_quicktaskbutton();
+quickSector = return_quicksectorbutton();
+quickCategory = return_quickcategorybutton();
 
-  //the quicktask button
-  $(quickTask).find('button').click(function() {
-    if ($(quickTask).hasClass("open") == false)
-    {
-      InstantTaskButton()
-    }
-  })
+//the quicktask button
+$(quickTask).find('button').click(function() {
+  if ($(quickTask).hasClass("open") == false)
+  {
+    InstantTaskButton()
+  }
+});
 
-    //the quicktask button
-    $(quickSector).find('button').click(function() {
-      if ($(quickSector).hasClass("open") == false)
-      {
-        InstantSectorButton()
-      }
-    })
+//the quicktask button
+$(quickSector).find('button').click(function() {
+  if ($(quickSector).hasClass("open") == false)
+  {
+    InstantSectorButton()
+  }
+});
 
-    //the quicktask button
-    $(quickCategory).find('button').click(function() {
-      if ($(quickCategory).hasClass("open") == false)
-      {
-        InstantCategoryButton()
-      }
-    })
+//the quicktask button
+$(quickCategory).find('button').click(function() {
+  if ($(quickCategory).hasClass("open") == false)
+  {
+    InstantCategoryButton()
+  }
+});
 
-    whenJobIsReady(function(){
-      if (masterViewModel.canTask.peek() == true) //this role covers sectors and category as well
-      {
-        $('#lighthouse_actions_content').append(quickTask);
-        $('#lighthouse_actions_content').append(quickSector);
-        $('#lighthouse_actions_content').append(quickCategory);
-      }
-    })
+whenJobIsReady(function(){
+  if (masterViewModel.canTask.peek() == true) //this role covers sectors and category as well
+  {
+    $('#lighthouse_actions_content').append(quickTask, quickSector, quickCategory);
+  }
+});
 
 
-    whenTeamsAreReady(function(){
+whenTeamsAreReady(function(){
 
-      lighthouseTasking()
+  lighthouseTasking()
 
- //Bold the team action taken
- $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css("font-weight", "bold")
+  //Bold the team action taken
+  $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css("font-weight", "bold");
 
   //checkbox for hide completed tasking
   $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox());
@@ -173,16 +164,13 @@ quickCategory = return_quickcategorybutton()
     $('#content div.col-md-5 div[data-bind="visible: jobLoaded()"] div.widget-header')[0].append(renderSectorFilterCheckBox());
 
     $('#lighthouseSectorFilterEnabled').click(function() {
-    // Toggle Value
-    var lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
-    // Save Value
-    localStorage.setItem('LighthouseSectorFilterEnabled', lh_SectorFilterEnabled);
-
-    sectorfilter_switch()
-
-
-  });
-    sectorfilter_switch()
+      // Toggle Value
+      var lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
+      // Save Value
+      localStorage.setItem('LighthouseSectorFilterEnabled', lh_SectorFilterEnabled);
+      sectorfilter_switch();
+    });
+    sectorfilter_switch();
   }
 
   $('#lighthouseEnabled').click(function() {
@@ -191,50 +179,54 @@ quickCategory = return_quickcategorybutton()
     // Save Value
     localStorage.setItem('LighthouseHideCompletedEnabled', lh_hideComplete);
     // Trigger Display Change
-    taskingItems_switch();
+    jobView_teamsTasked_completedHiddenSwitch();
   });
-  
-  taskingItems_prepare();
 
+  jobView_teamsTasked_itemsPrepare();
 });
 
 function sectorfilter_switch(){
   // Set flag
   var lh_SectorFilterEnabled = localStorage.getItem('LighthouseSectorFilterEnabled') == 'false';
-  // Toggle class for checkbox
-  $('#lighthouseSectorFilterEnabled')
-  .toggleClass('fa-check-square-o', lh_SectorFilterEnabled)
-  .toggleClass('fa-square-o', !lh_SectorFilterEnabled);
+  // Adjust View
+  jobView_teamsTasked_completedHiddenSwitch();
 }
 
-function taskingItems_prepare(){
-  $('#content > div.col-md-5 > div:nth-child(2) > div.widget-content > div > div')
-  .each(function(k,v){
-    var $t = $(v);
-    var isComplete = $('div:nth-child(1) > div.col-xs-6.small.text-right > span',$t).text().indexOf('Complete') === 0;
-      // Add class "team_complete" to any Tasked Items where the status starts with "Complete"
-      $t.toggleClass('team_complete', isComplete);
+function jobView_teamsTasked_itemsPrepare(){
+  // Loop through all Tasked Teams
+  $('div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div')
+    .each(function(k,v){
+      var $t = $(v);
+      var lastUpdate = $('span[data-bind^="text: CurrentStatus"]', $t).text();
+      var b = false;
+      if( b = /^(.+)\s+\(Logged:\s+([^\)]+)\)/.exec(lastUpdate) ){
+        $t.addClass('teamStatus_'+b[1].replace(/\s+/,'-').toLowerCase());
+      }else{
+        console.log('Unable to parse '+lastUpdate);
+      }
     })
-  .click(taskingItems_individual);
-  taskingItems_switch();
+    .click(jobView_teamsTasked_showHiddenItem);
+  jobView_teamsTasked_completedHiddenSwitch();
 }
-function taskingItems_switch(){
+function jobView_teamsTasked_completedHiddenSwitch(){
   // Set flag
   var hideComplete = localStorage.getItem('LighthouseHideCompletedEnabled') == 'false';
   // Toggle class for container
-  $('#content > div.col-md-5 > div:nth-child(2)').toggleClass('team_complete_hidden', hideComplete);
+  //$('div.widget > div.widget-content > div[data-bind$="taskedTeams"]').toggleClass('team_complete_hidden', hideComplete);
+  // Toggle Visibility of Tasked Teams
+  $('div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div.teamStatus_complete > div.row:gt(0)').toggle(!hideComplete);
   // Toggle class for checkbox
   $('#lighthouseEnabled')
-  .toggleClass('fa-check-square-o', hideComplete)
-  .toggleClass('fa-square-o', !hideComplete);
+    .toggleClass('fa-check-square-o', hideComplete)
+    .toggleClass('fa-square-o', !hideComplete);
 }
 
-function taskingItems_individual(e){
+function jobView_teamsTasked_showHiddenItem(e){
   // Tasked Team Clicked On
   var $t = $(e.currentTarget);
   // Only Toggle Content if the Clicked Team is Complete
-  if( $t.hasClass('team_complete') )
-    $('div.row.clearfix:not(:contains("Set"))', $t).slideToggle();
+  if( $t.hasClass('teamStatus_complete') )
+    $t.children('div.row:gt(0)').slideToggle();
 }
 
 
@@ -242,10 +234,7 @@ document.title = "#"+jobId;
 
 function lighthouseKeeper(){
 
-
-
   var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: $data"]');
-
 
   var ICEMS_Dictionary = {
     'ASNSW'   : 'NSW Ambulance' ,
@@ -267,7 +256,6 @@ function lighthouseKeeper(){
     'NPT'     : 'No Person(s) Trapped',
     'NFI'     : 'No Further Information',
     'THX'     : 'Thanks'
-
   };
 
   $targetElements.each(function(v){
@@ -343,15 +331,14 @@ function InstantCategoryButton() {
     var categories = ["NA", "1", "2", "3", "4", "5"];
     finalli = []
     categories.forEach(function(entry) {
-
       item = (<li><a style="text-align:left" href="#">{entry}</a></li>);
-    //click handler
-    $(item).click(function (e) {
-      SetCategory(entry)
-      e.preventDefault();
+      //click handler
+      $(item).click(function (e) {
+        SetCategory(entry)
+        e.preventDefault();
+      })
+      finalli.push(item)
     })
-    finalli.push(item)
-  })
     $(quickCategory).find('ul').append(finalli)
   }
 
@@ -389,8 +376,8 @@ function InstantSectorButton() {
   var loading = (<li><a href="#" style="text-align: center;"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
   $(quickSector).find('ul').append(loading)
 
-   //fetch the job and check its tasking status to ensure the data is fresh and not stale on page.
-   $.ajax({
+  //fetch the job and check its tasking status to ensure the data is fresh and not stale on page.
+  $.ajax({
     type: 'GET'
     , url: urls.Base+'/Api/v1/Sectors/Search?entityIds[]='+user.currentHqId+'&statusIds=1&viewModelType=2&pageSize=100&pageIndex=1'
     , beforeSend: function(n) {
@@ -403,7 +390,6 @@ function InstantSectorButton() {
       //console.log('textStatus = "%s"', textStatus, response);
       if (textStatus == 'success')
       {
-
         if(response.responseJSON.Results.length) {
           $(quickSector).find('ul').empty();
 
@@ -416,7 +402,6 @@ function InstantSectorButton() {
               currentsector = masterViewModel.sector.peek().Id
             } else {
               currentsector = null
-
             }
             if (entry.Id != currentsector) //if its not the same as the current sector
             {
@@ -438,79 +423,77 @@ function InstantSectorButton() {
         }
       }
     }
-  })
+  });
 
-function SetSector(sector,currentsector) {
-  if (sector.Id != currentsector) //if its not the same as the current sector
-  {
-    $.ajax({
-      type: 'PUT'
-      , url: urls.Base+'/Api/v1/Sectors/'+sector.Id+'/Jobs'
-      , beforeSend: function(n) {
-        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
-      }
-      , data: {IdsToAdd: [jobId], LighthouseFunction: 'SetSector'}
-      , cache: false
-      , dataType: 'json'
-      , complete: function(response, textStatus) {
-        if (response.status == 200)
-        {
-        masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
-        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
-      }
+  function SetSector(sector,currentsector) {
+    if (sector.Id != currentsector) //if its not the same as the current sector
+    {
+      $.ajax({
+        type: 'PUT'
+        , url: urls.Base+'/Api/v1/Sectors/'+sector.Id+'/Jobs'
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+        }
+        , data: {IdsToAdd: [jobId], LighthouseFunction: 'SetSector'}
+        , cache: false
+        , dataType: 'json'
+        , complete: function(response, textStatus) {
+          if (response.status == 200)
+          {
+            masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
+            masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
+          }
+        }
+      });
+    } else { //if its the same, then remove it.
+      $.ajax({
+        type: 'PUT'
+        , url: urls.Base+'/Api/v1/Sectors/RemoveJobFromSector/'+jobId
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+        }
+        , data: {LighthouseFunction: 'SetSector'}
+        , cache: false
+        , dataType: 'json'
+        , complete: function(response, textStatus) {
+          if (response.status == 200)
+          {
+            masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
+            masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
+          }
+        }
+      });
     }
-  })
-  } else { //if its the same, then remove it.
-    $.ajax({
-      type: 'PUT'
-      , url: urls.Base+'/Api/v1/Sectors/RemoveJobFromSector/'+jobId
-      , beforeSend: function(n) {
-        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
-      }
-      , data: {LighthouseFunction: 'SetSector'}
-      , cache: false
-      , dataType: 'json'
-      , complete: function(response, textStatus) {
-        if (response.status == 200)
-        {
-        masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
-        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
-      }
-    }
-  })
   }
 }
-}
 
-  ////Quick Task Stuff
+////Quick Task Stuff
+function InstantTaskButton() {
 
-  function InstantTaskButton() {
-
-
-    var alreadyTasked = []
-    $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
-      if(v.CurrentStatusId != 6)
-      {
-        alreadyTasked.push(v.Team.Id)
-      }
-    })
-    $(quickTask).find('ul').empty();
-    var loading = (<li><a href="#" style="text-align: center;"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>)
-    $(quickTask).find('ul').append(loading)
-
-    lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
-
-
-    var sectorFilter = null
-    if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true )
+  var alreadyTasked = []
+  $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
+    if(v.CurrentStatusId != 6)
     {
-     sectorFilter = masterViewModel.sector.peek().Id
-   } 
+      alreadyTasked.push(v.Team.Id);
+    }
+  });
 
-   console.log("Sector Filter is:"+sectorFilter)
+  $(quickTask).find('ul').empty();
+  var loading = (<li><a href="#" style="text-align: center;"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>);
+  $(quickTask).find('ul').append(loading);
 
-   //fetch the job and check its tasking status to ensure the data is fresh and not stale on page.
-   $.ajax({
+  lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
+
+  var sectorFilter = null;
+  if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true )
+  {
+    sectorFilter = masterViewModel.sector.peek().Id
+  }
+
+  console.log("Sector Filter is:"+sectorFilter)
+
+  //fetch the job and check its tasking status to ensure the data is fresh and not stale on page.
+  $.ajax({
     type: 'GET'
     , url: urls.Base+'/Api/v1/Jobs/'+jobId+'?viewModelType=2'
     , beforeSend: function(n) {
@@ -526,157 +509,147 @@ function SetSector(sector,currentsector) {
       {
         var data = response.responseJSON
 
-      if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
-      {
+        if (data.JobStatusType.Id == 1 || data.JobStatusType.Id == 2 || data.JobStatusType.Id == 4 || data.JobStatusType.Id == 5) //New or Active or Tasked or Refered
+        {
 
-       ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
+          ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
+            console.log(response);
 
-        console.log(response)
-        if(response.responseJSON.Results.length) {
-          $(quickTask).find('ul').empty();
+            if(response.responseJSON.Results.length) {
+              $(quickTask).find('ul').empty();
 
-            /////
-            ///// Search Box
-            /////
-            theSearch = return_search_box()
+              /////
+              ///// Search Box
+              /////
+              theSearch = return_search_box();
+              $(theSearch).click(function (e) {
+                e.stopPropagation();
+              });
 
-            $(theSearch).click(function (e) {
-              e.stopPropagation();
-            });
-
-            $(theSearch).keyup(function (e) {
-              e.stopPropagation();
-              $.each($(quickTask).find('ul').find('li[role!="presentation"]'),function(k,v){
-                if (($(v)[0].innerText).toUpperCase().indexOf(e.target.value.toUpperCase()) == -1)
-                {
-                  $(v).hide()
-                } else {
-                 $(v).show()
-               }
-             })
-              $.each($(quickTask).find('ul').find('li[role="presentation"]'),function(k,v){
-                childrenVis = false
-                nextChild = $(v).next()
-                // walk the neighbours of the li, if they are displayed then dont hide the pres li, otherwise hide it. wish this was a nested DOM!
-                while (nextChild != null)
-                {
-                  if ($(nextChild).css('display') != undefined) //next might not be a valid dom, cause next seems to keep going when there is no next!
+              $(theSearch).keyup(function (e) {
+                e.stopPropagation();
+                $.each($(quickTask).find('ul').find('li[role!="presentation"]'),function(k,v){
+                  if (($(v)[0].innerText).toUpperCase().indexOf(e.target.value.toUpperCase()) == -1)
                   {
-                    if ( $(nextChild).css('display') != 'none'){ //if hidden
-                      childrenVis = true
+                    $(v).hide()
+                  } else {
+                    $(v).show()
+                  }
+                });
+                $.each($(quickTask).find('ul').find('li[role="presentation"]'),function(k,v){
+                  childrenVis = false
+                  nextChild = $(v).next()
+                  // walk the neighbours of the li, if they are displayed then dont hide the pres li, otherwise hide it. wish this was a nested DOM!
+                  while (nextChild != null)
+                  {
+                    if ($(nextChild).css('display') != undefined) //next might not be a valid dom, cause next seems to keep going when there is no next!
+                    {
+                      if ( $(nextChild).css('display') != 'none'){ //if hidden
+                        childrenVis = true
+                      }
+                    }
+                    if ($(nextChild).length == 0 || $(nextChild).next().attr('role') == 'presentation') //if this is a valid dom, and the next one isnt pres. next wont ever stop and will just return a 0 lenght
+                    {
+                      nextChild = null
+                    } else {
+                      nextChild = $(nextChild).next()
                     }
                   }
-                 if ($(nextChild).length == 0 || $(nextChild).next().attr('role') == 'presentation') //if this is a valid dom, and the next one isnt pres. next wont ever stop and will just return a 0 lenght 
-                 {
-                  nextChild = null
-                } else {
-                  nextChild = $(nextChild).next()
-                }
-              }
-                if (childrenVis != true) //hide or show the pres depending on its children
+                  if (childrenVis != true) //hide or show the pres depending on its children
+                  {
+                    $(v).hide()
+                  } else {
+                    $(v).show()
+                  }
+                });
+              });
+              /////
+              ///// END Search Box
+              /////
+              $(quickTask).find('ul').append(theSearch);
+
+              sector = {}
+              nonsector = []
+              $.each(response.responseJSON.Results, function(k, v) { //for every team that came back
+                if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
                 {
-                  $(v).hide()
-                } else {
-                 $(v).show()
-               }
+                  var item = null;
+                  if (v.Members.length == 0)
+                  {
+                    item = return_li(v.Id,v.Callsign.toUpperCase(),null,v.TaskedJobCount+"");
+                  } else {
+                    $(v.Members).each(function(k, vv) {
+                      if (vv.TeamLeader)
+                      {
+                        item = return_li(v.Id,v.Callsign.toUpperCase(),vv.Person.FirstName+" "+vv.Person.LastName,v.TaskedJobCount+"");
+                      }
+                    });
+                  }
+                  //still create teams that have no TL
+                  if (item === null) {
+                    item = return_li(v.Id,v.Callsign.toUpperCase(),"No TL",v.TaskedJobCount+"");
+                  }
 
-             })
-});
+                  if (v.Sector === null)
+                  {
+                    nonsector.push(item)
+                  } else {
+                    var sectorName = v.Sector.Name;
+                    if (sectorName in sector)
+                    {
+                      sector[sectorName].push(item)
+                    } else {
+                      sector[sectorName] = [item]
+                    }
+                  }
 
-            /////
-            ///// END Search Box
-            /////
+                  //click handler
+                  $(item).click(function (e) {
+                    TaskTeam(v.Id)
+                    e.preventDefault();
+                  })
 
-
-            $(quickTask).find('ul').append(theSearch);
-
-
-            sector = {}
-            nonsector = []
-            $.each(response.responseJSON.Results, function(k, v) { //for every team that came back
-          if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
-          {
-            var item = null;
-
-            if (v.Members.length == 0)
-            {
-              item = return_li(v.Id,v.Callsign.toUpperCase(),null,v.TaskedJobCount+"");
-            } else
-            {
-
-              $(v.Members).each(function(k, vv) {
-                if (vv.TeamLeader)
-                {
-                  item = return_li(v.Id,v.Callsign.toUpperCase(),vv.Person.FirstName+" "+vv.Person.LastName,v.TaskedJobCount+"");
                 }
+              });
+
+              finalli = [];
+              drawnsectors = [];
+
+              //finalli.push(return_lipres(masterViewModel.sector.peek().Name+" Sector Teams"));
+              $.each(sector, function(k, v){
+                if (k in drawnsectors)
+                {
+                  finalli.push(v);
+                } else {
+                  drawnsectors.push(k);
+                  //if (finalli.length != 0) { finalli.push(return_lidivider()) };
+                  finalli.push(return_lipres(k+ " Sector"))
+                  finalli.push($(v))
+                }
+              });
+              //finalli.push(return_lidivider());
+              finalli.push(return_lipres("Unsectorised Teams"));
+              $.each(nonsector, function(k, v){
+                finalli.push(v);
               })
-            }
-            //still create teams that have no TL
-            if (item === null) {
-              item = return_li(v.Id,v.Callsign.toUpperCase(),"No TL",v.TaskedJobCount+"");
-            }
+              $(quickTask).find('ul').append(finalli);
 
-            if (v.Sector === null)
-            {
-              nonsector.push(item)
             } else {
-              var sectorName = v.Sector.Name;
-              if (sectorName in sector)
-              {
-                sector[sectorName].push(item)
-              } else {
-                sector[sectorName] = [item]
-              }
+              $(quickTask).find('ul').empty();
+              no_results = (<li><a href="#">No Active Field Teams</a></li>);
+              $(quickTask).find('ul').append(no_results);
             }
 
+          });
 
-            //click handler
-            $(item).click(function (e) {
-              TaskTeam(v.Id)
-              e.preventDefault();
-            })
-
-          }
-        })
-finalli = []
-drawnsectors = []
-
-          //finalli.push(return_lipres(masterViewModel.sector.peek().Name+" Sector Teams"));
-          $.each(sector, function(k, v){
-            if (k in drawnsectors)
-            {
-              finalli.push(v)
-            } else {
-              drawnsectors.push(k)
-              //if (finalli.length != 0) { finalli.push(return_lidivider()) };
-              finalli.push(return_lipres(k+ " Sector"))
-              finalli.push($(v))
-            }
-          })
-          //finalli.push(return_lidivider());
-          finalli.push(return_lipres("Unsectorised Teams"));
-          $.each(nonsector, function(k, v){
-            finalli.push(v)
-          })
-          $(quickTask).find('ul').append(finalli)
-
-        } else {
+        } else { //job has changed status since it was opened so warn them
           $(quickTask).find('ul').empty();
-
-          no_results = (<li><a href="#">No Active Field Teams</a></li>)
+          no_results = (<li><a href="#">Cannot task when job status is {masterViewModel.jobStatus.peek().Name}. Refresh the page!</a></li>)
           $(quickTask).find('ul').append(no_results)
         }
-
-      })
-} else {
-  //job has changed status since it was opened so warn them
-  $(quickTask).find('ul').empty();
-  no_results = (<li><a href="#">Cannot task when job status is {masterViewModel.jobStatus.peek().Name}. Refresh the page!</a></li>)
-  $(quickTask).find('ul').append(no_results)
-}
-}
-}
-})
+      }
+    }
+  });
 
 }
 
@@ -708,13 +681,13 @@ function TaskTeam(teamID) {
         masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
       }
     }
-  })
+  });
 }
 
 function return_search_box() {
   return (
     <input type="text" style="width: 95%; margin:auto" id="filterquicksearch" maxlength="30" class="form-control input-sm" placeholder="Filter"></input>
-    )
+  );
 }
 
 function return_li(id, callsign, teamleader, JobCount) {
@@ -722,24 +695,24 @@ function return_li(id, callsign, teamleader, JobCount) {
   {
     return(
       <li><a style="text-align:left" href="#"><b>{callsign}</b> - <small>{teamleader}<sup>TL</sup></small></a></li>
-      )
+    );
   } else {
     return(
       <li><a style="text-align:left" href="#"><b>{callsign}</b> - <i><small>No Members</small></i></a></li>
-      )
+    );
   }
 }
 
 function return_lipres(title) {
   return(
     <li style="text-align:left" role="presentation" class="dropdown-header">{title}</li>
-    )
+  );
 }
 
 function return_lidivider() {
   return(
     <li role="presentation" class="divider"></li>
-    )
+  );
 }
 
 function replaceAll(str, find, replace) {
@@ -747,8 +720,7 @@ function replaceAll(str, find, replace) {
 }
 
 function removeOptions(selectbox) {
-  var i;
-  for (i = selectbox.options.length - 1; i >= 0; i--) {
+  for (var i = selectbox.options.length - 1; i >= 0; i--) {
     selectbox.remove(i);
   }
 }
@@ -764,24 +736,21 @@ function return_untask_button() {
     margin-right: -12px;
     margin-top: -12px;
     margin-left: 10px;
-    ">×</span>)
+    ">×</span>);
 }
 
 
 
 $(document).ready(function() {
 
-
-
-
   _.each([
-    ["#stormtree", "Storm", "Tree Operations/Removal"],
-    ["#stormproperty", "Storm", "Property Protection"],
-    ["#stormsafety", "Storm", "Public Safety"],
-    ["#stormaccess", "Storm", "Road/Access Clearance"],
-    ["#stormrecon", "Storm", "Reconnaissance"],
-    ["#rcrcalloff", "RoadCrashRescue", "Call Off"],
-    ["#rcrcallextricate", "RoadCrashRescue", "Extrication "],
+      ["#stormtree", "Storm", "Tree Operations/Removal"],
+      ["#stormproperty", "Storm", "Property Protection"],
+      ["#stormsafety", "Storm", "Public Safety"],
+      ["#stormaccess", "Storm", "Road/Access Clearance"],
+      ["#stormrecon", "Storm", "Reconnaissance"],
+      ["#rcrcalloff", "RoadCrashRescue", "Call Off"],
+      ["#rcrcallextricate", "RoadCrashRescue", "Extrication "],
     ], function(args) {
       var selector = args[0]
       , parent = args[1]
@@ -807,34 +776,34 @@ $(document).ready(function() {
 function return_quicktaskbutton() {
   return (
     <div id="lighthouse_instanttask" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
-    <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
-    <span class="caret"></span></button>
-    <ul class="dropdown-menu scrollable-menu">
-    </ul>
+      <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
+      <span class="caret"></span></button>
+      <ul class="dropdown-menu scrollable-menu">
+      </ul>
     </div>
-    )
+  );
 }
 
 function return_quicksectorbutton() {
   return (
     <div id="lighthouse_instantsector" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
-    <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" id="lhsectorbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Sector
-    <span class="caret"></span></button>
-    <ul class="dropdown-menu scrollable-menu">
-    </ul>
+      <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" id="lhsectorbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Sector
+      <span class="caret"></span></button>
+      <ul class="dropdown-menu scrollable-menu">
+      </ul>
     </div>
-    )
+  );
 }
 
 function return_quickcategorybutton() {
   return (
     <div id="lighthouse_instantcategory" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
-    <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhcategorybutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Category
-    <span class="caret"></span></button>
-    <ul class="dropdown-menu scrollable-menu">
-    </ul>
+      <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhcategorybutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Category
+      <span class="caret"></span></button>
+      <ul class="dropdown-menu scrollable-menu">
+      </ul>
     </div>
-    )
+  );
 }
 
 function checkAddressHistory(){
@@ -910,34 +879,44 @@ function checkAddressHistory(){
       switch(textStatus){
         case 'success':
         if(response.responseJSON.Results.length) {
-          var history_rows = { 'exact':     { title :       'Same Address'
-          , key :         'exact'
-          , always_show : true
-          , hide_old :    false
-          , has_old :     false
-          , jobs :        new Array() }
-          , 'partial':   { title :       'Apartment, Townhouse or Battleaxe'
-          , key :         'partial'
-          , always_show : false
-          , hide_old :    false
-          , has_old :     false
-          , jobs :        new Array() }
-          , 'neighbour': { title :       'Immediate Neighbours'
-          , key :         'neighbour'
-          , always_show : false
-          , hide_old :    false
-          , has_old :     false
-          , jobs :        new Array() }
-          , 'street':    { title :       'Same Street'
-          , key :         'street'
-          , always_show : false
-          , hide_old :    true
-          , has_old :     false
-          , jobs :        new Array() } };
+          var history_rows = {
+            'exact':     {
+              title :       'Same Address' ,
+              key :         'exact' ,
+              always_show : true ,
+              hide_old :    false ,
+              has_old :     false ,
+              jobs :        new Array()
+            } ,
+            'partial':   {
+              title :       'Apartment, Townhouse or Battleaxe' ,
+              key :         'partial' ,
+              always_show : false ,
+              hide_old :    false ,
+              has_old :     false ,
+              jobs :        new Array()
+            } ,
+            'neighbour': {
+              title :       'Immediate Neighbours' ,
+              key :         'neighbour' ,
+              always_show : false ,
+              hide_old :    false ,
+              has_old :     false ,
+              jobs :        new Array()
+            } ,
+            'street':    {
+              title :       'Same Street' ,
+              key :         'street' ,
+              always_show : false ,
+              hide_old :    true ,
+              has_old :     false ,
+              jobs :        new Array()
+            }
+          };
           status_groups = {
-            'active' :    ['new', 'acknowledged', 'active', 'tasked', 'referred']
-            , 'complete' :  ['complete', 'finalised']
-            , 'cancelled' : ['cancelled', 'rejected']
+            'active' :    ['new', 'acknowledged', 'active', 'tasked', 'referred'] ,
+            'complete' :  ['complete', 'finalised'] ,
+            'cancelled' : ['cancelled', 'rejected']
           };
 
           if(address.StreetNumber != null){
@@ -956,7 +935,7 @@ function checkAddressHistory(){
 
               // History Job is Current Job
               if(v.Id == jobId) return true;
-              
+
               // Santitise and Pre-Process Job Details (for later display)
               // Job URL
               v.url = '/Jobs/'+v.Id;
@@ -1013,7 +992,7 @@ function checkAddressHistory(){
               }
 
             }
-            
+
               // Push Job to Job Array
               history_rows[result_group].jobs.push(v);
               if(v.isold) history_rows[result_group].has_old = true;
@@ -1050,12 +1029,12 @@ function checkAddressHistory(){
                         );
                     })
                     )}
-</div>
-</fieldset>
-);
-})}
-</div>
-);
+                  </div>
+                  </fieldset>
+                );
+              })}
+              </div>
+            );
 
             // Show/Hide Handler
             var $job_view_history_toggle_old = $( <div class="job_view_history_toggle_old"><span>Show</span> Older Jobs</div> )
@@ -1162,7 +1141,7 @@ function whenJobIsReady(cb) { //when external vars have loaded
 function renderSectorFilterCheckBox() {
   return (
     <span class="pull-right h6">
-    <span id="lighthouseSectorFilterEnabled" class="fa fa-lg"></span> 
+    <span id="lighthouseSectorFilterEnabled" class="fa fa-lg"></span>
     <img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
     src={lighthouseUrl+"icons/lh-black.png"} /> Instant Filter by Sector
     </span>
@@ -1172,7 +1151,7 @@ function renderSectorFilterCheckBox() {
 function renderCheckBox() {
   return (
     <span class="pull-right h6">
-    <span id="lighthouseEnabled" class="fa fa-lg"></span> 
+    <span id="lighthouseEnabled" class="fa fa-lg"></span>
     <img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
     src={lighthouseUrl+"icons/lh-black.png"} /> Collapse Completed Tasking
     </span>
@@ -1188,9 +1167,9 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
     }
     , data: {
       'Id':       TaskingID
-      ,'TeamId':    TeamID    
+      ,'TeamId':    TeamID
       , 'JobId':    JobID
-      ,'LighthouseFunction': 'untaskTeamFromJob'       
+      ,'LighthouseFunction': 'untaskTeamFromJob'
     }
     , cache: false
     , dataType: 'json'

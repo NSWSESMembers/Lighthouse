@@ -18,8 +18,6 @@ window.addEventListener("message", function(event) {
     });
   } else if (event.data.type && (event.data.type == "FROM_PAGE_SESASBESTOS_RESULT")) {
     asbestosBoxColor(event.data.address.PrettyAddress+" was FOUND on the SES asbestos register.",'red','')
-
-
   }
 }, false);
 
@@ -28,10 +26,11 @@ function asbestosBoxColor(text, color, url) {
   if (url != '')
   {
     console.log("got url")
-    $('#asbestos-register-box').css('cursor','pointer');
-    $('#asbestos-register-box').click(function(){
-      window.open(url)
-    })
+    $('#asbestos-register-box')
+      .css('cursor','pointer')
+      .click(function(){
+        window.open(url)
+      });
   }
   if (color != "") {
     $('#asbestos-register-box')[0].style.color = "white"
@@ -125,7 +124,7 @@ var html = (
   </div>
   </div>
   </div>
-  );
+);
 
 // Quick Text - Job - Team Complete
 var html2 = renderQuickText("CompleteTeamQuickTextBox", [
@@ -146,7 +145,7 @@ job_view_history = (
   </div>
   </div>
   </fieldset>
-  );
+);
 
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
 job_asbestos_history = (
@@ -158,7 +157,7 @@ job_asbestos_history = (
   <p id="asbestos-register-text" class="form-control-static">Searching...</p>
   </div>
   </div>
-  );
+);
 
 $('fieldset.col-md-12').each(function(k,v){
   var $v = $(v);
