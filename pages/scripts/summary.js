@@ -94,13 +94,15 @@ $(document).on('click',"#submitButton",function() {
 })
 
 function resize() {
-  var neightbourHeight = $('#outstanding').parent().parent().parent().parent().parent().height()
+  if (typeof $('#outstanding').parent() === "function") {
+    var neightbourHeight = $('#outstanding').parent().parent().parent().parent().parent().height()
 
   neightbourHeight=parseInt(neightbourHeight)-10-10-10-10-10 //all the padding
   $('#title').parent().height(neightbourHeight*0.6) //60%
   ($('#title-details-start').parent().parent().height(neightbourHeight*0.4)) //40%
 
   return true
+}
 
 }
 
@@ -376,17 +378,16 @@ function HackTheMatrix(unit, host, token, progressBar) {
       };
 
       var title;
-      //nasty hack to cleanup long unit names
-      var code = unit.Name
-      if (code.length > 15) {
-        code = unit.Code
-      }
       
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
         title = "<p style='margin-bottom:0px'>Job Summary</p>NSW";
       } else {
         if (Array.isArray(unit) == false) { //1 lga
+          var code = unit.Name
+          if (code.length > 15) { //handle long unit names
+            code = unit.Code
+          }
           document.title = unit.Name + " Job Summary";
           title = "<p style='margin-bottom:0px'>Job Summary</p>"+code;
         }
