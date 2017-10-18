@@ -220,6 +220,9 @@ function jobView_teamsTasked_completedHiddenSwitch(){
   // Toggle class for container
   //$('div.widget > div.widget-content > div[data-bind$="taskedTeams"]').toggleClass('team_complete_hidden', hideComplete);
   // Toggle Visibility of Tasked Teams
+  // Non-Completed Crews
+  $('div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div:not(.teamStatus_complete) > div.row:not(:first-child)').show();
+  // Completed Crews
   $('div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div.teamStatus_complete > div.row:not(:first-child)').toggle(!hideComplete);
   // Toggle class for checkbox
   $('#lighthouseEnabled')
