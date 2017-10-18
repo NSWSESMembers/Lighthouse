@@ -19,7 +19,6 @@ window.FinaliseSelected = function FinaliseSelected(words,beaconStringDate) { //
 $('a.lh-update-filter[data-page]').each(function(index, lighthouseButton) {
   $(lighthouseButton)
     .on("mouseenter click",function(){
-      console.log('setLighthouseButtonTarget()');
       var exports = JSON.parse(filterDataForExport());
       var $t = $(this);
       var lighthousePageName = $t.data('page');
