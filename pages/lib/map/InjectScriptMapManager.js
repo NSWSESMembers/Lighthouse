@@ -1164,16 +1164,24 @@ const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
      */
      initialise(filterViewModel) {
         // Send the auth token to the content script
-        console.debug('Sending access-token: ' + user.accessToken);
-        window.postMessage({type: 'LH_USER_ACCESS_TOKEN', token: user.accessToken}, '*');
+
+        function sendToken() { //send the token every 5 mins as it will change every ~60
+            console.debug('Sending access-token: ' + user.accessToken);
+
+            window.postMessage({type: 'LH_USER_ACCESS_TOKEN', token: user.accessToken}, '*');
+        }
+        sendToken()
+        setInterval(sendToken, 3e5);
+
 
         console.debug('Sending base: ' + urls.Base);
         window.postMessage({type: 'LH_USER_API', base: urls.Base}, '*');
 
-        filterViewModel.selectedEntities.subscribe(function () {
-            sendStateToContentScript(filterViewModel);
-            console.log('sending entities')
-        });
+        $('input[type="button"][value="Apply"]').click(function(){
+          sendStateToContentScript(filterViewModel);
+          console.log('sending entities')  
+      })
+
 
         sendStateToContentScript(filterViewModel);
 

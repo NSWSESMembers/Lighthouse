@@ -51,7 +51,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
             </span>
             <span id="toggleSesTeamsBtn" class="label tag tag-lh-filter tag-disabled">
             <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
-            <span class="tag-text">SES Team Locations</span>
+            <span class="tag-text">Team Tasking</span>
             </span>
             </li>
             </ul>
@@ -149,21 +149,27 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
                     console.debug('Got start: ' + this._startDate);
                     console.debug('Got end: ' + this._endDate);
 
-                } else if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
-                    let params = event.data.params;
-                    this._requestLayerUpdate('helicopters', params);
+                    var disabled = $('#toggleSesTeamsBtn').hasClass('tag-disabled');
+                    if (!disabled) //if the teams button is pressed, teams are shown, update them with the new data
+                     {
+                        this._requestSesTeamsLayerUpdate()
+                     }
 
-                } else if (event.data.type === 'LH_RESPONSE_TRANSPORT_KEY') {
+    } else if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
+        let params = event.data.params;
+        this._requestLayerUpdate('helicopters', params);
 
-                    let sessionKey = 'lighthouseTransportApiKeyCache';
-                    let transportApiKeyCache = event.data.key;
+    } else if (event.data.type === 'LH_RESPONSE_TRANSPORT_KEY') {
 
-                    console.debug('got transport key: ' + transportApiKeyCache);
-                    sessionStorage.setItem(sessionKey, transportApiKeyCache);
-                    this._fetchTransportResourceWithKey(transportApiKeyCache, event.data.layer);
-                }
-            }
-        }.bind(this), false);
+        let sessionKey = 'lighthouseTransportApiKeyCache';
+        let transportApiKeyCache = event.data.key;
+
+        console.debug('got transport key: ' + transportApiKeyCache);
+        sessionStorage.setItem(sessionKey, transportApiKeyCache);
+        this._fetchTransportResourceWithKey(transportApiKeyCache, event.data.layer);
+    }
+}
+}.bind(this), false);
 }
 
     /**
@@ -253,7 +259,6 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
         console.debug('updating SES teams layer',this);
 
         if (!this._token) {
-            console.log('waiting',this._token)
             // If the inject script hasn't sent over the HQs wait a few seconds then retry
             setTimeout(this._requestSesTeamsLayerUpdate.bind(this), 2000);
             return;
