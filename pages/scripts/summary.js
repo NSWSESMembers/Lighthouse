@@ -100,7 +100,6 @@ resize()
 });
 
 window.addEventListener('resize', function(event){
-  console.log('resize')
   resize()
 });
 
