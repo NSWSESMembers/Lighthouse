@@ -22,10 +22,11 @@ $('a.lh-update-filter[data-page]').each(function(index, lighthouseButton) {
       var exports = JSON.parse(filterDataForExport());
       var $t = $(this);
       var lighthousePageName = $t.data('page');
-      var h = lighthouseUrl+"pages/"+lighthousePageName+".html?host="+urls.Base+"&source="+location.origin+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken);
+      var h = lighthouseUrl+"pages/"+lighthousePageName+".html?host="+urls.Base+"&source="+location.origin+"&start="+encodeURIComponent(exports.StartDate)+"&end="+encodeURIComponent(exports.EndDate)+ "&token=" + encodeURIComponent(user.accessToken) + "&tokenexp="+encodeURIComponent(user.expiresAt);
       if (exports.hasOwnProperty("Hq"))
         h += "&hq="+exports.Hq;
       $t.attr('href',h);
+      $t.attr('target',"_blank");
     });
 });
 

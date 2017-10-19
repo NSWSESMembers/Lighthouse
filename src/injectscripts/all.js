@@ -26,7 +26,7 @@ whenWeAreReady(user,function() {
       thismorning = new Date(thismorning.getTime());
 
 
-      var vars = "?host=" + urls.Base + "&source="+ location.origin +"&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString()) + "&token=" + encodeURIComponent(user.accessToken);
+      var vars = "?host=" + urls.Base + "&source="+ location.origin +"&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString()) + "&token=" + encodeURIComponent(user.accessToken)+ "&tokenexp="+encodeURIComponent(user.expiresAt);
 
       lighthouseMenu = MakeMenu(lighthouseUrl,vars,user.hq.Code)
 
@@ -42,18 +42,18 @@ whenWeAreReady(user,function() {
     <ul class="dropdown-menu">\
     <li role="presentation" class="dropdown-header">Jobs</li>\
     <li id="lhsummarymenuitem">\
-    <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
+    <a href="'+lighthouseUrl+'pages/summary.html'+vars+'" target="_blank">Job Summary ('+unitName+' Today)</a>\
     </li>\
     <li id="lhstatsmenuitem">\
-    <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
+    <a href="'+lighthouseUrl+'pages/stats.html'+vars+'" target="_blank">Job Statistics ('+unitName+' Today)</a>\
     </li>\
     <li id="lhexportmenuitem">\
-    <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
+    <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'" target="_blank">Job Export ('+unitName+' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
-    <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
+    <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'" target="_blank">Team Summary ('+unitName+' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
@@ -79,18 +79,18 @@ whenWeAreReady(user,function() {
     <ul class="dropdown-menu">\
     <li role="presentation" class="dropdown-header">Jobs</li>\
     <li id="lhsummarymenuitem">\
-    <a href="'+lighthouseUrl+'pages/summary.html'+vars+'">Job Summary ('+unitName+' Today)</a>\
+    <a href="'+lighthouseUrl+'pages/summary.html'+vars+'" target="_blank">Job Summary ('+unitName+' Today)</a>\
     </li>\
     <li id="lhstatsmenuitem">\
-    <a href="'+lighthouseUrl+'pages/stats.html'+vars+'">Job Statistics ('+unitName+' Today)</a>\
+    <a href="'+lighthouseUrl+'pages/stats.html'+vars+'" target="_blank">Job Statistics ('+unitName+' Today)</a>\
     </li>\
     <li id="lhexportmenuitem">\
-    <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'">Job Export ('+unitName+' Today)</a>\
+    <a href="'+lighthouseUrl+'pages/advexport.html'+vars+'" target="_blank">Job Export ('+unitName+' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
-    <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'">Team Summary ('+unitName+' Today)</a>\
+    <a href="'+lighthouseUrl+'pages/teamsummary.html'+vars+'" target="_blank">Team Summary ('+unitName+' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\

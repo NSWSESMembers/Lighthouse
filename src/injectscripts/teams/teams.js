@@ -16,9 +16,9 @@ function summary(){
   })
 
   if (hq.length !== 0) {
-    $("#lighthouseTeamSummaryButton").attr("href",lighthouseUrl+"pages/teamsummary.html?host="+urls.Base+"&source="+location.origin+"&hq="+hq+"&start="+encodeURIComponent(start.toISOString())+"&end="+encodeURIComponent(end.toISOString())+ "&token=" + encodeURIComponent(user.accessToken));
+    $("#lighthouseTeamSummaryButton").attr("href",lighthouseUrl+"pages/teamsummary.html?host="+urls.Base+"&source="+location.origin+"&hq="+hq+"&start="+encodeURIComponent(start.toISOString())+"&end="+encodeURIComponent(end.toISOString())+ "&token=" + encodeURIComponent(user.accessToken)+ "&tokenexp="+encodeURIComponent(user.expiresAt));
   } else {
-    $("#lighthouseTeamSummaryButton").attr("href",lighthouseUrl+"pages/teamsummary.html?host="+urls.Base+"&source="+location.origin+"&start="+encodeURIComponent(start.toISOString())+"&end="+encodeURIComponent(end.toISOString())+ "&token=" + encodeURIComponent(user.accessToken));
+    $("#lighthouseTeamSummaryButton").attr("href",lighthouseUrl+"pages/teamsummary.html?host="+urls.Base+"&source="+location.origin+"&start="+encodeURIComponent(start.toISOString())+"&end="+encodeURIComponent(end.toISOString())+ "&token=" + encodeURIComponent(user.accessToken)+ "&tokenexp="+encodeURIComponent(user.expiresAt));
   }
 }
 

@@ -1,7 +1,10 @@
 var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
 var $ = require('jquery');
+var moment = require('moment');
+
 global.jQuery = $;
+
 var ElasticProgress = require('elastic-progress');
 
 var LighthouseJob = require('../lib/shared_job_code.js');
@@ -12,6 +15,12 @@ var LighthouseJson = require('../lib/shared_json_code.js');
 require('../styles/advexport.css');
 
 var timeoverride = null;
+
+var params = getSearchParameters();
+
+var token = params.token
+var tokenexp = params.tokenexp
+
 
 window.onerror = function(message, url, lineNumber) {
   $('#loading')
@@ -89,9 +98,14 @@ var lighthouse_fieldDefaults = [
   'Job Contact - Phone Number'
   ];
 
-
-
   $(document).ready(function() {
+
+
+
+    validateTokenExpiration();
+    setInterval(validateTokenExpiration, 3e5);
+
+
 
     var $fieldsetContainer = $('#advexport_fieldsets');
     $.each(lighthouse_fieldArray,function(k,v){
@@ -124,6 +138,7 @@ var lighthouse_fieldDefaults = [
         fontFamily: 'Montserrat',
         colorBg:    '#edadab',
         colorFg:    '#d2322d',
+        width: 200,
         onClose:function(){
           $('#loading')
           .hide();
@@ -145,7 +160,7 @@ function transformToAssocArray(prmstr) {
   var prmarr = prmstr.split('&');
   for (var i = 0; i < prmarr.length; i++) {
     var tmparr = prmarr[i].split('=');
-    params[tmparr[0]] = tmparr[1];
+    params[tmparr[0]] = decodeURIComponent(tmparr[1]);
   }
   return params;
 }
@@ -153,7 +168,25 @@ function transformToAssocArray(prmstr) {
 var timeperiod;
 var unit = [];
 
-var params = getSearchParameters();
+function validateTokenExpiration()
+{
+  moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
+    $.ajax({
+      type: 'GET'
+      , url: params.source+"/Authorization/RefreshToken"
+      , beforeSend: function(n) {
+        n.setRequestHeader("Authorization", "Bearer " + token)
+      }
+      , cache: false
+      , dataType: 'json'
+      , complete: function(response, textStatus) {
+        token = response.responseJSON.access_token
+        tokenexp = response.responseJSON.expires_at
+        console.log("successful token renew.")
+      }
+    })
+    )
+}
 
 //Get times vars for the call
 function RunForestRun(mp) {
@@ -196,7 +229,7 @@ function HackTheMatrix(id, host, progressBar) {
   }
 
 
-  LighthouseJob.get_json(unit, host, start, end, params.token, function(jobs) {
+  LighthouseJob.get_json(unit, host, start, end, token, function(jobs) {
     //console.log(jobs);
           // $(jobs.Results).each(function(j,k){
           //   console.log(k)

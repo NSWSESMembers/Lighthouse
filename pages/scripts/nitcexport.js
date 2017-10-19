@@ -2,9 +2,15 @@ var nitc = require('../lib/shared_nitc_code.js');
 var $ = require('jquery');
 global.jQuery = $;
 var ElasticProgress = require('elastic-progress');
+var moment = require('moment');
 
 // inject css c/o browserify-css
 require('../styles/nitcexport.css');
+
+var params = getSearchParameters();
+
+var token = params.token
+var tokenexp = params.tokenexp
 
 var timeoverride = null;
 
@@ -13,6 +19,14 @@ window.onerror = function(message, url, lineNumber) {
   document.getElementById("loading").innerHTML = "Error loading page<br>"+message+" Line "+lineNumber;
   return true;
 }; 
+
+
+$(document).ready(function() {
+
+  validateTokenExpiration();
+  setInterval(validateTokenExpiration, 3e5);
+
+})
 
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById("goButton").addEventListener("click", function(){
@@ -41,7 +55,7 @@ function transformToAssocArray(prmstr) {
   var prmarr = prmstr.split("&");
   for (var i = 0; i < prmarr.length; i++) {
     var tmparr = prmarr[i].split("=");
-    params[tmparr[0]] = tmparr[1];
+    params[tmparr[0]] = decodeURIComponent(tmparr[1]);
   }
   return params;
 }
@@ -49,7 +63,25 @@ function transformToAssocArray(prmstr) {
 var timeperiod;
 var unit = [];
 
-var params = getSearchParameters();
+function validateTokenExpiration()
+  {
+    moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
+      $.ajax({
+        type: 'GET'
+        , url: params.source+"/Authorization/RefreshToken"
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + token)
+        }
+        , cache: false
+        , dataType: 'json'
+        , complete: function(response, textStatus) {
+          token = response.responseJSON.access_token
+          tokenexp = response.responseJSON.expires_at
+          console.log("successful token renew.")
+        }
+      })
+      )
+  }
 
 //Get times vars for the call
 function RunForestRun(mp) {
@@ -63,8 +95,8 @@ function HackTheMatrix(progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  nitc.get_json(params, start, end, function(nitcs) {
-console.log(nitcs)
+  nitc.get_json(params, token, start, end, function(nitcs) {
+
     if (document.getElementById("Activity").checked) {  // Activity list export
         var exports = nitcs.Results.map(function(d){
             var rawSdate = new Date(d.StartDate);

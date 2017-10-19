@@ -18,6 +18,9 @@ var dc = require('dc');
 // inject css c/o browserify-css
 require('../styles/stats.css');
 
+var moment = require('moment');
+
+
 var timeoverride = null;
 var timeperiod;
 var unit = null;
@@ -27,11 +30,14 @@ var firstrun = true;
 //get passed page params
 var params = getSearchParameters();
 
-
+var token = params.token
+var tokenexp = params.tokenexp
 
 // init
 $(function() {
 
+  validateTokenExpiration();
+  setInterval(validateTokenExpiration, 3e5);
 
   if (chrome.manifest.name.includes("Development")) {
     $('body').addClass("watermark");
@@ -85,13 +91,32 @@ function getSearchParameters() {
     var prmarr = prmstr.split("&");
     for (var i = 0; i < prmarr.length; i++) {
       var tmparr = prmarr[i].split("=");
-      params[tmparr[0]] = tmparr[1];
+      params[tmparr[0]] = decodeURIComponent(tmparr[1]);
     }
     return params;
   }
 
 }
 
+ function validateTokenExpiration()
+  {
+    moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
+      $.ajax({
+        type: 'GET'
+        , url: params.source+"/Authorization/RefreshToken"
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + token)
+        }
+        , cache: false
+        , dataType: 'json'
+        , complete: function(response, textStatus) {
+          token = response.responseJSON.access_token
+          tokenexp = response.responseJSON.expires_at
+          console.log("successful token renew.")
+        }
+      })
+      )
+  }
 
 
 //update every X seconds
@@ -148,10 +173,10 @@ function RunForestRun(mp) {
 
       if (params.hq.split(",").length == 1) { //if only one HQ
 
-        LighthouseUnit.get_unit_name(params.hq, params.host, params.token, function(result) {
+        LighthouseUnit.get_unit_name(params.hq, params.host, token, function(result) {
           unit = result;
 
-          fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
+          fetchFromBeacon(unit, params.host, token, fetchComplete, mp, firstrun);
         });
 
       } else { //if more than one HQ
@@ -160,22 +185,22 @@ function RunForestRun(mp) {
         var hqsGiven = params.hq.split(",");
         console.log(hqsGiven);
         hqsGiven.forEach(function(d){
-          LighthouseUnit.get_unit_name(d, params.host, params.token, function(result) {
+          LighthouseUnit.get_unit_name(d, params.host, token, function(result) {
             unit.push(result);
             if (unit.length == params.hq.split(",").length) {
-              fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
+              fetchFromBeacon(unit, params.host, token, fetchComplete, mp, firstrun);
             }
           });
         });
       }
     } else { //no hq was sent, get them all
       unit = [];
-      fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
+      fetchFromBeacon(unit, params.host, token, fetchComplete, mp, firstrun);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
     $('#loadinginline').css('visibility', 'visible');
-    fetchFromBeacon(unit, params.host, params.token, fetchComplete, mp, firstrun);
+    fetchFromBeacon(unit, params.host, token, fetchComplete, mp, firstrun);
   }
 }
 

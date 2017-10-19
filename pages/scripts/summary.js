@@ -5,6 +5,7 @@ var LighthouseChrome = require('../lib/shared_chrome_code.js');
 
 var $ = require('jquery');
 var _ = require('underscore');
+var moment = require('moment');
 
 global.jQuery = $;
 var ElasticProgress = require('elastic-progress');
@@ -18,13 +19,41 @@ require('bootstrap');
 // inject css c/o browserify-css
 require('../styles/summary.css');
 
+var params = getSearchParameters();
+
 
 var timeoverride = null;
 
-window.onerror = function(message, url, lineNumber) {
-  document.getElementById("loading").innerHTML = "Error loading page<br>" + message + " Line " + lineNumber;
-  return true;
-};
+var token = params.token
+var tokenexp = params.tokenexp
+
+var timeperiod;
+var unit = null;
+
+
+
+$(document).ready(function() {
+
+  validateTokenExpiration();
+  setInterval(validateTokenExpiration, 3e5);
+
+
+  if (chrome.manifest.name.includes("Development")) {
+    $('body').addClass("watermark");
+  }
+
+
+  document.getElementById("refresh").onclick = function() {
+    RunForestRun();
+  }
+});
+
+
+
+// window.onerror = function(message, url, lineNumber) {
+//   document.getElementById("loading").innerHTML = "Error loading page<br>" + message + " Line " + lineNumber;
+//   return true;
+// };
 
 
 
@@ -45,7 +74,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-      //This is called when the loading progress bar closes. good place for onload kinda code
+//This is called when the loading progress bar closes. good place for onload kinda code
 
 
 
@@ -61,6 +90,7 @@ resize()
 
 }
 });
+
 
   // SET ON CLOSE TO RUN THIS
 
@@ -106,6 +136,26 @@ function resize() {
 
 }
 
+  function validateTokenExpiration()
+  {
+    moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
+      $.ajax({
+        type: 'GET'
+        , url: params.source+"/Authorization/RefreshToken"
+        , beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + token)
+        }
+        , cache: false
+        , dataType: 'json'
+        , complete: function(response, textStatus) {
+          token = response.responseJSON.access_token
+          tokenexp = response.responseJSON.expires_at
+          console.log("successful token renew.")
+        }
+      })
+      )
+  }
+
 function applyTheme(themeName){
   console.log('Apply theme:'+themeName)
   switch (themeName+''){ //make it a string because storage objects is weird
@@ -131,23 +181,9 @@ function applyTheme(themeName){
 
    applyTheme("boo")
 
-
    break;
  }
 }
-
-//refresh button
-$(document).ready(function() {
-
-  if (chrome.manifest.name.includes("Development")) {
-    $('body').addClass("watermark");
-  }
-
-
-  document.getElementById("refresh").onclick = function() {
-    RunForestRun();
-  }
-});
 
 function getSearchParameters() {
   var prmstr = window.location.search.substr(1);
@@ -159,16 +195,12 @@ function transformToAssocArray(prmstr) {
   var prmarr = prmstr.split("&");
   for (var i = 0; i < prmarr.length; i++) {
     var tmparr = prmarr[i].split("=");
-    params[tmparr[0]] = tmparr[1];
+    params[tmparr[0]] = decodeURIComponent(tmparr[1]);
   }
   return params;
 }
 
-var timeperiod;
-var unit = null;
 
-
-var params = getSearchParameters();
 
 //update every X seconds
 function startTimer(duration) {
@@ -221,30 +253,30 @@ function RunForestRun(mp) {
 
     if (typeof params.hq !== 'undefined') {
       if (params.hq.split(",").length == 1) { //one HQ was passed
-        LighthouseUnit.get_unit_name(params.hq, params.host, params.token, function(result) {
+        LighthouseUnit.get_unit_name(params.hq, params.host, token, function(result) {
           unit = result;
-          HackTheMatrix(unit, params.host,params.token,mp);
+          HackTheMatrix(unit, params.host, token,mp);
         });
       } else {
         unit = [];
         console.log("passed array of units");
         var hqsGiven = params.hq.split(",");
         hqsGiven.forEach(function(d) {
-          LighthouseUnit.get_unit_name(d, params.host, params.token, function(result) {
+          LighthouseUnit.get_unit_name(d, params.host, token, function(result) {
             unit.push(result);
             if (unit.length == params.hq.split(",").length) {
-              HackTheMatrix(unit, params.host,params.token,mp);
+              HackTheMatrix(unit, params.host, token, mp);
             }
           });
         });
       }
     } else { //no hq was sent, get them all
       unit = [];
-      HackTheMatrix(unit, params.host,params.token,mp);
+      HackTheMatrix(unit, params.host, token, mp);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
-    HackTheMatrix(unit, params.host,params.token);
+    HackTheMatrix(unit, params.host, token);
   }
 
 }
