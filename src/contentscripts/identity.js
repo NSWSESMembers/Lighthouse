@@ -6,7 +6,7 @@ var model = JSON.parse(encodedJson);
 if (model.clientName == "beacon OMS Prod" || model.clientName == "beacon OMS Preview") //only run if we are logging into a beacon page.
 {
 
-  var $ = require('jquery');
+  var $ = require('jquery/dist/jquery.min');
   var DOM = require('jsx-dom-factory');
   var LighthouseChrome = require('../../pages/lib/shared_chrome_code.js');
 
