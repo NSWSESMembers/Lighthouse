@@ -102,7 +102,6 @@ $('#LHImportCollectionCode').click(function() {
         $('#LHImportCollectionErrorText').append(spinner)
 
 
-        console.log(code)
         $.ajax({
             type: 'POST',
             url: "https://tdykes.com/lighthouse/collection.php",
@@ -111,7 +110,23 @@ $('#LHImportCollectionCode').click(function() {
                 LighthouseFunction: 'CollectionLoadCollection',
                 source: location.hostname,
                 code: code
-            },
+            }, xhr: function() {
+            // Get new xhr object using default factory
+            var xhr = jQuery.ajaxSettings.xhr();
+            // Copy the browser's native setRequestHeader method
+            var setRequestHeader = xhr.setRequestHeader;
+            // Replace with a wrapper
+            xhr.setRequestHeader = function(name, value) {
+            // Ignore the X-Requested-With header
+            if (name == 'Authorization') return;
+            // Otherwise call the native setRequestHeader method
+            // Note: setRequestHeader requires its 'this' to be the xhr object,
+            // which is what 'this' is here when executed.
+            setRequestHeader.call(this, name, value);
+        }
+        // pass it on to jQuery
+        return xhr;
+    },
             cache: false,
             dataType: 'json',
             complete: function(response, textStatus) {
