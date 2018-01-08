@@ -190,26 +190,26 @@ function loadSynchronously(url) {
 
     fetchEssentialEnergyOutages(function(essentialEnergyData) {
         finalData.essential = essentialEnergyData
-        merge()
+        merge("EssentialEnergy")
     })
 
     fetchEndeavourEnergyOutages(function(endeavourEnergyData) {
         finalData.endeavour = endeavourEnergyData
-        merge()
+        merge("EndeavourEnergy")
     })
 
     fetchAusgridOutages(function(AusgridData){
         finalData.ausgrid = AusgridData
-        merge()
+        merge("Ausgrid")
     });
 
 
 
-    function merge() {
-        console.log("checking if all power outage data is back")
+    function merge(name) {
+        console.log(name+" is back," +"checking if all power outage data is back")
         if (finalData.essential && finalData.endeavour && finalData.ausgrid)
         {
-            console.log("merging power outages")
+            console.log("merging all power outages")
             var merged = {}
             merged.features = []
             //if you just push you end up with an array of the array not a merged array like you might want.
@@ -233,7 +233,7 @@ function loadSynchronously(url) {
     var xhttp = new XMLHttpRequest();
     xhttp.onloadend = function () {
         if (this.readyState === 4 && this.status === 200) {
-            geoJson = {
+            ausgridGeoJson = {
                 'type': 'FeatureCollection',
                 'features': []
             };
@@ -251,7 +251,7 @@ function loadSynchronously(url) {
 
             if (expectCount == 0) //call back if theres none.
             {
-                callback(geoJson)
+                callback(ausgridGeoJson)
             }
 
             result.d.Data.forEach(function(item) {
@@ -300,13 +300,13 @@ function loadSynchronously(url) {
                             feature.properties.type = "Outage"
                             feature.properties.startDateTime = outageresult.d.Data.StartDateTime
                             feature.properties.endDateTime = outageresult.d.Data.EstRestTime
-                            geoJson.features.push(feature)
+                            ausgridGeoJson.features.push(feature)
                         } else {
                             expectCount--
                         }
-                        if (geoJson.features.length == expectCount) //return once all the data is back
+                        if (ausgridGeoJson.features.length == expectCount) //return once all the data is back
                         {
-                            callback(geoJson)
+                            callback(ausgridGeoJson)
                         }
                     })
 }
@@ -379,7 +379,7 @@ function loadSynchronously(url) {
                 var json = []
 
             }
-            geoJson = {
+            endeavourGeoJson = {
                 'type': 'FeatureCollection',
                 'features': []
             };
@@ -413,10 +413,10 @@ function loadSynchronously(url) {
                     }
                 };
 
-                geoJson.features.push(feature);
+                endeavourGeoJson.features.push(feature);
             }
 
-            callback(geoJson);
+            callback(endeavourGeoJson);
         } else {
             // error
             var response = {
@@ -441,11 +441,11 @@ function loadSynchronously(url) {
     xhttp.onloadend = function () {
         if (this.readyState === 4 && this.status === 200) {
             var kml = xhttp.responseXML;
-            var geoJson = tj.kml(kml);
-            for (var i = 0; i < geoJson.features.length; i++) {
-                geoJson.features[i].owner='EssentialEnergy'
+            var essentialGeoJson = tj.kml(kml);
+            for (var i = 0; i < essentialGeoJson.features.length; i++) {
+                essentialGeoJson.features[i].owner='EssentialEnergy'
             }
-            callback(geoJson);
+            callback(essentialGeoJson);
         } else {
             // error
             var response = {
