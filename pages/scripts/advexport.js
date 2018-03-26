@@ -363,7 +363,7 @@ function downloadCSV(file, dataIn, keyIn) {
       a.href = url;
       a.download = fileName;
       a.click();
-      window.URL.revokeObjectURL(url);
+      //window.URL.revokeObjectURL(url); removed due to chrome race condition resulting in a 404
     };
   }());
 
