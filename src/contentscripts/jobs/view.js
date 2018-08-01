@@ -10,10 +10,6 @@ window.addEventListener("message", function(event) {
     return;
   if (event.data.type && (event.data.type == "FROM_PAGE_FTASBESTOS_SEARCH")) {
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
-      if (response.resultbool == false)
-      {
-        response.requrl = ''
-      }
       asbestosBoxColor(response.result,response.colour,response.requrl)
     });
   } else if (event.data.type && (event.data.type == "FROM_PAGE_SESASBESTOS_RESULT")) {
@@ -25,7 +21,6 @@ function asbestosBoxColor(text, color, url) {
   $('#asbestos-register-text').html(text);
   if (url != '')
   {
-    console.log("got url")
     $('#asbestos-register-box')
       .css('cursor','pointer')
       .click(function(){

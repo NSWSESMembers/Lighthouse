@@ -83,7 +83,12 @@ whenAddressIsReady(function() {
         {
           window.postMessage({ type: "FROM_PAGE_SESASBESTOS_RESULT", address: masterViewModel.geocodedAddress.peek(), result: true, color: 'red' }, "*");
         } else {
-          window.postMessage({ type: "FROM_PAGE_FTASBESTOS_SEARCH", address: masterViewModel.geocodedAddress.peek() }, "*");
+          postCodes.returnPostCode(masterViewModel.geocodedAddress.peek().Locality, function(postcode){
+            if (typeof postcode !== 'undefined')
+              {
+                window.postMessage({ type: "FROM_PAGE_FTASBESTOS_SEARCH", address: {postcode:postcode, ...masterViewModel.geocodedAddress.peek()} }, "*");
+              }
+          })
         }
       });
     }

@@ -11,6 +11,8 @@ const essentialEnergyOutagesFeed = 'http://www.essentialenergy.com.au/Asset/kmz/
 const endeavourEnergyOutagesFeed = 'http://www.endeavourenergy.com.au/mobileapp/outage/outages/listBoth/current';
 const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
 
+//external libs
+
 //block message js core request, fetch the file, inject our vars then serve it back to the requestor. :-)
 chrome.webRequest.onBeforeRequest.addListener(
     function (details) {
@@ -51,7 +53,6 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
-        console.log(request);
         if (request.type === "asbestos") {
             checkAsbestosRegister(request.address,function(result,colour,bool,url){
                 sendResponse({result: result, colour: colour, resultbool: bool, requrl: url})
@@ -460,18 +461,15 @@ function loadSynchronously(url) {
 }
 
 function checkAsbestosRegister( inAddressObject, cb ){
-
     var AddressParts = /^(.+)\s(.+)$/.exec( inAddressObject.Street );
     if( !inAddressObject.Flat )
         inAddressObject.Flat = "";
-    var formAddress = "http://www.fairtrading.nsw.gov.au/ftw/Tenants_and_home_owners/Loose_fill_asbestos_insulation/Public_Search/LFAI_Public_Register.page?"+
-    "idol_totalhits=0&currentPage=1&"+
-    "form-unit="+encodeURI(inAddressObject.Flat)+"&"+
-    "form-streetno="+encodeURI(inAddressObject.StreetNumber)+"&"+
-    "form-street="+encodeURI(AddressParts[1])+"&"+
-    "form-streettype="+encodeURI(AddressParts[2])+"&"+
-    "form-suburb="+encodeURI(inAddressObject.Locality)+"&"+
-    "propertyaddress=Property%3A%28"+encodeURI(inAddressObject.Flat+" "+inAddressObject.StreetNumber+" "+inAddressObject.Street+" "+inAddressObject.Locality)+"%29";
+    var formAddress = "https://www.fairtrading.nsw.gov.au/loose-fill-asbestos-insulation-register?"+
+    "unit="+encodeURI(inAddressObject.Flat)+"&"+
+    "number="+encodeURI(inAddressObject.StreetNumber)+"&"+
+    "street="+encodeURI(AddressParts[1])+"&"+
+    "type="+encodeURI(AddressParts[2])+"&"+
+    "postcode="+encodeURI(inAddressObject.postcode)
 
     console.log("loading cache")
     var ftCache = JSON.parse(localStorage.getItem("lighthouseFTCache"));
