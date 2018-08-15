@@ -1179,7 +1179,7 @@ const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
 
         $('input[type="button"][value="Apply"]').click(function(){
           sendStateToContentScript(filterViewModel);
-          console.log('sending entities')  
+          console.log('sending entities')
       })
 
 
@@ -1302,7 +1302,7 @@ ${rows.join('\r')}
                     <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
                     <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
                     Job recieved at ${moment(data.JobReceived).format('HH:mm:ss DD/MM/YYYY')}<br>
-                    ${data.EntityAssignedTo.Code} - ${data.EntityAssignedTo.ParentEntity.Code}
+                    ${(data.EntityAssignedTo.ParentEntity ? (data.EntityAssignedTo.Code+" - "+data.EntityAssignedTo.ParentEntity.Code) : data.EntityAssignedTo.Code)}
                     </span>`;
 
                     $('#jobPopUp').html(details)
