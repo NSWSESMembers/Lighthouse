@@ -1,6 +1,5 @@
 var DOM = require('jsx-dom-factory');
 var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
-var postCodes = require('../../../lib/postcodes.js');
 
 console.log("jobs/create.js inject running");
 
@@ -38,18 +37,17 @@ $(document).ready(function() {
     console.log("jobs create ready")
 
     jobsystem.geocodedAddress.subscribe(function(status) {
-      $('#asbestos-register-flag').text("Searching...");
+      $('#asbestos-register-text').text("Searching...");
       if (jobsystem.geocodedAddress.peek() != null)
       {
         address = jobsystem.geocodedAddress.peek()
-        if (address.street != "") 
+        if (address.street != "")
         {
           address.PrettyAddress = address.pretty_address
           address.StreetNumber = address.number
           address.Street = address.street
           address.Locality = address.locality
           address.Flat = address.flat
-          delete address.postcode
 
     //reset the colors
     $('#asbestos-register-box')[0].style.color = "black"
@@ -59,20 +57,8 @@ $(document).ready(function() {
         if (res == true)
         {
           window.postMessage({ type: "FROM_PAGE_SESASBESTOS_RESULT", address: address, result: true, color: 'red' }, "*");
-
         } else {
-          //reset the colors
-          $('#asbestos-register-box')[0].style.color = "black"
-          $('#asbestos-register-box').css({'background' :'','margin-left':'0px'})
-          $('#asbestos-register-flag').text("Searching Fairtrade");
-          postCodes.returnPostCode(address.Locality, function(postcode){
-            if (typeof postcode !== 'undefined')
-              {
-                window.postMessage({ type: "FROM_PAGE_FTASBESTOS_SEARCH", address: {postcode: postcode, ...address} }, "*");
-              } else {
-                $('#asbestos-register-flag').text("Not A Searchable Address");
-              }
-          })
+          window.postMessage({ type: "FROM_PAGE_FTASBESTOS_SEARCH", address: address }, "*");
         }
       })
 
@@ -144,4 +130,3 @@ function DoTour() {
 // Start the tour
 tour.start();
 }
-

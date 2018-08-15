@@ -1222,6 +1222,7 @@ const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
 
 
             fetchJob(jobid, function (data) {
+                console.log(data)
                 fetchJobTasking(jobid, function (taskingdata) {
 
                     //Tasking

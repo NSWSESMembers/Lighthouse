@@ -77,7 +77,7 @@ chrome.runtime.onMessage.addListener(
             fetchTransportResource('v1/live/cameras', function(data) {
                 sendResponse(data);
             }, request.params.apiKey);
-            return true;    
+            return true;
         } else if (request.type === 'helicopters') {
             fetchHelicopterLocations(request.params, function(data) {
                 sendResponse(data);
@@ -286,8 +286,8 @@ function loadSynchronously(url) {
                     point.coordinates = []
                     point.coordinates.push(item.Coords[0].lng,item.Coords[0].lat)
 
-                    feature.geometry.geometries.push(point)                    
-                    
+                    feature.geometry.geometries.push(point)
+
                     fetchAusgridOutage(item.WebId,item.OutageDisplayType, function(outageresult){ //for each outage ask their API for the deatils of the outage
                         if (typeof(outageresult.error) === 'undefined') //if no error
                         {
@@ -330,7 +330,7 @@ function loadSynchronously(url) {
 /**
  * Fetche Ausgrid power outage detail.
  * @param webId web ID
- * @param type OutageDisplayType 
+ * @param type OutageDisplayType
  * @param callback the callback to send the data to.
  */
  function fetchAusgridOutage(id,type,callback) {
@@ -468,8 +468,8 @@ function checkAsbestosRegister( inAddressObject, cb ){
     "unit="+encodeURI(inAddressObject.Flat)+"&"+
     "number="+encodeURI(inAddressObject.StreetNumber)+"&"+
     "street="+encodeURI(AddressParts[1])+"&"+
-    "type="+encodeURI(AddressParts[2])+"&"+
-    "postcode="+encodeURI(inAddressObject.postcode)
+    "suburb="+encodeURI(inAddressObject.Locality)+"&"+
+    "type="+encodeURI(AddressParts[2])+"&"
 
     console.log("loading cache")
     var ftCache = JSON.parse(localStorage.getItem("lighthouseFTCache"));
@@ -477,7 +477,7 @@ function checkAsbestosRegister( inAddressObject, cb ){
     if (ftCache) {
 
         //walk the cache and clean it up first
-        
+
         var foundinCache = false
         ftCache.forEach(function(item) {
 

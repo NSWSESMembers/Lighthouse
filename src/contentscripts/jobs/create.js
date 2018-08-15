@@ -7,13 +7,18 @@ window.addEventListener("message", function(event) {
   if (event.source != window)
     return;
 
-  
+
   // We only accept messages from ourselves or the extension
   if (event.source != window)
     return;
   if (event.data.type && (event.data.type == "FROM_PAGE_FTASBESTOS_SEARCH")) {
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
-     window.postMessage({ type: "FROM_LH", result: response.resultbool }, "*");
+      if (response.resultbool == false)
+      {
+        response.requrl = ''
+      } else {
+        window.postMessage({ type: "FROM_LH", result: true }, "*");
+      }
     asbestosBoxColor(response.result,response.colour,response.requrl)
     });
   } else if (event.data.type && (event.data.type == "FROM_PAGE_SESASBESTOS_RESULT")) {
