@@ -937,7 +937,7 @@ function make_collection_button(name, count) {
 
 function filtershowallmyregion() {
   filterViewModel.selectedEntities.destroyAll() //flush first :-)
-  $.get(urls.Base + "/Api/v1/Entities/" + user.currentRegionId + "/Children", function(data) {
+  $.get(urls.Base + "/Api/v1/Entities/" + user.currentZoneId + "/Children", function(data) {
     results = data;
     results.forEach(function(d) {
       filterViewModel.selectedEntities.push(d);
