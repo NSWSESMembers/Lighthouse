@@ -3,7 +3,7 @@
   "name": "Lighthouse",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2018.8.23.1",
+  "version": "2018.10.10.1",
     "browser_action": {
       "default_icon": {
         "16": "icons/lighthouse64.png"
