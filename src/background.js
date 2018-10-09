@@ -7,7 +7,7 @@ const tj = require('togeojson');
 const rfsMajorIncidentsFeed = "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json";
 const transportFeed = "https://api.transport.nsw.gov.au/";
 const openSkyFeed = "https://opensky-network.org/api/states/all";
-const essentialEnergyOutagesFeed = 'http://www.essentialenergy.com.au/Asset/kmz/current.kml';
+const essentialEnergyOutagesFeed = 'https://www.essentialenergy.com.au/Assets/kmz/current.kml';
 const endeavourEnergyOutagesFeed = 'http://www.endeavourenergy.com.au/mobileapp/outage/outages/listBoth/current';
 const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
 
