@@ -687,18 +687,18 @@ function TaskTeam(teamID) {
   TeamIds.push(teamID);
   var JobIds = [];
   JobIds.push(jobId);
-  data.TeamIds = TeamIds;
-  data.JobIds = JobIds;
-  datastring = JSON.stringify(data);
+
+
   $.ajax({
     type: 'POST'
     , url: urls.Base+'/Api/v1/Tasking'
     , beforeSend: function(n) {
       n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
     }
-    , data: {TeamIds: TeamIds, JobIds: JobIds, LighthouseFunction: 'TaskTeam'}
+    , data: JSON.stringify({TeamIds:TeamIds, JobIds:JobIds, LighthouseFunction: 'TaskTeam'})
     , cache: false
-    , dataType: 'json'
+    , dataType: "json"
+    , contentType: "application/json; charset=utf-8"
     , complete: function(response, textStatus) {
       if (textStatus == 'success')
       {
