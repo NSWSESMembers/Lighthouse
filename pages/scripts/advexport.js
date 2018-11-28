@@ -10,6 +10,8 @@ var ElasticProgress = require('elastic-progress');
 var LighthouseJob = require('../lib/shared_job_code.js');
 var LighthouseUnit = require('../lib/shared_unit_code.js');
 var LighthouseJson = require('../lib/shared_json_code.js');
+var LighthouseOpsLog = require('../lib/shared_operationslog_code.js');
+
 
 // inject css c/o browserify-css
 require('../styles/advexport.css');
@@ -69,6 +71,9 @@ var lighthouse_fieldArray = {
     'ContactFirstName'   : 'Job Contact - First Name' ,
     'ContactLastName'    : 'Job Contact - Last Name' ,
     'ContactPhoneNumber' : 'Job Contact - Phone Number'
+  } ,
+    'Special' : {
+    'ICEMSIUMTransactions'    : 'ICEMS - Number Of IUM Transactions' ,
   }
 };
 var lighthouse_fieldDefaults = [
@@ -138,10 +143,9 @@ var lighthouse_fieldDefaults = [
         fontFamily: 'Montserrat',
         colorBg:    '#edadab',
         colorFg:    '#d2322d',
-        width: 200,
+        width:       200,
         onClose:function(){
-          $('#loading')
-          .hide();
+            document.getElementById("loading").style.visibility = 'hidden';
         }
       });
       RunForestRun(mp);
@@ -250,15 +254,11 @@ var beacon_jobs = jobs.Results.map(function(d){
         switch(key){
           case 'JobReceived':
           var rawdate = new Date(d.JobReceived);
-
           rawValue = rawdate;
-
           break;
           case 'Tags':
           rawValue = d.Tags.map(function(d){return d.Name}).join(',');
           break;
-
-
           case 'JobAcknowledged':
           _.each(d.JobStatusTypeHistory.reverse(), function(history){
             if (history.Name == 'Active')
@@ -299,11 +299,55 @@ var beacon_jobs = jobs.Results.map(function(d){
 
 return jobRow;
 });
+
+if (selectedcolumns.indexOf('ICEMSIUMTransactions') != -1) {
+  progressBar.setValue(0);
+  $('#extra_progress').text("Counting ICEMS Transactions");
+  var queue = jobs.Results.length-1
+  var position = 0
+  poppy()
+  function poppy() {
+    progressBar.setValue(position/queue*100);
+    console.log(position/queue*100)
+      $('#extra_progress').text("Counting ICEMS Transactions..."+Math.floor(position/queue*100)+"%");
+    const item = jobs.Results[position]
+    const itemPos = position
+    position++
+    if (item.ICEMSIncidentIdentifier != null) {
+   LighthouseOpsLog.get_operations_log(item.Id, host, token, function(logs) {
+     var numberOfIUM = 0
+     logs.Results.forEach(function(r){
+      if (r.Subject && r.Subject.indexOf('Incident Update Message') != -1 && r.Subject.indexOf('Incident Update Message Acceptance') == -1) {
+        numberOfIUM++
+      }
+     })
+     beacon_jobs[itemPos][selectedcolumns.indexOf('ICEMSIUMTransactions')] = numberOfIUM
+     if (position < queue) {
+      poppy()
+     } else {
+        progressBar.setValue(1);
+        downloadCSV("LighthouseExport.csv", beacon_jobs, selectedcolumns);
+        progressBar.close();
+        $('#extra_progress').text("");
+    }
+   })
+ } else {
+  if (position < queue) {
+      poppy()
+     } else {
+        progressBar.setValue(1);
+        downloadCSV("LighthouseExport.csv", beacon_jobs, selectedcolumns);
+        progressBar.close();
+        $('#extra_progress').text("");
+    }
+ }
+  }
+} else {
 progressBar.setValue(1);
-progressBar.close();
 downloadCSV("LighthouseExport.csv", beacon_jobs, selectedcolumns);
 
 progressBar.close();
+}
 
 },function(val,total){
   progressBar.setValue(val/total);
