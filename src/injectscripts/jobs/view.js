@@ -101,7 +101,7 @@ whenAddressIsReady(function() {
           let _sortedDistances = distances.sort(function(a, b) {
             return a.distance - b.distance
           });
-          $('#nearest-lhq-text').text(`${_sortedDistances[0].attributes.HQNAME} ( ${_sortedDistances[0].distance.toFixed(2)} kms), ${_sortedDistances[1].attributes.HQNAME} (${_sortedDistances[1].distance.toFixed(2)} kms), ${_sortedDistances[2].attributes.HQNAME} (${_sortedDistances[2].distance.toFixed(2)} kms)`)
+          $('#nearest-lhq-text').text(`${_sortedDistances[0].attributes.HQNAME} (${_sortedDistances[0].distance.toFixed(2)} kms), ${_sortedDistances[1].attributes.HQNAME} (${_sortedDistances[1].distance.toFixed(2)} kms), ${_sortedDistances[2].attributes.HQNAME} (${_sortedDistances[2].distance.toFixed(2)} kms)`)
           var t1 = performance.now();
           console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
       })
