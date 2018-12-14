@@ -3,6 +3,7 @@ var _ = require('underscore');
 var $ = require('jquery');
 var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
 var postCodes = require('../../../lib/postcodes.js');
+var vincenty = require('../../../lib/vincenty.js');
 var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 
 
@@ -94,8 +95,7 @@ whenAddressIsReady(function() {
         $.getJSON(lighthouseUrl+'resources/SES_HQs.geojson', function (data) {
           distances = []
           data.features.forEach(function(v){
-            let lhq = v
-            v.distance = calcCrow(v.attributes.POINT_Y,v.attributes.POINT_X,masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)
+            v.distance = vincenty.distVincenty(v.attributes.POINT_Y,v.attributes.POINT_X,masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)/1000
             distances.push(v)
           })
           let _sortedDistances = distances.sort(function(a, b) {
@@ -105,35 +105,55 @@ whenAddressIsReady(function() {
           var t1 = performance.now();
           console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
       })
+        if (masterViewModel.jobType.peek().ParentId == 5) { //Is a rescue
+          var t0 = performance.now();
+          let avlType = masterViewModel.jobType.peek().Name
+          switch(avlType) { //translations for different AVL names
+            case "RCR":
+            avlType = "GLR"
+            break
+          }
+        $.ajax({
+    type: 'GET'
+    , url: urls.Base+'/Api/v1/ResourceLocations/GET?resourceTypes='+avlType
+    , beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
+    , cache: false
+    , dataType: 'json'
+    , data: {LighthouseFunction: 'NearestAVL'}
+    , complete: function(response, textStatus) {
+      //console.log('textStatus = "%s"', textStatus, response);
+      if (textStatus == 'success')
+      {
+       avlDistances = []
+       response.responseJSON.forEach(function(v){
+            v.distance = vincenty.distVincenty(v.Latitude,v.Longtitude,masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)/1000
+            avlDistances.push(v)
+          })
+       let _sortedAvlDistances = avlDistances.sort(function(a, b) {
+            return a.distance - b.distance
+          });
+       $('#nearest-avl-text').text(`${_sortedAvlDistances[0].CallSign} (${_sortedAvlDistances[0].distance.toFixed(2)} kms), ${_sortedAvlDistances[1].CallSign} (${_sortedAvlDistances[1].distance.toFixed(2)} kms), ${_sortedAvlDistances[2].CallSign} (${_sortedAvlDistances[2].distance.toFixed(2)} kms)`)
+       var t1 = performance.now();
+       console.log("Call to calculate distances from AVLs took " + (t1 - t0) + " milliseconds.")
+      }
+    }
+  }); 
+  } else {
+         $('#nearest-avl-text').text('Enabled only for rescue jobs')
+  }
      } else {
      $('#nearest-lhq-text').text('No geocoded job location available')
+     $('#nearest-avl-text').text('No geocoded job location available')
    }
    } else {
      $('#nearest-lhq-text').text('No geocoded job location available')
+     $('#nearest-avl-text').text('No geocoded job location available')
    }
   })
 
-   //This function takes in latitude and longitude of two location and returns the distance between them as the crow flies (in km)
-    function calcCrow(lat1, lon1, lat2, lon2) 
-    {
-      var R = 6371; // km
-      var dLat = toRad(lat2-lat1);
-      var dLon = toRad(lon2-lon1);
-      var lat1 = toRad(lat1);
-      var lat2 = toRad(lat2);
 
-      var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
-      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-      var d = R * c;
-      return d;
-    }
-
-    // Converts numeric degrees to radians
-    function toRad(Value) 
-    {
-        return Value * Math.PI / 180;
-    }
 
   //
   //postcode checking code
