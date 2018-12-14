@@ -87,7 +87,49 @@ whenAddressIsReady(function() {
           }
       });
     }
+    if(typeof masterViewModel.geocodedAddress.peek() != 'undefined')
+    {
+     if (masterViewModel.geocodedAddress.peek().Latitude != null || masterViewModel.geocodedAddress.peek().Longitude != null) {
+      var t0 = performance.now();
+        $.getJSON(lighthouseUrl+'resources/SES_HQs.geojson', function (data) {
+          distances = []
+          data.features.forEach(function(v){
+            let lhq = v
+            v.distance = calcCrow(v.attributes.POINT_Y,v.attributes.POINT_X,masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)
+            distances.push(v)
+          })
+          let _sortedDistances = distances.sort(function(a, b) {
+            return a.distance - b.distance
+          });
+          $('#nearest-lhq-text').text(`${_sortedDistances[0].attributes.HQNAME} ( ${_sortedDistances[0].distance.toFixed(2)} kms), ${_sortedDistances[1].attributes.HQNAME} (${_sortedDistances[1].distance.toFixed(2)} kms), ${_sortedDistances[2].attributes.HQNAME} (${_sortedDistances[2].distance.toFixed(2)} kms)`)
+          var t1 = performance.now();
+          console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
+      })
+     }
+   }
   })
+
+   //This function takes in latitude and longitude of two location and returns the distance between them as the crow flies (in km)
+    function calcCrow(lat1, lon1, lat2, lon2) 
+    {
+      var R = 6371; // km
+      var dLat = toRad(lat2-lat1);
+      var dLon = toRad(lon2-lon1);
+      var lat1 = toRad(lat1);
+      var lat2 = toRad(lat2);
+
+      var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      var d = R * c;
+      return d;
+    }
+
+    // Converts numeric degrees to radians
+    function toRad(Value) 
+    {
+        return Value * Math.PI / 180;
+    }
 
   //
   //postcode checking code
@@ -539,7 +581,6 @@ function InstantTaskButton() {
         {
 
           ReturnTeamsActiveAtLHQ(user.hq,sectorFilter,function(response){
-            console.log(response);
 
             if(response.responseJSON.Results.length) {
               $(quickTask).find('ul').empty();
