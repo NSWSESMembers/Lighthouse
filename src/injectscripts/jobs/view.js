@@ -105,7 +105,11 @@ whenAddressIsReady(function() {
           var t1 = performance.now();
           console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
       })
-     }
+     } else {
+     $('#nearest-lhq-text').text('No geocoded job location available')
+   }
+   } else {
+     $('#nearest-lhq-text').text('No geocoded job location available')
    }
   })
 
