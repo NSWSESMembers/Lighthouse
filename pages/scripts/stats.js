@@ -80,6 +80,17 @@ $(document).ready(function() {
     $e.preventDefault();
     RunForestRun();
   })
+  $("#local-chart-header").click(function($e) {
+    switch ($("#local-chart-header").text()) {
+      case "Job Localities":
+        $("#local-chart-header").text("Assigned Unit")
+      break
+      case "Assigned Unit":
+        $("#local-chart-header").text("Job Localities")
+      break
+    }
+    RunForestRun();
+  })
 });
 
 function getSearchParameters() {
@@ -498,14 +509,22 @@ console.log("open")
   });
 
   localChart = makeSimplePie("#dc-local-chart", 460, 240, function(d) {
-    if (unit.length == 0) { //whole nsw state
-      return d.LGA;
-    }
-    if (Array.isArray(unit) == false) { //1 lga
-      return d.Address.Locality;
-    }
-    if (unit.length > 1) { //more than one
-      return d.LGA;
+    switch ($("#local-chart-header").text()) {
+      case "Job Localities":
+        if (unit.length == 0) { //whole nsw state
+          return d.LGA;
+        }
+        if (Array.isArray(unit) == false) { //1 lga
+          return d.Address.Locality;
+        }
+        if (unit.length > 1) { //more than one
+          return d.LGA;
+        }
+        break
+      case "Assigned Unit":
+        return d.EntityAssignedTo.Name;
+      break
+
     }
   });
 
