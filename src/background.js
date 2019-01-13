@@ -1,7 +1,7 @@
 // This background script is initialised and executed once and exists
 // separate to all other pages.
 
-const tj = require('togeojson');
+var tj = require('@mapbox/togeojson');
 
 //Sit Aware Map Data Feeds
 const rfsMajorIncidentsFeed = "https://www.rfs.nsw.gov.au/feeds/majorIncidents.json";
