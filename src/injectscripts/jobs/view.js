@@ -765,7 +765,7 @@ function TaskTeam(teamID) {
     , dataType: "json"
     , contentType: "application/json; charset=utf-8"
     , complete: function(response, textStatus) {
-      if (textStatus == 'success')
+      if (textStatus == 'success' || textStatus == 'error') //work around for beacon bug returning error 500 for no reason
       {
         masterViewModel.teamsViewModel.loadTaskedTeams() //load teams
         masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
