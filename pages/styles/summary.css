@@ -58,6 +58,10 @@ body.watermark .lh-box .lh-body{
   font-size: 2.0vmax;
 }
 
+.lh-box .lh-body .lh-cell .lh-sublabel {
+  font-size: 0.7vmax;
+}
+
 .lh-box .lh-body .lh-cell .lh-value {
   font-size: 3.0vmax;
 }
@@ -67,14 +71,6 @@ body.watermark .lh-box .lh-body{
 
 .results {
   margin-bottom: 50px
-}
-
-.footer {
-	background-color: white;
-	width: 100%;
-	height: 55px;
-	font-size: 12px;
-	text-align: center;
 }
 
 

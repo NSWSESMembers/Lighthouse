@@ -282,8 +282,9 @@ function HackTheMatrix(unit, host, source, token) {
           }
           latestupdate.innerHTML = latest;
 
-          jobCount.innerHTML = d.TaskedJobCount+"/"+completed;
+          jobCount.innerHTML = "<a href=\""+source+"/Teams/"+d.Id+"/Jobs\" target=\"_blank\">"+d.TaskedJobCount+" | "+completed+"</a>";
           jobCount.className = "jobcount";
+
         });
 
 jobCount.innerHTML = "<img width=\"50%\" alt=\"Loading...\" src=\"images/loader.gif\">";

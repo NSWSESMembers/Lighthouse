@@ -5,6 +5,14 @@
   <title>Beacon Job Stats</title>
 </head>
 <body>
+  <div id="loading">
+    <div id="loadmiddle">
+      <div id="loadinner">
+        <p>Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+        <div class="loadprogress" role="button" aria-label="progress"></div>
+      </div>
+    </div>
+  </div>
   <div class="modal fade"  id="settingsmodal" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
@@ -31,14 +39,6 @@
             <button type="button" class="btn btn-primary" data-dismiss="modal">Go Back</button>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-  <div id="loading">
-    <div id="loadmiddle">
-      <div id="loadinner">
-        <p>Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
-        <div class="loadprogress" role="button" aria-label="progress"></div>
       </div>
     </div>
   </div>
@@ -74,6 +74,7 @@
             <div class="col-md-4">
               <div class="lh-cell" id="outstanding">
                 <div class="lh-label">Outstanding</div>
+                <div class="lh-sublabel">New + Active + Tasked + Refered</div>
                 <div class="lh-value"></div>
                 <div class="lh-subscript"></div>
               </div>
@@ -81,6 +82,7 @@
             <div class="col-md-4">
               <div class="lh-cell" id="completedsum">
                 <div class="lh-label">Completed</div>
+                <div class="lh-sublabel">Completed + Cancelled + Rejected + Finalised</div>
                 <div class="lh-value"></div>
                 <div class="lh-subscript"></div>
               </div>
@@ -124,13 +126,12 @@
           </div>
         </div>
         <div class="col-md-3">
-          <div class="lh-cell" id="completed">
-            <div class="lh-label">Completed</div>
+          <div class="lh-cell" id="referred">
+            <div class="lh-label">Referred</div>
             <div class="lh-value"></div>
             <div class="lh-subscript"></div>
           </div>
         </div>
-      </div>
     </div>
   </div>
 
@@ -139,8 +140,8 @@
     <div class="lh-body">
       <div class="row">
         <div class="col-md-3">
-          <div class="lh-cell" id="referred">
-            <div class="lh-label">Referred</div>
+          <div class="lh-cell" id="completed">
+            <div class="lh-label">Completed</div>
             <div class="lh-value"></div>
             <div class="lh-subscript"></div>
           </div>

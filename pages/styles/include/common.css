@@ -1,5 +1,14 @@
 @import url("node_modules/bootstrap/dist/css/bootstrap.css");
 
+#body {
+    padding-bottom: 55px;
+}
+
+#container {
+    min-height: 100%;
+    position: relative;
+}
+
 
 body.watermark {
 	min-height: 100%;
@@ -133,7 +142,7 @@ p {
 	color: orange;	
 }
 
-.callsign > a, .callsign-alert > a, .callsign-rest > a, .callsign-standby > a, .callsign-active > a {
+.callsign > a, .callsign-alert > a, .callsign-rest > a, .callsign-standby > a, .callsign-active > a, .jobcount > a {
 	color: inherit;
   text-decoration: none; /* no underline */
 }
