@@ -13,7 +13,7 @@ function prepareData(jobs, unit, start, end) {
     var thisJobisComp = false;
 
     if (d.Event) {
-      var words = d.Event.Identifier +" - "+ d.Event.Description;
+      var words = d.Event.Identifier +" - "+ d.Event.Name;
       eventIdAndDescription[words] = (eventIdAndDescription[words] || 0) + 1;
     }
 

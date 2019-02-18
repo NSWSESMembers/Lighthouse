@@ -121,9 +121,13 @@ function getSearchParameters() {
         , cache: false
         , dataType: 'json'
         , complete: function(response, textStatus) {
-          token = response.responseJSON.access_token
-          tokenexp = response.responseJSON.expires_at
-          console.log("successful token renew.")
+          if (textStatus == 'success') {
+            token = response.responseJSON.access_token
+            tokenexp = response.responseJSON.expires_at
+            console.log("successful token renew.")
+          } else {
+            alert("Login expired. please close the page and reopen from beacon")
+          }
         }
       })
       )

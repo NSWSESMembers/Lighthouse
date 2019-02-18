@@ -18,6 +18,8 @@ function GetUnitNamefromBeacon(Id, host, token, callback) {
           console.log("GetUnitNamefromBeacon call back");
           callback(results);
         }
+      } else {
+        alert("Login expired. please close the page and reopen from beacon")
       }
     }
   })
