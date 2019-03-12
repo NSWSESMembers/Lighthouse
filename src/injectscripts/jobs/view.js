@@ -134,7 +134,11 @@ whenAddressIsReady(function() {
        let _sortedAvlDistances = avlDistances.sort(function(a, b) {
             return a.distance - b.distance
           });
-       $('#nearest-avl-text').text(`${_sortedAvlDistances[0].CallSign} (${_sortedAvlDistances[0].distance.toFixed(2)} kms), ${_sortedAvlDistances[1].CallSign} (${_sortedAvlDistances[1].distance.toFixed(2)} kms), ${_sortedAvlDistances[2].CallSign} (${_sortedAvlDistances[2].distance.toFixed(2)} kms)`)
+       if (_sortedAvlDistances.length > 0) {
+        $('#nearest-avl-text').text(`${_sortedAvlDistances[0].CallSign} (${_sortedAvlDistances[0].distance.toFixed(2)} kms), ${_sortedAvlDistances[1].CallSign} (${_sortedAvlDistances[1].distance.toFixed(2)} kms), ${_sortedAvlDistances[2].CallSign} (${_sortedAvlDistances[2].distance.toFixed(2)} kms)`)
+       } else {
+        $('#nearest-avl-text').text("No AVL results returned for "+avlType)
+       } 
        var t1 = performance.now();
        console.log("Call to calculate distances from AVLs took " + (t1 - t0) + " milliseconds.")
       }
