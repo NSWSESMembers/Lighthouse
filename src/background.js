@@ -50,6 +50,20 @@ chrome.webRequest.onBeforeRequest.addListener(
     ["blocking"]
     );
 
+//block tasking  js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
+// Reaplce the date picker with more options
+chrome.webRequest.onBeforeRequest.addListener(
+    function (details) {
+        console.log("blocking jobs register js request")
+        var javascriptCode = loadSynchronously(details.url);
+        var replaced = javascriptCode.replace('"Last Month":[utility.dateRanges.LastMonth.StartDate(),utility.dateRanges.LastMonth.EndDate()]','"Last Month":[utility.dateRanges.LastMonth.StartDate(), utility.dateRanges.LastMonth.EndDate()],"This Calendar Year":[moment().startOf(\'year\'), moment().endOf(\'year\')],"All":\n [utility.minDate, moment().endOf(\'year\')]');
+        return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+    },
+    { urls: ["https://*.ses.nsw.gov.au/js/teams/index?v=*","https://*.ses.nsw.gov.au/js/teams/index?v=*"] },
+    ["blocking"]
+    );
+
+
 
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
