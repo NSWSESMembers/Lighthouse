@@ -95,13 +95,13 @@ whenAddressIsReady(function() {
         $.getJSON(lighthouseUrl+'resources/SES_HQs.geojson', function (data) {
           distances = []
           data.features.forEach(function(v){
-            v.distance = vincenty.distVincenty(v.attributes.POINT_Y,v.attributes.POINT_X,masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)/1000
+            v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)/1000
             distances.push(v)
           })
           let _sortedDistances = distances.sort(function(a, b) {
             return a.distance - b.distance
           });
-          $('#nearest-lhq-text').text(`${_sortedDistances[0].attributes.HQNAME} (${_sortedDistances[0].distance.toFixed(2)} kms), ${_sortedDistances[1].attributes.HQNAME} (${_sortedDistances[1].distance.toFixed(2)} kms), ${_sortedDistances[2].attributes.HQNAME} (${_sortedDistances[2].distance.toFixed(2)} kms)`)
+          $('#nearest-lhq-text').text(`${_sortedDistances[0].properties.HQNAME} (${_sortedDistances[0].distance.toFixed(2)} kms), ${_sortedDistances[1].properties.HQNAME} (${_sortedDistances[1].distance.toFixed(2)} kms), ${_sortedDistances[2].properties.HQNAME} (${_sortedDistances[2].distance.toFixed(2)} kms)`)
           var t1 = performance.now();
           console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
       })

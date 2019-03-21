@@ -295,23 +295,18 @@ const rfsIcons = {
         for (let i = 0; i < data.features.length; i++) {
             let hq = data.features[i];
 
-            let x = hq.geometry.x;
-            let y = hq.geometry.y;
+            let x = hq.geometry.coordinates[0];
+            let y = hq.geometry.coordinates[1];
 
-            let name = hq.attributes.HQNAME;
+            let name = hq.properties.HQNAME;
 
-            var unitCode = ''
-            if (hq.attributes.UNIT_CODE != ' ')
-            {
-                unitCode = hq.attributes.UNIT_CODE
-            } else {
-                unitCode = hq.attributes.REGCODE
-            }
+            let unitCode = hq.properties.UNIT_CODE;
+           
 
             let details =
             `<div id='lhqPopUp'>\
-            <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${unitCode} &mdash; ${hq.attributes.REGCODE}</div>\
-            <div id='lhqNameHolder' style="display:none">Unit Name: <span id='lhqName'>${hq.attributes.HQNAME}</span></div>\
+            <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${unitCode}</div>\
+            <div id='lhqNameHolder' style="display:none">Unit Name: <span id='lhqName'>${hq.properties.HQNAME}</span></div>\
             <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
 
             <div id='lhqacredHolder' style="padding-top:10px;width:100%;margin:auto">\
@@ -759,7 +754,6 @@ const rfsIcons = {
             if (textStatus == 'success') {
                 if (response.responseJSON.Results.length) {
                     var v = response.responseJSON.Results[0]
-                    console.log(v)
                     hq.Entity = v.Entity
                     v.Entity.EntityTypeId = 1 //shouldnt be using entity for filters, so add the missing things
                     hq.HeadquartersStatus = v.HeadquartersStatusType.Name
@@ -1222,7 +1216,6 @@ const SimpleLineSymbol = eval('require("esri/symbols/SimpleLineSymbol");');
 
 
             fetchJob(jobid, function (data) {
-                console.log(data)
                 fetchJobTasking(jobid, function (taskingdata) {
 
                     //Tasking
@@ -1298,7 +1291,6 @@ ${rows.join('\r')}
                     <div id='JobTags' style="display:block;text-align:center;padding-top:10px">${tagString}</div>
                     ${taskingTable}
                     <div style="display:block;text-align:center;padding-top:10px"><a href=${location.origin}/Jobs/${data.Id} target='_blank'>View Job Details</a></div>
-
                     <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
                     <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
                     Job recieved at ${moment(data.JobReceived).format('HH:mm:ss DD/MM/YYYY')}<br>
