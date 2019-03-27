@@ -65,7 +65,7 @@ window.addEventListener("message", function(event) {
   } else if (event.data.type && (event.data.type == "PURGE_COLLECTION")) {
     chrome.storage.sync.remove([event.data.name+'-'+location.hostname])
     chrome.storage.local.clear(function() {})
-  } 
+  }
 }, false);
 
 
