@@ -57,9 +57,6 @@ whenWeAreReady(user, function() {
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
-    <li id="lhtourmenuitem">\
-    <a href="#" id="LHTourRestart">Restart All Tours</a>\
-    </li>\
     <li id="lhstoragemenuitem">\
     <a href="#" id="LHClearStorage">Delete All Collections</a>\
     </li>\
@@ -94,9 +91,6 @@ whenWeAreReady(user, function() {
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
-    <li id="lhtourmenuitem">\
-    <a href="#" id="LHTourRestart">Restart All Tours</a>\
-    </li>\
     <li id="lhstoragemenuitem">\
     <a href="#" id="LHClearStorage">Delete All Collections</a>\
     </li>\
@@ -112,17 +106,6 @@ whenWeAreReady(user, function() {
     }
 
     $('ul.nav.navbar-nav.navbar-left').append(lighthouseMenu);
-
-    $("#LHTourRestart").click(function() {
-      Object.keys(localStorage)
-        .forEach(function(key) {
-          if (/^LHTour/.test(key)) {
-            console.log("Removing localstorage key..." + key);
-            localStorage.removeItem(key);
-          }
-        });
-      location.reload();
-    });
 
     $("#LHClearStorage").click(function() {
       window.postMessage({
@@ -140,9 +123,6 @@ whenWeAreReady(user, function() {
       location.reload();
     });
 
-    if (location.pathname == "/") {
-      DoTour()
-    }
 
     //lighthouse menu for teams
     if (location.pathname == "/Teams") {
@@ -984,109 +964,3 @@ $(function() {
     });
 
 });
-
-
-function DoTour() {
-  require('bootstrap-tour')
-
-
-  // Instance the tour
-  var tour = new Tour({
-    name: "LHTourAll",
-    smartPlacement: true,
-    placement: "right",
-    debug: true,
-    steps: [{
-        element: "",
-        placement: "top",
-        orphan: true,
-        backdrop: true,
-        title: "Lighthouse Welcome",
-        content: "Lighthouse has made some changes to this page. would you like a tour?"
-      },
-      {
-        element: "#lhmenu",
-        title: "Lighthouse Menu",
-        placement: "bottom",
-        backdrop: false,
-        onNext: function(tour) {
-          $('#lhmenu > ul').show();
-        },
-        content: "The Lighthouse menu gives quick access to several lighthouse features.",
-      },
-      {
-        element: "#lhsummarymenuitem",
-        title: "Lighthouse Menu - Summary",
-        placement: "left",
-        backdrop: true,
-        onShown: function(tour) {
-          $('.popover').css("z-index", "9999999");
-        },
-        content: "Lighthouse Summary provides a simple to read screen that gives a summary of all jobs. It will default to jobs at your HQ and a 24 hour filter.",
-      },
-      {
-        element: "#lhstatsmenuitem",
-        title: "Lighthouse Menu - Statistics",
-        placement: "right",
-        backdrop: true,
-        onShown: function(tour) {
-          $('.popover').css("z-index", "9999999");
-        },
-        content: "Lighthouse Statistics provides a simple statistics (pie charts and bar graphs) breakdown for all jobs. It will default to jobs at your HQ and a 24 hour filter.",
-      },
-      {
-        element: "#lhexportmenuitem",
-        title: "Lighthouse Menu - Job Export",
-        placement: "left",
-        backdrop: true,
-        content: "Lighthouse Advanced Export allows you to export jobs and includes almost all the available data for the job - 31 data fields in total.",
-      },
-      {
-        element: "#lhteammenuitem",
-        title: "Lighthouse Menu - Team Summary",
-        placement: "right",
-        backdrop: true,
-        content: "Lighthouse Summary provides a simple to read screen that gives a summary of all job. It will default to teams at your HQ.",
-      },
-      {
-        element: "#lhmapmenuitem",
-        title: "Lighthouse Menu - Live Map",
-        placement: "left",
-        backdrop: true,
-        content: "Lighthouse Live Map provides a live and interactive map that can plot jobs, teams, ipads, and people.",
-      },
-      {
-        element: "#lhtourmenuitem",
-        title: "Lighthouse Menu - Restart Tour",
-        placement: "right",
-        backdrop: true,
-        content: "If you would like to replay the tour at any time, click here.",
-      },
-      {
-        element: "#layoutJobSearchFormJobQuery",
-        title: "Job Search",
-        placement: "left",
-        backdrop: false,
-        onShown: function(tour) {
-          $('#lhmenu ul').toggle();
-          $('.popover').css("z-index", "9999999");
-        },
-        content: "If you search for a job number that is found you will be taken straight to that job",
-      },
-      {
-        element: "",
-        placement: "top",
-        orphan: true,
-        backdrop: true,
-        title: "Questions?",
-        content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
-      }
-    ]
-  })
-
-  /// Initialize the tour
-  tour.init();
-
-  // Start the tour
-  tour.start();
-}

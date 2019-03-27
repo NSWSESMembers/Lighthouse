@@ -138,12 +138,12 @@ whenAddressIsReady(function() {
         $('#nearest-avl-text').text(`${_sortedAvlDistances[0].CallSign} (${_sortedAvlDistances[0].distance.toFixed(2)} kms), ${_sortedAvlDistances[1].CallSign} (${_sortedAvlDistances[1].distance.toFixed(2)} kms), ${_sortedAvlDistances[2].CallSign} (${_sortedAvlDistances[2].distance.toFixed(2)} kms)`)
        } else {
         $('#nearest-avl-text').text("No AVL results returned for "+avlType)
-       } 
+       }
        var t1 = performance.now();
        console.log("Call to calculate distances from AVLs took " + (t1 - t0) + " milliseconds.")
       }
     }
-  }); 
+  });
   } else {
          $('#nearest-avl-text').text('Enabled only for rescue jobs')
   }
@@ -1178,7 +1178,6 @@ function checkAddressHistory(){
 }
 
 setTimeout(checkAddressHistory, 400);
-DoTour()
 
 // wait for teams to have loaded
 function whenTeamsAreReady(cb) { //when external vars have loaded
@@ -1278,94 +1277,4 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
 
     }
   })
-}
-
-
-
-function DoTour() {
-  require('bootstrap-tour')
-
-  //this thing needs an id - its the page length box
-  $('#content > div.widget.clearfix.job-reg-widget > div.widget-content > div > div.col-xs-4.text-right.job-reg-padding-fix > span').attr("id","pageination")
-
-
-
-    // Instance the tour
-    var tour = new Tour({
-      name: "LHTourJobView",
-      smartPlacement: true,
-      placement: "right",
-      steps: [
-      {
-        element: "",
-        placement: "top",
-        orphan: true,
-        backdrop: true,
-        title: "Lighthouse Welcome",
-        content: "Lighthouse has made some changes to this page. would you like a tour?"
-      },
-      {
-        element: "#asbestos-register-text",
-        title: "Lighthouse Loose Fill Asbestos Register",
-        placement: "top",
-        backdrop: false,
-        content: "Lighthouse will search the NSW Dept Of Fair Trading Loose Fill Abestos Register for the jobs address and display the results.",
-      },
-      {
-        element: "#job_view_history_groups",
-        title: "Lighthouse Job History",
-        placement: "top",
-        backdrop: false,
-        content: "Lighthouse will search for jobs with the same or similar address to this job. the results will be displayed here.",
-      },
-      {
-        element: "#lighthouse_actions_content",
-        placement: "left",
-        orphan: true,
-        backdrop: false,
-        title: "Instant Actions",
-        content: "If your permissions allow, you will be able to Task, Sector or Categorise the job without leaving the job details page."
-      },
-      {
-        element: "",
-        placement: "top",
-        orphan: true,
-        backdrop: true,
-        title: "Untask",
-        content: "If a team can be untasked from the job there will be a little x button next to them in the list of tasked teams."
-      },
-      {
-        element: "",
-        placement: "top",
-        orphan: true,
-        backdrop: true,
-        title: "Quick Text and Tasks",
-        onNext: function(tour) {
-          $('#completeProviderModal').modal('hide');
-        },
-        content: "There are numerous Quick Text and Quick Task addons for team and job completion, as well as job finalisation. This saves having to click or type common tasks and actions. They appear on the completion popups"
-      },
-      {
-        element: "#lighthouse_mapblock",
-        title: "Lighthouse Map Tweak",
-        placement: "top",
-        backdrop: false,
-        content: "To scroll the map you will need to click on it first. this stops the map 'stealing' the cursor when you scroll past",
-      },
-      {
-        element: "",
-        placement: "top",
-        orphan: true,
-        backdrop: true,
-        title: "Questions?",
-        content: "If you have any questions please seek help from the 'About Lighthout' button under the lighthouse menu on the top menu"
-      }
-      ]
-    })
-
-    /// Initialize the tour
-    tour.init();
-
-// Start the tour
-tour.start();
 }
