@@ -5,15 +5,16 @@
 <title>Beacon Stats</title>
 </head>
 <body class="stats">
-<div id="loading">
-  <div id="loadmiddle">
-    <div id="loadinner">
-      <p>Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
-      <div class="loadprogress" role="button" aria-label="progress"></div>
+  <div id="loading">
+    <div id="loadmiddle">
+      <div id="loadinner">
+        <p>Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+        <div class="progress">
+          <div id="loadprogress" class="progress-bar" role="progressbar"></div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-
 <div id="loadinginline">
   <div id="loadmiddleinline">
     <div id="loadinnerinline">
@@ -152,7 +153,7 @@
     <a href= "https://github.com/NSWSESMembers/Lighthouse/blob/master/LICENSE.txt" rel="license" target="_blank">MIT Licence</a>.
     <div class="timer">
       <a href="#" id="refresh">
-        <span class="glyphicon glyphicon-refresh"></span>
+        <i class="fas fa-sync"></i>
         <span id="time">00:00</span>
       </a>
     </div>

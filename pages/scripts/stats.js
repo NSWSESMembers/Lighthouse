@@ -10,7 +10,6 @@ var LighthouseStatsJobsCleanup = require('../lib/stats/jobparsing.js');
 var $ = require('jquery');
 global.jQuery = $;
 
-var ElasticProgress = require('elastic-progress');
 var crossfilter = require('crossfilter');
 var d3 = require('d3');
 var dc = require('dc');
@@ -25,7 +24,7 @@ var timeoverride = null;
 var timeperiod;
 var unit = null;
 var facts = null;
-var firstrun = true; 
+var firstrun = true;
 
 //get passed page params
 var params = getSearchParameters();
@@ -43,22 +42,24 @@ $(function() {
     $('body').addClass("watermark");
   }
 
-
-
-  var element = document.querySelector('.loadprogress');
-
-  var mp = new ElasticProgress(element, {
-    buttonSize: 60,
-    fontFamily: "Montserrat",
-    colorBg: "#ccb2e6",
-    colorFg: "#4c2673",
-    onClose:function(){
+ var mp = new Object();
+   mp.setValue = function(value) { //value between 0 and 1
+     $('#loadprogress').css('width', (Math.round(value*100)+'%'));
+     $('#loadprogress').text(Math.round(value*100)+'%')
+   }
+   mp.open = function() {
+     $('#loadprogress').css('width', 1+'%');
+   }
+   mp.fail = function(error) {
+     $('#loadprogress').css('width', '100%');
+     $('#loadprogress').addClass('progress-bar-striped bg-danger');
+     $('#loadprogress').text('Error Loading - '+error)
+   }
+   mp.close = function() {
      $('#loading').hide();
      $('#results').show();
      $('footer').show();
-
    }
- });
 
   //run every X seconds the main loop.
   startTimer(180, $('#time'));
@@ -177,7 +178,7 @@ function RunForestRun(mp) {
     console.log("Done fetching from beacon, rendering graphs...");
     renderPage(unit, jobsData, firstrun);
     console.log("Graphs rendered.");
-    progressBar &&  progressBar.setValue(100);
+    progressBar &&  progressBar.setValue(1);
     progressBar && progressBar.close();
   }
 
@@ -188,23 +189,31 @@ function RunForestRun(mp) {
 
       if (params.hq.split(",").length == 1) { //if only one HQ
 
-        LighthouseUnit.get_unit_name(params.hq, params.host, token, function(result) {
+        LighthouseUnit.get_unit_name(params.hq, params.host, token, function(result, error) {
+          if (typeof error == 'undefined') {
           unit = result;
-
           fetchFromBeacon(unit, params.host, token, fetchComplete, mp, firstrun);
+        } else {
+          mp.fail(error)
+        }
         });
 
       } else { //if more than one HQ
-        unit = []; 
+        unit = [];
         console.log("passed array of units");
         var hqsGiven = params.hq.split(",");
         console.log(hqsGiven);
         hqsGiven.forEach(function(d){
-          LighthouseUnit.get_unit_name(d, params.host, token, function(result) {
+          LighthouseUnit.get_unit_name(d, params.host, token, function(result, error) {
+            if (typeof error == 'undefined') {
+            mp.setValue(((10/params.hq.split(",").length)*unit.length)/100) //use 10% for lhq loading
             unit.push(result);
             if (unit.length == params.hq.split(",").length) {
               fetchFromBeacon(unit, params.host, token, fetchComplete, mp, firstrun);
             }
+          } else {
+            mp.fail(error)
+          }
           });
         });
       }
@@ -233,7 +242,7 @@ function fetchFromBeacon(unit, host, token, cb, progressBar, firstrun) {
       if (val == -1 && total == -1) {
         progressBar.fail();
       } else {
-        progressBar.setValue(val/total)
+        progressBar.setValue(0.1+((val/total)-0.1)) //start at 10%, dont top 100%
       }
     }
   });
@@ -388,10 +397,10 @@ console.log("open")
 
   var volumeOpenByPeriodGroup = volumeOpenByPeriod.group().reduceCount(function(d) { return d.JobReceivedFixed; });
 
-  
-  var runningtotalGroup = accumulate_group(volumeOpenByPeriodGroup) 
 
-  var runningclosedGroup = accumulate_group(volumeClosedByPeriodGroup) 
+  var runningtotalGroup = accumulate_group(volumeOpenByPeriodGroup)
+
+  var runningclosedGroup = accumulate_group(volumeClosedByPeriodGroup)
 
 
   function accumulate_group(source_group) {
@@ -505,7 +514,7 @@ console.log("open")
   .order(d3.descending);
 
 
-  
+
 
 
   jobtypeChart = makeSimplePie("#dc-jobtype-chart", 460, 240, function(d) {
@@ -736,12 +745,12 @@ console.log("open")
         return newObject.slice(0, count);
       };
       return group;
-      break;              
+      break;
     }
 
   }
 
-  
+
 
 
 // make pie chart using our standard parameters
@@ -779,9 +788,9 @@ function makePie(elem, w, h, dimension, group) {
             if (filters.indexOf(d[i]) >= 0)
               return true;
           }
-          return false; 
+          return false;
         });
-      return filters; 
+      return filters;
     });
     return chart
   }
@@ -809,13 +818,9 @@ function makePie(elem, w, h, dimension, group) {
     .slicesCap(10);
     chart.label(function(d) {
       var matches = d.key.match(/\b(\w|\+)/g);              // ['J','S','O','N']
-      var acronym = matches.join(''); 
+      var acronym = matches.join('');
       return acronym;
     })
     chart.legend(dc.legend().legendText(function(d) { return d.name + ' (' +d.data+')';}).x(0).y(20))
     return chart
   }
-
-
-
-

@@ -1,4 +1,6 @@
 @import url("node_modules/bootstrap/dist/css/bootstrap.css");
+@import url("node_modules/@fortawesome/fontawesome-free/css/all.css");
+
 
 #body {
     padding-bottom: 55px;
@@ -111,35 +113,35 @@ p {
 	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
-	color: black;	
+	color: black;
 }
 
 .callsign-active {
 	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
-	color: green;	
+	color: green;
 }
 
 .callsign-standby {
 	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
-	color: blue;	
+	color: blue;
 }
 
 .callsign-rest {
 	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
-	color: Chocolate;	
+	color: Chocolate;
 }
 
 .callsign-alert {
 	font-size: 2vmax;
 	width: 15%;
 	font-weight: bold;
-	color: orange;	
+	color: orange;
 }
 
 .callsign > a, .callsign-alert > a, .callsign-rest > a, .callsign-standby > a, .callsign-active > a, .jobcount > a {

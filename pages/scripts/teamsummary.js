@@ -26,18 +26,33 @@ require('../styles/teamsummary.css');
 
 //on DOM load
 document.addEventListener('DOMContentLoaded', function() {
+  var mp = new Object();
+    mp.setValue = function(value) { //value between 0 and 1
+      $('#loadprogress').css('width', (Math.round(value*100)+'%'));
+      $('#loadprogress').text(Math.round(value*100)+'%')
+    }
+    mp.open = function() {
+      $('#loadprogress').css('width', 1+'%');
+    }
+    mp.fail = function(error) {
+      $('#loadprogress').css('width', '100%');
+      $('#loadprogress').addClass('progress-bar-striped bg-danger');
+      $('#loadprogress').text('Error Loading - '+error)
+    }
+    mp.close = function() {
+      document.getElementById("loading").style.visibility = 'hidden';
+    }
 
   //run every X period of time the main loop.
   display = document.querySelector('#time');
   startTimer(60, display);
 
-  RunForestRun()
+  RunForestRun(mp)
 });
 
 
 $(document).on('change', 'input[name=slide]:radio', function() {
   timeoverride = (this.value == "reset" ? null : this.value);
-
   RunForestRun();
 });
 
@@ -51,7 +66,7 @@ $(document).ready(function() {
     $('body').addClass("watermark");
   }
 
-  
+
   document.getElementById("refresh").onclick = function() {
     RunForestRun();
   }
@@ -118,7 +133,10 @@ function startTimer(duration, display) {
 
 
 //Get times vars for the call
-function RunForestRun() {
+function RunForestRun(mp) {
+
+  mp && mp.open();
+
 
   if (timeoverride != null) { //we are using a time override
 
@@ -146,9 +164,13 @@ function RunForestRun() {
 
     if (typeof params.hq != 'undefined') {  //if not no hqs
       if (params.hq.split(",").length == 1) { //if only one HQ
-        LighthouseUnit.get_unit_name(params.hq,params.host, token, function(result) {
+        LighthouseUnit.get_unit_name(params.hq,params.host, token, function(result, error) {
+          if (typeof error == 'undefined') {
           unit = result;
-          HackTheMatrix(unit,params.host, params.source, token);
+          HackTheMatrix(unit,params.host, params.source, token, mp);
+        } else {
+          mp.fail(error)
+        }
         });
       } else {
         unit = [];
@@ -156,17 +178,22 @@ function RunForestRun() {
         var hqsGiven = params.hq.split(",");
         console.log(hqsGiven);
         hqsGiven.forEach(function(d){
-          LighthouseUnit.get_unit_name(d, params.host, token, function(result) {
+          LighthouseUnit.get_unit_name(d, params.host, token, function(result, error) {
+            if (typeof error == 'undefined') {
+            mp.setValue(((10/params.hq.split(",").length)*unit.length)/100) //use 10% for lhq loading
             unit.push(result);
             if (unit.length == params.hq.split(",").length) {
-              HackTheMatrix(unit, params.host, params.source, token);
+              HackTheMatrix(unit, params.host, params.source, token, mp);
             }
+          } else {
+            mp.fail(error)
+          }
           });
         });
       }
     } else { //no hq was sent, get them all
       unit = [];
-      HackTheMatrix(unit,params.host, params.source, token);
+      HackTheMatrix(unit,params.host, params.source, token, mp);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
@@ -176,7 +203,7 @@ function RunForestRun() {
 }
 
 //make the call to beacon
-function HackTheMatrix(unit, host, source, token) {
+function HackTheMatrix(unit, host, source, token, progressBar) {
 
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
@@ -184,7 +211,6 @@ function HackTheMatrix(unit, host, source, token) {
   var totalTeamsActive = 0;
 
   LighthouseTeam.get_teams(unit, host, start, end, token , function(teams) {
-
     var options = {
       weekday: "short",
       year: "numeric",
@@ -309,8 +335,19 @@ var banner;
       };
     }
     document.getElementById("banner").innerHTML = banner + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + " | Total Active Teams: "+totalTeamsActive+"</h4>";
-    document.getElementById("loading").style.visibility = 'hidden';
-  });
+    progressBar && progressBar.setValue(1);
+    progressBar && progressBar.close();
+  },
+  function(val,total){
+    if (progressBar) { //if its a first load
+      if (val == -1 && total == -1) {
+        progressBar.fail();
+      } else {
+        progressBar.setValue(0.1+((val/total)-0.1)) //start at 10%, dont top 100%
+      }
+    }
+  }
+);
 }
 
 
@@ -320,4 +357,3 @@ function secondsToHms(d) {
   var m = Math.floor(d % 3600 / 60);
   var s = Math.floor(d % 3600 % 60);
   return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s); }
-

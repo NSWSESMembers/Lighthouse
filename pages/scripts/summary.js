@@ -8,16 +8,13 @@ var _ = require('underscore');
 var moment = require('moment');
 
 global.jQuery = $;
-var ElasticProgress = require('elastic-progress');
 var crossfilter = require('crossfilter');
 
-require('bootstrap-tour')
-
 require('bootstrap');
-
-
+require('@fortawesome/fontawesome-free');
 // inject css c/o browserify-css
 require('../styles/summary.css');
+require("../../node_modules/bootstrap/dist/css/bootstrap.css");
 
 var params = getSearchParameters();
 
@@ -37,18 +34,13 @@ $(document).ready(function() {
   validateTokenExpiration();
   setInterval(validateTokenExpiration, 3e5);
 
-
   if (chrome.manifest.name.includes("Development")) {
     $('body').addClass("watermark");
   }
-
-
   document.getElementById("refresh").onclick = function() {
     RunForestRun();
   }
 });
-
-
 
 // window.onerror = function(message, url, lineNumber) {
 //   document.getElementById("loading").innerHTML = "Error loading page<br>" + message + " Line " + lineNumber;
@@ -56,40 +48,32 @@ $(document).ready(function() {
 // };
 
 
-
 //on DOM load
 document.addEventListener('DOMContentLoaded', function() {
-  var element = document.querySelector('.loadprogress');
 
-  var mp = new ElasticProgress(element, {
-    buttonSize: 60,
-    fontFamily: "Montserrat",
-    colorBg: "#7dbde8",
-    colorFg: "#0f3a57",
-    onClose:function(){
-
+  var mp = new Object();
+    mp.setValue = function(value) { //value between 0 and 1
+      $('#loadprogress').css('width', (Math.round(value*100)+'%'));
+      $('#loadprogress').text(Math.round(value*100)+'%')
+    }
+    mp.open = function() {
+      $('#loadprogress').css('width', 1+'%');
+    }
+    mp.fail = function(error) {
+      $('#loadprogress').css('width', '100%');
+      $('#loadprogress').addClass('progress-bar-striped bg-danger');
+      $('#loadprogress').text('Error Loading - '+error)
+    }
+    mp.close = function() {
       document.getElementById("loading").style.visibility = 'hidden';
       document.getElementById("results").style.visibility = 'visible';
       applyTheme([localStorage.getItem("LighthouseSummaryTheme")]);
 
+      console.log('Close finished')
+      startTimer(60);
 
-
-//This is called when the loading progress bar closes. good place for onload kinda code
-
-
-
-/// Initialize the tour
-summaryTour.init();
-
-// Start the tour
-summaryTour.start();
-console.log('Close finished')
-startTimer(60);
-
-resize()
-
-}
-});
+      resize()
+    }
 
 
   // SET ON CLOSE TO RUN THIS
@@ -118,7 +102,7 @@ $(document).on('click',"#submitButton",function() {
   $('#settingsmodal').modal('hide');
 
   localStorage.setItem("LighthouseSummaryTheme",$('input[name=themebox]:checked').val())
-  applyTheme($('input[name=themebox]:checked').val()) 
+  applyTheme($('input[name=themebox]:checked').val())
 
 })
 
@@ -236,7 +220,6 @@ function RunForestRun(mp) {
     var start = new Date();
     start.setDate(start.getDate() - (timeoverride / 24));
 
-
     starttime = start.toISOString();
     endtime = end.toISOString();
 
@@ -252,9 +235,13 @@ function RunForestRun(mp) {
 
     if (typeof params.hq !== 'undefined') {
       if (params.hq.split(",").length == 1) { //one HQ was passed
-        LighthouseUnit.get_unit_name(params.hq, params.host, token, function(result) {
+        LighthouseUnit.get_unit_name(params.hq, params.host, token, function(result, error) {
+          if (typeof error == 'undefined') {
           unit = result;
-          HackTheMatrix(unit, params.host, token,mp);
+          HackTheMatrix(unit, params.host, token, mp);
+        } else {
+          mp.fail(error)
+        }
         });
       } else {
         unit = [];
@@ -262,10 +249,15 @@ function RunForestRun(mp) {
         var hqsGiven = params.hq.split(",");
         hqsGiven.forEach(function(d) {
           LighthouseUnit.get_unit_name(d, params.host, token, function(result) {
+            if (typeof error == 'undefined') {
+            mp.setValue(((10/params.hq.split(",").length)*unit.length)/100) //use 10% for lhq loading
             unit.push(result);
             if (unit.length == params.hq.split(",").length) {
               HackTheMatrix(unit, params.host, token, mp);
             }
+          } else {
+            mp.fail(error)
+          }
           });
         });
       }
@@ -399,7 +391,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
             $(elem + ' .lh-subscript').html('&mdash;%')
           }
         });
-      
+
       var options = {
         weekday: "short",
         year: "numeric",
@@ -409,7 +401,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
       };
 
       var title;
-      
+
       if (unit.length == 0) { //whole nsw state
         document.title = "NSW Job Summary";
         title = "<p style='margin-bottom:0px'>Job Summary</p>NSW";
@@ -450,84 +442,10 @@ function HackTheMatrix(unit, host, token, progressBar) {
         if (val == -1 && total == -1) {
           progressBar.fail();
         } else {
-          progressBar.setValue(val/total)
+          progressBar.setValue(0.1+((val/total)-0.1)) //start at 10%, dont top 100%
         }
       }
     }
     );
 
 }
-
-
-      // Instance the tour
-      var summaryTour = new Tour({
-        name: "LHTJobSummary",
-        smartPlacement: true,
-        debug: true,
-        steps: [
-        {
-          element: "",
-          placement: "top",
-          orphan: true,
-          backdrop: true,
-          title: "Welcome",
-          content: "Welcome to the Job Summary Dashboard. As this is your first time here lets quickly run through how this all works. Most things are self explanatory so this will be quick."
-        },
-        {
-          element: "#title",
-          placement: "auto",
-          orphan: true,
-          backdrop: true,
-          title: "Selected unit",
-          content: "This represents which unit (or group of unit) the summary covers. A count will be shown if multiple units are sellected."
-        },
-        {
-          element: "#radio1",
-          delay: 500,
-          placement: "top",
-          orphan: true,
-          backdrop: true,
-          title: "Time override",
-          content: "Use these to ignore the selected time and automatically keep a sliding time window."
-        },
-        {
-          element: "#refresh",
-          title: "Refresh",
-          placement: "auto",
-          backdrop: true,
-          content: "The data will automatically update when the timer reaches 0. You can force an update by clicking here at any time.",
-        },
-        {
-          element: "#settings",
-          title: "Settings",
-          placement: "top",
-          backdrop: true,
-          content: "Here you will find display settings.",
-          onNext: function (tour) {$('#settingsmodal').modal('show');}
-        },
-        {
-          element: "#themepicker",
-          title: "Colour Theme",
-          placement: "right",
-          delay: 500,
-          backdrop: true,
-          content: "This changes the colour theme of the dashboard."
-        },
-        {
-          element: "#submitButton",
-          title: "Save",
-          placement: "auto",
-          backdrop: true,
-          onNext: function (tour) {$('#settingsmodal').modal('hide');},
-          content: "Don't forget to save."
-        },
-        {
-          element: "",
-          delay: 500,
-          placement: "top",
-          orphan: true,
-          backdrop: true,
-          title: "Thanks",
-          content: "This covers the basic operation of the Job Summary Dashboard."
-        }
-        ]});

@@ -1,7 +1,6 @@
 var nitc = require('../lib/shared_nitc_code.js');
 var $ = require('jquery');
 global.jQuery = $;
-var ElasticProgress = require('elastic-progress');
 var moment = require('moment');
 
 // inject css c/o browserify-css
@@ -18,7 +17,7 @@ window.onerror = function(message, url, lineNumber) {
   document.getElementById("loading").style.visibility = 'visible';
   document.getElementById("loading").innerHTML = "Error loading page<br>"+message+" Line "+lineNumber;
   return true;
-}; 
+};
 
 
 $(document).ready(function() {
@@ -31,15 +30,22 @@ $(document).ready(function() {
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById("goButton").addEventListener("click", function(){
     var element = document.querySelector('.loadprogress');
-    var mp = new ElasticProgress(element, {
-      buttonSize: 60,
-      fontFamily: "Montserrat",
-      colorBg: "#edadab",
-      colorFg: "#d2322d",
-      onClose:function(){
-        $('#loading').hide();
-      }
-    });
+    var mp = new Object();
+    mp.setValue = function(value) { //value between 0 and 1
+      $('#loadprogress').css('width', (Math.round(value * 100) + '%'));
+      $('#loadprogress').text(Math.round(value * 100) + '%')
+    }
+    mp.open = function() {
+      document.getElementById("loading").style.visibility = 'visible';
+      $('#loadprogress').css('width', 1 + '%');
+    }
+    mp.fail = function() {
+      $('#loadprogress').addClass('progress-bar-striped bg-danger');
+      $('#loadprogress').text('Error Loading')
+    }
+    mp.close = function() {
+      document.getElementById("loading").style.visibility = 'hidden';
+    }
     RunForestRun(mp);
   });
 });
@@ -169,7 +175,7 @@ function HackTheMatrix(progressBar) {
   });
 }
 
-function convertArrayOfObjectsToCSV(data) {  
+function convertArrayOfObjectsToCSV(data) {
   var result, ctr, keys, columnDelimiter, lineDelimiter, data;
 
   if (data == null || !data.length) {
@@ -193,7 +199,7 @@ function convertArrayOfObjectsToCSV(data) {
       }
       if (ctr > 0)
         result += columnDelimiter;
-//      if (item[key] === undefined) 
+//      if (item[key] === undefined)
 //        item[key] = 0;
       result += "\""+item[key]+"\"";
       ctr++;
@@ -205,7 +211,7 @@ function convertArrayOfObjectsToCSV(data) {
 }
 
 
-function downloadCSV(file,dataIn) {  
+function downloadCSV(file,dataIn) {
   var csv = convertArrayOfObjectsToCSV(dataIn);
   if (csv == null)
     return;
@@ -231,4 +237,3 @@ function findInArr(arr,name) {
     }
     return null;
 }
-
