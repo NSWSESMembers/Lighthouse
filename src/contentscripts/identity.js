@@ -3,7 +3,7 @@ var encodedJson = document.getElementById("modelJson").textContent.replace(/&quo
 var model = JSON.parse(encodedJson);
 
 
-if (model.clientName == "beacon OMS Prod" || model.clientName == "beacon OMS Preview") //only run if we are logging into a beacon page.
+if (model.clientName == "beacon" || model.clientName == "beacon Train" ||  model.clientName == "beacon Preview")//only run if we are logging into a beacon page.
 {
 
   var $ = require('jquery/dist/jquery.min');
