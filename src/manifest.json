@@ -17,6 +17,9 @@
   },
   "permissions": [
     "storage",
+    "https://identitypreview.ses.nsw.gov.au/core/login",
+    "https://identitytrain.ses.nsw.gov.au/core/login",
+    "https://identity.ses.nsw.gov.au/core/login",
     "https://beacon.ses.nsw.gov.au/*",
     "https://trainbeacon.ses.nsw.gov.au/*",
     "https://previewbeacon.ses.nsw.gov.au/*",
@@ -140,6 +143,7 @@
     },
     {
       "matches": ["https://identity.ses.nsw.gov.au/core/login*",
+                  "https://identitytrain.ses.nsw.gov.au/core/login*",
                   "https://identitypreview.ses.nsw.gov.au/core/login*"],
       "js": [
         "contentscripts/identity.js"
