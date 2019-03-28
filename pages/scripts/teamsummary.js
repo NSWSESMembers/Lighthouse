@@ -27,21 +27,27 @@ require('../styles/teamsummary.css');
 //on DOM load
 document.addEventListener('DOMContentLoaded', function() {
   var mp = new Object();
-    mp.setValue = function(value) { //value between 0 and 1
-      $('#loadprogress').css('width', (Math.round(value*100)+'%'));
-      $('#loadprogress').text(Math.round(value*100)+'%')
-    }
-    mp.open = function() {
-      $('#loadprogress').css('width', 1+'%');
-    }
-    mp.fail = function(error) {
-      $('#loadprogress').css('width', '100%');
-      $('#loadprogress').addClass('progress-bar-striped bg-danger');
-      $('#loadprogress').text('Error Loading - '+error)
-    }
-    mp.close = function() {
-      document.getElementById("loading").style.visibility = 'hidden';
-    }
+  mp.setValue = function(value) { //value between 0 and 1
+    $('#loadprogress').css('width', (Math.round(value * 100) + '%'));
+    $('#loadprogress').text(Math.round(value * 100) + '%')
+  }
+  mp.open = function() {
+    $('#loadprogress').css('width', 1 + '%');
+  }
+  mp.fail = function(error) {
+    $('#loadprogress').css('width', '100%');
+    $('#loadprogress').addClass('progress-bar-striped bg-danger');
+    $('#loadprogress').text('Error Loading - ' + error)
+  }
+  mp.close = function() {
+    document.getElementById("loading").style.visibility = 'hidden';
+    positionFooter();
+
+    $(window)
+      .scroll(positionFooter)
+      .resize(positionFooter)
+
+  }
 
   //run every X period of time the main loop.
   display = document.querySelector('#time');
@@ -70,6 +76,8 @@ $(document).ready(function() {
   document.getElementById("refresh").onclick = function() {
     RunForestRun();
   }
+
+
 });
 
 function getSearchParameters() {
@@ -90,30 +98,29 @@ function transformToAssocArray(prmstr) {
 var timeperiod;
 var unit = null;
 
-function validateTokenExpiration()
-  {
-    moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
-      $.ajax({
-        type: 'GET'
-        , url: params.source+"/Authorization/RefreshToken"
-        , beforeSend: function(n) {
-          n.setRequestHeader("Authorization", "Bearer " + token)
-        }
-        , cache: false
-        , dataType: 'json'
-        , complete: function(response, textStatus) {
-          token = response.responseJSON.access_token
-          tokenexp = response.responseJSON.expires_at
-          console.log("successful token renew.")
-        }
-      })
-      )
-  }
+function validateTokenExpiration() {
+  moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
+    $.ajax({
+      type: 'GET',
+      url: params.source + "/Authorization/RefreshToken",
+      beforeSend: function(n) {
+        n.setRequestHeader("Authorization", "Bearer " + token)
+      },
+      cache: false,
+      dataType: 'json',
+      complete: function(response, textStatus) {
+        token = response.responseJSON.access_token
+        tokenexp = response.responseJSON.expires_at
+        console.log("successful token renew.")
+      }
+    })
+  )
+}
 
 //update every X seconds
 function startTimer(duration, display) {
   var timer = duration,
-  minutes, seconds;
+    minutes, seconds;
   setInterval(function() {
     minutes = parseInt(timer / 60, 10)
     seconds = parseInt(timer % 60, 10);
@@ -162,38 +169,38 @@ function RunForestRun(mp) {
   if (unit == null) {
     console.log("firstrun...will fetch vars");
 
-    if (typeof params.hq != 'undefined') {  //if not no hqs
+    if (typeof params.hq != 'undefined') { //if not no hqs
       if (params.hq.split(",").length == 1) { //if only one HQ
-        LighthouseUnit.get_unit_name(params.hq,params.host, token, function(result, error) {
+        LighthouseUnit.get_unit_name(params.hq, params.host, token, function(result, error) {
           if (typeof error == 'undefined') {
-          unit = result;
-          HackTheMatrix(unit,params.host, params.source, token, mp);
-        } else {
-          mp.fail(error)
-        }
+            unit = result;
+            HackTheMatrix(unit, params.host, params.source, token, mp);
+          } else {
+            mp.fail(error)
+          }
         });
       } else {
         unit = [];
         console.log("passed array of units");
         var hqsGiven = params.hq.split(",");
         console.log(hqsGiven);
-        hqsGiven.forEach(function(d){
+        hqsGiven.forEach(function(d) {
           LighthouseUnit.get_unit_name(d, params.host, token, function(result, error) {
             if (typeof error == 'undefined') {
-            mp.setValue(((10/params.hq.split(",").length)*unit.length)/100) //use 10% for lhq loading
-            unit.push(result);
-            if (unit.length == params.hq.split(",").length) {
-              HackTheMatrix(unit, params.host, params.source, token, mp);
+              mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
+              unit.push(result);
+              if (unit.length == params.hq.split(",").length) {
+                HackTheMatrix(unit, params.host, params.source, token, mp);
+              }
+            } else {
+              mp.fail(error)
             }
-          } else {
-            mp.fail(error)
-          }
           });
         });
       }
     } else { //no hq was sent, get them all
       unit = [];
-      HackTheMatrix(unit,params.host, params.source, token, mp);
+      HackTheMatrix(unit, params.host, params.source, token, mp);
     }
   } else {
     console.log("rerun...will NOT fetch vars");
@@ -210,144 +217,144 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
   var totalMembersActive = 0;
   var totalTeamsActive = 0;
 
-  LighthouseTeam.get_teams(unit, host, start, end, token , function(teams) {
-    var options = {
-      weekday: "short",
-      year: "numeric",
-      month: "2-digit",
-      day: "numeric",
-      hour12: false
-    };
-    var table = document.getElementById("resultstable").getElementsByTagName('tbody')[0];
+  LighthouseTeam.get_teams(unit, host, start, end, token, function(teams) {
+      var options = {
+        weekday: "short",
+        year: "numeric",
+        month: "2-digit",
+        day: "numeric",
+        hour12: false
+      };
+      var table = document.getElementById("resultstable").getElementsByTagName('tbody')[0];
 
-    $( "#resultstable tbody tr" ).each( function(){
-      this.parentNode.removeChild( this );
-    });
+      $("#resultstable tbody tr").each(function() {
+        this.parentNode.removeChild(this);
+      });
 
-    teams.Results.forEach(function(d) { //for every team
+      teams.Results.forEach(function(d) { //for every team
 
-      if (d.TeamStatusType.Name != "Stood Down" && d.TeamStatusType.Name != "Rest" && d.TeamStatusType.Name != "Standby" && d.TeamStatusType.Name != "On Alert")  { //that has not stood down
+        if (d.TeamStatusType.Name != "Stood Down" && d.TeamStatusType.Name != "Rest" && d.TeamStatusType.Name != "Standby" && d.TeamStatusType.Name != "On Alert") { //that has not stood down
 
-        totalTeamsActive++;
+          totalTeamsActive++;
 
-        var row = table.insertRow(-1);
-        var callsign = row.insertCell(0);
-        var members = row.insertCell(1);
-        var status = row.insertCell(2);
-        var jobCount = row.insertCell(3);
-        var latestupdate = row.insertCell(4);
-        latestupdate.className = "update";
+          var row = table.insertRow(-1);
+          var callsign = row.insertCell(0);
+          var members = row.insertCell(1);
+          var status = row.insertCell(2);
+          var jobCount = row.insertCell(3);
+          var latestupdate = row.insertCell(4);
+          latestupdate.className = "update";
 
-        callsign.innerHTML = "<a href=\""+source+"/Teams/"+d.Id+"/Edit\" target=\"_blank\">"+d.Callsign+"</a>";
+          callsign.innerHTML = "<a href=\"" + source + "/Teams/" + d.Id + "/Edit\" target=\"_blank\">" + d.Callsign + "</a>";
 
-        switch (d.TeamStatusType.Id) { //color the callsign by team status
-          case 3: //active
-          callsign.className = "callsign-active";
-          break;
-          case 1: //standby
-          callsign.className = "callsign-standby";
-          break;
-          case 4: //rest
-          callsign.className = "callsign-rest";
-          break;
-          case 2: //alert
-          callsign.className = "callsign-alert";
-          break;
-          default:
-          callsign.className = "callsign";
-          break;
-        }
-
-        if (d.Members.length == 0) {
-          members.innerHTML = "Empty"
-        } else {
-          d.Members.forEach(function(d2) { //for each member in the team
-            totalMembersActive++; //count them
-            if (members.innerHTML == "") { //if the first in the string dont add command
-              if (d2.TeamLeader == true) { //bold if team leader
-                members.innerHTML = "<b>" + d2.Person.FirstName + " " + d2.Person.LastName + "</b>";
-              } else { //not bold
-                members.innerHTML = d2.Person.FirstName + " " + d2.Person.LastName;
-              }
-            } else { //not first in string
-              if (d2.TeamLeader == true) { //bold if team leader
-                members.innerHTML = members.innerHTML + ", " + "<b>" + d2.Person.FirstName + " " + d2.Person.LastName + "</b>";
-              } else { // not team leader
-                members.innerHTML = members.innerHTML + ", " + d2.Person.FirstName + " " + d2.Person.LastName;
-              }
-            }
-          });
-        }
-        members.className = "members";
-
-        var rawteamdate = new Date(d.TeamStatusStartDate);
-        var teamdate = new Date(rawteamdate.getTime());
-        status.innerHTML = d.TeamStatusType.Name +"<br>"+teamdate.toLocaleTimeString("en-au", options);
-        status.className = "status";
-
-        var latest = null;
-        var oldesttime = null;
-        var completed = 0;
-
-        LighthouseTeam.get_tasking(d.Id,host,token, function(e) {
-          e.Results.forEach(function(f) {
-            f.CurrentStatus == "Complete" && completed++;
-            var rawdate = new Date(f.CurrentStatusTime);
-            var thistime = new Date(rawdate.getTime());
-
-
-            if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") { //it wasnt an untask or a tasking (so its a action the team made like on route or onsite)
-             var diff = moment(thistime).fromNow();
-             latest = f.CurrentStatus + " #" + "<a style=\"color: inherit;\" href=\""+source+"/Jobs/"+f.Job.Id+"\" target=\"_blank\">"+f.Job.Identifier+"</a>" + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options)+ "<br>"+diff;
-             oldesttime = thistime;
-           }
-         });
-
-          if (latest == null) {
-            latest = "No Updates";
+          switch (d.TeamStatusType.Id) { //color the callsign by team status
+            case 3: //active
+              callsign.className = "callsign-active";
+              break;
+            case 1: //standby
+              callsign.className = "callsign-standby";
+              break;
+            case 4: //rest
+              callsign.className = "callsign-rest";
+              break;
+            case 2: //alert
+              callsign.className = "callsign-alert";
+              break;
+            default:
+              callsign.className = "callsign";
+              break;
           }
-          latestupdate.innerHTML = latest;
 
-          jobCount.innerHTML = "<a href=\""+source+"/Teams/"+d.Id+"/Jobs\" target=\"_blank\">"+d.TaskedJobCount+" | "+completed+"</a>";
-          jobCount.className = "jobcount";
+          if (d.Members.length == 0) {
+            members.innerHTML = "Empty"
+          } else {
+            d.Members.forEach(function(d2) { //for each member in the team
+              totalMembersActive++; //count them
+              if (members.innerHTML == "") { //if the first in the string dont add command
+                if (d2.TeamLeader == true) { //bold if team leader
+                  members.innerHTML = "<b>" + d2.Person.FirstName + " " + d2.Person.LastName + "</b>";
+                } else { //not bold
+                  members.innerHTML = d2.Person.FirstName + " " + d2.Person.LastName;
+                }
+              } else { //not first in string
+                if (d2.TeamLeader == true) { //bold if team leader
+                  members.innerHTML = members.innerHTML + ", " + "<b>" + d2.Person.FirstName + " " + d2.Person.LastName + "</b>";
+                } else { // not team leader
+                  members.innerHTML = members.innerHTML + ", " + d2.Person.FirstName + " " + d2.Person.LastName;
+                }
+              }
+            });
+          }
+          members.className = "members";
 
-        });
+          var rawteamdate = new Date(d.TeamStatusStartDate);
+          var teamdate = new Date(rawteamdate.getTime());
+          status.innerHTML = d.TeamStatusType.Name + "<br>" + teamdate.toLocaleTimeString("en-au", options);
+          status.className = "status";
 
-jobCount.innerHTML = "<img width=\"50%\" alt=\"Loading...\" src=\"images/loader.gif\">";
-latestupdate.innerHTML = "<img width=\"20%\" alt=\"Loading...\" src=\"images/loader.gif\">";
+          var latest = null;
+          var oldesttime = null;
+          var completed = 0;
 
-}
-});
+          LighthouseTeam.get_tasking(d.Id, host, token, function(e) {
+            e.Results.forEach(function(f) {
+              f.CurrentStatus == "Complete" && completed++;
+              var rawdate = new Date(f.CurrentStatusTime);
+              var thistime = new Date(rawdate.getTime());
 
-var banner;
 
-    if (unit.length == 0) { //whole nsw state
-      document.title = "NSW Team Summary";
-      banner = "<h2>Team summary for NSW</h2>";
-    } else {
-      if (Array.isArray(unit) == false) { //1 lga
-        document.title = unit.Name + " Team Summary";
-        banner = '<h2>Team summary for ' + unit.Name + "</h2>";
-      };
-      if (unit.length > 1) { //more than one
-        document.title = "Group Team Summary";
-        banner = "<h2>Team summary for Group</h2>";
-      };
-    }
-    document.getElementById("banner").innerHTML = banner + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + " | Total Active Teams: "+totalTeamsActive+"</h4>";
-    progressBar && progressBar.setValue(1);
-    progressBar && progressBar.close();
-  },
-  function(val,total){
-    if (progressBar) { //if its a first load
-      if (val == -1 && total == -1) {
-        progressBar.fail();
+              if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") { //it wasnt an untask or a tasking (so its a action the team made like on route or onsite)
+                var diff = moment(thistime).fromNow();
+                latest = f.CurrentStatus + " #" + "<a style=\"color: inherit;\" href=\"" + source + "/Jobs/" + f.Job.Id + "\" target=\"_blank\">" + f.Job.Identifier + "</a>" + "<br>" + f.Job.Address.PrettyAddress + "<br>" + thistime.toLocaleTimeString("en-au", options) + "<br>" + diff;
+                oldesttime = thistime;
+              }
+            });
+
+            if (latest == null) {
+              latest = "No Updates";
+            }
+            latestupdate.innerHTML = latest;
+
+            jobCount.innerHTML = "<a href=\"" + source + "/Teams/" + d.Id + "/Jobs\" target=\"_blank\">" + d.TaskedJobCount + " | " + completed + "</a>";
+            jobCount.className = "jobcount";
+
+          });
+
+          jobCount.innerHTML = "<img width=\"50%\" alt=\"Loading...\" src=\"images/loader.gif\">";
+          latestupdate.innerHTML = "<img width=\"20%\" alt=\"Loading...\" src=\"images/loader.gif\">";
+
+        }
+      });
+
+      var banner;
+
+      if (unit.length == 0) { //whole nsw state
+        document.title = "NSW Team Summary";
+        banner = "<h2>Team summary for NSW</h2>";
       } else {
-        progressBar.setValue(0.1+((val/total)-0.1)) //start at 10%, dont top 100%
+        if (Array.isArray(unit) == false) { //1 lga
+          document.title = unit.Name + " Team Summary";
+          banner = '<h2>Team summary for ' + unit.Name + "</h2>";
+        };
+        if (unit.length > 1) { //more than one
+          document.title = "Group Team Summary";
+          banner = "<h2>Team summary for Group</h2>";
+        };
+      }
+      document.getElementById("banner").innerHTML = banner + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + " | Total Active Teams: " + totalTeamsActive + "</h4>";
+      progressBar && progressBar.setValue(1);
+      progressBar && progressBar.close();
+    },
+    function(val, total) {
+      if (progressBar) { //if its a first load
+        if (val == -1 && total == -1) {
+          progressBar.fail();
+        } else {
+          progressBar.setValue(0.1 + ((val / total) - 0.1)) //start at 10%, dont top 100%
+        }
       }
     }
-  }
-);
+  );
 }
 
 
@@ -356,4 +363,23 @@ function secondsToHms(d) {
   var h = Math.floor(d / 3600);
   var m = Math.floor(d % 3600 / 60);
   var s = Math.floor(d % 3600 % 60);
-  return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s); }
+  return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s);
+}
+
+function positionFooter() {
+  var footerHeight = 55,
+  footerTop = 0,
+  $footer = $(".footer");
+  footerHeight = $footer.height();
+  footerTop = ($(window).scrollTop() + $(window).height() - footerHeight) + "px";
+
+  if (($(document.body).height() + footerHeight) < $(window).height()) {
+    $footer.css({
+      position: "absolute"
+    })
+  } else {
+    $footer.css({
+      position: "static"
+    })
+  }
+}
