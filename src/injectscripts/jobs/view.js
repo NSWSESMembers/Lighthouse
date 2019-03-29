@@ -139,7 +139,6 @@ whenAddressIsReady(function() {
     , dataType: 'json'
     , data: {LighthouseFunction: 'NearestAVL'}
     , complete: function(response, textStatus) {
-      //console.log('textStatus = "%s"', textStatus, response);
       if (textStatus == 'success')
       {
        avlDistances = []
@@ -499,7 +498,6 @@ function InstantSectorButton() {
     , dataType: 'json'
     , data: {LighthouseFunction: 'InstantSectorButton'}
     , complete: function(response, textStatus) {
-      //console.log('textStatus = "%s"', textStatus, response);
       if (textStatus == 'success')
       {
         if(response.responseJSON.Results.length) {
@@ -615,7 +613,6 @@ function InstantTaskButton() {
     , dataType: 'json'
     , data: {LighthouseFunction: 'QuickTaskGetJob'}
     , complete: function(response, textStatus) {
-      //console.log('textStatus = "%s"', textStatus, response);
 
       if (textStatus == 'success')
       {
@@ -991,7 +988,6 @@ function checkAddressHistory(){
     , cache: false
     , dataType: 'json'
     , complete: function(response, textStatus) {
-      //console.log('textStatus = "%s"', textStatus, response);
       var $job_view_history_container = $('#job_view_history_container');
       switch(textStatus){
         case 'success':
