@@ -32,7 +32,8 @@ function lighthouseTasking() {
             //for every tasked team
             $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k, vv) {
                 //match against this DOM
-                if (vv.Team.Id == DOMCallsign) //only show for tasking that can be deleted (tasked only)
+                console.log(vv.Team)
+                if (vv.Team.Id == DOMCallsign && vv.Team.Members.length)
                 {
                     //attach a sms button
                     msg = return_message_button()
