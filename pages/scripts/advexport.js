@@ -326,8 +326,7 @@ function HackTheMatrix(id, host, progressBar) {
       poppy()
 
       function poppy() {
-        progressBar.setValue(position / queue * 100);
-        console.log(position / queue * 100)
+        progressBar.setValue(position / queue);
         $('#extra_progress').text("Counting ICEMS Transactions..." + Math.floor(position / queue * 100) + "%");
         const item = jobs.Results[position]
         const itemPos = position
@@ -345,7 +344,7 @@ function HackTheMatrix(id, host, progressBar) {
               poppy()
             } else {
               progressBar.setValue(1);
-              downloadCSV("LighthouseExport.csv", beacon_jobs, selectedcolumns);
+              downloadCSV("LighthouseExport-"+Math.floor(Date.now() / 1000)+".csv", beacon_jobs, selectedcolumns);
               progressBar.close();
               $('#extra_progress').text("");
             }
@@ -355,7 +354,7 @@ function HackTheMatrix(id, host, progressBar) {
             poppy()
           } else {
             progressBar.setValue(1);
-            downloadCSV("LighthouseExport.csv", beacon_jobs, selectedcolumns);
+            downloadCSV("LighthouseExport-"+Math.floor(Date.now() / 1000)+".csv", beacon_jobs, selectedcolumns);
             progressBar.close();
             $('#extra_progress').text("");
           }
@@ -363,7 +362,7 @@ function HackTheMatrix(id, host, progressBar) {
       }
     } else {
       progressBar.setValue(1);
-      downloadCSV("LighthouseExport.csv", beacon_jobs, selectedcolumns);
+      downloadCSV("LighthouseExport-"+Math.floor(Date.now() / 1000)+".csv", beacon_jobs, selectedcolumns);
 
       progressBar.close();
     }
