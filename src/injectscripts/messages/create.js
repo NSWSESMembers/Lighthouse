@@ -20,7 +20,7 @@ $(document).ready(function() {
     $.each(qs, function(value, key){
         switch (value)
         {
-            case "importcollection":
+            case "lhimportcollection":
             $('#LHImportCollectionErrorText').hide()
             DownloadedObject = {}
             $('#LHCodeBox').val(key)
@@ -28,11 +28,46 @@ $(document).ready(function() {
             $('#LHCodeBox').show()
             $('#LHImportCollectionCode').text('Download Collection')
             $('#LHCollectionImportModal').modal();
+            break
 
-
-            window.history.pushState("object or string", "Title", window.location.pathname );
-
-
+            case "lhquickrecipient":
+            var people = JSON.parse(unescape(key))
+            console.log(people)
+            $.each(people, function(key, val) {
+                $.ajax({
+                    type: 'GET',
+                    url: urls.Base+'/Api/v1/People/' + val + '/Contacts',
+                    beforeSend: function(n) {
+                        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+                    },
+                    data: {
+                        LighthouseFunction: 'LoadPerson'
+                    },
+                    cache: false,
+                    dataType: 'json',
+                    complete: function(response, textStatus) {
+                        if (textStatus == 'success') {
+                            var wasAdded = false
+                            if (response.responseJSON.Results.length) {
+                                $.each(response.responseJSON.Results, function(k, v) {
+                                    if (v.ContactTypeId == 2) {
+                                        var BuildNew = {};
+                                        BuildNew.Contact = v
+                                        BuildNew.ContactGroup = null
+                                        BuildNew.ContactTypeId = v.ContactTypeId
+                                        BuildNew.Description = v.FirstName + " " + v.LastName;
+                                        BuildNew.Recipient = v.Detail;
+                                        msgsystem.selectedRecipients.push(BuildNew)
+                                    }
+                                })
+                                  }
+                                }
+                              }
+                            })
+                            })
+                            $([document.documentElement, document.body]).animate({
+                              scrollTop: $('textarea[data-bind="value: messageText"]')[0].scrollIntoView()
+                            }, 2000);
             break
         }
 
@@ -83,7 +118,7 @@ $(document).ready(function() {
 
             spinner.remove()
             $('#LHGenerateShareCollectionCode').text(response.responseJSON.code)
-            $('#LHGenerateShareCollectionCodeURL').text(window.location.href+"?importcollection="+response.responseJSON.code)
+            $('#LHGenerateShareCollectionCodeURL').text(window.location.href+"?lhimportcollection="+response.responseJSON.code)
 
         }
     }
@@ -146,7 +181,6 @@ $('#LHImportCollectionCode').click(function() {
                     $(button).find('span.sharebutton').hide()
                     $('#LGCollectionImportGroup').append(button)
                     $('#LHImportCollectionCode').text('Accept & Save')
-                    console.log(DownloadedObject)
 
                 } else if (response.responseJSON.result == 'NOTFOUND') {
                     $('#LHImportCollectionErrorText').show()
@@ -163,7 +197,6 @@ $('#LHImportCollectionCode').click(function() {
         })
 } else if ($('#LHImportCollectionCode').text() == "Accept & Save") {
     $('#LHCollectionImportModal').modal('hide');
-    console.log(DownloadedObject)
     window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(DownloadedObject), name: 'lighthouseMessageCollections'}, '*');
 }
 
@@ -401,9 +434,9 @@ function LoadNitc() {
 
                                                     }
                                                 })
-if (wasAdded == false)
-{
-   total--
+                                                  if (wasAdded == false)
+                                                    {
+                                                      total--
                                                         if (total == 0) //when they have all loaded, stop spinning.
                                                         {
                                                             spinner.remove();
@@ -412,56 +445,56 @@ if (wasAdded == false)
                                                         }
                                                     }
                                                 } else {
-  //no results for this guy. thats ok, skip it.
+                                                    //no results for this guy. thats ok, skip it.
 
-    if ($total == 0) //when they have all loaded, stop spinning.
-    {
-        console.log('done loading team')
-        spinner.remove();
-        //cb for when they are loaded
-        $(button).children().css('display','')
-    }
-}
-} else {
-  //bad answer from the server. thats ok, skip it.
+                                                    if ($total == 0) //when they have all loaded, stop spinning.
+                                                    {
+                                                      console.log('done loading team')
+                                                      spinner.remove();
+                                                      //cb for when they are loaded
+                                                      $(button).children().css('display','')
+                                                    }
+                                                  }
+                                                } else {
+                                                  //bad answer from the server. thats ok, skip it.
 
-    if ($total == 0) //when they have all loaded, stop spinning.
-    {
-        console.log('done loading team')
-        spinner.remove();
-        //cb for when they are loaded
-        $(button).children().css('display','')
-    }
-}
-}
-})
-})
-})
-$(button).appendTo('#lighthousenitc');
-button.style.width = button.offsetWidth + "px";
-button.style.height = button.offsetHeight + "px";
-}
-})
-} else {
-            //nothing found
-            $('#lighthousenitc').empty() //empty to prevent dupes
+                                                  if ($total == 0) //when they have all loaded, stop spinning.
+                                                    {
+                                                      console.log('done loading team')
+                                                      spinner.remove();
+                                                      //cb for when they are loaded
+                                                      $(button).children().css('display','')
+                                                    }
+                                                  }
+                                                }
+                                              })
+                                            })
+                                          })
+                                          $(button).appendTo('#lighthousenitc');
+                                          button.style.width = button.offsetWidth + "px";
+                                          button.style.height = button.offsetHeight + "px";
+                                        }
+                                      })
+                                    } else {
+                                      //nothing found
+                                      $('#lighthousenitc').empty() //empty to prevent dupes
 
-        }
-        $('#nitccount').text(numberOfevents)
-        if (response.responseJSON.TotalItems >  response.responseJSON.PageSize)
-        {
-            var loadall = make_nitc_load_all_button(response.responseJSON.TotalItems)
-            $(loadall).find('#nitcloadall').click(function() {
-                FetchNITC(response.responseJSON.TotalItems)
-            })
-            $(loadall).appendTo('#lighthousenitcpanel');
-        }
+                                    }
+                                    $('#nitccount').text(numberOfevents)
+                                    if (response.responseJSON.TotalItems >  response.responseJSON.PageSize)
+                                    {
+                                      var loadall = make_nitc_load_all_button(response.responseJSON.TotalItems)
+                                      $(loadall).find('#nitcloadall').click(function() {
+                                        FetchNITC(response.responseJSON.TotalItems)
+                                      })
+                                      $(loadall).appendTo('#lighthousenitcpanel');
+                                    }
 
 
-    })
-}
+                                  })
+                                }
 
-}
+                              }
 
 
 function LoadTeams() {

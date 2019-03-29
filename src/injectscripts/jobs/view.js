@@ -23,45 +23,61 @@ masterViewModel.teamsViewModel.taskedTeams.subscribe(lighthouseTasking);
 
 
 function lighthouseTasking() {
-  console.log("Tasking Changes");
-  ///Horrible nasty code for untasking
+    console.log("Tasking Changes, adding buttons where needed per team");
+    ///Horrible nasty code for untasking
 
-  $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function(k, v) { //for every dom
+    $('a[data-bind="attr: {href: \'/Teams/\' + Team.Id + \'/Edit\'}, text: Team.Callsign"').each(function(k, v) { //for every dom that shows team name
+        if ($(v).parent().find("#message").length == 0) { //check for an existing msg button
+            DOMCallsign = ($(this)[0].href.split("/")[4])
+            //for every tasked team
+            $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k, vv) {
+                //match against this DOM
+                if (vv.Team.Id == DOMCallsign) //only show for tasking that can be deleted (tasked only)
+                {
+                    //attach a sms button
+                    msg = return_message_button()
+                    $(v).after(msg)
 
-    //pull out the call sign and the status
-    DOMCallsign = ($(this)[0].parentNode.children[0].children[0].href.split("/")[4])
-    DOMStatus = ($(this)[0].parentNode.children[1].innerText.split(" ")[0])
-
-    //for every tasked team
-    $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,vv){
-
-      //match against this DOM
-      if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) //only show for tasking that can be deleted (tasked only)
-      {
-        //attached a X button if its matched and deletable
-        untask = return_untask_button()
-        $(v).append(untask)
-
-        //click function
-        $(untask).click(function() {
-          DOMCallsign = ($(this)[0].parentNode.parentNode.children[0].children[0].href.split("/")[4])
-          DOMStatus = ($(this)[0].parentNode.parentNode.children[1].innerText.split(" ")[0])
-
-          event.stopImmediatePropagation();
-          $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
-
-            if (v.Team.Id == DOMCallsign && v.CurrentStatus == DOMStatus) //match it again
-            {
-              untaskTeamFromJob(v.Team.Id, jobId, v.Id)  //untask it
-            }
-          })
-        })
-      }
+                    //click function
+                    $(msg).click(function() {
+                        event.stopImmediatePropagation();
+                        var tightarray = []
+                        vv.Team.Members.map(function(member) {
+                            tightarray.push(member.Person.Id)
+                        })
+                        window.open('/Messages/Create?lhquickrecipient=' + escape(JSON.stringify(tightarray)), '_blank');
+                    })
+                }
+            })
+        }
     })
-  })
 
-  ////END horrible untask code
+    $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function(k, v) { //for every team dom
 
+        if ($(v).parent().find("#untask").length == 0) { //check for an existing untask button
+
+            //pull out the call sign and the status
+            DOMCallsign = ($(this)[0].parentNode.children[0].children[0].href.split("/")[4])
+            DOMStatus = ($(this)[0].parentNode.children[1].innerText.split(" ")[0])
+
+            //for every tasked team
+            $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k, vv) {
+                //match against this DOM
+                if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) //only show for tasking that can be deleted (tasked only)
+                {
+                    //attached a X button if its matched and deletable
+                    untask = return_untask_button()
+                    $(v).append(untask)
+
+                    //click function
+                    $(untask).click(function() {
+                        event.stopImmediatePropagation();
+                        untaskTeamFromJob(vv.Team.Id, jobId, vv.Id) //untask it
+                    })
+                }
+            })
+        }
+    })
 }
 
 
@@ -827,11 +843,17 @@ document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
 }
 
 function return_untask_button() {
-  return (<span class="close" style="
+  return (<span id="untask" class="close" style="
     margin-right: -12px;
     margin-top: -12px;
     margin-left: 10px;
     ">×</span>);
+}
+function return_message_button() {
+  return (<span id="message" class="close fa fa-comments" style="
+    margin-left: 5px;
+    float: none !important;
+    "></span>);
 }
 
 
