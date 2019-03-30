@@ -17,7 +17,11 @@ masterViewModel.messagesViewModel.messages.subscribe(lighthouseKeeper);
 
 //if tasking update
 
-masterViewModel.teamsViewModel.taskedTeams.subscribe(lighthouseTasking);
+//Force the tasking function to last in the stack of subscribers for this.
+//Prevents the UI redrawing AFTER the icons have been set, meaning they get removed
+masterViewModel.teamsViewModel.taskedTeams.subscribe(function() {
+  setTimeout(lighthouseTasking,0)
+});
 
 
 
@@ -32,7 +36,6 @@ function lighthouseTasking() {
             //for every tasked team
             $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k, vv) {
                 //match against this DOM
-                console.log(vv.Team)
                 if (vv.Team.Id == DOMCallsign && vv.Team.Members.length)
                 {
                     //attach a sms button
@@ -50,17 +53,17 @@ function lighthouseTasking() {
                     })
                 }
             })
+        } else {
+          console.log('already has a sms button')
         }
     })
 
     $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function(k, v) { //for every team dom
-
         if ($(v).parent().find("#untask").length == 0) { //check for an existing untask button
 
             //pull out the call sign and the status
             DOMCallsign = ($(this)[0].parentNode.children[0].children[0].href.split("/")[4])
             DOMStatus = ($(this)[0].parentNode.children[1].innerText.split(" ")[0])
-
             //for every tasked team
             $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k, vv) {
                 //match against this DOM
@@ -77,6 +80,8 @@ function lighthouseTasking() {
                     })
                 }
             })
+        } else {
+          console.log('already has untask button')
         }
     })
 }
