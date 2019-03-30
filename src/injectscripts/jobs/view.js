@@ -19,6 +19,7 @@ masterViewModel.messagesViewModel.messages.subscribe(lighthouseKeeper);
 
 //Force the tasking function to last in the stack of subscribers for this.
 //Prevents the UI redrawing AFTER the icons have been set, meaning they get removed
+//https://stackoverflow.com/questions/779379/why-is-settimeoutfn-0-sometimes-useful
 masterViewModel.teamsViewModel.taskedTeams.subscribe(function() {
   setTimeout(lighthouseTasking,0)
 });
