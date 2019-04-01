@@ -1,7 +1,7 @@
 var inject = require('../../../lib/inject.js');
 var $ = require('jquery');
 var DOM = require('jsx-dom-factory');
-const MapManager = require('../../../pages/lib/map/ContentScriptMapManager.js');
+const MapManager = require('../../../lib/map/ContentScriptMapManager.js');
 
 // Add team create button to team tab
 $(

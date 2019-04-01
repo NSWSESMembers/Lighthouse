@@ -1,4 +1,4 @@
-const MapManager = require('../../../pages/lib/map/InjectScriptMapManager.js');
+const MapManager = require('../../../lib/map/InjectScriptMapManager.js');
 
 window.addEventListener('load', pageFullyLoaded, false);
 
