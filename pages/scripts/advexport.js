@@ -18,8 +18,9 @@ var timeoverride = null;
 
 var params = getSearchParameters();
 
-var token = params.token
-var tokenexp = params.tokenexp
+var apiHost = params.host
+var token = ''
+var tokenexp = ''
 
 
 window.onerror = function(message, url, lineNumber) {
@@ -103,12 +104,8 @@ var lighthouse_fieldDefaults = [
 
 $(document).ready(function() {
 
-
-
   validateTokenExpiration();
   setInterval(validateTokenExpiration, 3e5);
-
-
 
   var $fieldsetContainer = $('#advexport_fieldsets');
   $.each(lighthouse_fieldArray, function(k, v) {
@@ -187,30 +184,42 @@ var timeperiod;
 var unit = [];
 
 function validateTokenExpiration() {
-  moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
-    $.ajax({
-      type: 'GET',
-      url: params.source + "/Authorization/RefreshToken",
-      beforeSend: function(n) {
-        n.setRequestHeader("Authorization", "Bearer " + token)
-      },
-      cache: false,
-      dataType: 'json',
-      complete: function(response, textStatus) {
-        token = response.responseJSON.access_token
-        tokenexp = response.responseJSON.expires_at
-        console.log("successful token renew.")
-      }
-    })
-  )
+  getToken(function() {
+    moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
+      $.ajax({
+        type: 'GET',
+        url: params.source + "/Authorization/RefreshToken",
+        beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + token)
+        },
+        cache: false,
+        dataType: 'json',
+        complete: function(response, textStatus) {
+          token = response.responseJSON.access_token
+          tokenexp = response.responseJSON.expires_at
+          chrome.storage.local.set({
+            ['beaconAPIToken-' + apiHost]: JSON.stringify({
+              token: token,
+              expdate: tokenexp
+            })
+          }, function() {
+            console.log('local data set - beaconAPIToken')
+          })
+          console.log("successful token renew.")
+        }
+      })
+    )
+  })
 }
 
 //Get times vars for the call
 function RunForestRun(mp) {
-  mp && mp.open();
-  $('#loading')
-    .show();
-  HackTheMatrix(params.hq, params.host, mp);
+  getToken(function() {
+    mp && mp.open();
+    $('#loading')
+      .show();
+    HackTheMatrix(params.hq, params.host, mp);
+  })
 }
 
 var selectedcolumns = [];
@@ -434,4 +443,20 @@ function downloadCSV(file, dataIn, keyIn) {
 
   saveData(csv, file);
 
+}
+
+// wait for token to have loaded
+function getToken(cb) { //when external vars have loaded
+  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
+    chrome.storage.local.get('beaconAPIToken-' + apiHost, function(data) {
+      var tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost])
+      if (typeof tokenJSON.token !== "undefined" && typeof tokenJSON.expdate !== "undefined" && tokenJSON.token != '' && tokenJSON.expdate != '') {
+        token = tokenJSON.token
+        tokenexp = tokenJSON.expdate
+        console.log("api key has been found");
+        clearInterval(waiting); //stop timer
+        cb(); //call back
+      }
+    })
+  }, 200);
 }

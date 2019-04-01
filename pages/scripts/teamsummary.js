@@ -12,8 +12,9 @@ var timeoverride = null;
 
 var params = getSearchParameters();
 
-var token = params.token
-var tokenexp = params.tokenexp
+var apiHost = params.host
+var token = ''
+var tokenexp = ''
 
 
 // inject css c/o browserify-css
@@ -99,22 +100,32 @@ var timeperiod;
 var unit = null;
 
 function validateTokenExpiration() {
-  moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
-    $.ajax({
-      type: 'GET',
-      url: params.source + "/Authorization/RefreshToken",
-      beforeSend: function(n) {
-        n.setRequestHeader("Authorization", "Bearer " + token)
-      },
-      cache: false,
-      dataType: 'json',
-      complete: function(response, textStatus) {
-        token = response.responseJSON.access_token
-        tokenexp = response.responseJSON.expires_at
-        console.log("successful token renew.")
-      }
-    })
-  )
+  getToken(function() {
+    moment().isAfter(moment(tokenexp).subtract(5, "minutes")) && (console.log("token expiry triggered. time to renew."),
+      $.ajax({
+        type: 'GET',
+        url: params.source + "/Authorization/RefreshToken",
+        beforeSend: function(n) {
+          n.setRequestHeader("Authorization", "Bearer " + token)
+        },
+        cache: false,
+        dataType: 'json',
+        complete: function(response, textStatus) {
+          token = response.responseJSON.access_token
+          tokenexp = response.responseJSON.expires_at
+          chrome.storage.local.set({
+            ['beaconAPIToken-' + apiHost]: JSON.stringify({
+              token: token,
+              expdate: tokenexp
+            })
+          }, function() {
+            console.log('local data set - beaconAPIToken')
+          })
+          console.log("successful token renew.")
+        }
+      })
+    )
+  })
 }
 
 //update every X seconds
@@ -141,72 +152,68 @@ function startTimer(duration, display) {
 
 //Get times vars for the call
 function RunForestRun(mp) {
-
-  mp && mp.open();
-
-
-  if (timeoverride != null) { //we are using a time override
-
-    var end = new Date();
-
-    var start = new Date();
-    start.setDate(start.getDate() - (timeoverride / 24));
+  getToken(function() {
+    mp && mp.open();
 
 
-    starttime = start.toISOString();
-    endtime = end.toISOString();
+    if (timeoverride != null) { //we are using a time override
 
-    console.log(starttime);
-    console.log(endtime);
+      var end = new Date();
 
-    params.start = starttime;
-    params.end = endtime;
+      var start = new Date();
+      start.setDate(start.getDate() - (timeoverride / 24));
 
-  } else {
-    params = getSearchParameters();
-  }
+      starttime = start.toISOString();
+      endtime = end.toISOString();
 
-  if (unit == null) {
-    console.log("firstrun...will fetch vars");
+      params.start = starttime;
+      params.end = endtime;
 
-    if (typeof params.hq != 'undefined') { //if not no hqs
-      if (params.hq.split(",").length == 1) { //if only one HQ
-        LighthouseUnit.get_unit_name(params.hq, params.host, token, function(result, error) {
-          if (typeof error == 'undefined') {
-            unit = result;
-            HackTheMatrix(unit, params.host, params.source, token, mp);
-          } else {
-            mp.fail(error)
-          }
-        });
-      } else {
-        unit = [];
-        console.log("passed array of units");
-        var hqsGiven = params.hq.split(",");
-        console.log(hqsGiven);
-        hqsGiven.forEach(function(d) {
-          LighthouseUnit.get_unit_name(d, params.host, token, function(result, error) {
+    } else {
+      params = getSearchParameters();
+    }
+
+    if (unit == null) {
+      console.log("firstrun...will fetch vars");
+
+      if (typeof params.hq != 'undefined') { //if not no hqs
+        if (params.hq.split(",").length == 1) { //if only one HQ
+          LighthouseUnit.get_unit_name(params.hq, apiHost, token, function(result, error) {
             if (typeof error == 'undefined') {
-              mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
-              unit.push(result);
-              if (unit.length == params.hq.split(",").length) {
-                HackTheMatrix(unit, params.host, params.source, token, mp);
-              }
+              unit = result;
+              HackTheMatrix(unit, apiHost, params.source, token, mp);
             } else {
               mp.fail(error)
             }
           });
-        });
+        } else {
+          unit = [];
+          console.log("passed array of units");
+          var hqsGiven = params.hq.split(",");
+          console.log(hqsGiven);
+          hqsGiven.forEach(function(d) {
+            LighthouseUnit.get_unit_name(d, params.host, token, function(result, error) {
+              if (typeof error == 'undefined') {
+                mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
+                unit.push(result);
+                if (unit.length == params.hq.split(",").length) {
+                  HackTheMatrix(unit, apiHost, params.source, token, mp);
+                }
+              } else {
+                mp.fail(error)
+              }
+            });
+          });
+        }
+      } else { //no hq was sent, get them all
+        unit = [];
+        HackTheMatrix(unit, apiHost, params.source, token, mp);
       }
-    } else { //no hq was sent, get them all
-      unit = [];
-      HackTheMatrix(unit, params.host, params.source, token, mp);
+    } else {
+      console.log("rerun...will NOT fetch vars");
+      HackTheMatrix(unit, apiHost, params.source, token);
     }
-  } else {
-    console.log("rerun...will NOT fetch vars");
-    HackTheMatrix(unit, params.host, params.source, token);
-  }
-
+  })
 }
 
 //make the call to beacon
@@ -368,8 +375,8 @@ function secondsToHms(d) {
 
 function positionFooter() {
   var footerHeight = 55,
-  footerTop = 0,
-  $footer = $(".footer");
+    footerTop = 0,
+    $footer = $(".footer");
   footerHeight = $footer.height();
   footerTop = ($(window).scrollTop() + $(window).height() - footerHeight) + "px";
 
@@ -382,4 +389,20 @@ function positionFooter() {
       position: "static"
     })
   }
+}
+
+// wait for token to have loaded
+function getToken(cb) { //when external vars have loaded
+  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
+    chrome.storage.local.get('beaconAPIToken-' + apiHost, function(data) {
+      var tokenJSON = JSON.parse(data['beaconAPIToken-' + apiHost])
+      if (typeof tokenJSON.token !== "undefined" && typeof tokenJSON.expdate !== "undefined" && tokenJSON.token != '' && tokenJSON.expdate != '') {
+        token = tokenJSON.token
+        tokenexp = tokenJSON.expdate
+        console.log("api key has been found");
+        clearInterval(waiting); //stop timer
+        cb(); //call back
+      }
+    })
+  }, 200);
 }

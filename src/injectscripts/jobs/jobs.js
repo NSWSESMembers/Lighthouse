@@ -24,11 +24,17 @@ window.FinaliseSelected = function FinaliseSelected(words, beaconStringDate) { /
  */
 $('a.lh-update-filter[data-page]').each(function(index, lighthouseButton) {
   $(lighthouseButton)
-    .on("mouseenter click", function() {
+    .on("click", function() {
+      window.postMessage({
+        type: "FROM_PAGE_UPDATE_API_TOKEN",
+        host: urls.Base,
+        token: user.accessToken,
+        tokenexp: user.expiresAt,
+      }, "*");
       var exports = JSON.parse(filterDataForExport());
       var $t = $(this);
       var lighthousePageName = $t.data('page');
-      var h = lighthouseUrl + "pages/" + lighthousePageName + ".html?host=" + urls.Base + "&source=" + location.origin + "&start=" + encodeURIComponent(exports.StartDate) + "&end=" + encodeURIComponent(exports.EndDate) + "&token=" + encodeURIComponent(user.accessToken) + "&tokenexp=" + encodeURIComponent(user.expiresAt);
+      var h = lighthouseUrl + "pages/" + lighthousePageName + ".html?host=" + urls.Base + "&source=" + location.origin + "&start=" + encodeURIComponent(exports.StartDate) + "&end=" + encodeURIComponent(exports.EndDate);
       if (exports.hasOwnProperty("Hq"))
         h += "&hq=" + exports.Hq;
       $t.attr('href', h);

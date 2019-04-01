@@ -26,7 +26,7 @@ whenWeAreReady(user, function() {
     thismorning = new Date(thismorning.getTime());
 
 
-    var vars = "?host=" + urls.Base + "&source=" + location.origin + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString()) + "&token=" + encodeURIComponent(user.accessToken) + "&tokenexp=" + encodeURIComponent(user.expiresAt);
+    var vars = "?host=" + urls.Base + "&source=" + location.origin + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString());
 
     lighthouseMenu = MakeMenu(lighthouseUrl, vars, user.hq.Code)
 
@@ -101,9 +101,8 @@ whenWeAreReady(user, function() {
     </li>\
     ')
       }
-
-
     }
+
 
     $('ul.nav.navbar-nav.navbar-left').append(lighthouseMenu);
 
@@ -122,6 +121,31 @@ whenWeAreReady(user, function() {
       }, '*');
       location.reload();
     });
+
+    $("#lhsummarymenuitem > a").click(function() {
+      updateToken();
+    })
+
+    $("#lhstatsmenuitem > a").click(function() {
+      updateToken();
+    })
+
+    $("#lhexportmenuitem > a").click(function() {
+      updateToken();
+    })
+
+    $("#lhteammenuitem > a").click(function() {
+      updateToken();
+    })
+
+    function updateToken() {
+      window.postMessage({
+        type: "FROM_PAGE_UPDATE_API_TOKEN",
+        host: urls.Base,
+        token: user.accessToken,
+        tokenexp: user.expiresAt,
+      }, "*");
+    }
 
 
     //lighthouse menu for teams

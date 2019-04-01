@@ -84,6 +84,9 @@ chrome.runtime.onMessage.addListener(
                 sendResponse({result: result, colour: colour, resultbool: bool, requrl: url})
             });
             return true;
+        } else if (request.type === 'API_TOKEN_UPDATE') {
+          localStorage.setItem('beaconAPIToken-'+request.host, JSON.stringify(request.token));
+            return true;
         } else if (request.type === 'rfs') {
             fetchRfsIncidents(function(data) {
                 sendResponse(data);

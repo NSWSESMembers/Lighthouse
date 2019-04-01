@@ -18,6 +18,8 @@ window.addEventListener("message", function(event) {
     });
   } else if (event.data.type && (event.data.type == "FROM_PAGE_SESASBESTOS_RESULT")) {
     asbestosBoxColor(event.data.address.PrettyAddress+" was FOUND on the SES asbestos register.",'red','')
+  } else if (event.data.type && (event.data.type == "FROM_PAGE_UPDATE_API_TOKEN")) {
+    
   }
 }, false);
 
