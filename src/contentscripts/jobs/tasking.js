@@ -22,6 +22,13 @@ $(
   </a>
 ).appendTo('#job > div > div > div.widget-header');
 
+// Add Other Layers sub heading
+$(
+  <li id="other-menu" class="menu-heading sub-heading">
+  Other Layers
+  </li>
+).appendTo('#filter > nav > ul');
+
 //inject the coded needed to fix visual problems
 //needs to be injected so that it runs after the DOMs are created
 inject('jobs/tasking.js');
@@ -29,6 +36,6 @@ inject('jobs/tasking.js');
 const mapManager = new MapManager();
 
 // Add the buttons for the extra layers
-let mapButton = $('li.menu-heading').eq(2).next();
-MapManager.createLayerMenu().insertAfter(mapButton).last();
+let otherMenu = $('#other-menu');
+MapManager.createLayerMenu().insertAfter(otherMenu);
 mapManager.initialise();
