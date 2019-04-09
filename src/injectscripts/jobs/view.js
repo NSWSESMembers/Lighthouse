@@ -854,7 +854,7 @@ function return_untask_button() {
     ">×</span>);
 }
 function return_message_button() {
-  return (<span id="message" class="close fa fa-comments" style="
+  return (<span id="message" class="close fa fa-envelope" style="
     margin-left: 5px;
     float: none !important;
     "></span>);
