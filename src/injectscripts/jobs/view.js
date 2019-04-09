@@ -854,10 +854,11 @@ function return_untask_button() {
     ">×</span>);
 }
 function return_message_button() {
-  return (<span id="message" class="close fa fa-comments" style="
-    margin-left: 5px;
+  return (<sup id="message" class="close fa fa-comment" style="
+    margin-left: 3px;
     float: none !important;
-    "></span>);
+    top: -0.7em;
+    "></sup>);
 }
 
 
