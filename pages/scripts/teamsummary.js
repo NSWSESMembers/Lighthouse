@@ -252,7 +252,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
           var latestupdate = row.insertCell(4);
           latestupdate.className = "update";
 
-          callsign.innerHTML = "<a href=\"" + source + "/Teams/" + d.Id + "/Edit\" target=\"_blank\">" + d.Callsign + "</a>";
+          callsign.innerHTML = "<a href=\"" + source + "/Teams/" + d.Id + "/Edit\" target=\"_blank\">" + d.Callsign.trim() + "</a>";
 
           switch (d.TeamStatusType.Id) { //color the callsign by team status
             case 3: //active
