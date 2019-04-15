@@ -82,17 +82,6 @@ $(document).ready(function() {
     $e.preventDefault();
     RunForestRun();
   })
-  $("#local-chart-header").click(function($e) {
-    switch ($("#local-chart-header").text()) {
-      case "Job Localities":
-        $("#local-chart-header").text("Assigned Unit")
-        break
-      case "Assigned Unit":
-        $("#local-chart-header").text("Job Localities")
-        break
-    }
-    RunForestRun();
-  })
 });
 
 function getSearchParameters() {
@@ -260,7 +249,7 @@ function renderPage(unit, jobs, firstrunlocal) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  cleanJobs = LighthouseStatsJobsCleanup.prepareData(jobs, unit, start, end);
+  LighthouseStatsJobsCleanup.prepareData(jobs, unit, start, end, function(cleanJobs) {
 
   prepareCharts(cleanJobs, start, end, firstrun);
 
@@ -291,7 +280,7 @@ function renderPage(unit, jobs, firstrunlocal) {
     dc.renderAll();
   });
 
-
+});
 
 }
 
@@ -333,8 +322,11 @@ var jobTypeChart = null;
 var hazardChart = null;
 var propertyChart = null;
 var jobtypeChart = null;
+var taskCountChart = null;
 var localChart = null;
-
+var unitChart = null;
+var clusterChart = null;
+var zoneChart = null;
 function prepareCharts(jobs, start, end, firstRun) {
 
   if (firstRun) //if its the first run expect everything to not exist, and draw it all
@@ -396,12 +388,9 @@ function prepareCharts(jobs, start, end, firstRun) {
 
 
 
-    console.log("closed")
     var volumeClosedByPeriodGroup = volumeClosedByPeriod.group().reduceCount(function(d) {
       return d.JobCompleted;
     });
-
-    console.log("open")
 
     var volumeOpenByPeriodGroup = volumeOpenByPeriod.group().reduceCount(function(d) {
       return d.JobReceivedFixed;
@@ -573,9 +562,25 @@ function prepareCharts(jobs, start, end, firstRun) {
       return d.Type;
     });
 
+
+    // taskCountChart = makeSimplePie("#dc-taskcount-chart", 460, 240, function(d) {
+    //   return d.Type;
+    // });
+
+    clusterChart = makeSimplePie("#dc-cluster-chart", 460, 240, function(d) {
+      return d.EntityAssignedTo.Cluster;
+    });
+
+
+    zoneChart = makeSimplePie("#dc-zone-chart", 460, 240, function(d) {
+      return d.EntityAssignedTo.ParentEntity.Name;
+    });
+
+    unitChart = makeSimplePie("#dc-unit-chart", 460, 240, function(d) {
+          return d.EntityAssignedTo.Name;
+    });
+
     localChart = makeSimplePie("#dc-local-chart", 460, 240, function(d) {
-      switch ($("#local-chart-header").text()) {
-        case "Job Localities":
           if (unit.length == 0) { //whole nsw state
             return d.LGA;
           }
@@ -585,12 +590,6 @@ function prepareCharts(jobs, start, end, firstRun) {
           if (unit.length > 1) { //more than one
             return d.LGA;
           }
-          break
-        case "Assigned Unit":
-          return d.EntityAssignedTo.Name;
-          break
-
-      }
     });
 
     statusChart = makeSimplePie("#dc-jobstatus-chart", 460, 240, function(d) {
@@ -609,7 +608,7 @@ function prepareCharts(jobs, start, end, firstRun) {
       return d.JobPriorityType.Name;
     });
 
-    jobTypeChart = makeSimplePieAbrev("#dc-tasktype-chart", 460, 240, function(d) {
+    jobTypeChart = makeSimplePie("#dc-tasktype-chart", 460, 240, function(d) {
       return d.jobtype;
     });
 
