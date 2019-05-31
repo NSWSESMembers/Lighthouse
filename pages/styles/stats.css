@@ -2,6 +2,17 @@
 @import url("node_modules/dc/dc.css");
 @import url("node_modules/jqcloud-npm/dist/jqcloud.css");
 
+.highcharts-container {
+  margin: 0 auto;
+}
+
+.pie-slice path {
+		stroke:#fff;
+}
+.dc-chart .selected path {
+		stroke-width: 1;
+		stroke:#fff;
+}
 
 .dc-chart .pie-slice {
 	fill: black;

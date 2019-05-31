@@ -4,6 +4,7 @@ var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseChrome = require('../lib/shared_chrome_code.js');
 var LighthouseWordCloud = require('../lib/stats/wordcloud.js');
 var LighthouseStatsJobsCleanup = require('../lib/stats/jobparsing.js');
+var LighthouseStatsJobsCleanup = require('../lib/stats/jobparsing.js');
 
 
 
@@ -19,6 +20,7 @@ require('../styles/stats.css');
 
 var moment = require('moment');
 
+var humanizeDuration = require('humanize-duration')
 
 var timeoverride = null;
 var timeperiod;
@@ -251,37 +253,36 @@ function renderPage(unit, jobs, firstrunlocal) {
 
   LighthouseStatsJobsCleanup.prepareData(jobs, unit, start, end, function(cleanJobs) {
 
-  prepareCharts(cleanJobs, start, end, firstrun);
+    prepareCharts(cleanJobs, start, end, firstrun);
 
-  LighthouseWordCloud.makeSituationOnSceneCloud(cleanJobs, '#cloud');
+    LighthouseWordCloud.makeSituationOnSceneCloud(cleanJobs, '#cloud');
 
-  if (firstrunlocal) {
-    console.log("First Run - We Will Render All")
+    if (firstrunlocal) {
+      console.log("First Run - We Will Render All")
 
-    dc.renderAll();
+      dc.renderAll();
 
 
-  } else {
-    console.log("NOT first run - Will Redraw All")
-    dc.redrawAll();
-    $('#loadinginline').css('visibility', 'hidden');
-  }
+    } else {
+      console.log("NOT first run - Will Redraw All")
+      dc.redrawAll();
+      $('#loadinginline').css('visibility', 'hidden');
+    }
 
-  //WE ARE DONE WILL ALL LOADING
+    //WE ARE DONE WILL ALL LOADING
 
-  if (firstrunlocal) {
-    firstrun = false
-  }
+    if (firstrunlocal) {
+      firstrun = false
+    }
 
-  //click to reset the filters that are applied
-  $(".total").click(function($e) {
-    $e.preventDefault();
-    dc.filterAll();
-    dc.renderAll();
+    //click to reset the filters that are applied
+    $(".total").click(function($e) {
+      $e.preventDefault();
+      dc.filterAll();
+      dc.renderAll();
+    });
+
   });
-
-});
-
 }
 
 
@@ -318,7 +319,6 @@ var statusChart = null;
 var agencyChart = null;
 var eventChart = null;
 var priorityChart = null;
-var jobTypeChart = null;
 var hazardChart = null;
 var propertyChart = null;
 var jobtypeChart = null;
@@ -327,6 +327,18 @@ var localChart = null;
 var unitChart = null;
 var clusterChart = null;
 var zoneChart = null;
+
+var lowermeanChart = dc.numberDisplay("#dc-lowermean-chart");
+var middlemeanChart = dc.numberDisplay("#dc-middlemean-chart");
+var uppermeanChart = dc.numberDisplay("#dc-uppermean-chart");
+
+var completionBellChart = null;
+
+var lowerupperChart = dc.numberDisplay("#dc-lowerupper-chart");
+var middlemiddleChart = dc.numberDisplay("#dc-middlemiddle-chart");
+var upperlowerChart = dc.numberDisplay("#dc-upperlower-chart");
+
+
 function prepareCharts(jobs, start, end, firstRun) {
 
   if (firstRun) //if its the first run expect everything to not exist, and draw it all
@@ -334,7 +346,6 @@ function prepareCharts(jobs, start, end, firstRun) {
     facts = crossfilter(jobs.Results)
 
     var all = facts.groupAll();
-
 
     //display totals
     countchart = dc.dataCount(".total");
@@ -346,6 +357,9 @@ function prepareCharts(jobs, start, end, firstRun) {
     timeClosedChart = dc.barChart("#dc-timeclosed-chart");
     dataTable = dc.dataTable("#dc-table-graph");
 
+
+    completionBellChart = dc.barChart("#dc-completionbell-chart");
+
     var closeTimeDimension = facts.dimension(function(d) {
       return d.JobCompleted;
     });
@@ -355,8 +369,6 @@ function prepareCharts(jobs, start, end, firstRun) {
     });
 
 
-
-
     var oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
     var timeDifference = (Math.round(Math.abs((start.getTime() - end.getTime()) / (oneDay))));
     var timePeriodWord;
@@ -364,21 +376,21 @@ function prepareCharts(jobs, start, end, firstRun) {
 
     if (timeDifference <= 14) {
       var timePeriodWord = "Hour";
-      var timePeriodUnits = d3.time.hours;
+      var timePeriodUnits = d3.timeHours;
       var volumeClosedByPeriod = facts.dimension(function(d) {
-        return d3.time.hour(d.JobCompleted);
+        return d3.timeHour(d.JobCompleted);
       });
       var volumeOpenByPeriod = facts.dimension(function(d) {
-        return d3.time.hour(d.JobReceivedFixed);
+        return d3.timeHour(d.JobReceivedFixed);
       });
     } else {
       var timePeriodWord = "Day";
-      var timePeriodUnits = d3.time.days;
+      var timePeriodUnits = d3.timeDays;
       var volumeClosedByPeriod = facts.dimension(function(d) {
-        return d3.time.day(d.JobCompleted);
+        return d3.timeDay(d.JobCompleted);
       });
       var volumeOpenByPeriod = facts.dimension(function(d) {
-        return d3.time.day(d.JobReceivedFixed);
+        return d3.timeDay(d.JobReceivedFixed);
       });
     }
 
@@ -386,6 +398,120 @@ function prepareCharts(jobs, start, end, firstRun) {
     $('#completedTitle').html("Jobs Completed Per " + timePeriodWord);
     $('#runningTitle').html("Running Totals Per " + timePeriodWord);
 
+
+    var jobLength = facts.dimension(function(d) {
+        return d.JobDuration;
+    });
+
+    var jobLengthDimension = facts.dimension(function(d) {
+      return round(d.JobDuration/1000/60/60,0.1);
+    });
+
+    var jobLengthPeriodsGroup = jobLengthDimension.group().reduceCount(function(d) {
+      return round(d.JobDuration/1000/60/60,0.1);
+    });
+
+
+    var jobLengthPeriodsGroupFiltered = remove_empty_bins(jobLengthPeriodsGroup) // or filter_bins, or whatever
+
+
+    var jobLengthGroup = accumulate_group_top(jobLength)
+
+    function accumulate_group_top(source_group) {
+      return {
+        all: function() {
+          var onlyCompleted = source_group.top(Infinity).filter(function(m) {
+            if (m.JobDuration != 0) {
+              return true
+            }
+            return false
+          })
+
+
+          var size = onlyCompleted.length
+          var top = onlyCompleted.slice(Math.floor(size * 0.8))
+          var bottom = onlyCompleted.slice(0,Math.ceil(size * 0.2))
+          var middle = onlyCompleted.slice(Math.ceil(size * 0.2),Math.floor(size * 0.8))
+          // Drawing and updating the chart
+
+          return [{
+            'bottom20th': d3.mean(bottom, function(d) {
+              return d.JobDuration;
+            }),
+            'middle60th': d3.mean(middle, function(d) {
+              return d.JobDuration;
+            }),
+            'top20th': d3.mean(top, function(d) {
+              return d.JobDuration;
+            }),
+            'topbottom': d3.quantile(onlyCompleted.map(function(a){
+              return a.JobDuration
+            }),0.7),
+            'middlemiddle': d3.quantile(onlyCompleted.map(function(a){
+              return a.JobDuration
+            }),0.5),
+            'bottomtop': d3.quantile(onlyCompleted.map(function(a){
+              return a.JobDuration
+            }),0.25),
+          }];
+        }
+      }
+    }
+
+    uppermeanChart
+      .group(jobLengthGroup)
+      .valueAccessor(function(d) {
+        return d.top20th
+      })
+      .formatNumber(function(d) {
+        return humanizeDuration(d,{ round: true })
+
+      })
+
+    middlemeanChart
+      .group(jobLengthGroup)
+      .valueAccessor(function(d) {
+        return d.middle60th
+      })
+      .formatNumber(function(d) {
+        return humanizeDuration(d,{ round: true })
+      })
+
+    lowermeanChart
+      .group(jobLengthGroup)
+      .valueAccessor(function(d) {
+        return d.bottom20th
+      })
+      .formatNumber(function(d) {
+        return humanizeDuration(d,{ round: true })
+      })
+
+      lowerupperChart
+        .group(jobLengthGroup)
+        .valueAccessor(function(d) {
+          return d.topbottom
+        })
+        .formatNumber(function(d) {
+          return humanizeDuration(d,{ round: true })
+        })
+
+      middlemiddleChart
+        .group(jobLengthGroup)
+        .valueAccessor(function(d) {
+          return d.middlemiddle
+        })
+        .formatNumber(function(d) {
+          return humanizeDuration(d,{ round: true })
+        })
+
+      upperlowerChart
+        .group(jobLengthGroup)
+        .valueAccessor(function(d) {
+          return d.bottomtop
+        })
+        .formatNumber(function(d) {
+          return humanizeDuration(d,{ round: true })
+        })
 
 
     var volumeClosedByPeriodGroup = volumeClosedByPeriod.group().reduceCount(function(d) {
@@ -420,6 +546,27 @@ function prepareCharts(jobs, start, end, firstRun) {
       };
     }
 
+    completionBellChart
+    .width(1400)
+    .height(250)
+    .transitionDuration(500)
+    .brushOn(true)
+    .mouseZoomable(false)
+    .xAxisLabel("Number of hours job is open for")
+    .yAxisLabel("Number of Jobs")
+    .barPadding(10)
+    .dimension(jobLengthDimension)
+    .group(jobLengthPeriodsGroupFiltered)
+    .x(d3.scaleLinear()
+    .domain([round(jobLengthDimension.bottom(1)[0].JobDuration/1000/60/60,0.1),round(jobLengthDimension.top(1)[0].JobDuration/1000/60/60,0.1)+1])
+    )
+    //.x(d3.scaleLinear().domain([round(jobLengthDimension.bottom(1)[0].JobDuration/1000/60/60,0.25),round(jobLengthDimension.top(1)[0].JobDuration/1000/60/60,0.25)+1]))
+
+    .elasticY(true)
+    .xAxis();
+
+
+completionBellChart.xAxis().ticks(20);
 
     timeOpenChart
       .width(800)
@@ -436,7 +583,7 @@ function prepareCharts(jobs, start, end, firstRun) {
       .dimension(timeOpenDimension)
       .group(volumeOpenByPeriodGroup)
       .xUnits(timePeriodUnits)
-      .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+      .x(d3.scaleTime().domain([new Date(start), new Date(end)]))
       .elasticY(true)
       .xAxis();
 
@@ -455,13 +602,13 @@ function prepareCharts(jobs, start, end, firstRun) {
       .dimension(closeTimeDimension)
       .group(volumeClosedByPeriodGroup)
       .xUnits(timePeriodUnits)
-      .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+      .x(d3.scaleTime().domain([new Date(start), new Date(end)]))
       .elasticY(true)
       .xAxis();
 
 
     runningChart
-      .width(1200)
+      .width(1400)
       .height(250)
       .transitionDuration(500)
       .mouseZoomable(false)
@@ -499,7 +646,7 @@ function prepareCharts(jobs, start, end, firstRun) {
           strokeOpacity: 0.8
         })
       ])
-      .x(d3.time.scale().domain([new Date(start), new Date(end)]))
+      .x(d3.scaleTime().domain([new Date(start), new Date(end)]))
       .elasticY(true)
       .brushOn(false)
       .xAxis();
@@ -563,33 +710,21 @@ function prepareCharts(jobs, start, end, firstRun) {
     });
 
 
-    // taskCountChart = makeSimplePie("#dc-taskcount-chart", 460, 240, function(d) {
-    //   return d.Type;
-    // });
-
     clusterChart = makeSimplePie("#dc-cluster-chart", 460, 240, function(d) {
       return d.EntityAssignedTo.Cluster;
     });
 
 
     zoneChart = makeSimplePie("#dc-zone-chart", 460, 240, function(d) {
-      return d.EntityAssignedTo.ParentEntity.Name;
+      return d.EntityAssignedTo.ParentEntity ? d.EntityAssignedTo.ParentEntity.Name : "NA";
     });
 
     unitChart = makeSimplePie("#dc-unit-chart", 460, 240, function(d) {
-          return d.EntityAssignedTo.Name;
+      return d.EntityAssignedTo.Name;
     });
 
     localChart = makeSimplePie("#dc-local-chart", 460, 240, function(d) {
-          if (unit.length == 0) { //whole nsw state
-            return d.LGA;
-          }
-          if (Array.isArray(unit) == false) { //1 lga
-            return d.Address.Locality;
-          }
-          if (unit.length > 1) { //more than one
-            return d.LGA;
-          }
+      return d.Address.Locality;
     });
 
     statusChart = makeSimplePie("#dc-jobstatus-chart", 460, 240, function(d) {
@@ -628,11 +763,14 @@ function prepareCharts(jobs, start, end, firstRun) {
     agencyChartFilters = agencyChart.filters();
     eventChartFilters = eventChart.filters();
     priorityChartFilters = priorityChart.filters();
-    jobTypeChartFilters = jobTypeChart.filters();
+    jobtypeChartFilters = jobtypeChart.filters();
     hazardChartFilters = hazardChart.filters();
     propertyChartFilters = propertyChart.filters();
-    jobtypeChartFilters = jobtypeChart.filters();
     localChartFilters = localChart.filters();
+    unitChartFilters = unitChart.filters();
+    clusterChartFilters = clusterChart.filters();
+    zoneChartFilters = zoneChart.filters();
+
 
 
     //remove the filters
@@ -640,12 +778,13 @@ function prepareCharts(jobs, start, end, firstRun) {
     agencyChart.filter(null)
     eventChart.filter(null)
     priorityChart.filter(null)
-    jobTypeChart.filter(null)
     hazardChart.filter(null)
     propertyChart.filter(null)
     jobtypeChart.filter(null)
     localChart.filter(null)
-
+    unitChart.filters(null)
+    clusterChart.filters(null)
+    zoneChart.filters(null)
     //temporary until I can get filter sets working on bar charts
     //remove the filters
     timeOpenChart.filter(null)
@@ -661,13 +800,13 @@ function prepareCharts(jobs, start, end, firstRun) {
     agencyChart.filter([agencyChartFilters])
     eventChart.filter([eventChartFilters])
     priorityChart.filter([priorityChartFilters])
-    jobTypeChart.filter([jobtypeChartFilters])
     hazardChart.filter([hazardChartFilters])
     propertyChart.filter([propertyChartFilters])
     jobtypeChart.filter([jobtypeChartFilters])
     localChart.filter([localChartFilters])
-
-
+    unitChart.filter([unitChartFilters])
+    clusterChart.filters([clusterChartFilters])
+    zoneChart.filters([zoneChartFilters])
 
     //add the data back in
     facts.add(jobs.Results)
@@ -802,8 +941,6 @@ function makeTagGroup(dim, targetfact) {
 }
 
 
-
-
 // make pie chart using our standard parameters
 function makePie(elem, w, h, dimension, group) {
   var chart = dc.pieChart(elem);
@@ -813,6 +950,25 @@ function makePie(elem, w, h, dimension, group) {
     .innerRadius(0)
     .dimension(dimension)
     .group(group);
+  chart.legend(dc.legend().legendText(function(d) {
+    return d.name + ' (' + d.data + ')';
+  }).x(0).y(20))
+  chart.on('renderlet', function(chart) {
+    chart.selectAll('text.pie-slice')
+      .attr('transform', function(d) {
+        var translate = d3.select(this).attr('transform');
+        var ang = ((d.startAngle + d.endAngle) / 2 * 180 / Math.PI) % 360;
+        if (ang < 180) ang -= 90;
+        else ang += 90;
+        return translate + ' rotate(' + ang + ')';
+      });
+  });
+  dc.override(chart, 'legendables', function() {
+    var legendables = this._legendables();
+    return legendables.filter(function(l) {
+      return l.data > 0;
+    });
+  });
   return chart;
 }
 
@@ -826,12 +982,7 @@ function makeTagPie(elem, fact, location) {
 
   var group = makeTagGroup(dimension, location);
   var chart = makePie(elem, 460, 240, dimension, group);
-
   chart.slicesCap(10);
-  chart.legend(dc.legend().legendText(function(d) {
-    return d.name + ' (' + d.data + ')';
-  }).x(0).y(20))
-
   chart.filterHandler(function(dimension, filters) {
     if (filters.length === 0)
       dimension.filter(null);
@@ -857,9 +1008,6 @@ function makeSimplePie(elem, w, h, selector) {
   var chart = makePie(elem, w, h, dimension, group);
   chart
     .slicesCap(10);
-  chart.legend(dc.legend().legendText(function(d) {
-    return d.name + ' (' + d.data + ')';
-  }).x(0).y(20))
   return chart
 }
 
@@ -876,9 +1024,6 @@ function makeSimplePieAbrev(elem, w, h, selector) {
     var acronym = matches.join('');
     return acronym;
   })
-  chart.legend(dc.legend().legendText(function(d) {
-    return d.name + ' (' + d.data + ')';
-  }).x(0).y(20))
   return chart
 }
 
@@ -896,4 +1041,21 @@ function getToken(cb) { //when external vars have loaded
       }
     })
   }, 200);
+}
+
+function round(value, step) {
+    step || (step = 1.0);
+    var inv = 1.0 / step;
+    return Math.ceil(value * inv) / inv;
+}
+
+function remove_empty_bins(source_group) {
+    return {
+        all:function () {
+            return source_group.all().filter(function(d) {
+                //return Math.abs(d.value) > 0.00001; // if using floating-point numbers
+                return d.value !== 0 && d.key !== 0; // if integers only
+            });
+        }
+    };
 }
