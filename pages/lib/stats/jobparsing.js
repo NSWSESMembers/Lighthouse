@@ -118,22 +118,47 @@ function prepareData(jobs, unit, start, end, cb) {
 
       d.JobOpenFor = 0;
       d.JobCompleted = new Date(0); //do it with a 1970 so that its a valid date. will filter out later
+      var jobstart = 0;
+      var jobend = 0;
       for (var counter = 0; counter < (d.JobStatusTypeHistory.length); counter++) {
         switch (d.JobStatusTypeHistory[counter].Type) {
           case 1: // New
             break;
-          case 2: // Acknowledged
+          case 2: // active
+            jobstart = (jobstart == 0 ? new Date(d.JobStatusTypeHistory[counter].Timelogged) : jobstart) //only count first
             break;
           case 3:
-          case 6:
+            break;
+          case 4: //tasked
+            break;
+          case 6: //complete
+            jobend = (jobend == 0 ? new Date(d.JobStatusTypeHistory[counter].Timelogged) : jobend) //only count first
+            if (thisJobisComp == false) {
+              thisJobisComp = true;
+              d.JobCompleted = new Date(d.JobStatusTypeHistory[counter].Timelogged)
+            }
+            break;
           case 7:
-          case 8: //REJ, COMP+ // anything past completed is all we care about
+            if (thisJobisComp == false) {
+              thisJobisComp = true;
+              d.JobCompleted = new Date(d.JobStatusTypeHistory[counter].Timelogged)
+            }
+            break;
+          case 8:
             if (thisJobisComp == false) {
               thisJobisComp = true;
               d.JobCompleted = new Date(d.JobStatusTypeHistory[counter].Timelogged)
             }
             break;
         }
+      }
+      if (jobstart != 0 && jobend != 0) {
+        d.JobDuration = jobend - jobstart
+        if (d.JobDuration < 0) {
+          d.JobDuration = 0
+        }
+      } else {
+        d.JobDuration = 0
       }
 
       clusterCodes.returnCluster(d.EntityAssignedTo.Name, function(cluster) { //sync call to get cluster name
@@ -148,71 +173,72 @@ function prepareData(jobs, unit, start, end, cb) {
   }
 
   async function processArray(array, cb) {
-    for (const d of array) {
+    for (var d of array) {
       await processJob(d);
     }
+    console.log('Job processArray Completed')
     cb();
   }
 
   processArray(jobs.Results, function() {
 
-  var options = {
-    weekday: "short",
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-    hour12: false
-  };
+    var options = {
+      weekday: "short",
+      year: "numeric",
+      month: "2-digit",
+      day: "numeric",
+      hour12: false
+    };
 
-  if (unit.length == 0) { //whole nsw state
-    document.title = "NSW Job Statistics";
-    $('.stats header h2').text('Job statistics for NSW');
-  } else { //multiple units
-    if (Array.isArray(unit) == false) { //single unit
-      document.title = unit.Name + " Job Statistics";
-      $('.stats header h2').text('Job statistics for ' + unit.Name);
-    }
-    if (unit.length > 1) { //more than one
-
-      var unitParents = []
-      unit.forEach(function(d2) {
-        unitParents[d2.ParentEntity.Code] = (unitParents[d2.ParentEntity.Code] || 0) + 1;
-      })
-      if (Object.keys(unitParents).length == 1) //if theres only 1 LHQ
-      {
-        $('.stats header h2').text('Job statistics for (' + unitParents[Object.keys(unitParents)[0]] + ') ' + Object.keys(unitParents)[0] + ' units');
-      } else {
-        $('.stats header h2').text('Job statistics for Group');
-
+    if (unit.length == 0) { //whole nsw state
+      document.title = "NSW Job Statistics";
+      $('.stats header h2').text('Job statistics for NSW');
+    } else { //multiple units
+      if (Array.isArray(unit) == false) { //single unit
+        document.title = unit.Name + " Job Statistics";
+        $('.stats header h2').text('Job statistics for ' + unit.Name);
       }
+      if (unit.length > 1) { //more than one
 
-      document.title = "Group Job Statistics";
+        var unitParents = []
+        unit.forEach(function(d2) {
+          unitParents[d2.ParentEntity.Code] = (unitParents[d2.ParentEntity.Code] || 0) + 1;
+        })
+        if (Object.keys(unitParents).length == 1) //if theres only 1 LHQ
+        {
+          $('.stats header h2').text('Job statistics for (' + unitParents[Object.keys(unitParents)[0]] + ') ' + Object.keys(unitParents)[0] + ' units');
+        } else {
+          $('.stats header h2').text('Job statistics for Group');
+
+        }
+
+        document.title = "Group Job Statistics";
+      }
     }
-  }
 
-  $('.stats header h4').text(
-    start.toLocaleTimeString("en-au", options) + " to " +
-    end.toLocaleTimeString("en-au", options)
-  );
+    $('.stats header h4').text(
+      start.toLocaleTimeString("en-au", options) + " to " +
+      end.toLocaleTimeString("en-au", options)
+    );
 
-  var banner = "";
+    var banner = "";
 
-  for (var i = 0; i < Object.keys(eventIdAndDescription).length; ++i) {
-    banner = i == 0 ? banner + Object.keys(eventIdAndDescription)[i] : banner + " | " + Object.keys(eventIdAndDescription)[i];
-  }
-  var speed = 15
-  if (banner.length > 1000) {
-    speed = 70
-  } else if (banner.length > 500 && banner.length < 1000) {
-    speed = 30
-  }
+    for (var i = 0; i < Object.keys(eventIdAndDescription).length; ++i) {
+      banner = i == 0 ? banner + Object.keys(eventIdAndDescription)[i] : banner + " | " + Object.keys(eventIdAndDescription)[i];
+    }
+    var speed = 15
+    if (banner.length > 1000) {
+      speed = 70
+    } else if (banner.length > 500 && banner.length < 1000) {
+      speed = 30
+    }
 
-  $('#events').text(banner);
+    $('#events').text(banner);
 
-  $('#events').css('animation', 'marquee ' + speed + 's linear infinite')
+    $('#events').css('animation', 'marquee ' + speed + 's linear infinite')
 
-  cb(jobs) //return clean jobs
-})
+    cb(jobs) //return clean jobs
+  })
 
 }
 

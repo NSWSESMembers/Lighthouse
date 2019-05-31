@@ -28,8 +28,20 @@ var tokenexp = ''
 var timeperiod;
 var unit = null;
 
+var sounds = {
+  'None':'',
+  'Chime': 'sounds/chime.mp3',
+  'iphone':'sounds/iphone.mp3',
+  'Minion': 'sounds/minion.mp3',
+  'Ding':'sounds/ding.mp3',
+}
+
+var newJobSoundElement = document.createElement('audio');
+var newJobSoundSampleElement = document.createElement('audio');
+
 
 $(document).ready(function() {
+
 
   validateTokenExpiration();
 
@@ -64,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById("loading").style.visibility = 'hidden';
     document.getElementById("results").style.visibility = 'visible';
     applyTheme([localStorage.getItem("LighthouseSummaryTheme")]);
-
+    applySounds()
     console.log('Close finished')
     startTimer(60);
 
@@ -90,6 +102,23 @@ $(document).on('change', 'input[name=slide]:radio', function() {
 
 $(document).on('click', "#settings", function() {
   $('input[name=themebox]').val([localStorage.getItem("LighthouseSummaryTheme")]);
+
+  $.each(Object.keys(sounds), function(val, text) {
+    $('#newJobSound').append( new Option(text,text) );
+  });
+
+  $('#newJobSound').val(localStorage.getItem("LighthouseSummaryNewJobSound"))
+
+  $('#newJobSound').change(function(){
+     var val = $(this).val()
+      console.log('Going to play '+val)
+      newJobSoundSampleElement.setAttribute('src', sounds[val]);
+
+    if (val != 'None') {
+      newJobSoundSampleElement.play();
+    }
+});
+
   $('#settingsmodal').modal('show');
 })
 
@@ -97,6 +126,8 @@ $(document).on('click', "#submitButton", function() {
   $('#settingsmodal').modal('hide');
 
   localStorage.setItem("LighthouseSummaryTheme", $('input[name=themebox]:checked').val())
+  localStorage.setItem("LighthouseSummaryNewJobSound", $('#newJobSound').val())
+
   applyTheme($('input[name=themebox]:checked').val())
 
 })
@@ -170,6 +201,20 @@ function applyTheme(themeName) {
 
       break;
   }
+}
+
+function applySounds() {
+  var newJobSound = localStorage.getItem("LighthouseSummaryNewJobSound")
+  console.log('NewJobSound is',newJobSound)
+
+  //set default
+  if (newJobSound == null) {
+    localStorage.setItem("LighthouseSummaryNewJobSound","None")
+    newJobSound = "None"
+  }
+
+  newJobSoundSampleElement.setAttribute('src', sounds[newJobSound]);
+
 }
 
 function getSearchParameters() {
@@ -369,6 +414,16 @@ function HackTheMatrix(unit, host, token, progressBar) {
       var outstanding = newJob + activeJob + tskJob + refJob;
       var completed = canJob + completeJob + finJob + rejJob;
 
+
+      //Sounds for new jobs
+      if (newJob > parseInt($('#new .lh-value').text())) {
+        console.log('Going to play NewJobSound')
+
+      if (newJobSoundElement.getAttribute('src') != '') {
+        newJobSoundElement.play();
+      }
+    }
+
       _.each([
         ['#outstanding', outstanding],
         ['#completedsum', completed],
@@ -394,6 +449,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
           $(elem + ' .lh-subscript').html('&mdash;%')
         }
       });
+
 
       var options = {
         weekday: "short",

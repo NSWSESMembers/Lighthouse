@@ -225,6 +225,8 @@ gulp.task('pages_html', function() {
 gulp.task('pages_static', function() {
   gulp.src('pages/images/**')
     .pipe(gulp.dest('build/pages/images'));
+  gulp.src('pages/sounds/**')
+    .pipe(gulp.dest('build/pages/sounds'));  
   return gulp.src('src/manifest.json')
     .pipe(gulp.dest('build'));
 });
