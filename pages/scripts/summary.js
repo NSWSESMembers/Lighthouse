@@ -94,6 +94,16 @@ window.addEventListener('resize', function(event) {
   resize()
 });
 
+$('#newJobSound').change(function(){
+   var val = $(this).val()
+    console.log('Going to play '+val)
+    newJobSoundSampleElement.setAttribute('src', sounds[val]);
+
+  if (val != 'None') {
+    newJobSoundSampleElement.play();
+  }
+});
+
 $(document).on('change', 'input[name=slide]:radio', function() {
   console.log(this.value);
   timeoverride = (this.value == "reset" ? null : this.value);
@@ -102,22 +112,12 @@ $(document).on('change', 'input[name=slide]:radio', function() {
 
 $(document).on('click', "#settings", function() {
   $('input[name=themebox]').val([localStorage.getItem("LighthouseSummaryTheme")]);
-
+  $('#newJobSound').empty()
   $.each(Object.keys(sounds), function(val, text) {
     $('#newJobSound').append( new Option(text,text) );
   });
 
   $('#newJobSound').val(localStorage.getItem("LighthouseSummaryNewJobSound"))
-
-  $('#newJobSound').change(function(){
-     var val = $(this).val()
-      console.log('Going to play '+val)
-      newJobSoundSampleElement.setAttribute('src', sounds[val]);
-
-    if (val != 'None') {
-      newJobSoundSampleElement.play();
-    }
-});
 
   $('#settingsmodal').modal('show');
 })
