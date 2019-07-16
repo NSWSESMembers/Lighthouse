@@ -432,6 +432,12 @@ function prepareCharts(jobs, start, end, firstRun) {
           var top = onlyCompleted.slice(Math.floor(size * 0.8))
           var bottom = onlyCompleted.slice(0,Math.ceil(size * 0.2))
           var middle = onlyCompleted.slice(Math.ceil(size * 0.2),Math.floor(size * 0.8))
+
+          //if theres no middle due to length < 3
+          if (middle.length == 0) {
+            middle = onlyCompleted
+          }
+
           // Drawing and updating the chart
 
           return [{
@@ -446,7 +452,7 @@ function prepareCharts(jobs, start, end, firstRun) {
             }),
             'topbottom': d3.quantile(onlyCompleted.map(function(a){
               return a.JobDuration
-            }),0.7),
+            }),0.75),
             'middlemiddle': d3.quantile(onlyCompleted.map(function(a){
               return a.JobDuration
             }),0.5),
@@ -560,11 +566,8 @@ function prepareCharts(jobs, start, end, firstRun) {
     .x(d3.scaleLinear()
     .domain([round(jobLengthDimension.bottom(1)[0].JobDuration/1000/60/60,0.1),round(jobLengthDimension.top(1)[0].JobDuration/1000/60/60,0.1)+1])
     )
-    //.x(d3.scaleLinear().domain([round(jobLengthDimension.bottom(1)[0].JobDuration/1000/60/60,0.25),round(jobLengthDimension.top(1)[0].JobDuration/1000/60/60,0.25)+1]))
-
     .elasticY(true)
     .xAxis();
-
 
 completionBellChart.xAxis().ticks(20);
 
@@ -770,7 +773,7 @@ completionBellChart.xAxis().ticks(20);
     unitChartFilters = unitChart.filters();
     clusterChartFilters = clusterChart.filters();
     zoneChartFilters = zoneChart.filters();
-
+    completionBellChartFilters = completionBellChart.filters();
 
 
     //remove the filters
@@ -789,6 +792,7 @@ completionBellChart.xAxis().ticks(20);
     //remove the filters
     timeOpenChart.filter(null)
     timeClosedChart.filter(null)
+    completionBellChart.filter(null)
 
 
     //flush all the jobs stored in the facts
@@ -807,7 +811,6 @@ completionBellChart.xAxis().ticks(20);
     unitChart.filter([unitChartFilters])
     clusterChart.filters([clusterChartFilters])
     zoneChart.filters([zoneChartFilters])
-
     //add the data back in
     facts.add(jobs.Results)
   };

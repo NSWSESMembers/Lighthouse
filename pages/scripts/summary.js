@@ -127,7 +127,7 @@ $(document).on('click', "#submitButton", function() {
 
   localStorage.setItem("LighthouseSummaryTheme", $('input[name=themebox]:checked').val())
   localStorage.setItem("LighthouseSummaryNewJobSound", $('#newJobSound').val())
-
+  applySounds()
   applyTheme($('input[name=themebox]:checked').val())
 
 })
@@ -205,7 +205,7 @@ function applyTheme(themeName) {
 
 function applySounds() {
   var newJobSound = localStorage.getItem("LighthouseSummaryNewJobSound")
-  console.log('NewJobSound is',newJobSound)
+  console.log('NewJobSound is ',newJobSound)
 
   //set default
   if (newJobSound == null) {
@@ -213,7 +213,7 @@ function applySounds() {
     newJobSound = "None"
   }
 
-  newJobSoundSampleElement.setAttribute('src', sounds[newJobSound]);
+  newJobSoundElement.setAttribute('src', sounds[newJobSound]);
 
 }
 
@@ -417,9 +417,10 @@ function HackTheMatrix(unit, host, token, progressBar) {
 
       //Sounds for new jobs
       if (newJob > parseInt($('#new .lh-value').text())) {
-        console.log('Going to play NewJobSound')
+        console.log('New job, will play newJobSoundElement if set')
 
       if (newJobSoundElement.getAttribute('src') != '') {
+        console.log('playing newJobSoundElement')
         newJobSoundElement.play();
       }
     }
