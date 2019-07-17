@@ -1,6 +1,5 @@
 var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
-var $ = require('jquery');
 var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
 var postCodes = require('../../../lib/postcodes.js');
 var vincenty = require('../../../lib/vincenty.js');
@@ -208,6 +207,9 @@ whenAddressIsReady(function() {
 quickTask = return_quicktaskbutton();
 quickSector = return_quicksectorbutton();
 quickCategory = return_quickcategorybutton();
+quickRadioLog = return_quickradiologbutton();
+instantRadiologModal = return_quickradiologmodal();
+
 
 //the quicktask button
 $(quickTask).find('button').click(function() {
@@ -217,7 +219,7 @@ $(quickTask).find('button').click(function() {
   }
 });
 
-//the quicktask button
+//the quicksector button
 $(quickSector).find('button').click(function() {
   if ($(quickSector).hasClass("open") == false)
   {
@@ -225,7 +227,7 @@ $(quickSector).find('button').click(function() {
   }
 });
 
-//the quicktask button
+//the quickcategory button
 $(quickCategory).find('button').click(function() {
   if ($(quickCategory).hasClass("open") == false)
   {
@@ -233,11 +235,58 @@ $(quickCategory).find('button').click(function() {
   }
 });
 
+
+//add the radio log modal
+$( "body" ).append(instantRadiologModal);
+
+//the quick radio log button
+$(quickRadioLog).find('button').click(function() {
+  $('#instantradiologModal').modal()
+  console.log('test')
+});
+
+// submit radio log on enter press in message body
+$('#instantRadioLogText').keydown(function(event) {
+    if (event.keyCode == 13) {
+        processSubmitInstantRadioLog()
+        return false;
+     }
+   })
+
+//submit radio log on submit button press
+$(instantRadiologModal).find('#submitInstantRadioLogButton').click(function() {
+processSubmitInstantRadioLog()
+});
+
+//handle both the above submits
+function processSubmitInstantRadioLog() {
+  if ($('#instantRadioLogText').val() == '') {
+    $('#instantRadioLogTextForm').addClass('has-error')
+  } else {
+submitInstantRadioLog($('#instantRadioLogCallSign').val(),$('#instantRadioLogText').val(),function(result) {
+  if (result) {
+    $('#instantradiologModal').modal('hide')
+    $('#instantRadioLogTextForm').removeClass('has-error') //just incase
+    $('#instantRadioLogText').val('')
+  } else {
+    alert('Error submitting log entry')
+  }
+})
+}
+}
+
+
 whenJobIsReady(function(){
+
+
   if (masterViewModel.canTask.peek() == true) //this role covers sectors and category as well
   {
     $('#lighthouse_actions_content').append(quickTask, quickSector, quickCategory);
+
   }
+
+  $('#lighthouse_actions_content').append(quickRadioLog);
+
 });
 
 
@@ -768,6 +817,18 @@ function InstantTaskButton() {
 
 }
 
+////Instant radio log stuff
+function submitInstantRadioLog(subject, text,cb) {
+  masterViewModel.notesViewModel.OperationsLogManager.CreateEntry(jobId,null,subject || "Instant Radio Log",text,null, null, null, !1, !1, !1, [15,6],null,function(res) {
+if (res) {
+      masterViewModel.notesViewModel.loadOpsLogPage()
+      cb(true)
+    } else {
+      cb(false)
+    }
+})
+
+}
 
 
 function TaskTeam(teamID) {
@@ -897,7 +958,7 @@ $(document).ready(function() {
 function return_quicktaskbutton() {
   return (
     <div id="lighthouse_instanttask" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
-      <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Task
+      <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><i class="fa fa-tasks"></i>Instant Task
       <span class="caret"></span></button>
       <ul class="dropdown-menu scrollable-menu">
       </ul>
@@ -908,7 +969,7 @@ function return_quicktaskbutton() {
 function return_quicksectorbutton() {
   return (
     <div id="lighthouse_instantsector" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
-      <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" id="lhsectorbutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Sector
+      <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" id="lhsectorbutton"><i class="fa fa-cubes"></i>Instant Sector
       <span class="caret"></span></button>
       <ul class="dropdown-menu scrollable-menu">
       </ul>
@@ -919,10 +980,58 @@ function return_quicksectorbutton() {
 function return_quickcategorybutton() {
   return (
     <div id="lighthouse_instantcategory" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
-      <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhcategorybutton"><img width="14px" style="vertical-align:top;margin-right:5px;float:left" src={lighthouseUrl+"icons/lh.png"}></img>Instant Category
+      <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhcategorybutton"><i class="fa fa-database"></i>Instant Category
       <span class="caret"></span></button>
       <ul class="dropdown-menu scrollable-menu">
       </ul>
+    </div>
+  );
+}
+
+function return_quickradiologbutton() {
+  return (
+    <div id="lighthouse_instantradiolog" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;">
+      <button class="btn btn-sm btn-default" style="background-color: #837947;border-color: #837947" type="button" id="lhinstantradiologbutton"><i class="fa fa-microphone"></i>Instant Radio Log
+      </button>
+    </div>
+  );
+}
+
+function return_quickradiologmodal() {
+  return (
+    <div class="modal fade" id="instantradiologModal" role="dialog" style="display: none;">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title"><i class="fa fa-microphone"></i> Instant Radio Log Entry | Job</h4>
+          </div>
+          <div class="modal-body">
+          <div class="form-group" title="">
+            <div class="row">
+              <label class="col-md-4 col-lg-3 control-label">Callsign</label>
+              <div class="col-md-8 col-lg-9">
+                <textarea id="instantRadioLogCallSign" class="form-control" rows="1"></textarea>
+              </div>
+              <div title="">
+              </div>
+            </div>
+          </div>
+            <div class="form-group" title="" id="instantRadioLogTextForm">
+              <div class="row">
+                <label class="col-md-4 col-lg-3 control-label">Note</label>
+                <div class="col-md-8 col-lg-9">
+                  <textarea id="instantRadioLogText" class="form-control"></textarea>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-info"><span class="button-text" id="submitInstantRadioLogButton">Submit</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
