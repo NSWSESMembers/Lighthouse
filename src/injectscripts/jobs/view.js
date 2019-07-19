@@ -9,10 +9,16 @@ var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 console.log("Running inject script");
 
 //if ops logs update
-masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseKeeper);
+masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
 
 //if messages update
-masterViewModel.messagesViewModel.messages.subscribe(lighthouseKeeper);
+masterViewModel.messagesViewModel.messages.subscribe(lighthouseDictionary);
+
+//if the ETA inputs are visable
+masterViewModel.teamsViewModel.jobTeamStatusBeingUpdated.subscribe(lighthouseETA);
+
+//if the ETA time changes
+masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.subscribe(lighthouseETAFromNow);
 
 //if tasking update
 
@@ -23,7 +29,63 @@ masterViewModel.teamsViewModel.taskedTeams.subscribe(function() {
   setTimeout(lighthouseTasking,0)
 });
 
+function lighthouseETAFromNow() {
+  var future = moment(masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.peek())
+  var now = moment()
+  var totalHours = future.diff(now, 'hours');
+  var totalMinutes = Math.ceil(future.diff(now, 'minutes'));
+  var clearMinutes = Math.ceil(totalMinutes % 60);
+  $('#quickETAtext').text("In "+totalHours + " hours and " + clearMinutes + " minutes")
+}
 
+function lighthouseETA() {
+  setTimeout( function() {
+    //dont draw for offsite
+    if (masterViewModel.teamsViewModel.jobTeamStatusTypeBeingUpdated().Id != 5)
+    {
+    $('a[data-bind$="loadingButton: $parent.updatingJobTeamStatus, click: $parent.updateJobTeamStatus"]')
+      .each(function(k,v){ //there can only be one, but why not handle more than one incase
+
+        var buttons = return_quicketarow()
+        var text = return_quicketamoment()
+
+        $('div[data-bind$="validationElement: $parent.jobTeamStatusEstimatedCompletion"].input-group').after(text)
+
+
+        $(buttons).find("#5min").click(function() {
+            addToTime(5,v,text)
+        })
+        $(buttons).find("#10min").click(function() {
+          addToTime(10,v,text)
+        })
+        $(buttons).find("#15min").click(function() {
+          addToTime(15,v,text)
+        })
+        $(buttons).find("#30min").click(function() {
+          addToTime(30,v,text)
+        })
+        $(buttons).find("#60min").click(function() {
+          addToTime(60,v,text)
+        })
+        $(v).before(buttons)
+
+      })
+
+      function addToTime(addMins, where, text) {
+        var timeInput = $(where).parent('div').parent('div').parent('div').find('input[data-bind$="datetimepicker: $parent.jobTeamStatusEstimatedCompletion, attr: {placeholder: $parent.jobTeamStatusTypeBeingUpdated() ? ($parent.jobTeamStatusTypeBeingUpdated().Id == Enum.JobTeamStatusTypeEnum.Enroute.Id ? \'ETA\' : \'ETC\') : \'\' \}"]')
+        var now = moment()
+        var current = moment()
+        if (timeInput.val() != ''){
+          current = moment(timeInput.val(),'DD/MM/YYYY HH:mm')
+        }
+        var future = current.clone()
+        future.add(addMins,'m')
+        masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion(future)
+      }
+}
+}, 0);
+
+}
 
 
 function lighthouseTasking() {
@@ -88,7 +150,7 @@ function lighthouseTasking() {
 
 
 //call on run
-lighthouseKeeper();
+lighthouseDictionary();
 
 
 //call when the address exists
@@ -399,7 +461,7 @@ $(document).on('click',  'div.widget > div.widget-content > div[data-bind$="task
 
 document.title = "#"+jobId;
 
-function lighthouseKeeper(){
+function lighthouseDictionary(){
 
   var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: $data"]');
 
@@ -439,9 +501,9 @@ function lighthouseKeeper(){
       contentRepl = contentRepl.replace(new RegExp('\\b(' + abbrText + ')\\b', 'gi'), '<abbr title="' + clearText + '">$1</abbr>');
     });
     if(contentRepl != contentOrig){
-      $t.html(contentRepl).addClass('lighthouseKeeper-modified');
+      $t.html(contentRepl).addClass('lighthouseDictionary-modified');
     }else{
-      $t.addClass('lighthouseKeeper-nomodifications');
+      $t.addClass('lighthouseDictionary-nomodifications');
     }
   });
 
@@ -1033,6 +1095,35 @@ function return_quickradiologmodal() {
         </div>
       </div>
     </div>
+  );
+}
+
+function return_quicketarow() {
+  return (
+      <div>
+        <span id="5min" class="label tag tag-task tag-disabled">
+          <span class="tag-text">+5min</span>
+        </span>
+        <span id="10min" class="label tag tag-task tag-disabled">
+          <span class="tag-text">+10min</span>
+        </span>
+        <span id="15min" class="label tag tag-task tag-disabled">
+          <span class="tag-text">+15min</span>
+        </span>
+        <span id="30min" class="label tag tag-task tag-disabled">
+          <span class="tag-text">+30min</span>
+        </span>
+        <span id="60min" class="label tag tag-task tag-disabled">
+          <span class="tag-text">+60min</span>
+        </span>
+      </div>
+  );
+}
+
+function return_quicketamoment() {
+  return (
+      <div style="padding-left: 5px" id="quickETAtext">
+      </div>
   );
 }
 
