@@ -1100,21 +1100,26 @@ function return_quickradiologmodal() {
 
 function return_quicketarow() {
   return (
-      <div>
-        <span id="5min" class="label tag tag-task tag-disabled">
-          <span class="tag-text">+5min</span>
+      <div style="display: inline-block">
+        <span id="5min" class="label tag tag-darkgreen tag-disabled">
+          <span class="tag-text"><img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+          src={lighthouseUrl+"icons/lh.png"} />+5min</span>
         </span>
-        <span id="10min" class="label tag tag-task tag-disabled">
-          <span class="tag-text">+10min</span>
+        <span id="10min" class="label tag tag-darkgreen tag-disabled">
+          <span class="tag-text"><img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+          src={lighthouseUrl+"icons/lh.png"} />+10min</span>
         </span>
-        <span id="15min" class="label tag tag-task tag-disabled">
-          <span class="tag-text">+15min</span>
+        <span id="15min" class="label tag tag-darkgreen tag-disabled">
+          <span class="tag-text"><img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+          src={lighthouseUrl+"icons/lh.png"} />+15min</span>
         </span>
-        <span id="30min" class="label tag tag-task tag-disabled">
-          <span class="tag-text">+30min</span>
+        <span id="30min" class="label tag tag-darkgreen tag-disabled">
+          <span class="tag-text"><img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+          src={lighthouseUrl+"icons/lh.png"} />+30min</span>
         </span>
-        <span id="60min" class="label tag tag-task tag-disabled">
-          <span class="tag-text">+60min</span>
+        <span id="60min" class="label tag tag-darkgreen tag-disabled">
+          <span class="tag-text"><img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+          src={lighthouseUrl+"icons/lh.png"} />+60min</span>
         </span>
       </div>
   );

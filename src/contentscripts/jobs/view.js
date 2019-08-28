@@ -43,13 +43,12 @@ function asbestosBoxColor(text, color, url) {
 function renderQuickText(id, selections) {
   return (
     <div class="form-group">
-    <div class="row">
     <label class="col-md-4 col-lg-3 control-label">
     <img style="width:16px;vertical-align:top;margin-right:5px"
     src={chrome.extension.getURL("icons/lh-black.png")} />
     Quick Text
     </label>
-    <div class="col-md-8 col-lg-9">
+    <div class="col-md-8 col-lg-9" style="margin-bottom: 15px;">
     <select class="form-control" id={id} style="width:100%">
     {
       _.map(selections, function(selection) {
@@ -57,7 +56,6 @@ function renderQuickText(id, selections) {
       })
     }
     </select>
-    </div>
     </div>
     </div>
     );
@@ -106,13 +104,12 @@ var options = [
 
 var html = (
   <div class="form-group">
-  <div class="row">
   <label class="col-md-4 col-lg-3 control-label">
   <img style="width:16px;vertical-align:top;margin-right:5px"
   src={chrome.extension.getURL("icons/lh-black.png")} />
   Quick Tasks
   </label>
-  <div class="col-md-8 col-lg-9">
+  <div class="col-md-8 col-lg-9" style="margin-bottom: 15px;">
   {
     _.map(options, function(option) {
       return (
@@ -124,7 +121,6 @@ var html = (
   }
   </div>
   </div>
-  </div>
 );
 
 // Quick Text - Job - Team Complete
@@ -133,7 +129,7 @@ var html2 = renderQuickText("CompleteTeamQuickTextBox", [
   "NSW SES volunteers attended scene and resident no longer required assistance.",
   ])
 
-$('#completeTeamModal .modal-body .form-group:nth-child(12)').after([html, html2]);
+$('#completeTeamModal > div > div > div.modal-body > div > div > div > textarea[data-bind$="value: actionTaken"]').parent().parent().after([html, html2]);
 
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
 job_view_history = (
