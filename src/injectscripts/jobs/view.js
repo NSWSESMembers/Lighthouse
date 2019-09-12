@@ -2,8 +2,8 @@ var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
 var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
 var postCodes = require('../../../lib/postcodes.js');
-var vincenty = require('../../../lib/vincenty.js');
 var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
+var vincenty = require('../../../lib/vincenty.js');
 
 
 console.log("Running inject script");
@@ -163,11 +163,11 @@ whenAddressIsReady(function() {
     {
       $('#asbestos-register-text').html("Not A Searchable Address");
     } else {
-      sesAsbestosSearch(masterViewModel.geocodedAddress.peek(), function(res) {
+      sesAsbestosSearch(masterViewModel.geocodedAddress.peek(), function(res) { //check the ses asbestos register first
         if (res == true)
-        {
+        { //tell the inject page (rendering result handled on the inject page)
           window.postMessage({ type: "FROM_PAGE_SESASBESTOS_RESULT", address: masterViewModel.geocodedAddress.peek(), result: true, color: 'red' }, "*");
-        } else {
+        } else { //otherwise check the fair trade database via background script
             window.postMessage({ type: "FROM_PAGE_FTASBESTOS_SEARCH", address: masterViewModel.geocodedAddress.peek() }, "*");
           }
       });
@@ -175,20 +175,8 @@ whenAddressIsReady(function() {
     if(typeof masterViewModel.geocodedAddress.peek() != 'undefined')
     {
      if (masterViewModel.geocodedAddress.peek().Latitude != null || masterViewModel.geocodedAddress.peek().Longitude != null) {
-      var t0 = performance.now();
-        $.getJSON(lighthouseUrl+'resources/SES_HQs.geojson', function (data) {
-          distances = []
-          data.features.forEach(function(v){
-            v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)/1000
-            distances.push(v)
-          })
-          let _sortedDistances = distances.sort(function(a, b) {
-            return a.distance - b.distance
-          });
-          $('#nearest-lhq-text').text(`${_sortedDistances[0].properties.HQNAME} (${_sortedDistances[0].distance.toFixed(2)} kms), ${_sortedDistances[1].properties.HQNAME} (${_sortedDistances[1].distance.toFixed(2)} kms), ${_sortedDistances[2].properties.HQNAME} (${_sortedDistances[2].distance.toFixed(2)} kms)`)
-          var t1 = performance.now();
-          console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
-      })
+       window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", lat: masterViewModel.geocodedAddress.peek().Longitude, lng: masterViewModel.geocodedAddress.peek().Longitude }, "*");
+
         if (masterViewModel.jobType.peek().ParentId == 5) { //Is a rescue
           var t0 = performance.now();
           let avlType = masterViewModel.jobType.peek().Name

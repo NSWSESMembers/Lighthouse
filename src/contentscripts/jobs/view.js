@@ -2,6 +2,7 @@ var inject = require('../../../lib/inject.js');
 var _ = require('underscore');
 var DOM = require('jsx-dom-factory');
 var $ = require('jquery');
+var vincenty = require('../../../lib/vincenty.js');
 
 
 window.addEventListener("message", function(event) {
@@ -20,6 +21,21 @@ window.addEventListener("message", function(event) {
     asbestosBoxColor(event.data.address.PrettyAddress+" was FOUND on the SES asbestos register.",'red','')
   } else if (event.data.type && (event.data.type == "FROM_PAGE_UPDATE_API_TOKEN")) {
 
+  } else if (event.data.type && (event.data.type == "FROM_PAGE_LHQ_DISTANCE")) {
+    var t0 = performance.now();
+  $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+    distances = []
+    data.features.forEach(function(v){
+      v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,event.data.lat,event.data.lng)/1000
+      distances.push(v)
+    })
+    let _sortedDistances = distances.sort(function(a, b) {
+      return a.distance - b.distance
+    });
+    $('#nearest-lhq-text').text(`${_sortedDistances[0].properties.HQNAME} (${_sortedDistances[0].distance.toFixed(2)} kms), ${_sortedDistances[1].properties.HQNAME} (${_sortedDistances[1].distance.toFixed(2)} kms), ${_sortedDistances[2].properties.HQNAME} (${_sortedDistances[2].distance.toFixed(2)} kms)`)
+    var t1 = performance.now();
+    console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
+})
   }
 }, false);
 
