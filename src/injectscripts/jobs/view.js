@@ -175,7 +175,7 @@ whenAddressIsReady(function() {
     if(typeof masterViewModel.geocodedAddress.peek() != 'undefined')
     {
      if (masterViewModel.geocodedAddress.peek().Latitude != null || masterViewModel.geocodedAddress.peek().Longitude != null) {
-       window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", lat: masterViewModel.geocodedAddress.peek().Longitude, lng: masterViewModel.geocodedAddress.peek().Longitude }, "*");
+       window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", lat: masterViewModel.geocodedAddress.peek().Latitude, lng: masterViewModel.geocodedAddress.peek().Longitude }, "*");
 
         if (masterViewModel.jobType.peek().ParentId == 5) { //Is a rescue
           var t0 = performance.now();
