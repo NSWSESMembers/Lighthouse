@@ -1077,7 +1077,7 @@ function return_quickradiologmodal() {
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-              <button type="button" class="btn btn-info"><span class="button-text" id="submitInstantRadioLogButton">Submit</span></button>
+              <button type="button" class="btn btn-info" id="submitInstantRadioLogButton"><span class="button-text">Submit</span></button>
             </div>
           </div>
         </div>
