@@ -802,7 +802,7 @@ function LoadJobFilterCollections() {
         $(button).click(function() {
 
           //go back to defaults first
-          //FIX for events collection load resetting date filter
+          //FIX for  collection load resetting date filter when events is flushed
           filterViewModel.resetFilters()
 
 
