@@ -800,6 +800,13 @@ function LoadJobFilterCollections() {
         var button = make_collection_button(item.name, item.items.length + "")
 
         $(button).click(function() {
+
+          //go back to defaults first
+          //FIX for events collection load resetting date filter
+          filterViewModel.resetFilters()
+
+
+
           filterViewModel.selectedTags.removeAll()
           item.items.selectedTags.forEach(function(itm) {
             filterViewModel.selectedTags.push(itm)
@@ -902,7 +909,8 @@ function LoadJobFilterCollections() {
               break
           }
 
-          filterViewModel.selectedEvents.removeAll()
+          //removing events resets time filter. dont do this
+          //filterViewModel.selectedEvents.removeAll()
           item.items.selectedEvents.forEach(function(itm) {
             filterViewModel.selectedEvents.push(itm)
           })
