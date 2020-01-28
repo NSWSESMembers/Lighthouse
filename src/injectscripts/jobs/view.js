@@ -292,7 +292,6 @@ $( "body" ).append(instantRadiologModal);
 //the quick radio log button
 $(quickRadioLog).find('button').click(function() {
   $('#instantradiologModal').modal()
-  console.log('test')
 });
 
 // submit radio log on enter press in message body
@@ -352,7 +351,8 @@ whenTeamsAreReady(function(){
 
   if (masterViewModel.sector.peek() !== null)
   {
-    $('#content div.col-md-5 div[data-bind="visible: jobLoaded()"] div.widget-header')[0].append(renderSectorFilterCheckBox());
+    console.log('sector filter enabled')
+    $('#lighthouse_actions div.widget-header').append(renderSectorFilterCheckBox());
 
     $('#lighthouseSectorFilterEnabled').click(function() {
       // Toggle Value
@@ -379,9 +379,13 @@ whenTeamsAreReady(function(){
 function sectorfilter_switch(){
   // Set flag
   var lh_SectorFilterEnabled = localStorage.getItem('LighthouseSectorFilterEnabled') == 'false';
-  // Adjust View
-  jobView_teamsTasked_completedHiddenSwitch();
+  // Toggle class for checkbox
+  $('#lighthouseSectorFilterEnabled')
+    .toggleClass('fa-check-square-o', lh_SectorFilterEnabled)
+    .toggleClass('fa-square-o', !lh_SectorFilterEnabled);
 }
+
+
 
 
 
@@ -627,7 +631,8 @@ function InstantSectorButton() {
             }
             $(item).click(function (e) {
               SetSector(entry,currentsector)
-              e.preventDefault();
+              location.reload();
+              //e.preventDefault();
             })
             finalli.push(item)
           })
@@ -688,7 +693,8 @@ function InstantTaskButton() {
 
   var alreadyTasked = []
   $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
-    if(v.CurrentStatusId != 6)
+    console.log(v.CurrentStatusId)
+    if(v.CurrentStatusId != 6 && v.CurrentStatusId != 7)
     {
       alreadyTasked.push(v.Team.Id);
     }
@@ -841,11 +847,13 @@ function InstantTaskButton() {
                   finalli.push($(v))
                 }
               });
+              if (nonsector.length) {
               //finalli.push(return_lidivider());
               finalli.push(return_lipres("Unsectorised Teams"));
               $.each(nonsector, function(k, v){
                 finalli.push(v);
               })
+            }
               $(quickTask).find('ul').append(finalli);
 
             } else {
