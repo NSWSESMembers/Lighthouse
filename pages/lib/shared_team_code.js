@@ -5,7 +5,7 @@ function GetTaskingfromBeacon(Id, host, token, callback) {
   console.log("GetTaskingfromBeacon called with:" + Id+", "+host);
 
     LighthouseJson.get_json(
-    host+"/Api/v1/Tasking/Search?TeamIds=" + Id, token,
+    host+"/Api/v1/Tasking/Search?LighthouseFunction=GetTaskingfromBeacon&TeamIds=" + Id, token,
     function(res){
       console.log("Progress CB");
     },
@@ -48,7 +48,7 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback,
     }
   }
 
-  var url = host+"/Api/v1/Teams/Search?" + $.param(params, true);
+  var url = host+"/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon" + $.param(params, true);
   var lastDisplayedVal = 0 ;
   LighthouseJson.get_json(
     url, token,

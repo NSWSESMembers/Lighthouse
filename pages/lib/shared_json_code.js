@@ -1,7 +1,7 @@
 var $ = require('jquery');
 
 function goGetMeSomeJSONFromBeacon(url, token, progresscb, cb) { //take url and a page limit and loop until a result returns less than we asked for
-  const perPageLimit = 50;
+  const perPageLimit = 100;
   var currentPage = 1;
   var totalResults = [];
   goGet(HandleResults,currentPage); //make the first call to kick off the loop
@@ -23,8 +23,8 @@ function goGetMeSomeJSONFromBeacon(url, token, progresscb, cb) { //take url and 
       }
     } else { //last entry amazingly 0, or something is broken. lets stop
       progresscb(totalResults.length,result.TotalItems)
-      console.log("Got them all"); 
-        cb(totalResults); //we are done 
+      console.log("Got them all");
+        cb(totalResults); //we are done
       }
     }
 

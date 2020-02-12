@@ -13,17 +13,17 @@ function GetJSONfromBeacon(unit, host, StartDate, EndDate, token, callback, prog
 
   if (unit !== null || typeof unit == undefined) {
     if (Array.isArray(unit) == false) {
-      url = host + "/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
+      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
     } else {
       var hqString = "";
       unit.forEach(function(d) {
         hqString = hqString + "&Hq=" + d.Id
       });
       console.log(hqString)
-      url = host + "/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
+      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
     }
   } else {
-    url = host + "/Api/v1/Jobs/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
+    url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
 
   }
 
