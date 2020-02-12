@@ -360,7 +360,8 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
           progressBar.setValue(0.1 + ((val / total) - 0.1)) //start at 10%, dont top 100%
         }
       }
-    }
+    },
+    [3] // StatusTypeId=3 - Activated
   );
 }
 

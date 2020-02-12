@@ -29,6 +29,7 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback,
   params['SortField'] = 'CreatedOn';
   params['SortOrder'] = 'desc';
   params['StatusTypeId'] = statusTypes;
+  params['IncludeDeleted'] = false;
 
   if (unit !== null || typeof unit == undefined) {
     if (Array.isArray(unit) == false) {
@@ -48,7 +49,7 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback,
     }
   }
 
-  var url = host+"/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon" + $.param(params, true);
+  var url = host+"/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon&" + $.param(params, true);
   var lastDisplayedVal = 0 ;
   LighthouseJson.get_json(
     url, token,
