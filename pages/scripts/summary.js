@@ -324,96 +324,43 @@ function RunForestRun(mp) {
 //make the call to beacon
 function HackTheMatrix(unit, host, token, progressBar) {
 
+  progressBar.setValue(0.5);
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  LighthouseJob.get_json(unit, host, start, end, token,
-    function(jobs) {
-      var facts = crossfilter(jobs.Results);
-      var all = facts.groupAll();
+  LighthouseJob.get_summary_json(unit, host, start, end, token,
+    function(summary) {
+      progressBar.setValue(1);
 
-      var JobStatus = facts.dimension(function(d) {
-        return d.JobStatusType.Name;
-      });
+      var completeJob = _.findWhere(summary.result, { Name: "Complete" }).Count;
+      var newJob = _.findWhere(summary.result, { Name: "New" }).Count;
+      var activeJob = _.findWhere(summary.result, { Name: "Active" }).Count;
+      var refJob = _.findWhere(summary.result, { Name: "Referred" }).Count;
+      var finJob = _.findWhere(summary.result, { Name: "Finalised" }).Count;
+      var canJob = _.findWhere(summary.result, { Name: "Cancelled" }).Count;
+      var rejJob = _.findWhere(summary.result, { Name: "Rejected" }).Count;
+      var tskJob = _.findWhere(summary.result, { Name: "Tasked" }).Count;
 
-      var JobType = facts.dimension(function(d) {
-        return d.JobType.ParentId;
-      });
+      var storm = _.findWhere(summary.result, { Name: "Storm" }).Count;
+      var flood = _.findWhere(summary.result, { Name: "Flood Misc" }).Count;
+      flood = flood + _.findWhere(summary.result, { Name: "Medical Resupply" }).Count;
+      flood = flood + _.findWhere(summary.result, { Name: "Fodder Drop" }).Count;
+      flood = flood + _.findWhere(summary.result, { Name: "Resupply" }).Count;
+      flood = flood + _.findWhere(summary.result, { Name: "Vet Assistance" }).Count;
 
-      var JobStatusGroup = JobStatus.group().reduceCount(function(d) {
-        return d.JobStatusType.Name;
-      });
-      var JobTypeGroup = JobType.group().reduceCount(function(d) {
-        return d.JobType.ParentId;
-      });
+      var rescue = _.findWhere(summary.result, { Name: "RCR" }).Count;
+      rescue = rescue + _.findWhere(summary.result, { Name: "FR" }).Count;
+      rescue = rescue + _.findWhere(summary.result, { Name: "WR" }).Count;
+      rescue = rescue + _.findWhere(summary.result, { Name: "VR" }).Count;
+      rescue = rescue + _.findWhere(summary.result, { Name: "CFR" }).Count;
 
-      var completeJob = 0;
-      var newJob = 0;
-      var activeJob = 0;
-      var refJob = 0;
-      var finJob = 0;
-      var canJob = 0;
-      var rejJob = 0;
-      var tskJob = 0;
 
-      JobStatusGroup.all().forEach(function(d) {
-        console.log(d.key + " " + d.value);
-        switch (d.key) {
-          case "New":
-            newJob = d.value;
-            break;
-          case "Active":
-            activeJob = d.value;
-            break;
-          case "Tasked":
-            tskJob = d.value;
-            break;
-          case "Complete":
-            completeJob = d.value;
-            break;
-          case "Finalised":
-            finJob = d.value;
-            break;
-          case "Referred":
-            refJob = d.value;
-            break;
-          case "Rejected":
-            rejJob = d.value;
-            break;
-          case "Cancelled":
-            canJob = d.value;
-            break;
-          default:
-            console.log("unmatched status - " + d)
-            break;
-        }
-      });
-
-      var storm = 0;
-      var flood = 0;
-      var rescue = 0;
-      var support = 0;
-
-      JobTypeGroup.all().forEach(function(d) {
-        switch (d.key) {
-          case 1: // Parent: Storm
-            storm = d.value;
-            break;
-          case 2: // Parent: Support
-            support = d.value;
-            break;
-          case 4: // Parent: Flood Assistance
-            flood = d.value;
-            break;
-          case 5: // Parent: Rescue
-            rescue = d.value;
-            break;
-        }
-      });
+      var support = _.findWhere(summary.result, { Name: "Support" }).Count;
 
       var outstanding = newJob + activeJob + tskJob + refJob;
       var completed = canJob + completeJob + finJob + rejJob;
 
+      var total = outstanding+completed
 
       //Sounds for new jobs
       if (newJob > parseInt($('#new .lh-value').text())) {
@@ -428,7 +375,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
       _.each([
         ['#outstanding', outstanding],
         ['#completedsum', completed],
-        ['#totalnumber', jobs.Results.length],
+        ['#totalnumber', outstanding+completed],
         ['#new', newJob],
         ['#active', activeJob],
         ['#tasked', tskJob],
@@ -445,7 +392,7 @@ function HackTheMatrix(unit, host, token, progressBar) {
         var [elem, jobCount] = params;
         $(elem + ' .lh-value').text('' + jobCount)
         if (jobCount > 0) {
-          $(elem + ' .lh-subscript').text(Math.round(jobCount / jobs.Results.length * 100) + '%')
+          $(elem + ' .lh-subscript').text(Math.round(jobCount / total * 100) + '%')
         } else {
           $(elem + ' .lh-subscript').html('&mdash;%')
         }
