@@ -324,13 +324,13 @@ function RunForestRun(mp) {
 //make the call to beacon
 function HackTheMatrix(unit, host, token, progressBar) {
 
-  progressBar.setValue(0.5);
+  progressBar && progressBar.setValue(0.5);
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
   LighthouseJob.get_summary_json(unit, host, start, end, token,
     function(summary) {
-      progressBar.setValue(1);
+      progressBar && progressBar.setValue(1);
 
       var completeJob = _.findWhere(summary.result, { Name: "Complete" }).Count;
       var newJob = _.findWhere(summary.result, { Name: "New" }).Count;
