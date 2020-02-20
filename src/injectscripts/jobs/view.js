@@ -205,8 +205,17 @@ whenAddressIsReady(function() {
        let _sortedAvlDistances = avlDistances.sort(function(a, b) {
             return a.distance - b.distance
           });
+          $('#nearest-avl-text').text('')
        if (_sortedAvlDistances.length > 0) {
-        $('#nearest-avl-text').text(`${_sortedAvlDistances[0].CallSign} (${_sortedAvlDistances[0].distance.toFixed(2)} kms), ${_sortedAvlDistances[1].CallSign} (${_sortedAvlDistances[1].distance.toFixed(2)} kms), ${_sortedAvlDistances[2].CallSign} (${_sortedAvlDistances[2].distance.toFixed(2)} kms)`)
+         var maxLength = 3 //how many results to display
+         var used = 0
+         _sortedAvlDistances.forEach(function(v) { //safe way to loop with a limit
+           if (used < maxLength) {
+             used++
+           $('#nearest-avl-text').text($('#nearest-avl-text').text() + `${v.CallSign} (${v.distance.toFixed(2)} kms), `)
+         }
+         })
+         $('#nearest-avl-text').text($('#nearest-avl-text').text().slice(0,-2)) //trim the comma space from the very end
        } else {
         $('#nearest-avl-text').text("No AVL results returned for "+avlType)
        }
