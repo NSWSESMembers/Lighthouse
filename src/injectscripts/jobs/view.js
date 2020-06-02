@@ -14,6 +14,16 @@ masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
 //if messages update
 masterViewModel.messagesViewModel.messages.subscribe(lighthouseDictionary);
 
+//if ops logs update
+masterViewModel.notesViewModel.opsLogEntries.subscribe(function(){lighthouseMessageTPlus($('div[data-bind="foreach: opsLogEntries"] .text-muted:not([lhTPlus])'))});
+
+//if messages update
+masterViewModel.messagesViewModel.messages.subscribe(function(){lighthouseMessageTPlus($('div[data-bind="foreach: messages"] .text-muted:not([lhTPlus])'))});
+
+// timeline updates
+masterViewModel.jobHistory.subscribe(lighthouseTimeLineTPlus);
+
+
 //if the ETA inputs are visable
 masterViewModel.teamsViewModel.jobTeamStatusBeingUpdated.subscribe(lighthouseETA);
 
@@ -152,6 +162,9 @@ function lighthouseTasking() {
 //call on run
 lighthouseDictionary();
 
+lighthouseMessageTPlus($('div[data-bind="foreach: messages"] .text-muted:not([lhTPlus])'))
+lighthouseMessageTPlus($('div[data-bind="foreach: opsLogEntries"] .text-muted:not([lhTPlus])'))
+lighthouseTimeLineTPlus();
 
 //call when the address exists
 whenAddressIsReady(function() {
@@ -461,6 +474,46 @@ $(document).on('click',  'div.widget > div.widget-content > div[data-bind$="task
 
 
 document.title = "#"+jobId;
+
+
+function lighthouseTimeLineTPlus() {
+  let jobCreatedMoment = moment(masterViewModel.jobReceived())
+  $('div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]').each(function (r) {
+    let res = $(this).text()
+    let end = moment(res,'DD/MM/YYYY HH:mm')
+    let tPlus = moment.duration(end.diff(jobCreatedMoment));
+    let years = tPlus.years(),
+    days = tPlus.days(),
+    hrs = pad(tPlus.hours() + (24 * tPlus.days())), //wont use days
+    mins = pad(tPlus.minutes()),
+    secs = tPlus.seconds();
+    let tPlusText = `T+${hrs}:${mins}:${secs}`
+    $(this).text($(this).text().replace(res,`${res} (${tPlusText})`))
+    $(this).attr('lhTPlus',tPlusText)
+  })
+  console.log("lighthouseTimeLineTPlus Done calculating Tplus times")
+}
+
+function lighthouseMessageTPlus(dom) {
+ let jobCreatedMoment = moment(masterViewModel.jobReceived())
+  dom.each(function (r) {
+    let res = $(this).text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
+    if (res && res.length) {
+      //01/06/2020 11:31
+      let end = moment(res[1],'DD/MM/YYYY HH:mm')
+      let tPlus = moment.duration(end.diff(jobCreatedMoment));
+      let years = tPlus.years(),
+      days = tPlus.days(),
+      hrs = pad(tPlus.hours() + (24 * tPlus.days())), //wont use days
+      mins = pad(tPlus.minutes()),
+      secs = tPlus.seconds();
+      let tPlusText = `T+${hrs}:${mins}:${secs}`
+      $(this).text($(this).text().replace(res[1],`${res[1]} (${tPlusText})`))
+      $(this).attr('lhTPlus',tPlusText)
+    }
+  })
+  console.log("lighthouseMessageTPlus Done calculating Tplus times")
+}
 
 function lighthouseDictionary(){
 
@@ -1512,4 +1565,10 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
 
     }
   })
+}
+
+function pad(n, z) {
+  z = z || '0';
+  n = n + '';
+  return n.length >= 2 ? n : new Array(2 - n.length + 1).join(z) + n;
 }
