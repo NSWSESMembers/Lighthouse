@@ -480,14 +480,7 @@ function lighthouseTimeLineTPlus() {
   let jobCreatedMoment = moment(masterViewModel.jobReceived())
   $('div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]').each(function (r) {
     let res = $(this).text()
-    let end = moment(res,'DD/MM/YYYY HH:mm')
-    let tPlus = moment.duration(end.diff(jobCreatedMoment));
-    let years = tPlus.years(),
-    days = tPlus.days(),
-    hrs = pad(tPlus.hours() + (24 * tPlus.days())), //wont use days
-    mins = pad(tPlus.minutes()),
-    secs = tPlus.seconds();
-    let tPlusText = `T+${hrs}:${mins}:${secs}`
+    let tPlusText = returnTTime(res)
     $(this).text($(this).text().replace(res,`${res} (${tPlusText})`))
     $(this).attr('lhTPlus',tPlusText)
   })
@@ -495,24 +488,32 @@ function lighthouseTimeLineTPlus() {
 }
 
 function lighthouseMessageTPlus(dom) {
- let jobCreatedMoment = moment(masterViewModel.jobReceived())
   dom.each(function (r) {
     let res = $(this).text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
     if (res && res.length) {
-      //01/06/2020 11:31
-      let end = moment(res[1],'DD/MM/YYYY HH:mm')
-      let tPlus = moment.duration(end.diff(jobCreatedMoment));
-      let years = tPlus.years(),
-      days = tPlus.days(),
-      hrs = pad(tPlus.hours() + (24 * tPlus.days())), //wont use days
-      mins = pad(tPlus.minutes()),
-      secs = tPlus.seconds();
-      let tPlusText = `T+${hrs}:${mins}:${secs}`
+      let tPlusText = returnTTime(res[1])
       $(this).text($(this).text().replace(res[1],`${res[1]} (${tPlusText})`))
       $(this).attr('lhTPlus',tPlusText)
     }
   })
   console.log("lighthouseMessageTPlus Done calculating Tplus times")
+}
+
+function returnTTime(messageDate) {
+  let jobCreatedMoment = moment(masterViewModel.jobReceived())
+  let end = moment(messageDate,'DD/MM/YYYY HH:mm')
+  //work out if its T+ or T-
+  let whichFirst = jobCreatedMoment.isBefore(end)
+  let tPlus = moment.duration(end.diff(jobCreatedMoment));
+  let years = whichFirst ? tPlus.years() : tPlus.years() * -1,
+  days = whichFirst ? tPlus.days() : tPlus.days() * -1,
+  hrs = whichFirst ? tPlus.hours() : tPlus.hours() * -1,
+  hrsTotal = hrs + (24 * days),  //wont use days so make hours include days
+  mins = whichFirst ? tPlus.minutes() : tPlus.minutes() * -1,
+  secs = whichFirst ? tPlus.seconds() : tPlus.seconds() * -1,
+  symbol = whichFirst ? '+' : '-'
+  let tPlusText = `T${symbol}${pad(hrs)}:${pad(mins)}:${pad(secs)}`
+  return tPlusText
 }
 
 function lighthouseDictionary(){
