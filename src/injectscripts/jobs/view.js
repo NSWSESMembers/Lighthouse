@@ -502,6 +502,8 @@ function lighthouseMessageTPlus(dom) {
 function returnTTime(messageDate) {
   let jobCreatedMoment = moment(masterViewModel.jobReceived())
   let end = moment(messageDate,'DD/MM/YYYY HH:mm')
+
+  jobCreatedMoment.seconds(0) //zero the seconds because the log doesnt show seconds
   //work out if its T+ or T-
   let whichFirst = jobCreatedMoment.isBefore(end)
   let tPlus = moment.duration(end.diff(jobCreatedMoment));
