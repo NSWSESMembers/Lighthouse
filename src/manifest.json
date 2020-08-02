@@ -1,19 +1,19 @@
 {
   "manifest_version": 2,
-  "name": "Lighthouse",
-  "short_name": "Lighthouse",
+  "name": "Lighthouse Development Preview",
+  "short_name": "Lighthouse Development Preview",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2020.01.28.01",
+  "version": "2020.06.04.01",
     "browser_action": {
       "default_icon": {
-        "16": "icons/lighthouse64.png"
+        "16": "icons/lighthouse64_dev.png"
         },
         "default_title": "Lighthouse",
         "default_popup": "pages/popup.html"
     },
   "icons": {
-    "128": "icons/lighthouse128.png",
-    "64":"icons/lighthouse64.png"
+    "128": "icons/lighthouse128_dev.png",
+    "64":"icons/lighthouse64_dev.png"
   },
   "permissions": [
     "storage",
@@ -23,6 +23,7 @@
     "https://beacon.ses.nsw.gov.au/*",
     "https://trainbeacon.ses.nsw.gov.au/*",
     "https://previewbeacon.ses.nsw.gov.au/*",
+    "https://testbeacon.ses.nsw.gov.au/*",
     "https://testbeaconau.ses.nsw.gov.au/*",
     "http://www.fairtrading.nsw.gov.au/*",
     "https://www.fairtrading.nsw.gov.au/*",
@@ -144,7 +145,8 @@
     {
       "matches": ["https://identity.ses.nsw.gov.au/core/login*",
                   "https://identitytrain.ses.nsw.gov.au/core/login*",
-                  "https://identitypreview.ses.nsw.gov.au/core/login*"],
+                  "https://identitytest.ses.nsw.gov.au/core/login*",
+                  "https://identitypreview.ses.nsw.gov.au/core/login*"]
       "js": [
         "contentscripts/identity.js"
       ]
