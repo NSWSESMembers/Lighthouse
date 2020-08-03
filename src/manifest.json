@@ -146,7 +146,7 @@
       "matches": ["https://identity.ses.nsw.gov.au/core/login*",
                   "https://identitytrain.ses.nsw.gov.au/core/login*",
                   "https://identitytest.ses.nsw.gov.au/core/login*",
-                  "https://identitypreview.ses.nsw.gov.au/core/login*"]
+                  "https://identitypreview.ses.nsw.gov.au/core/login*"],
       "js": [
         "contentscripts/identity.js"
       ]
