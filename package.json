@@ -12,7 +12,7 @@
     "dc": "^3.0.12",
     "humanize-duration": "^3.18.0",
     "jqcloud-npm": "^3.1.0",
-    "jquery": ">=3.4.0",
+    "jquery": ">=3.5.0",
     "jsx-dom-factory": "^1.1.0",
     "markerwithlabel": "^2.0.0",
     "moment": ">=1.0.2",
