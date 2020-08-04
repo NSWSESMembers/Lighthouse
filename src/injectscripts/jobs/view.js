@@ -477,32 +477,35 @@ document.title = "#"+jobId;
 
 
 function lighthouseTimeLineTPlus() {
-  let jobCreatedMoment = moment(masterViewModel.jobReceived())
-  $('div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]').each(function (r) {
-    let res = $(this).text()
-    let tPlusText = returnTTime(res)
-    $(this).text($(this).text().replace(res,`${res} (${tPlusText})`))
-    $(this).attr('lhTPlus',tPlusText)
+  whenJobIsReady(function(){
+    let jobCreatedMoment = moment(masterViewModel.jobReceived())
+    $('div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]').each(function (r) {
+      let res = $(this).text()
+      let tPlusText = returnTTime(res)
+      $(this).text($(this).text().replace(res,`${res} (${tPlusText})`))
+      $(this).attr('lhTPlus',tPlusText)
+    })
+    console.log("lighthouseTimeLineTPlus Done calculating Tplus times")
   })
-  console.log("lighthouseTimeLineTPlus Done calculating Tplus times")
 }
 
 function lighthouseMessageTPlus(dom) {
-  dom.each(function (r) {
-    let res = $(this).text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
-    if (res && res.length) {
-      let tPlusText = returnTTime(res[1])
-      $(this).text($(this).text().replace(res[1],`${res[1]} (${tPlusText})`))
-      $(this).attr('lhTPlus',tPlusText)
-    }
+  whenJobIsReady(function(){
+    dom.each(function (r) {
+      let res = $(this).text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
+      if (res && res.length) {
+        let tPlusText = returnTTime(res[1])
+        $(this).text($(this).text().replace(res[1],`${res[1]} (${tPlusText})`))
+        $(this).attr('lhTPlus',tPlusText)
+      }
+    })
+    console.log("lighthouseMessageTPlus Done calculating Tplus times")
   })
-  console.log("lighthouseMessageTPlus Done calculating Tplus times")
 }
 
 function returnTTime(messageDate) {
   let jobCreatedMoment = moment(masterViewModel.jobReceived())
   let end = moment(messageDate,'DD/MM/YYYY HH:mm')
-
   jobCreatedMoment.seconds(0) //zero the seconds because the log doesnt show seconds
   //work out if its T+ or T-
   let whichFirst = jobCreatedMoment.isBefore(end)

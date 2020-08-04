@@ -3,7 +3,7 @@
   "name": "Lighthouse Development Preview",
   "short_name": "Lighthouse Development Preview",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2020.06.04.01",
+  "version": "2020.08.04.01",
     "browser_action": {
       "default_icon": {
         "16": "icons/lighthouse64_dev.png"
