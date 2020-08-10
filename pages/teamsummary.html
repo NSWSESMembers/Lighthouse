@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <title>Beacon Stats</title>
+<style>
+body {
+    opacity: 0;
+}
+</style>
 </head>
 <body>
   <div id="loading">
@@ -17,6 +22,13 @@
   </div>
 <div id="body">
 <div align="center" id="results" class="teamresults">
+  <div id="loadinginline">
+    <div id="loadmiddleinline">
+      <div id="loadinnerinline">
+        <p>Updating<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+      </div>
+    </div>
+  </div>
   <p id="banner">Team Summary For X</p>
   <br>
   <div id="scrollbounds">
@@ -35,6 +47,30 @@
     </table>
   </div>
 </div>
+</div>
+<div class="modal fade"  id="filtermodal" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Team Filter</h4>
+        <button type="button" class="close" data-dismiss="modal">×</button>
+      </div>
+      <div class="modal-body">
+        <span class="float-left">Select teams to display:</span>
+        <div style="margin-left: 5px;margin-bottom:5px;text-align: right">
+          <button type="button" class="btn btn-secondary btn-sm" id="selectAllfilters" style="font-size: 0.8em;">Select All</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="clearAllfilters" style="font-size: 0.8em;">Unselect All</button>
+        </div>
+        <ul class="list-group" id="teamFilterList">
+        </ul>
+        <br>
+        <div class="modal-footer">
+          <button id="filtersSave" type="button" class="btn btn-success">Save & Close</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal">Go Back</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="footer">
   <form>
@@ -64,6 +100,11 @@
     <a href="#" id="refresh">
       <i class="fas fa-sync"></i>
       <span id="time">00:00</span>
+    </a>
+  </div>
+  <div style="float:left;margin-left: 5px;margin-bottom:5px">
+    <a href="#" id="filters">
+      <i style="vertical-align:middle;" class="fas fa-filter"></i> Filter Teams
     </a>
   </div>
 </div>

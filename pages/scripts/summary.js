@@ -42,7 +42,7 @@ var newJobSoundSampleElement = document.createElement('audio');
 
 $(document).ready(function() {
 
-
+  $('body').addClass('fade-in');
   validateTokenExpiration();
 
   setInterval(validateTokenExpiration, 3e5);

@@ -26,8 +26,8 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback,
   let params = {};
   params['StatusStartDate'] = StartDate.toISOString();
   params['StatusEndDate'] = EndDate.toISOString();
-  params['SortField'] = 'CreatedOn';
-  params['SortOrder'] = 'desc';
+  params['SortField'] = 'callsign';
+  params['SortOrder'] = 'asc';
   params['StatusTypeId'] = statusTypes;
   params['IncludeDeleted'] = false;
 

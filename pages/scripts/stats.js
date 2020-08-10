@@ -37,7 +37,7 @@ var tokenexp = ''
 
 // init
 $(function() {
-
+  $('body').addClass('fade-in');
   validateTokenExpiration();
   setInterval(validateTokenExpiration, 3e5);
 

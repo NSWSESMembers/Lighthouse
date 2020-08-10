@@ -4,6 +4,9 @@ var LighthouseJson = require('../lib/shared_json_code.js');
 var LighthouseTeam = require('../lib/shared_team_code.js');
 var LighthouseChrome = require('../lib/shared_chrome_code.js');
 
+require('bootstrap');
+require('@fortawesome/fontawesome-free');
+
 var moment = require('moment');
 var $ = require('jquery');
 global.jQuery = $;
@@ -15,7 +18,8 @@ var params = getSearchParameters();
 var apiHost = params.host
 var token = ''
 var tokenexp = ''
-
+var allTeams = []
+var firstRun = true
 
 // inject css c/o browserify-css
 require('../styles/teamsummary.css');
@@ -27,6 +31,7 @@ require('../styles/teamsummary.css');
 
 //on DOM load
 document.addEventListener('DOMContentLoaded', function() {
+
   var mp = new Object();
   mp.setValue = function(value) { //value between 0 and 1
     $('#loadprogress').css('width', (Math.round(value * 100) + '%'));
@@ -52,9 +57,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
   //run every X period of time the main loop.
   display = document.querySelector('#time');
-  startTimer(60, display);
+  startTimer(180, display);
 
   RunForestRun(mp)
+  $('body').addClass('fade-in');
+
 });
 
 
@@ -77,9 +84,55 @@ $(document).ready(function() {
   document.getElementById("refresh").onclick = function() {
     RunForestRun();
   }
+  $(document).on('click', "#clearAllfilters", function() {
+    $("#teamFilterList").find("li").removeClass('active');
+    allTeams.forEach(function(team) {
+      team.hidden = true
+    })
+  })
+  $(document).on('click', "#selectAllfilters", function() {
+    $("#teamFilterList").find("li").addClass('active');
+    allTeams.forEach(function(team) {
+      team.hidden = false
+    })
+  })
+  $(document).on('click', "#filters", function() {
+    showSearchFilters();
+  })
+
+  $(document).on('click', "#filtersSave", function() {
+    $('#filtermodal').modal('hide');
+    RunForestRun();
+  })
 
 
 });
+
+function showSearchFilters() {
+  $("#teamFilterList").empty()
+  allTeams.forEach(function(eachTeam) {
+    let team = eachTeam.rawObject
+    let theRow = $(`<li class="list-group-item">${team.Callsign.trim()}</li>`)
+    if (eachTeam.hidden == false) {
+      $(theRow).addClass('active');
+    }
+    $(theRow).click(function(e) {
+      e.preventDefault()
+      if ($(this).hasClass('active')) {
+        //filter away this team
+        $(this).removeClass('active');
+        eachTeam.hidden = true
+
+      } else {
+        //show it
+        $(this).addClass('active');
+        eachTeam.hidden = false
+      }
+    })
+    $('#teamFilterList').append(theRow)
+  })
+  $('#filtermodal').modal('show');
+}
 
 function getSearchParameters() {
   var prmstr = window.location.search.substr(1);
@@ -172,7 +225,6 @@ function RunForestRun(mp) {
     } else {
       params = getSearchParameters();
     }
-
     if (unit == null) {
       console.log("firstrun...will fetch vars");
 
@@ -190,7 +242,6 @@ function RunForestRun(mp) {
           unit = [];
           console.log("passed array of units");
           var hqsGiven = params.hq.split(",");
-          console.log(hqsGiven);
           hqsGiven.forEach(function(d) {
             LighthouseUnit.get_unit_name(d, params.host, token, function(result, error) {
               if (typeof error == 'undefined') {
@@ -211,6 +262,7 @@ function RunForestRun(mp) {
       }
     } else {
       console.log("rerun...will NOT fetch vars");
+      $('#loadinginline').css('display', 'block');
       HackTheMatrix(unit, apiHost, params.source, token);
     }
   })
@@ -221,8 +273,9 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
 
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
-  var totalMembersActive = 0;
-  var totalTeamsActive = 0;
+  var membersActive = 0;
+  var teamsActive = 0;
+  var teamsHidden = 0;
 
   LighthouseTeam.get_teams(unit, host, start, end, token, function(teams) {
       var options = {
@@ -234,15 +287,62 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
       };
       var table = document.getElementById("resultstable").getElementsByTagName('tbody')[0];
 
+      //remove teams from the main array that are not longer returned from the api query
+      allTeams.forEach(function(d, index) {
+        let found = false
+        $.each(teams.Results, function(i, el) {
+          if (this.Id == d.Id) {
+            found = true
+          }
+        });
+        if (!found) {
+          allTeams.splice(index, 1);
+        }
+      })
+
+      teams.Results.forEach(function(d) {
+          let foundIndex = null;
+          let isOld = false //would be undef otherwise
+          isOld = allTeams.find(function(r,i) {
+            if (r.Id === d.Id) {
+              foundIndex = i
+              return true
+            }
+          })
+        if (!isOld) {
+          let newTeam = {}
+          newTeam.Id = d.Id
+          newTeam.hidden = false
+          newTeam.rawObject = d
+          allTeams.push(newTeam)
+        } else {
+          allTeams[foundIndex].rawObject = d
+        }
+
+      })
+
+    allTeams.sort(function (a,b) {
+        if(b.TaskedJobCount < a.TaskedJobCount) { return -1; }
+        if(b.TaskedJobCount > a.TaskedJobCount) { return 1; }
+        return 0;
+      })
+
+      if (firstRun) {
+        firstRun = false;
+        showSearchFilters();
+      }
+
       $("#resultstable tbody tr").each(function() {
         this.parentNode.removeChild(this);
       });
 
-      teams.Results.forEach(function(d) { //for every team
+      allTeams.forEach(function(eachTeam) {
+        if (eachTeam.hidden == false) {
+          let teamId = eachTeam.Id
+          let team = eachTeam.rawObject
 
-        if (d.TeamStatusType.Name != "Stood Down" && d.TeamStatusType.Name != "Rest" && d.TeamStatusType.Name != "Standby" && d.TeamStatusType.Name != "On Alert") { //that has not stood down
 
-          totalTeamsActive++;
+          teamsActive++;
 
           var row = table.insertRow(-1);
           var callsign = row.insertCell(0);
@@ -252,9 +352,9 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
           var latestupdate = row.insertCell(4);
           latestupdate.className = "update";
 
-          callsign.innerHTML = "<a href=\"" + source + "/Teams/" + d.Id + "/Edit\" target=\"_blank\">" + d.Callsign.trim() + "</a>";
+          callsign.innerHTML = "<a href=\"" + source + "/Teams/" + teamId + "/Edit\" target=\"_blank\">" + team.Callsign.trim() + "</a>";
 
-          switch (d.TeamStatusType.Id) { //color the callsign by team status
+          switch (team.TeamStatusType.Id) { //color the callsign by team status
             case 3: //active
               callsign.className = "callsign-active";
               break;
@@ -272,11 +372,11 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
               break;
           }
 
-          if (d.Members.length == 0) {
+          if (team.Members.length == 0) {
             members.innerHTML = "Empty"
           } else {
-            d.Members.forEach(function(d2) { //for each member in the team
-              totalMembersActive++; //count them
+            team.Members.forEach(function(d2) { //for each member in the team
+              membersActive++; //count them
               if (members.innerHTML == "") { //if the first in the string dont add command
                 if (d2.TeamLeader == true) { //bold if team leader
                   members.innerHTML = "<b>" + d2.Person.FirstName + " " + d2.Person.LastName + "</b>";
@@ -294,21 +394,20 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
           }
           members.className = "members";
 
-          var rawteamdate = new Date(d.TeamStatusStartDate);
+          var rawteamdate = new Date(team.TeamStatusStartDate);
           var teamdate = new Date(rawteamdate.getTime());
-          status.innerHTML = d.TeamStatusType.Name + "<br>" + teamdate.toLocaleTimeString("en-au", options);
+          status.innerHTML = team.TeamStatusType.Name + "<br>" + teamdate.toLocaleTimeString("en-au", options);
           status.className = "status";
 
           var latest = null;
           var oldesttime = null;
           var completed = 0;
 
-          LighthouseTeam.get_tasking(d.Id, host, token, function(e) {
+          LighthouseTeam.get_tasking(teamId, host, token, function(e) {
             e.Results.forEach(function(f) {
               f.CurrentStatus == "Complete" && completed++;
               var rawdate = new Date(f.CurrentStatusTime);
               var thistime = new Date(rawdate.getTime());
-
 
               if (oldesttime < thistime && f.CurrentStatus !== "Tasked" && f.CurrentStatus !== "Untasked") { //it wasnt an untask or a tasking (so its a action the team made like on route or onsite)
                 var diff = moment(thistime).fromNow();
@@ -322,16 +421,17 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
             }
             latestupdate.innerHTML = latest;
 
-            jobCount.innerHTML = "<a href=\"" + source + "/Teams/" + d.Id + "/Jobs\" target=\"_blank\">" + d.TaskedJobCount + " | " + completed + "</a>";
+            jobCount.innerHTML = "<a href=\"" + source + "/Teams/" + teamId + "/Jobs\" target=\"_blank\">" + team.TaskedJobCount + " | " + completed + "</a>";
             jobCount.className = "jobcount";
 
           });
 
           jobCount.innerHTML = "<img width=\"50%\" alt=\"Loading...\" src=\"images/loader.gif\">";
           latestupdate.innerHTML = "<img width=\"20%\" alt=\"Loading...\" src=\"images/loader.gif\">";
-
-        }
-      });
+      } else {
+        teamsHidden ++;
+      }
+      })
 
       var banner;
 
@@ -348,9 +448,11 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
           banner = "<h2>Team summary for Group</h2>";
         };
       }
-      document.getElementById("banner").innerHTML = banner + "<h4>" + start.toLocaleTimeString("en-au", options) + " to " + end.toLocaleTimeString("en-au", options) + "<br>Total Active Members: " + totalMembersActive + " | Total Active Teams: " + totalTeamsActive + "</h4>";
+      document.getElementById("banner").innerHTML = `${banner} <h4> ${start.toLocaleTimeString("en-au", options)} to ${end.toLocaleTimeString("en-au", options)} <br> Displayed Members: ${membersActive} | Displayed Teams: ${teamsActive}  | Hidden Teams: ${teamsHidden}</h4>`;
       progressBar && progressBar.setValue(1);
       progressBar && progressBar.close();
+      $('#loadinginline').css('display', 'none');
+
     },
     function(val, total) {
       if (progressBar) { //if its a first load

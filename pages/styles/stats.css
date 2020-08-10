@@ -2,6 +2,11 @@
 @import url("node_modules/dc/dist/style/dc.css");
 @import url("node_modules/jqcloud-npm/dist/jqcloud.css");
 
+body.fade-in {
+    opacity: 1;
+    transition: 1s opacity;
+}
+
 .highcharts-container {
   margin: 0 auto;
 }

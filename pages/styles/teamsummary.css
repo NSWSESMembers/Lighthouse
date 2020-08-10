@@ -1,7 +1,8 @@
 @import url("include/common.css");
 
-#body {
-    padding-bottom: 55px;
+body.fade-in {
+    opacity: 1;
+    transition: 1s opacity;
 }
 
 #container {
@@ -16,4 +17,41 @@
 	font-size: 12px;
 	text-align: center;
 	bottom: 0;
+}
+
+#loadinginline {
+	display: none;
+	top: 0;
+	left: 0;
+	right: 0;
+	width: 100%;
+	background: red;
+}
+
+
+#loadmiddleinline
+{
+	margin: 0 auto;
+	display: table;
+	font-size: 20px;
+}
+
+#loadinnerinline > p
+{
+	font-size: 20px;
+}
+
+.list-group{
+    max-height: 500px;
+    margin-bottom: 10px;
+    overflow:scroll;
+    -webkit-overflow-scrolling: touch;
+}
+
+.list-group-item {
+  margin: 0 0 10px 0;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
 }
