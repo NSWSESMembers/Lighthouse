@@ -966,12 +966,6 @@ function makePie(elem, w, h, dimension, group) {
         return translate + ' rotate(' + ang + ')';
       });
   });
-  dc.override(chart, 'legendables', function() {
-    var legendables = this._legendables();
-    return legendables.filter(function(l) {
-      return l.data > 0;
-    });
-  });
   return chart;
 }
 
