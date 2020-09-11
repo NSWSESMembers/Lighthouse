@@ -30,7 +30,7 @@ function GetJSONfromBeacon(unit, host, StartDate, EndDate, token, callback, prog
 
   var lastDisplayedVal = 0 ;
   LighthouseJson.get_json(
-    url, token,
+    url, token, 0, 100,
     function(count,total){
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
         lastDisplayedVal = count;
@@ -91,7 +91,30 @@ function GetSummaryJSONfromBeacon(unit, host, StartDate, EndDate, token, callbac
     });
 }
 
+function GetJobfromBeacon(Id, viewModelType = 1, host, token, callback) {
+  $.ajax({
+    type: 'GET',
+    url: host + "/Api/v1/Jobs/" + Id + "?LighthouseFunction=GetJobfromBeacon&viewModelType="+viewModelType,
+    beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + token)
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function(response, textStatus) {
+      if (textStatus == 'success') {
+        results = response.responseJSON;
+        if (typeof callback === "function") {
+          callback(results);
+        }
+      }
+    }
+  })
+}
+
+
+
 module.exports = {
+  get_job: GetJobfromBeacon,
   get_json: GetJSONfromBeacon,
   get_summary_json: GetSummaryJSONfromBeacon
 }

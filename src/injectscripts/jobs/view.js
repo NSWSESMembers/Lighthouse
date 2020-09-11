@@ -161,7 +161,7 @@ function lighthouseTasking() {
 
 //call on run
 lighthouseDictionary();
-
+//
 lighthouseMessageTPlus($('div[data-bind="foreach: messages"] .text-muted:not([lhTPlus])'))
 lighthouseMessageTPlus($('div[data-bind="foreach: opsLogEntries"] .text-muted:not([lhTPlus])'))
 lighthouseTimeLineTPlus();
@@ -258,18 +258,20 @@ whenAddressIsReady(function() {
 
   var lastChar = masterViewModel.geocodedAddress.peek().PrettyAddress.substr(masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4)
 
-  if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true)) //if no postcode set
+  if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true)) //if no postcode is displayed
   {
-
     postCodes.returnPostCode(masterViewModel.geocodedAddress.peek().Locality, function(postcode){
       if (typeof postcode !== 'undefined')
       {
-        $('p[data-bind="text: enteredAddress"]').text($('p[data-bind="text: enteredAddress"]').text()+" "+postcode)
+        $('p[data-bind="text: enteredAddress"]').text($('p[data-bind="text: enteredAddress"]').text()+", "+postcode)
       } else {
         console.log("Postcode not found")
       }
     });
 
+  } else if (masterViewModel.geocodedAddress.peek().PostCode != null && (isNaN(parseInt(lastChar)) == true)) {
+    console.log('postcode is in the geocode by not displayed')
+    $('p[data-bind="text: enteredAddress"]').text($('p[data-bind="text: enteredAddress"]').text()+", "+masterViewModel.geocodedAddress.peek().PostCode)
   }
 
   //end postcode
@@ -477,26 +479,34 @@ document.title = "#"+jobId;
 
 
 function lighthouseTimeLineTPlus() {
+  //messages can load before job created time has loaded
   whenJobIsReady(function(){
     let jobCreatedMoment = moment(masterViewModel.jobReceived())
     $('div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]').each(function (r) {
-      let res = $(this).text()
-      let tPlusText = returnTTime(res)
-      $(this).text($(this).text().replace(res,`${res} (${tPlusText})`))
-      $(this).attr('lhTPlus',tPlusText)
+      // weird race condition where they already have the attrib
+      if ($(this).attr('lhTPlus') === undefined || $(this).attr('lhTPlus') === false) {
+        let res = $(this).text()
+        let tPlusText = returnTTime(res)
+        $(this).attr('lhTPlus',tPlusText)
+        $(this).text($(this).text().replace(res,`${res} (${tPlusText})`))
+      }
     })
     console.log("lighthouseTimeLineTPlus Done calculating Tplus times")
   })
 }
 
 function lighthouseMessageTPlus(dom) {
+  //messages can load before job created time has loaded
   whenJobIsReady(function(){
     dom.each(function (r) {
-      let res = $(this).text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
-      if (res && res.length) {
-        let tPlusText = returnTTime(res[1])
-        $(this).text($(this).text().replace(res[1],`${res[1]} (${tPlusText})`))
-        $(this).attr('lhTPlus',tPlusText)
+      // weird race condition where they already have the attrib
+      if ($(this).attr('lhTPlus') === undefined || $(this).attr('lhTPlus') === false) {
+        let res = $(this).text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
+        if (res && res.length) {
+          let tPlusText = returnTTime(res[1])
+          $(this).attr('lhTPlus',tPlusText)
+          $(this).text($(this).text().replace(res[1],`${res[1]} (${tPlusText})`))
+        }
       }
     })
     console.log("lighthouseMessageTPlus Done calculating Tplus times")

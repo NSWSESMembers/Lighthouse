@@ -33,7 +33,7 @@ function GetJSONfromBeacon(params, token, StartDate, EndDate, callback, progress
 
   var lastDisplayedVal = 0 ;
   LighthouseJson.get_json(
-    url, token,
+    url, token, 0, 100,
     function(count,total){
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
         lastDisplayedVal = count;
@@ -42,7 +42,7 @@ function GetJSONfromBeacon(params, token, StartDate, EndDate, callback, progress
       if (count == -1 && total == -1) { //allow errors
         progressCallBack(count,total);
       }
-      
+
     },
     function(results) { //call for the JSON, rebuild the array and return it when done.
       console.log("GetJSONfromBeacon call back with: ");

@@ -1,6 +1,7 @@
 const $ = require('jquery');
 const LighthouseJson = require('./shared_json_code.js');
 
+//limited to single page result
 function GetTaskingfromBeacon(Id, host, token, callback) {
   console.log("GetTaskingfromBeacon called with:" + Id+", "+host);
 
@@ -10,7 +11,26 @@ function GetTaskingfromBeacon(Id, host, token, callback) {
       console.log("Progress CB");
     },
     function(results) { //call for the JSON, rebuild the array and return it when done.
-      console.log("GetJSONfromBeacon call back");
+      console.log("GetTaskingfromBeacon call back");
+      var obj = {
+        "Results": results
+      };
+      callback(obj);
+    }
+  );
+
+}
+
+//limited to single page result
+function GetHistoryfromBeacon(Id, host, token, callback) {
+  console.log("GetHistoryfromBeacon called with:" + Id+", "+host);
+    LighthouseJson.get_json(
+    host+"/Api/v1/Teams/"+Id+"/History?LighthouseFunction=GetHistoryfromBeacon", token, 1, 20,
+    function(res){
+      console.log("Progress CB");
+    },
+    function(results) { //call for the JSON, rebuild the array and return it when done.
+      console.log("GetHistoryfromBeacon call back");
       var obj = {
         "Results": results
       };
@@ -52,7 +72,7 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback,
   var url = host+"/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon&" + $.param(params, true);
   var lastDisplayedVal = 0 ;
   LighthouseJson.get_json(
-    url, token,
+    url, token, 0, 100,
     function(count,total){
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
         lastDisplayedVal = count;
@@ -198,6 +218,7 @@ function getTeamGeoJson(hqs, host, startDate, endDate, token, callback) {
 
 module.exports = {
   get_tasking: GetTaskingfromBeacon,
+  get_history: GetHistoryfromBeacon,
   get_teams: GetJSONTeamsfromBeacon,
   getTeamGeoJson: getTeamGeoJson
 };

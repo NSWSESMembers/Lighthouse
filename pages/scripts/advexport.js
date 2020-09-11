@@ -281,7 +281,7 @@ function HackTheMatrix(id, host, progressBar) {
         //console.log(key)
         switch (key) {
           case 'JobReceived':
-            var rawdate = new Date(d.JobReceived);
+            var rawdate = parseISOLocal(d.JobReceived);
             rawValue = rawdate;
             break;
           case 'Tags':
@@ -459,4 +459,14 @@ function getToken(cb) { //when external vars have loaded
       }
     })
   }, 200);
+}
+
+
+/*  @param {string} s - an ISO 8001 format date and time string
+**                      with all components, e.g. 2015-11-24T19:40:00
+**  @returns {Date} - Date instance from parsing the string. May be NaN.
+*/
+function parseISOLocal(s) {
+  var b = s.split(/\D/);
+  return new Date(b[0], b[1]-1, b[2], b[3], b[4], b[5]);
 }

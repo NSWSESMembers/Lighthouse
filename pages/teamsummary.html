@@ -20,33 +20,18 @@ body {
       </div>
     </div>
   </div>
-<div id="body">
-<div align="center" id="results" class="teamresults">
   <div id="loadinginline">
     <div id="loadmiddleinline">
       <div id="loadinnerinline">
-        <p>Updating<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
+        Updating<span class="dots"><span>.</span><span>.</span><span>.</span></span>
       </div>
     </div>
   </div>
-  <p id="banner">Team Summary For X</p>
-  <br>
-  <div id="scrollbounds">
-    <table id="resultstable" class="teamtotals">
-      <thead>
-        <tr class="header">
-          <td>Team<br>Call Sign</td>
-          <td>Team<br>Members</td>
-          <td>Team<br>Status</td>
-          <td>Tasking<p style="font-size: 1.1vmax;">Active | Completed</p></td>
-          <td>Team<br>Latest Update</td>
-        </tr>
-      </thead>
-      <tbody>
-      </tbody>
-    </table>
+<div>
+  <div class="container-fluid" id="pageContent">
+    <div class="row" id="pageHeader">
+    </div>
   </div>
-</div>
 </div>
 <div class="modal fade"  id="filtermodal" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
   <div class="modal-dialog">
@@ -58,9 +43,11 @@ body {
       <div class="modal-body">
         <span class="float-left">Select teams to display:</span>
         <div style="margin-left: 5px;margin-bottom:5px;text-align: right">
-          <button type="button" class="btn btn-secondary btn-sm" id="selectAllfilters" style="font-size: 0.8em;">Select All</button>
-          <button type="button" class="btn btn-secondary btn-sm" id="clearAllfilters" style="font-size: 0.8em;">Unselect All</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="selectAllfilters" style="font-size: 0.6em;">Select All</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="selectAllActivatedfilters" style="font-size: 0.6em;">Select Activated</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="clearAllfilters" style="font-size: 0.6em;">Unselect All</button>
         </div>
+        <hr></hr>
         <ul class="list-group" id="teamFilterList">
         </ul>
         <br>
@@ -103,7 +90,7 @@ body {
     </a>
   </div>
   <div style="float:left;margin-left: 5px;margin-bottom:5px">
-    <a href="#" id="filters">
+    <a href="#" class="teamFilters" id="filters">
       <i style="vertical-align:middle;" class="fas fa-filter"></i> Filter Teams
     </a>
   </div>
