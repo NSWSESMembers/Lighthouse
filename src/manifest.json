@@ -26,6 +26,7 @@
     "https://previewbeacon.ses.nsw.gov.au/*",
     "https://testbeacon.ses.nsw.gov.au/*",
     "https://testbeaconau.ses.nsw.gov.au/*",
+    "https://devbeacon.ses.nsw.gov.au/*",
     "http://www.fairtrading.nsw.gov.au/*",
     "https://www.fairtrading.nsw.gov.au/*",
     "https://www.rfs.nsw.gov.au/*",
@@ -147,6 +148,7 @@
       "matches": ["https://identity.ses.nsw.gov.au/core/login*",
                   "https://identitytrain.ses.nsw.gov.au/core/login*",
                   "https://identitytest.ses.nsw.gov.au/core/login*",
+                  "https://identitydev.ses.nsw.gov.au/core/login*",
                   "https://identitypreview.ses.nsw.gov.au/core/login*"],
       "js": [
         "contentscripts/identity.js"
