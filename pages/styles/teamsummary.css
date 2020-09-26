@@ -172,6 +172,7 @@ body.fade-in {
 }
 
 .team-job-count-active,
+.team-status,
 .team-job-count-completed,
 .team-time {
   font-size: 1.vmax;
