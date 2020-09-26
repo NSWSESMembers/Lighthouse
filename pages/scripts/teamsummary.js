@@ -153,7 +153,7 @@ function showSearchFilters() {
   if (allTeams.length) {
     allTeams.forEach(function(eachTeam) {
       let team = eachTeam.rawObject
-      let theRow = $(`<li class="list-group-item" data-status="${team.TeamStatusType.Name}">${team.Callsign.trim()} (${team.TeamStatusType.Name})</li>`)
+      let theRow = $(`<li class="list-group-item" data-status="${team.TeamStatusType.Name}">${team.Callsign.trim()} (${team.TeamType.Name} | ${team.TeamStatusType.Name})</li>`)
       if (eachTeam.hidden == false) {
         $(theRow).addClass('active');
       }
@@ -328,12 +328,13 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
   var teamsHidden = 0;
 
   LighthouseTeam.get_teams(unit, host, start, end, token, function(teams) {
-      var options = {
+
+      var options = { //date display options
         weekday: "short",
         year: "numeric",
         month: "2-digit",
         day: "numeric",
-        hour12: false
+        hour12: false,
       };
 
       //remove teams from the main array that are not longer returned from the api query
@@ -363,6 +364,8 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
           newTeam.Id = d.Id
 
           newTeam.hidden = d.TeamStatusType.Name != "Activated" ? true : false //default only show activated
+          newTeam.hidden = d.TeamType.Name != "Field" ? true : false  //default only show field teams
+
           newTeam.rawObject = d
           allTeams.push(newTeam)
         } else {
@@ -470,7 +473,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
                          <div class="team-callsign text-center col-12"><a href="${source}/Teams/${team.Id}/Edit" target="_blank">${team.Callsign.trim()}</a></div>
                    </div>
                    <div class="team-status-summary row">
-                         <div class="team-status text-left col-5">${team.TeamStatusType.Name}</div>
+                         <div class="team-status text-left col-5">${team.TeamType.Name == "Operations" ? "Ops" : team.TeamType.Name} | ${team.TeamStatusType.Name}</div>
                          <div class="team-buttons text-left col-2">
                          ${teamMemberIds.length ? `<a href="${source}/Messages/Create?lhquickrecipient=${escape(JSON.stringify(teamMemberIds))}" target="_blank">` : ''}<i data-toggle="tooltip" title="SMS all team members" class="fas fa-envelope ${teamMemberIds.length ? '' : 'fa-disabled'}"></i>${teamMemberIds.length ? `</a>` : ''}
                          </div>
@@ -612,6 +615,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
             //while we are under the limit or break at end of array
             //we roll up add/remove so we cant just count items
             while ($(thisBox).find('.team-history > .container > .row').length < limit) {
+
               let keepLooping = true
               let loopCount = 0
               let teamMembersAddedOrRemoved = []
@@ -619,8 +623,10 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
               let verb = ''
               while (keepLooping) {
                 let theMatch = null
-                if (historyItems[index + loopCount] !== 'undefined') {
-                  theMatch = historyItems[index + loopCount].name.match(/(.+)\s(added|removed) (to|from) team/)
+                if (typeof historyItems[index + loopCount] !== 'undefined') {
+                  if (typeof historyItems[index + loopCount].name !== 'undefined') {
+                    theMatch = historyItems[index + loopCount].name.match(/(.+)\s(added|removed) (to|from) team/)
+                  }
                 }
                 if (theMatch) {
                   if (addingOrRemoving == '') {
@@ -633,6 +639,8 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
                     if (historyItems[index].timeStamp === historyItems[index + loopCount].timeStamp) {
                       teamMembersAddedOrRemoved.push(theMatch[1])
                       loopCount++
+                    } else { //another add but different time stamp
+                      keepLooping = false
                     }
                   } else {
                     keepLooping = false
@@ -649,7 +657,9 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
                 index = index + loopCount
               } else {
                 //not a rollup so just add it
-                $(thisBox).find('.team-history > .container').append(historyItems[index].dom)
+                if (typeof historyItems[index] !== 'undefined') { //are we at the end
+                  $(thisBox).find('.team-history > .container').append(historyItems[index].dom)
+                }
               }
               //if we are at the end otherwise go again
               if (historyItems.length == index) {
