@@ -32,7 +32,6 @@ $(document).ready(function() {
 
             case "lhquickrecipient":
             var people = JSON.parse(unescape(key))
-            console.log(people)
             $.each(people, function(key, val) {
                 $.ajax({
                     type: 'GET',
@@ -56,7 +55,7 @@ $(document).ready(function() {
                                         BuildNew.ContactGroup = null
                                         BuildNew.ContactTypeId = v.ContactTypeId
                                         BuildNew.Description = v.FirstName + " " + v.LastName;
-                                        BuildNew.Recipient = v.Detail;
+                                        BuildNew.Detail = v.Detail;
                                         msgsystem.selectedRecipients.push(BuildNew)
                                     }
                                 })
@@ -235,7 +234,7 @@ $('#LHCollectionImport').click(function() {
 if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) {
     whenWeAreReady(msgsystem, function() {
 
-        msgsystem.selectedHeadquarters.subscribe(function(status) {
+        msgsystem.searchHeadquarters.subscribe(function(status) {
             if (status !== null) {
                 LoadTeams()
                 LoadNitc()
@@ -250,10 +249,10 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
             //Home HQ - with a wait to catch possible race condition where the page is still loading
             whenWeAreReady(user, function() {
                 var waiting = setInterval(function() {
-                    if (msgsystem.loadingContacts.peek() === false && typeof user.hq != "undefined") { //check if the core js is still searching for something
+                    if (msgsystem.loadingRecipients.peek() === false && typeof user.hq != "undefined") { //check if the core js is still searching for something
                         clearInterval(waiting); //stop timer
                         console.log("Setting Selected HQ to user HQ");
-                        msgsystem.setSelectedHeadquarters(user.hq);
+                        msgsystem.searchHeadquarters(user.hq);
                         $('#contact').val(user.hq.Name)
                     } else {
                         console.log("messages is still loading")
@@ -263,20 +262,13 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
 
         });
         //auto select ones that have the world default in them
-        msgsystem.loadingContacts.subscribe(function(status) {
+        msgsystem.loadingRecipients.subscribe(function(status) {
             if (status == false) {
-                msgsystem.availableContactGroups.peek().forEach(function(item) {
-                    if (item.Name.indexOf("(default)") > -1) {
+                msgsystem.availableRecipients.peek().forEach(function(item) {
+                    if (item.Description.indexOf("(default)") > -1) {
                         msgsystem.addContactGroup(item);
                     }
                 })
-
-                msgsystem.availableContacts.peek().forEach(function(item) {
-                    if (item.Description.indexOf("(default)") > -1) {
-                        msgsystem.addContact(item);
-                    }
-                })
-
             }
         })
 
@@ -370,10 +362,10 @@ function LoadNitc() {
          var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
          spinner.appendTo($('#lighthousenitc'));
-         $('#nitchq').text("NITC Events (with Participants) at " + msgsystem.selectedHeadquarters.peek().Name + " (±30 Days)")
+         $('#nitchq').text("NITC Events (with Participants) at " + msgsystem.searchHeadquarters.peek().Name + " (±30 Days)")
          $('#HQNitcSet').show()
 
-         ReturnNitcAtLHQ(msgsystem.selectedHeadquarters.peek(),size,function(response) {
+         ReturnNitcAtLHQ(msgsystem.searchHeadquarters.peek(),size,function(response) {
             var numberOfevents = 0 //count number with participants
             if (response.responseJSON.Results.length) {
             $('#lighthousenitc').empty() //empty to prevent dupes and spinners
@@ -421,7 +413,7 @@ function LoadNitc() {
                                                         BuildNew.ContactGroup = null
                                                         BuildNew.ContactTypeId = v.ContactTypeId
                                                         BuildNew.Description = v.FirstName + " " + v.LastName;
-                                                        BuildNew.Recipient = v.Detail;
+                                                        BuildNew.Detail = v.Detail;
                                                         msgsystem.selectedRecipients.push(BuildNew)
                                                         console.log(total)
                                                         if (total == 0) //when they have all loaded, stop spinning.
@@ -503,9 +495,9 @@ function LoadTeams() {
     var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
     spinner.appendTo($('#lighthouseteams'));
-    $('#teamshq').text("Active Teams (with Members) at " + msgsystem.selectedHeadquarters.peek().Name)
+    $('#teamshq').text("Active Teams (with Members) at " + msgsystem.searchHeadquarters.peek().Name)
     $('#HQTeamsSet').show()
-    ReturnTeamsActiveAtLHQ(msgsystem.selectedHeadquarters.peek(), null, function(response) {
+    ReturnTeamsActiveAtLHQ(msgsystem.searchHeadquarters.peek(), null, function(response) {
         var numberOfTeam = 0
         if (response.responseJSON.Results.length) {
             $('#lighthouseteams').empty() //empty to prevent dupes and spinners
@@ -561,7 +553,7 @@ function LoadTeams() {
                                                         BuildNew.Description = v.FirstName + " " + v.LastName;
 
                                                     }
-                                                    BuildNew.Recipient = v.Detail;
+                                                    BuildNew.Detail = v.Detail;
                                                     msgsystem.selectedRecipients.push(BuildNew)
                                                     if (total == 0) //when they have all loaded, stop spinning.
                                                     {
@@ -807,7 +799,7 @@ $.ajax({
                         BuildNew.ContactGroup = null;
                         BuildNew.ContactTypeId = v.ContactTypeId;
                         BuildNew.Description = v.FirstName + " " + v.LastName + " (" + v.Description + ")";
-                        BuildNew.Recipient = v.Detail;
+                        BuildNew.Detail = v.Detail;
                         msgsystem.selectedRecipients.push(BuildNew)
 
 
@@ -855,7 +847,7 @@ $.ajax({
                         BuildNew.ContactTypeId = v.ContactTypeId;
                         BuildNew.ContactGroup = null;
                         BuildNew.Description = v.EntityName + " (" + v.Description + ")";
-                        BuildNew.Recipient = v.Detail;
+                        BuildNew.Detail = v.Detail;
                         msgsystem.selectedRecipients.push(BuildNew)
 
                         $total = $total - 1;
