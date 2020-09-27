@@ -467,7 +467,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
           }
 
           const thisBox = $(`
-          <div class="col-3 col-team">
+          <div class="col-4 col-team">
               <div class="team ${teamStatusClass}">
                    <div class="row">
                          <div class="team-callsign text-center col-12"><a href="${source}/Teams/${team.Id}/Edit" target="_blank">${team.Callsign.trim()}</a></div>
@@ -629,9 +629,9 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
                   }
                 }
                 if (theMatch) {
-                  if (addingOrRemoving == '') {
+                  if (addingOrRemoving == '') { //if we are not already looking for a sequential match, set it
                     addingOrRemoving = theMatch[2]
-                    verb = theMatch[3]
+                    verb = theMatch[3] //verb would be addded or removed from team
                   }
                   if (addingOrRemoving == theMatch[2]) {
                     //nested so we dont go out of bounds
@@ -639,7 +639,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
                     if (historyItems[index].timeStamp === historyItems[index + loopCount].timeStamp) {
                       teamMembersAddedOrRemoved.push(theMatch[1])
                       loopCount++
-                    } else { //another add but different time stamp
+                    } else { //same verb but different time stamp
                       keepLooping = false
                     }
                   } else {
@@ -652,11 +652,14 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
               if (teamMembersAddedOrRemoved.length > 1) {
                 let multiTeamDom = $(`<div class="row team-history-row"><div class="team-history col-8"><strong>Members ${addingOrRemoving} ${verb} team</strong><small><br>${teamMembersAddedOrRemoved.join(', ')}</small></div><div class="team-job col-4 text-center">${historyItems[index].timeStamp}</div></div>`)
                 $(thisBox).find('.team-history > .container').append(multiTeamDom) //add the grouped DOM
-                $(thisBox).find('.team-history > .container').append(historyItems[index + loopCount].dom) //add the dom that wasnt the group
+                if (typeof historyItems[index + loopCount] !== 'undefined') { //is there another DOM left to add or did we run out of team history
+                  $(thisBox).find('.team-history > .container').append(historyItems[index + loopCount].dom) //add the dom that wasnt the group
+                }
 
-                index = index + loopCount
+                index = index + loopCount //reset the index to true index + number of history items walked over
               } else {
                 //not a rollup so just add it
+                console.log(historyItems[index])
                 if (typeof historyItems[index] !== 'undefined') { //are we at the end
                   $(thisBox).find('.team-history > .container').append(historyItems[index].dom)
                 }
@@ -789,7 +792,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
         $('#pageContent').append(`<div class="row display-flex team-row"></div>`)
 
         for (index = 0, len = theCards.length; index < len; ++index) {
-          if ((index % 4) == 0) {
+          if ((index % 3) == 0) {
             $('#pageContent').append(`<div class="row team-row"></div>`)
           }
           $('#pageContent').find('.team-row:last-child').append(theCards[index])
