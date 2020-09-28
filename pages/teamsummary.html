@@ -47,7 +47,7 @@
           <div style="margin-left: 5px;margin-bottom:5px;text-align: right">
             <button type="button" class="btn btn-secondary btn-sm" id="selectAllfilters" style="font-size: 0.6em;">Select All</button>
             <button type="button" class="btn btn-secondary btn-sm" id="selectAllActivatedfilters" style="font-size: 0.6em;">Select Activated</button>
-            <button type="button" class="btn btn-secondary btn-sm" id="clearAllfilters" style="font-size: 0.6em;">Unselect All</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="unselectAllfilters" style="font-size: 0.6em;">Unselect All</button>
           </div>
           <hr>
           </hr>
@@ -57,11 +57,19 @@
           </hr>
           <div class="row form-row">
             <div class="col" style="margin-bottom:1rem">
-              <label class="form-check-label" for="customCheck">Automatically show new active teams:</label>
+              <label class="form-check-label" for="autoShowNewTeams">Automatically show activated teams:</label>
             </div>
             <div class="col-right">
               <input type="checkbox" class="form-check-input" id="autoShowNewTeams" name="autoShowNewTeams" checked>
             </div>
+          </div>
+          <div class="form-group gridWidth">
+            <label for="sel1">Grid width:</label>
+            <select class="form-control" id="gridWidth">
+              <option value="2">2 teams</option>
+              <option value="3" selected="selected">3 teams</option>
+              <option value="4">4 teams</option>
+            </select>
           </div>
           <div class="modal-footer">
             <button id="filtersSave" type="button" class="btn btn-success">Save & Close</button>

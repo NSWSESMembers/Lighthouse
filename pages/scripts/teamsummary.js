@@ -22,6 +22,9 @@ var tokenexp = ''
 var allTeams = []
 var firstRun = true
 
+var setColWidth = 4
+var setDefaultAdd = true
+
 //allow pretty popovers with inline style
 $.fn.tooltip.Constructor.Default.whiteList['*'].push('style')
 
@@ -88,7 +91,6 @@ $(document).on('change', 'input[name=slide]:radio', function() {
 //refresh button
 $(document).ready(function() {
 
-
   //Dynamic popovers are a bitch. This will remmove any/all on body click
   $('body').on('click', function(e) {
     $("*").each(function() {
@@ -112,16 +114,16 @@ $(document).ready(function() {
   document.getElementById("refresh").onclick = function() {
     RunForestRun();
   }
-  $(document).on('click', "#clearAllfilters", function() {
+  $(document).on('click', "#unselectAllfilters", function() {
     $("#teamFilterList").find("li").removeClass('active');
     allTeams.forEach(function(team) {
-      team.hidden = true
+      team.needsToBeHidden = true
     })
   })
   $(document).on('click', "#selectAllfilters", function() {
     $("#teamFilterList").find("li").addClass('active');
     allTeams.forEach(function(team) {
-      team.hidden = false
+      team.needsToBeHidden = false
     })
   })
   $(document).on('click', "#selectAllActivatedfilters", function() {
@@ -130,20 +132,40 @@ $(document).ready(function() {
 
     allTeams.forEach(function(team) {
       if (team.rawObject.TeamStatusType.Name == "Activated") {
-        team.hidden = false
+        team.needsToBeHidden = false
       } else {
-        team.hidden = true
+        team.needsToBeHidden = true
       }
     })
   })
+
   $(document).on('click', ".teamFilters", function() {
     showSearchFilters();
   })
 
   $(document).on('click', "#filtersSave", function() {
+
+    setColWidth = parseInt($('#gridWidth')[0].value)
+
+    setDefaultAdd = $('#autoShowNewTeams').is(':checked')
+
+    allTeams.forEach(function(eachTeam) {
+      if (typeof eachTeam.needsToBeHidden != 'undefined') {
+        eachTeam.hidden = eachTeam.needsToBeHidden
+        delete eachTeam.needsToBeHidden
+      }
+    })
     $('#filtermodal').modal('hide');
     RunForestRun();
   })
+
+  $('#filtermodal').on('hidden.bs.modal', function() {
+    allTeams.forEach(function(eachTeam) {
+      if (typeof eachTeam.needsToBeHidden != 'undefined') {
+        delete eachTeam.needsToBeHidden
+      }
+    })
+  });
 
 
 });
@@ -162,12 +184,12 @@ function showSearchFilters() {
         if ($(this).hasClass('active')) {
           //filter away this team
           $(this).removeClass('active');
-          eachTeam.hidden = true
+          eachTeam.needsToBeHidden = true
 
         } else {
           //show it
           $(this).addClass('active');
-          eachTeam.hidden = false
+          eachTeam.needsToBeHidden = false
         }
       })
       $('#teamFilterList').append(theRow)
@@ -175,6 +197,15 @@ function showSearchFilters() {
   } else {
     $('#teamFilterList').append('<i>No Teams</i>')
   }
+
+  $('#gridWidth')[0].value = `${setColWidth}`
+
+  if (setDefaultAdd) {
+    $('#autoShowNewTeams').prop("checked", true)
+  } else {
+    $('#autoShowNewTeams').prop("checked", false)
+  }
+
   $('#filtermodal').modal('show');
 }
 
@@ -359,16 +390,29 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
             return true
           }
         })
-        if (!isOld) {
+        if (!isOld) { //if its a new team
           let newTeam = {}
           newTeam.Id = d.Id
 
-          newTeam.hidden = d.TeamStatusType.Name != "Activated" ? true : false //default only show activated
-          newTeam.hidden = d.TeamType.Name != "Field" ? true : false  //default only show field teams
+          if (setDefaultAdd) {
+            if (d.TeamStatusType.Name === "Activated") {
+              newTeam.hidden = false
+            } else {
+              newTeam.hidden = true
+            }
+          }
+
+          newTeam.hidden = d.TeamType.Name != "Field" ? true : false //default only show field teams
 
           newTeam.rawObject = d
           allTeams.push(newTeam)
         } else {
+
+          if (setDefaultAdd) {
+            if (allTeams[foundIndex].rawObject.TeamStatusType.Name !== "Activated" && d.TeamStatusType.Name === "Activated") { //if the team is now activated and wasnt before
+              newTeam.hidden = false
+            }
+          }
           allTeams[foundIndex].rawObject = d
         }
 
@@ -465,9 +509,11 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
               teamResources.push(`${r.Name}`)
             });
           }
+          console.log(setColWidth)
+          let colCount = 12 / setColWidth
 
           const thisBox = $(`
-          <div class="col-4 col-team">
+          <div class="col-${colCount} col-team">
               <div class="team ${teamStatusClass}">
                    <div class="row">
                          <div class="team-callsign text-center col-12"><a href="${source}/Teams/${team.Id}/Edit" target="_blank">${team.Callsign.trim()}</a></div>
@@ -659,7 +705,6 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
                 index = index + loopCount //reset the index to true index + number of history items walked over
               } else {
                 //not a rollup so just add it
-                console.log(historyItems[index])
                 if (typeof historyItems[index] !== 'undefined') { //are we at the end
                   $(thisBox).find('.team-history > .container').append(historyItems[index].dom)
                 }
@@ -792,7 +837,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
         $('#pageContent').append(`<div class="row display-flex team-row"></div>`)
 
         for (index = 0, len = theCards.length; index < len; ++index) {
-          if ((index % 3) == 0) {
+          if (index % setColWidth == 0) {
             $('#pageContent').append(`<div class="row team-row"></div>`)
           }
           $('#pageContent').find('.team-row:last-child').append(theCards[index])
