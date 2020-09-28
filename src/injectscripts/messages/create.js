@@ -253,7 +253,34 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
                         clearInterval(waiting); //stop timer
                         console.log("Setting Selected HQ to user HQ");
                         msgsystem.searchHeadquarters(user.hq);
-                        $('#contact').val(user.hq.Name)
+                        $('#searchHQ').val(user.hq.Name)
+
+
+                        $.ajax({
+                          type: 'GET',
+                          url: urls.Base + '/Api/v1/People/' + user.personId + '/Contacts',
+                          beforeSend: function(n) {
+                            n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+                          },
+                          data: {
+                            LighthouseFunction: 'LoadPerson'
+                          },
+                          cache: false,
+                          dataType: 'json',
+                          complete: function(response, textStatus) {
+                            if (textStatus == 'success') {
+                              if (response.responseJSON.Results.length) {
+                                $.each(response.responseJSON.Results, function(k, v) {
+                                  if (v.ContactTypeId == 2) {
+                                    msgsystem.forwardingAddress(v.Detail)
+                                    $('#replyAddress').value = v.Detail
+                                  }
+                                })
+                              }
+                            }
+                          }
+                        })
+
                     } else {
                         console.log("messages is still loading")
                     }
@@ -798,7 +825,7 @@ $.ajax({
                         BuildNew.Contact = v;
                         BuildNew.ContactGroup = null;
                         BuildNew.ContactTypeId = v.ContactTypeId;
-                        BuildNew.Description = v.FirstName + " " + v.LastName + " (" + v.Description + ")";
+                        BuildNew.Description = v.FirstName + " " + v.LastName;
                         BuildNew.Detail = v.Detail;
                         msgsystem.selectedRecipients.push(BuildNew)
 
@@ -846,7 +873,7 @@ $.ajax({
                         BuildNew.Contact = v;
                         BuildNew.ContactTypeId = v.ContactTypeId;
                         BuildNew.ContactGroup = null;
-                        BuildNew.Description = v.EntityName + " (" + v.Description + ")";
+                        BuildNew.Description = v.EntityName;
                         BuildNew.Detail = v.Detail;
                         msgsystem.selectedRecipients.push(BuildNew)
 
