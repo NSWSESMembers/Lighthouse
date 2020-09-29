@@ -228,6 +228,24 @@ body.fade-in {
   border-bottom: solid 1px #ccc;
 }
 
+.team-history-view {
+  padding: 0.3em;
+}
+
+.team-history-view>div {
+  font-size: 0.6em;
+  font-weight: bold;
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 5px;
+  width: 100%;
+}
+
+.team-history-view>div>a {
+  color: inherit;
+  text-decoration: none;
+}
+
 .team-members {
   padding: 0.3em;
   border-bottom: solid 1px #ccc;
@@ -259,21 +277,4 @@ body.fade-in {
 
 .teamFilters:hover {
   cursor: pointer;
-}
-
-div.custom-control-right {
-  padding-right: 24px;
-  padding-left: 0;
-  margin-left: 0;
-  margin-right: 0;
-}
-
-div.custom-control-right .custom-control-label::after {
-  right: -1.5rem;
-  left: auto;
-}
-
-div.custom-control-right .custom-control-label::before {
-  right: -2.35rem;
-  left: auto;
 }

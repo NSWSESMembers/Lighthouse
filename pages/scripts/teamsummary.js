@@ -393,7 +393,9 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
         if (!isOld) { //if its a new team
           let newTeam = {}
           newTeam.Id = d.Id
+          newTeam.hidden = true //default hidden unless below
 
+          if (d.TeamType.Name === 'Field') { //default only show field teams
           if (setDefaultAdd) {
             if (d.TeamStatusType.Name === "Activated") {
               newTeam.hidden = false
@@ -401,18 +403,19 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
               newTeam.hidden = true
             }
           }
+        }
 
-          newTeam.hidden = d.TeamType.Name != "Field" ? true : false //default only show field teams
 
           newTeam.rawObject = d
           allTeams.push(newTeam)
-        } else {
+        } else { //existing team
 
           if (setDefaultAdd) {
             if (allTeams[foundIndex].rawObject.TeamStatusType.Name !== "Activated" && d.TeamStatusType.Name === "Activated") { //if the team is now activated and wasnt before
-              newTeam.hidden = false
+              allTeams[foundIndex].hidden = false
             }
           }
+
           allTeams[foundIndex].rawObject = d
         }
 
@@ -509,7 +512,6 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
               teamResources.push(`${r.Name}`)
             });
           }
-          console.log(setColWidth)
           let colCount = 12 / setColWidth
 
           const thisBox = $(`
@@ -543,6 +545,10 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
                    <div class="row team-history">
                    <div class="container"></div>
                    </div>
+                   <div class="row team-history-view">
+                   <div class="col-12 text-center"><a href="${source}/Teams/History/${teamId}" target="_blank">View full team history</a></div>
+                   </div>
+                   </div>
                </div>
             </div>
           `)
@@ -568,9 +574,15 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
               if (trimmedDesc && trimmedDesc.match(/(.+)(?:by.*$)/)) {
                 trimmedDesc = trimmedDesc.match(/(.+)(?:by.*$)/)[1]
               }
+              console.log(trimmedDesc.replace(team.Callsign,'Team'))
+
+              if (f.Name.match(/^Team set as.*/)) {
+                trimmedDesc = ''
+              }
+
               if (jobNumber) { //if its about a job
                 holdMyDOM.timeStamp = timeStamp
-                holdMyDOM.dom = $(`<div class="row team-history-row"><div class="team-history col-8 history-job"><strong class="history-job-number">${f.Name.replace(team.Callsign,'')}</strong></a><small>${f.Description != '' && f.Description != null ? '<br>'+f.Description : ''}</small></div><div class="team-job col-4 text-center">${timeStamp}</div></div>`)
+                holdMyDOM.dom = $(`<div class="row team-history-row"><div class="team-history col-8 history-job"><strong class="history-job-number">${f.Name.replace(team.Callsign,'')}</strong></a><small>${f.Description != '' && f.Description != null ? '<br>'+ truncateString(f.Description, 200) : ''}</small></div><div class="team-job col-4 text-center">${timeStamp}</div></div>`)
               } else {
                 holdMyDOM.timeStamp = timeStamp
                 holdMyDOM.dom = $(`<div class="row team-history-row"><div class="team-history col-8"><strong>${f.Name}</strong><small>${trimmedDesc != '' && trimmedDesc != null  ? '<br>'+trimmedDesc : ''}</small></div><div class="team-job col-4 text-center">${timeStamp}</div></div>`)
@@ -716,9 +728,6 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
                 index++
               }
             }
-
-            //we dont return total items so always so more link
-            $(thisBox).find('.team-history > .container').append(`<div class="team-job col-12"><a href="${source}/Teams/History/${teamId}" target="_blank">...more</a></div>`)
 
 
             //activate all pops
@@ -904,3 +913,7 @@ function getToken(cb) { //when external vars have loaded
     })
   }, 200);
 }
+
+function truncateString(str, length) {
+     return str.length > length ? str.substring(0, length - 3) + '...' : str
+  }
