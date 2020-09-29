@@ -18,7 +18,7 @@ chrome.webRequest.onBeforeRequest.addListener(
     function (details) {
         console.log("blocking message js request")
         var javascriptCode = loadSynchronously(details.url);
-        var replaced = "var msgsystem;"+javascriptCode.replace("CreateMessageViewModel,f,t,i,r,u;","CreateMessageViewModel,f,t,i,r,u;msgsystem = n;");
+        var replaced = "var msgsystem;"+javascriptCode.replace("CreateMessageViewModel,t;","CreateMessageViewModel,t;msgsystem = n;");
         return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
     },
     { urls: ["https://*.ses.nsw.gov.au/js/messages/create?v=*"] },

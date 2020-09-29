@@ -4,32 +4,31 @@ var $ = require('jquery');
 
 inject('messages/create.js');
 
-function renderCheckBox() {
+function renderPrefillCheckBox() {
 	var selected = (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) ? "fa-check-square-o" : "fa-square-o";
 	return (
 		<span class="pull-right h6">
-		<span style="vertical-align:text-top" id="lighthouseEnabled" class={"fa fa-lg "+selected}></span> 
+		<span style="vertical-align:text-top" id="lighthouseEnabled" class={"fa fa-lg "+selected}></span>
 		<img style="width:16px;vertical-align:bottom;margin-right:5px;margin-left:5px"
-		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill With Home LHQ & Select Default Recipients
+		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill Home LHQ
 		</span>
 		);
 }
 
-$('#content > div > div > div:nth-child(2) fieldset:nth-child(1) legend').append(renderCheckBox);
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(1) legend').append(renderPrefillCheckBox);
 
-
-function recipientsButtons() {
+function renderRememberReplyCheckBox() {
+	var selected = (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) ? "fa-check-square-o" : "fa-square-o";
 	return (
-		<div class="panel-footer">
-		<button id="recipientsdel" class="btn btn-default">
-		<img style="width:16px;vertical-align:top;margin-right:5px"
-		src={chrome.extension.getURL("icons/lh.png")} />
-		Remove All Recipients</button>
-		</div>
+		<span class="pull-right h6">
+		<span style="vertical-align:text-top" id="lighthouseReplyRemember" class={"fa fa-lg "+selected}></span>
+		<img style="width:16px;vertical-align:bottom;margin-right:5px;margin-left:5px"
+		src={chrome.extension.getURL("icons/lh-black.png")} /> Remember Reply Address
+		</span>
 		);
 }
 
-$('#content > div > div > div:nth-child(2) fieldset:nth-child(2) div.panel.panel-default').append(recipientsButtons);
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(6) legend').append(renderRememberReplyCheckBox);
 
 function renderHQTeams() {
 	return (
@@ -89,8 +88,3 @@ function renderCollections() {
 
 
 $('#content > div > div > div:nth-child(2) fieldset:nth-child(3)').after(renderCollections);
-
-
-
-
-
