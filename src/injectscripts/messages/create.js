@@ -254,33 +254,6 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
                         console.log("Setting Selected HQ to user HQ");
                         msgsystem.searchHeadquarters(user.hq);
                         $('#searchHQ').val(user.hq.Name)
-
-
-                        $.ajax({
-                          type: 'GET',
-                          url: urls.Base + '/Api/v1/People/' + user.personId + '/Contacts',
-                          beforeSend: function(n) {
-                            n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
-                          },
-                          data: {
-                            LighthouseFunction: 'LoadPerson'
-                          },
-                          cache: false,
-                          dataType: 'json',
-                          complete: function(response, textStatus) {
-                            if (textStatus == 'success') {
-                              if (response.responseJSON.Results.length) {
-                                $.each(response.responseJSON.Results, function(k, v) {
-                                  if (v.ContactTypeId == 2) {
-                                    msgsystem.forwardingAddress(v.Detail)
-                                    $('#replyAddress').value = v.Detail
-                                  }
-                                })
-                              }
-                            }
-                          }
-                        })
-
                     } else {
                         console.log("messages is still loading")
                     }
@@ -303,8 +276,31 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
         console.log("Not running due to preference setting")
     }
 
+    msgsystem.replyToAddress.subscribe(function() {
+      if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) {
+          localStorage.setItem("LighthouseReplyDetail", msgsystem.replyToAddress.peek());
+      }
+    })
+
+    if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) {
+        msgsystem.replyToAddress(localStorage.getItem("LighthouseReplyDetail"))
+        $('#replyAddress').value = localStorage.getItem("LighthouseReplyDetail")
+    }
+
     //Operational = true
     msgsystem.operational(true);
+
+    $('#lighthouseReplyRemember').click(function() {
+        if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") === null) //its true so uncheck it
+        {
+            $(this).toggleClass("fa-check-square-o fa-square-o")
+            localStorage.setItem("LighthouseReplyRemember", false);
+        } else //its false so uncheck it
+        {
+            $(this).toggleClass("fa-square-o fa-check-square-o")
+            localStorage.setItem("LighthouseReplyRemember", true);
+        }
+    });
 
     $('#lighthouseEnabled').click(function() {
         if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") === null) //its true so uncheck it

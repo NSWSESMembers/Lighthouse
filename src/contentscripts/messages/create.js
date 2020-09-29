@@ -4,18 +4,31 @@ var $ = require('jquery');
 
 inject('messages/create.js');
 
-function renderCheckBox() {
+function renderPrefillCheckBox() {
 	var selected = (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) ? "fa-check-square-o" : "fa-square-o";
 	return (
 		<span class="pull-right h6">
 		<span style="vertical-align:text-top" id="lighthouseEnabled" class={"fa fa-lg "+selected}></span>
 		<img style="width:16px;vertical-align:bottom;margin-right:5px;margin-left:5px"
-		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill Home LHQ & Reply
+		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill Home LHQ
 		</span>
 		);
 }
 
-$('#content > div > div > div:nth-child(2) fieldset:nth-child(1) legend').append(renderCheckBox);
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(1) legend').append(renderPrefillCheckBox);
+
+function renderRememberReplyCheckBox() {
+	var selected = (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) ? "fa-check-square-o" : "fa-square-o";
+	return (
+		<span class="pull-right h6">
+		<span style="vertical-align:text-top" id="lighthouseReplyRemember" class={"fa fa-lg "+selected}></span>
+		<img style="width:16px;vertical-align:bottom;margin-right:5px;margin-left:5px"
+		src={chrome.extension.getURL("icons/lh-black.png")} /> Remember Reply Address
+		</span>
+		);
+}
+
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(6) legend').append(renderRememberReplyCheckBox);
 
 function renderHQTeams() {
 	return (
