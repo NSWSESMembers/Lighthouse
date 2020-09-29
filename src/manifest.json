@@ -32,7 +32,7 @@
     "https://www.rfs.nsw.gov.au/*",
     "https://api.transport.nsw.gov.au/*",
     "https://www.ausgrid.com.au/*",
-    "http://www.endeavourenergy.com.au/*",
+    "https://www.endeavourenergy.com.au/*",
     "https://www.essentialenergy.com.au/*",
     "webRequest",
     "webRequestBlocking"
