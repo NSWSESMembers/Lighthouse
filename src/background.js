@@ -8,7 +8,7 @@ const rfsMajorIncidentsFeed = "https://www.rfs.nsw.gov.au/feeds/majorIncidents.j
 const transportFeed = "https://api.transport.nsw.gov.au/";
 const openSkyFeed = "https://opensky-network.org/api/states/all";
 const essentialEnergyOutagesFeed = 'https://www.essentialenergy.com.au/Assets/kmz/current.kml';
-const endeavourEnergyOutagesFeed = 'http://www.endeavourenergy.com.au/mobileapp/outage/outages/listBoth/current';
+const endeavourEnergyOutagesFeed = 'https://www.endeavourenergy.com.au/mobileapp/outage/outages/listBoth/current';
 const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
 
 //external libs
