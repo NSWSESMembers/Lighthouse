@@ -82,7 +82,7 @@ function lighthouseETA() {
       })
 
       function addToTime(addMins, where, text) {
-        var timeInput = $(where).parent('div').parent('div').parent('div').find('input[data-bind$="datetimepicker: $parent.jobTeamStatusEstimatedCompletion, attr: {placeholder: $parent.jobTeamStatusTypeBeingUpdated() ? ($parent.jobTeamStatusTypeBeingUpdated().Id == Enum.JobTeamStatusTypeEnum.Enroute.Id ? \'ETA\' : \'ETC\') : \'\' \}"]')
+        var timeInput = $(where).parent('div').parent('div').parent('div').find('input[data-bind$="datetimepicker: $parent.jobTeamStatusEstimatedCompletion, attr: {placeholder: $parent.jobTeamStatusTypeBeingUpdated() ? ($parent.jobTeamStatusTypeBeingUpdated().Id == Enum.JobTeamStatusType.Enroute.Id ? \'ETA\' : \'ETC\') : \'\' \}"]')
         var now = moment()
         var current = moment()
         if (timeInput.val() != ''){
@@ -661,7 +661,7 @@ function InstantCategoryButton() {
         if (response.status == 204)
         {
         masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
-        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelType.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
       }
     }
   })
@@ -740,7 +740,7 @@ function InstantSectorButton() {
           if (response.status == 200)
           {
             masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
-            masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
+            masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelType.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
           }
         }
       });
@@ -758,7 +758,7 @@ function InstantSectorButton() {
           if (response.status == 200)
           {
             masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
-            masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
+            masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelType.Full.Id,function(t){masterViewModel.sector(t.Sector)}) //update status
           }
         }
       });
@@ -771,7 +771,7 @@ function InstantTaskButton() {
 
   var alreadyTasked = []
   $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k,v){
-    console.log(v.CurrentStatusId)
+
     if(v.CurrentStatusId != 6 && v.CurrentStatusId != 7)
     {
       alreadyTasked.push(v.Team.Id);
@@ -990,7 +990,7 @@ function TaskTeam(teamID) {
       {
         masterViewModel.teamsViewModel.loadTaskedTeams() //load teams
         masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
-        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelType.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
       }
     }
   });
@@ -1576,7 +1576,7 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
       {
         masterViewModel.teamsViewModel.loadTaskedTeams() //load teams
         masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
-        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelTypeEnum.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
+        masterViewModel.JobManager.GetJobById(jobId,Enum.JobViewModelType.Full.Id,function(t){masterViewModel.jobStatus(t.JobStatusType)}) //update status
       }
 
     }
