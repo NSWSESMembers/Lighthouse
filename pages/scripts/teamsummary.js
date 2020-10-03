@@ -574,7 +574,6 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
               if (trimmedDesc && trimmedDesc.match(/(.+)(?:by.*$)/)) {
                 trimmedDesc = trimmedDesc.match(/(.+)(?:by.*$)/)[1]
               }
-              console.log(trimmedDesc.replace(team.Callsign,'Team'))
 
               if (f.Name.match(/^Team set as.*/)) {
                 trimmedDesc = ''
