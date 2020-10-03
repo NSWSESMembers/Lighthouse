@@ -107,7 +107,7 @@ $(document).ready(function() {
     cache: false,
     dataType: 'json',
     complete: function(response, textStatus) {
-        console.log(response)
+
         if (response.responseJSON.result == 'OK')
         {
 
@@ -164,7 +164,7 @@ $('#LHImportCollectionCode').click(function() {
             cache: false,
             dataType: 'json',
             complete: function(response, textStatus) {
-                console.log(response)
+
                 spinner.remove()
                 if (response.responseJSON.result == 'OK')
                 {
@@ -233,15 +233,17 @@ $('#LHCollectionImport').click(function() {
 
 if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) {
     whenWeAreReady(msgsystem, function() {
+        msgsystem.searchHeadquarters.subscribe(function(hqSet) {
 
-        msgsystem.searchHeadquarters.subscribe(function(status) {
-            if (status !== null) {
+            if (hqSet != null && hqSet != '') {
                 LoadTeams()
                 LoadNitc()
 
-            } else {
+            } else { //normally after a message sent
                 $('#HQTeamsSet').hide()
                 $('#HQNitcSet').hide()
+
+                $('#searchHQ').val('')
 
             }
         });
@@ -276,15 +278,19 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
         console.log("Not running due to preference setting")
     }
 
-    msgsystem.replyToAddress.subscribe(function() {
+    msgsystem.replyToAddress.subscribe(function(r) {
       if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) {
-          localStorage.setItem("LighthouseReplyDetail", msgsystem.replyToAddress.peek());
+        if (r != null && r != '') {
+          localStorage.setItem("LighthouseReplyDetail", r);
+        }
       }
     })
 
     if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) {
+      if (localStorage.getItem("LighthouseReplyDetail") != null && localStorage.getItem("LighthouseReplyDetail") != '') {
         msgsystem.replyToAddress(localStorage.getItem("LighthouseReplyDetail"))
         $('#replyAddress').value = localStorage.getItem("LighthouseReplyDetail")
+      }
     }
 
     //Operational = true
@@ -299,6 +305,10 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
         {
             $(this).toggleClass("fa-square-o fa-check-square-o")
             localStorage.setItem("LighthouseReplyRemember", true);
+            //save the current Value
+            if (msgsystem.replyToAddress.peek() != null && msgsystem.replyToAddress.peek() != '') {
+                localStorage.setItem("LighthouseReplyDetail", msgsystem.replyToAddress.peek());
+            }
         }
     });
 
@@ -438,7 +448,6 @@ function LoadNitc() {
                                                         BuildNew.Description = v.FirstName + " " + v.LastName;
                                                         BuildNew.Detail = v.Detail;
                                                         msgsystem.selectedRecipients.push(BuildNew)
-                                                        console.log(total)
                                                         if (total == 0) //when they have all loaded, stop spinning.
                                                         {
                                                             spinner.remove();
@@ -664,7 +673,6 @@ function LoadAllCollections() {
   if (currentCollections !== null) {
     $.each(currentCollections, function(k, v) {
         console.log('pushing local to sync storage')
-        console.log(v)
         window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(v), name: 'lighthouseMessageCollections'}, '*');
 
     })
@@ -718,7 +726,7 @@ function LoadAllCollections() {
                 $('#LHCollectionShareModal').modal()
             })
             $(button).appendTo('#lighthousecollections');
-            console.log()
+
             button.style.width = (($(button).find('span.sharebutton')[0].offsetWidth)+($(button).find('span.delbutton')[0].offsetWidth)+button.offsetWidth) + "px"; //add the width of the X button to the width, to avoid overlap
             button.style.height = button.offsetHeight + "px";
         });
