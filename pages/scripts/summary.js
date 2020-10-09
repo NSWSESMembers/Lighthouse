@@ -25,15 +25,17 @@ var apiHost = params.host
 var token = ''
 var tokenexp = ''
 
+var apiLoadingInterlock = false
+
 var timeperiod;
 var unit = null;
 
 var sounds = {
-  'None':'',
+  'None': '',
   'Chime': 'sounds/chime.mp3',
-  'iphone':'sounds/iphone.mp3',
+  'iphone': 'sounds/iphone.mp3',
   'Minion': 'sounds/minion.mp3',
-  'Ding':'sounds/ding.mp3',
+  'Ding': 'sounds/ding.mp3',
 }
 
 var newJobSoundElement = document.createElement('audio');
@@ -78,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
     applyTheme([localStorage.getItem("LighthouseSummaryTheme")]);
     applySounds()
     console.log('Close finished')
-    startTimer(60);
+    startTimer(10);
 
     resize()
   }
@@ -94,10 +96,10 @@ window.addEventListener('resize', function(event) {
   resize()
 });
 
-$('#newJobSound').change(function(){
-   var val = $(this).val()
-    console.log('Going to play '+val)
-    newJobSoundSampleElement.setAttribute('src', sounds[val]);
+$('#newJobSound').change(function() {
+  var val = $(this).val()
+  console.log('Going to play ' + val)
+  newJobSoundSampleElement.setAttribute('src', sounds[val]);
 
   if (val != 'None') {
     newJobSoundSampleElement.play();
@@ -114,7 +116,7 @@ $(document).on('click', "#settings", function() {
   $('input[name=themebox]').val([localStorage.getItem("LighthouseSummaryTheme")]);
   $('#newJobSound').empty()
   $.each(Object.keys(sounds), function(val, text) {
-    $('#newJobSound').append( new Option(text,text) );
+    $('#newJobSound').append(new Option(text, text));
   });
 
   $('#newJobSound').val(localStorage.getItem("LighthouseSummaryNewJobSound"))
@@ -205,11 +207,11 @@ function applyTheme(themeName) {
 
 function applySounds() {
   var newJobSound = localStorage.getItem("LighthouseSummaryNewJobSound")
-  console.log('NewJobSound is ',newJobSound)
+  console.log('NewJobSound is ', newJobSound)
 
   //set default
   if (newJobSound == null) {
-    localStorage.setItem("LighthouseSummaryNewJobSound","None")
+    localStorage.setItem("LighthouseSummaryNewJobSound", "None")
     newJobSound = "None"
   }
 
@@ -259,66 +261,72 @@ function startTimer(duration) {
 
 //Get times vars for the call
 function RunForestRun(mp) {
-  getToken(function() {
-    mp && mp.open();
+  if (!apiLoadingInterlock) {
+    //prevent multiple overlapping runs
+    apiLoadingInterlock = true
+    getToken(function() {
+      mp && mp.open();
 
-    if (timeoverride !== null) { //we are using a time override
+      if (timeoverride !== null) { //we are using a time override
 
-      var end = new Date();
+        var end = new Date();
 
-      var start = new Date();
-      start.setDate(start.getDate() - (timeoverride / 24));
+        var start = new Date();
+        start.setDate(start.getDate() - (timeoverride / 24));
 
-      starttime = start.toISOString();
-      endtime = end.toISOString();
+        starttime = start.toISOString();
+        endtime = end.toISOString();
 
-      params.start = starttime;
-      params.end = endtime;
+        params.start = starttime;
+        params.end = endtime;
 
-    } else {
-      params = getSearchParameters();
-    }
+      } else {
+        params = getSearchParameters();
+      }
 
-    if (unit == null) {
-      console.log("firstrun...will fetch vars");
+      if (unit == null) {
+        console.log("firstrun...will fetch vars");
 
-      if (typeof params.hq !== 'undefined') {
-        if (params.hq.split(",").length == 1) { //one HQ was passed
-          LighthouseUnit.get_unit_name(params.hq, apiHost, token, function(result, error) {
-            if (typeof error == 'undefined') {
-              unit = result;
-              HackTheMatrix(unit, apiHost, token, mp);
-            } else {
-              mp.fail(error)
-            }
-          });
-        } else {
-          unit = [];
-          console.log("passed array of units");
-          var hqsGiven = params.hq.split(",");
-          hqsGiven.forEach(function(d) {
-            LighthouseUnit.get_unit_name(d, apiHost, token, function(result) {
+        if (typeof params.hq !== 'undefined') {
+          if (params.hq.split(",").length == 1) { //one HQ was passed
+            LighthouseUnit.get_unit_name(params.hq, apiHost, token, function(result, error) {
               if (typeof error == 'undefined') {
-                mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
-                unit.push(result);
-                if (unit.length == params.hq.split(",").length) {
-                  HackTheMatrix(unit, apiHost, token, mp);
-                }
+                unit = result;
+                HackTheMatrix(unit, apiHost, token, mp);
               } else {
                 mp.fail(error)
               }
             });
-          });
+          } else {
+            unit = [];
+            console.log("passed array of units");
+            var hqsGiven = params.hq.split(",");
+            hqsGiven.forEach(function(d) {
+              LighthouseUnit.get_unit_name(d, apiHost, token, function(result) {
+                if (typeof error == 'undefined') {
+                  mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
+                  unit.push(result);
+                  if (unit.length == params.hq.split(",").length) {
+                    HackTheMatrix(unit, apiHost, token, mp);
+                  }
+                } else {
+                  mp.fail(error)
+                }
+              });
+            });
+          }
+        } else { //no hq was sent, get them all
+          unit = [];
+          HackTheMatrix(unit, apiHost, token, mp);
         }
-      } else { //no hq was sent, get them all
-        unit = [];
-        HackTheMatrix(unit, apiHost, token, mp);
+      } else {
+        console.log("rerun...will NOT fetch vars");
+        HackTheMatrix(unit, apiHost, token);
       }
-    } else {
-      console.log("rerun...will NOT fetch vars");
-      HackTheMatrix(unit, apiHost, token);
-    }
-  })
+    })
+  } else {
+    console.log("interlock true, we are already running. preventing sequential run")
+  }
 }
 
 //make the call to beacon
@@ -332,50 +340,90 @@ function HackTheMatrix(unit, host, token, progressBar) {
     function(summary) {
       progressBar && progressBar.setValue(1);
 
-      var completeJob = _.findWhere(summary.result, { Name: "Complete" }).Count;
-      var newJob = _.findWhere(summary.result, { Name: "New" }).Count;
-      var activeJob = _.findWhere(summary.result, { Name: "Active" }).Count;
-      var refJob = _.findWhere(summary.result, { Name: "Referred" }).Count;
-      var finJob = _.findWhere(summary.result, { Name: "Finalised" }).Count;
-      var canJob = _.findWhere(summary.result, { Name: "Cancelled" }).Count;
-      var rejJob = _.findWhere(summary.result, { Name: "Rejected" }).Count;
-      var tskJob = _.findWhere(summary.result, { Name: "Tasked" }).Count;
+      var completeJob = _.findWhere(summary.result, {
+        Name: "Complete"
+      }).Count;
+      var newJob = _.findWhere(summary.result, {
+        Name: "New"
+      }).Count;
+      var activeJob = _.findWhere(summary.result, {
+        Name: "Active"
+      }).Count;
+      var refJob = _.findWhere(summary.result, {
+        Name: "Referred"
+      }).Count;
+      var finJob = _.findWhere(summary.result, {
+        Name: "Finalised"
+      }).Count;
+      var canJob = _.findWhere(summary.result, {
+        Name: "Cancelled"
+      }).Count;
+      var rejJob = _.findWhere(summary.result, {
+        Name: "Rejected"
+      }).Count;
+      var tskJob = _.findWhere(summary.result, {
+        Name: "Tasked"
+      }).Count;
 
-      var storm = _.findWhere(summary.result, { Name: "Storm" }).Count;
-      var flood = _.findWhere(summary.result, { Name: "Flood Misc" }).Count;
-      flood = flood + _.findWhere(summary.result, { Name: "Medical Resupply" }).Count;
-      flood = flood + _.findWhere(summary.result, { Name: "Fodder Drop" }).Count;
-      flood = flood + _.findWhere(summary.result, { Name: "Resupply" }).Count;
-      flood = flood + _.findWhere(summary.result, { Name: "Vet Assistance" }).Count;
+      var storm = _.findWhere(summary.result, {
+        Name: "Storm"
+      }).Count;
+      var flood = _.findWhere(summary.result, {
+        Name: "Flood Misc"
+      }).Count;
+      flood = flood + _.findWhere(summary.result, {
+        Name: "Medical Resupply"
+      }).Count;
+      flood = flood + _.findWhere(summary.result, {
+        Name: "Fodder Drop"
+      }).Count;
+      flood = flood + _.findWhere(summary.result, {
+        Name: "Resupply"
+      }).Count;
+      flood = flood + _.findWhere(summary.result, {
+        Name: "Vet Assistance"
+      }).Count;
 
-      var rescue = _.findWhere(summary.result, { Name: "RCR" }).Count;
-      rescue = rescue + _.findWhere(summary.result, { Name: "FR" }).Count;
-      rescue = rescue + _.findWhere(summary.result, { Name: "WR" }).Count;
-      rescue = rescue + _.findWhere(summary.result, { Name: "VR" }).Count;
-      rescue = rescue + _.findWhere(summary.result, { Name: "CFR" }).Count;
+      var rescue = _.findWhere(summary.result, {
+        Name: "RCR"
+      }).Count;
+      rescue = rescue + _.findWhere(summary.result, {
+        Name: "FR"
+      }).Count;
+      rescue = rescue + _.findWhere(summary.result, {
+        Name: "WR"
+      }).Count;
+      rescue = rescue + _.findWhere(summary.result, {
+        Name: "VR"
+      }).Count;
+      rescue = rescue + _.findWhere(summary.result, {
+        Name: "CFR"
+      }).Count;
 
 
-      var support = _.findWhere(summary.result, { Name: "Support" }).Count;
+      var support = _.findWhere(summary.result, {
+        Name: "Support"
+      }).Count;
 
       var outstanding = newJob + activeJob + tskJob + refJob;
       var completed = canJob + completeJob + finJob + rejJob;
 
-      var total = outstanding+completed
+      var total = outstanding + completed
 
       //Sounds for new jobs
       if (newJob > parseInt($('#new .lh-value').text())) {
         console.log('New job, will play newJobSoundElement if set')
 
-      if (newJobSoundElement.getAttribute('src') != '') {
-        console.log('playing newJobSoundElement')
-        newJobSoundElement.play();
+        if (newJobSoundElement.getAttribute('src') != '') {
+          console.log('playing newJobSoundElement')
+          newJobSoundElement.play();
+        }
       }
-    }
 
       _.each([
         ['#outstanding', outstanding],
         ['#completedsum', completed],
-        ['#totalnumber', outstanding+completed],
+        ['#totalnumber', outstanding + completed],
         ['#new', newJob],
         ['#active', activeJob],
         ['#tasked', tskJob],
@@ -455,6 +503,10 @@ function HackTheMatrix(unit, host, token, progressBar) {
 
       progressBar && progressBar.setValue(1);
       progressBar && progressBar.close();
+
+      apiLoadingInterlock = false
+
+
     },
     function(val, total) {
       if (progressBar) { //if its a first load

@@ -25,6 +25,9 @@ var firstRun = true
 var setColWidth = 4
 var setDefaultAdd = true
 
+var apiLoadingInterlock = false
+
+
 //allow pretty popovers with inline style
 $.fn.tooltip.Constructor.Default.whiteList['*'].push('style')
 
@@ -280,6 +283,10 @@ function startTimer(duration, display) {
 
 //Get times vars for the call
 function RunForestRun(mp) {
+  if (!apiLoadingInterlock) {
+    //prevent multiple overlapping runs
+    apiLoadingInterlock = true
+
   getToken(function() {
     mp && mp.open();
     mp && mp.setValue(-1);
@@ -347,6 +354,9 @@ function RunForestRun(mp) {
       HackTheMatrix(unit, apiHost, params.source, token);
     }
   })
+  } else {
+    console.log("interlock true, we are already running. preventing sequential run")
+  }
 }
 
 //make the call to beacon
@@ -854,6 +864,8 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
         //progressBar && progressBar.setValue(1);
         progressBar && progressBar.close();
         $('#loadinginline').css('display', 'none');
+        apiLoadingInterlock = false
+        positionFooter();
       }
     },
     function(val, total) {

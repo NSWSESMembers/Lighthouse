@@ -9,6 +9,7 @@ var LighthouseStatsJobsCleanup = require('../lib/stats/jobparsing.js');
 
 
 var $ = require('jquery');
+
 global.jQuery = $;
 
 var crossfilter = require('crossfilter');
@@ -27,6 +28,8 @@ var timeperiod;
 var unit = null;
 var facts = null;
 var firstrun = true;
+
+var apiLoadingInterlock = false
 
 //get passed page params
 var params = getSearchParameters();
@@ -153,77 +156,86 @@ function startTimer(duration, display) {
 
 //Get times vars for the call
 function RunForestRun(mp) {
-  getToken(function() {
-    mp && mp.open();
+  if (!apiLoadingInterlock) {
+    //prevent multiple overlapping runs
+    apiLoadingInterlock = true
 
-    if (timeoverride !== null) { //we are using a time override
-      var end = new Date();
-      var start = new Date();
+    getToken(function() {
+      mp && mp.open();
 
-      start.setDate(start.getDate() - (timeoverride / 24));
+      if (timeoverride !== null) { //we are using a time override
+        var end = new Date();
+        var start = new Date();
 
-      starttime = start.toISOString();
-      endtime = end.toISOString();
+        start.setDate(start.getDate() - (timeoverride / 24));
 
-      params.start = starttime;
-      params.end = endtime;
-    } else {
-      params = getSearchParameters();
-    }
+        starttime = start.toISOString();
+        endtime = end.toISOString();
 
-    function fetchComplete(jobsData, progressBar, firstrun) {
-      console.log("Done fetching from beacon, rendering graphs...");
-      renderPage(unit, jobsData, firstrun);
-      console.log("Graphs rendered.");
-      progressBar && progressBar.setValue(1);
-      progressBar && progressBar.close();
-    }
+        params.start = starttime;
+        params.end = endtime;
+      } else {
+        params = getSearchParameters();
+      }
 
-    if (firstrun) {
-      console.log("firstrun...will fetch vars");
+      function fetchComplete(jobsData, progressBar, firstrun) {
+        //prevent multiple overlapping runs
+        apiLoadingInterlock = false
+        console.log("Done fetching from beacon, rendering graphs...");
+        renderPage(unit, jobsData, firstrun);
+        console.log("Graphs rendered.");
+        progressBar && progressBar.setValue(1);
+        progressBar && progressBar.close();
+      }
 
-      if (typeof params.hq !== 'undefined') { //HQ was sent (so no filter)
+      if (firstrun) {
+        console.log("firstrun...will fetch vars");
 
-        if (params.hq.split(",").length == 1) { //if only one HQ
+        if (typeof params.hq !== 'undefined') { //HQ was sent (so no filter)
 
-          LighthouseUnit.get_unit_name(params.hq, apiHost, token, function(result, error) {
-            if (typeof error == 'undefined') {
-              unit = result;
-              fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
-            } else {
-              mp.fail(error)
-            }
-          });
+          if (params.hq.split(",").length == 1) { //if only one HQ
 
-        } else { //if more than one HQ
-          unit = [];
-          console.log("passed array of units");
-          var hqsGiven = params.hq.split(",");
-          console.log(hqsGiven);
-          hqsGiven.forEach(function(d) {
-            LighthouseUnit.get_unit_name(d, apiHost, token, function(result, error) {
+            LighthouseUnit.get_unit_name(params.hq, apiHost, token, function(result, error) {
               if (typeof error == 'undefined') {
-                mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
-                unit.push(result);
-                if (unit.length == params.hq.split(",").length) {
-                  fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
-                }
+                unit = result;
+                fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
               } else {
                 mp.fail(error)
               }
             });
-          });
+
+          } else { //if more than one HQ
+            unit = [];
+            console.log("passed array of units");
+            var hqsGiven = params.hq.split(",");
+            console.log(hqsGiven);
+            hqsGiven.forEach(function(d) {
+              LighthouseUnit.get_unit_name(d, apiHost, token, function(result, error) {
+                if (typeof error == 'undefined') {
+                  mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
+                  unit.push(result);
+                  if (unit.length == params.hq.split(",").length) {
+                    fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
+                  }
+                } else {
+                  mp.fail(error)
+                }
+              });
+            });
+          }
+        } else { //no hq was sent, get them all
+          unit = [];
+          fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
         }
-      } else { //no hq was sent, get them all
-        unit = [];
+      } else {
+        console.log("rerun...will NOT fetch vars");
+        $('#loadinginline').css('visibility', 'visible');
         fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
       }
-    } else {
-      console.log("rerun...will NOT fetch vars");
-      $('#loadinginline').css('visibility', 'visible');
-      fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
-    }
-  })
+    })
+  } else {
+    console.log("interlock true, we are already running. preventing sequential run")
+  }
 }
 
 
@@ -400,15 +412,15 @@ function prepareCharts(jobs, start, end, firstRun) {
 
 
     var jobLength = facts.dimension(function(d) {
-        return d.JobDuration;
+      return d.JobDuration;
     });
 
     var jobLengthDimension = facts.dimension(function(d) {
-      return round(d.JobDuration/1000/60/60,0.1);
+      return round(d.JobDuration / 1000 / 60 / 60, 0.1);
     });
 
     var jobLengthPeriodsGroup = jobLengthDimension.group().reduceCount(function(d) {
-      return round(d.JobDuration/1000/60/60,0.1);
+      return round(d.JobDuration / 1000 / 60 / 60, 0.1);
     });
 
 
@@ -430,8 +442,8 @@ function prepareCharts(jobs, start, end, firstRun) {
 
           var size = onlyCompleted.length
           var top = onlyCompleted.slice(Math.floor(size * 0.8))
-          var bottom = onlyCompleted.slice(0,Math.ceil(size * 0.2))
-          var middle = onlyCompleted.slice(Math.ceil(size * 0.2),Math.floor(size * 0.8))
+          var bottom = onlyCompleted.slice(0, Math.ceil(size * 0.2))
+          var middle = onlyCompleted.slice(Math.ceil(size * 0.2), Math.floor(size * 0.8))
 
           //if theres no middle due to length < 3
           if (middle.length == 0) {
@@ -450,15 +462,15 @@ function prepareCharts(jobs, start, end, firstRun) {
             'top20th': d3.mean(top, function(d) {
               return d.JobDuration;
             }),
-            'topbottom': d3.quantile(onlyCompleted.map(function(a){
+            'topbottom': d3.quantile(onlyCompleted.map(function(a) {
               return a.JobDuration
-            }),0.75),
-            'middlemiddle': d3.quantile(onlyCompleted.map(function(a){
+            }), 0.75),
+            'middlemiddle': d3.quantile(onlyCompleted.map(function(a) {
               return a.JobDuration
-            }),0.5),
-            'bottomtop': d3.quantile(onlyCompleted.map(function(a){
+            }), 0.5),
+            'bottomtop': d3.quantile(onlyCompleted.map(function(a) {
               return a.JobDuration
-            }),0.25),
+            }), 0.25),
           }];
         }
       }
@@ -470,7 +482,9 @@ function prepareCharts(jobs, start, end, firstRun) {
         return d.top20th
       })
       .formatNumber(function(d) {
-        return humanizeDuration(d,{ round: true })
+        return humanizeDuration(d, {
+          round: true
+        })
 
       })
 
@@ -480,7 +494,9 @@ function prepareCharts(jobs, start, end, firstRun) {
         return d.middle60th
       })
       .formatNumber(function(d) {
-        return humanizeDuration(d,{ round: true })
+        return humanizeDuration(d, {
+          round: true
+        })
       })
 
     lowermeanChart
@@ -489,35 +505,43 @@ function prepareCharts(jobs, start, end, firstRun) {
         return d.bottom20th
       })
       .formatNumber(function(d) {
-        return humanizeDuration(d,{ round: true })
+        return humanizeDuration(d, {
+          round: true
+        })
       })
 
-      lowerupperChart
-        .group(jobLengthGroup)
-        .valueAccessor(function(d) {
-          return d.topbottom
+    lowerupperChart
+      .group(jobLengthGroup)
+      .valueAccessor(function(d) {
+        return d.topbottom
+      })
+      .formatNumber(function(d) {
+        return humanizeDuration(d, {
+          round: true
         })
-        .formatNumber(function(d) {
-          return humanizeDuration(d,{ round: true })
-        })
+      })
 
-      middlemiddleChart
-        .group(jobLengthGroup)
-        .valueAccessor(function(d) {
-          return d.middlemiddle
+    middlemiddleChart
+      .group(jobLengthGroup)
+      .valueAccessor(function(d) {
+        return d.middlemiddle
+      })
+      .formatNumber(function(d) {
+        return humanizeDuration(d, {
+          round: true
         })
-        .formatNumber(function(d) {
-          return humanizeDuration(d,{ round: true })
-        })
+      })
 
-      upperlowerChart
-        .group(jobLengthGroup)
-        .valueAccessor(function(d) {
-          return d.bottomtop
+    upperlowerChart
+      .group(jobLengthGroup)
+      .valueAccessor(function(d) {
+        return d.bottomtop
+      })
+      .formatNumber(function(d) {
+        return humanizeDuration(d, {
+          round: true
         })
-        .formatNumber(function(d) {
-          return humanizeDuration(d,{ round: true })
-        })
+      })
 
 
     var volumeClosedByPeriodGroup = volumeClosedByPeriod.group().reduceCount(function(d) {
@@ -553,23 +577,23 @@ function prepareCharts(jobs, start, end, firstRun) {
     }
 
     completionBellChart
-    .width(1400)
-    .height(250)
-    .transitionDuration(500)
-    .brushOn(true)
-    .mouseZoomable(false)
-    .xAxisLabel("Number of hours job is open for")
-    .yAxisLabel("Number of Jobs")
-    .barPadding(10)
-    .dimension(jobLengthDimension)
-    .group(jobLengthPeriodsGroupFiltered)
-    .x(d3.scaleLinear()
-    .domain([round(jobLengthDimension.bottom(1)[0].JobDuration/1000/60/60,0.1),round(jobLengthDimension.top(1)[0].JobDuration/1000/60/60,0.1)+1])
-    )
-    .elasticY(true)
-    .xAxis();
+      .width(1400)
+      .height(250)
+      .transitionDuration(500)
+      .brushOn(true)
+      .mouseZoomable(false)
+      .xAxisLabel("Number of hours job is open for")
+      .yAxisLabel("Number of Jobs")
+      .barPadding(10)
+      .dimension(jobLengthDimension)
+      .group(jobLengthPeriodsGroupFiltered)
+      .x(d3.scaleLinear()
+        .domain([round(jobLengthDimension.bottom(1)[0].JobDuration / 1000 / 60 / 60, 0.1), round(jobLengthDimension.top(1)[0].JobDuration / 1000 / 60 / 60, 0.1) + 1])
+      )
+      .elasticY(true)
+      .xAxis();
 
-completionBellChart.xAxis().ticks(20);
+    completionBellChart.xAxis().ticks(20);
 
     timeOpenChart
       .width(800)
@@ -1041,18 +1065,18 @@ function getToken(cb) { //when external vars have loaded
 }
 
 function round(value, step) {
-    step || (step = 1.0);
-    var inv = 1.0 / step;
-    return Math.ceil(value * inv) / inv;
+  step || (step = 1.0);
+  var inv = 1.0 / step;
+  return Math.ceil(value * inv) / inv;
 }
 
 function remove_empty_bins(source_group) {
-    return {
-        all:function () {
-            return source_group.all().filter(function(d) {
-                //return Math.abs(d.value) > 0.00001; // if using floating-point numbers
-                return d.value !== 0 && d.key !== 0; // if integers only
-            });
-        }
-    };
+  return {
+    all: function() {
+      return source_group.all().filter(function(d) {
+        //return Math.abs(d.value) > 0.00001; // if using floating-point numbers
+        return d.value !== 0 && d.key !== 0; // if integers only
+      });
+    }
+  };
 }
