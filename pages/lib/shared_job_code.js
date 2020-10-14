@@ -20,7 +20,6 @@ function GetJSONfromBeacon(unit, host, StartDate, EndDate, token, callback, prog
       unit.forEach(function(d) {
         hqString = hqString + "&Hq=" + d.Id
       });
-      console.log(hqString)
       url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
     }
   } else {
