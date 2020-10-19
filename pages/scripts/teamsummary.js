@@ -313,10 +313,10 @@ function RunForestRun(mp) {
       if (typeof params.hq != 'undefined') { //if not no hqs
         if (params.hq.split(",").length == 1) { //if only one HQ
           mp && mp.setText(`Loading unit #${params.hq}`)
-          LighthouseUnit.get_unit_name(params.hq, apiHost, token, function(result, error) {
+          LighthouseUnit.get_unit_name(params.hq, apiHost, params.userId, token, function(result, error) {
             if (typeof error == 'undefined') {
               unit = result;
-              HackTheMatrix(unit, apiHost, params.source, token, mp);
+              HackTheMatrix(unit, apiHost, params.source, params.userId, token, mp);
             } else {
               mp.fail(error)
             }
@@ -331,12 +331,12 @@ function RunForestRun(mp) {
           // HackTheMatrix(unit, apiHost, params.source, token, mp);
           mp && mp.setText(`Loading multiple unit details`)
           hqsGiven.forEach(function(d) {
-            LighthouseUnit.get_unit_name(d, params.host, token, function(result, error) {
+            LighthouseUnit.get_unit_name(d, params.host, params.userId, token, function(result, error) {
               mp && mp.setText(`Loaded unit ${result.Code}`)
               if (typeof error == 'undefined') {
                 unit.push(result);
                 if (unit.length == params.hq.split(",").length) {
-                  HackTheMatrix(unit, apiHost, params.source, token, mp);
+                  HackTheMatrix(unit, apiHost, params.source, params.userId, token, mp);
                 }
               } else {
                 mp.fail(error)
@@ -346,12 +346,12 @@ function RunForestRun(mp) {
         }
       } else { //no hq was sent, get them all
         unit = [];
-        HackTheMatrix(unit, apiHost, params.source, token, mp);
+        HackTheMatrix(unit, apiHost, params.source, params.userId, token, mp);
       }
     } else {
       console.log("rerun...will NOT fetch vars");
       $('#loadinginline').css('display', 'block');
-      HackTheMatrix(unit, apiHost, params.source, token);
+      HackTheMatrix(unit, apiHost, params.source,  params.userId, token);
     }
   })
   } else {
@@ -360,7 +360,7 @@ function RunForestRun(mp) {
 }
 
 //make the call to beacon
-function HackTheMatrix(unit, host, source, token, progressBar) {
+function HackTheMatrix(unit, host, source, userId, token, progressBar) {
 
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
@@ -368,7 +368,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
   var teamsActive = 0;
   var teamsHidden = 0;
 
-  LighthouseTeam.get_teams(unit, host, start, end, token, function(teams) {
+  LighthouseTeam.get_teams(unit, host, start, end, userId, token, function(teams) {
 
       var options = { //date display options
         weekday: "short",
@@ -571,7 +571,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
 
           progressBar && progressBar.setText(`Loading team ${team.Callsign} history`)
 
-          LighthouseTeam.get_history(teamId, host, token, function(e) {
+          LighthouseTeam.get_history(teamId, host, userId, token, function(e) {
             let historyItems = []
             e.Results.forEach(function(f) {
               const timeStamp = moment(f.TimeStamp).format('MMM D HH.mm')
@@ -599,7 +599,7 @@ function HackTheMatrix(unit, host, source, token, progressBar) {
 
               function jobAddress(cb) {
                 let address = ''
-                LighthouseJob.get_job(jobNumber[0].replace('-', ''), 1, host, token, function(data) {
+                LighthouseJob.get_job(jobNumber[0].replace('-', ''), 1, host, userId, token, function(data) {
                   // Job Tags
                   var tagArray = new Array();
                   $.each(data.Tags, function(tagIdx, tagObj) {

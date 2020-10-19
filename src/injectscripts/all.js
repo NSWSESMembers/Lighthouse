@@ -28,7 +28,7 @@ whenWeAreReady(user, function() {
     thismorning = new Date(thismorning.getTime());
 
 
-    var vars = "?host=" + urls.Base + "&source=" + location.origin + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString());
+    var vars = "?userId=" + user.Id + "&host=" + urls.Base + "&source=" + location.origin + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString());
 
     lighthouseMenu = MakeMenu(lighthouseUrl, vars, user.hq.Code)
 
@@ -925,7 +925,8 @@ function LoadJobFilterCollections() {
                 n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
               },
               data: {
-                LighthouseFunction: 'LighthouseLoadICEMSFromCollection'
+                LighthouseFunction: 'LighthouseLoadICEMSFromCollection',
+                userId: user.Id
               },
               cache: false,
               dataType: 'json',

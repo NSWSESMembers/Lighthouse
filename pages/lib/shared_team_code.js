@@ -2,11 +2,11 @@ const $ = require('jquery');
 const LighthouseJson = require('./shared_json_code.js');
 
 //limited to single page result
-function GetTaskingfromBeacon(Id, host, token, callback) {
-  console.log("GetTaskingfromBeacon called with:" + Id+", "+host);
+function GetTaskingfromBeacon(Id, host, userId = 'notPassed', token, callback) {
+  console.log("GetTaskingfromBeacon called with:" + Id + ", " + host);
 
     LighthouseJson.get_json(
-    host+"/Api/v1/Tasking/Search?LighthouseFunction=GetTaskingfromBeacon&TeamIds=" + Id, token,
+    host+"/Api/v1/Tasking/Search?LighthouseFunction=GetTaskingfromBeacon&userId=" + userId + "&TeamIds=" + Id, token, 0, 100,
     function(res){
       console.log("Progress CB");
     },
@@ -22,10 +22,10 @@ function GetTaskingfromBeacon(Id, host, token, callback) {
 }
 
 //limited to single page result
-function GetHistoryfromBeacon(Id, host, token, callback) {
+function GetHistoryfromBeacon(Id, host, userId = 'notPassed', token, callback) {
   console.log("GetHistoryfromBeacon called with:" + Id+", "+host);
     LighthouseJson.get_json(
-    host+"/Api/v1/Teams/"+Id+"/History?LighthouseFunction=GetHistoryfromBeacon", token, 1, 20,
+    host+"/Api/v1/Teams/"+Id+"/History?LighthouseFunction=GetHistoryfromBeacon&userId=" + userId, token, 1, 20,
     function(res){
       console.log("Progress CB");
     },
@@ -41,7 +41,7 @@ function GetHistoryfromBeacon(Id, host, token, callback) {
 }
 
 //make the call to beacon
-function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback, progressCallBack, statusTypes = []) {
+function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = []) {
   console.debug("GetJSONTeamsfromBeacon called");
   let params = {};
   params['StatusStartDate'] = StartDate.toISOString();
@@ -69,7 +69,7 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback,
     }
   }
 
-  var url = host+"/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon&" + $.param(params, true);
+  var url = host+"/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon&userId=" + userId + "&" + $.param(params, true);
   var lastDisplayedVal = 0 ;
   LighthouseJson.get_json(
     url, token, 0, 100,
@@ -100,10 +100,11 @@ function GetJSONTeamsfromBeacon(unit, host, StartDate, EndDate, token, callback,
  * @param hqs the units to filter on.
  * @param startDate the date to limit the tasking search from.
  * @param endDate the date to limit the tasking search till.
+  * @param userId the users id
  * @param token the authorisation token.
  * @param callback the callback to send the data to after it is fetched.
  */
-function getTeamGeoJson(hqs, host, startDate, endDate, token, callback) {
+function getTeamGeoJson(hqs, host, startDate, endDate, userId = 'notPassed', token, callback) {
     console.debug('fetching SES teams geoJson');
 
     let lastDay = new Date();
@@ -115,7 +116,7 @@ function getTeamGeoJson(hqs, host, startDate, endDate, token, callback) {
     let teamEndRange = new Date();
     let statusTypes = [3]; // Only get activated teams
 
-    GetJSONTeamsfromBeacon(hqs, host, teamStartRange, teamEndRange, token, function (teams) {
+    GetJSONTeamsfromBeacon(hqs, host, teamStartRange, teamEndRange, userId, token, function (teams) {
 
         // Make a promise to collect all the team details in promises
         new Promise((mainResolve) => {
@@ -125,7 +126,7 @@ function getTeamGeoJson(hqs, host, startDate, endDate, token, callback) {
 
                 // Create a promise for this team to check its tasking and details
                 promises.push(new Promise((resolve) => {
-                    GetTaskingfromBeacon(team.Id, host, token, function (teamTasking) {
+                    GetTaskingfromBeacon(team.Id, host, userId, token, function (teamTasking) {
                         let latestTasking = null;
                         let latestTime = null;
 
@@ -213,7 +214,7 @@ function getTeamGeoJson(hqs, host, startDate, endDate, token, callback) {
                 callback(error);
             });
         });
-    }, statusTypes);
+    }, function(p) {console.log(p)}, statusTypes);
 }
 
 module.exports = {

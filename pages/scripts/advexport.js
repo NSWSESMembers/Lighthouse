@@ -259,7 +259,7 @@ function HackTheMatrix(id, host, progressBar) {
   }
 
 
-  LighthouseJob.get_json(unit, host, start, end, token, function(jobs) {
+  LighthouseJob.get_json(unit, host, start, end, params.userId, token, function(jobs) {
     //console.log(jobs);
     // $(jobs.Results).each(function(j,k){
     //   console.log(k)
@@ -341,7 +341,7 @@ function HackTheMatrix(id, host, progressBar) {
         const itemPos = position
         position++
         if (item.ICEMSIncidentIdentifier != null) {
-          LighthouseOpsLog.get_operations_log(item.Id, host, token, function(logs) {
+          LighthouseOpsLog.get_operations_log(item.Id, host, params.userId, token, function(logs) {
             var numberOfIUM = 0
             logs.Results.forEach(function(r) {
               if (r.Subject && r.Subject.indexOf('Incident Update Message') != -1 && r.Subject.indexOf('Incident Update Message Acceptance') == -1) {

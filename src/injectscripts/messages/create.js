@@ -40,7 +40,8 @@ $(document).ready(function() {
                         n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
                     },
                     data: {
-                        LighthouseFunction: 'LoadPerson'
+                        LighthouseFunction: 'LoadPerson',
+                        userId: user.Id
                     },
                     cache: false,
                     dataType: 'json',
@@ -429,7 +430,8 @@ function LoadNitc() {
                                         n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
                                     },
                                     data: {
-                                        LighthouseFunction: 'LoadPerson'
+                                        LighthouseFunction: 'LoadPerson',
+                                        userId: user.Id
                                     },
                                     cache: false,
                                     dataType: 'json',
@@ -562,7 +564,8 @@ function LoadTeams() {
                                     n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
                                 },
                                 data: {
-                                    LighthouseFunction: 'LoadPerson'
+                                    LighthouseFunction: 'LoadPerson',
+                                    userId: user.Id
                                 },
                                 cache: false,
                                 dataType: 'json',
@@ -755,7 +758,8 @@ function LoadCollection(col, cb) {
                     n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
                 },
                 data: {
-                    LighthouseFunction: 'CollectionLoadCollection'
+                    LighthouseFunction: 'CollectionLoadCollection',
+                    userId: user.Id
                 },
                 cache: false,
                 dataType: 'json',
@@ -770,7 +774,8 @@ function LoadCollection(col, cb) {
                                 n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
                             },
                             data: {
-                                LighthouseFunction: 'CollectionLoadHQ'
+                                LighthouseFunction: 'CollectionLoadHQ',
+                                userId: user.Id
                             },
                             cache: false,
                             dataType: 'json',
@@ -816,7 +821,8 @@ $.ajax({
         n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
     },
     data: {
-        LighthouseFunction: 'LoadPerson'
+        LighthouseFunction: 'LoadPerson',
+        userId: user.Id
     },
     cache: false,
     dataType: 'json',
@@ -866,7 +872,8 @@ $.ajax({
         'HeadquarterIds[]': itm.OwnerId,
         'SortField': "createdon",
         'SortOrder': "asc",
-        'LighthouseFunction': 'CollectionLoadEntity'
+        'LighthouseFunction': 'CollectionLoadEntity',
+        'userId': user.Id
     },
     complete: function(response, textStatus) {
         if (textStatus == 'success') {

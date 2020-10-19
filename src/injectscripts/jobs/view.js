@@ -206,7 +206,7 @@ whenAddressIsReady(function() {
     }
     , cache: false
     , dataType: 'json'
-    , data: {LighthouseFunction: 'NearestAVL'}
+    , data: {LighthouseFunction: 'NearestAVL', userId: user.Id}
     , complete: function(response, textStatus) {
       if (textStatus == 'success')
       {
@@ -654,7 +654,7 @@ function InstantCategoryButton() {
       , beforeSend: function(n) {
         n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
       }
-      , data: {Id: id, Ids: [jobId], LighthouseFunction: 'SetCategory'}
+      , data: {Id: id, Ids: [jobId], LighthouseFunction: 'SetCategory', userId: user.Id}
       , cache: false
       , dataType: 'json'
       , complete: function(response, textStatus) {
@@ -684,7 +684,7 @@ function InstantSectorButton() {
     }
     , cache: false
     , dataType: 'json'
-    , data: {LighthouseFunction: 'InstantSectorButton'}
+    , data: {LighthouseFunction: 'InstantSectorButton', userId: user.Id}
     , complete: function(response, textStatus) {
       if (textStatus == 'success')
       {
@@ -733,7 +733,7 @@ function InstantSectorButton() {
         , beforeSend: function(n) {
           n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
         }
-        , data: {IdsToAdd: [jobId], LighthouseFunction: 'SetSector'}
+        , data: {IdsToAdd: [jobId], LighthouseFunction: 'SetSector', userId: user.Id}
         , cache: false
         , dataType: 'json'
         , complete: function(response, textStatus) {
@@ -751,7 +751,7 @@ function InstantSectorButton() {
         , beforeSend: function(n) {
           n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
         }
-        , data: {LighthouseFunction: 'SetSector'}
+        , data: {LighthouseFunction: 'SetSector', userId: user.Id}
         , cache: false
         , dataType: 'json'
         , complete: function(response, textStatus) {
@@ -801,7 +801,7 @@ function InstantTaskButton() {
     }
     , cache: false
     , dataType: 'json'
-    , data: {LighthouseFunction: 'QuickTaskGetJob'}
+    , data: {LighthouseFunction: 'QuickTaskGetJob', userId: user.Id}
     , complete: function(response, textStatus) {
 
       if (textStatus == 'success')
@@ -981,7 +981,7 @@ function TaskTeam(teamID) {
     , beforeSend: function(n) {
       n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
     }
-    , data: JSON.stringify({TeamIds:TeamIds, JobIds:JobIds, LighthouseFunction: 'TaskTeam'})
+    , data: JSON.stringify({TeamIds:TeamIds, JobIds:JobIds, LighthouseFunction: 'TaskTeam', userId: user.Id})
     , cache: false
     , dataType: "json"
     , contentType: "application/json; charset=utf-8"
@@ -1270,6 +1270,7 @@ function checkAddressHistory(){
       , 'SortField':          'JobReceived'
       , 'SortOrder':          'desc'
       , 'LighthouseFunction': 'checkAddressHistory'
+      , 'userId':             user.Id
     }
     , cache: false
     , dataType: 'json'
@@ -1568,6 +1569,7 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
       ,'TeamId':    TeamID
       , 'JobId':    JobID
       ,'LighthouseFunction': 'untaskTeamFromJob'
+      ,'userId': user.Id
     }
     , cache: false
     , dataType: 'json'

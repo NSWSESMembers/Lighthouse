@@ -289,10 +289,10 @@ function RunForestRun(mp) {
 
         if (typeof params.hq !== 'undefined') {
           if (params.hq.split(",").length == 1) { //one HQ was passed
-            LighthouseUnit.get_unit_name(params.hq, apiHost, token, function(result, error) {
+            LighthouseUnit.get_unit_name(params.hq, apiHost, params.userId, token, function(result, error) {
               if (typeof error == 'undefined') {
                 unit = result;
-                HackTheMatrix(unit, apiHost, token, mp);
+                HackTheMatrix(unit, apiHost,  params.userId, token, mp);
               } else {
                 mp.fail(error)
               }
@@ -302,12 +302,12 @@ function RunForestRun(mp) {
             console.log("passed array of units");
             var hqsGiven = params.hq.split(",");
             hqsGiven.forEach(function(d) {
-              LighthouseUnit.get_unit_name(d, apiHost, token, function(result) {
+              LighthouseUnit.get_unit_name(d, apiHost, params.userId, token, function(result) {
                 if (typeof error == 'undefined') {
                   mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
                   unit.push(result);
                   if (unit.length == params.hq.split(",").length) {
-                    HackTheMatrix(unit, apiHost, token, mp);
+                    HackTheMatrix(unit, apiHost, params.userId, token, mp);
                   }
                 } else {
                   mp.fail(error)
@@ -321,7 +321,7 @@ function RunForestRun(mp) {
         }
       } else {
         console.log("rerun...will NOT fetch vars");
-        HackTheMatrix(unit, apiHost, token);
+        HackTheMatrix(unit, apiHost, params.userId, token);
       }
     })
   } else {
@@ -330,13 +330,13 @@ function RunForestRun(mp) {
 }
 
 //make the call to beacon
-function HackTheMatrix(unit, host, token, progressBar) {
+function HackTheMatrix(unit, host, userId, token, progressBar) {
 
   progressBar && progressBar.setValue(0.5);
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  LighthouseJob.get_summary_json(unit, host, start, end, token,
+  LighthouseJob.get_summary_json(unit, host, start, end, userId, token,
     function(summary) {
       progressBar && progressBar.setValue(1);
 

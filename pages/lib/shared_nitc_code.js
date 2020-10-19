@@ -1,9 +1,9 @@
 var LighthouseJson = require('./shared_json_code.js');
 
 //make the call to beacon
-function GetJSONfromBeacon(params, token, StartDate, EndDate, callback, progressCallBack) {
+function GetNITCJSONfromBeacon(params, userId = 'notPassed', token, StartDate, EndDate, callback, progressCallBack) {
 
-    var url = params.host + "/Api/v1/NonIncident/Search?StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString();
+    var url = params.host + "/Api/v1/NonIncident/Search?LighthouseFunction=GetNITCJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString();
     var s = "";
     if (typeof params.EntityIds !== "undefined") {
         params.EntityIds.split(",").forEach(function(d){
@@ -55,5 +55,5 @@ function GetJSONfromBeacon(params, token, StartDate, EndDate, callback, progress
 }
 
 module.exports = {
-  get_json: GetJSONfromBeacon
+  get_json: GetNITCJSONfromBeacon
 }

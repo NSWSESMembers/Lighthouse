@@ -195,10 +195,10 @@ function RunForestRun(mp) {
 
           if (params.hq.split(",").length == 1) { //if only one HQ
 
-            LighthouseUnit.get_unit_name(params.hq, apiHost, token, function(result, error) {
+            LighthouseUnit.get_unit_name(params.hq, apiHost, params.userId, token, function(result, error) {
               if (typeof error == 'undefined') {
                 unit = result;
-                fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
+                fetchFromBeacon(unit, apiHost, params.userId, token, fetchComplete, mp, firstrun);
               } else {
                 mp.fail(error)
               }
@@ -210,12 +210,12 @@ function RunForestRun(mp) {
             var hqsGiven = params.hq.split(",");
             console.log(hqsGiven);
             hqsGiven.forEach(function(d) {
-              LighthouseUnit.get_unit_name(d, apiHost, token, function(result, error) {
+              LighthouseUnit.get_unit_name(d, apiHost, params.userId, token, function(result, error) {
                 if (typeof error == 'undefined') {
                   mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
                   unit.push(result);
                   if (unit.length == params.hq.split(",").length) {
-                    fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
+                    fetchFromBeacon(unit, apiHost, params.userId, token, fetchComplete, mp, firstrun);
                   }
                 } else {
                   mp.fail(error)
@@ -225,12 +225,12 @@ function RunForestRun(mp) {
           }
         } else { //no hq was sent, get them all
           unit = [];
-          fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
+          fetchFromBeacon(unit, apiHost, params.userId, token, fetchComplete, mp, firstrun);
         }
       } else {
         console.log("rerun...will NOT fetch vars");
         $('#loadinginline').css('visibility', 'visible');
-        fetchFromBeacon(unit, apiHost, token, fetchComplete, mp, firstrun);
+        fetchFromBeacon(unit, apiHost, params.userId, token, fetchComplete, mp, firstrun);
       }
     })
   } else {
@@ -241,11 +241,11 @@ function RunForestRun(mp) {
 
 
 // fetch jobs from beacon
-function fetchFromBeacon(unit, host, token, cb, progressBar, firstrun) {
+function fetchFromBeacon(unit, host, userId, token, cb, progressBar, firstrun) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  LighthouseJob.get_json(unit, host, start, end, token, function(data) {
+  LighthouseJob.get_json(unit, host, start, end, userId, token, function(data) {
     cb && cb(data, progressBar, firstrun);
   }, function(val, total) {
     if (progressBar) { //if its a first load

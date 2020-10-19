@@ -101,7 +101,7 @@ function HackTheMatrix(progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  nitc.get_json(params, token, start, end, function(nitcs) {
+  nitc.get_json(params, params.userId, token, start, end, function(nitcs) {
 
     if (document.getElementById("Activity").checked) {  // Activity list export
         var exports = nitcs.Results.map(function(d){

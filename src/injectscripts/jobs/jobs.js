@@ -34,7 +34,7 @@ $('a.lh-update-filter[data-page]').each(function(index, lighthouseButton) {
       var exports = JSON.parse(filterDataForExport());
       var $t = $(this);
       var lighthousePageName = $t.data('page');
-      var h = lighthouseUrl + "pages/" + lighthousePageName + ".html?host=" + urls.Base + "&source=" + location.origin + "&start=" + encodeURIComponent(exports.StartDate) + "&end=" + encodeURIComponent(exports.EndDate);
+      var h = lighthouseUrl + "pages/" + lighthousePageName + ".html?userId=" + user.Id + "&host=" + urls.Base + "&source=" + location.origin + "&start=" + encodeURIComponent(exports.StartDate) + "&end=" + encodeURIComponent(exports.EndDate);
       if (exports.hasOwnProperty("Hq"))
         h += "&hq=" + exports.Hq;
       $t.attr('href', h);

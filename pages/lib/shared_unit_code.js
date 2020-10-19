@@ -1,10 +1,10 @@
 var $ = require('jquery');
 
-function GetUnitNamefromBeacon(Id, host, token, callback) {
+function GetUnitNamefromBeacon(Id, host, userId = 'notPassed', token, callback) {
   console.log("GetUnitNamefromBeacon called with:" + Id + ", " + host);
   $.ajax({
     type: 'GET',
-    url: host + "/Api/v1/Entities/" + Id,
+    url: host + "/Api/v1/Entities/" + Id + "?LighthouseFunction=GetUnitNamefromBeacon&userId=" + userId,
     beforeSend: function(n) {
       n.setRequestHeader("Authorization", "Bearer " + token)
     },

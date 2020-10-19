@@ -1,11 +1,11 @@
 var $ = require('jquery');
 
-function GetResourcesfromBeacon(Id, host, token, callback) {
+function GetResourcesfromBeacon(Id, host, userId = 'notPassed', token, callback) {
   console.log("GetResourcesfromBeacon called with:" + Id + ", " + host);
 
   $.ajax({
     type: 'GET',
-    url: host + "/Api/v1/Entities/" + Id,
+    url: host + "/Api/v1/Entities/" + Id + "?LighthouseFunction=GetResourcesfromBeacon&userId=" + userId,
     beforeSend: function(n) {
       n.setRequestHeader("Authorization", "Bearer " + token)
     },
