@@ -13,6 +13,8 @@
     "jqcloud-npm": "^3.1.0",
     "jquery": ">=3.5.0",
     "jsx-dom-factory": "^1.1.0",
+    "knockout": "^3.5.1",
+    "knockout-secure-binding": "^0.5.5",
     "markerwithlabel": "^2.0.0",
     "moment": ">=1.0.2",
     "stopwords": "0.0.5",

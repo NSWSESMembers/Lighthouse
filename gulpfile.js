@@ -90,7 +90,7 @@ function getBundler(file, dest, options) {
         //gutil.log('Copying file from ' + JSON.stringify(source) + ' to ' + JSON.stringify(target));
         fse.copySync(source, target);
 
-        // Returns a new path string with original query string and hash fragments 
+        // Returns a new path string with original query string and hash fragments
         return urlDest + relativePath.substring(prefix.length) + queryStringAndHash;
       }
 
@@ -217,7 +217,7 @@ gulp.task('pages_styles', function () {
 // copy and compress HTML files
 gulp.task('pages_html', function() {
   return gulp.src('pages/*.html')
-    .pipe(cleanhtml())
+    //.pipe(cleanhtml())
     .pipe(gulp.dest('build/pages'));
 });
 
@@ -226,7 +226,7 @@ gulp.task('pages_static', function() {
   gulp.src('pages/images/**')
     .pipe(gulp.dest('build/pages/images'));
   gulp.src('pages/sounds/**')
-    .pipe(gulp.dest('build/pages/sounds'));  
+    .pipe(gulp.dest('build/pages/sounds'));
   return gulp.src('src/manifest.json')
     .pipe(gulp.dest('build'));
 });

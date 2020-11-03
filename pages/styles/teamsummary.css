@@ -10,6 +10,10 @@ body.fade-in {
   background: #eee;
 }
 
+.popover-body {
+  box-shadow: 20px 20px 20px grey;
+}
+
 #container {
   min-height: 100%;
   position: relative;
@@ -69,6 +73,10 @@ body.fade-in {
   flex-wrap: wrap;
 }
 
+.team-row {
+  justify-content: center;
+}
+
 .row.display-flex>[class*='col-'] {
   display: flex;
   flex-direction: column;
@@ -121,6 +129,7 @@ body.fade-in {
 
 .team-callsign {
   font-size: 2vmax;
+  text-transform: uppercase;
   padding: 0.5em;
 }
 
@@ -173,7 +182,7 @@ body.fade-in {
 
 .team-job-count-active,
 .team-status,
-.team-job-count-completed,
+.team-status-for,
 .team-time {
   font-size: 1.vmax;
   padding: 0.2em;
@@ -232,6 +241,10 @@ body.fade-in {
   padding: 0.3em;
 }
 
+.team-history-loading {
+  opacity: 0.5;
+}
+
 .team-history-view>div {
   font-size: 0.6em;
   font-weight: bold;
@@ -247,6 +260,11 @@ body.fade-in {
 }
 
 .team-members {
+  padding: 0.3em;
+  border-bottom: solid 1px #ccc;
+}
+
+.team-location {
   padding: 0.3em;
   border-bottom: solid 1px #ccc;
 }

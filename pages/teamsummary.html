@@ -31,8 +31,92 @@
   </div>
   <div>
     <div class="container-fluid" id="pageContent">
-      <div class="row" id="pageHeader">
+      <div class="row">
+        <div class="col-12 text-center">
+          <h2 data-bind="text: bannerTitle"></h2>
+          <h4 data-bind="text: filterStartTime + ' to ' + filterEndTime"></h4>
+          <h4 class="teamFilters">Displayed Members: <a data-bind="text: membersShown"></a> | Displayed Teams: <a data-bind="text: teamsShown"></a> | Hidden Teams: <a data-bind="text: teamsHidden"></a></h4>
+        </div>
       </div>
+      <!-- ko foreach: rows -->
+      <div class="row team-row" data-bind="foreach: $data">
+        <div class="col-team" data-bind="class: $root.boxFlexWidth">
+          <div class="team" data-bind="css: statusStyle()">
+            <div class="row">
+              <div class="team-callsign text-center col-12"><a target="_blank" data-bind="text: callsign, attr: { href: $root.source+'/Teams/'+id+'/Edit', title: 'Edit Team' }"></a></div>
+            </div>
+            <div class="team-status-summary row">
+              <div class="team-status text-left col-5" data-bind="text: type"></div>
+              <div class="team-buttons text-left col-2"><a target="_blank" data-bind="attr: { href: $root.source + '/Messages/Create?lhquickrecipient=' + teamMemberPersonIds}"><i data-toggle="tooltip" title="SMS all team members"
+                    class="fas fa-envelope" data-bind="css: { fa-disabled: teamMemberCount == 0 }"></i></a>
+              </div>
+              <div class="team-time col-5 text-right"><i class="far fa-clock"></i> <a data-bind="text: ' ' + statusTimePretty"></a></div>
+            </div>
+            <div class="team-summary row">
+              <div class="team-job-count-active col-6 text-left" data-bind="text: 'Active Jobs: ' + activeJobs, css: {team-stat-warning: activeJobs == 1, team-stat-hazard: activeJobs == 0 }"></i></div>
+              <div class="team-status-for col-6 text-right" data-bind="text: status + ' For ' + statusTimeSince + ' hrs', css: {team-stat-warning: statusTimeSince >= 10 & statusTimeSince <= 12,team-stat-hazard: statusTimeSince > 12 }"></i></div>
+            </div>
+            <!-- ko if: sector -->
+            <div class="sector-summary row">
+              <div class="col-12 text-center" data-bind="text: sector + ' Sector'"></div>
+            </div>
+            <!-- /ko -->
+            <div class="row team-resources">
+              <!-- ko if: teamResources().length > 0 -->
+              <div class="col-12 text-center" data-bind="text: teamResources"></div>
+              <!-- /ko -->
+              <!-- ko ifnot: teamResources().length > 0 -->
+              <div class="col-12 text-center">
+                <i>No Resources Attached</i>
+              </div>
+              <!-- /ko -->
+            </div>
+            <div class="row team-members">
+              <!-- ko if: teamMembers().length > 0 -->
+              <div class="col-12 text-center" data-bind="foreach: teamMembers">
+                <span class="team-member" data-toggle="tooltip" title=""
+                  data-bind="text: fullName, css: {team-leader: isTeamLeader, team-stat-warning: timeOnSince >= 10 & timeOnSince <= 12,team-stat-hazard: timeOnSince > 12 }, attr: { title: fullName + ' has been ' + $parent.status + ' for ' + timeOnSince + 'hrs'  }"></span>
+              </div>
+              <!-- /ko -->
+              <!-- ko ifnot: teamMembers().length > 0 -->
+              <div class="col-12 text-center">
+                <i>No Team Members Attached</i>
+              </div>
+              <!-- /ko -->
+            </div>
+            <!-- ko if: teamLocation -->
+            <div class="row team-location">
+              <div class="col-12 text-center" data-bind="html: teamLocation"></div>
+            </div>
+            <!-- /ko -->
+            <div class="row team-history">
+              <div class="col-12 text-center" data-bind="visible: loadingHistory">
+                <i class="fas fa-spinner fa-spin"></i>
+              </div>
+              <div class="container" data-bind="foreach: filteredTeamHistory, css: {team-history-loading: loadingHistory}">
+                <!-- ko if: type() == 'job' -->
+                <div class="row team-history-row" data-bind="click: jobPop">
+                  <div class="team-history col-8 history-job"><strong class="history-job-number" data-bind="text: trimmedName"></strong><br><small data-bind="text: trimmedDesc"></small>
+                  </div>
+                  <div class="team-job col-4 text-center" data-bind="text: timeStampPretty"></div>
+                </div>
+                <!-- /ko -->
+                <!-- ko ifnot: type() == 'job' -->
+                <div class="row team-history-row">
+                  <div class="team-history col-8"><strong data-bind="text: name"></strong><br><small data-bind="text: trimmedDesc"></small>
+                  </div>
+                  <div class="team-job col-4 text-center" data-bind="text: timeStampPretty"></div>
+                </div>
+                <!-- /ko -->
+              </div>
+            </div>
+            <div class="row team-history-view">
+              <div class="col-12 text-center"><a target="_blank" data-bind="attr: { href: $root.source+'/Teams/History/'+id, title: 'Edit Team' }">View full team history</a></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /ko -->
     </div>
   </div>
   <div class="modal fade" id="filtermodal" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
@@ -51,29 +135,51 @@
           </div>
           <hr>
           </hr>
-          <ul class="list-group" id="teamFilterList">
+          <ul class="list-group" id="teamFilterList" data-bind="foreach: teams">
+            <li class="list-group-item" data-bind="click: toggleHide, css: { active: hidden == false}">
+              <div>
+                <div class="float-right" data-bind="text: type"></div>
+                <div data-bind="text: callsign"></div>
+                <div>
+                  <small data-bind="text: status + ' - ' + statusTimePretty"></small>
+                </div>
+              </div>
+            </li>
+            <!-- ko if: $parent.teams().length == 0 -->
+            <li class="list-group-item">
+              <i>Beacon Returned No Teams</i>
+            </li>
+            <!-- /ko -->
           </ul>
           <hr>
           </hr>
           <div class="row form-row">
             <div class="col" style="margin-bottom:1rem">
+              <label class="form-check-label" for="hideTeamMemberChanges">Show team member history:</label>
+            </div>
+            <div class="col-right">
+              <input type="checkbox" class="form-check-input" id="hideTeamMemberChanges" data-bind="checked: setShowTeamMemberChanges">
+            </div>
+          </div>
+          <div class="row form-row">
+            <div class="col" style="margin-bottom:1rem">
               <label class="form-check-label" for="autoShowNewTeams">Automatically show activated teams:</label>
             </div>
             <div class="col-right">
-              <input type="checkbox" class="form-check-input" id="autoShowNewTeams" name="autoShowNewTeams" checked>
+              <input type="checkbox" class="form-check-input" id="autoShowNewTeams" data-bind="checked: setDefaultAdd">
             </div>
           </div>
           <div class="form-group gridWidth">
             <label for="sel1">Grid width:</label>
-            <select class="form-control" id="gridWidth">
-              <option value="2">2 teams</option>
-              <option value="3" selected="selected">3 teams</option>
-              <option value="4">4 teams</option>
+            <select class="form-control" data-bind="value: setColWidth">
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
             </select>
           </div>
+          
           <div class="modal-footer">
-            <button id="filtersSave" type="button" class="btn btn-success">Save & Close</button>
-            <button type="button" class="btn btn-primary" data-dismiss="modal">Go Back</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
           </div>
         </div>
       </div>
@@ -110,7 +216,7 @@
       </a>
     </div>
     <div style="float:left;margin-left: 5px;margin-bottom:5px">
-      <a href="#" class="teamFilters" id="filters">
+      <a class="teamFilters" id="filters">
         <i style="vertical-align:middle;" class="fas fa-filter"></i> Filter Teams
       </a>
     </div>
