@@ -315,6 +315,11 @@ $( "body" ).append(instantRadiologModal);
 
 //the quick radio log button
 $(quickRadioLog).find('button').click(function() {
+
+  if (masterViewModel.teamsViewModel.taskedTeams.peek().length == 1 && $('#instantRadioLogCallSign').val() == '') {
+    $('#instantRadioLogCallSign').val(masterViewModel.teamsViewModel.taskedTeams.peek()[0].Team.Callsign)
+  }
+
   $('#instantradiologModal').modal()
 });
 
