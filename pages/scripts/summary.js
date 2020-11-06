@@ -292,7 +292,7 @@ function RunForestRun(mp) {
             LighthouseUnit.get_unit_name(params.hq, apiHost, params.userId, token, function(result, error) {
               if (typeof error == 'undefined') {
                 unit = result;
-                HackTheMatrix(unit, apiHost,  params.userId, token, mp);
+                HackTheMatrix(unit, apiHost, params.userId, token, mp);
               } else {
                 mp.fail(error)
               }
@@ -317,7 +317,7 @@ function RunForestRun(mp) {
           }
         } else { //no hq was sent, get them all
           unit = [];
-          HackTheMatrix(unit, apiHost, token, mp);
+          HackTheMatrix(unit, apiHost, params.userId, token, mp);
         }
       } else {
         console.log("rerun...will NOT fetch vars");
@@ -331,7 +331,7 @@ function RunForestRun(mp) {
 
 //make the call to beacon
 function HackTheMatrix(unit, host, userId, token, progressBar) {
-
+console.log(userId)
   progressBar && progressBar.setValue(0.5);
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
