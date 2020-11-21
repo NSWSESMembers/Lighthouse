@@ -960,7 +960,7 @@ function InstantTaskButton() {
 
 ////Instant radio log stuff
 function submitInstantRadioLog(subject, text,cb) {
-  masterViewModel.notesViewModel.OperationsLogManager.CreateEntry(jobId,null,subject || "Instant Radio Log",text,null, null, null, !1, !1, !1, [15,6],null,function(res) {
+  masterViewModel.notesViewModel.OperationsLogManager.CreateEntry(jobId, null, null, subject || "Instant Radio Log", text, null, null, null, !1, !1, false, [15,6], null, function(res) {
 if (res) {
       masterViewModel.notesViewModel.loadOpsLogPage()
       cb(true)
