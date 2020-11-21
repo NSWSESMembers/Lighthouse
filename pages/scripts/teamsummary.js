@@ -407,6 +407,9 @@ var Team = function({
             } else if (jobNumber[1] == 'Complete') {
               locationMethod = jobNumber[1]
               locationFound = jobNumber[2]
+            } else if (jobNumber[1] == 'Offsite') {
+              locationMethod = jobNumber[1]
+              locationFound = jobNumber[2]
             }
           }
         //}

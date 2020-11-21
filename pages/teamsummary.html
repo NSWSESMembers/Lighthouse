@@ -135,6 +135,7 @@
           </div>
           <hr>
           </hr>
+          <!-- ko if: $root.teams().length > 0 -->
           <ul class="list-group" id="teamFilterList" data-bind="foreach: teams">
             <li class="list-group-item" data-bind="click: toggleHide, css: { active: hidden == false}">
               <div>
@@ -145,12 +146,15 @@
                 </div>
               </div>
             </li>
-            <!-- ko if: $parent.teams().length == 0 -->
-            <li class="list-group-item">
-              <i>Beacon Returned No Teams</i>
-            </li>
-            <!-- /ko -->
           </ul>
+          <!-- /ko -->
+          <!-- ko if: $root.teams().length == 0 -->
+          <ul class="list-group" id="teamFilterList">
+            <li class="list-group-item">
+              <i>Beacon returned no teams</i>
+            </li>
+          </ul>
+          <!-- /ko -->
           <hr>
           </hr>
           <div class="row form-row">
@@ -177,7 +181,7 @@
               <option value="4">4</option>
             </select>
           </div>
-          
+
           <div class="modal-footer">
             <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
           </div>
