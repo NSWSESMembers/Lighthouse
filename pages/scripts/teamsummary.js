@@ -1058,10 +1058,17 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
             iPromise.push(new Promise(function(resolve, reject) {
               try {
                 clusterCodes.returnCluster(unit.Name, function(cluster) {
+                  if (typeof cluster !== 'undefined') {
                   resolve({
                     zone: unit.ParentEntity.Code,
                     cluster: cluster.clusterCode
                   })
+                } else {
+                  resolve({
+                    zone: unit.ParentEntity.Code,
+                    cluster: 'Unknown'
+                  })
+                }
                 })
               } catch (e) {
                 reject(e)
@@ -1072,7 +1079,7 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
           Promise.all(iPromise).then(function(results) {
             let clusters = {}
             let zone = {}
-            let groupName = ''
+            let groupName = `${results.length} units`
             results.forEach(function(res) {
               if (zone.hasOwnProperty(res.zone)) {
                 zone[res.zone].count += 1;
