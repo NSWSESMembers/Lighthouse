@@ -35,9 +35,25 @@ $(document).ready(function() {
   whenWeAreReady(jobsystem, function() {
     console.log("jobs create ready")
 
+    jobsystem.latitude.subscribe(function(status) {
+      if (jobsystem.latitude.peek() != '' && jobsystem.longitude.peek() != '') {
+        window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", lat: jobsystem.latitude.peek(), lng: jobsystem.longitude.peek() }, "*");
+      }
+    })
+
+    jobsystem.longitude.subscribe(function(status) {
+      if (jobsystem.latitude.peek() != '' && jobsystem.longitude.peek() != '') {
+        window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", lat: jobsystem.latitude.peek(), lng: jobsystem.longitude.peek() }, "*");
+      }
+    })
+
     jobsystem.geocodedAddress.subscribe(function(status) {
       $('#asbestos-register-text').text("Searching...");
       if (jobsystem.geocodedAddress.peek() != null) {
+
+      window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", lat: jobsystem.geocodedAddress.peek().latitude, lng: jobsystem.geocodedAddress.peek().longitude }, "*");
+
+
         address = jobsystem.geocodedAddress.peek()
         if (address.street != "") {
           address.PrettyAddress = address.pretty_address

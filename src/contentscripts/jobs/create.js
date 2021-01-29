@@ -1,6 +1,7 @@
 var inject = require('../../../lib/inject.js');
 var DOM = require('jsx-dom-factory');
 var $ = require('jquery');
+var vincenty = require('../../../lib/vincenty.js');
 
 window.addEventListener("message", function(event) {
   // We only accept messages from ourselves
@@ -26,6 +27,21 @@ window.addEventListener("message", function(event) {
     asbestosBoxColor(event.data.address.PrettyAddress+" was FOUND on the SES asbestos register.",'red','')
 
 
+  }  else if (event.data.type && (event.data.type == "FROM_PAGE_LHQ_DISTANCE")) {
+    var t0 = performance.now();
+  $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+    distances = []
+    data.features.forEach(function(v){
+      v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,event.data.lat,event.data.lng)/1000
+      distances.push(v)
+    })
+    let _sortedDistances = distances.sort(function(a, b) {
+      return a.distance - b.distance
+    });
+    $('#nearest-lhq-text').text(`${_sortedDistances[0].properties.HQNAME} (${_sortedDistances[0].distance.toFixed(2)} kms), ${_sortedDistances[1].properties.HQNAME} (${_sortedDistances[1].distance.toFixed(2)} kms), ${_sortedDistances[2].properties.HQNAME} (${_sortedDistances[2].distance.toFixed(2)} kms)`)
+    var t1 = performance.now();
+    console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
+})
   }
 }, false);
 
@@ -60,10 +76,20 @@ job_asbestos_history = (
   </div>
   );
 
+  job_nearest_lhq = (
+    <div class="form-group">
+    <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
+    src={chrome.extension.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest LHQs </abbr></label>
+    <div id="nearest-lhq-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
+    <p id="nearest-lhq-text" class="form-control-static">Waiting For A Location</p>
+    </div>
+    </div>
+  );
 
 
 $('#createRfaForm > fieldset:nth-child(5) > div:nth-child(2)').after(job_asbestos_history);
 
+$('#createRfaForm > fieldset:nth-child(5) > div:nth-child(12)').after(job_nearest_lhq);
 
 
 console.log("injecting")
