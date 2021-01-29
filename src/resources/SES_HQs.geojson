@@ -361,7 +361,7 @@
       },
       "properties": {
         "FID": 20,
-        "HQNAME": "Blue Mountains",
+        "HQNAME": "Blue Mountains - Katoomba",
         "UNIT_CODE": "BLU",
         "POINT_X": 150.30065,
         "POINT_Y": -33.70897
@@ -4307,6 +4307,24 @@
         "UNIT_CODE": "SWN",
         "POINT_X": 151.626,
         "POINT_Y": -33.144
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 257,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16757871.378203,
+          -3987981.025012
+        ]
+      },
+      "properties": {
+        "FID": 257,
+        "HQNAME": "Blue Mountains - Faulconbridge",
+        "UNIT_CODE": "BLU",
+        "POINT_X": 150.539,
+        "POINT_Y": -33.694
       }
     }
   ]
