@@ -56,6 +56,7 @@ function MyViewModel() {
   self.setColWidth = ko.observable(3)
   self.setDefaultAdd = ko.observable(true)
   self.setShowTeamMemberChanges = ko.observable(true)
+  self.setShowTeamResources = ko.observable(true)
 
 
   self.teams = ko.observableArray()
@@ -374,6 +375,7 @@ var Team = function({
     self.loadingHistory(true)
     let locationFound = false
     let locationMethod = ''
+    let timeStampAgo = ''
 
     //All this code only works because you cant change the order of the history
     //if history order ever changes the push/unshift logic will need to be smarter
@@ -401,15 +403,19 @@ var Team = function({
             if (jobNumber[1] == 'Onsite') {
               locationMethod = jobNumber[1]
               locationFound = jobNumber[2]
+              timeStampAgo =  moment(historyItem.TimeStamp).fromNow()
             } else if (jobNumber[1] == 'Enroute') {
               locationMethod = jobNumber[1]
               locationFound = jobNumber[2]
+              timeStampAgo =  moment(historyItem.TimeStamp).fromNow()
             } else if (jobNumber[1] == 'Complete') {
               locationMethod = jobNumber[1]
               locationFound = jobNumber[2]
+              timeStampAgo =  moment(historyItem.TimeStamp).fromNow()
             } else if (jobNumber[1] == 'Offsite') {
               locationMethod = jobNumber[1]
               locationFound = jobNumber[2]
+              timeStampAgo =  moment(historyItem.TimeStamp).fromNow()
             }
           }
         //}
@@ -445,7 +451,7 @@ var Team = function({
 
       if (locationFound) {
         LighthouseJob.get_job(locationFound.replace('-', ''), 1, params.host, params.userId, pageToken, function(job) {
-          self.teamLocation(`${locationMethod} ${locationFound}<br>${job.Address.PrettyAddress.replace(', NSW','')}`)
+          self.teamLocation(`${locationMethod} ${locationFound} (${timeStampAgo})<br>${job.Address.PrettyAddress.replace(', NSW','')}`)
         })
       }
 

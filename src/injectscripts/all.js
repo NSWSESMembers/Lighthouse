@@ -1004,6 +1004,10 @@ function make_collection_button(name, count) {
 function filtershowallmyregion() {
   filterViewModel.selectedEntities.destroyAll() //flush first :-)
   var parentId = typeof(user.currentRegionId) != 'undefined' ? user.currentRegionId : user.currentZoneId
+  //Add zone as well
+  $.get(urls.Base + "/Api/v1/Entities/" + parentId, function(data) {
+    filterViewModel.selectedEntities.push(data);
+  })
   $.get(urls.Base + "/Api/v1/Entities/" + parentId + "/Children", function(data) {
     results = data;
     results.forEach(function(d) {

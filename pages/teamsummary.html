@@ -61,6 +61,7 @@
               <div class="col-12 text-center" data-bind="text: sector + ' Sector'"></div>
             </div>
             <!-- /ko -->
+            <!-- ko if: $root.setShowTeamResources() == true -->
             <div class="row team-resources">
               <!-- ko if: teamResources().length > 0 -->
               <div class="col-12 text-center" data-bind="text: teamResources"></div>
@@ -71,6 +72,7 @@
               </div>
               <!-- /ko -->
             </div>
+            <!-- /ko -->
             <div class="row team-members">
               <!-- ko if: teamMembers().length > 0 -->
               <div class="col-12 text-center" data-bind="foreach: teamMembers">
@@ -163,6 +165,14 @@
             </div>
             <div class="col-right">
               <input type="checkbox" class="form-check-input" id="hideTeamMemberChanges" data-bind="checked: setShowTeamMemberChanges">
+            </div>
+          </div>
+          <div class="row form-row">
+            <div class="col" style="margin-bottom:1rem">
+              <label class="form-check-label" for="hideTeamResources">Show team resources:</label>
+            </div>
+            <div class="col-right">
+              <input type="checkbox" class="form-check-input" id="hideTeamResources" data-bind="checked: setShowTeamResources">
             </div>
           </div>
           <div class="row form-row">
