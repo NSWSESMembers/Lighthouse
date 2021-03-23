@@ -43,10 +43,11 @@ ko.options.deferUpdates = true;
 
 var myViewModel = new MyViewModel();
 
-
-
 function MyViewModel() {
   var self = this;
+
+  //used to force things that show time since to redraw evey run
+  self.dummyRecountMoments = ko.observable();
 
   self.source = params.source
   self.bannerTitle = ko.observable('Loading...')
@@ -306,6 +307,8 @@ var TeamMember = function({
   })
 
   self.timeOnSince = ko.computed(function() {
+    //force a recount when the timer runs
+    myViewModel.dummyRecountMoments();
     return moment().diff(self.timeOn(), 'hours')
   })
 
@@ -590,6 +593,9 @@ var Team = function({
   })
 
   self.statusTimeSince = ko.computed(function() {
+    //force a recount when the timer runs
+    myViewModel.dummyRecountMoments();
+
     return moment().diff(self.statusTime(), 'hours')
   })
 
@@ -1032,7 +1038,7 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
 
       Promise.all(allTeamsPromises).then(function() {
         console.log('all team stuff loaded')
-
+        myViewModel.dummyRecountMoments.notifySubscribers(ko.observable());
         if (firstRun) {
           console.log('first run')
           firstRun = false;
