@@ -559,7 +559,10 @@ function lighthouseDictionary(){
     'NPI'     : 'No Person(s) Injured',
     'NPT'     : 'No Person(s) Trapped',
     'NFI'     : 'No Further Information',
-    'THX'     : 'Thanks'
+    'THX'     : 'Thanks',
+    'NESB'    : 'Non-English Speaking Background',
+    'YOM'     : 'Year Old Male',
+    'YOF'     : 'Year Old Female'
   };
 
   $targetElements.each(function(v){
