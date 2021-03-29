@@ -339,6 +339,8 @@ var localChart = null;
 var unitChart = null;
 var clusterChart = null;
 var zoneChart = null;
+var sectorChart = null;
+
 
 var lowermeanChart = dc.numberDisplay("#dc-lowermean-chart");
 var middlemeanChart = dc.numberDisplay("#dc-middlemean-chart");
@@ -746,6 +748,10 @@ function prepareCharts(jobs, start, end, firstRun) {
       return d.EntityAssignedTo.ParentEntity ? d.EntityAssignedTo.ParentEntity.Name : "NA";
     });
 
+    sectorChart = makeSimplePie("#dc-sector-chart", 460, 240, function(d) {
+      return d.Sector ? d.Sector.Name : "Unassigned";
+    });
+
     unitChart = makeSimplePie("#dc-unit-chart", 460, 240, function(d) {
       return d.EntityAssignedTo.Name;
     });
@@ -797,6 +803,8 @@ function prepareCharts(jobs, start, end, firstRun) {
     unitChartFilters = unitChart.filters();
     clusterChartFilters = clusterChart.filters();
     zoneChartFilters = zoneChart.filters();
+    sectorChartFilters = sectorChart.filters();
+
     completionBellChartFilters = completionBellChart.filters();
 
 
@@ -812,6 +820,8 @@ function prepareCharts(jobs, start, end, firstRun) {
     unitChart.filters(null)
     clusterChart.filters(null)
     zoneChart.filters(null)
+    sectorChart.filters(null)
+
     //temporary until I can get filter sets working on bar charts
     //remove the filters
     timeOpenChart.filter(null)
@@ -835,6 +845,8 @@ function prepareCharts(jobs, start, end, firstRun) {
     unitChart.filter([unitChartFilters])
     clusterChart.filters([clusterChartFilters])
     zoneChart.filters([zoneChartFilters])
+    sectorChart.filters([sectorChartFilters])
+
     //add the data back in
     facts.add(jobs.Results)
   };

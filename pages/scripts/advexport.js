@@ -48,7 +48,8 @@ var lighthouse_fieldArray = {
     'EntityAssignedTo.Code': 'HQ',
     'LGA': 'LGA',
     'EntityAssignedTo.ParentEntity.Code': 'Region',
-    'Event.Identifier': 'Event'
+    'Event.Identifier': 'Event',
+    'Sector.Name': 'Sector'
   },
   'Address Details': {
     'Address.Level': 'Level',
