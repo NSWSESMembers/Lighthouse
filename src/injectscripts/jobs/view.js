@@ -4,7 +4,6 @@ var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
 var postCodes = require('../../../lib/postcodes.js');
 var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 var vincenty = require('../../../lib/vincenty.js');
-var what3words = require('../../../lib/what3words.js');
 
 
 console.log("Running inject script");
@@ -249,20 +248,7 @@ whenAddressIsReady(function() {
      $('#nearest-lhq-text').text('No geocoded job location available')
      $('#nearest-avl-text').text('No geocoded job location available')
    }
-   
-   
-   // what3words
-	what3words(masterViewModel.geocodedAddress.peek(), function(res) {
-		if (res == false) {
-			$('#what3words-text').text("Error fetching what3words address")
-		} else {
-			$('#what3words-text').html("<span style='color:#E11F26'>///</span> " + res.words)
-		}
-	});
-   
   })
-  
-  
 
 
 
