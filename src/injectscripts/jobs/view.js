@@ -252,17 +252,25 @@ whenAddressIsReady(function() {
    
    
    // what3words
-	what3words(masterViewModel.geocodedAddress.peek(), function(res) {
-		if (res == false) {
-			$('#what3words-text').text("Error fetching what3words address")
-		} else {
-			$('#what3words-text').html(
-				"<a href='"+ res.map + "' target='_blank'>" + res.words + "</a>"
-			)
-			
-			$('#what3words-near').text(" Near " + res.nearestPlace)
-		}
-	});
+	if(typeof masterViewModel.geocodedAddress.peek() == 'undefined') {
+		console.log("what3words: Address Not Geocoded")
+      // $('#what3words-text').html("Not A Searchable Address");
+	} else if (masterViewModel.geocodedAddress.peek().Street == null || masterViewModel.geocodedAddress.peek().StreetNumber == null) {
+		console.log("what3words: Address Not Geocoded")
+		// $('#what3words-text').html("Not A Searchable Address");
+    } else {
+		what3words(masterViewModel.geocodedAddress.peek(), function(res) {
+			if (res == false) {
+				$('#what3words-text').text("Error fetching what3words address")
+			} else {
+				$('#what3words-text').html(
+					"<a href='"+ res.map + "' target='_blank'>" + res.words + "</a>"
+				)
+				
+				$('#what3words-near').text(" Near " + res.nearestPlace)
+			}
+		});
+	}
    
   }) 
   
