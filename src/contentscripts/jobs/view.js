@@ -177,8 +177,11 @@ job_what3words = (
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
   src={chrome.extension.getURL("icons/lh-black.png")} />what3words</label>
   <div id="what3words-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
-  <p id="what3words-text" class="form-control-static">
-	<span style="color:#E11F26">///</span> <span style="color:#bbb">&mdash;.&mdash;.&mdash;</span>
+  <p class="form-control-static">
+	<span style="color:#E11F26">///</span> <span id="what3words-text"><span style="color:#bbb">&mdash;.&mdash;.&mdash;</span></span>
+  </p>
+  <p class="form-control-static hidden">
+	<small><span id="what3words-near" style="color:#bbb"></span></small>
   </p>
   </div>
   </div> 

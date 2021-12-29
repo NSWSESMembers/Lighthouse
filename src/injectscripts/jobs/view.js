@@ -256,7 +256,11 @@ whenAddressIsReady(function() {
 		if (res == false) {
 			$('#what3words-text').text("Error fetching what3words address")
 		} else {
-			$('#what3words-text').html("<span style='color:#E11F26'>///</span> " + res.words)
+			$('#what3words-text').html(
+				"<a href='"+ res.map + "' target='_blank'>" + res.words + "</a>"
+			)
+			
+			$('#what3words-near').text(" Near " + res.nearestPlace)
 		}
 	});
    
