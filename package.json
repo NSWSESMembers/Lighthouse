@@ -18,7 +18,8 @@
     "markerwithlabel": "^2.0.0",
     "moment": ">=1.0.2",
     "stopwords": "0.0.5",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "yarn": "^1.22.17"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.8.1",
