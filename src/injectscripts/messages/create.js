@@ -10,28 +10,37 @@ console.log("inject running");
 $(document).ready(function() {
 
 
-    $( "body" ).append(make_collection_import_modal())
-
-    $( "body" ).append(make_collection_share_modal())
 
     var query = window.location.search.substring(1);
     var qs = parse_query_string(query);
 
-    $.each(qs, function(value, key){
-        switch (value)
-        {
-            case "lhimportcollection":
-            $('#LHImportCollectionErrorText').hide()
-            DownloadedObject = {}
-            $('#LHCodeBox').val(key)
-            $('#LGCollectionImportGroup').find('span').remove()
-            $('#LHCodeBox').show()
-            $('#LHImportCollectionCode').text('Download Collection')
-            $('#LHCollectionImportModal').modal();
-            break
+    $.each(qs, function(key, value){
 
+        switch (key)
+        {
+          case "jobId":
+          $.ajax({
+              type: 'GET',
+              url: urls.Base+'/Api/v1/Jobs/Search?Identifier=' + unescape(value),
+              beforeSend: function(n) {
+                  n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+              },
+              data: {
+                  LighthouseFunction: 'LoadJob',
+              },
+              cache: false,
+              dataType: 'json',
+              complete: function(response, textStatus) {
+                if (textStatus == 'success') {
+                  if (response.responseJSON.Results.length) {
+                  msgsystem.job(response.responseJSON.Results[0])
+                }
+                }
+              }
+              })
+          break
             case "lhquickrecipient":
-            var people = JSON.parse(unescape(key))
+            var people = JSON.parse(unescape(value))
             $.each(people, function(key, val) {
                 $.ajax({
                     type: 'GET',
@@ -73,164 +82,11 @@ $(document).ready(function() {
 
     })
 
-    $('#LHGenerateShareCollectionLink').click(function() {
-        var spinner = $(<i style="width:100%; margin-top:12px; margin-left:auto; margin-right:auto; margin-bottom:12px" class="fa fa-refresh fa-spin fa-3x fa-fw"></i>)
-        $('#LHGenerateShareCollectionCodeBox').css('display','table');
-        $('#LHGenerateShareCollectionCode').css('display','none')
-        $('#LHGenerateShareCollectionCodeBox').find('div').append(spinner)
-
-
-        $.ajax({
-            type: 'POST',
-            url: "https://tdykes.com/lighthouse/collection.php",
-            data: {
-                function: 'set',
-                LighthouseFunction: 'CollectionLoadCollection',
-                source: location.hostname,
-                object: JSON.stringify(SharedCollection)
-            }, xhr: function() {
-            // Get new xhr object using default factory
-            var xhr = jQuery.ajaxSettings.xhr();
-            // Copy the browser's native setRequestHeader method
-            var setRequestHeader = xhr.setRequestHeader;
-            // Replace with a wrapper
-            xhr.setRequestHeader = function(name, value) {
-            // Ignore the X-Requested-With header
-            if (name == 'Authorization') return;
-            // Otherwise call the native setRequestHeader method
-            // Note: setRequestHeader requires its 'this' to be the xhr object,
-            // which is what 'this' is here when executed.
-            setRequestHeader.call(this, name, value);
-        }
-        // pass it on to jQuery
-        return xhr;
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function(response, textStatus) {
-
-        if (response.responseJSON.result == 'OK')
-        {
-
-            $('#LHGenerateShareCollectionCodeURLBox').css('display','table');
-            $('#LHGenerateShareCollectionCode').css('display','')
-            $('#LHGenerateShareCollectionCodeURL').css('display','')
-
-            spinner.remove()
-            $('#LHGenerateShareCollectionCode').text(response.responseJSON.code)
-            $('#LHGenerateShareCollectionCodeURL').text(window.location.href+"?lhimportcollection="+response.responseJSON.code)
-
-        }
-    }
-})
-})
-
-$('#LHImportCollectionCode').click(function() {
-    if ($('#LHImportCollectionCode').text() == "Download Collection")
-    {
-        var code = $('#LHCodeBox').val()
-
-        var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
-
-        $('#LHImportCollectionErrorText').text('')
-        $('#LHImportCollectionErrorText').show()
-        $('#LHImportCollectionErrorText').append(spinner)
-
-
-        $.ajax({
-            type: 'POST',
-            url: "https://tdykes.com/lighthouse/collection.php",
-            data: {
-                function: 'get',
-                LighthouseFunction: 'CollectionLoadCollection',
-                source: location.hostname,
-                code: code
-            }, xhr: function() {
-            // Get new xhr object using default factory
-            var xhr = jQuery.ajaxSettings.xhr();
-            // Copy the browser's native setRequestHeader method
-            var setRequestHeader = xhr.setRequestHeader;
-            // Replace with a wrapper
-            xhr.setRequestHeader = function(name, value) {
-            // Ignore the X-Requested-With header
-            if (name == 'Authorization') return;
-            // Otherwise call the native setRequestHeader method
-            // Note: setRequestHeader requires its 'this' to be the xhr object,
-            // which is what 'this' is here when executed.
-            setRequestHeader.call(this, name, value);
-        }
-        // pass it on to jQuery
-        return xhr;
-    },
-            cache: false,
-            dataType: 'json',
-            complete: function(response, textStatus) {
-
-                spinner.remove()
-                if (response.responseJSON.result == 'OK')
-                {
-                    var object = JSON.parse(JSON.parse(response.responseJSON.object))
-                    DownloadedObject = object
-                    //$('#LHCodeBox').val(object.name)
-                    $('#LHCodeBox').hide()
-                    $('#LHImportCollectionErrorText').hide()
-                    var button = make_collection_button(object.name, object.description, object.items.length + "")
-                    $(button).css('margin-top','15px')
-                    $(button).css('margin-bottom','25px')
-                    $(button).find('span.delbutton').hide()
-                    $(button).find('span.sharebutton').hide()
-                    $('#LGCollectionImportGroup').append(button)
-                    $('#LHImportCollectionCode').text('Accept & Save')
-
-                } else if (response.responseJSON.result == 'NOTFOUND') {
-                    $('#LHImportCollectionErrorText').show()
-                    $('#LHImportCollectionErrorText').text('Code not found')
-                    console.log(response.responseJSON.result)
-                } else if (response.responseJSON.result == 'MISSMATCH') {
-                    $('#LHImportCollectionErrorText').show()
-                    $('#LHImportCollectionErrorText').text('Requested collection is not for '+location.hostname+' it is for '+response.responseJSON.source)
-                } else if (response.responseJSON.result == 'EXPIRED') {
-                    $('#LHImportCollectionErrorText').show()
-                    $('#LHImportCollectionErrorText').text('Code has expired')
-                }
-            }
-        })
-} else if ($('#LHImportCollectionCode').text() == "Accept & Save") {
-    $('#LHCollectionImportModal').modal('hide');
-    window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(DownloadedObject), name: 'lighthouseMessageCollections'}, '*');
-}
-
-})
-
-$('#LHGenerateShareCollectionCode').click(function(e) {
-  //
-  copyToClipboard($('#LHGenerateShareCollectionCode').text())
-  $('#clicktocopy').text('Copied to clipboard')
-  e.stopPropagation();
-})
-
-$('#LHGenerateShareCollectionCodeURL').click(function(e) {
-  //
-  copyToClipboard($('#LHGenerateShareCollectionCodeURL').text())
-  $('#clicktocopyURL').text('Copied to clipboard')
-  e.stopPropagation();
-})
-
 $('#LHCodeBox').keypress(function(e){
   if(e.keyCode==13)
       $('#LHImportCollectionCode').click();
 });
 
-
-$('#LHCollectionImport').click(function() {
-    $('#LHImportCollectionErrorText').hide()
-    DownloadedObject = {}
-    $('#LHCodeBox').val('')
-    $('#LGCollectionImportGroup').find('span').remove()
-    $('#LHCodeBox').show()
-    $('#LHImportCollectionCode').text('Download Collection')
-    $('#LHCollectionImportModal').modal();
-})
 
 if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) {
     whenWeAreReady(msgsystem, function() {
@@ -333,53 +189,6 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
     $("#recipientsdel").click(function() {
         msgsystem.selectedRecipients.removeAll();
     })
-
-    $("#collectionsave").click(function() {
-        if (msgsystem.selectedRecipients.peek().length > 0) {
-            var SaveName = prompt("Please enter a name for the collection. If the name already exists it will be overwritten.", "");
-            if (SaveName !== null && SaveName != "") {
-
-
-                var theSelected = msgsystem.selectedRecipients.peek();
-                var theCollection = [];
-                var CollectionParent = {};
-                theSelected.forEach(function(item) {
-                    var thisItem = {};
-                    if (item.Contact === null) {
-                        thisItem.type = "group";
-                        thisItem.OwnerId = item.ContactGroup.Entity.Id;
-                        thisItem.Id = item.ContactGroup.Id;
-
-                    } else if (item.ContactGroup === null) {
-                        if (item.Contact.PersonId === null) {
-                            thisItem.type = "entity";
-                            thisItem.OwnerId = item.Contact.EntityId;
-                            thisItem.Id = item.Contact.Id;
-                        } else {
-                            thisItem.type = "person";
-                            thisItem.OwnerId = item.Contact.PersonId;
-                            thisItem.Id = item.Contact.Id;
-                        }
-                    }
-
-                    theCollection.push(thisItem);
-                });
-                //Collection Save code
-                CollectionParent.name = SaveName;
-                CollectionParent.description = SaveName;
-                CollectionParent.items = theCollection;
-
-                window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(CollectionParent), name: 'lighthouseMessageCollections'}, '*');
-
-
-            }
-        }
-    })
-
-
-    //Load all the Collections on page load
-
-    LoadAllCollections();
 
 });
 
@@ -651,282 +460,7 @@ button.style.height = button.offsetHeight + "px";
 }
 
 
-function LoadAllCollections() {
 
-  window.addEventListener("message", function(event) {
-    // We only accept messages from content scrip
-    if (event.source !== window)
-      return;
-  if (event.data.type) {
-      if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseMessageCollections") {
-        try {
-          var items = JSON.parse(event.data.dataresult)
-      } catch (e)
-      {
-          var items = []
-      }
-      ProcessData(items)
-  }
-}
-})
-  window.postMessage({ type: 'FETCH_COLLECTION',name: 'lighthouseMessageCollections' }, '*');
-
-  //Quick little code to move local storage to chrome storage
-  currentCollections = JSON.parse(localStorage.getItem("lighthouseContactCollections"));
-  if (currentCollections !== null) {
-    $.each(currentCollections, function(k, v) {
-        console.log('pushing local to sync storage')
-        window.postMessage({ type: 'SAVE_COLLECTION', newdata:JSON.stringify(v), name: 'lighthouseMessageCollections'}, '*');
-
-    })
-    console.log('removing localstorage')
-    localStorage.removeItem("lighthouseContactCollections")
-}
-
-  function ProcessData(theLoadedCollection) { //Load the saved Collections
-    $("#lighthousecollections").empty();
-
-    //Load the saved Collections
-
-    if (theLoadedCollection) {
-
-        $("#collectionscount").text(theLoadedCollection.length);
-        theLoadedCollection.forEach(function(item) {
-
-            var button = make_collection_button(item.name, item.description, item.items.length + "")
-            var spinner = $(<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
-
-            //click fuction for a collection box
-            $(button).click(function() {
-                $(button).children().css('display','none')
-
-                spinner.appendTo(button);
-                console.log("loading collection")
-                LoadCollection(item, function() {
-                    console.log("collection load complete")
-                    spinner.remove();
-                    //cb for when they are loaded
-                    $(button).children().css('display','')
-                });
-            })
-            $(button).find('span.delbutton').click(function() {
-                event.stopImmediatePropagation();
-                var r = confirm("Are you sure you want to delete this collection?");
-                if (r == true) {
-                    DeleteCollection(item);
-                }
-            })
-            $(button).find('span.sharebutton').click(function() {
-                event.stopImmediatePropagation();
-                SharedCollection = item
-                $('#clicktocopy').text('Click to copy to clipboard')
-                $('#clicktocopyURL').text('Click to copy to clipboard')
-                $('#LHGenerateShareCollectionCodeBox').css('display','none')
-                $('#LHGenerateShareCollectionCodeURLBox').css('display','none')
-                $('#LHGenerateShareCollectionCode').text('')
-
-                $('#LHGenerateShareCollectionCodeURL').text('')
-                $('#LHCollectionShareModal').modal()
-            })
-            $(button).appendTo('#lighthousecollections');
-
-            button.style.width = (($(button).find('span.sharebutton')[0].offsetWidth)+($(button).find('span.delbutton')[0].offsetWidth)+button.offsetWidth) + "px"; //add the width of the X button to the width, to avoid overlap
-            button.style.height = button.offsetHeight + "px";
-        });
-}
-}
-}
-
-function DeleteCollection(col) {
-    window.postMessage({ type: 'DELETE_COLLECTION', target:JSON.stringify(col), name:'lighthouseMessageCollections'}, '*');
-
-    LoadAllCollections();
-
-}
-
-function LoadCollection(col, cb) {
-    $total = col.items.length;
-    msgsystem.selectedRecipients.removeAll();
-    col.items.forEach(function(itm) {
-        switch (itm.type) {
-            case "group":
-            var groupOwner;
-            $.ajax({
-                type: 'GET',
-                url: urls.Base+'/Api/v1/Entities/' + itm.OwnerId,
-                beforeSend: function(n) {
-                    n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
-                },
-                data: {
-                    LighthouseFunction: 'CollectionLoadCollection',
-                    userId: user.Id
-                },
-                cache: false,
-                dataType: 'json',
-                complete: function(response, textStatus) {
-                    switch (textStatus) {
-                        case 'success':
-                        groupOwner = response.responseJSON.Name;
-                        $.ajax({
-                            type: 'GET',
-                            url: urls.Base+'/Api/v1/ContactGroups/headquarters/' + itm.OwnerId,
-                            beforeSend: function(n) {
-                                n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
-                            },
-                            data: {
-                                LighthouseFunction: 'CollectionLoadHQ',
-                                userId: user.Id
-                            },
-                            cache: false,
-                            dataType: 'json',
-                            complete: function(response, textStatus) {
-                                if (textStatus == 'success') {
-                                    if (response.responseJSON.Results.length) {
-                                        $.each(response.responseJSON.Results, function(k, v) {
-                                            if (v.Id == itm.Id) {
-
-                                                BuildNew = {};
-                                                BuildNew.Contact = null;
-                                                BuildNew.ContactGroup = v
-                                                BuildNew.ContactTypeId = null;
-                                                BuildNew.Description = groupOwner;
-                                                BuildNew.Recipient = v.Name;
-                                                msgsystem.selectedRecipients.push(BuildNew)
-
-                                                $total = $total - 1;
-                                                if ($total == 0) {
-                                                    cb();
-                                                }
-                                            }
-                                        })
-                                    }
-                                } else { //fail safe
-                                  $total = $total - 1;
-                                  if ($total == 0) {
-                                    cb();
-                                }
-                            }
-                        }
-                    })
-break;
-}
-}
-})
-break;
-case "person":
-$.ajax({
-    type: 'GET',
-    url: urls.Base+'/Api/v1/People/' + itm.OwnerId + '/Contacts',
-    beforeSend: function(n) {
-        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
-    },
-    data: {
-        LighthouseFunction: 'LoadPerson',
-        userId: user.Id
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function(response, textStatus) {
-        if (textStatus == 'success') {
-            if (response.responseJSON.Results.length) {
-                $.each(response.responseJSON.Results, function(k, v) {
-                    if (v.Id == itm.Id) {
-                        BuildNew = {};
-                        BuildNew.Contact = v;
-                        BuildNew.ContactGroup = null;
-                        BuildNew.ContactTypeId = v.ContactTypeId;
-                        BuildNew.Description = v.FirstName + " " + v.LastName;
-                        BuildNew.Detail = v.Detail;
-                        msgsystem.selectedRecipients.push(BuildNew)
-
-
-                        $total = $total - 1;
-                        if ($total == 0) {
-                            cb();
-                        }
-
-                    }
-                })
-            }
-        } else { //fail safe
-          $total = $total - 1;
-          if ($total == 0) {
-            cb();
-        }
-    }
-}
-})
-break;
-case "entity":
-$.ajax({
-    type: 'GET',
-    url: urls.Base+'/Api/v1/Contacts/Search',
-    beforeSend: function(n) {
-        n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
-    },
-    cache: false,
-    dataType: 'json',
-    data: {
-        'PageIndex': 1,
-        'PageSize': 1000,
-        'HeadquarterIds[]': itm.OwnerId,
-        'SortField': "createdon",
-        'SortOrder': "asc",
-        'LighthouseFunction': 'CollectionLoadEntity',
-        'userId': user.Id
-    },
-    complete: function(response, textStatus) {
-        if (textStatus == 'success') {
-            if (response.responseJSON.Results.length) {
-                $.each(response.responseJSON.Results, function(k, v) {
-                    if (v.Id == itm.Id) {
-                        BuildNew = {};
-                        BuildNew.Contact = v;
-                        BuildNew.ContactTypeId = v.ContactTypeId;
-                        BuildNew.ContactGroup = null;
-                        BuildNew.Description = v.EntityName;
-                        BuildNew.Detail = v.Detail;
-                        msgsystem.selectedRecipients.push(BuildNew)
-
-                        $total = $total - 1;
-                        if ($total == 0) {
-                            cb();
-                        }
-
-                    }
-                })
-            }
-        } else { //fail safe
-          $total = $total - 1;
-          if ($total == 0) {
-            cb();
-        }
-    }
-}
-})
-break;
-
-default: //something bad. we should never end up here
-$total = $total - 1;
-if ($total == 0) {
-    cb();
-}
-
-break;
-}
-})
-}
-
-function make_collection_button(name, description, count) {
-    return (
-        <span class="label label tag-rebecca">
-        <span class="sharebutton"  style="float:left;margin-left: -6px;margin-top:-4px"><i class="fa fa-share fa1"></i></span>
-        <span class="delbutton"  style="float:right;margin-right: -6px;margin-top:-4px"><i class="fa fa-times"></i></span>
-        <span><p  style="margin-bottom:5px"><i class="fa fa-object-group" aria-hidden="true" style="padding-right: 5px;"></i>{name}</p></span>
-        <span>{count} Recipients</span>
-        </span>
-        )
-}
 
 function make_team_button(name, TL, members, counts) {
     return (
@@ -956,77 +490,6 @@ function make_nitc_load_all_button(total) {
         )
 }
 
-function make_collection_share_modal() {
-    return (
-        <div id="LHCollectionShareModal" class="modal fade" role="dialog">
-        <div class="modal-dialog">
-
-        <div class="modal-content">
-        <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Lighthouse Share Recipient Collection</h4>
-        </div>
-        <div class="modal-body">
-        <h4>Generate a share code to quickly share this collection with others.</h4>
-        <p/>
-        <p>By Sharing this collection you will allow anyone with the share code to load and use a copy of this collection.</p>
-        <p>The generated code will be valid for 24 hours and can be used as many times as needed. If you make further changes to the Collection after sharing you will need to re-share the collection.</p>
-        <button type="button" class="btn btn-success" id="LHGenerateShareCollectionLink">Generate Code</button>
-        <div id='LHGenerateShareCollectionCodeBox' style="display: none;margin:auto;">
-        <div style="margin-top:20px;border-style: dashed;border-width: 2px;">
-        <p style="font-family: 'Courier New';text-align: center;font-size: -webkit-xxx-large;margin: 15px 15px;" id="LHGenerateShareCollectionCode"></p>
-        </div>
-        <p id="clicktocopy" style="text-align: center;">Click to copy to clipboard</p>
-        </div>
-        <div id='LHGenerateShareCollectionCodeURLBox' style="display: none;margin:auto;">
-        <div style="margin-top:20px;border-style: dashed;border-width: 2px;">
-        <p style="font-family: 'Courier New';text-align: center;font-size: small;margin: 15px 15px;" id="LHGenerateShareCollectionCodeURL"></p>
-        </div>
-        <p id="clicktocopyURL" style="text-align: center;">Click to copy to clipboard</p>
-        </div>
-        </div>
-        <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
-        </div>
-        </div>
-        </div>
-        )
-}
-
-function make_collection_import_modal() {
-    return (
-        <div id="LHCollectionImportModal" class="modal fade" role="dialog">
-        <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-        <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Lighthouse Import Recipient Collection</h4>
-        </div>
-        <div class="modal-body">
-        <h4>Import a shared collection.</h4>
-        <p/>
-        <p>Input the share code to download a copy of a shared collection and save it into your own collections.</p>
-        <div class='row' style="margin-top:20px">
-        <div class="col-lg-3 center-block" style="width:100%">
-        <div class="input-group" style="width:50%; margin: 0 auto">
-        <div  id="LGCollectionImportGroup" style="display:flex;justify-content: center">
-        <input type="text" maxlength="4" class="form-control" id="LHCodeBox" style="text-transform:uppercase;text-align:center;font-size: -webkit-xxx-large;height: 80px;margin-bottom:10px"/>
-        </div>
-        <p id="LHImportCollectionErrorText" style="text-align:center;display:hidden;color:red"></p>
-        <button id="LHImportCollectionCode" style="margin: 0 auto;display:block" class="btn btn-primary" type="button">Download Collection</button>
-        </div>
-        </div>
-        </div>
-        <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </div>
-        </div>
-        </div>
-        </div>
-        </div>
-        )
-}
 
 function whenWeAreReady(varToCheck, cb) { //when external vars have loaded
     var waiting = setInterval(function() {

@@ -161,6 +161,7 @@ div.team_complete_hidden div.teamStatus_complete div.row.clearfix {
 #lighthouse_instanttask .dropdown-menu {
   left: auto;
   right: 0;
+  z-index: 2000;
 }
 
 

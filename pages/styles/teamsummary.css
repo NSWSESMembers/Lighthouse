@@ -47,7 +47,7 @@ body.fade-in {
   font-size: 20px;
 }
 
-#teamFilterList {
+#sessionList {
   max-height: 500px;
   margin-bottom: 10px;
   overflow-y: auto;

@@ -18,8 +18,14 @@ chrome.webRequest.onBeforeRequest.addListener(
     function (details) {
         console.log("blocking message js request")
         var javascriptCode = loadSynchronously(details.url);
-        var replaced = "var msgsystem;"+javascriptCode.replace("CreateMessageViewModel,t;","CreateMessageViewModel,t;msgsystem = n;");
-        return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+        if (javascriptCode.includes("CreateMessageViewModel,t;")) {
+          var replaced = "var msgsystem;"+javascriptCode.replace("CreateMessageViewModel,t;","CreateMessageViewModel,t;msgsystem = n;");
+          return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+        } else if (javascriptCode.includes("var viewModel = new CreateMessageViewModel();")) {
+          var replaced = "var msgsystem;\r\n"+javascriptCode.replace("var viewModel = new CreateMessageViewModel();","var viewModel = new CreateMessageViewModel();\r\nmsgsystem = viewModel;");
+          return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+        }
+
     },
     { urls: ["https://*.ses.nsw.gov.au/js/messages/create?v=*"] },
     ["blocking"]
@@ -30,8 +36,13 @@ chrome.webRequest.onBeforeRequest.addListener(
     function (details) {
         console.log("blocking jobs create js request")
         var javascriptCode = loadSynchronously(details.url);
+        if (javascriptCode.includes("var n=this,t,i;n.MessageTemplateManager")) {
         var replaced = "var jobsystem;"+javascriptCode.replace("var n=this,t,i;n.MessageTemplateManager","var n=this,t,i;jobsystem=n;n.MessageTemplateManager");
         return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+      } else if (javascriptCode.includes("vm = new CreateJobViewModel();")) {
+        var replaced = "var jobsystem;\r\n"+javascriptCode.replace("vm = new CreateJobViewModel();","vm = new CreateJobViewModel();\r\njobsystem=vm;");
+        return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+      }
     },
     { urls: ["https://*.ses.nsw.gov.au/js/jobs/create?v=*"] },
     ["blocking"]
@@ -43,8 +54,13 @@ chrome.webRequest.onBeforeRequest.addListener(
     function (details) {
         console.log("blocking jobs register js request")
         var javascriptCode = loadSynchronously(details.url);
+        if (javascriptCode.includes('"Last Month":[utility.dateRanges.LastMonth.StartDate(),utility.dateRanges.LastMonth.EndDate()]')) {
         var replaced = javascriptCode.replace('"Last Month":[utility.dateRanges.LastMonth.StartDate(),utility.dateRanges.LastMonth.EndDate()]','"Last Month":[utility.dateRanges.LastMonth.StartDate(), utility.dateRanges.LastMonth.EndDate()],"This Calendar Year":[moment().startOf(\'year\'), moment().endOf(\'year\')],"All":\n [utility.minDate, moment().endOf(\'year\')]');
         return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+      } else if (javascriptCode.includes("'Last Month': [utility.dateRanges.LastMonth.StartDate(), utility.dateRanges.LastMonth.EndDate()]")) {
+        var replaced = javascriptCode.replace("'Last Month': [utility.dateRanges.LastMonth.StartDate(), utility.dateRanges.LastMonth.EndDate()]",'"Last Month":[utility.dateRanges.LastMonth.StartDate(), utility.dateRanges.LastMonth.EndDate()],"This Calendar Year":[moment().startOf(\'year\'), moment().endOf(\'year\')],"All":\n [utility.minDate, moment().endOf(\'year\')]');
+        return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+      }
     },
     { urls: ["https://*.ses.nsw.gov.au/js/jobs/register?v=*","https://*.ses.nsw.gov.au/js/jobs/tasking?v=*"] },
     ["blocking"]
@@ -69,8 +85,13 @@ chrome.webRequest.onBeforeRequest.addListener(
         function (details) {
             console.log("blocking team create js request")
             var javascriptCode = loadSynchronously(details.url);
+            if (javascriptCode.includes("var n=new TeamViewModel;")) {
             var replaced = "var vm;"+javascriptCode.replace("var n=new TeamViewModel;","var n=new TeamViewModel;vm=n;");
             return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+          } else if (javascriptCode.includes("var vm = new TeamViewModel();")) {
+            var replaced = "var vm;"+javascriptCode.replace("var vm = new TeamViewModel();","vm = new TeamViewModel();");
+            return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
+          }
         },
         { urls: ["https://*.ses.nsw.gov.au/js/teams/create?v=*"] },
         ["blocking"]

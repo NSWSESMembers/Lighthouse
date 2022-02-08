@@ -1,0 +1,92 @@
+#asset-route-warning {
+  color: red;
+  margin-top: -5px;
+  margin-bottom: 10px;
+  font-family: "latobold";
+
+  text-align: center;
+  font-size: small;
+}
+
+#filter-warning {
+  color: red;
+  margin-top: 5px;
+  font-family: "latobold";
+  text-align: right;
+  font-size: smaller;
+}
+
+#asset-draw-time {
+  color: black;
+  margin-top: 5px;
+  position: absolute;
+  font-family: "latobold";
+  text-align: left;
+  font-size: smaller;
+}
+
+.marker-pin {
+  width: 40px;
+  height: 40px;
+  border-radius: 50% 50% 50% 0;
+  background: #c30b82;
+  position: absolute;
+  transform: rotate(-45deg);
+  left: 50%;
+  top: 50%;
+  margin: -15px 0 0 -15px;
+}
+
+.marker-pin::after {
+    content: '';
+    width: 34px;
+    height: 34px;
+    margin: 3px 0 0 3px;
+    background: #000;
+    position: absolute;
+    border-radius: 50%;
+ }
+
+.custom-div-icon i {
+   position: absolute;
+   width: 22px;
+   font-size: 22px;
+   left: 0;
+   right: 0;
+   margin: 10px auto;
+   text-align: center;
+}
+
+.custom-div-icon i.awesome {
+    margin: 12px auto;
+    font-size: 15px;
+ }
+
+ #nearest-asset-table {
+   margin-bottom: 5px
+ }
+
+ #nearest-asset-table tbody tr:hover th {
+    background: #E8E8E8;
+}
+
+ #nearest-asset-table tbody tr:hover td {
+    background: #E8E8E8;
+}
+
+.nearest-asset-table-selected {
+   background: #00A36C;
+   color: white;
+}
+
+.nearest-asset-table-selected:hover th {
+   background: #9FE2BF !important;
+}
+
+.nearest-asset-table-selected:hover td {
+   background: #9FE2BF !important;
+}
+
+.leaflet-routing-container {
+    display: none;
+}

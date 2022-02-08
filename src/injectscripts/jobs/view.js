@@ -1,13 +1,26 @@
 var DOM = require('jsx-dom-factory');
 var _ = require('underscore');
+var L = require('leaflet')
 var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
 var postCodes = require('../../../lib/postcodes.js');
 var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 var vincenty = require('../../../lib/vincenty.js');
+var esri = require('esri-leaflet')
 
+require('leaflet-easybutton')
+require('leaflet-routing-machine')
+
+require('lrm-graphhopper'); // Adds L.Routing.GraphHopper onto L.Routing
+require("leaflet/dist/leaflet.css");
+
+//require('esri-leaflet')
 
 console.log("Running inject script");
 
+
+var assetMap; //global map holder
+var assetMapRenderAtTime
+var assetMapRenderTimer
 //if ops logs update
 masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
 
@@ -121,7 +134,7 @@ function lighthouseTasking() {
                         vv.Team.Members.map(function(member) {
                             tightarray.push(member.Person.Id)
                         })
-                        window.open('/Messages/Create?lhquickrecipient=' + escape(JSON.stringify(tightarray)), '_blank');
+                        window.open('/Messages/Create?jobId='+escape(jobId)+'&lhquickrecipient=' + escape(JSON.stringify(tightarray)), '_blank');
                     })
                 }
             })
@@ -185,69 +198,6 @@ whenAddressIsReady(function() {
           }
       });
     }
-    if(typeof masterViewModel.geocodedAddress.peek() != 'undefined')
-    {
-     if (masterViewModel.geocodedAddress.peek().Latitude != null || masterViewModel.geocodedAddress.peek().Longitude != null) {
-       window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", lat: masterViewModel.geocodedAddress.peek().Latitude, lng: masterViewModel.geocodedAddress.peek().Longitude }, "*");
-
-        if (masterViewModel.jobType.peek().ParentId == 5) { //Is a rescue
-          var t0 = performance.now();
-          let avlType = masterViewModel.jobType.peek().Name
-          switch(avlType) { //translations for different AVL names
-            case "RCR":
-            avlType = "GLR"
-            break
-          }
-        $.ajax({
-    type: 'GET'
-    , url: urls.Base+'/Api/v1/ResourceLocations/GET?resourceTypes='+avlType
-    , beforeSend: function(n) {
-      n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
-    }
-    , cache: false
-    , dataType: 'json'
-    , data: {LighthouseFunction: 'NearestAVL', userId: user.Id}
-    , complete: function(response, textStatus) {
-      if (textStatus == 'success')
-      {
-       avlDistances = []
-       response.responseJSON.forEach(function(v){
-            v.distance = vincenty.distVincenty(v.Latitude,v.Longtitude,masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)/1000
-            avlDistances.push(v)
-          })
-       let _sortedAvlDistances = avlDistances.sort(function(a, b) {
-            return a.distance - b.distance
-          });
-          $('#nearest-avl-text').text('')
-       if (_sortedAvlDistances.length > 0) {
-         var maxLength = 3 //how many results to display
-         var used = 0
-         _sortedAvlDistances.forEach(function(v) { //safe way to loop with a limit
-           if (used < maxLength) {
-             used++
-           $('#nearest-avl-text').text($('#nearest-avl-text').text() + `${v.CallSign} (${v.distance.toFixed(2)} kms), `)
-         }
-         })
-         $('#nearest-avl-text').text($('#nearest-avl-text').text().slice(0,-2)) //trim the comma space from the very end
-       } else {
-        $('#nearest-avl-text').text("No AVL results returned for "+avlType)
-       }
-       var t1 = performance.now();
-       console.log("Call to calculate distances from AVLs took " + (t1 - t0) + " milliseconds.")
-      }
-    }
-  });
-  } else {
-         $('#nearest-avl-text').text('Enabled only for rescue jobs')
-  }
-     } else {
-     $('#nearest-lhq-text').text('No geocoded job location available')
-     $('#nearest-avl-text').text('No geocoded job location available')
-   }
-   } else {
-     $('#nearest-lhq-text').text('No geocoded job location available')
-     $('#nearest-avl-text').text('No geocoded job location available')
-   }
   })
 
 
@@ -255,9 +205,9 @@ whenAddressIsReady(function() {
   //
   //postcode checking code
   //
-
-  var lastChar = masterViewModel.geocodedAddress.peek().PrettyAddress.substr(masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4)
-
+  if(masterViewModel.geocodedAddress.peek().PrettyAddress) {
+    var lastChar = masterViewModel.geocodedAddress.peek().PrettyAddress.substr(masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4)
+  }
   if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true)) //if no postcode is displayed
   {
     postCodes.returnPostCode(masterViewModel.geocodedAddress.peek().Locality, function(postcode){
@@ -276,6 +226,19 @@ whenAddressIsReady(function() {
 
   //end postcode
 
+
+
+
+
+  //assetLocationButtonOn clicky clicky if saved
+  let assetLocationSavedState = localStorage.getItem("LighthouseJobViewAssetLocationButton")
+
+  if (assetLocationSavedState == 'all') {
+    $('#assetLocationButtonAll').click()
+  } else if (assetLocationSavedState == 'active') {
+    $('#assetLocationButtonActiveOnly').click()
+  }
+
 })
 
 quickTask = return_quicktaskbutton();
@@ -283,6 +246,589 @@ quickSector = return_quicksectorbutton();
 quickCategory = return_quickcategorybutton();
 quickRadioLog = return_quickradiologbutton();
 instantRadiologModal = return_quickradiologmodal();
+
+
+  function renderNearestAssets(activeOnly, resultsToDisplay, cb) {
+
+    if (!masterViewModel.geocodedAddress.peek().Latitude && !masterViewModel.geocodedAddress.peek().Longitude) {
+      $('#nearest-asset-geoerror').show();
+      cb && cb()
+    } else {
+
+    //stuff that needs to persist
+    //$('#asset-map').show() //really deosnt like been hidden when you draw it
+    $('#nearest-asset-box').show()
+    if (!$('#asset-map')[0]._leaflet_id) {
+      console.log('Map doesnt exist, creating')
+    assetMap = L.map('asset-map').setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
+    L.control.scale().addTo(assetMap);
+    esri.basemapLayer('Topographic').addTo(assetMap);
+  }
+
+    assetMapRenderAtTime =  moment()
+    $('#asset-draw-time').html(`Map last updated: ${moment().diff(assetMapRenderAtTime, 'seconds')}s ago`)
+
+    assetMapRenderTimer = setInterval(function () {
+      $('#asset-draw-time').html(`Map last updated: ${moment().diff(assetMapRenderAtTime, 'seconds')}s ago`)
+      if (moment().diff(assetMapRenderAtTime, 'seconds') >= 60) {
+        $('#asset-draw-time').css('color', 'red');
+      } else {
+        $('#asset-draw-time').css('color', 'black');
+      }
+    }, 5000)
+
+    // var menuButton = L.easyButton({
+    //     states: [{
+    //         stateName: 'show-menu',
+    //         icon: 'fa fa-life-ring',
+    //         title: 'Show RMS',
+    //         onClick: function (btn, map) {
+    //             menu.options.button = btn;
+    //             console.log('button')
+    //             btn.state('hide-menu');
+    //         }
+    //     },{
+    //         stateName: 'hide-menu',
+    //         icon: 'fa fa-life-ring',
+    //         title: 'Hide RMS',
+    //         onClick: function (btn, map) {
+    //             console.log('button hide')
+    //             btn.state('show-menu');
+    //         }
+    //     }],
+    //     id: 'styles-menu',
+    // });
+    // menuButton.addTo(assetMap);
+
+
+    var mapMarkers = []
+    if (!activeOnly) { //only show LHQ's when in all mode
+      window.postMessage({ type: "FROM_PAGE_LHQS"}, "*");
+    }
+    window.addEventListener('message', function (event) {
+        // We only accept messages from background
+        if (event.source !== window)
+            return;
+
+        if (event.data.type) {
+            if (event.data.type === 'lhqs') {
+
+              if (event.data.data && event.data.data.features) {
+                let hqDistances = []
+                event.data.data.features.forEach(function(v){
+                  v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)/1000
+                  hqDistances.push(v)
+                })
+                let _sortedhqDistances = hqDistances.sort(function(a, b) {
+                    return a.distance - b.distance
+                  });
+
+                  for (let i = 0; i < _sortedhqDistances.length; i++) { //all of them with some conttrol of count
+                      let hq = _sortedhqDistances[i];
+                    //if (hq.distance < 100) {//only show LHQ's within 100km
+                      let x = hq.properties.POINT_X;
+                      let y = hq.properties.POINT_Y;
+
+                      let name = hq.properties.HQNAME;
+
+                      let unitCode = hq.properties.UNIT_CODE;
+
+
+                      let details =
+                      `<div id='lhqPopUp' style="width:250px">\
+                      <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${hq.properties.HQNAME}</div>\
+                      <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
+
+                      <div id='lhqacredHolder' style="padding-top:10px;width:100%;margin:auto">\
+                      <table id='lhqacred' style="width:100%;text-align: center;">\
+                      <tr>\
+                      <th style="text-align: center;width:100%">Available SRB Roles</th>\
+                      </tr>\
+                      </table>\
+                      </div>\
+
+                      <div id='lhqContactsHolder' style="padding-top:10px;width:100%;margin:auto">\
+                      <table id='lhqContacts' style="width:100%;text-align: center;">\
+                      <tr>\
+                      <td colspan="2" style="font-weight: bold">Contact Details</td>
+                      </tr>\
+                      <tr>\
+                      <th style="text-align: center;width:50%">Name</th>\
+                      <th style="text-align: center;width:50%">Detail</th>\
+                      </tr>\
+                      </table>\
+                      </div>\
+                      </div>`;
+
+                      let icon = lighthouseUrl + "icons/ses.png";
+
+                      var lhqMarkerIcon = L.divIcon({
+                        className: 'custom-div-icon',
+                           html: `<div><img width="80%" src=${icon}></img></div>`,
+                          iconSize: [20, 20],
+                          iconAnchor: [10, 10]
+                      });
+
+                      let marker = L.marker([y,x], {icon: lhqMarkerIcon}).addTo(assetMap)
+                      marker.bindTooltip(details)
+                      console.debug(`SES LHQ at [${x},${y}]: ${name}`);
+                      let contentLoaded = false;
+                      marker.on('tooltipopen', function() {
+                        if (!contentLoaded) {
+                          contentLoaded = true
+                        let toolTip = $($.parseHTML(marker.getTooltip()._content))
+                        fetchHqDetails(unitCode, function (hqdeets) {
+                          var c = 0;
+                          $.each(hqdeets.contacts, function (k, v) {
+                              if (v.ContactTypeId == 4 || v.ContactTypeId == 3) {
+                                  c++;
+                                  if (c % 2 || c == 0) //every other row
+                                  {
+                                      toolTip.find('#lhqContacts').append('<tr><td>' + v.Description.replace('Phone', '').replace('Number', '') + '</td><td>' + v.Detail + '</td></tr>');
+                                  } else {
+                                      toolTip.find('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
+                                  }
+                              }
+                          });
+
+                          if (hqdeets.acred.length > 0) //fill otherwise placeholder
+                          {
+                              $.each(hqdeets.acred, function (k, v) {
+                                toolTip.find('#lhqacred').append('<tr><td>' + v + '</td></tr>');
+                              })
+                          } else {
+                              toolTip.find('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
+                          }
+                          toolTip.find('#lhqStatus').text(hqdeets.HeadquartersStatus)
+                          toolTip.find('#lhqJobCount').text(hqdeets.currentJobCount)
+                          toolTip.find('#lhqTeamCount').text(hqdeets.currentTeamCount)
+                            marker.setTooltipContent(toolTip.prop('outerHTML'))
+                        })
+                        }
+                      });
+
+                    //}
+                  }
+              }
+
+            }
+          }
+        })
+
+
+             var jobMarker = L.divIcon({
+               className: 'custom-div-icon',
+               html: "<i class='fa fa-crosshairs'>",
+               iconSize: [20, 20],
+               iconAnchor: [10, 20]
+             });
+
+
+               mapMarkers.push(L.marker([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude], {icon: jobMarker}).addTo(assetMap))
+
+
+
+    $.ajax({
+    type: 'GET'
+    , url: urls.Base+'/Api/v1/ResourceLocations/Radio?resourceTypes='
+    , beforeSend: function(n) {
+    n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+    }
+    , cache: false
+    , dataType: 'json'
+    , data: {LighthouseFunction: 'NearestAsset', userId: user.Id}
+    , complete: function(response, textStatus) {
+    if (textStatus == 'success')
+    {
+
+    assetDistances = []
+    var t0 = performance.now();
+
+    response.responseJSON.forEach(function(v){
+        v.distance = vincenty.distVincenty(v.geometry.coordinates[1],v.geometry.coordinates[0],masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)/1000
+        v.bearing = getBearing(masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude,v.geometry.coordinates[1],v.geometry.coordinates[0])
+
+        assetDistances.push(v)
+      })
+    let _sortedAssetDistances = assetDistances.sort(function(a, b) {
+        return a.distance - b.distance
+      });
+
+
+    var distances = []
+
+    if (_sortedAssetDistances.length > 0) {
+     let maxLength = resultsToDisplay //how many results to display
+     let used = 0
+     let hiddenAssets = 0
+     _sortedAssetDistances.forEach(function(v) { //safe way to loop with a limit
+       if (used < maxLength) {
+         if ((activeOnly && moment().diff(v.properties.lastSeen, "hours") < 1) || (!activeOnly)) {
+         used++
+         distances.push(v.distance)
+         let row = $(`
+           <tr style="${moment().diff(v.properties.lastSeen, "days") > 1 ? "font-style: italic; opacity: 0.6;" : ''}  cursor: pointer;">
+        <th scope="row">${v.properties.name}</th>
+        <td>${v.properties.entity}</td>
+        <td>${v.distance.toFixed(2)} km ${getCardinal(v.bearing)}</td>
+        <td>${v.properties.talkgroup != null ? v.properties.talkgroup : 'Unknown'}</td>
+        <td>${moment(v.properties.lastSeen).fromNow()}</td>
+        </tr>
+           `);
+           $('#nearest-asset-table tbody').append(row)
+           var unit = v.properties.name.match(/([a-zA-Z]+)/gi);
+           var veh = v.properties.name.match(/(\d+)/gi);
+           let bgcolor = "#4838cc"
+           if (used == 1) {bgcolor = 'green'}
+           if (used == maxLength) {bgcolor = 'red'}
+           let markerLabel = v.properties.name
+           if (unit && veh) {
+             markerLabel = `${unit}<br>${veh}`
+           }
+           var situationVehicle = L.divIcon({
+             className: 'custom-div-icon',
+                html: `<div style='background-color:${bgcolor}; ${moment().diff(v.properties.lastSeen, "days") > 1 ? "filter: contrast(0.3);" : ''}' class='marker-pin'></div>
+                <div class="awesome" style="position: absolute; margin: 24px 13px; line-height: 10px; text-align: center; color:white">
+                  <p>${markerLabel}</p>
+                </div>`,
+               iconSize: [40, 56],
+               iconAnchor: [24, 56]
+           });
+
+           let marker = L.marker([v.geometry.coordinates[1], v.geometry.coordinates[0]], {icon: situationVehicle}).addTo(assetMap)
+
+           var polyline = L.polyline([[v.geometry.coordinates[1], v.geometry.coordinates[0]],[masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude]], {weight: 4, color: 'green', dashArray: "6"})
+
+
+           let srcLatRad = v.geometry.coordinates[1]  * (Math.PI / 180);
+           let dstLatRad = masterViewModel.geocodedAddress.peek().Latitude  * (Math.PI / 180);
+           let middleLatRad = Math.atan(Math.sinh(Math.log(Math.sqrt((Math.tan(dstLatRad)+1/Math.cos(dstLatRad))*(Math.tan(srcLatRad)+1/Math.cos(srcLatRad))))));
+           let middleLat = middleLatRad * (180 / Math.PI)
+           let middleLng = (v.geometry.coordinates[0] + masterViewModel.geocodedAddress.peek().Longitude) / 2;
+
+
+           let midPointBetween = middlePoint(v.geometry.coordinates[1], v.geometry.coordinates[0], masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude)
+
+           var distanceMarker = new L.circleMarker([middleLat, middleLng], { radius: 0.1 }); //opacity may be set to zero
+           distanceMarker.bindTooltip(`${v.distance.toFixed(2)} km ${getCardinal(v.bearing)}`, {permanent: true, offset: [0, 0] });
+
+           var distanceMarkerRoute = []
+
+            if (used != 1 && used != maxLength) {
+           var markerCircle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
+             color: 'black',
+             weight: 0.5,
+             fill: false,
+             dashArray: "6",
+             radius: (v.distance * 1000) //KM to M divided by 2 for radius
+           }).addTo(assetMap);
+          }
+
+
+           var routingControl = L.Routing.control({
+             router: L.Routing.graphHopper('lighthouse', {
+                serviceUrl: 'https://map.tdykes.com/route',
+                urlParameters: { algorithm: 'alternative_route', 'ch.disable': true, instructions: false,  }
+              }),
+              // waypoints: [
+              //   L.latLng(v.geometry.coordinates[1]+parseFloat((Math.random() * (0.0001 - 0.0005) + 0.0005).toFixed(4)), v.geometry.coordinates[0]+parseFloat((Math.random() * (0.0001 - 0.0005) + 0.0005).toFixed(4))),
+              //   L.latLng(masterViewModel.geocodedAddress.peek().Latitude+parseFloat((Math.random() * (0.0001 - 0.0005) + 0.0005).toFixed(4)), masterViewModel.geocodedAddress.peek().Longitude+parseFloat((Math.random() * (0.0001 - 0.0005) + 0.0005).toFixed(4)))
+              // ],
+             waypoints: [
+               L.latLng(v.geometry.coordinates[1], v.geometry.coordinates[0]),
+               L.latLng(masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude)
+             ],
+             draggableWaypoints: false,
+             routeWhileDragging: false,
+             reverseWaypoints: false,
+             useZoomParameter: false,
+             showAlternatives: true,
+             fitSelectedRoutes : false,
+             createMarker: function(i, wp, er) {
+                        return null;
+                },
+                lineOptions: {
+                    styles: [
+                      {color: '#3388ff', opacity: 1, weight: 3},
+                    ],
+                    addWaypoints: false,
+                },
+                altLineOptions: {
+                    styles: [
+                        {color: 'red', opacity: 1, weight: 3},
+                    ],
+                   addWaypoints: false,
+                },
+           })
+
+           routingControl.on('routingerror', function (e) {
+
+             let before = $('#asset-route-warning').html()
+
+             $('#asset-route-warning').html(`Error Routing<br>${e.error.response.message}`)
+
+             setTimeout(function(){
+               $('#asset-route-warning').fadeOut(400,function() {
+                  $(this).html(before)
+                }).fadeIn();
+             }, 4000);
+
+         })
+
+
+           routingControl.on('routesfound', function (e) {
+             let routeCount = 0
+             let bounds = [] //array of every point, needed to work out zoom
+             e.routes.forEach(function(r) {
+               routeCount++
+
+               r.coordinates.map(function(c) {
+                 bounds.push([c.lat,c.lng])
+               })
+
+               if (routeCount == 1) {
+                 middle = r.coordinates[Math.floor(r.coordinates.length/4)] //first quarter
+               } else {
+                 middle = r.coordinates[Math.floor((r.coordinates.length/4)*3)] //last quarter
+               }
+
+               distance = r.summary.totalDistance;
+               time = r.summary.totalTime;
+               timeHr = parseInt(moment.utc(time*1000).format('HH'))
+               timeMin = parseInt(moment.utc(time*1000).format('mm'))
+               timeText = ""
+               if (timeHr == 0) {
+                 timeText = `${timeMin} min`
+               } else {
+                 timeText = `${timeHr} hr ${timeMin} min`
+               }
+               let _distanceMarkerRoute = new L.circleMarker([middle.lat, middle.lng], { radius: 0.1 }).addTo(assetMap); //opacity may be set to zero
+               _distanceMarkerRoute.bindTooltip(`<div style="text-align: center;"><strong style="color:${routeCount == '1' ? '#3388ff' : 'red'}">Via ${r.name}</strong><br><strong>${(distance/1000).toFixed(1)}km - ${timeText}</strong></div>`, {permanent: true, offset: [0, 0] });
+               distanceMarkerRoute.push(_distanceMarkerRoute)
+             })
+
+             // Zoom to fit the path that was drawn
+              let latlngBounds = L.latLngBounds(bounds)
+              assetMap.flyToBounds(latlngBounds, {padding: [40, 40]})
+
+           })
+
+           // hover over table rows
+
+           $(row).mouseover(function() {
+             polyline.addTo(assetMap);
+             distanceMarker.addTo(assetMap);
+
+           }).mouseout(function() {
+             polyline.remove(assetMap);
+             distanceMarker.remove(assetMap);
+           })
+
+           $(row).on('click', function() { //fly to just this marker and the job
+             drawPathingAndUpdateRow()
+           })
+
+           marker.on('click', function() {
+             drawPathingAndUpdateRow()
+           });
+
+           marker.on('mouseover', function() {
+             polyline.addTo(assetMap);
+
+             distanceMarker.addTo(assetMap);
+
+           });
+
+           marker.on('mouseout', function() {
+             polyline.remove(assetMap);
+             distanceMarker.remove(assetMap)
+
+           });
+
+           mapMarkers.push(marker);
+
+           function drawPathingAndUpdateRow() {
+             if (!row.hasClass( 'nearest-asset-table-selected' )) {
+               $(row).addClass('nearest-asset-table-selected')
+               //remove the crow flies and replace with true
+               polyline.remove(assetMap);
+               distanceMarker.remove(assetMap);
+
+               let latlngBounds = L.latLngBounds([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude],[v.geometry.coordinates[1], v.geometry.coordinates[0]])
+               assetMap.flyToBounds(latlngBounds, {padding: [50, 50]})
+               routingControl.addTo(assetMap);
+
+             } else {
+               $(row).removeClass('nearest-asset-table-selected')
+               routingControl.remove(assetMap)
+               distanceMarkerRoute.forEach(function(r) { r.remove(assetMap)})
+               distanceMarkerRoute = []
+               marker.unbindTooltip()
+             }
+
+             if ($(".nearest-asset-table-selected").length == 0) {
+               $('#asset-route-warning').css("visibility", "hidden");
+             } else {
+               $('#asset-route-warning').css("visibility", "unset");
+             }
+
+           }
+         } else {
+           hiddenAssets = hiddenAssets + 1
+         }
+     }
+   })
+   if (hiddenAssets > 0) {
+     $('#filter-warning').html(`Hiding ${hiddenAssets} inactive assets`)
+     $('#filter-warning').css("visibility", "unset");
+   } else {
+     $('#filter-warning').css("visibility", "hidden");
+   }
+
+
+     const average = (array) => array.reduce((a, b) => a + b) / array.length;
+var s2circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
+  color: 'red',
+  weight: 1,
+  fillColor: '#f03',
+  fillOpacity: 0.05,
+  radius: quantileSorted(distances, 1) * 1000
+}).addTo(assetMap);
+
+// var meancircle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
+//   color: 'yellow',
+//   weight: 1,
+//   fillColor: '#8B8000',
+//   fillOpacity: 0.05,
+//   radius: (quantileSorted(distances, 1) * 1000) / 2 //quantileSorted(distances, 0.5) * 1000
+// }).addTo(assetMap);
+
+var s1circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
+  color: 'green',
+  weight: 1,
+  fillColor: '#50C878',
+  fillOpacity: 0.05,
+  radius: quantileSorted(distances, 0) * 1000
+}).addTo(assetMap);
+
+
+
+
+     let latlngs = mapMarkers.map(marker => marker.getLatLng())
+
+     let latlngBounds = L.latLngBounds(latlngs)
+
+     assetMap.fitBounds(latlngBounds, {padding: [20, 20]})
+     //$('#nearest-asset-text').text($('#nearest-asset-text').text().slice(0,-2)) //trim the comma space from the very end
+    } else {
+    $('#nearest-asset-text').text("No Assets found")
+    }
+    var t1 = performance.now();
+    console.log("Call to calculate distances from assets took " + (t1 - t0) + " milliseconds.")
+    cb()
+    }
+    }
+    });
+  }
+}
+
+
+//the asset location buttons
+
+
+function assetLocationMapOff() {
+  clearInterval(assetMapRenderAtTime);
+  $('#nearest-asset-box').hide()
+  $('#nearest-asset-table tbody').empty()
+  $('#nearest-asset-geoerror').hide()
+  if (assetMap && assetMap.remove) {
+    assetMap.off();
+  assetMap.remove();
+  assetMap = null;
+  }
+
+}
+
+  $('#assetLocationButtonOff').click(function() {
+
+    localStorage.removeItem("LighthouseJobViewAssetLocationButton");
+
+    $('#assetLocationButtonActiveOnly').removeClass('btn-active')
+    $('#assetLocationButtonActiveOnly').addClass('btn-inactive')
+
+    $('#assetLocationButtonAll').removeClass('btn-active')
+    $('#assetLocationButtonAll').addClass('btn-inactive')
+
+    $('#assetLocationButtonOff').addClass('btn-active')
+    $('#assetLocationButtonOff').removeClass('btn-inactive')
+
+    assetLocationMapOff()
+
+  })
+
+
+$('#assetLocationButtonAll').click(function() {
+
+  //swap from action only to all
+  if ($('#assetLocationButtonActiveOnly').hasClass('btn-active')) {
+    $('#assetLocationButtonActiveOnly').removeClass('btn-active')
+    $('#assetLocationButtonActiveOnly').addClass('btn-inactive')
+    assetLocationMapOff()
+  }
+
+  //check we dont already have a map (only a real map has trhe remove function)
+  if (!assetMap) {
+
+
+  localStorage.setItem("LighthouseJobViewAssetLocationButton", 'all');
+
+  $('#assetLocationButtonOff').removeClass('btn-active')
+  $('#assetLocationButtonOff').addClass('btn-inactive')
+
+  $('#assetLocationButtonAll').addClass('btn-active')
+  $('#assetLocationButtonAll').removeClass('btn-inactive')
+
+  var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
+
+  spinner.appendTo('#assetLocationButtonAll');
+
+  renderNearestAssets(false, 5, function() {
+    spinner.hide()
+  })
+}
+
+
+});
+
+$('#assetLocationButtonActiveOnly').click(function() {
+
+  if ($('#assetLocationButtonAll').hasClass('btn-active')) {
+    $('#assetLocationButtonAll').removeClass('btn-active')
+    $('#assetLocationButtonAll').addClass('btn-inactive')
+    assetLocationMapOff()
+  }
+
+  if (!assetMap) {
+
+  localStorage.setItem("LighthouseJobViewAssetLocationButton", 'active');
+
+  $('#assetLocationButtonOff').removeClass('btn-active')
+  $('#assetLocationButtonOff').addClass('btn-inactive')
+
+  $('#assetLocationButtonActiveOnly').addClass('btn-active')
+  $('#assetLocationButtonActiveOnly').removeClass('btn-inactive')
+
+  var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
+
+  spinner.appendTo('#assetLocationButtonActiveOnly');
+
+  renderNearestAssets(true, 5, function() {
+    spinner.hide()
+  })
+}
+
+});
+
 
 
 //the quicktask button
@@ -1069,6 +1615,26 @@ function return_message_button() {
 
 $(document).ready(function() {
 
+  moment.updateLocale('en', {
+    relativeTime: {
+      future : 'in %s',
+      past   : '%s ago',
+      s  : function (number, withoutSuffix) {
+        return withoutSuffix ? 'now' : 'a few seconds';
+      },
+      m  : '1m',
+      mm : '%dm',
+      h  : '1h',
+      hh : '%dh',
+      d  : '1d',
+      dd : '%dd',
+      M  : '1mth',
+      MM : '%dmth',
+      y  : '1y',
+      yy : '%dy'
+    }
+  });
+
   _.each([
       ["#stormtree", "Storm", "Tree Operations/Removal"],
       ["#stormproperty", "Storm", "Property Protection"],
@@ -1597,4 +2163,269 @@ function pad(n, z) {
   z = z || '0';
   n = n + '';
   return n.length >= 2 ? n : new Array(2 - n.length + 1).join(z) + n;
+}
+
+function radians(n) {
+  return n * (Math.PI / 180);
+}
+function degrees(n) {
+  return n * (180 / Math.PI);
+}
+
+function getBearing(startLat,startLong,endLat,endLong){
+  startLat = radians(startLat);
+  startLong = radians(startLong);
+  endLat = radians(endLat);
+  endLong = radians(endLong);
+
+  var dLong = endLong - startLong;
+
+  var dPhi = Math.log(Math.tan(endLat/2.0+Math.PI/4.0)/Math.tan(startLat/2.0+Math.PI/4.0));
+  if (Math.abs(dLong) > Math.PI){
+    if (dLong > 0.0)
+       dLong = -(2.0 * Math.PI - dLong);
+    else
+       dLong = (2.0 * Math.PI + dLong);
+  }
+
+  return (degrees(Math.atan2(dLong, dPhi)) + 360.0) % 360.0;
+}
+
+
+function getCardinal(angle) {
+  /**
+   * Customize by changing the number of directions you have
+   * We have 8
+   */
+  const degreePerDirection = 360 / 8;
+
+  /**
+   * Offset the angle by half of the degrees per direction
+   * Example: in 4 direction system North (320-45) becomes (0-90)
+   */
+  const offsetAngle = angle + degreePerDirection / 2;
+
+  return (offsetAngle >= 0 * degreePerDirection && offsetAngle < 1 * degreePerDirection) ? "North"
+    : (offsetAngle >= 1 * degreePerDirection && offsetAngle < 2 * degreePerDirection) ? "NE"
+      : (offsetAngle >= 2 * degreePerDirection && offsetAngle < 3 * degreePerDirection) ? "East"
+        : (offsetAngle >= 3 * degreePerDirection && offsetAngle < 4 * degreePerDirection) ? "SE"
+          : (offsetAngle >= 4 * degreePerDirection && offsetAngle < 5 * degreePerDirection) ? "South"
+            : (offsetAngle >= 5 * degreePerDirection && offsetAngle < 6 * degreePerDirection) ? "SW"
+              : (offsetAngle >= 6 * degreePerDirection && offsetAngle < 7 * degreePerDirection) ? "West"
+                : "NW";
+}
+
+function StandardDeviation(numbersArr) {
+    //--CALCULATE AVAREGE--
+    var total = 0;
+    for(var key in numbersArr)
+       total += numbersArr[key];
+    var meanVal = total / numbersArr.length;
+    //--CALCULATE AVAREGE--
+
+    //--CALCULATE STANDARD DEVIATION--
+    var SDprep = 0;
+    for(var key in numbersArr)
+       SDprep += Math.pow((parseFloat(numbersArr[key]) - meanVal),2);
+    var SDresult = Math.sqrt(SDprep/numbersArr.length);
+    //--CALCULATE STANDARD DEVIATION--
+    return(SDresult);
+
+}
+
+//-- Define radius function
+if (typeof (Number.prototype.toRad) === "undefined") {
+    Number.prototype.toRad = function () {
+        return this * Math.PI / 180;
+    }
+}
+
+//-- Define degrees function
+if (typeof (Number.prototype.toDeg) === "undefined") {
+    Number.prototype.toDeg = function () {
+        return this * (180 / Math.PI);
+    }
+}
+
+
+//-- Define middle point function
+function middlePoint(lat1, lng1, lat2, lng2) {
+
+    //-- Longitude difference
+    var dLng = (lng2 - lng1).toRad();
+
+    //-- Convert to radians
+    lat1 = lat1.toRad();
+    lat2 = lat2.toRad();
+    lng1 = lng1.toRad();
+
+    var bX = Math.cos(lat2) * Math.cos(dLng);
+    var bY = Math.cos(lat2) * Math.sin(dLng);
+    var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + bX) * (Math.cos(lat1) + bX) + bY * bY));
+    var lng3 = lng1 + Math.atan2(bY, Math.cos(lat1) + bX);
+
+    //-- Return result
+    return [lng3.toDeg(), lat3.toDeg()];
+}
+
+
+function randomIntFromInterval(min, max) { // min and max included
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+//Credit D3: https://github.com/d3/d3-array/blob/master/LICENSE
+  function quantileSorted(values, p, fnValueFrom) {
+    var n = values.length;
+    if (!n) {
+      return;
+    }
+
+    fnValueFrom =
+      Object.prototype.toString.call(fnValueFrom) == "[object Function]"
+        ? fnValueFrom
+        : function (x) {
+            return x;
+          };
+
+    p = +p;
+
+    if (p <= 0 || n < 2) {
+      return +fnValueFrom(values[0], 0, values);
+    }
+
+    if (p >= 1) {
+      return +fnValueFrom(values[n - 1], n - 1, values);
+    }
+
+    var i = (n - 1) * p,
+      i0 = Math.floor(i),
+      value0 = +fnValueFrom(values[i0], i0, values),
+      value1 = +fnValueFrom(values[i0 + 1], i0 + 1, values);
+
+    return value0 + (value1 - value0) * (i - i0);
+  }
+
+  function fetchHqDetails(HQName, cb) {
+     var hq = {}
+     $.ajax({
+         type: 'GET'
+         , url: urls.Base+'/Api/v1/Headquarters/Search?Name='+HQName
+         , beforeSend: function(n) {
+             n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+         },
+         cache: false,
+         dataType: 'json',
+         complete: function(response, textStatus) {
+             if (textStatus == 'success') {
+                 if (response.responseJSON.Results.length) {
+                     var v = response.responseJSON.Results[0]
+                     hq.Entity = v.Entity
+                     v.Entity.EntityTypeId = 1 //shouldnt be using entity for filters, so add the missing things
+                     hq.HeadquartersStatus = v.HeadquartersStatusType.Name
+                     fetchHqAccreditations(v.Id,function(acred){
+                         hq.acred = []
+                         $.each(acred,function(k,v){
+                             if (v.HeadquarterAccreditationStatusType.Id == 1) //1 is available. everything else is bad. only return what is avail
+                             {
+                                 hq.acred.push(v.HeadquarterAccreditationType.Name)
+                             }
+                         })
+                         if (typeof(hq.contacts) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.currentTeamCount) !== 'undefined') //lazy mans way to only return once all the data is back
+                         {
+                             cb(hq)
+                         }
+                     })
+                     fetchHqJobCount(v.Id,function(jobcount){
+                         hq.currentJobCount = jobcount //return a count
+                         if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined'  && typeof(hq.currentTeamCount) !== 'undefined') //lazy mans way to only return once all the data is back
+                         {
+                             cb(hq)
+                         }
+                     })
+                     fetchHqTeamCount(v.Id,function(teamcount){
+                         hq.currentTeamCount = teamcount //return a count
+                         if (typeof(hq.contacts) !== 'undefined' && typeof(hq.acred) !== 'undefined' && typeof(hq.currentJobCount) !== 'undefined') //lazy mans way to only return once all the data is back
+                         {
+                             cb(hq)
+                         }
+                     })
+                     fetchHqContacts(v.Id,function(contacts){ //lazy mans way to only return once all the data is back
+                         hq.contacts = contacts //return them all
+                         if (typeof(hq.currentJobCount) !== 'undefined' && typeof(hq.acred) !== 'undefined'  && typeof(hq.currentTeamCount) !== 'undefined')
+                         {
+                             cb(hq)
+                         }
+                     })
+                 }
+             }
+         }
+     })
+ }
+
+ function fetchHqAccreditations(HQId,cb) {
+    $.ajax({
+        type: 'GET'
+        , url: urls.Base+'/Api/v1/HeadquarterAccreditations/'+HQId
+        , beforeSend: function(n) {
+            n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+        },
+        cache: false,
+        dataType: 'json',
+        complete: function(response, textStatus) {
+            if (textStatus == 'success') {
+                cb(response.responseJSON.HeadquarterAccreditationMappings)
+            }
+        }
+    })
+}
+
+function fetchHqJobCount(HQId,cb) {
+   $.ajax({
+       type: 'GET'
+       , url: urls.Base+'/Api/v1/Jobs/Search?StartDate=&EndDate=&Hq='+HQId+'&JobStatusTypeIds%5B%5D=2&JobStatusTypeIds%5B%5D=1&JobStatusTypeIds%5B%5D=5&JobStatusTypeIds%5B%5D=4&ViewModelType=5&PageIndex=1&PageSize=100'
+       , beforeSend: function(n) {
+           n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+       },
+       cache: false,
+       dataType: 'json',
+       complete: function(response, textStatus) {
+           if (textStatus == 'success') {
+               cb(response.responseJSON.TotalItems) //return the count of how many results.
+           }
+       }
+   })
+}
+
+function fetchHqTeamCount(HQId,cb) {
+   $.ajax({
+       type: 'GET'
+       , url: urls.Base+'/Api/v1/Teams/Search?StatusStartDate=&StatusEndDate=&AssignedToId='+HQId+'&StatusTypeId%5B%5D=3&IncludeDeleted=false&PageIndex=1&PageSize=200&SortField=CreatedOn&SortOrder=desc'
+       , beforeSend: function(n) {
+           n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+       },
+       cache: false,
+       dataType: 'json',
+       complete: function(response, textStatus) {
+           if (textStatus == 'success') {
+               cb(response.responseJSON.TotalItems) //return the count of how many results.
+           }
+       }
+   })
+}
+
+function fetchHqContacts(HQId,cb) {
+   $.ajax({
+       type: 'GET'
+       , url: urls.Base+'/Api/v1/Contacts/Search?HeadquarterIds='+HQId+'&PageIndex=1&PageSize=50&SortField=createdon&SortOrder=asc'
+       , beforeSend: function(n) {
+           n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+       },
+       cache: false,
+       dataType: 'json',
+       complete: function(response, textStatus) {
+           if (textStatus == 'success') {
+               cb(response.responseJSON.Results) //return everything as they are all useful
+           }
+       }
+   })
 }

@@ -66,25 +66,3 @@ var hqNitcgroup = renderHQNitc()
 $(hqNitcgroup).hide() // hide it untill there is something to show
 
 $('#content > div > div > div:nth-child(2) fieldset:nth-child(2)').after(hqNitcgroup);
-
-
-function renderCollections() {
-	return (
-		<fieldset>
-		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:5px"
-		src={chrome.extension.getURL("icons/lh-black.png")} />Lighthouse Recipient Collections</legend>
-		<div class="panel panel-default">
-		<div class="panel-heading"><span>Lighthouse Recipient Collections</span><span id="collectionscount" class="pull-right badge">0</span></div>
-		<div id="lighthousecollections" class="panel-body">
-		</div>
-		<div class="panel-footer">
-		<button style="margin-left: 5px;margin-right:5px" id="collectionsave" class="btn btn-default"><img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"src={chrome.extension.getURL("icons/lh.png")} />Save Current Recipients As Collection</button>
-		<button id="LHCollectionImport" class="btn btn-default"><img style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px" src={chrome.extension.getURL("icons/lh.png")}/>Import Shared Collection</button>
-		</div>
-		</div>
-		</fieldset>
-		);
-}
-
-
-$('#content > div > div > div:nth-child(2) fieldset:nth-child(3)').after(renderCollections);

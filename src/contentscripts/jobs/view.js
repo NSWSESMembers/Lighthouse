@@ -4,6 +4,8 @@ var DOM = require('jsx-dom-factory');
 var $ = require('jquery');
 var vincenty = require('../../../lib/vincenty.js');
 
+// inject all.css - browserify-css takes care of this
+require('../../styles/jobs.view.css');
 
 window.addEventListener("message", function(event) {
   // We only accept messages from ourselves or the extension
@@ -36,6 +38,11 @@ window.addEventListener("message", function(event) {
     var t1 = performance.now();
     console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
 })
+} else if (event.data.type && (event.data.type == "FROM_PAGE_LHQS")) {
+  console.log("LHQS REQUESTED")
+  $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+    window.postMessage({type: "lhqs", data: data}, '*');
+  })
   }
 }, false);
 
@@ -172,23 +179,42 @@ job_asbestos_history = (
   </div>
 );
 
-job_nearest_lhq = (
-  <div class="form-group">
-  <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.extension.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest LHQs </abbr></label>
-  <div id="nearest-lhq-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
-  <p id="nearest-lhq-text" class="form-control-static">Waiting...</p>
-  </div>
-  </div>
-);
-
-job_nearest_avl = (
-  <div class="form-group">
-  <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.extension.getURL("icons/lh-black.png")} /><abbr title="As reported and filtered by Beacon, distance as the crow flies">Closest AVLs </abbr></label>
-  <div id="nearest-avl-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
-  <p id="nearest-avl-text" class="form-control-static">Waiting...</p>
-  </div>
+job_nearest_asset_widget = (
+  <div class="widget" style="">
+        <div class="widget-header">
+          <h3><img style="width:16px;vertical-align:inherit;margin-right:5px" src={chrome.extension.getURL("icons/lh-black.png")} /> Nearest Asset Locations</h3>
+          <span class="pull-right btn-group btn-group-sm" data-toggle="buttons">
+          <button id="assetLocationButtonActiveOnly" type="button" class="btn btn-inactive"><span class="text">Active Only</span></button>
+            <button id="assetLocationButtonAll" type="button" class="btn btn-inactive"><span class="text">All</span></button>
+            <button id="assetLocationButtonOff" type="button" class="btn btn-active"><span class="text">Off</span></button>
+          </span>
+        </div>
+        <div class="widget-content" style="display:none" id="nearest-asset-geoerror" >
+        <div class="alert alert-danger text-center widget-content">
+        <div class="form-group">
+          Address not geocoded - Cannot calculate any asset distances without a geocoded address.
+        </div>
+      </div>
+        </div>
+        <div class="widget-content" id="nearest-asset-box" style="display:none">
+        <table class="table text-center" id="nearest-asset-table">
+          <thead>
+            <tr>
+              <th scope="col" class="text-center">Callsign</th>
+              <th scope="col" class="text-center">Owner</th>
+              <th scope="col" class="text-center">Absolute Distance & Bearing</th>
+              <th scope="col" class="text-center">Talkgroup</th>
+              <th scope="col" class="text-center">Last Location Update</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+        <div class="text-center" id="asset-route-warning" style="visibility:hidden">Travel distance and time are estimates and cannot be used for navigation or response times</div>
+        <div id="asset-map" style="height: 450px;"></div>
+        <div id="asset-draw-time"></div>
+        <div id="filter-warning" style="visibility:hidden"></div>
+        </div>
   </div>
 );
 
@@ -213,16 +239,6 @@ $('fieldset.col-md-12').each(function(k,v){
 
 })
 
-
-$('#editRfaForm > fieldset.col-md-8 > div > label').each(function(k,v){
-  var $v = $(v);
-  if (v.innerText == 'LGA') {
-    $v.parent().after(job_nearest_avl)
-    $v.parent().after(job_nearest_lhq)
-    return false;
-  }
-})
-
 job_lighthouse_actions = (
   <div id="lighthouse_actions" class="widget actions-box" style="">
     <div class="widget-header">
@@ -234,7 +250,7 @@ job_lighthouse_actions = (
   </div>
 )
 
-$('div.widget.actions-box').after(job_lighthouse_actions)
+$('div.widget.actions-box').after(job_lighthouse_actions, job_nearest_asset_widget)
 
 
 // inject the coded needed to fix visual problems
