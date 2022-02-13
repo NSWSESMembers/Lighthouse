@@ -233,10 +233,10 @@ whenAddressIsReady(function() {
   //assetLocationButtonOn clicky clicky if saved
   let assetLocationSavedState = localStorage.getItem("LighthouseJobViewAssetLocationButton")
 
-  if (assetLocationSavedState == 'all') {
-    $('#assetLocationButtonAll').click()
+  if (assetLocationSavedState == 'all' || assetLocationSavedState == null) {
+    assetLocationButtonAll()
   } else if (assetLocationSavedState == 'active') {
-    $('#assetLocationButtonActiveOnly').click()
+    assetLocationButtonActiveOnly()
   }
 
 })
@@ -348,7 +348,7 @@ instantRadiologModal = return_quickradiologmodal();
                       </div>\
 
                       <div id='lhqContactsHolder' style="padding-top:10px;width:100%;margin:auto">\
-                      <table id='lhqContacts' style="width:100%;text-align: center;">\
+                      <table id='lhqContacts' style="width:100%;text-align: center; table-layout: fixed;">\
                       <tr>\
                       <td colspan="2" style="font-weight: bold">Contact Details</td>
                       </tr>\
@@ -371,20 +371,20 @@ instantRadiologModal = return_quickradiologmodal();
 
                       let marker = L.marker([y,x], {icon: lhqMarkerIcon}).addTo(assetMap)
                       marker.bindTooltip(details)
-                      console.debug(`SES LHQ at [${x},${y}]: ${name}`);
+                      //console.debug(`SES LHQ at [${x},${y}]: ${name}`);
                       let contentLoaded = false;
                       marker.on('tooltipopen', function() {
                         if (!contentLoaded) {
                           contentLoaded = true
                         let toolTip = $($.parseHTML(marker.getTooltip()._content))
-                        fetchHqDetails(unitCode, function (hqdeets) {
+                        fetchHqDetails(name, function (hqdeets) {
                           var c = 0;
                           $.each(hqdeets.contacts, function (k, v) {
                               if (v.ContactTypeId == 4 || v.ContactTypeId == 3) {
                                   c++;
                                   if (c % 2 || c == 0) //every other row
                                   {
-                                      toolTip.find('#lhqContacts').append('<tr><td>' + v.Description.replace('Phone', '').replace('Number', '') + '</td><td>' + v.Detail + '</td></tr>');
+                                      toolTip.find('#lhqContacts').append('<tr><td style="word-wrap:break-word; white-space:normal;">' + v.Description.replace('Phone', '').replace('Number', '') + '</td><td>' + v.Detail + '</td></tr>');
                                   } else {
                                       toolTip.find('#lhqContacts').append('<tr style="background-color:#e8e8e8"><td>'+v.Description.replace('Phone','').replace('Number','')+'</td><td>'+v.Detail+'</td></tr>');
                                   }
@@ -416,16 +416,15 @@ instantRadiologModal = return_quickradiologmodal();
         })
 
 
-             var jobMarker = L.divIcon({
-               className: 'custom-div-icon',
-               html: "<i class='fa fa-crosshairs'>",
-               iconSize: [20, 20],
-               iconAnchor: [10, 20]
-             });
+    var jobMarker = L.divIcon({
+        className: 'custom-div-icon',
+        html: "<i class='fa fa-crosshairs'>",
+        iconSize: [20, 20],
+        iconAnchor: [10, 20]
+    });
 
 
-               mapMarkers.push(L.marker([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude], {icon: jobMarker}).addTo(assetMap))
-
+    mapMarkers.push(L.marker([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude], {icon: jobMarker, zIndexOffset: 1000}).addTo(assetMap))
 
 
     $.ajax({
@@ -524,10 +523,9 @@ instantRadiologModal = return_quickradiologmodal();
            }).addTo(assetMap);
           }
 
-
            var routingControl = L.Routing.control({
              router: L.Routing.graphHopper('lighthouse', {
-                serviceUrl: 'https://map.tdykes.com/route',
+                serviceUrl: 'https://graphhopper.lighthouse-extension.com/route',
                 urlParameters: { algorithm: 'alternative_route', 'ch.disable': true, instructions: false,  }
               }),
               // waypoints: [
@@ -561,11 +559,17 @@ instantRadiologModal = return_quickradiologmodal();
                 },
            })
 
+
            routingControl.on('routingerror', function (e) {
-
+             console.log(e)
              let before = $('#asset-route-warning').html()
-
-             $('#asset-route-warning').html(`Error Routing<br>${e.error.response.message}`)
+             let error
+             if (e.error.response) {
+               error = e.error.response.message
+             } else {
+               error = 'Error talking to routing server... try again soon'
+             }
+             $('#asset-route-warning').html(`Error Routing<br>${error}`)
 
              setTimeout(function(){
                $('#asset-route-warning').fadeOut(400,function() {
@@ -616,6 +620,7 @@ instantRadiologModal = return_quickradiologmodal();
            // hover over table rows
 
            $(row).mouseover(function() {
+             marker.zIndexOffset = 99999;
              polyline.addTo(assetMap);
              distanceMarker.addTo(assetMap);
 
@@ -656,6 +661,7 @@ instantRadiologModal = return_quickradiologmodal();
 
                let latlngBounds = L.latLngBounds([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude],[v.geometry.coordinates[1], v.geometry.coordinates[0]])
                assetMap.flyToBounds(latlngBounds, {padding: [50, 50]})
+
                routingControl.addTo(assetMap);
 
              } else {
@@ -669,6 +675,7 @@ instantRadiologModal = return_quickradiologmodal();
              if ($(".nearest-asset-table-selected").length == 0) {
                $('#asset-route-warning').css("visibility", "hidden");
              } else {
+               $('#asset-route-warning').html("Travel distance and time are estimates and should not be used for navigation or response times")
                $('#asset-route-warning').css("visibility", "unset");
              }
 
@@ -691,7 +698,7 @@ var s2circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, master
   color: 'red',
   weight: 1,
   fillColor: '#f03',
-  fillOpacity: 0.05,
+  fillOpacity: 0.03,
   radius: quantileSorted(distances, 1) * 1000
 }).addTo(assetMap);
 
@@ -707,7 +714,7 @@ var s1circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, master
   color: 'green',
   weight: 1,
   fillColor: '#50C878',
-  fillOpacity: 0.05,
+  fillOpacity: 0.03,
   radius: quantileSorted(distances, 0) * 1000
 }).addTo(assetMap);
 
@@ -721,7 +728,12 @@ var s1circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, master
      assetMap.fitBounds(latlngBounds, {padding: [20, 20]})
      //$('#nearest-asset-text').text($('#nearest-asset-text').text().slice(0,-2)) //trim the comma space from the very end
     } else {
-    $('#nearest-asset-text').text("No Assets found")
+      let row = $(`
+        <tr>
+          <td colspan="5"><i>No assets found</i></td>
+        </tr>
+        `)
+      $('#nearest-asset-table tbody').append(row)
     }
     var t1 = performance.now();
     console.log("Call to calculate distances from assets took " + (t1 - t0) + " milliseconds.")
@@ -741,6 +753,8 @@ function assetLocationMapOff() {
   $('#nearest-asset-box').hide()
   $('#nearest-asset-table tbody').empty()
   $('#nearest-asset-geoerror').hide()
+  $('#asset-route-warning').css("visibility", "hidden");
+
   if (assetMap && assetMap.remove) {
     assetMap.off();
   assetMap.remove();
@@ -751,7 +765,7 @@ function assetLocationMapOff() {
 
   $('#assetLocationButtonOff').click(function() {
 
-    localStorage.removeItem("LighthouseJobViewAssetLocationButton");
+    localStorage.setItem("LighthouseJobViewAssetLocationButton", 'off');
 
     $('#assetLocationButtonActiveOnly').removeClass('btn-active')
     $('#assetLocationButtonActiveOnly').addClass('btn-inactive')
@@ -768,66 +782,77 @@ function assetLocationMapOff() {
 
 
 $('#assetLocationButtonAll').click(function() {
-
-  //swap from action only to all
-  if ($('#assetLocationButtonActiveOnly').hasClass('btn-active')) {
-    $('#assetLocationButtonActiveOnly').removeClass('btn-active')
-    $('#assetLocationButtonActiveOnly').addClass('btn-inactive')
-    assetLocationMapOff()
-  }
-
-  //check we dont already have a map (only a real map has trhe remove function)
-  if (!assetMap) {
-
-
-  localStorage.setItem("LighthouseJobViewAssetLocationButton", 'all');
-
-  $('#assetLocationButtonOff').removeClass('btn-active')
-  $('#assetLocationButtonOff').addClass('btn-inactive')
-
-  $('#assetLocationButtonAll').addClass('btn-active')
-  $('#assetLocationButtonAll').removeClass('btn-inactive')
-
-  var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
-
-  spinner.appendTo('#assetLocationButtonAll');
-
-  renderNearestAssets(false, 5, function() {
-    spinner.hide()
-  })
-}
-
-
+  assetLocationButtonAll()
 });
+
+
+function assetLocationButtonAll() {
+
+    //swap from action only to all
+    if ($('#assetLocationButtonActiveOnly').hasClass('btn-active')) {
+      $('#assetLocationButtonActiveOnly').removeClass('btn-active')
+      $('#assetLocationButtonActiveOnly').addClass('btn-inactive')
+      assetLocationMapOff()
+    }
+
+    //check we dont already have a map (only a real map has trhe remove function)
+    if (!assetMap) {
+
+
+    localStorage.setItem("LighthouseJobViewAssetLocationButton", 'all');
+
+    $('#assetLocationButtonOff').removeClass('btn-active')
+    $('#assetLocationButtonOff').addClass('btn-inactive')
+
+    $('#assetLocationButtonAll').addClass('btn-active')
+    $('#assetLocationButtonAll').removeClass('btn-inactive')
+
+    var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
+
+    spinner.appendTo('#assetLocationButtonAll');
+
+    renderNearestAssets(false, 5, function() {
+      spinner.hide()
+    })
+  }
+}
 
 $('#assetLocationButtonActiveOnly').click(function() {
-
-  if ($('#assetLocationButtonAll').hasClass('btn-active')) {
-    $('#assetLocationButtonAll').removeClass('btn-active')
-    $('#assetLocationButtonAll').addClass('btn-inactive')
-    assetLocationMapOff()
-  }
-
-  if (!assetMap) {
-
-  localStorage.setItem("LighthouseJobViewAssetLocationButton", 'active');
-
-  $('#assetLocationButtonOff').removeClass('btn-active')
-  $('#assetLocationButtonOff').addClass('btn-inactive')
-
-  $('#assetLocationButtonActiveOnly').addClass('btn-active')
-  $('#assetLocationButtonActiveOnly').removeClass('btn-inactive')
-
-  var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
-
-  spinner.appendTo('#assetLocationButtonActiveOnly');
-
-  renderNearestAssets(true, 5, function() {
-    spinner.hide()
-  })
-}
-
+assetLocationButtonActiveOnly()
 });
+
+function assetLocationButtonActiveOnly() {
+
+    if ($('#assetLocationButtonAll').hasClass('btn-active')) {
+      $('#assetLocationButtonAll').removeClass('btn-active')
+      $('#assetLocationButtonAll').addClass('btn-inactive')
+      assetLocationMapOff()
+    }
+
+    if (!assetMap) {
+
+    localStorage.setItem("LighthouseJobViewAssetLocationButton", 'active');
+
+    $('#assetLocationButtonOff').removeClass('btn-active')
+    $('#assetLocationButtonOff').addClass('btn-inactive')
+
+    $('#assetLocationButtonActiveOnly').addClass('btn-active')
+    $('#assetLocationButtonActiveOnly').removeClass('btn-inactive')
+
+    var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
+
+    spinner.appendTo('#assetLocationButtonActiveOnly');
+
+    renderNearestAssets(true, 5, function() {
+      spinner.hide()
+      let before = $('#asset-route-warning').html()
+      $('#asset-route-warning').css("visibility", "unset");
+
+      $('#asset-route-warning').html(`Hiding assets that have not updated within the last 1 hour`)
+
+    })
+  }
+}
 
 
 
@@ -1092,7 +1117,7 @@ function lighthouseDictionary(){
     'NSWPF'   : 'NSW Police Force' ,
     'TMC'     : 'Transport Management Center',
     'NSWTMC'  : 'NSW Transport Management Center',
-
+    'KLO4'    : 'Keep a Look Out For',
     'AA'      : 'As Above' ,
     'INFTS?'  : 'Informant/Caller' ,
     '\dPOBS?' : 'Person(s) On Board' ,

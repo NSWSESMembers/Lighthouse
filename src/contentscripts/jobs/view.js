@@ -210,7 +210,7 @@ job_nearest_asset_widget = (
           <tbody>
           </tbody>
         </table>
-        <div class="text-center" id="asset-route-warning" style="visibility:hidden">Travel distance and time are estimates and cannot be used for navigation or response times</div>
+        <div class="text-center" id="asset-route-warning" style="visibility:hidden">Travel distance and time are estimates and should not be used for navigation or response times</div>
         <div id="asset-map" style="height: 450px;"></div>
         <div id="asset-draw-time"></div>
         <div id="filter-warning" style="visibility:hidden"></div>

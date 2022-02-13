@@ -5,6 +5,8 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1)
   var DOM = require('jsx-dom-factory');
   var LighthouseChrome = require('../../pages/lib/shared_chrome_code.js');
 
+
+
   // inject JS that is to run on every page in page context
   inject('all.js');
 
