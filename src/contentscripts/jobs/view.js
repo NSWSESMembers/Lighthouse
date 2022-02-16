@@ -184,6 +184,7 @@ job_nearest_asset_widget = (
         <div class="widget-header">
           <h3><img style="width:16px;vertical-align:inherit;margin-right:5px" src={chrome.extension.getURL("icons/lh-black.png")} /> Nearest Asset Locations</h3>
           <span class="pull-right btn-group btn-group-sm" data-toggle="buttons">
+          <button id="assetLocationButtonFiltered" type="button" class="btn btn-inactive"><span class="text">Filtered Only</span></button>
           <button id="assetLocationButtonActiveOnly" type="button" class="btn btn-inactive"><span class="text">Active Only</span></button>
             <button id="assetLocationButtonAll" type="button" class="btn btn-inactive"><span class="text">All</span></button>
             <button id="assetLocationButtonOff" type="button" class="btn btn-active"><span class="text">Off</span></button>
@@ -197,7 +198,8 @@ job_nearest_asset_widget = (
       </div>
         </div>
         <div class="widget-content" id="nearest-asset-box" style="display:none">
-        <table class="table text-center" id="nearest-asset-table">
+        <div style="overflow-y: scroll; max-height: 250px;">
+          <table class="table text-center" id="nearest-asset-table">
           <thead>
             <tr>
               <th scope="col" class="text-center">Callsign</th>
@@ -210,6 +212,7 @@ job_nearest_asset_widget = (
           <tbody>
           </tbody>
         </table>
+        </div>
         <div class="text-center" id="asset-route-warning" style="visibility:hidden">Travel distance and time are estimates and should not be used for navigation or response times</div>
         <div id="asset-map" style="height: 450px;"></div>
         <div id="asset-draw-time"></div>

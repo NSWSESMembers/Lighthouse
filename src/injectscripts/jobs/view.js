@@ -21,6 +21,8 @@ console.log("Running inject script");
 var assetMap; //global map holder
 var assetMapRenderAtTime
 var assetMapRenderTimer
+var filteredAssetList = []
+
 //if ops logs update
 masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
 
@@ -237,6 +239,8 @@ whenAddressIsReady(function() {
     assetLocationButtonAll()
   } else if (assetLocationSavedState == 'active') {
     assetLocationButtonActiveOnly()
+  } else if (assetLocationSavedState == 'filter') {
+    assetLocationButtonFiltered(true)
   }
 
 })
@@ -248,7 +252,7 @@ quickRadioLog = return_quickradiologbutton();
 instantRadiologModal = return_quickradiologmodal();
 
 
-  function renderNearestAssets(activeOnly, resultsToDisplay, cb) {
+  function renderNearestAssets({teamFilter, activeOnly, resultsToDisplay, cb}) {
 
     if (!masterViewModel.geocodedAddress.peek().Latitude && !masterViewModel.geocodedAddress.peek().Longitude) {
       $('#nearest-asset-geoerror').show();
@@ -302,7 +306,7 @@ instantRadiologModal = return_quickradiologmodal();
 
 
     var mapMarkers = []
-    if (!activeOnly) { //only show LHQ's when in all mode
+    if (!activeOnly && typeof(teamFilter) == "undefined") { //only show LHQ's when in all mode
       window.postMessage({ type: "FROM_PAGE_LHQS"}, "*");
     }
     window.addEventListener('message', function (event) {
@@ -440,31 +444,47 @@ instantRadiologModal = return_quickradiologmodal();
     if (textStatus == 'success')
     {
 
-    assetDistances = []
+    var assetDistances = []
+    var furthestDistance; //need a way to know the furthest marker
+    var nearestDistance; //need a way to know the closest marker
+
     var t0 = performance.now();
+    var hiddenAssets = 0
+
 
     response.responseJSON.forEach(function(v){
+
+
+      //If passed a filter then filter on the contents
+
+      if (typeof(teamFilter) == "undefined" || ( typeof(teamFilter) != "undefined" && teamFilter.includes(v.properties.name))) {
         v.distance = vincenty.distVincenty(v.geometry.coordinates[1],v.geometry.coordinates[0],masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude)/1000
         v.bearing = getBearing(masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude,v.geometry.coordinates[1],v.geometry.coordinates[0])
-
         assetDistances.push(v)
+      } else {
+        hiddenAssets = hiddenAssets + 1
+      }
       })
-    let _sortedAssetDistances = assetDistances.sort(function(a, b) {
+
+    assetDistances.sort(function(a, b) {
         return a.distance - b.distance
       });
 
 
-    var distances = []
 
-    if (_sortedAssetDistances.length > 0) {
+
+    if (assetDistances.length > 0) {
      let maxLength = resultsToDisplay //how many results to display
      let used = 0
-     let hiddenAssets = 0
-     _sortedAssetDistances.forEach(function(v) { //safe way to loop with a limit
-       if (used < maxLength) {
+     assetDistances.forEach(function(v) { //safe way to loop with a limit
+
+       if (used < maxLength || typeof(teamFilter) != "undefined") {
          if ((activeOnly && moment().diff(v.properties.lastSeen, "hours") < 1) || (!activeOnly)) {
          used++
-         distances.push(v.distance)
+         furthestDistance = v
+         if (nearestDistance == null) {
+           nearestDistance = v
+         }
          let row = $(`
            <tr style="${moment().diff(v.properties.lastSeen, "days") > 1 ? "font-style: italic; opacity: 0.6;" : ''}  cursor: pointer;">
         <th scope="row">${v.properties.name}</th>
@@ -686,7 +706,7 @@ instantRadiologModal = return_quickradiologmodal();
      }
    })
    if (hiddenAssets > 0) {
-     $('#filter-warning').html(`Hiding ${hiddenAssets} inactive assets`)
+     $('#filter-warning').html(`Hiding ${hiddenAssets} assets`)
      $('#filter-warning').css("visibility", "unset");
    } else {
      $('#filter-warning').css("visibility", "hidden");
@@ -699,26 +719,17 @@ var s2circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, master
   weight: 1,
   fillColor: '#f03',
   fillOpacity: 0.03,
-  radius: quantileSorted(distances, 1) * 1000
+  radius: furthestDistance.distance  * 1000
 }).addTo(assetMap);
 
-// var meancircle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
-//   color: 'yellow',
-//   weight: 1,
-//   fillColor: '#8B8000',
-//   fillOpacity: 0.05,
-//   radius: (quantileSorted(distances, 1) * 1000) / 2 //quantileSorted(distances, 0.5) * 1000
-// }).addTo(assetMap);
 
 var s1circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
   color: 'green',
   weight: 1,
   fillColor: '#50C878',
   fillOpacity: 0.03,
-  radius: quantileSorted(distances, 0) * 1000
+  radius: nearestDistance.distance * 1000
 }).addTo(assetMap);
-
-
 
 
      let latlngs = mapMarkers.map(marker => marker.getLatLng())
@@ -763,9 +774,21 @@ function assetLocationMapOff() {
 
 }
 
+
+
+
+$('#assetLocationButtonFiltered').click(function() {
+
+assetLocationButtonFiltered()
+
+})
+
   $('#assetLocationButtonOff').click(function() {
 
     localStorage.setItem("LighthouseJobViewAssetLocationButton", 'off');
+
+    $('#assetLocationButtonFiltered').removeClass('btn-active')
+    $('#assetLocationButtonFiltered').addClass('btn-inactive')
 
     $('#assetLocationButtonActiveOnly').removeClass('btn-active')
     $('#assetLocationButtonActiveOnly').addClass('btn-inactive')
@@ -795,6 +818,13 @@ function assetLocationButtonAll() {
       assetLocationMapOff()
     }
 
+    //swap from filter only to all
+    if ($('#assetLocationButtonFiltered').hasClass('btn-active')) {
+      $('#assetLocationButtonFiltered').removeClass('btn-active')
+      $('#assetLocationButtonFiltered').addClass('btn-inactive')
+      assetLocationMapOff()
+    }
+
     //check we dont already have a map (only a real map has trhe remove function)
     if (!assetMap) {
 
@@ -811,9 +841,9 @@ function assetLocationButtonAll() {
 
     spinner.appendTo('#assetLocationButtonAll');
 
-    renderNearestAssets(false, 5, function() {
+    renderNearestAssets({resultsToDisplay: 5, cb: function() {
       spinner.hide()
-    })
+    }})
   }
 }
 
@@ -826,6 +856,12 @@ function assetLocationButtonActiveOnly() {
     if ($('#assetLocationButtonAll').hasClass('btn-active')) {
       $('#assetLocationButtonAll').removeClass('btn-active')
       $('#assetLocationButtonAll').addClass('btn-inactive')
+      assetLocationMapOff()
+    }
+
+    if ($('#assetLocationButtonFiltered').hasClass('btn-active')) {
+      $('#assetLocationButtonFiltered').removeClass('btn-active')
+      $('#assetLocationButtonFiltered').addClass('btn-inactive')
       assetLocationMapOff()
     }
 
@@ -843,15 +879,215 @@ function assetLocationButtonActiveOnly() {
 
     spinner.appendTo('#assetLocationButtonActiveOnly');
 
-    renderNearestAssets(true, 5, function() {
+    renderNearestAssets({activeOnly: true, resultsToDisplay: 5, cb: function() {
       spinner.hide()
       let before = $('#asset-route-warning').html()
       $('#asset-route-warning').css("visibility", "unset");
 
       $('#asset-route-warning').html(`Hiding assets that have not updated within the last 1 hour`)
 
-    })
+    }})
   }
+}
+
+function assetLocationButtonFiltered(bypassUI) {
+
+  if ($('#assetLocationButtonAll').hasClass('btn-active')) {
+    $('#assetLocationButtonAll').removeClass('btn-active')
+    $('#assetLocationButtonAll').addClass('btn-inactive')
+    assetLocationMapOff()
+  }
+
+  if ($('#assetLocationButtonActiveOnly').hasClass('btn-active')) {
+    $('#assetLocationButtonActiveOnly').removeClass('btn-active')
+    $('#assetLocationButtonActiveOnly').addClass('btn-inactive')
+    assetLocationMapOff()
+  }
+
+  if ($('#assetLocationButtonOff').hasClass('btn-active')) {
+    $('#assetLocationButtonOff').removeClass('btn-active')
+    $('#assetLocationButtonOff').addClass('btn-inactive')
+  }
+
+if (!bypassUI) {
+
+  $('#teamFilterListAddSelected').unbind().click(function() {
+    $("#teamFilterListAll").val().forEach(function(s) {
+      let option = $(`<option value=${s}>${s}</option>`)
+      option.dblclick(function(x) {
+        if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
+        {
+          $('#teamFilterListAll').find(`option[value|=${x.target.value}]`).show()
+        }
+        $(x.target).remove()
+      });
+      $("#teamFilterListSelected").append(option);
+
+
+
+      $('#teamFilterListAll').find(`option[value|=${s}]`).hide()
+    })
+  })
+
+  $('#teamFilterListRemoveSelected').unbind().click(function() {
+    $("#teamFilterListSelected").val().forEach(function(s) {
+      if (s.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
+      {
+        $('#teamFilterListAll').find(`option[value|=${s}]`).show()
+      }
+      $('#teamFilterListSelected').find(`option[value|=${s}]`).remove()
+    })
+  })
+
+
+  $("#assetSaveFiltersButton").unbind().click(function() {
+
+    assetLocationMapOff()
+
+    $('#assetLocationButtonFiltered').addClass('btn-active')
+    $('#assetLocationButtonFiltered').removeClass('btn-inactive')
+
+    localStorage.setItem("LighthouseJobViewAssetLocationButton", 'filter');
+
+
+    let selectedAssets = []
+     $("#teamFilterListSelected").children().each(function(r) {
+      selectedAssets.push($(this)[0].value)
+    })
+
+  localStorage.setItem("LighthouseJobViewAssetFilter", JSON.stringify(selectedAssets));
+
+
+    $('#assetLocationButtonFiltered').addClass('btn-active')
+    $('#assetLocationButtonFiltered').removeClass('btn-inactive')
+
+
+  var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
+
+  spinner.appendTo('#assetLocationButtonFiltered');
+  renderNearestAssets({teamFilter: selectedAssets, activeOnly: false, cb: function() {
+    spinner.hide()
+  }})
+
+  $('#LHAssetFilterModal').modal('hide');
+
+  })
+
+
+
+  $('#assetListAllQuickSearch').keyup = null;
+
+
+  $('#assetListAllQuickSearch').keyup(function (e) {
+        $.each($('#teamFilterListAll').find('option'),function(k,v){
+          if (($(v)[0].value).toUpperCase().indexOf(e.target.value.toUpperCase()) == -1)
+          {
+            $(v).hide()
+          } else {
+            if (!$('#teamFilterListSelected').find(`option[value|=${$(v)[0].value}]`).length) { //stupid always truthy find function
+              $(v).show()
+            }
+          }
+        });
+      })
+
+      $('#assetListSelectedQuickSearch').keyup(function (e) {
+            $.each($('#teamFilterListSelected').find('option'),function(k,v){
+              if (($(v)[0].value).toUpperCase().indexOf(e.target.value.toUpperCase()) == -1)
+              {
+                $(v).hide()
+              } else {
+                  $(v).show()
+              }
+            });
+          })
+
+          $("#teamFilterListSelected").empty()
+
+          JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')).forEach(function(i){
+            $("#teamFilterListSelected").append(`<option value=${i}>${i}</option>`);
+          })
+
+
+  $.ajax({
+  type: 'GET'
+  , url: urls.Base+'/Api/v1/ResourceLocations/Radio?resourceTypes='
+  , beforeSend: function(n) {
+  n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+  }
+  , cache: false
+  , dataType: 'json'
+  , data: {LighthouseFunction: 'NearestAsset', userId: user.Id}
+  , complete: function(response, textStatus) {
+  if (textStatus == 'success')
+  {
+
+    $("#teamFilterListAll").empty()
+
+    let sorted = response.responseJSON.map(function(i) {
+      return i.properties.name
+    })
+    sorted.sort()
+
+
+    sorted.forEach(function(v){
+        $("#teamFilterListAll").append(`<option ${$('#teamFilterListSelected').find(`option[value|=${v}]`).toArray().length ? "style='display:none' " : ''}value=${v}>${v}</option>`);
+
+    })
+
+    $('#teamFilterListAll option').unbind().dblclick(function(x) {
+      $(x.target).hide()
+      let option = $(`<option value=${x.target.value}>${x.target.value}</option>`)
+      option.dblclick(function(x) {
+        if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
+        {
+          $('#teamFilterListAll').find(`option[value|=${x.target.value}]`).show()
+        }
+        $(x.target).remove()
+      });
+      $("#teamFilterListSelected").append(option);
+    });
+
+    $('#teamFilterListSelected option').unbind().dblclick(function(x) {
+      console.log(x)
+      if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
+      {
+        $('#teamFilterListAll').find(`option[value|=${x.target.value}]`).show()
+      }
+      $(x.target).remove()
+    });
+
+
+    // response.responseJSON.forEach(function(v){
+    //     $("#teamFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
+    // })
+  }
+}
+})
+
+  //render and fill moal
+  $('#LHAssetFilterModal').modal();
+
+
+  localStorage.setItem("LighthouseJobViewAssetLocationButton", 'filter');
+
+} else { //skip all the UI and just load and go
+
+
+    $('#assetLocationButtonFiltered').addClass('btn-active')
+    $('#assetLocationButtonFiltered').removeClass('btn-inactive')
+
+
+  var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
+
+  spinner.appendTo('#assetLocationButtonFiltered');
+
+  renderNearestAssets({teamFilter: JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')), activeOnly: false, cb: function() {
+    spinner.hide()
+  }})
+
+}
+
 }
 
 
@@ -1640,6 +1876,9 @@ function return_message_button() {
 
 $(document).ready(function() {
 
+
+  $( "body" ).append(make_asset_filter_modal())
+
   moment.updateLocale('en', {
     relativeTime: {
       future : 'in %s',
@@ -1968,7 +2207,7 @@ function checkAddressHistory(){
               }
 
               // Unless we have a Street Number for Current and Historic, we can only match the street
-              if(v.Address.StreetNumber != null && address.StreetNumber != null) {
+              if(v.Address.StreetNumber != null && address.StreetNumber != null && !address.StreetNumber.match(/Lot/i) && !v.Address.StreetNumber.match(/Lot/i)) {
 
                 if(v.Address.PrettyAddress == address.PrettyAddress) {
                   // Perfect Match
@@ -2453,4 +2692,61 @@ function fetchHqContacts(HQId,cb) {
            }
        }
    })
+}
+
+function make_asset_filter_modal() {
+    return (
+      <div id="LHAssetFilterModal" class="modal fade" role="dialog">
+ <div class="modal-dialog modal-sm" style="width:50%">
+    <div class="modal-content">
+       <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Lighthouse Asset Filter</h4>
+       </div>
+       <div class="modal-body">
+          <h4>Select teams to show</h4>
+          <p/>
+          <div class="container-fluid">
+             <div class='row'>
+                <div class="col-md-5 text-center">
+                   <h5>All Assets</h5>
+                   <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListAllQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
+                </div>
+                <div class="col-md-2 text-center">
+                </div>
+                <div class="col-md-5 text-center">
+                   <h5>Selected Assets</h5>
+                   <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListSelectedQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
+
+                </div>
+             </div>
+             <div class='row' style="display: flex; align-items: center;">
+                <div class="col-md-5 text-center">
+                   <select multiple id="teamFilterListAll">
+                   </select>
+                </div>
+                <div class="col-md-2 text-center">
+                <div>
+                   <div>
+                      <button style="margin-bottom: 5px; width: 100px" type="button" class="btn btn-primary" id="teamFilterListAddSelected">Add<span style="margin-left: 10px;" class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></button>
+                   </div>
+                   <div>
+                      <button style="margin-top: 5px; width: 100px" type="button" class="btn btn-primary" id="teamFilterListRemoveSelected"><span style="margin-right: 10px;" class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>Remove</button>
+                   </div>
+                   </div>
+                </div>
+                <div class="col-md-5 text-center">
+                   <select multiple id="teamFilterListSelected">
+                   </select>
+                </div>
+             </div>
+          </div>
+       </div>
+       <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="assetSaveFiltersButton">Save filter</button>
+       </div>
+    </div>
+ </div>
+</div>
+        )
 }

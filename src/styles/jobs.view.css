@@ -90,3 +90,18 @@
 .leaflet-routing-container {
     display: none;
 }
+
+
+#teamFilterListAll {
+      width: 65%;
+      height: 400px;
+      font-size: xx-large;
+      text-align: center;
+}
+
+#teamFilterListSelected {
+      width: 65%;
+      height: 400px;
+      font-size: xx-large;
+      text-align: center;
+}
