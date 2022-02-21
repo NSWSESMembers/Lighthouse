@@ -13,7 +13,6 @@ chrome.runtime.onInstalled.addListener(function(details){
              chrome.tabs.create({ url: 'https://lighthouse.ses.nsw.gov.au/#whatsnew' });
              break;
           case 'update':
-          console.log(majorVersion)
              console.log('User has updated their extension.')
              chrome.tabs.create({ url: 'https://lighthouse.ses.nsw.gov.au/#whatsnew' });
              break;

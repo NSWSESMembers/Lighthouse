@@ -1033,6 +1033,10 @@ function assetLocationButtonFiltered(bypassUI) {
 
 if (!bypassUI) {
 
+  //reset search boxes
+  $('#assetListAllQuickSearch').val('')
+  $('#assetListSelectedQuickSearch').val('')
+
   $('#teamFilterListAddSelected').unbind().click(function() {
     $("#teamFilterListAll").val().forEach(function(s) {
 
