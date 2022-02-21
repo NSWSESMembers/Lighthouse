@@ -18,9 +18,11 @@
     "knockout-secure-binding": "^0.5.5",
     "leaflet": "^1.7.1",
     "leaflet-easybutton": "^2.4.0",
+    "leaflet-fullscreen": "git+https://github.com/Leaflet/Leaflet.fullscreen.git",
     "leaflet-routing-machine": "^3.2.12",
     "lrm-graphhopper": "git+https://github.com/NSWSESMembers/lrm-graphhopper.git",
     "markerwithlabel": "^2.0.2",
+    "md5": "^2.3.0",
     "moment": "^2.29.1",
     "stopwords": "0.0.5"
   },

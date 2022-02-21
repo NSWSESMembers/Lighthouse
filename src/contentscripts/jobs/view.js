@@ -198,15 +198,16 @@ job_nearest_asset_widget = (
       </div>
         </div>
         <div class="widget-content" id="nearest-asset-box" style="display:none">
-        <div style="overflow-y: scroll; max-height: 250px;">
+        <div style="overflow-y: scroll; max-height: 260px;">
           <table class="table text-center" id="nearest-asset-table">
           <thead>
             <tr>
               <th scope="col" class="text-center">Callsign</th>
+              <th scope="col" class="text-center">Locate</th>
               <th scope="col" class="text-center">Owner</th>
-              <th scope="col" class="text-center">Absolute Distance & Bearing</th>
+              <th scope="col" class="text-center">Abs Distance & Bearing</th>
               <th scope="col" class="text-center">Talkgroup</th>
-              <th scope="col" class="text-center">Last Location Update</th>
+              <th scope="col" class="text-center">Last Update</th>
             </tr>
           </thead>
           <tbody>
@@ -214,7 +215,15 @@ job_nearest_asset_widget = (
         </table>
         </div>
         <div class="text-center" id="asset-route-warning" style="visibility:hidden">Travel distance and time are estimates and should not be used for navigation or response times</div>
-        <div id="asset-map" style="height: 450px;"></div>
+        <div>
+        <div id="asset-map" style="height: 450px;">
+          <div id="asset-map-loading" class="leaflet-loader-container">
+            <div class="leaflet-loader-background">
+              <div class="leaflet-loader">Loading...</div>
+            </div>
+          </div>
+        </div>
+        </div>
         <div id="asset-draw-time"></div>
         <div id="filter-warning" style="visibility:hidden"></div>
         </div>

@@ -7,6 +7,8 @@ var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 var vincenty = require('../../../lib/vincenty.js');
 var esri = require('esri-leaflet')
 
+
+var md5 = require('md5')
 require('leaflet-easybutton')
 require('leaflet-routing-machine')
 
@@ -16,6 +18,10 @@ require("leaflet/dist/leaflet.css");
 //require('esri-leaflet')
 
 console.log("Running inject script");
+
+//webpack fucks this right up. Ive manually copied the images overlay
+//TODO: Sam fix the webpack script
+L.Icon.Default.imagePath = `${lighthouseUrl}icons/`
 
 
 var assetMap; //global map holder
@@ -266,6 +272,7 @@ instantRadiologModal = return_quickradiologmodal();
       console.log('Map doesnt exist, creating')
     assetMap = L.map('asset-map').setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
     L.control.scale().addTo(assetMap);
+
     esri.basemapLayer('Topographic').addTo(assetMap);
   }
 
@@ -447,10 +454,9 @@ instantRadiologModal = return_quickradiologmodal();
     var assetDistances = []
     var furthestDistance; //need a way to know the furthest marker
     var nearestDistance; //need a way to know the closest marker
-
+    var allRoutersOnMap = {}
     var t0 = performance.now();
     var hiddenAssets = 0
-
 
     response.responseJSON.forEach(function(v){
 
@@ -485,21 +491,37 @@ instantRadiologModal = return_quickradiologmodal();
          if (nearestDistance == null) {
            nearestDistance = v
          }
+
+
+        var unit = v.properties.name.match(/([a-z]+)/i)[1];
+        var veh = v.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1];
+        let uniqueColor = `${stringToColor(v.id)}`
+
+          //use our unique color, unless its the first or last
+           if (used == 1) {
+                bgcolor = 'green'
+                uniqueColor = bgcolor
+          } else if (used == maxLength) { //doesnt work in filter mode
+            bgcolor = 'red'
+            uniqueColor = bgcolor
+        } else {
+              bgcolor = uniqueColor
+            }
+
+
          let row = $(`
-           <tr style="${moment().diff(v.properties.lastSeen, "days") > 1 ? "font-style: italic; opacity: 0.6;" : ''}  cursor: pointer;">
-        <th scope="row">${v.properties.name}</th>
+           <tr style="${moment().diff(v.properties.lastSeen, "days") > 1 ? "font-style: italic;" : ''}  cursor: pointer;">
+        <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${v.properties.entity}'s ${v.properties.capability} ${v.properties.resourceType}">${v.properties.name}</div></th>
+        <td><div id="locate" style="background:${uniqueColor}"></div></td>
         <td>${v.properties.entity}</td>
         <td>${v.distance.toFixed(2)} km ${getCardinal(v.bearing)}</td>
         <td>${v.properties.talkgroup != null ? v.properties.talkgroup : 'Unknown'}</td>
-        <td>${moment(v.properties.lastSeen).fromNow()}</td>
+        <td ${moment().diff(v.properties.lastSeen, "days") > 1 ? "style=color:red" : ''}>${moment(v.properties.lastSeen).fromNow()}</td>
         </tr>
            `);
            $('#nearest-asset-table tbody').append(row)
-           var unit = v.properties.name.match(/([a-zA-Z]+)/gi);
-           var veh = v.properties.name.match(/(\d+)/gi);
-           let bgcolor = "#4838cc"
-           if (used == 1) {bgcolor = 'green'}
-           if (used == maxLength) {bgcolor = 'red'}
+           row.find($('[data-toggle="tooltip"]')).tooltip()
+
            let markerLabel = v.properties.name
            if (unit && veh) {
              markerLabel = `${unit}<br>${veh}`
@@ -514,8 +536,7 @@ instantRadiologModal = return_quickradiologmodal();
                iconAnchor: [24, 56]
            });
 
-           let marker = L.marker([v.geometry.coordinates[1], v.geometry.coordinates[0]], {icon: situationVehicle}).addTo(assetMap)
-
+           var marker = L.marker([v.geometry.coordinates[1], v.geometry.coordinates[0]], {icon: situationVehicle}).addTo(assetMap)
            var polyline = L.polyline([[v.geometry.coordinates[1], v.geometry.coordinates[0]],[masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude]], {weight: 4, color: 'green', dashArray: "6"})
 
 
@@ -533,7 +554,7 @@ instantRadiologModal = return_quickradiologmodal();
 
            var distanceMarkerRoute = []
 
-            if (used != 1 && used != maxLength) {
+            if (used != 1 && used != maxLength && used <= 10) { //not the first, last or more than 10
            var markerCircle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
              color: 'black',
              weight: 0.5,
@@ -543,45 +564,57 @@ instantRadiologModal = return_quickradiologmodal();
            }).addTo(assetMap);
           }
 
+
            var routingControl = L.Routing.control({
              router: L.Routing.graphHopper('lighthouse', {
                 serviceUrl: 'https://graphhopper.lighthouse-extension.com/route',
-                urlParameters: { algorithm: 'alternative_route', 'ch.disable': true, instructions: false,  }
+                urlParameters: {'ch.disable': true, instructions: true,  }
               }),
-              // waypoints: [
-              //   L.latLng(v.geometry.coordinates[1]+parseFloat((Math.random() * (0.0001 - 0.0005) + 0.0005).toFixed(4)), v.geometry.coordinates[0]+parseFloat((Math.random() * (0.0001 - 0.0005) + 0.0005).toFixed(4))),
-              //   L.latLng(masterViewModel.geocodedAddress.peek().Latitude+parseFloat((Math.random() * (0.0001 - 0.0005) + 0.0005).toFixed(4)), masterViewModel.geocodedAddress.peek().Longitude+parseFloat((Math.random() * (0.0001 - 0.0005) + 0.0005).toFixed(4)))
-              // ],
-             waypoints: [
-               L.latLng(v.geometry.coordinates[1], v.geometry.coordinates[0]),
-               L.latLng(masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude)
-             ],
-             draggableWaypoints: false,
+              // waypoints added at request time so they flush out custom routing
+             draggableWaypoints: true,
              routeWhileDragging: false,
              reverseWaypoints: false,
              useZoomParameter: false,
-             showAlternatives: true,
+             showAlternatives: false,
              fitSelectedRoutes : false,
-             createMarker: function(i, wp, er) {
-                        return null;
+             createMarker: function(i, wp, n) {
+                        if (i == n-1 || i == 0) { //dont draw first or last marker
+                          return null
+                        } else {
+                          const marker = L.marker(wp.latLng, {
+                              draggable: true,
+                              icon: L.icon({
+                              		iconUrl:       `${lighthouseUrl}icons/marker-icon.png`,
+                              		iconRetinaUrl: `${lighthouseUrl}icons/marker-icon-2x.png`,
+                              		shadowUrl:     `${lighthouseUrl}icons/marker-shadow.png`,
+                              		iconSize:    [25, 41],
+                              		iconAnchor:  [12, 41],
+                              		popupAnchor: [1, -34],
+                              		tooltipAnchor: [16, -28],
+                              		shadowSize:  [41, 41]
+                              })
+                          })
+                          return marker
+                        }
                 },
-                lineOptions: {
+             lineOptions: {
                     styles: [
-                      {color: '#3388ff', opacity: 1, weight: 3},
+                      {color: uniqueColor, opacity: 0.9, weight: 3},
                     ],
-                    addWaypoints: false,
+                    //addWaypoints: false,
                 },
-                altLineOptions: {
-                    styles: [
-                        {color: 'red', opacity: 1, weight: 3},
-                    ],
-                   addWaypoints: false,
-                },
+             //  altLineOptions: {
+             //        styles: [
+             //            {color: 'red', opacity: 1, weight: 3},
+             //        ],
+             //       addWaypoints: false,
+             //    },
            })
 
 
            routingControl.on('routingerror', function (e) {
              console.log(e)
+             $('#asset-map-loading').css("visibility", "hidden");
              let before = $('#asset-route-warning').html()
              let error
              if (e.error.response) {
@@ -601,20 +634,33 @@ instantRadiologModal = return_quickradiologmodal();
 
 
            routingControl.on('routesfound', function (e) {
-             let routeCount = 0
-             let bounds = [] //array of every point, needed to work out zoom
+             console.log(e)
+             $( "#asset-map-loading" ).fadeOut( "fast", function() {
+               //tidy up the css because we need table no none
+               $('#asset-map-loading').css("visibility", "hidden");
+               $('#asset-map-loading').css("display", "table");
+             });
+             distanceMarkerRoute.forEach(function(r) { r.remove(assetMap)})
+
+
              e.routes.forEach(function(r) {
-               routeCount++
 
-               r.coordinates.map(function(c) {
-                 bounds.push([c.lat,c.lng])
-               })
 
-               if (routeCount == 1) {
-                 middle = r.coordinates[Math.floor(r.coordinates.length/4)] //first quarter
-               } else {
-                 middle = r.coordinates[Math.floor((r.coordinates.length/4)*3)] //last quarter
-               }
+               let routesSorted = r.instructions.sort(function(a, b) {
+                    return a.distance - b.distance;
+                });
+                //regex out to make the path name, if theres no known road name then null out
+                // and let the truthy in the template catch it
+                let name = routesSorted[routesSorted.length-1].text.match(/onto (.+)$/i)
+                if (name) {
+                  name = name[1]
+                } else {
+                  name = null
+                }
+
+                allRoutersOnMap[v.properties.name] = r.coordinates
+
+                 middle = r.coordinates[Math.floor(r.coordinates.length/4)]
 
                distance = r.summary.totalDistance;
                time = r.summary.totalTime;
@@ -627,39 +673,60 @@ instantRadiologModal = return_quickradiologmodal();
                  timeText = `${timeHr} hr ${timeMin} min`
                }
                let _distanceMarkerRoute = new L.circleMarker([middle.lat, middle.lng], { radius: 0.1 }).addTo(assetMap); //opacity may be set to zero
-               _distanceMarkerRoute.bindTooltip(`<div style="text-align: center;"><strong style="color:${routeCount == '1' ? '#3388ff' : 'red'}">Via ${r.name}</strong><br><strong>${(distance/1000).toFixed(1)}km - ${timeText}</strong></div>`, {permanent: true, offset: [0, 0] });
+               _distanceMarkerRoute.bindTooltip(`<div style="text-align: center;"><strong style="color:${uniqueColor}">${v.properties.name}${name ? ' via ': ""}${name ? name : ''}</strong><br><strong>${(distance/1000).toFixed(1)} km - ${timeText}</strong></div>`, {permanent: true, offset: [0, 0] });
                distanceMarkerRoute.push(_distanceMarkerRoute)
              })
 
-             // Zoom to fit the path that was drawn
-              let latlngBounds = L.latLngBounds(bounds)
-              assetMap.flyToBounds(latlngBounds, {padding: [40, 40]})
+             zoomToFitRoutes()
 
            })
+
+
+
+           //hold the zindex so we can restore it after we bring to front
+           var zindex = marker._zIndex
+
+           //calculate it if its first
+           // if (used == 1) {
+           //   marker.setZIndexOffset(9999)
+           //   drawPathingAndUpdateRow()
+           // }
 
            // hover over table rows
 
-           $(row).mouseover(function() {
-             marker.zIndexOffset = 99999;
+           $(row).mouseenter(function() {
              polyline.addTo(assetMap);
              distanceMarker.addTo(assetMap);
-
-           }).mouseout(function() {
+             marker.setZIndexOffset(9999)
+           }).mouseleave(function() {
              polyline.remove(assetMap);
              distanceMarker.remove(assetMap);
-           })
+             //reset the  zindex  if the row isnt clicked
+             if (!row.hasClass( 'nearest-asset-table-selected' )) {
+             marker.setZIndexOffset(zindex)
+           }
+            })
 
-           $(row).on('click', function() { //fly to just this marker and the job
+            $(row).find('#locate').on('click', function(e) { //fly to just this marker and the job
+              e.stopPropagation();
+              console.log(marker.getLatLng())
+            //  let latlngBounds = L.latLngBounds([marker.getLatLng().lat, marker.getLatLng().lng])
+            //  console.log(latlngBounds)
+              assetMap.flyTo([marker.getLatLng().lat, marker.getLatLng().lng], 15)
+            })
+
+           $(row).on('click', function() { //path this marker
              drawPathingAndUpdateRow()
+             marker.setZIndexOffset(9999)
            })
 
            marker.on('click', function() {
              drawPathingAndUpdateRow()
+             marker.setZIndexOffset(9999)
            });
 
            marker.on('mouseover', function() {
              polyline.addTo(assetMap);
-
              distanceMarker.addTo(assetMap);
 
            });
@@ -668,28 +735,62 @@ instantRadiologModal = return_quickradiologmodal();
              polyline.remove(assetMap);
              distanceMarker.remove(assetMap)
 
+             marker.setZIndexOffset(zindex)
            });
 
            mapMarkers.push(marker);
 
+
+
+          function zoomToFitRoutes() {
+            console.log('before',allRoutersOnMap)
+                        // Zoom to fit all drawn paths
+            var activePoints = []
+            for (var k in allRoutersOnMap){
+              if (allRoutersOnMap.hasOwnProperty(k)) {
+                allRoutersOnMap[k].map(function(c) {
+                  activePoints.push([c.lat,c.lng])
+                })
+              }
+            }
+            if (activePoints.length){
+              let latlngBounds = L.latLngBounds(activePoints)
+              assetMap.flyToBounds(latlngBounds, {padding: [40, 40]})
+            }
+            }
+
+
+
            function drawPathingAndUpdateRow() {
              if (!row.hasClass( 'nearest-asset-table-selected' )) {
                $(row).addClass('nearest-asset-table-selected')
+               $('#asset-map-loading').css("visibility", "unset");
                //remove the crow flies and replace with true
                polyline.remove(assetMap);
                distanceMarker.remove(assetMap);
 
                let latlngBounds = L.latLngBounds([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude],[v.geometry.coordinates[1], v.geometry.coordinates[0]])
-               assetMap.flyToBounds(latlngBounds, {padding: [50, 50]})
+            //   assetMap.flyToBounds(latlngBounds, {padding: [50, 50]})
 
+              //reset waypoints each time just incase someone has repathed
+              routingControl.getPlan().setWaypoints([
+                L.latLng(v.geometry.coordinates[1], v.geometry.coordinates[0]),
+                L.latLng(masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude)
+              ])
                routingControl.addTo(assetMap);
+
 
              } else {
                $(row).removeClass('nearest-asset-table-selected')
+
+               delete allRoutersOnMap[v.properties.name]
                routingControl.remove(assetMap)
                distanceMarkerRoute.forEach(function(r) { r.remove(assetMap)})
                distanceMarkerRoute = []
                marker.unbindTooltip()
+               marker.setZIndexOffset(zindex)
+               zoomToFitRoutes()
+
              }
 
              if ($(".nearest-asset-table-selected").length == 0) {
@@ -755,6 +856,27 @@ var s1circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, master
   }
 }
 
+function stringToColor(number) {
+  const hue = number * 137.508; // use golden angle approximation
+return `hsl(${hue},80%,50%)`;
+
+}
+
+function hashCode(str) { // java String#hashCode
+    var hash = 0;
+    for (var i = 0; i < str.length; i++) {
+       hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return hash;
+}
+
+function intToRGB(i){
+    var c = (i & 0x00FFFFFF)
+        .toString(16)
+        .toUpperCase();
+
+    return "00000".substring(0, 6 - c.length) + c;
+}
 
 //the asset location buttons
 
@@ -913,11 +1035,14 @@ if (!bypassUI) {
 
   $('#teamFilterListAddSelected').unbind().click(function() {
     $("#teamFilterListAll").val().forEach(function(s) {
+
       let option = $(`<option value=${s}>${s}</option>`)
+
+      //click handler for unselecting
       option.dblclick(function(x) {
         if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
         {
-          $('#teamFilterListAll').find(`option[value|=${x.target.value}]`).show()
+          $('#teamFilterListAll').find(`option[value|="${x.target.value}"]`).show()
         }
         $(x.target).remove()
       });
@@ -925,7 +1050,7 @@ if (!bypassUI) {
 
 
 
-      $('#teamFilterListAll').find(`option[value|=${s}]`).hide()
+      $('#teamFilterListAll').find(`option[value|="${s}"]`).hide()
     })
   })
 
@@ -933,22 +1058,20 @@ if (!bypassUI) {
     $("#teamFilterListSelected").val().forEach(function(s) {
       if (s.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
       {
-        $('#teamFilterListAll').find(`option[value|=${s}]`).show()
+        $('#teamFilterListAll').find(`option[value|="${s}"]`).show()
       }
-      $('#teamFilterListSelected').find(`option[value|=${s}]`).remove()
+      $('#teamFilterListSelected').find(`option[value|="${s}"]`).remove()
     })
   })
 
 
   $("#assetSaveFiltersButton").unbind().click(function() {
 
-    assetLocationMapOff()
 
+    assetLocationMapOff()
     $('#assetLocationButtonFiltered').addClass('btn-active')
     $('#assetLocationButtonFiltered').removeClass('btn-inactive')
-
     localStorage.setItem("LighthouseJobViewAssetLocationButton", 'filter');
-
 
     let selectedAssets = []
      $("#teamFilterListSelected").children().each(function(r) {
@@ -956,11 +1079,8 @@ if (!bypassUI) {
     })
 
   localStorage.setItem("LighthouseJobViewAssetFilter", JSON.stringify(selectedAssets));
-
-
     $('#assetLocationButtonFiltered').addClass('btn-active')
     $('#assetLocationButtonFiltered').removeClass('btn-inactive')
-
 
   var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
 
@@ -984,7 +1104,7 @@ if (!bypassUI) {
           {
             $(v).hide()
           } else {
-            if (!$('#teamFilterListSelected').find(`option[value|=${$(v)[0].value}]`).length) { //stupid always truthy find function
+            if (!$('#teamFilterListSelected').find(`option[value|="${$(v)[0].value}"]`).length) { //stupid always truthy find function
               $(v).show()
             }
           }
@@ -1002,9 +1122,11 @@ if (!bypassUI) {
             });
           })
 
-          $("#teamFilterListSelected").empty()
 
-          JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')).forEach(function(i){
+
+          $("#teamFilterListSelected").empty()
+          let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || []
+          loadIn.forEach(function(i){
             $("#teamFilterListSelected").append(`<option value=${i}>${i}</option>`);
           })
 
@@ -1031,28 +1153,32 @@ if (!bypassUI) {
 
 
     sorted.forEach(function(v){
-        $("#teamFilterListAll").append(`<option ${$('#teamFilterListSelected').find(`option[value|=${v}]`).toArray().length ? "style='display:none' " : ''}value=${v}>${v}</option>`);
+
+        $("#teamFilterListAll").append(`<option ${$('#teamFilterListSelected').find(`option[value|="${v}"]`).toArray().length ? "style='display:none' " : ''}value=${v}>${v}</option>`);
 
     })
 
     $('#teamFilterListAll option').unbind().dblclick(function(x) {
-      $(x.target).hide()
-      let option = $(`<option value=${x.target.value}>${x.target.value}</option>`)
+
+      let option = $(`<option value="${x.target.value}">${x.target.value}</option>`)
+      //click handler for unselecting
       option.dblclick(function(x) {
         if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
         {
-          $('#teamFilterListAll').find(`option[value|=${x.target.value}]`).show()
+          $('#teamFilterListAll').find(`option[value|="${x.target.value}"]`).show()
         }
         $(x.target).remove()
       });
+
+      $(x.target).hide()
       $("#teamFilterListSelected").append(option);
     });
 
     $('#teamFilterListSelected option').unbind().dblclick(function(x) {
-      console.log(x)
+
       if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
       {
-        $('#teamFilterListAll').find(`option[value|=${x.target.value}]`).show()
+        $('#teamFilterListAll').find(`option[value|="${x.target.value}"]`).show()
       }
       $(x.target).remove()
     });
@@ -1082,7 +1208,7 @@ if (!bypassUI) {
 
   spinner.appendTo('#assetLocationButtonFiltered');
 
-  renderNearestAssets({teamFilter: JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')), activeOnly: false, cb: function() {
+  renderNearestAssets({teamFilter: JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || [], activeOnly: false, cb: function() {
     spinner.hide()
   }})
 
@@ -1171,6 +1297,9 @@ whenJobIsReady(function(){
   }
 
   $('#lighthouse_actions_content').append(quickRadioLog);
+
+  document.title = "#"+jobId;
+
 
 });
 
@@ -1287,7 +1416,6 @@ $(document).on('click',  'div.widget > div.widget-content > div[data-bind$="task
 
 
 
-document.title = "#"+jobId;
 
 
 function lighthouseTimeLineTPlus() {
@@ -2704,7 +2832,7 @@ function make_asset_filter_modal() {
           <h4 class="modal-title">Lighthouse Asset Filter</h4>
        </div>
        <div class="modal-body">
-          <h4>Select teams to show</h4>
+          <h4>Select assets to show</h4>
           <p/>
           <div class="container-fluid">
              <div class='row'>

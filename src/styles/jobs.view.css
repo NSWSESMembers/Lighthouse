@@ -1,7 +1,7 @@
 #asset-route-warning {
   color: red;
-  margin-top: -7px;
-  margin-bottom: 10px;
+  margin-top: 0px;
+  margin-bottom: 5px;
   font-family: "latobold";
 
   text-align: center;
@@ -104,4 +104,33 @@
       height: 400px;
       font-size: xx-large;
       text-align: center;
+}
+
+.leaflet-loader-container {
+	height: 100%;
+  visibility: hidden;
+	width: 100%;
+  display: table;
+	position: absolute;
+	z-index: 99999;
+	cursor: auto;
+}
+.leaflet-loader-container .leaflet-loader-background {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+  opacity: 0.6;
+  color: white;
+  font-size: x-large;
+  font-family: "latobold";
+	height: 100%;
+	width: 100%;
+	background-color: black;
+}
+
+#locate {
+    width: 15px;
+    border-radius: 5px;
+    height: 15px;
+    margin: auto;
 }
