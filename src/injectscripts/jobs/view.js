@@ -6,12 +6,12 @@ var postCodes = require('../../../lib/postcodes.js');
 var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
 var vincenty = require('../../../lib/vincenty.js');
 var esri = require('esri-leaflet')
-
+var chroma = require('chroma-js')
 
 var md5 = require('md5')
 require('leaflet-easybutton')
 require('leaflet-routing-machine')
-
+require ('leaflet-svg-shape-markers')
 require('lrm-graphhopper'); // Adds L.Routing.GraphHopper onto L.Routing
 require("leaflet/dist/leaflet.css");
 
@@ -273,7 +273,7 @@ instantRadiologModal = return_quickradiologmodal();
     assetMap = L.map('asset-map').setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
     L.control.scale().addTo(assetMap);
 
-    esri.basemapLayer('Topographic').addTo(assetMap);
+    esri.basemapLayer('Topographic', {ignoreDeprecationWarning: true}).addTo(assetMap);
   }
 
     assetMapRenderAtTime =  moment()
@@ -288,28 +288,10 @@ instantRadiologModal = return_quickradiologmodal();
       }
     }, 5000)
 
-    // var menuButton = L.easyButton({
-    //     states: [{
-    //         stateName: 'show-menu',
-    //         icon: 'fa fa-life-ring',
-    //         title: 'Show RMS',
-    //         onClick: function (btn, map) {
-    //             menu.options.button = btn;
-    //             console.log('button')
-    //             btn.state('hide-menu');
-    //         }
-    //     },{
-    //         stateName: 'hide-menu',
-    //         icon: 'fa fa-life-ring',
-    //         title: 'Hide RMS',
-    //         onClick: function (btn, map) {
-    //             console.log('button hide')
-    //             btn.state('show-menu');
-    //         }
-    //     }],
-    //     id: 'styles-menu',
-    // });
-    // menuButton.addTo(assetMap);
+    var menuButton = L.easyButton('fa-crosshairs fa-lg', function(btn, map) {
+      assetMap.setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13)
+    });
+    menuButton.addTo(assetMap);
 
 
     var mapMarkers = []
@@ -427,15 +409,54 @@ instantRadiologModal = return_quickradiologmodal();
         })
 
 
-    var jobMarker = L.divIcon({
-        className: 'custom-div-icon',
-        html: "<i class='fa fa-crosshairs'>",
-        iconSize: [20, 20],
-        iconAnchor: [10, 20]
-    });
+    let markerStyle = {}
 
+    switch(masterViewModel.jobPriority.peek().Name) {
+      case "Priority":
+      markerStyle = {
+        shape: "square",
+        radius: 6,
+        fillColor: "#FFA500",
+		    color: "black",
+        weight: 1.5,
+        fillOpacity: 1
+      }
+      break
+      case "Immediate":
+      markerStyle = {
+        shape: "triangle-down",
+        radius: 6,
+        fillColor: "#4F92FF",
+        color: "black",
+        weight: 1.5,
+        fillOpacity: 1
+      }
+      break
+      case "Rescue":
+      markerStyle = {
+        shape: "diamond",
+        radius: 6,
+        fillColor: "#FF0000",
+        color: "black",
+        weight: 1.5,
+        fillOpacity: 1
+      }
+      break
+      default:
+      markerStyle = {
+        shape: "circle",
+        radius: 6,
+        fillColor: "#66CC00",
+		    color: "black",
+        weight: 2,
+        fillOpacity: 1
+      }
+    }
 
-    mapMarkers.push(L.marker([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude], {icon: jobMarker, zIndexOffset: 1000}).addTo(assetMap))
+    let jobMarker = L.shapeMarker([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude], markerStyle);
+    mapMarkers.push(jobMarker.addTo(assetMap))
+
+  //mapMarkers.push(L.marker([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude], {icon: jobMarker, zIndexOffset: 1000}).addTo(assetMap))
 
 
     $.ajax({
@@ -482,6 +503,11 @@ instantRadiologModal = return_quickradiologmodal();
     if (assetDistances.length > 0) {
      let maxLength = resultsToDisplay //how many results to display
      let used = 0
+
+     var steps = (typeof(teamFilter) != "undefined" ? teamFilter.length : maxLength)
+     var colorScale = chroma.scale(['green','red']).mode('lch').colors(steps)
+
+
      assetDistances.forEach(function(v) { //safe way to loop with a limit
 
        if (used < maxLength || typeof(teamFilter) != "undefined") {
@@ -495,7 +521,7 @@ instantRadiologModal = return_quickradiologmodal();
 
         var unit = v.properties.name.match(/([a-z]+)/i)[1];
         var veh = v.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1];
-        let uniqueColor = `${stringToColor(v.id)}`
+        let uniqueColor = colorScale[used-1]//`${stringToColor(v.id)}`
 
           //use our unique color, unless its the first or last
            if (used == 1) {
@@ -709,10 +735,7 @@ instantRadiologModal = return_quickradiologmodal();
 
             $(row).find('#locate').on('click', function(e) { //fly to just this marker and the job
               e.stopPropagation();
-              console.log(marker.getLatLng())
-            //  let latlngBounds = L.latLngBounds([marker.getLatLng().lat, marker.getLatLng().lng])
-            //  console.log(latlngBounds)
-              assetMap.flyTo([marker.getLatLng().lat, marker.getLatLng().lng], 15)
+              assetMap.setView([marker.getLatLng().lat, marker.getLatLng().lng], 15)
             })
 
            $(row).on('click', function() { //path this marker
@@ -769,8 +792,6 @@ instantRadiologModal = return_quickradiologmodal();
                polyline.remove(assetMap);
                distanceMarker.remove(assetMap);
 
-               let latlngBounds = L.latLngBounds([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude],[v.geometry.coordinates[1], v.geometry.coordinates[0]])
-            //   assetMap.flyToBounds(latlngBounds, {padding: [50, 50]})
 
               //reset waypoints each time just incase someone has repathed
               routingControl.getPlan().setWaypoints([
@@ -896,7 +917,24 @@ function assetLocationMapOff() {
 
 }
 
+$('#assetLocationButtonRefresh').click(function() {
 
+  if ($('#assetLocationButtonAll').hasClass('btn-active')) {
+    assetLocationMapOff()
+    assetLocationButtonAll()
+  }
+
+  if ($('#assetLocationButtonActiveOnly').hasClass('btn-active')) {
+    assetLocationMapOff()
+    assetLocationButtonActiveOnly()
+  }
+
+  if ($('#assetLocationButtonFiltered').hasClass('btn-active')) {
+    assetLocationMapOff()
+    assetLocationButtonFiltered(true)
+  }
+
+})
 
 
 $('#assetLocationButtonFiltered').click(function() {
@@ -1006,7 +1044,7 @@ function assetLocationButtonActiveOnly() {
       let before = $('#asset-route-warning').html()
       $('#asset-route-warning').css("visibility", "unset");
 
-      $('#asset-route-warning').html(`Hiding assets that have not updated within the last 1 hour`)
+      $('#asset-route-warning').html(`Showing nearest 5 assets that have updated within the last 1 hour`)
 
     }})
   }
@@ -1091,6 +1129,9 @@ if (!bypassUI) {
   spinner.appendTo('#assetLocationButtonFiltered');
   renderNearestAssets({teamFilter: selectedAssets, activeOnly: false, cb: function() {
     spinner.hide()
+    $('#asset-route-warning').html(`Showing filtered list of assets`)
+    $('#asset-route-warning').css("visibility", "unset");
+
   }})
 
   $('#LHAssetFilterModal').modal('hide');
@@ -1134,6 +1175,10 @@ if (!bypassUI) {
             $("#teamFilterListSelected").append(`<option value=${i}>${i}</option>`);
           })
 
+          $("#teamFilterListAll").empty()
+
+          $('#asset-map-filter-loading').css("visibility", "unset");
+
 
   $.ajax({
   type: 'GET'
@@ -1148,7 +1193,6 @@ if (!bypassUI) {
   if (textStatus == 'success')
   {
 
-    $("#teamFilterListAll").empty()
 
     let sorted = response.responseJSON.map(function(i) {
       return i.properties.name
@@ -1161,6 +1205,9 @@ if (!bypassUI) {
         $("#teamFilterListAll").append(`<option ${$('#teamFilterListSelected').find(`option[value|="${v}"]`).toArray().length ? "style='display:none' " : ''}value=${v}>${v}</option>`);
 
     })
+
+    $('#asset-map-filter-loading').css("visibility", "hidden");
+
 
     $('#teamFilterListAll option').unbind().dblclick(function(x) {
 
@@ -1214,6 +1261,9 @@ if (!bypassUI) {
 
   renderNearestAssets({teamFilter: JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || [], activeOnly: false, cb: function() {
     spinner.hide()
+    $('#asset-route-warning').html(`Showing filtered list of assets`)
+    $('#asset-route-warning').css("visibility", "unset");
+
   }})
 
 }
@@ -2009,7 +2059,6 @@ function return_message_button() {
 $(document).ready(function() {
 
 
-  $( "body" ).append(make_asset_filter_modal())
 
   moment.updateLocale('en', {
     relativeTime: {
@@ -2064,7 +2113,7 @@ $(document).ready(function() {
 function return_quicktaskbutton() {
   return (
     <div id="lighthouse_instanttask" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
-      <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><i class="fa fa-tasks"></i>Instant Task
+      <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><i class="fa fa-tasks" style="padding-right: 5px;"></i>Instant Task
       <span class="caret"></span></button>
       <ul class="dropdown-menu scrollable-menu">
       </ul>
@@ -2075,7 +2124,7 @@ function return_quicktaskbutton() {
 function return_quicksectorbutton() {
   return (
     <div id="lighthouse_instantsector" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
-      <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" id="lhsectorbutton"><i class="fa fa-cubes"></i>Instant Sector
+      <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" id="lhsectorbutton"><i class="fa fa-cubes" style="padding-right: 5px;"></i>Instant Sector
       <span class="caret"></span></button>
       <ul class="dropdown-menu scrollable-menu">
       </ul>
@@ -2086,7 +2135,7 @@ function return_quicksectorbutton() {
 function return_quickcategorybutton() {
   return (
     <div id="lighthouse_instantcategory" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
-      <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhcategorybutton"><i class="fa fa-database"></i>Instant Category
+      <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhcategorybutton"><i class="fa fa-database" style="padding-right: 5px;"></i>Instant Category
       <span class="caret"></span></button>
       <ul class="dropdown-menu scrollable-menu">
       </ul>
@@ -2097,7 +2146,7 @@ function return_quickcategorybutton() {
 function return_quickradiologbutton() {
   return (
     <div id="lighthouse_instantradiolog" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;">
-      <button class="btn btn-sm btn-default" style="background-color: #837947;border-color: #837947" type="button" id="lhinstantradiologbutton"><i class="fa fa-microphone"></i>Instant Radio Log
+      <button class="btn btn-sm btn-default" style="background-color: #837947;border-color: #837947" type="button" id="lhinstantradiologbutton"><i class="fa fa-microphone" style="padding-right: 5px;"></i>Instant Radio Log
       </button>
     </div>
   );
@@ -2824,61 +2873,4 @@ function fetchHqContacts(HQId,cb) {
            }
        }
    })
-}
-
-function make_asset_filter_modal() {
-    return (
-      <div id="LHAssetFilterModal" class="modal fade" role="dialog">
- <div class="modal-dialog modal-sm" style="width:50%">
-    <div class="modal-content">
-       <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title">Lighthouse Asset Filter</h4>
-       </div>
-       <div class="modal-body">
-          <h4>Select assets to show</h4>
-          <p/>
-          <div class="container-fluid">
-             <div class='row'>
-                <div class="col-md-5 text-center">
-                   <h5>All Assets</h5>
-                   <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListAllQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
-                </div>
-                <div class="col-md-2 text-center">
-                </div>
-                <div class="col-md-5 text-center">
-                   <h5>Selected Assets</h5>
-                   <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListSelectedQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
-
-                </div>
-             </div>
-             <div class='row' style="display: flex; align-items: center;">
-                <div class="col-md-5 text-center">
-                   <select multiple id="teamFilterListAll">
-                   </select>
-                </div>
-                <div class="col-md-2 text-center">
-                <div>
-                   <div>
-                      <button style="margin-bottom: 5px; width: 100px" type="button" class="btn btn-primary" id="teamFilterListAddSelected">Add<span style="margin-left: 10px;" class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></button>
-                   </div>
-                   <div>
-                      <button style="margin-top: 5px; width: 100px" type="button" class="btn btn-primary" id="teamFilterListRemoveSelected"><span style="margin-right: 10px;" class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>Remove</button>
-                   </div>
-                   </div>
-                </div>
-                <div class="col-md-5 text-center">
-                   <select multiple id="teamFilterListSelected">
-                   </select>
-                </div>
-             </div>
-          </div>
-       </div>
-       <div class="modal-footer">
-          <button type="button" class="btn btn-primary" id="assetSaveFiltersButton">Save filter</button>
-       </div>
-    </div>
- </div>
-</div>
-        )
 }

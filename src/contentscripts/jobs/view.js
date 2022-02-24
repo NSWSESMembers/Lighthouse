@@ -180,7 +180,7 @@ job_asbestos_history = (
 );
 
 job_nearest_asset_widget = (
-  <div class="widget" style="">
+  <div class="widget" style="" id="lighthouse_nearestasset">
         <div class="widget-header">
           <h3><img style="width:16px;vertical-align:inherit;margin-right:5px" src={chrome.extension.getURL("icons/lh-black.png")} /> Nearest Asset Locations</h3>
           <span class="pull-right btn-group btn-group-sm" data-toggle="buttons">
@@ -188,6 +188,9 @@ job_nearest_asset_widget = (
           <button id="assetLocationButtonActiveOnly" type="button" class="btn btn-inactive"><span class="text">Active Only</span></button>
             <button id="assetLocationButtonAll" type="button" class="btn btn-inactive"><span class="text">All</span></button>
             <button id="assetLocationButtonOff" type="button" class="btn btn-active"><span class="text">Off</span></button>
+          </span>
+          <span class="pull-right btn-group btn-group-sm" data-toggle="buttons" style="margin-right: 5px">
+          <button id="assetLocationButtonRefresh" type="button" class="btn btn-inactive"><span class="text"><i class="fa fa-refresh" style="margin-right:0px"></i></span></button>
           </span>
         </div>
         <div class="widget-content" style="display:none" id="nearest-asset-geoerror" >
@@ -215,7 +218,7 @@ job_nearest_asset_widget = (
         </table>
         </div>
         <div class="text-center" id="asset-route-warning" style="visibility:hidden">Travel distance and time are estimates and should not be used for navigation or response times</div>
-        <div>
+        <div id="asset-map-container" style="height: 450px; position: relative;">
         <div id="asset-map" style="height: 450px;">
           <div id="asset-map-loading" class="leaflet-loader-container">
             <div class="leaflet-loader-background">
@@ -229,6 +232,70 @@ job_nearest_asset_widget = (
         </div>
   </div>
 );
+
+
+
+asset_filter_modal = (
+      <div id="LHAssetFilterModal" class="modal fade" role="dialog">
+ <div class="modal-dialog modal-sm" style="width:50%">
+    <div class="modal-content">
+       <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Lighthouse Asset Filter</h4>
+       </div>
+       <div class="modal-body">
+          <h4>Select assets to show</h4>
+          <p/>
+          <div class="container-fluid">
+             <div class='row'>
+                <div class="col-md-5 text-center">
+                   <h5>All Assets</h5>
+                   <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListAllQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
+                </div>
+                <div class="col-md-2 text-center">
+                </div>
+                <div class="col-md-5 text-center">
+                   <h5>Selected Assets</h5>
+                   <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListSelectedQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
+                </div>
+             </div>
+             <div class='row' style="display: flex; align-items: center;">
+                <div class="col-md-5 text-center">
+                <div id="asset-map-filter-loading" class="filter-loader-container">
+                  <div class="filter-loader-background">
+                    <div class="filter-loader">Loading...</div>
+                  </div>
+                  </div>
+                   <select multiple id="teamFilterListAll">
+                   </select>
+                </div>
+                <div class="col-md-2 text-center">
+                <div>
+                   <div>
+                      <button style="margin-bottom: 5px; width: 100px" type="button" class="btn btn-primary" id="teamFilterListAddSelected">Add<span style="margin-left: 10px;" class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></button>
+                   </div>
+                   <div>
+                      <button style="margin-top: 5px; width: 100px" type="button" class="btn btn-primary" id="teamFilterListRemoveSelected"><span style="margin-right: 10px;" class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>Remove</button>
+                   </div>
+                   </div>
+                </div>
+                <div class="col-md-5 text-center">
+                   <select multiple id="teamFilterListSelected">
+                   </select>
+                </div>
+             </div>
+          </div>
+       </div>
+       <div class="modal-footer">
+          <button type="button" class="btn btn-primary" id="assetSaveFiltersButton">Save filter</button>
+       </div>
+    </div>
+ </div>
+</div>
+)
+
+
+
 
 $('fieldset.col-md-12').each(function(k,v){
   var $v = $(v);
@@ -262,7 +329,27 @@ job_lighthouse_actions = (
   </div>
 )
 
-$('div.widget.actions-box').after(job_lighthouse_actions, job_nearest_asset_widget)
+$('div.widget.actions-box').after(job_lighthouse_actions)
+$('#map').parent().before(job_nearest_asset_widget)
+
+var $mapblock = $(
+  <div id="lighthouse_mapblock">
+  <div>Click to zoom or move map</div>
+  </div>
+  );
+
+$mapblock
+.click(function(e){
+  $(this).hide();
+  e.stopPropagation();
+});
+
+$('#asset-map-container').prepend($mapblock)
+.mouseleave(function(e) {
+  $mapblock.show();
+});
+
+$( "body" ).append(asset_filter_modal)
 
 
 // inject the coded needed to fix visual problems

@@ -128,6 +128,27 @@
 	background-color: black;
 }
 
+.filter-loader-container {
+	height: 100%;
+  visibility: hidden;
+	width: 100%;
+  display: table;
+	position: absolute;
+	z-index: 99999;
+	cursor: auto;
+}
+.filter-loader-container .filter-loader-background {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+  opacity: 0.6;
+  color: black;
+  font-size: x-large;
+  font-family: "latobold";
+	height: 100%;
+	width: 100%;
+}
+
 #locate {
     width: 15px;
     border-radius: 5px;
