@@ -88,7 +88,6 @@ $('#LHCodeBox').keypress(function(e){
 });
 
 
-if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) {
     whenWeAreReady(msgsystem, function() {
         msgsystem.searchHeadquarters.subscribe(function(hqSet) {
 
@@ -104,6 +103,7 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
 
             }
         });
+        if (localStorage.getItem("LighthousePrefillLHQEnabled") == "true" || localStorage.getItem("LighthousePrefillLHQEnabled") == null) {
 
             //Home HQ - with a wait to catch possible race condition where the page is still loading
             whenWeAreReady(user, function() {
@@ -118,7 +118,9 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
                     }
                 }, 200);
             });
-
+          } else {
+              console.log("Not running prefill due to preference setting")
+          }
         });
         //auto select ones that have the world default in them
         msgsystem.loadingRecipients.subscribe(function(status) {
@@ -131,9 +133,9 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
             }
         })
 
-    } else {
-        console.log("Not running due to preference setting")
-    }
+
+
+
 
     msgsystem.replyToAddress.subscribe(function(r) {
       if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) {
@@ -169,17 +171,17 @@ if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.
         }
     });
 
-    $('#lighthouseEnabled').click(function() {
-        if (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") === null) //its true so uncheck it
+    $('#lighthousePrefillEnabled').click(function() {
+        if (localStorage.getItem("LighthousePrefillLHQEnabled") == "true" || localStorage.getItem("LighthousePrefillLHQEnabled") === null) //its true so uncheck it
         {
             $(this).toggleClass("fa-check-square-o fa-square-o")
-            localStorage.setItem("LighthouseMessagesEnabled", false);
+            localStorage.setItem("LighthousePrefillLHQEnabled", false);
             location.reload();
 
         } else //its false so uncheck it
         {
             $(this).toggleClass("fa-square-o fa-check-square-o")
-            localStorage.setItem("LighthouseMessagesEnabled", true);
+            localStorage.setItem("LighthousePrefillLHQEnabled", true);
             location.reload();
 
 

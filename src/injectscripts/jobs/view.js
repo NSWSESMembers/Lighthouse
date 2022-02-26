@@ -518,9 +518,8 @@ instantRadiologModal = return_quickradiologmodal();
            nearestDistance = v
          }
 
-
-        var unit = v.properties.name.match(/([a-z]+)/i)[1];
-        var veh = v.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1];
+        var unit = v.properties.name.match(/([a-z]+)/i) ? v.properties.name.match(/([a-z]+)/i)[1] : v.properties.name;
+        var veh = v.properties.name.match(/[a-z]+(\d*[a-z]?)/i) ? v.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1] : '';
         let uniqueColor = colorScale[used-1]//`${stringToColor(v.id)}`
 
           //use our unique color, unless its the first or last

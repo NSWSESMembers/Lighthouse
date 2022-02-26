@@ -5,10 +5,11 @@ var $ = require('jquery');
 inject('messages/create.js');
 
 function renderPrefillCheckBox() {
-	var selected = (localStorage.getItem("LighthouseMessagesEnabled") == "true" || localStorage.getItem("LighthouseMessagesEnabled") == null) ? "fa-check-square-o" : "fa-square-o";
+	console.log(localStorage.getItem("LighthousePrefillLHQEnabled"))
+	var selected = (localStorage.getItem("LighthousePrefillLHQEnabled") == "true" || localStorage.getItem("LighthousePrefillLHQEnabled") == null) ? "fa-check-square-o" : "fa-square-o";
 	return (
 		<span class="pull-right h6">
-		<span style="vertical-align:text-top" id="lighthouseEnabled" class={"fa fa-lg "+selected}></span>
+		<span style="vertical-align:text-top" id="lighthousePrefillEnabled" class={"fa fa-lg "+selected}></span>
 		<img style="width:16px;vertical-align:bottom;margin-right:5px;margin-left:5px"
 		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill Home LHQ
 		</span>
