@@ -95,14 +95,14 @@
 #teamFilterListAll {
       width: 65%;
       height: 400px;
-      font-size: xx-large;
+      font-size: 2vw;
       text-align: center;
 }
 
 #teamFilterListSelected {
       width: 65%;
       height: 400px;
-      font-size: xx-large;
+      font-size: 2vw;
       text-align: center;
 }
 
@@ -121,7 +121,7 @@
   vertical-align: middle;
   opacity: 0.6;
   color: white;
-  font-size: x-large;
+  font-size: 1.5;
   font-family: "latobold";
 	height: 100%;
 	width: 100%;
@@ -143,7 +143,7 @@
   vertical-align: middle;
   opacity: 0.6;
   color: black;
-  font-size: x-large;
+  font-size: 1.5vw;
   font-family: "latobold";
 	height: 100%;
 	width: 100%;

@@ -1106,8 +1106,8 @@ if (!bypassUI) {
   })
 
 
-  $("#assetSaveFiltersButton").unbind().click(function() {
-
+  $("#LHAssetFilterModal").on("hidden.bs.modal", function () {
+      // put your default event here
 
     assetLocationMapOff()
     $('#assetLocationButtonFiltered').addClass('btn-active')
