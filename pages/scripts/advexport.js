@@ -42,6 +42,7 @@ var lighthouse_fieldArray = {
     'JobPriorityType.Name': 'Priority',
     'JobType.Name': 'Type',
     'JobStatusType.Name': 'Status',
+    'Categories': 'Categories',
     'Reconnoitered': 'Reconned',
     'SituationOnScene': 'Situation On Scene',
     'Tags': 'Tags',
@@ -290,6 +291,11 @@ function HackTheMatrix(id, host, progressBar) {
               return d.Name
             }).join(',');
             break;
+            case 'Categories':
+              rawValue = d.Categories.map(function(d) {
+                return d.Name
+              }).join(',');
+              break;
           case 'JobAcknowledged':
             _.each(d.JobStatusTypeHistory.reverse(), function(history) {
               if (history.Name == 'Active') {
