@@ -276,6 +276,11 @@ let instantRadiologModal = return_quickradiologmodal();
     L.control.scale().addTo(assetMap);
 
     esri.basemapLayer('Topographic', {ignoreDeprecationWarning: true}).addTo(assetMap);
+
+    //keep the job marker ontop of everything else
+    assetMap.createPane('jobMarker');
+    assetMap.getPane('jobMarker').style.zIndex = 650;
+
   }
 
     assetMapRenderAtTime =  moment()
@@ -421,7 +426,8 @@ let instantRadiologModal = return_quickradiologmodal();
         fillColor: "#FFA500",
 		    color: "black",
         weight: 1.5,
-        fillOpacity: 1
+        fillOpacity: 1,
+        pane: "jobMarker"
       }
       break
       case "Immediate":
@@ -431,7 +437,8 @@ let instantRadiologModal = return_quickradiologmodal();
         fillColor: "#4F92FF",
         color: "black",
         weight: 1.5,
-        fillOpacity: 1
+        fillOpacity: 1,
+        pane: "jobMarker"
       }
       break
       case "Rescue":
@@ -441,7 +448,8 @@ let instantRadiologModal = return_quickradiologmodal();
         fillColor: "#FF0000",
         color: "black",
         weight: 1.5,
-        fillOpacity: 1
+        fillOpacity: 0.9,
+        pane: "jobMarker"
       }
       break
       default:
@@ -451,14 +459,13 @@ let instantRadiologModal = return_quickradiologmodal();
         fillColor: "#66CC00",
 		    color: "black",
         weight: 2,
-        fillOpacity: 1
+        fillOpacity: 1,
+        pane: "jobMarker"
       }
     }
 
     let jobMarker = L.shapeMarker([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude], markerStyle);
     mapMarkers.push(jobMarker.addTo(assetMap))
-
-  //mapMarkers.push(L.marker([masterViewModel.geocodedAddress.peek().Latitude,masterViewModel.geocodedAddress.peek().Longitude], {icon: jobMarker, zIndexOffset: 1000}).addTo(assetMap))
 
 
     $.ajax({
@@ -591,6 +598,7 @@ let instantRadiologModal = return_quickradiologmodal();
              dashArray: "6",
              radius: (v.distance * 1000) //KM to M divided by 2 for radius
            }).addTo(assetMap);
+
           }
 
 
