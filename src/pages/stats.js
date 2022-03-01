@@ -335,6 +335,7 @@ var unitChart = null;
 var clusterChart = null;
 var zoneChart = null;
 var sectorChart = null;
+var categoriesChart = null;
 
 
 var lowermeanChart = dc.numberDisplay("#dc-lowermean-chart");
@@ -746,6 +747,10 @@ function prepareCharts(jobs, start, end, firstRun) {
 
     sectorChart = makeSimplePie("#dc-sector-chart", 460, 240, function(d) {
       return d.Sector ? d.Sector.Name : "Unassigned";
+    });
+
+    categoriesChart = makeSimplePie("#dc-categories-chart", 460, 240, function(d) {
+      return d.Categories.length ? d.Categories[0].Name : "Unassigned";
     });
 
     unitChart = makeSimplePie("#dc-unit-chart", 460, 240, function(d) {
