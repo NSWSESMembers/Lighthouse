@@ -216,6 +216,7 @@ whenAddressIsReady(function() {
   if(masterViewModel.geocodedAddress.peek().PrettyAddress) {
     var lastChar = masterViewModel.geocodedAddress.peek().PrettyAddress.substr(masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4)
   }
+
   if (masterViewModel.geocodedAddress.peek().PostCode == null && (isNaN(parseInt(lastChar)) == true)) //if no postcode is displayed
   {
     postCodes.returnPostCode(masterViewModel.geocodedAddress.peek().Locality, function(postcode){
@@ -235,6 +236,11 @@ whenAddressIsReady(function() {
   //end postcode
 
 
+  if(typeof masterViewModel.geocodedAddress.peek() != 'undefined') {
+   if (masterViewModel.geocodedAddress.peek().Latitude != null || masterViewModel.geocodedAddress.peek().Longitude != null) {
+     window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", lat: masterViewModel.geocodedAddress.peek().Latitude, lng: masterViewModel.geocodedAddress.peek().Longitude }, "*");
+   }
+ }
 
 
 
@@ -866,6 +872,8 @@ var s1circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, master
      let latlngBounds = L.latLngBounds(latlngs)
 
      assetMap.fitBounds(latlngBounds, {padding: [20, 20]})
+     assetMap.setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
+
      //$('#nearest-asset-text').text($('#nearest-asset-text').text().slice(0,-2)) //trim the comma space from the very end
     } else {
       let row = $(`

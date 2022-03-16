@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
     applyTheme([localStorage.getItem("LighthouseSummaryTheme")]);
     applySounds()
     console.log('Close finished')
-    startTimer(10);
+    startTimer(30);
 
     resize()
   }

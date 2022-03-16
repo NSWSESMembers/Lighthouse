@@ -5,24 +5,24 @@ var tj = require('@mapbox/togeojson');
 
 
   // Check whether new version is installed
-chrome.runtime.onInstalled.addListener(function(details){
-    const reason = details.reason
-       switch (reason) {
-          case 'install':
-             console.log('New User installed the extension.')
-             chrome.tabs.create({ url: 'https://lighthouse.ses.nsw.gov.au/#whatsnew' });
-             break;
-          case 'update':
-             console.log('User has updated their extension.')
-             chrome.tabs.create({ url: 'https://lighthouse.ses.nsw.gov.au/#whatsnew' });
-             break;
-          case 'chrome_update':
-          case 'shared_module_update':
-          default:
-             console.log('Other install events within the browser')
-             break;
-       }
-});
+// chrome.runtime.onInstalled.addListener(function(details){
+//     const reason = details.reason
+//        switch (reason) {
+//           case 'install':
+//              console.log('New User installed the extension.')
+//              chrome.tabs.create({ url: 'https://lighthouse.ses.nsw.gov.au/#whatsnew' });
+//              break;
+//           case 'update':
+//              console.log('User has updated their extension.')
+//              chrome.tabs.create({ url: 'https://lighthouse.ses.nsw.gov.au/#whatsnew' });
+//              break;
+//           case 'chrome_update':
+//           case 'shared_module_update':
+//           default:
+//              console.log('Other install events within the browser')
+//              break;
+//        }
+// });
 
 
 //Sit Aware Map Data Feeds
