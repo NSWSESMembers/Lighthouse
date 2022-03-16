@@ -59,17 +59,17 @@ export default class MapLayer {
      * @param imageUrl the URL for the marker's image.
      * @return the marker to customise.
      */
-    static createImageMarker(imageUrl) {
+    static createImageMarker(imageUrl, scale = 16, xOffset = 0, yOffset = 0) {
         let marker = new PictureMarkerSymbol();
         //live traffic svg's are small
         if (imageUrl.split('.')[imageUrl.split('.').length-1] == 'svg') {
           marker.setHeight(32);
           marker.setWidth(32);
         } else {
-          marker.setHeight(16);
-          marker.setWidth(16);
+          marker.setHeight(scale);
+          marker.setWidth(scale);
         }
-
+        marker.setOffset(xOffset, yOffset)
         marker.setUrl(imageUrl);
         return marker;
     }
@@ -189,16 +189,16 @@ export default class MapLayer {
      * @param offsetY the offset (in pixels) to place the text relative to the point.
      * @return the text symbol to customise.
      */
-    addTextSymbol(lat, lon, text, offsetX = 0, offsetY = 0) {
+    addTextSymbol(lat, lon, text, offsetX = 0, offsetY = 0, color = 'black', size = 12) {
         let point = new Point({
             latitude: lat,
             longitude: lon
         });
 
-        let textSymbol = new TextSymbol(text)
+        let textSymbol = new TextSymbol({text: text, color: new Color(color)})
             .setOffset(offsetX, offsetY)
-            .setHorizontalAlignment('left')
-            .setFont(new Font().setFamily('monospace'));
+            .setHorizontalAlignment('center')
+            .setFont(new Font().setFamily('monospace').setSize(size));
 
         let graphic = new Graphic(point, textSymbol);
 
