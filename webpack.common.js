@@ -57,10 +57,10 @@ module.exports = {
   },
   plugins: [
     new DotenvPlugin(),
-    // new ESLintPlugin({
-    //  extensions: ['js', 'ts'],
-    //  overrideConfigFile: path.resolve(__dirname, '.eslintrc'),
-    // }),
+    new ESLintPlugin({
+      extensions: ['js', 'ts'],
+      overrideConfigFile: path.resolve(__dirname, '.eslintrc'),
+    }),
     new MiniCssExtractPlugin({
       filename: 'styles/[name].css',
     }),
