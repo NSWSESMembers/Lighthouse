@@ -25,7 +25,7 @@
     "lrm-graphhopper": "git+https://github.com/NSWSESMembers/lrm-graphhopper.git",
     "markerwithlabel": "^2.0.2",
     "md5": "^2.3.0",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "stopwords": "0.0.5",
     "utils": "^0.3.1"
   },
