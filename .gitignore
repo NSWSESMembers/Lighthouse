@@ -6,6 +6,7 @@ dist
 .sass-cache
 package
 *.swp
+.env
 
 Lighthouse.zip
 .DS_Store
