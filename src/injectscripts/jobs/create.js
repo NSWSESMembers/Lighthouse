@@ -1,5 +1,5 @@
-var DOM = require('jsx-dom-factory');
-var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
+var DOM = require('jsx-dom-factory').default;
+var sesAsbestosSearch = require('../../lib/sesasbestos.js');
 
 console.log("jobs/create.js inject running");
 

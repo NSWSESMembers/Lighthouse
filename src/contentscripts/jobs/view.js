@@ -1,8 +1,8 @@
-var inject = require('../../../lib/inject.js');
+var inject = require('../../lib/inject.js');
 var _ = require('underscore');
-var DOM = require('jsx-dom-factory');
+var DOM = require('jsx-dom-factory').default;
 var $ = require('jquery');
-var vincenty = require('../../../lib/vincenty.js');
+var vincenty = require('../../lib/vincenty.js');
 
 // inject all.css - browserify-css takes care of this
 require('../../styles/jobs.view.css');

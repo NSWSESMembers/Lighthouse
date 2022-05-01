@@ -1,9 +1,9 @@
 if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1)
 {
-  var inject = require('../../lib/inject.js');
+  var inject = require('../lib/inject.js');
   var $ = require('jquery');
-  var DOM = require('jsx-dom-factory');
-  var LighthouseChrome = require('../../pages/lib/shared_chrome_code.js');
+  var DOM = require('jsx-dom-factory').default;
+  var LighthouseChrome = require('../pages/lib/shared_chrome_code.js');
 
 
 
@@ -76,6 +76,7 @@ window.addEventListener("message", function(event) {
 
   // Map Mouse Eating Stopper
   if (location.pathname != "/Jobs/SituationalAwareness") {
+    let $map;
     if( ( $map = $('#map') ).length && ('#map_zoom_slider',$map).length ){
       var $mapblock = $(
         <div id="lighthouse_mapblock">

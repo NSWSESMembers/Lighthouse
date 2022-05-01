@@ -35,11 +35,15 @@ This version is updated when minor changes are committed through the GitHub repo
 
 Install:
 
-- NodeJS and npm
-- Gulp (`npm install -g gulp-cli`)
+- Node and NPM (tested with v18) `brew install node`
+- `cd Lighthouse`
+- `npm install`
 
-Build:
-Run `yarn install` in the root of this repository. You then should be able to run `gulp`. The extension will be built into `build` and bundled into `dist`. Load the `build` directory as an unpacked Chrome extension and then execute `gulp watch` while developing to have gulp automatically rebuild JS/JSX as you edit the files.
+Build for development:
+
+- `npm start`
+- The extension should now be built into `dist/`. Load this into Chrome with dev mode turned on.
+- Webpack should automatically rebuild as you make changes but some changes won't take effect in Chrome until you reload the extension.
 
 Pull requests are welcome!
 

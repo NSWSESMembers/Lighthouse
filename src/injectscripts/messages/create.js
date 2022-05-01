@@ -1,6 +1,6 @@
-var DOM = require('jsx-dom-factory');
-var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
-var ReturnNitcAtLHQ = require('../../../lib/getnitc.js');
+var DOM = require('jsx-dom-factory').default;
+var ReturnTeamsActiveAtLHQ = require('../../lib/getteams.js');
+var ReturnNitcAtLHQ = require('../../lib/getnitc.js');
 
 var SharedCollection = {}
 var DownloadedObject = {}

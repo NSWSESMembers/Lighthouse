@@ -1,4 +1,4 @@
-var clusterCodes = require('../../lib/clusters.js');
+var clusterCodes = require('../lib/clusters.js');
 
 whenWeAreReady(user, function() {
 

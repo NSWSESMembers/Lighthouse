@@ -7,8 +7,8 @@ if (model.clientName == "beacon" || model.clientName == "beacon Train" ||  model
 {
 
   var $ = require('jquery/dist/jquery.min');
-  var DOM = require('jsx-dom-factory');
-  var LighthouseChrome = require('../../pages/lib/shared_chrome_code.js');
+  var DOM = require('jsx-dom-factory').default;
+  var LighthouseChrome = require('../pages/lib/shared_chrome_code.js');
 
 
   url = chrome.extension.getURL("icons/lhbackdrop_dark.png")

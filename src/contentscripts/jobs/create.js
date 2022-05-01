@@ -1,7 +1,7 @@
-var inject = require('../../../lib/inject.js');
-var DOM = require('jsx-dom-factory');
+var inject = require('../../lib/inject.js');
+var DOM = require('jsx-dom-factory').default;
 var $ = require('jquery');
-var vincenty = require('../../../lib/vincenty.js');
+var vincenty = require('../../lib/vincenty.js');
 
 window.addEventListener("message", function(event) {
   // We only accept messages from ourselves

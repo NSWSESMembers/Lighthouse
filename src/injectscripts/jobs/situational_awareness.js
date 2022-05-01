@@ -3,7 +3,7 @@ window.addEventListener('load', pageFullyLoaded, false);
 
 function pageFullyLoaded(e) {
   whenMapIsReady(function() {
-    const MapManager = require('../../../lib/map/InjectScriptMapManager.js');
+    const MapManager = require('../../lib/map/InjectScriptMapManager.js').default;
     //hide the maximize button
     let max = document.getElementsByClassName('titleButton maximize');
     max[0].classList.add('hidden');

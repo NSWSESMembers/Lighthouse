@@ -1,10 +1,10 @@
-var DOM = require('jsx-dom-factory');
+var DOM = require('jsx-dom-factory').default;
 var _ = require('underscore');
 var L = require('leaflet')
-var ReturnTeamsActiveAtLHQ = require('../../../lib/getteams.js');
-var postCodes = require('../../../lib/postcodes.js');
-var sesAsbestosSearch = require('../../../lib/sesasbestos.js');
-var vincenty = require('../../../lib/vincenty.js');
+var ReturnTeamsActiveAtLHQ = require('../../lib/getteams.js');
+var postCodes = require('../../lib/postcodes.js');
+var sesAsbestosSearch = require('../../lib/sesasbestos.js');
+var vincenty = require('../../lib/vincenty.js');
 var esri = require('esri-leaflet')
 var chroma = require('chroma-js')
 

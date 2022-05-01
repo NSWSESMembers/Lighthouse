@@ -1,5 +1,5 @@
-var inject = require('../../../lib/inject.js');
-var DOM = require('jsx-dom-factory');
+var inject = require('../../lib/inject.js');
+var DOM = require('jsx-dom-factory').default;
 var $ = require('jquery');
 
 inject('messages/create.js');
