@@ -1,4 +1,4 @@
-
+/* global lighthouseUrl */
 function returnPostCode(suburb,cb) {
 	//use a XMLHttpRequest because the auth headers in jquerys ajax call dont like hitting local urls due to preflight errors
 	var xhttp = new XMLHttpRequest();

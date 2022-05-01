@@ -4,8 +4,6 @@ var DOM = require('jsx-dom-factory').default;
 
 //NITC Screen specific Code
 //add export button
-var bar = document.getElementsByClassName("btn-group pull-left text-left");
-
 var bar = $('.nitc-page #content .widget .widget-header .btn-group.pull-left.text-left');
 
 $(

@@ -1,3 +1,4 @@
+/* global $, urls, user, msgsystem, moment */
 var DOM = require('jsx-dom-factory').default;
 var ReturnTeamsActiveAtLHQ = require('../../lib/getteams.js');
 var ReturnNitcAtLHQ = require('../../lib/getnitc.js');
@@ -284,7 +285,7 @@ function LoadNitc() {
                                                 } else {
                                                     //no results for this guy. thats ok, skip it.
 
-                                                    if ($total == 0) //when they have all loaded, stop spinning.
+                                                    if (total == 0) //when they have all loaded, stop spinning.
                                                     {
                                                       console.log('done loading team')
                                                       spinner.remove();
@@ -295,7 +296,7 @@ function LoadNitc() {
                                                 } else {
                                                   //bad answer from the server. thats ok, skip it.
 
-                                                  if ($total == 0) //when they have all loaded, stop spinning.
+                                                  if (total == 0) //when they have all loaded, stop spinning.
                                                     {
                                                       console.log('done loading team')
                                                       spinner.remove();
@@ -434,7 +435,7 @@ if (wasAdded == false)
   total--
   //bad answer from the server. thats ok, skip it.
 
-    if ($total == 0) //when they have all loaded, stop spinning.
+    if (total == 0) //when they have all loaded, stop spinning.
     {
         console.log('done loading team')
         spinner.remove();

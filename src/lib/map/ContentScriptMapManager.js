@@ -318,7 +318,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
      _requestLayerUpdate(layer, params = {}) {
         chrome.runtime.sendMessage({type: layer, params: params}, function (response) {
             if (response.error) {
-                console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
+                console.error(`Update to ${layer} failed: ${response.error} http-code:${response.httpCode}`);
             } else {
                 ContentScriptMapManager._passLayerDataToInject(layer, response)
             }

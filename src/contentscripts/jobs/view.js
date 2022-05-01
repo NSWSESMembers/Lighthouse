@@ -22,11 +22,11 @@ window.addEventListener("message", function(event) {
   } else if (event.data.type && (event.data.type == "FROM_PAGE_SESASBESTOS_RESULT")) {
     asbestosBoxColor(event.data.address.PrettyAddress+" was FOUND on the SES asbestos register.",'red','')
   } else if (event.data.type && (event.data.type == "FROM_PAGE_UPDATE_API_TOKEN")) {
-
+    // do nothing
   } else if (event.data.type && (event.data.type == "FROM_PAGE_LHQ_DISTANCE")) {
     var t0 = performance.now();
   $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
-    distances = []
+    let distances = []
     data.features.forEach(function(v){
       v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,event.data.lat,event.data.lng)/1000
       distances.push(v)
@@ -155,7 +155,7 @@ var html2 = renderQuickText("CompleteTeamQuickTextBox", [
 $('#completeTeamModal > div > div > div.modal-body > div > div > div > textarea[data-bind$="value: actionTaken"]').parent().parent().after([html, html2]);
 
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
-job_view_history = (
+let job_view_history = (
   <fieldset id="job_view_history_groups" class="col-md-12">
   <legend class="main"><img style="width:16px;vertical-align:inherit;margin-right:5px"
   src={chrome.extension.getURL("icons/lh-black.png")} />Job History <span>12 Months search by Address</span></legend>
@@ -168,7 +168,7 @@ job_view_history = (
 );
 
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
-job_asbestos_history = (
+let job_asbestos_history = (
   <div class="form-group">
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
   src={chrome.extension.getURL("icons/lh-black.png")} />Asbestos Register</label>
@@ -179,7 +179,7 @@ job_asbestos_history = (
   </div>
 );
 
-job_nearest_asset_widget = (
+let job_nearest_asset_widget = (
   <div class="widget" style="" id="lighthouse_nearestasset">
         <div class="widget-header">
           <h3><img style="width:16px;vertical-align:inherit;margin-right:5px" src={chrome.extension.getURL("icons/lh-black.png")} /> Nearest Asset Locations</h3>
@@ -235,7 +235,7 @@ job_nearest_asset_widget = (
 
 
 
-asset_filter_modal = (
+let asset_filter_modal = (
       <div id="LHAssetFilterModal" class="modal fade" role="dialog">
  <div class="modal-dialog modal-sm" style="width:50%">
     <div class="modal-content">
@@ -311,7 +311,7 @@ $('fieldset.col-md-12').each(function(k,v){
 
 })
 
-job_lighthouse_actions = (
+let job_lighthouse_actions = (
   <div id="lighthouse_actions" class="widget actions-box" style="">
     <div class="widget-header">
         <h3><img style="width:16px;vertical-align:inherit;margin-right:5px"

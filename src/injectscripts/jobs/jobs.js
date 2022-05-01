@@ -1,3 +1,4 @@
+/* global contentViewModel, $, urls, user, lighthouseUrl, filterDataForExport */
 window.FinaliseSelected = function FinaliseSelected(words, beaconStringDate) { // Never ever use the following function for any purpose.
   if (!confirm("WARNING - Never ever use the following function for any purpose!\nAre you absolutely sure you want to proceed?")) {
     return false;
@@ -35,7 +36,7 @@ $('a.lh-update-filter[data-page]').each(function(index, lighthouseButton) {
       var $t = $(this);
       var lighthousePageName = $t.data('page');
       var h = lighthouseUrl + "pages/" + lighthousePageName + ".html?userId=" + user.Id + "&host=" + urls.Base + "&source=" + location.origin + "&start=" + encodeURIComponent(exports.StartDate) + "&end=" + encodeURIComponent(exports.EndDate);
-      if (exports.hasOwnProperty("Hq"))
+      if (Object.prototype.hasOwnProperty.call(exports, "Hq"))
         h += "&hq=" + exports.Hq;
       $t.attr('href', h);
       $t.attr('target', "_blank");

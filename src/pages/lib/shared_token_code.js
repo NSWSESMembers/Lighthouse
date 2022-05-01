@@ -16,7 +16,7 @@ export function fetchBeaconToken(apiHost, source, cb) { //when external vars hav
         if (periodicCheck == null) {
           console.log('setting up periodic token check because it doesnt exist')
           periodicCheck = setInterval(function() {
-            ValidateBeaconToken(apiHost, source)
+            validateBeaconToken(apiHost, source)
           }, 3e5);
         }
 
@@ -30,7 +30,7 @@ export function fetchBeaconToken(apiHost, source, cb) { //when external vars hav
 }
 
 export function validateBeaconToken(apiHost, source) {
-  getToken(apiHost, source, function({
+  fetchBeaconToken(apiHost, source, function({
     token,
     tokenexp
   }) {

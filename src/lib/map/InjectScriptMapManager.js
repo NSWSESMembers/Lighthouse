@@ -1,3 +1,4 @@
+/* global lighthouseEnviroment, lighthouseUrl, urls, user */
 const $ = require('jquery');
 const DOM = require('jsx-dom-factory').default;
 const moment = require('moment');
@@ -616,6 +617,82 @@ const rfsIcons = {
         for (let i = 0; i < data.features.length; i++) {
             let feature = data.features[i];
 
+            const PowerOutageDetails = function(source) {
+                var name,creation,start,end,reason,status,type,CustomerAffected,contact = 'Unknown'
+                switch (source.owner)
+                {
+                    case 'EndeavourEnergy':
+                    name = 'Endeavour Energy: ' + source.properties.incidentId;
+                    creation = source.properties.creationDateTime;
+                    start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
+                    end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
+                    reason = source.properties.reason;
+                    status = source.properties.status;
+                    type = source.properties.outageType;
+                    if (type == "U") type="Unknown";
+                    if (type == "P") type="Planned";
+                    CustomerAffected = source.properties.numberCustomerAffected;
+                    contact = "Endeavour Energy 131 003"
+                    break
+                    case 'Ausgrid':
+                    name = 'Ausgrid: ' + source.properties.incidentId;
+                    creation = source.properties.creationDateTime;
+                    start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
+                    end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
+                    reason = source.properties.reason;
+                    type = source.properties.outageType;
+                    status = source.properties.status
+                    if (status == "") status="Unknown";
+                    type = source.properties.type
+                    CustomerAffected = source.properties.numberCustomerAffected;
+                    contact = "Ausgrid 13 13 88"
+                    break
+                    case 'EssentialEnergy':
+                    name = 'Essential Energy: ' + source.id;
+                    start = /Time Off:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    end = /Time On:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    if (end == "") end = "Unknown";
+                    status = /Status:<\/span>(.*?)<\/div>/g.exec(source.properties.description)
+                    if (status)
+                    {
+                        status = status[1]
+                    } else {
+                        status = "NA"
+                    }
+                    type = source.properties.outageType;
+                    if (source.properties.styleUrl.match("unplanned"))
+                    {
+                        type = "Unplanned"
+                        reason = "Unknown"
+                    } else {
+                        type = "Planned"
+                        reason = /Reason:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
+                    }
+                    CustomerAffected = /No\. of Customers affected:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
+                    contact = "Essential Energy 132 080"
+                    break
+                }
+
+                let dateDetails =
+                `<div class="dateDetails">\
+                <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
+                <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
+                </div>`;
+                let details =
+                `<div>Affected Customers: ${CustomerAffected}</div>\
+                <div>Outage Type: ${type}</div>\
+                <div>Reason: ${reason}</div>\
+                <div>Status: ${status}</div>\
+                ${dateDetails}\
+                <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
+                <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+                ${contact}\
+                </span>`;
+
+                return({name:name,details:details})
+
+            }
+
             if (feature.geometry.type.toLowerCase() === 'geometrycollection') {
                 let details = PowerOutageDetails(feature)
 
@@ -649,83 +726,6 @@ const rfsIcons = {
                 mapLayer.addImageMarker(lat, lon, powerIcon, details.name, details.details);
                 count++;
             }
-
-            function PowerOutageDetails(source){
-                var name,creation,start,end,reason,status,type,CustomerAffected,contact = 'Unknown'
-                switch (source.owner)
-                {
-                    case 'EndeavourEnergy':
-                    name = 'Endeavour Energy: ' + source.properties.incidentId;
-                    creation = source.properties.creationDateTime;
-                    start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
-                    end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
-                    reason = source.properties.reason;
-                    status = source.properties.status;
-                    type = source.properties.outageType;
-                    if (type = "U") type="Unknown";
-                    if (type = "P") type="Planned";
-                    CustomerAffected = source.properties.numberCustomerAffected;
-                    contact = "Endeavour Energy 131 003"
-                    break
-                    case 'Ausgrid':
-                    name = 'Ausgrid: ' + source.properties.incidentId;
-                    creation = source.properties.creationDateTime;
-                    start = moment(source.properties.startDateTime).format('DD/MM/YY HH:mm:ss');
-                    end = moment(source.properties.endDateTime).format('DD/MM/YY HH:mm:ss');
-                    reason = source.properties.reason;
-                    type = source.properties.outageType;
-                    status = source.properties.status
-                    if (status == "") status="Unknown";
-                    type = source.properties.type
-                    CustomerAffected = source.properties.numberCustomerAffected;
-                    contact = "Ausgrid 13 13 88"
-                    break
-                    case 'EssentialEnergy':
-                    name = 'Essential Energy: ' + source.id;
-                    start = /Time Off\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
-                    end = /Time On\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
-                    if (end == "") end = "Unknown";
-                    status = /Status\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)
-                    if (status)
-                    {
-                        status = status[1]
-                    } else {
-                        status = "NA"
-                    }
-                    type = source.properties.outageType;
-                    if (source.properties.styleUrl.match("unplanned"))
-                    {
-                        type = "Unplanned"
-                        reason = "Unknown"
-                    } else {
-                        type = "Planned"
-                        reason = /Reason\:<\/span>(.*?)<\/div>/g.exec(source.properties.description)[1]
-                    }
-                    CustomerAffected = /No\. of Customers affected\:<\/span>(\d*)<\/div>/g.exec(source.properties.description)[1]
-                    contact = "Essential Energy 132 080"
-                    break
-                }
-
-                let dateDetails =
-                `<div class="dateDetails">\
-                <div><span class="dateDetailsLabel">Start Time: </span> ${start}</div>\
-                <div><span class="dateDetailsLabel">End Time: </span> ${end}</div>\
-                </div>`;
-                let details =
-                `<div>Affected Customers: ${CustomerAffected}</div>\
-                <div>Outage Type: ${type}</div>\
-                <div>Reason: ${reason}</div>\
-                <div>Status: ${status}</div>\
-                ${dateDetails}\
-                <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">\
-                <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
-                ${contact}\
-                </span>`;
-
-                return({name:name,details:details})
-
-            }
-
 
         }
     }
@@ -1198,7 +1198,7 @@ export default class InjectScriptMapManager {
 
         //bind to the click event for the jobs and fiddle with the popups Onclick
         lighthouseMap._map._layers.graphicsLayer3.onClick.after.advice = function (event) {
-            var jobid = /\/Jobs\/(\d.*?)\"/g.exec(event.graphic.infoTemplate.content)[1]
+            var jobid = /\/Jobs\/(\d.*?)"/g.exec(event.graphic.infoTemplate.content)[1]
 
 
             var details =
@@ -1257,7 +1257,7 @@ ${rows.join('\r')}
 </div>`
 
                     // Job Tags
-                    var tagArray = new Array();
+                    var tagArray = [];
                     $.each(data.Tags, function (tagIdx, tagObj) {
                         tagArray.push(tagObj.Name);
                     });

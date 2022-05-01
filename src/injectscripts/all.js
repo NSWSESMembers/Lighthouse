@@ -1,3 +1,4 @@
+/* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment */
 var clusterCodes = require('../lib/clusters.js');
 
 whenWeAreReady(user, function() {
@@ -8,7 +9,7 @@ whenWeAreReady(user, function() {
   }
 
   $.get(urls.Base + "/Api/v1/Entities/" + user.currentHqId, function(data) {
-    results = data;
+    let results = data;
 
     user.hq = results;
 
@@ -30,7 +31,7 @@ whenWeAreReady(user, function() {
 
     var vars = "?userId=" + user.Id + "&host=" + urls.Base + "&source=" + location.origin + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString());
 
-    lighthouseMenu = MakeMenu(lighthouseUrl, vars, user.hq.Code)
+    let lighthouseMenu = MakeMenu(lighthouseUrl, vars, user.hq.Code)
 
     function MakeMenu(lighthouseUrl, vars, unitName) {
 
@@ -152,7 +153,7 @@ whenWeAreReady(user, function() {
 
     //lighthouse menu for teams
     if (location.pathname == "/Teams") {
-
+      let regionfilter;
       if (user.hq.EntityTypeId != 1) { //make region level more obvious
         regionfilter = user.hq.Code + " Units";
       } else {
@@ -160,11 +161,12 @@ whenWeAreReady(user, function() {
       }
 
       clusterCodes.returnCluster(user.hq.Name, function(cluster) { //sync call to get cluster name
+        let clusterfilter, filtermenu;
         if (typeof cluster !== 'undefined') {
           clusterfilter = cluster.clusterCode
 
           //only draw with cluster if we got a cluster name back
-      var filtermenu = `\
+      filtermenu = `\
     <li class="" id="lhquickfilter">\
     <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
     <ul class="sub-menu" style="display: none;">\
@@ -178,7 +180,7 @@ whenWeAreReady(user, function() {
 
 } else {
 
-  var filtermenu = `\
+  filtermenu = `\
 <li class="" id="lhquickfilter">\
 <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
 <ul class="sub-menu" style="display: none;">\
@@ -262,7 +264,7 @@ whenWeAreReady(user, function() {
 
       $("#lhfiltercollectionsave").click(function() {
 
-        saveObject = {}
+        let saveObject = {}
 
         saveObject.selectedTeamTypes = filterViewModel.selectedTeamTypes.peek().map(function(x) {
           return {
@@ -294,7 +296,7 @@ whenWeAreReady(user, function() {
         var SaveName = prompt("Please enter a name for the collection. If the name already exists it will be overwritten.", "");
         if (SaveName !== null && SaveName != "") {
 
-          CollectionParent = {}
+          let CollectionParent = {}
           CollectionParent.name = SaveName;
           CollectionParent.description = SaveName;
           CollectionParent.items = saveObject;
@@ -317,7 +319,7 @@ whenWeAreReady(user, function() {
     //lighthouse menu for jobs
 
     if (location.pathname === "/Jobs") {
-
+      let regionfilter;
       if (user.hq.EntityTypeId != 1) {
         //make region level more obvious
         regionfilter = user.hq.Code + " Units";
@@ -326,10 +328,11 @@ whenWeAreReady(user, function() {
       }
 
       clusterCodes.returnCluster(user.hq.Name, function(cluster) { //sync call to get cluster name
+        let clusterfilter, filtermenu;
         if (typeof cluster !== 'undefined') {
           clusterfilter = cluster.clusterCode
 
-          var filtermenu = `\
+          filtermenu = `\
           <li class="" id="lhquickfilter">\
           <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
           <ul class="sub-menu" style="display: none;">\
@@ -345,7 +348,7 @@ whenWeAreReady(user, function() {
 
 
         } else {
-          var filtermenu = `\
+          filtermenu = `\
           <li class="" id="lhquickfilter">\
           <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
           <ul class="sub-menu" style="display: none;">\
@@ -528,7 +531,7 @@ whenWeAreReady(user, function() {
 
         $("#lhfiltercollectionsave").click(function() {
 
-          saveObject = {}
+          let saveObject = {}
 
           saveObject.selectedTags = filterViewModel.selectedTags.peek().map(function(x) {
             return {
@@ -589,7 +592,7 @@ whenWeAreReady(user, function() {
 
           var SaveName = prompt("Please enter a name for the collection. If the name already exists it will be overwritten.", "");
           if (SaveName !== null && SaveName != "") {
-            CollectionParent = {}
+            let CollectionParent = {}
             CollectionParent.name = SaveName;
             CollectionParent.description = SaveName;
             CollectionParent.items = saveObject;
@@ -622,10 +625,11 @@ function LoadTeamFilterCollections() {
       return;
     if (event.data.type) {
       if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseTeamFilterCollections") {
+        let items;
         try {
-          var items = JSON.parse(event.data.dataresult)
+          items = JSON.parse(event.data.dataresult)
         } catch (e) {
-          var items = []
+          items = []
         }
         ProcessData(items)
       }
@@ -776,10 +780,11 @@ function LoadJobFilterCollections() {
       return;
     if (event.data.type) {
       if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseJobFilterCollections") {
+        let items;
         try {
-          var items = JSON.parse(event.data.dataresult)
+          items = JSON.parse(event.data.dataresult)
         } catch (e) {
-          var items = []
+          items = []
         }
         ProcessData(items)
       }
@@ -1009,7 +1014,7 @@ function filtershowallmyregion() {
     filterViewModel.selectedEntities.push(data);
   })
   $.get(urls.Base + "/Api/v1/Entities/" + parentId + "/Children", function(data) {
-    results = data;
+    let results = data;
     results.forEach(function(d) {
       filterViewModel.selectedEntities.push(d);
     });
@@ -1063,7 +1068,7 @@ $(function() {
       var $t = $(this),
         $q = $('#layoutJobSearchFormJobQuery', $t),
         val = $q.val();
-      if (/^\d{0,4}\-?\d{4}$/.test(val)) { // if the field contains 4 or more digits and nothing else
+      if (/^\d{0,4}-?\d{4}$/.test(val)) { // if the field contains 4 or more digits and nothing else
         document.location = '/Jobs/' + parseInt(val.replace(/\D/g, ''), 10);
         e.preventDefault();
         e.stopImmediatePropagation();

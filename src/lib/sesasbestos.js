@@ -1,3 +1,4 @@
+/* global urls, user */
 // function for searching the ops log for jobs on the SES asbestos register
 
 var $ = require('jquery');

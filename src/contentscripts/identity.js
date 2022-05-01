@@ -1,5 +1,5 @@
 
-var encodedJson = document.getElementById("modelJson").textContent.replace(/&quot;/g, '\"');
+var encodedJson = document.getElementById("modelJson").textContent.replace(/&quot;/g, '"');
 var model = JSON.parse(encodedJson);
 
 
@@ -11,10 +11,10 @@ if (model.clientName == "beacon" || model.clientName == "beacon Train" ||  model
   var LighthouseChrome = require('../pages/lib/shared_chrome_code.js');
 
 
-  url = chrome.extension.getURL("icons/lhbackdrop_dark.png")
+  let url = chrome.extension.getURL("icons/lhbackdrop_dark.png")
 
 
-  version = 'v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
+  let version = 'v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
   $('body').append(
     <span id ='lhbg'>
     <div class="col-xs-12" style="position:fixed;bottom:0px;right:0px;width:600px;text-align:right;margin-right:-10px;color:white">

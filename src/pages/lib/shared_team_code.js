@@ -51,7 +51,7 @@ export function get_teams(unit, host, StartDate, EndDate, userId = 'notPassed', 
   params['StatusTypeId'] = statusTypes;
   params['IncludeDeleted'] = false;
 
-  if (unit !== null || typeof unit == undefined) {
+  if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) == false) {
       params['AssignedToId'] = unit.Id;
       params['CreatedAtId'] = unit.Id;
@@ -126,7 +126,7 @@ export function getTeamGeoJson(hqs, host, startDate, endDate, userId = 'notPasse
 
                 // Create a promise for this team to check its tasking and details
                 promises.push(new Promise((resolve) => {
-                    GetTaskingfromBeacon(team.Id, host, userId, token, function (teamTasking) {
+                    get_tasking(team.Id, host, userId, token, function (teamTasking) {
                         let latestTasking = null;
                         let latestTime = null;
 

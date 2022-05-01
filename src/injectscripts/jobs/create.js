@@ -1,3 +1,4 @@
+/* global $, jobsystem */
 var DOM = require('jsx-dom-factory').default;
 var sesAsbestosSearch = require('../../lib/sesasbestos.js');
 
@@ -54,7 +55,7 @@ $(document).ready(function() {
       window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", lat: jobsystem.geocodedAddress.peek().latitude, lng: jobsystem.geocodedAddress.peek().longitude }, "*");
 
 
-        address = jobsystem.geocodedAddress.peek()
+        let address = jobsystem.geocodedAddress.peek()
         if (address.street != "") {
           address.PrettyAddress = address.pretty_address
           address.StreetNumber = address.number

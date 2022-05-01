@@ -100,9 +100,10 @@ function HackTheMatrix(progressBar) {
   var end = new Date(decodeURIComponent(params.end));
 
   nitc.get_json(params, params.userId, token, start, end, function(nitcs) {
+    let exports;
 
     if (document.getElementById("Activity").checked) {  // Activity list export
-        var exports = nitcs.Results.map(function(d){
+        exports = nitcs.Results.map(function(d){
             var rawSdate = new Date(d.StartDate);
             var rawEdate = new Date(d.EndDate);
             d.StartDateFixed = new Date(rawSdate.getTime() + ( rawSdate.getTimezoneOffset() * 60000 ));
@@ -130,7 +131,7 @@ function HackTheMatrix(progressBar) {
             return rObj
         });
     } else {    // Member list export
-        var exports = [];
+        exports = [];
         var listOfActivities = [];
         nitcs.Results.map(function(d) {
             var activities = d.Tags.map(function(t){return t.Name});
@@ -154,7 +155,7 @@ function HackTheMatrix(progressBar) {
             });
         });
         // Pad out the activities so we have the same number of columns for all members
-        for (i =0; i < exports.length; i++) {
+        for (let i =0; i < exports.length; i++) {
             listOfActivities.forEach(function(a) {
                 if (typeof exports[i][a] === 'undefined') {
                     exports[i][a] = 0;
@@ -174,7 +175,7 @@ function HackTheMatrix(progressBar) {
 }
 
 function convertArrayOfObjectsToCSV(data) {
-  var result, ctr, keys, columnDelimiter, lineDelimiter, data;
+  var result, ctr, keys, columnDelimiter, lineDelimiter;
 
   if (data == null || !data.length) {
     return null;
@@ -214,14 +215,14 @@ function downloadCSV(file,dataIn) {
   if (csv == null)
     return;
 
-  filename = file;
+  let filename = file;
 
   if (!csv.match(/^data:text\/csv/i)) {
     csv = 'data:text/csv;charset=utf-8,' + csv;
   }
-  data = encodeURI(csv);
+  let data = encodeURI(csv);
 
-  link = document.createElement('a');
+  let link = document.createElement('a');
   link.setAttribute('href', data);
   link.setAttribute('download', filename);
   link.click();

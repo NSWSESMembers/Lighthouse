@@ -1,3 +1,4 @@
+/* global lighthouseUrl, masterViewModel, $, moment, user, urls, jobId, Enum */
 var DOM = require('jsx-dom-factory').default;
 var _ = require('underscore');
 var L = require('leaflet')
@@ -70,6 +71,18 @@ function lighthouseETAFromNow() {
 
 function lighthouseETA() {
   setTimeout( function() {
+    const addToTime = (addMins, where, text) => {
+      var timeInput = $(where).parent('div').parent('div').parent('div').find('input[data-bind$="datetimepicker: $parent.jobTeamStatusEstimatedCompletion, attr: {placeholder: $parent.jobTeamStatusTypeBeingUpdated() ? ($parent.jobTeamStatusTypeBeingUpdated().Id == Enum.JobTeamStatusType.Enroute.Id ? \'ETA\' : \'ETC\') : \'\' }"]')
+      var now = moment()
+      var current = moment()
+      if (timeInput.val() != ''){
+        current = moment(timeInput.val(),'DD/MM/YYYY HH:mm')
+      }
+      var future = current.clone()
+      future.add(addMins,'m')
+      masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion(future)
+    }
+
     //dont draw for offsite
     if (masterViewModel.teamsViewModel.jobTeamStatusTypeBeingUpdated().Id != 5)
     {
@@ -101,17 +114,7 @@ function lighthouseETA() {
 
       })
 
-      function addToTime(addMins, where, text) {
-        var timeInput = $(where).parent('div').parent('div').parent('div').find('input[data-bind$="datetimepicker: $parent.jobTeamStatusEstimatedCompletion, attr: {placeholder: $parent.jobTeamStatusTypeBeingUpdated() ? ($parent.jobTeamStatusTypeBeingUpdated().Id == Enum.JobTeamStatusType.Enroute.Id ? \'ETA\' : \'ETC\') : \'\' \}"]')
-        var now = moment()
-        var current = moment()
-        if (timeInput.val() != ''){
-          current = moment(timeInput.val(),'DD/MM/YYYY HH:mm')
-        }
-        var future = current.clone()
-        future.add(addMins,'m')
-        masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion(future)
-      }
+
 }
 }, 0);
 
@@ -124,14 +127,14 @@ function lighthouseTasking() {
 
     $('a[data-bind="attr: {href: \'/Teams/\' + Team.Id + \'/Edit\'}, text: Team.Callsign"').each(function(k, v) { //for every dom that shows team name
         if ($(v).parent().find("#message").length == 0) { //check for an existing msg button
-            DOMCallsign = ($(this)[0].href.split("/")[4])
+            let DOMCallsign = ($(this)[0].href.split("/")[4])
             //for every tasked team
             $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k, vv) {
                 //match against this DOM
                 if (vv.Team.Id == DOMCallsign && vv.Team.Members.length)
                 {
                     //attach a sms button
-                    msg = return_message_button()
+                    let msg = return_message_button()
                     $(v).after(msg)
 
                     //click function
@@ -154,15 +157,15 @@ function lighthouseTasking() {
         if ($(v).parent().find("#untask").length == 0) { //check for an existing untask button
 
             //pull out the call sign and the status
-            DOMCallsign = ($(this)[0].parentNode.children[0].children[0].href.split("/")[4])
-            DOMStatus = ($(this)[0].parentNode.children[1].innerText.split(" ")[0])
+            let DOMCallsign = ($(this)[0].parentNode.children[0].children[0].href.split("/")[4])
+            let DOMStatus = ($(this)[0].parentNode.children[1].innerText.split(" ")[0])
             //for every tasked team
             $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function(k, vv) {
                 //match against this DOM
                 if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) //only show for tasking that can be deleted (tasked only)
                 {
                     //attached a X button if its matched and deletable
-                    untask = return_untask_button()
+                    let untask = return_untask_button()
                     $(v).append(untask)
 
                     //click function
@@ -250,11 +253,11 @@ whenAddressIsReady(function() {
 
 })
 
-quickTask = return_quicktaskbutton();
-quickSector = return_quicksectorbutton();
-quickCategory = return_quickcategorybutton();
-quickRadioLog = return_quickradiologbutton();
-instantRadiologModal = return_quickradiologmodal();
+let quickTask = return_quicktaskbutton();
+let quickSector = return_quicksectorbutton();
+let quickCategory = return_quickcategorybutton();
+let quickRadioLog = return_quickradiologbutton();
+let instantRadiologModal = return_quickradiologmodal();
 
 
   function renderNearestAssets({teamFilter, activeOnly, resultsToDisplay, cb}) {
@@ -508,6 +511,7 @@ instantRadiologModal = return_quickradiologmodal();
 
 
      assetDistances.forEach(function(v) { //safe way to loop with a limit
+      let row;
 
        if (used < maxLength || typeof(teamFilter) != "undefined") {
          if ((activeOnly && moment().diff(v.properties.lastSeen, "hours") < 1) || (!activeOnly)) {
@@ -520,6 +524,7 @@ instantRadiologModal = return_quickradiologmodal();
         var unit = v.properties.name.match(/([a-z]+)/i) ? v.properties.name.match(/([a-z]+)/i)[1] : v.properties.name;
         var veh = v.properties.name.match(/[a-z]+(\d*[a-z]?)/i) ? v.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1] : '';
         let uniqueColor = colorScale[used-1]//`${stringToColor(v.id)}`
+        let bgcolor;
 
           //use our unique color, unless its the first or last
            if (used == 1) {
@@ -533,7 +538,7 @@ instantRadiologModal = return_quickradiologmodal();
             }
 
 
-         let row = $(`
+         row = $(`
            <tr style="${moment().diff(v.properties.lastSeen, "days") > 1 ? "font-style: italic;" : ''}  cursor: pointer;">
         <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${v.properties.entity}'s ${v.properties.capability} ${v.properties.resourceType}">${v.properties.name}</div></th>
         <td><div id="locate" style="background:${uniqueColor}"></div></td>
@@ -684,13 +689,13 @@ instantRadiologModal = return_quickradiologmodal();
 
                 allRoutersOnMap[v.properties.name] = r.coordinates
 
-                 middle = r.coordinates[Math.floor(r.coordinates.length/4)]
+                let middle = r.coordinates[Math.floor(r.coordinates.length/4)]
 
-               distance = r.summary.totalDistance;
-               time = r.summary.totalTime;
-               timeHr = parseInt(moment.utc(time*1000).format('HH'))
-               timeMin = parseInt(moment.utc(time*1000).format('mm'))
-               timeText = ""
+               let distance = r.summary.totalDistance;
+               let time = r.summary.totalTime;
+               let timeHr = parseInt(moment.utc(time*1000).format('HH'))
+               let timeMin = parseInt(moment.utc(time*1000).format('mm'))
+               let timeText = ""
                if (timeHr == 0) {
                  timeText = `${timeMin} min`
                } else {
@@ -763,66 +768,68 @@ instantRadiologModal = return_quickradiologmodal();
 
 
 
-          function zoomToFitRoutes() {
-            console.log('before',allRoutersOnMap)
-                        // Zoom to fit all drawn paths
-            var activePoints = []
-            for (var k in allRoutersOnMap){
-              if (allRoutersOnMap.hasOwnProperty(k)) {
-                allRoutersOnMap[k].map(function(c) {
-                  activePoints.push([c.lat,c.lng])
-                })
-              }
-            }
-            if (activePoints.length){
-              let latlngBounds = L.latLngBounds(activePoints)
-              assetMap.flyToBounds(latlngBounds, {padding: [40, 40]})
-            }
-            }
 
-
-
-           function drawPathingAndUpdateRow() {
-             if (!row.hasClass( 'nearest-asset-table-selected' )) {
-               $(row).addClass('nearest-asset-table-selected')
-               $('#asset-map-loading').css("visibility", "unset");
-               //remove the crow flies and replace with true
-               polyline.remove(assetMap);
-               distanceMarker.remove(assetMap);
-
-
-              //reset waypoints each time just incase someone has repathed
-              routingControl.getPlan().setWaypoints([
-                L.latLng(v.geometry.coordinates[1], v.geometry.coordinates[0]),
-                L.latLng(masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude)
-              ])
-               routingControl.addTo(assetMap);
-
-
-             } else {
-               $(row).removeClass('nearest-asset-table-selected')
-
-               delete allRoutersOnMap[v.properties.name]
-               routingControl.remove(assetMap)
-               distanceMarkerRoute.forEach(function(r) { r.remove(assetMap)})
-               distanceMarkerRoute = []
-               marker.unbindTooltip()
-               marker.setZIndexOffset(zindex)
-               zoomToFitRoutes()
-
-             }
-
-             if ($(".nearest-asset-table-selected").length == 0) {
-               $('#asset-route-warning').css("visibility", "hidden");
-             } else {
-               $('#asset-route-warning').html("Travel distance and time are estimates and should not be used for navigation or response times")
-               $('#asset-route-warning').css("visibility", "unset");
-             }
-
-           }
          } else {
            hiddenAssets = hiddenAssets + 1
          }
+     }
+
+     function zoomToFitRoutes() {
+      console.log('before',allRoutersOnMap)
+                  // Zoom to fit all drawn paths
+      var activePoints = []
+      for (var k in allRoutersOnMap){
+        if (Object.prototype.hasOwnProperty.call(allRoutersOnMap, k)) {
+          allRoutersOnMap[k].map(function(c) {
+            activePoints.push([c.lat,c.lng])
+          })
+        }
+      }
+      if (activePoints.length){
+        let latlngBounds = L.latLngBounds(activePoints)
+        assetMap.flyToBounds(latlngBounds, {padding: [40, 40]})
+      }
+      }
+
+
+
+     function drawPathingAndUpdateRow() {
+       if (!row.hasClass( 'nearest-asset-table-selected' )) {
+         $(row).addClass('nearest-asset-table-selected')
+         $('#asset-map-loading').css("visibility", "unset");
+         //remove the crow flies and replace with true
+         polyline.remove(assetMap);
+         distanceMarker.remove(assetMap);
+
+
+        //reset waypoints each time just incase someone has repathed
+        routingControl.getPlan().setWaypoints([
+          L.latLng(v.geometry.coordinates[1], v.geometry.coordinates[0]),
+          L.latLng(masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude)
+        ])
+         routingControl.addTo(assetMap);
+
+
+       } else {
+         $(row).removeClass('nearest-asset-table-selected')
+
+         delete allRoutersOnMap[v.properties.name]
+         routingControl.remove(assetMap)
+         distanceMarkerRoute.forEach(function(r) { r.remove(assetMap)})
+         distanceMarkerRoute = []
+         marker.unbindTooltip()
+         marker.setZIndexOffset(zindex)
+         zoomToFitRoutes()
+
+       }
+
+       if ($(".nearest-asset-table-selected").length == 0) {
+         $('#asset-route-warning').css("visibility", "hidden");
+       } else {
+         $('#asset-route-warning').html("Travel distance and time are estimates and should not be used for navigation or response times")
+         $('#asset-route-warning').css("visibility", "unset");
+       }
+
      }
    })
    if (hiddenAssets > 0) {
@@ -1419,7 +1426,7 @@ function jobView_teamsTasked_itemsPrepare(){
       // Strip Old Classes
       $t.attr('class', $t.attr('class').replace(/\bteamStatus_\S+\b/,' '));
       // Add new Class for Team Status
-      if( b = /^(.+)\s+\(Logged:\s+([^\)]+)\)/.exec(lastUpdate) ){
+      if( b == /^(.+)\s+\(Logged:\s+([^)]+)\)/.exec(lastUpdate) ){
         $t.addClass('teamStatus_'+b[1].replace(/\s+/,'-').toLowerCase());
       }else{
         console.log('Unable to parse '+lastUpdate);
@@ -1536,7 +1543,7 @@ function lighthouseDictionary(){
     'KLO4'    : 'Keep a Look Out For',
     'AA'      : 'As Above' ,
     'INFTS?'  : 'Informant/Caller' ,
-    '\dPOBS?' : 'Person(s) On Board' ,
+    '\\dPOBS?' : 'Person(s) On Board' ,
     'POIS?'   : 'Person(s) Of Interest' ,
     'POSS'    : 'Possible' ,
     'PTS?'    : 'Patient(s)' ,
@@ -1592,13 +1599,14 @@ if (document.getElementById("CompleteQuickTextBox")) {
 masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValue) {
   if (typeof newValue !== 'undefined') {
     if (newValue !== null) {
+      let quickText, i, opt;
       switch (newValue.Name) {
         case "Storm":
         removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
-        var quickText = ["", "No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.", "Branch/tree sectioned; resident/owner to organize removal"]
+        quickText = ["", "No damage to property, scene safe. Resident to arrange for clean up.", "Tree removed and scene made safe.", "Roof repaired and scene made safe.", "Damage repaired and scene made safe.", "Job was referred to contractors who have completed the task.", "Council have removed the tree from the road, scene made safe.", "Branch/tree sectioned; resident/owner to organize removal"]
         document.getElementById("CompleteTeamQuickTextBox").removed
-        for (var i = 0; i < quickText.length; i++) {
-          var opt = document.createElement('option');
+        for (i = 0; i < quickText.length; i++) {
+          opt = document.createElement('option');
           opt.text = quickText[i];
           opt.value = quickText[i];
           document.getElementById("CompleteTeamQuickTextBox").add(opt);
@@ -1606,9 +1614,9 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
         break;
         case "Search":
         removeOptions(document.getElementById("CompleteTeamQuickTextBox"));
-        var quickText = ["", "All teams complete on search, person found safe and well.", "All teams complete on search, nothing found."]
-        for (var i = 0; i < quickText.length; i++) {
-          var opt = document.createElement('option');
+        quickText = ["", "All teams complete on search, person found safe and well.", "All teams complete on search, nothing found."]
+        for (i = 0; i < quickText.length; i++) {
+          opt = document.createElement('option');
           opt.text = quickText[i];
           opt.value = quickText[i];
           document.getElementById("CompleteTeamQuickTextBox").add(opt);
@@ -1623,9 +1631,9 @@ masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function(newValu
 function InstantCategoryButton() {
   if ( $(quickCategory).find('li').length < 1 ) {
     var categories = ["NA", "1", "2", "3", "4", "5"];
-    finalli = []
+    let finalli = []
     categories.forEach(function(entry) {
-      item = (<li><a style="text-align:left" href="#">{entry}</a></li>);
+      let item = (<li><a style="text-align:left" href="#">{entry}</a></li>);
       //click handler
       $(item).click(function (e) {
         SetCategory(entry)
@@ -1688,8 +1696,9 @@ function InstantSectorButton() {
 
           var data = response.responseJSON
 
-          finalli = []
+          let finalli = []
           data.Results.forEach(function(entry) {
+            let currentsector, item;
             if (masterViewModel.sector.peek() != null)
             {
               currentsector = masterViewModel.sector.peek().Id
@@ -1712,7 +1721,7 @@ function InstantSectorButton() {
           $(quickSector).find('ul').append(finalli)
         } else {
           $(quickSector).find('ul').empty();
-          no_results = (<li><a href="#">No Open Sectors</a></li>)
+          let no_results = (<li><a href="#">No Open Sectors</a></li>)
           $(quickSector).find('ul').append(no_results)
         }
       }
@@ -1777,7 +1786,7 @@ function InstantTaskButton() {
   var loading = (<li><a href="#" style="text-align: center;"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>);
   $(quickTask).find('ul').append(loading);
 
-  lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
+  let lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
 
   var sectorFilter = null;
   if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true )
@@ -1814,7 +1823,7 @@ function InstantTaskButton() {
               /////
               ///// Search Box
               /////
-              theSearch = return_search_box();
+              let theSearch = return_search_box();
               $(theSearch).click(function (e) {
                 e.stopPropagation();
               });
@@ -1830,8 +1839,8 @@ function InstantTaskButton() {
                   }
                 });
                 $.each($(quickTask).find('ul').find('li[role="presentation"]'),function(k,v){
-                  childrenVis = false
-                  nextChild = $(v).next()
+                  let childrenVis = false
+                  let nextChild = $(v).next()
                   // walk the neighbours of the li, if they are displayed then dont hide the pres li, otherwise hide it. wish this was a nested DOM!
                   while (nextChild != null)
                   {
@@ -1861,8 +1870,8 @@ function InstantTaskButton() {
               /////
               $(quickTask).find('ul').append(theSearch);
 
-              sector = {}
-              nonsector = []
+              let sector = {}
+              let nonsector = []
               $.each(response.responseJSON.Results, function(k, v) { //for every team that came back
                 if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
                 {
@@ -1905,8 +1914,8 @@ function InstantTaskButton() {
                 }
               });
 
-              finalli = [];
-              drawnsectors = [];
+              let finalli = [];
+              let drawnsectors = [];
 
               //finalli.push(return_lipres(masterViewModel.sector.peek().Name+" Sector Teams"));
               $.each(sector, function(k, v){
@@ -1931,7 +1940,7 @@ function InstantTaskButton() {
 
             } else {
               $(quickTask).find('ul').empty();
-              no_results = (<li><a href="#">No Active Field Teams</a></li>);
+              let no_results = (<li><a href="#">No Active Field Teams</a></li>);
               $(quickTask).find('ul').append(no_results);
             }
 
@@ -1939,7 +1948,7 @@ function InstantTaskButton() {
 
         } else { //job has changed status since it was opened so warn them
           $(quickTask).find('ul').empty();
-          no_results = (<li><a href="#">Cannot task when job status is {masterViewModel.jobStatus.peek().Name}. Refresh the page!</a></li>)
+          let no_results = (<li><a href="#">Cannot task when job status is {masterViewModel.jobStatus.peek().Name}. Refresh the page!</a></li>)
           $(quickTask).find('ul').append(no_results)
         }
       }
@@ -2293,6 +2302,7 @@ function checkAddressHistory(){
     , dataType: 'json'
     , complete: function(response, textStatus) {
       var $job_view_history_container = $('#job_view_history_container');
+      let content;
       switch(textStatus){
         case 'success':
         if(response.responseJSON.Results.length) {
@@ -2303,7 +2313,7 @@ function checkAddressHistory(){
               always_show : true ,
               hide_old :    false ,
               has_old :     false ,
-              jobs :        new Array()
+              jobs :        []
             } ,
             'partial':   {
               title :       'Apartment, Townhouse or Battleaxe' ,
@@ -2311,7 +2321,7 @@ function checkAddressHistory(){
               always_show : false ,
               hide_old :    false ,
               has_old :     false ,
-              jobs :        new Array()
+              jobs :        []
             } ,
             'neighbour': {
               title :       'Immediate Neighbours' ,
@@ -2319,7 +2329,7 @@ function checkAddressHistory(){
               always_show : false ,
               hide_old :    false ,
               has_old :     false ,
-              jobs :        new Array()
+              jobs :        []
             } ,
             'street':    {
               title :       'Same Street' ,
@@ -2327,10 +2337,10 @@ function checkAddressHistory(){
               always_show : false ,
               hide_old :    true ,
               has_old :     false ,
-              jobs :        new Array()
+              jobs :        []
             }
           };
-          status_groups = {
+          const status_groups = {
             'active' :    ['new', 'acknowledged', 'active', 'tasked', 'referred'] ,
             'complete' :  ['complete', 'finalised'] ,
             'cancelled' : ['cancelled', 'rejected']
@@ -2365,14 +2375,14 @@ function checkAddressHistory(){
               // Default value for Situation on Scene
               if(v.SituationOnScene == null) v.SituationOnScene = (<em>View job for more detail</em>);
               // Job Tags
-              var tagArray = new Array();
+              var tagArray = [];
               $.each( v.Tags , function( tagIdx , tagObj ){
                 tagArray.push( tagObj.Name );
               });
               v.tagString = ( tagArray.length ? tagArray.join(', ') : (<em>No Tags</em>) );
               // Job CSS Classes
               v.cssClasses = 'job_view_history_item job_view_history_item_status_' + v.JobStatusType.Name.toLowerCase();
-              var jobGroups = new Array();
+              var jobGroups = [];
               $.each(status_groups, function(status_group, statuses) {
                 if(statuses.indexOf(v.JobStatusType.Name.toLowerCase()) >= 0)
                   jobGroups.push(status_group);
@@ -2661,14 +2671,14 @@ function getCardinal(angle) {
 function StandardDeviation(numbersArr) {
     //--CALCULATE AVAREGE--
     var total = 0;
-    for(var key in numbersArr)
+    for(let key in numbersArr)
        total += numbersArr[key];
     var meanVal = total / numbersArr.length;
     //--CALCULATE AVAREGE--
 
     //--CALCULATE STANDARD DEVIATION--
     var SDprep = 0;
-    for(var key in numbersArr)
+    for(let key in numbersArr)
        SDprep += Math.pow((parseFloat(numbersArr[key]) - meanVal),2);
     var SDresult = Math.sqrt(SDprep/numbersArr.length);
     //--CALCULATE STANDARD DEVIATION--

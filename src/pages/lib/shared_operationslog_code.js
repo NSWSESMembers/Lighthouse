@@ -11,7 +11,7 @@ export function get_operations_log(Id, host, userId = 'notPassed', token, callba
     dataType: 'json',
     complete: function(response, textStatus) {
       if (textStatus == 'success') {
-        results = response.responseJSON;
+        let results = response.responseJSON;
         if (typeof callback === "function") {
           callback(results);
         }

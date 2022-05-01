@@ -4,7 +4,6 @@ var LighthouseJson = require('./lib/shared_json_code.js');
 var LighthouseChrome = require('./lib/shared_chrome_code.js');
 var LighthouseWordCloud = require('./lib/stats/wordcloud.js');
 var LighthouseStatsJobsCleanup = require('./lib/stats/jobparsing.js');
-var LighthouseStatsJobsCleanup = require('./lib/stats/jobparsing.js');
 import '../../styles/pages/stats.css';
 
 var $ = require('jquery');
@@ -165,8 +164,8 @@ function RunForestRun(mp) {
 
         start.setDate(start.getDate() - (timeoverride / 24));
 
-        starttime = start.toISOString();
-        endtime = end.toISOString();
+        let starttime = start.toISOString();
+        let endtime = end.toISOString();
 
         params.start = starttime;
         params.end = endtime;
@@ -327,6 +326,7 @@ var statusChart = null;
 var agencyChart = null;
 var eventChart = null;
 var priorityChart = null;
+let jobTypeChart = null;
 var hazardChart = null;
 var propertyChart = null;
 var jobtypeChart = null;
@@ -381,25 +381,24 @@ function prepareCharts(jobs, start, end, firstRun) {
 
     var oneDay = 24 * 60 * 60 * 1000; // hours*minutes*seconds*milliseconds
     var timeDifference = (Math.round(Math.abs((start.getTime() - end.getTime()) / (oneDay))));
-    var timePeriodWord;
-    var timePeriodUnits;
+    let timePeriodWord, timePeriodUnits, volumeClosedByPeriod, volumeOpenByPeriod;
 
     if (timeDifference <= 14) {
-      var timePeriodWord = "Hour";
-      var timePeriodUnits = d3.timeHours;
-      var volumeClosedByPeriod = facts.dimension(function(d) {
+      timePeriodWord = "Hour";
+      timePeriodUnits = d3.timeHours;
+      volumeClosedByPeriod = facts.dimension(function(d) {
         return d3.timeHour(d.JobCompleted);
       });
-      var volumeOpenByPeriod = facts.dimension(function(d) {
+      volumeOpenByPeriod = facts.dimension(function(d) {
         return d3.timeHour(d.JobReceivedFixed);
       });
     } else {
-      var timePeriodWord = "Day";
-      var timePeriodUnits = d3.timeDays;
-      var volumeClosedByPeriod = facts.dimension(function(d) {
+      timePeriodWord = "Day";
+      timePeriodUnits = d3.timeDays;
+      volumeClosedByPeriod = facts.dimension(function(d) {
         return d3.timeDay(d.JobCompleted);
       });
-      var volumeOpenByPeriod = facts.dimension(function(d) {
+      volumeOpenByPeriod = facts.dimension(function(d) {
         return d3.timeDay(d.JobReceivedFixed);
       });
     }
@@ -425,9 +424,8 @@ function prepareCharts(jobs, start, end, firstRun) {
     var jobLengthPeriodsGroupFiltered = remove_empty_bins(jobLengthPeriodsGroup) // or filter_bins, or whatever
 
 
-    var jobLengthGroup = accumulate_group_top(jobLength)
 
-    function accumulate_group_top(source_group) {
+    const accumulate_group_top = (source_group) => {
       return {
         all: function() {
           var onlyCompleted = source_group.top(Infinity).filter(function(m) {
@@ -473,6 +471,8 @@ function prepareCharts(jobs, start, end, firstRun) {
         }
       }
     }
+
+    var jobLengthGroup = accumulate_group_top(jobLength)
 
     uppermeanChart
       .group(jobLengthGroup)
@@ -551,12 +551,7 @@ function prepareCharts(jobs, start, end, firstRun) {
     });
 
 
-    var runningtotalGroup = accumulate_group(volumeOpenByPeriodGroup)
-
-    var runningclosedGroup = accumulate_group(volumeClosedByPeriodGroup)
-
-
-    function accumulate_group(source_group) {
+    const accumulate_group = (source_group) => {
       return {
         all: function() {
           var cumulate = 0;
@@ -573,6 +568,12 @@ function prepareCharts(jobs, start, end, firstRun) {
         }
       };
     }
+
+    var runningtotalGroup = accumulate_group(volumeOpenByPeriodGroup)
+
+    var runningclosedGroup = accumulate_group(volumeClosedByPeriodGroup)
+
+
 
     completionBellChart
       .width(1400)
@@ -788,20 +789,20 @@ function prepareCharts(jobs, start, end, firstRun) {
 
 
     //remember the set filters
-    statusChartFilters = statusChart.filters();
-    agencyChartFilters = agencyChart.filters();
-    eventChartFilters = eventChart.filters();
-    priorityChartFilters = priorityChart.filters();
-    jobtypeChartFilters = jobtypeChart.filters();
-    hazardChartFilters = hazardChart.filters();
-    propertyChartFilters = propertyChart.filters();
-    localChartFilters = localChart.filters();
-    unitChartFilters = unitChart.filters();
-    clusterChartFilters = clusterChart.filters();
-    zoneChartFilters = zoneChart.filters();
-    sectorChartFilters = sectorChart.filters();
+    let statusChartFilters = statusChart.filters();
+    let agencyChartFilters = agencyChart.filters();
+    let eventChartFilters = eventChart.filters();
+    let priorityChartFilters = priorityChart.filters();
+    let jobtypeChartFilters = jobtypeChart.filters();
+    let hazardChartFilters = hazardChart.filters();
+    let propertyChartFilters = propertyChart.filters();
+    let localChartFilters = localChart.filters();
+    let unitChartFilters = unitChart.filters();
+    let clusterChartFilters = clusterChart.filters();
+    let zoneChartFilters = zoneChart.filters();
+    let sectorChartFilters = sectorChart.filters();
 
-    completionBellChartFilters = completionBellChart.filters();
+    let completionBellChartFilters = completionBellChart.filters();
 
 
     //remove the filters
@@ -852,10 +853,11 @@ function prepareCharts(jobs, start, end, firstRun) {
 
 // produces a 'group' for tag pie charts, switch on the key in the object that needs to be walked
 function makeTagGroup(dim, targetfact) {
+  let group;
 
   switch (targetfact) {
     case "treeTags":
-      var group = dim.groupAll().reduce(
+      group = dim.groupAll().reduce(
         function(p, v) {
           v.treeTags.forEach(function(val, idx) {
             p[val] = (p[val] || 0) + 1; //increment counts
@@ -875,7 +877,7 @@ function makeTagGroup(dim, targetfact) {
       group.all = function() {
         var newObject = [];
         for (var key in this) {
-          if (this.hasOwnProperty(key) && key != "all" && key != "top") {
+          if (Object.prototype.hasOwnProperty.call(this, key) && key != "all" && key != "top") {
             newObject.push({
               key: key,
               value: this[key]
@@ -892,9 +894,8 @@ function makeTagGroup(dim, targetfact) {
         return newObject.slice(0, count);
       };
       return group;
-      break;
     case "hazardTags":
-      var group = dim.groupAll().reduce(
+      group = dim.groupAll().reduce(
         function(p, v) {
           v.hazardTags.forEach(function(val, idx) {
             p[val] = (p[val] || 0) + 1; //increment counts
@@ -914,7 +915,7 @@ function makeTagGroup(dim, targetfact) {
       group.all = function() {
         var newObject = [];
         for (var key in this) {
-          if (this.hasOwnProperty(key) && key != "all" && key != "top") {
+          if (Object.prototype.hasOwnProperty.call(this, key) && key != "all" && key != "top") {
             newObject.push({
               key: key,
               value: this[key]
@@ -931,9 +932,8 @@ function makeTagGroup(dim, targetfact) {
         return newObject.slice(0, count);
       };
       return group;
-      break;
     case "propertyTags":
-      var group = dim.groupAll().reduce(
+      group = dim.groupAll().reduce(
         function(p, v) {
           v.propertyTags.forEach(function(val, idx) {
             p[val] = (p[val] || 0) + 1; //increment counts
@@ -953,7 +953,7 @@ function makeTagGroup(dim, targetfact) {
       group.all = function() {
         var newObject = [];
         for (var key in this) {
-          if (this.hasOwnProperty(key) && key != "all" && key != "top") {
+          if (Object.prototype.hasOwnProperty.call(this, key) && key != "all" && key != "top") {
             newObject.push({
               key: key,
               value: this[key]
@@ -970,7 +970,6 @@ function makeTagGroup(dim, targetfact) {
         return newObject.slice(0, count);
       };
       return group;
-      break;
   }
 
 }

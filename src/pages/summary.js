@@ -270,8 +270,8 @@ function RunForestRun(mp) {
         var start = new Date();
         start.setDate(start.getDate() - (timeoverride / 24));
 
-        starttime = start.toISOString();
-        endtime = end.toISOString();
+        let starttime = start.toISOString();
+        let endtime = end.toISOString();
 
         params.start = starttime;
         params.end = endtime;
@@ -298,7 +298,7 @@ function RunForestRun(mp) {
             console.log("passed array of units");
             var hqsGiven = params.hq.split(",");
             hqsGiven.forEach(function(d) {
-              LighthouseUnit.get_unit_name(d, apiHost, params.userId, token, function(result) {
+              LighthouseUnit.get_unit_name(d, apiHost, params.userId, token, function(result, error) {
                 if (typeof error == 'undefined') {
                   mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
                   unit.push(result);

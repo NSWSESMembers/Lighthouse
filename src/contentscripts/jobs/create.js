@@ -30,7 +30,7 @@ window.addEventListener("message", function(event) {
   }  else if (event.data.type && (event.data.type == "FROM_PAGE_LHQ_DISTANCE")) {
     var t0 = performance.now();
   $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
-    distances = []
+    let distances = []
     data.features.forEach(function(v){
       v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,event.data.lat,event.data.lng)/1000
       distances.push(v)
@@ -61,12 +61,7 @@ function asbestosBoxColor(text, color, url) {
   }
 }
 
-
-$(document).ready(function(){
-
-})
-
-job_asbestos_history = (
+let job_asbestos_history = (
   <div class="form-group">
   <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px" src={chrome.extension.getURL("icons/lh-black.png")} />Asbestos Register</label>
   <div id="asbestos-register-box" class="col-md-10 col-lg-8" style="width:inherit">
@@ -76,7 +71,7 @@ job_asbestos_history = (
   </div>
   );
 
-  job_nearest_lhq = (
+  let job_nearest_lhq = (
     <div class="form-group">
     <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
     src={chrome.extension.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest LHQs </abbr></label>

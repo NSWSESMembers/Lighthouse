@@ -1,3 +1,4 @@
+/* global tinygradient */
 var $ = require('jquery');
 global.jQuery = $;
 var stopwords = require('stopwords').english;
@@ -36,7 +37,7 @@ function walkSituationOnSceneWords(jobs){ //take array and make word:frequency a
     .toLowerCase()
     .replace(/object Object/g, '')
     .replace(/\//g,' ')
-    .replace(/[\+\.,\/#!$%\^&\*{}=_`~]/g,'')
+    .replace(/[+.,/#!$%^&*{}=_`~]/g,'')
     .replace(/[0-9]/g, '');
 
     // this returns an array of words pre-split
@@ -66,7 +67,7 @@ function removeStopwords(string) {
   var length = words.length;
   for (var i = 0; i < length; i++) {
     var word = words[i].trim();
-    var word = word.replace(/[.,-\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+    word = word.replace(/[.,-/#!$%^&*;:{}=\-_`~()]/g,"");
     if(word != "" && stopwords.indexOf(word) == -1) {
       filteredWords.push(word);
     }

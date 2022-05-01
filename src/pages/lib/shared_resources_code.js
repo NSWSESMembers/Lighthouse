@@ -13,7 +13,7 @@ export function get_unit_resouces(Id, host, userId = 'notPassed', token, callbac
     dataType: 'json',
     complete: function(response, textStatus) {
       if (textStatus == 'success') {
-        results = response.responseJSON;
+        let results = response.responseJSON;
         if (typeof callback === "function") {
           console.log("GetResourcesfromBeacon call back with:");
           console.log(results); //.Results);

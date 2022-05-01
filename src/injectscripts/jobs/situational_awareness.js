@@ -1,4 +1,4 @@
-
+/* global contentViewModel, map */
 window.addEventListener('load', pageFullyLoaded, false);
 
 function pageFullyLoaded(e) {

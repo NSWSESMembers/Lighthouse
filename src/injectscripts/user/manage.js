@@ -1,4 +1,4 @@
-
+/* global _, $, vm */
 vm.pagedList.subscribe(lighthouseKeeper)
 
 function lighthouseKeeper(){

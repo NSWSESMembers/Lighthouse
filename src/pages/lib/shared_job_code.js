@@ -12,7 +12,7 @@ export function get_json(unit, host, StartDate, EndDate, userId = 'notPassed', t
   var url = "";
   console.log("GetJSONfromBeacon called with:" + StartDate + "," + EndDate + ", " + host);
 
-  if (unit !== null || typeof unit == undefined) {
+  if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) == false) {
       url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
     } else {
@@ -55,7 +55,7 @@ export function get_summary_json(unit, host, StartDate, EndDate, userId = 'notPa
     var url = "";
     console.log("GetSummaryJSONfromBeacon called with:" + StartDate + "," + EndDate + ", " + host);
 
-    if (unit !== null || typeof unit == undefined) {
+    if (unit !== null || typeof unit === 'undefined') {
         if (Array.isArray(unit) == false) {
             url = host + "/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&EntityIds=" + unit.Id;
         } else {
@@ -101,7 +101,7 @@ export function get_job(Id, viewModelType = 1, host, userId = 'notPassed', token
     dataType: 'json',
     complete: function(response, textStatus) {
       if (textStatus == 'success') {
-        results = response.responseJSON;
+        let results = response.responseJSON;
         if (typeof callback === "function") {
           callback(results);
         }

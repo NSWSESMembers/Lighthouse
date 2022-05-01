@@ -1,3 +1,4 @@
+/* global moment, $, urls, user */
 var ReturnNitcAtLHQ = function(hq,size,cb) {
 	var start = moment();
 	var end = moment();
@@ -51,7 +52,7 @@ var ReturnNitcAtLHQ = function(hq,size,cb) {
 			, 'PageSize':           size
 			, 'SortField':          'Id'
 			, 'SortOrder':          'desc'
-			,'LighthouseFunction': 'getnitc' 
+			,'LighthouseFunction': 'getnitc'
 		}
 
 		var entityIds = []

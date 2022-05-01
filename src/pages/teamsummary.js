@@ -27,76 +27,75 @@ var myViewModel;
 
 
 function MyViewModel() {
-  var self = this;
 
   //used to force things that show time since to redraw evey run
-  self.dummyRecountMoments = ko.observable();
+  this.dummyRecountMoments = ko.observable();
 
-  self.source = params.source
-  self.bannerTitle = ko.observable('Loading...')
-  self.filterStartTime = ko.observable('Loading...')
-  self.filterEndTime = ko.observable('Loading...')
+  this.source = params.source
+  this.bannerTitle = ko.observable('Loading...')
+  this.filterStartTime = ko.observable('Loading...')
+  this.filterEndTime = ko.observable('Loading...')
 
-  self.setColWidth = ko.observable(3)
-  self.setDefaultAdd = ko.observable(true)
-  self.setShowTeamMemberChanges = ko.observable(true)
-  self.setShowTeamResources = ko.observable(true)
+  this.setColWidth = ko.observable(3)
+  this.setDefaultAdd = ko.observable(true)
+  this.setShowTeamMemberChanges = ko.observable(true)
+  this.setShowTeamResources = ko.observable(true)
 
 
-  self.teams = ko.observableArray()
+  this.teams = ko.observableArray()
 
-  self.boxFlexWidth = ko.computed(function() {
-    return `col-${12 / self.setColWidth()}`
+  this.boxFlexWidth = ko.computed(() => {
+    return `col-${12 / this.setColWidth()}`
   })
 
-  self.membersShown = ko.computed(function() {
+  this.membersShown = ko.computed(() => {
     let activeMembers = 0
-    self.teams().forEach(function(t) {
+    this.teams().forEach((t) => {
       if (!t.hidden()) {
         activeMembers = activeMembers + t.teamMemberCount()
       }
     })
     return activeMembers
   })
-  self.membersShown.extend({
+  this.membersShown.extend({
     rateLimit: 500
   });
 
-  self.teamsShown = ko.computed(function() {
+  this.teamsShown = ko.computed(() => {
     let teamsShown = 0
-    self.teams().forEach(function(t) {
+    this.teams().forEach((t) => {
       if (!t.hidden()) {
         teamsShown = teamsShown + 1
       }
     })
     return teamsShown
   })
-  self.teamsShown.extend({
+  this.teamsShown.extend({
     rateLimit: 500
   });
 
-  self.teamsHidden = ko.computed(function() {
+  this.teamsHidden = ko.computed(() => {
     let teamsHidden = 0
-    self.teams().forEach(function(t) {
+    this.teams().forEach(function(t) {
       if (t.hidden()) {
         teamsHidden = teamsHidden + 1
       }
     })
     return teamsHidden
   })
-  self.teamsHidden.extend({
+  this.teamsHidden.extend({
     rateLimit: 500
   });
 
-  self.rows = ko.computed({
-    read: function() {
-      let filteredTeams = ko.utils.arrayFilter(self.teams(), function(t) {
+  this.rows = ko.computed({
+    read: () => {
+      let filteredTeams = ko.utils.arrayFilter(this.teams(), (t) => {
         return !t.hidden()
       })
 
       let result = [],
         row,
-        colLength = parseInt(self.setColWidth(), 10);
+        colLength = parseInt(this.setColWidth(), 10);
 
       //loop through items and push each item to a row array that gets pushed to the final result
       for (var i = 0, j = filteredTeams.length; i < j; i++) {
@@ -118,7 +117,7 @@ function MyViewModel() {
     deferEvaluation: true
   });
 
-  self.rows.extend({
+  this.rows.extend({
     rateLimit: 200
   });
 
@@ -131,20 +130,18 @@ var TeamHistory = function({
   description,
   timeStamp
 }) {
-  var self = this;
+  this.parent = parent
+  this.rawObject = rawObject
+  this.name = name
+  this.description = description
+  this.timeStamp = timeStamp
 
-  self.parent = parent
-  self.rawObject = rawObject
-  self.name = name
-  self.description = description
-  self.timeStamp = timeStamp
-
-  self.timeStampPretty = ko.computed(function() {
-    return moment(self.timeStamp).format('MMM D HH.mm')
+  this.timeStampPretty = ko.computed(() => {
+    return moment(this.timeStamp).format('MMM D HH.mm')
   })
 
-  self.type = function() {
-    let jobNumber = self.name.match(/(\d{4}-\d{4})/g)
+  this.type = () => {
+    let jobNumber = this.name.match(/(\d{4}-\d{4})/g)
     if (jobNumber) {
       return 'job'
     } else {
@@ -152,28 +149,28 @@ var TeamHistory = function({
     }
   }
 
-  self.trimmedDesc = ko.computed(function() {
-    let trimmedDesc = self.description
+  this.trimmedDesc = ko.computed(() => {
+    let trimmedDesc = this.description
     if (trimmedDesc && trimmedDesc.match(/(.+)(?:by.*$)/)) {
       trimmedDesc = trimmedDesc.match(/(.+)(?:by.*$)/)[1]
     }
 
-    if (self.name.match(/^Team set as.*/)) {
+    if (this.name.match(/^Team set as.*/)) {
       trimmedDesc = ''
     }
 
     return trimmedDesc
   })
 
-  self.trimmedName = ko.computed(function() {
-    let trimmedName = self.name
-    if (self.name.match(/(\d{4}-\d{4})/g)) {
-      trimmedName = trimmedName.replace(self.parent.callsign(), '')
+  this.trimmedName = ko.computed(() => {
+    let trimmedName = this.name
+    if (this.name.match(/(\d{4}-\d{4})/g)) {
+      trimmedName = trimmedName.replace(this.parent.callsign(), '')
     }
     return trimmedName
   })
 
-  self.jobPop = function(data, event) {
+  this.jobPop = function(data, event) {
     event.stopPropagation()
 
     $("*").each(function() {
@@ -193,7 +190,7 @@ var TeamHistory = function({
       let address = ''
       LighthouseJob.get_job(jobNumber[0].replace('-', ''), 1, params.host, params.userId, pageToken, function(data) {
         // Job Tags
-        var tagArray = new Array();
+        var tagArray = [];
         $.each(data.Tags, function(tagIdx, tagObj) {
           tagArray.push(tagObj.Name);
         });
@@ -217,7 +214,7 @@ var TeamHistory = function({
             break
         }
 
-        details =
+        let details =
           `<div id='jobPopUp' style="margin-top:-5px;"><div id='jobType' style="margin:auto;text-align:center;font-weight: bold;background-color:${bgcolor};color:${txtcolor}">${data.Identifier}<br>${data.JobType.Name} - ${data.JobStatusType.Name}</div>\
         <div id='jobPriority' style="margin:auto;text-align:center;background-color:${bgcolor};color:${txtcolor}"><span id='lhqStatus'>${data.JobPriorityType.Description}</span></div>\
         <div style="display:block;text-align: center;font-weight:bold;margin-top:10px">${data.Address.PrettyAddress}</div>\
@@ -274,25 +271,23 @@ var TeamMember = function({
   isTeamLeader,
   timeOn
 }) {
-  var self = this;
+  this.rawObject = rawObject
+  this.id = id
+  this.memberId = memberId
+  this.personId = personId
+  this.firstName = firstName
+  this.lastName = lastName
+  this.isTeamLeader = ko.observable(isTeamLeader)
+  this.timeOn = ko.observable(timeOn)
 
-  self.rawObject = rawObject
-  self.id = id
-  self.memberId = memberId
-  self.personId = personId
-  self.firstName = firstName
-  self.lastName = lastName
-  self.isTeamLeader = ko.observable(isTeamLeader)
-  self.timeOn = ko.observable(timeOn)
-
-  self.fullName = ko.computed(function() {
-    return `${self.firstName} ${self.lastName}`
+  this.fullName = ko.computed(() => {
+    return `${this.firstName} ${this.lastName}`
   })
 
-  self.timeOnSince = ko.computed(function() {
+  this.timeOnSince = ko.computed(() => {
     //force a recount when the timer runs
     myViewModel.dummyRecountMoments();
-    return moment().diff(self.timeOn(), 'hours')
+    return moment().diff(this.timeOn(), 'hours')
   })
 
 }
@@ -308,57 +303,54 @@ var Team = function({
   activeJobs,
   teamResources,
 }) {
-
-  var self = this;
-
-  self.rawObject = rawObject
-  self.id = id
-  self.hidden = ko.observable(true)
-  // self.hidden.extend({
+  this.rawObject = rawObject
+  this.id = id
+  this.hidden = ko.observable(true)
+  // this.hidden.extend({
   //   rateLimit: 100
   // });
 
-  self.callsign = ko.observable(callsign)
-  self.type = type
+  this.callsign = ko.observable(callsign)
+  this.type = type
 
-  self.sector = ko.observable(sector)
-  self.status = ko.observable(status)
+  this.sector = ko.observable(sector)
+  this.status = ko.observable(status)
 
-  self.statusTime = ko.observable(statusTime)
-  self.activeJobs = ko.observable(activeJobs)
+  this.statusTime = ko.observable(statusTime)
+  this.activeJobs = ko.observable(activeJobs)
 
-  self.teamLocation = ko.observable()
+  this.teamLocation = ko.observable()
 
-  self.loadingHistory = ko.observable(true)
+  this.loadingHistory = ko.observable(true)
 
-  self.teamMembers = ko.observableArray()
-  self.teamMembers.extend({
+  this.teamMembers = ko.observableArray()
+  this.teamMembers.extend({
     rateLimit: 200
   });
 
-  self.teamMembers.subscribe(function(newValue) {
+  this.teamMembers.subscribe((newValue) => {
     activateToolTips()
   })
 
-  self.teamResources = ko.observable(teamResources)
-  self.teamHistory = ko.observableArray()
-  self.teamMembers.extend({
+  this.teamResources = ko.observable(teamResources)
+  this.teamHistory = ko.observableArray()
+  this.teamMembers.extend({
     rateLimit: 200
   });
 
-  self.hidden.subscribe(function(newValue) {
+  this.hidden.subscribe((newValue) => {
     if (newValue == false) {
       positionFooter()
-      self.fetchHistory()
+      this.fetchHistory()
     }
   })
 
-  self.activeMembers = ko.computed(function() {
-    return self.teamMembers.length
+  this.activeMembers = ko.computed(() => {
+    return this.teamMembers.length
   })
 
-  self.fetchHistory = function() {
-    self.loadingHistory(true)
+  this.fetchHistory = () => {
+    this.loadingHistory(true)
     let locationFound = false
     let locationMethod = ''
     let timeStampAgo = ''
@@ -366,9 +358,9 @@ var Team = function({
     //All this code only works because you cant change the order of the history
     //if history order ever changes the push/unshift logic will need to be smarter
 
-    LighthouseTeam.get_history(self.id, params.host, params.userId, pageToken, function(history) {
+    LighthouseTeam.get_history(this.id, params.host, params.userId, pageToken, (history) => {
 
-      self.teamHistory().forEach(function(t, index) {
+      this.teamHistory().forEach((t, index) => {
         let found = false
         $.each(history.Results, function(i, el) {
           if (`${this.Name}-${this.Description}-${this.TimeStamp}` == `${t.name}-${t.description}-${t.timeStamp}`) {
@@ -376,12 +368,12 @@ var Team = function({
           }
         });
         if (!found) {
-          self.teamHistory.splice(index, 1);
+          this.teamHistory.splice(index, 1);
         }
       })
 
       //work backwards so that unshifting is possible
-      history.Results.reverse().forEach(function(historyItem) {
+      history.Results.reverse().forEach((historyItem) => {
 
         //if (!locationFound) {
           let jobNumber = historyItem.Name.match(/.*(Offsite|Onsite|Enroute|Complete) on job (\d{4}-\d{4})/)
@@ -408,7 +400,7 @@ var Team = function({
 
         let existingHistory = false //would be undef otherwise
 
-        existingHistory = self.teamHistory().find(function(r, i) {
+        existingHistory = this.teamHistory().find((r, i) => {
           if (`${r.name}-${r.description}-${r.timeStamp}` === `${historyItem.Name}-${historyItem.Description}-${historyItem.TimeStamp}`) {
             return true
           }
@@ -416,42 +408,42 @@ var Team = function({
         if (!existingHistory) { //if its a new history item
 
           let theNewHistory = new TeamHistory({
-            parent: self,
+            parent: this,
             rawObject: historyItem,
             name: historyItem.Name,
             description: historyItem.Description,
             timeStamp: historyItem.TimeStamp,
           })
           //unshift so new things go at the begining
-          self.teamHistory.unshift(theNewHistory)
+          this.teamHistory.unshift(theNewHistory)
 
         } else { //old history
-          existingHistory.parent = self
+          existingHistory.parent = this
           existingHistory.rawObject = historyItem
           existingHistory.name = historyItem.Name
           existingHistory.description = historyItem.Description
           existingHistory.timeStamp = historyItem.TimeStamp
         }
       })
-      self.loadingHistory(false)
+      this.loadingHistory(false)
 
       if (locationFound) {
         LighthouseJob.get_job(locationFound.replace('-', ''), 1, params.host, params.userId, pageToken, function(job) {
-          self.teamLocation(`${locationMethod} ${locationFound} (${timeStampAgo})<br>${job.Address.PrettyAddress.replace(', NSW','')}`)
+          this.teamLocation(`${locationMethod} ${locationFound} (${timeStampAgo})<br>${job.Address.PrettyAddress.replace(', NSW','')}`)
         })
       }
 
     })
   }
 
-  self.filteredTeamHistory = ko.computed({
-    read: function() {
+  this.filteredTeamHistory = ko.computed({
+    read: () => {
       var newHistoryArray = []
 
-      let limit = self.teamHistory().length > 5 ? 5 : self.teamHistory().length
+      let limit = this.teamHistory().length > 5 ? 5 : this.teamHistory().length
 
       //filter to hide history events we dont care for.
-      let historyItems = self.teamHistory().filter(function(h) {
+      let historyItems = this.teamHistory().filter((h) => {
         if (myViewModel.setShowTeamMemberChanges() == true) {
           return true
         } else {
@@ -530,60 +522,55 @@ var Team = function({
     deferEvaluation: true
   })
 
-  self.filteredTeamHistory.extend({
+  this.filteredTeamHistory.extend({
     rateLimit: 50
   });
 
-  self.statusStyle = ko.computed(function() {
-    switch (self.status()) { //color the callsign by team status
+  this.statusStyle = ko.computed(() => {
+    switch (this.status()) { //color the callsign by team status
       case 'Activated': //active
         return "team-active";
-        break;
       case 'Standby': //standby
         return "team-standby";
-        break;
       case 'Rest': //rest
         return "team-rest";
-        break;
       case 'On Alert': //alert
         return "team-alert";
-        break;
       default:
         return "team";
-        break;
     }
   });
 
-  self.teamMemberCount = ko.computed(function() {
-    return self.teamMembers().length
+  this.teamMemberCount = ko.computed(() => {
+    return this.teamMembers().length
   })
-  self.teamMemberCount.extend({
+  this.teamMemberCount.extend({
     rateLimit: 200
   });
 
-  self.teamMemberPersonIds = ko.computed(function() {
-    return escape(JSON.stringify(self.teamMembers().map(function(t) {
+  this.teamMemberPersonIds = ko.computed(() => {
+    return escape(JSON.stringify(this.teamMembers().map((t) => {
       return t.personId
     })))
   })
-  self.teamMemberPersonIds.extend({
+  this.teamMemberPersonIds.extend({
     rateLimit: 200
   });
 
 
-  self.statusTimePretty = ko.computed(function() {
-    return moment(self.statusTime()).format('MMM D HH.mm')
+  this.statusTimePretty = ko.computed(() => {
+    return moment(this.statusTime()).format('MMM D HH.mm')
   })
 
-  self.statusTimeSince = ko.computed(function() {
+  this.statusTimeSince = ko.computed(() => {
     //force a recount when the timer runs
     myViewModel.dummyRecountMoments();
 
-    return moment().diff(self.statusTime(), 'hours')
+    return moment().diff(this.statusTime(), 'hours')
   })
 
 
-  self.toggleHide = function(team) {
+  this.toggleHide = function(team) {
     team.hidden() ? team.hidden(false) : team.hidden(true)
   }.bind(this);
 
@@ -663,8 +650,8 @@ function RunForestRun(mp) {
         var start = new Date();
         start.setDate(start.getDate() - (timeoverride / 24));
 
-        starttime = start.toISOString();
-        endtime = end.toISOString();
+        let starttime = start.toISOString();
+        let endtime = end.toISOString();
 
         params.start = starttime;
         params.end = endtime;
@@ -938,13 +925,13 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
             let zone = {}
             let groupName = `${results.length} units`
             results.forEach(function(res) {
-              if (zone.hasOwnProperty(res.zone)) {
+              if (Object.prototype.hasOwnProperty.call(zone, res.zone)) {
                 zone[res.zone].count += 1;
               } else {
                 zone[res.zone] = {}
                 zone[res.zone].count = 1
               }
-              if (clusters.hasOwnProperty(res.cluster)) {
+              if (Object.prototype.hasOwnProperty.call(zone, res.cluster)) {
                 clusters[res.cluster].count += 1;
               } else {
                 clusters[res.cluster] = {}
@@ -1198,7 +1185,9 @@ document.addEventListener('DOMContentLoaded', function() {
       $('#filtermodal').modal('hide');
     })
 
-    $('#filtermodal').on('hidden.bs.modal', function() {});
+    $('#filtermodal').on('hidden.bs.modal', () => {
+      // do nothing
+    });
 
 
   });

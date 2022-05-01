@@ -31,11 +31,12 @@ window.addEventListener("message", function(event) {
     })
   } else if (event.data.type && (event.data.type == "SAVE_COLLECTION")) {
     chrome.storage.sync.get([event.data.name+'-'+location.hostname], function (existingdata){
+      let items;
       try {
-        var items = JSON.parse(existingdata[event.data.name+'-'+location.hostname])
+        items = JSON.parse(existingdata[event.data.name+'-'+location.hostname])
       } catch (e)
       {
-        var items = []
+        items = []
       }
       items.push(JSON.parse(event.data.newdata))
 
@@ -46,11 +47,12 @@ window.addEventListener("message", function(event) {
     })
   } else if (event.data.type && (event.data.type == "DELETE_COLLECTION")) {
     chrome.storage.sync.get([event.data.name+'-'+location.hostname], function (existingdata){
+      let items;
       try {
-        var items = JSON.parse(existingdata[event.data.name+'-'+location.hostname])
+        items = JSON.parse(existingdata[event.data.name+'-'+location.hostname])
       } catch (e)
       {
-        var items = []
+        items = []
       }
       items.forEach(function(item) {
         if (event.data.target == JSON.stringify(item)) {
@@ -63,7 +65,9 @@ window.addEventListener("message", function(event) {
     })
   } else if (event.data.type && (event.data.type == "PURGE_COLLECTION")) {
     chrome.storage.sync.remove([event.data.name+'-'+location.hostname])
-    chrome.storage.local.clear(function() {})
+    chrome.storage.local.clear(function() {
+      // do nothing
+    });
   } else if (event.data.type && (event.data.type == "FROM_PAGE_UPDATE_API_TOKEN")) {
     chrome.storage.local.set({['beaconAPIToken-'+event.data.host]:JSON.stringify({token:event.data.token,expdate:event.data.tokenexp})}, function (){
       console.log('local data set - beaconAPIToken')

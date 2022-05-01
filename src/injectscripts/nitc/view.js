@@ -1,3 +1,4 @@
+/* global vm, $ */
 whenVmIsReady(function() {
 
   var totalhrs = 0;

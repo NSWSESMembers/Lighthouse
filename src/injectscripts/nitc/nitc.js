@@ -1,16 +1,16 @@
-
+/* global $, lighthouseUrl, urls, user, contentViewModel */
 $("#lighthouseExportButton").on('click mouseenter', function() {
   var exports = JSON.parse(filterDataForExport());
-  var href = lighthouseUrl + "pages/nitcexport.html?host=" + urls.Base + 
+  var href = lighthouseUrl + "pages/nitcexport.html?host=" + urls.Base +
       "&start=" + encodeURIComponent(exports.StartDate) + "&token="+user.accessToken + "&tokenexp="+encodeURIComponent(user.expiresAt) +"&end=" +
       encodeURIComponent(exports.EndDate);
-  if (exports.hasOwnProperty("EntityIds"))
+  if (Object.prototype.hasOwnProperty.call(exports, "EntityIds"))
       href += "&EntityIds=" + exports.EntityIds;
-  if (exports.hasOwnProperty("NonIncidentTypeIds"))
+  if (Object.prototype.hasOwnProperty.call(exports, "NonIncidentTypeIds"))
       href += "&NonIncidentTypeIds=" + exports.NonIncidentTypeIds;
-  if (exports.hasOwnProperty("TagIds"))
+  if (Object.prototype.hasOwnProperty.call(exports, "TagIds"))
       href += "&TagIds=" + exports.TagIds;
-  if (exports.hasOwnProperty("IncludeCompleted"))
+  if (Object.prototype.hasOwnProperty.call(exports, "IncludeCompleted"))
       href += "&IncludeCompleted=" + exports.IncludeCompleted;
   $(this).attr("href", href);
 });

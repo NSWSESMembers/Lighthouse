@@ -1,3 +1,4 @@
+/* global taskingViewModel, $, filterViewModel */
 const MapManager = require('../../lib/map/InjectScriptMapManager.js');
 
 window.addEventListener('load', pageFullyLoaded, false);

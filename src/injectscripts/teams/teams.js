@@ -1,3 +1,4 @@
+/* global $, user, urls, lighthouseUrl, filterViewModel */
 $("#lighthouseTeamSummaryButton").on("click", function() {
   summary();
 })

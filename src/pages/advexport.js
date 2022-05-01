@@ -109,32 +109,20 @@ $(document).ready(function() {
 
   var $fieldsetContainer = $('#advexport_fieldsets');
   $.each(lighthouse_fieldArray, function(k, v) {
-    var fieldset = ( <
-      fieldset >
-      <
-      legend > {
-        k
-      } < /legend> {
-        _.map(v, function(label, key) {
-          return ( <
-            label class = "checkbox-inline" >
-            <
-            input type = "checkbox"
-            name = "advexportfields[]"
-            value = {
-              key
-            }
-            checked = {
-              lighthouse_fieldDefaults.indexOf(label) >= 0
-            }
-            /> {
-              label
-            } <
-            /label>
-          );
-        })
-      } <
-      /fieldset>
+    var fieldset = (
+      <fieldset>
+        <legend>{ k }</legend>
+          {
+          _.map(v, function(label, key) {
+            return (
+            <label class = "checkbox-inline" >
+              <input type = "checkbox" name = "advexportfields[]" value = { key } checked = { lighthouse_fieldDefaults.indexOf(label) >= 0 } />
+              { label }
+              </label>
+            );
+          })
+        }
+      </fieldset>
     );
     $fieldsetContainer.append(fieldset);
   });
@@ -270,12 +258,13 @@ function HackTheMatrix(id, host, progressBar) {
 
       _.each(selectedcolumns, function(key) {
         // Raw Value
+        let rawValue;
         try {
-          var rawValue = key.split('.').reduce(function(obj, i) {
+          rawValue = key.split('.').reduce(function(obj, i) {
             return obj[i]
           }, d);
         } catch (err) {
-          var rawValue = ''
+          rawValue = ''
         }
         // Special Cases
         //console.log(key)
@@ -334,31 +323,29 @@ function HackTheMatrix(id, host, progressBar) {
       var position = 0
       poppy()
 
-      function poppy() {
-        progressBar.setValue(position / queue);
-        $('#extra_progress').text("Counting ICEMS Transactions..." + Math.floor(position / queue * 100) + "%");
-        const item = jobs.Results[position]
-        const itemPos = position
-        position++
-        if (item.ICEMSIncidentIdentifier != null) {
-          LighthouseOpsLog.get_operations_log(item.Id, host, params.userId, token, function(logs) {
-            var numberOfIUM = 0
-            logs.Results.forEach(function(r) {
-              if (r.Subject && r.Subject.indexOf('Incident Update Message') != -1 && r.Subject.indexOf('Incident Update Message Acceptance') == -1) {
-                numberOfIUM++
-              }
-            })
-            beacon_jobs[itemPos][selectedcolumns.indexOf('ICEMSIUMTransactions')] = numberOfIUM
-            if (position < queue) {
-              poppy()
-            } else {
-              progressBar.setValue(1);
-              downloadCSV("LighthouseExport-"+Math.floor(Date.now() / 1000)+".csv", beacon_jobs, selectedcolumns);
-              progressBar.close();
-              $('#extra_progress').text("");
+
+    } else {
+      progressBar.setValue(1);
+      downloadCSV("LighthouseExport-"+Math.floor(Date.now() / 1000)+".csv", beacon_jobs, selectedcolumns);
+
+      progressBar.close();
+    }
+
+    function poppy() {
+      progressBar.setValue(position / queue);
+      $('#extra_progress').text("Counting ICEMS Transactions..." + Math.floor(position / queue * 100) + "%");
+      const item = jobs.Results[position]
+      const itemPos = position
+      position++
+      if (item.ICEMSIncidentIdentifier != null) {
+        LighthouseOpsLog.get_operations_log(item.Id, host, params.userId, token, function(logs) {
+          var numberOfIUM = 0
+          logs.Results.forEach(function(r) {
+            if (r.Subject && r.Subject.indexOf('Incident Update Message') != -1 && r.Subject.indexOf('Incident Update Message Acceptance') == -1) {
+              numberOfIUM++
             }
           })
-        } else {
+          beacon_jobs[itemPos][selectedcolumns.indexOf('ICEMSIUMTransactions')] = numberOfIUM
           if (position < queue) {
             poppy()
           } else {
@@ -367,13 +354,17 @@ function HackTheMatrix(id, host, progressBar) {
             progressBar.close();
             $('#extra_progress').text("");
           }
+        })
+      } else {
+        if (position < queue) {
+          poppy()
+        } else {
+          progressBar.setValue(1);
+          downloadCSV("LighthouseExport-"+Math.floor(Date.now() / 1000)+".csv", beacon_jobs, selectedcolumns);
+          progressBar.close();
+          $('#extra_progress').text("");
         }
       }
-    } else {
-      progressBar.setValue(1);
-      downloadCSV("LighthouseExport-"+Math.floor(Date.now() / 1000)+".csv", beacon_jobs, selectedcolumns);
-
-      progressBar.close();
     }
 
   }, function(val, total) {
@@ -383,7 +374,7 @@ function HackTheMatrix(id, host, progressBar) {
 
 function convertArrayOfObjectsToCSV(data, selectedcolumns) {
 
-  var result, ctr, keys, columnDelimiter, lineDelimiter, data;
+  var result, ctr, keys, columnDelimiter, lineDelimiter;
 
   if (data == null || !data.length) {
     return null;
@@ -398,7 +389,8 @@ function convertArrayOfObjectsToCSV(data, selectedcolumns) {
   var delimLine = '\n';
 
   // Getting Column Headings
-  var fieldKeys = fieldLabels = [];
+  let fieldKeys = [];
+  let fieldLabels = [];
   _.each(lighthouse_fieldArray, function(fields, section) {
     _.each(fields, function(label, key) {
       fieldKeys.push(key);
@@ -429,7 +421,7 @@ function downloadCSV(file, dataIn, keyIn) {
     document.body.appendChild(a);
     a.style = "display: none";
     return function(data, fileName) {
-      blob = new Blob([data], {
+      let blob = new Blob([data], {
           type: "octet/stream"
         }),
         url = window.URL.createObjectURL(blob);

@@ -1,3 +1,4 @@
+/* global moment, $, urls, user */
 var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
 	var now = moment();
 	var end = moment();
@@ -99,14 +100,14 @@ var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
         		v.Callsign = '('+v.CreatedAt.Code+') '+v.Callsign
         	})
         }
-        response = {}
+        let response = {}
         response.responseJSON = {}
         response.responseJSON.Results = totalResults
         cb(response); //we are done
     }
     } else { //last entry amazingly 0, or something is broken. lets stop
     	console.log("none");
-    	response = {}
+    	let response = {}
     	response.responseJSON = {}
     	response.responseJSON.Results = []
         cb(response); //we are done

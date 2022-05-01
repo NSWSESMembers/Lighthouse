@@ -1,3 +1,4 @@
+/* global vm, $ */
 //edit and create page.
 // background js fiddles with create page to expose same viewmodel as OutageDisplayType
 
