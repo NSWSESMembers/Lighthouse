@@ -278,7 +278,9 @@ let instantRadiologModal = return_quickradiologmodal();
     $('#nearest-asset-box').show()
     if (!$('#asset-map')[0]._leaflet_id) {
       console.log('Map doesnt exist, creating')
-    assetMap = L.map('asset-map').setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
+    assetMap = L.map('asset-map', {
+    zoomSnap: 0.5
+    }).setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
     L.control.scale().addTo(assetMap);
 
     esri.basemapLayer('Topographic', {ignoreDeprecationWarning: true}).addTo(assetMap);
@@ -877,8 +879,15 @@ var s1circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, master
 
      let latlngBounds = L.latLngBounds(latlngs)
 
-     assetMap.fitBounds(latlngBounds, {padding: [20, 20]})
-     assetMap.setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
+     let ne=latlngBounds.getNorthEast();
+     let sw=latlngBounds.getSouthWest();
+     let neSymetric=[ne.lat + (masterViewModel.geocodedAddress.peek().Latitude - ne.lat)*2, ne.lng + (masterViewModel.geocodedAddress.peek().Longitude - ne.lng)*2];
+     let swSymetric=[sw.lat +(masterViewModel.geocodedAddress.peek().Latitude - sw.lat)*2, sw.lng + (masterViewModel.geocodedAddress.peek().Longitude - sw.lng)*2];
+     latlngBounds.extend(L.latLngBounds(swSymetric, neSymetric));
+
+
+     assetMap.fitBounds(latlngBounds, {padding: [10,10]})
+     // assetMap.setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
 
      //$('#nearest-asset-text').text($('#nearest-asset-text').text().slice(0,-2)) //trim the comma space from the very end
     } else {

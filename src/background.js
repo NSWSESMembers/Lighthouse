@@ -30,7 +30,7 @@ const rfsMajorIncidentsFeed = "https://www.rfs.nsw.gov.au/feeds/majorIncidents.j
 const transportFeed = "https://api.transport.nsw.gov.au/";
 const openSkyFeed = "https://opensky-network.org/api/states/all";
 const essentialEnergyOutagesFeed = 'https://www.essentialenergy.com.au/Assets/kmz/current.kml';
-const endeavourEnergyOutagesFeed = 'https://www.endeavourenergy.com.au/mobileapp/outage/outages/listBoth/current';
+const endeavourEnergyOutagesFeed = 'https://www.endeavourenergy.com.au/designs/connectors/outage-feeds/get-current-outage';
 const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
 
 //external libs
@@ -319,21 +319,20 @@ function loadSynchronously(url) {
 
             var expectCount = 0
 
-            result.d.Data.forEach(function(item) {
-                if (item.WebId != 0)
-                {
-                    expectCount++
-                }
-            })
+            result.forEach(function(item) {
+              if (item.WebId != 0)
+              {
+            expectCount++
+            }
+          })
 
-            if (expectCount == 0) //call back if theres none.
+          if (expectCount == 0) //call back if theres none.
             {
                 callback(ausgridGeoJson)
             }
 
-            result.d.Data.forEach(function(item) {
-                if (item.WebId != 0)
-                {
+            result.forEach(function(item) {
+
                     //build up some geojson from normal JSON
                     var feature = {}
                     feature.geometry = {}
@@ -346,21 +345,24 @@ function loadSynchronously(url) {
                     polygon.coordinates = []
 
                     var ords = []
-                    item.Coords.forEach(function(point){
-                        ords.push([point.lng,point.lat])
-                    })
+                    if (item.Polygons.length > 0) {
+                      item.Polygons[0].Coords.forEach(function(point){
+                          ords.push([point.lng,point.lat])
+                      })
+                      ords.push([item.Polygons[0].Coords[0].lng,item.Polygons[0].Coords[0].lat]) //push the first item again at the end to complete the polygon
 
-                    ords.push([item.Coords[0].lng,item.Coords[0].lat]) //push the first item again at the end to complete the polygon
+                    }
+
+
 
                     polygon.coordinates.push(ords)
 
                     feature.geometry.geometries.push(polygon)
 
-                    //make a point to go with the polygon //TODO - center this in the polygon - geo maths centroid
                     var point = {}
                     point.type = "Point"
                     point.coordinates = []
-                    point.coordinates.push(item.Coords[0].lng,item.Coords[0].lat)
+                    point.coordinates.push(item.MarkerLocation.lng,item.MarkerLocation.lat)
 
                     feature.geometry.geometries.push(point)
 
@@ -370,13 +372,13 @@ function loadSynchronously(url) {
                             feature.owner = "Ausgrid"
                             feature.type = "Feature"
                             feature.properties = {}
-                            feature.properties.numberCustomerAffected = outageresult.d.Data.Customers
-                            feature.properties.incidentId = outageresult.d.Data.WebId
-                            feature.properties.reason = outageresult.d.Data.Cause
-                            feature.properties.status = outageresult.d.Data.Status
+                            feature.properties.numberCustomerAffected = outageresult.Customers
+                            feature.properties.incidentId = outageresult.WebId
+                            feature.properties.reason = outageresult.Cause
+                            feature.properties.status = outageresult.Status
                             feature.properties.type = "Outage"
-                            feature.properties.startDateTime = outageresult.d.Data.StartDateTime
-                            feature.properties.endDateTime = outageresult.d.Data.EstRestTime
+                            feature.properties.startDateTime = outageresult.StartDateTime
+                            feature.properties.endDateTime = outageresult.EstRestTime
                             ausgridGeoJson.features.push(feature)
                         } else {
                             expectCount--
@@ -386,7 +388,7 @@ function loadSynchronously(url) {
                             callback(ausgridGeoJson)
                         }
                     })
-}
+
 })
 } else {
             // error
@@ -397,9 +399,9 @@ function loadSynchronously(url) {
             callback(response);
         }
     };
-    xhttp.open('POST', ausgridBaseUrl + 'services/Outage/Outage.asmx/GetOutages', true);
+    xhttp.open('POST', ausgridBaseUrl + 'webapi/OutageMapData/GetCurrentUnplannedOutageMarkersAndPolygons', true);
     xhttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-    var blob = new Blob(['{"box":{"bottomleft":{"lat":-33.77499909311501,"lng":149.5178374449364},"topright":{"lat":-33.08275780283044,"lng":152.50337211290514},"zoom":9}}'], {type: 'text/plain'});
+    var blob = new Blob(['{"bottomleft":{"lat":-34.44684015562498,"lng":146.13435073046878},"topright":{"lat":-32.499628661589995,"lng":156.03852553515628},"zoom":8}'], {type: 'text/plain'});
     xhttp.send(blob);
 }
 
@@ -432,9 +434,9 @@ function loadSynchronously(url) {
             callback(response);
         }
     };
-    xhttp.open('POST', ausgridBaseUrl + 'services/Outage/Outage.asmx/GetOutage', true);
+    xhttp.open('POST', ausgridBaseUrl + 'webapi/OutageMapData/GetOutage', true);
     xhttp.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-    var blob = new Blob(['{"id":{"WebId":"'+id+'","OutageDisplayType":"'+type+'"}}'], {type: 'text/plain'});
+    var blob = new Blob(['{"WebId":"'+id+'","OutageDisplayType":"'+type+'"}'], {type: 'text/plain'});
     xhttp.send(blob);
 }
 
@@ -465,7 +467,7 @@ function loadSynchronously(url) {
             // Convert the feed to geoJSON
             for (var i = 0; i < json.length; i++) {
                 var incident = json[i];
-
+                if ((new Date()/1000) - (Date.parse(incident.startDateTime)/1000) < (30 * 24 * 60)) { //30 days ago only
                 var feature = {
                     'type': 'Feature',
                     'owner': 'EndeavourEnergy',
@@ -492,6 +494,7 @@ function loadSynchronously(url) {
                 };
 
                 endeavourGeoJson.features.push(feature);
+              }
             }
 
             callback(endeavourGeoJson);
