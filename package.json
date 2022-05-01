@@ -26,7 +26,8 @@
     "markerwithlabel": "^2.0.2",
     "md5": "^2.3.0",
     "moment": "^2.29.1",
-    "stopwords": "0.0.5"
+    "stopwords": "0.0.5",
+    "utils": "^0.3.1"
   },
   "devDependencies": {
     "@fortawesome/fontawesome-free": "^5.15.4",
