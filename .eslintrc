@@ -11,7 +11,8 @@
   ],
   "env": {
     "browser": true,
-    "node": true
+    "node": true,
+    "webextensions": true
   },
   "rules": {
     "@typescript-eslint/no-var-requires": 0
