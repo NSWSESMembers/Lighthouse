@@ -32,6 +32,7 @@
   },
   "browserslist": "> 0.25%, not dead",
   "dependencies": {
+    "@babel/runtime": "^7.16.5",
     "@bugsnag/js": "^6.5.2",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@mapbox/togeojson": "^0.16.0",
