@@ -82,7 +82,6 @@
     "lint-staged": "^12.1.4",
     "mini-css-extract-plugin": "^2.4.5",
     "node-sass": "^7.0.0",
-    "popper.js": "^1.16.1",
     "prettier": "^2.5.1",
     "sass-loader": "^12.4.0",
     "typescript": "^4.5.4",
