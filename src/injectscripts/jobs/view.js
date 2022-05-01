@@ -8,7 +8,6 @@ var vincenty = require('../../lib/vincenty.js');
 var esri = require('esri-leaflet')
 var chroma = require('chroma-js')
 
-var md5 = require('md5')
 require('leaflet-easybutton')
 require('leaflet-routing-machine')
 require ('leaflet-svg-shape-markers')
