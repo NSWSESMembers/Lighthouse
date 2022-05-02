@@ -1,7 +1,6 @@
 var LighthouseJob = require('./lib/shared_job_code.js');
 var LighthouseUnit = require('./lib/shared_unit_code.js');
-var LighthouseJson = require('./lib/shared_json_code.js');
-var LighthouseChrome = require('./lib/shared_chrome_code.js');
+require('./lib/shared_chrome_code.js'); // side-effect
 import '../../styles/pages/summary.css';
 
 var $ = require('jquery');

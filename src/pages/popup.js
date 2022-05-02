@@ -1,4 +1,4 @@
-var LighthouseChrome = require('./lib/shared_chrome_code.js');
+require('./lib/shared_chrome_code.js'); // side-effect
 
 let version = 'Lighthouse v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
 

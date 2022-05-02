@@ -1,8 +1,7 @@
 var LighthouseJob = require('./lib/shared_job_code.js');
 var LighthouseUnit = require('./lib/shared_unit_code.js');
-var LighthouseJson = require('./lib/shared_json_code.js');
 var LighthouseTeam = require('./lib/shared_team_code.js');
-var LighthouseChrome = require('./lib/shared_chrome_code.js');
+require('./lib/shared_chrome_code.js'); // side-effect
 var BeaconToken = require('./lib/shared_token_code.js');
 var clusterCodes = require('../lib/clusters.js');
 import '../../styles/pages/teamsummary.css';

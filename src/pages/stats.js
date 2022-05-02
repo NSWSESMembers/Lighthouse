@@ -1,7 +1,6 @@
 var LighthouseJob = require('./lib/shared_job_code.js');
 var LighthouseUnit = require('./lib/shared_unit_code.js');
-var LighthouseJson = require('./lib/shared_json_code.js');
-var LighthouseChrome = require('./lib/shared_chrome_code.js');
+require('./lib/shared_chrome_code.js'); // side-effect
 var LighthouseWordCloud = require('./lib/stats/wordcloud.js');
 var LighthouseStatsJobsCleanup = require('./lib/stats/jobparsing.js');
 import '../../styles/pages/stats.css';

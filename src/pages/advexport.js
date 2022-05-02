@@ -8,8 +8,6 @@ import '../../styles/pages/advexport.css';
 global.jQuery = $;
 
 var LighthouseJob = require('./lib/shared_job_code.js');
-var LighthouseUnit = require('./lib/shared_unit_code.js');
-var LighthouseJson = require('./lib/shared_json_code.js');
 var LighthouseOpsLog = require('./lib/shared_operationslog_code.js');
 
 
