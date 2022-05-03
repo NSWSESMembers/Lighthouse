@@ -1,13 +1,13 @@
-const $ = require('jquery');
-const LighthouseJson = require('./shared_json_code.js');
+import $ from 'jquery';
+import { getJsonPaginated } from './json.js';
 
 //limited to single page result
-export function get_tasking(Id, host, userId = 'notPassed', token, callback) {
-  console.log("GetTaskingfromBeacon called with:" + Id + ", " + host);
+export function getTasking(id, host, userId = 'notPassed', token, callback) {
+  console.log("GetTaskingfromBeacon called with:" + id + ", " + host);
 
-    LighthouseJson.get_json(
-    host+"/Api/v1/Tasking/Search?LighthouseFunction=GetTaskingfromBeacon&userId=" + userId + "&TeamIds=" + Id, token, 0, 100,
-    function(res){
+    getJsonPaginated(
+    host+"/Api/v1/Tasking/Search?LighthouseFunction=GetTaskingfromBeacon&userId=" + userId + "&TeamIds=" + id, token, 0, 100,
+    function(_res) {
       console.log("Progress CB");
     },
     function(results) { //call for the JSON, rebuild the array and return it when done.
@@ -22,11 +22,11 @@ export function get_tasking(Id, host, userId = 'notPassed', token, callback) {
 }
 
 //limited to single page result
-export function get_history(Id, host, userId = 'notPassed', token, callback) {
-  console.log("GetHistoryfromBeacon called with:" + Id+", "+host);
-    LighthouseJson.get_json(
-    host+"/Api/v1/Teams/"+Id+"/History?LighthouseFunction=GetHistoryfromBeacon&userId=" + userId, token, 1, 20,
-    function(res){
+export function getHistory(id, host, userId = 'notPassed', token, callback) {
+  console.log("GetHistoryfromBeacon called with:" + id+", "+host);
+    getJsonPaginated(
+    host+"/Api/v1/Teams/"+id+"/History?LighthouseFunction=GetHistoryfromBeacon&userId=" + userId, token, 1, 20,
+    function(_res) {
       console.log("Progress CB");
     },
     function(results) { //call for the JSON, rebuild the array and return it when done.
@@ -41,7 +41,7 @@ export function get_history(Id, host, userId = 'notPassed', token, callback) {
 }
 
 //make the call to beacon
-export function get_teams(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = []) {
+export function search(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = []) {
   console.debug("GetJSONTeamsfromBeacon called");
   let params = {};
   params['StatusStartDate'] = StartDate.toISOString();
@@ -71,7 +71,7 @@ export function get_teams(unit, host, StartDate, EndDate, userId = 'notPassed', 
 
   var url = host+"/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon&userId=" + userId + "&" + $.param(params, true);
   var lastDisplayedVal = 0 ;
-  LighthouseJson.get_json(
+  getJsonPaginated(
     url, token, 0, 100,
     function(count,total){
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
@@ -116,7 +116,7 @@ export function getTeamGeoJson(hqs, host, startDate, endDate, userId = 'notPasse
     let teamEndRange = new Date();
     let statusTypes = [3]; // Only get activated teams
 
-    LighthouseJson.get_json(hqs, host, teamStartRange, teamEndRange, userId, token, function (teams) {
+    getJsonPaginated(hqs, host, teamStartRange, teamEndRange, userId, token, function (teams) {
 
         // Make a promise to collect all the team details in promises
         new Promise((mainResolve) => {
@@ -126,7 +126,7 @@ export function getTeamGeoJson(hqs, host, startDate, endDate, userId = 'notPasse
 
                 // Create a promise for this team to check its tasking and details
                 promises.push(new Promise((resolve) => {
-                    get_tasking(team.Id, host, userId, token, function (teamTasking) {
+                    getTasking(team.Id, host, userId, token, function (teamTasking) {
                         let latestTasking = null;
                         let latestTime = null;
 

@@ -1,6 +1,4 @@
-var LighthouseJob = require('./lib/shared_job_code.js');
-var LighthouseUnit = require('./lib/shared_unit_code.js');
-var LighthouseTeam = require('./lib/shared_team_code.js');
+import BeaconClient from '../shared/BeaconClient.js';
 require('./lib/shared_chrome_code.js'); // side-effect
 var BeaconToken = require('./lib/shared_token_code.js');
 var clusterCodes = require('../lib/clusters.js');
@@ -187,7 +185,7 @@ var TeamHistory = function({
     function jobAddress(cb) {
 
       let address = ''
-      LighthouseJob.get_job(jobNumber[0].replace('-', ''), 1, params.host, params.userId, pageToken, function(data) {
+      BeaconClient.job.get(jobNumber[0].replace('-', ''), 1, params.host, params.userId, pageToken, function(data) {
         // Job Tags
         var tagArray = [];
         $.each(data.Tags, function(tagIdx, tagObj) {
@@ -357,7 +355,7 @@ var Team = function({
     //All this code only works because you cant change the order of the history
     //if history order ever changes the push/unshift logic will need to be smarter
 
-    LighthouseTeam.get_history(this.id, params.host, params.userId, pageToken, (history) => {
+    BeaconClient.team.get_history(this.id, params.host, params.userId, pageToken, (history) => {
 
       this.teamHistory().forEach((t, index) => {
         let found = false
@@ -427,7 +425,7 @@ var Team = function({
       this.loadingHistory(false)
 
       if (locationFound) {
-        LighthouseJob.get_job(locationFound.replace('-', ''), 1, params.host, params.userId, pageToken, function(job) {
+        BeaconClient.job.get(locationFound.replace('-', ''), 1, params.host, params.userId, pageToken, function(job) {
           this.teamLocation(`${locationMethod} ${locationFound} (${timeStampAgo})<br>${job.Address.PrettyAddress.replace(', NSW','')}`)
         })
       }
@@ -663,7 +661,7 @@ function RunForestRun(mp) {
 
         if (typeof params.hq != 'undefined') { //if not no hqs
           if (params.hq.split(",").length == 1) { //if only one HQ
-            LighthouseUnit.get_unit_name(params.hq, apiHost, params.userId, token, function(result, error) {
+            BeaconClient.unit.getName(params.hq, apiHost, params.userId, token, function(result, error) {
               if (typeof error == 'undefined') {
                 mp && mp.setText(`Loaded unit ${result.Code}`)
                 unit = result;
@@ -682,7 +680,7 @@ function RunForestRun(mp) {
             // HackTheMatrix(unit, apiHost, params.source, token, mp);
             mp && mp.setText(`Loading multiple unit details`)
             hqsGiven.forEach(function(d) {
-              LighthouseUnit.get_unit_name(d, params.host, params.userId, token, function(result, error) {
+              BeaconClient.unit.getName(d, params.host, params.userId, token, function(result, error) {
                 mp && mp.setText(`Loaded unit ${result.Code}`)
                 if (typeof error == 'undefined') {
                   unit.push(result);
@@ -715,7 +713,7 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  LighthouseTeam.get_teams(unit, host, start, end, userId, token, function(teams) {
+  BeaconClient.team.search(unit, host, start, end, userId, token, function(teams) {
 
       let allTeamsPromises = []
 

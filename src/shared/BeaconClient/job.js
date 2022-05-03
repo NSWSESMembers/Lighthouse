@@ -1,8 +1,7 @@
-var LighthouseJson = require('./shared_json_code.js');
-var $ = require('jquery');
+import $ from 'jquery';
+import { getJsonPaginated } from './json.js';
 
-//make the call to beacon
-export function get_json(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, viewmodel) {
+export function search(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, viewmodel) {
 
   if (typeof viewmodel === 'undefined') //if they dont specify a viewmodel to load, pull the big one down.
    {
@@ -10,7 +9,7 @@ export function get_json(unit, host, StartDate, EndDate, userId = 'notPassed', t
   }
 
   var url = "";
-  console.log("GetJSONfromBeacon called with:" + StartDate + "," + EndDate + ", " + host);
+  console.log("Client.job.search() called with:" + StartDate + "," + EndDate + ", " + host);
 
   if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) == false) {
@@ -28,7 +27,7 @@ export function get_json(unit, host, StartDate, EndDate, userId = 'notPassed', t
   }
 
   var lastDisplayedVal = 0 ;
-  LighthouseJson.get_json(
+  getJsonPaginated(
     url, token, 0, 100,
     function(count,total){
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
@@ -51,9 +50,9 @@ export function get_json(unit, host, StartDate, EndDate, userId = 'notPassed', t
 
 }
 
-export function get_summary_json(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack) {
+export function summary(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack) {
     var url = "";
-    console.log("GetSummaryJSONfromBeacon called with:" + StartDate + "," + EndDate + ", " + host);
+    console.log("Client.job.summary() called with:" + StartDate + "," + EndDate + ", " + host);
 
     if (unit !== null || typeof unit === 'undefined') {
         if (Array.isArray(unit) == false) {
@@ -90,10 +89,10 @@ export function get_summary_json(unit, host, StartDate, EndDate, userId = 'notPa
     });
 }
 
-export function get_job(Id, viewModelType = 1, host, userId = 'notPassed', token, callback) {
+export function get(id, viewModelType = 1, host, userId = 'notPassed', token, callback) {
   $.ajax({
     type: 'GET',
-    url: host + "/Api/v1/Jobs/" + Id + "?LighthouseFunction=GetJobfromBeacon&userId=" + userId + "&viewModelType="+viewModelType,
+    url: host + "/Api/v1/Jobs/" + id + "?LighthouseFunction=GetJobfromBeacon&userId=" + userId + "&viewModelType="+viewModelType,
     beforeSend: function(n) {
       n.setRequestHeader("Authorization", "Bearer " + token)
     },

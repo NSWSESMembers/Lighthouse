@@ -2,13 +2,12 @@ var DOM = require('jsx-dom-factory').default;
 var _ = require('underscore');
 var $ = require('jquery');
 var moment = require('moment');
+import BeaconClient from '../shared/BeaconClient.js';
+
 import '../../styles/pages/advexport.css';
 
 
 global.jQuery = $;
-
-var LighthouseJob = require('./lib/shared_job_code.js');
-var LighthouseOpsLog = require('./lib/shared_operationslog_code.js');
 
 
 var timeoverride = null;
@@ -246,7 +245,7 @@ function HackTheMatrix(id, host, progressBar) {
   }
 
 
-  LighthouseJob.get_json(unit, host, start, end, params.userId, token, function(jobs) {
+  BeaconClient.job.get(unit, host, start, end, params.userId, token, function(jobs) {
     //console.log(jobs);
     // $(jobs.Results).each(function(j,k){
     //   console.log(k)
@@ -342,7 +341,7 @@ function HackTheMatrix(id, host, progressBar) {
       const itemPos = position
       position++
       if (item.ICEMSIncidentIdentifier != null) {
-        LighthouseOpsLog.get_operations_log(item.Id, host, params.userId, token, function(logs) {
+        BeaconClient.operationslog.search(item.Id, host, params.userId, token, function(logs) {
           var numberOfIUM = 0
           logs.Results.forEach(function(r) {
             if (r.Subject && r.Subject.indexOf('Incident Update Message') != -1 && r.Subject.indexOf('Incident Update Message Acceptance') == -1) {

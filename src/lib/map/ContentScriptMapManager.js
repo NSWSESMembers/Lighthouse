@@ -1,8 +1,7 @@
 const $ = require('jquery');
 const DOM = require('jsx-dom-factory').default;
 const moment = require('moment');
-const LighthouseTeam = require('../../pages/lib/shared_team_code.js');
-const LighthouseAsset = require('../../pages/lib/shared_asset_code.js');
+import BeaconClient from '../../shared/BeaconClient.js';
 
 
 const lighthouseIcon = chrome.extension.getURL('icons/lh-black.png');
@@ -278,7 +277,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
             return;
         }
 
-        LighthouseTeam.getTeamGeoJson(this._hqs, this._base, this._startDate, this._endDate, 'ContentScriptMapManager', this._token, function(result) {
+        BeaconClient.team.getTeamGeoJson(this._hqs, this._base, this._startDate, this._endDate, 'ContentScriptMapManager', this._token, function(result) {
             ContentScriptMapManager._passLayerDataToInject('ses-teams', result);
         }.bind(this));
     }
@@ -294,7 +293,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
             setTimeout(this._requestSesFilteredAssets.bind(this), 2000);
             return;
         } else {
-        LighthouseAsset.getFilteredAssets(this._hqs, this._base, 'ContentScriptMapManager', this._token, function(result) {
+        BeaconClient.asset.filter(this._hqs, this._base, 'ContentScriptMapManager', this._token, function(result) {
             ContentScriptMapManager._passLayerDataToInject('ses-assets-filtered', result);
         }.bind(this));
       }

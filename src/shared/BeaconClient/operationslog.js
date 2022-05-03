@@ -1,11 +1,10 @@
-var $ = require('jquery');
+import $ from 'jquery';
 
-export function get_unit_resouces(Id, host, userId = 'notPassed', token, callback) {
-  console.log("GetResourcesfromBeacon called with:" + Id + ", " + host);
-
+//limited to 1000 calls. no paging support
+export function search(Id, host, userId = 'notPassed', token, callback) {
   $.ajax({
     type: 'GET',
-    url: host + "/Api/v1/Entities/" + Id + "?LighthouseFunction=GetResourcesfromBeacon&userId=" + userId,
+    url: host + "/Api/v1/OperationsLog/search?LighthouseFunction=GetOperationsLogfromBeacon&userId=" + userId + "&JobIds%5B%5D=" + Id + "&PageIndex=1&PageSize=1000&SortOrder=desc&SortField=TimeLogged",
     beforeSend: function(n) {
       n.setRequestHeader("Authorization", "Bearer " + token)
     },
@@ -15,8 +14,6 @@ export function get_unit_resouces(Id, host, userId = 'notPassed', token, callbac
       if (textStatus == 'success') {
         let results = response.responseJSON;
         if (typeof callback === "function") {
-          console.log("GetResourcesfromBeacon call back with:");
-          console.log(results); //.Results);
           callback(results);
         }
       }

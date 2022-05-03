@@ -1,6 +1,6 @@
-const $ = require('jquery');
+import $ from 'jquery';
 
-function getFilteredAssets(hqs, host, userId = 'notPassed', token, cb) {
+export function filter(hqs, host, userId = 'notPassed', token, cb) {
   console.debug('fetching SES Asset Locations with HQ filter on result');
   $.ajax({
     type: 'GET',
@@ -33,7 +33,3 @@ function getFilteredAssets(hqs, host, userId = 'notPassed', token, cb) {
     }
   })
 }
-
-module.exports = {
-  getFilteredAssets: getFilteredAssets
-};

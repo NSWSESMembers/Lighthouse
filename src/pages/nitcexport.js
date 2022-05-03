@@ -1,4 +1,4 @@
-var nitc = require('./lib/shared_nitc_code.js');
+import BeaconClient from '../shared/BeaconClient.js';
 var $ = require('jquery');
 global.jQuery = $;
 var moment = require('moment');
@@ -99,7 +99,7 @@ function HackTheMatrix(progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  nitc.get_json(params, params.userId, token, start, end, function(nitcs) {
+  BeaconClient.nitc.get(params, params.userId, token, start, end, function(nitcs) {
     let exports;
 
     if (document.getElementById("Activity").checked) {  // Activity list export

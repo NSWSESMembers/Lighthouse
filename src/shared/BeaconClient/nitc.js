@@ -1,7 +1,7 @@
-var LighthouseJson = require('./shared_json_code.js');
+import { getJsonPaginated } from './json.js';
 
-//make the call to beacon
-export function get_json(params, userId = 'notPassed', token, StartDate, EndDate, callback, progressCallBack) {
+
+export function search(params, userId = 'notPassed', token, StartDate, EndDate, callback, progressCallBack) {
 
     var url = params.host + "/Api/v1/NonIncident/Search?LighthouseFunction=GetNITCJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString();
     var s = "";
@@ -32,7 +32,7 @@ export function get_json(params, userId = 'notPassed', token, StartDate, EndDate
 
 
   var lastDisplayedVal = 0 ;
-  LighthouseJson.get_json(
+  getJsonPaginated(
     url, token, 0, 100,
     function(count,total){
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)

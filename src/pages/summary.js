@@ -1,5 +1,4 @@
-var LighthouseJob = require('./lib/shared_job_code.js');
-var LighthouseUnit = require('./lib/shared_unit_code.js');
+import BeaconClient from '../shared/BeaconClient.js';
 require('./lib/shared_chrome_code.js'); // side-effect
 import '../../styles/pages/summary.css';
 
@@ -284,7 +283,7 @@ function RunForestRun(mp) {
 
         if (typeof params.hq !== 'undefined') {
           if (params.hq.split(",").length == 1) { //one HQ was passed
-            LighthouseUnit.get_unit_name(params.hq, apiHost, params.userId, token, function(result, error) {
+            BeaconClient.unit.getName(params.hq, apiHost, params.userId, token, function(result, error) {
               if (typeof error == 'undefined') {
                 unit = result;
                 HackTheMatrix(unit, apiHost, params.userId, token, mp);
@@ -297,7 +296,7 @@ function RunForestRun(mp) {
             console.log("passed array of units");
             var hqsGiven = params.hq.split(",");
             hqsGiven.forEach(function(d) {
-              LighthouseUnit.get_unit_name(d, apiHost, params.userId, token, function(result, error) {
+              BeaconClient.unit.getName(d, apiHost, params.userId, token, function(result, error) {
                 if (typeof error == 'undefined') {
                   mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
                   unit.push(result);
@@ -331,7 +330,7 @@ console.log(userId)
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  LighthouseJob.get_summary_json(unit, host, start, end, userId, token,
+  BeaconClient.job.summary(unit, host, start, end, userId, token,
     function(summary) {
       progressBar && progressBar.setValue(1);
 

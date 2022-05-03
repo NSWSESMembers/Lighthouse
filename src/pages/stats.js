@@ -1,5 +1,5 @@
-var LighthouseJob = require('./lib/shared_job_code.js');
-var LighthouseUnit = require('./lib/shared_unit_code.js');
+import BeaconClient from '../shared/BeaconClient.js';
+
 require('./lib/shared_chrome_code.js'); // side-effect
 var LighthouseWordCloud = require('./lib/stats/wordcloud.js');
 var LighthouseStatsJobsCleanup = require('./lib/stats/jobparsing.js');
@@ -189,7 +189,7 @@ function RunForestRun(mp) {
 
           if (params.hq.split(",").length == 1) { //if only one HQ
 
-            LighthouseUnit.get_unit_name(params.hq, apiHost, params.userId, token, function(result, error) {
+            BeaconClient.unit.getName(params.hq, apiHost, params.userId, token, function(result, error) {
               if (typeof error == 'undefined') {
                 unit = result;
                 fetchFromBeacon(unit, apiHost, params.userId, token, fetchComplete, mp, firstrun);
@@ -204,7 +204,7 @@ function RunForestRun(mp) {
             var hqsGiven = params.hq.split(",");
             console.log(hqsGiven);
             hqsGiven.forEach(function(d) {
-              LighthouseUnit.get_unit_name(d, apiHost, params.userId, token, function(result, error) {
+              BeaconClient.unit.getName(d, apiHost, params.userId, token, function(result, error) {
                 if (typeof error == 'undefined') {
                   mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
                   unit.push(result);
@@ -239,7 +239,7 @@ function fetchFromBeacon(unit, host, userId, token, cb, progressBar, firstrun) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  LighthouseJob.get_json(unit, host, start, end, userId, token, function(data) {
+  BeaconClient.job.search(unit, host, start, end, userId, token, function(data) {
     cb && cb(data, progressBar, firstrun);
   }, function(val, total) {
     if (progressBar) { //if its a first load

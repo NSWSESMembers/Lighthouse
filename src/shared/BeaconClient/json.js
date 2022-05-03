@@ -1,6 +1,7 @@
-var $ = require('jquery');
+import $ from 'jquery';
 
-export function get_json(url, token, pageLimit = 0, perPageLimit = 100, progresscb, cb) { //take url and a page limit and loop until a result returns less than we asked for
+
+export function getJsonPaginated(url, token, pageLimit = 0, perPageLimit = 100, progresscb, cb) { //take url and a page limit and loop until a result returns less than we asked for
   var currentPage = 1;
   var totalResults = [];
   goGet(HandleResults,currentPage); //make the first call to kick off the loop
