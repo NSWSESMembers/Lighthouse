@@ -136,13 +136,13 @@ const teamEnrouteIcon = lighthouseUrl + 'icons/enroute.png';
 const teamOnsiteIcon = lighthouseUrl + 'icons/bus.png';
 const teamOffsiteIcon = lighthouseUrl + 'icons/offsite.png';
 
-const assetIcon = lighthouseUrl + 'icons/asset';
-const assetOrangeIcon = lighthouseUrl + 'icons/asset-orange';
-const assetRedIcon = lighthouseUrl + 'icons/asset-red';
-const assetBlueIcon = lighthouseUrl + 'icons/asset-blue';
-const assetYellowIcon = lighthouseUrl + 'icons/asset-yellow';
-const assetBrownIcon = lighthouseUrl + 'icons/asset-brown';
-const assetPurpleIcon = lighthouseUrl + 'icons/asset-purple';
+const assetIcon = lighthouseUrl + 'icons/asset-icons/asset';
+const assetOrangeIcon = lighthouseUrl + 'icons/asset-icons/asset-orange';
+const assetRedIcon = lighthouseUrl + 'icons/asset-icons/asset-red';
+const assetBlueIcon = lighthouseUrl + 'icons/asset-icons/asset-blue';
+const assetYellowIcon = lighthouseUrl + 'icons/asset-icons/asset-yellow';
+const assetBrownIcon = lighthouseUrl + 'icons/asset-icons/asset-brown';
+const assetPurpleIcon = lighthouseUrl + 'icons/asset-icons/asset-purple';
 
 
 
