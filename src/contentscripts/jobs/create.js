@@ -82,9 +82,9 @@ let job_asbestos_history = (
   );
 
 
-$('#createRfaForm > fieldset:nth-child(6) > div:nth-child(2)').after(job_asbestos_history);
+$('#createRfaForm > fieldset:nth-child(5) > div:nth-child(2)').after(job_asbestos_history);
 
-$('#createRfaForm > fieldset:nth-child(6) > div:nth-child(12)').after(job_nearest_lhq);
+$('#createRfaForm > fieldset:nth-child(5) > div:nth-child(12)').after(job_nearest_lhq);
 
 
 console.log("injecting")
