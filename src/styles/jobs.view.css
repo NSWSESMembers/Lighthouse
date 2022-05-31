@@ -57,11 +57,6 @@
    text-align: center;
 }
 
-.custom-div-icon i.awesome {
-    margin: 12px auto;
-    font-size: 15px;
- }
-
  #nearest-asset-table {
    margin-bottom: 5px
  }
@@ -121,7 +116,7 @@
   vertical-align: middle;
   opacity: 0.6;
   color: white;
-  font-size: 1.5;
+  font-size: 15px;
   font-family: "latobold";
 	height: 100%;
 	width: 100%;
@@ -147,6 +142,10 @@
   font-family: "latobold";
 	height: 100%;
 	width: 100%;
+}
+
+.leaflet-tooltip {
+   font-size: 11px;
 }
 
 #locate {

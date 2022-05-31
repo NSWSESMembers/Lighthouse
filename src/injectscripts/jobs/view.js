@@ -573,7 +573,7 @@ let instantRadiologModal = return_quickradiologmodal();
            var situationVehicle = L.divIcon({
              className: 'custom-div-icon',
                 html: `<div style='background-color:${bgcolor}; ${moment().diff(v.properties.lastSeen, "days") > 1 ? "filter: contrast(0.3);" : ''}' class='marker-pin'></div>
-                <div class="awesome" style="position: absolute; margin: 24px 13px; line-height: 10px; text-align: center; color:white">
+                <div class="assetMarker" style="position: absolute; margin: 24px 13px; line-height: 10px; text-align: center; color:white; font-size: 11px;">
                   <p>${markerLabel}</p>
                 </div>`,
                iconSize: [40, 56],
