@@ -212,7 +212,7 @@ var selectedcolumns = [];
 
 //make the call to beacon
 function HackTheMatrix(id, host, progressBar) {
-  console.log(id);
+
   var unit = [];
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
@@ -244,8 +244,7 @@ function HackTheMatrix(id, host, progressBar) {
     console.log(unit);
   }
 
-
-  BeaconClient.job.get(unit, host, start, end, params.userId, token, function(jobs) {
+  BeaconClient.job.search(unit, host, start, end, params.userId, token, function(jobs) {
     //console.log(jobs);
     // $(jobs.Results).each(function(j,k){
     //   console.log(k)
