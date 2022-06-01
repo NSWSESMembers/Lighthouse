@@ -4,7 +4,6 @@ const glob = require('glob');
 const DotenvPlugin = require('dotenv-webpack');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const contentScripts = glob.sync('./src/contentscripts/**/*.js')
   .reduce((acc, path) => {
@@ -60,9 +59,6 @@ module.exports = {
     new ESLintPlugin({
       extensions: ['js', 'ts'],
       overrideConfigFile: path.resolve(__dirname, '.eslintrc'),
-    }),
-    new MiniCssExtractPlugin({
-      filename: 'styles/[name].css',
     }),
     new CopyPlugin({
       patterns: [{ from: 'static' }],
