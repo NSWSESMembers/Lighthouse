@@ -7,7 +7,6 @@ var _ = require('underscore');
 var moment = require('moment');
 
 global.jQuery = $;
-var crossfilter = require('crossfilter');
 require('bootstrap'); // for jq plugin: modal
 
 var params = getSearchParameters();
@@ -21,7 +20,6 @@ var tokenexp = ''
 
 var apiLoadingInterlock = false
 
-var timeperiod;
 var unit = null;
 
 var sounds = {
@@ -86,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
   RunForestRun(mp)
 });
 
-window.addEventListener('resize', function(event) {
+window.addEventListener('resize', function() {
   resize()
 });
 
@@ -152,7 +150,7 @@ function validateTokenExpiration() {
         },
         cache: false,
         dataType: 'json',
-        complete: function(response, textStatus) {
+        complete: function(response) {
           token = response.responseJSON.access_token
           tokenexp = response.responseJSON.expires_at
           chrome.storage.local.set({
@@ -441,13 +439,6 @@ console.log(userId)
       });
 
 
-      var options = {
-        weekday: "short",
-        year: "numeric",
-        month: "2-digit",
-        day: "numeric",
-        hour12: false
-      };
 
       var title;
 

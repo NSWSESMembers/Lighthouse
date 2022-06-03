@@ -184,7 +184,6 @@ var TeamHistory = function({
 
     function jobAddress(cb) {
 
-      let address = ''
       BeaconClient.job.get(jobNumber[0].replace('-', ''), 1, params.host, params.userId, pageToken, function(data) {
         // Job Tags
         var tagArray = [];
@@ -325,7 +324,7 @@ var Team = function({
     rateLimit: 200
   });
 
-  this.teamMembers.subscribe((newValue) => {
+  this.teamMembers.subscribe(() => {
     activateToolTips()
   })
 
@@ -355,11 +354,11 @@ var Team = function({
     //All this code only works because you cant change the order of the history
     //if history order ever changes the push/unshift logic will need to be smarter
 
-    BeaconClient.team.get_history(this.id, params.host, params.userId, pageToken, (history) => {
+    BeaconClient.team.getHistory(this.id, params.host, params.userId, pageToken, (history) => {
 
       this.teamHistory().forEach((t, index) => {
         let found = false
-        $.each(history.Results, function(i, el) {
+        $.each(history.Results, function() {
           if (`${this.Name}-${this.Description}-${this.TimeStamp}` == `${t.name}-${t.description}-${t.timeStamp}`) {
             found = true
           }
@@ -397,7 +396,7 @@ var Team = function({
 
         let existingHistory = false //would be undef otherwise
 
-        existingHistory = this.teamHistory().find((r, i) => {
+        existingHistory = this.teamHistory().find((r) => {
           if (`${r.name}-${r.description}-${r.timeStamp}` === `${historyItem.Name}-${historyItem.Description}-${historyItem.TimeStamp}`) {
             return true
           }
@@ -425,8 +424,9 @@ var Team = function({
       this.loadingHistory(false)
 
       if (locationFound) {
+        let teamLocation = this.teamLocation
         BeaconClient.job.get(locationFound.replace('-', ''), 1, params.host, params.userId, pageToken, function(job) {
-          this.teamLocation(`${locationMethod} ${locationFound} (${timeStampAgo})<br>${job.Address.PrettyAddress.replace(', NSW','')}`)
+          teamLocation(`${locationMethod} ${locationFound} (${timeStampAgo})<br>${job.Address.PrettyAddress.replace(', NSW','')}`)
         })
       }
 
@@ -633,9 +633,7 @@ function RunForestRun(mp) {
     apiLoadingInterlock = true
 
     BeaconToken.fetchBeaconToken(apiHost, params.source, function({
-      token,
-      tokenexp
-    }) {
+      token    }) {
       pageToken = token
       mp && mp.open();
       mp && mp.setValue(-1);
@@ -730,7 +728,7 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
       //remove teams from the main array that are not longer returned from the api query
       myViewModel.teams().forEach(function(d, index) {
         let found = false
-        $.each(teams.Results, function(i, el) {
+        $.each(teams.Results, function() {
           if (this.Id == d.id) {
             found = true
           }
@@ -742,12 +740,12 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
 
       teams.Results.forEach(function(d) {
 
-        allTeamsPromises.push(new Promise(function(resolve, reject) {
+        allTeamsPromises.push(new Promise(function(resolve) {
 
 
           let existingTeam = false //would be undef otherwise
           let storedTeam = {};
-          existingTeam = myViewModel.teams().find(function(r, i) {
+          existingTeam = myViewModel.teams().find(function(r) {
             if (r.id === d.Id) {
               return true
             }
@@ -818,7 +816,7 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
           //remove team members from the array that are not longer returned from the api query
           storedTeam.teamMembers().forEach(function(t, index) {
             let found = false
-            $.each(d.Members, function(i, el) {
+            $.each(d.Members, function() {
               if (this.Id == t.id) {
                 found = true
               }
@@ -830,7 +828,7 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
 
           d.Members.forEach(function(teamMember) {
             let existingTeamMember = false //would be undef otherwise
-            existingTeamMember = storedTeam.teamMembers().find(function(r, i) {
+            existingTeamMember = storedTeam.teamMembers().find(function(r) {
               if (r.id === teamMember.Id) {
                 return true
               }
@@ -999,20 +997,11 @@ function activateToolTips() {
 }
 
 
-function secondsToHms(d) {
-  d = Number(d);
-  var h = Math.floor(d / 3600);
-  var m = Math.floor(d % 3600 / 60);
-  var s = Math.floor(d % 3600 % 60);
-  return ((h > 0 ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s < 10 ? "0" : "") + s);
-}
 
 function positionFooter() {
   var footerHeight = 55,
-    footerTop = 0,
     $footer = $(".footer");
   footerHeight = $footer.height();
-  footerTop = ($(window).scrollTop() + $(window).height() - footerHeight) + "px";
 
   if (($(document.body).height() + footerHeight) < $(window).height()) {
     $footer.css({
@@ -1026,19 +1015,12 @@ function positionFooter() {
 }
 
 
-function truncateString(str, length) {
-  return str.length > length ? str.substring(0, length - 3) + '...' : str
-}
-
-
-
 var firstRun = true
 
 
 var apiLoadingInterlock = false
 
 
-var timeperiod;
 var unit = null;
 
 
@@ -1130,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     //  Dynamic popovers are a bitch. This will remmove any/all on body click
-    $('body').on('click', function(e) {
+    $('body').on('click', function() {
       $("*").each(function() {
         // Bootstrap sets a data field with key `bs.popover` on elements that have a popover.
         // Note that there is no corresponding **HTML attribute** on the elements so we cannot
@@ -1156,17 +1138,17 @@ document.addEventListener('DOMContentLoaded', function() {
       RunForestRun();
     }
     $(document).on('click', "#unselectAllfilters", function() {
-      myViewModel.teams().forEach(function(d, index) {
+      myViewModel.teams().forEach(function(d) {
         d.hidden(true)
       })
     })
     $(document).on('click', "#selectAllfilters", function() {
-      myViewModel.teams().forEach(function(d, index) {
+      myViewModel.teams().forEach(function(d) {
         d.hidden(false)
       })
     })
     $(document).on('click', "#selectAllActivatedfilters", function() {
-      myViewModel.teams().forEach(function(d, index) {
+      myViewModel.teams().forEach(function(d) {
         d.hidden(true)
         if (d.status() == "Activated") {
           d.hidden(false)
