@@ -333,6 +333,7 @@ var taskCountChart = null;
 var localChart = null;
 var unitChart = null;
 var clusterChart = null;
+var lgaChart = null;
 var zoneChart = null;
 var sectorChart = null;
 var categoriesChart = null;
@@ -740,6 +741,9 @@ function prepareCharts(jobs, start, end, firstRun) {
       return d.EntityAssignedTo.Cluster;
     });
 
+    lgaChart = makeSimplePie("#dc-lga-chart", 460, 240, function(d) {
+      return d.LGA;
+    });
 
     zoneChart = makeSimplePie("#dc-zone-chart", 460, 240, function(d) {
       return d.EntityAssignedTo.ParentEntity ? d.EntityAssignedTo.ParentEntity.Name : "NA";
@@ -803,6 +807,7 @@ function prepareCharts(jobs, start, end, firstRun) {
     let localChartFilters = localChart.filters();
     let unitChartFilters = unitChart.filters();
     let clusterChartFilters = clusterChart.filters();
+    let lgaChartFilters = lgaChart.filters();
     let zoneChartFilters = zoneChart.filters();
     let sectorChartFilters = sectorChart.filters();
 
@@ -820,6 +825,7 @@ function prepareCharts(jobs, start, end, firstRun) {
     localChart.filter(null)
     unitChart.filters(null)
     clusterChart.filters(null)
+    lgaChart.filters(null)
     zoneChart.filters(null)
     sectorChart.filters(null)
 
@@ -845,6 +851,7 @@ function prepareCharts(jobs, start, end, firstRun) {
     localChart.filter([localChartFilters])
     unitChart.filter([unitChartFilters])
     clusterChart.filters([clusterChartFilters])
+    lgaChart.filters([lgaChartFilters])
     zoneChart.filters([zoneChartFilters])
     sectorChart.filters([sectorChartFilters])
 
