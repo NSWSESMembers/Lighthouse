@@ -7,6 +7,7 @@ import BeaconClient from '../../shared/BeaconClient.js';
 const lighthouseIcon = chrome.extension.getURL('icons/lh-black.png');
 const teamIcon = chrome.extension.getURL('icons/bus.png');
 const assetIcon = chrome.extension.getURL('icons/asset-icons/asset-red.png');
+const hazardWatchIcon = chrome.extension.getURL('icons/hazardWatch.png');
 
 const helicopterIcon = chrome.extension.getURL('icons/helicopter.png');
 const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');
@@ -56,9 +57,13 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
             <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={teamIcon} />
             <span class="tag-text">Team Tasking</span>
             </span>
-            <span id="toggleSesFilteredAssets" class="label tag tag-lh-filter tag-disabled">
+            <span id="toggleSesFilteredAssetsBtn" class="label tag tag-lh-filter tag-disabled">
             <img style="max-width: 16px; vertical-align: top;margin-right: 4px;" src={assetIcon} />
             <span class="tag-text">HQ Filtered Asset Locations</span>
+            </span>
+            <span id="toggleHazardWatchBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px; vertical-align: top;margin-right: 4px;" src={hazardWatchIcon} />
+            <span class="tag-text">Hazard Watch</span>
             </span>
             </li>
             </ul>
@@ -131,7 +136,8 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
         this._registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', this._requestTransportCamerasLayerUpdate, 10 * 60000); // every 10 mins
         this._registerClickHandler('toggleHelicoptersBtn', 'helicopters', ContentScriptMapManager._requestHelicoptersLayerUpdate, 10000); // every 10s
         this._registerClickHandler('toggleSesTeamsBtn', 'ses-teams', this._requestSesTeamsLayerUpdate, 5 * 60000); // every 5 minutes
-        this._registerClickHandler('toggleSesFilteredAssets', 'ses-assets-filtered', this._requestSesFilteredAssets, 60000); // every 1 minutes
+        this._registerClickHandler('toggleSesFilteredAssestBtn', 'ses-assets-filtered', this._requestSesFilteredAssets, 60000); // every 1 minutes
+        this._registerClickHandler('toggleHazardWatchBtn', 'hazard-watch', this._requestHazardWatchLayerUpdate, 5 * 60000); // every 5 minutes
         this._registerClickHandler('togglePowerOutagesBtn', 'power-outages', this._requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('togglelhqsBtn', 'lhqs', this._requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
 
@@ -265,6 +271,12 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
         this._requestLayerUpdate('power-outages')
     }
 
+    _requestHazardWatchLayerUpdate() {
+        //console.debug('updating hazard-watch layer');
+        this._requestLayerUpdate('hazard-watch')
+
+    }
+
     /**
      * Requests an update to the SES teams location layer.
      */
@@ -337,6 +349,8 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
         //console.debug('updating transport incidents layer');
         window.postMessage({type: 'LH_REQUEST_HELI_PARAMS'}, '*');
     }
+
+    
 
     /**
      * Sends a message to the background script with layer name and params.

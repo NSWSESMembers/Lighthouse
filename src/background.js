@@ -32,7 +32,7 @@ const openSkyFeed = "https://opensky-network.org/api/states/all";
 const essentialEnergyOutagesFeed = 'https://www.essentialenergy.com.au/Assets/kmz/current.kml';
 const endeavourEnergyOutagesFeed = 'https://www.endeavourenergy.com.au/designs/connectors/outage-feeds/get-current-outage';
 const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
-
+const hazardWatchUrl = 'https://hazardwatch.gov.au/api/warnings'
 //external libs
 
 //block message js core request, fetch the file, inject our vars then serve it back to the requestor. :-)
@@ -164,6 +164,12 @@ chrome.runtime.onMessage.addListener(
                 sendResponse(data);
             });
             return true;
+        } else if (request.type === 'hazard-watch') {
+            fetchHazardWatch(function(data) {
+                console.log(data)
+                sendResponse(data);
+            });
+            return true;
         }
     });
 
@@ -253,6 +259,31 @@ function loadSynchronously(url) {
         }
     };
     xhttp.open('GET', openSkyFeed + params, true);
+    xhttp.send();
+}
+
+/**
+ * Fetches the hazard watch.
+ *
+ * @param params the HTTP URL parameters to add.
+ * @param callback the callback to send the data to.
+ */
+ function fetchHazardWatch(callback) {
+    console.info('fetching hazard watch');
+    var xhttp = new XMLHttpRequest();
+    xhttp.onloadend = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            callback(JSON.parse(xhttp.responseText));
+        } else {
+            // error
+            var response = {
+                error: 'Request failed',
+                httpCode: this.status
+            };
+            callback(response);
+        }
+    };
+    xhttp.open('GET', hazardWatchUrl, true);
     xhttp.send();
 }
 

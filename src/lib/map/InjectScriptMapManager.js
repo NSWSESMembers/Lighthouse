@@ -60,6 +60,8 @@ window.addEventListener("message", function(event) {
                 showLhqs(mapLayer, event.data.response)
             } else if (event.data.layer === 'power-outages') {
                 showPowerOutages(mapLayer, event.data.response)
+            } else if (event.data.layer === 'hazard-watch') {
+                showHazardWatch(mapLayer, event.data.response)
             }
 
         } else if (event.data.type === "LH_CLEAR_LAYER_DATA") {
@@ -614,6 +616,170 @@ const rfsIcons = {
 }
 
 /**
+ * Shows the current hazard watch hazards.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+ function showHazardWatch(mapLayer, data) {
+    console.info('showing hazard watch');
+ data.forEach(function(hazard) {
+     console.log(hazard)
+
+    let description = $(`
+    <table style="width: 100%;">
+    </table>`)
+
+    let headline = ''
+
+    let icon = lighthouseUrl + 'icons/hz_flood.svg'
+
+        //work out the top level icon first
+    switch (hazard.event)
+    {
+       case 'FloodWatch':
+           icon = lighthouseUrl + 'icons/hz_flood.svg'
+       break
+       case 'FloodBulletin':
+           icon = lighthouseUrl + 'icons/hz_flood.svg'
+       break
+       case 'FinalFloodBulletin':
+        icon = lighthouseUrl + 'icons/hz_flood.svg'
+        break
+       case 'EvacuationOrder':
+           icon = lighthouseUrl + 'icons/hz_evac.svg'
+       break
+       case 'AllClear':
+           icon = lighthouseUrl + 'icons/hz_clear.svg'
+       break
+       case 'EvacuationWarning':
+           icon = lighthouseUrl + 'icons/hz_evacwarning.svg'
+       break
+    }
+
+
+     if (hazard.clusteredWarnings) { //if there are clustered warnings
+        hazard.clusteredWarnings.reverse()
+
+        headline = "Multiple Warnings"
+
+
+        hazard.clusteredWarnings.forEach(function(clusteredHazard) {
+            let subText = clusteredHazard.event
+            switch (clusteredHazard.event)
+            {
+                case 'FloodWatch':
+                    subText = ''
+                break
+                case 'FloodBulletin':
+                    subText = `${clusteredHazard.floodWarningLevel} Flood Bulletin`
+                break
+                case 'FinalFloodBulletin':
+                    subText = `${clusteredHazard.floodWarningLevel} Flood Bulletin`
+                break
+                case 'EvacuationOrder':
+                    subText = `Evacuation Order`
+                break
+                case 'AllClear':
+                    subText = `All Clear`
+                break
+                case 'EvacuationWarning':
+                    subText = `Evacuation Warning`
+                break
+            }
+        description.append(`<tbody class="hazard-hover-table"><tr>
+        <td rowspan="2" style="width: 25%; padding-left: 5px"><object data="${icon}" type="image/svg+xml"></object></td>
+        <td style="width: 70%; ">${clusteredHazard.areaName}</td>
+        <td rowspan="2" style="width: 5%;padding-right: 5px"><a style="display: block;" href="https://hazardwatch.gov.au/warnings/${clusteredHazard.id}" target="_blank"><object style="pointer-events: none;" data="${lighthouseUrl + 'icons/hz_arrow.svg'}" type="image/svg+xml"></object></a></td>
+        </tr>
+        <tr>
+        <td style=" padding-bottom: 10px;">${subText}<br><span style="font-weight: bold;" >${moment(clusteredHazard.issuedAt).format('h:mma ddd D MMM z')}</span></td>
+        </tr></tbody>`)
+        })
+
+            //work out nested icon
+     switch (hazard.clusteredWarnings[hazard.clusteredWarnings.length - 1].event)
+     {
+        case 'FloodWatch':
+            icon = lighthouseUrl + 'icons/hz_flood.svg'
+        break
+        case 'FloodBulletin':
+            icon = lighthouseUrl + 'icons/hz_flood.svg'
+        break
+        case 'FinalFloodBulletin':
+            icon = lighthouseUrl + 'icons/hz_flood.svg'
+        break
+        case 'EvacuationOrder':
+            icon = lighthouseUrl + 'icons/hz_evac.svg'
+        break
+        case 'AllClear':
+            icon = lighthouseUrl + 'icons/hz_clear.svg'
+        break
+        case 'EvacuationWarning':
+            icon = lighthouseUrl + 'icons/hz_evacwarning.svg'
+        break
+     }
+
+     } else { //kinda render it the same because its just so much text to squish into the box
+
+        headline = hazard.headline
+
+        let subText = hazard.event
+            switch (hazard.event)
+            {
+                case 'FloodWatch':
+                    subText = ''
+                break
+                case 'FloodBulletin':
+                    subText = `${hazard.floodWarningLevel} Flood Bulletin`
+                break
+                case 'FinalFloodBulletin':
+                    subText = `${hazard.floodWarningLevel} Flood Bulletin`
+                break
+                case 'EvacuationOrder':
+                    subText = `Evacuation Order`
+                break
+                case 'AllClear':
+                    subText = `All Clear`
+                break
+                case 'EvacuationWarning':
+                    subText = `Evacuation Warning`
+                break
+            }
+
+        description.append(`<tbody class="hazard-hover-table"><tr>
+        <td rowspan="2" style="width: 25%; padding-left: 5px"><object data="${icon}" type="image/svg+xml"></object></td>
+        <td style="width: 70%; ">${hazard.areaName}</td>
+        <td rowspan="2" style="width: 5%;padding-right: 5px"><a style="display: block;" href="https://hazardwatch.gov.au/warnings/${hazard.id}" target="_blank"><object style="pointer-events: none;" data="${lighthouseUrl + 'icons/hz_arrow.svg'}" type="image/svg+xml"></object></a></td>
+        </tr>
+        <tr>
+        <td style=" padding-bottom: 10px;">${subText}<br><span style="font-weight: bold;" >${moment(hazard.issuedAt).format('h:mma ddd D MMM z')}</span></td>
+        </tr></tbody>`)
+     }
+
+     if (hazard.geometries[0].type == 'Polygon') {
+        let polygonPoints = hazard.geometries[0].coordinates[0];
+        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.2], 3,SimpleLineSymbol.STYLE_SHORTDOT, headline, description.prop("outerHTML"));
+     }
+     if (hazard.geometries[0].type == 'MultiPolygon') {
+        let polygonPoints = hazard.geometries[0].coordinates[0][0];
+        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.2], 3,SimpleLineSymbol.STYLE_SHORTDOT, headline, description.prop("outerHTML"));
+     }
+     
+     if (hazard.geometries[1].type == 'Point') {
+            mapLayer.addImageMarker(hazard.geometries[1].coordinates[1], hazard.geometries[1].coordinates[0], icon, headline, description.prop("outerHTML"));
+     }
+
+    //  if (hazard.clusteredWarnings.length) {
+    //     hazard.clusteredWarnings.forEach(function(clustered) {
+            
+    //     })
+    //  }
+ })
+
+}
+
+/**
  * Shows the current position of known rescue helicopters on the map.
  *
  * @param mapLayer the map layer to add to.
@@ -818,7 +984,7 @@ const rfsIcons = {
                     if (geometry.type.toLowerCase() === 'polygon') {
 
                         let polygonPoints = geometry.coordinates[0];
-                        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3,SimpleLineSymbol.STYLE_SOLID, details.name, details.details);
+                        mapLayer.addPolygon(polygonPoints, '#000000', [100, 100, 100, 0.5], 3, SimpleLineSymbol.STYLE_SOLID, details.name, details.details);
 
                     } else if (geometry.type.toLowerCase() === 'point') {
 
@@ -1319,6 +1485,7 @@ export default class InjectScriptMapManager {
         lighthouseMap.createLayer('rfs', 1);
         lighthouseMap.createLayer('lhqs', 3);
         lighthouseMap.createLayer('ses-assets-filtered', 3);
+        lighthouseMap.createLayer('hazard-watch', 3);
 
 
         //bind to the click event for the jobs and fiddle with the popups Onclick
@@ -1482,7 +1649,7 @@ if (developmentMode) {
 
         window['lighthouseMap'] = lighthouseMap;
 
-        let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleSesTeamsBtn', 'toggleSesFilteredAssets', 'toggleHelicoptersBtn', 'togglelhqsBtn', 'togglePowerOutagesBtn'];
+        let buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleSesTeamsBtn', 'toggleSesFilteredAssetsBtn', 'toggleHazardWatchBtn', 'toggleHelicoptersBtn', 'togglelhqsBtn', 'togglePowerOutagesBtn'];
         buttons.forEach(function (buttonId) {
             if (localStorage.getItem('Lighthouse-' + buttonId) === 'true') {
                 let button = $(`#${buttonId}`);
