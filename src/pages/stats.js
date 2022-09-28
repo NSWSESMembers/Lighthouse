@@ -359,16 +359,16 @@ function prepareCharts(jobs, start, end, firstRun) {
 
     //display totals
     const countchart = dc.dataCount(".total");
-
+    
     // jobs per hour time chart
-    const timeOpenChart = dc.barChart("#dc-timeopen-chart");
-    const runningChart = dc.compositeChart("#dc-running-chart");
+    timeOpenChart = dc.barChart("#dc-timeopen-chart");
+    runningChart = dc.compositeChart("#dc-running-chart");
 
-    const timeClosedChart = dc.barChart("#dc-timeclosed-chart");
-    const dataTable = dc.dataTable("#dc-table-graph");
+    timeClosedChart = dc.barChart("#dc-timeclosed-chart");
+    dataTable = dc.dataTable("#dc-table-graph");
 
 
-    const completionBellChart = dc.barChart("#dc-completionbell-chart");
+    completionBellChart = dc.barChart("#dc-completionbell-chart");
 
     var closeTimeDimension = facts.dimension(function(d) {
       return d.JobCompleted;
@@ -806,6 +806,7 @@ function prepareCharts(jobs, start, end, firstRun) {
     let zoneChartFilters = zoneChart.filters();
     let sectorChartFilters = sectorChart.filters();
 
+    console.log(completionBellChart)
     let completionBellChartFilters = completionBellChart.filters();
 
 
