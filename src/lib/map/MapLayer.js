@@ -85,6 +85,7 @@ export default class MapLayer {
      * @return the marker to customise.
      */
     addImageMarker(lat, lon, imageUrl, title='', details='') {
+        console.log(imageUrl)
         let marker = MapLayer.createImageMarker(imageUrl);
         this.addMarker(lat, lon, marker, title, details);
         return marker;
@@ -167,14 +168,12 @@ export default class MapLayer {
         polySymbol.setOutline(new SimpleLineSymbol(style, new Color(outlineColour), thickness));
         polySymbol.setColor(new Color(fillColour));
 
-
         // expect GPS lat/long data
         let lineGeometry = new Polyline(new SpatialReference({wkid:4326}));
         lineGeometry.addPath(points);
 
         let lineGraphic = new Graphic(lineGeometry, polySymbol);
         lineGraphic.setAttributes({title:title,details:details})
-
 
         this._graphicsLayer.add(lineGraphic);
     }

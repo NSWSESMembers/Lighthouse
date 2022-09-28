@@ -34,6 +34,7 @@
     "https://www.ausgrid.com.au/*",
     "https://www.endeavourenergy.com.au/*",
     "https://www.essentialenergy.com.au/*",
+    "https://hazardwatch.gov.au/api/warnings",
     "webRequest",
     "webRequestBlocking"
   ],

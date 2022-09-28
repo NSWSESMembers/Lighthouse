@@ -244,3 +244,8 @@ div[data-bind="text: $data"] {
         transform: translateY(-100%);
     }
 }
+
+
+.hazard-hover-table:hover {
+border: 2px dashed rgb(51, 51, 51);
+}
