@@ -55,8 +55,14 @@ body.fade-in {
   padding: 2px;
 }
 
+.list-group {
+  max-height: 300px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
 .list-group-item {
-  margin: 0 0 10px 0;
+  margin: 0 10px 10px 0;
   border-top-left-radius: 0.25rem;
   border-top-right-radius: 0.25rem;
   border-bottom-left-radius: 0.25rem;

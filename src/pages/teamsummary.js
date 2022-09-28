@@ -35,6 +35,10 @@ function MyViewModel() {
 
   this.setColWidth = ko.observable(3)
   this.setDefaultAdd = ko.observable(true)
+  this.setShowTeamSummary = ko.observable(true)
+  this.setShowTeamMembers = ko.observable(true)
+  this.setShowTeamLocation = ko.observable(true)
+
   this.setShowTeamMemberChanges = ko.observable(true)
   this.setShowTeamResources = ko.observable(true)
 

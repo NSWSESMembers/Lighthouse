@@ -52,10 +52,12 @@
               </div>
               <div class="team-time col-5 text-right"><i class="far fa-clock"></i> <a data-bind="text: ' ' + statusTimePretty"></a></div>
             </div>
+            <!-- ko if: $root.setShowTeamSummary() == true -->
             <div class="team-summary row">
               <div class="team-job-count-active col-6 text-left" data-bind="text: 'Active Jobs: ' + activeJobs, css: {team-stat-warning: activeJobs == 1, team-stat-hazard: activeJobs == 0 }"></i></div>
               <div class="team-status-for col-6 text-right" data-bind="text: status + ' For ' + statusTimeSince + ' hrs', css: {team-stat-warning: statusTimeSince >= 10 & statusTimeSince <= 12,team-stat-hazard: statusTimeSince > 12 }"></i></div>
             </div>
+            <!-- /ko -->
             <!-- ko if: sector -->
             <div class="sector-summary row">
               <div class="col-12 text-center" data-bind="text: sector + ' Sector'"></div>
@@ -73,6 +75,7 @@
               <!-- /ko -->
             </div>
             <!-- /ko -->
+            <!-- ko if: $root.setShowTeamMembers() == true -->
             <div class="row team-members">
               <!-- ko if: teamMembers().length > 0 -->
               <div class="col-12 text-center" data-bind="foreach: teamMembers">
@@ -86,10 +89,13 @@
               </div>
               <!-- /ko -->
             </div>
+            <!-- /ko -->
+            <!-- ko if: $root.setShowTeamLocation() == true -->
             <!-- ko if: teamLocation -->
             <div class="row team-location">
               <div class="col-12 text-center" data-bind="html: teamLocation"></div>
             </div>
+            <!-- /ko -->
             <!-- /ko -->
             <div class="row team-history">
               <div class="col-12 text-center" data-bind="visible: loadingHistory">
@@ -161,10 +167,10 @@
           </hr>
           <div class="row form-row">
             <div class="col" style="margin-bottom:1rem">
-              <label class="form-check-label" for="hideTeamMemberChanges">Show team member history:</label>
+              <label class="form-check-label" for="hideTeamSummary">Show team summary:</label>
             </div>
             <div class="col-right">
-              <input type="checkbox" class="form-check-input" id="hideTeamMemberChanges" data-bind="checked: setShowTeamMemberChanges">
+              <input type="checkbox" class="form-check-input" id="hideTeamSummary" data-bind="checked: setShowTeamSummary">
             </div>
           </div>
           <div class="row form-row">
@@ -173,6 +179,30 @@
             </div>
             <div class="col-right">
               <input type="checkbox" class="form-check-input" id="hideTeamResources" data-bind="checked: setShowTeamResources">
+            </div>
+          </div>
+          <div class="row form-row">
+            <div class="col" style="margin-bottom:1rem">
+              <label class="form-check-label" for="hideTeamMembers">Show team members:</label>
+            </div>
+            <div class="col-right">
+              <input type="checkbox" class="form-check-input" id="hideTeamMembers" data-bind="checked: setShowTeamMembers">
+            </div>
+          </div>
+          <div class="row form-row">
+            <div class="col" style="margin-bottom:1rem">
+              <label class="form-check-label" for="hideTeamLocation">Show team location:</label>
+            </div>
+            <div class="col-right">
+              <input type="checkbox" class="form-check-input" id="hideTeamLocation" data-bind="checked: setShowTeamLocation">
+            </div>
+          </div>
+          <div class="row form-row">
+            <div class="col" style="margin-bottom:1rem">
+              <label class="form-check-label" for="hideTeamMemberChanges">Show team member history:</label>
+            </div>
+            <div class="col-right">
+              <input type="checkbox" class="form-check-input" id="hideTeamMemberChanges" data-bind="checked: setShowTeamMemberChanges">
             </div>
           </div>
           <div class="row form-row">
