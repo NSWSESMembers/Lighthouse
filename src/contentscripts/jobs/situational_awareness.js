@@ -4,6 +4,7 @@ const moment = require('moment');
 const inject = require('../../lib/inject.js');
 const MapManager = require('../../lib/map/ContentScriptMapManager.js').default;
 
+
 //inject the coded needed to fix visual problems
 //needs to be injected so that it runs after the DOMs are created
 inject('jobs/situational_awareness.js');
@@ -11,6 +12,8 @@ inject('jobs/situational_awareness.js');
 // Add the buttons for the extra layers
 const mapManager = new MapManager();
 MapManager.createLayerMenu().appendTo('#currentSituationLayers');
+MapManager.asset_filter_modal().appendTo('body');
+
 mapManager.initialise();
 
 //Clear all lighthouse filters when click. A little hacky by changing the button class then calling the click to clear inbuild timers and layers.

@@ -16,6 +16,8 @@ const rmsIcon = chrome.extension.getURL('icons/rms.png');
 const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
 const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
 
+
+
 /**
  * A class for helping out with map layer access on the content script side.
  */
@@ -29,6 +31,71 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
         this._timers = {};
     }
 
+    /**
+ * Build a modal to inject into the body for asset selection
+ */
+     static asset_filter_modal()  {
+        return $(
+    <div id="LHAssetFilterModal" class="modal fade" role="dialog">
+<div class="modal-dialog modal-sm" style="width:50%">
+  <div class="modal-content">
+     <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Lighthouse Asset Filter</h4>
+     </div>
+     <div class="modal-body">
+        <h4>Select assets to show</h4>
+        <p/>
+        <div class="container-fluid">
+
+           <div class='row' style="display: flex; align-items: center;">
+              <div class="col-md-5 text-center">
+              <h5>All Assets</h5>
+              <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListAllQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
+              <div id="asset-map-filter-loading" class="filter-loader-container">
+                <div class="filter-loader-background">
+                  <div class="filter-loader">Loading...</div>
+                </div>
+                </div>
+                 <select multiple id="assetFilterListAll">
+                 </select>
+              </div>
+              <div class="col-md-2 text-center">
+              <div>
+                 <div>
+                    <button style="margin-bottom: 5px; width: 100px" type="button" class="btn btn-primary" id="teamFilterListAddSelected">Add<span style="margin-left: 10px;" class="glyphicon glyphicon-arrow-right" aria-hidden="true"></span></button>
+                 </div>
+                 <div>
+                    <button style="margin-top: 5px; width: 100px" type="button" class="btn btn-primary" id="teamFilterListRemoveSelected"><span style="margin-right: 10px;" class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>Remove</button>
+                 </div>
+                 </div>
+              </div>
+              <div class="col-md-5 text-center">
+              <h5>Selected Assets</h5>
+              <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListSelectedQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
+                 <select multiple id="assetFilterListSelected">
+                 </select>
+              </div>
+           </div>
+        </div>
+     </div>
+     <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="assetSaveFiltersButton" data-dismiss="modal">Proceed</button>
+     </div>
+  </div>
+</div>
+</div>
+)
+        }
+
+
+    /** TODO: Fix Hazard Watch
+    <span id="toggleHazardWatchBtn" class="label tag tag-lh-filter tag-disabled">
+    <img style="max-width: 16px; vertical-align: top;margin-right: 4px;" src={hazardWatchIcon} />
+    <span class="tag-text">Hazard Watch</span>
+    </span>
+    */
+   
     /**
      * Creates a menu for the map layers.
      *
@@ -59,11 +126,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
             </span>
             <span id="toggleSesFilteredAssetsBtn" class="label tag tag-lh-filter tag-disabled">
             <img style="max-width: 16px; vertical-align: top;margin-right: 4px;" src={assetIcon} />
-            <span class="tag-text">HQ Filtered Asset Locations</span>
-            </span>
-            <span id="toggleHazardWatchBtn" class="label tag tag-lh-filter tag-disabled">
-            <img style="max-width: 16px; vertical-align: top;margin-right: 4px;" src={hazardWatchIcon} />
-            <span class="tag-text">Hazard Watch</span>
+            <span class="tag-text">Filtered Asset Locations</span>
             </span>
             </li>
             </ul>
@@ -136,8 +199,8 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
         this._registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', this._requestTransportCamerasLayerUpdate, 10 * 60000); // every 10 mins
         this._registerClickHandler('toggleHelicoptersBtn', 'helicopters', ContentScriptMapManager._requestHelicoptersLayerUpdate, 10000); // every 10s
         this._registerClickHandler('toggleSesTeamsBtn', 'ses-teams', this._requestSesTeamsLayerUpdate, 5 * 60000); // every 5 minutes
-        this._registerClickHandler('toggleSesFilteredAssestBtn', 'ses-assets-filtered', this._requestSesFilteredAssets, 60000); // every 1 minutes
-        this._registerClickHandler('toggleHazardWatchBtn', 'hazard-watch', this._requestHazardWatchLayerUpdate, 5 * 60000); // every 5 minutes
+        this._registerClickHandler('toggleSesFilteredAssetsBtn', 'ses-assets-filtered', this._requestSesFilteredAssets, 60000); // every 1 minutes
+        //this._registerClickHandler('toggleHazardWatchBtn', 'hazard-watch', this._requestHazardWatchLayerUpdate, 5 * 60000); // every 5 minutes
         this._registerClickHandler('togglePowerOutagesBtn', 'power-outages', this._requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('togglelhqsBtn', 'lhqs', this._requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
 
@@ -189,6 +252,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
     }
 }
 }.bind(this), false);
+
 }
 
     /**
@@ -201,9 +265,17 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
      * @return timer the timer which refreshes the layer.
      */
      _registerClickHandler(buttonId, layer, updateFunction, interval) {
+        console.log(buttonId)
         document.getElementById(buttonId).addEventListener('click',
-            function () {
-                //console.debug(`toggle ${buttonId} clicked`);
+            function (e) {
+
+                //work out if it was a human or a script that clicked
+                let headless = true 
+                if (e.pointerType != "") {
+                    headless = false
+                }
+
+                console.debug(`toggle ${buttonId} clicked`);
 
                 let button = $(`#${buttonId}`);
                 let disabled = button.hasClass('tag-disabled');
@@ -212,7 +284,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
 
                 if (disabled) {
                     updateFunction = updateFunction.bind(this);
-                    updateFunction();
+                    updateFunction({headless: headless});
                     this._timers[layer] = setInterval(updateFunction, interval);
                     button.removeClass('tag-disabled');
                 } else {
@@ -297,17 +369,21 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
     /**
      * Requests an update to the SES filtered asset layer.
      */
-     _requestSesFilteredAssets() {
-        //console.debug('updating SES teams layer',this);
-
+     _requestSesFilteredAssets(passedVars) {
         if (!this._token) {
             // If the inject script hasn't sent over the HQs wait a few seconds then retry
             setTimeout(this._requestSesFilteredAssets.bind(this), 2000);
             return;
         } else {
-        BeaconClient.asset.filter(this._hqs, this._base, 'ContentScriptMapManager', this._token, function(result) {
-            ContentScriptMapManager._passLayerDataToInject('ses-assets-filtered', result);
-        }.bind(this));
+            if (passedVars && passedVars.headless == false) {
+                //something about drawing that modal for picking assets
+                window.postMessage({type: 'LH_ASSETFILTERMODALCALL'}, '*');
+            } else {
+                let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || []
+                BeaconClient.asset.filter(loadIn, this._base, 'ContentScriptMapManager', this._token, function(result) {
+                    ContentScriptMapManager._passLayerDataToInject('ses-assets-filtered', result);
+                }.bind(this));
+            }
       }
     }
 

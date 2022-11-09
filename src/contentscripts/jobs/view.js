@@ -267,7 +267,7 @@ let asset_filter_modal = (
                     <div class="filter-loader">Loading...</div>
                   </div>
                   </div>
-                   <select multiple id="teamFilterListAll">
+                   <select multiple id="assetFilterListAll">
                    </select>
                 </div>
                 <div class="col-md-2 text-center">
@@ -283,7 +283,7 @@ let asset_filter_modal = (
                 <div class="col-md-5 text-center">
                 <h5>Selected Assets</h5>
                 <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListSelectedQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
-                   <select multiple id="teamFilterListSelected">
+                   <select multiple id="assetFilterListSelected">
                    </select>
                 </div>
              </div>

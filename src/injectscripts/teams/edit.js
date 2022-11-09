@@ -22,5 +22,4 @@ vm.members.subscribe(function() {
     console.log("setting team leader to first member in team")
     vm.setTeamLeader(vm.members.peek()[0])
   }
-  console.log(lead)
 })

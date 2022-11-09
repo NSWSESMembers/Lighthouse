@@ -1,7 +1,7 @@
 import $ from 'jquery';
 
-export function filter(hqs, host, userId = 'notPassed', token, cb) {
-  console.debug('fetching SES Asset Locations with HQ filter on result');
+export function filter(assetFilter, host, userId = 'notPassed', token, cb) {
+  console.debug('fetching SES Asset Locations with filter on result');
   $.ajax({
     type: 'GET',
     url: host + '/Api/v1/ResourceLocations/Radio?resourceTypes=',
@@ -16,17 +16,15 @@ export function filter(hqs, host, userId = 'notPassed', token, cb) {
     },
     complete: function(response, textStatus) {
       if (textStatus == 'success') {
-        if (hqs.length == 0) { //show everything
+        if (assetFilter.length == 0) { //show everything
           cb(response.responseJSON)
         } else { //filtered
           var filteredResult = []
-          hqs.forEach(function(q) { //for every lhq passed filter assets
             response.responseJSON.forEach(function(v) {
-              if (v.properties.entity == q.Name) {
+              if (assetFilter.includes(v.properties.name)) {
                 filteredResult.push(v)
               }
             })
-          })
           cb(filteredResult)
         }
       }

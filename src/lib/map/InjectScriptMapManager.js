@@ -33,6 +33,7 @@ window.addEventListener("message", function(event) {
     const lighthouseMap = window['lighthouseMap'];
 
     if (event.data.type) {
+
         if (event.data.type === "LH_REQUEST_HELI_PARAMS") {
             let params = buildHeliParams();
             window.postMessage({ type: 'LH_RESPONSE_HELI_PARAMS', params: params }, '*');
@@ -1439,6 +1440,7 @@ export default class InjectScriptMapManager {
      * @param filterViewModel the filter view model.
      */
      initialise(filterViewModel) {
+        
         // Send the auth token to the content script
 
         function sendToken() { //send the token every 5 mins as it will change every ~60

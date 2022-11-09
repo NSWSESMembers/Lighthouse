@@ -1,6 +1,7 @@
 /* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment */
 var clusterCodes = require('../lib/clusters.js');
 
+
 whenWeAreReady(user, function() {
 
 

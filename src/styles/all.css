@@ -249,3 +249,42 @@ div[data-bind="text: $data"] {
 .hazard-hover-table:hover {
 border: 2px dashed rgb(51, 51, 51);
 }
+
+
+
+/* Asset Filter Modal */
+
+.filter-loader-container {
+	height: 100%;
+  visibility: hidden;
+	width: 100%;
+  display: table;
+	position: absolute;
+	z-index: 99999;
+	cursor: auto;
+}
+.filter-loader-container .filter-loader-background {
+  display: table-cell;
+  text-align: center;
+  vertical-align: middle;
+  opacity: 0.6;
+  color: black;
+  font-size: 1.5vw;
+  font-family: "latobold";
+	height: 100%;
+	width: 100%;
+}
+
+#assetFilterListAll {
+  width: 65%;
+  height: 400px;
+  font-size: 2vw;
+  text-align: center;
+}
+
+#assetFilterListSelected {
+  width: 65%;
+  height: 400px;
+  font-size: 2vw;
+  text-align: center;
+}

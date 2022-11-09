@@ -849,7 +849,7 @@ let instantRadiologModal = return_quickradiologmodal();
      }
    })
    if (hiddenAssets > 0) {
-     $('#filter-warning').html(`Hiding ${hiddenAssets} assets`)
+     $('#filter-warning').html(`Hiding ${hiddenAssets} inactive assets`)
      $('#filter-warning').css("visibility", "unset");
    } else {
      $('#filter-warning').css("visibility", "hidden");
@@ -1106,7 +1106,7 @@ if (!bypassUI) {
   $('#assetListSelectedQuickSearch').val('')
 
   $('#teamFilterListAddSelected').unbind().click(function() {
-    $("#teamFilterListAll").val().forEach(function(s) {
+    $("#assetFilterListAll").val().forEach(function(s) {
 
       let option = $(`<option value=${s}>${s}</option>`)
 
@@ -1114,25 +1114,25 @@ if (!bypassUI) {
       option.dblclick(function(x) {
         if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
         {
-          $('#teamFilterListAll').find(`option[value|="${x.target.value}"]`).show()
+          $('#assetFilterListAll').find(`option[value|="${x.target.value}"]`).show()
         }
         $(x.target).remove()
       });
-      $("#teamFilterListSelected").append(option);
+      $("#assetFilterListSelected").append(option);
 
 
 
-      $('#teamFilterListAll').find(`option[value|="${s}"]`).hide()
+      $('#assetFilterListAll').find(`option[value|="${s}"]`).hide()
     })
   })
 
   $('#teamFilterListRemoveSelected').unbind().click(function() {
-    $("#teamFilterListSelected").val().forEach(function(s) {
+    $("#assetFilterListSelected").val().forEach(function(s) {
       if (s.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
       {
-        $('#teamFilterListAll').find(`option[value|="${s}"]`).show()
+        $('#assetFilterListAll').find(`option[value|="${s}"]`).show()
       }
-      $('#teamFilterListSelected').find(`option[value|="${s}"]`).remove()
+      $('#assetFilterListSelected').find(`option[value|="${s}"]`).remove()
     })
   })
 
@@ -1146,7 +1146,7 @@ if (!bypassUI) {
     localStorage.setItem("LighthouseJobViewAssetLocationButton", 'filter');
 
     let selectedAssets = []
-     $("#teamFilterListSelected").children().each(function(r) {
+     $("#assetFilterListSelected").children().each(function(r) {
       selectedAssets.push($(this)[0].value)
     })
 
@@ -1165,6 +1165,7 @@ if (!bypassUI) {
   }})
 
   $('#LHAssetFilterModal').modal('hide');
+  $('#LHAssetFilterModal').unbind();
 
   })
 
@@ -1174,12 +1175,12 @@ if (!bypassUI) {
 
 
   $('#assetListAllQuickSearch').keyup(function (e) {
-        $.each($('#teamFilterListAll').find('option'),function(k,v){
+        $.each($('#assetFilterListAll').find('option'),function(k,v){
           if (($(v)[0].value).toUpperCase().indexOf(e.target.value.toUpperCase()) == -1)
           {
             $(v).hide()
           } else {
-            if (!$('#teamFilterListSelected').find(`option[value|="${$(v)[0].value}"]`).length) { //stupid always truthy find function
+            if (!$('#assetFilterListSelected').find(`option[value|="${$(v)[0].value}"]`).length) { //stupid always truthy find function
               $(v).show()
             }
           }
@@ -1187,7 +1188,7 @@ if (!bypassUI) {
       })
 
       $('#assetListSelectedQuickSearch').keyup(function (e) {
-            $.each($('#teamFilterListSelected').find('option'),function(k,v){
+            $.each($('#assetFilterListSelected').find('option'),function(k,v){
               if (($(v)[0].value).toUpperCase().indexOf(e.target.value.toUpperCase()) == -1)
               {
                 $(v).hide()
@@ -1199,13 +1200,13 @@ if (!bypassUI) {
 
 
 
-          $("#teamFilterListSelected").empty()
+          $("#assetFilterListSelected").empty()
           let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || []
           loadIn.forEach(function(i){
-            $("#teamFilterListSelected").append(`<option value=${i}>${i}</option>`);
+            $("#assetFilterListSelected").append(`<option value=${i}>${i}</option>`);
           })
 
-          $("#teamFilterListAll").empty()
+          $("#assetFilterListAll").empty()
 
           $('#asset-map-filter-loading').css("visibility", "unset");
 
@@ -1232,41 +1233,41 @@ if (!bypassUI) {
 
     sorted.forEach(function(v){
 
-        $("#teamFilterListAll").append(`<option ${$('#teamFilterListSelected').find(`option[value|="${v}"]`).toArray().length ? "style='display:none' " : ''}value=${v}>${v}</option>`);
+        $("#assetFilterListAll").append(`<option ${$('#assetFilterListSelected').find(`option[value|="${v}"]`).toArray().length ? "style='display:none' " : ''}value=${v}>${v}</option>`);
 
     })
 
     $('#asset-map-filter-loading').css("visibility", "hidden");
 
 
-    $('#teamFilterListAll option').unbind().dblclick(function(x) {
+    $('#assetFilterListAll option').unbind().dblclick(function(x) {
 
       let option = $(`<option value="${x.target.value}">${x.target.value}</option>`)
       //click handler for unselecting
       option.dblclick(function(x) {
         if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
         {
-          $('#teamFilterListAll').find(`option[value|="${x.target.value}"]`).show()
+          $('#assetFilterListAll').find(`option[value|="${x.target.value}"]`).show()
         }
         $(x.target).remove()
       });
 
       $(x.target).hide()
-      $("#teamFilterListSelected").append(option);
+      $("#assetFilterListSelected").append(option);
     });
 
-    $('#teamFilterListSelected option').unbind().dblclick(function(x) {
+    $('#assetFilterListSelected option').unbind().dblclick(function(x) {
 
       if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1)
       {
-        $('#teamFilterListAll').find(`option[value|="${x.target.value}"]`).show()
+        $('#assetFilterListAll').find(`option[value|="${x.target.value}"]`).show()
       }
       $(x.target).remove()
     });
 
 
     // response.responseJSON.forEach(function(v){
-    //     $("#teamFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
+    //     $("#assetFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
     // })
   }
 }
@@ -1983,8 +1984,11 @@ function InstantTaskButton() {
 }
 
 ////Instant radio log stuff
+//Oct 2022 this function has changed to
+//CreateEntry
+//ƒ createLogEntry(entityid,jobId, eventId, talkgroupId, talkgroupRequestId, subject, text, position, personFromId, personToId, important, restricted, actionRequired, actionReminder, tagIds,
 function submitInstantRadioLog(subject, text,cb) {
-  masterViewModel.notesViewModel.OperationsLogManager.CreateEntry(jobId, null, null, null, subject || "Instant Radio Log", text, null, null, null, !1, !1, false, null, [15,6], null, function(res) {
+  masterViewModel.notesViewModel.OperationsLogManager.CreateEntry(masterViewModel.entityAssignedTo.peek().Id, jobId, null, null, null, subject || "Instant Radio Log", text, null, null, null, !1, !1, false, null, [15,6], null, function(res) {
 if (res) {
       masterViewModel.notesViewModel.loadOpsLogPage()
       cb(true)
