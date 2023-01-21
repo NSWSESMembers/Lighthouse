@@ -1,4 +1,4 @@
-/* global $, urls, user, msgsystem, moment */
+/* global $, urls, user, createMessageViewModel, moment */
 var DOM = require('jsx-dom-factory').default;
 var ReturnTeamsActiveAtLHQ = require('../../lib/getteams.js');
 var ReturnNitcAtLHQ = require('../../lib/getnitc.js');
@@ -34,7 +34,7 @@ $(document).ready(function() {
               complete: function(response, textStatus) {
                 if (textStatus == 'success') {
                   if (response.responseJSON.Results.length) {
-                  msgsystem.job(response.responseJSON.Results[0])
+                  createMessageViewModel.job(response.responseJSON.Results[0])
                 }
                 }
               }
@@ -67,7 +67,7 @@ $(document).ready(function() {
                                         BuildNew.ContactTypeId = v.ContactTypeId
                                         BuildNew.Description = v.FirstName + " " + v.LastName;
                                         BuildNew.Detail = v.Detail;
-                                        msgsystem.selectedRecipients.push(BuildNew)
+                                        createMessageViewModel.selectedRecipients.push(BuildNew)
                                     }
                                 })
                                   }
@@ -89,8 +89,8 @@ $('#LHCodeBox').keypress(function(e){
 });
 
 
-    whenWeAreReady(msgsystem, function() {
-        msgsystem.searchHeadquarters.subscribe(function(hqSet) {
+    whenWeAreReady(createMessageViewModel, function() {
+        createMessageViewModel.searchHeadquarters.subscribe(function(hqSet) {
 
             if (hqSet != null && hqSet != '') {
                 LoadTeams()
@@ -109,10 +109,10 @@ $('#LHCodeBox').keypress(function(e){
             //Home HQ - with a wait to catch possible race condition where the page is still loading
             whenWeAreReady(user, function() {
                 var waiting = setInterval(function() {
-                    if (msgsystem.loadingRecipients.peek() === false && typeof user.hq != "undefined") { //check if the core js is still searching for something
+                    if (createMessageViewModel.loadingRecipients.peek() === false && typeof user.hq != "undefined") { //check if the core js is still searching for something
                         clearInterval(waiting); //stop timer
                         console.log("Setting Selected HQ to user HQ");
-                        msgsystem.searchHeadquarters(user.hq);
+                        createMessageViewModel.searchHeadquarters(user.hq);
                         $('#searchHQ').val(user.hq.Name)
                     } else {
                         console.log("messages is still loading")
@@ -124,11 +124,11 @@ $('#LHCodeBox').keypress(function(e){
           }
         });
         //auto select ones that have the world default in them
-        msgsystem.loadingRecipients.subscribe(function(status) {
+        createMessageViewModel.loadingRecipients.subscribe(function(status) {
             if (status == false) {
-                msgsystem.availableRecipients.peek().forEach(function(item) {
+                createMessageViewModel.availableRecipients.peek().forEach(function(item) {
                     if (item.Description.indexOf("(default)") > -1) {
-                        msgsystem.addContactGroup(item);
+                        createMessageViewModel.addContactGroup(item);
                     }
                 })
             }
@@ -138,7 +138,7 @@ $('#LHCodeBox').keypress(function(e){
 
 
 
-    msgsystem.replyToAddress.subscribe(function(r) {
+    createMessageViewModel.replyToAddress.subscribe(function(r) {
       if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) {
         if (r != null && r != '') {
           localStorage.setItem("LighthouseReplyDetail", r);
@@ -148,13 +148,13 @@ $('#LHCodeBox').keypress(function(e){
 
     if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) {
       if (localStorage.getItem("LighthouseReplyDetail") != null && localStorage.getItem("LighthouseReplyDetail") != '') {
-        msgsystem.replyToAddress(localStorage.getItem("LighthouseReplyDetail"))
+        createMessageViewModel.replyToAddress(localStorage.getItem("LighthouseReplyDetail"))
         $('#replyAddress').value = localStorage.getItem("LighthouseReplyDetail")
       }
     }
 
     //Operational = true
-    msgsystem.operational(true);
+    createMessageViewModel.operational(true);
 
     $('#lighthouseReplyRemember').click(function() {
         if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") === null) //its true so uncheck it
@@ -166,8 +166,8 @@ $('#LHCodeBox').keypress(function(e){
             $(this).toggleClass("fa-square-o fa-check-square-o")
             localStorage.setItem("LighthouseReplyRemember", true);
             //save the current Value
-            if (msgsystem.replyToAddress.peek() != null && msgsystem.replyToAddress.peek() != '') {
-                localStorage.setItem("LighthouseReplyDetail", msgsystem.replyToAddress.peek());
+            if (createMessageViewModel.replyToAddress.peek() != null && createMessageViewModel.replyToAddress.peek() != '') {
+                localStorage.setItem("LighthouseReplyDetail", createMessageViewModel.replyToAddress.peek());
             }
         }
     });
@@ -190,7 +190,7 @@ $('#LHCodeBox').keypress(function(e){
     });
 
     $("#recipientsdel").click(function() {
-        msgsystem.selectedRecipients.removeAll();
+        createMessageViewModel.selectedRecipients.removeAll();
     })
 
 });
@@ -208,10 +208,10 @@ function LoadNitc() {
          var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
          spinner.appendTo($('#lighthousenitc'));
-         $('#nitchq').text("NITC Events (with Participants) at " + msgsystem.searchHeadquarters.peek().Name + " (±30 Days)")
+         $('#nitchq').text("NITC Events (with Participants) at " + createMessageViewModel.searchHeadquarters.peek().Name + " (±30 Days)")
          $('#HQNitcSet').show()
 
-         ReturnNitcAtLHQ(msgsystem.searchHeadquarters.peek(),size,function(response) {
+         ReturnNitcAtLHQ(createMessageViewModel.searchHeadquarters.peek(),size,function(response) {
             var numberOfevents = 0 //count number with participants
             if (response.responseJSON.Results.length) {
             $('#lighthousenitc').empty() //empty to prevent dupes and spinners
@@ -227,7 +227,7 @@ function LoadNitc() {
                         var total = v.Participants.length
 
                             //Operational = false - probably
-                            msgsystem.operational(false);
+                            createMessageViewModel.operational(false);
 
                             var spinner = $(<i style="margin-top:4px" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
@@ -261,7 +261,7 @@ function LoadNitc() {
                                                         BuildNew.ContactTypeId = v.ContactTypeId
                                                         BuildNew.Description = v.FirstName + " " + v.LastName;
                                                         BuildNew.Detail = v.Detail;
-                                                        msgsystem.selectedRecipients.push(BuildNew)
+                                                        createMessageViewModel.selectedRecipients.push(BuildNew)
                                                         if (total == 0) //when they have all loaded, stop spinning.
                                                         {
                                                             spinner.remove();
@@ -341,9 +341,9 @@ function LoadTeams() {
     var spinner = $(<i style="width:100%; margin-top:4px; margin-left:auto; margin-right:auto" class="fa fa-refresh fa-spin fa-2x fa-fw"></i>)
 
     spinner.appendTo($('#lighthouseteams'));
-    $('#teamshq').text("Active Teams (with Members) at " + msgsystem.searchHeadquarters.peek().Name)
+    $('#teamshq').text("Active Teams (with Members) at " + createMessageViewModel.searchHeadquarters.peek().Name)
     $('#HQTeamsSet').show()
-    ReturnTeamsActiveAtLHQ(msgsystem.searchHeadquarters.peek(), null, function(response) {
+    ReturnTeamsActiveAtLHQ(createMessageViewModel.searchHeadquarters.peek(), null, function(response) {
         var numberOfTeam = 0
         if (response.responseJSON.Results.length) {
             $('#lighthouseteams').empty() //empty to prevent dupes and spinners
@@ -401,7 +401,7 @@ function LoadTeams() {
 
                                                     }
                                                     BuildNew.Detail = v.Detail;
-                                                    msgsystem.selectedRecipients.push(BuildNew)
+                                                    createMessageViewModel.selectedRecipients.push(BuildNew)
                                                     if (total == 0) //when they have all loaded, stop spinning.
                                                     {
                                                         spinner.remove();

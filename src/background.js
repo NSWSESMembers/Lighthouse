@@ -35,25 +35,6 @@ const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
 const hazardWatchUrl = 'https://hazardwatch.gov.au/api/warnings'
 //external libs
 
-//block message js core request, fetch the file, inject our vars then serve it back to the requestor. :-)
-chrome.webRequest.onBeforeRequest.addListener(
-    function (details) {
-        let replaced;
-        console.log("blocking message js request")
-        var javascriptCode = loadSynchronously(details.url);
-        if (javascriptCode.includes("CreateMessageViewModel,t;")) {
-          replaced = "var msgsystem;"+javascriptCode.replace("CreateMessageViewModel,t;","CreateMessageViewModel,t;msgsystem = n;");
-          return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
-        } else if (javascriptCode.includes("var viewModel = new CreateMessageViewModel();")) {
-          replaced = "var msgsystem;\r\n"+javascriptCode.replace("var viewModel = new CreateMessageViewModel();","var viewModel = new CreateMessageViewModel();\r\nmsgsystem = viewModel;");
-          return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
-        }
-
-    },
-    { urls: ["https://*.ses.nsw.gov.au/js/messages/create?v=*"] },
-    ["blocking"]
-    );
-
 //block job create js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
 chrome.webRequest.onBeforeRequest.addListener(
     function (details) {
