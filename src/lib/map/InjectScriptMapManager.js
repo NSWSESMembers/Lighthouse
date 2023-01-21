@@ -510,7 +510,6 @@ const rfsIcons = {
     if (data && data.length > 0) {
         for (let i = 0; i < data.length; i++) {
           const asset = data[i]
-          if (moment().diff(asset.properties.lastSeen, "days") < 15) {
                 let lat = asset.geometry.coordinates[1];
                 let lon = asset.geometry.coordinates[0];
                 var unit = asset.properties.name.match(/([a-z]+)/i) ? asset.properties.name.match(/([a-z]+)/i)[1] : asset.properties.name;
@@ -594,7 +593,6 @@ const rfsIcons = {
                 mapLayer.addTextSymbol(lat, lon, `${veh.trim()}`, 0, 11, 'white', ); //-4 offset normally
 
                 count++;
-              }
         }
     }
     console.info(`added ${count} SES assets`);
