@@ -99,7 +99,7 @@ function HackTheMatrix(progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  BeaconClient.nitc.get(params, params.userId, token, start, end, function(nitcs) {
+  BeaconClient.nitc.search(params, params.userId, token, start, end, function(nitcs) {
     let exports;
 
     if (document.getElementById("Activity").checked) {  // Activity list export
