@@ -208,7 +208,6 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
             // We only accept messages from background
             if (event.source !== window)
                 return;
-
             if (event.data.type) {
                 if (event.data.type === 'LH_USER_API') {
                     this._base = event.data.base;

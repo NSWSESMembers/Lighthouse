@@ -1460,7 +1460,7 @@ export default class InjectScriptMapManager {
         filterViewModel.unappliedChanges.subscribe(function(val) {
           console.log('unappliedChanges observable flip', val)
           if (val == false) {
-            sendStateToContentScript(filterViewModel);
+            sendStateToContentScript(filterViewModel, true); //same as a first run otherwise it will default to show
           }
         })
 

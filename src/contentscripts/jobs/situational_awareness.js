@@ -21,7 +21,7 @@ mapManager.initialise();
 $('input[data-bind="click: clearLayers"]')[0].addEventListener('click',
     function () {
         console.log('resetting lighthouse layers');
-        var buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglePowerOutagesBtn', 'togglelhqsBtn', 'toggleSesFilteredAssets'];
+        var buttons = ['toggleRfsIncidentsBtn', 'toggleRmsIncidentsBtn', 'toggleRmsFloodingBtn', 'toggleSesFilteredAssetsBtn', 'toggleRmsCamerasBtn', 'toggleHelicoptersBtn', 'togglePowerOutagesBtn', 'togglelhqsBtn', 'toggleSesFilteredAssets'];
         buttons.forEach(function (buttonId) {
             var button = $(`#${buttonId}`);
             button.removeClass('tag-disabled');
