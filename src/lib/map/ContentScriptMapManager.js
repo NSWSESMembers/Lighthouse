@@ -230,7 +230,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
                         this._requestSesTeamsLayerUpdate()
                      }
                      //TODO: Race condition with on page load and on button click
-                     if (!$('#toggleSesFilteredAssets').hasClass('tag-disabled')) //if the asset button is pressed, teams are shown, update them with the new data
+                     if (!$('#toggleSesFilteredAssetsBtn').hasClass('tag-disabled')) //if the asset button is pressed, teams are shown, update them with the new data
                       {
                          this._requestSesFilteredAssets()
                       }
