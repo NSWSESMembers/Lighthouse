@@ -86,25 +86,6 @@ chrome.webRequest.onBeforeRequest.addListener(
     );
 
 
-    //block team create js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
-    chrome.webRequest.onBeforeRequest.addListener(
-        function (details) {
-            let replaced;
-            console.log("blocking team create js request")
-            var javascriptCode = loadSynchronously(details.url);
-            if (javascriptCode.includes("var n=new TeamViewModel;")) {
-            replaced = "var vm;"+javascriptCode.replace("var n=new TeamViewModel;","var n=new TeamViewModel;vm=n;");
-            return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
-          } else if (javascriptCode.includes("var vm = new TeamViewModel();")) {
-            replaced = "var vm;"+javascriptCode.replace("var vm = new TeamViewModel();","vm = new TeamViewModel();");
-            return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
-          }
-        },
-        { urls: ["https://*.ses.nsw.gov.au/js/teams/create?v=*"] },
-        ["blocking"]
-        );
-
-
 chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         if (request.type === "asbestos") {
