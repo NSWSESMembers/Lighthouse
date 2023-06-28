@@ -35,25 +35,6 @@ const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
 const hazardWatchUrl = 'https://hazardwatch.gov.au/api/warnings'
 //external libs
 
-//block job create js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
-chrome.webRequest.onBeforeRequest.addListener(
-    function (details) {
-        let replaced;
-        console.log("blocking jobs create js request")
-        var javascriptCode = loadSynchronously(details.url);
-        if (javascriptCode.includes("var n=this,t,i;n.MessageTemplateManager")) {
-        replaced = "var jobsystem;"+javascriptCode.replace("var n=this,t,i;n.MessageTemplateManager","var n=this,t,i;jobsystem=n;n.MessageTemplateManager");
-        return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
-      } else if (javascriptCode.includes("vm = new CreateJobViewModel();")) {
-        replaced = "var jobsystem;\r\n"+javascriptCode.replace("vm = new CreateJobViewModel();","vm = new CreateJobViewModel();\r\njobsystem=vm;");
-        return { redirectUrl: "data:text/javascript,"+encodeURIComponent(replaced) };
-      }
-    },
-    { urls: ["https://*.ses.nsw.gov.au/js/jobs/create?v=*"] },
-    ["blocking"]
-    );
-
-//block job register js core requests, fetch the original file async, replace some stuff, serve the file back to the requestor.
 // Reaplce the date picker with more options
 chrome.webRequest.onBeforeRequest.addListener(
     function (details) {

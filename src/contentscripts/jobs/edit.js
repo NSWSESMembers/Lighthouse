@@ -43,7 +43,7 @@ window.addEventListener("message", function(event) {
     data.features.forEach(function(v){
       v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,event.data.lat,event.data.lng)/1000
       distances.push(v)
-      if (event.data.report != null) {
+        if (event.data.report != null) {
       let unitAccreditations = event.data.report[v.properties.UNIT_CODE] 
       if (typeof unitAccreditations != "undefined") {
         let jobType = event.data.jType
@@ -64,7 +64,7 @@ window.addEventListener("message", function(event) {
           break;
           case "RCR":
           if (unitAccreditations['GLR'] == "Available") {
-            v.properties.QUAL = 'GLR'
+            v.properties.QUAL = 'GLR' 
             rescueDistances.push(v)
           }
           break
@@ -91,6 +91,7 @@ window.addEventListener("message", function(event) {
     });
     
     let nearestLhqStrings = []
+
     for(let i = 0; i < 4; i++){
       if (typeof _sortedDistances[i] != "undefined") {
         let newDom = (
@@ -107,6 +108,7 @@ window.addEventListener("message", function(event) {
     }
 
     let nearestRescueLhqStrings = []
+
     for(let i = 0; i < 4; i++){
       if (typeof _sortedRescueDistances[i] != "undefined") {
         let rescueString = ''
@@ -134,6 +136,7 @@ window.addEventListener("message", function(event) {
     if (nearestRescueLhqStrings.length == 0) {
       nearestRescueLhqStrings.push('No Results')
     }
+
 
     $('#nearest-lhq-text').empty()
     $('#nearest-lhq-text').append(nearestLhqStrings)
@@ -200,15 +203,13 @@ let job_asbestos_history = (
   );
 
 
-$('#createRfaForm > fieldset:nth-child(5) > div:nth-child(2)').after(job_asbestos_history);
+$('#editRfaForm > fieldset:nth-child(6) > div:nth-child(2)').after(job_asbestos_history);
 
-$('#createRfaForm > fieldset:nth-child(5) > div:nth-child(12)').after(job_nearest_rescue_lhq);
+$('#editRfaForm > fieldset:nth-child(6) > div:nth-child(12)').after(job_nearest_rescue_lhq);
 
-$('#createRfaForm > fieldset:nth-child(5) > div:nth-child(12)').after(job_nearest_lhq);
-
-
+$('#editRfaForm > fieldset:nth-child(6) > div:nth-child(12)').after(job_nearest_lhq);
 
 
 console.log("injecting")
 
-inject('jobs/create.js');
+inject('jobs/edit.js');

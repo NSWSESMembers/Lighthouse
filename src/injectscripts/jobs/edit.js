@@ -2,7 +2,7 @@
 var DOM = require('jsx-dom-factory').default;
 var sesAsbestosSearch = require('../../lib/sesasbestos.js');
 
-console.log("jobs/create.js inject running");
+console.log("jobs/edit.js inject running");
 
 $(document).ready(function() {
 
@@ -18,7 +18,7 @@ $(document).ready(function() {
             vm.entityAssignedTo(res)
           }
         })
-      }
+      }  
     if (event.data.type && (event.data.type == "FROM_LH_ASBESTOS")) {
       if (event.data.result == true) {
         console.log("Applying Fibro/Asbestos tag")
@@ -41,16 +41,34 @@ $(document).ready(function() {
   })
 
   whenWeAreReady(vm, function() {
-    console.log("jobs create ready")
-
+    console.log("jobs edit ready")
 
     let accreditations = undefined;
 
+    // toggle the nearest lhq buttons automagically
     vm.entityAssignedTo.subscribe(function(who) {
       $(`#nearest-rescue-lhq-text button[data-unit!='${who.Code}'], #nearest-lhq-text button[data-unit!='${who.Code}'] `).removeClass('active')
       $(`#nearest-rescue-lhq-text button[data-unit='${who.Code}'], #nearest-lhq-text button[data-unit='${who.Code}']`).addClass('active')
-
     })
+
+    window.postMessage({ type: "FROM_PAGE_JOBTYPE", jType: vm.jobType.peek().Name ? vm.jobType.peek().Name : null}, "*")
+
+    //push an update back in to upload distances for the new rescue type
+  if (vm.jobType.peek() && vm.latitude.peek() && vm.longitude.peek()) {
+    if (vm.jobType.peek().ParentId == 5) {
+      if (accreditations == undefined) {
+        fetchAccreditations(function(res) {
+          accreditations = res
+          window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name ? vm.jobType.peek().Name : null, report: accreditations, lat: vm.latitude.peek(), lng: vm.longitude.peek() }, "*");
+        }) 
+      } else {
+        window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name ? vm.jobType.peek().Name : null, report: accreditations,lat: vm.latitude.peek(), lng: vm.longitude.peek() }, "*");
+      }
+    } else { //dont send report
+      window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name ? vm.jobType.peek().Name : null, report: null, lat: vm.latitude.peek(), lng: vm.longitude.peek() }, "*");
+    }
+  }
+
 
     vm.jobType.subscribe(function(jt) {
         window.postMessage({ type: "FROM_PAGE_JOBTYPE", jType: jt ? jt.Name : null}, "*")
@@ -75,7 +93,6 @@ $(document).ready(function() {
 
 
     vm.latitude.subscribe(function() {
-      console.log('latitude changed')
       if (vm.latitude.peek() != '' && vm.longitude.peek() != '') {
         if (vm.jobType.peek().ParentId == 5) {
         if (accreditations == undefined) {
@@ -93,8 +110,6 @@ $(document).ready(function() {
     })
 
     vm.longitude.subscribe(function() {
-      console.log('longitude changed')
-
       if (vm.latitude.peek() != '' && vm.longitude.peek() != '') {
         if (vm.jobType.peek().ParentId == 5) {
 
@@ -113,21 +128,21 @@ $(document).ready(function() {
     })
 
     vm.geocodedAddress.subscribe(function(status) {
+      $('#asbestos-register-text').text("Searching...");
       if (vm.geocodedAddress.peek() != null) {
-        $('#asbestos-register-text').text("Searching...");
 
-      //   if (vm.jobType.peek().ParentId == 5) {
-      //   if (accreditations == undefined) {
-      //     fetchAccreditations(function(res) {
-      //       accreditations = res
-      //       window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: accreditations, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
-      //     }) 
-      //   } else {
-      //     window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: accreditations, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
-      //   }
-      // } else {
-      //   window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: null, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
-      // }
+        if (vm.jobType.peek().ParentId == 5) {
+        if (accreditations == undefined) {
+          fetchAccreditations(function(res) {
+            accreditations = res
+            window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: accreditations, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
+          }) 
+        } else {
+          window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: accreditations, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
+        }
+      } else {
+        window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: null, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
+      }
 
         let address = vm.geocodedAddress.peek()
         if (address.street != "") {

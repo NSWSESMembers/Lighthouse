@@ -1,4 +1,4 @@
-/* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment */
+/* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment, contentViewModel */
 var clusterCodes = require('../lib/clusters.js');
 
 
@@ -316,6 +316,120 @@ whenWeAreReady(user, function() {
     }); //after cluster call has loaded
 
     }
+
+ //lighthouse menu for situation map
+ if (location.pathname == "/Jobs/SituationalAwareness") {
+  let regionfilter;
+  if (user.hq.EntityTypeId != 1) { //make region level more obvious
+    regionfilter = user.hq.Code + " Units";
+  } else {
+    regionfilter = user.hq.ParentEntity.Code;
+  }
+
+  clusterCodes.returnCluster(user.hq.Name, function(cluster) { //sync call to get cluster name
+    let clusterfilter, filtermenu;
+    if (typeof cluster !== 'undefined') {
+      clusterfilter = cluster.clusterCode
+
+      //only draw with cluster if we got a cluster name back
+  filtermenu = `\
+<li class="" id="lhquickfilter">\
+<a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
+<ul class="sub-menu" style="display: none;">\
+<li class="active">\
+<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">${user.hq.Code}</span></span><span class="label tag tag-property tag-disabled" id="filterallmycluster"><span class="tag-text">${clusterfilter}</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">${regionfilter}</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span>\
+<li>\
+</ul>\
+</li>`;
+
+} else {
+
+filtermenu = `\
+<li class="" id="lhquickfilter">\
+<a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
+<ul class="sub-menu" style="display: none;">\
+<li class="active">\
+<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-home" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 5px">Locations</a><span class="label tag tag-property tag-disabled" id="filtermyhq"><span class="tag-text">${user.hq.Code}</span></span><span class="label tag tag-property tag-disabled" id="filterallmyregion"><span class="tag-text">${regionfilter}</span></span><span class="label tag tag-lighthouse" id="clearlocator"><span class="tag-text"><img width="14px" style="width:14px;vertical-align:top;margin-right:5px" src="${lighthouseUrl}icons/lh-black.png">All</span></span></span>\
+<span class="twitter-typeahead" style="margin-left:5px;margin-bottom:10px;position:relative;display:inline-block;direction:ltr"><i class="toggle-icon-sub fa fa-clock-o" style="float: left;margin-top: 12px;"></i><a style="font-size: .9em; margin-left: 5px">Times</a><span class="label tag tag-task tag-disabled" id="filtertoday"><span class="tag-text">Today</span></span><span class="label tag tag-task tag-disabled" id="filter7days"><span class="tag-text">7 Days</span></span><span class="label tag tag-task tag-disabled" id="filter30days"><span class="tag-text">30 Days</span></span></span>\
+<li>\
+</ul>\
+</li>`;
+
+}
+
+  $('.main-menu > li:nth-child(2)').first().after(filtermenu); //theres two of these
+
+  $("#filterallmycluster").click(function() {
+    contentViewModel.filterViewModel.selectedEntities.removeAll();
+    filtershowallmycluster(contentViewModel.filterViewModel);
+  });
+
+  $("#filterallmyregion").click(function() {
+    contentViewModel.filterViewModel.selectedEntities.removeAll();
+    filtershowallmyregion(contentViewModel.filterViewModel);
+  });
+
+  $("#filtermyhq").click(function() {
+    contentViewModel.filterViewModel.selectedEntities.removeAll();
+    contentViewModel.filterViewModel.selectedEntities.push(user.hq);
+    contentViewModel.filterViewModel.updateFilters();
+  });
+
+  $("#clearlocator").click(function() {
+    contentViewModel.filterViewModel.selectedEntities.removeAll();
+    contentViewModel.filterViewModel.updateFilters();
+  });
+
+  $("#filtertoday").click(function() {
+    contentViewModel.filterViewModel.startDate(utility.dateRanges.Today.StartDate())
+    contentViewModel.filterViewModel.endDate(utility.dateRanges.Today.EndDate())
+    contentViewModel.filterViewModel.dateRangeType('Today')
+    $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm"));
+    $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j) {
+      if ($(this).text() == "Today") {
+        $(this).addClass('active')
+      } else {
+        $(this).removeClass('active')
+      }
+    })
+    contentViewModel.filterViewModel.updateFilters();
+  });
+
+  $("#filter7days").click(function() {
+    contentViewModel.filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
+    contentViewModel.filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
+    contentViewModel.filterViewModel.dateRangeType('Last 7 Days')
+    $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm"));
+    $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j) {
+      if ($(this).text() == "Last 7 Days") {
+        $(this).addClass('active')
+      } else {
+        $(this).removeClass('active')
+      }
+    })
+    contentViewModel.filterViewModel.updateFilters();
+  });
+
+  $("#filter30days").click(function() {
+    contentViewModel.filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
+    contentViewModel.filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
+    contentViewModel.filterViewModel.dateRangeType('Last 30 Days')
+    $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
+    $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j) {
+      if ($(this).text() == "Last 30 Days") {
+        $(this).addClass('active')
+      } else {
+        $(this).removeClass('active')
+      }
+    })
+    contentViewModel.filterViewModel.updateFilters();
+  });
+
+}); 
+
+}
+
 
     //lighthouse menu for jobs
 
@@ -1007,32 +1121,31 @@ function make_collection_button(name, count) {
     `)
 }
 
-function filtershowallmyregion() {
-  filterViewModel.selectedEntities.destroyAll() //flush first :-)
+function filtershowallmyregion(model = filterViewModel) {
+  model.selectedEntities.destroyAll() //flush first :-)
   var parentId = typeof(user.currentRegionId) != 'undefined' ? user.currentRegionId : user.currentZoneId
   //Add zone as well
   $.get(urls.Base + "/Api/v1/Entities/" + parentId, function(data) {
-    filterViewModel.selectedEntities.push(data);
+    model.selectedEntities.push(data);
   })
   $.get(urls.Base + "/Api/v1/Entities/" + parentId + "/Children", function(data) {
     let results = data;
     results.forEach(function(d) {
-      filterViewModel.selectedEntities.push(d);
+      model.selectedEntities.push(d);
     });
-    filterViewModel.updateFilters();
+    model.updateFilters();
   })
 }
 
-function filtershowallmycluster() {
-  filterViewModel.selectedEntities.destroyAll() //flush first :-)
+function filtershowallmycluster(model = filterViewModel) {
+  model.selectedEntities.destroyAll() //flush first :-)
   clusterCodes.returnSiblings(user.hq.Name, function(cluster) { //sync call to get cluster siblings
     if (typeof cluster !== 'undefined') {
-      console.log(cluster)
       cluster.forEach(function(unit) {
         $.get(urls.Base + "/Api/v1/Entities/Search?EntityName=" + unit, function(data) {
-            filterViewModel.selectedEntities.push(data.Results[0]);
-            if (filterViewModel.selectedEntities.peek().length == cluster.length) { //once they are all back, apply the filter
-              filterViewModel.updateFilters();
+            model.selectedEntities.push(data.Results[0]);
+            if (model.selectedEntities.peek().length == cluster.length) { //once they are all back, apply the filter
+              model.updateFilters();
             }
         })
       })
