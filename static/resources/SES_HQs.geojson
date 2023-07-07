@@ -4073,7 +4073,7 @@
       },
       "properties": {
         "OBJECTID": 146,
-        "HQNAME": "Blue Mountains",
+        "HQNAME": "Blue Mountains Upper",
         "SES_LEVEL": "Unit",
         "REGCODE": "SWR",
         "UNIT_CODE": "BLU",
@@ -7237,7 +7237,7 @@
       },
       "properties": {
         "FID": 257,
-        "HQNAME": "Blue Mountains",
+        "HQNAME": "Blue Mountains Lower",
         "UNIT_CODE": "BLU",
         "POINT_X": 150.539,
         "POINT_Y": -33.694
