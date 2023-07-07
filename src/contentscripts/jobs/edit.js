@@ -95,9 +95,7 @@ window.addEventListener("message", function(event) {
     for(let i = 0; i < 4; i++){
       if (typeof _sortedDistances[i] != "undefined") {
         let newDom = (
-          <button class="btn btn-default btn-sm" style="margin-right:5px;" data-unit={_sortedDistances[i].properties.UNIT_CODE}>
-            {_sortedDistances[i].properties.HQNAME} ({_sortedDistances[i].distance.toFixed(2)} kms)
-          </button>
+          <a type="button" class="btn btn-default btn-sm" data-unit={_sortedDistances[i].properties.UNIT_CODE}>{_sortedDistances[i].properties.HQNAME} ({_sortedDistances[i].distance.toFixed(2)} kms)</a>
         )
         $(newDom).click(function(e) {
           e.preventDefault()
@@ -116,9 +114,7 @@ window.addEventListener("message", function(event) {
           rescueString = ` (${_sortedRescueDistances[i].properties.QUAL})`
         }
         let newDom = (
-          <button class="btn btn-info btn-sm" style="margin-right:5px;" data-unit={_sortedRescueDistances[i].properties.UNIT_CODE}>
-            {_sortedRescueDistances[i].properties.HQNAME}{rescueString} ({_sortedRescueDistances[i].distance.toFixed(2)} kms)
-          </button>
+          <a type="button" class="btn btn-default btn-sm" data-unit={_sortedRescueDistances[i].properties.UNIT_CODE}>{_sortedRescueDistances[i].properties.HQNAME}{rescueString} ({_sortedRescueDistances[i].distance.toFixed(2)} kms)</a>
         )
         $(newDom).click(function(e) {
           e.preventDefault()
@@ -147,6 +143,7 @@ window.addEventListener("message", function(event) {
 
     var t1 = performance.now();
     console.log("Call to calculate distances from LHQs took " + (t1 - t0) + " milliseconds.")
+    window.postMessage({ type: "FROM_LH_FINISHED"}, "*");
 
   })
 }
@@ -182,8 +179,8 @@ let job_asbestos_history = (
     <div class="form-group">
     <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
     src={chrome.extension.getURL("icons/lh-black.png")} />Closest LHQs</label>
-    <div id="nearest-lhq-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
-    <div class="d-flex flex-row" id="nearest-lhq-text">
+    <div id="nearest-lhq-box" class="col-md-9 col-lg-9">
+    <div class="btn-toolbar" id="nearest-lhq-text" style="margin: unset; margin-left: -5px;">
     <p class="form-control-static">Waiting For A Location</p>
     </div>
     </div>
@@ -194,8 +191,8 @@ let job_asbestos_history = (
     <div class="form-group" id="nearest-rescue-lhq-group" style="display: none;">
     <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
     src={chrome.extension.getURL("icons/lh-black.png")} /><span id="nearest-rescue-lhq-label">Closest Accreditred LHQs</span></label>
-    <div id="nearest-rescue-lhq-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
-    <div class="d-flex flex-row" id="nearest-rescue-lhq-text">
+    <div id="nearest-rescue-lhq-box" class="col-md-9 col-lg-9">
+    <div class="btn-toolbar" id="nearest-rescue-lhq-text" style="margin: unset; margin-left: -5px;">
     <p class="form-control-static">Waiting For A Location</p>
     </div>
     </div>

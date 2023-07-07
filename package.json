@@ -54,6 +54,7 @@
     "lrm-graphhopper": "git+https://github.com/NSWSESMembers/lrm-graphhopper.git",
     "markerwithlabel": "^2.0.2",
     "moment": "^2.29.1",
+    "nunjucks": "^3.2.4",
     "stopwords": "0.0.5"
   },
   "devDependencies": {
@@ -82,6 +83,7 @@
     "underscore": "^1.13.1",
     "webpack": "^5.65.0",
     "webpack-cli": "^4.9.1",
-    "webpack-merge": "^5.8.0"
+    "webpack-merge": "^5.8.0",
+    "zip-webpack-plugin": "^4.0.1"
   }
 }

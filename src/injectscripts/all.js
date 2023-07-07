@@ -1,21 +1,18 @@
-/* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment, contentViewModel */
+/* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment, contentViewModel, layout */
 var clusterCodes = require('../lib/clusters.js');
 
-
-whenWeAreReady(user, function() {
-
-
-  if (typeof urls.Base == "undefined") {
-    urls.Base = "https://" + location.hostname
+whenWeAreReady(layout, function () {
+  if (typeof urls.Base == 'undefined') {
+    urls.Base = 'https://' + location.hostname;
   }
 
-  $.get(urls.Base + "/Api/v1/Entities/" + user.currentHqId, function(data) {
-    let results = data;
+    let results = layout.hqStatus.peek().Entity //move this into here to make everything easier and remove a duplicate call
+    
 
     user.hq = results;
 
     //menu bar code
-    var ul = document.getElementsByClassName("nav navbar-nav");
+    var ul = document.getElementsByClassName('nav navbar-nav');
 
     var tonight = new Date();
 
@@ -29,35 +26,72 @@ whenWeAreReady(user, function() {
 
     thismorning = new Date(thismorning.getTime());
 
+    var vars =
+      '?userId=' +
+      user.Id +
+      '&host=' +
+      urls.Base +
+      '&source=' +
+      location.origin +
+      '&hq=' +
+      user.currentHqId +
+      '&start=' +
+      encodeURIComponent(thismorning.toISOString()) +
+      '&end=' +
+      encodeURIComponent(tonight.toISOString());
 
-    var vars = "?userId=" + user.Id + "&host=" + urls.Base + "&source=" + location.origin + "&hq=" + user.currentHqId + "&start=" + encodeURIComponent(thismorning.toISOString()) + "&end=" + encodeURIComponent(tonight.toISOString());
-
-    let lighthouseMenu = MakeMenu(lighthouseUrl, vars, user.hq.Code)
+    let lighthouseMenu = MakeMenu(lighthouseUrl, vars, user.hq.Code);
 
     function MakeMenu(lighthouseUrl, vars, unitName) {
-
-      if (lighthouseEnviroment == "Development") {
+      if (lighthouseEnviroment == 'Development') {
         //dev version
-        return $.parseHTML('\
+        return $.parseHTML(
+          '\
     <li class="dropdown" id="lhmenu">\
     <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
-    <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="' + lighthouseUrl + 'icons/lh.png"></img>Lighthouse</span>\
+    <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="' +
+            lighthouseUrl +
+            'icons/lh.png"></img>Lighthouse</span>\
     </a>\
     <ul class="dropdown-menu">\
     <li role="presentation" class="dropdown-header">Jobs</li>\
     <li id="lhsummarymenuitem">\
-    <a href="' + lighthouseUrl + 'pages/summary.html' + vars + '" target="_blank">Job Summary (' + unitName + ' Today)</a>\
+    <a href="' +
+            lighthouseUrl +
+            'pages/summary.html' +
+            vars +
+            '" target="_blank">Job Summary (' +
+            unitName +
+            ' Today)</a>\
     </li>\
     <li id="lhstatsmenuitem">\
-    <a href="' + lighthouseUrl + 'pages/stats.html' + vars + '" target="_blank">Job Statistics (' + unitName + ' Today)</a>\
+    <a href="' +
+            lighthouseUrl +
+            'pages/stats.html' +
+            vars +
+            '" target="_blank">Job Statistics (' +
+            unitName +
+            ' Today)</a>\
     </li>\
     <li id="lhexportmenuitem">\
-    <a href="' + lighthouseUrl + 'pages/advexport.html' + vars + '" target="_blank">Job Export (' + unitName + ' Today)</a>\
+    <a href="' +
+            lighthouseUrl +
+            'pages/advexport.html' +
+            vars +
+            '" target="_blank">Job Export (' +
+            unitName +
+            ' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
-    <a href="' + lighthouseUrl + 'pages/teamsummary.html' + vars + '" target="_blank">Team Summary (' + unitName + ' Today)</a>\
+    <a href="' +
+            lighthouseUrl +
+            'pages/teamsummary.html' +
+            vars +
+            '" target="_blank">Team Summary (' +
+            unitName +
+            ' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
@@ -69,29 +103,57 @@ whenWeAreReady(user, function() {
     </li>\
     </ul>\
     </li>\
-    ')
-      } else if (lighthouseEnviroment == "Production") {
+    ',
+        );
+      } else if (lighthouseEnviroment == 'Production') {
         //prod version
-        return $.parseHTML('\
+        return $.parseHTML(
+          '\
     <li class="dropdown" id="lhmenu">\
     <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
-    <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="' + lighthouseUrl + 'icons/lh.png"></img>Lighthouse</span>\
+    <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="' +
+            lighthouseUrl +
+            'icons/lh.png"></img>Lighthouse</span>\
     </a>\
     <ul class="dropdown-menu">\
     <li role="presentation" class="dropdown-header">Jobs</li>\
     <li id="lhsummarymenuitem">\
-    <a href="' + lighthouseUrl + 'pages/summary.html' + vars + '" target="_blank">Job Summary (' + unitName + ' Today)</a>\
+    <a href="' +
+            lighthouseUrl +
+            'pages/summary.html' +
+            vars +
+            '" target="_blank">Job Summary (' +
+            unitName +
+            ' Today)</a>\
     </li>\
     <li id="lhstatsmenuitem">\
-    <a href="' + lighthouseUrl + 'pages/stats.html' + vars + '" target="_blank">Job Statistics (' + unitName + ' Today)</a>\
+    <a href="' +
+            lighthouseUrl +
+            'pages/stats.html' +
+            vars +
+            '" target="_blank">Job Statistics (' +
+            unitName +
+            ' Today)</a>\
     </li>\
     <li id="lhexportmenuitem">\
-    <a href="' + lighthouseUrl + 'pages/advexport.html' + vars + '" target="_blank">Job Export (' + unitName + ' Today)</a>\
+    <a href="' +
+            lighthouseUrl +
+            'pages/advexport.html' +
+            vars +
+            '" target="_blank">Job Export (' +
+            unitName +
+            ' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
-    <a href="' + lighthouseUrl + 'pages/teamsummary.html' + vars + '" target="_blank">Team Summary (' + unitName + ' Today)</a>\
+    <a href="' +
+            lighthouseUrl +
+            'pages/teamsummary.html' +
+            vars +
+            '" target="_blank">Team Summary (' +
+            unitName +
+            ' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
@@ -103,71 +165,84 @@ whenWeAreReady(user, function() {
     </li>\
     </ul>\
     </li>\
-    ')
+    ',
+        );
       }
     }
 
-
     $('ul.nav.navbar-nav.navbar-left').append(lighthouseMenu);
 
-    $("#LHClearStorage").click(function() {
-      window.postMessage({
-        type: 'PURGE_COLLECTION',
-        name: 'lighthouseMessageCollections'
-      }, '*');
-      window.postMessage({
-        type: 'PURGE_COLLECTION',
-        name: 'lighthouseTeamFilterCollections'
-      }, '*');
-      window.postMessage({
-        type: 'PURGE_COLLECTION',
-        name: 'lighthouseJobFilterCollections'
-      }, '*');
+    $('#LHClearStorage').click(function () {
+      window.postMessage(
+        {
+          type: 'PURGE_COLLECTION',
+          name: 'lighthouseMessageCollections',
+        },
+        '*',
+      );
+      window.postMessage(
+        {
+          type: 'PURGE_COLLECTION',
+          name: 'lighthouseTeamFilterCollections',
+        },
+        '*',
+      );
+      window.postMessage(
+        {
+          type: 'PURGE_COLLECTION',
+          name: 'lighthouseJobFilterCollections',
+        },
+        '*',
+      );
       location.reload();
     });
 
-    $("#lhsummarymenuitem > a").click(function() {
+    $('#lhsummarymenuitem > a').click(function () {
       updateToken();
-    })
+    });
 
-    $("#lhstatsmenuitem > a").click(function() {
+    $('#lhstatsmenuitem > a').click(function () {
       updateToken();
-    })
+    });
 
-    $("#lhexportmenuitem > a").click(function() {
+    $('#lhexportmenuitem > a').click(function () {
       updateToken();
-    })
+    });
 
-    $("#lhteammenuitem > a").click(function() {
+    $('#lhteammenuitem > a').click(function () {
       updateToken();
-    })
+    });
 
     function updateToken() {
-      window.postMessage({
-        type: "FROM_PAGE_UPDATE_API_TOKEN",
-        host: urls.Base,
-        token: user.accessToken,
-        tokenexp: user.expiresAt,
-      }, "*");
+      window.postMessage(
+        {
+          type: 'FROM_PAGE_UPDATE_API_TOKEN',
+          host: urls.Base,
+          token: user.accessToken,
+          tokenexp: user.expiresAt,
+        },
+        '*',
+      );
     }
 
-
     //lighthouse menu for teams
-    if (location.pathname == "/Teams") {
+    if (location.pathname == '/Teams') {
       let regionfilter;
-      if (user.hq.EntityTypeId != 1) { //make region level more obvious
-        regionfilter = user.hq.Code + " Units";
+      if (user.hq.EntityTypeId != 1) {
+        //make region level more obvious
+        regionfilter = user.hq.Code + ' Units';
       } else {
         regionfilter = user.hq.ParentEntity.Code;
       }
 
-      clusterCodes.returnCluster(user.hq.Name, function(cluster) { //sync call to get cluster name
+      clusterCodes.returnCluster(user.hq.Name, function (cluster) {
+        //sync call to get cluster name
         let clusterfilter, filtermenu;
         if (typeof cluster !== 'undefined') {
-          clusterfilter = cluster.clusterCode
+          clusterfilter = cluster.clusterCode;
 
           //only draw with cluster if we got a cluster name back
-      filtermenu = `\
+          filtermenu = `\
     <li class="" id="lhquickfilter">\
     <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
     <ul class="sub-menu" style="display: none;">\
@@ -178,10 +253,8 @@ whenWeAreReady(user, function() {
     <li>\
     </ul>\
     </li>`;
-
-} else {
-
-  filtermenu = `\
+        } else {
+          filtermenu = `\
 <li class="" id="lhquickfilter">\
 <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
 <ul class="sub-menu" style="display: none;">\
@@ -192,147 +265,182 @@ whenWeAreReady(user, function() {
 <li>\
 </ul>\
 </li>`;
-
-}
-
-      $('.main-menu > li:nth-child(1)').after(filtermenu);
-
-      $("#filterallmycluster").click(function() {
-        filterViewModel.selectedEntities.removeAll();
-        filtershowallmycluster();
-      });
-
-      $("#filterallmyregion").click(function() {
-        filterViewModel.selectedEntities.removeAll();
-        filtershowallmyregion();
-      });
-
-      $("#filtermyhq").click(function() {
-        filterViewModel.selectedEntities.removeAll();
-        filterViewModel.selectedEntities.push(user.hq);
-        filterViewModel.updateFilters();
-      });
-
-      $("#clearlocator").click(function() {
-        filterViewModel.selectedEntities.removeAll();
-        filterViewModel.updateFilters();
-      });
-
-      $("#filtertoday").click(function() {
-        filterViewModel.startDate(utility.dateRanges.Today.StartDate())
-        filterViewModel.endDate(utility.dateRanges.Today.EndDate())
-        filterViewModel.dateRangeType('Today')
-        $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm"));
-        $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j) {
-          if ($(this).text() == "Today") {
-            $(this).addClass('active')
-          } else {
-            $(this).removeClass('active')
-          }
-        })
-        filterViewModel.updateFilters();
-      });
-
-      $("#filter7days").click(function() {
-        filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
-        filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
-        filterViewModel.dateRangeType('Last 7 Days')
-        $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm"));
-        $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j) {
-          if ($(this).text() == "Last 7 Days") {
-            $(this).addClass('active')
-          } else {
-            $(this).removeClass('active')
-          }
-        })
-        filterViewModel.updateFilters();
-      });
-
-      $("#filter30days").click(function() {
-        filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
-        filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
-        filterViewModel.dateRangeType('Last 30 Days')
-        $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
-        $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j) {
-          if ($(this).text() == "Last 30 Days") {
-            $(this).addClass('active')
-          } else {
-            $(this).removeClass('active')
-          }
-        })
-        filterViewModel.updateFilters();
-      });
-
-      $("#lhfiltercollectionsave").click(function() {
-
-        let saveObject = {}
-
-        saveObject.selectedTeamTypes = filterViewModel.selectedTeamTypes.peek().map(function(x) {
-          return {
-            Id: x.Id
-          }
-        }) //lets make it shorter by only keeping the ID
-        saveObject.selectedTeamStatusTypes = filterViewModel.selectedTeamStatusTypes.peek().map(function(x) {
-          return {
-            Id: x.Id
-          }
-        }) //lets make it shorter by only keeping the ID
-        saveObject.selectedCapabilities = filterViewModel.selectedCapabilities.peek().map(function(x) {
-          return {
-            Id: x.Id
-          }
-        }) //lets make it shorter by only keeping the ID
-        saveObject.dateRangeType = filterViewModel.dateRangeType.peek()
-        saveObject.startDate = filterViewModel.startDate.peek()
-        saveObject.endDate = filterViewModel.endDate.peek()
-
-        saveObject.selectedEntities = filterViewModel.selectedEntities.peek().map(function(x) {
-          return {
-            Id: x.Id,
-            Name: x.Name,
-            EntityTypeId: x.EntityTypeId
-          }
-        }) //lets make it shorter
-
-        var SaveName = prompt("Please enter a name for the collection. If the name already exists it will be overwritten.", "");
-        if (SaveName !== null && SaveName != "") {
-
-          let CollectionParent = {}
-          CollectionParent.name = SaveName;
-          CollectionParent.description = SaveName;
-          CollectionParent.items = saveObject;
-
-          window.postMessage({
-            type: 'SAVE_COLLECTION',
-            newdata: JSON.stringify(CollectionParent),
-            name: 'lighthouseTeamFilterCollections'
-          }, '*');
-
         }
 
-      })
+        $('.main-menu > li:nth-child(1)').after(filtermenu);
 
-      LoadTeamFilterCollections()
-    }); //after cluster call has loaded
+        $('#filterallmycluster').click(function () {
+          filterViewModel.selectedEntities.removeAll();
+          filtershowallmycluster();
+        });
 
+        $('#filterallmyregion').click(function () {
+          filterViewModel.selectedEntities.removeAll();
+          filtershowallmyregion();
+        });
+
+        $('#filtermyhq').click(function () {
+          filterViewModel.selectedEntities.removeAll();
+          filterViewModel.selectedEntities.push(user.hq);
+          filterViewModel.updateFilters();
+        });
+
+        $('#clearlocator').click(function () {
+          filterViewModel.selectedEntities.removeAll();
+          filterViewModel.updateFilters();
+        });
+
+        $('#filtertoday').click(function () {
+          filterViewModel.startDate(utility.dateRanges.Today.StartDate());
+          filterViewModel.endDate(utility.dateRanges.Today.EndDate());
+          filterViewModel.dateRangeType('Today');
+          $('#reportrange span').html(
+            utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm') +
+              ' - ' +
+              utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm'),
+          );
+          $(
+            'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
+          ).each(function (j) {
+            if ($(this).text() == 'Today') {
+              $(this).addClass('active');
+            } else {
+              $(this).removeClass('active');
+            }
+          });
+          filterViewModel.updateFilters();
+        });
+
+        $('#filter7days').click(function () {
+          filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate());
+          filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate());
+          filterViewModel.dateRangeType('Last 7 Days');
+          $('#reportrange span').html(
+            utility.dateRanges.Last7Days.StartDate().format(
+              'MMMM D, YYYY H:mm',
+            ) +
+              ' - ' +
+              utility.dateRanges.Last7Days.StartDate().format(
+                'MMMM D, YYYY H:mm',
+              ),
+          );
+          $(
+            'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
+          ).each(function (j) {
+            if ($(this).text() == 'Last 7 Days') {
+              $(this).addClass('active');
+            } else {
+              $(this).removeClass('active');
+            }
+          });
+          filterViewModel.updateFilters();
+        });
+
+        $('#filter30days').click(function () {
+          filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate());
+          filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate());
+          filterViewModel.dateRangeType('Last 30 Days');
+          $('#reportrange span').html(
+            utility.dateRanges.Last30Days.StartDate().format(
+              'MMMM D, YYYY H:mm',
+            ) +
+              ' - ' +
+              utility.dateRanges.Last30Days.StartDate().format(
+                'MMMM D, YYYY H:mm',
+              ),
+          );
+          $(
+            'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
+          ).each(function (j) {
+            if ($(this).text() == 'Last 30 Days') {
+              $(this).addClass('active');
+            } else {
+              $(this).removeClass('active');
+            }
+          });
+          filterViewModel.updateFilters();
+        });
+
+        $('#lhfiltercollectionsave').click(function () {
+          let saveObject = {};
+
+          saveObject.selectedTeamTypes = filterViewModel.selectedTeamTypes
+            .peek()
+            .map(function (x) {
+              return {
+                Id: x.Id,
+              };
+            }); //lets make it shorter by only keeping the ID
+          saveObject.selectedTeamStatusTypes =
+            filterViewModel.selectedTeamStatusTypes.peek().map(function (x) {
+              return {
+                Id: x.Id,
+              };
+            }); //lets make it shorter by only keeping the ID
+          saveObject.selectedCapabilities = filterViewModel.selectedCapabilities
+            .peek()
+            .map(function (x) {
+              return {
+                Id: x.Id,
+              };
+            }); //lets make it shorter by only keeping the ID
+          saveObject.dateRangeType = filterViewModel.dateRangeType.peek();
+          saveObject.startDate = filterViewModel.startDate.peek();
+          saveObject.endDate = filterViewModel.endDate.peek();
+
+          saveObject.selectedEntities = filterViewModel.selectedEntities
+            .peek()
+            .map(function (x) {
+              return {
+                Id: x.Id,
+                Name: x.Name,
+                EntityTypeId: x.EntityTypeId,
+              };
+            }); //lets make it shorter
+
+          var SaveName = prompt(
+            'Please enter a name for the collection. If the name already exists it will be overwritten.',
+            '',
+          );
+          if (SaveName !== null && SaveName != '') {
+            let CollectionParent = {};
+            CollectionParent.name = SaveName;
+            CollectionParent.description = SaveName;
+            CollectionParent.items = saveObject;
+
+            window.postMessage(
+              {
+                type: 'SAVE_COLLECTION',
+                newdata: JSON.stringify(CollectionParent),
+                name: 'lighthouseTeamFilterCollections',
+              },
+              '*',
+            );
+          }
+        });
+
+        LoadTeamFilterCollections();
+      }); //after cluster call has loaded
     }
 
- //lighthouse menu for situation map
- if (location.pathname == "/Jobs/SituationalAwareness") {
-  let regionfilter;
-  if (user.hq.EntityTypeId != 1) { //make region level more obvious
-    regionfilter = user.hq.Code + " Units";
-  } else {
-    regionfilter = user.hq.ParentEntity.Code;
-  }
+    //lighthouse menu for situation map
+    if (location.pathname == '/Jobs/SituationalAwareness') {
+      let regionfilter;
+      if (user.hq.EntityTypeId != 1) {
+        //make region level more obvious
+        regionfilter = user.hq.Code + ' Units';
+      } else {
+        regionfilter = user.hq.ParentEntity.Code;
+      }
 
-  clusterCodes.returnCluster(user.hq.Name, function(cluster) { //sync call to get cluster name
-    let clusterfilter, filtermenu;
-    if (typeof cluster !== 'undefined') {
-      clusterfilter = cluster.clusterCode
+      clusterCodes.returnCluster(user.hq.Name, function (cluster) {
+        //sync call to get cluster name
+        let clusterfilter, filtermenu;
+        if (typeof cluster !== 'undefined') {
+          clusterfilter = cluster.clusterCode;
 
-      //only draw with cluster if we got a cluster name back
-  filtermenu = `\
+          //only draw with cluster if we got a cluster name back
+          filtermenu = `\
 <li class="" id="lhquickfilter">\
 <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
 <ul class="sub-menu" style="display: none;">\
@@ -342,10 +450,8 @@ whenWeAreReady(user, function() {
 <li>\
 </ul>\
 </li>`;
-
-} else {
-
-filtermenu = `\
+        } else {
+          filtermenu = `\
 <li class="" id="lhquickfilter">\
 <a href="#" class="js-sub-menu-toggle"> <i class="fa fa-fw"></i><img width="14px" style="vertical-align:top;margin-right:10px;float:left" src="${lighthouseUrl}icons/lh-black.png"><span class="text" style="margin-left: -20px;">Lighthouse Quick Filters</span><i class="toggle-icon fa fa-angle-left"></i></a>\
 <ul class="sub-menu" style="display: none;">\
@@ -355,97 +461,132 @@ filtermenu = `\
 <li>\
 </ul>\
 </li>`;
+        }
 
-}
+        $('.main-menu > li:nth-child(2)').first().after(filtermenu); //theres two of these
 
-  $('.main-menu > li:nth-child(2)').first().after(filtermenu); //theres two of these
+        $('#filterallmycluster').click(function () {
+          contentViewModel.filterViewModel.selectedEntities.removeAll();
+          filtershowallmycluster(contentViewModel.filterViewModel);
+        });
 
-  $("#filterallmycluster").click(function() {
-    contentViewModel.filterViewModel.selectedEntities.removeAll();
-    filtershowallmycluster(contentViewModel.filterViewModel);
-  });
+        $('#filterallmyregion').click(function () {
+          contentViewModel.filterViewModel.selectedEntities.removeAll();
+          filtershowallmyregion(contentViewModel.filterViewModel);
+        });
 
-  $("#filterallmyregion").click(function() {
-    contentViewModel.filterViewModel.selectedEntities.removeAll();
-    filtershowallmyregion(contentViewModel.filterViewModel);
-  });
+        $('#filtermyhq').click(function () {
+          contentViewModel.filterViewModel.selectedEntities.removeAll();
+          contentViewModel.filterViewModel.selectedEntities.push(user.hq);
+          contentViewModel.filterViewModel.updateFilters();
+        });
 
-  $("#filtermyhq").click(function() {
-    contentViewModel.filterViewModel.selectedEntities.removeAll();
-    contentViewModel.filterViewModel.selectedEntities.push(user.hq);
-    contentViewModel.filterViewModel.updateFilters();
-  });
+        $('#clearlocator').click(function () {
+          contentViewModel.filterViewModel.selectedEntities.removeAll();
+          contentViewModel.filterViewModel.updateFilters();
+        });
 
-  $("#clearlocator").click(function() {
-    contentViewModel.filterViewModel.selectedEntities.removeAll();
-    contentViewModel.filterViewModel.updateFilters();
-  });
+        $('#filtertoday').click(function () {
+          contentViewModel.filterViewModel.startDate(
+            utility.dateRanges.Today.StartDate(),
+          );
+          contentViewModel.filterViewModel.endDate(
+            utility.dateRanges.Today.EndDate(),
+          );
+          contentViewModel.filterViewModel.dateRangeType('Today');
+          $('#reportrange span').html(
+            utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm') +
+              ' - ' +
+              utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm'),
+          );
+          $(
+            'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
+          ).each(function (j) {
+            if ($(this).text() == 'Today') {
+              $(this).addClass('active');
+            } else {
+              $(this).removeClass('active');
+            }
+          });
+          contentViewModel.filterViewModel.updateFilters();
+        });
 
-  $("#filtertoday").click(function() {
-    contentViewModel.filterViewModel.startDate(utility.dateRanges.Today.StartDate())
-    contentViewModel.filterViewModel.endDate(utility.dateRanges.Today.EndDate())
-    contentViewModel.filterViewModel.dateRangeType('Today')
-    $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm"));
-    $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j) {
-      if ($(this).text() == "Today") {
-        $(this).addClass('active')
-      } else {
-        $(this).removeClass('active')
-      }
-    })
-    contentViewModel.filterViewModel.updateFilters();
-  });
+        $('#filter7days').click(function () {
+          contentViewModel.filterViewModel.startDate(
+            utility.dateRanges.Last7Days.StartDate(),
+          );
+          contentViewModel.filterViewModel.endDate(
+            utility.dateRanges.Last7Days.EndDate(),
+          );
+          contentViewModel.filterViewModel.dateRangeType('Last 7 Days');
+          $('#reportrange span').html(
+            utility.dateRanges.Last7Days.StartDate().format(
+              'MMMM D, YYYY H:mm',
+            ) +
+              ' - ' +
+              utility.dateRanges.Last7Days.StartDate().format(
+                'MMMM D, YYYY H:mm',
+              ),
+          );
+          $(
+            'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
+          ).each(function (j) {
+            if ($(this).text() == 'Last 7 Days') {
+              $(this).addClass('active');
+            } else {
+              $(this).removeClass('active');
+            }
+          });
+          contentViewModel.filterViewModel.updateFilters();
+        });
 
-  $("#filter7days").click(function() {
-    contentViewModel.filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
-    contentViewModel.filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
-    contentViewModel.filterViewModel.dateRangeType('Last 7 Days')
-    $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm"));
-    $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j) {
-      if ($(this).text() == "Last 7 Days") {
-        $(this).addClass('active')
-      } else {
-        $(this).removeClass('active')
-      }
-    })
-    contentViewModel.filterViewModel.updateFilters();
-  });
-
-  $("#filter30days").click(function() {
-    contentViewModel.filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
-    contentViewModel.filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
-    contentViewModel.filterViewModel.dateRangeType('Last 30 Days')
-    $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm"));
-    $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function(j) {
-      if ($(this).text() == "Last 30 Days") {
-        $(this).addClass('active')
-      } else {
-        $(this).removeClass('active')
-      }
-    })
-    contentViewModel.filterViewModel.updateFilters();
-  });
-
-}); 
-
-}
-
+        $('#filter30days').click(function () {
+          contentViewModel.filterViewModel.startDate(
+            utility.dateRanges.Last30Days.StartDate(),
+          );
+          contentViewModel.filterViewModel.endDate(
+            utility.dateRanges.Last30Days.EndDate(),
+          );
+          contentViewModel.filterViewModel.dateRangeType('Last 30 Days');
+          $('#reportrange span').html(
+            utility.dateRanges.Last30Days.StartDate().format(
+              'MMMM D, YYYY H:mm',
+            ) +
+              ' - ' +
+              utility.dateRanges.Last30Days.StartDate().format(
+                'MMMM D, YYYY H:mm',
+              ),
+          );
+          $(
+            'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
+          ).each(function (j) {
+            if ($(this).text() == 'Last 30 Days') {
+              $(this).addClass('active');
+            } else {
+              $(this).removeClass('active');
+            }
+          });
+          contentViewModel.filterViewModel.updateFilters();
+        });
+      });
+    }
 
     //lighthouse menu for jobs
 
-    if (location.pathname === "/Jobs") {
+    if (location.pathname === '/Jobs') {
       let regionfilter;
       if (user.hq.EntityTypeId != 1) {
         //make region level more obvious
-        regionfilter = user.hq.Code + " Units";
+        regionfilter = user.hq.Code + ' Units';
       } else {
         regionfilter = user.hq.ParentEntity.Code;
       }
 
-      clusterCodes.returnCluster(user.hq.Name, function(cluster) { //sync call to get cluster name
+      clusterCodes.returnCluster(user.hq.Name, function (cluster) {
+        //sync call to get cluster name
         let clusterfilter, filtermenu;
         if (typeof cluster !== 'undefined') {
-          clusterfilter = cluster.clusterCode
+          clusterfilter = cluster.clusterCode;
 
           filtermenu = `\
           <li class="" id="lhquickfilter">\
@@ -460,8 +601,6 @@ filtermenu = `\
           </li>
           </ul>
           </li>`;
-
-
         } else {
           filtermenu = `\
           <li class="" id="lhquickfilter">\
@@ -479,694 +618,928 @@ filtermenu = `\
         }
         $('.main-menu > li:nth-child(1)').after(filtermenu);
 
-
-
-        $("#filterrescue").click(function() {
+        $('#filterrescue').click(function () {
           filterViewModel.selectedParentJobTypes.removeAll();
           filterViewModel.selectedFloodAssTypes.removeAll();
           filterViewModel.parentJobTypeClicked({
             Id: 5,
-            Name: "Rescue",
-            Description: "Rescue",
-            ParentId: null
+            Name: 'Rescue',
+            Description: 'Rescue',
+            ParentId: null,
           });
           filterViewModel.updateFilters();
         });
 
-        $("#filterstorm").click(function() {
+        $('#filterstorm').click(function () {
           filterViewModel.selectedParentJobTypes.removeAll();
           filterViewModel.selectedRescueTypes.removeAll();
           filterViewModel.selectedFloodAssTypes.removeAll();
           filterViewModel.parentJobTypeClicked({
             Id: 1,
-            Name: "Storm",
-            Description: "Storm",
-            ParentId: null
+            Name: 'Storm',
+            Description: 'Storm',
+            ParentId: null,
           });
           filterViewModel.updateFilters();
         });
-        $("#filterflood").click(function() {
+        $('#filterflood').click(function () {
           filterViewModel.selectedParentJobTypes.removeAll();
           filterViewModel.selectedRescueTypes.removeAll();
           filterViewModel.parentJobTypeClicked({
             Id: 4,
-            Name: "Flood Assistance",
-            Description: "FloodAssistance",
-            ParentId: null
+            Name: 'Flood Assistance',
+            Description: 'FloodAssistance',
+            ParentId: null,
           });
           filterViewModel.rescueTypeClicked({
             Id: 4,
-            Name: "FR",
-            Description: "Flood Rescue",
-            ParentId: 5
+            Name: 'FR',
+            Description: 'Flood Rescue',
+            ParentId: 5,
           });
           filterViewModel.updateFilters();
         });
-        $("#filteralltype").click(function() {
+        $('#filteralltype').click(function () {
           filterViewModel.selectedParentJobTypes.removeAll();
           filterViewModel.selectedRescueTypes.removeAll();
           filterViewModel.selectedFloodAssTypes.removeAll();
           filterViewModel.updateFilters();
         });
 
-        $("#filteropen").click(function() {
+        $('#filteropen').click(function () {
           filterViewModel.selectedStatusTypes.removeAll();
           filterViewModel.selectedStatusTypes.push({
             Id: 2,
-            Name: "Acknowledged",
-            Description: "Acknowledged",
-            ParentId: null
+            Name: 'Acknowledged',
+            Description: 'Acknowledged',
+            ParentId: null,
           });
           filterViewModel.selectedStatusTypes.push({
             Id: 1,
-            Name: "New",
-            Description: "New",
-            ParentId: null
+            Name: 'New',
+            Description: 'New',
+            ParentId: null,
           });
           filterViewModel.selectedStatusTypes.push({
             Id: 4,
-            Name: "Tasked",
-            Description: "Tasked",
-            ParentId: null
+            Name: 'Tasked',
+            Description: 'Tasked',
+            ParentId: null,
           });
           filterViewModel.selectedStatusTypes.push({
             Id: 5,
-            Name: "Referred",
-            Description: "Referred",
-            ParentId: null
+            Name: 'Referred',
+            Description: 'Referred',
+            ParentId: null,
           });
           filterViewModel.updateFilters();
         });
 
-        $("#filterclosed").click(function() {
+        $('#filterclosed').click(function () {
           filterViewModel.selectedStatusTypes.removeAll();
           filterViewModel.selectedStatusTypes.push({
             Id: 6,
-            Name: "Complete",
-            Description: "Complete",
-            ParentId: null
+            Name: 'Complete',
+            Description: 'Complete',
+            ParentId: null,
           });
           filterViewModel.selectedStatusTypes.push({
             Id: 7,
-            Name: "Cancelled",
-            Description: "Cancelled",
-            ParentId: null
+            Name: 'Cancelled',
+            Description: 'Cancelled',
+            ParentId: null,
           });
           filterViewModel.selectedStatusTypes.push({
             Id: 3,
-            Name: "Rejected",
-            Description: "Rejected",
-            ParentId: null
+            Name: 'Rejected',
+            Description: 'Rejected',
+            ParentId: null,
           });
           filterViewModel.selectedStatusTypes.push({
             Id: 8,
-            Name: "Finalised",
-            Description: "Finalised",
-            ParentId: null
+            Name: 'Finalised',
+            Description: 'Finalised',
+            ParentId: null,
           });
           filterViewModel.updateFilters();
         });
 
-        $("#filterallstatus").click(function() {
+        $('#filterallstatus').click(function () {
           filterViewModel.selectedStatusTypes.removeAll();
           filterViewModel.updateFilters();
         });
 
-        $("#filterallmyregion").click(function() {
+        $('#filterallmyregion').click(function () {
           filterViewModel.selectedEntities.removeAll();
           filtershowallmyregion();
         });
 
-        $("#filterallmycluster").click(function() {
+        $('#filterallmycluster').click(function () {
           filterViewModel.selectedEntities.removeAll();
           filtershowallmycluster();
         });
 
-        $("#filtermyhq").click(function() {
+        $('#filtermyhq').click(function () {
           filterViewModel.selectedEntities.removeAll();
           filterViewModel.selectedEntities.push(user.hq);
           filterViewModel.updateFilters();
         });
 
-        $("#clearlocator").click(function() {
+        $('#clearlocator').click(function () {
           filterViewModel.selectedEntities.removeAll();
           filterViewModel.updateFilters();
         });
 
-        $("#filtertoday").click(function() {
-          filterViewModel.startDate(utility.dateRanges.Today.StartDate())
-          filterViewModel.endDate(utility.dateRanges.Today.EndDate())
-          filterViewModel.dateRangeType('Today')
-          $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Today.StartDate()
-          $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Today.EndDate()
-          $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.EndDate().format("MMMM D, YYYY H:mm"));
+        $('#filtertoday').click(function () {
+          filterViewModel.startDate(utility.dateRanges.Today.StartDate());
+          filterViewModel.endDate(utility.dateRanges.Today.EndDate());
+          filterViewModel.dateRangeType('Today');
+          $('#reportrange').data().daterangepicker.startDate =
+            utility.dateRanges.Today.StartDate();
+          $('#reportrange').data().daterangepicker.endDate =
+            utility.dateRanges.Today.EndDate();
+          $('#reportrange span').html(
+            utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm') +
+              ' - ' +
+              utility.dateRanges.Today.EndDate().format('MMMM D, YYYY H:mm'),
+          );
           filterViewModel.updateFilters();
         });
 
-        $("#filter7days").click(function() {
-          filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
-          filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
-          $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last7Days.StartDate()
-          $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last7Days.EndDate()
-          filterViewModel.dateRangeType('Last 7 Days')
-          $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.EndDate().format("MMMM D, YYYY H:mm"));
+        $('#filter7days').click(function () {
+          filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate());
+          filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate());
+          $('#reportrange').data().daterangepicker.startDate =
+            utility.dateRanges.Last7Days.StartDate();
+          $('#reportrange').data().daterangepicker.endDate =
+            utility.dateRanges.Last7Days.EndDate();
+          filterViewModel.dateRangeType('Last 7 Days');
+          $('#reportrange span').html(
+            utility.dateRanges.Last7Days.StartDate().format(
+              'MMMM D, YYYY H:mm',
+            ) +
+              ' - ' +
+              utility.dateRanges.Last7Days.EndDate().format(
+                'MMMM D, YYYY H:mm',
+              ),
+          );
           filterViewModel.updateFilters();
         });
 
-        $("#filter30days").click(function() {
-          filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
-          filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
-          $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last30Days.StartDate()
-          $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last30Days.EndDate()
-          filterViewModel.dateRangeType('Last 30 Days')
-          $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.EndDate().format("MMMM D, YYYY H:mm"));
+        $('#filter30days').click(function () {
+          filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate());
+          filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate());
+          $('#reportrange').data().daterangepicker.startDate =
+            utility.dateRanges.Last30Days.StartDate();
+          $('#reportrange').data().daterangepicker.endDate =
+            utility.dateRanges.Last30Days.EndDate();
+          filterViewModel.dateRangeType('Last 30 Days');
+          $('#reportrange span').html(
+            utility.dateRanges.Last30Days.StartDate().format(
+              'MMMM D, YYYY H:mm',
+            ) +
+              ' - ' +
+              utility.dateRanges.Last30Days.EndDate().format(
+                'MMMM D, YYYY H:mm',
+              ),
+          );
           filterViewModel.updateFilters();
         });
 
+        $('#lhfiltercollectionsave').click(function () {
+          let saveObject = {};
 
-        $("#lhfiltercollectionsave").click(function() {
+          saveObject.selectedTags = filterViewModel.selectedTags
+            .peek()
+            .map(function (x) {
+              return {
+                Id: x.Id,
+              };
+            }); //lets make it shorter by only keeping the ID
+          saveObject.selectedRescueTypes = filterViewModel.selectedRescueTypes
+            .peek()
+            .map(function (x) {
+              return {
+                Id: x.Id,
+              };
+            }); //lets make it shorter by only keeping the ID
+          saveObject.selectedFloodAssTypes =
+            filterViewModel.selectedFloodAssTypes.peek().map(function (x) {
+              return {
+                Id: x.Id,
+              };
+            }); //lets make it shorter by only keeping the ID
+          saveObject.selectedPriorityTypes =
+            filterViewModel.selectedPriorityTypes.peek().map(function (x) {
+              return {
+                Id: x.Id,
+              };
+            }); //lets make it shorter by only keeping the ID
+          saveObject.selectedStatusTypes = filterViewModel.selectedStatusTypes
+            .peek()
+            .map(function (x) {
+              return {
+                Id: x.Id,
+              };
+            }); //lets make it shorter by only keeping the ID
+          saveObject.selectedParentJobTypes =
+            filterViewModel.selectedParentJobTypes.peek().map(function (x) {
+              return {
+                Id: x.Id,
+              };
+            }); //lets make it shorter by only keeping the ID
 
-          let saveObject = {}
+          saveObject.dateRangeType = filterViewModel.dateRangeType.peek();
+          saveObject.startDate = filterViewModel.startDate.peek();
+          saveObject.endDate = filterViewModel.endDate.peek();
 
-          saveObject.selectedTags = filterViewModel.selectedTags.peek().map(function(x) {
-            return {
-              Id: x.Id
-            }
-          }) //lets make it shorter by only keeping the ID
-          saveObject.selectedRescueTypes = filterViewModel.selectedRescueTypes.peek().map(function(x) {
-            return {
-              Id: x.Id
-            }
-          }) //lets make it shorter by only keeping the ID
-          saveObject.selectedFloodAssTypes = filterViewModel.selectedFloodAssTypes.peek().map(function(x) {
-            return {
-              Id: x.Id
-            }
-          }) //lets make it shorter by only keeping the ID
-          saveObject.selectedPriorityTypes = filterViewModel.selectedPriorityTypes.peek().map(function(x) {
-            return {
-              Id: x.Id
-            }
-          }) //lets make it shorter by only keeping the ID
-          saveObject.selectedStatusTypes = filterViewModel.selectedStatusTypes.peek().map(function(x) {
-            return {
-              Id: x.Id
-            }
-          }) //lets make it shorter by only keeping the ID
-          saveObject.selectedParentJobTypes = filterViewModel.selectedParentJobTypes.peek().map(function(x) {
-            return {
-              Id: x.Id
-            }
-          }) //lets make it shorter by only keeping the ID
+          saveObject.selectedEvents = filterViewModel.selectedEvents.peek();
 
-          saveObject.dateRangeType = filterViewModel.dateRangeType.peek()
-          saveObject.startDate = filterViewModel.startDate.peek()
-          saveObject.endDate = filterViewModel.endDate.peek()
+          saveObject.icemsIInIds = filterViewModel.icemsIInIds
+            .peek()
+            .map(function (x) {
+              return x.ReferringAgencyReference;
+            }); //scrub out the private details and just return the ID, we will fetch job details on load.
 
-          saveObject.selectedEvents = filterViewModel.selectedEvents.peek()
+          saveObject.selectedTeams = filterViewModel.selectedTeams.peek(); //already really short
 
-          saveObject.icemsIInIds = filterViewModel.icemsIInIds.peek().map(function(x) {
-            return x.ReferringAgencyReference
-          }) //scrub out the private details and just return the ID, we will fetch job details on load.
+          saveObject.selectedEntities = filterViewModel.selectedEntities
+            .peek()
+            .map(function (x) {
+              return {
+                Id: x.Id,
+                Name: x.Name,
+                EntityTypeId: x.EntityTypeId,
+              };
+            }); //lets make it shorter
+          saveObject.selectedPeople = filterViewModel.selectedPeople
+            .peek()
+            .map(function (x) {
+              return {
+                Id: x.Id,
+                FullName: x.FullName,
+              };
+            }); //lets make it shorter
 
-          saveObject.selectedTeams = filterViewModel.selectedTeams.peek() //already really short
-
-          saveObject.selectedEntities = filterViewModel.selectedEntities.peek().map(function(x) {
-            return {
-              Id: x.Id,
-              Name: x.Name,
-              EntityTypeId: x.EntityTypeId
-            }
-          }) //lets make it shorter
-          saveObject.selectedPeople = filterViewModel.selectedPeople.peek().map(function(x) {
-            return {
-              Id: x.Id,
-              FullName: x.FullName
-            }
-          }) //lets make it shorter
-
-          var SaveName = prompt("Please enter a name for the collection. If the name already exists it will be overwritten.", "");
-          if (SaveName !== null && SaveName != "") {
-            let CollectionParent = {}
+          var SaveName = prompt(
+            'Please enter a name for the collection. If the name already exists it will be overwritten.',
+            '',
+          );
+          if (SaveName !== null && SaveName != '') {
+            let CollectionParent = {};
             CollectionParent.name = SaveName;
             CollectionParent.description = SaveName;
             CollectionParent.items = saveObject;
-            console.log(CollectionParent)
-            window.postMessage({
-              type: 'SAVE_COLLECTION',
-              newdata: JSON.stringify(CollectionParent),
-              name: 'lighthouseJobFilterCollections'
-            }, '*');
+            console.log(CollectionParent);
+            window.postMessage(
+              {
+                type: 'SAVE_COLLECTION',
+                newdata: JSON.stringify(CollectionParent),
+                name: 'lighthouseJobFilterCollections',
+              },
+              '*',
+            );
           }
+        });
 
-        })
-
-        LoadJobFilterCollections()
+        LoadJobFilterCollections();
       }); //after cluster call has loaded
-
     } // location.pathname == "/Jobs"
+  }); // xhttp.onreadystatechange
 
-
-  }) // xhttp.onreadystatechange
-
-
-});
 
 function LoadTeamFilterCollections() {
-
-  window.addEventListener("message", function(event) {
+  window.addEventListener('message', function (event) {
     // We only accept messages from content scrip
-    if (event.source !== window)
-      return;
+    if (event.source !== window) return;
     if (event.data.type) {
-      if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseTeamFilterCollections") {
+      if (
+        event.data.type === 'RETURN_COLLECTION' &&
+        event.data.name == 'lighthouseTeamFilterCollections'
+      ) {
         let items;
         try {
-          items = JSON.parse(event.data.dataresult)
+          items = JSON.parse(event.data.dataresult);
         } catch (e) {
-          items = []
+          items = [];
         }
-        ProcessData(items)
+        ProcessData(items);
       }
     }
-  })
-  window.postMessage({
-    type: 'FETCH_COLLECTION',
-    name: 'lighthouseTeamFilterCollections'
-  }, '*');
+  });
+  window.postMessage(
+    {
+      type: 'FETCH_COLLECTION',
+      name: 'lighthouseTeamFilterCollections',
+    },
+    '*',
+  );
 
-  function ProcessData(theLoadedCollection) { //Load the saved Collections
+  function ProcessData(theLoadedCollection) {
+    //Load the saved Collections
 
-
-    $("#lhfiltercollections").empty();
+    $('#lhfiltercollections').empty();
 
     //Load the saved Collections
     if (theLoadedCollection) {
+      theLoadedCollection.forEach(function (item) {
+        console.log();
+        var button = make_collection_button(item.name, item.items.length + '');
 
-      theLoadedCollection.forEach(function(item) {
-        console.log()
-        var button = make_collection_button(item.name, item.items.length + "")
-
-        $(button).click(function() {
-          filterViewModel.selectedTeamTypes.removeAll()
-          item.items.selectedTeamTypes.forEach(function(itm) {
-            filterViewModel.selectedTeamTypes.push(itm)
-          })
-          filterViewModel.selectedTeamStatusTypes.removeAll()
-          item.items.selectedTeamStatusTypes.forEach(function(itm) {
-            filterViewModel.selectedTeamStatusTypes.push(itm)
-          })
-          filterViewModel.selectedCapabilities.removeAll()
-          item.items.selectedCapabilities.forEach(function(itm) {
-            filterViewModel.selectedCapabilities.push(itm)
-          })
+        $(button).click(function () {
+          filterViewModel.selectedTeamTypes.removeAll();
+          item.items.selectedTeamTypes.forEach(function (itm) {
+            filterViewModel.selectedTeamTypes.push(itm);
+          });
+          filterViewModel.selectedTeamStatusTypes.removeAll();
+          item.items.selectedTeamStatusTypes.forEach(function (itm) {
+            filterViewModel.selectedTeamStatusTypes.push(itm);
+          });
+          filterViewModel.selectedCapabilities.removeAll();
+          item.items.selectedCapabilities.forEach(function (itm) {
+            filterViewModel.selectedCapabilities.push(itm);
+          });
 
           switch (item.items.dateRangeType) {
-            case "Today":
-              filterViewModel.startDate(utility.dateRanges.Today.StartDate())
-              filterViewModel.endDate(utility.dateRanges.Today.EndDate())
-              filterViewModel.dateRangeType('Today')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Today.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Today.EndDate()
-              $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "Yesterday":
-              filterViewModel.startDate(utility.dateRanges.Yesterday.StartDate())
-              filterViewModel.endDate(utility.dateRanges.Yesterday.EndDate())
-              filterViewModel.dateRangeType('Yesterday')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Yesterday.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Yesterday.EndDate()
-              $("#reportrange span").html(utility.dateRanges.Yesterday.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Yesterday.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "Last 7 Days":
-              filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
-              filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
-              filterViewModel.dateRangeType('Last 7 Days')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last7Days.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last7Days.EndDate()
-              $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "Last 30 Days":
-              filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
-              filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
-              filterViewModel.dateRangeType('Last 30 Days')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last30Days.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last30Days.EndDate()
-              $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "This Month":
-              filterViewModel.startDate(utility.dateRanges.ThisMonth.StartDate())
-              filterViewModel.endDate(utility.dateRanges.ThisMonth.EndDate())
-              filterViewModel.dateRangeType('This Month')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.ThisMonth.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.ThisMonth.EndDate()
-              $("#reportrange span").html(utility.dateRanges.ThisMonth.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.ThisMonth.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "Last Month":
-              filterViewModel.startDate(utility.dateRanges.LastMonth.StartDate())
-              filterViewModel.endDate(utility.dateRanges.LastMonth.EndDate())
-              filterViewModel.dateRangeType('Last Month')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.LastMonth.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.LastMonth.EndDate()
-              $("#reportrange span").html(utility.dateRanges.LastMonth.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.LastMonth.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "This Calendar Year":
-              filterViewModel.startDate(moment().startOf('year'))
-              filterViewModel.endDate(moment().endOf('year'))
-              filterViewModel.dateRangeType('This Calendar Year')
-              $("#reportrange").data().daterangepicker.startDate = moment().startOf('year')
-              $("#reportrange").data().daterangepicker.endDate = moment().endOf('year')
-              $("#reportrange span").html(moment().startOf('year').format("MMMM D, YYYY H:mm") + " - " + moment().endOf('year').format("MMMM D, YYYY H:mm"));
-              break
-            case "All":
-              filterViewModel.startDate(utility.minDate)
-              filterViewModel.endDate(moment().endOf('year'))
-              filterViewModel.dateRangeType('All')
-              $("#reportrange").data().daterangepicker.startDate = utility.minDate
-              $("#reportrange").data().daterangepicker.endDate = moment().endOf('year')
-              $("#reportrange span").html(utility.minDate.format("MMMM D, YYYY H:mm") + " - " + moment().endOf('year').format("MMMM D, YYYY H:mm"));
-              break
-            case "Custom Range":
-              var start = moment(item.items.startDate)
-              var end = moment(item.items.endDate)
-              filterViewModel.startDate(start)
-              filterViewModel.endDate(end)
-              filterViewModel.dateRangeType('Custom Range')
-              $("#reportrange").data().daterangepicker.startDate = start
-              $("#reportrange").data().daterangepicker.endDate = end
-              $("#reportrange span").html(start.format("MMMM D, YYYY H:mm") + " - " + end.format("MMMM D, YYYY H:mm"));
-              break
+            case 'Today':
+              filterViewModel.startDate(utility.dateRanges.Today.StartDate());
+              filterViewModel.endDate(utility.dateRanges.Today.EndDate());
+              filterViewModel.dateRangeType('Today');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.Today.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.Today.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.Today.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.Today.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'Yesterday':
+              filterViewModel.startDate(
+                utility.dateRanges.Yesterday.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.Yesterday.EndDate());
+              filterViewModel.dateRangeType('Yesterday');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.Yesterday.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.Yesterday.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.Yesterday.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.Yesterday.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'Last 7 Days':
+              filterViewModel.startDate(
+                utility.dateRanges.Last7Days.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate());
+              filterViewModel.dateRangeType('Last 7 Days');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.Last7Days.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.Last7Days.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.Last7Days.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.Last7Days.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'Last 30 Days':
+              filterViewModel.startDate(
+                utility.dateRanges.Last30Days.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate());
+              filterViewModel.dateRangeType('Last 30 Days');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.Last30Days.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.Last30Days.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.Last30Days.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.Last30Days.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'This Month':
+              filterViewModel.startDate(
+                utility.dateRanges.ThisMonth.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.ThisMonth.EndDate());
+              filterViewModel.dateRangeType('This Month');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.ThisMonth.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.ThisMonth.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.ThisMonth.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.ThisMonth.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'Last Month':
+              filterViewModel.startDate(
+                utility.dateRanges.LastMonth.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.LastMonth.EndDate());
+              filterViewModel.dateRangeType('Last Month');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.LastMonth.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.LastMonth.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.LastMonth.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.LastMonth.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'This Calendar Year':
+              filterViewModel.startDate(moment().startOf('year'));
+              filterViewModel.endDate(moment().endOf('year'));
+              filterViewModel.dateRangeType('This Calendar Year');
+              $('#reportrange').data().daterangepicker.startDate =
+                moment().startOf('year');
+              $('#reportrange').data().daterangepicker.endDate =
+                moment().endOf('year');
+              $('#reportrange span').html(
+                moment().startOf('year').format('MMMM D, YYYY H:mm') +
+                  ' - ' +
+                  moment().endOf('year').format('MMMM D, YYYY H:mm'),
+              );
+              break;
+            case 'All':
+              filterViewModel.startDate(utility.minDate);
+              filterViewModel.endDate(moment().endOf('year'));
+              filterViewModel.dateRangeType('All');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.minDate;
+              $('#reportrange').data().daterangepicker.endDate =
+                moment().endOf('year');
+              $('#reportrange span').html(
+                utility.minDate.format('MMMM D, YYYY H:mm') +
+                  ' - ' +
+                  moment().endOf('year').format('MMMM D, YYYY H:mm'),
+              );
+              break;
+            case 'Custom Range':
+              var start = moment(item.items.startDate);
+              var end = moment(item.items.endDate);
+              filterViewModel.startDate(start);
+              filterViewModel.endDate(end);
+              filterViewModel.dateRangeType('Custom Range');
+              $('#reportrange').data().daterangepicker.startDate = start;
+              $('#reportrange').data().daterangepicker.endDate = end;
+              $('#reportrange span').html(
+                start.format('MMMM D, YYYY H:mm') +
+                  ' - ' +
+                  end.format('MMMM D, YYYY H:mm'),
+              );
+              break;
           }
 
-          filterViewModel.selectedEntities.removeAll()
-          item.items.selectedEntities.forEach(function(itm) {
-            filterViewModel.selectedEntities.push(itm)
-          })
+          filterViewModel.selectedEntities.removeAll();
+          item.items.selectedEntities.forEach(function (itm) {
+            filterViewModel.selectedEntities.push(itm);
+          });
 
           filterViewModel.updateFilters();
+        });
 
+        $(button)
+          .find('span.delbutton')
+          .click(function () {
+            event.stopImmediatePropagation();
+            var r = confirm('Are you sure you want to delete this collection?');
+            if (r == true) {
+              DeleteTeamCollection(item);
+            }
+          });
 
-        })
-
-        $(button).find('span.delbutton').click(function() {
-          event.stopImmediatePropagation();
-          var r = confirm("Are you sure you want to delete this collection?");
-          if (r == true) {
-            DeleteTeamCollection(item);
-          }
-        })
-
-        $('#lhfiltercollections').append(button)
-
-      })
-
+        $('#lhfiltercollections').append(button);
+      });
     }
   }
-
 }
 
-
-
 function LoadJobFilterCollections() {
-
-  window.addEventListener("message", function(event) {
+  window.addEventListener('message', function (event) {
     // We only accept messages from content scrip
-    if (event.source !== window)
-      return;
+    if (event.source !== window) return;
     if (event.data.type) {
-      if (event.data.type === "RETURN_COLLECTION" && event.data.name == "lighthouseJobFilterCollections") {
+      if (
+        event.data.type === 'RETURN_COLLECTION' &&
+        event.data.name == 'lighthouseJobFilterCollections'
+      ) {
         let items;
         try {
-          items = JSON.parse(event.data.dataresult)
+          items = JSON.parse(event.data.dataresult);
         } catch (e) {
-          items = []
+          items = [];
         }
-        ProcessData(items)
+        ProcessData(items);
       }
     }
-  })
+  });
 
-  window.postMessage({
-    type: 'FETCH_COLLECTION',
-    name: 'lighthouseJobFilterCollections'
-  }, '*');
+  window.postMessage(
+    {
+      type: 'FETCH_COLLECTION',
+      name: 'lighthouseJobFilterCollections',
+    },
+    '*',
+  );
 
-
-  function ProcessData(theLoadedCollection) { //Load the saved Collections
-    $("#lhfiltercollections").empty();
+  function ProcessData(theLoadedCollection) {
+    //Load the saved Collections
+    $('#lhfiltercollections').empty();
 
     if (theLoadedCollection) {
-      theLoadedCollection.forEach(function(item) {
-        var button = make_collection_button(item.name, item.items.length + "")
+      theLoadedCollection.forEach(function (item) {
+        var button = make_collection_button(item.name, item.items.length + '');
 
-        $(button).click(function() {
-
+        $(button).click(function () {
           //go back to defaults first
           //FIX for  collection load resetting date filter when events is flushed
-          filterViewModel.resetFilters()
+          filterViewModel.resetFilters();
 
-
-
-          filterViewModel.selectedTags.removeAll()
-          item.items.selectedTags.forEach(function(itm) {
-            filterViewModel.selectedTags.push(itm)
-          })
-          filterViewModel.selectedRescueTypes.removeAll()
-          item.items.selectedRescueTypes.forEach(function(itm) {
-            filterViewModel.selectedRescueTypes.push(itm)
-          })
-          filterViewModel.selectedFloodAssTypes.removeAll()
-          item.items.selectedFloodAssTypes.forEach(function(itm) {
-            filterViewModel.selectedFloodAssTypes.push(itm)
-          })
-          filterViewModel.selectedPriorityTypes.removeAll()
-          item.items.selectedPriorityTypes.forEach(function(itm) {
-            filterViewModel.selectedPriorityTypes.push(itm)
-          })
-          filterViewModel.selectedStatusTypes.removeAll()
-          item.items.selectedStatusTypes.forEach(function(itm) {
-            filterViewModel.selectedStatusTypes.push(itm)
-          })
-          filterViewModel.selectedParentJobTypes.removeAll()
-          item.items.selectedParentJobTypes.forEach(function(itm) {
-            filterViewModel.selectedParentJobTypes.push(itm)
-          })
+          filterViewModel.selectedTags.removeAll();
+          item.items.selectedTags.forEach(function (itm) {
+            filterViewModel.selectedTags.push(itm);
+          });
+          filterViewModel.selectedRescueTypes.removeAll();
+          item.items.selectedRescueTypes.forEach(function (itm) {
+            filterViewModel.selectedRescueTypes.push(itm);
+          });
+          filterViewModel.selectedFloodAssTypes.removeAll();
+          item.items.selectedFloodAssTypes.forEach(function (itm) {
+            filterViewModel.selectedFloodAssTypes.push(itm);
+          });
+          filterViewModel.selectedPriorityTypes.removeAll();
+          item.items.selectedPriorityTypes.forEach(function (itm) {
+            filterViewModel.selectedPriorityTypes.push(itm);
+          });
+          filterViewModel.selectedStatusTypes.removeAll();
+          item.items.selectedStatusTypes.forEach(function (itm) {
+            filterViewModel.selectedStatusTypes.push(itm);
+          });
+          filterViewModel.selectedParentJobTypes.removeAll();
+          item.items.selectedParentJobTypes.forEach(function (itm) {
+            filterViewModel.selectedParentJobTypes.push(itm);
+          });
 
           switch (item.items.dateRangeType) {
-            case "Today":
-              filterViewModel.startDate(utility.dateRanges.Today.StartDate())
-              filterViewModel.endDate(utility.dateRanges.Today.EndDate())
-              filterViewModel.dateRangeType('Today')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Today.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Today.EndDate()
-              $("#reportrange span").html(utility.dateRanges.Today.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Today.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "Yesterday":
-              filterViewModel.startDate(utility.dateRanges.Yesterday.StartDate())
-              filterViewModel.endDate(utility.dateRanges.Yesterday.EndDate())
-              filterViewModel.dateRangeType('Yesterday')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Yesterday.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Yesterday.EndDate()
-              $("#reportrange span").html(utility.dateRanges.Yesterday.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Yesterday.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "Last 7 Days":
-              filterViewModel.startDate(utility.dateRanges.Last7Days.StartDate())
-              filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate())
-              filterViewModel.dateRangeType('Last 7 Days')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last7Days.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last7Days.EndDate()
-              $("#reportrange span").html(utility.dateRanges.Last7Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last7Days.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "Last 30 Days":
-              filterViewModel.startDate(utility.dateRanges.Last30Days.StartDate())
-              filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate())
-              filterViewModel.dateRangeType('Last 30 Days')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.Last30Days.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.Last30Days.EndDate()
-              $("#reportrange span").html(utility.dateRanges.Last30Days.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.Last30Days.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "This Month":
-              filterViewModel.startDate(utility.dateRanges.ThisMonth.StartDate())
-              filterViewModel.endDate(utility.dateRanges.ThisMonth.EndDate())
-              filterViewModel.dateRangeType('This Month')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.ThisMonth.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.ThisMonth.EndDate()
-              $("#reportrange span").html(utility.dateRanges.ThisMonth.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.ThisMonth.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "Last Month":
-              filterViewModel.startDate(utility.dateRanges.LastMonth.StartDate())
-              filterViewModel.endDate(utility.dateRanges.LastMonth.EndDate())
-              filterViewModel.dateRangeType('Last Month')
-              $("#reportrange").data().daterangepicker.startDate = utility.dateRanges.LastMonth.StartDate()
-              $("#reportrange").data().daterangepicker.endDate = utility.dateRanges.LastMonth.EndDate()
-              $("#reportrange span").html(utility.dateRanges.LastMonth.StartDate().format("MMMM D, YYYY H:mm") + " - " + utility.dateRanges.LastMonth.EndDate().format("MMMM D, YYYY H:mm"));
-              break
-            case "This Calendar Year":
-              filterViewModel.startDate(moment().startOf('year'))
-              filterViewModel.endDate(moment().endOf('year'))
-              filterViewModel.dateRangeType('This Calendar Year')
-              $("#reportrange").data().daterangepicker.startDate = moment().startOf('year')
-              $("#reportrange").data().daterangepicker.endDate = moment().endOf('year')
-              $("#reportrange span").html(moment().startOf('year').format("MMMM D, YYYY H:mm") + " - " + moment().endOf('year').format("MMMM D, YYYY H:mm"));
-              break
-            case "All":
-              filterViewModel.startDate(utility.minDate)
-              filterViewModel.endDate(moment().endOf('year'))
-              filterViewModel.dateRangeType('All')
-              $("#reportrange").data().daterangepicker.startDate = utility.minDate
-              $("#reportrange").data().daterangepicker.endDate = moment().endOf('year')
-              $("#reportrange span").html(utility.minDate.format("MMMM D, YYYY H:mm") + " - " + moment().endOf('year').format("MMMM D, YYYY H:mm"));
-              break
-            case "Custom Range":
-              var start = moment(item.items.startDate)
-              var end = moment(item.items.endDate)
-              filterViewModel.startDate(start)
-              filterViewModel.endDate(end)
-              filterViewModel.dateRangeType('Custom Range')
-              $("#reportrange").data().daterangepicker.startDate = start
-              $("#reportrange").data().daterangepicker.endDate = end
-              $("#reportrange span").html(start.format("MMMM D, YYYY H:mm") + " - " + end.format("MMMM D, YYYY H:mm"));
-              break
+            case 'Today':
+              filterViewModel.startDate(utility.dateRanges.Today.StartDate());
+              filterViewModel.endDate(utility.dateRanges.Today.EndDate());
+              filterViewModel.dateRangeType('Today');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.Today.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.Today.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.Today.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.Today.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'Yesterday':
+              filterViewModel.startDate(
+                utility.dateRanges.Yesterday.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.Yesterday.EndDate());
+              filterViewModel.dateRangeType('Yesterday');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.Yesterday.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.Yesterday.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.Yesterday.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.Yesterday.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'Last 7 Days':
+              filterViewModel.startDate(
+                utility.dateRanges.Last7Days.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.Last7Days.EndDate());
+              filterViewModel.dateRangeType('Last 7 Days');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.Last7Days.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.Last7Days.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.Last7Days.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.Last7Days.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'Last 30 Days':
+              filterViewModel.startDate(
+                utility.dateRanges.Last30Days.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.Last30Days.EndDate());
+              filterViewModel.dateRangeType('Last 30 Days');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.Last30Days.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.Last30Days.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.Last30Days.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.Last30Days.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'This Month':
+              filterViewModel.startDate(
+                utility.dateRanges.ThisMonth.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.ThisMonth.EndDate());
+              filterViewModel.dateRangeType('This Month');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.ThisMonth.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.ThisMonth.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.ThisMonth.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.ThisMonth.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'Last Month':
+              filterViewModel.startDate(
+                utility.dateRanges.LastMonth.StartDate(),
+              );
+              filterViewModel.endDate(utility.dateRanges.LastMonth.EndDate());
+              filterViewModel.dateRangeType('Last Month');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.dateRanges.LastMonth.StartDate();
+              $('#reportrange').data().daterangepicker.endDate =
+                utility.dateRanges.LastMonth.EndDate();
+              $('#reportrange span').html(
+                utility.dateRanges.LastMonth.StartDate().format(
+                  'MMMM D, YYYY H:mm',
+                ) +
+                  ' - ' +
+                  utility.dateRanges.LastMonth.EndDate().format(
+                    'MMMM D, YYYY H:mm',
+                  ),
+              );
+              break;
+            case 'This Calendar Year':
+              filterViewModel.startDate(moment().startOf('year'));
+              filterViewModel.endDate(moment().endOf('year'));
+              filterViewModel.dateRangeType('This Calendar Year');
+              $('#reportrange').data().daterangepicker.startDate =
+                moment().startOf('year');
+              $('#reportrange').data().daterangepicker.endDate =
+                moment().endOf('year');
+              $('#reportrange span').html(
+                moment().startOf('year').format('MMMM D, YYYY H:mm') +
+                  ' - ' +
+                  moment().endOf('year').format('MMMM D, YYYY H:mm'),
+              );
+              break;
+            case 'All':
+              filterViewModel.startDate(utility.minDate);
+              filterViewModel.endDate(moment().endOf('year'));
+              filterViewModel.dateRangeType('All');
+              $('#reportrange').data().daterangepicker.startDate =
+                utility.minDate;
+              $('#reportrange').data().daterangepicker.endDate =
+                moment().endOf('year');
+              $('#reportrange span').html(
+                utility.minDate.format('MMMM D, YYYY H:mm') +
+                  ' - ' +
+                  moment().endOf('year').format('MMMM D, YYYY H:mm'),
+              );
+              break;
+            case 'Custom Range':
+              var start = moment(item.items.startDate);
+              var end = moment(item.items.endDate);
+              filterViewModel.startDate(start);
+              filterViewModel.endDate(end);
+              filterViewModel.dateRangeType('Custom Range');
+              $('#reportrange').data().daterangepicker.startDate = start;
+              $('#reportrange').data().daterangepicker.endDate = end;
+              $('#reportrange span').html(
+                start.format('MMMM D, YYYY H:mm') +
+                  ' - ' +
+                  end.format('MMMM D, YYYY H:mm'),
+              );
+              break;
           }
 
           //removing events resets time filter. dont do this
           //filterViewModel.selectedEvents.removeAll()
-          item.items.selectedEvents.forEach(function(itm) {
-            filterViewModel.selectedEvents.push(itm)
-          })
+          item.items.selectedEvents.forEach(function (itm) {
+            filterViewModel.selectedEvents.push(itm);
+          });
 
           //Fetch ICEMS jobs by Refering ID
-          filterViewModel.icemsIInIds.removeAll()
-          item.items.icemsIInIds.forEach(function(itm) {
+          filterViewModel.icemsIInIds.removeAll();
+          item.items.icemsIInIds.forEach(function (itm) {
             $.ajax({
               type: 'GET',
-              url: urls.Base + '/Api/v1/Jobs/Search?ICEMSIncidentIdentifier=' + itm + '&PageSize=1',
-              beforeSend: function(n) {
-                n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+              url:
+                urls.Base +
+                '/Api/v1/Jobs/Search?ICEMSIncidentIdentifier=' +
+                itm +
+                '&PageSize=1',
+              beforeSend: function (n) {
+                n.setRequestHeader(
+                  'Authorization',
+                  'Bearer ' + user.accessToken,
+                );
               },
               data: {
                 LighthouseFunction: 'LighthouseLoadICEMSFromCollection',
-                userId: user.Id
+                userId: user.Id,
               },
               cache: false,
               dataType: 'json',
-              complete: function(response, textStatus) {
+              complete: function (response, textStatus) {
                 if (textStatus == 'success') {
                   if (response.responseJSON.Results.length) {
-                    filterViewModel.icemsIInIds.push(response.responseJSON.Results[0])
+                    filterViewModel.icemsIInIds.push(
+                      response.responseJSON.Results[0],
+                    );
                   }
                 }
-              }
-            })
-          })
+              },
+            });
+          });
 
-          filterViewModel.selectedTeams.removeAll()
-          item.items.selectedTeams.forEach(function(itm) {
-            filterViewModel.selectedTeams.push(itm)
-          })
+          filterViewModel.selectedTeams.removeAll();
+          item.items.selectedTeams.forEach(function (itm) {
+            filterViewModel.selectedTeams.push(itm);
+          });
 
-          filterViewModel.selectedEntities.removeAll()
-          item.items.selectedEntities.forEach(function(itm) {
-            filterViewModel.selectedEntities.push(itm)
-          })
+          filterViewModel.selectedEntities.removeAll();
+          item.items.selectedEntities.forEach(function (itm) {
+            filterViewModel.selectedEntities.push(itm);
+          });
 
-          filterViewModel.selectedPeople.removeAll()
-          item.items.selectedPeople.forEach(function(itm) {
-            filterViewModel.selectedPeople.push(itm)
-          })
+          filterViewModel.selectedPeople.removeAll();
+          item.items.selectedPeople.forEach(function (itm) {
+            filterViewModel.selectedPeople.push(itm);
+          });
 
           filterViewModel.updateFilters();
+        });
 
+        $(button)
+          .find('span.delbutton')
+          .click(function () {
+            event.stopImmediatePropagation();
+            var r = confirm('Are you sure you want to delete this collection?');
+            if (r == true) {
+              DeleteJobCollection(item);
+            }
+          });
 
-        })
-
-        $(button).find('span.delbutton').click(function() {
-          event.stopImmediatePropagation();
-          var r = confirm("Are you sure you want to delete this collection?");
-          if (r == true) {
-            DeleteJobCollection(item);
-          }
-        })
-
-        $('#lhfiltercollections').append(button)
-
-      })
-
+        $('#lhfiltercollections').append(button);
+      });
     }
   }
-
 }
 
 function DeleteTeamCollection(col) {
-  window.postMessage({
-    type: 'DELETE_COLLECTION',
-    target: JSON.stringify(col),
-    name: 'lighthouseTeamFilterCollections'
-  }, '*');
+  window.postMessage(
+    {
+      type: 'DELETE_COLLECTION',
+      target: JSON.stringify(col),
+      name: 'lighthouseTeamFilterCollections',
+    },
+    '*',
+  );
 }
 
 function DeleteJobCollection(col) {
-  window.postMessage({
-    type: 'DELETE_COLLECTION',
-    target: JSON.stringify(col),
-    name: 'lighthouseJobFilterCollections'
-  }, '*');
+  window.postMessage(
+    {
+      type: 'DELETE_COLLECTION',
+      target: JSON.stringify(col),
+      name: 'lighthouseJobFilterCollections',
+    },
+    '*',
+  );
 }
 
 function make_collection_button(name, count) {
-  return $.parseHTML(`
+  return $.parseHTML(
+    `
     <span class="label tag tag-rebecca tag-disabled">\
-    <span><p  style="margin-bottom:0px"><i class="fa fa-object-group" aria-hidden="true" style="margin-right: 5px;"></i>` + name + `<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>\
+    <span><p  style="margin-bottom:0px"><i class="fa fa-object-group" aria-hidden="true" style="margin-right: 5px;"></i>` +
+      name +
+      `<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>\
     </span>\
-    `)
+    `,
+  );
 }
 
 function filtershowallmyregion(model = filterViewModel) {
-  model.selectedEntities.destroyAll() //flush first :-)
-  var parentId = typeof(user.currentRegionId) != 'undefined' ? user.currentRegionId : user.currentZoneId
+  model.selectedEntities.destroyAll(); //flush first :-)
+  var parentId =
+    typeof user.currentRegionId != 'undefined'
+      ? user.currentRegionId
+      : user.currentZoneId;
   //Add zone as well
-  $.get(urls.Base + "/Api/v1/Entities/" + parentId, function(data) {
+  $.get(urls.Base + '/Api/v1/Entities/' + parentId, function (data) {
     model.selectedEntities.push(data);
-  })
-  $.get(urls.Base + "/Api/v1/Entities/" + parentId + "/Children", function(data) {
-    let results = data;
-    results.forEach(function(d) {
-      model.selectedEntities.push(d);
-    });
-    model.updateFilters();
-  })
+  });
+  $.get(
+    urls.Base + '/Api/v1/Entities/' + parentId + '/Children',
+    function (data) {
+      let results = data;
+      results.forEach(function (d) {
+        model.selectedEntities.push(d);
+      });
+      model.updateFilters();
+    },
+  );
 }
 
 function filtershowallmycluster(model = filterViewModel) {
-  model.selectedEntities.destroyAll() //flush first :-)
-  clusterCodes.returnSiblings(user.hq.Name, function(cluster) { //sync call to get cluster siblings
+  model.selectedEntities.destroyAll(); //flush first :-)
+  clusterCodes.returnSiblings(user.hq.Name, function (cluster) {
+    //sync call to get cluster siblings
     if (typeof cluster !== 'undefined') {
-      cluster.forEach(function(unit) {
-        $.get(urls.Base + "/Api/v1/Entities/Search?EntityName=" + unit, function(data) {
+      cluster.forEach(function (unit) {
+        $.get(
+          urls.Base + '/Api/v1/Entities/Search?EntityName=' + unit,
+          function (data) {
             model.selectedEntities.push(data.Results[0]);
-            if (model.selectedEntities.peek().length == cluster.length) { //once they are all back, apply the filter
+            if (model.selectedEntities.peek().length == cluster.length) {
+              //once they are all back, apply the filter
               model.updateFilters();
             }
-        })
-      })
+          },
+        );
+      });
     }
-  })
+  });
 }
 
-
-function whenWeAreReady(varToCheck, cb) { //when external vars have loaded
-  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-    if (typeof varToCheck != "undefined") {
-      console.log("We are ready");
+function whenWeAreReady(varToCheck, cb) {
+  //when external vars have loaded
+  var waiting = setInterval(function () {
+    //run every 1sec until we have loaded the page (dont hate me Sam)
+    if (typeof varToCheck != 'undefined') {
+      console.log('We are ready');
       clearInterval(waiting); //stop timer
       cb(); //call back
     }
   }, 200);
 }
 
-
-$(function() {
-
+$(function () {
   // Adds CSS Classes to BODY
   $('body')
     // Start of the Hostname "beacon", "trainbeacon", "previewbeacon"
@@ -1177,16 +1550,15 @@ $(function() {
   // Adds CSS Class to BODY
 
   // Shortcuts search box - if Job Number entered, jump straight to that job
-  $('form#layoutJobSearchForm')
-    .on('submit', function(e) {
-      var $t = $(this),
-        $q = $('#layoutJobSearchFormJobQuery', $t),
-        val = $q.val();
-      if (/^\d{0,4}-?\d{4}$/.test(val)) { // if the field contains 4 or more digits and nothing else
-        document.location = '/Jobs/' + parseInt(val.replace(/\D/g, ''), 10);
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
-    });
-
+  $('form#layoutJobSearchForm').on('submit', function (e) {
+    var $t = $(this),
+      $q = $('#layoutJobSearchFormJobQuery', $t),
+      val = $q.val();
+    if (/^\d{0,4}-?\d{4}$/.test(val)) {
+      // if the field contains 4 or more digits and nothing else
+      document.location = '/Jobs/' + parseInt(val.replace(/\D/g, ''), 10);
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  });
 });

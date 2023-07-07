@@ -46,16 +46,22 @@ $(document).ready(function() {
 
     let accreditations = undefined;
 
+      // toggle the nearest lhq buttons automagically
     vm.entityAssignedTo.subscribe(function(who) {
-      $(`#nearest-rescue-lhq-text button[data-unit!='${who.Code}'], #nearest-lhq-text button[data-unit!='${who.Code}'] `).removeClass('active')
-      $(`#nearest-rescue-lhq-text button[data-unit='${who.Code}'], #nearest-lhq-text button[data-unit='${who.Code}']`).addClass('active')
-
+      if (who) {
+      $(`#contained-within-lhq-text a[data-unit!='${who.Code}'], #nearest-rescue-lhq-text a[data-unit!='${who.Code}'], #nearest-lhq-text a[data-unit!='${who.Code}'] `).removeClass('active')
+      $(`#contained-within-lhq-text a[data-unit='${who.Code}'], #nearest-rescue-lhq-text a[data-unit='${who.Code}'], #nearest-lhq-text a[data-unit='${who.Code}']`).addClass('active')
+      }
     })
 
     vm.jobType.subscribe(function(jt) {
-        window.postMessage({ type: "FROM_PAGE_JOBTYPE", jType: jt ? jt.Name : null}, "*")
-
-
+      if (jt) { //if defined
+        if (jt.ParentId == 5) { //only if a rescue type
+          window.postMessage({ type: "FROM_PAGE_JOBTYPE", jType: jt.Name}, "*")
+        } else {
+          window.postMessage({ type: "FROM_PAGE_JOBTYPE", jType: null}, "*")
+        }
+      }
         //push an update back in to upload distances for the new rescue type
       if (jt && vm.latitude.peek() && vm.longitude.peek()) {
         if (jt.ParentId == 5) {
@@ -74,10 +80,10 @@ $(document).ready(function() {
     })
 
 
-    vm.latitude.subscribe(function() {
+    vm.latitude.subscribe(function(latitude) {
       console.log('latitude changed')
-      if (vm.latitude.peek() != '' && vm.longitude.peek() != '') {
-        if (vm.jobType.peek().ParentId == 5) {
+      if (latitude) {
+        if (vm.jobType.peek() && vm.jobType.peek().ParentId == 5) {
         if (accreditations == undefined) {
           fetchAccreditations(function(res) {
             accreditations = res
@@ -87,16 +93,16 @@ $(document).ready(function() {
           window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: accreditations, lat: vm.latitude.peek(), lng: vm.longitude.peek() }, "*");
         }
       } else { //dont send report
-        window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: null, lat: vm.latitude.peek(), lng: vm.longitude.peek() }, "*");
+        window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: null, report: null, lat: vm.latitude.peek(), lng: vm.longitude.peek() }, "*");
       }
     }
     })
 
-    vm.longitude.subscribe(function() {
+    vm.longitude.subscribe(function(longitude) {
       console.log('longitude changed')
 
-      if (vm.latitude.peek() != '' && vm.longitude.peek() != '') {
-        if (vm.jobType.peek().ParentId == 5) {
+      if (longitude) {
+        if (vm.jobType.peek() && vm.jobType.peek().ParentId == 5) {
 
         if (accreditations == undefined) {
           fetchAccreditations(function(res) {
@@ -107,27 +113,78 @@ $(document).ready(function() {
           window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek() ? vm.jobType.peek().Name : null, report: accreditations,lat: vm.latitude.peek(), lng: vm.longitude.peek() }, "*");
         }
       } else { //dont send report
-        window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: null, lat: vm.latitude.peek(), lng: vm.longitude.peek() }, "*");
+        window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: null, report: null, lat: vm.latitude.peek(), lng: vm.longitude.peek() }, "*");
       }
     }
     })
 
-    vm.geocodedAddress.subscribe(function(status) {
-      if (vm.geocodedAddress.peek() != null) {
+    vm.geocodedAddress.subscribe(function(newAddress) {
+
+      if (newAddress) {
+        $.ajax({
+          type: 'GET',
+          url: urls.Base + '/Api/v1/GeoServices/Unit/Containing',
+          beforeSend: function (n) {
+            n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+          },
+          data: {
+            LighthouseFunction: 'UnitContains',
+            userId: user.Id,
+            latitude: newAddress.latitude,
+            longitude: newAddress.longitude,
+          },
+          cache: false,
+          dataType: 'json',
+          complete: function (response, textStatus) {
+            vm.EntityManager.GetEntityByCode(response.responseJSON.unit_code, function(data) {
+              let containedWithin = []
+              let newLHQDom = (
+                <a type="button" style="margin-bottom:5px" class="btn btn-default btn-sm" data-unit={data.Code}>{data.Name} Unit</a>
+              )
+              $(newLHQDom).click(function(e) {
+                e.preventDefault()
+                vm.entityAssignedTo(data)
+              })
+              containedWithin.push(newLHQDom)
+              let newZoneDom = (
+                <a type="button" style="margin-bottom:5px" class="btn btn-default btn-sm" data-unit={data.ParentEntity.Code}>{data.ParentEntity.Name}</a>
+              )
+              $(newZoneDom).click(function(e) {
+                e.preventDefault()
+                vm.entityAssignedTo(data.ParentEntity)
+              })
+              containedWithin.push(newZoneDom)
+              let newStateDom = (
+                <a type="button" style="margin-bottom:5px" class="btn btn-default btn-sm" data-unit="SHQ">State Headquarters</a>
+              )
+              $(newStateDom).click(function(e) {
+                e.preventDefault()
+                vm.entityAssignedTo({Id: 1, Code: 'SHQ', Name: 'State Headquarters'})
+              })
+              containedWithin.push(newStateDom)
+
+            $('#contained-within-lhq-text').empty()
+            $('#contained-within-lhq-text').append(containedWithin)
+            })
+          },
+        });
+
+
+
         $('#asbestos-register-text').text("Searching...");
 
-      //   if (vm.jobType.peek().ParentId == 5) {
-      //   if (accreditations == undefined) {
-      //     fetchAccreditations(function(res) {
-      //       accreditations = res
-      //       window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: accreditations, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
-      //     }) 
-      //   } else {
-      //     window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: accreditations, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
-      //   }
-      // } else {
-      //   window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: null, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
-      // }
+        if (vm.jobType.peek() && vm.jobType.peek().ParentId == 5) {
+        if (accreditations == undefined) {
+          fetchAccreditations(function(res) {
+            accreditations = res
+            window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: accreditations, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
+          }) 
+        } else {
+          window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: vm.jobType.peek().Name, report: accreditations, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
+        }
+      } else {
+        window.postMessage({ type: "FROM_PAGE_LHQ_DISTANCE", jType: null, report: null, lat: vm.geocodedAddress.peek().latitude, lng: vm.geocodedAddress.peek().longitude }, "*");
+      }
 
         let address = vm.geocodedAddress.peek()
         if (address.street != "") {

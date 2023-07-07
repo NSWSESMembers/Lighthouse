@@ -11,6 +11,77 @@ window.addEventListener("message", function(event) {
   // We only accept messages from ourselves or the extension
   if (event.source != window)
     return;
+    if (event.data.type && (event.data.type == "FROM_PAGE_LHQ_RESCUE_DISTANCE")) {
+      $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+        let rescueDistances = []
+        data.features.forEach(function(v){
+          v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,event.data.lat,event.data.lng)/1000
+
+          if (event.data.report != null) {
+          let unitAccreditations = event.data.report[v.properties.UNIT_CODE] 
+          if (typeof unitAccreditations != "undefined") {
+            let jobType = event.data.jType
+            let combo = []
+    
+            switch (jobType) {
+              case "FR":
+              if (unitAccreditations['Flood Rescue in Water'] == "Available") {
+                combo.push('In') 
+              }
+              if (unitAccreditations['Flood Rescue on Water'] == "Available") {
+                combo.push('On') 
+              }
+              if (combo.length >= 1) {
+                v.properties.QUAL = combo.join('/')
+                rescueDistances.push(v)
+              }
+              break;
+              case "RCR":
+              if (unitAccreditations['GLR'] == "Available") {
+                v.properties.QUAL = 'GLR'
+                rescueDistances.push(v)
+              }
+              break
+              case "VR":
+              if (unitAccreditations['Vertical Rescue'] == "Available") {
+                rescueDistances.push(v)
+              }
+              break;
+              default:
+                if (unitAccreditations[jobType] == "Available") {
+                  rescueDistances.push(v)
+                }
+              break
+            }
+             }
+            }
+        })
+    
+        let _sortedRescueDistances = rescueDistances.sort(function(a, b) {
+          return a.distance - b.distance
+        });
+    
+        let nearestRescueLhqStrings = []
+        for(let i = 0; i < 4; i++){
+          if (typeof _sortedRescueDistances[i] != "undefined") {
+            let rescueString = ''
+            if (typeof _sortedRescueDistances[i].properties.QUAL != 'undefined') { //they have an extra qual string on their unit from above logic
+              rescueString = ` (${_sortedRescueDistances[i].properties.QUAL})`
+            }
+          nearestRescueLhqStrings.push(`${_sortedRescueDistances[i].properties.HQNAME}${rescueString} (${_sortedRescueDistances[i].distance.toFixed(2)} kms)`)
+          }
+        }
+    
+        if (nearestRescueLhqStrings.length == 0) {
+          nearestRescueLhqStrings.push('No Results')
+        }
+
+        $('#nearest-rescue-lhq-text').empty()
+        $('#nearest-rescue-lhq-text').append(nearestRescueLhqStrings.join(', '))
+
+    
+      })
+    }
   if (event.data.type && (event.data.type == "FROM_PAGE_FTASBESTOS_SEARCH")) {
     chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
     if (response.resultbool == false)
@@ -189,6 +260,16 @@ let job_nearest_lhq = (
   </div>
 );
 
+let job_nearest_rescue_lhq = (
+  <div class="form-group" id="nearest-rescue-lhq-group" style="display: none;">
+  <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
+  src={chrome.extension.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest Accreditred LHQs</abbr></label>
+  <div id="nearest-rescue-lhq-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
+  <p id="nearest-rescue-lhq-text" class="form-control-static"></p>
+  </div>
+  </div>
+);
+
 let job_nearest_asset_widget = (
   <div class="widget" style="" id="lighthouse_nearestasset">
         <div class="widget-header">
@@ -324,6 +405,8 @@ $('fieldset.col-md-12').each(function(k,v){
 $('#editRfaForm > fieldset.col-md-8 > div > label').each(function(k,v){
   var $v = $(v);
   if (v.innerText == 'LGA') {
+    $v.parent().after(job_nearest_rescue_lhq)
+
     $v.parent().after(job_nearest_lhq)
     return false;
   }

@@ -84,17 +84,13 @@ var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
 
 
 	function HandleResults(result) { //check the length of the return
-		console.log("Results Returned:" + result.Results.length)
 
     if (result.Results.length >= 1) { //add it to the array
     	totalResults.push.apply(totalResults, result.Results);
-    	console.log("Total collected:"+totalResults.length+" of "+result.TotalItems);
       if (totalResults.length < result.TotalItems) { //length of array is less than expected number
-      	console.log("There is more to get");
         currentPage++; //guess we should get the next
         goGet(HandleResults,currentPage);
     } else {
-    	console.log("Got them all");
         if (hq.EntityTypeId != 1) { //thats a region, or state, not unit
         	$.each(totalResults,function(k,v){
         		v.Callsign = '('+v.CreatedAt.Code+') '+v.Callsign
@@ -106,7 +102,6 @@ var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
         cb(response); //we are done
     }
     } else { //last entry amazingly 0, or something is broken. lets stop
-    	console.log("none");
     	let response = {}
     	response.responseJSON = {}
     	response.responseJSON.Results = []
@@ -116,7 +111,6 @@ var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
 
 
   function goGet(cb,page) { //make the XMLHttpRequest with the given URL
-  	console.log("fetching page #"+page);
   	theData.PageIndex = page
   	theData.perPageLimit = perPageLimit
   	$.ajax({
@@ -131,11 +125,9 @@ var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
   		, complete: function(response, textStatus) {
   			if (textStatus == 'success')
   			{
-  				console.log("Page #"+page+" is back");
   				var result = response.responseJSON;
   				typeof cb === 'function' &&  cb(result);
   			} else {
-  				console.log("Sending back a fail");
   				typeof cb === 'function' &&  cb(null);
 
   			}

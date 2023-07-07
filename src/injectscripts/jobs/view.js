@@ -35,16 +35,6 @@ masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
 //if messages update
 masterViewModel.messagesViewModel.messages.subscribe(lighthouseDictionary);
 
-//if ops logs update
-masterViewModel.notesViewModel.opsLogEntries.subscribe(function(){lighthouseMessageTPlus($('div[data-bind="foreach: opsLogEntries"] .text-muted:not([lhTPlus])'))});
-
-//if messages update
-masterViewModel.messagesViewModel.messages.subscribe(function(){lighthouseMessageTPlus($('div[data-bind="foreach: messages"] .text-muted:not([lhTPlus])'))});
-
-// timeline updates
-masterViewModel.jobHistory.subscribe(lighthouseTimeLineTPlus);
-
-
 //if the ETA inputs are visable
 masterViewModel.teamsViewModel.jobTeamStatusBeingUpdated.subscribe(lighthouseETA);
 
@@ -184,10 +174,13 @@ function lighthouseTasking() {
 
 //call on run
 lighthouseDictionary();
-//
-lighthouseMessageTPlus($('div[data-bind="foreach: messages"] .text-muted:not([lhTPlus])'))
-lighthouseMessageTPlus($('div[data-bind="foreach: opsLogEntries"] .text-muted:not([lhTPlus])'))
-lighthouseTimeLineTPlus();
+
+//Watch the whole RFA form for changes to messages
+editRfaFormDOMWatcher();
+
+//Watch the timeline for changes
+lighthouseTimelineTPlusWatchers();
+
 
 //call when the address exists
 whenAddressIsReady(function() {
@@ -263,6 +256,8 @@ let quickTask = return_quicktaskbutton();
 let quickSector = return_quicksectorbutton();
 let quickCategory = return_quickcategorybutton();
 let quickRadioLog = return_quickradiologbutton();
+let quickMessage = return_quickmessagebutton();
+
 let instantRadiologModal = return_quickradiologmodal();
 
 
@@ -1332,6 +1327,12 @@ $(quickCategory).find('button').click(function() {
 $( "body" ).append(instantRadiologModal);
 
 //the quick radio log button
+$(quickMessage).find('button').click(function() {
+  let url = `/Messages/Create?jobId=${jobId}`;
+  window.open(url,'_blank');
+});
+
+//the quick message button
 $(quickRadioLog).find('button').click(function() {
 
   if (masterViewModel.teamsViewModel.taskedTeams.peek().length == 1 && $('#instantRadioLogCallSign').val() == '') {
@@ -1383,7 +1384,28 @@ whenJobIsReady(function(){
 
   $('#lighthouse_actions_content').append(quickRadioLog);
 
+  if (user.isInRole(Enum.Role.SendMessage.Id)) {
+    $('#lighthouse_actions_content').append(quickMessage);
+  }
+
   document.title = "#"+jobId;
+
+  if (masterViewModel.jobType.peek().ParentId == 5) {
+    $('#nearest-rescue-lhq-group').show()
+    let searchButton = (
+      <a type="button" class="btn btn-default btn-sm">Calculate</a>
+    )
+    $(searchButton).click(function(e) {
+      var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>)
+
+      spinner.appendTo(searchButton);
+      e.preventDefault()
+      fetchAccreditations(function(res) {
+        window.postMessage({ type: "FROM_PAGE_LHQ_RESCUE_DISTANCE", jType: masterViewModel.jobType.peek() ? masterViewModel.jobType.peek().Name : null, report: res, lat: masterViewModel.latitude.peek(), lng: masterViewModel.longitude.peek() }, "*");
+      })
+    })
+    $('#nearest-rescue-lhq-text').append(searchButton)
+  }
 
 
 });
@@ -1503,39 +1525,33 @@ $(document).on('click',  'div.widget > div.widget-content > div[data-bind$="task
 
 
 
-function lighthouseTimeLineTPlus() {
-  //messages can load before job created time has loaded
+function lighthouseTimelineTPlusWatchers() {
+//Timeline////
+  let $targetTimeline = $(`div[data-bind="foreach: jobHistory"]`);
+
+const observerTimeline = new MutationObserver(onTimelineChange);
+observerTimeline.observe($targetTimeline[0].parentNode, {
+  childList: true,
+  subtree: true,
+});
+
+function onTimelineChange() {
   whenJobIsReady(function(){
-    let jobCreatedMoment = moment(masterViewModel.jobReceived())
-    $('div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]').each(function (r) {
-      // weird race condition where they already have the attrib
-      if ($(this).attr('lhTPlus') === undefined || $(this).attr('lhTPlus') === false) {
-        let res = $(this).text()
-        let tPlusText = returnTTime(res)
-        $(this).attr('lhTPlus',tPlusText)
-        $(this).text($(this).text().replace(res,`${res} (${tPlusText})`))
-      }
-    })
-    console.log("lighthouseTimeLineTPlus Done calculating Tplus times")
+  $('div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]').each(function (r) {
+    // weird race condition where they already have the attrib
+    if ($(this).attr('lhTPlus') === undefined || $(this).attr('lhTPlus') === false) {
+      let res = $(this).text()
+      let tPlusText = returnTTime(res)
+      $(this).attr('lhTPlus',tPlusText)
+      $(this).text($(this).text().replace(res,`${res} (${tPlusText})`))
+    }
   })
+});
 }
 
-function lighthouseMessageTPlus(dom) {
-  //messages can load before job created time has loaded
-  whenJobIsReady(function(){
-    dom.each(function (r) {
-      // weird race condition where they already have the attrib
-      if ($(this).attr('lhTPlus') === undefined || $(this).attr('lhTPlus') === false) {
-        let res = $(this).text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
-        if (res && res.length) {
-          let tPlusText = returnTTime(res[1])
-          $(this).attr('lhTPlus',tPlusText)
-          $(this).text($(this).text().replace(res[1],`${res[1]} (${tPlusText})`))
-        }
-      }
-    })
-    console.log("lighthouseMessageTPlus Done calculating Tplus times")
-  })
+//call on first load
+onTimelineChange()
+
 }
 
 function returnTTime(messageDate) {
@@ -1658,6 +1674,7 @@ function InstantCategoryButton() {
   if ( $(quickCategory).find('li').length < 1 ) {
     var categories = ["NA", "1", "2", "3", "4", "5"];
     let finalli = []
+    let currentCategorie = masterViewModel.sector.peek().Id
     categories.forEach(function(entry) {
       let item = (<li><a style="text-align:left" href="#">{entry}</a></li>);
       //click handler
@@ -2148,7 +2165,7 @@ $(document).ready(function() {
 
 function return_quicktaskbutton() {
   return (
-    <div id="lighthouse_instanttask" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
+    <div id="lighthouse_instanttask" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;padding-bottom:5px;" class="dropdown">
       <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton"><i class="fa fa-tasks" style="padding-right: 5px;"></i>Instant Task
       <span class="caret"></span></button>
       <ul class="dropdown-menu scrollable-menu">
@@ -2159,7 +2176,7 @@ function return_quicktaskbutton() {
 
 function return_quicksectorbutton() {
   return (
-    <div id="lighthouse_instantsector" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
+    <div id="lighthouse_instantsector" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;padding-bottom:5px;" class="dropdown">
       <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" id="lhsectorbutton"><i class="fa fa-cubes" style="padding-right: 5px;"></i>Instant Sector
       <span class="caret"></span></button>
       <ul class="dropdown-menu scrollable-menu">
@@ -2170,7 +2187,7 @@ function return_quicksectorbutton() {
 
 function return_quickcategorybutton() {
   return (
-    <div id="lighthouse_instantcategory" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;" class="dropdown">
+    <div id="lighthouse_instantcategory" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;padding-bottom:5px;" class="dropdown">
       <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhcategorybutton"><i class="fa fa-database" style="padding-right: 5px;"></i>Instant Category
       <span class="caret"></span></button>
       <ul class="dropdown-menu scrollable-menu">
@@ -2181,8 +2198,17 @@ function return_quickcategorybutton() {
 
 function return_quickradiologbutton() {
   return (
-    <div id="lighthouse_instantradiolog" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;">
+    <div id="lighthouse_instantradiolog" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;padding-bottom:5px;">
       <button class="btn btn-sm btn-default" style="background-color: #837947;border-color: #837947" type="button" id="lhinstantradiologbutton"><i class="fa fa-microphone" style="padding-right: 5px;"></i>Instant Radio Log
+      </button>
+    </div>
+  );
+}
+
+function return_quickmessagebutton() {
+  return (
+    <div id="lighthouse_instantmessage" style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;padding-bottom:5px;">
+      <button class="btn btn-sm btn-default" style="background-color: #e24d00;border-color: #cb4f0f" type="button" id="lhinstantmessagebutton"><i class="fa fa-envelope" style="padding-right: 5px;"></i>Compose Job Message
       </button>
     </div>
   );
@@ -2581,6 +2607,10 @@ function whenUrlIsReady(cb) { //when external vars have loaded
 
 // wait for job to have loaded
 function whenJobIsReady(cb) { //when external vars have loaded
+  if (masterViewModel.jobLoaded()) {
+    console.log("job was already ready");
+    cb() //call back straight away
+  } else {
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
       if (masterViewModel.jobLoaded() == true)
       {
@@ -2589,6 +2619,7 @@ function whenJobIsReady(cb) { //when external vars have loaded
       cb(); //call back
     }
 }, 200);
+  }
 }
 
 //checkbox for hide completed tasking
@@ -2910,4 +2941,120 @@ function fetchHqContacts(HQId,cb) {
            }
        }
    })
+}
+
+
+function fetchAccreditations(cb) {
+  $.ajax({
+    type: 'GET',
+    url: urls.Reports + '/Headquarters',
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+    },
+    data: {
+      LighthouseFunction: 'fetchAccreditations',
+      userId: user.Id,
+      StartDate: moment().format('Y-MM-DD HH:mm:ss'),
+      EndDate: moment().format('Y-MM-DD HH:mm:ss'),
+      ReportId: 22,
+      EquipmentLeftOnly: false,
+
+    },
+    cache: false,
+    dataType: 'html',
+    complete: function (response, textStatus) {
+      let page = $.parseHTML(response.responseText)
+      let table = $(page).find('#reportTable')
+      cb && cb(tableToObj(table[0]))
+    },
+  });
+}
+
+//take a html table and turn it into a javascript object
+function tableToObj(table) {
+  var rows = table.rows;
+  var propCells = rows[0].cells;
+  var propNames = [];
+  var results = {};
+  var obj, row, cells;
+
+  // Use the first row for the property names
+  // Could use a header section but result is the same if
+  // there is only one header row
+  for (var i=0, iLen=propCells.length; i<iLen; i++) {
+    propNames.push(propCells[i].textContent || propCells[i].innerText);
+  }
+
+  // Use the rows for data
+  // Could use tbody rows here to exclude header & footer
+  // but starting from 1 gives required result
+  for (var j=1, jLen=rows.length; j<jLen; j++) {
+    cells = rows[j].cells;
+    obj = {};
+
+    for (var k=0; k<iLen; k++) {
+      obj[propNames[k]] = cells[k].textContent || cells[k].innerText;
+    }
+    // return as a key value pair on obj.Code
+    results[obj.Code]=obj
+  }
+  return results;
+}
+
+
+//Watch the messages div and react to changes by adding the forward button & tplus time stamps
+//this will be self called after adding in the DOM's
+function editRfaFormDOMWatcher() {
+  let $target = $(`#editRfaForm`);
+  if ($target.length > 0) {
+  // Now we watch for new elements
+  const observer = new MutationObserver((r) => {
+    var $targetElements = $(
+      '.job-details-page div[data-bind="foreach: messages"] div em:not(:has(#forwardMessage))'
+    );
+
+    $targetElements.each(function (v) {
+      var $daddy = $(this)
+
+      var $t = $(this).find('a strong');
+      let messageID = $t.text();
+
+        let url = `/Messages/Create?lhforward=${messageID}`;
+        let newDom = (
+          <a target="_blank" href={url} class="nounderline" id="forwardMessage">
+            <i
+              class="close fa fa-share"
+              style="margin-left: 5px; float: none !important;"
+              title="Forward message"
+              lh-data={messageID}
+            ></i>
+          </a>
+        );
+        $daddy.append(newDom);
+      
+    });
+    
+      $('div[data-bind="foreach: messages"] .text-muted:not([lhTPlus]),div[data-bind="foreach: opsLogEntries"] .text-muted:not([lhTPlus])').each(function (r) {
+        // weird race condition where they already have the attrib
+        var $thing = $(this)
+        if ($thing.attr('lhTPlus') === undefined || $thing.attr('lhTPlus') === false) {
+         let res = $thing.text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
+         if (res && res.length) {
+          whenJobIsReady(function(){
+            let tPlusText = returnTTime(res[1])
+            $thing.attr('lhTPlus',tPlusText)
+            $thing.text($thing.text().replace(res[1],`${res[1]} (${tPlusText})`))
+          })
+          }
+       }
+      
+    })
+
+
+  });
+  observer.observe($target.parent()[0].parentNode, {
+    childList: true,
+    subtree: true,
+  });
+}
 }

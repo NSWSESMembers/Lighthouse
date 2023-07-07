@@ -12,6 +12,9 @@ $(document).ready(function() {
     // We only accept messages from ourselves
     if (event.source != window)
       return;
+      if (event.data.type && (event.data.type == "FROM_LH_FINISHED")) { //fix a race condition where drawing happens after the assignedTo on page load
+        UpdateAssignedToBoxesActive()
+      }
       if (event.data.type && (event.data.type == "FROM_LH_SETASSIGNEDUNIT")) {
         vm.EntityManager.GetEntityByCode(event.data.code, function(res) {
           if (res) {
@@ -46,9 +49,8 @@ $(document).ready(function() {
     let accreditations = undefined;
 
     // toggle the nearest lhq buttons automagically
-    vm.entityAssignedTo.subscribe(function(who) {
-      $(`#nearest-rescue-lhq-text button[data-unit!='${who.Code}'], #nearest-lhq-text button[data-unit!='${who.Code}'] `).removeClass('active')
-      $(`#nearest-rescue-lhq-text button[data-unit='${who.Code}'], #nearest-lhq-text button[data-unit='${who.Code}']`).addClass('active')
+    vm.entityAssignedTo.subscribe(function() {
+      UpdateAssignedToBoxesActive()
     })
 
     window.postMessage({ type: "FROM_PAGE_JOBTYPE", jType: vm.jobType.peek().Name ? vm.jobType.peek().Name : null}, "*")
@@ -250,4 +252,10 @@ function tableToObj(table) {
     results[obj.Code]=obj
   }
   return results;
+}
+
+
+function UpdateAssignedToBoxesActive() {
+  $(`#nearest-rescue-lhq-text a[data-unit!='${vm.entityAssignedTo.peek().Code}'], #nearest-lhq-text a[data-unit!='${vm.entityAssignedTo.peek().Code}'] `).removeClass('active')
+  $(`#nearest-rescue-lhq-text a[data-unit='${vm.entityAssignedTo.peek().Code}'], #nearest-lhq-text a[data-unit='${vm.entityAssignedTo.peek().Code}']`).addClass('active')
 }

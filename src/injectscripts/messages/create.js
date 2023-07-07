@@ -2,6 +2,7 @@
 var DOM = require('jsx-dom-factory').default;
 var ReturnTeamsActiveAtLHQ = require('../../lib/getteams.js');
 var ReturnNitcAtLHQ = require('../../lib/getnitc.js');
+var nunjucks = require('nunjucks');
 
 var SharedCollection = {}
 var DownloadedObject = {}
@@ -40,7 +41,7 @@ $(document).ready(function() {
               }
               })
           break
-            case "lhquickrecipient":
+        case "lhquickrecipient":
             var people = JSON.parse(unescape(value))
             $.each(people, function(key, val) {
                 $.ajax({
@@ -79,6 +80,28 @@ $(document).ready(function() {
                               scrollTop: $('textarea[data-bind="value: messageText"]')[0].scrollIntoView()
                             }, 2000);
             break
+        case "lhforward":
+            $.ajax({
+                type: 'GET',
+                url: urls.Base+'/Api/v1/Messages/' + value,
+                beforeSend: function(n) {
+                    n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
+                },
+                data: {
+                    LighthouseFunction: 'lhforward',
+                    userId: user.Id
+                },
+                cache: false,
+                dataType: 'json',
+                complete: function(response, textStatus) {
+                    if (textStatus == 'success') {
+                        createMessageViewModel.messageText(response.responseJSON.MessageText)
+                        createMessageViewModel.operational(response.responseJSON.Operational)
+                        createMessageViewModel.job({Id: response.responseJSON.JobId, Identifier: response.responseJSON.JobIdentifier})
+                    }
+                }
+            })
+            break
         }
 
     })
@@ -88,6 +111,9 @@ $('#LHCodeBox').keypress(function(e){
       $('#LHImportCollectionCode').click();
 });
 
+whenUserIsReady(function() {
+    $('#messageTemplateHeader').text(`Message Templates for ${user.hq.Name}`)
+})
 
     whenWeAreReady(createMessageViewModel, function() {
         createMessageViewModel.searchHeadquarters.subscribe(function(hqSet) {
@@ -135,21 +161,159 @@ $('#LHCodeBox').keypress(function(e){
         })
 
 
+    createMessageViewModel.job.subscribe(function (r) {
+      if (r) {
+        $('#templateAccordion').empty();
+
+        whenWeAreReady(user, function () {
+          $.ajax({
+            type: 'GET',
+            url: `${urls.Base}/Api/v1/Jobs/${r.Id}?viewModelType=1`,
+            beforeSend: function (n) {
+              n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+            },
+            data: {
+              LighthouseFunction: 'MessageJobSubscribe',
+              userId: user.Id,
+            },
+            cache: false,
+            dataType: 'json',
+            complete: function (response, textStatus) {
+              if (textStatus == 'success') {
+                $.ajax({
+                  type: 'GET',
+                  url: `https://lighthouse-extension.com/static/message/templates`,
+                  cache: false,
+                  dataType: 'json',
+                  complete: function (lhResponse, textStatus) {
+                    if (textStatus == 'success') {
+                      let templates = lhResponse.responseJSON;
+                      nunjucks.configure({ autoescape: true });
+                      for (const [key, value] of Object.entries(templates)) {
+                        if (
+                          templates[key].attached.includes(user.currentHqId)
+                        ) {
+                          //check if this user can use that template group
+                          let groupDom = (
+                            <div class="panel panel-default">
+                              <div
+                                class="lh-panel-heading panel-heading"
+                                role="tab"
+                                id={'lh_template_group_heading_' + key}
+                              >
+                                <h4 class="panel-title">
+                                  <a
+                                    role="button"
+                                    data-toggle="collapse"
+                                    data-parent="#templateAccordion"
+                                    href={'#lh_template_group_' + key}
+                                    aria-expanded="false"
+                                    aria-controls={'lh_template_group_' + key}
+                                  >
+                                    {templates[key].name}
+                                  </a>
+                                </h4>
+                              </div>
+                              <div
+                                id={'lh_template_group_' + key}
+                                class="panel-collapse collapse"
+                                role="tabpanel"
+                                aria-labelledby={
+                                  'lh_template_group_heading_' + key
+                                }
+                              >
+                                <div class="panel-body"></div>
+                              </div>
+                            </div>
+                          );
+                          templates[key].items.forEach(function (t) {
+                            if (
+                              t.jobType.length == 0 ||
+                              t.jobType.includes(
+                                response.responseJSON.JobType.Id,
+                              )
+                            ) {
+                              t.name = nunjucks
+                                .renderString(
+                                  t.templateString,
+                                  response.responseJSON,
+                                )
+                                .toUpperCase();
+                              let newDom = (
+                                <a
+                                  type="button"
+                                  class="btn btn-default btn-sm"
+                                  style={
+                                    'margin-bottom:5px;text-align: left;width: 100%;white-space:break-spaces;border-color:' +
+                                    t.borderColor +
+                                    ';background-color:' +
+                                    t.backgroundColor +
+                                    ';color:' +
+                                    t.color
+                                  }
+                                >
+                                  {t.name}
+                                </a>
+                              );
+                              $(newDom).click(function (e) {
+                                e.preventDefault();
+                                createMessageViewModel.messageText(t.name);
+                              });
+                              $(groupDom).find('.panel-body').append(newDom);
+                            }
+                          });
+                          //add the group only if it has children
+                          if (
+                            $(groupDom).find('.panel-body').children().length
+                          ) {
+                            $('#templateAccordion').append(groupDom);
+                          }
+                        }
+                      }
+                    }
+                    if ($('#templateAccordion').children().length) {
+                      $('#MessageTemplates').show();
+
+                      //handles for the rotating arrow UI
+                      $('.panel-collapse').on('show.bs.collapse', function () {
+                        $(this)
+                          .siblings('.lh-panel-heading')
+                          .addClass('active');
+                      });
+
+                      $('.panel-collapse').on('hide.bs.collapse', function () {
+                        $(this)
+                          .siblings('.lh-panel-heading')
+                          .removeClass('active');
+                      });
+                    } else {
+                      $('#MessageTemplates').hide();
+                    }
+                  },
+                });
+              }
+            },
+          });
+        });
+      } else {
+        $('#MessageTemplates').hide();
+      }
+    });
+   
 
 
-
+// Do this on a per user basis
     createMessageViewModel.replyToAddress.subscribe(function(r) {
-      if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) {
+      if (localStorage.getItem(`LighthouseReplyRemember-${user.Id}`) == "true" || localStorage.getItem(`LighthouseReplyRemember-${user.Id}`) == null) {
         if (r != null && r != '') {
-          localStorage.setItem("LighthouseReplyDetail", r);
+          localStorage.setItem(`LighthouseReplyDetail-${user.Id}`, r);
         }
       }
     })
-
-    if (localStorage.getItem("LighthouseReplyRemember") == "true" || localStorage.getItem("LighthouseReplyRemember") == null) {
-      if (localStorage.getItem("LighthouseReplyDetail") != null && localStorage.getItem("LighthouseReplyDetail") != '') {
-        createMessageViewModel.replyToAddress(localStorage.getItem("LighthouseReplyDetail"))
-        $('#replyAddress').value = localStorage.getItem("LighthouseReplyDetail")
+    // Do this on a per user basis
+    if (localStorage.getItem(`LighthouseReplyRemember-${user.Id}`) == "true" || localStorage.getItem(`LighthouseReplyRemember-${user.Id}`) == null) {
+      if (localStorage.getItem(`LighthouseReplyDetail-${user.Id}`) != null && localStorage.getItem(`LighthouseReplyDetail-${user.Id}`) != '') {
+        createMessageViewModel.replyToAddress(localStorage.getItem(`LighthouseReplyDetail-${user.Id}`))
       }
     }
 
@@ -167,7 +331,7 @@ $('#LHCodeBox').keypress(function(e){
             localStorage.setItem("LighthouseReplyRemember", true);
             //save the current Value
             if (createMessageViewModel.replyToAddress.peek() != null && createMessageViewModel.replyToAddress.peek() != '') {
-                localStorage.setItem("LighthouseReplyDetail", createMessageViewModel.replyToAddress.peek());
+                localStorage.setItem(`LighthouseReplyDetail-${user.Id}`, createMessageViewModel.replyToAddress.peek());
             }
         }
     });
@@ -233,7 +397,6 @@ function LoadNitc() {
 
                             $(button).children().css('display','none')
                             spinner.appendTo(button);
-                            console.log("clicked " + v.Id)
                             $.each(v.Participants, function(kk, vv) {
                                 $.ajax({
                                     type: 'GET',
@@ -366,7 +529,6 @@ function LoadTeams() {
 
                         $(button).children().css('display','none')
                         spinner.appendTo(button);
-                        console.log("clicked " + v.Callsign)
                         var total = v.Members.length
                         $.each(v.Members, function(kk, vv) {
                             $.ajax({
@@ -499,6 +661,17 @@ function whenWeAreReady(varToCheck, cb) { //when external vars have loaded
         if (typeof varToCheck != "undefined") {
             clearInterval(waiting); //stop timer
             cb(); //call back
+        }
+    }, 200);
+}
+
+function whenUserIsReady(cb) { //Theres a stupid race condition here
+    var waiting = setInterval(function() {
+        if (typeof user.hq != "undefined") {
+            if (typeof user.hq.Name != "undefined") {
+                clearInterval(waiting); //stop timer
+                cb(); //call bac
+            }
         }
     }, 200);
 }

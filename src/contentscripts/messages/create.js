@@ -2,10 +2,12 @@ var inject = require('../../lib/inject.js');
 var DOM = require('jsx-dom-factory').default;
 var $ = require('jquery');
 
+require('../../styles/message.create.css');
+
+
 inject('messages/create.js');
 
 function renderPrefillCheckBox() {
-	console.log(localStorage.getItem("LighthousePrefillLHQEnabled"))
 	var selected = (localStorage.getItem("LighthousePrefillLHQEnabled") == "true" || localStorage.getItem("LighthousePrefillLHQEnabled") == null) ? "fa-check-square-o" : "fa-square-o";
 	return (
 		<span class="pull-right h6">
@@ -67,3 +69,26 @@ var hqNitcgroup = renderHQNitc()
 $(hqNitcgroup).hide() // hide it untill there is something to show
 
 $('#content > div > div > div:nth-child(2) fieldset:nth-child(2)').after(hqNitcgroup);
+
+function renderMessageTemplates() {
+
+	return (
+		<fieldset id="MessageTemplates">
+		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:5px"
+		src={chrome.extension.getURL("icons/lh-black.png")} />Message Templates</legend>
+		<div class="panel panel-default"  id="lighthousemessagetemplatepanel">
+		<div class="panel-heading"><span id="messageTemplateHeader">Message Templates for</span></div>
+		<div id="messageTemplateBody" class="panel-body">
+		<div class="panel-group" id="templateAccordion" role="tablist" aria-multiselectable="true">
+		</div> 	
+		</div>
+		</div>
+		</fieldset>
+		);	
+}
+
+var messageTemplates = renderMessageTemplates()
+$(messageTemplates).hide() // hide it untill there is something to show
+
+
+$('#content > div > div > div:nth-child(2) fieldset:nth-child(5)').after(messageTemplates);
