@@ -10,6 +10,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Install modules
-        run: npm Install
+        run: npm install
       - name: Lint
         run: npm run lint
