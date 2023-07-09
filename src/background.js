@@ -1,7 +1,7 @@
 // This background script is initialised and executed once and exists
 // separate to all other pages.
 
-var tj = require('@mapbox/togeojson');
+var tj = require('@tmcw/togeojson');
 
 
   // Check whether new version is installed
