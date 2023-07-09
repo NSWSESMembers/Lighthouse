@@ -15,7 +15,7 @@
   "main": "background.js",
   "scripts": {
     "build": "webpack --config webpack.prod.js",
-    "lint": "eslint --ext .ts,.js --max-warnings=0 .",
+    "lint": "eslint --ext .ts,.js --max-warnings=0 ./src",
     "prettier": "prettier --write",
     "start": "webpack --watch --config webpack.dev.js"
   },
