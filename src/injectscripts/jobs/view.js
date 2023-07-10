@@ -1,4 +1,5 @@
 /* global lighthouseUrl, masterViewModel, $, moment, user, urls, jobId, Enum */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var DOM = require('jsx-dom-factory').default;
 var _ = require('underscore');
 var L = require('leaflet')
@@ -26,8 +27,8 @@ L.Icon.Default.imagePath = `${lighthouseUrl}icons/`
 
 var assetMap; //global map holder
 var assetMapRenderAtTime
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var assetMapRenderTimer
-var filteredAssetList = []
 
 //if ops logs update
 masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
@@ -61,9 +62,8 @@ function lighthouseETAFromNow() {
 
 function lighthouseETA() {
   setTimeout( function() {
-    const addToTime = (addMins, where, text) => {
+    const addToTime = (addMins, where) => {
       var timeInput = $(where).parent('div').parent('div').parent('div').find('input[data-bind$="datetimepicker: $parent.jobTeamStatusEstimatedCompletion, attr: {placeholder: $parent.jobTeamStatusTypeBeingUpdated() ? ($parent.jobTeamStatusTypeBeingUpdated().Id == Enum.JobTeamStatusType.Enroute.Id ? \'ETA\' : \'ETC\') : \'\' }"]')
-      var now = moment()
       var current = moment()
       if (timeInput.val() != ''){
         current = moment(timeInput.val(),'DD/MM/YYYY HH:mm')
@@ -298,7 +298,7 @@ let instantRadiologModal = return_quickradiologmodal();
       }
     }, 5000)
 
-    var menuButton = L.easyButton('fa-crosshairs fa-lg', function(btn, map) {
+    var menuButton = L.easyButton('fa-crosshairs fa-lg', function(_btn, _map) {
       assetMap.setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13)
     });
     menuButton.addTo(assetMap);
@@ -333,9 +333,6 @@ let instantRadiologModal = return_quickradiologmodal();
                       let y = hq.properties.POINT_Y;
 
                       let name = hq.properties.HQNAME;
-
-                      let unitCode = hq.properties.UNIT_CODE;
-
 
                       let details =
                       `<div id='lhqPopUp' style="width:250px">\
@@ -533,7 +530,7 @@ let instantRadiologModal = return_quickradiologmodal();
 
         var unit = v.properties.name.match(/([a-z]+)/i) ? v.properties.name.match(/([a-z]+)/i)[1] : v.properties.name;
         var veh = v.properties.name.match(/[a-z]+(\d*[a-z]?)/i) ? v.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1] : '';
-        let uniqueColor = colorScale[used-1]//`${stringToColor(v.id)}`
+        let uniqueColor = colorScale[used-1]
         let bgcolor;
 
           //use our unique color, unless its the first or last
@@ -586,14 +583,14 @@ let instantRadiologModal = return_quickradiologmodal();
            let middleLng = (v.geometry.coordinates[0] + masterViewModel.geocodedAddress.peek().Longitude) / 2;
 
 
-           let midPointBetween = middlePoint(v.geometry.coordinates[1], v.geometry.coordinates[0], masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude)
-
            var distanceMarker = new L.circleMarker([middleLat, middleLng], { radius: 0.1 }); //opacity may be set to zero
            distanceMarker.bindTooltip(`${v.distance.toFixed(2)} km ${getCardinal(v.bearing)}`, {permanent: true, offset: [0, 0] });
 
            var distanceMarkerRoute = []
 
             if (used != 1 && used != maxLength && used <= 10) { //not the first, last or more than 10
+
+           // eslint-disable-next-line @typescript-eslint/no-unused-vars
            var markerCircle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
              color: 'black',
              weight: 0.5,
@@ -851,7 +848,7 @@ let instantRadiologModal = return_quickradiologmodal();
    }
 
 
-     const average = (array) => array.reduce((a, b) => a + b) / array.length;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var s2circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
   color: 'red',
   weight: 1,
@@ -861,6 +858,7 @@ var s2circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, master
 }).addTo(assetMap);
 
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var s1circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], {
   color: 'green',
   weight: 1,
@@ -902,30 +900,7 @@ var s1circle = L.circle([masterViewModel.geocodedAddress.peek().Latitude, master
   }
 }
 
-function stringToColor(number) {
-  const hue = number * 137.508; // use golden angle approximation
-return `hsl(${hue},80%,50%)`;
-
-}
-
-function hashCode(str) { // java String#hashCode
-    var hash = 0;
-    for (var i = 0; i < str.length; i++) {
-       hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return hash;
-}
-
-function intToRGB(i){
-    var c = (i & 0x00FFFFFF)
-        .toString(16)
-        .toUpperCase();
-
-    return "00000".substring(0, 6 - c.length) + c;
-}
-
 //the asset location buttons
-
 
 function assetLocationMapOff() {
   clearInterval(assetMapRenderAtTime);
@@ -1066,9 +1041,7 @@ function assetLocationButtonActiveOnly() {
 
     renderNearestAssets({activeOnly: true, resultsToDisplay: 5, cb: function() {
       spinner.hide()
-      let before = $('#asset-route-warning').html()
       $('#asset-route-warning').css("visibility", "unset");
-
       $('#asset-route-warning').html(`Showing nearest 5 assets that have updated within the last 1 hour`)
 
     }})
@@ -1141,7 +1114,7 @@ if (!bypassUI) {
     localStorage.setItem("LighthouseJobViewAssetLocationButton", 'filter');
 
     let selectedAssets = []
-     $("#assetFilterListSelected").children().each(function(r) {
+     $("#assetFilterListSelected").children().each(function(_r) {
       selectedAssets.push($(this)[0].value)
     })
 
@@ -1537,7 +1510,7 @@ observerTimeline.observe($targetTimeline[0].parentNode, {
 
 function onTimelineChange() {
   whenJobIsReady(function(){
-  $('div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]').each(function (r) {
+  $('div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]').each(function (_r) {
     // weird race condition where they already have the attrib
     if ($(this).attr('lhTPlus') === undefined || $(this).attr('lhTPlus') === false) {
       let res = $(this).text()
@@ -1561,10 +1534,7 @@ function returnTTime(messageDate) {
   //work out if its T+ or T-
   let whichFirst = jobCreatedMoment.isBefore(end)
   let tPlus = moment.duration(end.diff(jobCreatedMoment));
-  let years = whichFirst ? tPlus.years() : tPlus.years() * -1,
-  days = whichFirst ? tPlus.days() : tPlus.days() * -1,
-  hrs = whichFirst ? tPlus.hours() : tPlus.hours() * -1,
-  hrsTotal = hrs + (24 * days),  //wont use days so make hours include days
+  let hrs = whichFirst ? tPlus.hours() : tPlus.hours() * -1,
   mins = whichFirst ? tPlus.minutes() : tPlus.minutes() * -1,
   secs = whichFirst ? tPlus.seconds() : tPlus.seconds() * -1,
   symbol = whichFirst ? '+' : '-'
@@ -1601,7 +1571,7 @@ function lighthouseDictionary(){
     'YOF'     : 'Year Old Female'
   };
 
-  $targetElements.each(function(v){
+  $targetElements.each(function(_v){
     var $t = $(this);
     var contentOrig = $t.html();
     var contentRepl = contentOrig;
@@ -1611,7 +1581,6 @@ function lighthouseDictionary(){
     contentRepl = contentRepl.replace(/\s*\\n/, '<br />');
     // ICEMS Dictionary
     _.each(ICEMS_Dictionary, function(clearText, abbrText){
-      var contentTemp = contentRepl;
       contentRepl = contentRepl.replace(new RegExp('\\b(' + abbrText + ')\\b', 'gi'), '<abbr title="' + clearText + '">$1</abbr>');
     });
     if(contentRepl != contentOrig){
@@ -1625,14 +1594,12 @@ function lighthouseDictionary(){
 
 if (document.getElementById("FinaliseQuickTextBox")) {
   document.getElementById("FinaliseQuickTextBox").onchange = function() {
-    var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
     masterViewModel.finalisationText(this.value);
   }
 }
 
 if (document.getElementById("CompleteQuickTextBox")) {
   document.getElementById("CompleteQuickTextBox").onchange = function() {
-    var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
     masterViewModel.finalisationText(this.value);
   }
 }
@@ -1674,7 +1641,7 @@ function InstantCategoryButton() {
   if ( $(quickCategory).find('li').length < 1 ) {
     var categories = ["NA", "1", "2", "3", "4", "5"];
     let finalli = []
-    let currentCategorie = masterViewModel.sector.peek().Id
+
     categories.forEach(function(entry) {
       let item = (<li><a style="text-align:left" href="#">{entry}</a></li>);
       //click handler
@@ -1703,7 +1670,7 @@ function InstantCategoryButton() {
       , data: {Id: id, Ids: [jobId], LighthouseFunction: 'SetCategory', userId: user.Id}
       , cache: false
       , dataType: 'json'
-      , complete: function(response, textStatus) {
+      , complete: function(response, _textStatus) {
         if (response.status == 204)
         {
         masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
@@ -1754,7 +1721,7 @@ function InstantSectorButton() {
             } else { //if it is the same, make it bold.
               item = (<li><a style="text-align:left" href="#"><b>{entry.Name}</b></a></li>);
             }
-            $(item).click(function (e) {
+            $(item).click(function (_e) {
               SetSector(entry,currentsector)
               location.reload();
               //e.preventDefault();
@@ -1783,7 +1750,7 @@ function InstantSectorButton() {
         , data: {IdsToAdd: [jobId], LighthouseFunction: 'SetSector', userId: user.Id}
         , cache: false
         , dataType: 'json'
-        , complete: function(response, textStatus) {
+        , complete: function(response, _textStatus) {
           if (response.status == 200)
           {
             masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
@@ -1801,7 +1768,7 @@ function InstantSectorButton() {
         , data: {LighthouseFunction: 'SetSector', userId: user.Id}
         , cache: false
         , dataType: 'json'
-        , complete: function(response, textStatus) {
+        , complete: function(response, _textStatus) {
           if (response.status == 200)
           {
             masterViewModel.JobManager.GetHistory(jobId,function(t){masterViewModel.jobHistory(t)}) //load job history
@@ -2018,7 +1985,6 @@ if (res) {
 
 
 function TaskTeam(teamID) {
-  var data = {};
   var TeamIds = [];
   TeamIds.push(teamID);
   var JobIds = [];
@@ -2052,7 +2018,7 @@ function return_search_box() {
   );
 }
 
-function return_li(id, callsign, teamleader, JobCount) {
+function return_li(id, callsign, teamleader) {
   if (teamleader != null)
   {
     return(
@@ -2071,16 +2037,6 @@ function return_lipres(title) {
   );
 }
 
-function return_lidivider() {
-  return(
-    <li role="presentation" class="divider"></li>
-  );
-}
-
-function replaceAll(str, find, replace) {
-  return str.replace(new RegExp(find, 'g'), replace);
-}
-
 function removeOptions(selectbox) {
   for (var i = selectbox.options.length - 1; i >= 0; i--) {
     selectbox.remove(i);
@@ -2089,7 +2045,6 @@ function removeOptions(selectbox) {
 
 //take the clicked list option and set the complete action the value of this.
 document.getElementById("CompleteTeamQuickTextBox").onchange = function() {
-  var block = document.getElementById("finaliseJobModal").getElementsByClassName("form-control");
   masterViewModel.completeTeamViewModel.actionTaken(this.value);
 }
 
@@ -2142,8 +2097,7 @@ $(document).ready(function() {
       ["#rcrcalloff", "RoadCrashRescue", "Call Off"],
       ["#rcrcallextricate", "RoadCrashRescue", "Extrication "],
     ], function(args) {
-      var selector = args[0]
-      , parent = args[1]
+      var parent = args[1]
       , child = args[2];
 
       $(args[0]).click(function() {
@@ -2288,12 +2242,6 @@ function return_quicketamoment() {
 }
 
 function checkAddressHistory(){
-  var date_options = {
-    year: "numeric",
-    month: "2-digit",
-    day: "numeric",
-    hour12: false
-  };
 
   var address = masterViewModel.geocodedAddress();
   if(typeof address == 'undefined') {
@@ -2483,7 +2431,7 @@ function checkAddressHistory(){
             // Use JSX to Render
             $job_view_history_container.html(
               <div>
-              {_.map(_.filter(history_rows, function(row) { return row.always_show || row.jobs.length; }), function(groupData, groupKey){
+              {_.map(_.filter(history_rows, function(row) { return row.always_show || row.jobs.length; }), function(groupData, _groupKey){
                 return (
                   <fieldset id={"job_view_history_group_" + groupData.key } class={"job_view_history_group col-md-12" + (groupData.hide_old ? " job_view_history_showtoggle" : "")}>
                   <legend>
@@ -2728,24 +2676,6 @@ function getCardinal(angle) {
                 : "NW";
 }
 
-function StandardDeviation(numbersArr) {
-    //--CALCULATE AVAREGE--
-    var total = 0;
-    for(let key in numbersArr)
-       total += numbersArr[key];
-    var meanVal = total / numbersArr.length;
-    //--CALCULATE AVAREGE--
-
-    //--CALCULATE STANDARD DEVIATION--
-    var SDprep = 0;
-    for(let key in numbersArr)
-       SDprep += Math.pow((parseFloat(numbersArr[key]) - meanVal),2);
-    var SDresult = Math.sqrt(SDprep/numbersArr.length);
-    //--CALCULATE STANDARD DEVIATION--
-    return(SDresult);
-
-}
-
 //-- Define radius function
 if (typeof (Number.prototype.toRad) === "undefined") {
     Number.prototype.toRad = function () {
@@ -2760,63 +2690,6 @@ if (typeof (Number.prototype.toDeg) === "undefined") {
     }
 }
 
-
-//-- Define middle point function
-function middlePoint(lat1, lng1, lat2, lng2) {
-
-    //-- Longitude difference
-    var dLng = (lng2 - lng1).toRad();
-
-    //-- Convert to radians
-    lat1 = lat1.toRad();
-    lat2 = lat2.toRad();
-    lng1 = lng1.toRad();
-
-    var bX = Math.cos(lat2) * Math.cos(dLng);
-    var bY = Math.cos(lat2) * Math.sin(dLng);
-    var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + bX) * (Math.cos(lat1) + bX) + bY * bY));
-    var lng3 = lng1 + Math.atan2(bY, Math.cos(lat1) + bX);
-
-    //-- Return result
-    return [lng3.toDeg(), lat3.toDeg()];
-}
-
-
-function randomIntFromInterval(min, max) { // min and max included
-  return Math.floor(Math.random() * (max - min + 1) + min)
-}
-
-//Credit D3: https://github.com/d3/d3-array/blob/master/LICENSE
-  function quantileSorted(values, p, fnValueFrom) {
-    var n = values.length;
-    if (!n) {
-      return;
-    }
-
-    fnValueFrom =
-      Object.prototype.toString.call(fnValueFrom) == "[object Function]"
-        ? fnValueFrom
-        : function (x) {
-            return x;
-          };
-
-    p = +p;
-
-    if (p <= 0 || n < 2) {
-      return +fnValueFrom(values[0], 0, values);
-    }
-
-    if (p >= 1) {
-      return +fnValueFrom(values[n - 1], n - 1, values);
-    }
-
-    var i = (n - 1) * p,
-      i0 = Math.floor(i),
-      value0 = +fnValueFrom(values[i0], i0, values),
-      value1 = +fnValueFrom(values[i0 + 1], i0 + 1, values);
-
-    return value0 + (value1 - value0) * (i - i0);
-  }
 
   function fetchHqDetails(HQName, cb) {
      var hq = {}
@@ -2962,7 +2835,7 @@ function fetchAccreditations(cb) {
     },
     cache: false,
     dataType: 'html',
-    complete: function (response, textStatus) {
+    complete: function (response, _textStatus) {
       let page = $.parseHTML(response.responseText)
       let table = $(page).find('#reportTable')
       cb && cb(tableToObj(table[0]))
@@ -2976,7 +2849,7 @@ function tableToObj(table) {
   var propCells = rows[0].cells;
   var propNames = [];
   var results = {};
-  var obj, row, cells;
+  var obj, cells;
 
   // Use the first row for the property names
   // Could use a header section but result is the same if
@@ -3008,12 +2881,12 @@ function editRfaFormDOMWatcher() {
   let $target = $(`#editRfaForm`);
   if ($target.length > 0) {
   // Now we watch for new elements
-  const observer = new MutationObserver((r) => {
+  const observer = new MutationObserver((_r) => {
     var $targetElements = $(
       '.job-details-page div[data-bind="foreach: messages"] div em:not(:has(#forwardMessage))'
     );
 
-    $targetElements.each(function (v) {
+    $targetElements.each(function (_v) {
       var $daddy = $(this)
 
       var $t = $(this).find('a strong');
@@ -3034,7 +2907,7 @@ function editRfaFormDOMWatcher() {
       
     });
     
-      $('div[data-bind="foreach: messages"] .text-muted:not([lhTPlus]),div[data-bind="foreach: opsLogEntries"] .text-muted:not([lhTPlus])').each(function (r) {
+      $('div[data-bind="foreach: messages"] .text-muted:not([lhTPlus]),div[data-bind="foreach: opsLogEntries"] .text-muted:not([lhTPlus])').each(function (_r) {
         // weird race condition where they already have the attrib
         var $thing = $(this)
         if ($thing.attr('lhTPlus') === undefined || $thing.attr('lhTPlus') === false) {

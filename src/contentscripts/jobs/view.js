@@ -1,5 +1,6 @@
 var inject = require('../../lib/inject.js');
 var _ = require('underscore');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var DOM = require('jsx-dom-factory').default;
 var $ = require('jquery');
 var vincenty = require('../../lib/vincenty.js');
@@ -439,7 +440,7 @@ $mapblock
 });
 
 $('#asset-map-container').prepend($mapblock)
-.mouseleave(function(e) {
+.mouseleave(function(_e) {
   $mapblock.show();
 });
 

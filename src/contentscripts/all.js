@@ -2,8 +2,8 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1)
 {
   var inject = require('../lib/inject.js');
   var $ = require('jquery');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   var DOM = require('jsx-dom-factory').default;
-  var LighthouseChrome = require('../pages/lib/shared_chrome_code.js');
 
 
   let version = 'v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
@@ -45,7 +45,7 @@ window.addEventListener("message", function(event) {
       }
       items.push(JSON.parse(event.data.newdata))
 
-      chrome.storage.sync.set({[event.data.name+'-'+location.hostname]:JSON.stringify(items)}, function (data){
+      chrome.storage.sync.set({[event.data.name+'-'+location.hostname]:JSON.stringify(items)}, function (_data){
         window.postMessage({type: 'RETURN_COLLECTION', name: event.data.name, dataresult: JSON.stringify(items)}, '*');
 
       })
@@ -64,7 +64,7 @@ window.addEventListener("message", function(event) {
           items.splice(items.indexOf(item), 1)
         }
       })
-      chrome.storage.sync.set({[event.data.name+'-'+location.hostname]:JSON.stringify(items)}, function (data){
+      chrome.storage.sync.set({[event.data.name+'-'+location.hostname]:JSON.stringify(items)}, function (_data){
         window.postMessage({type: 'RETURN_COLLECTION', name: event.data.name, dataresult: JSON.stringify(items)}, '*');
       })
     })
@@ -101,7 +101,7 @@ window.addEventListener("message", function(event) {
 
       $('#map')
       .append($mapblock)
-      .mouseleave(function(e) {
+      .mouseleave(function(_e) {
         $mapblock.show();
       });
     }

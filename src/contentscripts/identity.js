@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var DOM = require('jsx-dom-factory').default;
 var encodedJson = document.getElementById("modelJson").textContent.replace(/&quot;/g, '"');
 var model = JSON.parse(encodedJson);
@@ -7,10 +8,6 @@ if (model.clientName == "beacon" || model.clientName == "beacon Train" ||  model
 {
   var $ = require('jquery/dist/jquery.min');
   require('../pages/lib/shared_chrome_code.js'); // side-effect
-
-
-  let url = chrome.extension.getURL("icons/lhbackdrop_dark.png")
-
 
   let version = 'v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
   $('body').append(

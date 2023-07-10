@@ -18,7 +18,6 @@ var moment = require('moment');
 var humanizeDuration = require('humanize-duration')
 
 var timeoverride = null;
-var timeperiod;
 var unit = null;
 var facts = null;
 var firstrun = true;
@@ -110,7 +109,7 @@ function validateTokenExpiration() {
         },
         cache: false,
         dataType: 'json',
-        complete: function(response, textStatus) {
+        complete: function(response) {
           token = response.responseJSON.access_token
           tokenexp = response.responseJSON.expires_at
           chrome.storage.local.set({
@@ -317,6 +316,7 @@ String.prototype.toHHMMSS = function() {
 
 
 //null these at this scope so they persist and we can refresh the data display
+/* eslint-disable @typescript-eslint/no-unused-vars */
 var timeOpenChart = null;
 var runningChart = null;
 var timeClosedChart = null;
@@ -329,13 +329,13 @@ let jobTypeChart = null;
 var hazardChart = null;
 var propertyChart = null;
 var jobtypeChart = null;
-var taskCountChart = null;
 var localChart = null;
 var unitChart = null;
 var clusterChart = null;
 var zoneChart = null;
 var sectorChart = null;
 var categoriesChart = null;
+/* eslint-enable @typescript-eslint/no-unused-vars */
 
 
 var lowermeanChart = dc.numberDisplay("#dc-lowermean-chart");
@@ -698,7 +698,7 @@ function prepareCharts(jobs, start, end, firstRun) {
       .width(1200)
       .height(800)
       .dimension(timeOpenDimension)
-      .group(function(d) {
+      .group(function() {
         return "Filtered Results (15 Max)"
       })
       .size(15)
@@ -807,7 +807,6 @@ function prepareCharts(jobs, start, end, firstRun) {
     let sectorChartFilters = sectorChart.filters();
 
     console.log(completionBellChart)
-    let completionBellChartFilters = completionBellChart.filters();
 
 
     //remove the filters
@@ -864,13 +863,13 @@ function makeTagGroup(dim, targetfact) {
     case "treeTags":
       group = dim.groupAll().reduce(
         function(p, v) {
-          v.treeTags.forEach(function(val, idx) {
+          v.treeTags.forEach(function(val) {
             p[val] = (p[val] || 0) + 1; //increment counts
           });
           return p;
         },
         function(p, v) {
-          v.treeTags.forEach(function(val, idx) {
+          v.treeTags.forEach(function(val) {
             p[val] = (p[val] || 0) - 1; //decrement counts
           });
           return p;
@@ -902,13 +901,13 @@ function makeTagGroup(dim, targetfact) {
     case "hazardTags":
       group = dim.groupAll().reduce(
         function(p, v) {
-          v.hazardTags.forEach(function(val, idx) {
+          v.hazardTags.forEach(function(val) {
             p[val] = (p[val] || 0) + 1; //increment counts
           });
           return p;
         },
         function(p, v) {
-          v.hazardTags.forEach(function(val, idx) {
+          v.hazardTags.forEach(function(val) {
             p[val] = (p[val] || 0) - 1; //decrement counts
           });
           return p;
@@ -940,13 +939,13 @@ function makeTagGroup(dim, targetfact) {
     case "propertyTags":
       group = dim.groupAll().reduce(
         function(p, v) {
-          v.propertyTags.forEach(function(val, idx) {
+          v.propertyTags.forEach(function(val) {
             p[val] = (p[val] || 0) + 1; //increment counts
           });
           return p;
         },
         function(p, v) {
-          v.propertyTags.forEach(function(val, idx) {
+          v.propertyTags.forEach(function(val) {
             p[val] = (p[val] || 0) - 1; //decrement counts
           });
           return p;
@@ -1044,21 +1043,6 @@ function makeSimplePie(elem, w, h, selector) {
   return chart
 }
 
-function makeSimplePieAbrev(elem, w, h, selector) {
-  var dimension = facts.dimension(function(d) {
-    return selector(d);
-  });
-  var group = dimension.group();
-  var chart = makePie(elem, w, h, dimension, group);
-  chart
-    .slicesCap(10);
-  chart.label(function(d) {
-    var matches = d.key.match(/\b(\w|\+)/g); // ['J','S','O','N']
-    var acronym = matches.join('');
-    return acronym;
-  })
-  return chart
-}
 
 // wait for token to have loaded
 function getToken(cb) { //when external vars have loaded

@@ -85,7 +85,6 @@ export default class MapLayer {
      * @return the marker to customise.
      */
     addImageMarker(lat, lon, imageUrl, title='', details='') {
-        console.log(imageUrl)
         let marker = MapLayer.createImageMarker(imageUrl);
         this.addMarker(lat, lon, marker, title, details);
         return marker;

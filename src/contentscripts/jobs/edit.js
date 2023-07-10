@@ -1,5 +1,5 @@
-/* global $, moment, urls, user */
 var inject = require('../../lib/inject.js');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var DOM = require('jsx-dom-factory').default;
 var $ = require('jquery');
 var vincenty = require('../../lib/vincenty.js');

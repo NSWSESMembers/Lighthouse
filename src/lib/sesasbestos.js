@@ -91,7 +91,7 @@ function getOpsLog(id,cb) {
 			}
 
 		}
-		, error: function (ajaxContext) {
+		, error: function (_ajaxContext) {
 			console.log("ajax http problem")
 			$('#asbestos-register-error').html($('#asbestos-register-error').html()+" Error searching SES asbestos register");
 			cb(false)

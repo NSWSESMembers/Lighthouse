@@ -9,8 +9,6 @@ var params = getSearchParameters();
 var token = params.token
 var tokenexp = params.tokenexp
 
-var timeoverride = null;
-
 window.onerror = function(message, url, lineNumber) {
   document.getElementById("loading").style.visibility = 'visible';
   document.getElementById("loading").innerHTML = "Error loading page<br>"+message+" Line "+lineNumber;
@@ -27,7 +25,6 @@ $(document).ready(function() {
 
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById("goButton").addEventListener("click", function(){
-    var element = document.querySelector('.loadprogress');
     var mp = new Object();
     mp.setValue = function(value) { //value between 0 and 1
       $('#loadprogress').css('width', (Math.round(value * 100) + '%'));
@@ -64,8 +61,6 @@ function transformToAssocArray(prmstr) {
   return params;
 }
 
-var timeperiod;
-var unit = [];
 
 function validateTokenExpiration()
   {
@@ -78,7 +73,7 @@ function validateTokenExpiration()
         }
         , cache: false
         , dataType: 'json'
-        , complete: function(response, textStatus) {
+        , complete: function(response) {
           token = response.responseJSON.access_token
           tokenexp = response.responseJSON.expires_at
           console.log("successful token renew.")

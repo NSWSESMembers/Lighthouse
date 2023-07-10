@@ -1,6 +1,7 @@
 var inject = require('../../lib/inject.js');
 var $ = require('jquery');
 const MapManager = require('../../lib/map/ContentScriptMapManager.js').default;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var DOM = require('jsx-dom-factory').default;
 
 

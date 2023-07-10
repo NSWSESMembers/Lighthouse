@@ -1,13 +1,13 @@
 const $ = require('jquery');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DOM = require('jsx-dom-factory').default;
-const moment = require('moment');
 import BeaconClient from '../../shared/BeaconClient.js';
 
 
 const lighthouseIcon = chrome.extension.getURL('icons/lh-black.png');
 const teamIcon = chrome.extension.getURL('icons/bus.png');
 const assetIcon = chrome.extension.getURL('icons/asset-icons/asset-red.png');
-const hazardWatchIcon = chrome.extension.getURL('icons/hazardWatch.png');
+//const hazardWatchIcon = chrome.extension.getURL('icons/hazardWatch.png');
 
 const helicopterIcon = chrome.extension.getURL('icons/helicopter.png');
 const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');

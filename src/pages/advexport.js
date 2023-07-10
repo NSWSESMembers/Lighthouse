@@ -1,4 +1,3 @@
-var DOM = require('jsx-dom-factory').default;
 var _ = require('underscore');
 var $ = require('jquery');
 var moment = require('moment');
@@ -10,7 +9,6 @@ import '../../styles/pages/advexport.css';
 global.jQuery = $;
 
 
-var timeoverride = null;
 
 var params = getSearchParameters();
 
@@ -166,8 +164,6 @@ function transformToAssocArray(prmstr) {
   return params;
 }
 
-var timeperiod;
-var unit = [];
 
 function validateTokenExpiration() {
   getToken(function() {
@@ -180,7 +176,7 @@ function validateTokenExpiration() {
         },
         cache: false,
         dataType: 'json',
-        complete: function(response, textStatus) {
+        complete: function(response) {
           token = response.responseJSON.access_token
           tokenexp = response.responseJSON.expires_at
           chrome.storage.local.set({
@@ -208,7 +204,6 @@ function RunForestRun(mp) {
   })
 }
 
-var selectedcolumns = [];
 
 //make the call to beacon
 function HackTheMatrix(id, host, progressBar) {
@@ -376,7 +371,6 @@ function HackTheMatrix(id, host, progressBar) {
 
 function convertArrayOfObjectsToCSV(data, selectedcolumns) {
 
-  var result, ctr, keys, columnDelimiter, lineDelimiter;
 
   if (data == null || !data.length) {
     return null;
@@ -393,13 +387,13 @@ function convertArrayOfObjectsToCSV(data, selectedcolumns) {
   // Getting Column Headings
   let fieldKeys = [];
   let fieldLabels = [];
-  _.each(lighthouse_fieldArray, function(fields, section) {
+  _.each(lighthouse_fieldArray, function(fields) {
     _.each(fields, function(label, key) {
       fieldKeys.push(key);
       fieldLabels.push(label);
     });
   });
-  selectedcolumns.map(function(v, k) {
+  selectedcolumns.map(function(v) {
     return fieldLabels[fieldKeys.indexOf(v)];
   })
 

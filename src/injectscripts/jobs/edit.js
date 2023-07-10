@@ -1,4 +1,5 @@
 /* global $, vm, moment, urls, user */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var DOM = require('jsx-dom-factory').default;
 var sesAsbestosSearch = require('../../lib/sesasbestos.js');
 
@@ -129,7 +130,7 @@ $(document).ready(function() {
     }
     })
 
-    vm.geocodedAddress.subscribe(function(status) {
+    vm.geocodedAddress.subscribe(function(_addr) {
       $('#asbestos-register-text').text("Searching...");
       if (vm.geocodedAddress.peek() != null) {
 
@@ -215,7 +216,7 @@ function fetchAccreditations(cb) {
     },
     cache: false,
     dataType: 'html',
-    complete: function (response, textStatus) {
+    complete: function (response, _textStatus) {
       let page = $.parseHTML(response.responseText)
       let table = $(page).find('#reportTable')
       cb && cb(tableToObj(table[0]))
@@ -229,7 +230,7 @@ function tableToObj(table) {
   var propCells = rows[0].cells;
   var propNames = [];
   var results = {};
-  var obj, row, cells;
+  var obj, cells;
 
   // Use the first row for the property names
   // Could use a header section but result is the same if

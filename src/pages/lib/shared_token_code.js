@@ -44,7 +44,7 @@ export function validateBeaconToken(apiHost, source) {
         },
         cache: false,
         dataType: 'json',
-        complete: function(response, textStatus) {
+        complete: function(response, _textStatus) {
           var token = response.responseJSON.access_token
           var tokenexp = response.responseJSON.expires_at
           chrome.storage.local.set({

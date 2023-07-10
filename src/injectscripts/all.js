@@ -1,7 +1,7 @@
 /* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment, contentViewModel, layout */
 var clusterCodes = require('../lib/clusters.js');
 
-whenWeAreReady(layout, function () {
+whenWeAreReady(layout.hqStatus, function () {
   if (typeof urls.Base == 'undefined') {
     urls.Base = 'https://' + location.hostname;
   }
@@ -10,9 +10,6 @@ whenWeAreReady(layout, function () {
     
 
     user.hq = results;
-
-    //menu bar code
-    var ul = document.getElementsByClassName('nav navbar-nav');
 
     var tonight = new Date();
 
@@ -301,7 +298,7 @@ whenWeAreReady(layout, function () {
           );
           $(
             'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
-          ).each(function (j) {
+          ).each(function (_j) {
             if ($(this).text() == 'Today') {
               $(this).addClass('active');
             } else {
@@ -326,7 +323,7 @@ whenWeAreReady(layout, function () {
           );
           $(
             'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
-          ).each(function (j) {
+          ).each(function (_j) {
             if ($(this).text() == 'Last 7 Days') {
               $(this).addClass('active');
             } else {
@@ -351,7 +348,7 @@ whenWeAreReady(layout, function () {
           );
           $(
             'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
-          ).each(function (j) {
+          ).each(function (_j) {
             if ($(this).text() == 'Last 30 Days') {
               $(this).addClass('active');
             } else {
@@ -501,7 +498,7 @@ whenWeAreReady(layout, function () {
           );
           $(
             'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
-          ).each(function (j) {
+          ).each(function (_j) {
             if ($(this).text() == 'Today') {
               $(this).addClass('active');
             } else {
@@ -530,7 +527,7 @@ whenWeAreReady(layout, function () {
           );
           $(
             'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
-          ).each(function (j) {
+          ).each(function (_j) {
             if ($(this).text() == 'Last 7 Days') {
               $(this).addClass('active');
             } else {
@@ -559,7 +556,7 @@ whenWeAreReady(layout, function () {
           );
           $(
             'div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li',
-          ).each(function (j) {
+          ).each(function (_j) {
             if ($(this).text() == 'Last 30 Days') {
               $(this).addClass('active');
             } else {
@@ -1472,7 +1469,7 @@ function DeleteJobCollection(col) {
   );
 }
 
-function make_collection_button(name, count) {
+function make_collection_button(name, _count) {
   return $.parseHTML(
     `
     <span class="label tag tag-rebecca tag-disabled">\

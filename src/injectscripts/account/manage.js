@@ -41,7 +41,7 @@ function lighthouseKeeper(){
     'Icems Management' : 'Manage ICEMS response, send IAR and other messages.'
   };
 
-  $targetElements.each(function(v){
+  $targetElements.each(function(_v){
 
     var $t = $(this);
 

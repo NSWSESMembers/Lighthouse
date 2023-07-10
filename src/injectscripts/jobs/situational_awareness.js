@@ -4,7 +4,7 @@
 /* global contentViewModel, map */
 window.addEventListener('load', pageFullyLoaded, false);
 
-function pageFullyLoaded(e) {
+function pageFullyLoaded(_e) {
   whenMapIsReady(function() {
     const MapManager = require('../../lib/map/InjectScriptMapManager.js').default;
     //hide the maximize button
@@ -77,7 +77,7 @@ window.addEventListener("message", function(event) {
 
 
     let selectedAssets = []
-     $("#assetFilterListSelected").children().each(function(r) {
+     $("#assetFilterListSelected").children().each(function(_r) {
       selectedAssets.push($(this)[0].value)
     })
 

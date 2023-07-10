@@ -12,7 +12,6 @@ export function prepareData(jobs, unit, start, end, cb) {
 
   function processJob(d) {
     return new Promise(resolve => {
-      var thisJobisAck = false;
       var thisJobisComp = false;
 
       if (d.Event) {

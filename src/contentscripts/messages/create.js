@@ -1,9 +1,10 @@
 var inject = require('../../lib/inject.js');
-var DOM = require('jsx-dom-factory').default;
 var $ = require('jquery');
 
-require('../../styles/message.create.css');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+var DOM = require('jsx-dom-factory').default;
 
+require('../../styles/message.create.css');
 
 inject('messages/create.js');
 

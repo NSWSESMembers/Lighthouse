@@ -5,11 +5,11 @@ window.FinaliseSelected = function FinaliseSelected(words, beaconStringDate) { /
   }
   console.log("Man will someone be cranky with you!");
   contentViewModel.selectedJobs.peek().forEach(function(d) {
-    contentViewModel.JobManager.FinaliseJob(d, words, beaconStringDate, (function(d) {
+    contentViewModel.JobManager.FinaliseJob(d, words, beaconStringDate, (function(_d) {
       console.log("OK")
-    }), (function(d) {
+    }), (function(_d) {
       console.log("Fail")
-    }), (function(d) {
+    }), (function(_d) {
       console.log("always")
     }));
   });

@@ -1,6 +1,6 @@
 const $ = require('jquery');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DOM = require('jsx-dom-factory').default;
-const moment = require('moment');
 const inject = require('../../lib/inject.js');
 const MapManager = require('../../lib/map/ContentScriptMapManager.js').default;
 
