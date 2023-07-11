@@ -2556,7 +2556,6 @@ function whenUrlIsReady(cb) { //when external vars have loaded
 // wait for job to have loaded
 function whenJobIsReady(cb) { //when external vars have loaded
   if (masterViewModel.jobLoaded()) {
-    console.log("job was already ready");
     cb() //call back straight away
   } else {
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
