@@ -573,8 +573,6 @@ function prepareCharts(jobs, start, end, firstRun) {
 
     var runningclosedGroup = accumulate_group(volumeClosedByPeriodGroup)
 
-
-
     completionBellChart
       .width(1400)
       .height(250)
@@ -587,7 +585,7 @@ function prepareCharts(jobs, start, end, firstRun) {
       .dimension(jobLengthDimension)
       .group(jobLengthPeriodsGroupFiltered)
       .x(d3.scaleLinear()
-        .domain([round(jobLengthDimension.bottom(1)[0].JobDuration / 1000 / 60 / 60, 0.1), round(jobLengthDimension.top(1)[0].JobDuration / 1000 / 60 / 60, 0.1) + 1])
+        .domain([round(jobLengthDimension.bottom(1).length ? jobLengthDimension.bottom(1)[0].JobDuration / 1000 / 60 / 60 : 0, 0.1), round(jobLengthDimension.top(1).length ? jobLengthDimension.top(1)[0].JobDuration / 1000 / 60 / 60 : 0, 0.1) + 1])
       )
       .elasticY(true)
       .xAxis();
