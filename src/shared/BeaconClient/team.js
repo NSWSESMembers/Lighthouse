@@ -41,8 +41,8 @@ export function getHistory(id, host, userId = 'notPassed', token, callback) {
 }
 
 //make the call to beacon
-export function search(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = []) {
-  console.debug("GetJSONTeamsfromBeacon called");
+export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = []) {
+  console.debug("teamSearch called");
   let params = {};
   params['StatusStartDate'] = StartDate.toISOString();
   params['StatusEndDate'] = EndDate.toISOString();
@@ -116,7 +116,7 @@ export function getTeamGeoJson(hqs, host, startDate, endDate, userId = 'notPasse
     let teamEndRange = new Date();
     let statusTypes = [3]; // Only get activated teams
 
-    getJsonPaginated(hqs, host, teamStartRange, teamEndRange, userId, token, function (teams) {
+    teamSearch(hqs, host, teamStartRange, teamEndRange, userId, token, function (teams) {
 
         // Make a promise to collect all the team details in promises
         new Promise((mainResolve) => {
@@ -214,5 +214,5 @@ export function getTeamGeoJson(hqs, host, startDate, endDate, userId = 'notPasse
                 callback(error);
             });
         });
-    }, function(p) {console.log(p)}, statusTypes);
+    }, function(p) {console.log('teamSearch progress',p)}, statusTypes);
 }

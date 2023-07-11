@@ -505,7 +505,7 @@ function showSesTeamsLocations(mapLayer, data) {
         let marker = MapLayer.createImageMarker(teamIcon);
         marker.setOffset(16, -16 * jobOffset);
         mapLayer.addMarker(lat, lon, marker, name, details);
-        mapLayer.addTextSymbol(lat, lon, name, 28, -16 * jobOffset - 4);
+        mapLayer.addTextSymbol(lat, lon, name, 50, -16 * jobOffset - 4);
         count++;
       }
     }
