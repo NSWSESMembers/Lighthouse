@@ -2,6 +2,8 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1)
 {
   var inject = require('../lib/inject.js');
   var $ = require('jquery');
+  require('../pages/lib/shared_chrome_code.js');
+
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   var DOM = require('jsx-dom-factory').default;
 
