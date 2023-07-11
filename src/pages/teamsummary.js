@@ -715,7 +715,7 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  BeaconClient.team.search(unit, host, start, end, userId, token, function(teams) {
+  BeaconClient.team.teamSearch(unit, host, start, end, userId, token, function(teams) {
 
       let allTeamsPromises = []
 
