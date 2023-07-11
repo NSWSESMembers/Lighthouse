@@ -1,6 +1,9 @@
 var _ = require('underscore');
 var $ = require('jquery');
 var moment = require('moment');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+var DOM = require('jsx-dom-factory').default;
+
 import BeaconClient from '../shared/BeaconClient.js';
 
 import '../../styles/pages/advexport.css';
@@ -245,6 +248,12 @@ function HackTheMatrix(id, host, progressBar) {
     //   console.log(k)
     //   console.log(k.Event)
     // })
+
+    //really hacky handling for 0 jobs. below code maps so it handles no results just fine.
+    if (jobs.Results.length == 0) {
+      alert("No job results returned")
+    }
+
     var beacon_jobs = jobs.Results.map(function(d) {
       var jobRow = [];
 
