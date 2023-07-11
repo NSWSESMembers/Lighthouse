@@ -1,5 +1,7 @@
 @import url("~bootstrap/dist/css/bootstrap.css");
-@import url("~@fortawesome/fontawesome-free/css/all.css");
+@import url("~@fortawesome/fontawesome-free/css/solid.min.css");
+@import url("~@fortawesome/fontawesome-free/css/regular.min.css");
+@import url("~@fortawesome/fontawesome-free/css/fontawesome.min.css");
 
 
 #body {
