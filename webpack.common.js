@@ -5,6 +5,7 @@ const DotenvPlugin = require('dotenv-webpack');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
 
+
 const contentScripts = glob.sync('./src/contentscripts/**/*.js')
   .reduce((acc, path) => {
     const entry = path.replace(/src\/(.*)\.js/, '$1');
@@ -61,7 +62,14 @@ module.exports = {
       overrideConfigFile: path.resolve(__dirname, '.eslintrc'),
     }),
     new CopyPlugin({
-      patterns: [{ from: 'static' }],
+      patterns: [
+        { 
+          from: 'static',
+          globOptions: {
+            ignore: ["**/.DS_Store","**/manifest.json"],
+          },
+        }
+      ],
     }),
   ],
 };

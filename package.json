@@ -14,10 +14,11 @@
   "author": "Tim Dykes",
   "main": "background.js",
   "scripts": {
-    "build": "webpack --config webpack.prod.js",
+    "prod": "webpack --config webpack.prod.js",
+    "dev": "webpack --config webpack.dev.js",
     "lint": "eslint --ext .ts,.js --max-warnings=0 ./src",
     "prettier": "prettier --write",
-    "start": "webpack --watch --config webpack.dev.js"
+    "start": "webpack --watch --config webpack.watch.js"
   },
   "husky": {
     "hooks": {
@@ -83,6 +84,7 @@
     "underscore": "^1.13.1",
     "webpack": "^5.65.0",
     "webpack-cli": "^4.9.1",
+    "webpack-extension-manifest-plugin": "^0.8.0",
     "webpack-merge": "^5.8.0",
     "zip-webpack-plugin": "^4.0.1"
   }
