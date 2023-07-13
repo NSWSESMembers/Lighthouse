@@ -1528,7 +1528,7 @@ function whenWeAreReady(varToCheck, cb) {
   //when external vars have loaded
   var waiting = setInterval(function () {
     //run every 1sec until we have loaded the page (dont hate me Sam)
-    if (typeof varToCheck != 'undefined') {
+    if (typeof varToCheck.peek() != 'undefined' && typeof varToCheck.peek() != 'function') { //be an object ffs
       console.log('We are ready');
       clearInterval(waiting); //stop timer
       cb(); //call back
