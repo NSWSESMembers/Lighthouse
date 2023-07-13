@@ -174,6 +174,7 @@ $(document).ready(function () {
   createMessageViewModel.job.subscribe(function (r) {
     if (r) {
       $('#templateAccordion').empty();
+      $('#templateAccordion').append($(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>))
 
       whenWeAreReady(user, function () {
         $.ajax({
@@ -197,11 +198,13 @@ $(document).ready(function () {
                 dataType: 'json',
                 complete: function (lhResponse, textStatus) {
                   if (textStatus == 'success') {
+                    $('#templateAccordion').empty();
                     let templates = lhResponse.responseJSON;
-                    nunjucks.configure({ autoescape: true });
+                    let nuns = nunjucks.configure({ autoescape: true });
+                    nuns.addGlobal('stripNSW',stripNSW)
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     for (const [key, value] of Object.entries(templates)) {
-                      if (templates[key].attached.includes(user.currentHqId)) {
+                      if (templates[key].attached.includes(user.currentHqId) || templates[key].attached.includes("*")) {
                         //check if this user can use that template group
                         let groupDom = (
                           <div class="panel panel-default">
@@ -240,7 +243,7 @@ $(document).ready(function () {
                             t.jobType.length == 0 ||
                             t.jobType.includes(response.responseJSON.JobType.Id)
                           ) {
-                            t.name = nunjucks
+                            t.name = nuns
                               .renderString(
                                 t.templateString,
                                 response.responseJSON,
@@ -791,4 +794,10 @@ function parse_query_string(query) {
     }
   }
   return query_string;
+}
+
+
+function stripNSW(address) {
+  const regex = /(.*)(, NSW(, \d{4})?)/i;
+  return(address.replace(regex, '$1'));
 }
