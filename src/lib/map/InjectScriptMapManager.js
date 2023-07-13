@@ -663,185 +663,95 @@ function buildHeliParams() {
  */
 function showHazardWatch(mapLayer, data) {
   console.info('showing hazard watch');
-  data.forEach(function (hazard) {
+  data.incidents.forEach(function (hazard) {
+    //TODO Hazard Watch
     console.log(hazard);
 
-    let description = $(`
-    <table style="width: 100%;">
-    </table>`);
+    // switch (hazard.senderName) {
+    //   case "NSW Rural Fire Service":
+    //     break
+    //   case "NSW State Emergency Service":
+    //     break
+    // }
 
-    let headline = '';
 
-    let icon = lighthouseUrl + 'icons/hz_flood.svg';
 
-    //work out the top level icon first
-    switch (hazard.event) {
-      case 'FloodWatch':
-        icon = lighthouseUrl + 'icons/hz_flood.svg';
-        break;
-      case 'FloodBulletin':
-        icon = lighthouseUrl + 'icons/hz_flood.svg';
-        break;
-      case 'FinalFloodBulletin':
-        icon = lighthouseUrl + 'icons/hz_flood.svg';
-        break;
-      case 'EvacuationOrder':
-        icon = lighthouseUrl + 'icons/hz_evac.svg';
-        break;
-      case 'AllClear':
-        icon = lighthouseUrl + 'icons/hz_clear.svg';
-        break;
-      case 'EvacuationWarning':
-        icon = lighthouseUrl + 'icons/hz_evacwarning.svg';
-        break;
-    }
 
-    if (hazard.clusteredWarnings) {
-      //if there are clustered warnings
-      hazard.clusteredWarnings.reverse();
+    // let description = $(`
+    // <table style="width: 100%;">
+    // </table>`);
 
-      headline = 'Multiple Warnings';
+    // let headline = hazard.headline;
 
-      hazard.clusteredWarnings.forEach(function (clusteredHazard) {
-        let subText = clusteredHazard.event;
-        switch (clusteredHazard.event) {
-          case 'FloodWatch':
-            subText = '';
-            break;
-          case 'FloodBulletin':
-            subText = `${clusteredHazard.floodWarningLevel} Flood Bulletin`;
-            break;
-          case 'FinalFloodBulletin':
-            subText = `${clusteredHazard.floodWarningLevel} Flood Bulletin`;
-            break;
-          case 'EvacuationOrder':
-            subText = `Evacuation Order`;
-            break;
-          case 'AllClear':
-            subText = `All Clear`;
-            break;
-          case 'EvacuationWarning':
-            subText = `Evacuation Warning`;
-            break;
-        }
-        description.append(`<tbody class="hazard-hover-table"><tr>
-        <td rowspan="2" style="width: 25%; padding-left: 5px"><object data="${icon}" type="image/svg+xml"></object></td>
-        <td style="width: 70%; ">${clusteredHazard.areaName}</td>
-        <td rowspan="2" style="width: 5%;padding-right: 5px"><a style="display: block;" href="https://hazardwatch.gov.au/warnings/${
-          clusteredHazard.id
-        }" target="_blank"><object style="pointer-events: none;" data="${lighthouseUrl + 'icons/hz_arrow.svg'}" type="image/svg+xml"></object></a></td>
-        </tr>
-        <tr>
-        <td style=" padding-bottom: 10px;">${subText}<br><span style="font-weight: bold;" >${moment(clusteredHazard.issuedAt).format('h:mma ddd D MMM z')}</span></td>
-        </tr></tbody>`);
-      });
+    // let icon = lighthouseUrl + 'icons/hz_flood.svg';
 
-      //work out nested icon
-      switch (
-        hazard.clusteredWarnings[hazard.clusteredWarnings.length - 1].event
-      ) {
-        case 'FloodWatch':
-          icon = lighthouseUrl + 'icons/hz_flood.svg';
-          break;
-        case 'FloodBulletin':
-          icon = lighthouseUrl + 'icons/hz_flood.svg';
-          break;
-        case 'FinalFloodBulletin':
-          icon = lighthouseUrl + 'icons/hz_flood.svg';
-          break;
-        case 'EvacuationOrder':
-          icon = lighthouseUrl + 'icons/hz_evac.svg';
-          break;
-        case 'AllClear':
-          icon = lighthouseUrl + 'icons/hz_clear.svg';
-          break;
-        case 'EvacuationWarning':
-          icon = lighthouseUrl + 'icons/hz_evacwarning.svg';
-          break;
-      }
-    } else {
-      //kinda render it the same because its just so much text to squish into the box
+    // let subText = hazard.incidentType;
 
-      headline = hazard.headline;
+    // //work out the top level icon first
+    // switch (hazard.hazardType) {
+    //   case 'Flood':
+    //     icon = lighthouseUrl + 'icons/hz_flood.svg';
+    //     break;
+    // }
 
-      let subText = hazard.event;
-      switch (hazard.event) {
-        case 'FloodWatch':
-          subText = '';
-          break;
-        case 'FloodBulletin':
-          subText = `${hazard.floodWarningLevel} Flood Bulletin`;
-          break;
-        case 'FinalFloodBulletin':
-          subText = `${hazard.floodWarningLevel} Flood Bulletin`;
-          break;
-        case 'EvacuationOrder':
-          subText = `Evacuation Order`;
-          break;
-        case 'AllClear':
-          subText = `All Clear`;
-          break;
-        case 'EvacuationWarning':
-          subText = `Evacuation Warning`;
-          break;
-      }
+    //   headline = hazard.headline;
 
-      description.append(`<tbody class="hazard-hover-table"><tr>
-        <td rowspan="2" style="width: 25%; padding-left: 5px"><object data="${icon}" type="image/svg+xml"></object></td>
-        <td style="width: 70%; ">${hazard.areaName}</td>
-        <td rowspan="2" style="width: 5%;padding-right: 5px"><a style="display: block;" href="https://hazardwatch.gov.au/warnings/${
-          hazard.id
-        }" target="_blank"><object style="pointer-events: none;" data="${
-        lighthouseUrl + 'icons/hz_arrow.svg'
-      }" type="image/svg+xml"></object></a></td>
-        </tr>
-        <tr>
-        <td style=" padding-bottom: 10px;">${subText}<br><span style="font-weight: bold;" >${moment(
-        hazard.issuedAt,
-      ).format('h:mma ddd D MMM z')}</span></td>
-        </tr></tbody>`);
-    }
+    //   description.append(`<tbody class="hazard-hover-table"><tr>
+    //     <td rowspan="2" style="width: 25%; padding-left: 5px"><object data="${icon}" type="image/svg+xml"></object></td>
+    //     <td style="width: 70%; ">${hazard.areaName}</td>
+    //     <td rowspan="2" style="width: 5%;padding-right: 5px"><a style="display: block;" href="https://hazardwatch.gov.au/warnings/${
+    //       hazard.id
+    //     }" target="_blank"><object style="pointer-events: none;" data="${
+    //     lighthouseUrl + 'icons/hz_arrow.svg'
+    //   }" type="image/svg+xml"></object></a></td>
+    //     </tr>
+    //     <tr>
+    //     <td style=" padding-bottom: 10px;">${subText}<br><span style="font-weight: bold;" >${moment(
+    //     hazard.issuedAt,
+    //   ).format('h:mma ddd D MMM z')}</span></td>
+    //     </tr></tbody>`);
+    
 
-    if (hazard.geometries[0].type == 'Polygon') {
-      let polygonPoints = hazard.geometries[0].coordinates[0];
-      mapLayer.addPolygon(
-        polygonPoints,
-        '#000000',
-        [100, 100, 100, 0.2],
-        3,
-        SimpleLineSymbol.STYLE_SHORTDOT,
-        headline,
-        description.prop('outerHTML'),
-      );
-    }
-    if (hazard.geometries[0].type == 'MultiPolygon') {
-      let polygonPoints = hazard.geometries[0].coordinates[0][0];
-      mapLayer.addPolygon(
-        polygonPoints,
-        '#000000',
-        [100, 100, 100, 0.2],
-        3,
-        SimpleLineSymbol.STYLE_SHORTDOT,
-        headline,
-        description.prop('outerHTML'),
-      );
-    }
+    // // if (hazard.geometries[0].type == 'Polygon') {
+    // //   let polygonPoints = hazard.geometries[0].coordinates[0];
+    // //   mapLayer.addPolygon(
+    // //     polygonPoints,
+    // //     '#000000',
+    // //     [100, 100, 100, 0.2],
+    // //     3,
+    // //     SimpleLineSymbol.STYLE_SHORTDOT,
+    // //     headline,
+    // //     description.prop('outerHTML'),
+    // //   );
+    // // }
+    // // if (hazard.geometries[0].type == 'MultiPolygon') {
+    // //   let polygonPoints = hazard.geometries[0].coordinates[0][0];
+    // //   mapLayer.addPolygon(
+    // //     polygonPoints,
+    // //     '#000000',
+    // //     [100, 100, 100, 0.2],
+    // //     3,
+    // //     SimpleLineSymbol.STYLE_SHORTDOT,
+    // //     headline,
+    // //     description.prop('outerHTML'),
+    // //   );
+    // // }
 
-    if (hazard.geometries[1].type == 'Point') {
-      mapLayer.addImageMarker(
-        hazard.geometries[1].coordinates[1],
-        hazard.geometries[1].coordinates[0],
-        icon,
-        headline,
-        description.prop('outerHTML'),
-      );
-    }
+    // // if (hazard.geometries[1].type == 'Point') {
+    // //   mapLayer.addImageMarker(
+    // //     hazard.geometries[1].coordinates[1],
+    // //     hazard.geometries[1].coordinates[0],
+    // //     icon,
+    // //     headline,
+    // //     description.prop('outerHTML'),
+    // //   );
+    // // }
 
-    //  if (hazard.clusteredWarnings.length) {
-    //     hazard.clusteredWarnings.forEach(function(clustered) {
+    // //  if (hazard.clusteredWarnings.length) {
+    // //     hazard.clusteredWarnings.forEach(function(clustered) {
 
-    //     })
-    //  }
+    // //     })
+    // //  }
   });
 }
 

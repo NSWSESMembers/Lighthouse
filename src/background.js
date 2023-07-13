@@ -32,7 +32,7 @@ const openSkyFeed = "https://opensky-network.org/api/states/all";
 const essentialEnergyOutagesFeed = 'https://www.essentialenergy.com.au/Assets/kmz/current.kml';
 const endeavourEnergyOutagesFeed = 'https://www.endeavourenergy.com.au/designs/connectors/outage-feeds/get-current-outage';
 const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
-const hazardWatchUrl = 'https://hazardwatch.gov.au/api/warnings'
+const hazardWatchUrl = 'https://feed.firesnearme.hazards.rfs.nsw.gov.au/'
 //external libs
 
 // Reaplce the date picker with more options
@@ -109,7 +109,6 @@ chrome.runtime.onMessage.addListener(
             return true;
         } else if (request.type === 'hazard-watch') {
             fetchHazardWatch(function(data) {
-                console.log(data)
                 sendResponse(data);
             });
             return true;

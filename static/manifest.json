@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
-  "name": "Lighthouse Development Preview",
-  "short_name": "Lighthouse Development Preview",
+  "name": "Lighthouse",
+  "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
-  "version": "2023.06.03.01",
+  "version": "",
     "browser_action": {
       "default_icon": {
         "16": "icons/lighthouse64_dev.png"
@@ -34,7 +34,7 @@
     "https://www.ausgrid.com.au/*",
     "https://www.endeavourenergy.com.au/*",
     "https://www.essentialenergy.com.au/*",
-    "https://hazardwatch.gov.au/api/warnings",
+    "https://feed.firesnearme.hazards.rfs.nsw.gov.au/*",
     "webRequest",
     "webRequestBlocking"
   ],
