@@ -6,7 +6,7 @@ const moment = require('moment');
 
 const packageName = "Lighthouse Development Preview"
 const now = new moment();
-const versionString = now.format('YYYY.MM.DD.HHmmSS')
+const versionString = now.format('YYYY.MM.DD.HHmm')
 
 module.exports = merge(common, {
   mode: 'development',
