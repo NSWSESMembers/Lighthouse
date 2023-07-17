@@ -115,7 +115,16 @@ window.addEventListener("message", function(event) {
   $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
     window.postMessage({type: "lhqs", data: data}, '*');
   })
-  }
+  } else if (event.data.type && (event.data.type == "FROM_PAGE_ASSIGNEDLHQ")) { //return a single units GPS location
+    console.log("ASSIGNED LHQ REQUESTED")
+    $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+      data.features.forEach(function(v){
+        if (v.properties.UNIT_CODE == event.data.lhq.Code) {
+          window.postMessage({type: "assignedLHQ", latitude: v.geometry.coordinates[1], longitude: v.geometry.coordinates[0]}, '*');
+        }
+      })
+    })
+    }
 }, false);
 
 function asbestosBoxColor(text, color, url) {

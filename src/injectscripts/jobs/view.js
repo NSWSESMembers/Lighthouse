@@ -237,6 +237,10 @@ whenAddressIsReady(function() {
    }
  }
 
+ if (masterViewModel.latitude.peek() == null && masterViewModel.longitude.peek() == null) {
+  $('#nearest-lhq-text').text('Address not geocoded')
+}
+
 
 
   //assetLocationButtonOn clicky clicky if saved
@@ -265,6 +269,31 @@ let instantRadiologModal = return_quickradiologmodal();
 
     if (!masterViewModel.geocodedAddress.peek().Latitude && !masterViewModel.geocodedAddress.peek().Longitude) {
       $('#nearest-asset-geoerror').show();
+      $('#nearest-asset-box').show();
+      $('#nearest-asset-table').hide();
+      if (!$('#asset-map')[0]._leaflet_id) {
+        console.log('Map doesnt exist, creating')
+      assetMap = L.map('asset-map', {
+      zoomSnap: 0.5
+      }).setView([-32.163191, 147.032179], 6); //geo middle of NSW
+      L.control.scale().addTo(assetMap);
+      esri.basemapLayer('Topographic', {ignoreDeprecationWarning: true}).addTo(assetMap);
+    }
+
+      //ask the bg for a the gps of the assied unit
+    window.postMessage({ type: "FROM_PAGE_ASSIGNEDLHQ", lhq:masterViewModel.entityAssignedTo.peek()}, "*");
+
+      //map the answer to the assigned LHQ
+    window.addEventListener('message', function (event) {
+      // We only accept messages from background
+      if (event.source !== window)
+          return;
+      if (event.data.type) {
+          if (event.data.type === 'assignedLHQ') {
+            assetMap.setView([event.data.latitude, event.data.longitude], 13)
+          }
+        }
+      })
       cb && cb()
     } else {
 
@@ -333,10 +362,10 @@ let instantRadiologModal = return_quickradiologmodal();
                       let y = hq.properties.POINT_Y;
 
                       let name = hq.properties.HQNAME;
-
+                      let code = hq.properties.UNIT_CODE
                       let details =
                       `<div id='lhqPopUp' style="width:250px">\
-                      <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${hq.properties.HQNAME}</div>\
+                      <div id='lhqCode' style="width:50%;margin:auto;text-align:center;font-weight: bold;">${name} (${code})</div>\
                       <div id='lhqStatusHolder' style="width:50%;margin:auto;text-align:center;"><span id='lhqStatus'>-Loading-</span></div>\
 
                       <div id='lhqacredHolder' style="padding-top:10px;width:100%;margin:auto">\
@@ -360,16 +389,17 @@ let instantRadiologModal = return_quickradiologmodal();
                       </div>\
                       </div>`;
 
-                      let icon = lighthouseUrl + "icons/ses.png";
+                      let icon = lighthouseUrl + "icons/ses_small.png";
 
                       var lhqMarkerIcon = L.divIcon({
                         className: 'custom-div-icon',
-                           html: `<div><img width="80%" src=${icon}></img></div>`,
-                          iconSize: [20, 20],
-                          iconAnchor: [10, 10]
+                           html: `<div><img width="50%" src=${icon}></img></div>`,
+                          iconSize: [16, 16],
+                          iconAnchor: [8, 8]
                       });
 
                       let marker = L.marker([y,x], {icon: lhqMarkerIcon}).addTo(assetMap)
+
                       marker.bindTooltip(details)
                       //console.debug(`SES LHQ at [${x},${y}]: ${name}`);
                       let contentLoaded = false;
@@ -377,7 +407,7 @@ let instantRadiologModal = return_quickradiologmodal();
                         if (!contentLoaded) {
                           contentLoaded = true
                         let toolTip = $($.parseHTML(marker.getTooltip()._content))
-                        fetchHqDetails(name, function (hqdeets) {
+                        fetchHqDetails(code, function (hqdeets) {
                           var c = 0;
                           $.each(hqdeets.contacts, function (k, v) {
                               if (v.ContactTypeId == 4 || v.ContactTypeId == 3) {
@@ -1377,6 +1407,13 @@ whenJobIsReady(function(){
         window.postMessage({ type: "FROM_PAGE_LHQ_RESCUE_DISTANCE", jType: masterViewModel.jobType.peek() ? masterViewModel.jobType.peek().Name : null, report: res, lat: masterViewModel.latitude.peek(), lng: masterViewModel.longitude.peek() }, "*");
       })
     })
+
+    if (masterViewModel.latitude.peek() == null && masterViewModel.longitude.peek() == null) {
+      $(searchButton).prop('disabled', true)
+      $(searchButton).addClass('disabled')
+
+    }
+    
     $('#nearest-rescue-lhq-text').append(searchButton)
   }
 
@@ -2689,11 +2726,11 @@ if (typeof (Number.prototype.toDeg) === "undefined") {
 }
 
 
-  function fetchHqDetails(HQName, cb) {
+  function fetchHqDetails(search, cb) {
      var hq = {}
      $.ajax({
          type: 'GET'
-         , url: urls.Base+'/Api/v1/Headquarters/Search?Name='+HQName
+         , url: urls.Base+'/Api/v1/Headquarters/Search?Name='+search
          , beforeSend: function(n) {
              n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
          },
