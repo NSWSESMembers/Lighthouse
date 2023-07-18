@@ -1,17 +1,12 @@
 /* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment, contentViewModel, layout */
 var clusterCodes = require('../lib/clusters.js');
 
-whenWeAreReady(layout.hqStatus, function () {
+whenWeAreReady(function () {
   if (typeof urls.Base == 'undefined') {
     urls.Base = 'https://' + location.hostname;
   }
 
-    let results = layout.hqStatus.peek().Entity //move this into here to make everything easier and remove a duplicate call
-    
-
-    user.hq = results;
-
-    var tonight = new Date();
+  var tonight = new Date();
 
     tonight.setHours(23, 59, 59, 0);
 
@@ -423,7 +418,7 @@ whenWeAreReady(layout.hqStatus, function () {
     //lighthouse menu for situation map
     if (location.pathname == '/Jobs/SituationalAwareness') {
       let regionfilter;
-      if (user.hq.EntityTypeId != 1) {
+      if (user.currentHqTypeId != 1) {
         //make region level more obvious
         regionfilter = user.hq.Code + ' Units';
       } else {
@@ -1524,14 +1519,23 @@ function filtershowallmycluster(model = filterViewModel) {
   });
 }
 
-function whenWeAreReady(varToCheck, cb) {
+function whenWeAreReady(cb) {
+
+  //fill user with a full object about the LHQ
+  $.get(urls.Base + "/Api/v1/Entities/" + user.currentHqId, function(data) {
+    user.hq = data;
+    user.hq.lighthouseLoaded = true;
+  })
+
   //when external vars have loaded
   var waiting = setInterval(function () {
     //run every 1sec until we have loaded the page (dont hate me Sam)
-    if (typeof varToCheck.peek() != 'undefined' && typeof varToCheck.peek() != 'function') { //be an object ffs
-      console.log('We are ready');
-      clearInterval(waiting); //stop timer
-      cb(); //call back
+    if (typeof user.hq != 'undefined') {
+      if (typeof user.hq.lighthouseLoaded != 'undefined') { //be an object ffs
+        console.log('We are ready');
+        clearInterval(waiting); //stop timer
+        cb(); //call back
+      }
     }
   }, 200);
 }
