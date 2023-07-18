@@ -1,5 +1,26 @@
 /* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment, contentViewModel, layout */
+
 var clusterCodes = require('../lib/clusters.js');
+
+window.postMessage(
+  {
+    type: 'LIGHTHOUSE_URL',
+  },
+  '*',
+);
+
+window.addEventListener('message', function (event) {
+  // We only accept messages from content scrip
+  if (event.source !== window) return;
+  if (event.data.type) {
+    if (event.data.type === 'RETURN_LIGHTHOUSE_URL') {
+      console.log(event.data)
+      this.window.lighthouseUrl = event.data.url
+      this.window.lighthouseEnviroment = event.data.lighthouseEnviroment
+    }
+  }
+});
+
 
 whenWeAreReady(function () {
   if (typeof urls.Base == 'undefined') {

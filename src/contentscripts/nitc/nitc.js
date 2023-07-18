@@ -13,7 +13,7 @@ $(
      class="btn btn-sm btn-default"
      style="margin-left: 20px; background: #d2322d; border-color: #edadab; color: white">
     <img style="width: 16px; vertical-align: top; margin-right: 5px"
-         src={chrome.extension.getURL("icons/lh.png")} />Export (Filtered)
+         src={chrome.runtime.getURL("icons/lh.png")} />Export (Filtered)
   </a>
 )
 .appendTo(bar);

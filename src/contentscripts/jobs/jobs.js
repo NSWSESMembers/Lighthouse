@@ -14,7 +14,7 @@ function makeButton(id, lighthousePage, background, border, text) {
     class="btn btn-sm btn-default lh-update-filter"
     style={'margin-left: 20px; background: ' + background + '; border-color: ' + border + '; color: white;'}>
     <img style="width: 16px; vertical-align: top; margin-right: 5px"
-    src={chrome.extension.getURL("icons/lh.png")} />{text}
+    src={chrome.runtime.getURL("icons/lh.png")} />{text}
     </a>
     )
   .appendTo(buttonBar);
