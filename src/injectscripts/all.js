@@ -1,4 +1,4 @@
-/* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment, contentViewModel, layout */
+/* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment, contentViewModel */
 
 var clusterCodes = require('../lib/clusters.js');
 
@@ -14,7 +14,6 @@ window.addEventListener('message', function (event) {
   if (event.source !== window) return;
   if (event.data.type) {
     if (event.data.type === 'RETURN_LIGHTHOUSE_URL') {
-      console.log(event.data)
       this.window.lighthouseUrl = event.data.url
       this.window.lighthouseEnviroment = event.data.lighthouseEnviroment
     }
