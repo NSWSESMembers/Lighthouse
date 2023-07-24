@@ -16,13 +16,15 @@ require ('leaflet-svg-shape-markers')
 require('lrm-graphhopper'); // Adds L.Routing.GraphHopper onto L.Routing
 require("leaflet/dist/leaflet.css");
 
-//require('esri-leaflet')
 
 console.log("Running inject script");
 
+
 //webpack fucks this right up. Ive manually copied the images overlay
 //TODO: Sam fix the webpack script
-L.Icon.Default.imagePath = `${lighthouseUrl}icons/`
+whenLighthouseIsReady(function() {
+  L.Icon.Default.imagePath = `${lighthouseUrl}icons/`
+})
 
 
 var assetMap; //global map holder
@@ -183,7 +185,7 @@ lighthouseTimelineTPlusWatchers();
 
 
 //call when the address exists
-whenAddressIsReady(function() {
+whenJobIsReady(function() {
   whenUrlIsReady(function() {
     if(typeof masterViewModel.geocodedAddress.peek() == 'undefined')
     {
@@ -1830,7 +1832,7 @@ function InstantTaskButton() {
   });
 
   $(quickTask).find('ul').empty();
-  var loading = (<li><a href="#" style="text-align: center;"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></a></li>);
+  var loading = (<li><div style="text-align: center; height: 35px"><i class="fa fa-refresh fa-spin fa-2x fa-fw"></i></div></li>);
   $(quickTask).find('ul').append(loading);
 
   let lh_SectorFilterEnabled = !( localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' || localStorage.getItem('LighthouseSectorFilterEnabled') == null );
@@ -1919,6 +1921,8 @@ function InstantTaskButton() {
 
               let sector = {}
               let nonsector = []
+              let localTeam = []
+
               $.each(response.responseJSON.Results, function(k, v) { //for every team that came back
                 if ($.inArray(v.Id,alreadyTasked) == -1) //not a currently active team on this job, so we can task them
                 {
@@ -1937,6 +1941,14 @@ function InstantTaskButton() {
                   //still create teams that have no TL
                   if (item === null) {
                     item = return_li(v.Id,v.Callsign.toUpperCase(),"No TL",v.TaskedJobCount+"");
+                  }
+
+                  //put local teams into a special array for zone and state users
+                  if (user.hq.EntityTypeId == 2 || user.hq.EntityTypeId == 3) {
+                    let assigned = v.AssignedTo ? v.AssignedTo.Id : v.CreatedAt.Id
+                    if (assigned == masterViewModel.entityAssignedTo.peek().Id) {
+                      localTeam.push($(item).clone())
+                    }
                   }
 
                   if (v.Sector === null)
@@ -1964,6 +1976,14 @@ function InstantTaskButton() {
               let finalli = [];
               let drawnsectors = [];
 
+              if (localTeam.length) {
+                finalli.push(return_lipres(`${masterViewModel.entityAssignedTo.peek().Code} Teams`));
+                $.each(localTeam, function(k, v){
+                  console.log(v)
+                  finalli.push(v);
+                })
+              }
+
               //finalli.push(return_lipres(masterViewModel.sector.peek().Name+" Sector Teams"));
               $.each(sector, function(k, v){
                 if (k in drawnsectors)
@@ -1976,6 +1996,7 @@ function InstantTaskButton() {
                   finalli.push($(v))
                 }
               });
+              
               if (nonsector.length) {
               //finalli.push(return_lidivider());
               finalli.push(return_lipres("Unsectorised Teams"));
@@ -1991,6 +2012,8 @@ function InstantTaskButton() {
               $(quickTask).find('ul').append(no_results);
             }
 
+          }, function(_number, _total){
+            //no progress indicator here
           });
 
         } else { //job has changed status since it was opened so warn them
@@ -2553,6 +2576,10 @@ setTimeout(checkAddressHistory, 400);
 
 // wait for teams to have loaded
 function whenTeamsAreReady(cb) { //when external vars have loaded
+  if (typeof masterViewModel != "undefined" & masterViewModel.teamsViewModel.teamsLoaded.peek() == true) {
+    console.log('teams already loaded')
+    cb()
+  } else {
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
     if (typeof masterViewModel != "undefined" & masterViewModel.teamsViewModel.teamsLoaded.peek() == true) {
       console.log("teams are ready");
@@ -2561,33 +2588,41 @@ function whenTeamsAreReady(cb) { //when external vars have loaded
     }
   }, 200);
 }
+}
 
 // wait for address to have loaded
-function whenAddressIsReady(cb) { //when external vars have loaded
-  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-    if (typeof masterViewModel !== "undefined" & masterViewModel.geocodedAddress != "undefined") {
-      if (typeof masterViewModel.geocodedAddress.peek() != "undefined" && masterViewModel.geocodedAddress.peek() !== null)
-      {
-        console.log("address is ready");
-      clearInterval(waiting); //stop timer
-      cb(); //call back
-    }
-  }
-}, 200);
-}
+//TODO: possibly redundant now
+// function whenAddressIsReady(cb) { //when external vars have loaded
+//   if (typeof masterViewModel !== "undefined" & typeof masterViewModel.geocodedAddress !== "undefined") {
+//     cb()
+//   } else {
+//     var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
+//       if (typeof masterViewModel !== "undefined" & masterViewModel.geocodedAddress != "undefined") {
+//         if (typeof masterViewModel.geocodedAddress.peek() != "undefined" && masterViewModel.geocodedAddress.peek() !== null) {
+//           console.log("address is ready");
+//           clearInterval(waiting); //stop timer
+//           cb(); //call back
+//         }
+//       }
+//     }, 200);
+//   }
+// }
 
 // wait for urls to have loaded
 function whenUrlIsReady(cb) { //when external vars have loaded
-  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-    if (typeof urls !== "undefined" & typeof urls.Base !== "undefined") {
-      if (urls.Base !== null)
-      {
-        console.log("urls is ready");
-      clearInterval(waiting); //stop timer
-      cb(); //call back
-    }
+  if (typeof urls !== "undefined" & typeof urls.Base !== "undefined") {
+    cb()
+  } else {
+    var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
+      if (typeof urls !== "undefined" & typeof urls.Base !== "undefined") {
+        if (urls.Base !== null) {
+          console.log("urls is ready");
+          clearInterval(waiting); //stop timer
+          cb(); //call back
+        }
+      }
+    }, 200);
   }
-}, 200);
 }
 
 // wait for job to have loaded
@@ -2597,6 +2632,21 @@ function whenJobIsReady(cb) { //when external vars have loaded
   } else {
   var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
       if (masterViewModel.jobLoaded() == true)
+      {
+      clearInterval(waiting); //stop timer
+      cb(); //call back
+    }
+}, 200);
+  }
+}
+
+// wait for job to have loaded
+function whenLighthouseIsReady(cb) { //when external vars have loaded
+  if (typeof lighthouseUrl !== "undefined") {
+    cb() //call back straight away
+  } else {
+  var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
+      if (typeof lighthouseUrl !== "undefined")
       {
       clearInterval(waiting); //stop timer
       cb(); //call back

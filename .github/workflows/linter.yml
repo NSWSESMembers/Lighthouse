@@ -1,7 +1,11 @@
 name: Lint Code Base
-on: [push, pull_request]
+on: 
+  pull_request:
+    branches:
+      - master
+      - development
 jobs:
-  build:
+  lint:
     name: Lint Code Base
     runs-on: ubuntu-latest
     steps:

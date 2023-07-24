@@ -37,7 +37,7 @@ window.addEventListener("message", function(event) {
     var t0 = performance.now('');
     $('#nearest-lhq-text').text('Searching...')
     $('#nearest-rescue-lhq-text').text('Searching...')
-  $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+  $.getJSON(chrome.runtime.getURL("resources/SES_HQs.geojson"), function (data) {
     let distances = []
     let rescueDistances = []
     data.features.forEach(function(v){
@@ -167,7 +167,7 @@ function asbestosBoxColor(text, color, url) {
 
 let job_asbestos_history = (
   <div class="form-group">
-  <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px" src={chrome.extension.getURL("icons/lh-black.png")} />Asbestos Register</label>
+  <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px" src={chrome.runtime.getURL("icons/lh-black.png")} />Asbestos Register</label>
   <div id="asbestos-register-box" class="col-md-10 col-lg-8" style="width:inherit">
   <a style="color:white;background-color:red" id="asbestos-register-error"></a>
   <p id="asbestos-register-text" class="form-control-static">Waiting For An Address</p>
@@ -178,7 +178,7 @@ let job_asbestos_history = (
   let job_nearest_lhq = (
     <div class="form-group">
     <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-    src={chrome.extension.getURL("icons/lh-black.png")} />Closest LHQs</label>
+    src={chrome.runtime.getURL("icons/lh-black.png")} />Closest LHQs</label>
     <div id="nearest-lhq-box" class="col-md-9 col-lg-9">
     <div class="btn-toolbar" id="nearest-lhq-text" style="margin: unset; margin-left: -5px;">
     <p class="form-control-static">Waiting For A Location</p>
@@ -190,7 +190,7 @@ let job_asbestos_history = (
   let job_nearest_rescue_lhq = (
     <div class="form-group" id="nearest-rescue-lhq-group" style="display: none;">
     <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-    src={chrome.extension.getURL("icons/lh-black.png")} /><span id="nearest-rescue-lhq-label">Closest Accreditred LHQs</span></label>
+    src={chrome.runtime.getURL("icons/lh-black.png")} /><span id="nearest-rescue-lhq-label">Closest Accreditred LHQs</span></label>
     <div id="nearest-rescue-lhq-box" class="col-md-9 col-lg-9">
     <div class="btn-toolbar" id="nearest-rescue-lhq-text" style="margin: unset; margin-left: -5px;">
     <p class="form-control-static">Waiting For A Location</p>

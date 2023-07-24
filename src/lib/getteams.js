@@ -1,5 +1,5 @@
 /* global moment, $, urls, user */
-var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
+var ReturnTeamsActiveAtLHQ = function(hq, sector, cb, progress) {
 	var now = moment();
 	var end = moment();
 	end.subtract(1, 'y');
@@ -52,7 +52,7 @@ var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
 			, 'SortOrder':          'desc'
 		}
 
-		const perPageLimit = 250;
+		const perPageLimit = 20;
 		var currentPage = 1;
 		var totalResults = [];
 
@@ -87,6 +87,7 @@ var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
 
     if (result.Results.length >= 1) { //add it to the array
     	totalResults.push.apply(totalResults, result.Results);
+		progress && progress(totalResults.length, result.TotalItems) //progress
       if (totalResults.length < result.TotalItems) { //length of array is less than expected number
         currentPage++; //guess we should get the next
         goGet(HandleResults,currentPage);
@@ -112,7 +113,7 @@ var ReturnTeamsActiveAtLHQ = function(hq, sector, cb) {
 
   function goGet(cb,page) { //make the XMLHttpRequest with the given URL
   	theData.PageIndex = page
-  	theData.perPageLimit = perPageLimit
+  	theData.PageSize = perPageLimit
   	$.ajax({
   		type: 'GET'
   		, url: urls.Base+'/Api/v1/Teams/Search'

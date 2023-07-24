@@ -20,6 +20,6 @@ if (model.clientName == "beacon" || model.clientName == "beacon Train" ||  model
     );
 
 
-  $('#lhbg').css({ 'z-index':'-100', 'background-image': 'url('+chrome.extension.getURL("icons/lhbackdrop_dark.png")+')','background-repeat': 'no-repeat', 'background-size': 'auto 70%','background-position': 'bottom right','width': '100%','height':'100%','position':'absolute','top': '0px'})
+  $('#lhbg').css({ 'z-index':'-100', 'background-image': 'url('+chrome.runtime.getURL("icons/lhbackdrop_dark.png")+')','background-repeat': 'no-repeat', 'background-size': 'auto 70%','background-position': 'bottom right','width': '100%','height':'100%','position':'absolute','top': '0px'})
 
 }

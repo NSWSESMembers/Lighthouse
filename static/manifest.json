@@ -1,22 +1,21 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Lighthouse",
   "short_name": "Lighthouse",
   "description": "Provides multiple enhancements to NSW SES beacon.",
   "version": "",
-    "browser_action": {
+    "action": {
       "default_icon": {
         "16": "icons/lighthouse64_dev.png"
         },
-        "default_title": "Lighthouse",
-        "default_popup": "pages/popup.html"
+      "default_title": "Lighthouse",
+      "default_popup": "pages/popup.html"
     },
   "icons": {
     "128": "icons/lighthouse128_dev.png",
     "64":"icons/lighthouse64_dev.png"
   },
-  "permissions": [
-    "storage",
+  "host_permissions": [
     "https://identitypreview.ses.nsw.gov.au/core/login",
     "https://identitytrain.ses.nsw.gov.au/core/login",
     "https://identitytest.ses.nsw.gov.au/core/login",
@@ -34,9 +33,11 @@
     "https://www.ausgrid.com.au/*",
     "https://www.endeavourenergy.com.au/*",
     "https://www.essentialenergy.com.au/*",
-    "https://feed.firesnearme.hazards.rfs.nsw.gov.au/*",
-    "webRequest",
-    "webRequestBlocking"
+    "https://feed.firesnearme.hazards.rfs.nsw.gov.au/*"
+  ],
+  "permissions": [
+    "storage",
+    "webRequest"
   ],
   "content_scripts": [
     {
@@ -163,13 +164,20 @@
     }
   ],
   "web_accessible_resources": [
-    "injectscripts/*",
-    "icons/*",
-    "pages/*",
-    "resources/*",
-    "manifest.json"
+    {
+      "resources" : [
+        "injectscripts/*",
+        "icons/*",
+        "pages/*",
+        "resources/*",
+        "manifest.json"
+      ],
+      "matches": [
+        "*://*/*"
+      ]
+    }
   ],
   "background": {
-    "scripts": ["background.js"]
+    "service_worker": "background.js"
   }
 }
