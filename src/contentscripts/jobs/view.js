@@ -13,7 +13,7 @@ window.addEventListener("message", function(event) {
   if (event.source != window)
     return;
     if (event.data.type && (event.data.type == "FROM_PAGE_LHQ_RESCUE_DISTANCE")) {
-      $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+      $.getJSON(chrome.runtime.getURL("resources/SES_HQs.geojson"), function (data) {
         let rescueDistances = []
         data.features.forEach(function(v){
           v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,event.data.lat,event.data.lng)/1000
@@ -97,7 +97,7 @@ window.addEventListener("message", function(event) {
     // do nothing
   } else if (event.data.type && (event.data.type == "FROM_PAGE_LHQ_DISTANCE")) {
     var t0 = performance.now();
-  $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+  $.getJSON(chrome.runtime.getURL("resources/SES_HQs.geojson"), function (data) {
     let distances = []
     data.features.forEach(function(v){
       v.distance = vincenty.distVincenty(v.properties.POINT_Y,v.properties.POINT_X,event.data.lat,event.data.lng)/1000
@@ -112,12 +112,12 @@ window.addEventListener("message", function(event) {
 })
 } else if (event.data.type && (event.data.type == "FROM_PAGE_LHQS")) {
   console.log("LHQS REQUESTED")
-  $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+  $.getJSON(chrome.runtime.getURL("resources/SES_HQs.geojson"), function (data) {
     window.postMessage({type: "lhqs", data: data}, '*');
   })
   } else if (event.data.type && (event.data.type == "FROM_PAGE_ASSIGNEDLHQ")) { //return a single units GPS location
     console.log("ASSIGNED LHQ REQUESTED")
-    $.getJSON(chrome.extension.getURL("resources/SES_HQs.geojson"), function (data) {
+    $.getJSON(chrome.runtime.getURL("resources/SES_HQs.geojson"), function (data) {
       data.features.forEach(function(v){
         if (v.properties.UNIT_CODE == event.data.lhq.Code) {
           window.postMessage({type: "assignedLHQ", latitude: v.geometry.coordinates[1], longitude: v.geometry.coordinates[0]}, '*');
@@ -149,7 +149,7 @@ function renderQuickText(id, selections) {
     <div class="form-group">
     <label class="col-md-4 col-lg-3 control-label">
     <img style="width:16px;vertical-align:top;margin-right:5px"
-    src={chrome.extension.getURL("icons/lh-black.png")} />
+    src={chrome.runtime.getURL("icons/lh-black.png")} />
     Quick Text
     </label>
     <div class="col-md-8 col-lg-9" style="margin-bottom: 15px;">
@@ -210,7 +210,7 @@ var html = (
   <div class="form-group">
   <label class="col-md-4 col-lg-3 control-label">
   <img style="width:16px;vertical-align:top;margin-right:5px"
-  src={chrome.extension.getURL("icons/lh-black.png")} />
+  src={chrome.runtime.getURL("icons/lh-black.png")} />
   Quick Tasks
   </label>
   <div class="col-md-8 col-lg-9" style="margin-bottom: 15px;">
@@ -239,7 +239,7 @@ $('#completeTeamModal > div > div > div.modal-body > div > div > div > textarea[
 let job_view_history = (
   <fieldset id="job_view_history_groups" class="col-md-12">
   <legend class="main"><img style="width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.extension.getURL("icons/lh-black.png")} />Job History <span>12 Months search by Address</span></legend>
+  src={chrome.runtime.getURL("icons/lh-black.png")} />Job History <span>12 Months search by Address</span></legend>
   <div id="job_view_history_container">
   <div style="text-align:center">
   <img src="/Content/images/loading_30.gif" />
@@ -252,7 +252,7 @@ let job_view_history = (
 let job_asbestos_history = (
   <div class="form-group">
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.extension.getURL("icons/lh-black.png")} />Asbestos Register</label>
+  src={chrome.runtime.getURL("icons/lh-black.png")} />Asbestos Register</label>
   <div id="asbestos-register-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
   <a style="color:white;background-color:red" id="asbestos-register-error"></a>
   <p id="asbestos-register-text" class="form-control-static">Searching...</p>
@@ -263,7 +263,7 @@ let job_asbestos_history = (
 let job_nearest_lhq = (
   <div class="form-group">
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.extension.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest LHQs </abbr></label>
+  src={chrome.runtime.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest LHQs </abbr></label>
   <div id="nearest-lhq-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
   <p id="nearest-lhq-text" class="form-control-static">Waiting...</p>
   </div>
@@ -273,7 +273,7 @@ let job_nearest_lhq = (
 let job_nearest_rescue_lhq = (
   <div class="form-group" id="nearest-rescue-lhq-group" style="display: none;">
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.extension.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest Accreditred LHQs</abbr></label>
+  src={chrome.runtime.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest Accreditred LHQs</abbr></label>
   <div id="nearest-rescue-lhq-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
   <p id="nearest-rescue-lhq-text" class="form-control-static"></p>
   </div>
@@ -283,7 +283,7 @@ let job_nearest_rescue_lhq = (
 let job_nearest_asset_widget = (
   <div class="widget" style="" id="lighthouse_nearestasset">
         <div class="widget-header">
-          <h3><img style="width:16px;vertical-align:inherit;margin-right:5px" src={chrome.extension.getURL("icons/lh-black.png")} /> Nearest Asset Locations</h3>
+          <h3><img style="width:16px;vertical-align:inherit;margin-right:5px" src={chrome.runtime.getURL("icons/lh-black.png")} /> Nearest Asset Locations</h3>
           <span class="pull-right btn-group btn-group-sm" data-toggle="buttons">
           <button id="assetLocationButtonFiltered" type="button" class="btn btn-inactive"><span class="text">Filtered Only</span></button>
           <button id="assetLocationButtonActiveOnly" type="button" class="btn btn-inactive"><span class="text">Active Only</span></button>
@@ -426,7 +426,7 @@ let job_lighthouse_actions = (
   <div id="lighthouse_actions" class="widget actions-box" style="">
     <div class="widget-header">
         <h3><img style="width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.extension.getURL("icons/lh-black.png")} /> Lighthouse Actions</h3>
+  src={chrome.runtime.getURL("icons/lh-black.png")} /> Lighthouse Actions</h3>
     </div>
     <div class="widget-content" id="lighthouse_actions_content">
     </div>

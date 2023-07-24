@@ -56,7 +56,8 @@
     "markerwithlabel": "^2.0.2",
     "moment": "^2.29.1",
     "nunjucks": "^3.2.4",
-    "stopwords": "0.0.5"
+    "stopwords": "0.0.5",
+    "xmldom": "^0.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",

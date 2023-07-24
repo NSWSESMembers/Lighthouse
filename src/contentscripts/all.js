@@ -21,18 +21,19 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1)
 require('../styles/all.css');
 
 //set the extension code var into the head
-var s = document.createElement('script');
-s.setAttribute('type', 'text/javascript');
-s.innerHTML = "var lighthouseUrl = \"" + chrome.extension.getURL("") + "\";\n var lighthouseEnviroment = \"" +(chrome.manifest.name.includes("Development") ? "Development" : "Production")+"\";\n";
-
-(document.head || document.documentElement).appendChild(s)
+// var s = document.createElement('script');
+// s.setAttribute('type', 'text/javascript');
+// s.innerHTML = "var lighthouseUrl = \"" + chrome.runtime.getURL("") + "\";\n var lighthouseEnviroment = \"" +(chrome.manifest.name.includes("Development") ? "Development" : "Production")+"\";\n";
+//(document.head || document.documentElement).appendChild(s)
 
 
 window.addEventListener("message", function(event) {
   // We only accept messages from ourselves or the extension
   if (event.source != window)
     return;
-  if (event.data.type && (event.data.type == "FETCH_COLLECTION")) {
+    if (event.data.type && (event.data.type == "LIGHTHOUSE_URL")) {
+      window.postMessage({type: 'RETURN_LIGHTHOUSE_URL', url: chrome.runtime.getURL(""), lighthouseEnviroment: (chrome.manifest.name.includes("Development") ? "Development" : "Production")})
+    } else if (event.data.type && (event.data.type == "FETCH_COLLECTION")) {
     chrome.storage.sync.get([event.data.name+'-'+location.hostname], function (data){ //append hostname so that storage is specific to host (trainbeacon/production/preview)
       window.postMessage({type: 'RETURN_COLLECTION', name: event.data.name, dataresult: data[event.data.name+'-'+location.hostname]}, '*'); //return object can be removed (name+lostname)
     })

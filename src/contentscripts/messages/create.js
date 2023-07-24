@@ -14,7 +14,7 @@ function renderPrefillCheckBox() {
 		<span class="pull-right h6">
 		<span style="vertical-align:text-top" id="lighthousePrefillEnabled" class={"fa fa-lg "+selected}></span>
 		<img style="width:16px;vertical-align:bottom;margin-right:5px;margin-left:5px"
-		src={chrome.extension.getURL("icons/lh-black.png")} /> Prefill Home LHQ
+		src={chrome.runtime.getURL("icons/lh-black.png")} /> Prefill Home LHQ
 		</span>
 		);
 }
@@ -27,7 +27,7 @@ function renderRememberReplyCheckBox() {
 		<span class="pull-right h6">
 		<span style="vertical-align:text-top" id="lighthouseReplyRemember" class={"fa fa-lg "+selected}></span>
 		<img style="width:16px;vertical-align:bottom;margin-right:5px;margin-left:5px"
-		src={chrome.extension.getURL("icons/lh-black.png")} /> Remember Reply Address
+		src={chrome.runtime.getURL("icons/lh-black.png")} /> Remember Reply Address
 		</span>
 		);
 }
@@ -38,7 +38,7 @@ function renderHQTeams() {
 	return (
 		<fieldset id="HQTeamsSet" >
 		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:-21px"
-		src={chrome.extension.getURL("icons/lh-black.png")} />Teams Attached to HQ</legend>
+		src={chrome.runtime.getURL("icons/lh-black.png")} />Teams Attached to HQ</legend>
 		<div class="panel panel-default">
 		<div class="panel-heading"><span id="teamshq">HQ Teams</span><span id="teamscount" class="pull-right badge">0</span></div>
 		<div id="lighthouseteams" class="panel-body">
@@ -56,7 +56,7 @@ function renderHQNitc() {
 	return (
 		<fieldset id="HQNitcSet">
 		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:-21px"
-		src={chrome.extension.getURL("icons/lh-black.png")} />NITC Events At HQ</legend>
+		src={chrome.runtime.getURL("icons/lh-black.png")} />NITC Events At HQ</legend>
 		<div class="panel panel-default"  id="lighthousenitcpanel">
 		<div class="panel-heading"><span id="nitchq">NITC Events</span><span id="nitccount" class="pull-right badge">0</span></div>
 		<div id="lighthousenitc" class="panel-body">
@@ -76,7 +76,7 @@ function renderMessageTemplates() {
 	return (
 		<fieldset id="MessageTemplates">
 		<legend><img style="width:16px;vertical-align:baseline;margin-right:5px;margin-left:-21px"
-		src={chrome.extension.getURL("icons/lh-black.png")} />Message Templates</legend>
+		src={chrome.runtime.getURL("icons/lh-black.png")} />Message Templates</legend>
 		<div class="panel panel-default"  id="lighthousemessagetemplatepanel">
 		<div class="panel-heading"><span id="messageTemplateHeader">Message Templates for</span></div>
 		<div id="messageTemplateBody" class="panel-body">

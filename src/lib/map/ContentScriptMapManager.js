@@ -4,17 +4,17 @@ const DOM = require('jsx-dom-factory').default;
 import BeaconClient from '../../shared/BeaconClient.js';
 
 
-const lighthouseIcon = chrome.extension.getURL('icons/lh-black.png');
-const teamIcon = chrome.extension.getURL('icons/bus.png');
-const assetIcon = chrome.extension.getURL('icons/asset-icons/asset-red.png');
-//const hazardWatchIcon = chrome.extension.getURL('icons/hazardWatch.png');
+const lighthouseIcon = chrome.runtime.getURL('icons/lh-black.png');
+const teamIcon = chrome.runtime.getURL('icons/bus.png');
+const assetIcon = chrome.runtime.getURL('icons/asset-icons/asset-red.png');
+//const hazardWatchIcon = chrome.runtime.getURL('icons/hazardWatch.png');
 
-const helicopterIcon = chrome.extension.getURL('icons/helicopter.png');
-const rfsIcon = chrome.extension.getURL('icons/rfs_emergency.png');
-const lhqIcon = chrome.extension.getURL('icons/ses.png');
-const rmsIcon = chrome.extension.getURL('icons/rms.png');
-const rfscorpIcon = chrome.extension.getURL('icons/rfs.png');
-const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
+const helicopterIcon = chrome.runtime.getURL('icons/helicopter.png');
+const rfsIcon = chrome.runtime.getURL('icons/rfs_emergency.png');
+const lhqIcon = chrome.runtime.getURL('icons/ses.png');
+const rmsIcon = chrome.runtime.getURL('icons/rms.png');
+const rfscorpIcon = chrome.runtime.getURL('icons/rfs.png');
+const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
 
 
 
@@ -299,7 +299,7 @@ const sesIcon = chrome.extension.getURL('icons/ses_corp.png');
      */
      _requestLhqsLayerUpdate() {
         console.debug('updating LHQs layer');
-        $.getJSON(chrome.extension.getURL('resources/SES_HQs.geojson'), function (data) {
+        $.getJSON(chrome.runtime.getURL('resources/SES_HQs.geojson'), function (data) {
             ContentScriptMapManager._passLayerDataToInject('lhqs', data);
         }.bind(this))
     }

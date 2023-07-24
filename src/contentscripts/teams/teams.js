@@ -13,7 +13,7 @@ $('.widget-header').append(
      style="margin-left: 20px; background: blue; color: white"
      href="#">
     <img style="width: 16px; vertical-align: top; margin-right: 5px"
-         src={chrome.extension.getURL("icons/lh.png")} />
+         src={chrome.runtime.getURL("icons/lh.png")} />
       Summary Screen
   </a>
 );
