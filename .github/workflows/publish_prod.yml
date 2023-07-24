@@ -1,8 +1,8 @@
-name: Publish Dev Preview to Chrome Store
+name: Publish to Chrome Store
 on:
   push:
     branches:
-      - development
+      - master
 jobs:
   lintandpublish:
     name: Publish Dev
@@ -22,7 +22,7 @@ jobs:
         uses: mnao305/chrome-extension-upload@v4.0.1
         with:
           file-path: build/*.zip
-          extension-id: jcmiinngebdojjbcjlpjpdhiankmjbda
+          extension-id: eheijalihofgiaoeanmnjceefmcpajnb
           client-id: ${{ secrets.CHROMESTORE_CLIENT_ID }}
           client-secret: ${{ secrets.CHROMESTORE_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROMESTORE_REFRESH_TOKEN }}
