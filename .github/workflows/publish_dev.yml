@@ -21,7 +21,7 @@ jobs:
       - name: Chrome extension upload action
         uses: mnao305/chrome-extension-upload@v4.0.1
         with:
-          file-path: ./build/*.zip
+          file-path: ../build/*.zip
           extension-id: jcmiinngebdojjbcjlpjpdhiankmjbda
           client-id: ${{ secrets.CHROMESTORE_CLIENT_ID }}
           client-secret: ${{ secrets.CHROMESTORE_CLIENT_SECRET }}
