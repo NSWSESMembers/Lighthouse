@@ -2,7 +2,8 @@ name: Publish Dev Preview to Chrome Store
 on:
   push:
     branches:
-      - development
+      - master
+      - main
 jobs:
   lintandpublish:
     name: Publish Dev
@@ -16,7 +17,7 @@ jobs:
         run: npm install
       - name: Lint
         run: npm run lint
-      - name: Build Dev
+      - name: Build package
         run: npm run dev
       - name: Chrome extension upload action
         uses: mnao305/chrome-extension-upload@v4.0.1
@@ -26,5 +27,5 @@ jobs:
           client-id: ${{ secrets.CHROMESTORE_CLIENT_ID }}
           client-secret: ${{ secrets.CHROMESTORE_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROMESTORE_REFRESH_TOKEN }}
-          publish: false
+          publish: true
           glob: true

@@ -1,9 +1,8 @@
-name: Lint Code Base
+name: Linter
 on: 
   pull_request:
     branches:
       - master
-      - development
 jobs:
   lint:
     name: Lint Code Base
