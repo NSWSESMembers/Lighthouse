@@ -1,8 +1,8 @@
 name: Lint Code Base
 on: [push, pull_request]
 jobs:
-  fetch:
-    name: fetch and install
+  lint:
+    name: Lint Code Base
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -11,10 +11,5 @@ jobs:
           fetch-depth: 0
       - name: Install modules
         run: npm install
-  lint:
-    name: Lint Code Base
-    runs-on: ubuntu-latest
-    needs: fetch
-    steps:
       - name: Lint
-        run: npm run lint      
+        run: npm run lint
