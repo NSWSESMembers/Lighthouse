@@ -8,7 +8,7 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1)
   var DOM = require('jsx-dom-factory').default;
 
 
-  let version = 'v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
+  let version = 'v'+chrome.manifest.version_name+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
 
   console.log(`%c Lighthouse extension ${version} version`, "color: #ffffff; background: #363636; padding: 0 3px;");
   

@@ -1,6 +1,6 @@
 require('./lib/shared_chrome_code.js'); // side-effect
 
-let version = 'Lighthouse v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
+let version = 'Lighthouse v'+chrome.manifest.version_name+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
 
 document.getElementById("version").innerHTML = version
 

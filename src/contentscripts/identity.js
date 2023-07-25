@@ -9,7 +9,7 @@ if (model.clientName == "beacon" || model.clientName == "beacon Train" ||  model
   var $ = require('jquery/dist/jquery.min');
   require('../pages/lib/shared_chrome_code.js'); // side-effect
 
-  let version = 'v'+chrome.manifest.version+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
+  let version = 'v'+chrome.manifest.version_name+' '+(chrome.manifest.name.includes("Development") ? "Development" : "Production")
   $('body').append(
     <span id ='lhbg'>
     <div class="col-xs-12" style="position:fixed;bottom:0px;right:0px;width:600px;text-align:right;margin-right:-10px;color:white">

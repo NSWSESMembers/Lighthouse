@@ -5,8 +5,13 @@ const moment = require('moment');
 
 const packageName = "Lighthouse Development Preview"
 const now = new moment();
-const versionString = now.format('YYYY.MM.DD.HHmmSS')
+const versionString = now.format('YYYY.MM.DD.HHmm')
 
+// get git info from command line
+let commitHash = require('child_process')
+  .execSync('git rev-parse --short HEAD')
+  .toString()
+  .trim();
 
 module.exports = merge(common, {
   mode: 'development',
@@ -20,9 +25,10 @@ module.exports = merge(common, {
         base: './static/manifest.json',
         extend: {
           version: versionString,
+          version_name: `${versionString}-${commitHash}`,
           name: packageName,
           short_name: packageName,
-          browser_action : {
+          action : {
             default_icon : {
               16 : "icons/lighthouse64_dev.png"
             }
