@@ -1542,16 +1542,36 @@ function filtershowallmycluster(model = filterViewModel) {
 function whenWeAreReady(cb) {
 
   //fill user with a full object about the LHQ
-  $.get(urls.Base + "/Api/v1/Entities/" + user.currentHqId, function(data) {
-    user.hq = data;
-    user.hq.lighthouseLoaded = true;
-  })
+  let userHq = sessionStorage.getItem("userHq");
+  if (userHq == null) {
+    console.log("no userHQ sessionStorage, fetching")
+    $.get(urls.Base + "/Api/v1/Entities/" + user.currentHqId, function(data) {
+      user.hq = data;
+      user.hq.lighthouseHqLoaded = true;
+      sessionStorage.setItem("userHq", JSON.stringify(data));
+    })
+  } else {
+    if (JSON.parse(userHq).Id == user.currentHqId) {
+      console.log("userHQ loaded from sessionStorage")
+      user.hq = JSON.parse(userHq)
+      user.hq.lighthouseHqLoaded = true;
+    } else {
+      console.log("userHQ sessionStorage hq id mismatch, refetching")
+      $.get(urls.Base + "/Api/v1/Entities/" + user.currentHqId, function(data) {
+        user.hq = data;
+        user.hq.lighthouseHqLoaded = true;
+        sessionStorage.setItem("userHq", JSON.stringify(data));
+      })
+    }
+  }
+
+  
 
   //when external vars have loaded
   var waiting = setInterval(function () {
     //run every 1sec until we have loaded the page (dont hate me Sam)
     if (typeof user.hq != 'undefined') {
-      if (typeof user.hq.lighthouseLoaded != 'undefined') { //be an object ffs
+      if (typeof user.hq.lighthouseHqLoaded != 'undefined') { //be an object ffs
         console.log('We are ready');
         clearInterval(waiting); //stop timer
         cb(); //call back
