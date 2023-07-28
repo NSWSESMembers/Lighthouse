@@ -237,7 +237,7 @@ $('#completeTeamModal > div > div > div.modal-body > div > div > div > textarea[
 
 // Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
 let job_view_history = (
-  <fieldset id="job_view_history_groups" class="col-md-12">
+  <fieldset id="job_view_history_groups" class="col-md-12" style="overflow:scroll; max-height:500px">
   <legend class="main"><img style="width:16px;vertical-align:inherit;margin-right:5px"
   src={chrome.runtime.getURL("icons/lh-black.png")} />Job History <span>12 Months search by Address</span></legend>
   <div id="job_view_history_container">
