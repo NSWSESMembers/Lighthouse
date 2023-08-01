@@ -798,6 +798,6 @@ function parse_query_string(query) {
 
 
 function stripNSW(address) {
-  const regex = /(.*)(, NSW(, \d{4})?)/i;
+  const regex = /(.*)(,? NSW(,? \d{4})?)/i;
   return(address.replace(regex, '$1'));
 }
