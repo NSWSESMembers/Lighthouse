@@ -37,14 +37,10 @@ masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
 masterViewModel.messagesViewModel.messages.subscribe(lighthouseDictionary);
 
 //if the ETA inputs are visable
-masterViewModel.teamsViewModel.jobTeamStatusBeingUpdated.subscribe(
-  lighthouseETA,
-);
+masterViewModel.teamsViewModel.jobTeamStatusBeingUpdated.subscribe(lighthouseETA);
 
 //if the ETA time changes
-masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.subscribe(
-  lighthouseETAFromNow,
-);
+masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.subscribe(lighthouseETAFromNow);
 
 //if tasking update
 
@@ -56,16 +52,12 @@ masterViewModel.teamsViewModel.taskedTeams.subscribe(function () {
 });
 
 function lighthouseETAFromNow() {
-  var future = moment(
-    masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.peek(),
-  );
+  var future = moment(masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.peek());
   var now = moment();
   var totalHours = future.diff(now, 'hours');
   var totalMinutes = Math.ceil(future.diff(now, 'minutes'));
   var clearMinutes = Math.ceil(totalMinutes % 60);
-  $('#quickETAtext').text(
-    'In ' + totalHours + ' hours and ' + clearMinutes + ' minutes',
-  );
+  $('#quickETAtext').text('In ' + totalHours + ' hours and ' + clearMinutes + ' minutes');
 }
 
 function lighthouseETA() {
@@ -88,48 +80,44 @@ function lighthouseETA() {
     };
 
     //dont draw for offsite
-    if (
-      masterViewModel.teamsViewModel.jobTeamStatusTypeBeingUpdated().Id != 5
-    ) {
-      $(
-        'a[data-bind$="loadingButton: $parent.updatingJobTeamStatus, click: $parent.updateJobTeamStatus"]',
-      ).each(function (k, v) {
-        //there can only be one, but why not handle more than one incase
+    if (masterViewModel.teamsViewModel.jobTeamStatusTypeBeingUpdated().Id != 5) {
+      $('a[data-bind$="loadingButton: $parent.updatingJobTeamStatus, click: $parent.updateJobTeamStatus"]').each(
+        function (k, v) {
+          //there can only be one, but why not handle more than one incase
 
-        var buttons = return_quicketarow();
-        var text = return_quicketamoment();
+          var buttons = return_quicketarow();
+          var text = return_quicketamoment();
 
-        $(
-          'div[data-bind$="validationElement: $parent.jobTeamStatusEstimatedCompletion"].input-group',
-        ).after(text);
+          $('div[data-bind$="validationElement: $parent.jobTeamStatusEstimatedCompletion"].input-group').after(text);
 
-        $(buttons)
-          .find('#5min')
-          .click(function () {
-            addToTime(5, v, text);
-          });
-        $(buttons)
-          .find('#10min')
-          .click(function () {
-            addToTime(10, v, text);
-          });
-        $(buttons)
-          .find('#15min')
-          .click(function () {
-            addToTime(15, v, text);
-          });
-        $(buttons)
-          .find('#30min')
-          .click(function () {
-            addToTime(30, v, text);
-          });
-        $(buttons)
-          .find('#60min')
-          .click(function () {
-            addToTime(60, v, text);
-          });
-        $(v).before(buttons);
-      });
+          $(buttons)
+            .find('#5min')
+            .click(function () {
+              addToTime(5, v, text);
+            });
+          $(buttons)
+            .find('#10min')
+            .click(function () {
+              addToTime(10, v, text);
+            });
+          $(buttons)
+            .find('#15min')
+            .click(function () {
+              addToTime(15, v, text);
+            });
+          $(buttons)
+            .find('#30min')
+            .click(function () {
+              addToTime(30, v, text);
+            });
+          $(buttons)
+            .find('#60min')
+            .click(function () {
+              addToTime(60, v, text);
+            });
+          $(v).before(buttons);
+        },
+      );
     }
   }, 0);
 }
@@ -138,80 +126,65 @@ function lighthouseTasking() {
   console.log('Tasking Changes, adding buttons where needed per team');
   ///Horrible nasty code for untasking
 
-  $(
-    "a[data-bind=\"attr: {href: '/Teams/' + Team.Id + '/Edit'}, text: Team.Callsign\"",
-  ).each(function (k, v) {
+  $("a[data-bind=\"attr: {href: '/Teams/' + Team.Id + '/Edit'}, text: Team.Callsign\"").each(function (k, v) {
     //for every dom that shows team name
     if ($(v).parent().find('#message').length == 0) {
       //check for an existing msg button
       let DOMCallsign = $(this)[0].href.split('/')[4];
       //for every tasked team
-      $.each(
-        masterViewModel.teamsViewModel.taskedTeams.peek(),
-        function (k, vv) {
-          //match against this DOM
-          if (vv.Team.Id == DOMCallsign && vv.Team.Members.length) {
-            //attach a sms button
-            let msg = return_message_button();
-            $(v).after(msg);
+      $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function (k, vv) {
+        //match against this DOM
+        if (vv.Team.Id == DOMCallsign && vv.Team.Members.length) {
+          //attach a sms button
+          let msg = return_message_button();
+          $(v).after(msg);
 
-            //click function
-            $(msg).click(function () {
-              event.stopImmediatePropagation();
-              var tightarray = [];
-              vv.Team.Members.map(function (member) {
-                tightarray.push(member.Person.Id);
-              });
-              window.open(
-                '/Messages/Create?jobId=' +
-                  escape(jobId) +
-                  '&lhquickrecipient=' +
-                  escape(JSON.stringify(tightarray)),
-                '_blank',
-              );
+          //click function
+          $(msg).click(function () {
+            event.stopImmediatePropagation();
+            var tightarray = [];
+            vv.Team.Members.map(function (member) {
+              tightarray.push(member.Person.Id);
             });
-          }
-        },
-      );
+            window.open(
+              '/Messages/Create?jobId=' + escape(jobId) + '&lhquickrecipient=' + escape(JSON.stringify(tightarray)),
+              '_blank',
+            );
+          });
+        }
+      });
     } else {
       console.log('already has a sms button');
     }
   });
 
-  $(
-    'div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right',
-  ).each(function (k, v) {
+  $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function (
+    k,
+    v,
+  ) {
     //for every team dom
     if ($(v).parent().find('#untask').length == 0) {
       //check for an existing untask button
 
       //pull out the call sign and the status
-      let DOMCallsign =
-        $(this)[0].parentNode.children[0].children[0].href.split('/')[4];
+      let DOMCallsign = $(this)[0].parentNode.children[0].children[0].href.split('/')[4];
       let DOMStatus = $(this)[0].parentNode.children[1].innerText.split(' ')[0];
       //for every tasked team
-      $.each(
-        masterViewModel.teamsViewModel.taskedTeams.peek(),
-        function (k, vv) {
-          //match against this DOM
-          if (
-            vv.Team.Id == DOMCallsign &&
-            vv.CurrentStatus == DOMStatus &&
-            vv.CurrentStatusId == 1
-          ) {
-            //only show for tasking that can be deleted (tasked only)
-            //attached a X button if its matched and deletable
-            let untask = return_untask_button();
-            $(v).append(untask);
+      $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function (k, vv) {
+        //match against this DOM
+        if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) {
+          //only show for tasking that can be deleted (tasked only)
+          //attached a X button if its matched and deletable
+          let untask = return_untask_button();
+          $(v).append(untask);
 
-            //click function
-            $(untask).click(function () {
-              event.stopImmediatePropagation();
-              untaskTeamFromJob(vv.Team.Id, jobId, vv.Id); //untask it
-            });
-          }
-        },
-      );
+          //click function
+          $(untask).click(function () {
+            event.stopImmediatePropagation();
+            untaskTeamFromJob(vv.Team.Id, jobId, vv.Id); //untask it
+          });
+        }
+      });
     } else {
       console.log('already has untask button');
     }
@@ -239,33 +212,30 @@ whenLighthouseIsReady(function () {
       ) {
         $('#asbestos-register-text').html('Not A Searchable Address');
       } else {
-        sesAsbestosSearch(
-          masterViewModel.geocodedAddress.peek(),
-          function (res) {
-            //check the ses asbestos register first
-            if (res == true) {
-              //tell the inject page (rendering result handled on the inject page)
-              window.postMessage(
-                {
-                  type: 'FROM_PAGE_SESASBESTOS_RESULT',
-                  address: masterViewModel.geocodedAddress.peek(),
-                  result: true,
-                  color: 'red',
-                },
-                '*',
-              );
-            } else {
-              //otherwise check the fair trade database via background script
-              window.postMessage(
-                {
-                  type: 'FROM_PAGE_FTASBESTOS_SEARCH',
-                  address: masterViewModel.geocodedAddress.peek(),
-                },
-                '*',
-              );
-            }
-          },
-        );
+        sesAsbestosSearch(masterViewModel.geocodedAddress.peek(), function (res) {
+          //check the ses asbestos register first
+          if (res == true) {
+            //tell the inject page (rendering result handled on the inject page)
+            window.postMessage(
+              {
+                type: 'FROM_PAGE_SESASBESTOS_RESULT',
+                address: masterViewModel.geocodedAddress.peek(),
+                result: true,
+                color: 'red',
+              },
+              '*',
+            );
+          } else {
+            //otherwise check the fair trade database via background script
+            window.postMessage(
+              {
+                type: 'FROM_PAGE_FTASBESTOS_SEARCH',
+                address: masterViewModel.geocodedAddress.peek(),
+              },
+              '*',
+            );
+          }
+        });
       }
     });
 
@@ -275,37 +245,24 @@ whenLighthouseIsReady(function () {
     if (masterViewModel.geocodedAddress.peek().PrettyAddress) {
       var lastChar = masterViewModel.geocodedAddress
         .peek()
-        .PrettyAddress.substr(
-          masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4,
-        );
+        .PrettyAddress.substr(masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4);
     }
 
-    if (
-      masterViewModel.geocodedAddress.peek().PostCode == null &&
-      isNaN(parseInt(lastChar)) == true
-    ) {
+    if (masterViewModel.geocodedAddress.peek().PostCode == null && isNaN(parseInt(lastChar)) == true) {
       //if no postcode is displayed
-      postCodes.returnPostCode(
-        masterViewModel.geocodedAddress.peek().Locality,
-        function (postcode) {
-          if (typeof postcode !== 'undefined') {
-            $('p[data-bind="text: enteredAddress"]').text(
-              $('p[data-bind="text: enteredAddress"]').text() + ', ' + postcode,
-            );
-          } else {
-            console.log('Postcode not found');
-          }
-        },
-      );
-    } else if (
-      masterViewModel.geocodedAddress.peek().PostCode != null &&
-      isNaN(parseInt(lastChar)) == true
-    ) {
+      postCodes.returnPostCode(masterViewModel.geocodedAddress.peek().Locality, function (postcode) {
+        if (typeof postcode !== 'undefined') {
+          $('p[data-bind="text: enteredAddress"]').text(
+            $('p[data-bind="text: enteredAddress"]').text() + ', ' + postcode,
+          );
+        } else {
+          console.log('Postcode not found');
+        }
+      });
+    } else if (masterViewModel.geocodedAddress.peek().PostCode != null && isNaN(parseInt(lastChar)) == true) {
       console.log('postcode is in the geocode by not displayed');
       $('p[data-bind="text: enteredAddress"]').text(
-        $('p[data-bind="text: enteredAddress"]').text() +
-          ', ' +
-          masterViewModel.geocodedAddress.peek().PostCode,
+        $('p[data-bind="text: enteredAddress"]').text() + ', ' + masterViewModel.geocodedAddress.peek().PostCode,
       );
     }
 
@@ -327,17 +284,12 @@ whenLighthouseIsReady(function () {
       }
     }
 
-    if (
-      masterViewModel.latitude.peek() == null &&
-      masterViewModel.longitude.peek() == null
-    ) {
+    if (masterViewModel.latitude.peek() == null && masterViewModel.longitude.peek() == null) {
       $('#nearest-lhq-text').text('Address not geocoded');
     }
 
     //assetLocationButtonOn clicky clicky if saved
-    let assetLocationSavedState = localStorage.getItem(
-      'LighthouseJobViewAssetLocationButton',
-    );
+    let assetLocationSavedState = localStorage.getItem('LighthouseJobViewAssetLocationButton');
 
     if (assetLocationSavedState == 'all' || assetLocationSavedState == null) {
       assetLocationButtonAll();
@@ -357,10 +309,7 @@ let quickMessage = return_quickmessagebutton();
 let instantRadiologModal = return_quickradiologmodal();
 
 function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
-  if (
-    !masterViewModel.geocodedAddress.peek().Latitude &&
-    !masterViewModel.geocodedAddress.peek().Longitude
-  ) {
+  if (!masterViewModel.geocodedAddress.peek().Latitude && !masterViewModel.geocodedAddress.peek().Longitude) {
     $('#nearest-asset-geoerror').show();
     $('#nearest-asset-box').show();
     $('#nearest-asset-table').hide();
@@ -370,9 +319,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
         zoomSnap: 0.5,
       }).setView([-32.163191, 147.032179], 6); //geo middle of NSW
       L.control.scale().addTo(assetMap);
-      esri
-        .basemapLayer('Topographic', { ignoreDeprecationWarning: true })
-        .addTo(assetMap);
+      esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(assetMap);
     }
 
     //ask the bg for a the gps of the assied unit
@@ -404,17 +351,12 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
       assetMap = L.map('asset-map', {
         zoomSnap: 0.5,
       }).setView(
-        [
-          masterViewModel.geocodedAddress.peek().Latitude,
-          masterViewModel.geocodedAddress.peek().Longitude,
-        ],
+        [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
         13,
       );
       L.control.scale().addTo(assetMap);
 
-      esri
-        .basemapLayer('Topographic', { ignoreDeprecationWarning: true })
-        .addTo(assetMap);
+      esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(assetMap);
 
       //keep the job marker ontop of everything else
       assetMap.createPane('jobMarker');
@@ -422,20 +364,10 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
     }
 
     assetMapRenderAtTime = moment();
-    $('#asset-draw-time').html(
-      `Map last updated: ${moment().diff(
-        assetMapRenderAtTime,
-        'seconds',
-      )}s ago`,
-    );
+    $('#asset-draw-time').html(`Map last updated: ${moment().diff(assetMapRenderAtTime, 'seconds')}s ago`);
 
     assetMapRenderTimer = setInterval(function () {
-      $('#asset-draw-time').html(
-        `Map last updated: ${moment().diff(
-          assetMapRenderAtTime,
-          'seconds',
-        )}s ago`,
-      );
+      $('#asset-draw-time').html(`Map last updated: ${moment().diff(assetMapRenderAtTime, 'seconds')}s ago`);
       if (moment().diff(assetMapRenderAtTime, 'seconds') >= 60) {
         $('#asset-draw-time').css('color', 'red');
       } else {
@@ -445,10 +377,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
 
     var menuButton = L.easyButton('fa-crosshairs fa-lg', function (_btn, _map) {
       assetMap.setView(
-        [
-          masterViewModel.geocodedAddress.peek().Latitude,
-          masterViewModel.geocodedAddress.peek().Longitude,
-        ],
+        [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
         13,
       );
     });
@@ -524,9 +453,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                 iconAnchor: [8, 8],
               });
 
-              let marker = L.marker([y, x], { icon: lhqMarkerIcon }).addTo(
-                assetMap,
-              );
+              let marker = L.marker([y, x], { icon: lhqMarkerIcon }).addTo(assetMap);
 
               marker.bindTooltip(details);
               //console.debug(`SES LHQ at [${x},${y}]: ${name}`);
@@ -546,10 +473,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                             .find('#lhqContacts')
                             .append(
                               '<tr><td style="word-wrap:break-word; white-space:normal;">' +
-                                v.Description.replace('Phone', '').replace(
-                                  'Number',
-                                  '',
-                                ) +
+                                v.Description.replace('Phone', '').replace('Number', '') +
                                 '</td><td>' +
                                 v.Detail +
                                 '</td></tr>',
@@ -559,10 +483,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                             .find('#lhqContacts')
                             .append(
                               '<tr style="background-color:#e8e8e8"><td>' +
-                                v.Description.replace('Phone', '').replace(
-                                  'Number',
-                                  '',
-                                ) +
+                                v.Description.replace('Phone', '').replace('Number', '') +
                                 '</td><td>' +
                                 v.Detail +
                                 '</td></tr>',
@@ -574,22 +495,14 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                     if (hqdeets.acred.length > 0) {
                       //fill otherwise placeholder
                       $.each(hqdeets.acred, function (k, v) {
-                        toolTip
-                          .find('#lhqacred')
-                          .append('<tr><td>' + v + '</td></tr>');
+                        toolTip.find('#lhqacred').append('<tr><td>' + v + '</td></tr>');
                       });
                     } else {
-                      toolTip
-                        .find('#lhqacred')
-                        .append(
-                          '<tr style="font-style: italic;"><td>None</td></tr>',
-                        );
+                      toolTip.find('#lhqacred').append('<tr style="font-style: italic;"><td>None</td></tr>');
                     }
                     toolTip.find('#lhqStatus').text(hqdeets.HeadquartersStatus);
                     toolTip.find('#lhqJobCount').text(hqdeets.currentJobCount);
-                    toolTip
-                      .find('#lhqTeamCount')
-                      .text(hqdeets.currentTeamCount);
+                    toolTip.find('#lhqTeamCount').text(hqdeets.currentTeamCount);
                     marker.setTooltipContent(toolTip.prop('outerHTML'));
                   });
                 }
@@ -651,544 +564,462 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
     }
 
     let jobMarker = L.shapeMarker(
-      [
-        masterViewModel.geocodedAddress.peek().Latitude,
-        masterViewModel.geocodedAddress.peek().Longitude,
-      ],
+      [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
       markerStyle,
     );
     mapMarkers.push(jobMarker.addTo(assetMap));
 
-    BeaconClient.asset.filter([],urls.Base, user.Id, user.accessToken, function(response) {
+    BeaconClient.asset.filter([], urls.Base, user.Id, user.accessToken, function (response) {
       if (response.length) {
-          var assetDistances = [];
-          var furthestDistance; //need a way to know the furthest marker
-          var nearestDistance; //need a way to know the closest marker
-          var allRoutersOnMap = {};
-          var t0 = performance.now();
-          var hiddenAssets = 0;
+        var assetDistances = [];
+        var furthestDistance; //need a way to know the furthest marker
+        var nearestDistance; //need a way to know the closest marker
+        var allRoutersOnMap = {};
+        var t0 = performance.now();
+        var hiddenAssets = 0;
 
-          response.forEach(function (v) {
-            //If passed a filter then filter on the contents
+        response.forEach(function (v) {
+          //If passed a filter then filter on the contents
 
-            if (
-              typeof teamFilter == 'undefined' ||
-              (typeof teamFilter != 'undefined' &&
-                teamFilter.includes(v.name))
-            ) {
-
-              v.distance =
-                vincenty.distVincenty(
-                  v.geometry.coordinates[1],
-                  v.geometry.coordinates[0],
-                  masterViewModel.geocodedAddress.peek().Latitude,
-                  masterViewModel.geocodedAddress.peek().Longitude,
-                ) / 1000;
-              v.bearing = getBearing(
-                masterViewModel.geocodedAddress.peek().Latitude,
-                masterViewModel.geocodedAddress.peek().Longitude,
+          if (typeof teamFilter == 'undefined' || (typeof teamFilter != 'undefined' && teamFilter.includes(v.name))) {
+            v.distance =
+              vincenty.distVincenty(
                 v.geometry.coordinates[1],
                 v.geometry.coordinates[0],
-              );
-              assetDistances.push(v);
-            } else {
-              hiddenAssets = hiddenAssets + 1;
-            }
-          });
-          assetDistances.sort(function (a, b) {
-            return a.distance - b.distance;
-          });
-          if (assetDistances.length > 0) {
-            let maxLength = resultsToDisplay; //how many results to display
-            let used = 0;
+                masterViewModel.geocodedAddress.peek().Latitude,
+                masterViewModel.geocodedAddress.peek().Longitude,
+              ) / 1000;
+            v.bearing = getBearing(
+              masterViewModel.geocodedAddress.peek().Latitude,
+              masterViewModel.geocodedAddress.peek().Longitude,
+              v.geometry.coordinates[1],
+              v.geometry.coordinates[0],
+            );
+            assetDistances.push(v);
+          } else {
+            hiddenAssets = hiddenAssets + 1;
+          }
+        });
+        assetDistances.sort(function (a, b) {
+          return a.distance - b.distance;
+        });
+        if (assetDistances.length > 0) {
+          let maxLength = resultsToDisplay; //how many results to display
+          let used = 0;
 
-            var steps =
-              typeof teamFilter != 'undefined' ? teamFilter.length : maxLength;
-            var colorScale = chroma
-              .scale(['green', 'red'])
-              .mode('lch')
-              .colors(steps);
+          var steps = typeof teamFilter != 'undefined' ? teamFilter.length : maxLength;
+          var colorScale = chroma.scale(['green', 'red']).mode('lch').colors(steps);
 
-            assetDistances.forEach(function (v) {
-              //safe way to loop with a limit
-              let row;
+          assetDistances.forEach(function (v) {
+            //safe way to loop with a limit
+            let row;
 
-              if (used < maxLength || typeof teamFilter != 'undefined') {
-                if (
-                  (activeOnly &&
-                    moment().diff(v.lastSeen, 'hours') < 1) ||
-                  !activeOnly
-                ) {
-                  used++;
-                  furthestDistance = v;
-                  if (nearestDistance == null) {
-                    nearestDistance = v;
-                  }
+            if (used < maxLength || typeof teamFilter != 'undefined') {
+              if ((activeOnly && moment().diff(v.lastSeen, 'hours') < 1) || !activeOnly) {
+                used++;
+                furthestDistance = v;
+                if (nearestDistance == null) {
+                  nearestDistance = v;
+                }
 
-                                    let uniqueColor = colorScale[used - 1];
-                  let bgcolor;
+                let uniqueColor = colorScale[used - 1];
+                let bgcolor;
 
-                  //use our unique color, unless its the first or last
-                  if (used == 1) {
-                    bgcolor = 'green';
-                    uniqueColor = bgcolor;
-                  } else if (used == maxLength) {
-                    //doesnt work in filter mode
-                    bgcolor = 'red';
-                    uniqueColor = bgcolor;
-                  } else {
-                    bgcolor = uniqueColor;
-                  }
+                //use our unique color, unless its the first or last
+                if (used == 1) {
+                  bgcolor = 'green';
+                  uniqueColor = bgcolor;
+                } else if (used == maxLength) {
+                  //doesnt work in filter mode
+                  bgcolor = 'red';
+                  uniqueColor = bgcolor;
+                } else {
+                  bgcolor = uniqueColor;
+                }
 
-                  row = $(`
-           <tr style="${
-             moment().diff(v.lastSeen, 'days') > 1
-               ? 'font-style: italic;'
-               : ''
-           }  cursor: pointer;">
-        <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${
-          v.entity
-        }'s ${v.capability} ${v.resourceType}">${
-                    v.name
-                  }</div></th>
+                row = $(`
+           <tr style="${moment().diff(v.lastSeen, 'days') > 1 ? 'font-style: italic;' : ''}  cursor: pointer;">
+        <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${v.entity}'s ${v.capability} ${
+                  v.resourceType
+                }">${v.name}</div></th>
         <td><div id="locate" style="background:${uniqueColor}"></div></td>
         <td>${v.entity}</td>
         <td>${v.distance.toFixed(2)} km ${getCardinal(v.bearing)}</td>
-        <td>${
-          v.talkGroup != null ? v.talkGroup : 'Unknown'
-        }</td>
-        <td ${
-          moment().diff(v.lastSeen, 'days') > 1
-            ? 'style=color:red'
-            : ''
-        }>${moment(v.lastSeen).fromNow()}</td>
+        <td>${v.talkGroup != null ? v.talkGroup : 'Unknown'}</td>
+        <td ${moment().diff(v.lastSeen, 'days') > 1 ? 'style=color:red' : ''}>${moment(v.lastSeen).fromNow()}</td>
         </tr>
            `);
-                  $('#nearest-asset-table tbody').append(row);
-                  row.find($('[data-toggle="tooltip"]')).tooltip();
-                  var situationVehicle = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style='background-color:${bgcolor}; ${
-                      moment().diff(v.lastSeen, 'days') > 1
-                        ? 'filter: contrast(0.3);'
-                        : ''
-                    }' class='marker-pin'></div>
+                $('#nearest-asset-table tbody').append(row);
+                row.find($('[data-toggle="tooltip"]')).tooltip();
+                var situationVehicle = L.divIcon({
+                  className: 'custom-div-icon',
+                  html: `<div style='background-color:${bgcolor}; ${
+                    moment().diff(v.lastSeen, 'days') > 1 ? 'filter: contrast(0.3);' : ''
+                  }' class='marker-pin'></div>
                 <div class="assetMarker" style="position: absolute; margin: 24px 13px; line-height: 10px; text-align: center; color:white; font-size: 11px;">
                   <p>${v.markerLabel}</p>
                 </div>`,
-                    iconSize: [40, 56],
-                    iconAnchor: [24, 56],
-                  });
+                  iconSize: [40, 56],
+                  iconAnchor: [24, 56],
+                });
 
-                  var marker = L.marker(
+                var marker = L.marker([v.geometry.coordinates[1], v.geometry.coordinates[0]], {
+                  icon: situationVehicle,
+                }).addTo(assetMap);
+                var polyline = L.polyline(
+                  [
                     [v.geometry.coordinates[1], v.geometry.coordinates[0]],
-                    { icon: situationVehicle },
-                  ).addTo(assetMap);
-                  var polyline = L.polyline(
-                    [
-                      [v.geometry.coordinates[1], v.geometry.coordinates[0]],
-                      [
-                        masterViewModel.geocodedAddress.peek().Latitude,
-                        masterViewModel.geocodedAddress.peek().Longitude,
-                      ],
-                    ],
-                    { weight: 4, color: 'green', dashArray: '6' },
-                  );
+                    [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
+                  ],
+                  { weight: 4, color: 'green', dashArray: '6' },
+                );
 
-                  let srcLatRad = v.geometry.coordinates[1] * (Math.PI / 180);
-                  let dstLatRad =
-                    masterViewModel.geocodedAddress.peek().Latitude *
-                    (Math.PI / 180);
-                  let middleLatRad = Math.atan(
-                    Math.sinh(
-                      Math.log(
-                        Math.sqrt(
-                          (Math.tan(dstLatRad) + 1 / Math.cos(dstLatRad)) *
-                            (Math.tan(srcLatRad) + 1 / Math.cos(srcLatRad)),
-                        ),
+                let srcLatRad = v.geometry.coordinates[1] * (Math.PI / 180);
+                let dstLatRad = masterViewModel.geocodedAddress.peek().Latitude * (Math.PI / 180);
+                let middleLatRad = Math.atan(
+                  Math.sinh(
+                    Math.log(
+                      Math.sqrt(
+                        (Math.tan(dstLatRad) + 1 / Math.cos(dstLatRad)) *
+                          (Math.tan(srcLatRad) + 1 / Math.cos(srcLatRad)),
                       ),
                     ),
-                  );
-                  let middleLat = middleLatRad * (180 / Math.PI);
-                  let middleLng =
-                    (v.geometry.coordinates[0] +
-                      masterViewModel.geocodedAddress.peek().Longitude) /
-                    2;
+                  ),
+                );
+                let middleLat = middleLatRad * (180 / Math.PI);
+                let middleLng = (v.geometry.coordinates[0] + masterViewModel.geocodedAddress.peek().Longitude) / 2;
 
-                  var distanceMarker = new L.circleMarker(
-                    [middleLat, middleLng],
-                    { radius: 0.1 },
-                  ); //opacity may be set to zero
-                  distanceMarker.bindTooltip(
-                    `${v.distance.toFixed(2)} km ${getCardinal(v.bearing)}`,
-                    { permanent: true, offset: [0, 0] },
-                  );
+                var distanceMarker = new L.circleMarker([middleLat, middleLng], { radius: 0.1 }); //opacity may be set to zero
+                distanceMarker.bindTooltip(`${v.distance.toFixed(2)} km ${getCardinal(v.bearing)}`, {
+                  permanent: true,
+                  offset: [0, 0],
+                });
 
-                  var distanceMarkerRoute = [];
+                var distanceMarkerRoute = [];
 
-                  if (used != 1 && used != maxLength && used <= 10) {
-                    //not the first, last or more than 10
+                if (used != 1 && used != maxLength && used <= 10) {
+                  //not the first, last or more than 10
 
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                    var markerCircle = L.circle(
-                      [
-                        masterViewModel.geocodedAddress.peek().Latitude,
-                        masterViewModel.geocodedAddress.peek().Longitude,
-                      ],
-                      {
-                        color: 'black',
-                        weight: 0.5,
-                        fill: false,
-                        dashArray: '6',
-                        radius: v.distance * 1000, //KM to M divided by 2 for radius
-                      },
-                    ).addTo(assetMap);
-                  }
-
-                  var routingControl = L.Routing.control({
-                    router: L.Routing.graphHopper('lighthouse', {
-                      serviceUrl:
-                        'https://graphhopper.lighthouse-extension.com/route',
-                      urlParameters: { 'ch.disable': true, instructions: true },
-                    }),
-                    // waypoints added at request time so they flush out custom routing
-                    draggableWaypoints: true,
-                    routeWhileDragging: false,
-                    reverseWaypoints: false,
-                    useZoomParameter: false,
-                    showAlternatives: false,
-                    fitSelectedRoutes: false,
-                    createMarker: function (i, wp, n) {
-                      if (i == n - 1 || i == 0) {
-                        //dont draw first or last marker
-                        return null;
-                      } else {
-                        const marker = L.marker(wp.latLng, {
-                          draggable: true,
-                          icon: L.icon({
-                            iconUrl: `${lighthouseUrl}icons/marker-icon.png`,
-                            iconRetinaUrl: `${lighthouseUrl}icons/marker-icon-2x.png`,
-                            shadowUrl: `${lighthouseUrl}icons/marker-shadow.png`,
-                            iconSize: [25, 41],
-                            iconAnchor: [12, 41],
-                            popupAnchor: [1, -34],
-                            tooltipAnchor: [16, -28],
-                            shadowSize: [41, 41],
-                          }),
-                        });
-                        return marker;
-                      }
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  var markerCircle = L.circle(
+                    [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
+                    {
+                      color: 'black',
+                      weight: 0.5,
+                      fill: false,
+                      dashArray: '6',
+                      radius: v.distance * 1000, //KM to M divided by 2 for radius
                     },
-                    lineOptions: {
-                      styles: [{ color: uniqueColor, opacity: 0.9, weight: 3 }],
-                      //addWaypoints: false,
-                    },
-                    //  altLineOptions: {
-                    //        styles: [
-                    //            {color: 'red', opacity: 1, weight: 3},
-                    //        ],
-                    //       addWaypoints: false,
-                    //    },
-                  });
+                  ).addTo(assetMap);
+                }
 
-                  routingControl.on('routingerror', function (e) {
-                    console.log(e);
-                    $('#asset-map-loading').css('visibility', 'hidden');
-                    let before = $('#asset-route-warning').html();
-                    let error;
-                    if (e.error.response) {
-                      error = e.error.response.message;
+                var routingControl = L.Routing.control({
+                  router: L.Routing.graphHopper('lighthouse', {
+                    serviceUrl: 'https://graphhopper.lighthouse-extension.com/route',
+                    urlParameters: { 'ch.disable': true, instructions: true },
+                  }),
+                  // waypoints added at request time so they flush out custom routing
+                  draggableWaypoints: true,
+                  routeWhileDragging: false,
+                  reverseWaypoints: false,
+                  useZoomParameter: false,
+                  showAlternatives: false,
+                  fitSelectedRoutes: false,
+                  createMarker: function (i, wp, n) {
+                    if (i == n - 1 || i == 0) {
+                      //dont draw first or last marker
+                      return null;
                     } else {
-                      error =
-                        'Error talking to routing server... try again soon';
-                    }
-                    $('#asset-route-warning').html(`Error Routing<br>${error}`);
-
-                    setTimeout(function () {
-                      $('#asset-route-warning')
-                        .fadeOut(400, function () {
-                          $(this).html(before);
-                        })
-                        .fadeIn();
-                    }, 4000);
-                  });
-
-                  routingControl.on('routesfound', function (e) {
-                    console.log(e);
-                    $('#asset-map-loading').fadeOut('fast', function () {
-                      //tidy up the css because we need table no none
-                      $('#asset-map-loading').css('visibility', 'hidden');
-                      $('#asset-map-loading').css('display', 'table');
-                    });
-                    distanceMarkerRoute.forEach(function (r) {
-                      r.remove(assetMap);
-                    });
-
-                    e.routes.forEach(function (r) {
-                      let routesSorted = r.instructions.sort(function (a, b) {
-                        return a.distance - b.distance;
+                      const marker = L.marker(wp.latLng, {
+                        draggable: true,
+                        icon: L.icon({
+                          iconUrl: `${lighthouseUrl}icons/marker-icon.png`,
+                          iconRetinaUrl: `${lighthouseUrl}icons/marker-icon-2x.png`,
+                          shadowUrl: `${lighthouseUrl}icons/marker-shadow.png`,
+                          iconSize: [25, 41],
+                          iconAnchor: [12, 41],
+                          popupAnchor: [1, -34],
+                          tooltipAnchor: [16, -28],
+                          shadowSize: [41, 41],
+                        }),
                       });
-                      //regex out to make the path name, if theres no known road name then null out
-                      // and let the truthy in the template catch it
-                      let name =
-                        routesSorted[routesSorted.length - 1].text.match(
-                          /onto (.+)$/i,
-                        );
-                      if (name) {
-                        name = name[1];
-                      } else {
-                        name = null;
-                      }
+                      return marker;
+                    }
+                  },
+                  lineOptions: {
+                    styles: [{ color: uniqueColor, opacity: 0.9, weight: 3 }],
+                    //addWaypoints: false,
+                  },
+                  //  altLineOptions: {
+                  //        styles: [
+                  //            {color: 'red', opacity: 1, weight: 3},
+                  //        ],
+                  //       addWaypoints: false,
+                  //    },
+                });
 
-                      allRoutersOnMap[v.properties.name] = r.coordinates;
-
-                      let middle =
-                        r.coordinates[Math.floor(r.coordinates.length / 4)];
-
-                      let distance = r.summary.totalDistance;
-                      let time = r.summary.totalTime;
-                      let timeHr = parseInt(
-                        moment.utc(time * 1000).format('HH'),
-                      );
-                      let timeMin = parseInt(
-                        moment.utc(time * 1000).format('mm'),
-                      );
-                      let timeText = '';
-                      if (timeHr == 0) {
-                        timeText = `${timeMin} min`;
-                      } else {
-                        timeText = `${timeHr} hr ${timeMin} min`;
-                      }
-                      let _distanceMarkerRoute = new L.circleMarker(
-                        [middle.lat, middle.lng],
-                        { radius: 0.1 },
-                      ).addTo(assetMap); //opacity may be set to zero
-                      _distanceMarkerRoute.bindTooltip(
-                        `<div style="text-align: center;"><strong style="color:${uniqueColor}">${
-                          v.properties.name
-                        }${name ? ' via ' : ''}${
-                          name ? name : ''
-                        }</strong><br><strong>${(distance / 1000).toFixed(
-                          1,
-                        )} km - ${timeText}</strong></div>`,
-                        { permanent: true, offset: [0, 0] },
-                      );
-                      distanceMarkerRoute.push(_distanceMarkerRoute);
-                    });
-
-                    zoomToFitRoutes();
-                  });
-
-                  //hold the zindex so we can restore it after we bring to front
-                  var zindex = marker._zIndex;
-
-                  //calculate it if its first
-                  // if (used == 1) {
-                  //   marker.setZIndexOffset(9999)
-                  //   drawPathingAndUpdateRow()
-                  // }
-
-                  // hover over table rows
-
-                  $(row)
-                    .mouseenter(function () {
-                      polyline.addTo(assetMap);
-                      distanceMarker.addTo(assetMap);
-                      marker.setZIndexOffset(9999);
-                    })
-                    .mouseleave(function () {
-                      polyline.remove(assetMap);
-                      distanceMarker.remove(assetMap);
-                      //reset the  zindex  if the row isnt clicked
-                      if (!row.hasClass('nearest-asset-table-selected')) {
-                        marker.setZIndexOffset(zindex);
-                      }
-                    });
-
-                  $(row)
-                    .find('#locate')
-                    .on('click', function (e) {
-                      //fly to just this marker and the job
-                      e.stopPropagation();
-                      assetMap.setView(
-                        [marker.getLatLng().lat, marker.getLatLng().lng],
-                        15,
-                      );
-                    });
-
-                  $(row).on('click', function () {
-                    //path this marker
-                    drawPathingAndUpdateRow();
-                    marker.setZIndexOffset(9999);
-                  });
-
-                  marker.on('click', function () {
-                    drawPathingAndUpdateRow();
-                    marker.setZIndexOffset(9999);
-                  });
-
-                  marker.on('mouseover', function () {
-                    polyline.addTo(assetMap);
-                    distanceMarker.addTo(assetMap);
-                  });
-
-                  marker.on('mouseout', function () {
-                    polyline.remove(assetMap);
-                    distanceMarker.remove(assetMap);
-
-                    marker.setZIndexOffset(zindex);
-                  });
-
-                  mapMarkers.push(marker);
-                } else {
-                  hiddenAssets = hiddenAssets + 1;
-                }
-              }
-
-              function zoomToFitRoutes() {
-                console.log('before', allRoutersOnMap);
-                // Zoom to fit all drawn paths
-                var activePoints = [];
-                for (var k in allRoutersOnMap) {
-                  if (
-                    Object.prototype.hasOwnProperty.call(allRoutersOnMap, k)
-                  ) {
-                    allRoutersOnMap[k].map(function (c) {
-                      activePoints.push([c.lat, c.lng]);
-                    });
+                routingControl.on('routingerror', function (e) {
+                  console.log(e);
+                  $('#asset-map-loading').css('visibility', 'hidden');
+                  let before = $('#asset-route-warning').html();
+                  let error;
+                  if (e.error.response) {
+                    error = e.error.response.message;
+                  } else {
+                    error = 'Error talking to routing server... try again soon';
                   }
-                }
-                if (activePoints.length) {
-                  let latlngBounds = L.latLngBounds(activePoints);
-                  assetMap.flyToBounds(latlngBounds, { padding: [40, 40] });
-                }
-              }
+                  $('#asset-route-warning').html(`Error Routing<br>${error}`);
 
-              function drawPathingAndUpdateRow() {
-                if (!row.hasClass('nearest-asset-table-selected')) {
-                  $(row).addClass('nearest-asset-table-selected');
-                  $('#asset-map-loading').css('visibility', 'unset');
-                  //remove the crow flies and replace with true
-                  polyline.remove(assetMap);
-                  distanceMarker.remove(assetMap);
+                  setTimeout(function () {
+                    $('#asset-route-warning')
+                      .fadeOut(400, function () {
+                        $(this).html(before);
+                      })
+                      .fadeIn();
+                  }, 4000);
+                });
 
-                  //reset waypoints each time just incase someone has repathed
-                  routingControl
-                    .getPlan()
-                    .setWaypoints([
-                      L.latLng(
-                        v.geometry.coordinates[1],
-                        v.geometry.coordinates[0],
-                      ),
-                      L.latLng(
-                        masterViewModel.geocodedAddress.peek().Latitude,
-                        masterViewModel.geocodedAddress.peek().Longitude,
-                      ),
-                    ]);
-                  routingControl.addTo(assetMap);
-                } else {
-                  $(row).removeClass('nearest-asset-table-selected');
-
-                  delete allRoutersOnMap[v.properties.name];
-                  routingControl.remove(assetMap);
+                routingControl.on('routesfound', function (e) {
+                  console.log(e);
+                  $('#asset-map-loading').fadeOut('fast', function () {
+                    //tidy up the css because we need table no none
+                    $('#asset-map-loading').css('visibility', 'hidden');
+                    $('#asset-map-loading').css('display', 'table');
+                  });
                   distanceMarkerRoute.forEach(function (r) {
                     r.remove(assetMap);
                   });
-                  distanceMarkerRoute = [];
-                  marker.unbindTooltip();
-                  marker.setZIndexOffset(zindex);
-                  zoomToFitRoutes();
-                }
 
-                if ($('.nearest-asset-table-selected').length == 0) {
-                  $('#asset-route-warning').css('visibility', 'hidden');
-                } else {
-                  $('#asset-route-warning').html(
-                    'Travel distance and time are estimates and should not be used for navigation or response times',
-                  );
-                  $('#asset-route-warning').css('visibility', 'unset');
-                }
+                  e.routes.forEach(function (r) {
+                    let routesSorted = r.instructions.sort(function (a, b) {
+                      return a.distance - b.distance;
+                    });
+                    //regex out to make the path name, if theres no known road name then null out
+                    // and let the truthy in the template catch it
+                    let name = routesSorted[routesSorted.length - 1].text.match(/onto (.+)$/i);
+                    if (name) {
+                      name = name[1];
+                    } else {
+                      name = null;
+                    }
+
+                    allRoutersOnMap[v.properties.name] = r.coordinates;
+
+                    let middle = r.coordinates[Math.floor(r.coordinates.length / 4)];
+
+                    let distance = r.summary.totalDistance;
+                    let time = r.summary.totalTime;
+                    let timeHr = parseInt(moment.utc(time * 1000).format('HH'));
+                    let timeMin = parseInt(moment.utc(time * 1000).format('mm'));
+                    let timeText = '';
+                    if (timeHr == 0) {
+                      timeText = `${timeMin} min`;
+                    } else {
+                      timeText = `${timeHr} hr ${timeMin} min`;
+                    }
+                    let _distanceMarkerRoute = new L.circleMarker([middle.lat, middle.lng], { radius: 0.1 }).addTo(
+                      assetMap,
+                    ); //opacity may be set to zero
+                    _distanceMarkerRoute.bindTooltip(
+                      `<div style="text-align: center;"><strong style="color:${uniqueColor}">${v.name}${
+                        name ? ' via ' : ''
+                      }${name ? name : ''}</strong><br><strong>${(distance / 1000).toFixed(
+                        1,
+                      )} km - ${timeText}</strong></div>`,
+                      { permanent: true, offset: [0, 0] },
+                    );
+                    distanceMarkerRoute.push(_distanceMarkerRoute);
+                  });
+
+                  zoomToFitRoutes();
+                });
+
+                //hold the zindex so we can restore it after we bring to front
+                var zindex = marker._zIndex;
+
+                //calculate it if its first
+                // if (used == 1) {
+                //   marker.setZIndexOffset(9999)
+                //   drawPathingAndUpdateRow()
+                // }
+
+                // hover over table rows
+
+                $(row)
+                  .mouseenter(function () {
+                    polyline.addTo(assetMap);
+                    distanceMarker.addTo(assetMap);
+                    marker.setZIndexOffset(9999);
+                  })
+                  .mouseleave(function () {
+                    polyline.remove(assetMap);
+                    distanceMarker.remove(assetMap);
+                    //reset the  zindex  if the row isnt clicked
+                    if (!row.hasClass('nearest-asset-table-selected')) {
+                      marker.setZIndexOffset(zindex);
+                    }
+                  });
+
+                $(row)
+                  .find('#locate')
+                  .on('click', function (e) {
+                    //fly to just this marker and the job
+                    e.stopPropagation();
+                    assetMap.setView([marker.getLatLng().lat, marker.getLatLng().lng], 15);
+                  });
+
+                $(row).on('click', function () {
+                  //path this marker
+                  drawPathingAndUpdateRow();
+                  marker.setZIndexOffset(9999);
+                });
+
+                marker.on('click', function () {
+                  drawPathingAndUpdateRow();
+                  marker.setZIndexOffset(9999);
+                });
+
+                marker.on('mouseover', function () {
+                  polyline.addTo(assetMap);
+                  distanceMarker.addTo(assetMap);
+                });
+
+                marker.on('mouseout', function () {
+                  polyline.remove(assetMap);
+                  distanceMarker.remove(assetMap);
+
+                  marker.setZIndexOffset(zindex);
+                });
+
+                mapMarkers.push(marker);
+              } else {
+                hiddenAssets = hiddenAssets + 1;
               }
-            });
-            if (hiddenAssets > 0) {
-              $('#filter-warning').html(
-                `Hiding ${hiddenAssets} inactive assets`,
-              );
-              $('#filter-warning').css('visibility', 'unset');
-            } else {
-              $('#filter-warning').css('visibility', 'hidden');
             }
 
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            var s2circle = L.circle(
-              [
-                masterViewModel.geocodedAddress.peek().Latitude,
-                masterViewModel.geocodedAddress.peek().Longitude,
-              ],
-              {
-                color: 'red',
-                weight: 1,
-                fillColor: '#f03',
-                fillOpacity: 0.03,
-                radius: furthestDistance.distance * 1000,
-              },
-            ).addTo(assetMap);
+            function zoomToFitRoutes() {
+              console.log('before', allRoutersOnMap);
+              // Zoom to fit all drawn paths
+              var activePoints = [];
+              for (var k in allRoutersOnMap) {
+                if (Object.prototype.hasOwnProperty.call(allRoutersOnMap, k)) {
+                  allRoutersOnMap[k].map(function (c) {
+                    activePoints.push([c.lat, c.lng]);
+                  });
+                }
+              }
+              if (activePoints.length) {
+                let latlngBounds = L.latLngBounds(activePoints);
+                assetMap.flyToBounds(latlngBounds, { padding: [40, 40] });
+              }
+            }
 
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            var s1circle = L.circle(
-              [
-                masterViewModel.geocodedAddress.peek().Latitude,
-                masterViewModel.geocodedAddress.peek().Longitude,
-              ],
-              {
-                color: 'green',
-                weight: 1,
-                fillColor: '#50C878',
-                fillOpacity: 0.03,
-                radius: nearestDistance.distance * 1000,
-              },
-            ).addTo(assetMap);
+            function drawPathingAndUpdateRow() {
+              if (!row.hasClass('nearest-asset-table-selected')) {
+                $(row).addClass('nearest-asset-table-selected');
+                $('#asset-map-loading').css('visibility', 'unset');
+                //remove the crow flies and replace with true
+                polyline.remove(assetMap);
+                distanceMarker.remove(assetMap);
 
-            let latlngs = mapMarkers.map((marker) => marker.getLatLng());
+                //reset waypoints each time just incase someone has repathed
+                routingControl
+                  .getPlan()
+                  .setWaypoints([
+                    L.latLng(v.geometry.coordinates[1], v.geometry.coordinates[0]),
+                    L.latLng(
+                      masterViewModel.geocodedAddress.peek().Latitude,
+                      masterViewModel.geocodedAddress.peek().Longitude,
+                    ),
+                  ]);
+                routingControl.addTo(assetMap);
+              } else {
+                $(row).removeClass('nearest-asset-table-selected');
 
-            let latlngBounds = L.latLngBounds(latlngs);
+                delete allRoutersOnMap[v.properties.name];
+                routingControl.remove(assetMap);
+                distanceMarkerRoute.forEach(function (r) {
+                  r.remove(assetMap);
+                });
+                distanceMarkerRoute = [];
+                marker.unbindTooltip();
+                marker.setZIndexOffset(zindex);
+                zoomToFitRoutes();
+              }
 
-            let ne = latlngBounds.getNorthEast();
-            let sw = latlngBounds.getSouthWest();
-            let neSymetric = [
-              ne.lat +
-                (masterViewModel.geocodedAddress.peek().Latitude - ne.lat) * 2,
-              ne.lng +
-                (masterViewModel.geocodedAddress.peek().Longitude - ne.lng) * 2,
-            ];
-            let swSymetric = [
-              sw.lat +
-                (masterViewModel.geocodedAddress.peek().Latitude - sw.lat) * 2,
-              sw.lng +
-                (masterViewModel.geocodedAddress.peek().Longitude - sw.lng) * 2,
-            ];
-            latlngBounds.extend(L.latLngBounds(swSymetric, neSymetric));
-
-            assetMap.fitBounds(latlngBounds, { padding: [10, 10] });
-            // assetMap.setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
-
-            //$('#nearest-asset-text').text($('#nearest-asset-text').text().slice(0,-2)) //trim the comma space from the very end
+              if ($('.nearest-asset-table-selected').length == 0) {
+                $('#asset-route-warning').css('visibility', 'hidden');
+              } else {
+                $('#asset-route-warning').html(
+                  'Travel distance and time are estimates and should not be used for navigation or response times',
+                );
+                $('#asset-route-warning').css('visibility', 'unset');
+              }
+            }
+          });
+          if (hiddenAssets > 0) {
+            $('#filter-warning').html(`Hiding ${hiddenAssets} inactive assets`);
+            $('#filter-warning').css('visibility', 'unset');
           } else {
-            let row = $(`
+            $('#filter-warning').css('visibility', 'hidden');
+          }
+
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          var s2circle = L.circle(
+            [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
+            {
+              color: 'red',
+              weight: 1,
+              fillColor: '#f03',
+              fillOpacity: 0.03,
+              radius: furthestDistance.distance * 1000,
+            },
+          ).addTo(assetMap);
+
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          var s1circle = L.circle(
+            [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
+            {
+              color: 'green',
+              weight: 1,
+              fillColor: '#50C878',
+              fillOpacity: 0.03,
+              radius: nearestDistance.distance * 1000,
+            },
+          ).addTo(assetMap);
+
+          let latlngs = mapMarkers.map((marker) => marker.getLatLng());
+
+          let latlngBounds = L.latLngBounds(latlngs);
+
+          let ne = latlngBounds.getNorthEast();
+          let sw = latlngBounds.getSouthWest();
+          let neSymetric = [
+            ne.lat + (masterViewModel.geocodedAddress.peek().Latitude - ne.lat) * 2,
+            ne.lng + (masterViewModel.geocodedAddress.peek().Longitude - ne.lng) * 2,
+          ];
+          let swSymetric = [
+            sw.lat + (masterViewModel.geocodedAddress.peek().Latitude - sw.lat) * 2,
+            sw.lng + (masterViewModel.geocodedAddress.peek().Longitude - sw.lng) * 2,
+          ];
+          latlngBounds.extend(L.latLngBounds(swSymetric, neSymetric));
+
+          assetMap.fitBounds(latlngBounds, { padding: [10, 10] });
+          // assetMap.setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
+
+          //$('#nearest-asset-text').text($('#nearest-asset-text').text().slice(0,-2)) //trim the comma space from the very end
+        } else {
+          let row = $(`
         <tr>
           <td colspan="5"><i>No assets found</i></td>
         </tr>
         `);
-            $('#nearest-asset-table tbody').append(row);
-          }
-          var t1 = performance.now();
-          console.log(
-            'Call to calculate distances from assets took ' +
-              (t1 - t0) +
-              ' milliseconds.',
-          );
-          cb();
+          $('#nearest-asset-table tbody').append(row);
         }
+        var t1 = performance.now();
+        console.log('Call to calculate distances from assets took ' + (t1 - t0) + ' milliseconds.');
+        cb();
+      }
     });
   }
 }
@@ -1277,9 +1108,7 @@ function assetLocationButtonAll() {
     $('#assetLocationButtonAll').addClass('btn-active');
     $('#assetLocationButtonAll').removeClass('btn-inactive');
 
-    var spinner = $(
-      <i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>,
-    );
+    var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>);
 
     spinner.appendTo('#assetLocationButtonAll');
 
@@ -1320,9 +1149,7 @@ function assetLocationButtonActiveOnly() {
     $('#assetLocationButtonActiveOnly').addClass('btn-active');
     $('#assetLocationButtonActiveOnly').removeClass('btn-inactive');
 
-    var spinner = $(
-      <i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>,
-    );
+    var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>);
 
     spinner.appendTo('#assetLocationButtonActiveOnly');
 
@@ -1332,9 +1159,7 @@ function assetLocationButtonActiveOnly() {
       cb: function () {
         spinner.hide();
         $('#asset-route-warning').css('visibility', 'unset');
-        $('#asset-route-warning').html(
-          `Showing nearest 5 assets that have updated within the last 1 hour`,
-        );
+        $('#asset-route-warning').html(`Showing nearest 5 assets that have updated within the last 1 hour`);
       },
     });
   }
@@ -1373,16 +1198,8 @@ function assetLocationButtonFiltered(bypassUI) {
 
             //click handler for unselecting
             option.dblclick(function (x) {
-              if (
-                x.target.value
-                  .toUpperCase()
-                  .indexOf(
-                    $('#assetListAllQuickSearch')[0].value.toUpperCase(),
-                  ) != -1
-              ) {
-                $('#assetFilterListAll')
-                  .find(`option[value|="${x.target.value}"]`)
-                  .show();
+              if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1) {
+                $('#assetFilterListAll').find(`option[value|="${x.target.value}"]`).show();
               }
               $(x.target).remove();
             });
@@ -1398,18 +1215,10 @@ function assetLocationButtonFiltered(bypassUI) {
         $('#assetFilterListSelected')
           .val()
           .forEach(function (s) {
-            if (
-              s
-                .toUpperCase()
-                .indexOf(
-                  $('#assetListAllQuickSearch')[0].value.toUpperCase(),
-                ) != -1
-            ) {
+            if (s.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1) {
               $('#assetFilterListAll').find(`option[value|="${s}"]`).show();
             }
-            $('#assetFilterListSelected')
-              .find(`option[value|="${s}"]`)
-              .remove();
+            $('#assetFilterListSelected').find(`option[value|="${s}"]`).remove();
           });
       });
 
@@ -1428,19 +1237,11 @@ function assetLocationButtonFiltered(bypassUI) {
           selectedAssets.push($(this)[0].value);
         });
 
-      localStorage.setItem(
-        'LighthouseJobViewAssetFilter',
-        JSON.stringify(selectedAssets),
-      );
+      localStorage.setItem('LighthouseJobViewAssetFilter', JSON.stringify(selectedAssets));
       $('#assetLocationButtonFiltered').addClass('btn-active');
       $('#assetLocationButtonFiltered').removeClass('btn-inactive');
 
-      var spinner = $(
-        <i
-          style="margin-left:5px"
-          class="fa fa-refresh fa-spin fa-1x fa-fw"
-        ></i>,
-      );
+      var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>);
 
       spinner.appendTo('#assetLocationButtonFiltered');
       renderNearestAssets({
@@ -1461,17 +1262,10 @@ function assetLocationButtonFiltered(bypassUI) {
 
     $('#assetListAllQuickSearch').keyup(function (e) {
       $.each($('#assetFilterListAll').find('option'), function (k, v) {
-        if (
-          $(v)[0].value.toUpperCase().indexOf(e.target.value.toUpperCase()) ==
-          -1
-        ) {
+        if ($(v)[0].value.toUpperCase().indexOf(e.target.value.toUpperCase()) == -1) {
           $(v).hide();
         } else {
-          if (
-            !$('#assetFilterListSelected').find(
-              `option[value|="${$(v)[0].value}"]`,
-            ).length
-          ) {
+          if (!$('#assetFilterListSelected').find(`option[value|="${$(v)[0].value}"]`).length) {
             //stupid always truthy find function
             $(v).show();
           }
@@ -1481,10 +1275,7 @@ function assetLocationButtonFiltered(bypassUI) {
 
     $('#assetListSelectedQuickSearch').keyup(function (e) {
       $.each($('#assetFilterListSelected').find('option'), function (k, v) {
-        if (
-          $(v)[0].value.toUpperCase().indexOf(e.target.value.toUpperCase()) ==
-          -1
-        ) {
+        if ($(v)[0].value.toUpperCase().indexOf(e.target.value.toUpperCase()) == -1) {
           $(v).hide();
         } else {
           $(v).show();
@@ -1493,8 +1284,7 @@ function assetLocationButtonFiltered(bypassUI) {
     });
 
     $('#assetFilterListSelected').empty();
-    let loadIn =
-      JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || [];
+    let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || [];
     loadIn.forEach(function (i) {
       $('#assetFilterListSelected').append(`<option value="${i}">${i}</option>`);
     });
@@ -1503,78 +1293,57 @@ function assetLocationButtonFiltered(bypassUI) {
 
     $('#asset-map-filter-loading').css('visibility', 'unset');
 
-    
-    BeaconClient.asset.filter([],urls.Base, user.Id, user.accessToken,function(res) {
+    BeaconClient.asset.filter([], urls.Base, user.Id, user.accessToken, function (res) {
       if (res.length) {
-        let sorted = []
+        let sorted = [];
 
-        res.forEach(function (i) { 
-            sorted.push(i.name)
+        res.forEach(function (i) {
+          sorted.push(i.name);
         });
-        
-          sorted.sort();
 
-          sorted.forEach(function (v) {
-            $('#assetFilterListAll').append(
-              `<option ${
-                $('#assetFilterListSelected')
-                  .find(`option[value|="${v}"]`)
-                  .toArray().length
-                  ? "style='display:none' "
-                  : ''
-              }value="${v}">${v}</option>`,
-            );
-          });
+        sorted.sort();
 
-          $('#asset-map-filter-loading').css('visibility', 'hidden');
+        sorted.forEach(function (v) {
+          $('#assetFilterListAll').append(
+            `<option ${
+              $('#assetFilterListSelected').find(`option[value|="${v}"]`).toArray().length
+                ? "style='display:none' "
+                : ''
+            }value="${v}">${v}</option>`,
+          );
+        });
 
-          $('#assetFilterListAll option')
-            .unbind()
-            .dblclick(function (x) {
-              let option = $(
-                `<option value="${x.target.value}">${x.target.value}</option>`,
-              );
-              //click handler for unselecting
-              option.dblclick(function (x) {
-                if (
-                  x.target.value
-                    .toUpperCase()
-                    .indexOf(
-                      $('#assetListAllQuickSearch')[0].value.toUpperCase(),
-                    ) != -1
-                ) {
-                  $('#assetFilterListAll')
-                    .find(`option[value|="${x.target.value}"]`)
-                    .show();
-                }
-                $(x.target).remove();
-              });
+        $('#asset-map-filter-loading').css('visibility', 'hidden');
 
-              $(x.target).hide();
-              $('#assetFilterListSelected').append(option);
-            });
-
-          $('#assetFilterListSelected option')
-            .unbind()
-            .dblclick(function (x) {
-              if (
-                x.target.value
-                  .toUpperCase()
-                  .indexOf(
-                    $('#assetListAllQuickSearch')[0].value.toUpperCase(),
-                  ) != -1
-              ) {
-                $('#assetFilterListAll')
-                  .find(`option[value|="${x.target.value}"]`)
-                  .show();
+        $('#assetFilterListAll option')
+          .unbind()
+          .dblclick(function (x) {
+            let option = $(`<option value="${x.target.value}">${x.target.value}</option>`);
+            //click handler for unselecting
+            option.dblclick(function (x) {
+              if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1) {
+                $('#assetFilterListAll').find(`option[value|="${x.target.value}"]`).show();
               }
               $(x.target).remove();
             });
 
-          // response.responseJSON.forEach(function(v){
-          //     $("#assetFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
-          // })
-        }
+            $(x.target).hide();
+            $('#assetFilterListSelected').append(option);
+          });
+
+        $('#assetFilterListSelected option')
+          .unbind()
+          .dblclick(function (x) {
+            if (x.target.value.toUpperCase().indexOf($('#assetListAllQuickSearch')[0].value.toUpperCase()) != -1) {
+              $('#assetFilterListAll').find(`option[value|="${x.target.value}"]`).show();
+            }
+            $(x.target).remove();
+          });
+
+        // response.responseJSON.forEach(function(v){
+        //     $("#assetFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
+        // })
+      }
     });
 
     //render and fill moal
@@ -1587,15 +1356,12 @@ function assetLocationButtonFiltered(bypassUI) {
     $('#assetLocationButtonFiltered').addClass('btn-active');
     $('#assetLocationButtonFiltered').removeClass('btn-inactive');
 
-    var spinner = $(
-      <i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>,
-    );
+    var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>);
 
     spinner.appendTo('#assetLocationButtonFiltered');
 
     renderNearestAssets({
-      teamFilter:
-        JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || [],
+      teamFilter: JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || [],
       activeOnly: false,
       cb: function () {
         spinner.hide();
@@ -1648,13 +1414,8 @@ $(quickMessage)
 $(quickRadioLog)
   .find('button')
   .click(function () {
-    if (
-      masterViewModel.teamsViewModel.taskedTeams.peek().length == 1 &&
-      $('#instantRadioLogCallSign').val() == ''
-    ) {
-      $('#instantRadioLogCallSign').val(
-        masterViewModel.teamsViewModel.taskedTeams.peek()[0].Team.Callsign,
-      );
+    if (masterViewModel.teamsViewModel.taskedTeams.peek().length == 1 && $('#instantRadioLogCallSign').val() == '') {
+      $('#instantRadioLogCallSign').val(masterViewModel.teamsViewModel.taskedTeams.peek()[0].Team.Callsign);
     }
 
     $('#instantradiologModal').modal();
@@ -1680,30 +1441,22 @@ function processSubmitInstantRadioLog() {
   if ($('#instantRadioLogText').val() == '') {
     $('#instantRadioLogTextForm').addClass('has-error');
   } else {
-    submitInstantRadioLog(
-      $('#instantRadioLogCallSign').val(),
-      $('#instantRadioLogText').val(),
-      function (result) {
-        if (result) {
-          $('#instantradiologModal').modal('hide');
-          $('#instantRadioLogTextForm').removeClass('has-error'); //just incase
-          $('#instantRadioLogText').val('');
-        } else {
-          alert('Error submitting log entry');
-        }
-      },
-    );
+    submitInstantRadioLog($('#instantRadioLogCallSign').val(), $('#instantRadioLogText').val(), function (result) {
+      if (result) {
+        $('#instantradiologModal').modal('hide');
+        $('#instantRadioLogTextForm').removeClass('has-error'); //just incase
+        $('#instantRadioLogText').val('');
+      } else {
+        alert('Error submitting log entry');
+      }
+    });
   }
 }
 
 whenJobIsReady(function () {
   if (masterViewModel.canTask.peek() == true) {
     //this role covers sectors and category as well
-    $('#lighthouse_actions_content').append(
-      quickTask,
-      quickSector,
-      quickCategory,
-    );
+    $('#lighthouse_actions_content').append(quickTask, quickSector, quickCategory);
   }
 
   $('#lighthouse_actions_content').append(quickRadioLog);
@@ -1722,12 +1475,7 @@ whenJobIsReady(function () {
       </a>
     );
     $(searchButton).click(function (e) {
-      var spinner = $(
-        <i
-          style="margin-left:5px"
-          class="fa fa-refresh fa-spin fa-1x fa-fw"
-        ></i>,
-      );
+      var spinner = $(<i style="margin-left:5px" class="fa fa-refresh fa-spin fa-1x fa-fw"></i>);
 
       spinner.appendTo(searchButton);
       e.preventDefault();
@@ -1735,9 +1483,7 @@ whenJobIsReady(function () {
         window.postMessage(
           {
             type: 'FROM_PAGE_LHQ_RESCUE_DISTANCE',
-            jType: masterViewModel.jobType.peek()
-              ? masterViewModel.jobType.peek().Name
-              : null,
+            jType: masterViewModel.jobType.peek() ? masterViewModel.jobType.peek().Name : null,
             report: res,
             lat: masterViewModel.latitude.peek(),
             lng: masterViewModel.longitude.peek(),
@@ -1747,10 +1493,7 @@ whenJobIsReady(function () {
       });
     });
 
-    if (
-      masterViewModel.latitude.peek() == null &&
-      masterViewModel.longitude.peek() == null
-    ) {
+    if (masterViewModel.latitude.peek() == null && masterViewModel.longitude.peek() == null) {
       $(searchButton).prop('disabled', true);
       $(searchButton).addClass('disabled');
     }
@@ -1763,21 +1506,14 @@ whenTeamsAreReady(function () {
   lighthouseTasking();
 
   //Bold the team action taken
-  $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css(
-    'font-weight',
-    'bold',
-  );
+  $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css('font-weight', 'bold');
 
   //checkbox for hide completed tasking
-  $(
-    '#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header',
-  ).append(renderCheckBox());
+  $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox());
 
   if (masterViewModel.sector.peek() !== null) {
     console.log('sector filter enabled');
-    $('#lighthouse_actions div.widget-header').append(
-      renderSectorFilterCheckBox(),
-    );
+    $('#lighthouse_actions div.widget-header').append(renderSectorFilterCheckBox());
 
     $('#lighthouseSectorFilterEnabled').click(function () {
       // Toggle Value
@@ -1786,10 +1522,7 @@ whenTeamsAreReady(function () {
         localStorage.getItem('LighthouseSectorFilterEnabled') == null
       );
       // Save Value
-      localStorage.setItem(
-        'LighthouseSectorFilterEnabled',
-        lh_SectorFilterEnabled,
-      );
+      localStorage.setItem('LighthouseSectorFilterEnabled', lh_SectorFilterEnabled);
       sectorfilter_switch();
     });
     sectorfilter_switch();
@@ -1812,8 +1545,7 @@ whenTeamsAreReady(function () {
 
 function sectorfilter_switch() {
   // Set flag
-  var lh_SectorFilterEnabled =
-    localStorage.getItem('LighthouseSectorFilterEnabled') == 'false';
+  var lh_SectorFilterEnabled = localStorage.getItem('LighthouseSectorFilterEnabled') == 'false';
   // Toggle class for checkbox
   $('#lighthouseSectorFilterEnabled')
     .toggleClass('fa-check-square-o', lh_SectorFilterEnabled)
@@ -1825,9 +1557,7 @@ function sectorfilter_switch() {
  */
 function jobView_teamsTasked_itemsPrepare() {
   // Loop through all Tasked Teams
-  $(
-    'div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div',
-  ).each(function (k, v) {
+  $('div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div').each(function (k, v) {
     var $t = $(v);
     var lastUpdate = $('span[data-bind^="text: CurrentStatus"]', $t).text();
     var b = false;
@@ -1848,8 +1578,7 @@ function jobView_teamsTasked_itemsPrepare() {
  */
 function jobView_teamsTasked_completedHiddenSwitch() {
   // Set flag
-  var hideComplete =
-    localStorage.getItem('LighthouseHideCompletedEnabled') == 'false';
+  var hideComplete = localStorage.getItem('LighthouseHideCompletedEnabled') == 'false';
   // Toggle Visibility of Tasked Teams
   // Non-Completed Crews
   $(
@@ -1860,9 +1589,7 @@ function jobView_teamsTasked_completedHiddenSwitch() {
     'div.widget > div.widget-content > div[data-bind$="taskedTeams"] > div.teamStatus_complete > div.row:not(:first-child)',
   ).toggle(!hideComplete);
   // Toggle class for checkbox
-  $('#lighthouseEnabled')
-    .toggleClass('fa-check-square-o', hideComplete)
-    .toggleClass('fa-square-o', !hideComplete);
+  $('#lighthouseEnabled').toggleClass('fa-check-square-o', hideComplete).toggleClass('fa-square-o', !hideComplete);
 }
 
 /**
@@ -1872,16 +1599,13 @@ function jobView_teamsTasked_showHiddenItem(e) {
   // Tasked Team Clicked On
   var $t = $(e.currentTarget);
   // Only Toggle Content if the Clicked Team is Complete
-  if ($t.hasClass('teamStatus_complete'))
-    $t.children('div.row:gt(0)').stop(true).slideToggle();
+  if ($t.hasClass('teamStatus_complete')) $t.children('div.row:gt(0)').stop(true).slideToggle();
 }
 
 /**
  * Subscribe to Tasked Team List - Reprocess list on change
  */
-masterViewModel.teamsViewModel.taskedTeams.subscribe(
-  jobView_teamsTasked_itemsPrepare,
-);
+masterViewModel.teamsViewModel.taskedTeams.subscribe(jobView_teamsTasked_itemsPrepare);
 
 /**
  * Attach Function to toggle Team Visibility on Click
@@ -1908,10 +1632,7 @@ function lighthouseTimelineTPlusWatchers() {
         'div[data-bind="foreach: jobHistory"] small[data-bind="text: moment(TimeStamp).format(utility.dtFormat)"]',
       ).each(function (_r) {
         // weird race condition where they already have the attrib
-        if (
-          $(this).attr('lhTPlus') === undefined ||
-          $(this).attr('lhTPlus') === false
-        ) {
+        if ($(this).attr('lhTPlus') === undefined || $(this).attr('lhTPlus') === false) {
           let res = $(this).text();
           let tPlusText = returnTTime(res);
           $(this).attr('lhTPlus', tPlusText);
@@ -1941,9 +1662,7 @@ function returnTTime(messageDate) {
 }
 
 function lighthouseDictionary() {
-  var $targetElements = $(
-    '.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: $data"]',
-  );
+  var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: $data"]');
 
   var ICEMS_Dictionary = {
     ASNSW: 'NSW Ambulance',
@@ -2005,9 +1724,7 @@ if (document.getElementById('CompleteQuickTextBox')) {
   };
 }
 
-masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function (
-  newValue,
-) {
+masterViewModel.completeTeamViewModel.primaryActivity.subscribe(function (newValue) {
   if (typeof newValue !== 'undefined') {
     if (newValue !== null) {
       let quickText, i, opt;
@@ -2099,13 +1816,9 @@ function InstantCategoryButton() {
           masterViewModel.JobManager.GetHistory(jobId, function (t) {
             masterViewModel.jobHistory(t);
           }); //load job history
-          masterViewModel.JobManager.GetJobById(
-            jobId,
-            Enum.JobViewModelType.Full.Id,
-            function (t) {
-              masterViewModel.jobStatus(t.JobStatusType);
-            },
-          ); //update status
+          masterViewModel.JobManager.GetJobById(jobId, Enum.JobViewModelType.Full.Id, function (t) {
+            masterViewModel.jobStatus(t.JobStatusType);
+          }); //update status
         }
       },
     });
@@ -2213,13 +1926,9 @@ function InstantSectorButton() {
             masterViewModel.JobManager.GetHistory(jobId, function (t) {
               masterViewModel.jobHistory(t);
             }); //load job history
-            masterViewModel.JobManager.GetJobById(
-              jobId,
-              Enum.JobViewModelType.Full.Id,
-              function (t) {
-                masterViewModel.sector(t.Sector);
-              },
-            ); //update status
+            masterViewModel.JobManager.GetJobById(jobId, Enum.JobViewModelType.Full.Id, function (t) {
+              masterViewModel.sector(t.Sector);
+            }); //update status
           }
         },
       });
@@ -2239,13 +1948,9 @@ function InstantSectorButton() {
             masterViewModel.JobManager.GetHistory(jobId, function (t) {
               masterViewModel.jobHistory(t);
             }); //load job history
-            masterViewModel.JobManager.GetJobById(
-              jobId,
-              Enum.JobViewModelType.Full.Id,
-              function (t) {
-                masterViewModel.sector(t.Sector);
-              },
-            ); //update status
+            masterViewModel.JobManager.GetJobById(jobId, Enum.JobViewModelType.Full.Id, function (t) {
+              masterViewModel.sector(t.Sector);
+            }); //update status
           }
         },
       });
@@ -2278,10 +1983,7 @@ function InstantTaskButton() {
   );
 
   var sectorFilter = null;
-  if (
-    masterViewModel.sector.peek() !== null &&
-    lh_SectorFilterEnabled === true
-  ) {
+  if (masterViewModel.sector.peek() !== null && lh_SectorFilterEnabled === true) {
     sectorFilter = masterViewModel.sector.peek().Id;
   }
 
@@ -2325,52 +2027,39 @@ function InstantTaskButton() {
 
                 $(theSearch).keyup(function (e) {
                   e.stopPropagation();
-                  $.each(
-                    $(quickTask).find('ul').find('li[role!="presentation"]'),
-                    function (k, v) {
-                      if (
-                        $(v)[0]
-                          .innerText.toUpperCase()
-                          .indexOf(e.target.value.toUpperCase()) == -1
-                      ) {
-                        $(v).hide();
-                      } else {
-                        $(v).show();
-                      }
-                    },
-                  );
-                  $.each(
-                    $(quickTask).find('ul').find('li[role="presentation"]'),
-                    function (k, v) {
-                      let childrenVis = false;
-                      let nextChild = $(v).next();
-                      // walk the neighbours of the li, if they are displayed then dont hide the pres li, otherwise hide it. wish this was a nested DOM!
-                      while (nextChild != null) {
-                        if ($(nextChild).css('display') != undefined) {
-                          //next might not be a valid dom, cause next seems to keep going when there is no next!
-                          if ($(nextChild).css('display') != 'none') {
-                            //if hidden
-                            childrenVis = true;
-                          }
-                        }
-                        if (
-                          $(nextChild).length == 0 ||
-                          $(nextChild).next().attr('role') == 'presentation'
-                        ) {
-                          //if this is a valid dom, and the next one isnt pres. next wont ever stop and will just return a 0 lenght
-                          nextChild = null;
-                        } else {
-                          nextChild = $(nextChild).next();
+                  $.each($(quickTask).find('ul').find('li[role!="presentation"]'), function (k, v) {
+                    if ($(v)[0].innerText.toUpperCase().indexOf(e.target.value.toUpperCase()) == -1) {
+                      $(v).hide();
+                    } else {
+                      $(v).show();
+                    }
+                  });
+                  $.each($(quickTask).find('ul').find('li[role="presentation"]'), function (k, v) {
+                    let childrenVis = false;
+                    let nextChild = $(v).next();
+                    // walk the neighbours of the li, if they are displayed then dont hide the pres li, otherwise hide it. wish this was a nested DOM!
+                    while (nextChild != null) {
+                      if ($(nextChild).css('display') != undefined) {
+                        //next might not be a valid dom, cause next seems to keep going when there is no next!
+                        if ($(nextChild).css('display') != 'none') {
+                          //if hidden
+                          childrenVis = true;
                         }
                       }
-                      if (childrenVis != true) {
-                        //hide or show the pres depending on its children
-                        $(v).hide();
+                      if ($(nextChild).length == 0 || $(nextChild).next().attr('role') == 'presentation') {
+                        //if this is a valid dom, and the next one isnt pres. next wont ever stop and will just return a 0 lenght
+                        nextChild = null;
                       } else {
-                        $(v).show();
+                        nextChild = $(nextChild).next();
                       }
-                    },
-                  );
+                    }
+                    if (childrenVis != true) {
+                      //hide or show the pres depending on its children
+                      $(v).hide();
+                    } else {
+                      $(v).show();
+                    }
+                  });
                 });
                 /////
                 ///// END Search Box
@@ -2387,12 +2076,7 @@ function InstantTaskButton() {
                     //not a currently active team on this job, so we can task them
                     var item = null;
                     if (v.Members.length == 0) {
-                      item = return_li(
-                        v.Id,
-                        v.Callsign.toUpperCase(),
-                        null,
-                        v.TaskedJobCount + '',
-                      );
+                      item = return_li(v.Id, v.Callsign.toUpperCase(), null, v.TaskedJobCount + '');
                     } else {
                       $(v.Members).each(function (k, vv) {
                         if (vv.TeamLeader) {
@@ -2407,25 +2091,13 @@ function InstantTaskButton() {
                     }
                     //still create teams that have no TL
                     if (item === null) {
-                      item = return_li(
-                        v.Id,
-                        v.Callsign.toUpperCase(),
-                        'No TL',
-                        v.TaskedJobCount + '',
-                      );
+                      item = return_li(v.Id, v.Callsign.toUpperCase(), 'No TL', v.TaskedJobCount + '');
                     }
 
                     //put local teams into a special array for zone and state users
-                    if (
-                      user.hq.EntityTypeId == 2 ||
-                      user.hq.EntityTypeId == 3
-                    ) {
-                      let assigned = v.AssignedTo
-                        ? v.AssignedTo.Id
-                        : v.CreatedAt.Id;
-                      if (
-                        assigned == masterViewModel.entityAssignedTo.peek().Id
-                      ) {
+                    if (user.hq.EntityTypeId == 2 || user.hq.EntityTypeId == 3) {
+                      let assigned = v.AssignedTo ? v.AssignedTo.Id : v.CreatedAt.Id;
+                      if (assigned == masterViewModel.entityAssignedTo.peek().Id) {
                         localTeam.push($(item).clone());
                       }
                     }
@@ -2453,11 +2125,7 @@ function InstantTaskButton() {
                 let drawnsectors = [];
 
                 if (localTeam.length) {
-                  finalli.push(
-                    return_lipres(
-                      `${masterViewModel.entityAssignedTo.peek().Code} Teams`,
-                    ),
-                  );
+                  finalli.push(return_lipres(`${masterViewModel.entityAssignedTo.peek().Code} Teams`));
                   $.each(localTeam, function (k, v) {
                     finalli.push(v);
                   });
@@ -2502,10 +2170,7 @@ function InstantTaskButton() {
           $(quickTask).find('ul').empty();
           let no_results = (
             <li>
-              <a href="#">
-                Cannot task when job status is{' '}
-                {masterViewModel.jobStatus.peek().Name}. Refresh the page!
-              </a>
+              <a href="#">Cannot task when job status is {masterViewModel.jobStatus.peek().Name}. Refresh the page!</a>
             </li>
           );
           $(quickTask).find('ul').append(no_results);
@@ -2576,13 +2241,9 @@ function TaskTeam(teamID) {
         masterViewModel.JobManager.GetHistory(jobId, function (t) {
           masterViewModel.jobHistory(t);
         }); //load job history
-        masterViewModel.JobManager.GetJobById(
-          jobId,
-          Enum.JobViewModelType.Full.Id,
-          function (t) {
-            masterViewModel.jobStatus(t.JobStatusType);
-          },
-        ); //update status
+        masterViewModel.JobManager.GetJobById(jobId, Enum.JobViewModelType.Full.Id, function (t) {
+          masterViewModel.jobStatus(t.JobStatusType);
+        }); //update status
       }
     },
   });
@@ -2711,22 +2372,18 @@ $(document).ready(function () {
         child = args[2];
 
       $(args[0]).click(function () {
-        masterViewModel.completeTeamViewModel.availablePrimaryActivities
-          .peek()
-          .forEach(function (d) {
-            if (d.Name == parent) {
-              masterViewModel.completeTeamViewModel.primaryActivity(d);
-              masterViewModel.completeTeamViewModel.availablePrimaryTasks.subscribe(
-                function (d) {
-                  d.forEach(function (d) {
-                    if (d.Name == child) {
-                      masterViewModel.completeTeamViewModel.primaryTask(d);
-                    }
-                  });
-                },
-              );
-            }
-          });
+        masterViewModel.completeTeamViewModel.availablePrimaryActivities.peek().forEach(function (d) {
+          if (d.Name == parent) {
+            masterViewModel.completeTeamViewModel.primaryActivity(d);
+            masterViewModel.completeTeamViewModel.availablePrimaryTasks.subscribe(function (d) {
+              d.forEach(function (d) {
+                if (d.Name == child) {
+                  masterViewModel.completeTeamViewModel.primaryTask(d);
+                }
+              });
+            });
+          }
+        });
       });
     },
   );
@@ -2739,12 +2396,7 @@ function return_quicktaskbutton() {
       style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;padding-bottom:5px;"
       class="dropdown"
     >
-      <button
-        class="btn btn-sm btn-warning dropdown-toggle"
-        type="button"
-        data-toggle="dropdown"
-        id="lhtaskbutton"
-      >
+      <button class="btn btn-sm btn-warning dropdown-toggle" type="button" data-toggle="dropdown" id="lhtaskbutton">
         <i class="fa fa-tasks" style="padding-right: 5px;"></i>Instant Task
         <span class="caret"></span>
       </button>
@@ -2760,12 +2412,7 @@ function return_quicksectorbutton() {
       style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;padding-bottom:5px;"
       class="dropdown"
     >
-      <button
-        class="btn btn-sm btn-info dropdown-toggle"
-        type="button"
-        data-toggle="dropdown"
-        id="lhsectorbutton"
-      >
+      <button class="btn btn-sm btn-info dropdown-toggle" type="button" data-toggle="dropdown" id="lhsectorbutton">
         <i class="fa fa-cubes" style="padding-right: 5px;"></i>Instant Sector
         <span class="caret"></span>
       </button>
@@ -2781,14 +2428,8 @@ function return_quickcategorybutton() {
       style="position:relative;display:inline-block;vertical-align:middle;padding-left:3px;padding-right:3px;padding-bottom:5px;"
       class="dropdown"
     >
-      <button
-        class="btn btn-sm btn-default dropdown-toggle"
-        type="button"
-        data-toggle="dropdown"
-        id="lhcategorybutton"
-      >
-        <i class="fa fa-database" style="padding-right: 5px;"></i>Instant
-        Category
+      <button class="btn btn-sm btn-default dropdown-toggle" type="button" data-toggle="dropdown" id="lhcategorybutton">
+        <i class="fa fa-database" style="padding-right: 5px;"></i>Instant Category
         <span class="caret"></span>
       </button>
       <ul class="dropdown-menu scrollable-menu"></ul>
@@ -2808,8 +2449,7 @@ function return_quickradiologbutton() {
         type="button"
         id="lhinstantradiologbutton"
       >
-        <i class="fa fa-microphone" style="padding-right: 5px;"></i>Instant
-        Radio Log
+        <i class="fa fa-microphone" style="padding-right: 5px;"></i>Instant Radio Log
       </button>
     </div>
   );
@@ -2827,8 +2467,7 @@ function return_quickmessagebutton() {
         type="button"
         id="lhinstantmessagebutton"
       >
-        <i class="fa fa-envelope" style="padding-right: 5px;"></i>Compose Job
-        Message
+        <i class="fa fa-envelope" style="padding-right: 5px;"></i>Compose Job Message
       </button>
     </div>
   );
@@ -2836,21 +2475,11 @@ function return_quickmessagebutton() {
 
 function return_quickradiologmodal() {
   return (
-    <div
-      class="modal fade"
-      id="instantradiologModal"
-      role="dialog"
-      style="display: none;"
-    >
+    <div class="modal fade" id="instantradiologModal" role="dialog" style="display: none;">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button
-              type="button"
-              class="close"
-              data-dismiss="modal"
-              aria-hidden="true"
-            >
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
               ×
             </button>
             <h4 class="modal-title">
@@ -2862,11 +2491,7 @@ function return_quickradiologmodal() {
               <div class="row">
                 <label class="col-md-4 col-lg-3 control-label">Callsign</label>
                 <div class="col-md-8 col-lg-9">
-                  <textarea
-                    id="instantRadioLogCallSign"
-                    class="form-control"
-                    rows="1"
-                  ></textarea>
+                  <textarea id="instantRadioLogCallSign" class="form-control" rows="1"></textarea>
                 </div>
                 <div title=""></div>
               </div>
@@ -2875,26 +2500,15 @@ function return_quickradiologmodal() {
               <div class="row">
                 <label class="col-md-4 col-lg-3 control-label">Note</label>
                 <div class="col-md-8 col-lg-9">
-                  <textarea
-                    id="instantRadioLogText"
-                    class="form-control"
-                  ></textarea>
+                  <textarea id="instantRadioLogText" class="form-control"></textarea>
                 </div>
               </div>
             </div>
             <div class="modal-footer">
-              <button
-                type="button"
-                class="btn btn-default"
-                data-dismiss="modal"
-              >
+              <button type="button" class="btn btn-default" data-dismiss="modal">
                 Cancel
               </button>
-              <button
-                type="button"
-                class="btn btn-info"
-                id="submitInstantRadioLogButton"
-              >
+              <button type="button" class="btn btn-info" id="submitInstantRadioLogButton">
                 <span class="button-text">Submit</span>
               </button>
             </div>
@@ -2971,21 +2585,13 @@ function checkAddressHistory() {
   }
 
   //dont allow searches if the job has not been geocoded
-  if (
-    address.Street == null &&
-    address.Locality == null &&
-    address.Latitude == null &&
-    address.Longitude == null
-  ) {
+  if (address.Street == null && address.Locality == null && address.Latitude == null && address.Longitude == null) {
     return $('#job_view_history_container')
       .empty()
       .append(
         '<em>Unable to Perform Address Search. Address does not appear valid (Not Geocoded).<br/>' +
           (masterViewModel.canEdit()
-            ? '<a href="/Jobs/' +
-              jobId +
-              '/Edit' +
-              '">Please edit the job and geocode the job location.</a>'
+            ? '<a href="/Jobs/' + jobId + '/Edit' + '">Please edit the job and geocode the job location.</a>'
             : 'Have an authorised user edit the job and geocode the job location.') +
           '</em>',
       );
@@ -3083,19 +2689,10 @@ function checkAddressHistory() {
 
             if (address.StreetNumber != null) {
               var re_StreetNumber_Parts = /^(?:(\d+)\D)?(\d+)\D*/;
-              var jobAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec(
-                address.StreetNumber,
-              );
-              var jobAddress_StreetNumber_Max = parseInt(
-                jobAddress_StreetNumber_tmp[2],
-                10,
-              );
-              var index =
-                typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1;
-              var jobAddress_StreetNumber_Min = parseInt(
-                jobAddress_StreetNumber_tmp[index],
-                10,
-              );
+              var jobAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec(address.StreetNumber);
+              var jobAddress_StreetNumber_Max = parseInt(jobAddress_StreetNumber_tmp[2], 10);
+              var index = typeof jobAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1;
+              var jobAddress_StreetNumber_Min = parseInt(jobAddress_StreetNumber_tmp[index], 10);
             }
             $.each(response.responseJSON.Results, function (k, v) {
               // Job Group
@@ -3112,35 +2709,24 @@ function checkAddressHistory() {
               // Generate the Relative Time
               v.relativeTime = moment(v.JobReceived).fromNow();
               // Is the Job Older than 14 Days
-              v.isold =
-                v.JobReceived.getTime() <
-                now.getTime() - 14 * 24 * 60 * 60 * 1000;
+              v.isold = v.JobReceived.getTime() < now.getTime() - 14 * 24 * 60 * 60 * 1000;
               // Default value for Situation on Scene
-              if (v.SituationOnScene == null)
-                v.SituationOnScene = <em>View job for more detail</em>;
+              if (v.SituationOnScene == null) v.SituationOnScene = <em>View job for more detail</em>;
               // Job Tags
               var tagArray = [];
               $.each(v.Tags, function (tagIdx, tagObj) {
                 tagArray.push(tagObj.Name);
               });
-              v.tagString = tagArray.length ? (
-                tagArray.join(', ')
-              ) : (
-                <em>No Tags</em>
-              );
+              v.tagString = tagArray.length ? tagArray.join(', ') : <em>No Tags</em>;
               // Job CSS Classes
-              v.cssClasses =
-                'job_view_history_item job_view_history_item_status_' +
-                v.JobStatusType.Name.toLowerCase();
+              v.cssClasses = 'job_view_history_item job_view_history_item_status_' + v.JobStatusType.Name.toLowerCase();
               var jobGroups = [];
               $.each(status_groups, function (status_group, statuses) {
-                if (statuses.indexOf(v.JobStatusType.Name.toLowerCase()) >= 0)
-                  jobGroups.push(status_group);
+                if (statuses.indexOf(v.JobStatusType.Name.toLowerCase()) >= 0) jobGroups.push(status_group);
               });
               if (jobGroups.length)
                 v.cssClasses +=
-                  ' job_view_history_item_statusgroup_' +
-                  jobGroups.join(' job_view_history_item_statusgroup_');
+                  ' job_view_history_item_statusgroup_' + jobGroups.join(' job_view_history_item_statusgroup_');
               if (v.isold) {
                 v.cssClasses += ' job_view_history_item_old';
                 if (jobGroups.indexOf('active') == -1) {
@@ -3158,35 +2744,17 @@ function checkAddressHistory() {
                 if (v.Address.PrettyAddress == address.PrettyAddress) {
                   // Perfect Match
                   result_group = 'exact';
-                } else if (
-                  v.Address.StreetNumber.replace(/\D+/g, '') ==
-                  address.StreetNumber.replace(/\D+/g, '')
-                ) {
+                } else if (v.Address.StreetNumber.replace(/\D+/g, '') == address.StreetNumber.replace(/\D+/g, '')) {
                   // Not an exact address match, so include the address in the result row
                   result_group = 'partial';
                 } else {
-                  var rowAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec(
-                    v.Address.StreetNumber,
-                  );
-                  var rowAddress_StreetNumber_Max = parseInt(
-                    rowAddress_StreetNumber_tmp[2],
-                    10,
-                  );
-                  var index =
-                    typeof rowAddress_StreetNumber_tmp[1] == 'undefined'
-                      ? 2
-                      : 1;
-                  var rowAddress_StreetNumber_Min = parseInt(
-                    rowAddress_StreetNumber_tmp[index],
-                    10,
-                  );
+                  var rowAddress_StreetNumber_tmp = re_StreetNumber_Parts.exec(v.Address.StreetNumber);
+                  var rowAddress_StreetNumber_Max = parseInt(rowAddress_StreetNumber_tmp[2], 10);
+                  var index = typeof rowAddress_StreetNumber_tmp[1] == 'undefined' ? 2 : 1;
+                  var rowAddress_StreetNumber_Min = parseInt(rowAddress_StreetNumber_tmp[index], 10);
                   if (
-                    Math.abs(
-                      jobAddress_StreetNumber_Min - rowAddress_StreetNumber_Max,
-                    ) == 2 ||
-                    Math.abs(
-                      jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min,
-                    ) == 2
+                    Math.abs(jobAddress_StreetNumber_Min - rowAddress_StreetNumber_Max) == 2 ||
+                    Math.abs(jobAddress_StreetNumber_Max - rowAddress_StreetNumber_Min) == 2
                   ) {
                     result_group = 'neighbour';
                   }
@@ -3211,17 +2779,13 @@ function checkAddressHistory() {
                         id={'job_view_history_group_' + groupData.key}
                         class={
                           'job_view_history_group col-md-12' +
-                          (groupData.hide_old
-                            ? ' job_view_history_showtoggle'
-                            : '')
+                          (groupData.hide_old ? ' job_view_history_showtoggle' : '')
                         }
                       >
                         <legend>
                           {groupData.title}
                           <span class="group_size">
-                            {groupData.jobs.length +
-                              ' Job' +
-                              (groupData.jobs.length == 1 ? '' : 's')}
+                            {groupData.jobs.length + ' Job' + (groupData.jobs.length == 1 ? '' : 's')}
                           </span>
                         </legend>
                         <div class="form-group col-xs-12">
@@ -3237,23 +2801,15 @@ function checkAddressHistory() {
                                     <a href={j.url} class="job_view_history_id">
                                       {j.Identifier}
                                     </a>
-                                    <span class="job_view_history_address">
-                                      {j.Address.PrettyAddress}
-                                    </span>
-                                    <span class="job_view_history_status">
-                                      {j.JobStatusType.Name}
-                                    </span>
+                                    <span class="job_view_history_address">{j.Address.PrettyAddress}</span>
+                                    <span class="job_view_history_status">{j.JobStatusType.Name}</span>
                                   </div>
-                                  <div class="job_view_history_situation">
-                                    {j.SituationOnScene}
-                                  </div>
+                                  <div class="job_view_history_situation">{j.SituationOnScene}</div>
                                   <div class="job_view_history_tags">
                                     <i class="fa fa-tags"></i>
                                     {j.tagString}
                                   </div>
-                                  <div class="job_view_history_time">
-                                    {j.relativeTime}
-                                  </div>
+                                  <div class="job_view_history_time">{j.relativeTime}</div>
                                 </div>
                               );
                             })
@@ -3319,19 +2875,13 @@ setTimeout(checkAddressHistory, 400);
 // wait for teams to have loaded
 function whenTeamsAreReady(cb) {
   //when external vars have loaded
-  if (
-    (typeof masterViewModel != 'undefined') &
-    (masterViewModel.teamsViewModel.teamsLoaded.peek() == true)
-  ) {
+  if ((typeof masterViewModel != 'undefined') & (masterViewModel.teamsViewModel.teamsLoaded.peek() == true)) {
     console.log('teams already loaded');
     cb();
   } else {
     var waiting = setInterval(function () {
       //run every 1sec until we have loaded the page (dont hate me Sam)
-      if (
-        (typeof masterViewModel != 'undefined') &
-        (masterViewModel.teamsViewModel.teamsLoaded.peek() == true)
-      ) {
+      if ((typeof masterViewModel != 'undefined') & (masterViewModel.teamsViewModel.teamsLoaded.peek() == true)) {
         console.log('teams are ready');
         clearInterval(waiting); //stop timer
         cb(); //call back
@@ -3459,13 +3009,9 @@ function untaskTeamFromJob(TeamID, JobID, TaskingID) {
         masterViewModel.JobManager.GetHistory(jobId, function (t) {
           masterViewModel.jobHistory(t);
         }); //load job history
-        masterViewModel.JobManager.GetJobById(
-          jobId,
-          Enum.JobViewModelType.Full.Id,
-          function (t) {
-            masterViewModel.jobStatus(t.JobStatusType);
-          },
-        ); //update status
+        masterViewModel.JobManager.GetJobById(jobId, Enum.JobViewModelType.Full.Id, function (t) {
+          masterViewModel.jobStatus(t.JobStatusType);
+        }); //update status
       }
     },
   });
@@ -3492,10 +3038,7 @@ function getBearing(startLat, startLong, endLat, endLong) {
 
   var dLong = endLong - startLong;
 
-  var dPhi = Math.log(
-    Math.tan(endLat / 2.0 + Math.PI / 4.0) /
-      Math.tan(startLat / 2.0 + Math.PI / 4.0),
-  );
+  var dPhi = Math.log(Math.tan(endLat / 2.0 + Math.PI / 4.0) / Math.tan(startLat / 2.0 + Math.PI / 4.0));
   if (Math.abs(dLong) > Math.PI) {
     if (dLong > 0.0) dLong = -(2.0 * Math.PI - dLong);
     else dLong = 2.0 * Math.PI + dLong;
@@ -3517,26 +3060,19 @@ function getCardinal(angle) {
    */
   const offsetAngle = angle + degreePerDirection / 2;
 
-  return offsetAngle >= 0 * degreePerDirection &&
-    offsetAngle < 1 * degreePerDirection
+  return offsetAngle >= 0 * degreePerDirection && offsetAngle < 1 * degreePerDirection
     ? 'North'
-    : offsetAngle >= 1 * degreePerDirection &&
-      offsetAngle < 2 * degreePerDirection
+    : offsetAngle >= 1 * degreePerDirection && offsetAngle < 2 * degreePerDirection
     ? 'NE'
-    : offsetAngle >= 2 * degreePerDirection &&
-      offsetAngle < 3 * degreePerDirection
+    : offsetAngle >= 2 * degreePerDirection && offsetAngle < 3 * degreePerDirection
     ? 'East'
-    : offsetAngle >= 3 * degreePerDirection &&
-      offsetAngle < 4 * degreePerDirection
+    : offsetAngle >= 3 * degreePerDirection && offsetAngle < 4 * degreePerDirection
     ? 'SE'
-    : offsetAngle >= 4 * degreePerDirection &&
-      offsetAngle < 5 * degreePerDirection
+    : offsetAngle >= 4 * degreePerDirection && offsetAngle < 5 * degreePerDirection
     ? 'South'
-    : offsetAngle >= 5 * degreePerDirection &&
-      offsetAngle < 6 * degreePerDirection
+    : offsetAngle >= 5 * degreePerDirection && offsetAngle < 6 * degreePerDirection
     ? 'SW'
-    : offsetAngle >= 6 * degreePerDirection &&
-      offsetAngle < 7 * degreePerDirection
+    : offsetAngle >= 6 * degreePerDirection && offsetAngle < 7 * degreePerDirection
     ? 'West'
     : 'NW';
 }
@@ -3771,9 +3307,7 @@ function editRfaFormDOMWatcher() {
   if ($target.length > 0) {
     // Now we watch for new elements
     const observer = new MutationObserver((_r) => {
-      var $targetElements = $(
-        '.job-details-page div[data-bind="foreach: messages"] div em:not(:has(#forwardMessage))',
-      );
+      var $targetElements = $('.job-details-page div[data-bind="foreach: messages"] div em:not(:has(#forwardMessage))');
 
       $targetElements.each(function (_v) {
         var $daddy = $(this);
@@ -3800,20 +3334,13 @@ function editRfaFormDOMWatcher() {
       ).each(function (_r) {
         // weird race condition where they already have the attrib
         var $thing = $(this);
-        if (
-          $thing.attr('lhTPlus') === undefined ||
-          $thing.attr('lhTPlus') === false
-        ) {
-          let res = $thing
-            .text()
-            .match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
+        if ($thing.attr('lhTPlus') === undefined || $thing.attr('lhTPlus') === false) {
+          let res = $thing.text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
           if (res && res.length) {
             whenJobIsReady(function () {
               let tPlusText = returnTTime(res[1]);
               $thing.attr('lhTPlus', tPlusText);
-              $thing.text(
-                $thing.text().replace(res[1], `${res[1]} (${tPlusText})`),
-              );
+              $thing.text($thing.text().replace(res[1], `${res[1]} (${tPlusText})`));
             });
           }
         }
