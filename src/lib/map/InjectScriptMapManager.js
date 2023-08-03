@@ -148,6 +148,7 @@ const assetBlueIcon = lighthouseUrl + 'icons/asset-icons/asset-blue';
 const assetYellowIcon = lighthouseUrl + 'icons/asset-icons/asset-yellow';
 const assetBrownIcon = lighthouseUrl + 'icons/asset-icons/asset-brown';
 const assetPurpleIcon = lighthouseUrl + 'icons/asset-icons/asset-purple';
+const assetBlackIcon = lighthouseUrl + 'icons/asset-icons/asset-black';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -521,51 +522,35 @@ function showSesTeamsLocations(mapLayer, data) {
  */
 function showSesFilteredAssets(mapLayer, data) {
   console.info('showing SES Filtered Assets');
+
   let count = 0;
   if (data && data.length > 0) {
+
     for (let i = 0; i < data.length; i++) {
       const asset = data[i];
       let lat = asset.geometry.coordinates[1];
       let lon = asset.geometry.coordinates[0];
-      var unit = asset.properties.name.match(/([a-z]+)/i)
-        ? asset.properties.name.match(/([a-z]+)/i)[1]
-        : asset.properties.name;
-      var veh = asset.properties.name.match(/[a-z]+(\d*[a-z]?)/i)
-        ? asset.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1]
-        : '';
       let details = `<span class="label tag tag-disabled">${
-        asset.properties.capability
+        asset.capability
       }</span><span class="label tag tag-disabled">Vehicle</span>
                 <br><br>
                 <p><b>${lat}</b>, <b>${lon}</b></p>
                 <p ${
-                  moment().diff(asset.properties.lastSeen, 'days') > 1
+                  moment().diff(asset.lastSeen, 'days') > 1
                     ? 'style=color:red'
                     : ''
                 }>
-                (last seen: ${asset.properties.lastSeen})<br>
-                (last seen: ${moment(asset.properties.lastSeen).fromNow()})
+                (last seen: ${moment(asset.lastSeen).format('YYYY.MM.DD HH:mm')})<br>
+                (last seen: ${moment(asset.lastSeen).fromNow()})
                 </p>
                 <p>Talkgroup: <b>${
-                  asset.properties.talkgroup
+                  asset.talkGroup
                 }</b><br>(last activity: ${
-        asset.properties.talkgroupLastUpdated
+        asset.talkGroupLastUpdated
       })<br>
-                (last seen: ${moment(
-                  asset.properties.talkgroupLastUpdated,
-                ).fromNow()})</p>
-                <p></p>
                 <hr>
                 <div>License Plate: <b>${
-                  asset.properties.licensePlate
-                }</b></div>
-                <div>Radio Id: <b>${asset.properties.radioId}</b></div>
-                <div>Radio Serial Number: <b>${
-                  asset.properties.serialNumber
-                }</b></div>
-                <div>SAP Status: <b>${asset.properties.status}</b></div>
-                <div>SAP Equipment Id: <b>${
-                  asset.properties.equipmentId
+                  asset.licensePlate
                 }</b></div>
                 <p></p>`;
 
@@ -615,7 +600,11 @@ function showSesFilteredAssets(mapLayer, data) {
           break;
       }
 
-      if (moment().diff(asset.properties.lastSeen, 'days') > 1) {
+      if (asset.type == 'telematics') {
+        markerIcon = assetBlackIcon;
+      }
+
+      if (moment().diff(asset.lastSeen, 'days') > 1) {
         markerIcon = `${markerIcon}-light`;
       }
 
@@ -627,11 +616,11 @@ function showSesFilteredAssets(mapLayer, data) {
         lat,
         lon,
         marker,
-        `${asset.properties.name} (${asset.properties.entity})`,
+        `${asset.name} (${asset.entity})`,
         details,
       );
-      mapLayer.addTextSymbol(lat, lon, `${unit.trim()}`, 0, 23, 'white'); //8 offset normally
-      mapLayer.addTextSymbol(lat, lon, `${veh.trim()}`, 0, 11, 'white'); //-4 offset normally
+      mapLayer.addTextSymbol(lat, lon, `${asset.unitCode.trim()}`, 0, 23, 'white'); //8 offset normally
+      mapLayer.addTextSymbol(lat, lon, `${asset.vehCode.trim()}`, 0, 11, 'white'); //-4 offset normally
 
       count++;
     }

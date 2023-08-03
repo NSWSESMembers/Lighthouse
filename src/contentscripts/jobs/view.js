@@ -352,7 +352,7 @@ let asset_filter_modal = (
              <div class='row' style="display: flex; align-items: center;">
                 <div class="col-md-5 text-center">
                 <h5>All Assets</h5>
-                <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListAllQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
+                <input type="text" style="width: 100%; margin:auto; margin-bottom: 5px" id="assetListAllQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
                 <div id="asset-map-filter-loading" class="filter-loader-container">
                   <div class="filter-loader-background">
                     <div class="filter-loader">Loading...</div>
@@ -373,7 +373,7 @@ let asset_filter_modal = (
                 </div>
                 <div class="col-md-5 text-center">
                 <h5>Selected Assets</h5>
-                <input type="text" style="width: 65%; margin:auto; margin-bottom: 5px" id="assetListSelectedQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
+                <input type="text" style="width: 100%; margin:auto; margin-bottom: 5px" id="assetListSelectedQuickSearch" maxlength="30" class="form-control" placeholder="Filter"></input>
                    <select multiple id="assetFilterListSelected">
                    </select>
                 </div>
