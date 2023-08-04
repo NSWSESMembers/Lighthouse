@@ -540,7 +540,7 @@ function showSesFilteredAssets(mapLayer, data) {
                     ? 'style=color:red'
                     : ''
                 }>
-                (last seen: ${moment(asset.lastSeen).format('YYYY.MM.DD HH:mm')})<br>
+                (last seen: ${asset.lastSeen == 0 ? 'never' : moment(asset.lastSeen).format('YYYY.MM.DD HH:mm')})<br>
                 (last seen: ${moment(asset.lastSeen).fromNow()})
                 </p>
                 <p>Talkgroup: <b>${
@@ -616,7 +616,7 @@ function showSesFilteredAssets(mapLayer, data) {
         lat,
         lon,
         marker,
-        `${asset.name} (${asset.entity})`,
+        `${asset.name.replace('Tele', 'Telematics').replace('PSN', 'PSN Radio')} ${asset.entity != "N/A" ? '('+asset.entity+')' : ''}`,
         details,
       );
       mapLayer.addTextSymbol(lat, lon, `${asset.unitCode.trim()}`, 0, 23, 'white'); //8 offset normally
@@ -1367,7 +1367,7 @@ class AircraftPosition {
   save() {
     let icao24 = this.aircraft.icao24;
     localStorage.setItem(
-      'lighthouse-last-position-' + icao24,
+      'Lighthouse-last-position-' + icao24,
       JSON.stringify(this),
     );
   }
@@ -1381,7 +1381,7 @@ class AircraftPosition {
   static load(icao24) {
     icao24 = icao24.toLowerCase();
     let cachedLastPosition = localStorage.getItem(
-      'lighthouse-last-position-' + icao24,
+      'Lighthouse-last-position-' + icao24,
     );
     if (cachedLastPosition) {
       return JSON.parse(cachedLastPosition);

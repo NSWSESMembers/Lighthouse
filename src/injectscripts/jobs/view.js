@@ -639,7 +639,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
 
                 row = $(`
            <tr style="${moment().diff(v.lastSeen, 'days') > 1 ? 'font-style: italic;' : ''}  cursor: pointer;">
-        <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${v.entity}'s ${v.capability} ${
+        <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${v.entity != "N/A" ? v.entity+"'s" : ''} ${v.capability} ${
                   v.resourceType
                 }">${v.name}</div></th>
         <td><div id="locate" style="background:${uniqueColor}"></div></td>

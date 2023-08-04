@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import moment from 'moment';
 
 export function filter(assetFilter, host, userId = 'notPassed', token, cb) {
   console.debug('fetching SES Asset Locations with possible filter on result');
@@ -24,12 +25,12 @@ function ReturnAssetLocations(host, userId = 'notPassed', token, cb) {
   Promise.all([fetchRadioAssets(host, userId, token), fetchTeleAssets(host, userId, token)]).then(function (res) {
     var response = [];
     res[0].forEach(function (i) {
-      // GRN locations
+      // PSN locations
       if (isNaN(i.properties.name)) {
         // hide numerical names that are not setup yet
-        i.type = 'grn';
+        i.type = 'psn';
         i.lastSeen = i.properties.lastSeen;
-        i.name = `${i.properties.name} (GRN)`;
+        i.name = `${i.properties.name} (PSN)`;
         i.unitCode = i.properties.name.match(/([a-z]+)/i) ? i.properties.name.match(/([a-z]+)/i)[1] : i.properties.name;
         i.vehCode = i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)
           ? i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1]
@@ -55,7 +56,7 @@ function ReturnAssetLocations(host, userId = 'notPassed', token, cb) {
         // hide numerical names that are not setup yet
         //Telemetric Locations
         i.type = 'telematics';
-        i.lastSeen = i.properties.timestamp;
+        i.lastSeen = moment.unix(i.properties.timestamp).toISOString();
         i.name = `${i.properties.displayName.match(/(^\w*)/g)} (Tele)`;
         i.unitCode = i.properties.displayName.match(/([a-z]+)/i)
           ? i.properties.displayName.match(/([a-z]+)/i)[1]
@@ -71,7 +72,7 @@ function ReturnAssetLocations(host, userId = 'notPassed', token, cb) {
         i.capability = i.properties.displayName.match(/^\w.* (.*)/g);
         i.resourceType = i.properties.type;
         i.talkGroup = 'N/A';
-        i.talkGroupLastUpdated = '0';
+        i.talkGroupLastUpdated = 'N/A';
         i.licensePlate = 'N/A';
         response.push(i);
       }
