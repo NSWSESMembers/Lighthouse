@@ -1580,15 +1580,43 @@ function whenWeAreReady(cb) {
   }, 200);
 }
 
-$(function () {
-  // Adds CSS Classes to BODY
-  $('body')
-    // Start of the Hostname "beacon", "trainbeacon", "previewbeacon"
-    .addClass(location.hostname.substring(0, location.hostname.indexOf('.')))
-    // If Christmas
-    .toggleClass('xmas', new Date().getMonth() == 11);
 
-  // Adds CSS Class to BODY
+// Event calendar banner magic
+$(function () {
+    $.get({
+    type: 'GET',
+    url: `https://lighthouse-extension.com/static/banners/list.json`,
+    cache: true,
+    dataType: 'json',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        const events = response.responseJSON
+        events.forEach(function(thisEvent) {
+          const now = moment()
+          const start = moment().set({'month': parseInt(thisEvent.startMonth)-1, 'date': parseInt(thisEvent.startDay), 'hour': 0, 'minute': 0, 'second': 0})
+          const end = moment().set({'month': parseInt(thisEvent.endMonth)-1, 'date': parseInt(thisEvent.endDay), 'hour': 23, 'minute': 59, 'second': 59})
+
+          if (now.isBetween(start, end, undefined, '[]')) {
+            console.log('setting banner to', thisEvent.title, thisEvent.banner[urls.Base])
+            $('.navbar-brand').css(`background-image`, `url(${thisEvent.banner[urls.Base]})`)
+            if (thisEvent.popover) {
+              $('.navbar-brand').each(function () {
+                var $elem = $(this);
+                $elem.popover({
+                    placement: 'auto',
+                    trigger: 'hover',
+                    html: true,
+                    title: thisEvent.title,
+                    content: thisEvent.content,
+                    container: $elem
+                });
+            });
+            }
+        }
+        })
+      }
+    }
+  })
 
   // Shortcuts search box - if Job Number entered, jump straight to that job
   $('form#layoutJobSearchForm').on('submit', function (e) {
