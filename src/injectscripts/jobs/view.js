@@ -1561,13 +1561,14 @@ function jobView_teamsTasked_itemsPrepare() {
     var $t = $(v);
     var lastUpdate = $('span[data-bind^="text: CurrentStatus"]', $t).text();
     var b = false;
+    b = /^(.+)\s+\(Logged:\s+([^)]+)\)/.exec(lastUpdate);
     // Strip Old Classes
     $t.attr('class', $t.attr('class').replace(/\bteamStatus_\S+\b/, ' '));
     // Add new Class for Team Status
-    if (b == /^(.+)\s+\(Logged:\s+([^)]+)\)/.exec(lastUpdate)) {
+    if (b) {
       $t.addClass('teamStatus_' + b[1].replace(/\s+/, '-').toLowerCase());
     } else {
-      console.log('Unable to parse ' + lastUpdate);
+      console.log('Unable to parse ' + lastUpdate, b);
     }
   });
   jobView_teamsTasked_completedHiddenSwitch();
