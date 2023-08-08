@@ -1,7 +1,7 @@
-/* global urls, user, $ */
+/* global urls, user, $, contentViewModel, map */
+import BeaconClient from '../../shared/BeaconClient.js';
 
 
-/* global contentViewModel, map */
 window.addEventListener('load', pageFullyLoaded, false);
 
 function pageFullyLoaded(_e) {
@@ -43,7 +43,7 @@ window.addEventListener("message", function(event) {
   $('#teamFilterListAddSelected').unbind().click(function() {
     $("#assetFilterListAll").val().forEach(function(s) {
 
-      let option = $(`<option value=${s}>${s}</option>`)
+      let option = $(`<option value="${s}">${s}</option>`)
 
       //click handler for unselecting
       option.dblclick(function(x) {
@@ -137,26 +137,15 @@ window.addEventListener("message", function(event) {
 
 
 
-      $.ajax({
-  type: 'GET'
-  , url: urls.Base+'/Api/v1/ResourceLocations/Radio?resourceTypes='
-  , beforeSend: function(n) {
-  n.setRequestHeader("Authorization", "Bearer " + user.accessToken)
-  }
-  , cache: false
-  , dataType: 'json'
-  , data: {LighthouseFunction: 'NearestAsset', userId: user.Id}
-  , complete: function(response, textStatus) {
-  if (textStatus == 'success')
-  {
-    let sorted = response.responseJSON.map(function(i) {
-      return i.properties.name
+          BeaconClient.asset.filter([],urls.Base, user.Id, user.accessToken,function(res) {
+    let sorted = res.map(function(i) {
+      return i.name
     })
     sorted.sort()
 
     sorted.forEach(function(v){
 
-        $("#assetFilterListAll").append(`<option ${$('#assetFilterListSelected').find(`option[value|="${v}"]`).toArray().length ? "style='display:none' " : ''}value=${v}>${v}</option>`);
+        $("#assetFilterListAll").append(`<option ${$('#assetFilterListSelected').find(`option[value|="${v}"]`).toArray().length ? "style='display:none' " : ''}value="${v}">${v}</option>`);
 
     })
 
@@ -192,8 +181,6 @@ window.addEventListener("message", function(event) {
     // response.responseJSON.forEach(function(v){
     //     $("#assetFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
     // })
-  }
-}
 })
       $('#LHAssetFilterModal').modal();
     }

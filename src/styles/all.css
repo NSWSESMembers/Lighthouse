@@ -255,14 +255,14 @@ border: 2px dashed rgb(51, 51, 51);
 }
 
 #assetFilterListAll {
-  width: 65%;
+  width: 100%;
   height: 400px;
   font-size: 2vw;
   text-align: center;
 }
 
 #assetFilterListSelected {
-  width: 65%;
+  width: 100%;
   height: 400px;
   font-size: 2vw;
   text-align: center;
