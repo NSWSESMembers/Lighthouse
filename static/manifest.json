@@ -42,6 +42,13 @@
   ],
   "content_scripts": [
     {
+      "matches": ["https://*.ses.nsw.gov.au/*"],
+      "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
+      "js": [
+        "contentscripts/all.js"
+      ]
+    },
+    {
       "matches": [
         "https://*.ses.nsw.gov.au/Jobs/Create*"
       ],
@@ -145,13 +152,6 @@
         "https://*.ses.nsw.gov.au/Account/Manage/"
       ],
       "js": ["contentscripts/account/manage.js"]
-    },
-    {
-      "matches": ["https://*.ses.nsw.gov.au/*"],
-      "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
-      "js": [
-        "contentscripts/all.js"
-      ]
     },
     {
       "matches": ["https://identity.ses.nsw.gov.au/core/login*",

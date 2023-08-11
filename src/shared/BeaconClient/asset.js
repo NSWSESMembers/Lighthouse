@@ -22,61 +22,74 @@ export function filter(assetFilter, host, userId = 'notPassed', token, cb) {
 
 function ReturnAssetLocations(host, userId = 'notPassed', token, cb) {
   console.log('ReturnAssetLocations');
-  Promise.all([fetchRadioAssets(host, userId, token), fetchTeleAssets(host, userId, token)]).then(function (res) {
+  Promise.allSettled([fetchRadioAssets(host, userId, token), fetchTeleAssets(host, userId, token)]).then(function (
+    res,
+  ) {
     var response = [];
-    res[0].forEach(function (i) {
-      // PSN locations
-      if (isNaN(i.properties.name)) {
-        // hide numerical names that are not setup yet
-        i.type = 'psn';
-        i.lastSeen = i.properties.lastSeen;
-        i.name = `${i.properties.name} (PSN)`;
-        i.unitCode = i.properties.name.match(/([a-z]+)/i) ? i.properties.name.match(/([a-z]+)/i)[1] : i.properties.name;
-        i.vehCode = i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)
-          ? i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1]
-          : '';
-        i.markerLabel = i.properties.name;
-        if (i.unitCode && i.vehCode) {
-          i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
-        }
-        i.entity = i.properties.entity;
-        i.capability = i.properties.capability;
-        i.resourceType = i.properties.resourceType;
-        i.talkGroup = i.properties.talkgroup != null ? i.properties.talkgroup : 'Unknown';
-        i.talkGroupLastUpdated =
-          i.properties.talkgroupLastUpdated != null ? i.properties.talkgroupLastUpdated : 'Unknown';
-        i.licensePlate = i.properties.licensePlate;
+    //PSN Responses
+    if (res[0].status === 'fulfilled') {
+      res[0].value.forEach(function (i) {
+        // PSN locations
+        if (isNaN(i.properties.name)) {
+          // hide numerical names that are not setup yet
+          i.type = 'psn';
+          i.lastSeen = i.properties.lastSeen;
+          i.name = `${i.properties.name} (PSN)`;
+          i.unitCode = i.properties.name.match(/([a-z]+)/i)
+            ? i.properties.name.match(/([a-z]+)/i)[1]
+            : i.properties.name;
+          i.vehCode = i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)
+            ? i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1]
+            : '';
+          i.markerLabel = i.properties.name;
+          if (i.unitCode && i.vehCode) {
+            i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
+          }
+          i.entity = i.properties.entity;
+          i.capability = i.properties.capability;
+          i.resourceType = i.properties.resourceType;
+          i.talkGroup = i.properties.talkgroup != null ? i.properties.talkgroup : 'Unknown';
+          i.talkGroupLastUpdated =
+            i.properties.talkgroupLastUpdated != null ? i.properties.talkgroupLastUpdated : 'Unknown';
+          i.licensePlate = i.properties.licensePlate;
 
-        response.push(i);
-      }
-    });
-
-    res[1].features.forEach(function (i) {
-      if (isNaN(i.properties.displayName)) {
-        // hide numerical names that are not setup yet
-        //Telemetric Locations
-        i.type = 'telematics';
-        i.lastSeen = moment.unix(i.properties.timestamp).toISOString();
-        i.name = `${i.properties.displayName.match(/(^\w*)/g)} (Tele)`;
-        i.unitCode = i.properties.displayName.match(/([a-z]+)/i)
-          ? i.properties.displayName.match(/([a-z]+)/i)[1]
-          : i.properties.displayName;
-        i.vehCode = i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i)
-          ? i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i)[1]
-          : '';
-        i.markerLabel = i.properties.displayName;
-        if (i.unitCode && i.vehCode) {
-          i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
+          response.push(i);
         }
-        i.entity = 'N/A';
-        i.capability = i.properties.displayName.match(/^\w.* (.*)/g);
-        i.resourceType = i.properties.type;
-        i.talkGroup = 'N/A';
-        i.talkGroupLastUpdated = 'N/A';
-        i.licensePlate = 'N/A';
-        response.push(i);
-      }
-    });
+      });
+    } else {
+      alert("Lighthouse - Error fetching PSN asset locations")
+    }
+    //Telematic Responses
+    if (res[1].status === 'fulfilled') {
+      res[1].value.features.forEach(function (i) {
+        if (isNaN(i.properties.displayName)) {
+          // hide numerical names that are not setup yet
+          //Telemetric Locations
+          i.type = 'telematics';
+          i.lastSeen = moment.unix(i.properties.timestamp).toISOString();
+          i.name = `${i.properties.displayName.match(/(^\w*)/g)} (Tele)`;
+          i.unitCode = i.properties.displayName.match(/([a-z]+)/i)
+            ? i.properties.displayName.match(/([a-z]+)/i)[1]
+            : i.properties.displayName;
+          i.vehCode = i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i)
+            ? i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i)[1]
+            : '';
+          i.markerLabel = i.properties.displayName;
+          if (i.unitCode && i.vehCode) {
+            i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
+          }
+          i.entity = 'N/A';
+          i.capability = i.properties.displayName.match(/^\w.* (.*)/g);
+          i.resourceType = i.properties.type;
+          i.talkGroup = 'N/A';
+          i.talkGroupLastUpdated = 'N/A';
+          i.licensePlate = 'N/A';
+          response.push(i);
+        }
+      });
+    } else {
+      alert("Lighthouse - Error fetching Telemetric asset locations")
+    }
     cb && cb(response);
   });
 }
