@@ -378,46 +378,42 @@ function HackTheMatrix(id, host, progressBar) {
   });
 }
 
-function convertArrayOfObjectsToCSV(data, selectedcolumns) {
+function convertArrayOfObjectsToCSV(args) {
+  console.log(args)
+  var result, ctr, keys, columnDelimiter, lineDelimiter, data;
 
-
+  data = args.data || null;
   if (data == null || !data.length) {
-    return null;
+      return null;
   }
 
-  //console.log('data', data);
+  columnDelimiter = args.columnDelimiter || ',';
+  lineDelimiter = args.lineDelimiter || '\n';
 
-  var rows = [];
-  var delimCellL = '"=""';
-  var delimCellR = '"""';
-  var delimCol = delimCellR + ',' + delimCellL;
-  var delimLine = '\n';
+  keys = args.keys;
 
-  // Getting Column Headings
-  let fieldKeys = [];
-  let fieldLabels = [];
-  _.each(lighthouse_fieldArray, function(fields) {
-    _.each(fields, function(label, key) {
-      fieldKeys.push(key);
-      fieldLabels.push(label);
-    });
-  });
-  selectedcolumns.map(function(v) {
-    return fieldLabels[fieldKeys.indexOf(v)];
-  })
-
-  rows.push(delimCellL + selectedcolumns.join(delimCol) + delimCellR);
+  result = '';
+  result += keys.join(columnDelimiter);
+  result += lineDelimiter;
 
   data.forEach(function(item) {
-    rows.push(delimCellL + item.join(delimCol) + delimCellR);
+      ctr = 0;
+      keys.forEach(function() {
+          if (ctr > 0) result += columnDelimiter;
+          item[ctr] = `"${item[ctr]}"`
+          result += item[ctr];
+          ctr++;
+      });
+      result += lineDelimiter;
   });
 
-  return rows.join(delimLine);
+  return result;
 }
 
 
 function downloadCSV(file, dataIn, keyIn) {
-  var csv = convertArrayOfObjectsToCSV(dataIn, keyIn);
+  console.log(dataIn)
+  var csv = convertArrayOfObjectsToCSV({data: dataIn, keys: keyIn});
   if (csv == null)
     return;
 
