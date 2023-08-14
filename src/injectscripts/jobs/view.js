@@ -580,7 +580,6 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
 
         response.forEach(function (v) {
           //If passed a filter then filter on the contents
-
           if (typeof teamFilter == 'undefined' || (typeof teamFilter != 'undefined' && teamFilter.includes(v.name))) {
             v.distance =
               vincenty.distVincenty(
@@ -613,7 +612,6 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
           assetDistances.forEach(function (v) {
             //safe way to loop with a limit
             let row;
-
             if (used < maxLength || typeof teamFilter != 'undefined') {
               if ((activeOnly && moment().diff(v.lastSeen, 'hours') < 1) || !activeOnly) {
                 used++;
@@ -895,6 +893,8 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
               } else {
                 hiddenAssets = hiddenAssets + 1;
               }
+            } else if (used == maxLength) {
+              hiddenAssets = hiddenAssets + 1; // count after maxLength
             }
 
             function zoomToFitRoutes() {
