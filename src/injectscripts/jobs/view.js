@@ -2103,11 +2103,17 @@ function InstantTaskButton() {
                       item = return_li(v.Id, v.Callsign.toUpperCase(), 'No TL', v.TaskedJobCount + '');
                     }
 
-                    //put local teams into a special array for zone and state users
+                    //click handler (before clone function)
+                    $(item).on( "click", function(e) {
+                      TaskTeam(v.Id);
+                      e.preventDefault();
+                    });
+
+                    //put local teams into a special array for zone and state users, copy the click functions
                     if (user.hq.EntityTypeId == 2 || user.hq.EntityTypeId == 3) {
                       let assigned = v.AssignedTo ? v.AssignedTo.Id : v.CreatedAt.Id;
                       if (assigned == masterViewModel.entityAssignedTo.peek().Id) {
-                        localTeam.push($(item).clone());
+                        localTeam.push($(item).clone(true));
                       }
                     }
 
@@ -2122,11 +2128,6 @@ function InstantTaskButton() {
                       }
                     }
 
-                    //click handler
-                    $(item).click(function (e) {
-                      TaskTeam(v.Id);
-                      e.preventDefault();
-                    });
                   }
                 });
 
