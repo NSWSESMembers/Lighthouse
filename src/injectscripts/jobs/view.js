@@ -1020,6 +1020,9 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
         console.log('Call to calculate distances from assets took ' + (t1 - t0) + ' milliseconds.');
         cb();
       }
+    }, function(error) {
+      $('#map-errors').html(error);
+      $('#map-errors').css('visibility', 'unset'); 
     });
   }
 }
@@ -1075,11 +1078,12 @@ $('#assetLocationButtonOff').click(function () {
 
   $('#assetLocationButtonOff').addClass('btn-active');
   $('#assetLocationButtonOff').removeClass('btn-inactive');
-
+  $('#map-errors').css('visibility', 'hidden'); 
   assetLocationMapOff();
 });
 
 $('#assetLocationButtonAll').click(function () {
+  $('#map-errors').css('visibility', 'hidden'); 
   assetLocationButtonAll();
 });
 
@@ -1088,6 +1092,7 @@ function assetLocationButtonAll() {
   if ($('#assetLocationButtonActiveOnly').hasClass('btn-active')) {
     $('#assetLocationButtonActiveOnly').removeClass('btn-active');
     $('#assetLocationButtonActiveOnly').addClass('btn-inactive');
+    $('#map-errors').css('visibility', 'hidden'); 
     assetLocationMapOff();
   }
 
@@ -1095,6 +1100,7 @@ function assetLocationButtonAll() {
   if ($('#assetLocationButtonFiltered').hasClass('btn-active')) {
     $('#assetLocationButtonFiltered').removeClass('btn-active');
     $('#assetLocationButtonFiltered').addClass('btn-inactive');
+    $('#map-errors').css('visibility', 'hidden'); 
     assetLocationMapOff();
   }
 
@@ -1344,6 +1350,8 @@ function assetLocationButtonFiltered(bypassUI) {
         //     $("#assetFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
         // })
       }
+    },function(error) {
+      alert(`Lighthouse error - ${error}`)
     });
 
     //render and fill moal

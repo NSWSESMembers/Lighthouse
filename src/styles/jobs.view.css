@@ -8,18 +8,35 @@
   font-size: small;
 }
 
+#below-map-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#map-errors {
+  color: red;
+  width: 33%;
+  margin-top: 5px;
+  font-family: "latobold";
+  text-align: center;
+  font-size: smaller;
+}
+
 #filter-warning {
   color: red;
+  width: 33%;
   margin-top: 5px;
   font-family: "latobold";
   text-align: right;
   font-size: smaller;
 }
 
+
 #asset-draw-time {
   color: black;
+  width: 33%;
   margin-top: 5px;
-  position: absolute;
   font-family: "latobold";
   text-align: left;
   font-size: smaller;
