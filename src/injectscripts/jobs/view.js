@@ -1979,8 +1979,9 @@ function InstantTaskButton() {
   $(quickTask).find('ul').empty();
   var loading = (
     <li>
-      <div style="text-align: center; height: 35px">
+      <div style="text-align: center; height: 45px">
         <i class="fa fa-refresh fa-spin fa-2x fa-fw"></i>
+        <div><b id="loading_progress"></b></div>
       </div>
     </li>
   );
@@ -2172,7 +2173,7 @@ function InstantTaskButton() {
               }
             },
             function (_number, _total) {
-              //no progress indicator here
+              $("#loading_progress").text(`${_number} of ${_total}`)
             },
           );
         } else {
