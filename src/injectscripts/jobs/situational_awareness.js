@@ -181,6 +181,8 @@ window.addEventListener("message", function(event) {
     // response.responseJSON.forEach(function(v){
     //     $("#assetFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
     // })
+}, function(error) {
+  alert(`Lighthouse error - ${error}`)
 })
       $('#LHAssetFilterModal').modal();
     }

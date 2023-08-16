@@ -328,8 +328,11 @@ let job_nearest_asset_widget = (
           </div>
         </div>
         </div>
-        <div id="asset-draw-time"></div>
-        <div id="filter-warning" style="visibility:hidden"></div>
+        <div id="below-map-bar">
+          <div id="asset-draw-time"></div>
+          <div id="map-errors" style="visibility:hidden"></div>
+          <div id="filter-warning" style="visibility:hidden"></div>
+        </div>
         </div>
   </div>
 );

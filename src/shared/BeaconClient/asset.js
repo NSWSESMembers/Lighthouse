@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import moment from 'moment';
 
-export function filter(assetFilter, host, userId = 'notPassed', token, cb) {
+export function filter(assetFilter, host, userId = 'notPassed', token, cb, err) {
   console.debug('fetching SES Asset Locations with possible filter on result');
   ReturnAssetLocations(host, userId, token, function (response) {
     if (assetFilter.length == 0) {
@@ -17,10 +17,12 @@ export function filter(assetFilter, host, userId = 'notPassed', token, cb) {
       });
       cb(filteredResult);
     }
+  }, function (error) {
+    err(error)
   });
 }
 
-function ReturnAssetLocations(host, userId = 'notPassed', token, cb) {
+function ReturnAssetLocations(host, userId = 'notPassed', token, cb, err) {
   console.log('ReturnAssetLocations');
   Promise.allSettled([fetchRadioAssets(host, userId, token), fetchTeleAssets(host, userId, token)]).then(function (
     res,
@@ -57,7 +59,7 @@ function ReturnAssetLocations(host, userId = 'notPassed', token, cb) {
         }
       });
     } else {
-      alert("Lighthouse - Error fetching PSN asset locations")
+      err("Error fetching PSN asset locations")
     }
     //Telematic Responses
     if (res[1].status === 'fulfilled') {
@@ -88,7 +90,7 @@ function ReturnAssetLocations(host, userId = 'notPassed', token, cb) {
         }
       });
     } else {
-      alert("Lighthouse - Error fetching Telemetric asset locations")
+      err("Error fetching Telemetric asset locations")
     }
     cb && cb(response);
   });
@@ -147,7 +149,7 @@ function fetchTeleAssets(host, userId = 'notPassed', token) {
         // 60 second cache
         fetch();
       } else {
-        console.log('fetchRadioAssets served from cache');
+        console.log('fetchTeleAssets served from cache');
         resolve(cacheJson.data);
       }
     } else {

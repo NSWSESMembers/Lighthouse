@@ -381,7 +381,9 @@ const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
                 let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || []
                 BeaconClient.asset.filter(loadIn, this._base, 'ContentScriptMapManager', this._token, function(result) {
                     ContentScriptMapManager._passLayerDataToInject('ses-assets-filtered', result);
-                }.bind(this));
+                }.bind(this),function(error) {
+                    console.log(error) 
+                  });
             }
       }
     }
