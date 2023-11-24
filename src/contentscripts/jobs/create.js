@@ -161,6 +161,15 @@ function asbestosBoxColor(text, color, url) {
   }
 }
 
+let myAvailability = (
+<div class="form-group">
+  <label for="myAvailabilityStatus" class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
+    src={chrome.runtime.getURL("icons/lh-black.png")} /> myAvailability</label>
+    <div id="myAvailabilityStatus" class="col-md-10 col-lg-10">
+   </div>
+</div>
+);
+
 let job_asbestos_history = (
   <div class="form-group">
   <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px" src={chrome.runtime.getURL("icons/lh-black.png")} />Asbestos Register</label>
@@ -216,6 +225,7 @@ $('#createRfaForm > fieldset:nth-child(5) > div:nth-child(14)').after(job_neares
 
 $('#createRfaForm > fieldset:nth-child(5) > div:nth-child(14)').after(job_contained_within_lhq);
 
+$('#createRfaForm > fieldset:nth-child(10) > div:nth-child(2)').after(myAvailability);
 
 
 
