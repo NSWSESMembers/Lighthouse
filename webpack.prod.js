@@ -6,7 +6,7 @@ const moment = require('moment');
 
 const packageName = "Lighthouse"
 const now = new moment();
-const versionString = now.utcOffset("+10:00").format('YYYY.MM.DD.HHmm')
+const versionString = now.utcOffset("+10:00").format('YYYY.M.D.Hm')
 const versionStringShort = now.utcOffset("+10:00").format('YYYY.MM.DD')
 
 // get git info from command line

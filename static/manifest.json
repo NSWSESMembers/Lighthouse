@@ -148,6 +148,12 @@
     },
     {
       "matches": [
+        "https://*.ses.nsw.gov.au/ContactGroups/*/Edit"
+      ],
+      "js": ["contentscripts/contactgroups/edit.js"]
+    },
+    {
+      "matches": [
         "https://*.ses.nsw.gov.au/Account/Manage",
         "https://*.ses.nsw.gov.au/Account/Manage/"
       ],
