@@ -105,6 +105,10 @@ $(document).ready(function () {
             'the matched contact groups are not marked for export to myAvailability.',
           );
         }
+        // if we have contact groups we have a lhq so reset this so we cant monitoring status
+         if (!unitAssigned) {
+          unitAssigned = vm.entityAssignedTo.peek()
+         }
       }
 
       if (unitAssigned) {
@@ -150,7 +154,7 @@ $(document).ready(function () {
 
     function noMyAvailability(dom, name, reason) {
       dom.append(
-        <div id={name} class="form-group alert alert-warning" style="margin-bottom:0px;margin-top:20px">
+        <div id={name} class="form-group alert alert-warning" style="margin-bottom:0px;margin-top:0px">
           <strong>No</strong> availability request will be raised in <strong>myAvailability</strong> because {reason}
         </div>,
       );
@@ -158,7 +162,7 @@ $(document).ready(function () {
 
     function yesMyAvailability(dom, name, reason) {
       dom.append(
-        <div id={name} class="form-group alert alert-info" style="margin-bottom:0px;margin-top:20px">
+        <div id={name} class="form-group alert alert-info" style="margin-bottom:0px;margin-top:0px">
           Availability request <strong>will</strong> be raised in <strong>myAvailability</strong> and include the members of the{' '}
           {reason} contact group(s)
         </div>,
