@@ -87,7 +87,7 @@ $(document).ready(function () {
     //   }
     // })
 
-    function calculateMyAvailabilityResult({ unitAssigned, jobType, contactGroups }) {
+    function calculateMyAvailabilityResult({ unitAssigned, jobType, contactGroups, jobPriority }) {
       $('#myAvailabilityStatus').empty();
       let exportedGroups = [];
 
@@ -109,17 +109,36 @@ $(document).ready(function () {
          if (!unitAssigned) {
           unitAssigned = vm.entityAssignedTo.peek()
          }
+
+         if (!jobPriority) {
+          jobPriority = vm.jobPriority.peek()
+         }
+
       }
 
       if (unitAssigned) {
         if (unitAssigned.HeadquartersStatusTypeId == 1) {
           //2 = not mon, 1 = mon,
-          if (vm.jobType.peek() && vm.jobType.peek().ParentId != 5) {
+          if (vm.jobPriority.peek() && vm.jobPriority.peek().Id != 1 && vm.jobPriority.peek().Id != 2) {
+            //not imediate or rescue
+            noMyAvailability(
+              $('#myAvailabilityStatus'),
+              'myAvailability-monitoring',
+              'the selected unit is monitoring and job response type is not immediate or rescue.',
+            );
+          }
+        }
+      }
+
+      if (jobPriority) {
+        if (vm.entityAssignedTo.peek() && vm.entityAssignedTo.peek() == 1) {
+          //2 = not mon, 1 = mon,
+          if (jobPriority.Id != 2 && jobPriority.Id != 1) { //immediate/rescue
             //not a rescue
             noMyAvailability(
               $('#myAvailabilityStatus'),
               'myAvailability-monitoring',
-              'the selected unit is monitoring and job is not rescue/immediate.',
+              'the selected unit is monitoring and job response type is not immediate or rescue.',
             );
           }
         }
@@ -132,7 +151,7 @@ $(document).ready(function () {
             noMyAvailability(
               $('#myAvailabilityStatus'),
               'myAvailability-jobType',
-              'the selected unit is monitoring and job is not rescue/immediate.',
+              'the selected unit is monitoring and job response type is not immediate or rescue.',
             );
           }
         }
@@ -168,6 +187,12 @@ $(document).ready(function () {
         </div>,
       );
     }
+
+    vm.jobPriority.subscribe(function (jp) {
+      if (jp) {
+        calculateMyAvailabilityResult({ jobPriority: jp });
+      }
+    })
 
     vm.jobType.subscribe(function (jt) {
       if (jt) {
