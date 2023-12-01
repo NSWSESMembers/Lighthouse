@@ -80,7 +80,6 @@ window.addEventListener("message", function(event) {
      $("#assetFilterListSelected").children().each(function(_r) {
       selectedAssets.push($(this)[0].value)
     })
-
   localStorage.setItem("LighthouseJobViewAssetFilter", JSON.stringify(selectedAssets));
 
   $('#LHAssetFilterModal').modal('hide');
@@ -127,7 +126,7 @@ window.addEventListener("message", function(event) {
           $("#assetFilterListSelected").empty()
           let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || []
           loadIn.forEach(function(i){
-            $("#assetFilterListSelected").append(`<option value=${i}>${i}</option>`);
+            $("#assetFilterListSelected").append(`<option value="${i}">${i}</option>`);
           })
 
           $("#assetFilterListAll").empty()
