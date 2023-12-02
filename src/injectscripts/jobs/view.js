@@ -3355,9 +3355,12 @@ function editRfaFormDOMWatcher() {
           let res = $thing.text().match(/^(?:Received|Created) (?:at|on) (.+) by (.+)$/);
           if (res && res.length) {
             whenJobIsReady(function () {
+              //another race conditon!
+              if ($thing.attr('lhTPlus') === undefined || $thing.attr('lhTPlus') === false) {
               let tPlusText = returnTTime(res[1]);
               $thing.attr('lhTPlus', tPlusText);
               $thing.text($thing.text().replace(res[1], `${res[1]} (${tPlusText})`));
+              }
             });
           }
         }
