@@ -1431,7 +1431,7 @@ $(quickRadioLog)
 
 // submit radio log on enter press in message body
 $('#instantRadioLogText').keydown(function (event) {
-  if (event.keyCode == 13) {
+  if (event.keyCode == 13 && !$('#submitInstantRadioLogButton').prop('disabled')) {
     processSubmitInstantRadioLog();
     return false;
   }
@@ -1449,12 +1449,18 @@ function processSubmitInstantRadioLog() {
   if ($('#instantRadioLogText').val() == '') {
     $('#instantRadioLogTextForm').addClass('has-error');
   } else {
+    $('#submitInstantRadioLogButton').prop('disabled', true)
+    $('#instantRadioLogText').prop('disabled', true)
     submitInstantRadioLog($('#instantRadioLogCallSign').val(), $('#instantRadioLogText').val(), function (result) {
       if (result) {
+        $('#submitInstantRadioLogButton').prop('disabled', false)
+        $('#instantRadioLogText').prop('disabled', false)
         $('#instantradiologModal').modal('hide');
         $('#instantRadioLogTextForm').removeClass('has-error'); //just incase
         $('#instantRadioLogText').val('');
       } else {
+        $('#submitInstantRadioLogButton').prop('disabled', false)
+        $('#instantRadioLogText').prop('disabled', false)
         alert('Error submitting log entry');
       }
     });
