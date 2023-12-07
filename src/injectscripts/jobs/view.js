@@ -19,6 +19,17 @@ require('leaflet/dist/leaflet.css');
 
 console.log('Running inject script');
 
+
+//track if shift is held down for the form submit shortcut in instant radio logs
+var shiftKeyHeld = false;
+window.onkeyup = function(e) { 
+  shiftKeyHeld = e.shiftKey
+}
+window.onkeydown = function(e) { 
+  shiftKeyHeld = e.shiftKey
+}
+///
+
 //webpack fucks this right up. Ive manually copied the images overlay
 //TODO: Sam fix the webpack script
 whenLighthouseIsReady(function () {
@@ -1431,7 +1442,7 @@ $(quickRadioLog)
 
 // submit radio log on enter press in message body
 $('#instantRadioLogText').keydown(function (event) {
-  if (event.keyCode == 13 && !$('#submitInstantRadioLogButton').prop('disabled')) {
+  if (event.keyCode == 13 && !$('#submitInstantRadioLogButton').prop('disabled') && shiftKeyHeld == false ) {
     processSubmitInstantRadioLog();
     return false;
   }
