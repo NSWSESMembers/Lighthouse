@@ -45,7 +45,7 @@ var ReturnTeamsActiveAtLHQ = function(hq, sector, cb, progress) {
 		var theData = {
 			'StartDate':          end.toISOString()
 			, 'EndDate':            now.toISOString()
-			, 'TypeIds[]':          1
+			, 'TypeIds[]':          [1,3]
 			, 'IncludeDeleted':     false
 			, 'StatusTypeId[]':     3
 			, 'SortField':          'statustimestamp'
