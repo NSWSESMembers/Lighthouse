@@ -99,11 +99,13 @@ $(document).ready(function () {
         });
 
         if (contactGroups.length && exportedGroups.length == 0) {
-          noMyAvailability(
-            $('#myAvailabilityStatus'),
-            'myAvailability-recipients',
-            'the matched contact groups are not marked for export to myAvailability.',
-          );
+          // noMyAvailability(
+          //   $('#myAvailabilityStatus'),
+          //   'myAvailability-recipients',
+          //   'the matched contact groups are not marked for export to myAvailability.',
+          // );
+          yesMyAvailability($('#myAvailabilityStatus'), 'myAvailability-recipients');
+
         }
         // if we have contact groups we have a lhq so reset this so we cant monitoring status
          if (!unitAssigned) {
@@ -166,7 +168,11 @@ $(document).ready(function () {
             'no matching contact groups were found.',
           );
         } else {
-          yesMyAvailability($('#myAvailabilityStatus'), 'myAvailability-recipients', exportedGroups.join(', '));
+          if (exportedGroups.length) {
+            yesMyAvailability($('#myAvailabilityStatus'), 'myAvailability-recipients', exportedGroups.join(', '));
+          } else {
+            yesMyAvailability($('#myAvailabilityStatus'), 'myAvailability-recipients');
+          }
         }
       }
     }
@@ -180,12 +186,21 @@ $(document).ready(function () {
     }
 
     function yesMyAvailability(dom, name, reason) {
-      dom.append(
-        <div id={name} class="form-group alert alert-info" style="margin-bottom:0px;margin-top:0px">
-          Availability request <strong>will</strong> be raised in <strong>myAvailability</strong> and include the members of the{' '}
-          {reason} contact group(s)
-        </div>,
-      );
+      if (reason) {
+        dom.append(
+          <div id={name} class="form-group alert alert-info" style="margin-bottom:0px;margin-top:0px">
+            Availability request <strong>will</strong> be raised in <strong>myAvailability</strong> and include the members of the{' '}
+            {reason} contact group(s)
+          </div>,
+        );
+      } else {
+        dom.append(
+          <div id={name} class="form-group alert alert-info" style="margin-bottom:0px;margin-top:0px">
+            Availability request <strong>will</strong> be raised in <strong>myAvailability</strong> but include no members due to no exported groups
+          </div>,
+        );
+      }
+      
     }
 
     vm.jobPriority.subscribe(function (jp) {
