@@ -14,6 +14,7 @@ window.addEventListener('message', function (event) {
   if (event.source !== window) return;
   if (event.data.type) {
     if (event.data.type === 'RETURN_LIGHTHOUSE_URL') {
+      console.log('RETURN_LIGHTHOUSE_URL', event.data.url)
       this.window.lighthouseUrl = event.data.url;
       this.window.lighthouseEnviroment = event.data.lighthouseEnviroment;
     }
@@ -1356,8 +1357,8 @@ function whenWeAreReady(cb) {
 
   //when external vars have loaded
   var waiting = setInterval(function () {
-    //run every 1sec until we have loaded the page (dont hate me Sam)
-    if (typeof user.hq != 'undefined') {
+    //run every X sec until we have loaded the page (dont hate me Sam)
+    if (typeof user.hq != 'undefined' && typeof this.window.lighthouseUrl != 'undefined') {
       if (typeof user.hq.lighthouseHqLoaded != 'undefined') {
         //be an object ffs
         console.log('We are ready');
