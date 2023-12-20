@@ -1,3 +1,4 @@
+/* eslint-disable */
 /* global taskingViewModel, $, filterViewModel */
 // const MapManager = require('../../lib/map/InjectScriptMapManager.js');
 
