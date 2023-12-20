@@ -733,30 +733,31 @@ function checkAsbestosRegister(inAddressObject, cb) {
     }
 
     function pullFTRegister(cb) {
-      fetch(formAddress)
-        .then((resp) => {
-          if (resp.ok) {
-            resp.text().then((txt) => {
-              if (
-                !/No\sMatch\sFound/.test(txt) &&
-                !/Confirmed\sMatch/.test(txt)
-              ) {
-                cb(0); //error
-              }
-              if (/Confirmed\sMatch/.test(txt)) {
-                cb(1); //found
-              }
-              if (/No\sMatch\sFound/.test(txt)) {
-                cb(2); //not found
-              }
-            });
-          } else {
-            cb(0); //error
-          }
-        })
-        .catch(() => {
-          cb(0); //fetch error
-        });
+      cb(2) //error out until FT fix their register
+      // fetch(formAddress)
+      //   .then((resp) => {
+      //     if (resp.ok) {
+      //       resp.text().then((txt) => {
+      //         if (
+      //           !/No\sMatch\sFound/.test(txt) &&
+      //           !/Confirmed\sMatch/.test(txt)
+      //         ) {
+      //           cb(0); //error
+      //         }
+      //         if (/Confirmed\sMatch/.test(txt)) {
+      //           cb(1); //found
+      //         }
+      //         if (/No\sMatch\sFound/.test(txt)) {
+      //           cb(2); //not found
+      //         }
+      //       });
+      //     } else {
+      //       cb(0); //error
+      //     }
+      //   })
+      //   .catch(() => {
+      //     cb(0); //fetch error
+      //   });
     }
   });
 }
