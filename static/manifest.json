@@ -100,12 +100,17 @@
     },
     {
       "matches": [
-        "https://*.ses.nsw.gov.au/Teams/Create",
-        "https://*.ses.nsw.gov.au/Teams/Create/",
         "https://*.ses.nsw.gov.au/Teams/*/Edit",
         "https://*.ses.nsw.gov.au/Teams/*/Edit/"
       ],
       "js": ["contentscripts/teams/edit.js"]
+    },
+    {
+      "matches": [
+        "https://*.ses.nsw.gov.au/Teams/Create",
+        "https://*.ses.nsw.gov.au/Teams/Create/"
+      ],
+      "js": ["contentscripts/teams/create.js"]
     },
     {
       "matches": [
