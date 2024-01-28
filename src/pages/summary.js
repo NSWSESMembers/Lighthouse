@@ -391,7 +391,15 @@ console.log(userId)
       rescue = rescue + _.findWhere(summary.result, {
         Name: "CFR"
       }).Count;
-
+      rescue = rescue + _.findWhere(summary.result, {
+        Name: "LAR"
+      }).Count;
+      rescue = rescue + _.findWhere(summary.result, {
+        Name: "GLR"
+      }).Count;
+      rescue = rescue + _.findWhere(summary.result, {
+        Name: "PAD"
+      }).Count;
 
       var support = _.findWhere(summary.result, {
         Name: "Support"
