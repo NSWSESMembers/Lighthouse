@@ -4073,10 +4073,10 @@
       },
       "properties": {
         "OBJECTID": 146,
-        "HQNAME": "Blue Mountains Upper",
+        "HQNAME": "Blue Mountains West",
         "SES_LEVEL": "Unit",
         "REGCODE": "SWR",
-        "UNIT_CODE": "BLU",
+        "UNIT_CODE": "BMW",
         "POINT_X": 150.30069442,
         "POINT_Y": -33.70966277,
         "ZoneCode": "MTZ",
@@ -7237,8 +7237,8 @@
       },
       "properties": {
         "FID": 257,
-        "HQNAME": "Blue Mountains Lower",
-        "UNIT_CODE": "BLU",
+        "HQNAME": "Blue Mountains East",
+        "UNIT_CODE": "BME",
         "POINT_X": 150.539,
         "POINT_Y": -33.694
       }
