@@ -134,6 +134,7 @@ function lighthouseETA() {
 }
 
 function lighthouseTasking() {
+  whenLighthouseIsReady(function () {
   console.log('Tasking Changes, adding buttons where needed per team');
   ///Horrible nasty code for untasking
 
@@ -200,6 +201,7 @@ function lighthouseTasking() {
       console.log('already has untask button');
     }
   });
+})
 }
 
 //call on run
@@ -1688,6 +1690,7 @@ function returnTTime(messageDate) {
 }
 
 function lighthouseDictionary() {
+  
   var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: $data"]');
 
   var ICEMS_Dictionary = {
