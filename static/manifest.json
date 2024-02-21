@@ -37,8 +37,7 @@
     "https://feed.firesnearme.hazards.rfs.nsw.gov.au/*"
   ],
   "permissions": [
-    "storage",
-    "webRequest"
+    "storage"
   ],
   "content_scripts": [
     {
