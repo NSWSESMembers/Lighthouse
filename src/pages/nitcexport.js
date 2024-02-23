@@ -114,7 +114,7 @@ function HackTheMatrix(progressBar) {
                 participants +=  p.Person.FullName + "(" + hours.toString() + ") ";
             });
             var rObj = {};
-            rObj["Name"] = d.Name;
+            rObj["Name"] = d.Name.replaceAll('#','');
             rObj["StartDate"] = d.StartDateFixed;
             rObj["EndDate"] = d.EndDateFixed;
             rObj["Unit"] = d.CreatedAt.Code;
