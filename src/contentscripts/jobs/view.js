@@ -38,6 +38,10 @@ window.addEventListener("message", function(event) {
               }
               break;
               case "RCR":
+              if (unitAccreditations['RCR'] == "Available") {
+                v.properties.QUAL = 'RCR'
+                rescueDistances.push(v)
+              }
               if (unitAccreditations['GLR'] == "Available") {
                 v.properties.QUAL = 'GLR'
                 rescueDistances.push(v)
