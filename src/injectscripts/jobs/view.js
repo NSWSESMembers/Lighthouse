@@ -1529,6 +1529,7 @@ whenJobIsReady(function () {
   }
 });
 
+whenLighthouseIsReady(function () {
 whenTeamsAreReady(function () {
   lighthouseTasking();
 
@@ -1569,6 +1570,8 @@ whenTeamsAreReady(function () {
 
   jobView_teamsTasked_itemsPrepare();
 });
+});
+
 
 function sectorfilter_switch() {
   // Set flag

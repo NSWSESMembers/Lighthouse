@@ -4,10 +4,12 @@
 
 
 //replace window title with team name if set
+vm.callsign.subscribe(function() {
 var callsign = vm.callsign.peek();
 if (typeof callsign !== 'undefined' && callsign !== null) {
-  document.title = callsign;
+  document.title = `${callsign} - Edit`;
 }
+})
 
 //when team members change
 vm.members.subscribe(function() {
