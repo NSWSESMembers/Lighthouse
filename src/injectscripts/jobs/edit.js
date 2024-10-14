@@ -257,6 +257,8 @@ function tableToObj(table) {
 
 
 function UpdateAssignedToBoxesActive() {
+  if (vm.entityAssignedTo.peek() != null) {
   $(`#nearest-rescue-lhq-text a[data-unit!='${vm.entityAssignedTo.peek().Code}'], #nearest-lhq-text a[data-unit!='${vm.entityAssignedTo.peek().Code}'] `).removeClass('active')
   $(`#nearest-rescue-lhq-text a[data-unit='${vm.entityAssignedTo.peek().Code}'], #nearest-lhq-text a[data-unit='${vm.entityAssignedTo.peek().Code}']`).addClass('active')
+  }
 }
