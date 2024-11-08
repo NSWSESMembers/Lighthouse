@@ -1578,7 +1578,7 @@ whenJobIsReady(function () {
                     {group.Name}
                   </a>
                 );
-                $(groupDom).click(function (e) {
+                $(groupDom).click(function () {
                   window.open(`/ContactGroups/${group.Id}/Edit`, '_blank').focus();
                 });
                 groups.push(groupDom);
