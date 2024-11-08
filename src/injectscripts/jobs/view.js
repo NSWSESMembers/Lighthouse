@@ -1527,6 +1527,85 @@ whenJobIsReady(function () {
 
     $('#nearest-rescue-lhq-text').append(searchButton);
   }
+
+ if (user.currentHqId == 1) { //only show for SOC
+  if (masterViewModel.entityAssignedTo.peek() != null) {
+    $('#escalations-lhq').show()
+    $.ajax({
+      type: 'GET',
+      url:
+        urls.Base +
+        '/Api/v1/ContactGroups/Search?EntityIds%5B%5D=' +
+        masterViewModel.entityAssignedTo.peek().Id +
+        '&PageIndex=1&PageSize=100&SortField=JobReceived&SortOrder=desc&_=1730938352523',
+      beforeSend: function (n) {
+        n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+      },
+      cache: false,
+      dataType: 'json',
+      data: { LighthouseFunction: 'InstantSectorButton', userId: user.Id },
+      complete: function (response, textStatus) {
+        if (textStatus == 'success') {
+          if (response.responseJSON.Results.length) {
+            let groups = [];
+            let jobType = masterViewModel.jobType.peek().Name
+            switch (jobType) {
+              case "FR":
+                jobType = "Flood Rescue"
+                break;
+                case "Flood Misc":
+                  jobType = "Flood"
+                break;       
+                case "GLR":
+                  jobType = "General Land Rescue"
+                break;  
+                case "VR":
+                  jobType = "Vertical Rescue"
+                break;         
+                default:
+                  jobType = masterViewModel.jobType.peek().Name 
+            }
+            response.responseJSON.Results.forEach(function (group) {
+              if (group.Escalation == true) {
+                if (group.Types.some(function (i) {
+                  console.log(i.Name, jobType)
+                  if (i.Name.includes(jobType)) {
+                    return true
+                  }
+                })) {
+                let groupDom = (
+                  <a type="button" style="margin-bottom:5px; margin-right: 5px;" class="btn btn-primary btn-xs" data-unit={group.Id}>
+                    {group.Name}
+                  </a>
+                );
+                $(groupDom).click(function (e) {
+                  window.open(`/ContactGroups/${group.Id}/Edit`, '_blank').focus();
+                });
+                groups.push(groupDom);
+              } else {
+                let groupDom = (
+                  <a type="button" style="margin-bottom:5px; margin-right: 5px;" class="btn btn-default btn-xs mr-1" data-unit={group.Id}>
+                    {group.Name}
+                  </a>
+                );
+                $(groupDom).click(function (e) {
+                  console.log(e)
+                  window.open(`/ContactGroups/${group.Id}/Edit`, '_blank').focus();
+                });
+                groups.push(groupDom);
+              }
+            }
+            })
+            $('#escalations-lhq-text').empty();
+              $('#escalations-lhq-text').append(groups);
+          }
+        }
+      }
+    })
+
+  }
+}
+
 });
 
 whenLighthouseIsReady(function () {

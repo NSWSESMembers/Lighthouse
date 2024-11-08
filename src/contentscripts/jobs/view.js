@@ -274,6 +274,16 @@ let job_nearest_lhq = (
   </div>
 );
 
+let job_escalations_lhq = (
+  <div class="form-group" id="escalations-lhq" style="display: none;">
+  <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
+  src={chrome.runtime.getURL("icons/lh-black.png")} />HQ Escalations</label>
+  <div id="escalations-lhq-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
+  <p id="escalations-lhq-text" class="form-control-static">Waiting...</p>
+  </div>
+  </div>
+);
+
 let job_nearest_rescue_lhq = (
   <div class="form-group" id="nearest-rescue-lhq-group" style="display: none;">
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
@@ -422,6 +432,9 @@ $('fieldset.col-md-12').each(function(k,v){
 $('#editRfaForm > fieldset.col-md-8 > div > label').each(function(k,v){
   var $v = $(v);
   if (v.innerText == 'LGA') {
+
+    $v.parent().before(job_escalations_lhq)
+
     $v.parent().after(job_nearest_rescue_lhq)
 
     $v.parent().after(job_nearest_lhq)
