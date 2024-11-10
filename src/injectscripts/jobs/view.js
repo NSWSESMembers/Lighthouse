@@ -1554,7 +1554,7 @@ whenJobIsReady(function () {
                 jobType = "Flood Rescue"
                 break;
                 case "Flood Misc":
-                  jobType = "Flood"
+                  jobType = "Flood/Storm"
                 break;       
                 case "GLR":
                   jobType = "General Land Rescue"
@@ -1568,7 +1568,6 @@ whenJobIsReady(function () {
             response.responseJSON.Results.forEach(function (group) {
               if (group.Escalation == true) {
                 if (group.Types.some(function (i) {
-                  console.log(i.Name, jobType)
                   if (i.Name.includes(jobType)) {
                     return true
                   }
