@@ -3364,7 +3364,7 @@ function editRfaFormDOMWatcher() {
       });
 
       $(
-        'div[data-bind="foreach: messages"] .text-muted:not([lhTPlus]),div[data-bind="foreach: opsLogEntries"] .text-muted:not([lhTPlus])',
+        'div[data-bind="foreach: messages"] .text-muted:not([lhTPlus])',
       ).each(function (_r) {
         // weird race condition where they already have the attrib
         var $thing = $(this);
