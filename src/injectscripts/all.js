@@ -1,4 +1,4 @@
-/* global user, urls, $, lighthouseUrl, filterViewModel, moment, utility, lighthouseEnviroment, contentViewModel */
+/* global user, urls, $, lighthouseUrl, filterViewModel, moment, layout, utility, lighthouseEnviroment, contentViewModel */
 
 var clusterCodes = require('../lib/clusters.js');
 
@@ -8,6 +8,15 @@ window.postMessage(
   },
   '*',
 );
+
+
+document.addEventListener('keydown', function(event) {
+  if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') {
+      event.preventDefault(); // Prevents the default action (e.g., focusing on the address bar)
+      layout.createRadioEntry();
+      // Add your custom logic here
+  }
+});
 
 window.addEventListener('message', function (event) {
   // We only accept messages from content scrip
