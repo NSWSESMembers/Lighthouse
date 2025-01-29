@@ -38,6 +38,33 @@ document.addEventListener('keydown', function(event) {
     window.location = "/jobs";
   }
 });
+
+document.addEventListener('keydown', function(event) {
+  if (event.altKey && event.key.toLowerCase() === 'm') {
+    event.preventDefault();
+    window.location = "/Messages/Create";
+  }
+});
+document.addEventListener('keydown', function(event) {
+  if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'm') {
+    event.preventDefault();
+    window.location = "/Messages";
+  }
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.altKey && event.key.toLowerCase() === 'h') {
+    event.preventDefault();
+    window.location = "/Headquarters/Manage";
+  }
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.altKey && event.key.toLowerCase() === 'c') {
+    event.preventDefault();
+    window.location = "/ContactGroup";
+  }
+});
 window.addEventListener('message', function (event) {
   // We only accept messages from content scrip
   if (event.source !== window) return;
