@@ -12,9 +12,8 @@ window.postMessage(
 
 document.addEventListener('keydown', function(event) {
   if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') {
-      event.preventDefault(); // Prevents the default action (e.g., focusing on the address bar)
-      layout.createRadioEntry();
-      // Add your custom logic here   
+    event.preventDefault();
+    layout.createRadioEntry();
   } else if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'o') {
     event.preventDefault(); 
     window.location = "/OperationsLog";
@@ -22,14 +21,14 @@ document.addEventListener('keydown', function(event) {
     event.preventDefault(); 
     layout.createEntry();
   } else if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'i') {
-      event.preventDefault();
-      window.location = "/jobs";
+    event.preventDefault();
+    window.location = "/jobs";
   } else if (event.altKey && event.key.toLowerCase() === 'i') {
     event.preventDefault(); 
     window.location = "/jobs/create";
   } else if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'm') {
-      event.preventDefault();
-      window.location = "/Messages";
+    event.preventDefault();
+    window.location = "/Messages";
   } else if (event.altKey && event.key.toLowerCase() === 'm') {
     event.preventDefault();
     window.location = "/Messages/Create";
@@ -39,8 +38,27 @@ document.addEventListener('keydown', function(event) {
   } else if (event.altKey && event.key.toLowerCase() === 'c') {
     event.preventDefault();
     window.location = "/ContactGroup";
+  } else if (event.altKey && event.key.toLowerCase() === 'z') { //ICEMS IAR shortcut
+    event.preventDefault();
+    var button = document.querySelector(".btn-success[data-bind*='requestAgency']");    
+    if (button && button.offsetParent !== null) {
+      button.click();
+    } else {
+      console.log("Error: Button not found or hidden!");
+      return; 
+    }
+  } else if (event.altKey && event.key.toLowerCase() === 'x') { //ICEMS IUM shortcut
+    event.preventDefault();
+    var button = document.querySelector(".btn-acknowledge[data-bind*='showIUMModal']");    
+    if (button && button.offsetParent !== null) {
+      button.click();
+    } else {
+      console.log("Error: Button not found or hidden!");
+      return; 
+    }
   }
 });
+
 
 window.addEventListener('message', function (event) {
   // We only accept messages from content scrip
