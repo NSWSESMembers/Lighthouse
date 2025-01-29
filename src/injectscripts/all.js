@@ -11,7 +11,7 @@ window.postMessage(
 
 
 document.addEventListener('keydown', function(event) {
-  if (event.altKey && event.key.toLowerCase() === 'r') {
+  if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') {
       event.preventDefault(); // Prevents the default action (e.g., focusing on the address bar)
       layout.createRadioEntry();
       // Add your custom logic here
