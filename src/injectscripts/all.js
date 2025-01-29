@@ -11,13 +11,33 @@ window.postMessage(
 
 
 document.addEventListener('keydown', function(event) {
-  if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') {
+  if (event.altKey && event.key.toLowerCase() === 'r') {
       event.preventDefault(); // Prevents the default action (e.g., focusing on the address bar)
       layout.createRadioEntry();
       // Add your custom logic here
   }
 });
 
+document.addEventListener('keydown', function(event) {
+  if (event.altKey && event.key.toLowerCase() === 'o') {
+      event.preventDefault(); // Prevents the default action (e.g., focusing on the address bar)
+      layout.createEntry();
+      // Add your custom logic here
+  }
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.altKey && event.key.toLowerCase() === 'i') {
+    window.location = "/jobs/create";
+  }
+});
+
+document.addEventListener('keydown', function(event) {
+  if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'i') {
+    event.preventDefault();
+    window.location = "/jobs";
+  }
+});
 window.addEventListener('message', function (event) {
   // We only accept messages from content scrip
   if (event.source !== window) return;
@@ -29,7 +49,6 @@ window.addEventListener('message', function (event) {
     }
   }
 });
-
 whenWeAreReady(function () {
   if (typeof urls.Base == 'undefined') {
     urls.Base = 'https://' + location.hostname;
