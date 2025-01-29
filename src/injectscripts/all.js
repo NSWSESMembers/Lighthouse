@@ -11,13 +11,13 @@ window.postMessage(
 
 
 document.addEventListener('keydown', function(event) {
-  if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') {
+  if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') { //create radio
     event.preventDefault();
     layout.createRadioEntry();
   } else if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'o') {
     event.preventDefault(); 
     window.location = "/OperationsLog";
-  } else if (event.altKey && event.key.toLowerCase() === 'o') {
+  } else if (event.altKey && event.key.toLowerCase() === 'o') { //create ops log 
     event.preventDefault(); 
     layout.createEntry();
   } else if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'i') {
@@ -38,7 +38,7 @@ document.addEventListener('keydown', function(event) {
   } else if (event.altKey && event.key.toLowerCase() === 'c') {
     event.preventDefault();
     window.location = "/ContactGroup";
-  } else if (event.altKey && event.key.toLowerCase() === 'z') { //ICEMS IAR shortcut
+  } else if (event.altKey && event.key.toLowerCase() === 'z') { //ICEMS IAR
     event.preventDefault();
     var button = document.querySelector(".btn-success[data-bind*='requestAgency']");    
     if (button && button.offsetParent !== null) {
@@ -47,7 +47,7 @@ document.addEventListener('keydown', function(event) {
       console.log("Error: Button not found or hidden!");
       return; 
     }
-  } else if (event.altKey && event.key.toLowerCase() === 'x') { //ICEMS IUM shortcut
+  } else if (event.altKey && event.key.toLowerCase() === 'x') { //ICEMS IUM
     event.preventDefault();
     var button = document.querySelector(".btn-acknowledge[data-bind*='showIUMModal']");    
     if (button && button.offsetParent !== null) {
