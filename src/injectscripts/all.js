@@ -14,47 +14,41 @@ document.addEventListener('keydown', function(event) {
   if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') { //create radio
     event.preventDefault();
     layout.createRadioEntry();
-  } else if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'o') {
+  } else if (event.altKey && event.shiftKey && event.code === "KeyO") {
     event.preventDefault(); 
     window.location = "/OperationsLog";
-  } else if (event.altKey && event.key.toLowerCase() === 'o') { //create ops log 
+  } else if (event.altKey && event.code === "KeyO") { //create ops log 
     event.preventDefault(); 
     layout.createEntry();
-  } else if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'i') {
+  } else if (event.altKey && event.shiftKey && event.code === "KeyI") {
     event.preventDefault();
     window.location = "/jobs";
-  } else if (event.altKey && event.key.toLowerCase() === 'i') {
+  } else if (event.altKey && event.code === "KeyI") {
     event.preventDefault(); 
     window.location = "/jobs/create";
-  } else if (event.altKey && event.shiftKey && event.key.toLowerCase() === 'm') {
+  } else if (event.altKey && event.shiftKey && event.code === "KeyM") {
     event.preventDefault();
     window.location = "/Messages";
-  } else if (event.altKey && event.key.toLowerCase() === 'm') {
+  } else if (event.altKey && event.code === "KeyM") {
     event.preventDefault();
     window.location = "/Messages/Create";
-  } else if (event.altKey && event.key.toLowerCase() === 'h') {
+  } else if (event.altKey && event.code === "KeyH") {
     event.preventDefault();
     window.location = "/Headquarters/Manage";
-  } else if (event.altKey && event.key.toLowerCase() === 'c') {
+  } else if (event.altKey && event.code === "KeyC") {
     event.preventDefault();
     window.location = "/ContactGroup";
-  } else if (event.altKey && event.key.toLowerCase() === 'z') { //ICEMS IAR
+  } else if (event.altKey && event.code === "KeyZ") { //ICEMS IAR
     event.preventDefault();
     var button = document.querySelector(".btn-success[data-bind*='requestAgency']");    
     if (button && button.offsetParent !== null) {
       button.click();
-    } else {
-      console.log("Error: Button not found or hidden!");
-      return; 
     }
-  } else if (event.altKey && event.key.toLowerCase() === 'x') { //ICEMS IUM
+  } else if (event.altKey && event.code === "KeyX") { //ICEMS IUM
     event.preventDefault();
-    var button = document.querySelector(".btn-acknowledge[data-bind*='showIUMModal']");    
+    button = document.querySelector(".btn-acknowledge[data-bind*='showIUMModal']");    
     if (button && button.offsetParent !== null) {
       button.click();
-    } else {
-      console.log("Error: Button not found or hidden!");
-      return; 
     }
   }
 });
