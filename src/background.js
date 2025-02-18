@@ -37,6 +37,19 @@ const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
 const hazardWatchUrl = 'https://feed.firesnearme.hazards.rfs.nsw.gov.au/';
 //external libs
 
+
+//Catch nativation changes in REACT app myAvailability
+//CAUTION - DONT USE INJECTS HERE AS THEY WILL STACK UP
+chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
+  if (details.url.includes('/requests/out-of-area-activations/')) {
+    chrome.scripting.executeScript({
+      target: { tabId: details.tabId },
+      files: ["myAvailability/contentscripts/requests/out-of-area-activations.js"]
+  });
+  }
+});
+
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.type === 'asbestos') {
     checkAsbestosRegister(
@@ -106,8 +119,29 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       sendResponse(data);
     });
     return true;
+  } else if (request.type === 'myAvailabilityOOAACSV') {
+    pullmyAvailOOAACSV(request.url, function (data) {
+      sendResponse(data);
+    });
+    return true;
   }
 });
+
+
+/**
+ * Fetches myAvail OOAA CSV Lists
+ *
+ * @param url url on S3
+ */
+function pullmyAvailOOAACSV(url, cb) {
+  fetch(url, { headers: {
+    'Accept': 'application/octet-stream',
+  }}).then(response => response.text())
+    .then((text) => {
+      cb(text)
+    });
+}
+
 
 /**
  * Fetches the current RFS incidents from their JSON feed.
@@ -300,12 +334,11 @@ function fetchAusgridOutages(callback) {
   console.info('fetching ausgrid power outage locations');
 
 
-  fetch(`${ausgridBaseUrl}webapi/OutageMapData/GetCurrentUnplannedOutageMarkersAndPolygons`, {
-    method: "POST",
+  fetch(`${ausgridBaseUrl}webapi/OutageMapData/GetCurrentUnplannedOutageMarkersAndPolygons?bottomleft.lat=-33.45170&bottomleft.lng=148.76319&topright.lat=-32.56033&topright.lng=153.66859&zoom=9`, {
+    method: "GET",
     headers: {
         "Content-Type": "application/json",
-      },
-    body: '{"bottomleft":{"lat":-34.44684015562498,"lng":146.13435073046878},"topright":{"lat":-32.499628661589995,"lng":156.03852553515628},"zoom":8}'
+      }
   }).then((resp) => {
     if (resp.ok) {
       resp.json().then((result) => {
@@ -313,18 +346,6 @@ function fetchAusgridOutages(callback) {
             type: 'FeatureCollection',
             features: [],
           };
-          var expectCount = 0;
-
-          result.forEach(function (item) {
-            if (item.WebId != 0) {
-              expectCount++;
-            }
-          });
-    
-          if (expectCount == 0) {
-            //call back if theres none.
-            callback(ausgridGeoJson);
-          }
     
           result.forEach(function (item) {
             //build up some geojson from normal JSON
@@ -363,35 +384,21 @@ function fetchAusgridOutages(callback) {
     
             feature.geometry.geometries.push(point);
     
-            fetchAusgridOutage(
-              item.WebId,
-              item.OutageDisplayType,
-              function (outageresult) {
-                //for each outage ask their API for the deatils of the outage
-                if (typeof outageresult.error === 'undefined') {
-                  //if no error
                   feature.owner = 'Ausgrid';
                   feature.type = 'Feature';
                   feature.properties = {};
-                  feature.properties.numberCustomerAffected =
-                    outageresult.Customers;
-                  feature.properties.incidentId = outageresult.WebId;
-                  feature.properties.reason = outageresult.Cause;
-                  feature.properties.status = outageresult.Status;
+                  feature.properties.numberCustomerAffected = item.CustomersAffectedText;
+                  feature.properties.incidentId = item.WebId;
+                  feature.properties.reason = item.Cause;
+                  feature.properties.status = item.Status;
                   feature.properties.type = 'Outage';
-                  feature.properties.startDateTime = outageresult.StartDateTime;
-                  feature.properties.endDateTime = outageresult.EstRestTime;
+                  feature.properties.startDateTime = item.StartDateTime;
+                  feature.properties.endDateTime = item.EstRestTime;
+
                   ausgridGeoJson.features.push(feature);
-                } else {
-                  expectCount--;
-                }
-                if (ausgridGeoJson.features.length == expectCount) {
-                  //return once all the data is back
-                  callback(ausgridGeoJson);
-                }
-              },
-            );
+
           });
+          callback(ausgridGeoJson);
       })
     } else {
         // error
@@ -759,5 +766,7 @@ function checkAsbestosRegister(inAddressObject, cb) {
       //     cb(0); //fetch error
       //   });
     }
+
+    
   });
 }
