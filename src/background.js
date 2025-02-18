@@ -424,37 +424,37 @@ function fetchAusgridOutages(callback) {
  * @param type OutageDisplayType
  * @param callback the callback to send the data to.
  */
-function fetchAusgridOutage(id, type, callback) {
-  console.info('fetching ausgrid power outage detail');
+// function fetchAusgridOutage(id, type, callback) {
+//   console.info('fetching ausgrid power outage detail');
 
-  fetch(`${ausgridBaseUrl}webapi/OutageMapData/GetOutage`, {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-      },
-    body: JSON.stringify({WebId:id,OutageDisplayType: type})
-  }).then((resp) => {
-    if (resp.ok) {
-      resp.json().then((json) => {
-        callback(json)
-      })
-    } else {
-        // error
-        var response = {
-          error: 'Request failed',
-          httpCode: 'error',
-        };
-        callback(response);
-    }
-}).catch(() => {
-    // error
-    var response = {
-        error: 'Request failed',
-        httpCode: 'error',
-      };
-      callback(response);
-})
-}
+//   fetch(`${ausgridBaseUrl}webapi/OutageMapData/GetOutage`, {
+//     method: "POST",
+//     headers: {
+//         "Content-Type": "application/json",
+//       },
+//     body: JSON.stringify({WebId:id,OutageDisplayType: type})
+//   }).then((resp) => {
+//     if (resp.ok) {
+//       resp.json().then((json) => {
+//         callback(json)
+//       })
+//     } else {
+//         // error
+//         var response = {
+//           error: 'Request failed',
+//           httpCode: 'error',
+//         };
+//         callback(response);
+//     }
+// }).catch(() => {
+//     // error
+//     var response = {
+//         error: 'Request failed',
+//         httpCode: 'error',
+//       };
+//       callback(response);
+// })
+// }
 
 /**
  * Fetches the current power outages for Endeavour Energy.
