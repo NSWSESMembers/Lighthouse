@@ -400,16 +400,19 @@ function mostCommonValue(arr) {
   return mostCommon;
 }
 
+
 function whenPageIsReady(cb) {
-  //when external vars have loaded
+  let startTime = Date.now();
   if ($("div.MuiStack-root:contains('Download Activated Members CSV')").length > 0) {
-    cb(); //call back straight away
+    cb(); // Call back immediately
   } else {
-    var waiting = setInterval(function () {
-      //run every 1sec until we have loaded the page (dont hate me Sam)
+    let waiting = setInterval(function () {
       if ($("div.MuiStack-root:contains('Download Activated Members CSV')").length > 0) {
-        clearInterval(waiting); //stop timer
-        cb(); //call back
+        clearInterval(waiting); // Stop timer
+        cb(); // Call back
+      } else if (Date.now() - startTime >= 5000) {
+        clearInterval(waiting); // Stop after 5 seconds
+        console.log("Timeout: Stopping waiting whenPageIsReady after 5 seconds.");
       }
     }, 500);
   }

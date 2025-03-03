@@ -41,7 +41,7 @@ const hazardWatchUrl = 'https://feed.firesnearme.hazards.rfs.nsw.gov.au/';
 //Catch nativation changes in REACT app myAvailability
 //CAUTION - DONT USE INJECTS HERE AS THEY WILL STACK UP
 chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
-  if (details.url.includes('/requests/out-of-area-activations/')) {
+  if (details.url.includes('/requests/out-of-area-activations') && details.url.slice(-1) != '/') {
     chrome.scripting.executeScript({
       target: { tabId: details.tabId },
       files: ["myAvailability/contentscripts/requests/out-of-area-activations.js"]
