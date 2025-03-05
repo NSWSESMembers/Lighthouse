@@ -139,21 +139,21 @@ fetchAllPages(function (error, results) {
         thisRow.respondedAt = resp.request.createdAt
         thisRow.memberName = resp.request.memberName
         thisRow.memberId = resp.request.memberId
-        thisRow.units = resp.request.member.units.map(function(v, i) {
+        thisRow.units = resp.request.member.units.map(function(v, _i) {
           return `${v.name} (${v.code})`
         }).join(", ")
         thisRow.clusters = '' //TODO
         thisRow.zones = '' //TODO
         thisRow.phoneNumbers = '' //TODO
         thisRow.approvalStatus = resp.request.status
-        thisRow.approvedDates = resp.request.availabilityBlocks.map(function(v, i) {
+        thisRow.approvedDates = resp.request.availabilityBlocks.map(function(v, _i) {
           if (v.availabilityStatus != 'Conditional') {
             return `${v.start} to ${v.end} with status: ${v.availabilityStatus}`
           } else {
             return `${v.start} to ${v.end} with status: ${v.availabilityStatus} and reason: ${v.conditionalReason}`
           }
         }).join(", ")
-        thisRow.approvedRoles = resp.request.roles.map(function(v, i) {
+        thisRow.approvedRoles = resp.request.roles.map(function(v, _i) {
           return `${v.category}: ${v.name}`
         }).join(", ")
         thisRow.capabilities = '' //TODO
