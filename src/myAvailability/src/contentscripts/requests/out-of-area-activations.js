@@ -245,7 +245,6 @@ function exportLongList() {
 
     data.forEach(function (row) {
       let dateRanges = row.approvedDates.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/g);
-      console.log(dateRanges);
       if (dateRanges) {
         for (let i = 0; i < dateRanges.length; i += 2) {
           let rangeDates = getDateRange(dateRanges[i] + ':00.000Z', dateRanges[i + 1] + ':00.000Z'); //timezones suck and we dont care
@@ -632,7 +631,6 @@ function downloadCSVFromAWS(url) {
 
     csvObj.forEach(function (row) {
       let dateRanges = row.approvedDates.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/g);
-      console.log(dateRanges);
       if (dateRanges) {
         for (let i = 0; i < dateRanges.length; i += 2) {
           let rangeDates = getDateRange(dateRanges[i] + ':00.000Z', dateRanges[i + 1] + ':00.000Z'); //timezones suck and we dont care
@@ -1033,7 +1031,6 @@ function getDateRange(start, end) {
   const endDate = new Date(end);
 
   while (currentDate <= endDate) {
-    console.log(currentDate, currentDate.toISOString());
     dates.push(currentDate.toISOString().split('T')[0]); // Format as YYYY-MM-DD
     currentDate.setDate(currentDate.getDate() + 1);
   }
