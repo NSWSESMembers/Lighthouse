@@ -130,7 +130,18 @@ function exportLongList() {
     if (error) {
       console.error('Failed to fetch data:', error);
     } else {
-      //console.log("Final Results:", results);
+      
+      $.ajax({
+        type: 'GET',
+        url: `https://${apiHost}/out-of-area-activation-requests/${requestId}`,
+        beforeSend: function (n) {
+          n.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('accessToken'));
+        },
+        cache: false,
+        dataType: 'json',
+        complete: function (response, textStatus) {
+          if (textStatus === 'success') {
+            const parentRequestObj = response.responseJSON
       results.forEach(function (resp) {
         const thisRow = {};
         thisRow.respondedAt = resp.request.createdAt;
@@ -224,15 +235,20 @@ function exportLongList() {
       Promise.all(requests)
         .then(() => {
           console.log('All member data requests completed successfully');
-          processAndSaveAll(finalList);
+          processAndSaveAll(finalList, parentRequestObj);
         })
         .catch((error) => {
           console.error('One or more member data requests failed:', error);
         });
+
+      } else {
+        console.log('fetching request failed')
+      }
+        }})
     }
   });
 
-  function processAndSaveAll(data) {
+  function processAndSaveAll(data, parentRequestObj) {
     const workbook = new ExcelJS.Workbook();
 
     const byZone = {};
@@ -242,15 +258,9 @@ function exportLongList() {
     let AllDateRangeBlocks = new Set();
 
     //find out out all the date ranges first before we split data up
-
-    data.forEach(function (row) {
-      let dateRanges = row.approvedDates.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/g);
-      if (dateRanges) {
-        for (let i = 0; i < dateRanges.length; i += 2) {
-          let rangeDates = getDateRange(dateRanges[i] + ':00.000Z', dateRanges[i + 1] + ':00.000Z'); //timezones suck and we dont care
+    parentRequestObj.activation.deployments.forEach(function (row) {
+          let rangeDates = getDateRange(row.start + ':00.000Z', row.end + ':00.000Z'); //timezones suck and we dont care
           rangeDates.forEach((date) => AllDateRangeBlocks.add(date));
-        }
-      }
     });
 
     AllDateRangeBlocks = Array.from(AllDateRangeBlocks).sort(); // Sort all unique dates
@@ -282,6 +292,10 @@ function exportLongList() {
            row[d] = '-'; //default value
         }
       })
+
+      row.approvedDates = row.approvedDates.replaceAll(/T(?:00:00|23:59)/g, '')
+
+
 
       // eslint-disable-next-line no-prototype-builtins
       if (byApproval.hasOwnProperty(row.approvalStatus)) {
@@ -405,19 +419,9 @@ function exportLongList() {
     });
 
     worksheet.getCell(`A20`).value = 'Periods different from the normal in Red';
-    worksheet.getCell(`A20`).fill = {
-      // Set background color to light red
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFFFCCCC' }, // Light red (RGBA hex code)
-    };
+    worksheet.getCell(`A20`).font = {color: {argb: "8B0000"} };
     worksheet.getCell(`A21`).value = 'Periods with conditions in Orange';
-    worksheet.getCell(`A21`).fill = {
-      // Set background color to light red
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFD580' }, // Light red (RGBA hex code)
-    };
+    worksheet.getCell(`A21`).font = {color: {argb: "8B4000"} };
     worksheet.mergeCells(20, 1, 20, 2);
     worksheet.mergeCells(21, 1, 21, 2);
 
@@ -446,7 +450,7 @@ function exportLongList() {
     roleSummary.forEach(function (role) {
       worksheet.getCell(`D${i}`).value = {
         text: role.role,
-        hyperlink: `#'${sanitizeString(role.role)}'!A1`,
+        hyperlink: `#'${truncateString(sanitizeString(role.role))}'!A1`,
       };
       worksheet.getCell(`D${i}`).font = { underline: true, color: { theme: 10 } };
       worksheet.getCell(`E${i}`).value = role.responses;
@@ -498,7 +502,7 @@ function exportLongList() {
 
     //By Role Sheets
     for (const [key] of Object.entries(byRole)) {
-      const worksheet = workbook.addWorksheet(sanitizeString(key), { properties: { tabColor: { argb: 'ffbb33' } } });
+      const worksheet = workbook.addWorksheet(truncateString(sanitizeString(key)), { properties: { tabColor: { argb: 'ffbb33' } } });
       worksheet.columns = rowHeading;
       worksheet.addRows(byRole[key]);
       setHighlightImportantStuff(worksheet);
@@ -525,7 +529,7 @@ function exportLongList() {
       const blobURL = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobURL;
-      link.download = `${Date.now().toString()}.xlsx`;
+      link.download = `${sanitizeString(parentRequestObj.activation.title)}-All-${Date.now().toString()}.xlsx`;
       link.click();
     });
 
@@ -539,20 +543,11 @@ function exportLongList() {
         if (rowNumber === 1) return; // Skip the first row
         const cell = row.getCell(7); // Column H (Excel columns are 1-based)
         if (cell.value !== mostCommonValue(commonPeriods)) {
-          cell.fill = {
-            // Set background color to light red
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFFFCCCC' }, // Light red (RGBA hex code)
-          };
+          cell.font = {color: {argb: "8B0000"} };
+
         }
         if (cell.value.includes('Conditional and reason')) {
-          cell.fill = {
-            // Set background color to light red
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFD580' }, // Light red (RGBA hex code)
-          };
+          cell.font = {color: {argb: "8B4000"} };
         }
         AllDateRangeBlocks.forEach(function (_x, i) {
           let dateCell = row.getCell(8 + i);
@@ -593,6 +588,17 @@ function exportLongList() {
 
 function downloadApproved() {
   $.ajax({
+    type: 'GET',
+    url: `https://${apiHost}/out-of-area-activation-requests/${requestId}`,
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('accessToken'));
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function (response, textStatus) {
+      if (textStatus === 'success') {
+        const parentRequestObj = response.responseJSON
+  $.ajax({
     type: 'POST',
     url: `https://${apiHost}/out-of-area-activation-requests/${requestId}/downloadMembers`,
     beforeSend: function (n) {
@@ -603,13 +609,19 @@ function downloadApproved() {
     dataType: 'json',
     complete: function (response, textStatus) {
       if (textStatus == 'success') {
-        downloadCSVFromAWS(response.responseJSON.downloadUrl);
+        downloadCSVFromAWS(response.responseJSON.downloadUrl,parentRequestObj);
       }
     },
   });
+} else {
+  console.log('failed to download request obj')
+}
+    }
+  })
+
 }
 
-function downloadCSVFromAWS(url) {
+function downloadCSVFromAWS(url, parentRequestObj) {
   //ask background to get the file then work on the returned result
   chrome.runtime.sendMessage({ type: 'myAvailabilityOOAACSV', url: url }, function (response) {
     //   const description = {
@@ -635,16 +647,10 @@ function downloadCSVFromAWS(url) {
     let AllDateRangeBlocks = new Set();
 
     //find out out all the date ranges first before we split data up
-
-    csvObj.forEach(function (row) {
-      let dateRanges = row.approvedDates.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/g);
-      if (dateRanges) {
-        for (let i = 0; i < dateRanges.length; i += 2) {
-          let rangeDates = getDateRange(dateRanges[i] + ':00.000Z', dateRanges[i + 1] + ':00.000Z'); //timezones suck and we dont care
-          rangeDates.forEach((date) => AllDateRangeBlocks.add(date));
-        }
-      }
-    });
+    parentRequestObj.activation.deployments.forEach(function (row) {
+      let rangeDates = getDateRange(row.start + ':00.000Z', row.end + ':00.000Z'); //timezones suck and we dont care
+      rangeDates.forEach((date) => AllDateRangeBlocks.add(date));
+});
 
     AllDateRangeBlocks = Array.from(AllDateRangeBlocks).sort(); // Sort all unique dates
 
@@ -675,6 +681,7 @@ function downloadCSVFromAWS(url) {
         }
       })
 
+      row.approvedDates = row.approvedDates.replaceAll(/T(?:00:00|23:59)/g, '')
 
       if (row.zones == '') {
         //if theres no zone the unit is the zone (catch staff)
@@ -781,19 +788,9 @@ function downloadCSVFromAWS(url) {
     });
 
     worksheet.getCell(`A20`).value = 'Periods different from the normal in Red';
-    worksheet.getCell(`A20`).fill = {
-      // Set background color to light red
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFFFCCCC' }, // Light red (RGBA hex code)
-    };
+    worksheet.getCell(`A20`).font = {color: {argb: "8B0000"} };
     worksheet.getCell(`A21`).value = 'Periods with conditions in Orange';
-    worksheet.getCell(`A21`).fill = {
-      // Set background color to light red
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFD580' }, // Light red (RGBA hex code)
-    };
+    worksheet.getCell(`A21`).font = {color: {argb: "8B4000"} };
     worksheet.mergeCells(20, 1, 20, 2);
     worksheet.mergeCells(21, 1, 21, 2);
 
@@ -822,7 +819,7 @@ function downloadCSVFromAWS(url) {
     roleSummary.forEach(function (role) {
       worksheet.getCell(`D${i}`).value = {
         text: role.role,
-        hyperlink: `#'${sanitizeString(role.role)}'!A1`,
+        hyperlink: `#'${truncateString(sanitizeString(role.role))}'!A1`,
       };
       worksheet.getCell(`D${i}`).font = { underline: true, color: { theme: 10 } };
       worksheet.getCell(`E${i}`).value = role.responses;
@@ -843,7 +840,7 @@ function downloadCSVFromAWS(url) {
 
     //By Role Sheets
     for (const [key] of Object.entries(byRole)) {
-      const worksheet = workbook.addWorksheet(sanitizeString(key), { properties: { tabColor: { argb: 'ffbb33' } } });
+      const worksheet = workbook.addWorksheet(truncateString(sanitizeString(key)), { properties: { tabColor: { argb: 'ffbb33' } } });
       worksheet.columns = rowHeading;
       worksheet.addRows(byRole[key]);
       setHighlightImportantStuff(worksheet);
@@ -858,9 +855,7 @@ function downloadCSVFromAWS(url) {
       const blobURL = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobURL;
-      link.download = `${sanitizeString(
-        csvObj.length ? csvObj[0].requestTitle : 'OOAA',
-      )}-${Date.now().toString()}.xlsx`;
+      link.download = `${sanitizeString(parentRequestObj.activation.title)}-Approved-${Date.now().toString()}.xlsx`;
       link.click();
     });
 
@@ -876,20 +871,10 @@ function downloadCSVFromAWS(url) {
         if (rowNumber === 1) return; // Skip the first row
         const cell = row.getCell(8); // Column H (Excel columns are 1-based)
         if (cell.value !== mostCommonValue(commonPeriods)) {
-          cell.fill = {
-            // Set background color to light red
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFFFCCCC' }, // Light red (RGBA hex code)
-          };
+          cell.font = {color: {argb: "8B0000"} };
         }
         if (cell.value.includes('Conditional and reason')) {
-          cell.fill = {
-            // Set background color to light red
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'FFD580' }, 
-          };
+          cell.font = {color: {argb: "8B4000"} };
         }
 
         AllDateRangeBlocks.forEach(function (_x, i) {
@@ -998,22 +983,48 @@ function sanitizeString(str) {
   return str.replace(/[^a-zA-Z0-9]/g, ''); // Remove all non-alphanumeric characters
 }
 
-function setAutoWidth(ws, padding = 0) {
-  padding = 3
-  ws.columns.forEach(function (column) {
-    var dataMax = 0;
-    column.eachCell({ includeEmpty: true }, function (cell) {
-      var txt = cell.value;
-      if (cell.value && typeof cell.value == 'object') {
-        txt = cell.value.text;
-      }
-      var columnLength = txt ? txt.length : 0;
-      if (columnLength > dataMax) {
-        dataMax = columnLength;
-      }
+function setAutoWidth(sheet, fromRow = 0) {
+  const PIXELS_PER_EXCEL_WIDTH_UNIT = 7.5;
+  if (!sheet || typeof sheet.eachRow !== 'function') {
+        throw new Error('Invalid worksheet provided');
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+        return;
+    }
+
+    const maxColumnLengths = [];
+    
+    sheet.eachRow((row, rowNum) => {
+        if (rowNum < fromRow) {
+            return;
+        }
+
+        row.eachCell((cell, num) => {
+                if (maxColumnLengths[num] === undefined) {
+                    maxColumnLengths[num] = 0;
+                }
+
+                const fontSize = cell.font && cell.font.size ? cell.font.size : 11;
+                ctx.font = `${fontSize}pt Calibri`;
+                const metrics = ctx.measureText(cell.value.text ? cell.value.text  : cell.value);
+                const cellWidth = metrics.width;
+                
+                maxColumnLengths[num] = Math.max(maxColumnLengths[num], cellWidth);
+        });
     });
-    column.width = dataMax < 10 ? 10 + padding : dataMax + padding;
-  });
+
+    for (let i = 1; i <= sheet.columnCount; i++) {
+        const col = sheet.getColumn(i);
+        const width = maxColumnLengths[i];
+        if (width / PIXELS_PER_EXCEL_WIDTH_UNIT + 1 <= 14) { // a minimum
+            col.width = 14;
+        } else if (width) {
+          col.width = width / PIXELS_PER_EXCEL_WIDTH_UNIT + 1;
+        }
+    }
 }
 
 function mostCommonValue(arr) {
@@ -1051,6 +1062,10 @@ function isDateBetween(targetDate, startDate, endDate) {
   const end = new Date(endDate);
 
   return target >= start && target <= end;
+}
+
+function truncateString(str) {
+  return str.length > 31 ? str.slice(0, 31) : str;
 }
 
 function whenPageIsReady(cb) {
