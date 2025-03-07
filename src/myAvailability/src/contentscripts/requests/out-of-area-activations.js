@@ -391,7 +391,7 @@ function exportLongList() {
     const worksheet = workbook.addWorksheet('Summary', { properties: { tabColor: { argb: 'FF00FF00' } } });
 
     worksheet.addRow(['Responses By Zone']);
-    worksheet.addRow(['Zone', 'Approved For Activation']);
+    worksheet.addRow(['Zone', 'Responses']);
     //add the role summary next to the other stats.
     let a = 3;
     zoneSummary.forEach(function (zone) {
@@ -477,6 +477,13 @@ function exportLongList() {
       i++;
     });
 
+    worksheet.getCell(`G${i}`).value = 'Total Responses'
+    worksheet.getCell(`G${i}`).font = { bold: true, italic: true };
+    worksheet.getCell(`H${i}`).value = approvalSummary.reduce((sum, item) => sum + item.responses, 0)
+    worksheet.getCell(`H${i}`).font = { bold: true, italic: true };
+
+
+
     setAutoWidth(worksheet);
 
     //By Zone Sheets
@@ -548,7 +555,7 @@ function exportLongList() {
           };
         }
         AllDateRangeBlocks.forEach(function (_x, i) {
-          let dateCell = row.getCell(9 + i);
+          let dateCell = row.getCell(8 + i);
 
           //date block stuff
           if (dateCell.value == 'Available') {
