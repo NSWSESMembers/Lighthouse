@@ -740,7 +740,15 @@ function prepareCharts(jobs, start, end, firstRun) {
 
 
     zoneChart = makeSimplePie("#dc-zone-chart", 460, 240, function(d) {
-      return d.EntityAssignedTo.ParentEntity ? d.EntityAssignedTo.ParentEntity.Name : "NA";
+      if (d.EntityAssignedTo.ParentEntity) {
+        if (d.EntityAssignedTo.ParentEntity.Id === 1) { //if a zone then dont return state, nest it under zone
+          return d.EntityAssignedTo.Name
+        } else {
+          return d.EntityAssignedTo.ParentEntity.Name
+        }
+      } else {
+        return d.EntityAssignedTo.Name //no parent. must be state
+      }
     });
 
     sectorChart = makeSimplePie("#dc-sector-chart", 460, 240, function(d) {
