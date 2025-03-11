@@ -211,7 +211,7 @@ let job_asbestos_history = (
   let job_nearest_rescue_lhq = (
     <div class="form-group" id="nearest-rescue-lhq-group" style="display: none;">
     <label class="col-md-2 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-    src={chrome.runtime.getURL("icons/lh-black.png")} /><span id="nearest-rescue-lhq-label">Closest Accreditred LHQs</span></label>
+    src={chrome.runtime.getURL("icons/lh-black.png")} /><span id="nearest-rescue-lhq-label">Closest Accredited LHQs</span></label>
     <div id="nearest-rescue-lhq-box" class="col-md-9 col-lg-9">
     <div class="btn-toolbar" id="nearest-rescue-lhq-text" style="margin: unset; margin-left: -5px;">
     <p class="form-control-static">Waiting For A Location</p>

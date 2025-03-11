@@ -277,7 +277,7 @@ let job_nearest_lhq = (
 let job_nearest_rescue_lhq = (
   <div class="form-group" id="nearest-rescue-lhq-group" style="display: none;">
   <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.runtime.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest Accreditred LHQs</abbr></label>
+  src={chrome.runtime.getURL("icons/lh-black.png")} /><abbr title="Distance as the crow flies">Closest Accredited LHQs</abbr></label>
   <div id="nearest-rescue-lhq-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
   <p id="nearest-rescue-lhq-text" class="form-control-static"></p>
   </div>
