@@ -50,8 +50,35 @@ $(document).ready(function() {
     let accreditations = undefined;
 
     // toggle the nearest lhq buttons automagically
-    vm.entityAssignedTo.subscribe(function() {
+    vm.entityAssignedTo.subscribe(function(who) {
       UpdateAssignedToBoxesActive()
+
+      $.ajax({
+        type: 'GET',
+        url: `${urls.Base}${urls.Api.hqStatus}/Search`,
+        beforeSend: function (n) {
+          n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+        },
+        data: {
+          LighthouseFunction: 'fetchHqStatus',
+          userId: user.Id,
+          Name: who.Name,
+          HeadquartersStatusTypeId: 1,
+          PageIndex: 1,
+          PageSize: 10     
+        },
+        cache: false,
+        dataType: 'json',
+        complete: function (response, _textStatus) {
+          if (response.responseJSON.Results.length) {
+            if (response.responseJSON.Results[0].HeadquartersStatusType.Id == 3) { //unavailable
+          alert(`${response.responseJSON.Results[0].Entity.Name} is currently unavailable - ${response.responseJSON.Results[0].Note}`);
+          }
+        }
+        },
+      });
+
+
     })
 
     window.postMessage({ type: "FROM_PAGE_JOBTYPE", jType: vm.jobType.peek().Name ? vm.jobType.peek().Name : null}, "*")
@@ -75,7 +102,6 @@ $(document).ready(function() {
 
     vm.jobType.subscribe(function(jt) {
         window.postMessage({ type: "FROM_PAGE_JOBTYPE", jType: jt ? jt.Name : null}, "*")
-
 
         //push an update back in to upload distances for the new rescue type
       if (jt && vm.latitude.peek() && vm.longitude.peek()) {

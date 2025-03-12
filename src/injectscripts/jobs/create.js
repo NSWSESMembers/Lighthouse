@@ -45,6 +45,33 @@ $(document).ready(function () {
 
     vm.entityAssignedTo.subscribe(function (who) {
       if (who) {
+
+          $.ajax({
+            type: 'GET',
+            url: `${urls.Base}${urls.Api.hqStatus}/Search`,
+            beforeSend: function (n) {
+              n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+            },
+            data: {
+              LighthouseFunction: 'fetchHqStatus',
+              userId: user.Id,
+              Name: who.Name,
+              HeadquartersStatusTypeId: 1,
+              PageIndex: 1,
+              PageSize: 10     
+            },
+            cache: false,
+            dataType: 'json',
+            complete: function (response, _textStatus) {
+              if (response.responseJSON.Results.length) {
+                if (response.responseJSON.Results[0].HeadquartersStatusType.Id == 3) { //unavailable
+              alert(`${response.responseJSON.Results[0].Entity.Name} is currently unavailable - ${response.responseJSON.Results[0].Note}`);
+              }
+            }
+            },
+          });
+
+
         calculateMyAvailabilityResult({ unitAssigned: who });
         // toggle the nearest lhq buttons automagically
         $(
