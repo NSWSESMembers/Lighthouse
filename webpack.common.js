@@ -27,12 +27,37 @@ const pagesScripts = glob.sync('./src/pages/**/*.js')
     return acc;
   }, {});
 
+
+const myAvailContentScripts = glob.sync('./src/myAvailability/src/contentscripts/**/*.js')
+  .reduce((acc, path) => {
+    const entry = path.replace(/src\/myAvailability\/src\/(.*)\.js/, 'myAvailability/$1');
+    acc[entry] = path;
+    return acc;
+  }, {});
+
+const myAvailInjectScripts = glob.sync('./src/myAvailability/src/injectscripts/**/*.js')
+  .reduce((acc, path) => {
+    const entry = path.replace(/src\/myAvailability\/src\/(.*)\.js/, 'myAvailability/$1');
+    acc[entry] = path;
+    return acc;
+  }, {});
+
+const myAvailPagesScripts = glob.sync('./src/myAvailability/src/pages/*.js')
+  .reduce((acc, path) => {
+    const entry = path.replace(/src\/myAvailability\/src\/pages\/(.*)\.js/, 'myAvailability/pages/$1');
+    acc[entry] = path;
+    return acc;
+  }, {});
+
 module.exports = {
   entry: {
     background: './src/background.js',
     ...contentScripts,
     ...injectScripts,
     ...pagesScripts,
+    ...myAvailContentScripts,
+    ...myAvailInjectScripts,
+    ...myAvailPagesScripts
   },
   module: {
     rules: [
@@ -68,7 +93,8 @@ module.exports = {
           globOptions: {
             ignore: ["**/.DS_Store","**/manifest.json"],
           },
-        }
+        } 
+        //TODO glob for myavail static
       ],
     }),
   ],
