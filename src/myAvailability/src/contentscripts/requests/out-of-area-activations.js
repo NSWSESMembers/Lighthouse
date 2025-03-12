@@ -156,6 +156,7 @@ function exportLongList() {
         thisRow.zones = ''; //TODO
         thisRow.phoneNumbers = ''; //TODO
         thisRow.approvalStatus = resp.request.status;
+        thisRow.unsuccessful = resp.request.unsuccessful;
         thisRow.approvedDates = resp.request.availabilityBlocks
           .map(function (v, _i) {
             if (v.availabilityStatus != 'Conditional') {
@@ -254,6 +255,7 @@ function exportLongList() {
     const byZone = {};
     const byRole = {};
     const byApproval = {};
+    const byUnsuccessful = [];
     const commonPeriods = [];
     let AllDateRangeBlocks = new Set();
 
@@ -292,10 +294,13 @@ function exportLongList() {
            row[d] = '-'; //default value
         }
       })
+      
 
       row.approvedDates = row.approvedDates.replaceAll(/T(?:00:00|23:59)/g, '')
 
-
+      if (row.unsuccessful == 1) {
+        byUnsuccessful.push(row);
+      }
 
       // eslint-disable-next-line no-prototype-builtins
       if (byApproval.hasOwnProperty(row.approvalStatus)) {
@@ -481,14 +486,28 @@ function exportLongList() {
       i++;
     });
 
+worksheet.getCell(`G${i}`).value = {
+  text: 'Marked As Unsuccessful',
+  hyperlink: `#'${sanitizeString('Marked Unsuccessful')}'!A1`,
+};
+worksheet.getCell(`G${i}`).font = { underline: true, color: { theme: 10 } };
+worksheet.getCell(`H${i}`).value = byUnsuccessful.length;
+i++
     worksheet.getCell(`G${i}`).value = 'Total Responses'
     worksheet.getCell(`G${i}`).font = { bold: true, italic: true };
     worksheet.getCell(`H${i}`).value = approvalSummary.reduce((sum, item) => sum + item.responses, 0)
     worksheet.getCell(`H${i}`).font = { bold: true, italic: true };
 
-
-
     setAutoWidth(worksheet);
+
+    const unsuccessfulWorksheet = workbook.addWorksheet(sanitizeString('Marked Unsuccessful'), { properties: { tabColor: { argb: 'FFC0CB' } } }); 
+    unsuccessfulWorksheet.columns = rowHeading;
+    unsuccessfulWorksheet.addRows(byUnsuccessful);
+    setHighlightImportantStuff(unsuccessfulWorksheet);
+    setAutoWidth(unsuccessfulWorksheet);
+    unsuccessfulWorksheet.autoFilter = `A1:${String.fromCharCode(64 + rowHeading.length)}1`;
+
+
 
     //By Zone Sheets
     for (const [key] of Object.entries(byZone)) {
@@ -519,6 +538,8 @@ function exportLongList() {
       setAutoWidth(worksheet);
       worksheet.autoFilter = `A1:${String.fromCharCode(64 + rowHeading.length)}1`;
     }
+
+  
 
     $('#lighthousedownloadall').text('Download All Responses XLSX');
 
