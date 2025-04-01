@@ -770,7 +770,6 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                 });
 
                 routingControl.on('routingerror', function (e) {
-                  console.log(e);
                   $('#asset-map-loading').css('visibility', 'hidden');
                   let before = $('#asset-route-warning').html();
                   let error;
@@ -911,7 +910,6 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
             }
 
             function zoomToFitRoutes() {
-              console.log('before', allRoutersOnMap);
               // Zoom to fit all drawn paths
               var activePoints = [];
               for (var k in allRoutersOnMap) {
@@ -936,6 +934,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                 distanceMarker.remove(assetMap);
 
                 //reset waypoints each time just incase someone has repathed
+                routingControl.addTo(assetMap); // Ensure this is called only once
                 routingControl
                   .getPlan()
                   .setWaypoints([
@@ -945,7 +944,6 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                       masterViewModel.geocodedAddress.peek().Longitude,
                     ),
                   ]);
-                routingControl.addTo(assetMap);
               } else {
                 $(row).removeClass('nearest-asset-table-selected');
 
