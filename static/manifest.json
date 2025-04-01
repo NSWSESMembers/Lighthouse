@@ -34,7 +34,8 @@
     "https://www.ausgrid.com.au/*",
     "https://www.endeavourenergy.com.au/*",
     "https://www.essentialenergy.com.au/*",
-    "https://feed.firesnearme.hazards.rfs.nsw.gov.au/*"
+    "https://feed.firesnearme.hazards.rfs.nsw.gov.au/*",
+    "https://graphhopper.lighthouse-extension.com/*"
   ],
   "permissions": [
     "storage"
