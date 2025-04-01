@@ -170,7 +170,7 @@ window.addEventListener("message", function(event) {
             )
             $(newDom).click(function(e) {
               e.preventDefault()
-              window.postMessage({ type: "FROM_LH_SETASSIGNEDUNIT", code: _sortedRescueDistances[i].unit.properties.UNIT_CODE}, "*");
+              window.postMessage({ type: "FROM_LH_SETASSIGNEDUNIT", code: nearestRescueDriveLhq[i].unit.properties.UNIT_CODE}, "*");
             })
             nearestRescueDriveLhqStrings.push(newDom)
           }

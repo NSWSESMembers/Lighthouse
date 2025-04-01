@@ -75,10 +75,10 @@ $(document).ready(function () {
         calculateMyAvailabilityResult({ unitAssigned: who });
         // toggle the nearest lhq buttons automagically
         $(
-          `#contained-within-lhq-text a[data-unit!='${who.Code}'], #nearest-rescue-lhq-text a[data-unit!='${who.Code}'], #nearest-lhq-text a[data-unit!='${who.Code}'] `,
+          `#contained-within-lhq-text a[data-unit!='${who.Code}'], #nearest-rescue-lhq-drive-text a[data-unit!='${who.Code}'], #nearest-rescue-lhq-text a[data-unit!='${who.Code}'], #nearest-lhq-text a[data-unit!='${who.Code}'] `,
         ).removeClass('active');
         $(
-          `#contained-within-lhq-text a[data-unit='${who.Code}'], #nearest-rescue-lhq-text a[data-unit='${who.Code}'], #nearest-lhq-text a[data-unit='${who.Code}']`,
+          `#contained-within-lhq-text a[data-unit='${who.Code}'], #nearest-rescue-drive-lhq-text a[data-unit='${who.Code}'], #nearest-rescue-lhq-text a[data-unit='${who.Code}'], #nearest-lhq-text a[data-unit='${who.Code}']`,
         ).addClass('active');
       }
     });
