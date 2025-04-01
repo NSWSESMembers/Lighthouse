@@ -33,7 +33,7 @@
   },
   "browserslist": "> 0.25%, not dead",
   "dependencies": {
-    "@babel/runtime": "^7.16.5",
+    "@babel/runtime": "^7.27.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@tmcw/togeojson": "^5.7.0",
     "bootstrap": "^4.6.1",
