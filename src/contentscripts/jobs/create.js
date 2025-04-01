@@ -143,11 +143,6 @@ window.addEventListener("message", function(event) {
         //handle the drive rescue distances as an array of promises due to ajax calls to resolve them all
             for (let i = 0; i < 9; i++) {
               if (typeof _sortedRescueDistances[i] != "undefined") {
-                let rescueString = '';
-                if (typeof _sortedRescueDistances[i].properties.QUAL != 'undefined') {
-                  rescueString = ` (${_sortedRescueDistances[i].properties.QUAL})`;
-                }
-
                 let promise = new Promise((resolve, reject) => {
                   $.getJSON(`https://graphhopper.lighthouse-extension.com/route?point=${_sortedRescueDistances[i].properties.POINT_Y},${_sortedRescueDistances[i].properties.POINT_X}&point=${event.data.lat},${event.data.lng}&instructions=false&type=json&key=lighthouse&ch.disable=true`, function (data) {
               resolve({ unit: _sortedRescueDistances[i], distance: data.paths[0].distance / 1000 });
