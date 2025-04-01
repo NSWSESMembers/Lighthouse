@@ -39,7 +39,8 @@
     "https://api.ses-mams-uat.net/*",
     "https://app.ses-mams-uat.net/*",
     "https://api.ses-mams.net/*",
-    "https://s3.ap-southeast-2.amazonaws.com/csv-download.ses-mams.net/*"
+    "https://s3.ap-southeast-2.amazonaws.com/csv-download.ses-mams.net/*",
+    "https://graphhopper.lighthouse-extension.com/*"
   ],
   "permissions": [
     "storage",
