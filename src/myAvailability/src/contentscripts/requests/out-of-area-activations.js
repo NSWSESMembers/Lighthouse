@@ -703,7 +703,6 @@ function downloadCSVFromAWS(url, parentRequestObj) {
       })
 
       row.approvedDates = row.approvedDates.replaceAll(/T(?:00:00|23:59)/g, '')
-
       if (row.zones == '') {
         //if theres no zone the unit is the zone (catch staff)
         row.zones = row.units;

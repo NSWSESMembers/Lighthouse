@@ -41,12 +41,23 @@ const hazardWatchUrl = 'https://feed.firesnearme.hazards.rfs.nsw.gov.au/';
 //Catch nativation changes in REACT app myAvailability
 //CAUTION - DONT USE INJECTS HERE AS THEY WILL STACK UP
 chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
-  if (details.url.includes('/requests/out-of-area-activations') && details.url.slice(-1) != '/') {
+// Regex for a 36-char UUID (8-4-4-4-12 hex digits)
+const uuidRegex = /[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/;
+
+// Match only the exact path “/requests/out-of-area-activations/<UUID>”
+const activationPathRegex = new RegExp(`^/requests/out-of-area-activations/${uuidRegex.source}$`);
+
+try {
+  const { pathname } = new URL(details.url);
+  if (activationPathRegex.test(pathname)) {
     chrome.scripting.executeScript({
       target: { tabId: details.tabId },
       files: ["myAvailability/contentscripts/requests/out-of-area-activations.js"]
-  });
+    });
   }
+} catch (e) {
+  // invalid URL — skip
+}
 });
 
 
