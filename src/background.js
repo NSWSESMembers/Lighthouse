@@ -58,6 +58,23 @@ try {
 } catch (e) {
   // invalid URL — skip
 }
+
+// Match only the exact path “/messages?”
+const messagesPathRegex = new RegExp(`^/messages(.*)$`);
+
+try {
+  const { pathname } = new URL(details.url);
+  if (messagesPathRegex.test(pathname)) {
+    chrome.scripting.executeScript({
+      target: { tabId: details.tabId },
+      files: ["myAvailability/contentscripts/messages/messages.js"]
+    });
+  }
+} catch (e) {
+  // invalid URL — skip
+}
+
+
 });
 
 

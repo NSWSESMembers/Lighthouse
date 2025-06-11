@@ -192,6 +192,13 @@
         "https://app.ses-mams-uat.net/requests/out-of-area-activations/*"
       ],
       "js": ["myAvailability/contentscripts/requests/out-of-area-activations.js"]
+    },
+    {
+      "matches": [
+        "https://myavailability.ses.nsw.gov.au/messages*",
+        "https://app.ses-mams-uat.net/messages*"
+      ],
+      "js": ["myAvailability/contentscripts/messages/messages.js"]
     }
   ],
   "web_accessible_resources": [
