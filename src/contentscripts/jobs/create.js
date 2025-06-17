@@ -292,16 +292,35 @@ let job_asbestos_history = (
     </div>
   );
 
+  const versionStr = $('meta[name="version"]').attr('content');
+  const isVersionAtLeast = (v, min) => {
+    const a = v.split('.').map(Number);
+    const b = min.split('.').map(Number);
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      const diff = (a[i] || 0) - (b[i] || 0);
+      if (diff > 0) return true;
+      if (diff < 0) return false;
+    }
+    return true;
+  };
+
 
 $('#createRfaForm > fieldset:nth-child(5) > div:nth-child(2)').after(job_asbestos_history);
 
 $('#createRfaForm > fieldset:nth-child(5) > div:nth-child(14)').after(job_nearest_drive_rescue_lhq);
+
+if (!isVersionAtLeast(versionStr, '4.28.0')) {
 
 $('#createRfaForm > fieldset:nth-child(5) > div:nth-child(14)').after(job_nearest_rescue_lhq);
 
 $('#createRfaForm > fieldset:nth-child(5) > div:nth-child(14)').after(job_nearest_lhq);
 
 $('#createRfaForm > fieldset:nth-child(5) > div:nth-child(14)').after(job_contained_within_lhq);
+
+} else {
+  console.log("Skipping LHQ distance/within for version " + versionStr);
+}
+
 
 $('#createRfaForm > fieldset:nth-child(10) > div:nth-child(2)').after(myAvailability);
 
