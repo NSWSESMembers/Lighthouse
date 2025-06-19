@@ -1,6 +1,8 @@
 const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const ZipPlugin = require('zip-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+
 const WebpackExtensionManifestPlugin = require('webpack-extension-manifest-plugin');
 const moment = require('moment');
 
@@ -18,6 +20,15 @@ let commitHash = require('child_process')
 module.exports = merge(common, {
   mode: 'production',
   devtool: 'source-map',
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          output: { ascii_only: true },
+        },
+      }),
+    ],
+  },
   plugins: [
     new WebpackExtensionManifestPlugin({
       config: {
