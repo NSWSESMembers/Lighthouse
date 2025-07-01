@@ -1030,7 +1030,7 @@ var unit = null;
 
 
 //allow pretty popovers with inline style
-$.fn.tooltip.Constructor.Default.whiteList['*'].push('style')
+//$.fn.tooltip.Constructor.Default.whiteList['*'].push('style')
 
 
 
