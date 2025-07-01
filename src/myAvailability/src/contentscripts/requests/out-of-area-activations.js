@@ -130,7 +130,7 @@ function exportLongList() {
     if (error) {
       console.error('Failed to fetch data:', error);
     } else {
-      
+
       $.ajax({
         type: 'GET',
         url: `https://${apiHost}/out-of-area-activation-requests/${requestId}`,
@@ -142,110 +142,111 @@ function exportLongList() {
         complete: function (response, textStatus) {
           if (textStatus === 'success') {
             const parentRequestObj = response.responseJSON
-      results.forEach(function (resp) {
-        const thisRow = {};
-        thisRow.respondedAt = resp.request.createdAt;
-        thisRow.memberName = resp.request.memberName;
-        thisRow.memberId = resp.request.memberId;
-        thisRow.units = resp.request.member.units
-          .map(function (v, _i) {
-            return `${v.name} (${v.code})`;
-          })
-          .join(', ');
-        thisRow.clusters = ''; //TODO
-        thisRow.zones = ''; //TODO
-        thisRow.phoneNumbers = ''; //TODO
-        thisRow.approvalStatus = resp.request.status;
-        thisRow.unsuccessful = resp.request.unsuccessful;
-        thisRow.approvedDates = resp.request.availabilityBlocks
-          .map(function (v, _i) {
-            if (v.availabilityStatus != 'Conditional') {
-              return `${v.start} to ${v.end} with status: ${v.availabilityStatus}`;
-            } else {
-              return `${v.start} to ${v.end} with status: ${v.availabilityStatus} and reason: ${v.conditionalReason}`;
-            }
-          })
-          .join(', ');
-        thisRow.approvedRoles = resp.request.roles
-          .map(function (v, _i) {
-            return `${v.category}: ${v.name}`;
-          })
-          .join(', ');
-        thisRow.capabilities = ''; //TODO
+            results.forEach(function (resp) {
+              const thisRow = {};
+              thisRow.respondedAt = resp.request.createdAt;
+              thisRow.memberName = resp.request.memberName;
+              thisRow.memberId = resp.request.memberId;
+              thisRow.units = resp.request.member.units
+                .map(function (v, _i) {
+                  return `${v.name} (${v.code})`;
+                })
+                .join(', ');
+              thisRow.clusters = ''; //TODO
+              thisRow.zones = ''; //TODO
+              thisRow.phoneNumbers = ''; //TODO
+              thisRow.approvalStatus = resp.request.status;
+              thisRow.unsuccessful = resp.request.unsuccessful;
+              thisRow.approvedDates = resp.request.availabilityBlocks
+                .map(function (v, _i) {
+                  if (v.availabilityStatus != 'Conditional') {
+                    return `${v.start} to ${v.end} with status: ${v.availabilityStatus}`;
+                  } else {
+                    return `${v.start} to ${v.end} with status: ${v.availabilityStatus} and reason: ${v.conditionalReason}`;
+                  }
+                })
+                .join(', ');
+              thisRow.approvedRoles = resp.request.roles
+                .map(function (v, _i) {
+                  return `${v.category}: ${v.name}`;
+                })
+                .join(', ');
+              thisRow.currentActivations = { roles: resp.mostRecentHistoryItem.roles.map((r) => `${r.name}`), dates: resp.mostRecentHistoryItem.availabilityBlocks.map((b) => `${b.start} to ${b.end}`) };
+              thisRow.capabilities = ''; //TODO
+              finalList.push(thisRow);
+            });
 
-        finalList.push(thisRow);
-      });
-
-      const requests = finalList.map((line, index) => {
-        return new Promise((resolve, reject) => {
-          $.ajax({
-            type: 'GET',
-            url: `https://${apiHost}/members/${line.memberId}`,
-            beforeSend: function (n) {
-              n.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('accessToken'));
-            },
-            cache: false,
-            dataType: 'json',
-            complete: function (response, textStatus) {
-              if (textStatus === 'success') {
-                finalList[index].phoneNumbers = response.responseJSON.phoneNumbers
-                  .map((v) => {
-                    return `${v.number}`;
-                  })
-                  .join(', ');
-                finalList[index].capabilities = response.responseJSON.capabilities
-                  .map((v) => {
-                    return `${v.label}: ${v.name}`;
-                  })
-                  .join(', ');
-                // Second AJAX call for org
+            const requests = finalList.map((line, index) => {
+              return new Promise((resolve, reject) => {
                 $.ajax({
                   type: 'GET',
-                  url: `https://${apiHost}/members/${line.memberId}/orgHierarchy`,
+                  url: `https://${apiHost}/members/${line.memberId}`,
                   beforeSend: function (n) {
                     n.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('accessToken'));
                   },
                   cache: false,
                   dataType: 'json',
-                  complete: function (orgResponse, orgTextStatus) {
-                    if (orgTextStatus === 'success') {
-                      finalList[index].zones = orgResponse.responseJSON.zones
+                  complete: function (response, textStatus) {
+                    if (textStatus === 'success') {
+                      finalList[index].phoneNumbers = response.responseJSON.phoneNumbers
                         .map((v) => {
-                          finalList[index].clusters = v.clusters
-                            .map((v) => {
-                              return `${v.name}`;
-                            })
-                            .join(', ');
-                          return `${v.name}`;
+                          return `${v.number}`;
                         })
                         .join(', ');
-                      resolve();
+                      finalList[index].capabilities = response.responseJSON.capabilities
+                        .map((v) => {
+                          return `${v.label}: ${v.name}`;
+                        })
+                        .join(', ');
+                      // Second AJAX call for org
+                      $.ajax({
+                        type: 'GET',
+                        url: `https://${apiHost}/members/${line.memberId}/orgHierarchy`,
+                        beforeSend: function (n) {
+                          n.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('accessToken'));
+                        },
+                        cache: false,
+                        dataType: 'json',
+                        complete: function (orgResponse, orgTextStatus) {
+                          if (orgTextStatus === 'success') {
+                            finalList[index].zones = orgResponse.responseJSON.zones
+                              .map((v) => {
+                                finalList[index].clusters = v.clusters
+                                  .map((v) => {
+                                    return `${v.name}`;
+                                  })
+                                  .join(', ');
+                                return `${v.name}`;
+                              })
+                              .join(', ');
+                            resolve();
+                          } else {
+                            reject(`OrgHierarchy request failed for memberId: ${line.memberId}`);
+                          }
+                        },
+                      });
                     } else {
-                      reject(`OrgHierarchy request failed for memberId: ${line.memberId}`);
+                      reject(`Request failed for memberId: ${line.memberId}`);
                     }
                   },
                 });
-              } else {
-                reject(`Request failed for memberId: ${line.memberId}`);
-              }
-            },
-          });
-        });
-      });
+              });
+            });
 
-      Promise.all(requests)
-        .then(() => {
-          console.log('All member data requests completed successfully');
-          processAndSaveAll(finalList, parentRequestObj);
-        })
-        .catch((error) => {
-          console.error('One or more member data requests failed:', error);
-        });
+            Promise.all(requests)
+              .then(() => {
+                console.log('All member data requests completed successfully');
+                processAndSaveAll(finalList, parentRequestObj);
+              })
+              .catch((error) => {
+                console.error('One or more member data requests failed:', error);
+              });
 
-      } else {
-        console.log('fetching request failed')
-      }
-        }})
+          } else {
+            console.log('fetching request failed')
+          }
+        }
+      })
     }
   });
 
@@ -261,8 +262,8 @@ function exportLongList() {
 
     //find out out all the date ranges first before we split data up
     parentRequestObj.activation.deployments.forEach(function (row) {
-          let rangeDates = getDateRange(row.start + ':00.000Z', row.end + ':00.000Z'); //timezones suck and we dont care
-          rangeDates.forEach((date) => AllDateRangeBlocks.add(date));
+      let rangeDates = getDateRange(row.start + ':00.000Z', row.end + ':00.000Z'); //timezones suck and we dont care
+      rangeDates.forEach((date) => AllDateRangeBlocks.add(date));
     });
 
     AllDateRangeBlocks = Array.from(AllDateRangeBlocks).sort(); // Sort all unique dates
@@ -280,7 +281,7 @@ function exportLongList() {
         let endDate = matches[2];
         let status = matches[3];
 
-          //for every date column check if its in this range and use that status to fill out
+        //for every date column check if its in this range and use that status to fill out
         AllDateRangeBlocks.forEach(function (d) {
           if (isDateBetween(d, startDate, endDate)) {
             row[d] = status;
@@ -288,13 +289,35 @@ function exportLongList() {
         });
       }
 
+      const activatedRegex = /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}) to (\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/g;
+
+      row.currentActivations.dates.forEach(function (d) {
+
+        if (!row.currentActivations.roles.length) {
+          row.currentActivations.roles = ['Unspecified']; //if no roles are present, set to unspecified
+        }
+
+        let matches;
+        while ((matches = activatedRegex.exec(d)) !== null) {
+          let startDate = matches[1];
+          let endDate = matches[2];
+
+          //for every date column check if its in this range and use that status to fill out
+          AllDateRangeBlocks.forEach(function (d) {
+            if (isDateBetween(d, startDate, endDate)) {
+              row[d] = `Activated - ${row.currentActivations.roles.join(', ')}`;
+            }
+          });
+        }
+      })
+
       //catch any missing time blocks
       AllDateRangeBlocks.forEach(function (d) {
         if (typeof row[d] == 'undefined') {
-           row[d] = '-'; //default value
+          row[d] = '-'; //default value
         }
       })
-      
+
 
       row.approvedDates = row.approvedDates.replaceAll(/T(?:00:00|23:59)/g, '')
 
@@ -354,6 +377,7 @@ function exportLongList() {
 
       // work out which period was the default by counting them all
       commonPeriods.push(row.approvedDates);
+
     });
 
     let dateHeaders = AllDateRangeBlocks.map(function (d) {
@@ -375,7 +399,7 @@ function exportLongList() {
       { header: 'Capabilities', key: 'capabilities' },
     ];
 
-    rowHeading.splice(7, 0, ...dateHeaders);
+    rowHeading.splice(8, 0, ...dateHeaders);
 
 
     let zoneSummary = [];
@@ -424,9 +448,9 @@ function exportLongList() {
     });
 
     worksheet.getCell(`A20`).value = 'Periods different from the normal in Red';
-    worksheet.getCell(`A20`).font = {color: {argb: "8B0000"} };
+    worksheet.getCell(`A20`).font = { color: { argb: "8B0000" } };
     worksheet.getCell(`A21`).value = 'Periods with conditions in Orange';
-    worksheet.getCell(`A21`).font = {color: {argb: "8B4000"} };
+    worksheet.getCell(`A21`).font = { color: { argb: "8B4000" } };
     worksheet.mergeCells(20, 1, 20, 2);
     worksheet.mergeCells(21, 1, 21, 2);
 
@@ -486,13 +510,13 @@ function exportLongList() {
       i++;
     });
 
-worksheet.getCell(`G${i}`).value = {
-  text: 'Marked As Unsuccessful',
-  hyperlink: `#'${sanitizeString('Marked Unsuccessful')}'!A1`,
-};
-worksheet.getCell(`G${i}`).font = { underline: true, color: { theme: 10 } };
-worksheet.getCell(`H${i}`).value = byUnsuccessful.length;
-i++
+    worksheet.getCell(`G${i}`).value = {
+      text: 'Marked As Unsuccessful',
+      hyperlink: `#'${sanitizeString('Marked Unsuccessful')}'!A1`,
+    };
+    worksheet.getCell(`G${i}`).font = { underline: true, color: { theme: 10 } };
+    worksheet.getCell(`H${i}`).value = byUnsuccessful.length;
+    i++
     worksheet.getCell(`G${i}`).value = 'Total Responses'
     worksheet.getCell(`G${i}`).font = { bold: true, italic: true };
     worksheet.getCell(`H${i}`).value = approvalSummary.reduce((sum, item) => sum + item.responses, 0)
@@ -500,7 +524,7 @@ i++
 
     setAutoWidth(worksheet);
 
-    const unsuccessfulWorksheet = workbook.addWorksheet(sanitizeString('Marked Unsuccessful'), { properties: { tabColor: { argb: 'FFC0CB' } } }); 
+    const unsuccessfulWorksheet = workbook.addWorksheet(sanitizeString('Marked Unsuccessful'), { properties: { tabColor: { argb: 'FFC0CB' } } });
     unsuccessfulWorksheet.columns = rowHeading;
     unsuccessfulWorksheet.addRows(byUnsuccessful);
     setHighlightImportantStuff(unsuccessfulWorksheet);
@@ -539,7 +563,7 @@ i++
       worksheet.autoFilter = `A1:${String.fromCharCode(64 + rowHeading.length)}1`;
     }
 
-  
+
 
     $('#lighthousedownloadall').text('Download All Responses XLSX');
 
@@ -564,14 +588,14 @@ i++
         if (rowNumber === 1) return; // Skip the first row
         const cell = row.getCell(7); // Column H (Excel columns are 1-based)
         if (cell.value !== mostCommonValue(commonPeriods)) {
-          cell.font = {color: {argb: "8B0000"} };
+          cell.font = { color: { argb: "8B0000" } };
 
         }
         if (cell.value.includes('Conditional and reason')) {
-          cell.font = {color: {argb: "8B4000"} };
+          cell.font = { color: { argb: "8B4000" } };
         }
         AllDateRangeBlocks.forEach(function (_x, i) {
-          let dateCell = row.getCell(8 + i);
+          let dateCell = row.getCell(9 + i);
 
           //date block stuff
           if (dateCell.value == 'Available') {
@@ -582,6 +606,12 @@ i++
               fgColor: { argb: 'cbffc5' }, // Light green
             };
             dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            dateCell.border = {
+              top: { style: 'thin', color: { argb: 'd4d4d4' } },
+              left: { style: 'thin', color: { argb: 'd4d4d4' } },
+              bottom: { style: 'thin', color: { argb: 'd4d4d4' } },
+              right: { style: 'thin', color: { argb: 'd4d4d4' } }
+            };
           }
           if (dateCell.value == 'Conditional') {
             dateCell.fill = {
@@ -591,7 +621,29 @@ i++
               fgColor: { argb: 'fcffc5' }, // Light yellow
             };
             dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            dateCell.border = {
+              top: { style: 'thin', color: { argb: 'd4d4d4' } },
+              left: { style: 'thin', color: { argb: 'd4d4d4' } },
+              bottom: { style: 'thin', color: { argb: 'd4d4d4' } },
+              right: { style: 'thin', color: { argb: 'd4d4d4' } }
+            };
           }
+          if (dateCell.value.includes('Activated')) {
+            dateCell.fill = {
+              // Set background color to Thistle    
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'D8BFD8' }, // Thistle    
+            };
+            dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            dateCell.border = {
+              top: { style: 'thin', color: { argb: 'd4d4d4' } },
+              left: { style: 'thin', color: { argb: 'd4d4d4' } },
+              bottom: { style: 'thin', color: { argb: 'd4d4d4' } },
+              right: { style: 'thin', color: { argb: 'd4d4d4' } }
+            };
+          }
+
           if (dateCell.value == 'Unavailable' || dateCell.value == '-') {
             dateCell.fill = {
               // Set background color to light red
@@ -600,6 +652,12 @@ i++
               fgColor: { argb: 'ffd7c5' }, // Light red (RGBA hex code)
             };
             dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
+            dateCell.border = {
+              top: { style: 'thin', color: { argb: 'd4d4d4' } },
+              left: { style: 'thin', color: { argb: 'd4d4d4' } },
+              bottom: { style: 'thin', color: { argb: 'd4d4d4' } },
+              right: { style: 'thin', color: { argb: 'd4d4d4' } }
+            };
           }
         });
       });
@@ -619,24 +677,24 @@ function downloadApproved() {
     complete: function (response, textStatus) {
       if (textStatus === 'success') {
         const parentRequestObj = response.responseJSON
-  $.ajax({
-    type: 'POST',
-    url: `https://${apiHost}/out-of-area-activation-requests/${requestId}/downloadMembers`,
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('accessToken'));
-    },
-    cache: false,
-    data: { status: 'approved' },
-    dataType: 'json',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        downloadCSVFromAWS(response.responseJSON.downloadUrl,parentRequestObj);
+        $.ajax({
+          type: 'POST',
+          url: `https://${apiHost}/out-of-area-activation-requests/${requestId}/downloadMembers`,
+          beforeSend: function (n) {
+            n.setRequestHeader('Authorization', 'Bearer ' + localStorage.getItem('accessToken'));
+          },
+          cache: false,
+          data: { status: 'approved' },
+          dataType: 'json',
+          complete: function (response, textStatus) {
+            if (textStatus == 'success') {
+              downloadCSVFromAWS(response.responseJSON.downloadUrl, parentRequestObj);
+            }
+          },
+        });
+      } else {
+        console.log('failed to download request obj')
       }
-    },
-  });
-} else {
-  console.log('failed to download request obj')
-}
     }
   })
 
@@ -671,7 +729,7 @@ function downloadCSVFromAWS(url, parentRequestObj) {
     parentRequestObj.activation.deployments.forEach(function (row) {
       let rangeDates = getDateRange(row.start + ':00.000Z', row.end + ':00.000Z'); //timezones suck and we dont care
       rangeDates.forEach((date) => AllDateRangeBlocks.add(date));
-});
+    });
 
     AllDateRangeBlocks = Array.from(AllDateRangeBlocks).sort(); // Sort all unique dates
 
@@ -698,7 +756,7 @@ function downloadCSVFromAWS(url, parentRequestObj) {
       //catch any missing time blocks
       AllDateRangeBlocks.forEach(function (d) {
         if (typeof row[d] == 'undefined') {
-           row[d] = '-'; //default value
+          row[d] = '-'; //default value
         }
       })
 
@@ -808,9 +866,9 @@ function downloadCSVFromAWS(url, parentRequestObj) {
     });
 
     worksheet.getCell(`A20`).value = 'Periods different from the normal in Red';
-    worksheet.getCell(`A20`).font = {color: {argb: "8B0000"} };
+    worksheet.getCell(`A20`).font = { color: { argb: "8B0000" } };
     worksheet.getCell(`A21`).value = 'Periods with conditions in Orange';
-    worksheet.getCell(`A21`).font = {color: {argb: "8B4000"} };
+    worksheet.getCell(`A21`).font = { color: { argb: "8B4000" } };
     worksheet.mergeCells(20, 1, 20, 2);
     worksheet.mergeCells(21, 1, 21, 2);
 
@@ -891,10 +949,10 @@ function downloadCSVFromAWS(url, parentRequestObj) {
         if (rowNumber === 1) return; // Skip the first row
         const cell = row.getCell(8); // Column H (Excel columns are 1-based)
         if (cell.value !== mostCommonValue(commonPeriods)) {
-          cell.font = {color: {argb: "8B0000"} };
+          cell.font = { color: { argb: "8B0000" } };
         }
         if (cell.value.includes('Conditional and reason')) {
-          cell.font = {color: {argb: "8B4000"} };
+          cell.font = { color: { argb: "8B4000" } };
         }
 
         AllDateRangeBlocks.forEach(function (_x, i) {
@@ -915,7 +973,7 @@ function downloadCSVFromAWS(url, parentRequestObj) {
               // Set background color to light yellow
               type: 'pattern',
               pattern: 'solid',
-              fgColor: { argb: 'fcffc5' }, 
+              fgColor: { argb: 'fcffc5' },
             };
             dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
           }
@@ -924,7 +982,7 @@ function downloadCSVFromAWS(url, parentRequestObj) {
               // Set background color to light red
               type: 'pattern',
               pattern: 'solid',
-              fgColor: { argb: 'ffd7c5' }, 
+              fgColor: { argb: 'ffd7c5' },
             };
             dateCell.alignment = { vertical: 'middle', horizontal: 'center' };
           }
@@ -1006,45 +1064,45 @@ function sanitizeString(str) {
 function setAutoWidth(sheet, fromRow = 0) {
   const PIXELS_PER_EXCEL_WIDTH_UNIT = 7.5;
   if (!sheet || typeof sheet.eachRow !== 'function') {
-        throw new Error('Invalid worksheet provided');
+    throw new Error('Invalid worksheet provided');
+  }
+
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return;
+  }
+
+  const maxColumnLengths = [];
+
+  sheet.eachRow((row, rowNum) => {
+    if (rowNum < fromRow) {
+      return;
     }
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-        return;
-    }
+    row.eachCell((cell, num) => {
+      if (maxColumnLengths[num] === undefined) {
+        maxColumnLengths[num] = 0;
+      }
 
-    const maxColumnLengths = [];
-    
-    sheet.eachRow((row, rowNum) => {
-        if (rowNum < fromRow) {
-            return;
-        }
+      const fontSize = cell.font && cell.font.size ? cell.font.size : 11;
+      ctx.font = `${fontSize}pt Calibri`;
+      const metrics = ctx.measureText(cell.value.text ? cell.value.text : cell.value);
+      const cellWidth = metrics.width;
 
-        row.eachCell((cell, num) => {
-                if (maxColumnLengths[num] === undefined) {
-                    maxColumnLengths[num] = 0;
-                }
-
-                const fontSize = cell.font && cell.font.size ? cell.font.size : 11;
-                ctx.font = `${fontSize}pt Calibri`;
-                const metrics = ctx.measureText(cell.value.text ? cell.value.text  : cell.value);
-                const cellWidth = metrics.width;
-                
-                maxColumnLengths[num] = Math.max(maxColumnLengths[num], cellWidth);
-        });
+      maxColumnLengths[num] = Math.max(maxColumnLengths[num], cellWidth);
     });
+  });
 
-    for (let i = 1; i <= sheet.columnCount; i++) {
-        const col = sheet.getColumn(i);
-        const width = maxColumnLengths[i];
-        if (width / PIXELS_PER_EXCEL_WIDTH_UNIT + 1 <= 14) { // a minimum
-            col.width = 14;
-        } else if (width) {
-          col.width = width / PIXELS_PER_EXCEL_WIDTH_UNIT + 1;
-        }
+  for (let i = 1; i <= sheet.columnCount; i++) {
+    const col = sheet.getColumn(i);
+    const width = maxColumnLengths[i];
+    if (width / PIXELS_PER_EXCEL_WIDTH_UNIT + 1 <= 14) { // a minimum
+      col.width = 14;
+    } else if (width) {
+      col.width = width / PIXELS_PER_EXCEL_WIDTH_UNIT + 1;
     }
+  }
 }
 
 function mostCommonValue(arr) {
