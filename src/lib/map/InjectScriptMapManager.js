@@ -214,7 +214,6 @@ function showTransportCameras(mapLayer, data) {
       if (feature.geometry.type.toLowerCase() === 'point') {
         //default incase that fucks up.
         var icon = `https://www.livetraffic.com/assets/icons/map/others/camera-${feature.properties.direction}.svg`;
-        console.log(feature.properties.direction);
 
         let lat = feature.geometry.coordinates[1];
         let lon = feature.geometry.coordinates[0];
