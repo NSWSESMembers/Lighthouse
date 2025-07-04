@@ -166,11 +166,11 @@ window.addEventListener("message", function(event) {
               rescueString = ` (${nearestRescueDriveLhq[i].unit.properties.QUAL})`
             }
             let newDom = (
-              <a type="button" class="btn btn-warning btn-sm" style="margin-bottom:5px" data-unit={nearestRescueDriveLhq[i].unit.properties.UNIT_CODE}>{nearestRescueDriveLhq[i].unit.properties.HQNAME}{rescueString} ({nearestRescueDriveLhq[i].distance.toFixed(2)} kms)</a>
+              <a type="button" class="btn btn-warning btn-sm" style="margin-bottom:5px" data-unit={nearestRescueDriveLhq[i].unit.properties.HQNAME}>{nearestRescueDriveLhq[i].unit.properties.HQNAME}{rescueString} ({nearestRescueDriveLhq[i].distance.toFixed(2)} kms)</a>
             )
             $(newDom).click(function(e) {
               e.preventDefault()
-              window.postMessage({ type: "FROM_LH_SETASSIGNEDUNIT", code: nearestRescueDriveLhq[i].unit.properties.UNIT_CODE}, "*");
+              window.postMessage({ type: "FROM_LH_SETASSIGNEDUNIT", code: nearestRescueDriveLhq[i].unit.properties.HQNAME}, "*");
             })
             nearestRescueDriveLhqStrings.push(newDom)
           }

@@ -11,11 +11,11 @@ $(document).ready(function () {
     // We only accept messages from ourselves
     if (event.source != window) return;
     if (event.data.type && event.data.type == 'FROM_LH_SETASSIGNEDUNIT') {
-      vm.EntityManager.GetEntityByCode(event.data.code, function (res) {
-        if (res) {
-          vm.entityAssignedTo(res);
+      vm.EntityManager.SearchEntityByName(event.data.code, function (results) {
+        if (results && results.Results.length > 0) {
+          vm.entityAssignedTo(results.Results[0]);
         }
-      });
+      })
     }
     if (event.data.type && event.data.type == 'FROM_LH_ASBESTOS') {
       if (event.data.result == true) {
@@ -46,30 +46,30 @@ $(document).ready(function () {
     vm.entityAssignedTo.subscribe(function (who) {
       if (who) {
 
-          $.ajax({
-            type: 'GET',
-            url: `${urls.Base}${urls.Api.hqStatus}/Search`,
-            beforeSend: function (n) {
-              n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
-            },
-            data: {
-              LighthouseFunction: 'fetchHqStatus',
-              userId: user.Id,
-              Name: who.Name,
-              HeadquartersStatusTypeId: 1,
-              PageIndex: 1,
-              PageSize: 10     
-            },
-            cache: false,
-            dataType: 'json',
-            complete: function (response, _textStatus) {
-              if (response.responseJSON.Results.length) {
-                if (response.responseJSON.Results[0].HeadquartersStatusType.Id == 3) { //unavailable
-              alert(`${response.responseJSON.Results[0].Entity.Name} is currently unavailable - ${response.responseJSON.Results[0].Note}`);
+        $.ajax({
+          type: 'GET',
+          url: `${urls.Base}${urls.Api.hqStatus}/Search`,
+          beforeSend: function (n) {
+            n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+          },
+          data: {
+            LighthouseFunction: 'fetchHqStatus',
+            userId: user.Id,
+            Name: who.Name,
+            HeadquartersStatusTypeId: 1,
+            PageIndex: 1,
+            PageSize: 10
+          },
+          cache: false,
+          dataType: 'json',
+          complete: function (response, _textStatus) {
+            if (response.responseJSON.Results.length) {
+              if (response.responseJSON.Results[0].HeadquartersStatusType.Id == 3) { //unavailable
+                alert(`${response.responseJSON.Results[0].Entity.Name} is currently unavailable - ${response.responseJSON.Results[0].Note}`);
               }
             }
-            },
-          });
+          },
+        });
 
 
         calculateMyAvailabilityResult({ unitAssigned: who });
@@ -135,13 +135,13 @@ $(document).ready(function () {
 
         }
         // if we have contact groups we have a lhq so reset this so we cant monitoring status
-         if (!unitAssigned) {
+        if (!unitAssigned) {
           unitAssigned = vm.entityAssignedTo.peek()
-         }
+        }
 
-         if (!jobPriority) {
+        if (!jobPriority) {
           jobPriority = vm.jobPriority.peek()
-         }
+        }
 
       }
 
@@ -227,7 +227,7 @@ $(document).ready(function () {
           </div>,
         );
       }
-      
+
     }
 
     vm.jobPriority.subscribe(function (jp) {
@@ -403,7 +403,10 @@ $(document).ready(function () {
           cache: false,
           dataType: 'json',
           complete: function (response, _textStatus) {
-            vm.EntityManager.GetEntityByCode(response.responseJSON.unit_code, function (data) {
+            vm.EntityManager.SearchEntityByName(response.responseJSON.unit_name, function (results) {
+                      if (results && results.Results.length > 0) {
+                        let data = results.Results[0];
+
               let containedWithin = [];
               let newLHQDom = (
                 <a type="button" style="margin-bottom:5px" class="btn btn-default btn-sm" data-unit={data.Code}>
@@ -443,6 +446,7 @@ $(document).ready(function () {
 
               $('#contained-within-lhq-text').empty();
               $('#contained-within-lhq-text').append(containedWithin);
+            }
             });
           },
         });
