@@ -171,7 +171,11 @@ function exportLongList() {
                   return `${v.category}: ${v.name}`;
                 })
                 .join(', ');
-              thisRow.currentActivations = { roles: resp.mostRecentHistoryItem.roles.map((r) => `${r.name}`), dates: resp.mostRecentHistoryItem.availabilityBlocks.map((b) => `${b.start} to ${b.end}`) };
+                if (resp.mostRecentHistoryItem && resp.mostRecentHistoryItem.action == 'Activated') {
+                  thisRow.currentActivations = { roles: resp.mostRecentHistoryItem.roles.map((r) => `${r.name}`), dates: resp.mostRecentHistoryItem.availabilityBlocks.map((b) => `${b.start} to ${b.end}`) };
+                } else {
+                  thisRow.currentActivations = { roles: [], dates: [] };
+                }
               thisRow.capabilities = ''; //TODO
               finalList.push(thisRow);
             });
