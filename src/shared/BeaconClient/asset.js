@@ -104,38 +104,58 @@ function fetchRadioAssets(host, userId = 'notPassed', token) {
       const cacheJson = JSON.parse(cache);
       if (secondsSinceEpoch - Math.round(new Date(cacheJson.timestamp * 1000) / 1000) > 60) {
         // 60 second cache
-        fetch();
+        fetchAllResources()
       } else {
         console.log('fetchRadioAssets served from cache');
         resolve(cacheJson.data);
       }
     } else {
-      fetch();
+      fetchAllResources()
     }
 
-    function fetch() {
-      $.ajax({
-        url: host + '/Api/v1/ResourceLocations/Radio?resourceTypes=',
-        beforeSend: function (n) {
-          n.setRequestHeader('Authorization', 'Bearer ' + token);
-        },
-        cache: false,
-        dataType: 'json',
-        data: { LighthouseFunction: 'fetchRadioAssets', userId: userId },
-        type: 'GET',
-        success: function (data) {
-          localStorage.setItem(
-            `LighthouseFetchedRadioAssets`,
-            JSON.stringify({ timestamp: secondsSinceEpoch, data: data }),
-          );
-          console.log('fetchRadioAssets served from server');
-          resolve(data);
-        },
-        error: function (error) {
-          reject(error);
-        },
-      });
-    }
+function fetchAllResources() {
+  const resourceTypes = [
+    "Portable", "Vessel", "Communication", "High Clearance", "SHQ Pool",
+    "Heavy Rescue", "Medium Rescue", "Light Rescue", "Medium Storm",
+    "Light Storm", "General Purpose", "Community First Responder",
+    "Command", "Bus"
+  ];
+
+  const fetchPromises = resourceTypes.map(type => {
+    return $.ajax({
+      url: host + '/Api/v1/ResourceLocations/Radio',
+      data: {
+        resourceTypes: type,
+        LighthouseFunction: 'fetchRadioAssets',
+        userId: userId
+      },
+      beforeSend: function (n) {
+        n.setRequestHeader('Authorization', 'Bearer ' + token);
+      },
+      cache: false,
+      dataType: 'json',
+      type: 'GET'
+    }).then(data => (data));
+  });
+
+  Promise.all(fetchPromises)
+    .then(results => {
+            const mergedData = results.flat(); // joins all arrays into one
+      
+      localStorage.setItem(
+        `LighthouseFetchedRadioAssets`,
+        JSON.stringify({ timestamp: secondsSinceEpoch, data: mergedData })
+      );
+
+      console.log('All radio assets fetched and stored.');
+      resolve(mergedData);
+    })
+    .catch(error => {
+      console.error('Error fetching radio assets:', error);
+      reject(error);
+    });
+}
+
   });
 }
 

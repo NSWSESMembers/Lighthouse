@@ -72,6 +72,7 @@ var lighthouse_fieldArray = {
   },
   'Special': {
     'ICEMSIUMTransactions': 'ICEMS - Number Of IUM Transactions',
+    'FloodRescueCategories': 'Flood Rescue Categories'
   }
 };
 var lighthouse_fieldDefaults = [
@@ -284,6 +285,12 @@ function HackTheMatrix(id, host, progressBar) {
                 return d.Name
               }).join(',');
               break;
+            case 'FloodRescueCategories':
+              if (d.Categories.length > 0) {
+                console.log(d.Categories)
+              rawValue = d.Categories[0].Id - 8 //just because it is.
+              }
+              break;  
           case 'JobAcknowledged':
             _.each(d.JobStatusTypeHistory.reverse(), function(history) {
               if (history.Name == 'Active') {

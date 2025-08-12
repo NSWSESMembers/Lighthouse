@@ -34,14 +34,27 @@
     "https://www.ausgrid.com.au/*",
     "https://www.endeavourenergy.com.au/*",
     "https://www.essentialenergy.com.au/*",
-    "https://feed.firesnearme.hazards.rfs.nsw.gov.au/*"
+    "https://feed.firesnearme.hazards.rfs.nsw.gov.au/*",
+    "https://myavailability.ses.nsw.gov.au/*",
+    "https://api.ses-mams-uat.net/*",
+    "https://app.ses-mams-uat.net/*",
+    "https://api.ses-mams.net/*",
+    "https://s3.ap-southeast-2.amazonaws.com/csv-download.ses-mams.net/*",
+    "https://graphhopper.lighthouse-extension.com/*"
   ],
   "permissions": [
-    "storage"
+    "storage",
+    "webNavigation",
+    "scripting"
   ],
   "content_scripts": [
     {
-      "matches": ["https://*.ses.nsw.gov.au/*"],
+      "matches": [
+        "https://beacon.ses.nsw.gov.au/*",
+        "https://trainbeacon.ses.nsw.gov.au/*",
+        "https://devbeacon.ses.nsw.gov.au/*",
+        "https://testbeacon.ses.nsw.gov.au/*"
+      ],
       "exclude_matches": ["https://*.ses.nsw.gov.au/Account/Login*"],
       "js": [
         "contentscripts/all.js"
@@ -172,6 +185,20 @@
       "js": [
         "contentscripts/identity.js"
       ]
+    },
+    {
+      "matches": [
+        "https://myavailability.ses.nsw.gov.au/requests/out-of-area-activations/*",
+        "https://app.ses-mams-uat.net/requests/out-of-area-activations/*"
+      ],
+      "js": ["myAvailability/contentscripts/requests/out-of-area-activations.js"]
+    },
+    {
+      "matches": [
+        "https://myavailability.ses.nsw.gov.au/messages*",
+        "https://app.ses-mams-uat.net/messages*"
+      ],
+      "js": ["myAvailability/contentscripts/messages/messages.js"]
     }
   ],
   "web_accessible_resources": [
@@ -181,6 +208,7 @@
         "icons/*",
         "pages/*",
         "resources/*",
+        "myAvailability/*",
         "manifest.json"
       ],
       "matches": [

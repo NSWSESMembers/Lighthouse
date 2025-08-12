@@ -4,7 +4,6 @@ var DOM = require('jsx-dom-factory').default;
 var _ = require('underscore');
 var L = require('leaflet');
 var ReturnTeamsActiveAtLHQ = require('../../lib/getteams.js');
-var postCodes = require('../../lib/postcodes.js');
 var sesAsbestosSearch = require('../../lib/sesasbestos.js');
 var vincenty = require('../../lib/vincenty.js');
 var esri = require('esri-leaflet');
@@ -252,36 +251,7 @@ whenLighthouseIsReady(function () {
       }
     });
 
-    //
-    //postcode checking code
-    //
-    if (masterViewModel.geocodedAddress.peek().PrettyAddress) {
-      var lastChar = masterViewModel.geocodedAddress
-        .peek()
-        .PrettyAddress.substr(masterViewModel.geocodedAddress.peek().PrettyAddress.length - 4);
-    }
-
-    if (masterViewModel.geocodedAddress.peek().PostCode == null && isNaN(parseInt(lastChar)) == true) {
-      //if no postcode is displayed
-      postCodes.returnPostCode(masterViewModel.geocodedAddress.peek().Locality, function (postcode) {
-        if (typeof postcode !== 'undefined') {
-          $('p[data-bind="text: enteredAddress"]').text(
-            $('p[data-bind="text: enteredAddress"]').text() + ', ' + postcode,
-          );
-        } else {
-          console.log('Postcode not found');
-        }
-      });
-    } else if (masterViewModel.geocodedAddress.peek().PostCode != null && isNaN(parseInt(lastChar)) == true) {
-      console.log('postcode is in the geocode by not displayed');
-      $('p[data-bind="text: enteredAddress"]').text(
-        $('p[data-bind="text: enteredAddress"]').text() + ', ' + masterViewModel.geocodedAddress.peek().PostCode,
-      );
-    }
-
-    //end postcode
-
-    if (typeof masterViewModel.geocodedAddress.peek() != 'undefined') {
+     if (typeof masterViewModel.geocodedAddress.peek() != 'undefined') {
       if (
         masterViewModel.geocodedAddress.peek().Latitude != null ||
         masterViewModel.geocodedAddress.peek().Longitude != null
@@ -770,7 +740,6 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                 });
 
                 routingControl.on('routingerror', function (e) {
-                  console.log(e);
                   $('#asset-map-loading').css('visibility', 'hidden');
                   let before = $('#asset-route-warning').html();
                   let error;
@@ -911,7 +880,6 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
             }
 
             function zoomToFitRoutes() {
-              console.log('before', allRoutersOnMap);
               // Zoom to fit all drawn paths
               var activePoints = [];
               for (var k in allRoutersOnMap) {
@@ -936,6 +904,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                 distanceMarker.remove(assetMap);
 
                 //reset waypoints each time just incase someone has repathed
+                routingControl.addTo(assetMap); // Ensure this is called only once
                 routingControl
                   .getPlan()
                   .setWaypoints([
@@ -945,7 +914,6 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                       masterViewModel.geocodedAddress.peek().Longitude,
                     ),
                   ]);
-                routingControl.addTo(assetMap);
               } else {
                 $(row).removeClass('nearest-asset-table-selected');
 
