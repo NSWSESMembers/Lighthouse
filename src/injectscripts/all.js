@@ -103,6 +103,13 @@ whenWeAreReady(function () {
           unitName +
           ' Today)</a>\
     </li>\
+    <li id="lhtaskingmenuitem">\
+    <a href="' +
+          lighthouseUrl +
+          'pages/tasking.html' +
+          vars +
+          '" target="_blank">Tasking</a>\
+    </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
@@ -231,6 +238,10 @@ whenWeAreReady(function () {
   });
 
   $('#lhteammenuitem > a').click(function () {
+    updateToken();
+  });
+
+  $('#lhtaskingmenuitem > a').click(function () {
     updateToken();
   });
 

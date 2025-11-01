@@ -9,5 +9,7 @@ import * as operationslog from './BeaconClient/operationslog.js';
 import * as resources from './BeaconClient/resources.js';
 import * as team from './BeaconClient/team.js';
 import * as unit from './BeaconClient/unit.js';
+import * as entities from './BeaconClient/entities.js';
+import * as tasking from './BeaconClient/tasking.js';
 
-export default { job, asset, nitc, operationslog, resources, team, unit };
+export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking };

@@ -58,7 +58,6 @@ export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed',
     } else {
       let assignedToId = [];
       let createdAtId = [];
-
       unit.forEach(function(d){
         assignedToId.push(d.Id);
         createdAtId.push(d.Id);
