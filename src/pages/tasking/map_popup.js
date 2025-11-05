@@ -1,9 +1,5 @@
 export function buildJobPopupKO() {
-<<<<<<< Updated upstream
-    return `
-=======
   return `
->>>>>>> Stashed changes
   <div class="job-popup" data-bind="with: job, draggableRow: { data: job, kind: 'job' }" draggable="true">
     <!-- Header -->
     <div id="jobIdentifier"
@@ -23,9 +19,6 @@ export function buildJobPopupKO() {
       <span id="priAndCat"
             data-bind="text: priorityName +' '+categoriesName"></span>
     </div>
-<<<<<<< Updated upstream
-
-=======
 <!-- Assign to Team Dropdown -->
     <div class="text-center mt-2">
       <div class="dropdown d-inline-block">
@@ -51,7 +44,6 @@ export function buildJobPopupKO() {
         </ul>
       </div>
     </div>
->>>>>>> Stashed changes
     <!-- Address -->
     <div class="text-center fw-bold mt-2"
          data-bind="text: (address.prettyAddress && address.prettyAddress()) || (address.short && address.short()) || ''"></div>
@@ -80,18 +72,12 @@ export function buildJobPopupKO() {
             </tr>
           </thead>
           <tbody data-bind="foreach: taskings">
-<<<<<<< Updated upstream
-            <tr>
-              <td style="padding:4px 8px;border-bottom:1px solid #eee"
-                  data-bind="text: teamCallsign"></td>
-=======
             <tr data-bind="event: {
             mouseenter: drawLineToJob,
             mouseleave: removeLine
             }, click: drawRoute" class="job-popup__tasking-row" style="cursor:pointer">
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
                   data-bind="text: teamCallsign, click: team.markerFocus, clickBubble: false"></td>
->>>>>>> Stashed changes
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
                   data-bind="text: currentStatus"></td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
@@ -120,8 +106,6 @@ export function buildJobPopupKO() {
     </div>
   </div>`;
 }
-<<<<<<< Updated upstream
-=======
 
 export function buildAssetPopupKO() {
   return `
@@ -212,4 +196,3 @@ export function buildAssetPopupKO() {
     </div>
   </div>`;
 }
->>>>>>> Stashed changes

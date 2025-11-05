@@ -9,31 +9,19 @@ require('./lib/shared_chrome_code.js'); // side-effect
 import '../../styles/pages/tasking.css';
 
 import { ResizeDividers } from './tasking/resize.js';
-<<<<<<< Updated upstream
-import { buildJobPopupKO } from './tasking/map_popup.js';
-
-var $ = require('jquery');
-var _ = require('underscore');
-=======
 import { addOrUpdateJobMarker, removeJobMarker } from './tasking/incidentMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './tasking/assetMarker.js';
 var $ = require('jquery');
->>>>>>> Stashed changes
 var moment = require('moment');
 var L = require('leaflet');
 var esri = require('esri-leaflet');
 
 var token = '';
-<<<<<<< Updated upstream
-var tokenExp = '';
-
-=======
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 var tokenExp = '';
 
 const safeStr = v => (v == null ? "" : String(v));
 
->>>>>>> Stashed changes
 
 require('leaflet-easybutton');
 require('leaflet-routing-machine');
@@ -41,17 +29,11 @@ require('leaflet-svg-shape-markers');
 require('lrm-graphhopper'); // Adds L.Routing.GraphHopper onto L.Routing
 require('leaflet/dist/leaflet.css');
 
-<<<<<<< Updated upstream
-require('bootstrap'); // for jq plugin: modal
-
-import * as bootstrap from 'bootstrap'; // gives you Modal, Tooltip, etc.
-=======
 require('bootstrap5'); // for jq plugin: modal
 
 
 
 import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
->>>>>>> Stashed changes
 
 
 
@@ -62,9 +44,6 @@ var ko;
 var myViewModel;
 
 
-<<<<<<< Updated upstream
-
-=======
 /////////DATA REFRESH CODE   
 
 var assetDataRefreshInterlock = false
@@ -79,7 +58,6 @@ function startAssetDataRefreshTimer() {
 };
 
 startAssetDataRefreshTimer()
->>>>>>> Stashed changes
 
 const teamLocationFilter = new Map();
 const incidentLocationFilter = new Map();
@@ -87,16 +65,12 @@ const incidentLocationFilter = new Map();
 
 
 // --- Leaflet map with Esri basemap
-<<<<<<< Updated upstream
-const map = L.map('map', { zoomControl: true }).setView([-33.8688, 151.2093], 11);
-=======
 const map = L.map('map', {
     zoomControl: true, // 1 / 10th of the original zoom step
     zoomSnap: .5,
     // Faster debounce time while zooming
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
->>>>>>> Stashed changes
 
 ResizeDividers(map)
 
@@ -200,8 +174,6 @@ function Tasking(data = {}) {
             if (!exists) newJob.taskings.push(self);
         }
     };
-<<<<<<< Updated upstream
-=======
 
     self.routeControl = null;
     self.distanceMarkerRoute = null
@@ -385,7 +357,6 @@ function Tasking(data = {}) {
             self._polyline = null;
         }
     };
->>>>>>> Stashed changes
 }
 
 function Team(data = {}) {
@@ -395,24 +366,17 @@ function Team(data = {}) {
     self.callsign = ko.observable(data.Callsign ?? "");
     self.assignedTo = new Entity(data.EntityAssignedTo || data.CreatedAt);
     self.status = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
-<<<<<<< Updated upstream
-    self.expanded = ko.observable(false);
-=======
->>>>>>> Stashed changes
     self.members = ko.observableArray(data.Members);
     self.teamLeader = ko.computed(function () {
         const leader = ko.unwrap(self.members).find(m => m.TeamLeader === true);
         return leader ? `${leader.Person.FirstName} ${leader.Person.LastName}` : '-';
     });
 
-<<<<<<< Updated upstream
-=======
     self.trackableAssets = ko.observableArray([]);
 
     self.expanded = ko.observable(false);
 
 
->>>>>>> Stashed changes
     self.taskingLoading = ko.observable(true);
     self.taskings = ko.observableArray([]);
 
@@ -424,10 +388,6 @@ function Team(data = {}) {
         return self.filteredTaskings() && self.filteredTaskings().length || 0;
     })
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
     self.filteredTaskings = ko.pureComputed(() => {
         const ignoreList = [
             "Complete",
@@ -436,17 +396,10 @@ function Team(data = {}) {
         ];
         return ko.utils.arrayFilter(this.taskings(), ts => {
             if (ignoreList.includes(ts.currentStatus())) {
-<<<<<<< Updated upstream
-                return false
-            }
-            return true
-        })
-=======
                 return false;
             }
             return true;
         }).sort((a, b) => new Date(b.currentStatusTime()) - new Date(a.currentStatusTime()));
->>>>>>> Stashed changes
     });
 
     self.taskingRowColour = ko.pureComputed(() => {
@@ -466,17 +419,11 @@ function Team(data = {}) {
     self.toggle = () => self.expanded(!self.expanded());
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
     self.expanded.subscribe(function (isExpanded) {
         if (isExpanded && self.taskingLoading()) {
             self.fetchTasking();
         }
     });
-<<<<<<< Updated upstream
-=======
 
     self.updateStatusById = function (statusId) {
         const status = teamStatusById[statusId];
@@ -484,7 +431,6 @@ function Team(data = {}) {
             self.status(status);
         }
     }
->>>>>>> Stashed changes
     self.fetchTasking = function () {
         BeaconClient.team.getTasking(self.id.peek(), apiHost, params.userId, token, function (tasking) {
             tasking.Results.forEach(t => {
@@ -507,8 +453,6 @@ function Team(data = {}) {
         if (!existsLocally) self.taskings.push(t);
     };
 
-<<<<<<< Updated upstream
-=======
     //only handle single asset for now
     self.markerFocus = function () {
         if (!map) return;
@@ -569,7 +513,6 @@ function Team(data = {}) {
             Colour: null
         }
     };
->>>>>>> Stashed changes
 }
 
 function Address(data = {}) {
@@ -595,8 +538,6 @@ function Address(data = {}) {
     });
 }
 
-<<<<<<< Updated upstream
-=======
 function Asset(data = {}) {
     const self = this;
     self.id = ko.observable(data.properties.id ?? null);
@@ -658,7 +599,6 @@ function Asset(data = {}) {
     }
 }
 
->>>>>>> Stashed changes
 function Entity(data = {}) {
     const self = this;
     self.id = ko.observable(data.Id ?? null);
@@ -674,10 +614,6 @@ function Entity(data = {}) {
 function Job(data = {}) {
     const self = this;
 
-<<<<<<< Updated upstream
-    self.marker = null;  // will hold the L.Marker instance
-=======
->>>>>>> Stashed changes
     // raw
     self.id = ko.observable(data.Id ?? null);
     self.identifier = ko.observable(data.Identifier ?? "");
@@ -712,9 +648,6 @@ function Job(data = {}) {
     self.collapse = () => self.expanded(false);
     self.taskingLoading = ko.observable(true);
 
-<<<<<<< Updated upstream
-    self.taskings = ko.observableArray();
-=======
     self.lastDataUpdate = new Date()
 
     self.dataRefreshTimer = null;
@@ -744,7 +677,6 @@ function Job(data = {}) {
     self.marker = null;  // will hold the L.Marker instance
     self.taskings = ko.observableArray(); //array of taskings
 
->>>>>>> Stashed changes
 
     self.sortedTaskings = ko.computed(function () {
         return self.taskings()
@@ -807,11 +739,7 @@ function Job(data = {}) {
 
     Job.prototype.updateFromJson = function (d = {}) {
 
-<<<<<<< Updated upstream
-
-=======
         self.startDataRefreshCheck() //restart counting for a refresh
->>>>>>> Stashed changes
 
         // scalars
         if (d.Identifier !== undefined) this.identifier(d.Identifier);
@@ -907,13 +835,8 @@ function Job(data = {}) {
     }
 
     self.onPopupOpen = function () {
-<<<<<<< Updated upstream
-        // self.taskingLoading(true);
-        // self.fetchTasking();
-=======
         self.taskingLoading(true);
         self.fetchTasking();
->>>>>>> Stashed changes
 
     };
 
@@ -929,8 +852,6 @@ function Job(data = {}) {
             self.taskingLoading(false);
         })
     }
-<<<<<<< Updated upstream
-=======
 
     self.refreshData = function () {
         BeaconClient.job.get(self.id(), 1, apiHost, params.userId, token, function (r) {
@@ -938,7 +859,6 @@ function Job(data = {}) {
             self.lastDataUpdate = new Date()
         })
     }
->>>>>>> Stashed changes
 }
 
 
@@ -946,28 +866,20 @@ function VM() {
     const self = this;
 
     self.tokenLoading = ko.observable(true);
-<<<<<<< Updated upstream
-=======
     self.teamsLoading = ko.observable(true);
     self.jobsLoading = ko.observable(true);
->>>>>>> Stashed changes
 
     // Registries
     self.teamsById = new Map();
     self.jobsById = new Map();
     self.taskingsById = new Map();
-<<<<<<< Updated upstream
-=======
     self.assetsById = new Map();
->>>>>>> Stashed changes
 
     // Global collections
     self.teams = ko.observableArray();
     self.jobs = ko.observableArray();
     self.taskings = ko.observableArray();
 
-<<<<<<< Updated upstream
-=======
     self.trackableAssets = ko.observableArray([]);
 
     self.activeRoute = null;
@@ -977,26 +889,10 @@ function VM() {
 
     // --- Vehicle Layer ---
     self.vehicleLayer = L.layerGroup().addTo(map);
->>>>>>> Stashed changes
 
 
     self.jobSearch = ko.observable('');
 
-<<<<<<< Updated upstream
-    //TODO: filtering logic for jobs that come from tasking?
-    self.filteredJobs = ko.pureComputed(() => {
-        const hqsFilter = Array.from(incidentLocationFilter.values()).map(f => ({ Id: f.id }));
-        return ko.utils.arrayFilter(this.jobs(), jb => {
-            if (hqsFilter.some(f => f.Id === jb.entityAssignedTo.id())) {
-                const term = self.jobSearch().toLowerCase();
-                return (!term || jb.identifier().includes(term) ||
-                    jb.address.prettyAddress().toLowerCase().includes(term));
-            }
-            return false
-        })
-    });
-
-=======
     self.teamStatusFilterList = ko.observableArray([
         "Standby",
         "Stood down"
@@ -1058,28 +954,15 @@ function VM() {
             return true
         });
     }).extend({ trackArrayChanges: true });
->>>>>>> Stashed changes
 
     self.teamSearch = ko.observable('');
 
     self.filteredTeams = ko.pureComputed(() => {
-<<<<<<< Updated upstream
-        const ignoreList = [
-            "Standby",
-            "Stood down"
-        ];
-=======
-
->>>>>>> Stashed changes
         return ko.utils.arrayFilter(this.teams(), tm => {
             if (tm.status() == null) {
                 return false
             }
-<<<<<<< Updated upstream
-            if (ignoreList.includes(tm.status())) {
-=======
             if (self.teamStatusFilterList().includes(tm.status())) {
->>>>>>> Stashed changes
                 return false
             }
             const term = self.teamSearch().toLowerCase();
@@ -1088,13 +971,6 @@ function VM() {
             }
             return false
         })
-<<<<<<< Updated upstream
-    });
-
-    // Team registry/upsert
-    self.getOrCreateTeam = function (teamJson) {
-
-=======
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
     const canon = s => (s || "")
@@ -1122,19 +998,10 @@ function VM() {
 
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
     self.getOrCreateTeam = function (teamJson) {
->>>>>>> Stashed changes
         if (!teamJson || teamJson.Id == null) return null;
         let team = self.teamsById.get(teamJson.Id);
         if (team) {
             team.callsign(teamJson.Callsign ?? team.callsign());
-<<<<<<< Updated upstream
-            return team;
-        }
-        team = new Team(teamJson);
-        team.fetchTasking()
-        self.teams.push(team);
-        self.teamsById.set(team.id(), team);
-=======
             if (teamJson.CurrentStatusId != null) {
                 team.updateStatusById(teamJson.CurrentStatusId);
             } else {
@@ -1149,7 +1016,6 @@ function VM() {
         self.teams.push(team);
         self.teamsById.set(team.id(), team);
         self._refreshTeamTrackableAssets(team);
->>>>>>> Stashed changes
         return team;
     };
 
@@ -1162,20 +1028,11 @@ function VM() {
             return job;
         }
         job = new Job(jobJson);
-<<<<<<< Updated upstream
-        job.fetchTasking()
-=======
->>>>>>> Stashed changes
         this.jobs.push(job);
         this.jobsById.set(job.id(), job);
         return job;
     };
 
-<<<<<<< Updated upstream
-
-    // Tasking registry/upsert (NEW magical 2.0 way of doing it)
-    self.upsertTaskingFromPayload = function (taskingJson, { teamContext = null } = {}) {
-=======
     // asset registry/upsert
     self.getOrCreateAsset = function (assetJson) {
         if (assetJson.type === 'telematics') return null;
@@ -1238,7 +1095,6 @@ function VM() {
     // Tasking registry/upsert (NEW magical 2.0 way of doing it)
     self.upsertTaskingFromPayload = function (taskingJson, { teamContext = null } = {}) {
 
->>>>>>> Stashed changes
         if (!taskingJson || taskingJson.Id == null) return null;
 
         // Resolve shared refs
@@ -1263,8 +1119,6 @@ function VM() {
         return t;
     };
 
-<<<<<<< Updated upstream
-=======
     self.initialFitDone = false;
     let initialFetchesPending = 3; // teams, jobs, assets
 
@@ -1304,7 +1158,6 @@ function VM() {
         }
     };
 
->>>>>>> Stashed changes
     self._linkTaskingToJob = function (tasking, job) {
         if (!tasking) return;
         const prev = tasking.job || null;
@@ -1318,241 +1171,17 @@ function VM() {
     };
 
 
-<<<<<<< Updated upstream
-
-
-    self.jobMarkerGroups = new Map();   // typeName → {layerGroup, markers: Map<JobId, Marker>}
-    self.markerLayersControl = null;    // optional Leaflet layer control
-
-
-    self.assignJobToTeam = function (teamVm, jobVm) {
-        BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, token, function (tasking) {
-=======
     self.markerLayersControl = null;    // optional Leaflet layer control
 
 
 
     self.assignJobToTeam = function (teamVm, jobVm) {
         BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, token, function () {
->>>>>>> Stashed changes
             jobVm.fetchTasking();
             teamVm.fetchTasking();
         })
     }
 
-<<<<<<< Updated upstream
-    // type → shape
-    const typeShape = {
-        "Storm": "circle",
-        "Flood Misc": "diamond",
-        "Flood": "square",
-        "FR": "diamond",
-        "Rescue": "triangle",
-        "Welfare": "square",
-        default: "circle"
-    };
-
-    // type → fill color
-    const typeFill = {
-        "Storm": "#22C55E",
-        "Flood Misc": "#1C7ED6",
-        "Flood": "#ffa200ff",
-        "FR": "#000000",
-        "Rescue": "#EF4444",
-        default: "#9CA3AF"
-    };
-
-    // Priority → stroke color
-    const priorityStroke = {
-        "Priority": "#FFA500",  // goldy yellow
-        "Immediate": "#4F92FF",  // blue
-        "Rescue": "#FF0000",  // red
-        "General": "#000000"   // black
-    };
-
-    // Flood Rescue categories → stroke color (overrides priority if job is Flood Rescue)
-    const floodCatStroke = {
-        "Category1": "#7F1D1D", // Critical assistance
-        "Category2": "#DC2626", // Imminent threat
-        "Category3": "#EA580C", // Trapped - rising
-        "Category4": "#EAB308", // Trapped - stable
-        "Category5": "#16A34A", // Animal
-        "Red": "#DC2626",
-        "Orange": "#EA580C"
-    };
-
-    function floodRescueCategoryKey(job) {
-        // pick first matching known category if present
-        const cat = job.categoriesName();
-        if (floodCatStroke[cat]) return cat;
-        return null;
-    }
-
-    // --- SVG factory (shape+style → L.divIcon) ---
-    self.makeShapeIcon = function ({ shape, fill, stroke, radius = 7, strokeWidth = 2 }) {
-        const d = radius * 2;
-        const cx = radius, cy = radius;
-
-        let inner = "";
-        switch (shape) {
-            case "circle":
-                inner = `<circle cx="${cx}" cy="${cy}" r="${radius - strokeWidth / 2}"
-                  fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-                break;
-            case "square": {
-                const s = d - strokeWidth;
-                const o = strokeWidth / 2;
-                inner = `<rect x="${o}" y="${o}" width="${s}" height="${s}"
-                  rx="2" ry="2" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-                break;
-            }
-            case "diamond": {
-                const r = radius - strokeWidth / 2;
-                inner = `<polygon points="${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}"
-                  fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-                break;
-            }
-            case "triangle": {
-                const r = radius - strokeWidth / 2;
-                const h = r * Math.sqrt(3);
-                const p1 = `${cx},${cy - r}`;
-                const p2 = `${cx - h / 2},${cy + r / 2}`;
-                const p3 = `${cx + h / 2},${cy + r / 2}`;
-                inner = `<polygon points="${p1} ${p2} ${p3}"
-                  fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-                break;
-            }
-            case "hex": {
-                const r = radius - strokeWidth / 2;
-                const pts = [];
-                for (let i = 0; i < 6; i++) {
-                    const a = (Math.PI / 3) * i - Math.PI / 6;
-                    pts.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
-                }
-                inner = `<polygon points="${pts.join(" ")}"
-                  fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-                break;
-            }
-            default:
-                inner = `<circle cx="${cx}" cy="${cy}" r="${radius - strokeWidth / 2}"
-                  fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-        }
-
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">
-      ${inner}
-    </svg>`;
-
-        return L.divIcon({
-            className: "job-svg-marker",
-            html: svg,
-            iconSize: [d, d],
-            iconAnchor: [radius, radius],
-            popupAnchor: [0, -radius]
-        });
-    };
-
-    // groups per type for easy toggling
-    self.jobMarkerGroups = new Map(); // typeName → {layerGroup, markers: Map<JobId, Marker>}
-    function ensureGroup(typeName) {
-        if (!self.jobMarkerGroups.has(typeName)) {
-            const group = L.layerGroup().addTo(map);
-            self.jobMarkerGroups.set(typeName, { layerGroup: group, markers: new Map() });
-        }
-        return self.jobMarkerGroups.get(typeName);
-    }
-
-    // Build icon style for a given job
-    function styleForJob(job) {
-        const type = job.typeName() || "default";
-        const shape = typeShape[type] || typeShape.default;
-        const fill = typeFill[type] || typeFill.default;
-
-        // Stroke: Flood Rescue categories override priority
-        let stroke;
-        if (type === "FR") {
-            const catKey = floodRescueCategoryKey(job);
-            stroke = (catKey && floodCatStroke[catKey]) || "#0EA5E9";
-        } else {
-            const pr = job.priorityName();
-            stroke = priorityStroke[pr] || "#4B5563";
-        }
-
-        // Emphasise Priority/Immediate with larger radius
-        const radius = (/^(Priority|Immediate)$/i.test(job.priorityName())) ? 8.5 : 7;
-
-        return { shape, fill, stroke, radius, strokeWidth: 2.25 };
-        // tweak strokeWidth if you need stronger outlines
-    }
-
-    // Sync markers to jobs
-    self.syncJobMarkers = function () {
-        const allSeen = new Map();
-
-
-        for (const [type, { markers }] of self.jobMarkerGroups.entries())
-            allSeen.set(type, new Set(markers.keys()));
-
-        for (const job of self.filteredJobs()) {
-            const id = job.id();
-            const lat = +job.address.latitude();
-            const lng = +job.address.longitude();
-            if (!Number.isFinite(lat) || !Number.isFinite(lng) || id == null) continue;
-
-            const type = job.typeName() || "default";
-            const { layerGroup, markers } = ensureGroup(type);
-            const seenSet = allSeen.get(type);
-            if (seenSet) seenSet.delete(id);
-
-            const style = styleForJob(job);
-
-            const html = buildJobPopupKO();
-
-
-            if (markers.has(id)) {
-                const m = markers.get(id);
-                m.setLatLng([lat, lng]);
-                m.setIcon(self.makeShapeIcon(style));
-                m.setPopupContent(html);
-                job.marker = m;
-                wireKoForPopup(m, job);
-            } else {
-                const marker = L.marker([lat, lng], {
-                    icon: self.makeShapeIcon(style),
-                    title: job.identifier()
-                }).bindPopup(html, {
-                    minWidth: 350,
-                    maxWidth: 500
-                });
-                marker.addTo(layerGroup);
-                markers.set(id, marker);
-                job.marker = marker;
-                wireKoForPopup(marker, job);
-            }
-        }
-
-        // remove stale markers
-        for (const [type, ids] of allSeen.entries()) {
-            const { markers, layerGroup } = self.jobMarkerGroups.get(type);
-            for (const id of ids) {
-                const m = markers.get(id);
-                if (m) {
-                    layerGroup.removeLayer(m);
-                    // clear job.marker
-                    const job = self.jobsById.get(id);
-                    if (job) job.marker = null;
-                }
-                markers.delete(id);
-            }
-        }
-    };
-
-    // automatically refresh markers when jobs change
-    self.filteredJobs.subscribe(self.syncJobMarkers);
-
-}
-
-
-=======
     // Used by the popup dropdown; KSB friendly
     self.assignJobToPopup = function (teamVm) {
         const jobVm = self._popupJob;
@@ -1613,7 +1242,6 @@ function VM() {
     }, null, "arrayChange");
 
 }
->>>>>>> Stashed changes
 window.addEventListener('resize', () => map.invalidateSize());
 
 
@@ -1624,17 +1252,6 @@ function fetchAllTeamData() {
     var end = new Date();
     var start = new Date();
     start.setDate(end.getDate() - 30); // last 7 days
-<<<<<<< Updated upstream
-
-    BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, token, function (teams) {
-        teams.Results.forEach(function (t) {
-            myViewModel.getOrCreateTeam(t);
-        })
-    }, function (val, total) {
-        console.log("Progress: " + val + " / " + total)
-    },
-        [1, 2, 3, 4])
-=======
     myViewModel.teamsLoading(true);
     BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, token, function (teams) {
         // teams.Results.forEach(function (t) {
@@ -1654,7 +1271,6 @@ function fetchAllTeamData() {
             })
         }
     )
->>>>>>> Stashed changes
 }
 
 function fetchAllJobsData() {
@@ -1664,26 +1280,15 @@ function fetchAllJobsData() {
     var end = new Date();
     var start = new Date();
     start.setDate(end.getDate() - 30); // last 30 days
-<<<<<<< Updated upstream
-
-    BeaconClient.job.searchwithStatusFilter(hqsFilter, apiHost, start, end, params.userId, token, function (jobs) {
-        jobs.Results.forEach(function (t) {
-            myViewModel.getOrCreateJob(t);
-        })
-=======
     myViewModel.jobsLoading(true);
     BeaconClient.job.searchwithStatusFilter(hqsFilter, apiHost, start, end, params.userId, token, function (allJobs) {
         console.log("Total jobs fetched:", allJobs.Results.length);
         myViewModel._markInitialFetchDone();
         myViewModel.jobsLoading(false);
->>>>>>> Stashed changes
     }, function (val, total) {
         console.log("Progress: " + val + " / " + total)
     },
         6, //view model
-<<<<<<< Updated upstream
-        [2, 1, 4, 5]) //status filter
-=======
         [2, 1, 4, 5], //status filter
         function (jobs) {
             jobs.Results.forEach(function (t) {
@@ -1708,7 +1313,6 @@ function fetchAllTrackableAssets() {
         }
         )
     }
->>>>>>> Stashed changes
 }
 
 
@@ -1823,32 +1427,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
 
-<<<<<<< Updated upstream
-
-
-
-=======
->>>>>>> Stashed changes
         ko.bindingProvider.instance = new ksb(options);
         window.ko = ko;
         ko.options.deferUpdates = true;
         myViewModel = new VM();
 
-<<<<<<< Updated upstream
-
-        ko.applyBindings(myViewModel);
-    })
-
-    //get tokens
-    BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(apiHost, params.source, function ({ token: rToken, exp }) {
-        console.log("Fetched Beacon token," + rToken);
-        token = rToken;
-        tokenExp = exp;
-        myViewModel.tokenLoading(false)
-    })
-
-
-=======
         ko.applyBindings(myViewModel);
     })
 
@@ -1863,7 +1446,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
->>>>>>> Stashed changes
     // Config Modal Stuff
 
     const modal = new bootstrap.Modal($('#configModal')[0]);
@@ -2022,10 +1604,7 @@ document.addEventListener('DOMContentLoaded', function () {
         modal.hide();
         fetchAllTeamData();
         fetchAllJobsData();
-<<<<<<< Updated upstream
-=======
         fetchAllTrackableAssets();
->>>>>>> Stashed changes
     });
 
     function loadFiltersFromLocalStorage() {
@@ -2051,10 +1630,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 })
 
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 function getSearchParameters() {
     var prmstr = window.location.search.substr(1);
     return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
@@ -2070,28 +1645,6 @@ function transformToAssocArray(prmstr) {
     return params;
 }
 
-<<<<<<< Updated upstream
-function wireKoForPopup(marker, job, origin) {
-    // guard against duplicate wiring
-    if (marker._koWired) return;
-    marker.on('popupopen', e => {
-        const el = e.popup.getElement();
-        if (el && !el.__ko_bound__) {
-            ko.applyBindings({ job, origin }, el);
-            el.__ko_bound__ = true;
-            job.onPopupOpen && job.onPopupOpen();
-        }
-    });
-    marker.on('popupclose', e => {
-        const el = e.popup.getElement();
-        if (el && el.__ko_bound__) {
-            ko.cleanNode(el);
-            delete el.__ko_bound__;
-            job.onPopupClose && job.onPopupClose();
-        }
-    });
-    marker._koWired = true;
-=======
 function fmtRelative(dateObj) {
     const now = Date.now();
     const t = dateObj.getTime();
@@ -2107,5 +1660,4 @@ function fmtRelative(dateObj) {
     if (d < 7) return `${d}d ago`;
     const w = Math.floor(d / 7);
     return `${w}w ago`;
->>>>>>> Stashed changes
 }

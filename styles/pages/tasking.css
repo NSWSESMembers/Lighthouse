@@ -1,11 +1,7 @@
 @import url("~@fortawesome/fontawesome-free/css/solid.min.css");
 @import url("~@fortawesome/fontawesome-free/css/regular.min.css");
 @import url("~@fortawesome/fontawesome-free/css/fontawesome.min.css");
-<<<<<<< Updated upstream
-@import url('~bootstrap/dist/css/bootstrap.css');
-=======
 @import url('~bootstrap5/dist/css/bootstrap.css');
->>>>>>> Stashed changes
 
 html {
   height: 100%;
@@ -33,10 +29,6 @@ body {
   max-width: 80vw;
 }
 
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 .pane .small { font-size: 0.8rem; }
 .input-group-sm .form-control { font-size: 0.75rem; }
 .input-group-text { background: transparent; border: none; }
@@ -165,10 +157,6 @@ body {
   padding-right: 8px;
   padding-bottom: 6px;
   padding-left: 8px;
-<<<<<<< Updated upstream
-  cursor: pointer;
-=======
->>>>>>> Stashed changes
 }
 
 .row.selected {
@@ -324,24 +312,10 @@ select {
   overflow: hidden;
 }
 
-<<<<<<< Updated upstream
-.job.expanded .chev {
-  transform: rotate(90deg);
-}
-
-.chev {
-  transition: transform 0.15s ease;
-}
-
-.team.expanded .chev {
-  transform: rotate(90deg);
-}
-=======
 
 td.chev { width: 1%; white-space: nowrap; }
 td.chev .btn { line-height: 1; }
 
->>>>>>> Stashed changes
 
 .team_body {
   display: none;
@@ -415,10 +389,6 @@ button.primary {
 
 .teams tbody tr.team:hover {
   background: #f1f3f5;
-<<<<<<< Updated upstream
-  cursor: pointer;
-=======
->>>>>>> Stashed changes
 }
 
 .teams tbody tr.team.expanded {
@@ -432,13 +402,6 @@ button.primary {
   vertical-align: middle;
 }
 
-<<<<<<< Updated upstream
-.team.expanded .chev {
-  transform: rotate(90deg);
-}
-
-=======
->>>>>>> Stashed changes
 .team_body td {
   background: #fafafa;
   border-top: none;
@@ -515,9 +478,6 @@ tr.job:hover {
 /* Config placed BELOW filters+results to give filters more space */
 .config-card .form-label {
   margin-top: 0.25rem;
-<<<<<<< Updated upstream
-}
-=======
 }
 
 
@@ -583,4 +543,3 @@ tr.job:hover {
     transition-timing-function: linear !important;
     transition-duration: 100ms !important;
   }
->>>>>>> Stashed changes

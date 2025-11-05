@@ -12,10 +12,6 @@
             <div class="pane pane--top" id="paneTop">
                 <!-- TEAMS (top pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
-<<<<<<< Updated upstream
-                    <span class="small fw-semibold text-center flex-grow-1">Teams</span>
-
-=======
                     <!-- ko if: teamsLoading -->
                     <span class="small fw-semibold text-center flex-grow-1 text-muted">
                         <i class="fa fa-spinner fa-spin me-1"></i> Loading Teams…
@@ -24,7 +20,6 @@
                     <!-- ko ifnot: teamsLoading -->
                     <span class="small fw-semibold text-center flex-grow-1">Teams</span>
                     <!-- /ko -->
->>>>>>> Stashed changes
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:150px;">
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
@@ -73,13 +68,6 @@
                             </tr>
                         </thead>
                         <tbody data-bind="foreach: { data: filteredTeams, as: 't' }">
-<<<<<<< Updated upstream
-                            <tr class="team"
-                                data-bind="css:{expanded: t.expanded()}, droppableRow: { team: t, onDrop: $root.assignJobToTeam },
-                     click: t.toggle, attr:{'aria-expanded': t.expanded}, style: { '--bs-table-bg': t.taskingRowColour()}">
-                                <td class="chev">▶</td>
-                                <td data-bind="text: t.callsign + ' ' + t.id"></td>
-=======
                             <tr class="team" data-bind="css:{expanded: t.expanded()}, droppableRow: { team: t, onDrop: $root.assignJobToTeam },
                      attr:{'aria-expanded': t.expanded}, style: { '--bs-table-bg': t.taskingRowColour()}">
                                 <td class="chev">
@@ -91,7 +79,6 @@
                                     </button>
                                 </td>
                                 <td data-bind="text: t.callsign"></td>
->>>>>>> Stashed changes
                                 <td data-bind="text: t.statusName"></td>
                                 <td data-bind="text: t.assignedTo.code"></td>
                                 <td data-bind="text: t.activeTaskingsCount"></td>
@@ -99,19 +86,6 @@
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group" aria-label="Tasking actions">
                                         <button type="button" class="btn btn-outline-secondary" title="Radio Log"
-<<<<<<< Updated upstream
-                                            data-bind="click: t.openRadioLog">
-                                            <i class="fa fa-solid fa-clipboard-list"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" title="Message"
-                                            data-bind="click: t.openMessage">
-                                            <i class="fa fa-solid fa-envelope"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" title="Edit"
-                                            data-bind="click: t.editTasking">
-                                            <i class="fa fa-solid fa-pen"></i>
-                                        </button>
-=======
                                             data-bind="click: t.openRadioLog, clickBubble: false">
                                             <i class="fa fa-solid fa-clipboard-list"></i>
                                         </button>
@@ -127,7 +101,6 @@
                                             data-bind="click: t.markerFocus, disable: !t.trackableAssets().length, clickBubble: false">
                                             <i class="fa fa-solid fa-street-view"></i>
                                         </button>
->>>>>>> Stashed changes
                                     </div>
                                 </td>
                             </tr>
@@ -195,10 +168,6 @@
             <div class="pane pane--bottom" id="paneBottom">
                 <!-- JOBS (bottom pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
-<<<<<<< Updated upstream
-                    <span class="small fw-semibold text-center flex-grow-1">Incident Register</span>
-
-=======
                     <!-- ko if: jobsLoading -->
                     <span class="small fw-semibold text-center flex-grow-1 text-muted">
                         <i class="fa fa-spinner fa-spin me-1"></i> Loading Incidents...
@@ -207,7 +176,6 @@
                     <!-- ko ifnot: jobsLoading -->
                     <span class="small fw-semibold text-center flex-grow-1">Incidents</span>
                     <!-- /ko -->
->>>>>>> Stashed changes
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:150px;">
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
@@ -263,13 +231,6 @@
                             <tr class="job" draggable="true" data-bind="
                                 css: { expanded: j.expanded() },
                                 draggableRow: { data: j, kind: 'job' },
-<<<<<<< Updated upstream
-                                click: j.toggle,
-                                attr: { 'aria-expanded': j.expanded },
-                                style: { '--bs-table-bg': j.rowColour()}
-                                ">
-                                <td class="chev">▶</td>
-=======
                                 attr: { 'aria-expanded': j.expanded },
                                 style: { '--bs-table-bg': j.rowColour()}
                                 ">
@@ -281,7 +242,6 @@
                                             data-bind="css: { 'fa-plus': !j.expanded(), 'fa-minus': j.expanded() }"></i>
                                     </button>
                                 </td>
->>>>>>> Stashed changes
                                 <td>
                                     <span data-bind="text: j.identifier"></span>
                                     <em class="fa fa-fw fa-share-alt ms-1"
@@ -303,13 +263,8 @@
                                     <div class="p-2">
                                         <div class="btn-toolbar mb-2" role="toolbar" aria-label="Job actions">
                                             <div class="btn-group me-2" role="group">
-<<<<<<< Updated upstream
-                                                <button type="button" class="btn btn-sm btn-secondary">⟲
-                                                    Refresh</button>
-=======
                                                 <button type="button" class="btn btn-sm btn-secondary"
                                                     data-bind="click: j.refreshData">⟲ Refresh</button>
->>>>>>> Stashed changes
                                                 <button type="button" class="btn btn-sm btn-primary"
                                                     data-bind="click: j.focusMap">Focus</button>
                                                 <button type="button" class="btn btn-sm btn-danger">Delete</button>
@@ -369,11 +324,8 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Oh fuck</button>
                     <button type="button" class="btn btn-primary" id="confirmTaskingYes">Yes, Task</button>
-<<<<<<< Updated upstream
-=======
                     <button type="button" class="btn btn-info" id="confirmTaskingYesSMS">Task & SMS Details</button>
 
->>>>>>> Stashed changes
                 </div>
             </div>
         </div>
@@ -514,10 +466,7 @@
     </div>
 
     <script src="tasking.js" type="text/javascript"></script>
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
 </body>
 
 </html>

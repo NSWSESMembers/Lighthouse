@@ -108,20 +108,12 @@ export function get(id, viewModelType = 1, host, userId = 'notPassed', token, ca
     }
   })
 }
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
+
 
 export function getTasking(id, host, userId = 'notPassed', token, callback) {
   $.ajax({
     type: 'GET',
-<<<<<<< Updated upstream
-    url: host + "/Api/v1/Tasking/Search?LighthouseFunction=GetJobTaskingFromBeacon&userId=" + userId +"&JobIds%5B%5D=" + id,
-=======
     url: host + "/Api/v1/Tasking/Search?LighthouseFunction=GetJobTaskingFromBeacon&userId=" + userId + "&JobIds%5B%5D=" + id,
->>>>>>> Stashed changes
     beforeSend: function (n) {
       n.setRequestHeader("Authorization", "Bearer " + token)
     },
@@ -135,17 +127,10 @@ export function getTasking(id, host, userId = 'notPassed', token, callback) {
   });
 }
 
-<<<<<<< Updated upstream
-export function searchwithStatusFilter(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, viewmodel, statusTypes = []) {
-
-  if (typeof viewmodel === 'undefined') //if they dont specify a viewmodel to load, pull the big one down.
-   {
-=======
 export function searchwithStatusFilter(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, viewmodel, statusTypes = [], onPage) {
 
   if (typeof viewmodel === 'undefined') //if they dont specify a viewmodel to load, pull the big one down.
   {
->>>>>>> Stashed changes
     viewmodel = "6";
   }
 
@@ -154,39 +139,6 @@ export function searchwithStatusFilter(unit, host, StartDate, EndDate, userId = 
 
   if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) == false) {
-<<<<<<< Updated upstream
-      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithStatusFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
-    } else {
-      var hqString = "";
-      unit.forEach(function(d) {
-        hqString = hqString + "&Hq=" + d.Id
-      });
-      var statusString = ""
-      statusTypes.forEach(function(s) {
-        statusString = statusString + "&JobStatusTypeIds=" + s
-      })
-      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithStatusFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + statusString + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
-    }
-  } else {
-    url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithStatusFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + statusString + "&ViewModelType="+viewmodel+"&SortField=Id&SortOrder=desc";
-
-  }
-
-  var lastDisplayedVal = 0 ;
-  getJsonPaginated(
-    url, token, 0, 100,
-    function(count,total){
-      if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
-        lastDisplayedVal = count;
-        progressCallBack(count,total);
-      }
-      if (count == -1 && total == -1) { //allow errors
-        progressCallBack(count,total);
-      }
-
-    },
-    function(results) { //call for the JSON, rebuild the array and return it when done.
-=======
       url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithStatusFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
     } else {
       var hqString = "";
@@ -218,18 +170,11 @@ export function searchwithStatusFilter(unit, host, StartDate, EndDate, userId = 
 
     },
     function (results) { //call for the JSON, rebuild the array and return it when done.
->>>>>>> Stashed changes
       console.log("GetJSONfromBeacon call back with: ");
       var obj = {
         "Results": results
       }
       callback(obj);
-<<<<<<< Updated upstream
-    }
-    );
-
-}
-=======
     }, function (pageResult) {
       if (typeof onPage === 'function') {
         onPage(pageResult);
@@ -238,5 +183,3 @@ export function searchwithStatusFilter(unit, host, StartDate, EndDate, userId = 
   );
 
 }
->>>>>>> Stashed changes
->>>>>>> Stashed changes
