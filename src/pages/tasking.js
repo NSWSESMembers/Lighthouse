@@ -11,6 +11,8 @@ import '../../styles/pages/tasking.css';
 import { ResizeDividers } from './tasking/resize.js';
 import { addOrUpdateJobMarker, removeJobMarker } from './tasking/incidentMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './tasking/assetMarker.js';
+import { MapVM } from './tasking/viewmodels/map.js';
+
 var $ = require('jquery');
 var moment = require('moment');
 var L = require('leaflet');
@@ -865,6 +867,8 @@ function Job(data = {}) {
 function VM() {
     const self = this;
 
+    self.mapVM = new MapVM(map, self);
+
     self.tokenLoading = ko.observable(true);
     self.teamsLoading = ko.observable(true);
     self.jobsLoading = ko.observable(true);
@@ -882,14 +886,8 @@ function VM() {
 
     self.trackableAssets = ko.observableArray([]);
 
-    self.activeRoute = null;
 
-    // groups per type for easy toggling
-    self.jobMarkerGroups = new Map(); // typeName → {layerGroup, markers: Map<JobId, Marker>}
-
-    // --- Vehicle Layer ---
-    self.vehicleLayer = L.layerGroup().addTo(map);
-
+   // --- Vehicle Layer ---
 
     self.jobSearch = ko.observable('');
 
@@ -1133,10 +1131,10 @@ function VM() {
         const fg = L.featureGroup();
 
         // vehicle (assets)
-        self.vehicleLayer.eachLayer(l => fg.addLayer(l));
+        self.mapVM.vehicleLayer.eachLayer(l => fg.addLayer(l));
 
         // all job marker layer groups
-        for (const { layerGroup } of self.jobMarkerGroups.values()) {
+        for (const { layerGroup } of self.mapVM.jobMarkerGroups.values()) {
             layerGroup.eachLayer(l => fg.addLayer(l));
         }
 

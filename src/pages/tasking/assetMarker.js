@@ -87,7 +87,7 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
     if (!asset) return;
 
     // Ensure layer exists
-    const layer = viewModel.vehicleLayer;
+    const layer = viewModel.mapVM.vehicleLayer;
 
     // Marker create (once)
     const lat = +asset.latitude?.();
@@ -167,7 +167,7 @@ export function detachAssetMarker(ko, map, viewModel, asset) {
         asset._markerSubs = [];
     }
     if (asset.marker) {
-        viewModel.vehicleLayer.removeLayer(asset.marker);
+        viewModel.mapVM.vehicleLayer.removeLayer(asset.marker);
         asset.marker = null;
     }
 }

@@ -3,115 +3,110 @@ var L = require('leaflet');
 var ko = require('knockout');
 
 export function addOrUpdateJobMarker(ko, map, vm, job) {
-  const id  = job.id?.();
-  const lat = job.address.latitude(); // null if null
-  const lng = job.address.longitude(); //null if null
+    const id = job.id?.();
+    const lat = job.address.latitude(); // null if null
+    const lng = job.address.longitude(); //null if null
 
-  if (!(Number.isFinite(lat) && Number.isFinite(lng)) || id == null) return;
+    if (!(Number.isFinite(lat) && Number.isFinite(lng)) || id == null) return;
 
-  const type = job.typeName?.() || "default";
-  const { layerGroup, markers } = ensureGroup(vm, map, type);
-  const style = styleForJob(job);
-  const html  = buildJobPopupKO();
+    const type = job.typeName?.() || "default";
+    const { layerGroup, markers } = ensureGroup(vm, map, type);
+    const style = styleForJob(job);
+    const html = buildJobPopupKO();
 
-  if (markers.has(id)) {
-    // update in place
-    const m = markers.get(id);
-    const pt = m.getLatLng();
-    if (pt.lat !== lat || pt.lng !== lng) m.setLatLng([lat, lng]);
-    const key = JSON.stringify(style);
-    if (m._styleKey !== key) { m.setIcon(makeShapeIcon(style)); m._styleKey = key; }
-    if (!m._popupBound) { m.setPopupContent(html); wireKoForPopup(ko, m, job, vm); }
-    job.marker = m;
-    return m;
-  }
+    if (markers.has(id)) {
+        // update in place
+        const m = markers.get(id);
+        const pt = m.getLatLng();
+        if (pt.lat !== lat || pt.lng !== lng) m.setLatLng([lat, lng]);
+        const key = JSON.stringify(style);
+        if (m._styleKey !== key) { m.setIcon(makeShapeIcon(style)); m._styleKey = key; }
+        if (!m._popupBound) { m.setPopupContent(html); wireKoForPopup(ko, m, job, vm); }
+        job.marker = m;
+        return m;
+    }
 
-  const marker = L.marker([lat, lng], {
-    icon: makeShapeIcon(style),
-    title: job.identifier?.()
-  }).bindPopup(html, { minWidth: 350, maxWidth: 500 });
+    const marker = L.marker([lat, lng], {
+        icon: makeShapeIcon(style),
+        title: job.identifier?.()
+    }).bindPopup(html, { minWidth: 350, maxWidth: 500 });
 
-  marker._styleKey = JSON.stringify(style);
-  marker.addTo(layerGroup);
-  markers.set(id, marker);
-  job.marker = marker;
-  wireKoForPopup(ko, marker, job, vm);
+    marker._styleKey = JSON.stringify(style);
+    marker.addTo(layerGroup);
+    markers.set(id, marker);
+    job.marker = marker;
+    wireKoForPopup(ko, marker, job, vm);
 
-  // live position updates from KO observables
-  marker._subs = [
-    job.address.latitude.subscribe(() => safeMove(marker, job)),
-    job.address.longitude.subscribe(() => safeMove(marker, job)),
-  ];
+    // live position updates from KO observables
+    marker._subs = [
+        job.address.latitude.subscribe(() => safeMove(marker, job)),
+        job.address.longitude.subscribe(() => safeMove(marker, job)),
+    ];
 
-  return marker;
+    return marker;
 }
 
 export function removeJobMarker(vm, jobOrId) {
-  const id = typeof jobOrId === 'number' ? jobOrId : jobOrId?.id?.();
-  if (id == null) return;
+    const id = typeof jobOrId === 'number' ? jobOrId : jobOrId?.id?.();
+    if (id == null) return;
 
-  // find marker in any group
-  for (const { layerGroup, markers } of vm.jobMarkerGroups.values()) {
-    const m = markers.get(id);
-    if (!m) continue;
+    // find marker in any group
+    for (const { layerGroup, markers } of vm.mapVM.jobMarkerGroups.values()) {
+        const m = markers.get(id);
+        if (!m) continue;
 
-    // dispose KO subscriptions
-    (m._subs || []).forEach(s => { try { s.dispose?.(); } catch{ /* empty */ } });
-    m._subs = [];
+        // dispose KO subscriptions
+        (m._subs || []).forEach(s => { try { s.dispose?.(); } catch { /* empty */ } });
+        m._subs = [];
 
-    // unbind KO from popup if ever opened
-    const popupEl = m.getPopup()?.getElement?.();
-    if (popupEl && popupEl.__ko_bound__) { try { ko.cleanNode(popupEl); } catch{ /* empty */ } delete popupEl.__ko_bound__; }
+        // unbind KO from popup if ever opened
+        const popupEl = m.getPopup()?.getElement?.();
+        if (popupEl && popupEl.__ko_bound__) { try { ko.cleanNode(popupEl); } catch { /* empty */ } delete popupEl.__ko_bound__; }
 
-    layerGroup.removeLayer(m);
-    markers.delete(id);
-    break;
-  }
+        layerGroup.removeLayer(m);
+        markers.delete(id);
+        break;
+    }
 
-  const job = vm.jobsById?.get?.(id);
-  if (job) job.marker = null;
+    const job = vm.jobsById?.get?.(id);
+    if (job) job.marker = null;
 }
 
 // --- internals ---
 function ensureGroup(vm, map, typeName) {
-  if (!vm.jobMarkerGroups.has(typeName)) {
-    const group = L.layerGroup().addTo(map);
-    vm.jobMarkerGroups.set(typeName, { layerGroup: group, markers: new Map() });
-  }
-  return vm.jobMarkerGroups.get(typeName);
+    if (!vm.mapVM.jobMarkerGroups.has(typeName)) {
+        const group = L.layerGroup().addTo(map);
+        vm.mapVM.jobMarkerGroups.set(typeName, { layerGroup: group, markers: new Map() });
+    }
+    return vm.mapVM.jobMarkerGroups.get(typeName);
 }
 
 function safeMove(marker, job) {
-  const lat = +job.address.latitude?.();
-  const lng = +job.address.longitude?.();
-  if (Number.isFinite(lat) && Number.isFinite(lng)) marker.setLatLng([lat, lng]);
+    const lat = +job.address.latitude?.();
+    const lng = +job.address.longitude?.();
+    if (Number.isFinite(lat) && Number.isFinite(lng)) marker.setLatLng([lat, lng]);
 }
 
 function wireKoForPopup(ko, marker, job, vm) {
-  if (marker._koWired) return;
-  marker.on('popupopen', e => {
-    const el = e.popup.getElement();
-    if (el && !el.__ko_bound__) {
-      vm._popupJob = job;
-      ko.applyBindings({ job, vm }, el);
-      el.__ko_bound__ = true;
-      job.onPopupOpen && job.onPopupOpen();
-    }
-  });
-  marker.on('popupclose', e => {
-    const el = e.popup.getElement();
-    if (el && el.__ko_bound__) { ko.cleanNode(el); delete el.__ko_bound__; job.onPopupClose && job.onPopupClose(); }
-    if (vm && vm._popupJob === job) vm._popupJob = null;
-
-        const taskings = vm.taskings ? vm.taskings() : [];
-        for (const t of taskings) {
-            if (t && typeof t.clearRoute === 'function') t.clearRoute();
-            t.removeLine()
+    if (marker._koWired) return;
+    marker.on('popupopen', e => {
+        const el = e.popup.getElement();
+        if (el && !el.__ko_bound__) {
+            vm.mapVM.setOpen('job', job);
+            ko.applyBindings({ job, vm }, el);
+            el.__ko_bound__ = true;
+            job.onPopupOpen && job.onPopupOpen();
         }
+    });
+    marker.on('popupclose', e => {
+        const el = e.popup.getElement();
+        if (el && el.__ko_bound__) { ko.cleanNode(el); delete el.__ko_bound__; job.onPopupClose && job.onPopupClose(); }
+        if (vm?.mapVM?.openPopup()?.ref === job) vm.mapVM.clearOpen();
+        vm.mapVM.clearRoutes();
 
-  });
-  marker._popupBound = true;
-  marker._koWired = true;
+    });
+    marker._popupBound = true;
+    marker._koWired = true;
 }
 
 
