@@ -1,7 +1,11 @@
 @import url("~@fortawesome/fontawesome-free/css/solid.min.css");
 @import url("~@fortawesome/fontawesome-free/css/regular.min.css");
 @import url("~@fortawesome/fontawesome-free/css/fontawesome.min.css");
+<<<<<<< Updated upstream
 @import url('~bootstrap/dist/css/bootstrap.css');
+=======
+@import url('~bootstrap5/dist/css/bootstrap.css');
+>>>>>>> Stashed changes
 
 html {
   height: 100%;
@@ -29,6 +33,10 @@ body {
   max-width: 80vw;
 }
 
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 .pane .small { font-size: 0.8rem; }
 .input-group-sm .form-control { font-size: 0.75rem; }
 .input-group-text { background: transparent; border: none; }
@@ -157,7 +165,10 @@ body {
   padding-right: 8px;
   padding-bottom: 6px;
   padding-left: 8px;
+<<<<<<< Updated upstream
   cursor: pointer;
+=======
+>>>>>>> Stashed changes
 }
 
 .row.selected {
@@ -313,6 +324,7 @@ select {
   overflow: hidden;
 }
 
+<<<<<<< Updated upstream
 .job.expanded .chev {
   transform: rotate(90deg);
 }
@@ -324,6 +336,12 @@ select {
 .team.expanded .chev {
   transform: rotate(90deg);
 }
+=======
+
+td.chev { width: 1%; white-space: nowrap; }
+td.chev .btn { line-height: 1; }
+
+>>>>>>> Stashed changes
 
 .team_body {
   display: none;
@@ -397,7 +415,10 @@ button.primary {
 
 .teams tbody tr.team:hover {
   background: #f1f3f5;
+<<<<<<< Updated upstream
   cursor: pointer;
+=======
+>>>>>>> Stashed changes
 }
 
 .teams tbody tr.team.expanded {
@@ -411,10 +432,13 @@ button.primary {
   vertical-align: middle;
 }
 
+<<<<<<< Updated upstream
 .team.expanded .chev {
   transform: rotate(90deg);
 }
 
+=======
+>>>>>>> Stashed changes
 .team_body td {
   background: #fafafa;
   border-top: none;
@@ -491,4 +515,72 @@ tr.job:hover {
 /* Config placed BELOW filters+results to give filters more space */
 .config-card .form-label {
   margin-top: 0.25rem;
+<<<<<<< Updated upstream
 }
+=======
+}
+
+
+
+
+.marker-pin {
+  width: 40px;
+  height: 40px;
+  border-radius: 50% 50% 50% 0;
+  background: #c30b82;
+  position: absolute;
+  transform: rotate(-45deg);
+  left: 50%;
+  top: 50%;
+  margin: -15px 0 0 -15px;
+}
+
+.marker-pin::after {
+    content: '';
+    width: 34px;
+    height: 34px;
+    margin: 3px 0 0 3px;
+    background: #000;
+    position: absolute;
+    border-radius: 50%;
+ }
+
+.custom-div-icon i {
+   position: absolute;
+   width: 22px;
+   font-size: 22px;
+   left: 0;
+   right: 0;
+   margin: 10px auto;
+   text-align: center;
+}
+
+.assetMarker {
+    font-family: monospace;
+}
+
+.veh-pop{min-width:260px;max-width:360px}
+.veh-pop__title{font-weight:700;margin-bottom:2px}
+.veh-pop__meta{font-size:12px;line-height:1.25}
+.veh-pop__tasking-item{padding:4px 0;border-bottom:1px dashed #e3e3e3;   cursor: pointer;}
+.veh-pop__tasking-item:last-child{border-bottom:none}
+.veh-pop__tasking-item:hover{background-color:rgba(0, 0, 0, 0.1);}
+
+
+.job-popup__tasking-row{padding:4px 0;border-bottom:1px dashed #e3e3e3; cursor: pointer;}
+.job-popup__tasking-row:hover{background-color:rgba(0, 0, 0, 0.1);}
+
+
+.btn-xs{--bs-btn-padding-y:.1rem;--bs-btn-padding-x:.35rem;--bs-btn-font-size:.7rem}
+
+
+.leaflet-routing-container {
+    display: none;
+}
+
+ .leaflet-zoom-anim
+  .leaflet-zoom-animated {
+    transition-timing-function: linear !important;
+    transition-duration: 100ms !important;
+  }
+>>>>>>> Stashed changes

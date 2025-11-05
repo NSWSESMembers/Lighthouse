@@ -1,5 +1,9 @@
 export function buildJobPopupKO() {
+<<<<<<< Updated upstream
     return `
+=======
+  return `
+>>>>>>> Stashed changes
   <div class="job-popup" data-bind="with: job, draggableRow: { data: job, kind: 'job' }" draggable="true">
     <!-- Header -->
     <div id="jobIdentifier"
@@ -19,7 +23,35 @@ export function buildJobPopupKO() {
       <span id="priAndCat"
             data-bind="text: priorityName +' '+categoriesName"></span>
     </div>
+<<<<<<< Updated upstream
 
+=======
+<!-- Assign to Team Dropdown -->
+    <div class="text-center mt-2">
+      <div class="dropdown d-inline-block">
+        <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="assignTeamBtn"
+                data-bs-toggle="dropdown" aria-expanded="false">
+          Assign to Team
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="assignTeamBtn" style="min-width: 260px;">
+          <li class="mb-2">
+            <input type="text"
+                   class="form-control form-control-sm"
+                   placeholder="Filter teams…"
+                   data-bind="textInput: $root.vm.popupTeamFilter, valueUpdate: 'afterkeydown'">
+          </li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <div style="max-height: 220px; overflow: auto;"
+                 data-bind="foreach: $root.vm.popupFilteredTeams">
+              <button type="button" class="dropdown-item"
+                      data-bind="text: callsign, click: $root.vm.assignJobToPopup"></button>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+>>>>>>> Stashed changes
     <!-- Address -->
     <div class="text-center fw-bold mt-2"
          data-bind="text: (address.prettyAddress && address.prettyAddress()) || (address.short && address.short()) || ''"></div>
@@ -48,9 +80,18 @@ export function buildJobPopupKO() {
             </tr>
           </thead>
           <tbody data-bind="foreach: taskings">
+<<<<<<< Updated upstream
             <tr>
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
                   data-bind="text: teamCallsign"></td>
+=======
+            <tr data-bind="event: {
+            mouseenter: drawLineToJob,
+            mouseleave: removeLine
+            }, click: drawRoute" class="job-popup__tasking-row" style="cursor:pointer">
+              <td style="padding:4px 8px;border-bottom:1px solid #eee"
+                  data-bind="text: teamCallsign, click: team.markerFocus, clickBubble: false"></td>
+>>>>>>> Stashed changes
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
                   data-bind="text: currentStatus"></td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
@@ -79,3 +120,96 @@ export function buildJobPopupKO() {
     </div>
   </div>`;
 }
+<<<<<<< Updated upstream
+=======
+
+export function buildAssetPopupKO() {
+  return `
+  <div class="veh-pop" data-bind="with: asset">
+    <div class="veh-pop__title" data-bind="text: name"></div>
+
+    <div class="veh-pop__meta">
+      <div data-bind="visible: entity || capability">
+        <span data-bind="text: entity"></span>
+        <span data-bind="visible: entity && capability">&nbsp;•&nbsp;</span>
+        <span data-bind="text: capability"></span>
+      </div>
+
+      <div data-bind="visible: licensePlate">
+        Rego:&nbsp;<strong data-bind="text: licensePlate"></strong>
+      </div>
+
+      <div data-bind="visible: lastSeenText">
+        Last seen:&nbsp;<span data-bind="text: lastSeenText"></span>
+      </div>
+
+      <div data-bind="visible: talkgroup">
+        TG:&nbsp;<strong data-bind="text: talkgroup"></strong>
+        <small data-bind="visible: talkgroupLastUpdatedText">
+          &nbsp;(<span data-bind="text: talkgroupLastUpdatedText"></span>)
+        </small>
+      </div>
+
+      <div class="veh-pop__coords" data-bind="visible: latLngText">
+        <code data-bind="text: latLngText"></code>
+      </div>
+    </div>
+
+    <!-- Teams bound to this asset -->
+    <div class="veh-pop__teams" data-bind="visible: matchingTeams && matchingTeams().length">
+      <hr class="my-2" />
+      <div class="fw-bold small mb-1">Team(s)</div>
+
+      <div class="veh-pop__team-list" data-bind="foreach: { data: matchingTeams, as: 'tm' }">
+        <div class="veh-pop__team">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="veh-pop__team-title">
+                <strong data-bind="text: tm.callsign"></strong>
+              </a>
+              <span class="text-muted small ms-2" data-bind="text: tm.statusName"></span>
+              <span class="text-muted small ms-2" data-bind="text: tm.teamLeader"></span>
+            </div>
+            <div>
+              <button class="btn btn-xs btn-outline-secondary"
+                      title="Open team"
+                      data-bind="click: tm.editTasking">Edit</button>
+            </div>
+          </div>
+
+          <!-- Taskings for this team (filtered) -->
+          <div class="veh-pop__taskings mt-1"
+               data-bind="visible: tm.filteredTaskings() && tm.filteredTaskings().length">
+            <div class="small text-muted mb-1">
+              Taskings (<span data-bind="text: tm.filteredTaskings().length"></span>)
+            </div>
+
+            <ul class="list-unstyled veh-pop__tasking-list" data-bind="foreach: { data: tm.filteredTaskings(), as: 'tsk' }">
+              <li class="veh-pop__tasking-item" data-bind="event: {
+        mouseenter: drawLineToJob,
+        mouseleave: removeLine
+      }, click: tsk.drawRoute">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <span class="badge bg-secondary me-1" data-bind="text: tsk.currentStatus"></span>
+                    <strong data-bind="text: tsk.jobIdentifier"></strong>
+                    <span class="text-muted small ms-1" data-bind="text: tsk.jobTypeName"></span>
+                    <span class="text-muted small ms-1" data-bind="text: tsk.jobPriority"></span>
+                  </div>
+                  <div class="text-end small text-muted" data-bind="text: tsk.statusSetAt"></div>
+                </div>
+                <div class="small text-truncate" data-bind="text: tsk.prettyAddress"></div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- When no active taskings -->
+          <div class="text-muted small" data-bind="visible: !tm.filteredTaskings() || tm.filteredTaskings().length === 0">
+            No active taskings.
+          </div>
+        </div>
+        <hr class="my-2" data-bind="visible: $index() < ($parent.matchingTeams().length - 1)"/>
+      </div>
+    </div>
+  </div>`;
+}
+>>>>>>> Stashed changes

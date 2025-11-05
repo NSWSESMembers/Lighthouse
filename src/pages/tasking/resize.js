@@ -4,11 +4,17 @@ export function ResizeDividers(map) {
 // ===== Elements =====
 const appEl      = document.querySelector('.app');
 const sidebarEl  = document.querySelector('.sidebar');
+<<<<<<< Updated upstream
 const mapWrapEl  = document.getElementById('mapWrap');
 const vsplitEl   = document.getElementById('vsplit');
 
 const paneTopEl  = document.getElementById('paneTop');
 const paneBotEl  = document.getElementById('paneBottom');
+=======
+const vsplitEl   = document.getElementById('vsplit');
+
+const paneTopEl  = document.getElementById('paneTop');
+>>>>>>> Stashed changes
 const hsplitEl   = document.getElementById('hsplit');
 
 // Leaflet map instance must exist; guard invalidateSize calls
