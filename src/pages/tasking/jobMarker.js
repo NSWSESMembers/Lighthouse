@@ -1,6 +1,8 @@
-import { buildJobPopupKO } from './map_popup.js';
 var L = require('leaflet');
 var ko = require('knockout');
+
+import { buildJobPopupKO } from './components/job_popup.js';
+
 
 export function addOrUpdateJobMarker(ko, map, vm, job) {
     const id = job.id?.();
@@ -21,7 +23,7 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         if (pt.lat !== lat || pt.lng !== lng) m.setLatLng([lat, lng]);
         const key = JSON.stringify(style);
         if (m._styleKey !== key) { m.setIcon(makeShapeIcon(style)); m._styleKey = key; }
-        if (!m._popupBound) { m.setPopupContent(html); wireKoForPopup(ko, m, job, vm); }
+        if (!m._popupBound) { m.setPopupContent(html); wireKoForPopup(ko, m, job, vm, popupVM); }
         job.marker = m;
         return m;
     }
@@ -35,7 +37,8 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     marker.addTo(layerGroup);
     markers.set(id, marker);
     job.marker = marker;
-    wireKoForPopup(ko, marker, job, vm);
+    const popupVM = vm.mapVM.makeJobPopupVM(job);
+    wireKoForPopup(ko, marker, job, vm, popupVM);
 
     // live position updates from KO observables
     marker._subs = [
@@ -87,13 +90,13 @@ function safeMove(marker, job) {
     if (Number.isFinite(lat) && Number.isFinite(lng)) marker.setLatLng([lat, lng]);
 }
 
-function wireKoForPopup(ko, marker, job, vm) {
+function wireKoForPopup(ko, marker, job, vm, popupVM) {
     if (marker._koWired) return;
     marker.on('popupopen', e => {
         const el = e.popup.getElement();
         if (el && !el.__ko_bound__) {
             vm.mapVM.setOpen('job', job);
-            ko.applyBindings({ job, vm }, el);
+            ko.applyBindings(popupVM, el);
             el.__ko_bound__ = true;
             job.onPopupOpen && job.onPopupOpen();
         }
@@ -103,7 +106,7 @@ function wireKoForPopup(ko, marker, job, vm) {
         if (el && el.__ko_bound__) { ko.cleanNode(el); delete el.__ko_bound__; job.onPopupClose && job.onPopupClose(); }
         if (vm?.mapVM?.openPopup()?.ref === job) vm.mapVM.clearOpen();
         vm.mapVM.clearRoutes();
-
+        vm.mapVM.clearOpen?.();
     });
     marker._popupBound = true;
     marker._koWired = true;

@@ -9,9 +9,9 @@ require('../lib/shared_chrome_code.js'); // side-effect
 import '../../../styles/pages/tasking.css';
 
 import { ResizeDividers } from './resize.js';
-import { addOrUpdateJobMarker, removeJobMarker } from './incidentMarker.js';
+import { addOrUpdateJobMarker, removeJobMarker } from './jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './assetMarker.js';
-import { MapVM } from './viewmodels/map.js';
+import { MapVM } from './viewmodels/Map.js';
 
 var $ = require('jquery');
 var moment = require('moment');
@@ -180,7 +180,7 @@ function Tasking(data = {}) {
     myViewModel.mapVM.activeRouteControl = null;
     self._routeSubs = []; // KO subscriptions for live updates
 
-    function getTeamLatLng() {
+    self.getTeamLatLng = function () {
         // Prefer live asset location if available; otherwise fall back to team HQ (assignedTo)
         const t = self.team;
         if (!t) return null;
@@ -194,7 +194,7 @@ function Tasking(data = {}) {
         return Number.isFinite(lat) && Number.isFinite(lng) ? L.latLng(lat, lng) : null;
     }
 
-    function getJobLatLng() {
+    self.getJobLatLng = function () {
         const j = self.job;
         if (!j) return null;
         const lat = +ko.unwrap(j.address.latitude), lng = +ko.unwrap(j.address.longitude);
@@ -209,147 +209,8 @@ function Tasking(data = {}) {
         }
     };
 
-    /**
-     * Draw a route between the team's current position and the job.
-     */
-    self.drawRoute = function () {
-        console.log(`Drawing route for tasking ${self.id()}`);
+    
 
-        const from = getTeamLatLng();
-        const to = getJobLatLng();
-        if (!from || !to) {
-            console.warn('Cannot draw route: missing team or job coordinates.');
-            return;
-        }
-
-        // Recreate clean control each time
-        self.clearRouteSubs();
-        if (myViewModel.activeRoute) {
-            myViewModel.activeRoute.remove();
-        }
-
-        myViewModel.mapVM.activeRouteControl = L.Routing.control({
-            waypoints: [from, to],
-            router: L.Routing.graphHopper('lighthouse', {
-                serviceUrl: 'https://graphhopper.lighthouse-extension.com/route',
-                urlParameters: { 'ch.disable': true, instructions: false },
-            }),
-            lineOptions: {
-                styles: [{ opacity: 0.9, weight: 6 }, { opacity: 1.0, weight: 3, dashArray: '6,8' }]
-            },
-            addWaypoints: false,
-            draggableWaypoints: false,
-            fitSelectedRoutes: false,
-            createMarker: function () { return null },
-            show: false // keep the big itinerary panel hidden
-        })
-
-
-        myViewModel.mapVM.activeRouteControl.on('routesfound', e => {
-            const route = e.routes && e.routes[0];
-            if (!route || !route.coordinates) return;
-
-            var r = e.routes[0]
-            let middle = r.coordinates[Math.floor(r.coordinates.length / 4)];
-
-            let distance = r.summary.totalDistance;
-            let time = r.summary.totalTime;
-            let timeHr = parseInt(moment.utc(time * 1000).format('HH'));
-            let timeMin = parseInt(moment.utc(time * 1000).format('mm'));
-            let timeText = '';
-            if (timeHr == 0) {
-                timeText = `${timeMin} min`;
-            } else {
-                timeText = `${timeHr} hr ${timeMin} min`;
-            }
-            myViewModel.mapVM.distanceMarker = new L.circleMarker([middle.lat, middle.lng], { radius: 0.1 }).addTo(
-                map,
-            ); //opacity may be set to zero
-            myViewModel.mapVM.distanceMarker.bindTooltip(
-                `<div style="text-align: center;"><strong>${(distance / 1000).toFixed(
-                    1,
-                )} km - ${timeText}</strong></div>`,
-                { permanent: true, offset: [0, 0] },
-            );
-
-            const bounds = L.latLngBounds(route.coordinates);
-            console.log('Fitting map to route bounds:', bounds);
-
-            //Smooth zoom/pan to fit the whole route with padding
-            map.flyToBounds(bounds, {
-                padding: [150, 150],  // add more if you have a sidebar, e.g. [200, 80]
-                maxZoom: 13,        // optional: prevent over-zoom
-                duration: 1.2       // seconds; optional for smoother transition
-            });
-        });
-
-        myViewModel.mapVM.activeRouteControl.addTo(map);
-
-        // Auto-update route when the team's first asset or job location moves
-        const team = self.team;
-        if (team && team.trackableAssets && team.trackableAssets().length > 0) {
-            const a = team.trackableAssets()[0];
-            self._routeSubs.push(a.latitude.subscribe(() => {
-                const s = getTeamLatLng(); const d = getJobLatLng();
-                if (s && d && myViewModel.mapVM.activeRouteControl) myViewModel.mapVM.activeRouteControl.setWaypoints([s, d]);
-            }));
-            self._routeSubs.push(a.longitude.subscribe(() => {
-                const s = getTeamLatLng(); const d = getJobLatLng();
-                if (s && d && myViewModel.mapVM.activeRouteControl) myViewModel.mapVM.activeRouteControl.setWaypoints([s, d]);
-            }));
-        }
-
-        const j = self.job;
-        if (j) {
-            self._routeSubs.push(j.address.latitude.subscribe(() => {
-                const s = getTeamLatLng(); const d = getJobLatLng();
-                if (s && d && myViewModel.mapVM.activeRouteControl) myViewModel.mapVM.activeRouteControl.setWaypoints([s, d]);
-            }));
-            self._routeSubs.push(j.address.longitude.subscribe(() => {
-                const s = getTeamLatLng(); const d = getJobLatLng();
-                if (s && d && myViewModel.mapVM.activeRouteControl) myViewModel.mapVM.activeRouteControl.setWaypoints([s, d]);
-            }));
-        }
-    };
-
-    self.drawLineToJob = function () {
-        console.log('Drawing line to job for tasking', this.id());
-        // clear any existing one first
-        this.removeLine();
-
-        const team = this.team;
-        const job = this.job;
-        if (!team || !job) return;
-
-        // pick the team’s first asset coordinates
-        let fromLat = null, fromLng = null;
-        if (team.trackableAssets && team.trackableAssets().length > 0) {
-            const a = team.trackableAssets()[0];
-            fromLat = +ko.unwrap(a.latitude);
-            fromLng = +ko.unwrap(a.longitude);
-        }
-        const toLat = +ko.unwrap(job.address.latitude);
-        const toLng = +ko.unwrap(job.address.longitude);
-
-        if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
-            Number.isFinite(toLat) && Number.isFinite(toLng))) return;
-
-        self._polyline = L.polyline(
-            [
-                [fromLat, fromLng],
-                [toLat, toLng],
-            ],
-            { weight: 4, color: 'green', dashArray: '6' }
-        )
-        self._polyline.addTo(map);
-    };
-
-    self.removeLine = function () {
-        if (self._polyline) {
-            map.removeLayer(this._polyline);
-            self._polyline = null;
-        }
-    };
 }
 
 function Team(data = {}) {
@@ -403,7 +264,7 @@ function Team(data = {}) {
 
     self.teamLink = ko.pureComputed(() => `${params.source}/Teams/${self.id()}/Edit`);
 
-    self.editTasking = () => {
+    self.openBeaconEditTeam = () => {
         window.open(self.teamLink(), '_blank');
         event.preventDefault();
     };
@@ -1183,14 +1044,7 @@ function VM() {
         return self.assignJobToTeam(teamVm, jobVm);
     };
 
-    //incident popup team filterings
-    self.popupTeamFilter = ko.observable('');
-    self.popupFilteredTeams = ko.pureComputed(() => {
-        const term = (self.popupTeamFilter() || '').toLowerCase().trim();
-        const list = self.filteredTeams(); // already exists
-        if (!term) return list;
-        return list.filter(tm => (tm.callsign() || '').toLowerCase().includes(term));
-    });
+ 
 
 
     //fetch tasking if a team is added

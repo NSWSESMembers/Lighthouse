@@ -1,6 +1,7 @@
 var L = require('leaflet');
 var moment = require('moment');
-import { buildAssetPopupKO } from './map_popup.js';
+
+import { buildAssetPopupKO } from './components/asset_popup.js';
 
 
 function buildIcon(asset) {
@@ -103,7 +104,14 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
         );
         m.addTo(layer);
         asset.marker = m;
-        bindPopupWithKO(ko, asset.marker, asset);
+        // Ask MapVM to create the AssetPopupViewModel for this asset:
+        const popupVm = viewModel.mapVM.makeAssetPopupVM(asset);
+        bindPopupWithKO(ko, asset.marker, viewModel, asset, popupVm);
+
+        // Track what's open
+        asset.marker.on('popupopen', () => {
+            viewModel.mapVM.setOpen('asset', asset);
+        });
     }
 
     // Already wired? Done.
@@ -148,9 +156,6 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
 
     asset._markerSubs = subs;
 
-    asset.marker.on('popupclose', () => {
-        viewModel.mapVM.clearRoutes();
-    });
 }
 
 /**
@@ -166,15 +171,17 @@ export function detachAssetMarker(ko, map, viewModel, asset) {
         viewModel.mapVM.vehicleLayer.removeLayer(asset.marker);
         asset.marker = null;
     }
+    viewModel.mapVM.destroyAssetPopupVM(asset);
 }
 
 
-function bindPopupWithKO(ko, marker, asset) {
-
+function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
     const openHandler = (e) => {
         const el = e.popup.getElement();
         if (el && !el.__ko_bound__) {
-            ko.applyBindings({ asset }, el);
+            vm.mapVM.setOpen('asset', asset);
+            // Popup template expects `asset` on the binding root; the VM provides it.
+            ko.applyBindings(popupVm, el);
             el.__ko_bound__ = true;
         }
     };
@@ -182,6 +189,8 @@ function bindPopupWithKO(ko, marker, asset) {
     const closeHandler = (e) => {
         const el = e.popup && e.popup.getElement();
         if (el && el.__ko_bound__) {
+            vm.mapVM.clearRoutes?.();
+            vm.mapVM.clearOpen?.();
             ko.cleanNode(el);
             delete el.__ko_bound__;
         }
