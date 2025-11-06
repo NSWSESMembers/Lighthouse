@@ -1,17 +1,17 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 global.jQuery = $;
 
-import BeaconClient from '../shared/BeaconClient.js';
-const BeaconToken = require('./lib/shared_token_code.js');
+import BeaconClient from '../../shared/BeaconClient.js';
+const BeaconToken = require('../lib/shared_token_code.js');
 
-require('./lib/shared_chrome_code.js'); // side-effect
+require('../lib/shared_chrome_code.js'); // side-effect
 
-import '../../styles/pages/tasking.css';
+import '../../../styles/pages/tasking.css';
 
-import { ResizeDividers } from './tasking/resize.js';
-import { addOrUpdateJobMarker, removeJobMarker } from './tasking/incidentMarker.js';
-import { attachAssetMarker, detachAssetMarker } from './tasking/assetMarker.js';
-import { MapVM } from './tasking/viewmodels/map.js';
+import { ResizeDividers } from './resize.js';
+import { addOrUpdateJobMarker, removeJobMarker } from './incidentMarker.js';
+import { attachAssetMarker, detachAssetMarker } from './assetMarker.js';
+import { MapVM } from './viewmodels/map.js';
 
 var $ = require('jquery');
 var moment = require('moment');
@@ -177,8 +177,7 @@ function Tasking(data = {}) {
         }
     };
 
-    self.routeControl = null;
-    self.distanceMarkerRoute = null
+    myViewModel.mapVM.activeRouteControl = null;
     self._routeSubs = []; // KO subscriptions for live updates
 
     function getTeamLatLng() {
@@ -202,16 +201,8 @@ function Tasking(data = {}) {
         return Number.isFinite(lat) && Number.isFinite(lng) ? L.latLng(lat, lng) : null;
     }
 
-    self.clearRoute = function () {
-        // remove LRM control and dispose subscriptions
-        if (self.routeControl && map) {
-            map.removeControl(self.routeControl);
-        }
-        self.routeControl = null;
-        if (self.distanceMarkerRoute) {
-            map.removeLayer(self.distanceMarkerRoute);
-        }
-        self.distanceMarkerRoute = null;
+    self.clearRouteSubs = function () {
+
         while (self._routeSubs.length) {
             const sub = self._routeSubs.pop();
             try { sub?.dispose?.(); } catch { /* ignore */ }
@@ -232,12 +223,12 @@ function Tasking(data = {}) {
         }
 
         // Recreate clean control each time
-        self.clearRoute();
+        self.clearRouteSubs();
         if (myViewModel.activeRoute) {
             myViewModel.activeRoute.remove();
         }
 
-        self.routeControl = L.Routing.control({
+        myViewModel.mapVM.activeRouteControl = L.Routing.control({
             waypoints: [from, to],
             router: L.Routing.graphHopper('lighthouse', {
                 serviceUrl: 'https://graphhopper.lighthouse-extension.com/route',
@@ -254,7 +245,7 @@ function Tasking(data = {}) {
         })
 
 
-        self.routeControl.on('routesfound', e => {
+        myViewModel.mapVM.activeRouteControl.on('routesfound', e => {
             const route = e.routes && e.routes[0];
             if (!route || !route.coordinates) return;
 
@@ -271,10 +262,10 @@ function Tasking(data = {}) {
             } else {
                 timeText = `${timeHr} hr ${timeMin} min`;
             }
-            self.distanceMarkerRoute = new L.circleMarker([middle.lat, middle.lng], { radius: 0.1 }).addTo(
+            myViewModel.mapVM.distanceMarker = new L.circleMarker([middle.lat, middle.lng], { radius: 0.1 }).addTo(
                 map,
             ); //opacity may be set to zero
-            self.distanceMarkerRoute.bindTooltip(
+            myViewModel.mapVM.distanceMarker.bindTooltip(
                 `<div style="text-align: center;"><strong>${(distance / 1000).toFixed(
                     1,
                 )} km - ${timeText}</strong></div>`,
@@ -291,8 +282,8 @@ function Tasking(data = {}) {
                 duration: 1.2       // seconds; optional for smoother transition
             });
         });
-        myViewModel.activeRoute = self.routeControl;
-        self.routeControl.addTo(map);
+
+        myViewModel.mapVM.activeRouteControl.addTo(map);
 
         // Auto-update route when the team's first asset or job location moves
         const team = self.team;
@@ -300,11 +291,11 @@ function Tasking(data = {}) {
             const a = team.trackableAssets()[0];
             self._routeSubs.push(a.latitude.subscribe(() => {
                 const s = getTeamLatLng(); const d = getJobLatLng();
-                if (s && d && self.routeControl) self.routeControl.setWaypoints([s, d]);
+                if (s && d && myViewModel.mapVM.activeRouteControl) myViewModel.mapVM.activeRouteControl.setWaypoints([s, d]);
             }));
             self._routeSubs.push(a.longitude.subscribe(() => {
                 const s = getTeamLatLng(); const d = getJobLatLng();
-                if (s && d && self.routeControl) self.routeControl.setWaypoints([s, d]);
+                if (s && d && myViewModel.mapVM.activeRouteControl) myViewModel.mapVM.activeRouteControl.setWaypoints([s, d]);
             }));
         }
 
@@ -312,11 +303,11 @@ function Tasking(data = {}) {
         if (j) {
             self._routeSubs.push(j.address.latitude.subscribe(() => {
                 const s = getTeamLatLng(); const d = getJobLatLng();
-                if (s && d && self.routeControl) self.routeControl.setWaypoints([s, d]);
+                if (s && d && myViewModel.mapVM.activeRouteControl) myViewModel.mapVM.activeRouteControl.setWaypoints([s, d]);
             }));
             self._routeSubs.push(j.address.longitude.subscribe(() => {
                 const s = getTeamLatLng(); const d = getJobLatLng();
-                if (s && d && self.routeControl) self.routeControl.setWaypoints([s, d]);
+                if (s && d && myViewModel.mapVM.activeRouteControl) myViewModel.mapVM.activeRouteControl.setWaypoints([s, d]);
             }));
         }
     };
@@ -887,7 +878,7 @@ function VM() {
     self.trackableAssets = ko.observableArray([]);
 
 
-   // --- Vehicle Layer ---
+    // --- Vehicle Layer ---
 
     self.jobSearch = ko.observable('');
 
@@ -1063,14 +1054,20 @@ function VM() {
     // recompute one team's asset list
     self._refreshTeamTrackableAssets = function (team) {
         if (!team || typeof team.trackableAssets !== 'function') return;
-        const out = [];
+        const list = team.trackableAssets();
+
         (self.trackableAssets() || []).forEach(a => {
-            if (self._assetMatchesTeam(a, team)) {
-                out.push(a);
+            const has = list.find(x => x.id() === a.id())
+            const match = self._assetMatchesTeam(a, team);
+             if (match && !has) {
+                team.trackableAssets.push(a);
                 a.matchingTeams.push(team)
             }
+            if (!match && has) {
+                a.matchingTeams.remove(team)
+                team.trackableAssets.remove(a);
+            }
         });
-        team.trackableAssets(out);
     };
 
     // when a single asset changes/arrives, patch all teams that match
@@ -1100,19 +1097,18 @@ function VM() {
         const teamRef = teamContext || self.getOrCreateTeam(taskingJson.Team);
 
         let t = self.taskingsById.get(taskingJson.Id);
+
         if (t) {
-            t.updateFrom(taskingJson);
+            t.updateFrom(taskingJson); //update the tasking inplace
         } else {
-            t = new Tasking(taskingJson);
+            t = new Tasking(taskingJson); //make a new one
             self.taskings.push(t);
             self.taskingsById.set(t.id(), t);
         }
 
         // Attach shared references
-        if (jobRef) t.job = jobRef;
-        if (teamRef) t.team = teamRef;
-        t.setJob(jobRef || null);
-        self._linkTaskingToJob(t, jobRef);
+        if (teamRef) t.team = teamRef; //bind the team to the tasking
+        self._linkTaskingAndJob(t, jobRef);  //bind the tasking to the job
 
         return t;
     };
@@ -1156,9 +1152,9 @@ function VM() {
         }
     };
 
-    self._linkTaskingToJob = function (tasking, job) {
+    self._linkTaskingAndJob = function (tasking, job) {
         if (!tasking) return;
-        const prev = tasking.job || null;
+        const prev = tasking.job.id && tasking.job || null; // current job ref
         if (prev && prev !== job) prev.removeTasking(tasking);   // detach from old job
         if (job) {
             tasking.job = job;                                     // set shared ref

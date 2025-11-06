@@ -13,6 +13,7 @@ export function MapVM(Lmap, root) {
   // active route/overlays
   self.activeRouteControl = null;
   self.distanceMarker = null;
+  self.crowFliesLine = null;
 
   // layers
   self.vehicleLayer = L.layerGroup().addTo(Lmap);
@@ -23,8 +24,11 @@ export function MapVM(Lmap, root) {
   self.clearOpen = () => self.openPopup(null);
 
   self.clearRoutes = () => {
+    console.log('clearing routes');
+
     if (self.activeRouteControl) { self.map.removeControl(self.activeRouteControl); self.activeRouteControl = null; }
     if (self.distanceMarker) { self.map.removeLayer(self.distanceMarker); self.distanceMarker = null; }
+
   };
 
   self.closeAllPopups = () => { self.map.closePopup(); self.clearOpen(); self.clearRoutes(); };

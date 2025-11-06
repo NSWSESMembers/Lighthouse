@@ -149,11 +149,7 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
     asset._markerSubs = subs;
 
     asset.marker.on('popupclose', () => {
-        const taskings = viewModel.taskings ? viewModel.taskings() : [];
-        for (const t of taskings) {
-            if (t && typeof t.clearRoute === 'function') t.clearRoute();
-            t.removeLine()
-        }
+        viewModel.mapVM.clearRoutes();
     });
 }
 
