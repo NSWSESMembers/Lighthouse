@@ -6,7 +6,6 @@ import { buildJobPopupKO } from '../components/job_popup.js';
 
 import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } from '../utils/popup_dom_utils.js';
 
-require('leaflet-responsive-popup')
 
 export function addOrUpdateJobMarker(ko, map, vm, job) {
     const id = job.id?.();
