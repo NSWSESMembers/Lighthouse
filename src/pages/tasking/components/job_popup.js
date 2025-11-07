@@ -98,6 +98,11 @@ export function buildJobPopupKO() {
                       data-bind="click: $root.drawRouteToAsset, disable: !team.trackableAssets().length, clickBubble: false">
                       <i class="fa fa-solid fa-car"></i>
                   </button>
+                  <button type="button" class="btn btn-small btn-outline-secondary"
+                      title="Fit Bounds"
+                      data-bind="click: $root.fitBoundsWithAsset, disable: !team.trackableAssets().length, clickBubble: false">
+                      <i class="fa fa-solid fa-object-group"></i>
+                  </button>
                 </div>
               </td>
             </tr>

@@ -14,7 +14,7 @@ export class JobPopupViewModel {
     popupTeamFilter = ko.observable('');
 
     taskTeamToJobWithConfirm = (team) => { //this team is our fake object with team and distance info
-        this.api.taskTeamToJobWithConfirm(this.job, team.team); 
+        this.api.taskTeamToJobWithConfirm(this.job, team.team);
     }
 
     // --- popupFilteredTeams ---
@@ -23,28 +23,28 @@ export class JobPopupViewModel {
         const list = this.filteredTeams() || [];
         const job = this.job;
         return list
-            .filter(tm => 
-            !term || (tm.callsign() || "").toLowerCase().includes(term)
+            .filter(tm =>
+                !term || (tm.callsign() || "").toLowerCase().includes(term)
             )
-            .filter(tm => 
-            !(job.incompleteTaskingsOnly() || []).some(
-                t => t.team.id === tm.id
-            )
+            .filter(tm =>
+                !(job.incompleteTaskingsOnly() || []).some(
+                    t => t.team.id === tm.id
+                )
             )
             .map(tm => {
-            const { distance, backBearing } = bestDistanceAndBearing(tm, job);
-            return {
-                team: tm,
-                taskings: tm.filteredTaskings,
-                distanceMeters: distance,
-                distanceLabel: fmtDist(distance),
-                bearingLabel: fmtBearing(backBearing)
-            };
+                const { distance, backBearing } = bestDistanceAndBearing(tm, job);
+                return {
+                    team: tm,
+                    taskings: tm.filteredTaskings,
+                    distanceMeters: distance,
+                    distanceLabel: fmtDist(distance),
+                    bearingLabel: fmtBearing(backBearing)
+                };
             })
             .sort((a, b) => {
-            const da = a.distanceMeters ?? Number.POSITIVE_INFINITY;
-            const db = b.distanceMeters ?? Number.POSITIVE_INFINITY;
-            return da - db;
+                const da = a.distanceMeters ?? Number.POSITIVE_INFINITY;
+                const db = b.distanceMeters ?? Number.POSITIVE_INFINITY;
+                return da - db;
             });
     });
 
@@ -87,6 +87,18 @@ export class JobPopupViewModel {
             { weight: 4, color: 'green', dashArray: '6' }
         )
         this.api.registerCrowFliesLine(this._polyline);
+    }
+
+    fitBoundsWithAsset = (tasking) => {
+        const bounds = L.latLngBounds([
+            tasking.getTeamLatLng(),
+            tasking.getJobLatLng()
+        ]);
+        this.api.flyToBounds(bounds, {
+            padding: [150, 150],  // add more if you have a sidebar, e.g. [200, 80]
+            maxZoom: 13,        // optional: prevent over-zoom
+            duration: 1.2       // seconds; optional for smoother transition
+        });
     }
 
     drawRouteToAsset = (tasking) => {
@@ -209,61 +221,61 @@ function haversineMeters(lat1, lon1, lat2, lon2) {
 }
 
 function bearingDegrees(lat1, lon1, lat2, lon2) {
-  const φ1 = toRad(lat1);
-  const φ2 = toRad(lat2);
-  const λ1 = toRad(lon1);
-  const λ2 = toRad(lon2);
-  const y = Math.sin(λ2 - λ1) * Math.cos(φ2);
-  const x = Math.cos(φ1)*Math.sin(φ2) -
-            Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2 - λ1);
-  const θ = Math.atan2(y, x);
-  return (toDeg(θ) + 360) % 360; // forward bearing
+    const φ1 = toRad(lat1);
+    const φ2 = toRad(lat2);
+    const λ1 = toRad(lon1);
+    const λ2 = toRad(lon2);
+    const y = Math.sin(λ2 - λ1) * Math.cos(φ2);
+    const x = Math.cos(φ1) * Math.sin(φ2) -
+        Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1);
+    const θ = Math.atan2(y, x);
+    return (toDeg(θ) + 360) % 360; // forward bearing
 }
 
 function backBearingDegrees(bearing) {
-  return (bearing + 180) % 360;
+    return (bearing + 180) % 360;
 }
 
 function bearingToCardinal(bearing) {
-  if (bearing == null || !Number.isFinite(bearing)) return null;
-  const dirs = [
-    "North", "North-East", "East", "South-East",
-    "South", "South-West", "West", "North-West"
-  ];
-  const idx = Math.round(bearing / 45) % 8;
-  return dirs[idx];
+    if (bearing == null || !Number.isFinite(bearing)) return null;
+    const dirs = [
+        "North", "North-East", "East", "South-East",
+        "South", "South-West", "West", "North-West"
+    ];
+    const idx = Math.round(bearing / 45) % 8;
+    return dirs[idx];
 }
 
 function bestDistanceAndBearing(team, job) {
-  const jLat = unwrapNum(job?.address?.latitude);
-  const jLon = unwrapNum(job?.address?.longitude);
-  if (jLat == null || jLon == null) return { distance: null, bearing: null };
+    const jLat = unwrapNum(job?.address?.latitude);
+    const jLon = unwrapNum(job?.address?.longitude);
+    if (jLat == null || jLon == null) return { distance: null, bearing: null };
 
-  const assets = ko.unwrap(team?.trackableAssets) || [];
-  let best = null;
-  let bestBearing = null;
+    const assets = ko.unwrap(team?.trackableAssets) || [];
+    let best = null;
+    let bestBearing = null;
 
-  for (const a of assets) {
-    let lat = unwrapNum(a?.latitude), lon = unwrapNum(a?.longitude);
-    if ((lat == null || lon == null) && a?.geometry?.coordinates) {
-      lat = unwrapNum(a.geometry.coordinates[1]);
-      lon = unwrapNum(a.geometry.coordinates[0]);
+    for (const a of assets) {
+        let lat = unwrapNum(a?.latitude), lon = unwrapNum(a?.longitude);
+        if ((lat == null || lon == null) && a?.geometry?.coordinates) {
+            lat = unwrapNum(a.geometry.coordinates[1]);
+            lon = unwrapNum(a.geometry.coordinates[0]);
+        }
+        if (lat == null || lon == null) continue;
+
+        const d = haversineMeters(lat, lon, jLat, jLon);
+        if (best == null || d < best) {
+            best = d;
+            bestBearing = bearingDegrees(lat, lon, jLat, jLon);
+        }
     }
-    if (lat == null || lon == null) continue;
-
-    const d = haversineMeters(lat, lon, jLat, jLon);
-    if (best == null || d < best) {
-      best = d;
-      bestBearing = bearingDegrees(lat, lon, jLat, jLon);
-    }
-  }
     const backBearing = bestBearing != null ? backBearingDegrees(bestBearing) : null;
 
-  return { distance: best, bearing: bestBearing, backBearing };
+    return { distance: best, bearing: bestBearing, backBearing };
 }
 
 const fmtBearing = b =>
-  b == null ? "-" : `${bearingToCardinal(b)} (${Math.round(b)}°)`;
+    b == null ? "-" : `${bearingToCardinal(b)} (${Math.round(b)}°)`;
 
 const fmtDist = m =>
     m == null ? "-" : (m < 950 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`);
