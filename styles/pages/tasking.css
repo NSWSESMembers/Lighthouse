@@ -2,7 +2,6 @@
 @import url("~@fortawesome/fontawesome-free/css/regular.min.css");
 @import url("~@fortawesome/fontawesome-free/css/fontawesome.min.css");
 @import url('~bootstrap5/dist/css/bootstrap.css');
-@import url('~leaflet-responsive-popup/leaflet.responsive.popup.css');
 
 html {
   height: 100%;
