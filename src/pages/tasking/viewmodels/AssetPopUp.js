@@ -14,6 +14,16 @@ export class AssetPopupViewModel {
     team.openBeaconEditTeam();
   }
 
+  updatePopup = () => {
+    console.log('AssetPopupViewModel.updatePopup called');
+    if (this.asset.marker && this.asset.marker.isPopupOpen()) {
+      const popup = this.asset.marker.getPopup();
+      if (popup) {
+        popup.update();
+      }
+    }
+  }
+
   drawCrowsFliesToJob = (tasking) => {
     // clear any existing one first
     this.api.clearCrowFliesLine();

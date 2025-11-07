@@ -1,8 +1,10 @@
 var L = require('leaflet');
 var moment = require('moment');
 
-import { buildAssetPopupKO } from './components/asset_popup.js';
+import {makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate} from '../utils/popup_dom_utils.js';
 
+import { buildAssetPopupKO } from '../components/asset_popup.js';
+require('leaflet-responsive-popup')
 
 function buildIcon(asset) {
     const capabilityColors = {
@@ -98,10 +100,19 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
         const m = L.marker([lat, lng], { icon });
         m._assetId = asset.id?.();
         const html = buildAssetPopupKO();
+        const contentEl = makePopupNode(html, 'veh-pop-root'); // stable node
+        const popup = L.responsivePopup({
+            minWidth: 360,
+            maxWidth: 360,
+            maxHeight: 360,
+            autoPan: true,
+            autoPanPadding: [16,16],
+        }).setContent(contentEl);
 
-        m.bindPopup(() =>
-            html
-        );
+        // m.bindPopup(() =>
+        //     html
+        // );
+        m.bindPopup(popup)
         m.addTo(layer);
         asset.marker = m;
         // Ask MapVM to create the AssetPopupViewModel for this asset:
@@ -177,23 +188,18 @@ export function detachAssetMarker(ko, map, viewModel, asset) {
 
 function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
     const openHandler = (e) => {
-        const el = e.popup.getElement();
-        if (el && !el.__ko_bound__) {
-            vm.mapVM.setOpen('asset', asset);
-            // Popup template expects `asset` on the binding root; the VM provides it.
-            ko.applyBindings(popupVm, el);
-            el.__ko_bound__ = true;
-        }
+        const el = e.popup.getContent(); // our stable node
+        vm.mapVM.setOpen?.('asset', asset);
+        bindKoToPopup(ko, popupVm, el);
+        deferPopupUpdate(e.popup);
     };
-
     const closeHandler = (e) => {
-        const el = e.popup && e.popup.getElement();
-        if (el && el.__ko_bound__) {
-            vm.mapVM.clearRoutes?.();
-            vm.mapVM.clearOpen?.();
-            ko.cleanNode(el);
-            delete el.__ko_bound__;
-        }
+        const el = e.popup?.getContent();
+        vm.mapVM.clearCrowFliesLine();
+        vm.mapVM.clearRoutes?.();
+        vm.mapVM.clearOpen?.();
+        unbindKoFromPopup(ko, el);
+
     };
     marker._koWired = true;
     marker.on('popupopen', openHandler);

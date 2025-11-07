@@ -64,7 +64,7 @@ export function buildAssetPopupKO() {
               <li class="veh-pop__tasking-item" data-bind="event: {
         mouseenter: $root.drawCrowsFliesToJob,
         mouseleave: $root.removeCrowsFliesToJob
-      }, click: $root.drawRouteToJob">
+      }, click: tsk.job.focusMap, clickBubble: false">
                 <div class="d-flex justify-content-between">
                   <div>
                     <span class="badge bg-secondary me-1" data-bind="text: tsk.currentStatus"></span>

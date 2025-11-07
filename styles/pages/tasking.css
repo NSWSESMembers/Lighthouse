@@ -2,6 +2,7 @@
 @import url("~@fortawesome/fontawesome-free/css/regular.min.css");
 @import url("~@fortawesome/fontawesome-free/css/fontawesome.min.css");
 @import url('~bootstrap5/dist/css/bootstrap.css');
+@import url('~leaflet-responsive-popup/leaflet.responsive.popup.css');
 
 html {
   height: 100%;
@@ -122,6 +123,14 @@ body {
   border-left-color: transparent;
 }
 
+.leaflet-popup-content-wrapper {
+  opacity: 0.8;
+  transition: opacity 0.1s ease;
+}
+.leaflet-popup-content-wrapper:hover {
+  opacity: 1;
+}
+
 .pane--bottom {
   flex-grow: 1;
   flex-shrink: 1;
@@ -130,6 +139,11 @@ body {
 
 .table-responsive {
   flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.job-popup_taskings {
+  max-height: 140px;
   overflow-y: auto;
 }
 
@@ -519,7 +533,7 @@ tr.job:hover {
     font-family: monospace;
 }
 
-.veh-pop{min-width:260px;max-width:360px}
+.veh-pop{min-width:360px;max-width:360px;max-height:360px}
 .veh-pop__title{font-weight:700;margin-bottom:2px}
 .veh-pop__meta{font-size:12px;line-height:1.25}
 .veh-pop__tasking-item{padding:4px 0;border-bottom:1px dashed #e3e3e3;   cursor: pointer;}
@@ -527,9 +541,12 @@ tr.job:hover {
 .veh-pop__tasking-item:hover{background-color:rgba(0, 0, 0, 0.1);}
 
 
+
 .job-popup__tasking-row{padding:4px 0;border-bottom:1px dashed #e3e3e3; cursor: pointer;}
 .job-popup__tasking-row:hover{background-color:rgba(0, 0, 0, 0.1);}
 
+
+.job-popup{min-width:380px;max-width:380px;min-height: 200px;}
 
 .btn-xs{--bs-btn-padding-y:.1rem;--bs-btn-padding-x:.35rem;--bs-btn-font-size:.7rem}
 

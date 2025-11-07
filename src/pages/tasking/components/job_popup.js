@@ -37,8 +37,16 @@ export function buildJobPopupKO() {
           <li>
             <div style="max-height: 220px; overflow: auto;"
                  data-bind="foreach: $root.popupFilteredTeams">
-              <button type="button" class="dropdown-item"
-                      data-bind="text: callsign, click: $root.assignJobToPopup"></button>
+              <button type="button" class="dropdown-item text-start py-1"
+  data-bind="html:
+    '<div><strong>' + (team.callsign() || '') + '</strong>' +
+    '<div class=&quot;small text-muted&quot;>' +
+      taskings().length + ' tasking(s) &nbsp;•&nbsp; ' +
+      (distanceLabel || '-') + ' &nbsp;•&nbsp; ' +
+      (bearingLabel || '-') +
+    '</div>',
+    click: $root.taskTeamToJobWithConfirm">
+</button>
             </div>
           </li>
         </ul>
@@ -46,7 +54,7 @@ export function buildJobPopupKO() {
     </div>
     <!-- Address -->
     <div class="text-center fw-bold mt-2"
-         data-bind="text: (address.prettyAddress && address.prettyAddress()) || (address.short && address.short()) || ''"></div>
+         data-bind="text: (address.prettyAddress && address.prettyAddress()) || ''"></div>
 
     <div id="JobDetails" style="padding-top:10px;width:100%;margin:auto">
       <!-- SoS -->
@@ -61,7 +69,7 @@ export function buildJobPopupKO() {
         <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
         <span class="ms-1">Loading taskings…</span>
       </div>
-
+      <div class="table-responsive job-popup_taskings">
       <div data-bind="visible: !taskingLoading() && taskings().length > 0" style="padding-top:10px">
         <table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead>
@@ -69,24 +77,34 @@ export function buildJobPopupKO() {
               <th style="padding:6px 8px;border-bottom:1px solid #ddd">Team</th>
               <th style="padding:6px 8px;border-bottom:1px solid #ddd">Status</th>
               <th style="padding:6px 8px;border-bottom:1px solid #ddd">Updated</th>
+              <th style="padding:6px 8px;border-bottom:1px solid #ddd">Actions</th>
             </tr>
           </thead>
-          <tbody data-bind="foreach: taskings">
+          <tbody data-bind="foreach: { data: taskings, afterRender:$root.updatePopup}">
             <tr data-bind="event: {
             mouseenter: $root.drawCrowsFliesToAsset,
             mouseleave: $root.removeCrowsFliesToAsset
-            }, click: $root.drawRouteToAsset" class="job-popup__tasking-row" style="cursor:pointer">
+            }, click: team.markerFocus, clickBubble: false" class="job-popup__tasking-row" style="cursor:pointer">
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
-                  data-bind="text: teamCallsign, click: team.markerFocus, clickBubble: false"></td>
+                  data-bind="text: teamCallsign"></td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
                   data-bind="text: currentStatus"></td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
-                  data-bind="text: statusSetAt"></td>
+                  data-bind="text: statusTimeAgoLabel"></td>
+              <td style="padding:4px 8px;border-bottom:1px solid #eee">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Tasking actions">               
+                  <button type="button" class="btn btn-small btn-outline-secondary"
+                      title="Zoom to"
+                      data-bind="click: $root.drawRouteToAsset, disable: !team.trackableAssets().length, clickBubble: false">
+                      <i class="fa fa-solid fa-car"></i>
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
-
+</div>
       <div class="text-center text-muted" data-bind="visible: !taskingLoading() && taskings().length === 0">
         No taskings yet.
       </div>

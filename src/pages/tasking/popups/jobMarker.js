@@ -1,8 +1,12 @@
 var L = require('leaflet');
 var ko = require('knockout');
 
-import { buildJobPopupKO } from './components/job_popup.js';
+import { buildJobPopupKO } from '../components/job_popup.js';
 
+
+import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } from '../utils/popup_dom_utils.js';
+
+require('leaflet-responsive-popup')
 
 export function addOrUpdateJobMarker(ko, map, vm, job) {
     const id = job.id?.();
@@ -15,23 +19,36 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     const { layerGroup, markers } = ensureGroup(vm, map, type);
     const style = styleForJob(job);
     const html = buildJobPopupKO();
+    const contentEl = makePopupNode(html, 'job-pop-root')
+
+    var popup = L.popup({
+        minWidth: 380,
+        maxWidth: 380,
+        minHeight: 300,
+        autoPan: true,
+        autoPanPadding: [16, 16]
+    }).setContent(contentEl);
+
+
+    const marker = L.marker([lat, lng], {
+        icon: makeShapeIcon(style),
+        title: job.identifier?.()
+    }).bindPopup(popup);
 
     if (markers.has(id)) {
         // update in place
+        const node = makePopupNode(html, 'job-pop-root');
         const m = markers.get(id);
         const pt = m.getLatLng();
         if (pt.lat !== lat || pt.lng !== lng) m.setLatLng([lat, lng]);
         const key = JSON.stringify(style);
         if (m._styleKey !== key) { m.setIcon(makeShapeIcon(style)); m._styleKey = key; }
-        if (!m._popupBound) { m.setPopupContent(html); wireKoForPopup(ko, m, job, vm, popupVM); }
+        if (!m._popupBound) { m.setPopupContent(node); wireKoForPopup(ko, m, job, vm, popupVM); }
         job.marker = m;
         return m;
     }
 
-    const marker = L.marker([lat, lng], {
-        icon: makeShapeIcon(style),
-        title: job.identifier?.()
-    }).bindPopup(html, { minWidth: 350, maxWidth: 500 });
+
 
     marker._styleKey = JSON.stringify(style);
     marker.addTo(layerGroup);
@@ -93,20 +110,22 @@ function safeMove(marker, job) {
 function wireKoForPopup(ko, marker, job, vm, popupVM) {
     if (marker._koWired) return;
     marker.on('popupopen', e => {
-        const el = e.popup.getElement();
-        if (el && !el.__ko_bound__) {
-            vm.mapVM.setOpen('job', job);
-            ko.applyBindings(popupVM, el);
-            el.__ko_bound__ = true;
-            job.onPopupOpen && job.onPopupOpen();
-        }
+        const el = e.popup.getContent();
+        vm.mapVM.setOpen?.('job', job);
+        bindKoToPopup(ko, popupVM, el);
+        job.onPopupOpen && job.onPopupOpen();
+        popupVM.updatePopup?.();
+        deferPopupUpdate(e.popup);
     });
     marker.on('popupclose', e => {
-        const el = e.popup.getElement();
-        if (el && el.__ko_bound__) { ko.cleanNode(el); delete el.__ko_bound__; job.onPopupClose && job.onPopupClose(); }
-        if (vm?.mapVM?.openPopup()?.ref === job) vm.mapVM.clearOpen();
+        const el = e.popup.getContent();
+        unbindKoFromPopup(ko, el);       // clean -> reset
+        job.onPopupClose && job.onPopupClose();
+        vm.mapVM.clearCrowFliesLine();
         vm.mapVM.clearRoutes();
         vm.mapVM.clearOpen?.();
+        if (vm?.mapVM?.openPopup()?.ref === job) vm.mapVM.clearOpen();
+
     });
     marker._popupBound = true;
     marker._koWired = true;

@@ -71,6 +71,11 @@ export function MapVM(Lmap, root) {
     if (self.distanceMarker) { self.map.removeLayer(self.distanceMarker); self.distanceMarker = null; }
   }
 
+  self.clearCrowFliesLine = () => {
+    console.log('clearing crow flies line');
+    if (self.crowFliesLine) { self.map.removeLayer(self.crowFliesLine); self.crowFliesLine = null; }
+  }
+
   const PopupStuff = {
 
     flyToBounds: (bounds, { opts }) => {
@@ -80,6 +85,7 @@ export function MapVM(Lmap, root) {
     clearRoutes: self.clearRoutes,
 
     registerRouteControl: (rc) => {
+      self.clearRoutes();
       self.activeRouteControl = rc;
       self.activeRouteControl.addTo(self.map);
     },
@@ -94,9 +100,11 @@ export function MapVM(Lmap, root) {
       self.crowFliesLine.addTo(self.map);
     },
 
-    clearCrowFliesLine: () => {
-      if (self.crowFliesLine) { self.map.removeLayer(self.crowFliesLine); self.crowFliesLine = null; }
-    },
+    clearCrowFliesLine: self.clearCrowFliesLine,
+
+    taskTeamToJobWithConfirm: (job, team) => {
+      root.showConfirmTaskingModal(job, team);
+    }
 
   }
 

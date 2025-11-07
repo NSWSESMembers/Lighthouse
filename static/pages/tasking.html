@@ -99,7 +99,7 @@
                                         </button>
                                         <button type="button" class="btn btn-outline-secondary" title="Zoom to"
                                             data-bind="click: t.markerFocus, disable: !t.trackableAssets().length, clickBubble: false">
-                                            <i class="fa fa-solid fa-street-view"></i>
+                                            <i class="fa fa-solid fa-crosshairs"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -280,6 +280,7 @@
                                                         <th scope="col" style="width:90px;">Callsign</th>
                                                         <th scope="col" style="width:160px;">Status</th>
                                                         <th scope="col" style="width:160px;">Time Stamp</th>
+                                                        <th scope="col" style="width:160px;">Actions</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody data-bind="foreach: { data: sortedTaskings, as: 't' }">
@@ -289,6 +290,31 @@
                                                         <td><span class="badge bg-warning text-dark"
                                                                 data-bind="text: t.currentStatus"></span></td>
                                                         <td data-bind="text: t.currentStatusTime"></td>
+                                                        <td>
+                                                            <div class="btn-group btn-group-sm" role="group"
+                                                                aria-label="Tasking actions">
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    title="Radio Log"
+                                                                    data-bind="click: t.openRadioLog, clickBubble: false">
+                                                                    <i class="fa fa-solid fa-clipboard-list"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    title="Message"
+                                                                    data-bind="click: t.openMessage, clickBubble: false">
+                                                                    <i class="fa fa-solid fa-envelope"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    title="Edit"
+                                                                    data-bind="click: t.editTasking, clickBubble: false">
+                                                                    <i class="fa fa-solid fa-pen"></i>
+                                                                </button>
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    title="Zoom to"
+                                                                    data-bind="click: t.team.markerFocus, disable: !t.team.trackableAssets().length, clickBubble: false">
+                                                                    <i class="fa fa-solid fa-street-view"></i>
+                                                                </button>
+                                                            </div>
+                                                        </td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -466,6 +492,7 @@
     </div>
 
     <script src="tasking/main.js" type="text/javascript"></script>
+
 
 </body>
 

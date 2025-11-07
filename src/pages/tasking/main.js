@@ -9,12 +9,19 @@ require('../lib/shared_chrome_code.js'); // side-effect
 import '../../../styles/pages/tasking.css';
 
 import { ResizeDividers } from './resize.js';
-import { addOrUpdateJobMarker, removeJobMarker } from './jobMarker.js';
-import { attachAssetMarker, detachAssetMarker } from './assetMarker.js';
+import { addOrUpdateJobMarker, removeJobMarker } from './popups/jobMarker.js';
+import { attachAssetMarker, detachAssetMarker } from './popups/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
 
+import { Asset } from './models/Asset.js';
+import { Tasking } from './models/Tasking.js';
+import { Team } from './models/Team.js';
+import { Job } from './models/Job.js';
+
+import { canon } from './utils/common.js';
+
 var $ = require('jquery');
-var moment = require('moment');
+
 var L = require('leaflet');
 var esri = require('esri-leaflet');
 
@@ -22,7 +29,6 @@ var token = '';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 var tokenExp = '';
 
-const safeStr = v => (v == null ? "" : String(v));
 
 
 require('leaflet-easybutton');
@@ -80,642 +86,6 @@ ResizeDividers(map)
 esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(map);
 
 
-function Tag(data = {}) {
-    const self = this;
-    self.id = ko.observable(data.Id ?? null);
-    self.name = ko.observable(data.Name ?? "");
-    self.tagGroupId = ko.observable(data.TagGroupId ?? null);
-}
-
-function Tasking(data = {}) {
-    const self = this;
-
-    self.job = ko.observable(null);
-
-    self.team = null;
-
-    // raw
-    self.id = ko.observable(data.Id ?? null);
-    self.currentStatus = ko.observable(data.CurrentStatus ?? "");
-    self.currentStatusTime = ko.observable(data.CurrentStatusTime ?? null);
-    self.currentStatusId = ko.observable(data.CurrentStatusId ?? null);
-    self.estimatedStatusEndTime = ko.observable(data.EstimatedStatusEndTime ?? null);
-    self.enroute = ko.observable(data.Enroute ?? null);
-    self.enrouteEstimatedCompletion = ko.observable(data.EnrouteEstimatedCompletion ?? null);
-    self.onsite = ko.observable(data.Onsite ?? null);
-    self.onsiteEstimatedCompletion = ko.observable(data.OnsiteEstimatedCompletion ?? null);
-    self.offsite = ko.observable(data.Offsite ?? null);
-    self.complete = ko.observable(data.Complete ?? null);
-
-    self.sequence = ko.observable(data.Sequence ?? 0);
-    self.manifest = ko.observableArray(data.Manifest || []);
-    self.distanceToScene = ko.observable(data.DistanceToScene ?? null);
-    self.injuriesSustained = ko.observable(!!data.InjuriesSustained);
-    self.aarCompleted = ko.observable(!!data.AARCompleted);
-    self.cispRequired = ko.observable(!!data.CISPRequired);
-    self.riskAssessmentCompleted = ko.observable(!!data.RiskAssessmentCompleted);
-    self.vesselUsed = ko.observable(!!data.VesselUsed);
-    self.primaryActivityType = ko.observable(data.PrimaryActivityType ?? null);
-    self.primaryTaskType = ko.observable(data.PrimaryTaskType ?? null);
-    self.actionTaken = ko.observable(data.ActionTaken ?? null);
-    self.equipmentUsed = ko.observableArray(data.EquipmentUsed || []);
-    self.equipmentKeptByName = ko.observable(data.EquipmentKeptByName ?? null);
-    self.equipmentKeptByNumber = ko.observable(data.EquipmentKeptByNumber ?? null);
-    self.injuries = ko.observableArray(data.Injuries || []);
-    self.safetyManagementSheet = ko.observable(data.SafetyManagementSheet ?? null);
-
-    // status helpers
-    self.statusSince = ko.pureComputed(() => (self.currentStatusTime() ? new Date(self.currentStatusTime()) : null));
-    self.statusAgeSeconds = ko.pureComputed(() => {
-        const d = self.statusSince();
-        return d ? Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000)) : null;
-    });
-    self.statusSetAt = ko.pureComputed(() => (self.currentStatusTime() ? moment(self.currentStatusTime()).format("DD/MM/YYYY HH:mm:ss") : null));
-
-
-    self.isTasked = ko.pureComputed(() => (self.currentStatus() || "").toLowerCase() === "tasked");
-    self.isEnroute = ko.pureComputed(() => (self.currentStatus() || "").toLowerCase() === "enroute");
-    self.isOnsite = ko.pureComputed(() => (self.currentStatus() || "").toLowerCase() === "onsite");
-    self.isComplete = ko.pureComputed(() => !!self.complete());
-
-    // convenience proxies
-    self.teamCallsign = ko.pureComputed(() => self.team.callsign());
-    self.jobIdentifier = ko.pureComputed(() => self.job.identifier());
-    self.jobTypeName = ko.pureComputed(() => self.job.typeName());
-    self.jobPriority = ko.pureComputed(() => self.job.priorityName());
-    self.prettyAddress = ko.pureComputed(() => self.job.address.prettyAddress() || self.job.address.short());
-
-
-    // patch model with partial updates
-    self.updateFrom = (patch = {}) => {
-        if (patch.CurrentStatus !== undefined) self.currentStatus(patch.CurrentStatus);
-        if (patch.CurrentStatusTime !== undefined) self.currentStatusTime(patch.CurrentStatusTime);
-        if (patch.CurrentStatusId !== undefined) self.currentStatusId(patch.CurrentStatusId);
-        if (patch.EstimatedStatusEndTime !== undefined) self.estimatedStatusEndTime(patch.EstimatedStatusEndTime);
-        if (patch.Enroute !== undefined) self.enroute(patch.Enroute);
-        if (patch.Onsite !== undefined) self.onsite(patch.Onsite);
-        if (patch.Offsite !== undefined) self.offsite(patch.Offsite);
-        if (patch.Complete !== undefined) self.complete(patch.Complete);
-    };
-
-    self.setJob = function (newJob) {
-        const prev = self.job;
-        if (prev === newJob) return;
-
-        // detach from previous job list
-        if (prev && typeof prev.taskings === 'function') {
-            prev.taskings.remove(x => x.id && x.id() === self.id());
-        }
-
-        // set new ref
-        self.job(newJob || null);
-
-        // attach to new job list without recursion
-        if (newJob && typeof newJob.taskings === 'function') {
-            const exists = newJob.taskings().some(x => x.id() === self.id());
-            if (!exists) newJob.taskings.push(self);
-        }
-    };
-
-    myViewModel.mapVM.activeRouteControl = null;
-    self._routeSubs = []; // KO subscriptions for live updates
-
-    self.getTeamLatLng = function () {
-        // Prefer live asset location if available; otherwise fall back to team HQ (assignedTo)
-        const t = self.team;
-        if (!t) return null;
-        const assets = t.trackableAssets && t.trackableAssets();
-        if (assets && assets.length > 0) {
-            const a = assets[0];
-            const lat = +ko.unwrap(a.latitude), lng = +ko.unwrap(a.longitude);
-            if (Number.isFinite(lat) && Number.isFinite(lng)) return L.latLng(lat, lng);
-        }
-        const lat = +ko.unwrap(t.assignedTo.latitude), lng = +ko.unwrap(t.assignedTo.longitude);
-        return Number.isFinite(lat) && Number.isFinite(lng) ? L.latLng(lat, lng) : null;
-    }
-
-    self.getJobLatLng = function () {
-        const j = self.job;
-        if (!j) return null;
-        const lat = +ko.unwrap(j.address.latitude), lng = +ko.unwrap(j.address.longitude);
-        return Number.isFinite(lat) && Number.isFinite(lng) ? L.latLng(lat, lng) : null;
-    }
-
-    self.clearRouteSubs = function () {
-
-        while (self._routeSubs.length) {
-            const sub = self._routeSubs.pop();
-            try { sub?.dispose?.(); } catch { /* ignore */ }
-        }
-    };
-
-    
-
-}
-
-function Team(data = {}) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self = this;
-    self.id = ko.observable(data.Id ?? null);
-    self.callsign = ko.observable(data.Callsign ?? "");
-    self.assignedTo = new Entity(data.EntityAssignedTo || data.CreatedAt);
-    self.status = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
-    self.members = ko.observableArray(data.Members);
-    self.teamLeader = ko.computed(function () {
-        const leader = ko.unwrap(self.members).find(m => m.TeamLeader === true);
-        return leader ? `${leader.Person.FirstName} ${leader.Person.LastName}` : '-';
-    });
-
-    self.trackableAssets = ko.observableArray([]);
-
-    self.expanded = ko.observable(false);
-
-
-    self.taskingLoading = ko.observable(true);
-    self.taskings = ko.observableArray([]);
-
-    self.statusName = ko.pureComputed(() => {
-        return (self.status() && self.status().Name) || "Unknown";
-    })
-
-    self.activeTaskingsCount = ko.pureComputed(() => {
-        return self.filteredTaskings() && self.filteredTaskings().length || 0;
-    })
-
-    self.filteredTaskings = ko.pureComputed(() => {
-        const ignoreList = [
-            "Complete",
-            "Untasked",
-            "CalledOff"
-        ];
-        return ko.utils.arrayFilter(this.taskings(), ts => {
-            if (ignoreList.includes(ts.currentStatus())) {
-                return false;
-            }
-            return true;
-        }).sort((a, b) => new Date(b.currentStatusTime()) - new Date(a.currentStatusTime()));
-    });
-
-    self.taskingRowColour = ko.pureComputed(() => {
-        if (self.activeTaskingsCount() === 0) {
-            return '#d4edda'; // light green
-        }
-    })
-
-    self.teamLink = ko.pureComputed(() => `${params.source}/Teams/${self.id()}/Edit`);
-
-    self.openBeaconEditTeam = () => {
-        window.open(self.teamLink(), '_blank');
-        event.preventDefault();
-    };
-
-
-    self.toggle = () => self.expanded(!self.expanded());
-    self.expand = () => self.expanded(true);
-    self.collapse = () => self.expanded(false);
-    self.expanded.subscribe(function (isExpanded) {
-        if (isExpanded && self.taskingLoading()) {
-            self.fetchTasking();
-        }
-    });
-
-    self.updateStatusById = function (statusId) {
-        const status = teamStatusById[statusId];
-        if (status) {
-            self.status(status);
-        }
-    }
-    self.fetchTasking = function () {
-        BeaconClient.team.getTasking(self.id.peek(), apiHost, params.userId, token, function (tasking) {
-            tasking.Results.forEach(t => {
-                self.upsertTaskingFromPayload(myViewModel, t);
-            })
-            self.taskingLoading(false);
-        })
-    }
-
-    self.findTaskingById = function (taskingId) {
-        const arr = this.taskings && ko.unwrap(this.taskings);
-        if (!arr) return undefined;
-        return arr.find(t => t.id && t.id() === taskingId);
-    }
-
-    self.upsertTaskingFromPayload = function (vm, taskingJson) {
-        const t = vm.upsertTaskingFromPayload(taskingJson, { teamContext: self });
-        // ensure it's listed under this team locally
-        const existsLocally = self.taskings().some(x => x.id() === t.id());
-        if (!existsLocally) self.taskings.push(t);
-    };
-
-    //only handle single asset for now
-    self.markerFocus = function () {
-        if (!map) return;
-        const lat = self.trackableAssets()[0].latitude();
-        const lng = self.trackableAssets()[0].longitude();
-        if (!lat || !lng) return;
-        console.log("Focusing map to asset at:", lat, lng);
-        if (Number.isFinite(lat) && Number.isFinite(lng)) {
-            map.flyTo([lat, lng], 14, { animate: true, duration: 0.10 });
-            self.trackableAssets()[0].marker.openPopup();
-        }
-    }
-
-    const teamStatusById = {
-        1: {
-            Key: "Standby",
-            Id: 1,
-            Name: "Standby",
-            Description: "Standby",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        },
-        2: {
-            Key: "OnAlert",
-            Id: 2,
-            Name: "OnAlert",
-            Description: "On Alert",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        },
-        3: {
-            Key: "Activated",
-            Id: 3,
-            Name: "Activated",
-            Description: "Activated",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        },
-        4: {
-            Key: "Rest",
-            Id: 4,
-            Name: "Rest",
-            Description: "Rest",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        },
-        5: {
-            Key: "StoodDown",
-            Id: 5,
-            Name: "StoodDown",
-            Description: "Stood down",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        }
-    };
-}
-
-function Address(data = {}) {
-    const self = this;
-    self.gnafId = ko.observable(data.GnafId ?? null);
-    self.latitude = ko.observable(data.Latitude ?? null);
-    self.longitude = ko.observable(data.Longitude ?? null);
-    self.streetNumber = ko.observable(data.StreetNumber ?? "");
-    self.street = ko.observable(data.Street ?? "");
-    self.locality = ko.observable(data.Locality ?? "");
-    self.postCode = ko.observable(data.PostCode ?? "");
-    self.prettyAddress = ko.observable(data.PrettyAddress ?? "");
-
-    self.latLng = ko.pureComputed(() => {
-        const lat = +self.latitude(), lng = +self.longitude();
-        return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
-    });
-
-    self.short = ko.pureComputed(() => {
-        const a = [self.streetNumber(), self.street()].filter(Boolean).join(" ");
-        const b = [self.locality(), "NSW"].filter(Boolean).join(", ");
-        return [a, b].filter(Boolean).join(", ");
-    });
-}
-
-function Asset(data = {}) {
-    const self = this;
-    self.id = ko.observable(data.properties.id ?? null);
-    self.name = ko.observable(data.properties.name ?? "");
-    self.markerLabel = ko.observable(data.markerLabel ?? "");
-    self.latitude = ko.observable(data.geometry.coordinates[1] ?? null);
-    self.longitude = ko.observable(data.geometry.coordinates[0] ?? null);
-    self.capability = ko.observable(data.properties.capability ?? "");
-    self.entity = ko.observable(data.properties.entity ?? "");
-    self.resourceType = ko.observable(data.properties.resourceType ?? "");
-    self.lastSeen = ko.observable(data.lastSeen ?? "");
-    self.licensePlate = ko.observable(data.properties.licensePlate ?? "");
-    self.direction = ko.observable(data.properties.direction ?? null);
-    self.talkgroup = ko.observable(data.properties.talkgroup ?? "");
-    self.talkgroupLastUpdated = ko.observable(data.properties.talkgroupLastUpdated ?? "");
-    self.marker = null;
-    self.matchingTeams = ko.observableArray();
-
-
-    self.lastSeenText = ko.pureComputed(() => {
-        const v = safeStr(self.lastSeen?.());
-        if (!v) return "";
-        const d = new Date(v);
-        if (isNaN(d)) return v;
-        return fmtRelative(d) + " — " + d.toLocaleString();
-    });
-
-    self.talkgroupLastUpdatedText = ko.pureComputed(() => {
-        const v = safeStr(self.talkgroupLastUpdated?.());
-        if (!v) return "";
-        const d = new Date(v);
-        if (isNaN(d)) return v;
-        return fmtRelative(d);
-    });
-
-    self.latLngText = ko.pureComputed(() => {
-        const lat = self.latitude?.();
-        const lng = self.longitude?.();
-        if (lat == null || lng == null) return "";
-        return `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
-    });
-
-    Asset.prototype.updateFromJson = function (d = {}) {
-        if (!d) return;
-
-        if (d.properties !== undefined) {
-            if (d.properties.direction !== undefined) this.direction(d.properties.direction);
-            if (d.properties.talkgroup !== undefined) this.talkgroup(d.properties.talkgroup);
-            if (d.properties.talkgroupLastUpdated !== undefined) this.talkgroupLastUpdated(d.properties.talkgroupLastUpdated);
-        }
-
-        if (d.markerLabel !== undefined) this.markerLabel(d.markerLabel);
-        if (d.geometry !== undefined && Array.isArray(d.geometry.coordinates)) {
-            if (d.geometry.coordinates[1] !== undefined) this.latitude(d.geometry.coordinates[1]);
-            if (d.geometry.coordinates[0] !== undefined) this.longitude(d.geometry.coordinates[0]);
-        }
-
-        if (d.lastSeen !== undefined) this.lastSeen(d.lastSeen);
-    }
-}
-
-function Entity(data = {}) {
-    const self = this;
-    self.id = ko.observable(data.Id ?? null);
-    self.code = ko.observable(data.Code ?? "");
-    self.name = ko.observable(data.Name ?? "");
-    self.latitude = ko.observable(data.Latitude ?? null);
-    self.longitude = ko.observable(data.Longitude ?? null);
-    self.parentEntity = ko.observable(
-        data.ParentEntity ? { id: data.ParentEntity.Id, code: data.ParentEntity.Code, name: data.ParentEntity.Name } : null
-    );
-}
-
-function Job(data = {}) {
-    const self = this;
-
-    // raw
-    self.id = ko.observable(data.Id ?? null);
-    self.identifier = ko.observable(data.Identifier ?? "");
-    self.typeId = ko.observable(data.TypeId ?? null);
-    self.type = ko.observable(data.Type ?? "");
-    self.callerName = ko.observable(data.CallerName ?? "");
-    self.callerNumber = ko.observable(data.CallerNumber ?? "");
-    self.contactName = ko.observable(data.ContactName ?? "");
-    self.contactNumber = ko.observable(data.ContactNumber ?? "");
-    self.permissionToEnterPremises = ko.observable(!!data.PermissionToEnterPremises);
-    self.howToEnterPremises = ko.observable(data.HowToEnterPremises ?? null);
-    self.jobReceived = ko.observable(data.JobReceived ?? null);
-    self.jobPriorityType = ko.observable(data.JobPriorityType || null); // {Id,Name,Description}
-    self.jobStatusType = ko.observable(data.JobStatusType || null);     // {Id,Name,Description}
-    self.jobType = ko.observable(data.JobType || null);                 // {Id,Name,...}
-    self.entityAssignedTo = new Entity(data.EntityAssignedTo || {});
-    self.lga = ko.observable(data.LGA ?? "");
-    self.address = new Address(data.Address || {});
-    self.tags = ko.observableArray((data.Tags || []).map(t => new Tag(t)));
-    self.taskingCategory = ko.observable(data.TaskingCategory ?? 0);
-    self.situationOnScene = ko.observable(data.SituationOnScene ?? "");
-    self.eventId = ko.observable(data.EventId ?? null);
-    self.printCount = ko.observable(data.PrintCount ?? 0);
-    self.actionRequiredTags = ko.observableArray(data.ActionRequiredTags || []);
-    self.categories = ko.observableArray(data.Categories || []);
-    self.inFrao = ko.observable(!!data.InFrao);
-    self.imageCount = ko.observable(data.ImageCount ?? 0);
-    self.icemsIncidentIdentifier = ko.observable(data.ICEMSIncidentIdentifier);
-    self.expanded = ko.observable(false);
-    self.toggle = () => self.expanded(!self.expanded());
-    self.expand = () => self.expanded(true);
-    self.collapse = () => self.expanded(false);
-    self.taskingLoading = ko.observable(true);
-
-    self.lastDataUpdate = new Date()
-
-    self.dataRefreshTimer = null;
-
-    self.startDataRefreshCheck = function () {
-        if (self.dataRefreshTimer) clearInterval(self.dataRefreshTimer);
-
-        self.dataRefreshTimer = setInterval(() => {
-            const now = new Date();
-            const last = self.lastDataUpdate;
-            if (!last || (now - last) > 120000) {
-                self.refreshData();
-            }
-        }, 30000);
-    };
-
-    self.stopDataRefreshCheck = function () {
-        if (self.dataRefreshTimer) {
-            clearInterval(self.dataRefreshTimer);
-            self.dataRefreshTimer = null;
-        }
-    };
-
-    self.startDataRefreshCheck() //start counting for a refresh
-
-    //refs to other obs
-    self.marker = null;  // will hold the L.Marker instance
-    self.taskings = ko.observableArray(); //array of taskings
-
-
-    self.sortedTaskings = ko.computed(function () {
-        return self.taskings()
-            .slice() // clone array
-            .sort(function (a, b) {
-                return new Date(a.currentStatusTime) - new Date(b.currentStatusTime);
-            });
-    });
-
-    // computed
-    self.jobLink = ko.pureComputed(() => `${params.source}/Jobs/${self.id()}`);
-    self.priorityName = ko.pureComputed(() => (self.jobPriorityType() && self.jobPriorityType().Name) || "");
-    self.statusName = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Name) || "");
-    self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
-    self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
-    self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
-    self.ageSeconds = ko.pureComputed(() => {
-        const d = self.receivedAt();
-        return d ? Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000)) : null;
-    });
-    self.tagsCsv = ko.pureComputed(() => {
-        return self.tags().map(t => t.name()).join(", ");
-    })
-
-    self.rowColour = ko.pureComputed(() => {
-        switch (self.priorityName()) {
-            case 'Rescue': return '#f1bfbf';
-            case 'Priority': return '#fcf8e3';
-            case 'Immediate': return '#d9edf7';
-            case 'General': return '#ffffff';
-            default: return '';
-        }
-    });
-
-    self.bannerBGColour = ko.pureComputed(() => {
-        const p = self.jobPriorityType()
-        const desc = p.Description;
-        if (desc === "Life Threatening") return "red";
-        if (desc === "Priority Response") return "rgb(255, 165, 0)";
-        if (desc === "Immediate Response") return "rgb(79, 146, 255)";
-        return "#1f2937";
-    })
-
-
-
-    self.categoriesName = ko.pureComputed(() => {
-        const beaconCats = {
-            7: "Orange",
-            8: "Red",
-            9: "Category1",
-            10: "Category2",
-            11: "Category3",
-            12: "Category4",
-            13: "Category5"
-        }
-        if (!self.categories || self.categories().length === 0) return "";
-        const c = self.categories()[0].Id;
-        return beaconCats[c] || "";
-    })
-
-    Job.prototype.updateFromJson = function (d = {}) {
-
-        self.startDataRefreshCheck() //restart counting for a refresh
-
-        // scalars
-        if (d.Identifier !== undefined) this.identifier(d.Identifier);
-        if (d.TypeId !== undefined) this.typeId(d.TypeId);
-        if (d.Type !== undefined) this.type(d.Type);
-        if (d.CallerName !== undefined) this.callerName(d.CallerName || "");
-        if (d.CallerNumber !== undefined) this.callerNumber(d.CallerNumber || "");
-        if (d.ContactName !== undefined) this.contactName(d.ContactName || "");
-        if (d.ContactNumber !== undefined) this.contactNumber(d.ContactNumber || "");
-        if (d.PermissionToEnterPremises !== undefined) this.permissionToEnterPremises(!!d.PermissionToEnterPremises);
-        if (d.HowToEnterPremises !== undefined) this.howToEnterPremises(d.HowToEnterPremises ?? null);
-        if (d.JobReceived !== undefined) this.jobReceived(d.JobReceived || null);
-        if (d.LGA !== undefined) this.lga(d.LGA || "");
-        if (d.TaskingCategory !== undefined) this.taskingCategory(d.TaskingCategory ?? 0);
-        if (d.SituationOnScene !== undefined) this.situationOnScene(d.SituationOnScene || "");
-        if (d.EventId !== undefined) this.eventId(d.EventId ?? null);
-        if (d.PrintCount !== undefined) this.printCount(d.PrintCount ?? 0);
-        if (d.InFrao !== undefined) this.inFrao(!!d.InFrao);
-        if (d.ImageCount !== undefined) this.imageCount(d.ImageCount ?? 0);
-
-        // structured
-        if (d.JobPriorityType !== undefined) this.jobPriorityType(d.JobPriorityType || null);
-        if (d.JobStatusType !== undefined) this.jobStatusType(d.JobStatusType || null);
-        if (d.JobType !== undefined) this.jobType(d.JobType || null);
-
-        if (d.EntityAssignedTo !== undefined) {
-            this.entityAssignedTo.id(d.EntityAssignedTo?.Id ?? null);
-            this.entityAssignedTo.code(d.EntityAssignedTo?.Code ?? "");
-            this.entityAssignedTo.name(d.EntityAssignedTo?.Name ?? "");
-            this.entityAssignedTo.latitude(d.EntityAssignedTo?.Latitude ?? null);
-            this.entityAssignedTo.longitude(d.EntityAssignedTo?.Longitude ?? null);
-            this.entityAssignedTo.parentEntity(
-                d.EntityAssignedTo?.ParentEntity
-                    ? {
-                        id: d.EntityAssignedTo.ParentEntity.Id,
-                        code: d.EntityAssignedTo.ParentEntity.Code,
-                        name: d.EntityAssignedTo.ParentEntity.Name
-                    }
-                    : null
-            );
-        }
-
-        if (d.Address !== undefined) {
-            this.address.gnafId(d.Address?.GnafId ?? null);
-            this.address.latitude(d.Address?.Latitude ?? null);
-            this.address.longitude(d.Address?.Longitude ?? null);
-            this.address.streetNumber(d.Address?.StreetNumber ?? "");
-            this.address.street(d.Address?.Street ?? "");
-            this.address.locality(d.Address?.Locality ?? "");
-            this.address.postCode(d.Address?.PostCode ?? "");
-            this.address.prettyAddress(d.Address?.PrettyAddress ?? "");
-        }
-
-        if (Array.isArray(d.Tags)) {
-            this.tags(d.Tags.map(t => new Tag(t)));
-        }
-        if (Array.isArray(d.ActionRequiredTags)) {
-            this.actionRequiredTags(d.ActionRequiredTags.slice());
-        }
-        if (Array.isArray(d.Categories)) {
-            this.categories(d.Categories.slice());
-        }
-    };
-
-    self.addTasking = function (t) {
-        if (!t || typeof t.id !== 'function') return;
-        const id = t.id();
-        if (!self.taskings().some(x => x.id() === id)) self.taskings.push(t);
-        // ensure backref points to this canonical job
-        if (!t.job || typeof t.job !== 'function' || t.job() !== self) {
-            t.setJob(self);
-        }
-    };
-
-    self.removeTasking = function (t) {
-        if (!t || typeof t.id !== 'function') return;
-        const id = t.id();
-        self.taskings.remove(x => x.id() === id);
-        if (t.job && typeof t.job === 'function' && t.job() === self) {
-            t.setJob(null);
-        }
-    };
-
-    self.focusMap = function () {
-        if (!map) return;
-        const lat = self.address.latitude();
-        const lng = self.address.longitude();
-        console.log("Focusing map to job at:", lat, lng);
-        if (Number.isFinite(lat) && Number.isFinite(lng)) {
-            map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
-            self.marker.openPopup();
-        }
-    }
-
-    self.onPopupOpen = function () {
-        self.taskingLoading(true);
-        self.fetchTasking();
-
-    };
-
-    self.onPopupClose = function () {
-        // popup closing logic goes here
-    };
-
-    self.fetchTasking = function () {
-        BeaconClient.job.getTasking(self.id(), apiHost, params.userId, token, function (tasking) {
-            tasking.Results.forEach(t => {
-                myViewModel.upsertTaskingFromPayload(t); // VM attaches the shared Job ref automatically
-            });
-            self.taskingLoading(false);
-        })
-    }
-
-    self.refreshData = function () {
-        BeaconClient.job.get(self.id(), 1, apiHost, params.userId, token, function (r) {
-            self.updateFromJson(r)
-            self.lastDataUpdate = new Date()
-        })
-    }
-}
-
-
 function VM() {
     const self = this;
 
@@ -735,24 +105,27 @@ function VM() {
     self.teams = ko.observableArray();
     self.jobs = ko.observableArray();
     self.taskings = ko.observableArray();
-
     self.trackableAssets = ko.observableArray([]);
 
 
-    // --- Vehicle Layer ---
 
-    self.jobSearch = ko.observable('');
 
+
+    // filters for what teams to ignore
     self.teamStatusFilterList = ko.observableArray([
         "Standby",
         "Stood down"
     ]);
 
+    //filters for what jobs to ignore
     self.jobsStatusFilterList = ko.observableArray([
         "Finalised",
         "Cancelled",
         "Complete"
     ])
+
+    //Job filtering/searching
+    self.jobSearch = ko.observable('');
 
     self.filteredJobs = ko.pureComputed(() => {
 
@@ -781,10 +154,8 @@ function VM() {
 
 
     self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
-        const ignoreList = [
-            "Finalised",
-            "Cancelled"
-        ];
+
+        const ignoreList = self.jobsStatusFilterList();
 
         const hqsFilter = Array.from(incidentLocationFilter.values()).map(f => ({ Id: f.id }));
 
@@ -805,6 +176,7 @@ function VM() {
         });
     }).extend({ trackArrayChanges: true });
 
+    // Team filtering/searching
     self.teamSearch = ko.observable('');
 
     self.filteredTeams = ko.pureComputed(() => {
@@ -823,10 +195,7 @@ function VM() {
         })
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
-    const canon = s => (s || "")
-        .toString()
-        .toUpperCase()
-        .replace(/[^A-Z0-9]/g, ""); // drop hyphens, spaces, etc.
+
 
     self.filteredTrackableAssets = ko.pureComputed(() => {
 
@@ -846,23 +215,70 @@ function VM() {
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
+    function makeJobDeps() {
+        return {
+            makeJobLink: (id) => `${params.source}/Jobs/${id}`,
+
+            fetchJobTasking: (jobId, cb) => {
+                BeaconClient.job.getTasking(jobId, apiHost, params.userId, token, (res) => {
+                    (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload((t)));
+                    cb(true);
+                }, (err) => {
+                    console.error("Failed to fetch job tasking:", err);
+                    cb(false);
+                });
+            },
+
+            fetchJobById: (jobId) =>
+                new Promise((resolve, reject) => {
+                    BeaconClient.job.get(jobId, 1, apiHost, params.userId, token,
+                        r => resolve(r),
+                        e => reject(e)
+                    );
+                }),
+
+            flyToJob: (job) => {
+                const lat = job.address.latitude?.();
+                const lng = job.address.longitude?.();
+                if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
+                    job.marker?.openPopup?.();
+                }
+            }
+        };
+    }
+
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
     self.getOrCreateTeam = function (teamJson) {
         if (!teamJson || teamJson.Id == null) return null;
+
+        const deps = {
+            upsertTasking: (tj, opts) => self.upsertTaskingFromPayload(tj, opts),
+            getTeamTasking: (teamId) =>
+                new Promise((resolve, reject) => {
+                    BeaconClient.team.getTasking(teamId, apiHost, params.userId, token, resolve, reject);
+                }),
+            makeTeamLink: (id) => `${params.source}/Teams/${id}/Edit`,
+            flyToAsset: (asset) => {
+                const lat = asset.latitude(), lng = asset.longitude();
+                if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    map.flyTo([lat, lng], 14, { animate: true, duration: 0.10 });
+                    asset.marker?.openPopup?.();
+                }
+            }
+        };
+
         let team = self.teamsById.get(teamJson.Id);
         if (team) {
             team.callsign(teamJson.Callsign ?? team.callsign());
-            if (teamJson.CurrentStatusId != null) {
-                team.updateStatusById(teamJson.CurrentStatusId);
-            } else {
-                team.status(teamJson.TeamStatusType || team.status());
-            }
+            if (teamJson.CurrentStatusId != null) team.updateStatusById(teamJson.CurrentStatusId);
+            else team.status(teamJson.TeamStatusType || team.status());
             team.members = ko.observableArray(teamJson.Members);
-            self._refreshTeamTrackableAssets(team); //incase the callsign changed
+            self._refreshTeamTrackableAssets(team);
             return team;
         }
-        team = new Team(teamJson);
-        //team.fetchTasking()
+
+        team = new Team(teamJson, deps);
         self.teams.push(team);
         self.teamsById.set(team.id(), team);
         self._refreshTeamTrackableAssets(team);
@@ -871,17 +287,17 @@ function VM() {
 
     // Job registry/upsert
     self.getOrCreateJob = function (jobJson) {
-        if (!jobJson || jobJson.Id == null) return null;
+        const deps = makeJobDeps();
         let job = this.jobsById.get(jobJson.Id);
         if (job) {
             job.updateFromJson(jobJson);
             return job;
         }
-        job = new Job(jobJson);
-        this.jobs.push(job);
+        job = new Job(jobJson, deps);
         this.jobsById.set(job.id(), job);
+        this.jobs.push(job);
         return job;
-    };
+    }
 
     // asset registry/upsert
     self.getOrCreateAsset = function (assetJson) {
@@ -920,7 +336,7 @@ function VM() {
         (self.trackableAssets() || []).forEach(a => {
             const has = list.find(x => x.id() === a.id())
             const match = self._assetMatchesTeam(a, team);
-             if (match && !has) {
+            if (match && !has) {
                 team.trackableAssets.push(a);
                 a.matchingTeams.push(team)
             }
@@ -950,7 +366,7 @@ function VM() {
 
     // Tasking registry/upsert (NEW magical 2.0 way of doing it)
     self.upsertTaskingFromPayload = function (taskingJson, { teamContext = null } = {}) {
-
+        console.log("Upserting tasking from payload:", taskingJson);
         if (!taskingJson || taskingJson.Id == null) return null;
 
         // Resolve shared refs
@@ -960,8 +376,10 @@ function VM() {
         let t = self.taskingsById.get(taskingJson.Id);
 
         if (t) {
+            console.log("Updating existing tasking:", t.id());
             t.updateFrom(taskingJson); //update the tasking inplace
         } else {
+            console.log("Creating new tasking:", taskingJson.Id);
             t = new Tasking(taskingJson); //make a new one
             self.taskings.push(t);
             self.taskingsById.set(t.id(), t);
@@ -970,7 +388,7 @@ function VM() {
         // Attach shared references
         if (teamRef) t.team = teamRef; //bind the team to the tasking
         self._linkTaskingAndJob(t, jobRef);  //bind the tasking to the job
-
+        teamRef.addTaskingIfNotExists(t);              //ensure the team has the tasking listed
         return t;
     };
 
@@ -1014,12 +432,16 @@ function VM() {
     };
 
     self._linkTaskingAndJob = function (tasking, job) {
+        console.log("Linking tasking:", tasking.id(), "with job:", job.id());
         if (!tasking) return;
-        const prev = tasking.job.id && tasking.job || null; // current job ref
-        if (prev && prev !== job) prev.removeTasking(tasking);   // detach from old job
+        const prev = tasking.job && tasking.job.id && tasking.job || null; // current job ref
+        if (prev && prev.id() !== job.id()) {
+            console.log("Previous job does not match the new job");
+            prev.removeTasking(tasking);   // detach from old job
+        }
         if (job) {
             tasking.job = job;                                     // set shared ref
-            job.addTasking(tasking);                               // attach to new job
+            job.addTasking(tasking);                               // attach to new job. has dup check
         } else {
             tasking.job = null;
         }
@@ -1028,24 +450,12 @@ function VM() {
 
     self.markerLayersControl = null;    // optional Leaflet layer control
 
-
-
     self.assignJobToTeam = function (teamVm, jobVm) {
         BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, token, function () {
             jobVm.fetchTasking();
             teamVm.fetchTasking();
         })
     }
-
-    // Used by the popup dropdown; KSB friendly
-    self.assignJobToPopup = function (teamVm) {
-        const jobVm = self._popupJob;
-        if (!teamVm || !jobVm) return;
-        return self.assignJobToTeam(teamVm, jobVm);
-    };
-
- 
-
 
     //fetch tasking if a team is added
     self.filteredTeams.subscribe((data) => {
@@ -1055,13 +465,6 @@ function VM() {
             }
         });
     }, null, "arrayChange");
-
-    // fetch tasking if a job is added
-    // self.filteredJobs.subscribe((data) => {
-    //     data.forEach(change => {
-    //        change.value.fetchTasking()
-    //     });
-    // }, null, "arrayChange");
 
 
     // automatically refresh markers when jobs change
@@ -1089,7 +492,35 @@ function VM() {
         });
     }, null, "arrayChange");
 
+    self.showConfirmTaskingModal = function (jobVm, teamVm) {
+        console.log(jobVm, teamVm);
+        if (!jobVm || !teamVm) return;
+
+        // Fill modal text
+        const jobIdEl = document.getElementById('confirmJobId');
+        const teamCallsignEl = document.getElementById('confirmTeamCallsign');
+        if (jobIdEl) jobIdEl.textContent = jobVm.identifier();
+        if (teamCallsignEl) teamCallsignEl.textContent = teamVm.callsign() || '(unknown)';
+
+        // Bootstrap modal
+        const modalEl = document.getElementById('confirmTaskingModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+
+        // Reset and rebind "Yes" button
+        const oldBtn = document.getElementById('confirmTaskingYes');
+        if (!oldBtn) return;
+        oldBtn.replaceWith(oldBtn.cloneNode(true));
+        const yesBtn = document.getElementById('confirmTaskingYes');
+
+        yesBtn.addEventListener('click', () => {
+            modal.hide();
+            self.assignJobToTeam(teamVm, jobVm);
+        });
+    };
+
 }
+
 window.addEventListener('resize', () => map.invalidateSize());
 
 
@@ -1250,27 +681,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     const jobVm = payload.data;
                     const teamVm = team;
+                    ctx.$root.showConfirmTaskingModal(jobVm, teamVm);
 
-                    // Fill modal text
-                    document.getElementById('confirmJobId').textContent = jobVm.id();
-                    document.getElementById('confirmTeamCallsign').textContent = teamVm.callsign() || '(unknown)';
-
-                    // Bootstrap modal
-                    const modalEl = document.getElementById('confirmTaskingModal');
-                    const modal = new bootstrap.Modal(modalEl);
-                    modal.show();
-
-                    // Reset and rebind "Yes" button
-                    const oldBtn = document.getElementById('confirmTaskingYes');
-                    oldBtn.replaceWith(oldBtn.cloneNode(true));
-                    const yesBtn = document.getElementById('confirmTaskingYes');
-
-                    yesBtn.addEventListener('click', () => {
-                        modal.hide();
-                        if (typeof onDrop === 'function') {
-                            onDrop.call(ctx.$root, teamVm, jobVm, { event: ev, context: ctx });
-                        }
-                    });
                 });
             }
         };
@@ -1493,19 +905,3 @@ function transformToAssocArray(prmstr) {
     return params;
 }
 
-function fmtRelative(dateObj) {
-    const now = Date.now();
-    const t = dateObj.getTime();
-    if (isNaN(t)) return "";
-    const s = Math.max(0, Math.floor((now - t) / 1000));
-    if (s < 60) return `${s}s ago`;
-    const m = Math.floor(s / 60);
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h ago`;
-    const d = Math.floor(h / 24);
-    if (d === 1) return "yesterday";
-    if (d < 7) return `${d}d ago`;
-    const w = Math.floor(d / 7);
-    return `${w}w ago`;
-}
