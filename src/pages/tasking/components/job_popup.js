@@ -94,7 +94,7 @@ export function buildJobPopupKO() {
               <td style="padding:4px 8px;border-bottom:1px solid #eee">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Tasking actions">               
                   <button type="button" class="btn btn-small btn-outline-secondary"
-                      title="Zoom to"
+                      title="Route to Asset"
                       data-bind="click: $root.drawRouteToAsset, disable: !team.trackableAssets().length, clickBubble: false">
                       <i class="fa fa-solid fa-car"></i>
                   </button>

@@ -4,7 +4,6 @@ var moment = require('moment');
 import {makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate} from '../utils/popup_dom_utils.js';
 
 import { buildAssetPopupKO } from '../components/asset_popup.js';
-require('leaflet-responsive-popup')
 
 function buildIcon(asset) {
     const capabilityColors = {
@@ -101,7 +100,7 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
         m._assetId = asset.id?.();
         const html = buildAssetPopupKO();
         const contentEl = makePopupNode(html, 'veh-pop-root'); // stable node
-        const popup = L.responsivePopup({
+        const popup = L.popup({
             minWidth: 360,
             maxWidth: 360,
             maxHeight: 360,

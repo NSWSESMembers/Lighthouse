@@ -52,7 +52,6 @@
     "leaflet": "^1.9.4",
     "leaflet-easybutton": "^2.4.0",
     "leaflet-fullscreen": "git+https://github.com/Leaflet/Leaflet.fullscreen.git",
-    "leaflet-responsive-popup": "^1.0.0",
     "leaflet-routing-machine": "^3.2.12",
     "leaflet-svg-shape-markers": "^1.3.0",
     "lrm-graphhopper": "git+https://github.com/NSWSESMembers/lrm-graphhopper.git",
