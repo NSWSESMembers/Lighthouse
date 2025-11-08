@@ -730,7 +730,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function norm(item) {
         return {
             id: item?.id ?? item?.code ?? item?.value ?? String(item),
-            name: item?.name ?? item?.label ?? item?.fullName ?? String(item)
+            name: item?.name ?? item?.label ?? item?.fullName ?? String(item),
+            entityType: item?.entityType ?? String(item)
         };
     }
 
@@ -758,14 +759,21 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function pillHtml(item, type) {
-        // type: 'team' | 'incident'
+        const sitemapButton = item.entityType == 2
+            ? `<button type="button" class="btn btn-sm btn-outline-light me-1 btn-load-children" title="Load Children">
+         <i class="fa fa-sitemap" aria-hidden="true"></i>
+       </button>`
+            : '';
+
         return $(`
-      <span class="badge text-bg-${type === 'team' ? 'primary' : 'success'} pill" data-id="${item.id}">
-        ${item.name}
-        <button type="button" class="btn-close btn-close-white ms-1" aria-label="Remove"></button>
-      </span>
-    `).data('payload', item);
+    <span class="badge text-bg-${type === 'team' ? 'primary' : 'success'} pill d-inline-flex align-items-center" data-id="${item.id}">
+      <span class="me-1">${item.name}</span>
+      ${sitemapButton}
+      <button type="button" class="btn-close btn-close-white ms-1" aria-label="Remove"></button>
+    </span>
+  `).data('payload', item);
     }
+
 
     function renderFilters() {
         $teamFilterList.empty();
@@ -802,11 +810,28 @@ document.addEventListener('DOMContentLoaded', function () {
         abortCtrl = new AbortController();
         setStatus('Searching…');
         BeaconClient.entities.search(query, apiHost, params.userId, token, function (data) {
-            renderResults(data.Results.map(e => ({ id: e.Id, name: e.Name })));
+            renderResults(data.Results.map(e => ({ id: e.Id, name: e.Name, entityType: e.EntityTypeId })));
             setStatus(`${data.Results.length} result${data.Results.length === 1 ? '' : 's'}.`);
             abortCtrl = null;
         })
     }
+
+    function ReturnChildren(parentId, type) {
+        if (abortCtrl) abortCtrl.abort();
+        abortCtrl = new AbortController();
+        BeaconClient.entities.children(parentId, apiHost, params.userId, token, function (data) {
+            data.forEach(item => {
+                const normItem = norm({ id: item.Id, name: item.Name, entityType: item.EntityTypeId });
+                if (type === 'team') {
+                    addTeam(normItem);
+                } else if (type === 'incident') {
+                    addIncident(normItem);
+                }
+            });
+            abortCtrl = null;
+        })
+    }
+
 
     // Search input with debounce
     $search.on('input', function () {
@@ -842,6 +867,21 @@ document.addEventListener('DOMContentLoaded', function () {
         incidentLocationFilter.delete(id);
         renderFilters();
     });
+
+    //Load Children buttons on pills
+    $teamFilterList.on('click', '.pill .btn-load-children', function () {
+        const id = $(this).closest('.pill').data('id');
+        console.log("Load children for HQ id:", id);
+        ReturnChildren(id, 'team');
+
+    });
+    $incidentFilterList.on('click', '.pill .btn-load-children', function () {
+        const id = $(this).closest('.pill').data('id');
+        console.log("Load children for HQ id:", id);
+        ReturnChildren(id, 'incident');
+    });
+
+
 
     // Clear buttons
     $clearTeams.on('click', function () { teamLocationFilter.clear(); renderFilters(); });
