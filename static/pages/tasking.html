@@ -357,6 +357,8 @@
         </div>
     </div>
 
+
+    <!-- Config Modal -->
     <div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
@@ -371,14 +373,13 @@
                         <!-- Search area -->
                         <div class="col-lg-12">
                             <label class="form-label">Filter by Head Quarters</label>
-                            <div class="input-group">
+                            <div class="input-group dropdown">
                                 <input id="locationSearch" type="search" class="form-control" placeholder="Search…"
-                                    autocomplete="off">
+                                    autocomplete="off" aria-expanded="false">
                                 <button id="clearSearch" class="btn btn-outline-secondary" type="button"
                                     title="Clear">&times;</button>
+                                <ul id="searchDropdown" class="dropdown-menu w-100" role="listbox"></ul>
                             </div>
-                            <div class="status-line mt-1" id="statusLine">Type to search.</div>
-                            <div id="resultsList" class="results" aria-live="polite" aria-label="Search results"></div>
                         </div>
                     </div>
                     <div class="row g-3 align-items-start top-band"></div>

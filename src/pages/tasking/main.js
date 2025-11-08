@@ -711,10 +711,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const modal = new bootstrap.Modal($('#configModal')[0]);
     modal.show();
 
+    $(document).on('click', (e) => {
+        if (!$(e.target).closest('.dropdown').length) {
+            $('#searchDropdown').removeClass('show');
+        }
+    });
+
     const $search = $('#locationSearch');
-    const $clear = $('#clearSearch');
-    const $status = $('#statusLine');
-    const $results = $('#resultsList');
+
     const $save = $('#saveConfig');
 
     const $teamFilterList = $('#teamFilterList');
@@ -725,8 +729,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let searchTimer = null;
     let abortCtrl = null;
 
-    function setStatus(msg) { $status.text(msg); }
-
     function norm(item) {
         return {
             id: item?.id ?? item?.code ?? item?.value ?? String(item),
@@ -736,26 +738,32 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function renderResults(items) {
-        $results.empty();
+        const $menu = $('#searchDropdown');
+        $menu.empty();
+
         if (!items.length) {
-            $results.append('<div class="list-group-item text-muted">No results.</div>');
+            $menu.append('<li><button class="dropdown-item disabled">No results</button></li>');
+            $menu.addClass('show');
             return;
         }
+
         items.forEach(raw => {
             const item = norm(raw);
-            const $row = $(`
-        <div class="list-group-item result-item">
-          <div class="text-truncate" title="${item.name}">${item.name}</div>
-          <div class="result-actions">
-            <button class="btn btn-vsmall btn-outline-primary" data-action="add-team">Filter Teams</button>
-            <button class="btn btn-vsmall btn-outline-success" data-action="add-incident">Filter Incidents</button>
+            const html = `
+      <li>
+        <div class="d-flex justify-content-between align-items-center px-2">
+          <span class="dropdown-item-text text-truncate" title="${item.name}">${item.name}</span>
+          <div class="btn-group btn-group-sm ms-2">
+            <button class="btn btn-outline-primary" data-action="add-team">Filter Teams</button>
+            <button class="btn btn-outline-success" data-action="add-incident">Filter Incidents</button>
           </div>
         </div>
-      `);
-            // attach item data
-            $row.data('payload', item);
-            $results.append($row);
+      </li>`;
+            const $row = $(html).data('payload', item);
+            $menu.append($row);
         });
+
+        $menu.addClass('show');
     }
 
     function pillHtml(item, type) {
@@ -801,17 +809,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function searchAPI(query) {
         if (!query.trim()) {
-            setStatus('Type to search.');
+              $('#searchDropdown').removeClass('show');
+
             renderResults([]);
             return;
         }
 
         if (abortCtrl) abortCtrl.abort();
         abortCtrl = new AbortController();
-        setStatus('Searching…');
         BeaconClient.entities.search(query, apiHost, params.userId, token, function (data) {
             renderResults(data.Results.map(e => ({ id: e.Id, name: e.Name, entityType: e.EntityTypeId })));
-            setStatus(`${data.Results.length} result${data.Results.length === 1 ? '' : 's'}.`);
             abortCtrl = null;
         })
     }
@@ -835,21 +842,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Search input with debounce
     $search.on('input', function () {
+        
         clearTimeout(searchTimer);
         const q = this.value;
         searchTimer = setTimeout(() => searchAPI(q), 300);
     });
 
-    $clear.on('click', function () {
-        $search.val('');
-        renderResults([]);
-        setStatus('Cleared.');
-        $search.trigger('focus');
-    });
+$('#clearSearch').on('click', function () {
+  $('#searchDropdown').removeClass('show');
+});
 
     // Clicks on results (event delegation)
-    $results.on('click', 'button[data-action]', function () {
-        const $row = $(this).closest('.list-group-item');
+    $('#searchDropdown').on('click', 'button[data-action]', function () {
+        const $row = $(this).closest('li');
         const item = $row.data('payload');
         const action = $(this).data('action');
         if (action === 'add-team') addTeam(item);

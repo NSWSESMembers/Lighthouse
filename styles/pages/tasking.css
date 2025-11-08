@@ -477,7 +477,7 @@ tr.job:hover {
 }
 .selected-box {
   min-height: 58px;
-  max-height: 100px;
+  max-height: 120px;
   overflow: auto;
 }
 .pill {
@@ -493,6 +493,18 @@ tr.job:hover {
 }
 .btn-load-children:hover {
   background-color: rgba(255, 255, 255, 0.2);
+}
+
+
+#searchDropdown.dropdown-menu {
+  max-height: 150px;
+  overflow: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1055; /* above modals but below tooltips */
+  transform: none !important;
+  margin-top: 2px;
 }
 
 /* Results full width, tall */

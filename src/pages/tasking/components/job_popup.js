@@ -23,7 +23,7 @@ export function buildJobPopupKO() {
     <div class="text-center mt-2">
       <div class="dropdown d-inline-block">
         <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="assignTeamBtn"
-                data-bs-toggle="dropdown" aria-expanded="false">
+                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           Assign to Team
         </button>
         <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="assignTeamBtn" style="min-width: 260px;">
