@@ -81,7 +81,7 @@ const map = L.map('map', {
 
 const legend = L.control({ position: "bottomright" });
 
-legend.onAdd = function (map) {
+legend.onAdd = function () {
     const div = L.DomUtil.create("div", "info legend p-2 bg-white shadow rounded opacity-75");
     div.innerHTML = `
     <h6 class="mb-1 fw-semibold">Legend</h6>
