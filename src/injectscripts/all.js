@@ -10,11 +10,12 @@ window.postMessage(
 );
 
 
-document.addEventListener('keydown', function(event) {
+
+document.addEventListener('keydown', function (event) {
   if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') {
-      event.preventDefault(); // Prevents the default action (e.g., focusing on the address bar)
-      layout.createRadioEntry();
-      // Add your custom logic here
+    event.preventDefault(); // Prevents the default action (e.g., focusing on the address bar)
+    layout.createRadioEntry();
+    // Add your custom logic here
   }
 });
 
@@ -71,55 +72,60 @@ whenWeAreReady(function () {
     <li class="dropdown" id="lhmenu">\
     <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
     <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="' +
-          lighthouseUrl +
-          'icons/lh.png"></img>Lighthouse</span>\
+        lighthouseUrl +
+        'icons/lh.png"></img>Lighthouse</span>\
     </a>\
     <ul class="dropdown-menu">\
     <li role="presentation" class="dropdown-header">Jobs</li>\
     <li id="lhsummarymenuitem">\
     <a href="' +
-          lighthouseUrl +
-          'pages/summary.html' +
-          vars +
-          '" target="_blank">Job Summary (' +
-          unitName +
-          ' Today)</a>\
+        lighthouseUrl +
+        'pages/summary.html' +
+        vars +
+        '" target="_blank">Job Summary (' +
+        unitName +
+        ' Today)</a>\
     </li>\
     <li id="lhstatsmenuitem">\
     <a href="' +
-          lighthouseUrl +
-          'pages/stats.html' +
-          vars +
-          '" target="_blank">Job Statistics (' +
-          unitName +
-          ' Today)</a>\
+        lighthouseUrl +
+        'pages/stats.html' +
+        vars +
+        '" target="_blank">Job Statistics (' +
+        unitName +
+        ' Today)</a>\
     </li>\
     <li id="lhexportmenuitem">\
     <a href="' +
-          lighthouseUrl +
-          'pages/advexport.html' +
-          vars +
-          '" target="_blank">Job Export (' +
-          unitName +
-          ' Today)</a>\
+        lighthouseUrl +
+        'pages/advexport.html' +
+        vars +
+        '" target="_blank">Job Export (' +
+        unitName +
+        ' Today)</a>\
+    </li>\
+    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Tasking\
     </li>\
     <li id="lhtaskingmenuitem">\
     <a href="' +
-          lighthouseUrl +
-          'pages/tasking.html' +
-          vars +
-          '" target="_blank">Tasking</a>\
+        lighthouseUrl +
+        'pages/tasking.html' +
+        vars +
+        '" target="_blank">Lighthouse Aided Dispatch (LAD!)</a>\
+    </li>\
+    <li id="lhtaskingremoteregister">\
+    <a href="">Register Tab For Remote Control</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
     <a href="' +
-          lighthouseUrl +
-          'pages/teamsummary.html' +
-          vars +
-          '" target="_blank">Team Summary (' +
-          unitName +
-          ' Today)</a>\
+        lighthouseUrl +
+        'pages/teamsummary.html' +
+        vars +
+        '" target="_blank">Team Summary (' +
+        unitName +
+        ' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
@@ -140,48 +146,48 @@ whenWeAreReady(function () {
     <li class="dropdown" id="lhmenu">\
     <a href="#" class="dropdown-toggle" data-toggle="dropdown">\
     <span class="nav-text"><img width="16px" style="vertical-align: text-bottom;margin-right:5px" src="' +
-          lighthouseUrl +
-          'icons/lh.png"></img>Lighthouse</span>\
+        lighthouseUrl +
+        'icons/lh.png"></img>Lighthouse</span>\
     </a>\
     <ul class="dropdown-menu">\
     <li role="presentation" class="dropdown-header">Jobs</li>\
     <li id="lhsummarymenuitem">\
     <a href="' +
-          lighthouseUrl +
-          'pages/summary.html' +
-          vars +
-          '" target="_blank">Job Summary (' +
-          unitName +
-          ' Today)</a>\
+        lighthouseUrl +
+        'pages/summary.html' +
+        vars +
+        '" target="_blank">Job Summary (' +
+        unitName +
+        ' Today)</a>\
     </li>\
     <li id="lhstatsmenuitem">\
     <a href="' +
-          lighthouseUrl +
-          'pages/stats.html' +
-          vars +
-          '" target="_blank">Job Statistics (' +
-          unitName +
-          ' Today)</a>\
+        lighthouseUrl +
+        'pages/stats.html' +
+        vars +
+        '" target="_blank">Job Statistics (' +
+        unitName +
+        ' Today)</a>\
     </li>\
     <li id="lhexportmenuitem">\
     <a href="' +
-          lighthouseUrl +
-          'pages/advexport.html' +
-          vars +
-          '" target="_blank">Job Export (' +
-          unitName +
-          ' Today)</a>\
+        lighthouseUrl +
+        'pages/advexport.html' +
+        vars +
+        '" target="_blank">Job Export (' +
+        unitName +
+        ' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
     <a href="' +
-          lighthouseUrl +
-          'pages/teamsummary.html' +
-          vars +
-          '" target="_blank">Team Summary (' +
-          unitName +
-          ' Today)</a>\
+        lighthouseUrl +
+        'pages/teamsummary.html' +
+        vars +
+        '" target="_blank">Team Summary (' +
+        unitName +
+        ' Today)</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
@@ -225,25 +231,34 @@ whenWeAreReady(function () {
     location.reload();
   });
 
-  $('#lhsummarymenuitem > a').click(function () {
+  $('#lhsummarymenuitem > a').mousedown(function () {
     updateToken();
   });
 
-  $('#lhstatsmenuitem > a').click(function () {
+  $('#lhstatsmenuitem > a').mousedown(function () {
     updateToken();
   });
 
-  $('#lhexportmenuitem > a').click(function () {
+  $('#lhexportmenuitem > a').mousedown(function () {
     updateToken();
   });
 
-  $('#lhteammenuitem > a').click(function () {
+  $('#lhteammenuitem > a').mousedown(function () {
     updateToken();
   });
 
-  $('#lhtaskingmenuitem > a').click(function () {
-    updateToken();
+  $('#lhtaskingmenuitem > a').mousedown(function () {
+    updateTokenAndRegister();
   });
+
+  $('#lhtaskingremoteregister > a').mousedown(function () {
+    registerTabForTaskingRemoteControl()
+  });
+
+  function updateTokenAndRegister() {
+    updateToken()
+    registerTabForTaskingRemoteControl()
+  };
 
   function updateToken() {
     window.postMessage(
@@ -252,6 +267,15 @@ whenWeAreReady(function () {
         host: urls.Base,
         token: user.accessToken,
         tokenexp: user.expiresAt,
+      },
+      '*',
+    );
+  }
+
+  function registerTabForTaskingRemoteControl() {
+    window.postMessage(
+      {
+        type: 'FROM_PAGE_REGISTER_TASKING_REMOTE'
       },
       '*',
     );
@@ -328,8 +352,8 @@ whenWeAreReady(function () {
         filterViewModel.dateRangeType('Today');
         $('#reportrange span').html(
           utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm') +
-            ' - ' +
-            utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm'),
+          ' - ' +
+          utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm'),
         );
         $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function (_j) {
           if ($(this).text() == 'Today') {
@@ -347,8 +371,8 @@ whenWeAreReady(function () {
         filterViewModel.dateRangeType('Last 7 Days');
         $('#reportrange span').html(
           utility.dateRanges.Last7Days.StartDate().format('MMMM D, YYYY H:mm') +
-            ' - ' +
-            utility.dateRanges.Last7Days.StartDate().format('MMMM D, YYYY H:mm'),
+          ' - ' +
+          utility.dateRanges.Last7Days.StartDate().format('MMMM D, YYYY H:mm'),
         );
         $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function (_j) {
           if ($(this).text() == 'Last 7 Days') {
@@ -366,8 +390,8 @@ whenWeAreReady(function () {
         filterViewModel.dateRangeType('Last 30 Days');
         $('#reportrange span').html(
           utility.dateRanges.Last30Days.StartDate().format('MMMM D, YYYY H:mm') +
-            ' - ' +
-            utility.dateRanges.Last30Days.StartDate().format('MMMM D, YYYY H:mm'),
+          ' - ' +
+          utility.dateRanges.Last30Days.StartDate().format('MMMM D, YYYY H:mm'),
         );
         $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function (_j) {
           if ($(this).text() == 'Last 30 Days') {
@@ -503,8 +527,8 @@ whenWeAreReady(function () {
         contentViewModel.filterViewModel.dateRangeType('Today');
         $('#reportrange span').html(
           utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm') +
-            ' - ' +
-            utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm'),
+          ' - ' +
+          utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm'),
         );
         $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function (_j) {
           if ($(this).text() == 'Today') {
@@ -522,8 +546,8 @@ whenWeAreReady(function () {
         contentViewModel.filterViewModel.dateRangeType('Last 7 Days');
         $('#reportrange span').html(
           utility.dateRanges.Last7Days.StartDate().format('MMMM D, YYYY H:mm') +
-            ' - ' +
-            utility.dateRanges.Last7Days.StartDate().format('MMMM D, YYYY H:mm'),
+          ' - ' +
+          utility.dateRanges.Last7Days.StartDate().format('MMMM D, YYYY H:mm'),
         );
         $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function (_j) {
           if ($(this).text() == 'Last 7 Days') {
@@ -541,8 +565,8 @@ whenWeAreReady(function () {
         contentViewModel.filterViewModel.dateRangeType('Last 30 Days');
         $('#reportrange span').html(
           utility.dateRanges.Last30Days.StartDate().format('MMMM D, YYYY H:mm') +
-            ' - ' +
-            utility.dateRanges.Last30Days.StartDate().format('MMMM D, YYYY H:mm'),
+          ' - ' +
+          utility.dateRanges.Last30Days.StartDate().format('MMMM D, YYYY H:mm'),
         );
         $('div.daterangepicker.dropdown-menu.opensleft > div.ranges > ul > li').each(function (_j) {
           if ($(this).text() == 'Last 30 Days') {
@@ -743,8 +767,8 @@ whenWeAreReady(function () {
         $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.Today.EndDate();
         $('#reportrange span').html(
           utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm') +
-            ' - ' +
-            utility.dateRanges.Today.EndDate().format('MMMM D, YYYY H:mm'),
+          ' - ' +
+          utility.dateRanges.Today.EndDate().format('MMMM D, YYYY H:mm'),
         );
         filterViewModel.updateFilters();
       });
@@ -757,8 +781,8 @@ whenWeAreReady(function () {
         filterViewModel.dateRangeType('Last 7 Days');
         $('#reportrange span').html(
           utility.dateRanges.Last7Days.StartDate().format('MMMM D, YYYY H:mm') +
-            ' - ' +
-            utility.dateRanges.Last7Days.EndDate().format('MMMM D, YYYY H:mm'),
+          ' - ' +
+          utility.dateRanges.Last7Days.EndDate().format('MMMM D, YYYY H:mm'),
         );
         filterViewModel.updateFilters();
       });
@@ -771,8 +795,8 @@ whenWeAreReady(function () {
         filterViewModel.dateRangeType('Last 30 Days');
         $('#reportrange span').html(
           utility.dateRanges.Last30Days.StartDate().format('MMMM D, YYYY H:mm') +
-            ' - ' +
-            utility.dateRanges.Last30Days.EndDate().format('MMMM D, YYYY H:mm'),
+          ' - ' +
+          utility.dateRanges.Last30Days.EndDate().format('MMMM D, YYYY H:mm'),
         );
         filterViewModel.updateFilters();
       });
@@ -921,8 +945,8 @@ function LoadTeamFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.Today.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.Today.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.Today.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Yesterday':
@@ -933,8 +957,8 @@ function LoadTeamFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.Yesterday.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.Yesterday.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.Yesterday.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.Yesterday.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Last 7 Days':
@@ -945,8 +969,8 @@ function LoadTeamFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.Last7Days.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.Last7Days.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.Last7Days.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.Last7Days.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Last 30 Days':
@@ -957,8 +981,8 @@ function LoadTeamFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.Last30Days.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.Last30Days.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.Last30Days.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.Last30Days.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'This Month':
@@ -969,8 +993,8 @@ function LoadTeamFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.ThisMonth.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.ThisMonth.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.ThisMonth.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.ThisMonth.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Last Month':
@@ -981,8 +1005,8 @@ function LoadTeamFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.LastMonth.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.LastMonth.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.LastMonth.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.LastMonth.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'This Calendar Year':
@@ -993,8 +1017,8 @@ function LoadTeamFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = moment().endOf('year');
               $('#reportrange span').html(
                 moment().startOf('year').format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  moment().endOf('year').format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                moment().endOf('year').format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'All':
@@ -1005,8 +1029,8 @@ function LoadTeamFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = moment().endOf('year');
               $('#reportrange span').html(
                 utility.minDate.format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  moment().endOf('year').format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                moment().endOf('year').format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Custom Range':
@@ -1117,8 +1141,8 @@ function LoadJobFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.Today.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.Today.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.Today.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.Today.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Yesterday':
@@ -1129,8 +1153,8 @@ function LoadJobFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.Yesterday.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.Yesterday.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.Yesterday.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.Yesterday.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Last 7 Days':
@@ -1141,8 +1165,8 @@ function LoadJobFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.Last7Days.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.Last7Days.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.Last7Days.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.Last7Days.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Last 30 Days':
@@ -1153,8 +1177,8 @@ function LoadJobFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.Last30Days.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.Last30Days.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.Last30Days.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.Last30Days.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'This Month':
@@ -1165,8 +1189,8 @@ function LoadJobFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.ThisMonth.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.ThisMonth.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.ThisMonth.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.ThisMonth.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Last Month':
@@ -1177,8 +1201,8 @@ function LoadJobFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = utility.dateRanges.LastMonth.EndDate();
               $('#reportrange span').html(
                 utility.dateRanges.LastMonth.StartDate().format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  utility.dateRanges.LastMonth.EndDate().format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                utility.dateRanges.LastMonth.EndDate().format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'This Calendar Year':
@@ -1189,8 +1213,8 @@ function LoadJobFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = moment().endOf('year');
               $('#reportrange span').html(
                 moment().startOf('year').format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  moment().endOf('year').format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                moment().endOf('year').format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'All':
@@ -1201,8 +1225,8 @@ function LoadJobFilterCollections() {
               $('#reportrange').data().daterangepicker.endDate = moment().endOf('year');
               $('#reportrange span').html(
                 utility.minDate.format('MMMM D, YYYY H:mm') +
-                  ' - ' +
-                  moment().endOf('year').format('MMMM D, YYYY H:mm'),
+                ' - ' +
+                moment().endOf('year').format('MMMM D, YYYY H:mm'),
               );
               break;
             case 'Custom Range':
@@ -1309,8 +1333,8 @@ function make_collection_button(name, _count) {
     `
     <span class="label tag tag-rebecca tag-disabled">\
     <span><p  style="margin-bottom:0px"><i class="fa fa-object-group" aria-hidden="true" style="margin-right: 5px;"></i>` +
-      name +
-      `<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>\
+    name +
+    `<span class="delbutton"><sup style="margin-left: 10px;margin-right: -5px;">X</sup></span></p></span>\
     </span>\
     `,
   );

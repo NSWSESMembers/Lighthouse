@@ -12,6 +12,8 @@ import { ResizeDividers } from './resize.js';
 import { addOrUpdateJobMarker, removeJobMarker } from './popups/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './popups/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
+import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
+
 
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
@@ -19,6 +21,8 @@ import { Team } from './models/Team.js';
 import { Job } from './models/Job.js';
 
 import { canon } from './utils/common.js';
+
+import { ConfigVM } from './viewmodels/Config.js';
 
 var $ = require('jquery');
 
@@ -36,9 +40,6 @@ require('leaflet-routing-machine');
 require('leaflet-svg-shape-markers');
 require('lrm-graphhopper'); // Adds L.Routing.GraphHopper onto L.Routing
 require('leaflet/dist/leaflet.css');
-
-require('bootstrap5'); // for jq plugin: modal
-
 
 
 import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
@@ -67,8 +68,6 @@ function startAssetDataRefreshTimer() {
 
 startAssetDataRefreshTimer()
 
-const teamLocationFilter = new Map();
-const incidentLocationFilter = new Map();
 
 
 
@@ -80,6 +79,68 @@ const map = L.map('map', {
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
 
+const legend = L.control({ position: "bottomright" });
+
+legend.onAdd = function (map) {
+    const div = L.DomUtil.create("div", "info legend p-2 bg-white shadow rounded opacity-75");
+    div.innerHTML = `
+    <h6 class="mb-1 fw-semibold">Legend</h6>
+
+    <div class="mb-2">
+      <div class="fw-semibold small mb-1">Job Type → Shape</div>
+      <div class="d-flex flex-wrap gap-2 small align-items-center">
+        <div><svg width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="2"/></svg> Storm</div>
+        <div><svg width="16" height="16"><rect x="2" y="2" width="12" height="12" rx="2" ry="2" fill="none" stroke="#000" stroke-width="2"/></svg>Support</div>
+        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" fill="none" stroke="#000" stroke-width="2"/></svg> Flood Rescue</div>
+        <div><svg width="16" height="16"><polygon points="8,2 2,14 14,14" fill="none" stroke="#000" stroke-width="2"/></svg> FloodSupport</div>
+        <div><svg width="16" height="16"><polygon points="8,2 14,8 8,14 2,8" fill="none" stroke="#000" stroke-width="2"/></svg> Rescue</div>
+        <div><svg width="16" height="16"><polygon points="8,0 10,6 16,6 11,10 13,16 8,12 3,16 5,10 0,6 6,6" fill="none" stroke="#000" stroke-width="2"/></svg> Tsunami</div>
+      </div>
+    </div>
+
+    <div class="mb-2">
+      <div class="fw-semibold small mb-1">Priority → Fill</div>
+      <div class="d-flex flex-wrap gap-2 small">
+        <div><span class="legend-box" style="background:#FFA500"></span> Priority</div>
+        <div><span class="legend-box" style="background:#4F92FF"></span> Immediate</div>
+        <div><span class="legend-box" style="background:#FF0000"></span> Rescue</div>
+        <div><span class="legend-box" style="background:#0fcb35ff"></span> General</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="fw-semibold small mb-1">FR: Category → Fill</div>
+      <div class="d-flex flex-wrap gap-2 small">
+        <div><span class="legend-box" style="background:#7F1D1D"></span> Cat 1</div>
+        <div><span class="legend-box" style="background:#DC2626"></span> Cat 2</div>
+        <div><span class="legend-box" style="background:#EA580C"></span> Cat 3</div>
+        <div><span class="legend-box" style="background:#EAB308"></span> Cat 4</div>
+        <div><span class="legend-box" style="background:#16A34A"></span> Cat 5</div>
+      </div>
+    </div>
+  `;
+    return div;
+};
+
+const style = document.createElement("style");
+style.textContent = `
+  .legend-box {
+    display:inline-block;
+    width:14px;
+    height:14px;
+    border:1px solid #333;
+    margin-right:4px;
+    vertical-align:middle;
+  }
+  .leaflet-control.legend svg {
+    vertical-align:middle;
+  }
+`;
+document.head.appendChild(style);
+
+legend.addTo(map);
+
+
 ResizeDividers(map)
 
 // Esri default basemap (others: 'Streets','Imagery','Topographic','Gray','DarkGray', etc.)
@@ -90,6 +151,17 @@ function VM() {
     const self = this;
 
     self.mapVM = new MapVM(map, self);
+
+    const configDeps = {
+        entitiesSearch: (q) => new Promise((resolve) => {
+            BeaconClient.entities.search(q, apiHost, params.userId, token, (data) => resolve(data.Results || []));
+        }),
+        entitiesChildren: (parentId) => new Promise((resolve) => {
+            BeaconClient.entities.children(parentId, apiHost, params.userId, token, (data) => resolve(data || []));
+        })
+    };
+
+    self.config = new ConfigVM(self, configDeps);
 
     self.tokenLoading = ko.observable(true);
     self.teamsLoading = ko.observable(true);
@@ -108,7 +180,9 @@ function VM() {
     self.trackableAssets = ko.observableArray([]);
 
 
-
+    ///opslog short cuts
+    self.opsLogModalVM = new OpsLogModalVM(self);
+    self.selectedJob = ko.observable(null);
 
 
     // filters for what teams to ignore
@@ -129,7 +203,7 @@ function VM() {
 
     self.filteredJobs = ko.pureComputed(() => {
 
-        const hqsFilter = Array.from(incidentLocationFilter.values()).map(f => ({ Id: f.id }));
+        const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
         const term = self.jobSearch().toLowerCase();
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
@@ -156,8 +230,7 @@ function VM() {
     self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
 
         const ignoreList = self.jobsStatusFilterList();
-
-        const hqsFilter = Array.from(incidentLocationFilter.values()).map(f => ({ Id: f.id }));
+        const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
 
@@ -244,10 +317,13 @@ function VM() {
                     map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
                     job.marker?.openPopup?.();
                 }
-            }
-        };
-    }
+            },
 
+            attachAndFillOpsLogModal: (job) => {
+                attachOpsLogModal(job);
+            },
+        }
+    }
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
     self.getOrCreateTeam = function (teamJson) {
         if (!teamJson || teamJson.Id == null) return null;
@@ -366,7 +442,6 @@ function VM() {
 
     // Tasking registry/upsert (NEW magical 2.0 way of doing it)
     self.upsertTaskingFromPayload = function (taskingJson, { teamContext = null } = {}) {
-        console.log("Upserting tasking from payload:", taskingJson);
         if (!taskingJson || taskingJson.Id == null) return null;
 
         // Resolve shared refs
@@ -519,13 +594,36 @@ function VM() {
         });
     };
 
+    self.attachAndFillOpsLogModal = function (jobId, cb) {
+        BeaconClient.operationslog.search(jobId, apiHost, params.userId, token, function (data) {
+            cb(data?.Results || []);
+        }, function (err) {
+            console.error("Failed to fetch ops log for job:", err);
+            cb([]);
+        });
+    }
+
+    self.fetchOpsLogForJob = function (jobId, cb) {
+        BeaconClient.operationslog.search(jobId, apiHost, params.userId, token, function (data) {
+            cb(data?.Results || []);
+        }, function (err) {
+            console.error("Failed to fetch ops log for job:", err);
+            cb([]);
+        });
+    }
+
+
+    self.fetchAllTeamData = fetchAllTeamData;
+    self.fetchAllJobsData = fetchAllJobsData;
+    self.fetchAllTrackableAssets = fetchAllTrackableAssets;
+
+    chrome.runtime.sendMessage({ type: "tasking" });
 }
 
 window.addEventListener('resize', () => map.invalidateSize());
 
-
 function fetchAllTeamData() {
-    const hqsFilter = Array.from(teamLocationFilter.values()).map(f => ({ Id: f.id }));
+    const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
     console.log("Fetching teams for HQS:", hqsFilter);
 
     var end = new Date();
@@ -553,7 +651,7 @@ function fetchAllTeamData() {
 }
 
 function fetchAllJobsData() {
-    const hqsFilter = Array.from(incidentLocationFilter.values()).map(f => ({ Id: f.id }));
+    const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
     console.log("Fetching jobs for HQS:", hqsFilter);
 
     var end = new Date();
@@ -693,247 +791,37 @@ document.addEventListener('DOMContentLoaded', function () {
         myViewModel = new VM();
 
         ko.applyBindings(myViewModel);
+
+        //get tokens
+        BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(apiHost, params.source, function ({ token: rToken, tokenexp: rExp }) {
+            console.log("Fetched Beacon token," + rToken);
+            token = rToken;
+            tokenExp = rExp;
+            myViewModel.tokenLoading(false);
+        })
+
+
+        //show config modal on load
+        const el = document.getElementById('configModal');
+        bootstrap.Modal.getOrCreateInstance(el).show();
+
     })
 
 
-    //get tokens
-    BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(apiHost, params.source, function ({ token: rToken, tokenexp: rExp }) {
-        console.log("Fetched Beacon token," + rToken);
-        token = rToken;
-        tokenExp = rExp;
-        myViewModel.tokenLoading(false);
-    })
 
 
-
-    // Config Modal Stuff
-
-    const modal = new bootstrap.Modal($('#configModal')[0]);
-    modal.show();
-
-    $(document).on('click', (e) => {
-        if (!$(e.target).closest('.dropdown').length) {
-            $('#searchDropdown').removeClass('show');
-        }
-    });
-
-    const $search = $('#locationSearch');
-
-    const $save = $('#saveConfig');
-
-    const $teamFilterList = $('#teamFilterList');
-    const $incidentFilterList = $('#incidentFilterList');
-    const $clearTeams = $('#clearTeams');
-    const $clearIncidents = $('#clearIncidents');
-
-    let searchTimer = null;
-    let abortCtrl = null;
-
-    function norm(item) {
-        return {
-            id: item?.id ?? item?.code ?? item?.value ?? String(item),
-            name: item?.name ?? item?.label ?? item?.fullName ?? String(item),
-            entityType: item?.entityType ?? String(item)
-        };
-    }
-
-    function renderResults(items) {
-        const $menu = $('#searchDropdown');
-        $menu.empty();
-
-        if (!items.length) {
-            $menu.append('<li><button class="dropdown-item disabled">No results</button></li>');
-            $menu.addClass('show');
-            return;
-        }
-
-        items.forEach(raw => {
-            const item = norm(raw);
-            const html = `
-      <li>
-        <div class="d-flex justify-content-between align-items-center px-2">
-          <span class="dropdown-item-text text-truncate" title="${item.name}">${item.name}</span>
-          <div class="btn-group btn-group-sm ms-2">
-            <button class="btn btn-outline-primary" data-action="add-team">Filter Teams</button>
-            <button class="btn btn-outline-success" data-action="add-incident">Filter Incidents</button>
-          </div>
-        </div>
-      </li>`;
-            const $row = $(html).data('payload', item);
-            $menu.append($row);
-        });
-
-        $menu.addClass('show');
-    }
-
-    function pillHtml(item, type) {
-        const sitemapButton = item.entityType == 2
-            ? `<button type="button" class="btn btn-sm btn-outline-light me-1 btn-load-children" title="Load Children">
-         <i class="fa fa-sitemap" aria-hidden="true"></i>
-       </button>`
-            : '';
-
-        return $(`
-    <span class="badge text-bg-${type === 'team' ? 'primary' : 'success'} pill d-inline-flex align-items-center" data-id="${item.id}">
-      <span class="me-1">${item.name}</span>
-      ${sitemapButton}
-      <button type="button" class="btn-close btn-close-white ms-1" aria-label="Remove"></button>
-    </span>
-  `).data('payload', item);
-    }
-
-
-    function renderFilters() {
-        $teamFilterList.empty();
-        $incidentFilterList.empty();
-
-        if (teamLocationFilter.size === 0) $teamFilterList.append('<span class="text-muted small">None</span>');
-        if (incidentLocationFilter.size === 0) $incidentFilterList.append('<span class="text-muted small">None</span>');
-
-        for (const item of teamLocationFilter.values()) {
-            $teamFilterList.append(pillHtml(item, 'team'));
-        }
-        for (const item of incidentLocationFilter.values()) {
-            $incidentFilterList.append(pillHtml(item, 'incident'));
-        }
-    }
-
-    function addTeam(item) {
-        if (!teamLocationFilter.has(item.id)) teamLocationFilter.set(item.id, item);
-        renderFilters();
-    }
-    function addIncident(item) {
-        if (!incidentLocationFilter.has(item.id)) incidentLocationFilter.set(item.id, item);
-        renderFilters();
-    }
-
-    function searchAPI(query) {
-        if (!query.trim()) {
-              $('#searchDropdown').removeClass('show');
-
-            renderResults([]);
-            return;
-        }
-
-        if (abortCtrl) abortCtrl.abort();
-        abortCtrl = new AbortController();
-        BeaconClient.entities.search(query, apiHost, params.userId, token, function (data) {
-            renderResults(data.Results.map(e => ({ id: e.Id, name: e.Name, entityType: e.EntityTypeId })));
-            abortCtrl = null;
-        })
-    }
-
-    function ReturnChildren(parentId, type) {
-        if (abortCtrl) abortCtrl.abort();
-        abortCtrl = new AbortController();
-        BeaconClient.entities.children(parentId, apiHost, params.userId, token, function (data) {
-            data.forEach(item => {
-                const normItem = norm({ id: item.Id, name: item.Name, entityType: item.EntityTypeId });
-                if (type === 'team') {
-                    addTeam(normItem);
-                } else if (type === 'incident') {
-                    addIncident(normItem);
-                }
-            });
-            abortCtrl = null;
-        })
-    }
-
-
-    // Search input with debounce
-    $search.on('input', function () {
-        
-        clearTimeout(searchTimer);
-        const q = this.value;
-        searchTimer = setTimeout(() => searchAPI(q), 300);
-    });
-
-$('#clearSearch').on('click', function () {
-  $('#searchDropdown').removeClass('show');
-});
-
-    // Clicks on results (event delegation)
-    $('#searchDropdown').on('click', 'button[data-action]', function () {
-        const $row = $(this).closest('li');
-        const item = $row.data('payload');
-        const action = $(this).data('action');
-        if (action === 'add-team') addTeam(item);
-        else if (action === 'add-incident') addIncident(item);
-    });
-
-    // Remove pills
-    $teamFilterList.on('click', '.pill .btn-close', function () {
-        const id = $(this).closest('.pill').data('id');
-        teamLocationFilter.delete(id);
-        renderFilters();
-    });
-    $incidentFilterList.on('click', '.pill .btn-close', function () {
-        const id = $(this).closest('.pill').data('id');
-        incidentLocationFilter.delete(id);
-        renderFilters();
-    });
-
-    //Load Children buttons on pills
-    $teamFilterList.on('click', '.pill .btn-load-children', function () {
-        const id = $(this).closest('.pill').data('id');
-        console.log("Load children for HQ id:", id);
-        ReturnChildren(id, 'team');
-
-    });
-    $incidentFilterList.on('click', '.pill .btn-load-children', function () {
-        const id = $(this).closest('.pill').data('id');
-        console.log("Load children for HQ id:", id);
-        ReturnChildren(id, 'incident');
-    });
-
-
-
-    // Clear buttons
-    $clearTeams.on('click', function () { teamLocationFilter.clear(); renderFilters(); });
-    $clearIncidents.on('click', function () { incidentLocationFilter.clear(); renderFilters(); });
-
-    // Save
-    $save.on('click', function () {
-        const cfg = {
-            refreshInterval: Number($('#refreshInterval').val()),
-            theme: $('#themeSelect').val(),
-            showAdvanced: $('#showAdvanced').is(':checked'),
-            defaultHQ: $('#defaultHQ').val().trim(),
-            filters: {
-                teams: Array.from(teamLocationFilter.values()),
-                incidents: Array.from(incidentLocationFilter.values())
-            }
-        };
-        console.log('Save config:', cfg);
-        localStorage.setItem('taskingFilters', JSON.stringify(cfg.filters));
-        modal.hide();
-        fetchAllTeamData();
-        fetchAllJobsData();
-        fetchAllTrackableAssets();
-    });
-
-    function loadFiltersFromLocalStorage() {
-        const savedFilters = localStorage.getItem('taskingFilters');
-        if (savedFilters) {
-            const filters = JSON.parse(savedFilters);
-            teamLocationFilter.clear();
-            incidentLocationFilter.clear();
-
-            filters.teams.forEach(item => teamLocationFilter.set(item.id, item));
-            filters.incidents.forEach(item => incidentLocationFilter.set(item.id, item));
-
-            renderFilters();
-        }
-    }
-
-    // Call loadFiltersFromLocalStorage on page load
-    loadFiltersFromLocalStorage();
-
-    // initial render
-    renderFilters();
 
 
 })
+
+function attachOpsLogModal(job) {
+    const modalEl = document.getElementById('opsLogModal');
+    const modal = new bootstrap.Modal(modalEl);
+
+    myViewModel.selectedJob(job);
+    myViewModel.opsLogModalVM.openForJob(job);
+    modal.show();
+}
 
 function getSearchParameters() {
     var prmstr = window.location.search.substr(1);
@@ -949,4 +837,3 @@ function transformToAssocArray(prmstr) {
     }
     return params;
 }
-

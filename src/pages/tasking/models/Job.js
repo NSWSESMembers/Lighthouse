@@ -5,6 +5,10 @@ import { Entity } from "./Entity.js";
 import { Address } from "./Address.js";
 import { Tag } from "./Tag.js";
 
+import { openURLInBeacon } from '../utils/chromeRunTime.js';
+import { jobsToUI } from "../utils/jobTypesToUI.js";
+
+
 export function Job(data = {}, deps = {}) {
     const self = this;
 
@@ -14,6 +18,7 @@ export function Job(data = {}, deps = {}) {
         fetchJobTasking = async (_jobId) => ({ Results: [] }),
         fetchJobById = async (_jobId) => null,
         flyToJob = (_job) => {/* noop */ },
+        attachAndFillOpsLogModal = (_jobId) => ([]),
     } = deps;
 
     // raw
@@ -40,7 +45,7 @@ export function Job(data = {}, deps = {}) {
     self.eventId = ko.observable(data.EventId ?? null);
     self.printCount = ko.observable(data.PrintCount ?? 0);
     self.actionRequiredTags = ko.observableArray(data.ActionRequiredTags || []);
-    self.categories = ko.observableArray(data.Categories || []);
+    self.categories = ko.observableArray((data.Categories || []).filter(c => (c?.Id ?? 0) >= 9)); //ditch pscu categories
     self.inFrao = ko.observable(!!data.InFrao);
     self.imageCount = ko.observable(data.ImageCount ?? 0);
     self.icemsIncidentIdentifier = ko.observable(data.ICEMSIncidentIdentifier);
@@ -48,10 +53,18 @@ export function Job(data = {}, deps = {}) {
     self.toggle = () => self.expanded(!self.expanded());
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
-    self.taskingLoading = ko.observable(true);
+    self.taskingLoading = ko.observable(false);
+
+    self.opsLogEntriesLoading = ko.observable(false);
+    self.opsLogEntries = ko.observableArray([]);
 
     self.lastDataUpdate = new Date();
     let refreshTimer = null;
+
+    self.attachAndFillOpsLogModal = function () {
+        console.log("Fetching ops log entries for job", self.id());
+        attachAndFillOpsLogModal(self)
+    }
 
     self.startDataRefreshCheck = function () {
         self.stopDataRefreshCheck();
@@ -125,14 +138,9 @@ export function Job(data = {}, deps = {}) {
     });
 
     self.bannerBGColour = ko.pureComputed(() => {
-        const p = self.jobPriorityType()
-        const desc = p.Description;
-        if (desc === "Life Threatening") return "red";
-        if (desc === "Priority Response") return "rgb(255, 165, 0)";
-        if (desc === "Immediate Response") return "rgb(79, 146, 255)";
-        return "#1f2937";
+        const style = jobsToUI(self);
+        return style.fillcolor || '#6b7280ff'; // default gray
     })
-
 
 
     self.categoriesName = ko.pureComputed(() => {
@@ -149,6 +157,21 @@ export function Job(data = {}, deps = {}) {
         const c = self.categories()[0].Id;
         return beaconCats[c] || "";
     })
+
+
+        self.categoriesParent = ko.pureComputed(() => {
+        const beaconJobParentCats = {
+            1: "Storm" ,
+            2: "Support",
+            4: "FloodSupport",
+            5: "Rescue",
+            6: "Tsunami"
+        }
+        if (!self.jobType) return "";
+        const c = self.jobType().ParentId;
+        return beaconJobParentCats[c] || "";
+    })
+
 
     Job.prototype.updateFromJson = function (d = {}) {
 
@@ -213,8 +236,9 @@ export function Job(data = {}, deps = {}) {
         if (Array.isArray(d.ActionRequiredTags)) {
             this.actionRequiredTags(d.ActionRequiredTags.slice());
         }
+        //ditch pscu categories
         if (Array.isArray(d.Categories)) {
-            this.categories(d.Categories.slice());
+            this.categories(d.Categories.filter(c => (c?.Id ?? 0) >= 9));
         }
     };
 
@@ -237,11 +261,16 @@ export function Job(data = {}, deps = {}) {
         }
     };
 
+    self.openBeaconJobDetails = function () {
+     const url = self.jobLink();
+        console.log("Opening job in Beacon:", url);
+        openURLInBeacon(url);
+    }
     // ---- map focus (delegated) ----
     self.focusMap = function () { flyToJob(self); };
 
     // ---- lifecycle hooks (delegated) ----
-    self.onPopupOpen = function () { self.fetchTasking(); };
+    self.onPopupOpen = function () { self.fetchTasking(); self.refreshData()};
     self.onPopupClose = function () { /* popup closing logic goes here */ };
 
     self.onPopupClose = function () {
@@ -257,8 +286,10 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.refreshData = async function () {
+        self.taskingLoading(true);
         const r = await fetchJobById(self.id());
         if (r) { self.updateFromJson(r); self.lastDataUpdate = new Date(); }
+        self.taskingLoading(false);
     };
 
 }

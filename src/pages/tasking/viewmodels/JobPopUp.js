@@ -2,6 +2,7 @@ var ko = require('knockout');
 var L = require('leaflet');
 var moment = require('moment');
 
+
 export class JobPopupViewModel {
     constructor({ job, map, api, filteredTeams }) {
         this.job = job;   // expects KO observables on the job (latitude/longitude/name/etc.)
@@ -33,12 +34,16 @@ export class JobPopupViewModel {
             )
             .map(tm => {
                 const { distance, backBearing } = bestDistanceAndBearing(tm, job);
+                const summaryLine = [
+                    tm.filteredTaskings().length + ' tasking(s)',
+                    distance != null ? fmtDist(distance) : null,
+                    backBearing != null ? fmtBearing(backBearing) : null
+                ].filter(Boolean).join(' • ');
                 return {
                     team: tm,
                     taskings: tm.filteredTaskings,
-                    distanceMeters: distance,
-                    distanceLabel: fmtDist(distance),
-                    bearingLabel: fmtBearing(backBearing)
+                    currentTaskingSummary: tm.currentTaskingSummary,
+                    summaryLine
                 };
             })
             .sort((a, b) => {
@@ -87,6 +92,9 @@ export class JobPopupViewModel {
             { weight: 4, color: 'green', dashArray: '6' }
         )
         this.api.registerCrowFliesLine(this._polyline);
+    }
+    displayOpsLogsForJob = () => {
+        this.job.attachAndFillOpsLogModal(this.job);
     }
 
     fitBoundsWithAsset = (tasking) => {

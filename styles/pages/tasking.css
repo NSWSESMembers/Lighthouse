@@ -132,7 +132,7 @@ body {
 }
 
 .leaflet-popup-content-wrapper {
-  opacity: 0.8;
+  opacity: 0.9;
   transition: opacity 0.1s ease;
 }
 .leaflet-popup-content-wrapper:hover {
@@ -312,13 +312,11 @@ select {
 .teams {
   width: 100%;
   table-layout: auto;
-  border-collapse: separate;
   border-spacing: 0 3px; /* gap between rows */
 }
 .jobs {
   width: 100%;
   table-layout: auto;
-  border-collapse: separate;
   border-spacing: 0 3px; /* gap between rows */
 }
 
@@ -492,7 +490,10 @@ tr.job:hover {
   color: #ccc
 }
 .btn-load-children:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--bs-btn-close-color);
+    text-decoration: none;
+    background-color: unset;
+    opacity: 0.75;
 }
 
 
@@ -579,6 +580,12 @@ tr.job:hover {
   font-size: 12px;
   line-height: 1.25;
 }
+
+.veh-pop__tasking-list {
+
+}
+
+
 .veh-pop__tasking-item {
   padding: 4px 0;
   border-bottom: 1px dashed #e3e3e3;
@@ -619,4 +626,102 @@ tr.job:hover {
 .leaflet-zoom-anim .leaflet-zoom-animated {
   transition-timing-function: linear !important;
   transition-duration: 100ms !important;
+}
+
+
+
+/* Merge expanded incident row with parent row */
+.jobs tbody tr.job.expanded + tr.job_body td {
+  border-top: none !important;      /* remove dividing border */
+  padding-top: 0 !important;        /* eliminate gap */
+}
+
+.jobs tbody tr.job.expanded {
+  border-bottom-left-radius: 0;     /* visually merge rounded edges */
+  border-bottom-right-radius: 0;
+}
+
+.jobs tbody tr.job_body td {
+  border-top: none;
+}
+
+.jobs tbody tr.job_body .card {
+  border-top-left-radius: 0;        /* make card blend into the parent row */
+  border-top-right-radius: 0;
+  margin-top: -1px;                 /* pull upward slightly to hide seam */
+}
+
+.jobs tbody tr.job_body > td {
+  background-color: var(--bs-table-bg) !important;
+  padding: 0;          /* remove extra white edge */
+}
+
+/* If you keep a card inside the expanded row, make it invisible */
+.jobs tbody tr.job_body .card {
+  background-color: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+
+tr.team_body > td { padding: 0; border-top: 0; }
+.team-card { border-top-left-radius: 0; border-top-right-radius: 0; }
+
+
+/* Base Leaflet divIcon wrapper for your SVG markers */
+.leaflet-marker-icon.job-svg-marker {
+  display: block;          /* kill inline baseline spacing */
+  line-height: 0;          /* no extra vertical space */
+  font-size: 0;            /* no text metrics */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent; /* no default bg from themes */
+  box-sizing: content-box; /* width/height = SVG box exactly */
+  pointer-events: auto;    /* marker remains clickable */
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform;  /* Leaflet translates this */
+}
+
+/* Ensure the embedded SVG is a tight, block-level box */
+.leaflet-marker-icon.job-svg-marker > svg {
+  display: block;                  /* no inline baseline */
+  overflow: visible;               /* avoid stroke clipping */
+  shape-rendering: geometricPrecision;
+  vector-effect: non-scaling-stroke; /* keeps stroke width stable if scaled */
+}
+
+/* Optional: crisper edges on some displays */
+.leaflet-marker-icon.job-svg-marker,
+.leaflet-marker-icon.job-svg-marker > svg {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* PULSE RING (separate follower marker using L.divIcon) */
+.pulse-ring-icon {
+  pointer-events: none;  /* clicks go to the base marker */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  font-size: 0;
+  will-change: transform;
+}
+
+.pulse-ring {
+  position: absolute;
+  inset: 0;              /* fills its icon box exactly */
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255,0,0,0.8);
+  transform-origin: 50% 50%;
+  animation: pulse-ring 1.4s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  80%  { transform: scale(1.1); opacity: 0.15; }
+  100% { transform: scale(1.2); opacity: 0; }
 }

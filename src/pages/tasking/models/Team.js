@@ -3,6 +3,8 @@ import ko from "knockout";
 
 import { Entity } from "./Entity.js";
 
+import { openURLInBeacon } from '../utils/chromeRunTime.js';
+
 export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
@@ -43,6 +45,36 @@ export function Team(data = {}, deps = {}) {
         return self.filteredTaskings() && self.filteredTaskings().length || 0;
     })
 
+    self.currentTaskingSummary = ko.pureComputed(() => {
+        const typeCounts = {};
+        const frCategoryCounts = {};
+        
+        self.filteredTaskings().forEach(t => {
+            const typeKey = t.job.type?.();
+            typeCounts[typeKey] = (typeCounts[typeKey] || 0) + 1;
+            
+            // If type is FR, track category counts
+            if (typeKey === "FR") {
+                const category = t.job.categoriesName?.().replaceAll('Category', 'C');
+                if (category) {
+                    frCategoryCounts[category] = (frCategoryCounts[category] || 0) + 1;
+                }
+            }
+        });
+        
+        const entries = Object.entries(typeCounts).map(([type, count]) => {
+            if (type === "FR" && Object.keys(frCategoryCounts).length > 0) {
+                const categoryBreakdown = Object.entries(frCategoryCounts)
+                    .map(([cat, catCount]) => `${cat}: ${catCount}`)
+                    .join(', ');
+                return `${type}: ${count} (${categoryBreakdown})`;
+            }
+            return `${type}: ${count}`;
+        });
+        
+        return entries.length ? entries.join(', ') : '';
+    });
+
     self.filteredTaskings = ko.pureComputed(() => {
         const ignoreList = [
             "Complete",
@@ -66,7 +98,9 @@ export function Team(data = {}, deps = {}) {
     self.teamLink = ko.pureComputed(() => makeTeamLink(self.id()));
 
     self.openBeaconEditTeam = (ev) => {
-        window.open(self.teamLink(), '_blank');
+        const url = self.teamLink();
+        console.log("Opening job in Beacon:", url);
+        openURLInBeacon(url);
         ev?.preventDefault?.();
     };
 
@@ -127,6 +161,23 @@ export function Team(data = {}, deps = {}) {
         const a = self.trackableAssets()[0];
         if (!a) return;
         flyToAsset(a); // map logic stays out of the model
+    };
+
+    self.latitude = ko.observable(data.Latitude ?? null);
+    self.longitude = ko.observable(data.Longitude ?? null);
+
+    self.updateFromJson = function (json) {
+        self.callsign(json.Callsign ?? self.callsign());
+        self.status(json.TeamStatusType ?? self.status());
+        self.members((json.Members || []).map(m => new Entity(m)));
+        self.assignedTo.updateFromJson(json.EntityAssignedTo || json.CreatedAt);
+
+        if (json.Latitude !== undefined) {
+            self.latitude(json.Latitude);
+        }
+        if (json.Longitude !== undefined) {
+            self.longitude(json.Longitude);
+        }
     };
 
     const teamStatusById = {

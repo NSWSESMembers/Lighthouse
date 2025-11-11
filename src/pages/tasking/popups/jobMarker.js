@@ -2,6 +2,7 @@ var L = require('leaflet');
 var ko = require('knockout');
 
 import { buildJobPopupKO } from '../components/job_popup.js';
+import { makeShapeIcon, styleForJob } from '../components/job_icon.js';
 
 
 import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } from '../utils/popup_dom_utils.js';
@@ -43,6 +44,17 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         const key = JSON.stringify(style);
         if (m._styleKey !== key) { m.setIcon(makeShapeIcon(style)); m._styleKey = key; }
         if (!m._popupBound) { m.setPopupContent(node); wireKoForPopup(ko, m, job, vm, popupVM); }
+
+        // keep the "New" ring in correct state
+        upsertPulseRing(layerGroup, job, m);
+
+        // ensure we have a status subscription exactly once
+        if (!m._pulseSubs || m._pulseSubs.length === 0) {
+            (m._pulseSubs ||= []).push(
+                job.statusName.subscribe(() => upsertPulseRing(layerGroup, job, m))
+            );
+        }
+
         job.marker = m;
         return m;
     }
@@ -53,6 +65,13 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     marker.addTo(layerGroup);
     markers.set(id, marker);
     job.marker = marker;
+
+    upsertPulseRing(layerGroup, job, marker);
+    (marker._pulseSubs ||= []).push(
+        job.statusName.subscribe(() => upsertPulseRing(layerGroup, job, marker))
+    );
+
+
     const popupVM = vm.mapVM.makeJobPopupVM(job);
     wireKoForPopup(ko, marker, job, vm, popupVM);
 
@@ -82,6 +101,14 @@ export function removeJobMarker(vm, jobOrId) {
         const popupEl = m.getPopup()?.getElement?.();
         if (popupEl && popupEl.__ko_bound__) { try { ko.cleanNode(popupEl); } catch { /* empty */ } delete popupEl.__ko_bound__; }
 
+        if (m._pulseRing) {
+            m._pulseRing._detach?.();
+            (m._pulseSubs || []).forEach(s => { try { s.dispose?.(); } catch { /* empty */ } });
+            m._pulseSubs = [];
+            layerGroup.removeLayer(m._pulseRing);
+            m._pulseRing = null;
+        }
+
         layerGroup.removeLayer(m);
         markers.delete(id);
         break;
@@ -89,6 +116,45 @@ export function removeJobMarker(vm, jobOrId) {
 
     const job = vm.jobsById?.get?.(id);
     if (job) job.marker = null;
+}
+
+
+function upsertPulseRing(layerGroup, job, marker) {
+  const isNew = (job.statusName?.() || '').toLowerCase() === 'new';
+  const base = marker.options.icon?.options || {};
+  const baseSize   = base.iconSize  || [14, 14];
+  const baseAnchor = base.iconAnchor|| [baseSize[0]/2, baseSize[1]/2];
+
+  if (isNew && !marker._pulseRing) {
+    const k = 4;
+    const ringSize   = [Math.round(baseSize[0]*k),   Math.round(baseSize[1]*k)];
+    const ringAnchor = [Math.round(baseAnchor[0]*k), Math.round(baseAnchor[1]*k)];
+
+    const ring = L.marker(marker.getLatLng(), {
+      icon: L.divIcon({
+        className: 'pulse-ring-icon',
+        html: '<div class="pulse-ring"></div>',
+        iconSize: ringSize,
+        iconAnchor: ringAnchor
+      }),
+      interactive: false,
+      keyboard: false
+    });
+
+    const follow = () => ring.setLatLng(marker.getLatLng());
+    marker.on('move', follow);
+    ring._detach = () => marker.off('move', follow);
+
+    ring.setZIndexOffset((marker.options?.zIndexOffset||0)+1);
+    ring.addTo(layerGroup);
+    marker._pulseRing = ring;
+  }
+
+  if (!isNew && marker._pulseRing) {
+    marker._pulseRing._detach?.();
+    layerGroup.removeLayer(marker._pulseRing);
+    marker._pulseRing = null;
+  }
 }
 
 // --- internals ---
@@ -131,140 +197,7 @@ function wireKoForPopup(ko, marker, job, vm, popupVM) {
 }
 
 
-// Build icon style for a given job
-function styleForJob(job) {
-    const type = job.typeName() || "default";
-    const shape = typeShape[type] || typeShape.default;
-    const fill = typeFill[type] || typeFill.default;
-
-    // Stroke: Flood Rescue categories override priority
-    let stroke;
-    if (type === "FR") {
-        const catKey = floodRescueCategoryKey(job);
-        stroke = (catKey && floodCatStroke[catKey]) || "#0EA5E9";
-    } else {
-        const pr = job.priorityName();
-        stroke = priorityStroke[pr] || "#4B5563";
-    }
-
-    // Emphasise Priority/Immediate with larger radius
-    const radius = (/^(Priority|Immediate)$/i.test(job.priorityName())) ? 8.5 : 7;
-
-    return { shape, fill, stroke, radius, strokeWidth: 2.25 };
-    // tweak strokeWidth if you need stronger outlines
-}
 
 
-
-// --- SVG factory (shape+style → L.divIcon) ---
-function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2 }) {
-    const d = radius * 2;
-    const cx = radius, cy = radius;
-
-    let inner = "";
-    switch (shape) {
-        case "circle":
-            inner = `<circle cx="${cx}" cy="${cy}" r="${radius - strokeWidth / 2}"
-                          fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-            break;
-        case "square": {
-            const s = d - strokeWidth;
-            const o = strokeWidth / 2;
-            inner = `<rect x="${o}" y="${o}" width="${s}" height="${s}"
-                          rx="2" ry="2" fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-            break;
-        }
-        case "diamond": {
-            const r = radius - strokeWidth / 2;
-            inner = `<polygon points="${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}"
-                          fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-            break;
-        }
-        case "triangle": {
-            const r = radius - strokeWidth / 2;
-            const h = r * Math.sqrt(3);
-            const p1 = `${cx},${cy - r}`;
-            const p2 = `${cx - h / 2},${cy + r / 2}`;
-            const p3 = `${cx + h / 2},${cy + r / 2}`;
-            inner = `<polygon points="${p1} ${p2} ${p3}"
-                          fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-            break;
-        }
-        case "hex": {
-            const r = radius - strokeWidth / 2;
-            const pts = [];
-            for (let i = 0; i < 6; i++) {
-                const a = (Math.PI / 3) * i - Math.PI / 6;
-                pts.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
-            }
-            inner = `<polygon points="${pts.join(" ")}"
-                          fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-            break;
-        }
-        default:
-            inner = `<circle cx="${cx}" cy="${cy}" r="${radius - strokeWidth / 2}"
-                          fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
-    }
-
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">
-              ${inner}
-            </svg>`;
-
-    return L.divIcon({
-        className: "job-svg-marker",
-        html: svg,
-        iconSize: [d, d],
-        iconAnchor: [radius, radius],
-        popupAnchor: [0, -radius]
-    });
-};
-
-// type → shape
-const typeShape = {
-    "Storm": "circle",
-    "Flood Misc": "diamond",
-    "Flood": "square",
-    "FR": "diamond",
-    "Rescue": "triangle",
-    "Welfare": "square",
-    "Evacuation Secondary": "hex",
-    default: "circle"
-};
-
-// type → fill color
-const typeFill = {
-    "Storm": "#22C55E",
-    "Flood Misc": "#1C7ED6",
-    "Flood": "#ffa200ff",
-    "FR": "#000000",
-    "Rescue": "#EF4444",
-    default: "#9CA3AF"
-};
-
-// Priority → stroke color
-const priorityStroke = {
-    "Priority": "#FFA500",  // goldy yellow
-    "Immediate": "#4F92FF",  // blue
-    "Rescue": "#FF0000",  // red
-    "General": "#000000"   // black
-};
-
-// Flood Rescue categories → stroke color (overrides priority if job is Flood Rescue)
-const floodCatStroke = {
-    "Category1": "#7F1D1D", // Critical assistance
-    "Category2": "#DC2626", // Imminent threat
-    "Category3": "#EA580C", // Trapped - rising
-    "Category4": "#EAB308", // Trapped - stable
-    "Category5": "#16A34A", // Animal
-    "Red": "#DC2626",
-    "Orange": "#EA580C"
-};
-
-function floodRescueCategoryKey(job) {
-    // pick first matching known category if present
-    const cat = job.categoriesName();
-    if (floodCatStroke[cat]) return cat;
-    return null;
-}
 
 

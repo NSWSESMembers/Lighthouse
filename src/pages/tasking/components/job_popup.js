@@ -22,10 +22,21 @@ export function buildJobPopupKO() {
 <!-- Assign to Team Dropdown -->
     <div class="text-center mt-2">
       <div class="dropdown d-inline-block">
-        <button class="btn btn-sm btn-primary dropdown-toggle" type="button" id="assignTeamBtn"
+        <button class="btn btn-small dropdown-toggle btn-outline-primary" type="button" id="assignTeamBtn"
                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Assign to Team
+                                <i class="fa fa-solid fa-user-plus"></i>
+
         </button>
+      <button type="button" class="btn btn-small btn-outline-secondary"
+                      title="Ops Log"
+                      data-bind="click: $root.displayOpsLogsForJob, clickBubble: false">
+                      <i class="fas fa-list"></i>
+                  </button>
+        <button type="button" class="btn btn-small btn-outline-secondary"
+                      title="Open In Beacon"
+                      data-bind="click: openBeaconJobDetails, clickBubble: false">
+                      <i class="fas fa-external-link-alt"></i>
+                  </button>          
         <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="assignTeamBtn" style="min-width: 260px;">
           <li class="mb-2">
             <input type="text"
@@ -41,9 +52,10 @@ export function buildJobPopupKO() {
   data-bind="html:
     '<div><strong>' + (team.callsign() || '') + '</strong>' +
     '<div class=&quot;small text-muted&quot;>' +
-      taskings().length + ' tasking(s) &nbsp;•&nbsp; ' +
-      (distanceLabel || '-') + ' &nbsp;•&nbsp; ' +
-      (bearingLabel || '-') +
+      currentTaskingSummary() +
+    '</div>' +
+    '<div class=&quot;small text-muted&quot;>' +
+      summaryLine +
     '</div>',
     click: $root.taskTeamToJobWithConfirm">
 </button>
@@ -113,13 +125,6 @@ export function buildJobPopupKO() {
       <div class="text-center text-muted" data-bind="visible: !taskingLoading() && taskings().length === 0">
         No taskings yet.
       </div>
-
-      <!-- Link -->
-      <div class="text-center pt-2">
-        <a target="_blank" rel="noopener noreferrer"
-           data-bind="attr: { href: jobLink }">View Job Details</a>
-      </div>
-
       <!-- Footer -->
       <span style="font-weight:bold;font-size:smaller;display:block;text-align:center">
         <hr style="height:1px;margin-top:5px;margin-bottom:5px">
