@@ -87,7 +87,7 @@ const map = L.map('map', {
 const LegendControl = L.Control.extend({
   options: { position: "bottomright", collapsed: false, persist: true },
 
-  onAdd(map) {
+  onAdd() {
     const div = L.DomUtil.create("div", "legend-container leaflet-bar");
     div.innerHTML = `
       <div class="legend-header d-flex justify-content-between align-items-center">
