@@ -277,6 +277,11 @@ export function Job(data = {}, deps = {}) {
         // popup closing logic goes here
     };
 
+    self.refreshDatAndTasking = function () {
+        self.fetchTasking();
+        self.refreshData();
+    }
+
     self.fetchTasking = function () {
         self.taskingLoading(true);
         fetchJobTasking(self.id(), () => {

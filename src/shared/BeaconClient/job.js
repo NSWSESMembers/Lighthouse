@@ -131,7 +131,7 @@ export function searchwithStatusFilter(unit, host, StartDate, EndDate, userId = 
 
   if (typeof viewmodel === 'undefined') //if they dont specify a viewmodel to load, pull the big one down.
   {
-    viewmodel = "6";
+    viewmodel = "1";
   }
 
   var url = "";

@@ -14,6 +14,9 @@ import { attachAssetMarker, detachAssetMarker } from './popups/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
 import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 
+import { installAlerts } from './components/alerts.js';
+
+
 
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
@@ -79,20 +82,27 @@ const map = L.map('map', {
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
 
-const legend = L.control({ position: "bottomright" });
 
-legend.onAdd = function () {
-    const div = L.DomUtil.create("div", "info legend p-2 bg-white shadow rounded opacity-75");
+// Legend control (collapsible)
+const LegendControl = L.Control.extend({
+  options: { position: "bottomright", collapsed: false, persist: true },
+
+  onAdd(map) {
+    const div = L.DomUtil.create("div", "legend-container leaflet-bar");
     div.innerHTML = `
-    <h6 class="mb-1 fw-semibold">Legend</h6>
+      <div class="legend-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Legend</span>
+        <button class="btn btn-sm btn-outline-secondary toggle-legend" type="button" aria-expanded="true">−</button>
+      </div>
+      <div class="legend-body mt-1">
 
     <div class="mb-2">
-      <div class="fw-semibold small mb-1">Job Type → Shape</div>
+      <div class="fw-semibold small mb-1">Incident Type → Shape</div>
       <div class="d-flex flex-wrap gap-2 small align-items-center">
         <div><svg width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="2"/></svg> Storm</div>
         <div><svg width="16" height="16"><rect x="2" y="2" width="12" height="12" rx="2" ry="2" fill="none" stroke="#000" stroke-width="2"/></svg>Support</div>
         <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" fill="none" stroke="#000" stroke-width="2"/></svg> Flood Rescue</div>
-        <div><svg width="16" height="16"><polygon points="8,2 2,14 14,14" fill="none" stroke="#000" stroke-width="2"/></svg> FloodSupport</div>
+        <div><svg width="16" height="16"><polygon points="8,2 2,14 14,14" fill="none" stroke="#000" stroke-width="2"/></svg> Flood Support</div>
         <div><svg width="16" height="16"><polygon points="8,2 14,8 8,14 2,8" fill="none" stroke="#000" stroke-width="2"/></svg> Rescue</div>
         <div><svg width="16" height="16"><polygon points="8,0 10,6 16,6 11,10 13,16 8,12 3,16 5,10 0,6 6,6" fill="none" stroke="#000" stroke-width="2"/></svg> Tsunami</div>
       </div>
@@ -118,28 +128,59 @@ legend.onAdd = function () {
         <div><span class="legend-box" style="background:#16A34A"></span> Cat 5</div>
       </div>
     </div>
-  `;
+
+
+    <div>
+      <div class="fw-semibold small mb-1">Overlays</div>
+      <div class="d-flex flex-wrap gap-2 small legend-ring ">
+        <div><div class="pulse-ring-icon"></div><svg  class="pulse-ring" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="2"/></svg> Unacknowledged incident</div>
+      </div>
+    </div>
+    </div>
+    `;
+
+    this._container = div;
+    this._body = div.querySelector(".legend-body");
+    this._btn = div.querySelector(".toggle-legend");
+
+    // initial state
+    const collapsed =
+      this.options.persist &&
+      localStorage.getItem("legendCollapsed") === "1"
+        ? true
+        : !!this.options.collapsed;
+    this._setCollapsed(collapsed);
+
+    // prevent map drag/zoom on click
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.on(this._btn, "click", this._toggle, this);
+
     return div;
-};
+  },
 
-const style = document.createElement("style");
-style.textContent = `
-  .legend-box {
-    display:inline-block;
-    width:14px;
-    height:14px;
-    border:1px solid #333;
-    margin-right:4px;
-    vertical-align:middle;
-  }
-  .leaflet-control.legend svg {
-    vertical-align:middle;
-  }
-`;
-document.head.appendChild(style);
+  onRemove() {
+    if (this._btn) L.DomEvent.off(this._btn, "click", this._toggle, this);
+  },
 
+  _toggle(e) {
+    L.DomEvent.stop(e);
+    const hidden = this._body.classList.toggle("d-none");
+    this._btn.textContent = hidden ? "+" : "−";
+    this._btn.setAttribute("aria-expanded", String(!hidden));
+    if (this.options.persist)
+      localStorage.setItem("legendCollapsed", hidden ? "1" : "0");
+  },
+
+  _setCollapsed(collapsed) {
+    if (!this._body || !this._btn) return;
+    this._body.classList.toggle("d-none", collapsed);
+    this._btn.textContent = collapsed ? "+" : "−";
+    this._btn.setAttribute("aria-expanded", String(!collapsed));
+  },
+});
+
+const legend = new LegendControl({ collapsed: false, persist: true });
 legend.addTo(map);
-
 
 ResizeDividers(map)
 
@@ -665,7 +706,7 @@ function fetchAllJobsData() {
     }, function (val, total) {
         console.log("Progress: " + val + " / " + total)
     },
-        6, //view model
+        1, //view model
         [2, 1, 4, 5], //status filter
         function (jobs) {
             jobs.Results.forEach(function (t) {
@@ -791,6 +832,9 @@ document.addEventListener('DOMContentLoaded', function () {
         myViewModel = new VM();
 
         ko.applyBindings(myViewModel);
+
+        // Alerts overlay
+        installAlerts(map, myViewModel);
 
         //get tokens
         BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(apiHost, params.source, function ({ token: rToken, tokenexp: rExp }) {

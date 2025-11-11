@@ -639,12 +639,16 @@
 
                     <!-- Entries -->
                     <div data-bind="foreach: entries, visible: !loading()">
-                        <div class="border rounded p-2 mb-2">
+                        <div class="border rounded p-2 mb-2" data-bind="css: { 'border-warning border-2': important, 'bg-light': isIcemsEntry }">
                             <div class="d-flex justify-content-between">
                                 <strong data-bind="text: subject"></strong>
-                                <span class="text-muted small" data-bind="text: timeLoggedAgo"></span>
+                                <div>
+                                    <span class="badge bg-primary me-1" data-bind="visible: isIcemsEntry">ICEMS</span>
+                                    <span class="badge bg-warning me-1" data-bind="visible: important">Important</span>
+                                    <span class="text-muted small" data-bind="text: timeLoggedAgo"></span>
+                                </div>
                             </div>
-                            <div class="small text-secondary mb-1" data-bind="text: createdByDisplay"></div>
+                            <div class="small text-secondary mb-1" data-bind="text: createdByDisplay + ' @ ' + timeLoggedFormatted"></div>
                             <div data-bind="text: text"></div>
                             <div class="mt-1">
                                 <span class="badge bg-info me-1" data-bind="text: tagsCsv, visible: tagsCsv"></span>

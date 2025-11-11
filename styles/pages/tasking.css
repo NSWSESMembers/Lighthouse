@@ -725,3 +725,110 @@ tr.team_body > td { padding: 0; border-top: 0; }
   80%  { transform: scale(1.1); opacity: 0.15; }
   100% { transform: scale(1.2); opacity: 0; }
 }
+
+.legend-ring > div > .pulse-ring {
+  position: relative !important
+}
+
+
+.leaflet-control.alerts { pointer-events:auto; }
+.alerts {
+  font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  min-width: 220px;
+  max-width: 360px;
+  backdrop-filter: blur(2px);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.2);
+  overflow: hidden;
+}
+.alerts__btn {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px; width:100%; background:transparent; border:0; cursor:pointer;
+  text-align:left;
+}
+.alerts__icon { width:16px; height:16px; flex:0 0 16px; }
+.alerts__title { font-weight:600; }
+.alerts__count { margin-left:auto; font-weight:700; }
+.alerts__panel { display:none; padding:8px 10px; border-top:1px dashed currentColor; color:black }
+.alerts--open .alerts__panel { display:block; }
+
+/* Levels — extend as needed */
+.alerts--warning { color:#664d03; background:rgba(255,193,7,.20); border:1px solid rgba(255,193,7,.5); }
+.alerts--danger  { color:#58151c; background:rgba(220,53,69,.20); border:1px solid rgba(220,53,69,.45); }
+.alerts--caution { color:#084298; background:rgba(13,110,253,.15); border:1px solid rgba(13,110,253,.35); }
+
+.alerts__list { margin:0; padding-left:18px; }
+
+/* Root container for the control (set this class in onAdd) */
+.alerts-root { position: relative; }
+
+/* Intro animation on first mount */
+.alerts-root--intro {
+  animation: alerts-slide-pop 420ms cubic-bezier(.2,.8,.2,1),
+}
+@keyframes alerts-slide-pop {
+  0% { opacity: 0; transform: translateY(-8px) scale(.98); }
+  60% { opacity: 1; transform: translateY(0) scale(1.008); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+
+/* Subtle ping from the hazard icon once */
+.alerts__btn .alerts__icon {
+  position: relative;
+}
+.alerts-root--intro .alerts__btn .alerts__icon::after {
+  content: "";
+  position: absolute; inset: -2px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: .6;
+  animation: alerts-ping 800ms ease-out forwards;
+}
+@keyframes alerts-ping {
+  0%   { transform: scale(.8); opacity: .75; }
+  70%  { transform: scale(1.6); opacity: .25; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .alerts-root--intro,
+  .alerts-root--intro .alerts__btn .alerts__icon::after {
+    animation: none !important;
+  }
+}
+
+.legend-container {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  min-width: 120px;
+  font-size: 13px;
+}
+
+.legend-container i {
+  width: 16px;
+  height: 16px;
+  float: left;
+  margin-right: 8px;
+  opacity: 0.7;
+}
+
+.legend-header button {
+  line-height: 1;
+  padding: 0 6px;
+}
+
+  .legend-box {
+    display:inline-block;
+    width:14px;
+    height:14px;
+    border:1px solid #333;
+    margin-right:4px;
+    vertical-align:middle;
+  }
+  .leaflet-control.legend svg {
+    vertical-align:middle;
+  }

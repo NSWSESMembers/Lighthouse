@@ -52,6 +52,12 @@ export function OpsLogEntry(data = {}) {
   // --- ICEMS fields ---
   self.icemsIncidentIdentifier = ko.observable(data.ICEMSIncidentIdentifier ?? null);
 
+  self.isIcemsEntry = ko.pureComputed(() => {
+    const id = self.icemsIncidentIdentifier();
+    if (id !== null && id !== undefined && id !== "") return true;
+    return self.tags().some(t => (t.name?.() || "").trim().toLowerCase() === "icems");
+  });
+
   // --- misc (nullable) ---
   self.position = ko.observable(data.Position ?? null);           // keep raw (could be {lat,lng} or string per API)
   self.actionReminder = ko.observable(data.ActionReminder ?? null);

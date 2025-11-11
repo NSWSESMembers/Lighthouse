@@ -49,7 +49,6 @@ const jobTypeParentCategoryShape = {
 function jobTypeParentCategoryKey(job) {
     // pick first matching known category if present
     const cat = job.categoriesParent();
-    console.log("jobTypeParentCategoryKey", cat);
     if (jobTypeParentCategoryShape[cat]) return cat; //check if exists
     return jobTypeParentCategoryShape.default;
 }

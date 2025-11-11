@@ -4,8 +4,10 @@ export function buildJobPopupKO() {
     <!-- Header -->
     <div id="jobIdentifier"
          class="fw-bold text-center"
-         style="color:white;background: black"
-         data-bind="text: identifier"></div>
+         style="color:white;background: black">
+         <span data-bind="text: identifier"></span>
+         <em class="fa fa-fw fa-share-alt" data-bind="visible: icemsIncidentIdentifier, attr:{ title: icemsIncidentIdentifier }"></em>
+         </div>
     <div id="jobType"
          class="fw-bold text-center"
          style="color:white;"
@@ -31,12 +33,17 @@ export function buildJobPopupKO() {
                       title="Ops Log"
                       data-bind="click: $root.displayOpsLogsForJob, clickBubble: false">
                       <i class="fas fa-list"></i>
-                  </button>
+        </button>
         <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Open In Beacon"
                       data-bind="click: openBeaconJobDetails, clickBubble: false">
                       <i class="fas fa-external-link-alt"></i>
-                  </button>          
+        </button>   
+        <button type="button" class="btn btn-small btn-outline-secondary"
+                      title="Refresh"
+                      data-bind="click: refreshDatAndTasking, clickBubble: false">
+                      <i class="fa fa-sync"></i>
+                  </button>                 
         <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="assignTeamBtn" style="min-width: 260px;">
           <li class="mb-2">
             <input type="text"
