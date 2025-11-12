@@ -11,5 +11,6 @@ import * as team from './BeaconClient/team.js';
 import * as unit from './BeaconClient/unit.js';
 import * as entities from './BeaconClient/entities.js';
 import * as tasking from './BeaconClient/tasking.js';
+import * as notifications from './BeaconClient/notifications.js';
 
-export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking };
+export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications };

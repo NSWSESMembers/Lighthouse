@@ -84,11 +84,6 @@ export function OpsLogEntry(data = {}) {
 
   self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
 
-  self.createdByDisplay = ko.pureComputed(() => {
-    const n = self.createdBy.fullName();
-    const rn = self.createdBy.registrationNumber();
-    return n || rn ? [n, rn].filter(Boolean).join(" — ") : "";
-  });
 
   self.hasPoliceTag = ko.pureComputed(() =>
     self.tags().some(t => (t.name?.() || "").toLowerCase() === "police")

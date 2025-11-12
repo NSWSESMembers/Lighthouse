@@ -124,11 +124,11 @@ const LegendControl = L.Control.extend({
     <div>
       <div class="fw-semibold small mb-1">FR: Category → Fill</div>
       <div class="d-flex flex-wrap gap-2 small">
-        <div><span class="legend-box" style="background:#7F1D1D"></span> Cat 1</div>
-        <div><span class="legend-box" style="background:#DC2626"></span> Cat 2</div>
-        <div><span class="legend-box" style="background:#EA580C"></span> Cat 3</div>
-        <div><span class="legend-box" style="background:#EAB308"></span> Cat 4</div>
-        <div><span class="legend-box" style="background:#16A34A"></span> Cat 5</div>
+        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#7F1D1D" stroke-width="2"/></svg> Cat 1</div>
+        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#DC2626" stroke-width="2"/></svg> Cat 2</div>
+        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#EA580C" stroke-width="2"/></svg> Cat 3</div>
+        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#EAB308" stroke-width="2"/></svg> Cat 4</div>
+        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#16A34A" stroke-width="2"/></svg> Cat 5</div>
       </div>
     </div>
 
@@ -366,6 +366,10 @@ function VM() {
             attachAndFillOpsLogModal: (job) => {
                 attachOpsLogModal(job);
             },
+
+            fetchUnacknowledgedJobNotifications: (job) => {
+                self.fetchUnacknowledgedJobNotifications(job);
+            }
         }
     }
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
@@ -569,6 +573,14 @@ function VM() {
 
     self.markerLayersControl = null;    // optional Leaflet layer control
 
+    self.fetchUnacknowledgedJobNotifications = function (job) {
+        BeaconClient.notifications.unaccepted(job.id(), apiHost, params.userId, token, function (data) {
+            job.unacceptedNotifications(data);
+        }, function (err) {
+            console.error("Failed to fetch unacknowledged job notifications:", err);
+        });
+    }
+
     self.assignJobToTeam = function (teamVm, jobVm) {
         BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, token, function () {
             jobVm.fetchTasking();
@@ -591,8 +603,10 @@ function VM() {
         changes.forEach(ch => {
             if (ch.status === 'added') {
                 addOrUpdateJobMarker(ko, map, self, ch.value);
+                ch.value.isFilteredIn(true);
             } else if (ch.status === 'deleted') {
                 removeJobMarker(self, ch.value);
+                ch.value.isFilteredIn(false);
             }
         });
     }, null, 'arrayChange');

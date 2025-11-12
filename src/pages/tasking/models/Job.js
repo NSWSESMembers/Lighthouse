@@ -19,7 +19,10 @@ export function Job(data = {}, deps = {}) {
         fetchJobById = async (_jobId) => null,
         flyToJob = (_job) => {/* noop */ },
         attachAndFillOpsLogModal = (_jobId) => ([]),
+        fetchUnacknowledgedJobNotifications = async (_job) => ([]),
     } = deps;
+
+    self.isFilteredIn = ko.observable(false);
 
     // raw
     self.id = ko.observable(data.Id ?? null);
@@ -58,8 +61,55 @@ export function Job(data = {}, deps = {}) {
     self.opsLogEntriesLoading = ko.observable(false);
     self.opsLogEntries = ko.observableArray([]);
 
+    self.unacceptedNotifications = ko.observableArray([]);
+
     self.lastDataUpdate = new Date();
     let refreshTimer = null;
+
+    let unacceptedNotificationsTimer = null;
+
+
+    // functions to poll unaccepted notifications if theres an icems ID
+    function pollUnacceptedNotifications() {
+        if (!self.icemsIncidentIdentifier()) return;
+        if (!self.isFilteredIn()) return;
+        console.log("Polling unaccepted notifications for job", self.id());
+        fetchUnacknowledgedJobNotifications(self);
+    }
+
+    self.startUnacceptedNotificationsPolling = function () {
+        self.stopUnacceptedNotificationsPolling();
+        if (!self.icemsIncidentIdentifier()) return;
+        if (!self.isFilteredIn()) return;
+        console.log(self.isFilteredIn(), self.icemsIncidentIdentifier(), self.id());
+        console.log("Starting unaccepted notifications polling for job", self.id());
+        pollUnacceptedNotifications();
+        unacceptedNotificationsTimer = setInterval(pollUnacceptedNotifications, 30000);
+    };
+
+    self.stopUnacceptedNotificationsPolling = function () {
+        if (unacceptedNotificationsTimer) {
+            clearInterval(unacceptedNotificationsTimer);
+            unacceptedNotificationsTimer = null;
+        }
+    };
+
+    self.icemsIncidentIdentifier.subscribe(() => {
+        if (!self.icemsIncidentIdentifier()) return;
+        if (!self.isFilteredIn()) return;
+        self.startUnacceptedNotificationsPolling();
+    });
+
+    self.isFilteredIn.subscribe(() => {
+        if (!self.icemsIncidentIdentifier()) return;
+        if (!self.isFilteredIn()) return;
+        self.startUnacceptedNotificationsPolling();
+    });
+
+    self.startUnacceptedNotificationsPolling();
+    //
+
+
 
     self.attachAndFillOpsLogModal = function () {
         console.log("Fetching ops log entries for job", self.id());
@@ -119,6 +169,8 @@ export function Job(data = {}, deps = {}) {
     self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
     self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
     self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
+    self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));
+
     self.ageSeconds = ko.pureComputed(() => {
         const d = self.receivedAt();
         return d ? Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000)) : null;
@@ -159,9 +211,9 @@ export function Job(data = {}, deps = {}) {
     })
 
 
-        self.categoriesParent = ko.pureComputed(() => {
+    self.categoriesParent = ko.pureComputed(() => {
         const beaconJobParentCats = {
-            1: "Storm" ,
+            1: "Storm",
             2: "Support",
             4: "FloodSupport",
             5: "Rescue",
@@ -196,6 +248,8 @@ export function Job(data = {}, deps = {}) {
         if (d.PrintCount !== undefined) this.printCount(d.PrintCount ?? 0);
         if (d.InFrao !== undefined) this.inFrao(!!d.InFrao);
         if (d.ImageCount !== undefined) this.imageCount(d.ImageCount ?? 0);
+
+        if (d.ICEMSIncidentIdentifier !== undefined) this.icemsIncidentIdentifier(d.ICEMSIncidentIdentifier || null);
 
         // structured
         if (d.JobPriorityType !== undefined) this.jobPriorityType(d.JobPriorityType || null);
@@ -262,7 +316,7 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.openBeaconJobDetails = function () {
-     const url = self.jobLink();
+        const url = self.jobLink();
         console.log("Opening job in Beacon:", url);
         openURLInBeacon(url);
     }
@@ -270,7 +324,7 @@ export function Job(data = {}, deps = {}) {
     self.focusMap = function () { flyToJob(self); };
 
     // ---- lifecycle hooks (delegated) ----
-    self.onPopupOpen = function () { self.fetchTasking(); self.refreshData()};
+    self.onPopupOpen = function () { self.fetchTasking(); self.refreshData() };
     self.onPopupClose = function () { /* popup closing logic goes here */ };
 
     self.onPopupClose = function () {

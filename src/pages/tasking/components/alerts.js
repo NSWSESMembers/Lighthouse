@@ -81,11 +81,16 @@ function buildDefaultRules(vm) {
 
   const newJobs = jobs.filter(j => (j.statusName && j.statusName() === 'New'));
   const untasked = jobs.filter(j => (Array.isArray(j.taskings()) && j.taskings().length === 0) && j.statusName && j.statusName() == 'Active');
-
+  const unackedNotifications = jobs.filter(j => (Array.isArray(j.unacceptedNotifications()) && j.unacceptedNotifications().length > 0));
+  
   const asItem = j => ({
     id: j.identifier?.() ?? j.id?.(),
     label: (j.identifier?.() || j.id?.()) + ' — ' + j.type() + ' — '+ (j.address?.prettyAddress?.() || '')
   });
+
+  //warning
+  //danger
+  //caution
 
   return [
     {
@@ -108,6 +113,19 @@ function buildDefaultRules(vm) {
       active: untasked.length > 0,
       items: untasked.slice(0, 10).map(asItem),
       count: untasked.length,
+      onClick: (id) => {
+        // optional: focus the job if present
+        const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
+        found?.focusMap();
+      }
+    },
+     {
+      id: 'unacked-notifications',
+      level: 'danger',
+      title: 'Unacknowledged notifications',
+      active: unackedNotifications.length > 0,
+      items: unackedNotifications.slice(0, 10).map(asItem),
+      count: unackedNotifications.length,
       onClick: (id) => {
         // optional: focus the job if present
         const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);

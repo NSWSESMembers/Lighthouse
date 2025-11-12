@@ -249,7 +249,7 @@
                                     <em class="fa fa-fw fa-share-alt"
                                         data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
                                 </td>
-                                <td data-bind="text: j.receivedAt"></td>
+                                <td data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }" data-bs-toggle="tooltip"></td>
                                 <td data-bind="text: j.entityAssignedTo.code"></td>
                                 <td data-bind="text: j.type"></td>
                                 <td data-bind="text: j.categoriesName || '-'"></td>
@@ -270,6 +270,11 @@
                                                     data-bind="text: j.statusName"></span>
                                             </div>
                                             <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-small dropdown-toggle btn-outline-primary"
+                                                    type="button" id="assignTeamBtn" data-bs-toggle="dropdown"
+                                                    aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-solid fa-user-plus"></i>
+                                                </button>
                                                 <button class="btn btn-outline-secondary"
                                                     data-bind="click: j.refreshData">
                                                     <i class="fa fa-sync"></i> Refresh
@@ -298,7 +303,7 @@
                                                         <li><strong>Priority:</strong> <span
                                                                 data-bind="text: j.priorityName"></span></li>
                                                         <li><strong>Received:</strong> <span
-                                                                data-bind="text: j.receivedAt"></span></li>
+                                                                data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }" data-bs-toggle="tooltip"></span></li>
                                                         <li><strong>Assigned HQ:</strong> <span
                                                                 data-bind="text: j.entityAssignedTo.name"></span></li>
                                                     </ul>
@@ -639,7 +644,8 @@
 
                     <!-- Entries -->
                     <div data-bind="foreach: entries, visible: !loading()">
-                        <div class="border rounded p-2 mb-2" data-bind="css: { 'border-warning border-2': important, 'bg-light': isIcemsEntry }">
+                        <div class="border rounded p-2 mb-2"
+                            data-bind="css: { 'border-warning border-2': important, 'bg-light': isIcemsEntry }">
                             <div class="d-flex justify-content-between">
                                 <strong data-bind="text: subject"></strong>
                                 <div>
@@ -648,7 +654,8 @@
                                     <span class="text-muted small" data-bind="text: timeLoggedAgo"></span>
                                 </div>
                             </div>
-                            <div class="small text-secondary mb-1" data-bind="text: createdByDisplay + ' @ ' + timeLoggedFormatted"></div>
+                            <div class="small text-secondary mb-1"
+                                data-bind="text: createdBy.fullName() + ' @ ' + timeLoggedFormatted"></div>
                             <div data-bind="text: text"></div>
                             <div class="mt-1">
                                 <span class="badge bg-info me-1" data-bind="text: tagsCsv, visible: tagsCsv"></span>
