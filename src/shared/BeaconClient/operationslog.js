@@ -20,3 +20,24 @@ export function search(Id, host, userId = 'notPassed', token, callback) {
     }
   })
 }
+
+
+export function get(entryId, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'GET',
+    url: host + "/Api/v1/OperationsLog/" + entryId + "?LighthouseFunction=GetOperationsLogEntryfromBeacon&userId=" + userId,
+    beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + token)
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function(response, textStatus) {
+      if (textStatus == 'success') {
+        let results = response.responseJSON;
+        if (typeof callback === "function") {
+          callback(results);
+        }
+      }
+    }
+  })
+}
