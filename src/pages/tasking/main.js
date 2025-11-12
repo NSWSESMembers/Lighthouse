@@ -15,6 +15,7 @@ import { MapVM } from './viewmodels/Map.js';
 import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 
 import { installAlerts } from './components/alerts.js';
+import { LegendControl } from './components/legend.js';
 
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
@@ -61,22 +62,6 @@ var myViewModel;
 
 /////////DATA REFRESH CODE   
 
-var assetDataRefreshInterlock = false
-
-var assetDataRefreshTimer = null
-
-function startAssetDataRefreshTimer() {
-    if (assetDataRefreshTimer) clearInterval(assetDataRefreshTimer);
-    assetDataRefreshTimer = setInterval(() => {
-        fetchAllTrackableAssets
-    }, 10000);
-};
-
-startAssetDataRefreshTimer()
-
-
-
-
 // --- Leaflet map with Esri basemap
 const map = L.map('map', {
     zoomControl: true, // 1 / 10th of the original zoom step
@@ -85,101 +70,7 @@ const map = L.map('map', {
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
 
-// Legend control (collapsible)
-const LegendControl = L.Control.extend({
-  options: { position: "bottomright", collapsed: false, persist: true },
 
-  onAdd() {
-    const div = L.DomUtil.create("div", "legend-container leaflet-bar");
-    div.innerHTML = `
-      <div class="legend-header d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Legend</span>
-        <button class="btn btn-sm btn-outline-secondary toggle-legend" type="button" aria-expanded="true">−</button>
-      </div>
-      <div class="legend-body mt-1">
-
-    <div class="mb-2">
-      <div class="fw-semibold small mb-1">Incident Type → Shape</div>
-      <div class="d-flex flex-wrap gap-2 small align-items-center">
-        <div><svg width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="2"/></svg> Storm</div>
-        <div><svg width="16" height="16"><rect x="2" y="2" width="12" height="12" rx="2" ry="2" fill="none" stroke="#000" stroke-width="2"/></svg>Support</div>
-        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" fill="none" stroke="#000" stroke-width="2"/></svg> Flood Rescue</div>
-        <div><svg width="16" height="16"><polygon points="8,2 2,14 14,14" fill="none" stroke="#000" stroke-width="2"/></svg> Flood Support</div>
-        <div><svg width="16" height="16"><polygon points="8,2 14,8 8,14 2,8" fill="none" stroke="#000" stroke-width="2"/></svg> Rescue</div>
-        <div><svg width="16" height="16"><polygon points="8,0 10,6 16,6 11,10 13,16 8,12 3,16 5,10 0,6 6,6" fill="none" stroke="#000" stroke-width="2"/></svg> Tsunami</div>
-      </div>
-    </div>
-
-    <div class="mb-2">
-      <div class="fw-semibold small mb-1">Priority → Fill</div>
-      <div class="d-flex flex-wrap gap-2 small">
-        <div><span class="legend-box" style="background:#FFA500"></span> Priority</div>
-        <div><span class="legend-box" style="background:#4F92FF"></span> Immediate</div>
-        <div><span class="legend-box" style="background:#FF0000"></span> Rescue</div>
-        <div><span class="legend-box" style="background:#0fcb35ff"></span> General</div>
-      </div>
-    </div>
-
-    <div>
-      <div class="fw-semibold small mb-1">FR: Category → Fill</div>
-      <div class="d-flex flex-wrap gap-2 small">
-        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#7F1D1D" stroke-width="2"/></svg> Cat 1</div>
-        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#DC2626" stroke-width="2"/></svg> Cat 2</div>
-        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#EA580C" stroke-width="2"/></svg> Cat 3</div>
-        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#EAB308" stroke-width="2"/></svg> Cat 4</div>
-        <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#16A34A" stroke-width="2"/></svg> Cat 5</div>
-      </div>
-    </div>
-
-
-    <div>
-      <div class="fw-semibold small mb-1">Overlays</div>
-      <div class="d-flex flex-wrap gap-2 small legend-ring ">
-        <div><div class="pulse-ring-icon"></div><svg  class="pulse-ring" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="2"/></svg> Unacknowledged incident</div>
-      </div>
-    </div>
-    </div>
-    `;
-
-    this._container = div;
-    this._body = div.querySelector(".legend-body");
-    this._btn = div.querySelector(".toggle-legend");
-
-    // initial state
-    const collapsed =
-      this.options.persist &&
-      localStorage.getItem("legendCollapsed") === "1"
-        ? true
-        : !!this.options.collapsed;
-    this._setCollapsed(collapsed);
-
-    // prevent map drag/zoom on click
-    L.DomEvent.disableClickPropagation(div);
-    L.DomEvent.on(this._btn, "click", this._toggle, this);
-
-    return div;
-  },
-
-  onRemove() {
-    if (this._btn) L.DomEvent.off(this._btn, "click", this._toggle, this);
-  },
-
-  _toggle(e) {
-    L.DomEvent.stop(e);
-    const hidden = this._body.classList.toggle("d-none");
-    this._btn.textContent = hidden ? "+" : "−";
-    this._btn.setAttribute("aria-expanded", String(!hidden));
-    if (this.options.persist)
-      localStorage.setItem("legendCollapsed", hidden ? "1" : "0");
-  },
-
-  _setCollapsed(collapsed) {
-    if (!this._body || !this._btn) return;
-    this._body.classList.toggle("d-none", collapsed);
-    this._btn.textContent = collapsed ? "+" : "−";
-    this._btn.setAttribute("aria-expanded", String(!collapsed));
-  },
-});
 
 const legend = new LegendControl({ collapsed: false, persist: true });
 legend.addTo(map);
@@ -195,20 +86,20 @@ function VM() {
 
     self.mapVM = new MapVM(map, self);
 
-// --- Layers Drawer (under zoom)
-const LayersDrawer = L.Control.extend({
-  options: { position: "topleft" },
+    // --- Layers Drawer (under zoom)
+    const LayersDrawer = L.Control.extend({
+        options: { position: "topleft" },
 
-  initialize(opts = {}) {
-    L.Util.setOptions(this, opts);
-    this._currentBase = null;
-    this._baseKey = localStorage.getItem("map.base") || "Topographic";
-    this._open = localStorage.getItem("layers.open") === "1";
-  },
+        initialize(opts = {}) {
+            L.Util.setOptions(this, opts);
+            this._currentBase = null;
+            this._baseKey = localStorage.getItem("map.base") || "Topographic";
+            this._open = localStorage.getItem("layers.open") === "1";
+        },
 
-  onAdd(map) {
-    const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
-    c.innerHTML = `
+        onAdd(map) {
+            const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
+            c.innerHTML = `
       <button class="ld-toggle" title="Layers" aria-expanded="${this._open ? "true" : "false"}">
         <i class="fas fa-layer-group"></i>
       </button>
@@ -224,117 +115,116 @@ const LayersDrawer = L.Control.extend({
       </div>
     `;
 
-    // build basemap list
-    const basemapNames = [
-      "Topographic","Streets","Imagery","ImageryClarity","StreetsReliefVector",
-      "DarkGray","Gray","Oceans","NationalGeographic","ShadedRelief","Terrain"
-    ];
-    const basesEl = c.querySelector(".ld-bases");
-    basemapNames.forEach(name => {
-      const id = `base-${name}`;
-      const row = document.createElement("label");
-      row.className = "ld-row";
-      row.innerHTML = `
-        <input type="radio" name="esri-base" id="${id}" value="${name}" ${name===this._baseKey?"checked":""}/>
+            // build basemap list
+            const basemapNames = [
+                { name: "Esri Topographic", esri: "Topographic" }, { name: "Esri Streets", esri: "Streets" }, { name: "Esri Imagery", esri: "Imagery" }, { name: "Esri Dark", esri: "DarkGray" },
+            ];
+            const basesEl = c.querySelector(".ld-bases");
+            basemapNames.forEach(({ name, esri }) => {
+                const id = `base-${esri}`;
+                const row = document.createElement("label");
+                row.className = "ld-row";
+                row.innerHTML = `
+        <input type="radio" name="esri-base" id="${id}" value="${esri}" ${esri === this._baseKey ? "checked" : ""}/>
         <span>${name}</span>
       `;
-      basesEl.appendChild(row);
-    });
+                basesEl.appendChild(row);
+            });
 
-    // apply initial basemap
-    this._setBasemap(this._baseKey, map);
+            // apply initial basemap
+            this._setBasemap(this._baseKey, map);
 
-    basesEl.addEventListener("change", (e) => {
-      const val = e.target?.value;
-      if (!val) return;
-      this._setBasemap(val, map);
-      localStorage.setItem("map.base", val);
-    });
+            basesEl.addEventListener("change", (e) => {
+                const val = e.target?.value;
+                if (!val) return;
+                this._setBasemap(val, map);
+                localStorage.setItem("map.base", val);
+            });
 
-    // build overlays from your existing layer groups
-    const overlaysEl = c.querySelector(".ld-overlays");
-    const overlayDefs = [];
+            // build overlays from your existing layer groups
+            const overlaysEl = c.querySelector(".ld-overlays");
+            const overlayDefs = [];
 
-    // Vehicles (single layer group)
-    if (this.options.vm?.mapVM?.vehicleLayer) {
-      overlayDefs.push({ key: "vehicles", label: "Vehicles", layer: this.options.vm.mapVM.vehicleLayer });
-    }
+            // Vehicles (single layer group)
+            if (this.options.vm?.mapVM?.vehicleLayer) {
+                overlayDefs.push({ key: "vehicles", label: "Vehicles", layer: this.options.vm.mapVM.vehicleLayer });
+            }
 
-    // Job groups (Map of { key => { layerGroup } })
-    if (this.options.vm?.mapVM?.jobMarkerGroups instanceof Map) {
-      for (const [k, v] of this.options.vm.mapVM.jobMarkerGroups.entries()) {
-        if (v?.layerGroup) {
-          overlayDefs.push({ key: `jobs-${k}`, label: `Jobs: ${k}`, layer: v.layerGroup });
-        }
-      }
-    }
+            // Job groups (Map of { key => { layerGroup } })
+            if (this.options.vm?.mapVM?.jobMarkerGroups instanceof Map) {
+                for (const [k, v] of this.options.vm.mapVM.jobMarkerGroups.entries()) {
+                    if (v?.layerGroup) {
+                        overlayDefs.push({ key: `jobs-${k}`, label: `Jobs: ${k}`, layer: v.layerGroup });
+                    }
+                }
+            }
 
-    // Optional alerts layer if you expose it later:
-    // if (this.options.vm?.mapVM?.alertsLayer) {
-    //   overlayDefs.push({ key: "alerts", label: "Alerts", layer: this.options.vm.mapVM.alertsLayer });
-    // }
+            // Optional alerts layer if you expose it later:
+            // if (this.options.vm?.mapVM?.alertsLayer) {
+            //   overlayDefs.push({ key: "alerts", label: "Alerts", layer: this.options.vm.mapVM.alertsLayer });
+            // }
 
-    overlayDefs.forEach(({ key, label, layer }) => {
-      const id = `ov-${key}`;
-      const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
-      if (saved) map.addLayer(layer);
+            overlayDefs.forEach(({ key, label, layer }) => {
+                const id = `ov-${key}`;
+                const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
+                if (saved) map.addLayer(layer);
 
-      const row = document.createElement("label");
-      row.className = "ld-row";
-      row.innerHTML = `
+                const row = document.createElement("label");
+                row.className = "ld-row";
+                row.innerHTML = `
         <input type="checkbox" id="${id}" ${saved ? "checked" : ""}/>
         <span>${label}</span>
       `;
-      overlaysEl.appendChild(row);
+                overlaysEl.appendChild(row);
 
-      row.querySelector("input").addEventListener("change", (e) => {
-        if (e.target.checked) {
-          map.addLayer(layer);
-          localStorage.setItem(`ov.${key}`, "1");
-        } else {
-          map.removeLayer(layer);
-          localStorage.setItem(`ov.${key}`, "0");
+                row.querySelector("input").addEventListener("change", (e) => {
+                    if (e.target.checked) {
+                        map.addLayer(layer);
+                        localStorage.setItem(`ov.${key}`, "1");
+                    } else {
+                        map.removeLayer(layer);
+                        localStorage.setItem(`ov.${key}`, "0");
+                    }
+                });
+            });
+
+            // open/close toggle
+            const btn = c.querySelector(".ld-toggle");
+            const panel = c.querySelector(".ld-panel");
+            L.DomEvent.on(btn, "click", (ev) => {
+                L.DomEvent.stop(ev);
+                const show = panel.classList.toggle("d-none");
+                btn.setAttribute("aria-expanded", (!show).toString());
+                localStorage.setItem("layers.open", show ? "0" : "1");
+            });
+
+            // don’t propagate scroll/drag
+            L.DomEvent.disableClickPropagation(c);
+
+            // nudge under the zoom buttons
+            setTimeout(() => {
+                const zoom = map._controlCorners.topleft.querySelector(".leaflet-control-zoom");
+                if (zoom && c.parentElement === map._controlCorners.topleft) {
+                    zoom.insertAdjacentElement("afterend", c);
+                }
+            }, 0);
+
+            this._container = c;
+            return c;
+        },
+
+        onRemove() { /* nothing to clean up */ },
+
+        _setBasemap(name, map) {
+            if (this._currentBase) map.removeLayer(this._currentBase);
+            this._currentBase = esri.basemapLayer(name, { ignoreDeprecationWarning: true });
+            this._currentBase.addTo(map);
         }
-      });
     });
 
-    // open/close toggle
-    const btn = c.querySelector(".ld-toggle");
-    const panel = c.querySelector(".ld-panel");
-    L.DomEvent.on(btn, "click", (ev) => {
-      L.DomEvent.stop(ev);
-      const show = panel.classList.toggle("d-none");
-      btn.setAttribute("aria-expanded", (!show).toString());
-      localStorage.setItem("layers.open", show ? "0" : "1");
-    });
-
-    // don’t propagate scroll/drag
-    L.DomEvent.disableClickPropagation(c);
-
-    // nudge under the zoom buttons
-    setTimeout(() => {
-      const zoom = map._controlCorners.topleft.querySelector(".leaflet-control-zoom");
-      if (zoom && c.parentElement === map._controlCorners.topleft) {
-        zoom.insertAdjacentElement("afterend", c);
-      }
-    }, 0);
-
-    this._container = c;
-    return c;
-  },
-
-  onRemove() { /* nothing to clean up */ },
-
-  _setBasemap(name, map) {
-    if (this._currentBase) map.removeLayer(this._currentBase);
-    this._currentBase = esri.basemapLayer(name, { ignoreDeprecationWarning: true });
-    this._currentBase.addTo(map);
-  }
-});
-
-// create & add (after VM so we can pass it in)
-const layersDrawer = new LayersDrawer({ vm: myViewModel });
-layersDrawer.addTo(map);
+    // create & add (after VM so we can pass it in)
+    const layersDrawer = new LayersDrawer({ vm: myViewModel });
+    layersDrawer.addTo(map);
 
     const configDeps = {
         entitiesSearch: (q) => new Promise((resolve) => {
@@ -477,22 +367,12 @@ layersDrawer.addTo(map);
             makeJobLink: (id) => `${params.source}/Jobs/${id}`,
 
             fetchJobTasking: (jobId, cb) => {
-                BeaconClient.job.getTasking(jobId, apiHost, params.userId, token, (res) => {
-                    (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload((t)));
-                    cb(true);
-                }, (err) => {
-                    console.error("Failed to fetch job tasking:", err);
-                    cb(false);
-                });
+                self.fetchJobTasking(jobId, cb);
             },
 
-            fetchJobById: (jobId) =>
-                new Promise((resolve, reject) => {
-                    BeaconClient.job.get(jobId, 1, apiHost, params.userId, token,
-                        r => resolve(r),
-                        e => reject(e)
-                    );
-                }),
+            fetchJobById: (jobId, cb) => {
+                self.fetchJobById(jobId, cb);
+            },
 
             flyToJob: (job) => {
                 const lat = job.address.latitude?.();
@@ -504,7 +384,7 @@ layersDrawer.addTo(map);
             },
 
             attachAndFillOpsLogModal: (job) => {
-                attachOpsLogModal(job);
+                self.attachOpsLogModal(job);
             },
 
             fetchUnacknowledgedJobNotifications: (job) => {
@@ -549,12 +429,22 @@ layersDrawer.addTo(map);
         return team;
     };
 
+    self.attachOpsLogModal = function (job) {
+        const modalEl = document.getElementById('opsLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        self.selectedJob(job);
+        self.opsLogModalVM.openForJob(job);
+        modal.show();
+    }
+
     // Job registry/upsert
     self.getOrCreateJob = function (jobJson) {
         const deps = makeJobDeps();
         let job = this.jobsById.get(jobJson.Id);
         if (job) {
             job.updateFromJson(jobJson);
+            job.lastDataUpdate = new Date()
             return job;
         }
         job = new Job(jobJson, deps);
@@ -810,85 +700,125 @@ layersDrawer.addTo(map);
         });
     }
 
+    self.fetchJobById = function (jobId, cb) {
+        BeaconClient.job.get(jobId, 1, apiHost, params.userId, token,
+            function (res) {
+                if (res) {
+                    const job = self.getOrCreateJob(res);
+                    cb(true);
+                } else {
+                    cb(false);
+                }
+            },
+            function (err) {
+                cb(false);
+            }
+        )
+    }
 
-    self.fetchAllTeamData = fetchAllTeamData;
-    self.fetchAllJobsData = fetchAllJobsData;
-    self.fetchAllTrackableAssets = fetchAllTrackableAssets;
+    self.fetchJobTasking = function (jobId, cb) {
+        BeaconClient.job.getTasking(jobId, apiHost, params.userId, token, (res) => {
+            (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload((t)));
+            cb(true);
+        }, (err) => {
+            console.error("Failed to fetch job tasking:", err);
+            cb(false);
+        });
+    }
 
-    chrome.runtime.sendMessage({ type: "tasking" });
+
+    self.fetchAllTrackableAssets = function () {
+        if (!assetDataRefreshInterlock) {
+            console.log("Fetching all trackable assets");
+            BeaconClient.asset.filter('', apiHost, params.userId, token, function (assets) {
+                assets.forEach(function (a) {
+                    myViewModel.getOrCreateAsset(a);
+                })
+                myViewModel._markInitialFetchDone();
+                assetDataRefreshInterlock = false;
+            }, function (err) {
+                console.error("Error fetching trackable assets:", err);
+                assetDataRefreshInterlock = false;
+            }
+            )
+        }
+    }
+
+    self.fetchAllJobsData = function () {
+        const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
+        console.log("Fetching jobs for HQS:", hqsFilter);
+
+        var end = new Date();
+        var start = new Date();
+        start.setDate(end.getDate() - 30); // last 30 days
+        myViewModel.jobsLoading(true);
+        BeaconClient.job.searchwithStatusFilter(hqsFilter, apiHost, start, end, params.userId, token, function (allJobs) {
+            console.log("Total jobs fetched:", allJobs.Results.length);
+            myViewModel._markInitialFetchDone();
+            myViewModel.jobsLoading(false);
+        }, function (val, total) {
+            console.log("Progress: " + val + " / " + total)
+        },
+            1, //view model
+            [2, 1, 4, 5], //status filter
+            function (jobs) {
+                jobs.Results.forEach(function (t) {
+                    myViewModel.getOrCreateJob(t);
+                })
+            }
+        )
+    }
+
+    self.fetchAllTeamData = function () {
+        const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
+        console.log("Fetching teams for HQS:", hqsFilter);
+
+        var end = new Date();
+        var start = new Date();
+        start.setDate(end.getDate() - 30); // last 30 days
+        myViewModel.teamsLoading(true);
+        BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, token, function (teams) {
+            // teams.Results.forEach(function (t) {
+            //     myViewModel.getOrCreateTeam(t);
+            // })
+            console.log("Total teams fetched:", teams.Results.length);
+            myViewModel._markInitialFetchDone();
+            myViewModel.teamsLoading(false);
+
+        }, function () {
+            //console.log("Progress: " + val + " / " + total)
+        },
+            [1, 2, 3, 4],
+            function (teams) { //per page
+                teams.Results.forEach(function (t) {
+                    myViewModel.getOrCreateTeam(t);
+                })
+            }
+        )
+    }
+
+    var assetDataRefreshInterlock = false
+
+    var assetDataRefreshTimer = null
+
+    function startAssetDataRefreshTimer() {
+        if (assetDataRefreshTimer) clearInterval(assetDataRefreshTimer);
+        assetDataRefreshTimer = setInterval(() => {
+            self.fetchAllTrackableAssets()
+        }, 30000);
+    };
+
+    startAssetDataRefreshTimer()
+
+
 }
 
 window.addEventListener('resize', () => map.invalidateSize());
 
-function fetchAllTeamData() {
-    const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
-    console.log("Fetching teams for HQS:", hqsFilter);
 
-    var end = new Date();
-    var start = new Date();
-    start.setDate(end.getDate() - 30); // last 7 days
-    myViewModel.teamsLoading(true);
-    BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, token, function (teams) {
-        // teams.Results.forEach(function (t) {
-        //     myViewModel.getOrCreateTeam(t);
-        // })
-        console.log("Total teams fetched:", teams.Results.length);
-        myViewModel._markInitialFetchDone();
-        myViewModel.teamsLoading(false);
 
-    }, function () {
-        //console.log("Progress: " + val + " / " + total)
-    },
-        [1, 2, 3, 4],
-        function (teams) { //per page
-            teams.Results.forEach(function (t) {
-                myViewModel.getOrCreateTeam(t);
-            })
-        }
-    )
-}
 
-function fetchAllJobsData() {
-    const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
-    console.log("Fetching jobs for HQS:", hqsFilter);
 
-    var end = new Date();
-    var start = new Date();
-    start.setDate(end.getDate() - 30); // last 30 days
-    myViewModel.jobsLoading(true);
-    BeaconClient.job.searchwithStatusFilter(hqsFilter, apiHost, start, end, params.userId, token, function (allJobs) {
-        console.log("Total jobs fetched:", allJobs.Results.length);
-        myViewModel._markInitialFetchDone();
-        myViewModel.jobsLoading(false);
-    }, function (val, total) {
-        console.log("Progress: " + val + " / " + total)
-    },
-        1, //view model
-        [2, 1, 4, 5], //status filter
-        function (jobs) {
-            jobs.Results.forEach(function (t) {
-                myViewModel.getOrCreateJob(t);
-            })
-        }
-    )
-}
-
-function fetchAllTrackableAssets() {
-    if (!assetDataRefreshInterlock) {
-        console.log("Fetching all trackable assets");
-        BeaconClient.asset.filter('', apiHost, params.userId, token, function (assets) {
-            assets.forEach(function (a) {
-                myViewModel.getOrCreateAsset(a);
-            })
-            myViewModel._markInitialFetchDone();
-            assetDataRefreshInterlock = false;
-        }, function (err) {
-            console.error("Error fetching trackable assets:", err);
-            assetDataRefreshInterlock = false;
-        }
-        )
-    }
-}
 
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -1008,21 +938,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     })
 
-
-
-
-
-
 })
-
-function attachOpsLogModal(job) {
-    const modalEl = document.getElementById('opsLogModal');
-    const modal = new bootstrap.Modal(modalEl);
-
-    myViewModel.selectedJob(job);
-    myViewModel.opsLogModalVM.openForJob(job);
-    modal.show();
-}
 
 function getSearchParameters() {
     var prmstr = window.location.search.substr(1);

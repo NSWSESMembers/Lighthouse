@@ -31,6 +31,10 @@ export function Team(data = {}, deps = {}) {
 
     self.trackableAssets = ko.observableArray([]);
 
+    self.trackableAssetsOrError = ko.pureComputed(() => {
+        return !self.trackableAssets().length ? 'Unable to match team to a radio asset' : 'Zoom to'
+    })
+
     self.expanded = ko.observable(false);
 
 
@@ -95,6 +99,7 @@ export function Team(data = {}, deps = {}) {
         }
     })
 
+    //url to open in beacon
     self.teamLink = ko.pureComputed(() => makeTeamLink(self.id()));
 
     self.openBeaconEditTeam = (ev) => {
@@ -161,23 +166,6 @@ export function Team(data = {}, deps = {}) {
         const a = self.trackableAssets()[0];
         if (!a) return;
         flyToAsset(a); // map logic stays out of the model
-    };
-
-    self.latitude = ko.observable(data.Latitude ?? null);
-    self.longitude = ko.observable(data.Longitude ?? null);
-
-    self.updateFromJson = function (json) {
-        self.callsign(json.Callsign ?? self.callsign());
-        self.status(json.TeamStatusType ?? self.status());
-        self.members((json.Members || []).map(m => new Entity(m)));
-        self.assignedTo.updateFromJson(json.EntityAssignedTo || json.CreatedAt);
-
-        if (json.Latitude !== undefined) {
-            self.latitude(json.Latitude);
-        }
-        if (json.Longitude !== undefined) {
-            self.longitude(json.Longitude);
-        }
     };
 
     const teamStatusById = {

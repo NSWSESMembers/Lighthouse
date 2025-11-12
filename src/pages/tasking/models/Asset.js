@@ -19,7 +19,7 @@ export function Asset(data = {}) {
     self.talkgroupLastUpdated = ko.observable(data.properties.talkgroupLastUpdated ?? "");
     self.marker = null;
     self.matchingTeams = ko.observableArray();
-
+    
 
     self.lastSeenText = ko.pureComputed(() => {
         const v = safeStr(self.lastSeen?.());

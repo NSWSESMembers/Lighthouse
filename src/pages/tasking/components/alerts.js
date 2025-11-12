@@ -2,7 +2,7 @@ import L from 'leaflet';
 import ko from 'knockout';
 
 /**
- * Simple SVG hazard icon used in the header
+ * SVG hazard icon used in the header
  */
 function hazardSvg() {
   return `
@@ -101,7 +101,7 @@ function buildDefaultRules(vm) {
       items: newJobs.slice(0, 10).map(asItem),
       count: newJobs.length,
       onClick: (id) => {
-        // optional: focus the job if present
+        // focus the job if present
         const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
         found?.focusMap();
       }
@@ -114,7 +114,7 @@ function buildDefaultRules(vm) {
       items: untasked.slice(0, 10).map(asItem),
       count: untasked.length,
       onClick: (id) => {
-        // optional: focus the job if present
+        // focus the job if present
         const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
         found?.focusMap();
       }

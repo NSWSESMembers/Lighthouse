@@ -15,8 +15,8 @@ export function Job(data = {}, deps = {}) {
     // ---- injected adapters (all optional, safe defaults) ----
     const {
         makeJobLink = (_id) => "#",
-        fetchJobTasking = async (_jobId) => ({ Results: [] }),
-        fetchJobById = async (_jobId) => null,
+        fetchJobTasking = (_jobId, cb) => cb(null),
+        fetchJobById = (_jobId, cb) => cb(null),
         flyToJob = (_job) => {/* noop */ },
         attachAndFillOpsLogModal = (_jobId) => ([]),
         fetchUnacknowledgedJobNotifications = async (_job) => ([]),
@@ -126,17 +126,6 @@ export function Job(data = {}, deps = {}) {
             }
         }, 30000);
     };
-    self.startDataRefreshCheck = function () {
-        if (self.dataRefreshTimer) clearInterval(self.dataRefreshTimer);
-
-        self.dataRefreshTimer = setInterval(() => {
-            const now = new Date();
-            const last = self.lastDataUpdate;
-            if (!last || (now - last) > 120000) {
-                self.refreshData();
-            }
-        }, 30000);
-    };
 
     self.stopDataRefreshCheck = function () {
         if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
@@ -175,9 +164,6 @@ export function Job(data = {}, deps = {}) {
         const d = self.receivedAt();
         return d ? Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000)) : null;
     });
-    self.tagsCsv = ko.pureComputed(() => {
-        return self.tags().map(t => t.name()).join(", ");
-    })
 
     self.rowColour = ko.pureComputed(() => {
         switch (self.priorityName()) {
@@ -204,6 +190,22 @@ export function Job(data = {}, deps = {}) {
             11: "Category3",
             12: "Category4",
             13: "Category5"
+        }
+        if (!self.categories || self.categories().length === 0) return "";
+        const c = self.categories()[0].Id;
+        return beaconCats[c] || "";
+    })
+
+
+    self.categoriesNameNumberDash = ko.pureComputed(() => {
+        const beaconCats = {
+            7: "-Orange",
+            8: "-Red",
+            9: "-1",
+            10: "-2",
+            11: "-3",
+            12: "-4",
+            13: "-5"
         }
         if (!self.categories || self.categories().length === 0) return "";
         const c = self.categories()[0].Id;
@@ -331,7 +333,7 @@ export function Job(data = {}, deps = {}) {
         // popup closing logic goes here
     };
 
-    self.refreshDatAndTasking = function () {
+    self.refreshDataAndTasking = function () {
         self.fetchTasking();
         self.refreshData();
     }
@@ -346,9 +348,9 @@ export function Job(data = {}, deps = {}) {
 
     self.refreshData = async function () {
         self.taskingLoading(true);
-        const r = await fetchJobById(self.id());
-        if (r) { self.updateFromJson(r); self.lastDataUpdate = new Date(); }
-        self.taskingLoading(false);
+        fetchJobById(self.id(), () => {
+            self.taskingLoading(false);
+        });
     };
 
 }

@@ -41,7 +41,7 @@ export function buildJobPopupKO() {
         </button>   
         <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Refresh"
-                      data-bind="click: refreshDatAndTasking, clickBubble: false">
+                      data-bind="click: refreshDataAndTasking, clickBubble: false">
                       <i class="fa fa-sync"></i>
                   </button>                 
         <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="assignTeamBtn" style="min-width: 260px;">
