@@ -118,7 +118,7 @@ export function removeJobMarker(vm, jobOrId) {
     if (job) job.marker = null;
 }
 
-
+//complicated for some reason. has to support different icons sizes and anchors
 function upsertPulseRing(layerGroup, job, marker) {
   const isNew = (job.statusName?.() || '').toLowerCase() === 'new';
   const base = marker.options.icon?.options || {};

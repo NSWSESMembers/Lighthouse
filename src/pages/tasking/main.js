@@ -9,14 +9,12 @@ require('../lib/shared_chrome_code.js'); // side-effect
 import '../../../styles/pages/tasking.css';
 
 import { ResizeDividers } from './resize.js';
-import { addOrUpdateJobMarker, removeJobMarker } from './popups/jobMarker.js';
-import { attachAssetMarker, detachAssetMarker } from './popups/assetMarker.js';
+import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
+import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
 import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 
 import { installAlerts } from './components/alerts.js';
-
-
 
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
@@ -30,7 +28,11 @@ import { ConfigVM } from './viewmodels/Config.js';
 var $ = require('jquery');
 
 var L = require('leaflet');
+
 var esri = require('esri-leaflet');
+
+
+
 
 var token = '';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -43,6 +45,7 @@ require('leaflet-routing-machine');
 require('leaflet-svg-shape-markers');
 require('lrm-graphhopper'); // Adds L.Routing.GraphHopper onto L.Routing
 require('leaflet/dist/leaflet.css');
+
 
 
 import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.

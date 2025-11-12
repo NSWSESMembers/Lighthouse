@@ -1,5 +1,5 @@
 var L = require('leaflet');
-import {makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate} from '../utils/popup_dom_utils.js';
+import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } from '../utils/popup_dom_utils.js';
 
 import { buildAssetPopupKO } from '../components/asset_popup.js';
 import { buildIcon } from '../components/asset_icon.js';
@@ -66,7 +66,7 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
             maxWidth: 360,
             maxHeight: 360,
             autoPan: true,
-            autoPanPadding: [16,16],
+            autoPanPadding: [16, 16],
         }).setContent(contentEl);
 
         // m.bindPopup(() =>
@@ -75,6 +75,7 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
         m.bindPopup(popup)
         m.addTo(layer);
         asset.marker = m;
+
         // Ask MapVM to create the AssetPopupViewModel for this asset:
         const popupVm = viewModel.mapVM.makeAssetPopupVM(asset);
         bindPopupWithKO(ko, asset.marker, viewModel, asset, popupVm);
