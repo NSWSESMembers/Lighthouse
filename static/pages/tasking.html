@@ -60,15 +60,27 @@
                         <thead class="table-light">
                             <tr>
                                 <th scope="col"></th>
-                                <th scope="col">Callsign</th>
-                                <th scope="col">Status</th>
-                                <th scope="col">HQ</th>
-                                <th scope="col">Task Count</th>
+                                <th class="sortable" data-sort-key="callsign" aria-sort="none"
+                                    data-bind="event: { click: setTeamSortFromElement }">
+                                    Callsign <i class="fa sort-icon fa-sort"></i>
+                                </th>
+                                <th class="sortable" data-sort-key="statusName" aria-sort="none"
+                                    data-bind="event: { click: setTeamSortFromElement }">
+                                    Status <i class="fa sort-icon fa-sort"></i>
+                                </th>
+                                <th class="sortable" data-sort-key="assignedToCode" aria-sort="none"
+                                    data-bind="event: { click: setTeamSortFromElement }">
+                                    HQ <i class="fa sort-icon fa-sort"></i>
+                                </th>
+                                <th class="sortable" data-sort-key="activeTaskingsCount" aria-sort="none"
+                                    data-bind="event: { click: setTeamSortFromElement }">
+                                    Task Count <i class="fa sort-icon fa-sort"></i>
+                                </th>
                                 <th scope="col">Team Leader</th>
                                 <th scope="col">Actions</th>
                             </tr>
                         </thead>
-                        <tbody data-bind="foreach: { data: filteredTeams, as: 't' }">
+                        <tbody data-bind="foreach: { data: sortedTeams, as: 't' }">
                             <tr class="team" data-bind="css:{expanded: t.expanded()}, droppableRow: { team: t, onDrop: $root.assignJobToTeam },
                      attr:{'aria-expanded': t.expanded}, style: { '--bs-table-bg': t.taskingRowColour()}">
                                 <td class="chev">
@@ -217,16 +229,31 @@
                         <thead class="table-light">
                             <tr>
                                 <th scope="col"></th>
-                                <th scope="col">Id</th>
-                                <th scope="col">Receieved</th>
-                                <th scope="col">HQ</th>
-                                <th scope="col">Type</th>
+                                <th class="sortable" data-sort-key="identifier" aria-sort="none"
+                                    data-bind="event: { click: setJobSortFromElement }">
+                                    Id <i class="fa sort-icon fa-sort"></i>
+                                </th>
+                                <th class="sortable" data-sort-key="receivedAt" aria-sort="none"
+                                    data-bind="event: { click: setJobSortFromElement }">
+                                    Received <i class="fa sort-icon fa-sort"></i>
+                                </th>
+                                <th class="sortable" data-sort-key="entityAssignedToCode" aria-sort="none"
+                                    data-bind="event: { click: setJobSortFromElement }">
+                                    HQ <i class="fa sort-icon fa-sort"></i>
+                                </th>
+                                <th class="sortable" data-sort-key="type" aria-sort="none"
+                                    data-bind="event: { click: setJobSortFromElement }">
+                                    Type <i class="fa sort-icon fa-sort"></i>
+                                </th>
                                 <th scope="col">Situation</th>
-                                <th scope="col">Status</th>
+                                <th class="sortable" data-sort-key="statusName" aria-sort="none"
+                                    data-bind="event: { click: setJobSortFromElement }">
+                                    Status <i class="fa sort-icon fa-sort"></i>
+                                </th>
                                 <th scope="col">Address</th>
                             </tr>
                         </thead>
-                        <tbody data-bind="foreach: { data: filteredJobs, as: 'j' }">
+                        <tbody data-bind="foreach: { data: sortedJobs, as: 'j' }">
                             <!-- Summary row -->
                             <tr class="job" draggable="true" data-bind="
                                 css: { expanded: j.expanded() },

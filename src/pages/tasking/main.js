@@ -259,12 +259,95 @@ function VM() {
     self.selectedJob = ko.observable(null);
 
 
+    // --- TABLE SORTING MAGIC ---
+    self.teamSortKey = ko.observable('callsign');
+    self.teamSortAsc = ko.observable(true);
+    self.jobSortKey = ko.observable('identifier');
+    self.jobSortAsc = ko.observable(false);
+
+    // --- sorted arrays ---
+    self.sortedTeams = ko.pureComputed(function () {
+        var key = self.teamSortKey(), asc = self.teamSortAsc();
+        var arr = self.filteredTeams(); // existing
+        return arr.slice().sort(function (a, b) {
+            var av = ko.unwrap(a[key]), bv = ko.unwrap(b[key]);
+            var an = typeof av === 'number' || /^\d+(\.\d+)?$/.test(av);
+            var bn = typeof bv === 'number' || /^\d+(\.\d+)?$/.test(bv);
+            var cmp = (an && bn) ? (Number(av) - Number(bv))
+                : String(av || '').localeCompare(String(bv || ''), undefined, { numeric: true });
+            return asc ? cmp : -cmp;
+        });
+    });
+
+    self.sortedJobs = ko.pureComputed(function () {
+        var key = self.jobSortKey(), asc = self.jobSortAsc();
+        var arr = self.filteredJobs();
+        return arr.slice().sort(function (a, b) {
+            var av = ko.unwrap(a[key]), bv = ko.unwrap(b[key]);
+            var an = typeof av === 'number' || /^\d+(\.\d+)?$/.test(av);
+            var bn = typeof bv === 'number' || /^\d+(\.\d+)?$/.test(bv);
+            var cmp = (an && bn) ? (Number(av) - Number(bv))
+                : String(av || '').localeCompare(String(bv || ''), undefined, { numeric: true });
+            return asc ? cmp : -cmp;
+        });
+    });
+
+    // --- UI updater shared helper ---
+    function updateSortHeaderUI(th, asc) {
+        var thead = th.parentNode.parentNode; // <tr> -> <thead>
+        // reset siblings
+        Array.prototype.forEach.call(thead.querySelectorAll('th.sortable'), function (h) {
+            h.setAttribute('aria-sort', 'none');
+            var i = h.querySelector('.sort-icon');
+            if (i) { i.classList.remove('fa-sort-up', 'fa-sort-down'); i.classList.add('fa-sort'); }
+        });
+        // set selected
+        th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+        var icon = th.querySelector('.sort-icon');
+        if (icon) {
+            icon.classList.remove('fa-sort');
+            icon.classList.toggle('fa-sort-up', asc);
+            icon.classList.toggle('fa-sort-down', !asc);
+        }
+    }
+
+    // --- KSB-safe click handlers using data-sort-key ---
+    self.setTeamSortFromElement = function (_, e) {
+        var th = e.currentTarget;
+        var key = th.getAttribute('data-sort-key');
+        if (!key) return;
+        if (self.teamSortKey() === key) self.teamSortAsc(!self.teamSortAsc());
+        else { self.teamSortKey(key); self.teamSortAsc(true); }
+        updateSortHeaderUI(th, self.teamSortAsc());
+    };
+
+    self.setJobSortFromElement = function (_, e) {
+        var th = e.currentTarget;
+        var key = th.getAttribute('data-sort-key');
+        if (!key) return;
+        if (self.jobSortKey() === key) self.jobSortAsc(!self.jobSortAsc());
+        else { self.jobSortKey(key); self.jobSortAsc(true); }
+        updateSortHeaderUI(th, self.jobSortAsc());
+    };
+
+    // --- (optional) initialize default icons on first render ---
+    ko.tasks.schedule(function () {
+        var thTeams = document.querySelector('.teams thead th.sortable[data-sort-key="' + self.teamSortKey() + '"]');
+        if (thTeams) updateSortHeaderUI(thTeams, self.teamSortAsc());
+        var thJobs = document.querySelector('.jobs thead th.sortable[data-sort-key="' + self.jobSortKey() + '"]');
+        if (thJobs) updateSortHeaderUI(thJobs, self.jobSortAsc());
+    });
+
+    // --- END TABLE SORTING MAGIC ---
+
+    //TODO: make these user configurable via UI
     // filters for what teams to ignore
     self.teamStatusFilterList = ko.observableArray([
         "Standby",
         "Stood down"
     ]);
 
+    //TODO: make these user configurable via UI
     //filters for what jobs to ignore
     self.jobsStatusFilterList = ko.observableArray([
         "Finalised",
@@ -439,10 +522,12 @@ function VM() {
     }
 
     // Job registry/upsert
+    // might be called from tasking OR job fetch so values might be missing
     self.getOrCreateJob = function (jobJson) {
         const deps = makeJobDeps();
         let job = this.jobsById.get(jobJson.Id);
         if (job) {
+            console.log("Updating existing job:", job.id());
             job.updateFromJson(jobJson);
             job.lastDataUpdate = new Date()
             return job;
@@ -704,13 +789,13 @@ function VM() {
         BeaconClient.job.get(jobId, 1, apiHost, params.userId, token,
             function (res) {
                 if (res) {
-                    const job = self.getOrCreateJob(res);
+                    self.getOrCreateJob(res);
                     cb(true);
                 } else {
                     cb(false);
                 }
             },
-            function (err) {
+            function (_err) {
                 cb(false);
             }
         )

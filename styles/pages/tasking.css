@@ -309,6 +309,15 @@ select {
   align-items: center;
   margin-bottom: 12px;
 }
+
+/* table sorting icons */
+table thead th.sortable { cursor: pointer; user-select: none; }
+table thead th .sort-icon { margin-left:.35rem; opacity:.7; }
+table thead th[aria-sort="none"] .sort-icon { /* neutral icon */ }
+table thead th[aria-sort="ascending"] .sort-icon { transform: translateY(-1px); }
+table thead th[aria-sort="descending"] .sort-icon { transform: translateY(1px); }
+
+
 .teams {
   width: 100%;
   table-layout: auto;
