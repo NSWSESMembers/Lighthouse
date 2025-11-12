@@ -661,15 +661,41 @@
                         aria-label="Close"></button>
                 </div>
 
-
                 <div class="modal-body">
                     <!-- Loading indicator -->
                     <div data-bind="visible: loading" class="text-center my-3">
                         <div class="spinner-border" role="status"></div>
                     </div>
 
+                    <!-- Tag filter -->
+                    <div class="mb-3" data-bind="visible: tagItems().length && !loading()">
+                        <div class="d-flex align-items-center flex-wrap gap-2">
+                            <span class="fw-semibold small me-2">Filter by tag:</span>
+
+                            <!-- All button -->
+                            <button type="button"
+                                data-bind="click: clearTagFilter, attr: { 'class': allTagButtonClass }">
+                                All
+                            </button>
+
+                            <!-- One button per tag -->
+                            <div data-bind="foreach: tagItems">
+                                <button type="button"
+                                    data-bind="text: label, click: select, attr: { 'class': btnClass }">
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No results message -->
+                    <div class="alert alert-info py-2 small"
+                        data-bind="visible: !loading() && filteredEntries().length === 0">
+                        No log entries match the selected tag filters.
+                    </div>
+
+
                     <!-- Entries -->
-                    <div data-bind="foreach: entries, visible: !loading()">
+                    <div data-bind="foreach: filteredEntries, visible: !loading()">
                         <div class="border rounded p-2 mb-2"
                             data-bind="css: { 'border-warning border-2': important, 'bg-light': isIcemsEntry }">
                             <div class="d-flex justify-content-between">
@@ -689,6 +715,8 @@
                         </div>
                     </div>
                 </div>
+
+
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>

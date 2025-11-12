@@ -318,21 +318,42 @@ table thead th[aria-sort="ascending"] .sort-icon { transform: translateY(-1px); 
 table thead th[aria-sort="descending"] .sort-icon { transform: translateY(1px); }
 
 
-.teams {
+.teams, .jobs {
   width: 100%;
   table-layout: auto;
   border-spacing: 0 3px; /* gap between rows */
-}
-.jobs {
-  width: 100%;
-  table-layout: auto;
-  border-spacing: 0 3px; /* gap between rows */
+  border-collapse: separate;
 }
 
 .team {
   border: 1px solid #ddd;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.teams thead th,
+.jobs thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bs-light, #f8f9fa);
+}
+
+/* Make the table body scroll within the pane */
+.pane .table-responsive {
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+/* Ensure the pane flexes vertically */
+.pane {
+    display: flex;
+    flex-direction: column;
+}
+
+.pane .table-responsive {
+    flex: 1 1 auto;
+    min-height: 0; /* required for flex scrolling */
 }
 
 .job {
