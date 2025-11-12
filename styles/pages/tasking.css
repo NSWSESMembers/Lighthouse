@@ -799,6 +799,26 @@ tr.team_body > td { padding: 0; border-top: 0; }
   }
 }
 
+
+/* laayer UI */
+
+.layers-drawer { margin-top: 6px; border: 0px !important}
+
+.layers-drawer .ld-toggle {
+  display:flex; align-items:center; justify-content:center;
+  width:34px; height:34px; background:#fff; border:none; cursor:pointer;
+}
+.layers-drawer .ld-toggle:focus { outline: 2px solid #66afe9; }
+.layers-drawer .ld-panel {
+  background:#fff; padding:6px; width: 220px; max-height: 280px; overflow:auto;
+  border-top: 1px solid #ccc;
+}
+.layers-drawer .ld-section + .ld-section { margin-top:8px; }
+.layers-drawer .ld-title { font-weight:600; font-size:12px; margin-bottom:4px; }
+.layers-drawer .ld-list { display:flex; flex-direction:column; gap:4px; }
+.layers-drawer .ld-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+
+
 .legend-container {
   background: rgba(255, 255, 255, 0.9);
   padding: 6px 10px;

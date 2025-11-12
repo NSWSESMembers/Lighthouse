@@ -85,7 +85,6 @@ const map = L.map('map', {
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
 
-
 // Legend control (collapsible)
 const LegendControl = L.Control.extend({
   options: { position: "bottomright", collapsed: false, persist: true },
@@ -195,6 +194,147 @@ function VM() {
     const self = this;
 
     self.mapVM = new MapVM(map, self);
+
+// --- Layers Drawer (under zoom)
+const LayersDrawer = L.Control.extend({
+  options: { position: "topleft" },
+
+  initialize(opts = {}) {
+    L.Util.setOptions(this, opts);
+    this._currentBase = null;
+    this._baseKey = localStorage.getItem("map.base") || "Topographic";
+    this._open = localStorage.getItem("layers.open") === "1";
+  },
+
+  onAdd(map) {
+    const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
+    c.innerHTML = `
+      <button class="ld-toggle" title="Layers" aria-expanded="${this._open ? "true" : "false"}">
+        <i class="fas fa-layer-group"></i>
+      </button>
+      <div class="ld-panel ${this._open ? "" : "d-none"}">
+        <div class="ld-section">
+          <div class="ld-title">Basemap</div>
+          <div class="ld-list ld-bases"></div>
+        </div>
+        <div class="ld-section">
+          <div class="ld-title">Overlays</div>
+          <div class="ld-list ld-overlays"></div>
+        </div>
+      </div>
+    `;
+
+    // build basemap list
+    const basemapNames = [
+      "Topographic","Streets","Imagery","ImageryClarity","StreetsReliefVector",
+      "DarkGray","Gray","Oceans","NationalGeographic","ShadedRelief","Terrain"
+    ];
+    const basesEl = c.querySelector(".ld-bases");
+    basemapNames.forEach(name => {
+      const id = `base-${name}`;
+      const row = document.createElement("label");
+      row.className = "ld-row";
+      row.innerHTML = `
+        <input type="radio" name="esri-base" id="${id}" value="${name}" ${name===this._baseKey?"checked":""}/>
+        <span>${name}</span>
+      `;
+      basesEl.appendChild(row);
+    });
+
+    // apply initial basemap
+    this._setBasemap(this._baseKey, map);
+
+    basesEl.addEventListener("change", (e) => {
+      const val = e.target?.value;
+      if (!val) return;
+      this._setBasemap(val, map);
+      localStorage.setItem("map.base", val);
+    });
+
+    // build overlays from your existing layer groups
+    const overlaysEl = c.querySelector(".ld-overlays");
+    const overlayDefs = [];
+
+    // Vehicles (single layer group)
+    if (this.options.vm?.mapVM?.vehicleLayer) {
+      overlayDefs.push({ key: "vehicles", label: "Vehicles", layer: this.options.vm.mapVM.vehicleLayer });
+    }
+
+    // Job groups (Map of { key => { layerGroup } })
+    if (this.options.vm?.mapVM?.jobMarkerGroups instanceof Map) {
+      for (const [k, v] of this.options.vm.mapVM.jobMarkerGroups.entries()) {
+        if (v?.layerGroup) {
+          overlayDefs.push({ key: `jobs-${k}`, label: `Jobs: ${k}`, layer: v.layerGroup });
+        }
+      }
+    }
+
+    // Optional alerts layer if you expose it later:
+    // if (this.options.vm?.mapVM?.alertsLayer) {
+    //   overlayDefs.push({ key: "alerts", label: "Alerts", layer: this.options.vm.mapVM.alertsLayer });
+    // }
+
+    overlayDefs.forEach(({ key, label, layer }) => {
+      const id = `ov-${key}`;
+      const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
+      if (saved) map.addLayer(layer);
+
+      const row = document.createElement("label");
+      row.className = "ld-row";
+      row.innerHTML = `
+        <input type="checkbox" id="${id}" ${saved ? "checked" : ""}/>
+        <span>${label}</span>
+      `;
+      overlaysEl.appendChild(row);
+
+      row.querySelector("input").addEventListener("change", (e) => {
+        if (e.target.checked) {
+          map.addLayer(layer);
+          localStorage.setItem(`ov.${key}`, "1");
+        } else {
+          map.removeLayer(layer);
+          localStorage.setItem(`ov.${key}`, "0");
+        }
+      });
+    });
+
+    // open/close toggle
+    const btn = c.querySelector(".ld-toggle");
+    const panel = c.querySelector(".ld-panel");
+    L.DomEvent.on(btn, "click", (ev) => {
+      L.DomEvent.stop(ev);
+      const show = panel.classList.toggle("d-none");
+      btn.setAttribute("aria-expanded", (!show).toString());
+      localStorage.setItem("layers.open", show ? "0" : "1");
+    });
+
+    // don’t propagate scroll/drag
+    L.DomEvent.disableClickPropagation(c);
+
+    // nudge under the zoom buttons
+    setTimeout(() => {
+      const zoom = map._controlCorners.topleft.querySelector(".leaflet-control-zoom");
+      if (zoom && c.parentElement === map._controlCorners.topleft) {
+        zoom.insertAdjacentElement("afterend", c);
+      }
+    }, 0);
+
+    this._container = c;
+    return c;
+  },
+
+  onRemove() { /* nothing to clean up */ },
+
+  _setBasemap(name, map) {
+    if (this._currentBase) map.removeLayer(this._currentBase);
+    this._currentBase = esri.basemapLayer(name, { ignoreDeprecationWarning: true });
+    this._currentBase.addTo(map);
+  }
+});
+
+// create & add (after VM so we can pass it in)
+const layersDrawer = new LayersDrawer({ vm: myViewModel });
+layersDrawer.addTo(map);
 
     const configDeps = {
         entitiesSearch: (q) => new Promise((resolve) => {
