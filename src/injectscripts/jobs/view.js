@@ -101,6 +101,11 @@ function lighthouseETA() {
           $('div[data-bind$="validationElement: $parent.jobTeamStatusEstimatedCompletion"].input-group').after(text);
 
           $(buttons)
+            .find('#1min')
+            .click(function () {
+              addToTime(1, v, text);
+            });
+          $(buttons)
             .find('#5min')
             .click(function () {
               addToTime(5, v, text);
@@ -1662,31 +1667,60 @@ function returnTTime(messageDate) {
 
 function lighthouseDictionary() {
   
-  var $targetElements = $('.job-details-page div[data-bind="foreach: opsLogEntries"] div[data-bind="text: $data"]');
+  var $targetElements = $('.job-details-page div[data-bind="foreach: Text"] div[data-bind="text: $data"]');
 
   var ICEMS_Dictionary = {
-    ASNSW: 'NSW Ambulance',
-    FRNSW: 'NSW Fire &amp; Rescue',
-    NSWPF: 'NSW Police Force',
-    TMC: 'Transport Management Center',
-    NSWTMC: 'NSW Transport Management Center',
-    KLO4: 'Keep a Look Out For',
     AA: 'As Above',
-    'INFTS?': 'Informant/Caller',
-    '\\dPOBS?': 'Person(s) On Board',
-    'POIS?': 'Person(s) Of Interest',
-    POSS: 'Possible',
-    'PTS?': 'Patient(s)',
-    'VEHS?': 'Vehicle(s)',
-    'VICT?': 'Victim',
-    'Y[OR]': 'Years Old',
+    ACK: 'Acknowledge',
+    ASNSW: 'NSW Ambulance',
+    ATTD: 'Attend',
+    B4: 'Before',
+    BET: 'Between',
+    BTW: 'Between OR By the Way',
+    'C[4F]W': 'Concern for Welfare',
+    CNCLD: 'Cancelled',
+    CNR: 'Corner',
+    DEC: 'Deceased',
+    ETA: 'Estimated Time of Arrival',
+    ETC: 'Estimated Time of Completion',
+    FRNSW: 'NSW Fire &amp; Rescue',
+    FB: 'Fire Brigade',
+    LOC: 'Location',
+    LS: 'Last Seen',
+    MP: 'Missing Person(s)',
+    NESB: 'Non-English Speaking Background',
+    NFA: 'No Further Action',
     NPI: 'No Person(s) Injured',
     NPT: 'No Person(s) Trapped',
     NFI: 'No Further Information',
-    THX: 'Thanks',
-    NESB: 'Non-English Speaking Background',
+    'NN[2T]A': 'No Need to Attend',
+    NSWPF: 'NSW Police Force',
+    POL: 'Police',
+    NVS: 'No Vehicle(s) Sighted',
+    OPP: 'Opposite',
+    OTW: 'On the Way',
+    'P[2T]P': 'Pole to Pole (Powerlines)',
+    'P[2T]H': 'Pole to House (Powerlines)',
+    '(\\d+)?PAX': 'Passenger',
+    PBY: "Passer By",
+    'POIS?': 'Person(s) Of Interest',
+    RCO: "Police Radio Rescue Coordinator",
+    REQ: "Require",
+    'VEHS?': 'Vehicle(s)',
+    'VOIS?': "Vehicle(s) Of Interest",
+    TMC: 'Transport Management Center',
+    NSWTMC: 'NSW Transport Management Center',
+    KLO4: 'Keep a Look Out For',
+    'INFTS?': 'Informant/Caller(s)',
+    '(\\d+)?POBS?': 'Person(s) On Board',
+    POSS: 'Possible',
+    'PTS?': 'Patient(s)',
+    'VICT?': 'Victim(s)',
+    YR: 'Years Old',
+    YO: 'Years Old',
     YOM: 'Year Old Male',
     YOF: 'Year Old Female',
+    THX: 'Thanks',
   };
 
   $targetElements.each(function (_v) {
@@ -2524,6 +2558,15 @@ function return_quickradiologmodal() {
 function return_quicketarow() {
   return (
     <div style="display: inline-block">
+      <span id="1min" class="label tag tag-darkgreen tag-disabled">
+        <span class="tag-text">
+          <img
+            style="width:16px;vertical-align:top;margin-right:5px;margin-left:5px"
+            src={lighthouseUrl + 'icons/lh.png'}
+          />
+          +1min
+        </span>
+      </span>
       <span id="5min" class="label tag tag-darkgreen tag-disabled">
         <span class="tag-text">
           <img
