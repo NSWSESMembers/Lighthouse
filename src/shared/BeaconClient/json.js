@@ -1,14 +1,16 @@
 import $ from 'jquery';
 
 
-export function getJsonPaginated(url, token, pageLimit = 0, perPageLimit = 100, progresscb, cb) { //take url and a page limit and loop until a result returns less than we asked for
+export function getJsonPaginated(url, token, pageLimit = 0, perPageLimit = 100, progresscb, cb, onPage) { //take url and a page limit and loop until a result returns less than we asked for
   var currentPage = 1;
   var totalResults = [];
   goGet(HandleResults,currentPage); //make the first call to kick off the loop
 
   function HandleResults(result) { //check the length of the return
     console.log("Results Returned:" + result.Results.length)
-
+    if (typeof onPage === 'function') {
+      onPage(result);
+    }
     if (result.Results.length >= 1) { //add it to the array
       totalResults.push.apply(totalResults, result.Results);
       progresscb(totalResults.length,result.TotalItems)

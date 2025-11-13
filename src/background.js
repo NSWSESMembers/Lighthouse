@@ -37,42 +37,43 @@ const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
 const hazardWatchUrl = 'https://feed.firesnearme.hazards.rfs.nsw.gov.au/';
 //external libs
 
+var activeTabForTaskingRemote = null
 
 //Catch nativation changes in REACT app myAvailability
 //CAUTION - DONT USE INJECTS HERE AS THEY WILL STACK UP
 chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
-// Regex for a 36-char UUID (8-4-4-4-12 hex digits)
-const uuidRegex = /[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/;
+  // Regex for a 36-char UUID (8-4-4-4-12 hex digits)
+  const uuidRegex = /[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}/;
 
-// Match only the exact path “/requests/out-of-area-activations/<UUID>”
-const activationPathRegex = new RegExp(`^/requests/out-of-area-activations/${uuidRegex.source}$`);
+  // Match only the exact path “/requests/out-of-area-activations/<UUID>”
+  const activationPathRegex = new RegExp(`^/requests/out-of-area-activations/${uuidRegex.source}$`);
 
-try {
-  const { pathname } = new URL(details.url);
-  if (activationPathRegex.test(pathname)) {
-    chrome.scripting.executeScript({
-      target: { tabId: details.tabId },
-      files: ["myAvailability/contentscripts/requests/out-of-area-activations.js"]
-    });
+  try {
+    const { pathname } = new URL(details.url);
+    if (activationPathRegex.test(pathname)) {
+      chrome.scripting.executeScript({
+        target: { tabId: details.tabId },
+        files: ["myAvailability/contentscripts/requests/out-of-area-activations.js"]
+      });
+    }
+  } catch (e) {
+    // invalid URL — skip
   }
-} catch (e) {
-  // invalid URL — skip
-}
 
-// Match only the exact path “/messages?”
-const messagesPathRegex = new RegExp(`^/messages(.*)$`);
+  // Match only the exact path “/messages?”
+  const messagesPathRegex = new RegExp(`^/messages(.*)$`);
 
-try {
-  const { pathname } = new URL(details.url);
-  if (messagesPathRegex.test(pathname)) {
-    chrome.scripting.executeScript({
-      target: { tabId: details.tabId },
-      files: ["myAvailability/contentscripts/messages/messages.js"]
-    });
+  try {
+    const { pathname } = new URL(details.url);
+    if (messagesPathRegex.test(pathname)) {
+      chrome.scripting.executeScript({
+        target: { tabId: details.tabId },
+        files: ["myAvailability/contentscripts/messages/messages.js"]
+      });
+    }
+  } catch (e) {
+    // invalid URL — skip
   }
-} catch (e) {
-  // invalid URL — skip
-}
 
 
 });
@@ -152,6 +153,23 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       sendResponse(data);
     });
     return true;
+  } else if (request.type === 'tasking-register-for-remote') {
+    activeTabForTaskingRemote = sender.tab.id
+    console.log("Registered tab for tasking remote:", activeTabForTaskingRemote)
+    console.log(sender.tab)
+    return true;
+  } else if (request.type === 'tasking-openURL') {
+    console.log("Sending tasking remote command to tab:", activeTabForTaskingRemote)
+      chrome.tabs.update(activeTabForTaskingRemote, { url: request.url }, function () {
+        if (chrome.runtime.lastError) {
+          console.error("Error sending tasking remote command:", chrome.runtime.lastError);
+          sendResponse({ error: 'Failed to send tasking remote command', message: chrome.runtime.lastError.message });
+        } else {
+          console.log("Tasking remote command sent");
+          sendResponse({ success: true });
+        }
+      });
+    return true;
   }
 });
 
@@ -162,9 +180,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
  * @param url url on S3
  */
 function pullmyAvailOOAACSV(url, cb) {
-  fetch(url, { headers: {
-    'Accept': 'application/octet-stream',
-  }}).then(response => response.text())
+  fetch(url, {
+    headers: {
+      'Accept': 'application/octet-stream',
+    }
+  }).then(response => response.text())
     .then((text) => {
       cb(text)
     });
@@ -186,21 +206,21 @@ function fetchRfsIncidents(callback) {
         callback(json)
       })
     } else {
-        // error
-        var response = {
-          error: 'Request failed',
-          httpCode: 'resp not ok',
-        };
-        callback(response);
-    }
-}).catch(() => {
-    // error
-    var response = {
+      // error
+      var response = {
         error: 'Request failed',
-        httpCode: 'fetch error',
+        httpCode: 'resp not ok',
       };
       callback(response);
-})
+    }
+  }).catch(() => {
+    // error
+    var response = {
+      error: 'Request failed',
+      httpCode: 'fetch error',
+    };
+    callback(response);
+  })
 }
 
 /**
@@ -213,10 +233,10 @@ function fetchRfsIncidents(callback) {
 function fetchTransportResource(path, callback, apiKey) {
   console.info('fetching transport resource: ' + path);
 
-  fetch(`${transportFeed}${path}`,{
+  fetch(`${transportFeed}${path}`, {
     headers: {
-        "Authorization": `apikey ${apiKey}`,
-      },  
+      "Authorization": `apikey ${apiKey}`,
+    },
   }).then((resp) => {
     if (resp.ok) {
       resp.json().then((json) => {
@@ -224,21 +244,21 @@ function fetchTransportResource(path, callback, apiKey) {
         callback(json)
       })
     } else {
-        // error
-        var response = {
-          error: 'Request failed',
-          httpCode: 'resp not ok',
-        };
-        callback(response);
-    }
-}).catch(() => {
-    // error
-    var response = {
+      // error
+      var response = {
         error: 'Request failed',
-        httpCode: 'fetch error',
+        httpCode: 'resp not ok',
       };
       callback(response);
-})
+    }
+  }).catch(() => {
+    // error
+    var response = {
+      error: 'Request failed',
+      httpCode: 'fetch error',
+    };
+    callback(response);
+  })
 }
 
 /**
@@ -254,7 +274,7 @@ function fetchHelicopterLocations(params, callback) {
     .then((resp) => {
       if (resp.ok) {
         resp.json().then((json) => {
-            console.info('sending back helicopter locations');
+          console.info('sending back helicopter locations');
           callback(json);
         });
       } else {
@@ -288,26 +308,26 @@ function fetchHazardWatch(callback) {
     .then((resp) => {
       if (resp.ok) {
         resp.json().then((json) => {
-            console.info('sending hazard watch');
-            callback(json);
-          });
-        } else {
-          // error
-          var response = {
-            error: 'Request failed',
-            httpCode: 'error',
-          };
-          callback(response);
-        }
-      })
-      .catch(() => {
+          console.info('sending hazard watch');
+          callback(json);
+        });
+      } else {
         // error
         var response = {
           error: 'Request failed',
           httpCode: 'error',
         };
         callback(response);
-      });
+      }
+    })
+    .catch(() => {
+      // error
+      var response = {
+        error: 'Request failed',
+        httpCode: 'error',
+      };
+      callback(response);
+    });
 }
 
 /**
@@ -365,85 +385,85 @@ function fetchAusgridOutages(callback) {
   fetch(`${ausgridBaseUrl}webapi/OutageMapData/GetCurrentUnplannedOutageMarkersAndPolygons?bottomleft.lat=-33.45170&bottomleft.lng=148.76319&topright.lat=-32.56033&topright.lng=153.66859&zoom=9`, {
     method: "GET",
     headers: {
-        "Content-Type": "application/json",
-      }
+      "Content-Type": "application/json",
+    }
   }).then((resp) => {
     if (resp.ok) {
       resp.json().then((result) => {
         let ausgridGeoJson = {
-            type: 'FeatureCollection',
-            features: [],
-          };
-    
-          result.forEach(function (item) {
-            //build up some geojson from normal JSON
-            var feature = {};
-            feature.geometry = {};
-            feature.geometry.type = 'GeometryCollection';
-            feature.geometry.geometries = [];
-    
-            //make a polygon from each set
-            var polygon = {};
-            polygon.type = 'Polygon';
-            polygon.coordinates = [];
-    
-            var ords = [];
-            if (item.Polygons.length > 0) {
-              item.Polygons[0].Coords.forEach(function (point) {
-                ords.push([point.lng, point.lat]);
-              });
-              ords.push([
-                item.Polygons[0].Coords[0].lng,
-                item.Polygons[0].Coords[0].lat,
-              ]); //push the first item again at the end to complete the polygon
-            }
-    
-            polygon.coordinates.push(ords);
-    
-            feature.geometry.geometries.push(polygon);
-    
-            var point = {};
-            point.type = 'Point';
-            point.coordinates = [];
-            point.coordinates.push(
-              item.MarkerLocation.lng,
-              item.MarkerLocation.lat,
-            );
-    
-            feature.geometry.geometries.push(point);
-    
-                  feature.owner = 'Ausgrid';
-                  feature.type = 'Feature';
-                  feature.properties = {};
-                  feature.properties.numberCustomerAffected = item.CustomersAffectedText;
-                  feature.properties.incidentId = item.WebId;
-                  feature.properties.reason = item.Cause;
-                  feature.properties.status = item.Status;
-                  feature.properties.type = 'Outage';
-                  feature.properties.startDateTime = item.StartDateTime;
-                  feature.properties.endDateTime = item.EstRestTime;
+          type: 'FeatureCollection',
+          features: [],
+        };
 
-                  ausgridGeoJson.features.push(feature);
+        result.forEach(function (item) {
+          //build up some geojson from normal JSON
+          var feature = {};
+          feature.geometry = {};
+          feature.geometry.type = 'GeometryCollection';
+          feature.geometry.geometries = [];
 
-          });
-          callback(ausgridGeoJson);
+          //make a polygon from each set
+          var polygon = {};
+          polygon.type = 'Polygon';
+          polygon.coordinates = [];
+
+          var ords = [];
+          if (item.Polygons.length > 0) {
+            item.Polygons[0].Coords.forEach(function (point) {
+              ords.push([point.lng, point.lat]);
+            });
+            ords.push([
+              item.Polygons[0].Coords[0].lng,
+              item.Polygons[0].Coords[0].lat,
+            ]); //push the first item again at the end to complete the polygon
+          }
+
+          polygon.coordinates.push(ords);
+
+          feature.geometry.geometries.push(polygon);
+
+          var point = {};
+          point.type = 'Point';
+          point.coordinates = [];
+          point.coordinates.push(
+            item.MarkerLocation.lng,
+            item.MarkerLocation.lat,
+          );
+
+          feature.geometry.geometries.push(point);
+
+          feature.owner = 'Ausgrid';
+          feature.type = 'Feature';
+          feature.properties = {};
+          feature.properties.numberCustomerAffected = item.CustomersAffectedText;
+          feature.properties.incidentId = item.WebId;
+          feature.properties.reason = item.Cause;
+          feature.properties.status = item.Status;
+          feature.properties.type = 'Outage';
+          feature.properties.startDateTime = item.StartDateTime;
+          feature.properties.endDateTime = item.EstRestTime;
+
+          ausgridGeoJson.features.push(feature);
+
+        });
+        callback(ausgridGeoJson);
       })
     } else {
-        // error
-        var response = {
-          error: 'Request failed',
-          httpCode: 'error',
-        };
-        callback(response);
-    }
-}).catch(() => {
-    // error
-    var response = {
+      // error
+      var response = {
         error: 'Request failed',
         httpCode: 'error',
       };
       callback(response);
-})
+    }
+  }).catch(() => {
+    // error
+    var response = {
+      error: 'Request failed',
+      httpCode: 'error',
+    };
+    callback(response);
+  })
 }
 
 /**
@@ -627,15 +647,15 @@ function checkAsbestosRegister(inAddressObject, cb) {
           foundinCache = true;
           console.log(
             'cache is ' +
-              (new Date().getTime() - new Date(item.timestamp).getTime()) /
-                1000 /
-                60 +
-              'mins old',
+            (new Date().getTime() - new Date(item.timestamp).getTime()) /
+            1000 /
+            60 +
+            'mins old',
           );
           if (
             (new Date().getTime() - new Date(item.timestamp).getTime()) /
-              1000 /
-              60 <
+            1000 /
+            60 <
             4320
           ) {
             //3 days
@@ -664,19 +684,19 @@ function checkAsbestosRegister(inAddressObject, cb) {
         } else {
           if (
             (new Date().getTime() - new Date(item.timestamp).getTime()) /
-              1000 /
-              60 >
+            1000 /
+            60 >
             4320
           ) {
             //3 days
             console.log(
               'cleaning stale cache item ' +
-                item.url +
-                ' age:' +
-                (new Date().getTime() - new Date(item.timestamp).getTime()) /
-                  1000 /
-                  60 +
-                'mins old',
+              item.url +
+              ' age:' +
+              (new Date().getTime() - new Date(item.timestamp).getTime()) /
+              1000 /
+              60 +
+              'mins old',
             );
             ftCache.splice(ftCache.indexOf(item), 1); //remove this item from the cache
             needToWriteChange = true;
@@ -740,7 +760,7 @@ function checkAsbestosRegister(inAddressObject, cb) {
           console.log('On the Register');
           cb(
             inAddressObject.PrettyAddress +
-              " was FOUND on the loose fill insulation asbestos register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>",
+            " was FOUND on the loose fill insulation asbestos register<i class='fa fa-external-link' aria-hidden='true' style='margin-left:5px;margin-right:-5px'></i>",
             'red',
             true,
             formAddress,
@@ -795,6 +815,6 @@ function checkAsbestosRegister(inAddressObject, cb) {
       //   });
     }
 
-    
+
   });
 }

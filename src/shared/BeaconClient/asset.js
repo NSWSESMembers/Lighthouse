@@ -102,8 +102,8 @@ function fetchRadioAssets(host, userId = 'notPassed', token) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
     if (cache != null) {
       const cacheJson = JSON.parse(cache);
-      if (secondsSinceEpoch - Math.round(new Date(cacheJson.timestamp * 1000) / 1000) > 60) {
-        // 60 second cache
+      if (secondsSinceEpoch - Math.round(new Date(cacheJson.timestamp * 1000) / 1000) > 20) {
+        // 20 second cache
         fetchAllResources()
       } else {
         console.log('fetchRadioAssets served from cache');
@@ -115,10 +115,7 @@ function fetchRadioAssets(host, userId = 'notPassed', token) {
 
 function fetchAllResources() {
   const resourceTypes = [
-    "Portable", "Vessel", "Communication", "High Clearance", "SHQ Pool",
-    "Heavy Rescue", "Medium Rescue", "Light Rescue", "Medium Storm",
-    "Light Storm", "General Purpose", "Community First Responder",
-    "Command", "Bus"
+    ""
   ];
 
   const fetchPromises = resourceTypes.map(type => {
@@ -165,8 +162,8 @@ function fetchTeleAssets(host, userId = 'notPassed', token) {
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
     if (cache != null) {
       const cacheJson = JSON.parse(cache);
-      if (secondsSinceEpoch - Math.round(new Date(cacheJson.timestamp * 1000) / 1000) > 60) {
-        // 60 second cache
+      if (secondsSinceEpoch - Math.round(new Date(cacheJson.timestamp * 1000) / 1000) > 20) {
+        // 20 second cache
         fetch();
       } else {
         console.log('fetchTeleAssets served from cache');
