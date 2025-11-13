@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import BeaconClient from '../../../shared/BeaconClient.js';
 
 function getTransportApiKeyOpsLog(origin) {
