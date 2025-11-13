@@ -156,6 +156,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   } else if (request.type === 'tasking-register-for-remote') {
     activeTabForTaskingRemote = sender.tab.id
     console.log("Registered tab for tasking remote:", activeTabForTaskingRemote)
+    console.log(sender.tab)
     return true;
   } else if (request.type === 'tasking-openURL') {
     console.log("Sending tasking remote command to tab:", activeTabForTaskingRemote)

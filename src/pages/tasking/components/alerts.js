@@ -83,6 +83,17 @@ function buildDefaultRules(vm) {
   const untasked = jobs.filter(j => (Array.isArray(j.taskings()) && j.taskings().length === 0) && j.statusName && j.statusName() == 'Active');
   const unackedNotifications = jobs.filter(j => (Array.isArray(j.unacceptedNotifications()) && j.unacceptedNotifications().length > 0));
   
+  // jobs that are active with atleast one tasking that is completed
+  const completableJobs = jobs.filter(j => {
+    if (j.statusName && j.statusName() != 'Active') return false;
+    if (j.taskings().length === 0) return false;
+    const incompleteTaskings = j.taskings().every(t => t.isComplete?.() === false);
+    const someoneDidSomething = j.taskings().some(t => t.isComplete?.() === true);
+    if (!incompleteTaskings && someoneDidSomething) return true;
+    if (!incompleteTaskings) return false;
+    if (!someoneDidSomething) return false;
+    return true;
+  })
   const asItem = j => ({
     id: j.identifier?.() ?? j.id?.(),
     label: (j.identifier?.() || j.id?.()) + ' — ' + j.type() + ' — '+ (j.address?.prettyAddress?.() || '')
@@ -128,6 +139,19 @@ function buildDefaultRules(vm) {
       count: unackedNotifications.length,
       onClick: (id) => {
         // optional: focus the job if present
+        const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
+        found?.focusMap();
+      }
+    },
+    {
+      id: 'completable-jobs',
+      level: 'info',
+      title: 'Incidents pending completion',
+      active: completableJobs.length > 0,
+      items: completableJobs.slice(0, 10).map(asItem),
+      count: completableJobs.length,
+      onClick: (id) => {
+        // focus the job if present
         const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
         found?.focusMap();
       }

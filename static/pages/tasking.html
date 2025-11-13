@@ -225,6 +225,8 @@
                             <col style="width: 30%;"> <!-- Situation -->
                             <col style="width: 8%;"> <!-- Status -->
                             <col style="width: 22%;"> <!-- Address -->
+                            <col style="width: 4%"> <!-- Actions -->
+
                         </colgroup>
                         <thead class="table-light">
                             <tr>
@@ -251,6 +253,7 @@
                                     Status <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th scope="col">Address</th>
+                                <th scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody data-bind="foreach: { data: sortedJobs, as: 'j' }">
@@ -270,17 +273,27 @@
                                     </button>
                                 </td>
                                 <td>
-                                    <span data-bind="text: j.identifier"></span>
+                                    <span class="no-drag" data-bind="text: j.identifier"></span>
                                     <em class="fa fa-fw fa-share-alt"
                                         data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
                                 </td>
-                                <td data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
-                                    data-bs-toggle="tooltip"></td>
-                                <td data-bind="text: j.entityAssignedTo.code"></td>
-                                <td data-bind="text: j.type + j.categoriesNameNumberDash"></td>
-                                <td data-bind="text: j.situationOnScene"></td>
-                                <td data-bind="text: j.statusName"></td>
-                                <td data-bind="text: j.address.prettyAddress()"></td>
+                                <td><span class="no-drag" data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
+                                    data-bs-toggle="tooltip"></span></td>
+                                <td><span class="no-drag" data-bind="text: j.entityAssignedTo.code"></span></td>
+                                <td><span class="no-drag" data-bind="text: j.type + j.categoriesNameNumberDash"></span></td>
+                                <td><span class="no-drag" data-bind="text: j.situationOnScene"></span></td>
+                                <td><span class="no-drag" data-bind="text: j.statusName"></span></td>
+                                <td><span class="no-drag"
+                                        data-bind="text: j.address.prettyAddress()"></span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Incident actions">
+                                        <button type="button" class="btn btn-outline-secondary" title="Zoom to"
+                                            data-bind="click: j.focusMap, lickBubble: false">
+                                            <i id="drag-ignore" class="fa fa-solid fa-crosshairs"></i>
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
 
                             <!-- Expanded details row -->

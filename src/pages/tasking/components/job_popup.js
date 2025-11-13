@@ -5,7 +5,7 @@ export function buildJobPopupKO() {
     <div id="jobIdentifier"
          class="fw-bold text-center"
          style="color:white;background: black">
-         <span data-bind="text: identifier"></span>
+         <span class="no-drag" data-bind="text: identifier"></span>
          <em class="fa fa-fw fa-share-alt" data-bind="visible: icemsIncidentIdentifier, attr:{ title: icemsIncidentIdentifier }"></em>
          </div>
     <div id="jobType"
@@ -72,13 +72,12 @@ export function buildJobPopupKO() {
       </div>
     </div>
     <!-- Address -->
-    <div class="text-center fw-bold mt-2"
-         data-bind="text: (address.prettyAddress && address.prettyAddress()) || ''"></div>
+    <div class="text-center fw-bold mt-2"><span class="no-drag" data-bind="text: (address.prettyAddress && address.prettyAddress()) || ''"></span></div>
 
     <div id="JobDetails" style="padding-top:10px;width:100%;margin:auto">
       <!-- SoS -->
-      <div id="JobSoS" class="text-center" data-bind="visible: !!situationOnScene(), text: situationOnScene"></div>
-      <div class="text-center" data-bind="visible: !situationOnScene()"><i>No situation on scene available.</i></div>
+      <div id="JobSoS" class="text-center"><span data-bind="visible: !!situationOnScene(), text: situationOnScene"></span></div>
+      <div class="text-center no-drag" data-bind="visible: !situationOnScene()"><i>No situation on scene available.</i></div>
 
       <!-- Tags -->
       <div id="JobTags" class="text-center pt-2" data-bind="text: tagsCsv()"></div>

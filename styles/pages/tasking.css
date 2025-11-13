@@ -22,6 +22,20 @@ body {
   font-size: 13px;
 }
 
+tr[draggable="true"] * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: grab;
+}
+
+div[draggable="true"] * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: grab;
+}
+
+
+
 /* Sidebar starts from a CSS var so JS can update it easily */
 .sidebar {
   width: var(--sidebar-w, 420px);
@@ -309,6 +323,8 @@ select {
   align-items: center;
   margin-bottom: 12px;
 }
+
+
 
 /* table sorting icons */
 table thead th.sortable { cursor: pointer; user-select: none; }
@@ -760,11 +776,21 @@ tr.team_body > td { padding: 0; border-top: 0; }
   position: relative !important
 }
 
+.no-drag {
+    user-select: text !important;
+    cursor: text !important;
+}
+
+#drag-ignore {
+    cursor: unset !important;
+}
+
+
 
 .leaflet-control.alerts { pointer-events:auto; }
 .alerts {
   font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  min-width: 230px;
+  min-width: 250px;
   max-width: 360px;
   backdrop-filter: blur(2px);
   border-radius: 10px;
@@ -783,9 +809,9 @@ tr.team_body > td { padding: 0; border-top: 0; }
 .alerts--open .alerts__panel { display:block; }
 
 /* Levels — extend as needed */
-.alerts--warning { color:#664d03; background:rgba(255,193,7,.20); border:1px solid rgba(255,193,7,.5); }
-.alerts--danger  { color:#58151c; background:rgba(220,53,69,.20); border:1px solid rgba(220,53,69,.45); }
-.alerts--caution { color:#084298; background:rgba(13,110,253,.15); border:1px solid rgba(13,110,253,.35); }
+.alerts--warning { color:#664d03; background:rgba(255,193,7,.20); border:1px solid rgba(255,193,7,.7); }
+.alerts--danger  { color:#58151c; background:rgba(220,53,69,.20); border:1px solid rgba(220,53,69,.6); }
+.alerts--caution { color:#084298; background:rgba(13,110,253,.15); border:1px solid rgba(13,110,253,.5); }
 
 .alerts__list { margin:0; padding-left:18px; }
 

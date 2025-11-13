@@ -937,24 +937,50 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 el.setAttribute('draggable', 'true');
 
-                el.addEventListener('dragstart', (ev) => {
-                    // create a handle id and cache payload
-                    const id = genId();
-                    dragStore.set(id, payload);
+                // Prevent drag from starting if clicking text or inside a selectable element
+                el.addEventListener('mousedown', function (ev) {
 
-                    // put only the id on the DnD channel
-                    ev.dataTransfer.setData('text/x-ko-drag-id', id);
-                    ev.dataTransfer.effectAllowed = 'copyMove';
+                    // If target is a text node → allow selection, block drag
+                    if (ev.target.nodeType === Node.TEXT_NODE) {
+                        el.setAttribute('draggable', 'false');
+                        setTimeout(function () {
+                            el.setAttribute('draggable', 'true');
+                        }, 0);
+                        return;
+                    }
 
-                    ev.dataTransfer.setData('text/plain', JSON.stringify({ kind: payload.kind }));
-
+                    // If clicking span, p, td, div containing text → also allow selection
+                    var tag = ev.target.tagName;
+                    if (tag === 'SPAN' || tag === 'P' || tag === 'TD' || tag === 'DIV') {
+                        // Only block drag if it actually contains text
+                        if (ev.target.innerText && ev.target.innerText.trim().length > 0) {
+                            el.setAttribute('draggable', 'false');
+                            setTimeout(function () {
+                                el.setAttribute('draggable', 'true');
+                            }, 0);
+                            return;
+                        }
+                    }
                 });
 
-                // clean up when drag ends
-                el.addEventListener('dragend', () => {
-                    // allow GC; not strictly necessary but keeps map small
-                    dragStore.forEach((_v, k) => dragStore.delete(k));
-                });
+                el.addEventListener('dragstart', function (ev) {
+            // if draggable was disabled for text selection, cancel
+            if (el.getAttribute('draggable') !== 'true') {
+                ev.preventDefault();
+                return;
+            }
+
+            const id = genId();
+            dragStore.set(id, payload);
+
+            ev.dataTransfer.setData('text/x-ko-drag-id', id);
+            ev.dataTransfer.effectAllowed = 'copyMove';
+            ev.dataTransfer.setData('text/plain', JSON.stringify({ kind: payload.kind }));
+        });
+
+        el.addEventListener('dragend', function () {
+            dragStore.forEach(function (_v, k) { dragStore.delete(k); });
+        });
             }
         };
 
