@@ -139,5 +139,9 @@ export function Tasking(data = {}) {
         return Number.isFinite(lat) && Number.isFinite(lng) ? L.latLng(lat, lng) : null;
     }
 
+    self.openRadioLogModal = function () {
+        console.log("Opening Radio Log for job", self.id());
+        this.job.openRadioLogModal(self);
+    };
 
 }

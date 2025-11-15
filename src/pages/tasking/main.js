@@ -13,6 +13,7 @@ import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
 import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
+import { NewOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
@@ -256,6 +257,7 @@ function VM() {
 
     ///opslog short cuts
     self.opsLogModalVM = new OpsLogModalVM(self);
+    self.NewOpsLogModalVM = new NewOpsLogModalVM(self);
     self.selectedJob = ko.observable(null);
 
 
@@ -470,6 +472,10 @@ function VM() {
                 self.attachOpsLogModal(job);
             },
 
+            openRadioLogModal: (tasking) => {
+                self.attachJobRadioLogModal(tasking);
+            },
+
             fetchUnacknowledgedJobNotifications: (job) => {
                 self.fetchUnacknowledgedJobNotifications(job);
             }
@@ -519,7 +525,20 @@ function VM() {
         self.selectedJob(job);
         self.opsLogModalVM.openForJob(job);
         modal.show();
+    };
+
+    self.attachJobRadioLogModal = function (tasking) {
+        const modalEl = document.getElementById('RadioLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.NewOpsLogModalVM;
+
+        vm.modalInstance = modal;
+
+        vm.openForTasking(tasking);
+        modal.show();
     }
+
 
     // Job registry/upsert
     // might be called from tasking OR job fetch so values might be missing
@@ -782,6 +801,16 @@ function VM() {
         }, function (err) {
             console.error("Failed to fetch ops log for job:", err);
             cb([]);
+        });
+    }
+
+    self.createOpsLogEntry = function (payload, cb) {
+        const form = BeaconClient.toFormUrlEncoded(payload);
+        BeaconClient.operationslog.create(apiHost, form, token, function (data) {
+            cb(data);
+        }, function (err) {
+            console.error("Failed to create ops log entry:", err);
+            cb(null);
         });
     }
 
