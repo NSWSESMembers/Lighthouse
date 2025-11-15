@@ -264,9 +264,8 @@ export function Job(data = {}, deps = {}) {
 
     Job.prototype.updateFromJson = function (d = {}) {
 
-        self.lastDataUpdate = new Date();
-
-        self.startDataRefreshCheck(); // restart timer
+        this.lastDataUpdate = new Date();
+        this.startDataRefreshCheck(); // restart timer
 
 
         // scalars
