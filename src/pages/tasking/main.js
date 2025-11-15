@@ -466,6 +466,10 @@ function VM() {
                 self.attachJobRadioLogModal(tasking);
             },
 
+            openNewOpsLogModal: (job) => {
+                self.attachNewOpsLogModal(job);
+            },
+
             fetchUnacknowledgedJobNotifications: (job) => {
                 self.fetchUnacknowledgedJobNotifications(job);
             }
@@ -542,6 +546,18 @@ function VM() {
         vm.modalInstance = modal;
 
         vm.openForTeam(team);
+        modal.show();
+    };
+
+    self.attachNewOpsLogModal = function (job) {
+        const modalEl = document.getElementById('NewOpsLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.NewOpsLogModalVM;
+
+        vm.modalInstance = modal;
+
+        vm.openForNewJobLog(job);
         modal.show();
     };
 

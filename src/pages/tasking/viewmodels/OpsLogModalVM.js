@@ -180,6 +180,12 @@ export function NewOpsLogModalVM(parentVM) {
     self.headerLabel(`New Radio Log for ${team.callsign?.() || ""}`);
   }
 
+  self.openForNewJobLog = async (job) => {
+    self.resetFields();
+    console.log(job);
+    self.headerLabel(`New Ops Log for ${job.identifier() || ""}`);
+  }
+
   self.toPayload = function () {
     return {
         EntityId: self.entityId(),

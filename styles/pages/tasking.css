@@ -897,22 +897,46 @@ tr.team_body > td { padding: 0; border-top: 0; }
   padding: 0 6px;
 }
 
-  .legend-box {
-    display:inline-block;
-    width:14px;
-    height:14px;
-    border:1px solid #333;
-    margin-right:4px;
-    vertical-align:middle;
-  }
-  .leaflet-control.legend svg {
-    vertical-align:middle;
-  }
+.legend-box {
+  display:inline-block;
+  width:14px;
+  height:14px;
+  border:1px solid #333;
+  margin-right:4px;
+  vertical-align:middle;
+}
+.leaflet-control.legend svg {
+  vertical-align:middle;
+}
 
-    .modal-textarea-full {
-      width: 100%;
-      resize: none;
-      box-sizing: border-box;
-      display: block;
-      margin: 0;
-  }
+.modal-textarea-full {
+    width: 100%;
+    resize: none;
+    box-sizing: border-box;
+    display: block;
+    margin: 0;
+}
+
+.tag-list {
+  margin-bottom: 12px;
+}
+
+.tag-pill {
+    display: inline-block;
+    padding: 6px 10px;
+    margin: 4px;
+    border-radius: 4px;
+    background: #b8a96a;   /* unselected default */
+    color: white;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.action-pill {
+    background: #d9534f;   /* red group */
+}
+
+.tag-selected {
+    background: #05314D !important;  /* SES dark blue or whatever you want */
+    color: #fff;
+}
