@@ -340,21 +340,6 @@ function VM() {
 
     // --- END TABLE SORTING MAGIC ---
 
-    //TODO: make these user configurable via UI
-    // filters for what teams to ignore
-    self.teamStatusFilterList = ko.observableArray([
-        "Standby",
-        "Stood down"
-    ]);
-
-    //TODO: make these user configurable via UI
-    //filters for what jobs to ignore
-    self.jobsStatusFilterList = ko.observableArray([
-        "Finalised",
-        "Cancelled",
-        "Complete"
-    ])
-
     //Job filtering/searching
     self.jobSearch = ko.observable('');
 
@@ -362,18 +347,18 @@ function VM() {
 
         const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
         const term = self.jobSearch().toLowerCase();
+        const allowed = self.config.jobStatusFilter(); // allow-list
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
+            const statusName = jb.statusName();
 
-            // If its an ignored status return false
-
-            if (self.jobsStatusFilterList().includes(jb.statusName())) {
-                return false
+            // If allow-list non-empty, only show jobs whose status is in it
+            if (allowed.length > 0 && !allowed.includes(statusName)) {
+                return false;
             }
 
             // If no HQ filters are active, skip HQ filtering
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
-
             if (!hqMatch) return false;
 
             // Apply text search
@@ -386,7 +371,7 @@ function VM() {
 
     self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
 
-        const ignoreList = self.jobsStatusFilterList();
+        const ignoreList = self.config.jobStatusFilter();
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
@@ -410,19 +395,24 @@ function VM() {
     self.teamSearch = ko.observable('');
 
     self.filteredTeams = ko.pureComputed(() => {
+        const allowed = self.config.teamStatusFilter(); // allow-list
         return ko.utils.arrayFilter(this.teams(), tm => {
-            if (tm.status() == null) {
-                return false
+            const status = tm.status().Name;
+            if (status == null) {
+                return false;
             }
-            if (self.teamStatusFilterList().includes(tm.status())) {
-                return false
+
+            // If allow-list non-empty, only show teams whose status is in it
+            if (allowed.length > 0 && !allowed.includes(status)) {
+                return false;
             }
+
             const term = self.teamSearch().toLowerCase();
             if (tm.callsign().toLowerCase().includes(term)) {
-                return true
+                return true;
             }
-            return false
-        })
+            return false;
+        });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
 
@@ -440,7 +430,7 @@ function VM() {
             // Return true if at least one team's status() is not in ignoreList
             return teams.some(t => {
                 const status = ko.unwrap(t.status);
-                return status && !self.teamStatusFilterList().includes(status);
+                return status && !self.config.teamStatusFilter().includes(status);
             });
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
@@ -833,6 +823,19 @@ function VM() {
         const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
         console.log("Fetching jobs for HQS:", hqsFilter);
 
+        const JobStatusByName = {
+            Active: { Id: 2 },
+            Cancelled: { Id: 7 },
+            Complete: { Id: 6 },
+            Finalised: { Id: 8 },
+            New: { Id: 1 },
+            Referred: { Id: 5 },
+            Rejected: { Id: 3 },
+            Tasked: { Id: 4 },
+        };
+
+        const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => JobStatusByName[status]?.Id).filter(id => id !== undefined);
+
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - 30); // last 30 days
@@ -844,8 +847,8 @@ function VM() {
         }, function (val, total) {
             console.log("Progress: " + val + " / " + total)
         },
-            1, //view model
-            [2, 1, 4, 5], //status filter
+            2, //view model
+            statusFilterToView, //status filter
             function (jobs) {
                 jobs.Results.forEach(function (t) {
                     myViewModel.getOrCreateJob(t);
@@ -858,6 +861,14 @@ function VM() {
         const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
         console.log("Fetching teams for HQS:", hqsFilter);
 
+        const TeamStatusByName = {
+            Standby: { Id: 1 },
+            OnAlert: { Id: 2 },
+            Activated: { Id: 3 },
+            Rest: { Id: 4 },
+            StoodDown: { Id: 5 }
+        };
+        const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => TeamStatusByName[status]?.Id).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - 30); // last 30 days
@@ -873,7 +884,7 @@ function VM() {
         }, function () {
             //console.log("Progress: " + val + " / " + total)
         },
-            [1, 2, 3, 4],
+            statusFilterToView, //status filter
             function (teams) { //per page
                 teams.Results.forEach(function (t) {
                     myViewModel.getOrCreateTeam(t);
@@ -926,6 +937,47 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
 
+        // status filters: maintain arrays of *ignored* status names
+        function makeStatusFilterBinding(listName) {
+            return {
+                init: function (element, valueAccessor, _allBindings, _vm, ctx) {
+                    const status = ko.unwrap(valueAccessor());
+                    const cfg = ctx.$root.config;
+                    if (!cfg || typeof cfg[listName] !== 'function') return;
+
+                    // initial state
+                    element.checked = cfg[listName]().includes(status);
+
+                    element.addEventListener('change', function () {
+                        const arr = cfg[listName];
+                        if (element.checked) {
+                            if (!arr().includes(status)) {
+                                arr.push(status);
+                            }
+                        } else {
+                            arr.remove(status);
+                        }
+                    });
+                },
+                update: function (element, valueAccessor, _allBindings, _vm, ctx) {
+                    const status = ko.unwrap(valueAccessor());
+                    const cfg = ctx.$root.config;
+                    if (!cfg || typeof cfg[listName] !== 'function') return;
+                    element.checked = cfg[listName]().includes(status);
+                }
+            };
+        }
+
+        ko.bindingHandlers.teamStatusFilter = makeStatusFilterBinding('teamStatusFilter');
+        ko.bindingHandlers.jobStatusFilter = makeStatusFilterBinding('jobStatusFilter');
+
+        ko.bindingHandlers.trVisible = {
+            update: function (element, valueAccessor) {
+                const value = ko.unwrap(valueAccessor());
+                element.style.display = value ? 'table-row' : 'none';
+            }
+        };
+
 
         const dragStore = new Map();
         const genId = () => (crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
@@ -964,23 +1016,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 el.addEventListener('dragstart', function (ev) {
-            // if draggable was disabled for text selection, cancel
-            if (el.getAttribute('draggable') !== 'true') {
-                ev.preventDefault();
-                return;
-            }
+                    // if draggable was disabled for text selection, cancel
+                    if (el.getAttribute('draggable') !== 'true') {
+                        ev.preventDefault();
+                        return;
+                    }
 
-            const id = genId();
-            dragStore.set(id, payload);
+                    const id = genId();
+                    dragStore.set(id, payload);
 
-            ev.dataTransfer.setData('text/x-ko-drag-id', id);
-            ev.dataTransfer.effectAllowed = 'copyMove';
-            ev.dataTransfer.setData('text/plain', JSON.stringify({ kind: payload.kind }));
-        });
+                    ev.dataTransfer.setData('text/x-ko-drag-id', id);
+                    ev.dataTransfer.effectAllowed = 'copyMove';
+                    ev.dataTransfer.setData('text/plain', JSON.stringify({ kind: payload.kind }));
+                });
 
-        el.addEventListener('dragend', function () {
-            dragStore.forEach(function (_v, k) { dragStore.delete(k); });
-        });
+                el.addEventListener('dragend', function () {
+                    dragStore.forEach(function (_v, k) { dragStore.delete(k); });
+                });
             }
         };
 

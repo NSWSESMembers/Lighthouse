@@ -217,12 +217,12 @@
                 <div class="table-responsive">
                     <table class="jobs table align-middle">
                         <colgroup>
-                            <col style="width: 4%;"> <!-- chevron -->
+                            <col style="width: 2%;"> <!-- chevron -->
                             <col style="width: 10%;"> <!-- Id -->
                             <col style="width: 8%;"> <!-- Recieved -->
                             <col style="width: 8%;"> <!-- HQ -->
                             <col style="width: 8%;"> <!-- Type -->
-                            <col style="width: 30%;"> <!-- Situation -->
+                            <col style="width: 28%;"> <!-- Situation -->
                             <col style="width: 8%;"> <!-- Status -->
                             <col style="width: 22%;"> <!-- Address -->
                             <col style="width: 4%"> <!-- Actions -->
@@ -273,18 +273,21 @@
                                     </button>
                                 </td>
                                 <td>
-                                    <span class="no-drag" data-bind="text: j.identifier"></span>
+                                    <span class="no-drag" data-bind="text: j.identifierTrimmed"></span>
+                                    <em class="far fa-image"
+                                        data-bind="visible: j.imageCount  > 0, attr:{ title: j.imageCount }"></em>
                                     <em class="fa fa-fw fa-share-alt"
                                         data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
                                 </td>
-                                <td><span class="no-drag" data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
-                                    data-bs-toggle="tooltip"></span></td>
+                                <td><span class="no-drag"
+                                        data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
+                                        data-bs-toggle="tooltip"></span></td>
                                 <td><span class="no-drag" data-bind="text: j.entityAssignedTo.code"></span></td>
-                                <td><span class="no-drag" data-bind="text: j.type + j.categoriesNameNumberDash"></span></td>
+                                <td><span class="no-drag"
+                                        data-bind="text: j.typeShort + j.categoriesNameNumberDash"></span></td>
                                 <td><span class="no-drag" data-bind="text: j.situationOnScene"></span></td>
                                 <td><span class="no-drag" data-bind="text: j.statusName"></span></td>
-                                <td><span class="no-drag"
-                                        data-bind="text: j.address.prettyAddress()"></span>
+                                <td><span class="no-drag" data-bind="text: j.address.prettyAddress()"></span>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group" aria-label="Incident actions">
@@ -605,40 +608,95 @@
                                             controls</label>
                                     </div>
                                 </div>
-                                <div class="col-sm-6 col-md-3">
-                                    <label for="defaultHQ" class="form-label">Default HQ</label>
-                                    <input id="defaultHQ" type="text" class="form-control"
-                                        data-bind="value: config.defaultHQ">
-                                </div>
 
                                 <!-- inside Other Settings card -->
-                                <div class="col-12">
-                                    <label class="form-label d-block mb-2">Show Teams With Status:</label>
-                                    <div class="border rounded p-2" id="teamStatusBox">
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox"
-                                                id="statusActivated" value="Activated" checked>
-                                            <label class="form-check-label" for="statusActivated">Activated</label>
+                                <!-- inside Other Settings card, after the team status block -->
+                                <div class="row">
+                                    <div class="col-3">
+                                        <label class="form-label d-block mb-2">Show Incidents With Status:</label>
+                                        <div class="border rounded p-2" id="jobStatusBox">
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusFinalised" value="Finalised"
+                                                    data-bind="jobStatusFilter: 'Finalised'">
+                                                <label class="form-check-label" for="statusFinalised">Finalised</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusCancelled" value="Cancelled"
+                                                    data-bind="jobStatusFilter: 'Cancelled'">
+                                                <label class="form-check-label" for="statusCancelled">Cancelled</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusComplete" value="Complete"
+                                                    data-bind="jobStatusFilter: 'Complete'">
+                                                <label class="form-check-label" for="statusComplete">Complete</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusActive" value="Active"
+                                                    data-bind="jobStatusFilter: 'Active'">
+                                                <label class="form-check-label" for="statusActive">Active</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusPending" value="New" data-bind="jobStatusFilter: 'New'">
+                                                <label class="form-check-label" for="statusPending">New</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusOnHold" value="Referred"
+                                                    data-bind="jobStatusFilter: 'Referred'">
+                                                <label class="form-check-label" for="statusOnHold">Referred</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusRejected" value="Rejected"
+                                                    data-bind="jobStatusFilter: 'Rejected'">
+                                                <label class="form-check-label" for="statusRejected">Rejected</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusTasked" value="Tasked"
+                                                    data-bind="jobStatusFilter: 'Tasked'">
+                                                <label class="form-check-label" for="statusTasked">Tasked</label>
+                                            </div>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox"
-                                                id="statusStandby" value="Standby" checked>
-                                            <label class="form-check-label" for="statusStandby">Standby</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox"
-                                                id="statusStoodDown" value="Stood down" checked>
-                                            <label class="form-check-label" for="statusStoodDown">Stood down</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox" id="statusRest"
-                                                value="Rest" checked>
-                                            <label class="form-check-label" for="statusRest">Rest</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox"
-                                                id="statusOnAlert" value="On Alert" checked>
-                                            <label class="form-check-label" for="statusOnAlert">On Alert</label>
+                                    </div>
+                                    <div class="col-3">
+                                        <label class="form-label d-block mb-2">Show Teams With Status:</label>
+                                        <div class="border rounded p-2" id="teamStatusBox">
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusActivated" value="Activated"
+                                                    data-bind="teamStatusFilter: 'Activated'">
+                                                <label class="form-check-label" for="statusActivated">Activated</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusStandby" value="Standby"
+                                                    data-bind="teamStatusFilter: 'Standby'">
+                                                <label class="form-check-label" for="statusStandby">Standby</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusStoodDown" value="Stood down"
+                                                    data-bind="teamStatusFilter: 'Stood down'">
+                                                <label class="form-check-label" for="statusStoodDown">Stood
+                                                    down</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusRest" value="Rest" data-bind="teamStatusFilter: 'Rest'">
+                                                <label class="form-check-label" for="statusRest">Rest</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusOnAlert" value="On Alert"
+                                                    data-bind="teamStatusFilter: 'On Alert'">
+                                                <label class="form-check-label" for="statusOnAlert">On Alert</label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

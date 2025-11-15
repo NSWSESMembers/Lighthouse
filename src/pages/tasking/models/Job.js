@@ -68,6 +68,11 @@ export function Job(data = {}, deps = {}) {
 
     let unacceptedNotificationsTimer = null;
 
+    self.typeShort = ko.pureComputed(() => {
+        const fullType = self.type() || "";
+        return fullType.replace(/Evacuation/i, 'Evac').trim();
+    })
+
 
     // functions to poll unaccepted notifications if theres an icems ID
     function pollUnacceptedNotifications() {
@@ -108,8 +113,6 @@ export function Job(data = {}, deps = {}) {
 
     self.startUnacceptedNotificationsPolling();
     //
-
-
 
     self.attachAndFillOpsLogModal = function () {
         console.log("Fetching ops log entries for job", self.id());
@@ -159,6 +162,11 @@ export function Job(data = {}, deps = {}) {
     self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
     self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
     self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));
+
+    self.identifierTrimmed = ko.pureComputed(() => {   
+        //trim leading zeros for compact display
+        return self.identifier().replace(/^0+/, '') || '0';
+    });
 
     self.ageSeconds = ko.pureComputed(() => {
         const d = self.receivedAt();
@@ -326,7 +334,7 @@ export function Job(data = {}, deps = {}) {
     self.focusMap = function () { flyToJob(self); };
 
     // ---- lifecycle hooks (delegated) ----
-    self.onPopupOpen = function () { self.fetchTasking(); self.refreshData() };
+    self.onPopupOpen = function () { self.refreshDataAndTasking(); };
     self.onPopupClose = function () { /* popup closing logic goes here */ };
 
     self.onPopupClose = function () {
@@ -347,6 +355,9 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.refreshData = async function () {
+
+
+
         self.taskingLoading(true);
         fetchJobById(self.id(), () => {
             self.taskingLoading(false);

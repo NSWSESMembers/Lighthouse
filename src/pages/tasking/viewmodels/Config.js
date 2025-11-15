@@ -22,7 +22,25 @@ export function ConfigVM(root, deps) {
     self.refreshInterval = ko.observable(60);
     self.theme = ko.observable('light');
     self.showAdvanced = ko.observable(false);
-    self.defaultHQ = ko.observable('');
+
+    //blown away on load
+    self.teamStatusFilter = ko.observableArray([
+        "Activated", "Standby", "Stood down", "Rest", "On Alert"
+    ]);
+
+    //blown away on load
+    self.jobStatusFilter = ko.observableArray([
+        "Active", "Cancelled", "Complete", "Finalised", "New",
+        "Referred", "Rejected", "Tasked"
+    ]);
+
+    self.jobStatusFilterDefaults = [
+        "Active", "New", "Tasked"
+    ];
+
+    self.teamStatusFilterDefaults = [
+        "Activated"
+    ];
 
     // Helpers
     const norm = (item) => ({
@@ -30,6 +48,7 @@ export function ConfigVM(root, deps) {
         name: item?.name ?? item?.Name ?? item?.label ?? item?.fullName ?? String(item),
         entityType: item?.entityType ?? item?.EntityTypeId ?? 0
     });
+
 
     function makeResultVM(raw) {
         const r = norm(raw);
@@ -115,18 +134,24 @@ export function ConfigVM(root, deps) {
 
 
     // Persistence
+    const STORAGE_KEY = 'lh-taskingConfig';
+
     self.save = () => {
         const cfg = {
             refreshInterval: Number(self.refreshInterval()),
             theme: self.theme(),
             showAdvanced: !!self.showAdvanced(),
-            defaultHQ: self.defaultHQ().trim(),
             filters: {
                 teams: ko.toJS(self.teamFilters),
                 incidents: ko.toJS(self.incidentFilters)
-            }
+            },
+            // these are your “ignored” statuses used by main.js filters
+            teamStatusFilter: ko.toJS(self.teamStatusFilter),
+            jobStatusFilter: ko.toJS(self.jobStatusFilter)
         };
-        localStorage.setItem('taskingFilters', JSON.stringify(cfg.filters));
+
+        console.log('Saving config:', cfg);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
 
         // Kick initial loads using the KO arrays (not Maps)
         root.fetchAllTeamData();
@@ -135,20 +160,58 @@ export function ConfigVM(root, deps) {
 
         // Close the Bootstrap modal
         const el = document.getElementById('configModal');
-
-        // eslint-disable-next-line no-undef
         const m = bootstrap.Modal.getOrCreateInstance(el);
         m.hide();
     };
 
     self.loadFromStorage = () => {
-        const saved = localStorage.getItem('taskingFilters');
-        if (!saved) return;
-        const filters = JSON.parse(saved);
-        self.teamFilters(filters.teams || []);
-        self.incidentFilters(filters.incidents || []);
+        const saved = localStorage.getItem(STORAGE_KEY);
+        let cfg;
+        try {
+            cfg = JSON.parse(saved);
+        } catch (e) {
+            console.warn('Failed to parse lh-taskingConfig:', e);
+            return;
+        }
+        if (!cfg) {
+            cfg = {}
+            console.log('Using defaults.');
+            cfg.refreshInterval = self.refreshInterval();
+            cfg.theme = self.theme();
+            cfg.showAdvanced = self.showAdvanced();
+            cfg.teamStatusFilter = self.teamStatusFilterDefaults;
+            cfg.jobStatusFilter = self.jobStatusFilterDefaults;
+
+        }
+        console.log('Loaded config:', cfg);
+        // scalar settings
+        if (typeof cfg.refreshInterval === 'number') {
+            self.refreshInterval(cfg.refreshInterval);
+        }
+        if (typeof cfg.theme === 'string') {
+            self.theme(cfg.theme);
+        }
+        if (typeof cfg.showAdvanced === 'boolean') {
+            self.showAdvanced(cfg.showAdvanced);
+        }
+
+        // filters
+        if (cfg.filters) {
+            self.teamFilters(cfg.filters.teams || []);
+            self.incidentFilters(cfg.filters.incidents || []);
+        }
+        console.log(self.teamFilters());
+        console.log(self.incidentFilters());
+
+        // status filters (arrays of status names to show)
+        if (Array.isArray(cfg.teamStatusFilter)) {
+            self.teamStatusFilter(cfg.teamStatusFilter);
+        }
+        if (Array.isArray(cfg.jobStatusFilter)) {
+            self.jobStatusFilter(cfg.jobStatusFilter);
+        }
     };
 
-    // Init
+    // run once on construction
     self.loadFromStorage();
 }
