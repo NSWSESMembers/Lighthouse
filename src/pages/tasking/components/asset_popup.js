@@ -89,23 +89,41 @@ export function buildAssetPopupKO() {
                        data-bind="text: tsk.prettyAddress"></div>
 
                   <!-- Third row: actions -->
-                  <div class="mt-1 d-flex justify-content-between align-items-center">
-                    <div class="text-muted small">
-                      <!-- room for extra labels if needed later -->
-                    </div>
-                    <div class="btn-group btn-group-sm" role="group">
-                      <button class="btn btn-outline-secondary"
-                              title="Focus on job"
-                              data-bind="click: tsk.job.focusMap, clickBubble:false, disable: !tsk.hasJob()">
-                        <i class="fa fa-crosshairs"></i>
-                      </button>
-                      <button class="btn btn-outline-secondary"
-                              title="Open in Beacon"
-                              data-bind="click: tsk.job.openBeaconJobDetails, clickBubble:false">
-                        <i class="fa fa-external-link-alt"></i>
-                      </button>
-                    </div>
-                  </div>
+<div class="mt-1 d-flex align-items-start justify-content-between">
+  
+  <!-- SituationOnScene block -->
+  <div class="flex-grow-1 pe-2 small text-muted"
+       style="white-space: pre-wrap; line-height: 1.2;"
+       data-bind="text: job.situationOnScene">
+  </div>
+
+  <!-- Action buttons -->
+  <div class="btn-group btn-group-sm ms-1" role="group">
+    <button class="btn btn-outline-primary"
+            title="Focus on job"
+            data-bind="click: $root.safeJobFocus,
+                       disable: !hasJob(),
+                       clickBubble:false">
+      <i class="fa fa-crosshairs"></i>
+    </button>
+
+    <button class="btn btn-outline-secondary"
+            title="Open in Beacon"
+            data-bind="click: $root.safeJobOpen,
+                       disable: !hasJob(),
+                       clickBubble:false">
+      <i class="fa fa-external-link-alt"></i>
+    </button>
+
+    <button class="btn btn-outline-secondary"
+            title="Refresh"
+            data-bind="click: $root.safeJobRefresh,
+                       disable: !hasJob(),
+                       clickBubble:false">
+      <i class="fa fa-sync"></i>
+    </button>
+  </div>
+</div>
                 </li>
               </ul>
             </div>
