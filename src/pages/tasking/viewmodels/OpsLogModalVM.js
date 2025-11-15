@@ -134,3 +134,124 @@ export function OpsLogModalVM(parentVm) {
     }
   };
 }
+
+export function NewOpsLogModalVM(parentVM) {
+  // eslint-disable-next-line @typescript-eslint/no-this-alias
+  const self = this;
+
+  self.entityId          = ko.observable(null);
+  self.jobId             = ko.observable(null);
+  self.eventId           = ko.observable(null);
+  self.talkgroupId       = ko.observable(null);
+  self.talkgroupRequestId= ko.observable(null);
+
+  self.subject           = ko.observable("");
+  self.text              = ko.observable("");
+  self.position          = ko.observable(null);
+  self.personFromId      = ko.observable(null);
+  self.personTold        = ko.observable(null);
+
+  self.important         = ko.observable(false);
+  self.restricted        = ko.observable(false);
+  self.actionRequired    = ko.observable(false);
+  self.actionReminder    = ko.observable(null);
+
+  self.tagIds            = ko.observableArray([]);
+  self.timeLogged        = ko.observable(null);
+
+  // UI header
+  self.headerLabel       = ko.observable("");
+
+  self.openForTasking = async (tasking) => {
+    self.resetFields();
+    self.jobId(tasking.job.id() || "");
+    self.subject(tasking.teamCallsign() || "");
+    self.tagIds([6]);
+
+    self.headerLabel(`New Radio Log for ${tasking.teamCallsign?.() || ""} ON ${tasking.job.identifier() || ""}`);
+  }
+
+  self.openForTeam = async (team) => {
+    // NEED TO COME BACK AND ADD HQ ONCE TIM HAS SETUP THE CONFIG PAGE TO USE IT.
+    self.resetFields();
+    self.subject(team.callsign() || "");
+    self.tagIds([6]);
+
+    self.headerLabel(`New Radio Log for ${team.callsign?.() || ""}`);
+  }
+
+  self.toPayload = function () {
+    return {
+        EntityId: self.entityId(),
+        JobId: self.jobId(),
+        EventId: self.eventId(),
+        TalkgroupId: self.talkgroupId(),
+        TalkgroupRequestId: self.talkgroupRequestId(),
+
+        Subject: self.subject(),
+        Text: self.text(),
+        Position: self.position(),
+        PersonFromId: self.personFromId(),
+        PersonTold: self.personTold(),
+
+        Important: self.important(),
+        Restricted: self.restricted(),
+        ActionRequired: self.actionRequired(),
+        ActionReminder: self.actionReminder(),
+
+        TagIds: self.tagIds(),
+        TimeLogged: self.timeLogged()
+    };
+  };
+
+  self.submit = function () {
+    const payload = self.toPayload();
+
+    parentVM.createOpsLogEntry(payload, function (result) {
+
+        if (!result) {
+            console.error("Ops Log submit failed");
+            return;
+        }
+
+        console.log("Ops Log successfully created:", result);
+
+        // use the modal instance passed from main.js
+        if (self.modalInstance) {
+            self.modalInstance.hide();
+        }
+    });
+  };
+
+  self.resetFields = function () {
+      // Core fields
+      self.entityId(null);
+      self.jobId(null);
+      self.eventId(null);
+      self.talkgroupId(null);
+      self.talkgroupRequestId(null);
+
+      // Content
+      self.subject("");
+      self.text("");
+      self.position(null);
+      self.personFromId(null);
+      self.personTold(null);
+
+      // Flags
+      self.important(false);
+      self.restricted(false);
+      self.actionRequired(false);
+      self.actionReminder(null);
+
+      // Arrays
+      self.tagIds([]);
+
+      // Metadata
+      self.timeLogged(null);
+
+      // UI header
+      self.headerLabel("");
+  };
+
+}

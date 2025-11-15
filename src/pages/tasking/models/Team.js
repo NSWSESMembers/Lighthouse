@@ -215,4 +215,8 @@ export function Team(data = {}, deps = {}) {
             Colour: null
         }
     };
+
+    self.openRadioLogModal = function () {
+        deps.openRadioLogModal(self);
+    };
 }

@@ -13,4 +13,22 @@ import * as entities from './BeaconClient/entities.js';
 import * as tasking from './BeaconClient/tasking.js';
 import * as notifications from './BeaconClient/notifications.js';
 
-export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications };
+export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, toFormUrlEncoded };
+
+export function toFormUrlEncoded(obj) {
+    const params = [];
+    for (const key in obj) {
+        const value = obj[key];
+
+        if (Array.isArray(value)) {
+            value.forEach(v => params.push(
+                encodeURIComponent(key + "[]") + "=" + encodeURIComponent(v)
+            ));
+        } else {
+            params.push(
+                encodeURIComponent(key) + "=" + encodeURIComponent(value ?? "")
+            );
+        }
+    }
+    return params.join("&");
+}

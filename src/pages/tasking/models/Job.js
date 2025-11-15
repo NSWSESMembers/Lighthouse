@@ -119,6 +119,11 @@ export function Job(data = {}, deps = {}) {
         attachAndFillOpsLogModal(self)
     }
 
+    self.openRadioLogModal = function (tasking) {
+        deps.openRadioLogModal(tasking)
+    };
+
+
     self.startDataRefreshCheck = function () {
         self.stopDataRefreshCheck();
         refreshTimer = setInterval(async () => {

@@ -139,5 +139,8 @@ export function Tasking(data = {}) {
         return Number.isFinite(lat) && Number.isFinite(lng) ? L.latLng(lat, lng) : null;
     }
 
+    self.openRadioLogModal = function () {
+        this.job.openRadioLogModal(self);
+    };
 
 }

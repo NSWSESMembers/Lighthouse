@@ -908,3 +908,11 @@ tr.team_body > td { padding: 0; border-top: 0; }
   .leaflet-control.legend svg {
     vertical-align:middle;
   }
+
+    .modal-textarea-full {
+      width: 100%;
+      resize: none;
+      box-sizing: border-box;
+      display: block;
+      margin: 0;
+  }
