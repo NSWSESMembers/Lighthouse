@@ -68,6 +68,12 @@ export function Job(data = {}, deps = {}) {
 
     let unacceptedNotificationsTimer = null;
 
+    self.expanded.subscribe(() => {
+        if (self.expanded()) {
+            self.fetchTasking();
+        }
+    });
+
     self.typeShort = ko.pureComputed(() => {
         const fullType = self.type() || "";
         return fullType.replace(/Evacuation/i, 'Evac').trim();

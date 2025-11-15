@@ -24,6 +24,7 @@ import { Team } from './models/Team.js';
 import { Job } from './models/Job.js';
 
 import { canon } from './utils/common.js';
+import { Enum } from './utils/enum.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
 
@@ -398,7 +399,7 @@ function VM() {
 
     self.filteredTeams = ko.pureComputed(() => {
         const allowed = self.config.teamStatusFilter(); // allow-list
-        return ko.utils.arrayFilter(this.teams(), tm => {
+        return ko.utils.arrayFilter(self.teams(), tm => {
             const status = tm.status().Name;
             if (status == null) {
                 return false;
@@ -868,18 +869,7 @@ function VM() {
         const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
         console.log("Fetching jobs for HQS:", hqsFilter);
 
-        const JobStatusByName = {
-            Active: { Id: 2 },
-            Cancelled: { Id: 7 },
-            Complete: { Id: 6 },
-            Finalised: { Id: 8 },
-            New: { Id: 1 },
-            Referred: { Id: 5 },
-            Rejected: { Id: 3 },
-            Tasked: { Id: 4 },
-        };
-
-        const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => JobStatusByName[status]?.Id).filter(id => id !== undefined);
+        const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => Enum.JobStatusType[status]?.Id).filter(id => id !== undefined);
 
         var end = new Date();
         var start = new Date();
@@ -906,14 +896,7 @@ function VM() {
         const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
         console.log("Fetching teams for HQS:", hqsFilter);
 
-        const TeamStatusByName = {
-            Standby: { Id: 1 },
-            OnAlert: { Id: 2 },
-            Activated: { Id: 3 },
-            Rest: { Id: 4 },
-            StoodDown: { Id: 5 }
-        };
-        const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => TeamStatusByName[status]?.Id).filter(id => id !== undefined);
+        const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => Enum.TeamStatusType[status]?.Id).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - 30); // last 30 days

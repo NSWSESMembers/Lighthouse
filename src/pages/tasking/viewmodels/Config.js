@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 import ko from 'knockout';
 
-
 import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
 // 
 export function ConfigVM(root, deps) {
@@ -24,15 +23,10 @@ export function ConfigVM(root, deps) {
     self.showAdvanced = ko.observable(false);
 
     //blown away on load
-    self.teamStatusFilter = ko.observableArray([
-        "Activated", "Standby", "Stood down", "Rest", "On Alert"
-    ]);
+    self.teamStatusFilter = ko.observableArray([]);
 
     //blown away on load
-    self.jobStatusFilter = ko.observableArray([
-        "Active", "Cancelled", "Complete", "Finalised", "New",
-        "Referred", "Rejected", "Tasked"
-    ]);
+    self.jobStatusFilter = ko.observableArray([]);
 
     self.jobStatusFilterDefaults = [
         "Active", "New", "Tasked"
