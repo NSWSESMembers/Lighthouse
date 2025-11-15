@@ -22,17 +22,15 @@ body {
   font-size: 13px;
 }
 
-tr[draggable="true"] * {
-    user-select: text !important;
-    -webkit-user-select: text !important;
+td.chev[draggable="true"] {
     cursor: grab;
 }
 
-div[draggable="true"] * {
-    user-select: text !important;
-    -webkit-user-select: text !important;
-    cursor: grab;
+td.chev[draggable="true"] * {
+    cursor: grab !important;
+    user-select: none !important;
 }
+
 
 
 

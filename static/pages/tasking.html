@@ -156,25 +156,27 @@
                                                                 data-bind="text: t.currentStatus"></span>
                                                         </td>
                                                         <td>
-                                                            <div class="btn-group btn-group-sm" role="group" aria-label="Tasking actions">
-                                                                <button type="button" class="btn btn-outline-secondary" title="Radio Log"
+                                                            <div class="btn-group btn-group-sm" role="group"
+                                                                aria-label="Tasking actions">
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    title="Radio Log"
                                                                     data-bind="click: t.openRadioLogModal, clickBubble: false">
                                                                     <i class="fa fa-solid fa-microphone"></i>
                                                                 </button>
-                                                                <button type="button" class="btn btn-outline-secondary" title="Update Team Status"
-                                                                    data-bind="">
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    title="Update Team Status" data-bind="">
                                                                     <i class="fa fa-solid fa-tasks"></i>
                                                                 </button>
-                                                                <button type="button" class="btn btn-outline-secondary" title="Message"
-                                                                    data-bind="">
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    title="Message" data-bind="">
                                                                     <i class="fa fa-solid fa-envelope"></i>
                                                                 </button>
-                                                                <button type="button" class="btn btn-outline-secondary" title="Edit"
-                                                                    data-bind="">
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    title="Edit" data-bind="">
                                                                     <i class="fas fa-external-link-alt"></i>
                                                                 </button>
-                                                                <button type="button" class="btn btn-outline-secondary" title="Zoom to"
-                                                                    data-bind="click: t.job.focusMap">
+                                                                <button type="button" class="btn btn-outline-secondary"
+                                                                    title="Zoom to" data-bind="click: t.job.focusMap">
                                                                     <i class="fa fa-solid fa-crosshairs"></i>
                                                                 </button>
                                                             </div>
@@ -274,13 +276,13 @@
                         </thead>
                         <tbody data-bind="foreach: { data: sortedJobs, as: 'j' }">
                             <!-- Summary row -->
-                            <tr class="job" draggable="true" data-bind="
+                            <tr class="job" data-bind="
                                 css: { expanded: j.expanded() },
-                                draggableRow: { data: j, kind: 'job' },
                                 attr: { 'aria-expanded': j.expanded, 'data-job-id': j.id  },
-                                style: { '--bs-table-bg': j.rowColour()}
+                                style: { '--bs-table-bg': j.rowColour()},
+                                click: j.toggleAndLoad
                                 ">
-                                <td class="chev">
+                                <td class="chev" draggable="true" data-bind="draggableRow: { job: j }">
                                     <button type="button" class="btn btn-link p-0 text-decoration-none"
                                         data-bind="click: j.toggleAndLoad, attr:{ 'aria-expanded': j.expanded }"
                                         aria-label="Expand/collapse incident">
@@ -289,21 +291,21 @@
                                     </button>
                                 </td>
                                 <td>
-                                    <span class="no-drag" data-bind="text: j.identifierTrimmed"></span>
+                                    <span data-bind="text: j.identifierTrimmed"></span>
                                     <em class="far fa-image"
                                         data-bind="visible: j.imageCount  > 0, attr:{ title: j.imageCount }"></em>
                                     <em class="fa fa-fw fa-share-alt"
                                         data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
                                 </td>
-                                <td><span class="no-drag"
+                                <td><span
                                         data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
                                         data-bs-toggle="tooltip"></span></td>
-                                <td><span class="no-drag" data-bind="text: j.entityAssignedTo.code"></span></td>
-                                <td><span class="no-drag"
+                                <td><span data-bind="text: j.entityAssignedTo.code"></span></td>
+                                <td><span
                                         data-bind="text: j.typeShort + j.categoriesNameNumberDash"></span></td>
-                                <td><span class="no-drag" data-bind="text: j.situationOnScene"></span></td>
-                                <td><span class="no-drag" data-bind="text: j.statusName"></span></td>
-                                <td><span class="no-drag" data-bind="text: j.address.prettyAddress()"></span>
+                                <td><span data-bind="text: j.situationOnScene"></span></td>
+                                <td><span data-bind="text: j.statusName"></span></td>
+                                <td><span data-bind="text: j.address.prettyAddress()"></span>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group" aria-label="Incident actions">
@@ -317,7 +319,7 @@
 
                             <!-- Expanded details row -->
                             <tr class="job_body"
-                                data-bind="trVisible: j.expanded,  style: { '--bs-table-bg': j.rowColour(), color: j.rowColour() }">
+                                data-bind="trVisible: j.expanded">
                                 <td colspan="9">
                                     <div class="card">
                                         <div class="card-header d-flex justify-content-between align-items-center">
@@ -419,8 +421,7 @@
                                                                             <i class="fa fa-microphone"></i>
                                                                         </button>
                                                                         <button class="btn btn-outline-secondary"
-                                                                            title="Update Team Status"
-                                                                            data-bind="">
+                                                                            title="Update Team Status" data-bind="">
                                                                             <i class="fa fa-tasks"></i>
                                                                         </button>
                                                                         <button class="btn btn-outline-secondary"
@@ -834,7 +835,8 @@
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000" data-bind="value: text"></textarea>
+                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
+                        data-bind="value: text"></textarea>
                 </div>
 
                 <div class="modal-footer">
@@ -863,8 +865,7 @@
                     <!-- Contact Types -->
                     <h6>Contact Types</h6>
                     <div class="tag-list" data-bind=""> <!-- foreach: byGroup(2) -->
-                        <span class="tag-pill"
-                            data-bind="text: name,
+                        <span class="tag-pill" data-bind="text: name,
                                         click: toggle,
                                         css: { 'tag-selected': selected }"></span>
                     </div>
@@ -872,8 +873,7 @@
                     <!-- Contact Methods -->
                     <h6>Contact Methods</h6>
                     <div class="tag-list" data-bind=""> <!-- foreach: byGroup(3)-->
-                        <span class="tag-pill"
-                            data-bind="text: name,
+                        <span class="tag-pill" data-bind="text: name,
                                         click: toggle,
                                         css: { 'tag-selected': selected }"></span>
                     </div>
@@ -881,8 +881,7 @@
                     <!-- Entry Purpose -->
                     <h6>Entry Purpose</h6>
                     <div class="tag-list" data-bind=""> <!-- foreach: byGroup(4)-->
-                        <span class="tag-pill"
-                            data-bind="text: name,
+                        <span class="tag-pill" data-bind="text: name,
                                         click: toggle,
                                         css: { 'tag-selected': selected }"></span>
                     </div>
@@ -890,15 +889,16 @@
                     <!-- Action Items -->
                     <h6>Action Items</h6>
                     <div class="tag-list" data-bind=""> <!-- foreach: byGroup(27)-->
-                        <span class="tag-pill action-pill"
-                            data-bind="text: name,
+                        <span class="tag-pill action-pill" data-bind="text: name,
                                         click: toggle,
                                         css: { 'tag-selected': selected }"></span>
                     </div>
                     <h6>Subject</h6>
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="1" maxlength="50" data-bind="value: subject"></textarea>
+                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="1" maxlength="50"
+                        data-bind="value: subject"></textarea>
                     <h6>Text</h6>
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000" data-bind="value: text"></textarea>
+                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
+                        data-bind="value: text"></textarea>
 
                 </div>
 

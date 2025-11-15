@@ -400,7 +400,8 @@ function VM() {
     self.filteredTeams = ko.pureComputed(() => {
         const allowed = self.config.teamStatusFilter(); // allow-list
         return ko.utils.arrayFilter(self.teams(), tm => {
-            const status = tm.status().Name;
+            console.log(tm)
+            const status = tm.status()?.Name;
             if (status == null) {
                 return false;
             }
@@ -1059,7 +1060,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 el.addEventListener('dragstart', function (ev) {
-                    // if draggable was disabled for text selection, cancel
                     if (el.getAttribute('draggable') !== 'true') {
                         ev.preventDefault();
                         return;
@@ -1071,6 +1071,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     ev.dataTransfer.setData('text/x-ko-drag-id', id);
                     ev.dataTransfer.effectAllowed = 'copyMove';
                     ev.dataTransfer.setData('text/plain', JSON.stringify({ kind: payload.kind }));
+
+                    // NEW: use full row as drag preview
+                    const row = opts.dragSourceRow || el.closest('tr');
+                    if (row) {
+                        try {
+                            ev.dataTransfer.setDragImage(row, 0, 0);
+                        } catch (_) { /* empty */ }
+                    }
                 });
 
                 el.addEventListener('dragend', function () {
