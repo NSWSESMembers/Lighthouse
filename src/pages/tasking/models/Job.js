@@ -129,6 +129,9 @@ export function Job(data = {}, deps = {}) {
         deps.openRadioLogModal(tasking)
     };
 
+    self.openNewOpsLogModal = function (job) {
+        deps.openNewOpsLogModal(job)
+    };
 
     self.startDataRefreshCheck = function () {
         self.stopDataRefreshCheck();

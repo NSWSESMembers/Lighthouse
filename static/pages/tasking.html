@@ -343,6 +343,10 @@
                                                     data-bind="click: j.attachAndFillOpsLogModal">
                                                     <i class="fa fa-list"></i> Ops Log
                                                 </button>
+                                                <button class="btn btn-outline-dark"
+                                                    data-bind="click: j.openNewOpsLogModal">
+                                                    <i class="fa fa-list"></i> New Ops Log
+                                                </button>
                                                 <button type="button" class="btn btn-outline-secondary" title="Edit"
                                                     data-bind="click: j.openBeaconJobDetails, clickBubble: false">
                                                     <i class="fas fa-external-link-alt"></i>
@@ -830,7 +834,7 @@
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" data-bind="value: text"></textarea>
+                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000" data-bind="value: text"></textarea>
                 </div>
 
                 <div class="modal-footer">
@@ -856,11 +860,46 @@
                 </div>
 
                 <div class="modal-body">
+                    <!-- Contact Types -->
                     <h6>Contact Types</h6>
+                    <div class="tag-list" data-bind=""> <!-- foreach: byGroup(2) -->
+                        <span class="tag-pill"
+                            data-bind="text: name,
+                                        click: toggle,
+                                        css: { 'tag-selected': selected }"></span>
+                    </div>
+
+                    <!-- Contact Methods -->
                     <h6>Contact Methods</h6>
+                    <div class="tag-list" data-bind=""> <!-- foreach: byGroup(3)-->
+                        <span class="tag-pill"
+                            data-bind="text: name,
+                                        click: toggle,
+                                        css: { 'tag-selected': selected }"></span>
+                    </div>
+
+                    <!-- Entry Purpose -->
                     <h6>Entry Purpose</h6>
+                    <div class="tag-list" data-bind=""> <!-- foreach: byGroup(4)-->
+                        <span class="tag-pill"
+                            data-bind="text: name,
+                                        click: toggle,
+                                        css: { 'tag-selected': selected }"></span>
+                    </div>
+
+                    <!-- Action Items -->
                     <h6>Action Items</h6>
-                    <h6>Selected Tags</h6>
+                    <div class="tag-list" data-bind=""> <!-- foreach: byGroup(27)-->
+                        <span class="tag-pill action-pill"
+                            data-bind="text: name,
+                                        click: toggle,
+                                        css: { 'tag-selected': selected }"></span>
+                    </div>
+                    <h6>Subject</h6>
+                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="1" maxlength="50" data-bind="value: subject"></textarea>
+                    <h6>Text</h6>
+                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000" data-bind="value: text"></textarea>
+
                 </div>
 
                 <div class="modal-footer">
