@@ -63,16 +63,34 @@ export function Job(data = {}, deps = {}) {
 
     self.unacceptedNotifications = ko.observableArray([]);
 
+    //refs to other obs
+    self.marker = null;  // will hold the L.Marker instance
+    self.taskings = ko.observableArray(); //array of taskings
+
+
+    // computed
+    self.jobLink = ko.pureComputed(() => makeJobLink(self.id()));
+    self.priorityName = ko.pureComputed(() => (self.jobPriorityType() && self.jobPriorityType().Name) || "");
+    self.statusName = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Name) || "");
+    self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
+    self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
+    self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
+    self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));
+
+
+
     self.lastDataUpdate = new Date();
     let refreshTimer = null;
 
     let unacceptedNotificationsTimer = null;
 
-    self.expanded.subscribe(() => {
-        if (self.expanded()) {
+    self.toggleAndLoad = function () {
+        if (!self.expanded()) {
             self.fetchTasking();
+            self.refreshData();
         }
-    });
+        self.expanded(!self.expanded())
+    };
 
     self.typeShort = ko.pureComputed(() => {
         const fullType = self.type() || "";
@@ -150,10 +168,6 @@ export function Job(data = {}, deps = {}) {
 
     self.startDataRefreshCheck();
 
-    //refs to other obs
-    self.marker = null;  // will hold the L.Marker instance
-    self.taskings = ko.observableArray(); //array of taskings
-
 
     self.incompleteTaskingsOnly = ko.computed(() =>
         self.taskings().filter(t => {
@@ -168,16 +182,9 @@ export function Job(data = {}, deps = {}) {
         )
     );
 
-    // computed
-    self.jobLink = ko.pureComputed(() => makeJobLink(self.id()));
-    self.priorityName = ko.pureComputed(() => (self.jobPriorityType() && self.jobPriorityType().Name) || "");
-    self.statusName = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Name) || "");
-    self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
-    self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
-    self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
-    self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));
 
-    self.identifierTrimmed = ko.pureComputed(() => {   
+
+    self.identifierTrimmed = ko.pureComputed(() => {
         //trim leading zeros for compact display
         return self.identifier().replace(/^0+/, '') || '0';
     });
@@ -347,12 +354,52 @@ export function Job(data = {}, deps = {}) {
     // ---- map focus (delegated) ----
     self.focusMap = function () { flyToJob(self); };
 
+    self.focusAndExpandInList = function () {
+        // expand the job row
+        self.expand();
+
+     requestAnimationFrame(() => {
+        // find the row for this job
+        const row = document.querySelector(`tr.job[data-job-id="${self.id()}"]`);
+        if (!row) return;
+
+        // find the scroll container (the table wrapper in the bottom pane)
+        const container = row.closest('.pane--bottom .table-responsive') 
+            || row.closest('.table-responsive')
+            || row.parentElement?.parentElement; // fallback
+
+        if (!container) {
+            // fallback to normal scrollIntoView if we can't find a container
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+        }
+
+        // sticky header height
+        const table = row.closest('table');
+        const thead = table ? table.querySelector('thead') : null;
+        const headerHeight = thead ? thead.getBoundingClientRect().height : 0;
+
+        // compute how far we need to move the container's scrollTop
+        const containerRect = container.getBoundingClientRect();
+        const rowRect = row.getBoundingClientRect();
+
+        // desired: row just under header, with a tiny padding
+        const padding = 2;
+        const delta = (rowRect.top - containerRect.top) - headerHeight - padding;
+
+        container.scrollTo({
+            top: container.scrollTop + delta,
+            behavior: "smooth"
+        });
+        });
+    };
+
+
     // ---- lifecycle hooks (delegated) ----
-    self.onPopupOpen = function () { self.refreshDataAndTasking(); };
-    self.onPopupClose = function () { /* popup closing logic goes here */ };
+    self.onPopupOpen = function () { self.refreshDataAndTasking(); self.focusAndExpandInList(); };
 
     self.onPopupClose = function () {
-        // popup closing logic goes here
+        self.collapse();
     };
 
     self.refreshDataAndTasking = function () {

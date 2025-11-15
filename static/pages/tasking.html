@@ -277,12 +277,12 @@
                             <tr class="job" draggable="true" data-bind="
                                 css: { expanded: j.expanded() },
                                 draggableRow: { data: j, kind: 'job' },
-                                attr: { 'aria-expanded': j.expanded },
+                                attr: { 'aria-expanded': j.expanded, 'data-job-id': j.id  },
                                 style: { '--bs-table-bg': j.rowColour()}
                                 ">
                                 <td class="chev">
                                     <button type="button" class="btn btn-link p-0 text-decoration-none"
-                                        data-bind="click: j.toggle, attr:{ 'aria-expanded': j.expanded }"
+                                        data-bind="click: j.toggleAndLoad, attr:{ 'aria-expanded': j.expanded }"
                                         aria-label="Expand/collapse incident">
                                         <i class="fa fa-solid"
                                             data-bind="css: { 'fa-plus': !j.expanded(), 'fa-minus': j.expanded() }"></i>
