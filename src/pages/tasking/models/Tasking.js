@@ -86,6 +86,13 @@ export function Tasking(data = {}) {
     self.prettyAddress = ko.pureComputed(() => self.job.address.prettyAddress() || self.job.address.short());
 
 
+
+    //task has job thats visible in the current filter
+    self.hasJob = ko.pureComputed(() => !!self.job.isFilteredIn());
+
+    
+
+    
     // patch model with partial updates
     self.updateFrom = (patch = {}) => {
         if (patch.CurrentStatus !== undefined) self.currentStatus(patch.CurrentStatus);
@@ -116,6 +123,8 @@ export function Tasking(data = {}) {
             if (!exists) newJob.taskings.push(self);
         }
     };
+    
+
 
 
     self.getTeamLatLng = function () {

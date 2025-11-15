@@ -25,6 +25,9 @@ export class AssetPopupViewModel {
   }
 
   drawCrowsFliesToJob = (tasking) => {
+    if (tasking.job.isFilteredIn() === false) {
+      return;
+    }
     // clear any existing one first
     this.api.clearCrowFliesLine();
     if (!tasking) return;

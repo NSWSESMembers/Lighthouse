@@ -80,9 +80,70 @@ export function Job(data = {}, deps = {}) {
 
 
     self.lastDataUpdate = new Date();
-    let refreshTimer = null;
 
-    let unacceptedNotificationsTimer = null;
+    // ---- DATA REFRESH CHECK ----
+    const dataRefreshInterval = makeFilteredInterval(async () => {
+        const now = Date.now();
+        const last = self.lastDataUpdate?.getTime?.() ?? 0;
+        // only refresh if we haven't had an update in > 2 minutes
+        if (now - last > 120000) {
+            await self.refreshData();
+        }
+    }, 30000, { runImmediately: false });
+
+    self.startDataRefreshCheck = function () {
+        dataRefreshInterval.start();
+    };
+
+    self.stopDataRefreshCheck = function () {
+        dataRefreshInterval.stop();
+    };
+
+    // Start/stop with filter state
+    self.isFilteredIn.subscribe((flag) => {
+        if (flag) {
+            self.startDataRefreshCheck();
+        } else {
+            self.stopDataRefreshCheck();
+        }
+    });
+
+
+    // ---- UNACCEPTED NOTIFICATIONS POLLING ----
+    const unacceptedNotificationsInterval = makeFilteredInterval(() => {
+        // extra guard: only if ICEMS id exists
+        if (!self.icemsIncidentIdentifier()) return;
+        console.log("Polling unaccepted notifications for job", self.id());
+        fetchUnacknowledgedJobNotifications(self);
+    }, 30000, { runImmediately: true });
+
+    self.startUnacceptedNotificationsPolling = function () {
+        unacceptedNotificationsInterval.start();
+    };
+
+    self.stopUnacceptedNotificationsPolling = function () {
+        unacceptedNotificationsInterval.stop();
+    };
+
+    // Restart / stop polling when identifiers or filters change
+    self.icemsIncidentIdentifier.subscribe((id) => {
+        if (id && self.isFilteredIn()) {
+            self.startUnacceptedNotificationsPolling();
+        } else {
+            self.stopUnacceptedNotificationsPolling();
+        }
+    });
+
+    self.isFilteredIn.subscribe((flag) => {
+        if (flag && self.icemsIncidentIdentifier()) {
+            self.startUnacceptedNotificationsPolling();
+        } else {
+            self.stopUnacceptedNotificationsPolling();
+        }
+    });
+
+
+
 
     self.toggleAndLoad = function () {
         if (!self.expanded()) {
@@ -98,45 +159,7 @@ export function Job(data = {}, deps = {}) {
     })
 
 
-    // functions to poll unaccepted notifications if theres an icems ID
-    function pollUnacceptedNotifications() {
-        if (!self.icemsIncidentIdentifier()) return;
-        if (!self.isFilteredIn()) return;
-        console.log("Polling unaccepted notifications for job", self.id());
-        fetchUnacknowledgedJobNotifications(self);
-    }
 
-    self.startUnacceptedNotificationsPolling = function () {
-        self.stopUnacceptedNotificationsPolling();
-        if (!self.icemsIncidentIdentifier()) return;
-        if (!self.isFilteredIn()) return;
-        console.log(self.isFilteredIn(), self.icemsIncidentIdentifier(), self.id());
-        console.log("Starting unaccepted notifications polling for job", self.id());
-        pollUnacceptedNotifications();
-        unacceptedNotificationsTimer = setInterval(pollUnacceptedNotifications, 30000);
-    };
-
-    self.stopUnacceptedNotificationsPolling = function () {
-        if (unacceptedNotificationsTimer) {
-            clearInterval(unacceptedNotificationsTimer);
-            unacceptedNotificationsTimer = null;
-        }
-    };
-
-    self.icemsIncidentIdentifier.subscribe(() => {
-        if (!self.icemsIncidentIdentifier()) return;
-        if (!self.isFilteredIn()) return;
-        self.startUnacceptedNotificationsPolling();
-    });
-
-    self.isFilteredIn.subscribe(() => {
-        if (!self.icemsIncidentIdentifier()) return;
-        if (!self.isFilteredIn()) return;
-        self.startUnacceptedNotificationsPolling();
-    });
-
-    self.startUnacceptedNotificationsPolling();
-    //
 
     self.attachAndFillOpsLogModal = function () {
         console.log("Fetching ops log entries for job", self.id());
@@ -150,23 +173,6 @@ export function Job(data = {}, deps = {}) {
     self.openNewOpsLogModal = function (job) {
         deps.openNewOpsLogModal(job)
     };
-
-    self.startDataRefreshCheck = function () {
-        self.stopDataRefreshCheck();
-        refreshTimer = setInterval(async () => {
-            const now = Date.now();
-            const last = self.lastDataUpdate?.getTime?.() ?? 0;
-            if (now - last > 120000) {
-                await self.refreshData();
-            }
-        }, 30000);
-    };
-
-    self.stopDataRefreshCheck = function () {
-        if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
-    };
-
-    self.startDataRefreshCheck();
 
 
     self.incompleteTaskingsOnly = ko.computed(() =>
@@ -257,6 +263,8 @@ export function Job(data = {}, deps = {}) {
 
 
     Job.prototype.updateFromJson = function (d = {}) {
+
+        self.lastDataUpdate = new Date();
 
         self.startDataRefreshCheck(); // restart timer
 
@@ -352,45 +360,48 @@ export function Job(data = {}, deps = {}) {
         openURLInBeacon(url);
     }
     // ---- map focus (delegated) ----
-    self.focusMap = function () { flyToJob(self); };
+    self.focusMap = function () {
+        if (self.isFilteredIn() === false) return;
+        flyToJob(self);
+    };
 
     self.focusAndExpandInList = function () {
         // expand the job row
         self.expand();
 
-     requestAnimationFrame(() => {
-        // find the row for this job
-        const row = document.querySelector(`tr.job[data-job-id="${self.id()}"]`);
-        if (!row) return;
+        requestAnimationFrame(() => {
+            // find the row for this job
+            const row = document.querySelector(`tr.job[data-job-id="${self.id()}"]`);
+            if (!row) return;
 
-        // find the scroll container (the table wrapper in the bottom pane)
-        const container = row.closest('.pane--bottom .table-responsive') 
-            || row.closest('.table-responsive')
-            || row.parentElement?.parentElement; // fallback
+            // find the scroll container (the table wrapper in the bottom pane)
+            const container = row.closest('.pane--bottom .table-responsive')
+                || row.closest('.table-responsive')
+                || row.parentElement?.parentElement; // fallback
 
-        if (!container) {
-            // fallback to normal scrollIntoView if we can't find a container
-            row.scrollIntoView({ behavior: "smooth", block: "center" });
-            return;
-        }
+            if (!container) {
+                // fallback to normal scrollIntoView if we can't find a container
+                row.scrollIntoView({ behavior: "smooth", block: "center" });
+                return;
+            }
 
-        // sticky header height
-        const table = row.closest('table');
-        const thead = table ? table.querySelector('thead') : null;
-        const headerHeight = thead ? thead.getBoundingClientRect().height : 0;
+            // sticky header height
+            const table = row.closest('table');
+            const thead = table ? table.querySelector('thead') : null;
+            const headerHeight = thead ? thead.getBoundingClientRect().height : 0;
 
-        // compute how far we need to move the container's scrollTop
-        const containerRect = container.getBoundingClientRect();
-        const rowRect = row.getBoundingClientRect();
+            // compute how far we need to move the container's scrollTop
+            const containerRect = container.getBoundingClientRect();
+            const rowRect = row.getBoundingClientRect();
 
-        // desired: row just under header, with a tiny padding
-        const padding = 2;
-        const delta = (rowRect.top - containerRect.top) - headerHeight - padding;
+            // desired: row just under header, with a tiny padding
+            const padding = 2;
+            const delta = (rowRect.top - containerRect.top) - headerHeight - padding;
 
-        container.scrollTo({
-            top: container.scrollTop + delta,
-            behavior: "smooth"
-        });
+            container.scrollTo({
+                top: container.scrollTop + delta,
+                behavior: "smooth"
+            });
         });
     };
 
@@ -425,4 +436,32 @@ export function Job(data = {}, deps = {}) {
         });
     };
 
+// interval that only runs while job is filtered in
+function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
+    let handle = null;
+
+    const tick = () => {
+        // global guard: only run if still filtered in
+        if (!self.isFilteredIn()) return;
+        fn();
+    };
+
+    const start = () => {
+        if (!self.isFilteredIn()) return; // don't start if already filtered out
+        if (handle) clearInterval(handle);
+        if (runImmediately) tick();
+        handle = setInterval(tick, intervalMs);
+    };
+
+    const stop = () => {
+        if (handle) {
+            clearInterval(handle);
+            handle = null;
+        }
+    };
+
+    return { start, stop };
 }
+
+}
+

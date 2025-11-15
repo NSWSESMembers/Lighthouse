@@ -571,7 +571,6 @@ function VM() {
         if (job) {
             console.log("Updating existing job:", job.id());
             job.updateFromJson(jobJson);
-            job.lastDataUpdate = new Date()
             return job;
         }
         job = new Job(jobJson, deps);

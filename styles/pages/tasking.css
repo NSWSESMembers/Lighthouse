@@ -627,8 +627,9 @@ tr.job:hover {
   line-height: 1.25;
 }
 
-.veh-pop__tasking-list {
-
+.veh-pop__taskings-list-frame {
+margin-left: -10px;
+margin-right: -15px;
 }
 
 
@@ -637,6 +638,14 @@ tr.job:hover {
   border-bottom: 1px dashed #e3e3e3;
   cursor: pointer;
 }
+
+.veh-pop__tasking-item--no-job {
+  padding: 4px 0;
+  border-bottom: 1px dashed #e3e3e3;
+  cursor: not-allowed;
+}
+
+
 .veh-pop__tasking-item:last-child {
   border-bottom: none;
 }
