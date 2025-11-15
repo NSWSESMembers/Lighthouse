@@ -99,7 +99,7 @@ export function buildAssetPopupKO() {
 
   <!-- Action buttons -->
   <div class="btn-group btn-group-sm ms-1" role="group">
-    <button class="btn btn-outline-primary"
+    <button class="btn btn-outline-secondary"
             title="Focus on job"
             data-bind="click: $root.safeJobFocus,
                        disable: !hasJob(),
