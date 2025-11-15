@@ -347,7 +347,7 @@ function VM() {
 
     self.filteredJobs = ko.pureComputed(() => {
 
-        const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
+        const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
         const term = self.jobSearch().toLowerCase();
         const allowed = self.config.jobStatusFilter(); // allow-list
 
@@ -373,20 +373,20 @@ function VM() {
 
     self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
 
-        const ignoreList = self.config.jobStatusFilter();
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
+        const allowed = self.config.jobStatusFilter(); // allow-list
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
 
-            // If its an ignored status return false
+            const statusName = jb.statusName();
 
-            if (ignoreList.includes(jb.statusName())) {
-                return false
+            // If allow-list non-empty, only show jobs whose status is in it
+            if (allowed.length > 0 && !allowed.includes(statusName)) {
+                return false;
             }
 
             // If no HQ filters are active, skip HQ filtering
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
-
             if (!hqMatch) return false;
 
             return true
@@ -892,7 +892,7 @@ function VM() {
         }, function (val, total) {
             console.log("Progress: " + val + " / " + total)
         },
-            2, //view model
+            1, //view model
             statusFilterToView, //status filter
             function (jobs) {
                 jobs.Results.forEach(function (t) {
