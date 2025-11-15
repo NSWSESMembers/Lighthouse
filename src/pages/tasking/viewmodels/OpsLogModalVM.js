@@ -171,6 +171,15 @@ export function NewOpsLogModalVM(parentVM) {
     self.headerLabel(`New Radio Log for ${tasking.teamCallsign?.() || ""} ON ${tasking.job.identifier() || ""}`);
   }
 
+  self.openForTeam = async (team) => {
+    // NEED TO COME BACK AND ADD HQ ONCE TIM HAS SETUP THE CONFIG PAGE TO USE IT.
+    self.resetFields();
+    self.subject(team.callsign() || "");
+    self.tagIds([6]);
+
+    self.headerLabel(`New Radio Log for ${team.callsign?.() || ""}`);
+  }
+
   self.toPayload = function () {
     return {
         EntityId: self.entityId(),

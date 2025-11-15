@@ -140,7 +140,6 @@ export function Tasking(data = {}) {
     }
 
     self.openRadioLogModal = function () {
-        console.log("Opening Radio Log for job", self.id());
         this.job.openRadioLogModal(self);
     };
 

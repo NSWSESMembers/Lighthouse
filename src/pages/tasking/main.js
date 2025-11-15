@@ -498,7 +498,11 @@ function VM() {
                     map.flyTo([lat, lng], 14, { animate: true, duration: 0.10 });
                     asset.marker?.openPopup?.();
                 }
-            }
+            },
+
+            openRadioLogModal: (team) => {
+                self.attachTeamRadioLogModal(team);
+            },
         };
 
         let team = self.teamsById.get(teamJson.Id);
@@ -537,7 +541,19 @@ function VM() {
 
         vm.openForTasking(tasking);
         modal.show();
-    }
+    };
+
+    self.attachTeamRadioLogModal = function (team) {
+        const modalEl = document.getElementById('RadioLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.NewOpsLogModalVM;
+
+        vm.modalInstance = modal;
+
+        vm.openForTeam(team);
+        modal.show();
+    };
 
 
     // Job registry/upsert
