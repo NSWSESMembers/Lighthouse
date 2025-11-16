@@ -274,183 +274,240 @@
                                 <th scope="col">Actions</th>
                             </tr>
                         </thead>
+
                         <tbody data-bind="foreach: { data: sortedJobs, as: 'j' }">
-                            <!-- Summary row -->
-                            <tr class="job" data-bind="
-                                css: { expanded: j.expanded() },
-                                attr: { 'aria-expanded': j.expanded, 'data-job-id': j.id  },
-                                style: { '--bs-table-bg': j.rowColour()},
-                                click: j.toggleAndLoad
-                                ">
-                                <td class="chev" draggable="true" data-bind="draggableRow: { job: j }">
-                                    <button type="button" class="btn btn-link p-0 text-decoration-none"
-                                        data-bind="attr:{ 'aria-expanded': j.expanded }"
-                                        aria-label="Expand/collapse incident">
-                                        <i class="fa fa-solid"
-                                            data-bind="css: { 'fa-plus': !j.expanded(), 'fa-minus': j.expanded() }"></i>
-                                    </button>
-                                </td>
-                                <td>
-                                    <span data-bind="text: j.identifierTrimmed"></span>
-                                    <em class="far fa-image"
-                                        data-bind="visible: j.imageCount  > 0, attr:{ title: j.imageCount }"></em>
-                                    <em class="fa fa-fw fa-share-alt"
-                                        data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
-                                </td>
-                                <td><span
-                                        data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
-                                        data-bs-toggle="tooltip"></span></td>
-                                <td><span data-bind="text: j.entityAssignedTo.code"></span></td>
-                                <td><span
-                                        data-bind="text: j.typeShort + j.categoriesNameNumberDash"></span></td>
-                                <td><span data-bind="text: j.situationOnScene"></span></td>
-                                <td><span data-bind="text: j.statusName"></span></td>
-                                <td><span data-bind="text: j.address.prettyAddress()"></span>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm" role="group" aria-label="Incident actions">
-                                        <button type="button" class="btn btn-outline-secondary" title="Zoom to"
-                                            data-bind="click: j.focusMap, lickBubble: false">
-                                            <i id="drag-ignore" class="fa fa-solid fa-crosshairs"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <!-- Expanded details row -->
-                            <tr class="job_body"
-                                data-bind="trVisible: j.expanded">
+                            <tr class="job-row" data-bind="attr: { 'data-job-id': j.id }">
                                 <td colspan="9">
-                                    <div class="card">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong data-bind="text: j.identifier"></strong>
-                                                <span class="badge bg-secondary ms-2"
-                                                    data-bind="text: j.statusName"></span>
-                                            </div>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-small dropdown-toggle btn-outline-primary"
-                                                    type="button" id="assignTeamBtn" data-bs-toggle="dropdown"
-                                                    aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-solid fa-user-plus"></i>
-                                                </button>
-                                                <button class="btn btn-outline-secondary"
-                                                    data-bind="click: j.refreshData">
-                                                    <i class="fa fa-sync"></i> Refresh
-                                                </button>
-                                                <button class="btn btn-outline-primary" data-bind="click: j.focusMap">
-                                                    <i class="fa fa-crosshairs"></i> Focus
-                                                </button>
-                                                <button class="btn btn-outline-dark"
-                                                    data-bind="click: j.attachAndFillOpsLogModal">
-                                                    <i class="fa fa-list"></i> Ops Log
-                                                </button>
-                                                <button class="btn btn-outline-dark"
-                                                    data-bind="click: j.openNewOpsLogModal">
-                                                    <i class="fa fa-list"></i> New Ops Log
-                                                </button>
-                                                <button type="button" class="btn btn-outline-secondary" title="Edit"
-                                                    data-bind="click: j.openBeaconJobDetails, clickBubble: false">
-                                                    <i class="fas fa-external-link-alt"></i>
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div class="job-card" data-bind="css: { 'job-card--expanded': j.expanded() }">
 
-                                        <div class="card-body">
-                                            <div class="row mb-3">
-                                                <div class="col-md-6">
-                                                    <h6 class="text-muted mb-1">Incident Details</h6>
-                                                    <ul class="list-unstyled mb-0 small">
-                                                        <li><strong>Type:</strong> <span
-                                                                data-bind="text: j.typeName"></span></li>
-                                                        <li><strong>Priority:</strong> <span
-                                                                data-bind="text: j.priorityName"></span></li>
-                                                        <li><strong>Received:</strong> <span
-                                                                data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
-                                                                data-bs-toggle="tooltip"></span></li>
-                                                        <li><strong>Assigned HQ:</strong> <span
-                                                                data-bind="text: j.entityAssignedTo.name"></span></li>
-                                                    </ul>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <h6 class="text-muted mb-1">Location</h6>
-                                                    <ul class="list-unstyled mb-0 small">
-                                                        <li><strong>Address:</strong> <span
-                                                                data-bind="text: j.address.prettyAddress"></span></li>
-                                                        <li><strong>LGA:</strong> <span data-bind="text: j.lga"></span>
-                                                        </li>
-                                                        <li><strong>Latitude:</strong> <span
-                                                                data-bind="text: j.address.latitude"></span></li>
-                                                        <li><strong>Longitude:</strong> <span
-                                                                data-bind="text: j.address.longitude"></span></li>
-                                                    </ul>
-                                                </div>
+                                        <!-- SUMMARY BAR (acts like the old parent row) -->
+                                        <div class="job-summary" data-bind="click: j.toggleAndLoad, style: { 'background': rowColour() }">
+                                            <!-- 1. Chevron / drag handle -->
+                                            <div class="job-cell job-cell--chev" draggable="true"
+                                                data-bind="draggableRow: { job: j }, click: j.toggleAndLoad, clickBubble: false">
+                                                <button type="button" class="btn btn-link p-0 text-decoration-none"
+                                                    data-bind="attr:{ 'aria-expanded': j.expanded }"
+                                                    aria-label="Expand/collapse incident">
+                                                    <i class="fa fa-solid"
+                                                        data-bind="css: { 'fa-plus': !j.expanded(), 'fa-minus': j.expanded() }"></i>
+                                                </button>
                                             </div>
 
-                                            <div class="border-top pt-2">
-                                                <h6 class="text-muted">Taskings</h6>
-                                                <div data-bind="visible: j.taskingLoading" class="text-center py-3">
-                                                    <div class="spinner-border" role="status"></div>
-                                                </div>
+                                            <!-- 2. Id -->
+                                            <div class="job-cell job-cell--id">
+                                                <span data-bind="text: j.identifierTrimmed"></span>
+                                                <em class="far fa-image"
+                                                    data-bind="visible: j.imageCount  > 0, attr:{ title: j.imageCount }"></em>
+                                                <em class="fa fa-fw fa-share-alt"
+                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
+                                            </div>
 
-                                                <div class="table-responsive" data-bind="visible: !j.taskingLoading()">
-                                                    <table class="table table-sm table-hover align-middle">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th>ID</th>
-                                                                <th>Team</th>
-                                                                <th>Status</th>
-                                                                <th>Updated</th>
-                                                                <th>Actions</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody data-bind="foreach: { data: j.sortedTaskings, as: 't' }">
-                                                            <tr>
-                                                                <td data-bind="text: t.id"></td>
-                                                                <td data-bind="text: t.teamCallsign"></td>
-                                                                <td>
-                                                                    <span class="badge bg-info text-dark"
-                                                                        data-bind="text: t.currentStatus"></span>
-                                                                </td>
-                                                                <td data-bind="text: t.statusTimeAgoLabel"></td>
-                                                                <td>
-                                                                    <div class="btn-group btn-group-sm">
-                                                                        <button class="btn btn-outline-secondary"
-                                                                            title="Radio Log"
-                                                                            data-bind="click: t.openRadioLogModal, clickBubble: false">
-                                                                            <i class="fa fa-microphone"></i>
-                                                                        </button>
-                                                                        <button class="btn btn-outline-secondary"
-                                                                            title="Update Team Status" data-bind="">
-                                                                            <i class="fa fa-tasks"></i>
-                                                                        </button>
-                                                                        <button class="btn btn-outline-secondary"
-                                                                            title="Message"
-                                                                            data-bind="click: t.openMessage, clickBubble: false">
-                                                                            <i class="fa fa-envelope"></i>
-                                                                        </button>
-                                                                        <button class="btn btn-outline-secondary"
-                                                                            title="Edit"
-                                                                            data-bind="click: t.team.openBeaconEditTeam, clickBubble: false">
-                                                                            <i class="fas fa-external-link-alt"></i>
-                                                                        </button>
-                                                                        <button class="btn btn-outline-secondary"
-                                                                            title="Zoom to"
-                                                                            data-bind="click: t.team.markerFocus, disable: !t.team.trackableAssets().length, clickBubble: false">
-                                                                            <i class="fa fa-crosshairs"></i>
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
+                                            <!-- 3. Received -->
+                                            <div class="job-cell job-cell--received">
+                                                <span data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
+                                                    data-bs-toggle="tooltip"></span>
+                                            </div>
+
+                                            <!-- 4. HQ -->
+                                            <div class="job-cell job-cell--hq">
+                                                <span data-bind="text: j.entityAssignedTo.code"></span>
+                                            </div>
+
+                                            <!-- 5. Type -->
+                                            <div class="job-cell job-cell--type">
+                                                <span data-bind="text: j.typeShort + j.categoriesNameNumberDash"></span>
+                                            </div>
+
+                                            <!-- 6. Situation -->
+                                            <div class="job-cell job-cell--situation">
+                                                <span data-bind="text: j.situationOnScene"></span>
+                                            </div>
+
+                                            <!-- 7. Status -->
+                                            <div class="job-cell job-cell--status">
+                                                <span data-bind="text: j.statusName"></span>
+                                            </div>
+
+                                            <!-- 8. Address -->
+                                            <div class="job-cell job-cell--address">
+                                                <span data-bind="text: j.address.prettyAddress()"></span>
+                                            </div>
+
+                                            <!-- 9. Actions -->
+                                            <div class="job-cell job-cell--actions">
+                                                <div class="btn-group btn-group-sm" role="group"
+                                                    aria-label="Incident actions">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        title="Zoom to"
+                                                        data-bind="click: j.focusMap, clickBubble: false">
+                                                        <i id="drag-ignore" class="fa fa-solid fa-crosshairs"></i>
+                                                    </button>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
+                                        </div><!-- /job-summary -->
+
+
+                                        <!-- DETAILS PANEL (ALL your old job_body content lives here) -->
+                                        <div class="job-details" data-bind="slideVisible: j.expanded">
+                                            <div class="card border-0 mb-0">
+                                                <div
+                                                    class="card-header d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong data-bind="text: j.identifier"></strong>
+                                                        <span class="badge bg-secondary ms-2"
+                                                            data-bind="text: j.statusName"></span>
+                                                    </div>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button
+                                                            class="btn btn-small dropdown-toggle btn-outline-primary"
+                                                            type="button" id="assignTeamBtn" data-bs-toggle="dropdown"
+                                                            aria-haspopup="true" aria-expanded="false">
+                                                            <i class="fa fa-solid fa-user-plus"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-secondary"
+                                                            data-bind="click: j.refreshData">
+                                                            <i class="fa fa-sync"></i> Refresh
+                                                        </button>
+                                                        <button class="btn btn-outline-primary"
+                                                            data-bind="click: j.focusMap">
+                                                            <i class="fa fa-crosshairs"></i> Focus
+                                                        </button>
+                                                        <button class="btn btn-outline-dark"
+                                                            data-bind="click: j.attachAndFillOpsLogModal">
+                                                            <i class="fa fa-list"></i> Ops Log
+                                                        </button>
+                                                        <button class="btn btn-outline-dark"
+                                                            data-bind="click: j.openNewOpsLogModal">
+                                                            <i class="fa fa-list"></i> New Ops Log
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary"
+                                                            title="Edit"
+                                                            data-bind="click: j.openBeaconJobDetails, clickBubble: false">
+                                                            <i class="fas fa-external-link-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="card-body">
+                                                    <!-- Incident Details / Location (copied from your old job_body) -->
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <h6 class="text-muted mb-1">Incident Details</h6>
+                                                            <ul class="list-unstyled mb-0 small">
+                                                                <li><strong>Type:</strong> <span
+                                                                        data-bind="text: j.typeName"></span></li>
+                                                                <li><strong>Priority:</strong> <span
+                                                                        data-bind="text: j.priorityName"></span></li>
+                                                                <li><strong>Received:</strong>
+                                                                    <span
+                                                                        data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
+                                                                        data-bs-toggle="tooltip"></span>
+                                                                </li>
+                                                                <li><strong>Assigned HQ:</strong>
+                                                                    <span
+                                                                        data-bind="text: j.entityAssignedTo.name"></span>
+                                                                </li>
+                                                                <li><strong>Assigned Zone:</strong>
+                                                                    <span
+                                                                        data-bind="text: j.entityAssignedTo.parentEntity().name"></span>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <h6 class="text-muted mb-1">Location</h6>
+                                                            <ul class="list-unstyled mb-0 small">
+                                                                <li><strong>Address:</strong>
+                                                                    <span
+                                                                        data-bind="text: j.address.prettyAddress"></span>
+                                                                </li>
+                                                                <li><strong>LGA:</strong> <span
+                                                                        data-bind="text: j.lga"></span></li>
+                                                                <li><strong>Latitude:</strong>
+                                                                    <span data-bind="text: j.address.latitude"></span>
+                                                                </li>
+                                                                <li><strong>Longitude:</strong>
+                                                                    <span data-bind="text: j.address.longitude"></span>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="border-top pt-2">
+                                                        <!-- ko if: j.taskingLoading -->
+                                                        <h6 class="text-muted">Loading Taskings...</h6>
+                                                        <!-- /ko -->
+                                                        <!-- ko ifnot: j.taskingLoading -->
+                                                        <h6 class="text-muted">Taskings</h6>
+                                                        <!-- /ko -->
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm table-hover align-middle">
+                                                                <thead class="table-light">
+                                                                    <tr>
+                                                                        <th>ID</th>
+                                                                        <th>Team</th>
+                                                                        <th>Status</th>
+                                                                        <th>Updated</th>
+                                                                        <th>Actions</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody
+                                                                    data-bind="foreach: { data: j.sortedTaskings, as: 't' }">
+                                                                    <tr>
+                                                                        <td data-bind="text: t.id"></td>
+                                                                        <td data-bind="text: t.teamCallsign"></td>
+                                                                        <td>
+                                                                            <span class="badge bg-info text-dark"
+                                                                                data-bind="text: t.currentStatus"></span>
+                                                                        </td>
+                                                                        <td data-bind="text: t.statusTimeAgoLabel"></td>
+                                                                        <td>
+                                                                            <div class="btn-group btn-group-sm">
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Radio Log"
+                                                                                    data-bind="click: t.openRadioLogModal, clickBubble: false">
+                                                                                    <i class="fa fa-microphone"></i>
+                                                                                </button>
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Update Team Status">
+                                                                                    <i class="fa fa-tasks"></i>
+                                                                                </button>
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Message"
+                                                                                    data-bind="click: t.openMessage, clickBubble: false">
+                                                                                    <i class="fa fa-envelope"></i>
+                                                                                </button>
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Edit"
+                                                                                    data-bind="click: t.team.openBeaconEditTeam, clickBubble: false">
+                                                                                    <i
+                                                                                        class="fas fa-external-link-alt"></i>
+                                                                                </button>
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Zoom to"
+                                                                                    data-bind="click: t.team.markerFocus, disable: !t.team.trackableAssets().length, clickBubble: false">
+                                                                                    <i class="fa fa-crosshairs"></i>
+                                                                                </button>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div><!-- /border-top -->
+                                                </div><!-- /card-body -->
+                                            </div><!-- /card -->
+                                        </div><!-- /job-details -->
+                                    </div><!-- /job-card -->
                                 </td>
                             </tr>
                         </tbody>
+
+
                     </table>
                 </div>
             </div>

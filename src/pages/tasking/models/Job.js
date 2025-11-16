@@ -63,6 +63,7 @@ export function Job(data = {}, deps = {}) {
 
     self.unacceptedNotifications = ko.observableArray([]);
 
+
     //refs to other obs
     self.marker = null;  // will hold the L.Marker instance
     self.taskings = ko.observableArray(); //array of taskings
@@ -295,21 +296,35 @@ export function Job(data = {}, deps = {}) {
         if (d.JobType !== undefined) this.jobType(d.JobType || null);
 
         if (d.EntityAssignedTo !== undefined) {
-            this.entityAssignedTo.id(d.EntityAssignedTo?.Id ?? null);
-            this.entityAssignedTo.code(d.EntityAssignedTo?.Code ?? "");
-            this.entityAssignedTo.name(d.EntityAssignedTo?.Name ?? "");
-            this.entityAssignedTo.latitude(d.EntityAssignedTo?.Latitude ?? null);
-            this.entityAssignedTo.longitude(d.EntityAssignedTo?.Longitude ?? null);
-            this.entityAssignedTo.parentEntity(
-                d.EntityAssignedTo?.ParentEntity
-                    ? {
-                        id: d.EntityAssignedTo.ParentEntity.Id,
-                        code: d.EntityAssignedTo.ParentEntity.Code,
-                        name: d.EntityAssignedTo.ParentEntity.Name
-                    }
-                    : null
-            );
+            const ea = d.EntityAssignedTo;
+
+            this.entityAssignedTo.id(ea?.Id ?? null);
+            this.entityAssignedTo.code(ea?.Code ?? "");
+            this.entityAssignedTo.name(ea?.Name ?? "");
+            this.entityAssignedTo.latitude(ea?.Latitude ?? null);
+            this.entityAssignedTo.longitude(ea?.Longitude ?? null);
+
+            // Correct handling of ParentEntity
+            if (ea.ParentEntity) {
+                const existingParent = this.entityAssignedTo.parentEntity();
+                if (existingParent) {
+                    // update existing parent entity observables
+                    existingParent.id(ea.ParentEntity.Id ?? null);
+                    existingParent.code(ea.ParentEntity.Code ?? "");
+                    existingParent.name(ea.ParentEntity.Name ?? "");
+                } else {
+                    // or create a new one if none exists yet
+                    this.entityAssignedTo.parentEntity(new Entity(ea.ParentEntity));
+                }
+            } else {
+                // if API can legitimately send "no parent", clear it
+                this.entityAssignedTo.parentEntity(null);
+            }
+
+            console.log("Updating parent entity for job",
+                this.entityAssignedTo.parentEntity() && this.entityAssignedTo.parentEntity().name());
         }
+
 
         if (d.Address !== undefined) {
             this.address.gnafId(d.Address?.GnafId ?? null);
@@ -370,7 +385,7 @@ export function Job(data = {}, deps = {}) {
 
         requestAnimationFrame(() => {
             // find the row for this job
-            const row = document.querySelector(`tr.job[data-job-id="${self.id()}"]`);
+            const row = document.querySelector(`tr.job-row[data-job-id="${self.id()}"]`);
             if (!row) return;
 
             // find the scroll container (the table wrapper in the bottom pane)
@@ -380,7 +395,7 @@ export function Job(data = {}, deps = {}) {
 
             if (!container) {
                 // fallback to normal scrollIntoView if we can't find a container
-                row.scrollIntoView({ behavior: "smooth", block: "center" });
+                row.scrollIntoView({ behavior: "smooth", block: "start" });
                 return;
             }
 
@@ -435,32 +450,32 @@ export function Job(data = {}, deps = {}) {
         });
     };
 
-// interval that only runs while job is filtered in
-function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
-    let handle = null;
+    // interval that only runs while job is filtered in
+    function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
+        let handle = null;
 
-    const tick = () => {
-        // global guard: only run if still filtered in
-        if (!self.isFilteredIn()) return;
-        fn();
-    };
+        const tick = () => {
+            // global guard: only run if still filtered in
+            if (!self.isFilteredIn()) return;
+            fn();
+        };
 
-    const start = () => {
-        if (!self.isFilteredIn()) return; // don't start if already filtered out
-        if (handle) clearInterval(handle);
-        if (runImmediately) tick();
-        handle = setInterval(tick, intervalMs);
-    };
+        const start = () => {
+            if (!self.isFilteredIn()) return; // don't start if already filtered out
+            if (handle) clearInterval(handle);
+            if (runImmediately) tick();
+            handle = setInterval(tick, intervalMs);
+        };
 
-    const stop = () => {
-        if (handle) {
-            clearInterval(handle);
-            handle = null;
-        }
-    };
+        const stop = () => {
+            if (handle) {
+                clearInterval(handle);
+                handle = null;
+            }
+        };
 
-    return { start, stop };
-}
+        return { start, stop };
+    }
 
 }
 

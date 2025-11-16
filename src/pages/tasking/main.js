@@ -974,10 +974,18 @@ document.addEventListener('DOMContentLoaded', function () {
             noVirtualElements: false
         };
 
-        ko.bindingHandlers.trVisible = {
+        ko.bindingHandlers.slideVisible = {
+            init: function (element, valueAccessor) {
+                const visible = ko.unwrap(valueAccessor());
+                $(element).toggle(!!visible);
+            },
             update: function (element, valueAccessor) {
-                const value = ko.unwrap(valueAccessor());
-                element.style.display = value ? 'table-row' : 'none';
+                const visible = ko.unwrap(valueAccessor());
+                if (visible) {
+                    $(element).stop(true, true).slideDown(120);
+                } else {
+                    $(element).stop(true, true).slideUp(120);
+                }
             }
         };
 

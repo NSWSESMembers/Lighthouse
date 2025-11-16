@@ -83,12 +83,8 @@ export function buildJobPopupKO() {
       <div id="JobTags" class="text-center pt-2" data-bind="text: tagsCsv()"></div>
 
       <!-- Taskings: loading / table / empty -->
-      <div class="text-center p-2" data-bind="visible: taskingLoading()">
-        <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
-        <span class="ms-1">Loading taskings…</span>
-      </div>
       <div class="table-responsive job-popup_taskings">
-      <div data-bind="visible: !taskingLoading() && taskings().length > 0" style="padding-top:10px">
+      <div data-bind="visible: taskings().length > 0" style="padding-top:10px">
         <table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead>
             <tr style="text-align:left;background:#f8f9fa">
@@ -128,6 +124,10 @@ export function buildJobPopupKO() {
         </table>
       </div>
 </div>
+      <div class="text-center text-muted" data-bind="visible: taskingLoading()">
+        <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+        <span class="ms-1">Loading taskings…</span>
+      </div>
       <div class="text-center text-muted" data-bind="visible: !taskingLoading() && taskings().length === 0">
         No taskings yet.
       </div>
