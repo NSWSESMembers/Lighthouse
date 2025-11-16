@@ -10,6 +10,4 @@ export function Entity(data = {}) {
     if (data.ParentEntity) {
         this.parentEntity(new Entity(data.ParentEntity));
     }
-    console.log("Entity Data:", data);
-    console.log("Created Entity:", this);
 }

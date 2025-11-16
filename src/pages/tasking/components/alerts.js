@@ -82,7 +82,11 @@ function buildDefaultRules(vm) {
   const newJobs = jobs.filter(j => (j.statusName && j.statusName() === 'New'));
   const untasked = jobs.filter(j => (Array.isArray(j.taskings()) && j.taskings().length === 0) && j.statusName && j.statusName() == 'Active');
   const unackedNotifications = jobs.filter(j => (Array.isArray(j.unacceptedNotifications()) && j.unacceptedNotifications().length > 0));
-  
+  const unGeoCoded = jobs.filter(j => {
+    const lat = j.address?.latitude?.();
+    const lng = j.address?.longitude?.();
+    return lat == null || lng == null;
+  });
   // jobs that are active with atleast one tasking that is completed
   const completableJobs = jobs.filter(j => {
     if (j.statusName && j.statusName() != 'Active') return false;
@@ -154,6 +158,19 @@ function buildDefaultRules(vm) {
         // focus the job if present
         const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
         found?.focusMap();
+      }
+    },
+    {
+      id: 'ungeocoded-jobs',
+      level: 'caution',
+      title: 'Incidents missing geolocation',
+      active: unGeoCoded.length > 0,
+      items: unGeoCoded.slice(0, 10).map(asItem),
+      count: unGeoCoded.length,
+      onClick: (id) => {
+        // focus the job if present
+        const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
+        found?.focusAndExpandInList();
       }
     }
   ];

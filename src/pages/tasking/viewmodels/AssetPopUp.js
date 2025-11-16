@@ -161,5 +161,10 @@ export class AssetPopupViewModel {
     window.dispatchEvent(new CustomEvent('assignTeamToAsset', { detail: { assetId: id } }));
   }
 
+  dispose = () => {
+    // clean up any subscriptions or resources here
+    this.removeRouteToJob();
+    this.removeCrowsFliesToJob();
+  }
 
 }

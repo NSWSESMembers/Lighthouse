@@ -5,6 +5,8 @@ import { Entity } from "./Entity.js";
 
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 
+import { Enum } from '../utils/enum.js';
+
 export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
@@ -18,10 +20,13 @@ export function Team(data = {}, deps = {}) {
         }
     } = deps;
 
+    self.isFilteredIn = ko.observable(false);
+    self.lastDataUpdate = new Date();
+
 
     self.id = ko.observable(data.Id ?? null);
     self.callsign = ko.observable(data.Callsign ?? "");
-    self.assignedTo = new Entity(data.EntityAssignedTo || data.CreatedAt);
+    self.assignedTo = ko.observable(new Entity(data.AssignedTo || data.CreatedAt));
     self.status = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
     self.members = ko.observableArray(data.Members);
     self.teamLeader = ko.computed(function () {
@@ -30,6 +35,10 @@ export function Team(data = {}, deps = {}) {
     });
 
     self.trackableAssets = ko.observableArray([]);
+
+    self.trackableAndIsFiltered = ko.pureComputed(() => {
+        return self.isFilteredIn() && self.trackableAssets().length > 0;
+    });
 
     self.trackableAssetsOrError = ko.pureComputed(() => {
         return !self.trackableAssets().length ? 'Unable to match team to a radio asset' : 'Zoom to'
@@ -52,11 +61,11 @@ export function Team(data = {}, deps = {}) {
     self.currentTaskingSummary = ko.pureComputed(() => {
         const typeCounts = {};
         const frCategoryCounts = {};
-        
+
         self.filteredTaskings().forEach(t => {
             const typeKey = t.job.type?.();
             typeCounts[typeKey] = (typeCounts[typeKey] || 0) + 1;
-            
+
             // If type is FR, track category counts
             if (typeKey === "FR") {
                 const category = t.job.categoriesName?.().replaceAll('Category', 'C');
@@ -65,7 +74,7 @@ export function Team(data = {}, deps = {}) {
                 }
             }
         });
-        
+
         const entries = Object.entries(typeCounts).map(([type, count]) => {
             if (type === "FR" && Object.keys(frCategoryCounts).length > 0) {
                 const categoryBreakdown = Object.entries(frCategoryCounts)
@@ -75,7 +84,7 @@ export function Team(data = {}, deps = {}) {
             }
             return `${type}: ${count}`;
         });
-        
+
         return entries.length ? entries.join(', ') : '';
     });
 
@@ -120,7 +129,7 @@ export function Team(data = {}, deps = {}) {
     });
 
     self.updateStatusById = function (statusId) {
-        const status = teamStatusById[statusId];
+        const status = Enum.TeamStatusType.some(s => s.Id === statusId);
         if (status) {
             self.status(status);
         }
@@ -168,55 +177,17 @@ export function Team(data = {}, deps = {}) {
         flyToAsset(a); // map logic stays out of the model
     };
 
-    const teamStatusById = {
-        1: {
-            Key: "Standby",
-            Id: 1,
-            Name: "Standby",
-            Description: "Standby",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        },
-        2: {
-            Key: "OnAlert",
-            Id: 2,
-            Name: "OnAlert",
-            Description: "On Alert",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        },
-        3: {
-            Key: "Activated",
-            Id: 3,
-            Name: "Activated",
-            Description: "Activated",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        },
-        4: {
-            Key: "Rest",
-            Id: 4,
-            Name: "Rest",
-            Description: "Rest",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        },
-        5: {
-            Key: "StoodDown",
-            Id: 5,
-            Name: "StoodDown",
-            Description: "Stood down",
-            ParentId: null,
-            GroupId: null,
-            Colour: null
-        }
-    };
-
-    self.openRadioLogModal = function () {
+        self.openRadioLogModal = function () {
         deps.openRadioLogModal(self);
     };
+
+    Team.prototype.updateFromJson = function (d = {}) {
+
+        if (d.Id !== undefined) this.id(d.Id);
+        if (d.Callsign !== undefined) this.callsign(d.Callsign);
+        if (d.TeamStatusType !== undefined) this.status(d.TeamStatusType);
+        if (d.Members !== undefined) this.members(d.Members);
+        if (d.AssignedTo !== undefined) this.assignedTo(new Entity(d.AssignedTo));
+        if (d.statusId !== undefined) this.updateStatusById(d.statusId);
+    }
 }

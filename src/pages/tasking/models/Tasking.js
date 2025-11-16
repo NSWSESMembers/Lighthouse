@@ -90,9 +90,11 @@ export function Tasking(data = {}) {
     //task has job thats visible in the current filter
     self.hasJob = ko.pureComputed(() => !!self.job.isFilteredIn());
 
-    
+    //same same but different ^
+    self.hasTeam = ko.pureComputed(() => !!self.team.isFilteredIn());
 
-    
+
+
     // patch model with partial updates
     self.updateFrom = (patch = {}) => {
         if (patch.CurrentStatus !== undefined) self.currentStatus(patch.CurrentStatus);

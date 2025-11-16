@@ -354,14 +354,14 @@ function VM() {
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
+            const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
 
             // If allow-list non-empty, only show jobs whose status is in it
             if (allowed.length > 0 && !allowed.includes(statusName)) {
                 return false;
             }
 
-            // If no HQ filters are active, skip HQ filtering
-            const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
+            //must match HQ filter
             if (!hqMatch) return false;
 
             // Apply text search
@@ -399,9 +399,11 @@ function VM() {
 
     self.filteredTeams = ko.pureComputed(() => {
         const allowed = self.config.teamStatusFilter(); // allow-list
+
         return ko.utils.arrayFilter(self.teams(), tm => {
-            console.log(tm)
+
             const status = tm.status()?.Name;
+            const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
             if (status == null) {
                 return false;
             }
@@ -411,10 +413,16 @@ function VM() {
                 return false;
             }
 
+            //must match HQ filter
+            if (!hqMatch) {
+                return false;
+            }
+
             const term = self.teamSearch().toLowerCase();
             if (tm.callsign().toLowerCase().includes(term)) {
                 return true;
             }
+
             return false;
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
@@ -427,6 +435,7 @@ function VM() {
         if (!self.trackableAssets) return [];
 
 
+
         return ko.utils.arrayFilter(self.trackableAssets() || [], a => {
             const teams = ko.unwrap(a.matchingTeams);
             if (!Array.isArray(teams) || teams.length === 0) return false;
@@ -434,7 +443,7 @@ function VM() {
             // Return true if at least one team's status() is not in ignoreList
             return teams.some(t => {
                 const status = ko.unwrap(t.status);
-                return status && !self.config.teamStatusFilter().includes(status);
+                return status && !self.config.teamStatusFilter().includes(status) && t.isFilteredIn();
             });
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
@@ -503,10 +512,7 @@ function VM() {
 
         let team = self.teamsById.get(teamJson.Id);
         if (team) {
-            team.callsign(teamJson.Callsign ?? team.callsign());
-            if (teamJson.CurrentStatusId != null) team.updateStatusById(teamJson.CurrentStatusId);
-            else team.status(teamJson.TeamStatusType || team.status());
-            team.members = ko.observableArray(teamJson.Members);
+            team.updateFromJson(teamJson);
             self._refreshTeamTrackableAssets(team);
             return team;
         }
@@ -746,10 +752,13 @@ function VM() {
     }
 
     //fetch tasking if a team is added
-    self.filteredTeams.subscribe((data) => {
-        data.forEach(change => {
-            if (change.status === 'added') {
-                change.value.fetchTasking()
+    self.filteredTeams.subscribe((changes) => {
+        changes.forEach(ch => {
+            if (ch.status === 'added') {
+                ch.value.isFilteredIn(true);
+                ch.value.fetchTasking();
+            } else if (ch.status === 'deleted') {
+                ch.value.isFilteredIn(false);
             }
         });
     }, null, "arrayChange");
@@ -776,6 +785,7 @@ function VM() {
             if (ch.status === 'added') {
                 attachAssetMarker(ko, map, self, a);
             } else if (ch.status === 'deleted') {
+                console.log("Detaching marker for asset no longer filtered in:", a.id());
                 // keep the asset in registry, but remove map marker + subs
                 detachAssetMarker(ko, map, self, a);
             }
