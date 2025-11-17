@@ -154,4 +154,19 @@ export function Tasking(data = {}) {
         this.job.openRadioLogModal(self);
     };
 
+    self.tagColorFromStatus = function () {
+        const status = (self.currentStatus() || "").toLowerCase();
+        switch (status) {
+            case "tasked":
+                return "bg-primary";
+            case "enroute":
+                return "bg-info";
+            case "onsite":
+                return "bg-warning";
+            case "complete":
+                return "bg-success";
+            default:
+                return "bg-secondary";
+        }
+    }
 }

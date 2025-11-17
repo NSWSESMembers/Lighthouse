@@ -75,7 +75,7 @@ export function buildAssetPopupKO() {
                   <!-- First row: status, job id, type, priority, time -->
                   <div class="d-flex justify-content-between align-items-start">
                     <div class="me-2">
-                      <span class="badge bg-secondary me-1" data-bind="text: tsk.currentStatus"></span>
+                      <span class="badge me-1" data-bind="text: tsk.currentStatus, class: tsk.tagColorFromStatus()"></span>
                       <strong data-bind="text: tsk.jobIdentifier + ' - ' +tsk.job.entityAssignedTo.code"></strong>
                       <span class="text-muted ms-1" data-bind="text: tsk.jobTypeName"></span>
                       <span class="text-muted ms-1" data-bind="text: tsk.jobPriority"></span>

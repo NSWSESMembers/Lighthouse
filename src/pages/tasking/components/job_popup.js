@@ -103,8 +103,8 @@ export function buildJobPopupKO() {
             css: { 'job-popup__tasking-row': hasTeam(), 'job-popup__tasking-row--no-job': !hasTeam() }">
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
                   data-bind="text: teamCallsign"></td>
-              <td style="padding:4px 8px;border-bottom:1px solid #eee"
-                  data-bind="text: currentStatus"></td>
+              <td style="padding:4px 8px;border-bottom:1px solid #eee"><span class="badge"
+                data-bind="text: currentStatus, css: tagColorFromStatus()"></span></td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
                   data-bind="text: statusTimeAgoLabel"></td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee">
