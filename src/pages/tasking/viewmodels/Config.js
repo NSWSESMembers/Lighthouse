@@ -227,10 +227,13 @@ export function ConfigVM(root, deps) {
 
     self.save = () => {
         const cfg = buildConfig();
-
-
         console.log('Saving config:', cfg);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+
+    };
+
+    self.saveAndCloseAndLoad = () => {
+        self.save();
 
         // Kick initial loads using the KO arrays (not Maps)
         root.fetchAllTeamData();
@@ -241,7 +244,22 @@ export function ConfigVM(root, deps) {
         const el = document.getElementById('configModal');
         const m = bootstrap.Modal.getOrCreateInstance(el);
         m.hide();
-    };
+    }
+
+    self.saveAndLoadJobData = () => {
+        self.save();
+        root.fetchAllJobsData();
+        return true;
+    }
+
+    self.saveAndLoadTeamData = () => {
+        self.save();
+        root.fetchAllTeamData();
+        return true;
+    }
+
+
+
 
     self.loadFromStorage = () => {
         const saved = localStorage.getItem(STORAGE_KEY);
