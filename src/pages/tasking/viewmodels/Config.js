@@ -25,6 +25,7 @@ export function ConfigVM(root, deps) {
     self.sharing = ko.observable(false);       // POST in progress
     self.loadingShared = ko.observable(false); // GET in progress
     self.shareKeyInput = ko.observable('');    // bound to header input
+    self.loadExpanded = ko.observable(false);
 
     // Selected location filters
     self.teamFilters = ko.observableArray([]);     // [{id, name, entityType}]
@@ -46,7 +47,14 @@ export function ConfigVM(root, deps) {
 
 
 
+    self.openLoadBox = function () {
+        self.loadExpanded(true);
+    };
 
+    self.closeLoadBox = function () {
+        self.loadExpanded(false);
+        self.shareKeyInput("");
+    };
 
     // self.incidentTypeFilter.subscribe(() => {
     //     self.save();
@@ -363,7 +371,7 @@ export function ConfigVM(root, deps) {
         if (!id) return;
         self.loadShared(id);
     };
-    
+
 
     // run once on construction
     self.loadFromStorage();

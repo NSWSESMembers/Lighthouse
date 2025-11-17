@@ -840,49 +840,15 @@
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header py-2 px-3">
-    <h5 class="modal-title mb-0">Page Configuration</h5>
 
-    <div class="d-flex align-items-center flex-wrap gap-2">
-
-                <!-- Shared key (inline, wraps cleanly) -->
-        <div class="small text-muted"
-             data-bind="visible: config.shareId">
-            <code class="user-select-all sharecode"
-                  data-bind="text: config.shareId"></code>
-        </div>
-
-        <!-- Share button -->
-        <button type="button"
-                class="btn btn-sm btn-outline-primary px-2"
-                data-bind="click: config.share, disable: config.sharing">
-            <i class="fa fa-share-alt me-1"></i> Share
-        </button>
+                    <div class="d-flex flex-column">
+                        <h5 class="modal-title mb-1">Page Configuration</h5>
+                    </div>
 
 
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 
-        <!-- Load shared config -->
-        <form class="d-flex align-items-center gap-2"
-              data-bind="submit: config.loadSharedFromField">
-            <input type="text"
-                   class="form-control form-control-sm"
-                   style="max-width:160px"
-                   placeholder="Load key"
-                   data-bind="textInput: config.shareKeyInput,
-                              enable: !config.loadingShared()">
-            <button type="submit"
-                    class="btn btn-sm btn-outline-secondary"
-                    data-bind="disable: config.loadingShared">
-                Load
-            </button>
-        </form>
-
-        <button type="button"
-                class="btn-close ms-2"
-                data-bs-dismiss="modal"
-                aria-label="Close"></button>
-    </div>
-</div>
-
+                </div>
 
                 <div class="modal-body">
                     <!-- TOP: search + two selected boxes NEXT TO the search -->
@@ -1025,7 +991,6 @@
                                 </div>
 
                                 <!-- inside Other Settings card -->
-                                <!-- inside Other Settings card, after the team status block -->
                                 <div class="row">
                                     <div class="col-3">
                                         <label class="form-label d-block mb-2">Show Incidents With Status:</label>
@@ -1288,10 +1253,60 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+
+                        <!-- Shared key -->
+                        <div class="small" data-bind="visible: config.shareId || config.sharing()">
+                            <!-- Spinner when loading -->
+                            <span class="spinner-border spinner-border-sm text-muted" role="status"
+                                data-bind="visible: config.sharing"></span>
+
+                            <!-- Key when NOT loading -->
+                            <code class="user-select-all sharecode"
+                                data-bind="visible: !config.sharing(), text: config.shareId"></code>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary px-2"
+                            data-bind="click: config.share, disable: config.sharing">
+                            <i class="fa fa-share-alt me-1"></i> Share
+                        </button>
+
+
+                        <!-- LOAD wrapper -->
+                        <div class="load-wrapper d-flex align-items-center"
+                            data-bind="css: { 'load-expanded': config.loadExpanded() }">
+
+                            <!-- Collapsed "Load" button -->
+                            <button type="button" class="btn btn-outline-secondary px-2" data-bind="click: config.openLoadBox,
+                               visible: !config.loadExpanded()">
+                                <i class="fas fa-cloud-download-alt"></i> Load
+                            </button>
+
+                            <!-- Expanded form -->
+                            <form class="d-flex align-items-center gap-2 load-form" data-bind="visible: config.loadExpanded,
+                             submit: config.loadSharedFromField">
+
+                                <input type="text" class="form-control form-control-sm load-input"
+                                    placeholder="Enter key" style="width:0; opacity:0;" data-bind="textInput: config.shareKeyInput,
+                                  enable: !config.loadingShared(),
+                                  css: { 'expanded-input': config.loadExpanded() }">
+
+                                <button type="submit" class="btn btn-outline-secondary"
+                                    data-bind="disable: config.loadingShared, visible: config.loadExpanded">
+                                    Go
+                                </button>
+
+                                <button type="button" class="btn btn-outline-secondary"
+                                    data-bind="click: config.closeLoadBox, visible: config.loadExpanded">
+                                    Cancel
+                                </button>
+                            </form>
+
+                        </div>
+
+                    </div>
                     <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
                         data-bind="click: config.save, disable: tokenLoading">
-                        <span data-bind="visible: !tokenLoading()">Save</span>
+                        <span data-bind="visible: !tokenLoading()">Save & Close</span>
                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
                             data-bind="visible: tokenLoading"></span>
                         <span data-bind="visible: tokenLoading">Loading...</span>

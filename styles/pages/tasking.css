@@ -1014,11 +1014,20 @@ tr.job:hover {
     flex-wrap: wrap;
     gap: 0.5rem;
 }
-#configModal .modal-header .modal-title {
-    margin-right: auto;
+
+#configModal .load-wrapper { position: relative; }
+
+#configModal .load-form input {
+    transition: width 0.25s ease, opacity 0.25s ease;
 }
 
+#configModal .expanded-input {
+    width: 160px !important;
+    opacity: 1 !important;
+}
 
 .sharecode {
-  font-size: 1.875em;
+    font-family: monospace;
+    font-size: 1.3rem;
+    letter-spacing: 0.05rem;
 }
