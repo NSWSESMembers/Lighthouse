@@ -262,6 +262,14 @@ export function Job(data = {}, deps = {}) {
         return beaconJobParentCats[c] || "";
     })
 
+    self.returnParentEntityName = ko.pureComputed(() => {
+        if (self.entityAssignedTo.parentEntity()) {
+            return self.entityAssignedTo.parentEntity().name();
+        }
+        return '-';
+    })
+
+
 
     Job.prototype.updateFromJson = function (d = {}) {
 
@@ -305,7 +313,7 @@ export function Job(data = {}, deps = {}) {
             this.entityAssignedTo.longitude(ea?.Longitude ?? null);
 
             // Correct handling of ParentEntity
-            if (ea.ParentEntity) {
+            if (ea.ParentEntity !== null) {
                 const existingParent = this.entityAssignedTo.parentEntity();
                 if (existingParent) {
                     // update existing parent entity observables
@@ -320,11 +328,7 @@ export function Job(data = {}, deps = {}) {
                 // if API can legitimately send "no parent", clear it
                 this.entityAssignedTo.parentEntity(null);
             }
-
-            console.log("Updating parent entity for job",
-                this.entityAssignedTo.parentEntity() && this.entityAssignedTo.parentEntity().name());
         }
-
 
         if (d.Address !== undefined) {
             this.address.gnafId(d.Address?.GnafId ?? null);

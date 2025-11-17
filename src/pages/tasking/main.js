@@ -350,14 +350,21 @@ function VM() {
 
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
         const term = self.jobSearch().toLowerCase();
-        const allowed = self.config.jobStatusFilter(); // allow-list
+
+        const allowedStatus = self.config.jobStatusFilter(); // allow-list
+        const incidentTypeAllowed = self.config.incidentTypeFilter();
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
 
             // If allow-list non-empty, only show jobs whose status is in it
-            if (allowed.length > 0 && !allowed.includes(statusName)) {
+            if (allowedStatus.length > 0 && !allowedStatus.includes(statusName)) {
+                return false;
+            }
+
+            // If incident type filter non-empty, only show jobs whose type is in it
+            if (incidentTypeAllowed.length > 0 && !incidentTypeAllowed.includes(jb.typeName())) {
                 return false;
             }
 
@@ -375,14 +382,22 @@ function VM() {
     self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
 
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
-        const allowed = self.config.jobStatusFilter(); // allow-list
+        const allowedStatus = self.config.jobStatusFilter(); // allow-list
+
+        const incidentTypeAllowed = self.config.incidentTypeFilter();
+
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
 
             const statusName = jb.statusName();
 
             // If allow-list non-empty, only show jobs whose status is in it
-            if (allowed.length > 0 && !allowed.includes(statusName)) {
+            if (allowedStatus.length > 0 && !allowedStatus.includes(statusName)) {
+                return false;
+            }
+
+            // If incident type filter non-empty, only show jobs whose type is in it
+            if (incidentTypeAllowed.length > 0 && !incidentTypeAllowed.includes(jb.typeName())) {
                 return false;
             }
 
@@ -897,11 +912,13 @@ function VM() {
 
         const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => Enum.JobStatusType[status]?.Id).filter(id => id !== undefined);
 
+        const incidentTypeFilterToView = myViewModel.config.incidentTypeFilter().map(type => Enum.IncidentType[type]?.Id).filter(id => id !== undefined);
+
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - 30); // last 30 days
         myViewModel.jobsLoading(true);
-        BeaconClient.job.searchwithStatusFilter(hqsFilter, apiHost, start, end, params.userId, token, function (allJobs) {
+        BeaconClient.job.searchwithFilter(hqsFilter, apiHost, start, end, params.userId, token, function (allJobs) {
             console.log("Total jobs fetched:", allJobs.Results.length);
             myViewModel._markInitialFetchDone();
             myViewModel.jobsLoading(false);
@@ -910,6 +927,7 @@ function VM() {
         },
             1, //view model
             statusFilterToView, //status filter
+            incidentTypeFilterToView, //incident type filter
             function (jobs) {
                 jobs.Results.forEach(function (t) {
                     myViewModel.getOrCreateJob(t);
@@ -1032,6 +1050,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         ko.bindingHandlers.teamStatusFilter = makeStatusFilterBinding('teamStatusFilter');
         ko.bindingHandlers.jobStatusFilter = makeStatusFilterBinding('jobStatusFilter');
+        ko.bindingHandlers.incidentTypeFilter = makeStatusFilterBinding('incidentTypeFilter');
 
         ko.bindingHandlers.trVisible = {
             update: function (element, valueAccessor) {
@@ -1169,6 +1188,36 @@ document.addEventListener('DOMContentLoaded', function () {
         bootstrap.Modal.getOrCreateInstance(el).show();
 
     })
+
+    // Toggle submenu on click
+    document.querySelectorAll('.dropdown-submenu > a').forEach(function (element) {
+        element.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const submenu = this.nextElementSibling;
+            if (!submenu) return;
+
+            // Close any open sibling submenus
+            const parentMenu = this.closest('.dropdown-menu');
+            parentMenu.querySelectorAll('.dropdown-menu.show').forEach(function (openMenu) {
+                if (openMenu !== submenu) {
+                    openMenu.classList.remove('show');
+                }
+            });
+
+            submenu.classList.toggle('show');
+        });
+    });
+
+    // When the main dropdown closes, close all submenus
+    document.querySelectorAll('.dropdown').forEach(function (dd) {
+        dd.addEventListener('hidden.bs.dropdown', function () {
+            this.querySelectorAll('.dropdown-menu.show').forEach(function (submenu) {
+                submenu.classList.remove('show');
+            });
+        });
+    });
 
 })
 

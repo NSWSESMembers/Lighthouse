@@ -985,3 +985,27 @@ tr.job:hover {
 .job-card--expanded .fa.fa-solid.fa-plus {
     /* if you switch to a single chevron icon, rotate it here */
 }
+
+/* Wider dropdown specifically for the Jobs filter menu */
+#jobMenu + .dropdown-menu {
+    min-width: 400px;      /* adjust as needed */
+    padding: 0.5rem 0.75rem;
+}
+
+.dropdown-collapse-body {
+    padding: 0.25rem 0.5rem 0.5rem 0.5rem;
+}
+
+.dropdown-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;   /* two columns */
+    column-gap: 1rem;
+    row-gap: 0.15rem;
+    font-size: 0.8rem;
+}
+
+.dropdown-two-col .form-check {
+    margin: 0;
+    padding: 0;
+    margin-left: 10px;
+}

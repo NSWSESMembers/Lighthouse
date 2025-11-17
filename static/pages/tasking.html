@@ -231,7 +231,8 @@
                                                                             <td data-bind="text: ts.jobTypeName"></td>
                                                                             <td data-bind="text: ts.prettyAddress"></td>
                                                                             <td>
-                                                                                <span class="badge" data-bind="class: ts.tagColorFromStatus(), text: ts.currentStatus"></span>
+                                                                                <span class="badge"
+                                                                                    data-bind="class: ts.tagColorFromStatus(), text: ts.currentStatus"></span>
                                                                             </td>
                                                                             <td>
                                                                                 <div class="btn-group btn-group-sm"
@@ -308,23 +309,218 @@
                             <input type="search" id="jobSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: jobSearch, valueUpdate: 'input'">
                         </div>
-
+                        
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
-                                id="jobMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa fa-cog"></i>
+                                id="jobMenu" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                aria-expanded="false">
+                                <i class="fa fa-filter"></i>
                             </button>
+
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jobMenu">
-                                <li><a class="dropdown-item" href="#" data-bind="click: fetchAllJobsData">Refresh
-                                        Jobs</a></li>
-                                <li><a class="dropdown-item" href="#">Show Only Open</a></li>
+
+                                <!-- Basic actions -->
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bind="click: fetchAllJobsData">
+                                        Refresh Jobs
+                                    </a>
+                                </li>
+
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#configModal">Page Config</a></li>
+
+                                <!-- INCIDENT STATUS FILTERS (collapsible section) -->
+                                <li>
+                                    <button class="dropdown-item d-flex justify-content-between align-items-center"
+                                        type="button" data-bs-toggle="collapse" data-bs-target="#jobStatusFilterMenu"
+                                        aria-expanded="false" aria-controls="jobStatusFilterMenu">
+                                        Incident Status Filters
+                                        <span class="ms-2 fa fa-chevron-right small"></span>
+                                    </button>
+                                    <div class="collapse dropdown-collapse-body" id="jobStatusFilterMenu">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusNew"
+                                                data-bind="jobStatusFilter: 'New', click: $root.config.save()">
+                                            <label class="form-check-label" for="ddStatusNew">New</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusActive"
+                                                data-bind="jobStatusFilter: 'Active', click: $root.config.save()">
+                                            <label class="form-check-label" for="ddStatusActive">Active</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusComplete"
+                                                data-bind="jobStatusFilter: 'Complete', click: $root.config.save()">
+                                            <label class="form-check-label" for="ddStatusComplete">Complete</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusCancelled"
+                                                data-bind="jobStatusFilter: 'Cancelled', click: $root.config.save()">
+                                            <label class="form-check-label" for="ddStatusCancelled">Cancelled</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusFinalised"
+                                                data-bind="jobStatusFilter: 'Finalised', click: $root.config.save()">
+                                            <label class="form-check-label" for="ddStatusFinalised">Finalised</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusReferred"
+                                                data-bind="jobStatusFilter: 'Referred', click: $root.config.save()">
+                                            <label class="form-check-label" for="ddStatusReferred">Referred</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusRejected"
+                                                data-bind="jobStatusFilter: 'Rejected', click: $root.config.save()">
+                                            <label class="form-check-label" for="ddStatusRejected">Rejected</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusTasked"
+                                                data-bind="jobStatusFilter: 'Tasked', click: $root.config.save()">
+                                            <label class="form-check-label" for="ddStatusTasked">Tasked</label>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+
+                                <!-- JOB TYPE FILTERS (collapsible section) -->
+                                <li>
+                                    <button class="dropdown-item d-flex justify-content-between align-items-center"
+                                        type="button" data-bs-toggle="collapse" data-bs-target="#jobTypeFilterMenu"
+                                        aria-expanded="false" aria-controls="jobTypeFilterMenu">
+                                        Incident Type Filters
+                                        <span class="ms-2 fa fa-chevron-right small"></span>
+                                    </button>
+                                    <div class="collapse dropdown-collapse-body" id="jobTypeFilterMenu">
+                                        <div class="dropdown-two-col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeStorm"
+                                                    data-bind="incidentTypeFilter: 'Storm', click: $root.config.save()">
+                                                <label class="form-check-label" for="ddJobTypeStorm">Storm</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeSupport"
+                                                    data-bind="incidentTypeFilter: 'Support', click: $root.config.save()">
+                                                <label class="form-check-label" for="ddJobTypeSupport">Support</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeFR"
+                                                    data-bind="incidentTypeFilter: 'FR', click: $root.config.save()">
+                                                <label class="form-check-label" for="ddJobTypeFR">Flood Rescue
+                                                    (FR)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeRCR"
+                                                    data-bind="incidentTypeFilter: 'RCR', click: $root.config.save()">
+                                                <label class="form-check-label" for="ddJobTypeRCR">RCR</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeGLR"
+                                                    data-bind="incidentTypeFilter: 'GLR', click: $root.config.save()">
+                                                <label class="form-check-label" for="ddJobTypeGLR">GLR</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeCFR"
+                                                    data-bind="incidentTypeFilter: 'CFR', click: $root.config.save()">
+                                                <label class="form-check-label" for="ddJobTypeCFR">CFR</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeVR"
+                                                    data-bind="incidentTypeFilter: 'VR', click: $root.config.save()">
+                                                <label class="form-check-label" for="ddJobTypeVR">VR</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeLAR"
+                                                    data-bind="incidentTypeFilter: 'LAR', click: $root.config.save()">
+                                                <label class="form-check-label" for="ddJobTypeLAR">LAR</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="dropdown-two-col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeResupply"
+                                                    data-bind="incidentTypeFilter: 'Resupply'">
+                                                <label class="form-check-label" for="ddJobTypeResupply">Resupply</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeMedicalResupply"
+                                                    data-bind="incidentTypeFilter: 'MedicalResupply'">
+                                                <label class="form-check-label" for="ddJobTypeMedicalResupply">Medical
+                                                    Resupply</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeFodderDrop"
+                                                    data-bind="incidentTypeFilter: 'FodderDrop'">
+                                                <label class="form-check-label" for="ddJobTypeFodderDrop">Fodder
+                                                    Drop</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeVetAssistance"
+                                                    data-bind="incidentTypeFilter: 'VetAssistance'">
+                                                <label class="form-check-label" for="ddJobTypeVetAssistance">Vet
+                                                    Assistance</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeFloodMisc"
+                                                    data-bind="incidentTypeFilter: 'FloodMisc'">
+                                                <label class="form-check-label" for="ddJobTypeFloodMisc">Flood
+                                                    Misc</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeEvacuationPriority"
+                                                    data-bind="incidentTypeFilter: 'EvacuationPriority'">
+                                                <label class="form-check-label"
+                                                    for="ddJobTypeEvacuationPriority">Evacuation Priority</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeEvacuationSecondary"
+                                                    data-bind="incidentTypeFilter: 'EvacuationSecondary'">
+                                                <label class="form-check-label"
+                                                    for="ddJobTypeEvacuationSecondary">Evacuation Secondary</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeWelfareCheck"
+                                                    data-bind="incidentTypeFilter: 'WelfareCheck'">
+                                                <label class="form-check-label" for="ddJobTypeWelfareCheck">Welfare
+                                                    Check</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeTransport"
+                                                    data-bind="incidentTypeFilter: 'Transport'">
+                                                <label class="form-check-label"
+                                                    for="ddJobTypeTransport">Transport</label>
+                                            </div>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeOther"
+                                                    data-bind="incidentTypeFilter: 'Tsunami'">
+                                                <label class="form-check-label" for="ddJobTypeOther">Tsunami</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+
+                                <!-- Open full config modal -->
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                        data-bs-target="#configModal">
+                                        Page Config
+                                    </a>
+                                </li>
                             </ul>
                         </div>
+
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -505,7 +701,7 @@
                                                                 </li>
                                                                 <li><strong>Assigned Zone:</strong>
                                                                     <span
-                                                                        data-bind="text: j.entityAssignedTo.parentEntity().name"></span>
+                                                                        data-bind="text: j.returnParentEntityName()"></span>
                                                                 </li>
                                                             </ul>
                                                         </div>
@@ -878,6 +1074,173 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="col-3">
+                                        <label class="form-label d-block mb-2">Show Incidents Of Type:</label>
+                                        <div class="border rounded p-2" id="jobTypeBox">
+
+                                            <!-- Storm -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeStorm" value="Storm"
+                                                    data-bind="incidentTypeFilter: 'Storm'">
+                                                <label class="form-check-label" for="jobTypeStorm">Storm</label>
+                                            </div>
+
+                                            <!-- Support -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeSupport" value="Support"
+                                                    data-bind="incidentTypeFilter: 'Support'">
+                                                <label class="form-check-label" for="jobTypeSupport">Support</label>
+                                            </div>
+
+                                            <!-- Flood Rescue (FR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeFR"
+                                                    value="FR" data-bind="incidentTypeFilter: 'FR'">
+                                                <label class="form-check-label" for="jobTypeFR">Flood Rescue
+                                                    (FR)</label>
+                                            </div>
+
+                                            <!-- Road Crash Rescue (RCR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeRCR"
+                                                    value="RCR" data-bind="incidentTypeFilter: 'RCR'">
+                                                <label class="form-check-label" for="jobTypeRCR">Road Crash Rescue
+                                                    (RCR)</label>
+                                            </div>
+
+                                            <!-- General Land Rescue (GLR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeGLR"
+                                                    value="GLR" data-bind="incidentTypeFilter: 'GLR'">
+                                                <label class="form-check-label" for="jobTypeGLR">General Land Rescue
+                                                    (GLR)</label>
+                                            </div>
+
+                                            <!-- Community First Responder (CFR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeCFR"
+                                                    value="CFR" data-bind="incidentTypeFilter: 'CFR'">
+                                                <label class="form-check-label" for="jobTypeCFR">Community First
+                                                    Responder (CFR)</label>
+                                            </div>
+
+                                            <!-- Vertical Rescue (VR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeVR"
+                                                    value="VR" data-bind="incidentTypeFilter: 'VR'">
+                                                <label class="form-check-label" for="jobTypeVR">Vertical Rescue
+                                                    (VR)</label>
+                                            </div>
+
+                                            <!-- LAR -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeLAR"
+                                                    value="LAR" data-bind="incidentTypeFilter: 'LAR'">
+                                                <label class="form-check-label" for="jobTypeLAR">Large Animal Rescue
+                                                    (LAR)</label>
+                                            </div>
+
+                                            <!-- Resupply -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeResupply" value="Resupply"
+                                                    data-bind="incidentTypeFilter: 'Resupply'">
+                                                <label class="form-check-label" for="jobTypeResupply">Resupply</label>
+                                            </div>
+
+                                            <!-- Medical Resupply -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeMedicalResupply" value="MedicalResupply"
+                                                    data-bind="incidentTypeFilter: 'MedicalResupply'">
+                                                <label class="form-check-label" for="jobTypeMedicalResupply">Medical
+                                                    Resupply</label>
+                                            </div>
+
+                                            <!-- Fodder Drop -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeFodderDrop" value="FodderDrop"
+                                                    data-bind="incidentTypeFilter: 'FodderDrop'">
+                                                <label class="form-check-label" for="jobTypeFodderDrop">Fodder
+                                                    Drop</label>
+                                            </div>
+
+                                            <!-- Vet Assistance -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeVetAssistance" value="VetAssistance"
+                                                    data-bind="incidentTypeFilter: 'VetAssistance'">
+                                                <label class="form-check-label" for="jobTypeVetAssistance">Vet
+                                                    Assistance</label>
+                                            </div>
+
+                                            <!-- Flood Misc -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeFloodMisc" value="FloodMisc"
+                                                    data-bind="incidentTypeFilter: 'FloodMisc'">
+                                                <label class="form-check-label" for="jobTypeFloodMisc">Flood
+                                                    Misc</label>
+                                            </div>
+
+                                            <!-- Evacuation A -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeEvacA" value="EvacuationPriority"
+                                                    data-bind="incidentTypeFilter: 'EvacuationPriority'">
+                                                <label class="form-check-label" for="jobTypeEvacA">Evacuation Priority
+                                                    (A)</label>
+                                            </div>
+
+                                            <!-- Evacuation B -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeEvacB" value="EvacuationSecondary"
+                                                    data-bind="incidentTypeFilter: 'EvacuationSecondary'">
+                                                <label class="form-check-label" for="jobTypeEvacB">Evacuation Secondary
+                                                    (B)</label>
+                                            </div>
+
+                                            <!-- Welfare Check -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeWelfareCheck" value="WelfareCheck"
+                                                    data-bind="incidentTypeFilter: 'WelfareCheck'">
+                                                <label class="form-check-label" for="jobTypeWelfareCheck">Welfare Check
+                                                    (B)</label>
+                                            </div>
+
+                                            <!-- Transport -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeTransport" value="Transport"
+                                                    data-bind="incidentTypeFilter: 'Transport'">
+                                                <label class="form-check-label" for="jobTypeTransport">Transport
+                                                    (B)</label>
+                                            </div>
+
+                                            <!-- Other -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeOther" value="Other"
+                                                    data-bind="incidentTypeFilter: 'Other'">
+                                                <label class="form-check-label" for="jobTypeOther">Other (B)</label>
+                                            </div>
+
+                                            <!-- Tsunami -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeTsunami" value="Tsunami"
+                                                    data-bind="incidentTypeFilter: 'Tsunami'">
+                                                <label class="form-check-label" for="jobTypeTsunami">Tsunami</label>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
                                 </div>
                             </form>
                         </div>

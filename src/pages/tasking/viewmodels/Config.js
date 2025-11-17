@@ -13,9 +13,10 @@ export function ConfigVM(root, deps) {
     self.dropdownOpen = ko.observable(false);
     self.inputHasFocus = ko.observable(false);
 
-    // Selected filters (KO arrays, not Maps)
+    // Selected location filters
     self.teamFilters = ko.observableArray([]);     // [{id, name, entityType}]
     self.incidentFilters = ko.observableArray([]); // [{id, name, entityType}]
+
 
     // Other settings
     self.refreshInterval = ko.observable(60);
@@ -28,6 +29,18 @@ export function ConfigVM(root, deps) {
     //blown away on load
     self.jobStatusFilter = ko.observableArray([]);
 
+
+    self.incidentTypeFilter = ko.observableArray([]); // [{id, name, entityType}]
+
+    // self.incidentTypeFilter.subscribe(() => {
+    //     self.save();
+    // });
+
+    // self.jobStatusFilter.subscribe(() => {
+    //     self.save();
+    // });
+
+
     self.jobStatusFilterDefaults = [
         "Active", "New", "Tasked"
     ];
@@ -35,6 +48,28 @@ export function ConfigVM(root, deps) {
     self.teamStatusFilterDefaults = [
         "Activated"
     ];
+
+    self.incidentTypeFilterDefaults = [
+        "Tsunami",
+        "Other",
+        "Transport",
+        "WelfareCheck",
+        "EvacuationSecondary",
+        "EvacuationPriority",
+        "FloodMisc",
+        "VetAssistance",
+        "FodderDrop",
+        "MedicalResupply",
+        "Resupply",
+        "LAR",
+        "VR",
+        "CFR",
+        "GLR",
+        "RCR",
+        "FR",
+        "Support",
+        "Storm"
+    ]
 
     // Helpers
     const norm = (item) => ({
@@ -99,6 +134,16 @@ export function ConfigVM(root, deps) {
         ev?.stopPropagation();
     };
 
+    self.addTeamAndIncident = (item, ev) => {
+        const normed = norm(item);
+        upsert(self.teamFilters, normed);
+        upsert(self.incidentFilters, normed);
+        self.dropdownOpen(true);
+        self.inputHasFocus(true);
+        ev?.preventDefault();
+        ev?.stopPropagation();
+    }
+
     // Pills
     self.removeTeam = (item) => removeById(self.teamFilters, item.id);
     self.removeIncident = (item) => removeById(self.incidentFilters, item.id);
@@ -135,13 +180,15 @@ export function ConfigVM(root, deps) {
             refreshInterval: Number(self.refreshInterval()),
             theme: self.theme(),
             showAdvanced: !!self.showAdvanced(),
-            filters: {
+            locationFilters: {
                 teams: ko.toJS(self.teamFilters),
                 incidents: ko.toJS(self.incidentFilters)
             },
             // these are your “ignored” statuses used by main.js filters
             teamStatusFilter: ko.toJS(self.teamStatusFilter),
-            jobStatusFilter: ko.toJS(self.jobStatusFilter)
+            jobStatusFilter: ko.toJS(self.jobStatusFilter),
+            incidentTypeFilter: ko.toJS(self.incidentTypeFilter)
+
         };
 
         console.log('Saving config:', cfg);
@@ -175,6 +222,7 @@ export function ConfigVM(root, deps) {
             cfg.showAdvanced = self.showAdvanced();
             cfg.teamStatusFilter = self.teamStatusFilterDefaults;
             cfg.jobStatusFilter = self.jobStatusFilterDefaults;
+            cfg.incidentTypeFilter = self.incidentTypeFilterDefaults;
 
         }
         console.log('Loaded config:', cfg);
@@ -190,12 +238,11 @@ export function ConfigVM(root, deps) {
         }
 
         // filters
-        if (cfg.filters) {
-            self.teamFilters(cfg.filters.teams || []);
-            self.incidentFilters(cfg.filters.incidents || []);
+        if (cfg.locationFilters) {
+            self.teamFilters(cfg.locationFilters.teams || []);
+            self.incidentFilters(cfg.locationFilters.incidents || []);
         }
-        console.log(self.teamFilters());
-        console.log(self.incidentFilters());
+
 
         // status filters (arrays of status names to show)
         if (Array.isArray(cfg.teamStatusFilter)) {
@@ -204,7 +251,12 @@ export function ConfigVM(root, deps) {
         if (Array.isArray(cfg.jobStatusFilter)) {
             self.jobStatusFilter(cfg.jobStatusFilter);
         }
+        if (Array.isArray(cfg.incidentTypeFilter)) {
+            self.incidentTypeFilter(cfg.incidentTypeFilter);
+        }
+
     };
+
 
     // run once on construction
     self.loadFromStorage();

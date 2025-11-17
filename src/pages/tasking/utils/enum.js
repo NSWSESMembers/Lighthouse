@@ -167,5 +167,160 @@ export const Enum = {
             "GroupId": null,
             "Colour": null
         }
+    },
+    IncidentType:
+    {
+    "Storm": {
+        "Id": 1,
+        "Name": "Storm",
+        "Description": "Storm",
+        "ParentId": 1,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Support": {
+        "Id": 2,
+        "Name": "Support",
+        "Description": "Support",
+        "ParentId": 2,
+        "GroupId": null,
+        "Colour": null
+    },
+    "FR": {
+        "Id": 4,
+        "Name": "FR",
+        "Description": "Flood Rescue",
+        "ParentId": 5,
+        "GroupId": null,
+        "Colour": null
+    },
+    "RCR": {
+        "Id": 5,
+        "Name": "RCR",
+        "Description": "Road Crash Rescue",
+        "ParentId": 5,
+        "GroupId": null,
+        "Colour": null
+    },
+    "GLR": {
+        "Id": 6,
+        "Name": "GLR",
+        "Description": "General Land Rescue",
+        "ParentId": 5,
+        "GroupId": null,
+        "Colour": null
+    },
+    "CFR": {
+        "Id": 7,
+        "Name": "CFR",
+        "Description": "Community First Responder",
+        "ParentId": 5,
+        "GroupId": null,
+        "Colour": null
+    },
+    "VR": {
+        "Id": 8,
+        "Name": "VR",
+        "Description": "Vertical Rescue",
+        "ParentId": 5,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Resupply": {
+        "Id": 9,
+        "Name": "Resupply",
+        "Description": "Resupply",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "MedicalResupply": {
+        "Id": 10,
+        "Name": "MedicalResupply",
+        "Description": "Medical Resupply",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "FodderDrop": {
+        "Id": 11,
+        "Name": "FodderDrop",
+        "Description": "Fodder Drop",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "VetAssistance": {
+        "Id": 12,
+        "Name": "VetAssistance",
+        "Description": "Vet Assistance",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "FloodMisc": {
+        "Id": 13,
+        "Name": "FloodMisc",
+        "Description": "Flood Misc",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "LAR": {
+        "Id": 17,
+        "Name": "LAR",
+        "Description": "Large Animal Rescue",
+        "ParentId": 5,
+        "GroupId": null,
+        "Colour": null
+    },
+    "EvacuationPriority": {
+        "Id": 18,
+        "Name": "EvacuationPriority",
+        "Description": "Evacuation Priority (A)",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "EvacuationSecondary": {
+        "Id": 19,
+        "Name": "EvacuationSecondary",
+        "Description": "Evacuation Secondary (B)",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "WelfareCheck": {
+        "Id": 20,
+        "Name": "WelfareCheck",
+        "Description": "Welfare Check (B)",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Transport": {
+        "Id": 21,
+        "Name": "Transport",
+        "Description": "Transport (B)",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Other": {
+        "Id": 22,
+        "Name": "Other",
+        "Description": "Other (B)",
+        "ParentId": 4,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Tsunami": {
+        "Id": 24,
+        "Name": "Tsunami",
+        "Description": "Tsunami",
+        "ParentId": 6,
+        "GroupId": null,
+        "Colour": null
     }
+}
 }
