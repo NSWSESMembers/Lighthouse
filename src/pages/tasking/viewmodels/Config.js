@@ -176,13 +176,20 @@ export function ConfigVM(root, deps) {
     };
 
     self.addTeamAndIncident = (item, ev) => {
-        const normed = norm(item);
-        upsert(self.teamFilters, normed);
-        upsert(self.incidentFilters, normed);
+
+        //force add to both if doesnt exist, dont remove if it does
+
+        const teamExists = self.teamFilters().some(x => x.id === norm(item).id);
+        if (!teamExists) self.teamFilters.push(item);
+
+        const incidentExists = self.incidentFilters().some(x => x.id === norm(item).id);
+        if (!incidentExists) self.incidentFilters.push(item);
+
         self.dropdownOpen(true);
         self.inputHasFocus(true);
         ev?.preventDefault();
         ev?.stopPropagation();
+
     }
 
     // Pills
@@ -208,7 +215,9 @@ export function ConfigVM(root, deps) {
             // Focus is moving into the dropdown (e.g., clicking a button) – keep it open
             return true;
         }
-        self.dropdownOpen(false);
+        window.setTimeout(function () {
+            self.dropdownOpen(false);
+        }, 150);
         return true;
     };
 
@@ -218,10 +227,13 @@ export function ConfigVM(root, deps) {
 
     self.save = () => {
         const cfg = buildConfig();
-
-
         console.log('Saving config:', cfg);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+
+    };
+
+    self.saveAndCloseAndLoad = () => {
+        self.save();
 
         // Kick initial loads using the KO arrays (not Maps)
         root.fetchAllTeamData();
@@ -232,7 +244,22 @@ export function ConfigVM(root, deps) {
         const el = document.getElementById('configModal');
         const m = bootstrap.Modal.getOrCreateInstance(el);
         m.hide();
-    };
+    }
+
+    self.saveAndLoadJobData = () => {
+        self.save();
+        root.fetchAllJobsData();
+        return true;
+    }
+
+    self.saveAndLoadTeamData = () => {
+        self.save();
+        root.fetchAllTeamData();
+        return true;
+    }
+
+
+
 
     self.loadFromStorage = () => {
         const saved = localStorage.getItem(STORAGE_KEY);

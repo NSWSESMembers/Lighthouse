@@ -341,42 +341,42 @@
                                     <div class="collapse dropdown-collapse-body" id="jobStatusFilterMenu">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusNew"
-                                                data-bind="jobStatusFilter: 'New', click: $root.config.save">
+                                                data-bind="jobStatusFilter: 'New', click: $root.config.saveAndLoadJobData">
                                             <label class="form-check-label" for="ddStatusNew">New</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusActive"
-                                                data-bind="jobStatusFilter: 'Active', click: $root.config.save">
+                                                data-bind="jobStatusFilter: 'Active', click: $root.config.saveAndLoadJobData">
                                             <label class="form-check-label" for="ddStatusActive">Active</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusComplete"
-                                                data-bind="jobStatusFilter: 'Complete', click: $root.config.save">
+                                                data-bind="jobStatusFilter: 'Complete', click: $root.config.saveAndLoadJobData">
                                             <label class="form-check-label" for="ddStatusComplete">Complete</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusCancelled"
-                                                data-bind="jobStatusFilter: 'Cancelled', click: $root.config.save">
+                                                data-bind="jobStatusFilter: 'Cancelled', click: $root.config.saveAndLoadJobData">
                                             <label class="form-check-label" for="ddStatusCancelled">Cancelled</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusFinalised"
-                                                data-bind="jobStatusFilter: 'Finalised', click: $root.config.save">
+                                                data-bind="jobStatusFilter: 'Finalised', click: $root.config.saveAndLoadJobData">
                                             <label class="form-check-label" for="ddStatusFinalised">Finalised</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusReferred"
-                                                data-bind="jobStatusFilter: 'Referred', click: $root.config.save">
+                                                data-bind="jobStatusFilter: 'Referred', click: $root.config.saveAndLoadJobData">
                                             <label class="form-check-label" for="ddStatusReferred">Referred</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusRejected"
-                                                data-bind="jobStatusFilter: 'Rejected', click: $root.config.save">
+                                                data-bind="jobStatusFilter: 'Rejected', click: $root.config.saveAndLoadJobData">
                                             <label class="form-check-label" for="ddStatusRejected">Rejected</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusTasked"
-                                                data-bind="jobStatusFilter: 'Tasked', click: $root.config.save">
+                                                data-bind="jobStatusFilter: 'Tasked', click: $root.config.saveAndLoadJobData">
                                             <label class="form-check-label" for="ddStatusTasked">Tasked</label>
                                         </div>
                                     </div>
@@ -398,43 +398,43 @@
                                         <div class="dropdown-two-col">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeStorm"
-                                                    data-bind="incidentTypeFilter: 'Storm', click: $root.config.save">
+                                                    data-bind="incidentTypeFilter: 'Storm', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeStorm">Storm</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeSupport"
-                                                    data-bind="incidentTypeFilter: 'Support', click: $root.config.save">
+                                                    data-bind="incidentTypeFilter: 'Support', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeSupport">Support</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeFR"
-                                                    data-bind="incidentTypeFilter: 'FR', click: $root.config.save">
+                                                    data-bind="incidentTypeFilter: 'FR', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeFR">Flood Rescue
                                                     (FR)</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeRCR"
-                                                    data-bind="incidentTypeFilter: 'RCR', click: $root.config.save">
+                                                    data-bind="incidentTypeFilter: 'RCR', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeRCR">RCR</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeGLR"
-                                                    data-bind="incidentTypeFilter: 'GLR', click: $root.config.save">
+                                                    data-bind="incidentTypeFilter: 'GLR', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeGLR">GLR</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeCFR"
-                                                    data-bind="incidentTypeFilter: 'CFR', click: $root.config.save">
+                                                    data-bind="incidentTypeFilter: 'CFR', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeCFR">CFR</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeVR"
-                                                    data-bind="incidentTypeFilter: 'VR', click: $root.config.save">
+                                                    data-bind="incidentTypeFilter: 'VR', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeVR">VR</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeLAR"
-                                                    data-bind="incidentTypeFilter: 'LAR', click: $root.config.save">
+                                                    data-bind="incidentTypeFilter: 'LAR', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeLAR">LAR</label>
                                             </div>
                                         </div>
@@ -442,65 +442,65 @@
                                         <div class="dropdown-two-col">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeResupply"
-                                                    data-bind="incidentTypeFilter: 'Resupply'">
+                                                    data-bind="incidentTypeFilter: 'Resupply', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeResupply">Resupply</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeMedicalResupply"
-                                                    data-bind="incidentTypeFilter: 'MedicalResupply'">
+                                                    data-bind="incidentTypeFilter: 'MedicalResupply', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeMedicalResupply">Medical
                                                     Resupply</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeFodderDrop"
-                                                    data-bind="incidentTypeFilter: 'FodderDrop'">
+                                                    data-bind="incidentTypeFilter: 'FodderDrop', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeFodderDrop">Fodder
                                                     Drop</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeVetAssistance"
-                                                    data-bind="incidentTypeFilter: 'VetAssistance'">
+                                                    data-bind="incidentTypeFilter: 'VetAssistance', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeVetAssistance">Vet
                                                     Assistance</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeFloodMisc"
-                                                    data-bind="incidentTypeFilter: 'FloodMisc'">
+                                                    data-bind="incidentTypeFilter: 'FloodMisc', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeFloodMisc">Flood
                                                     Misc</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeEvacuationPriority"
-                                                    data-bind="incidentTypeFilter: 'EvacuationPriority'">
+                                                    data-bind="incidentTypeFilter: 'EvacuationPriority', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label"
                                                     for="ddJobTypeEvacuationPriority">Evacuation Priority</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeEvacuationSecondary"
-                                                    data-bind="incidentTypeFilter: 'EvacuationSecondary'">
+                                                    data-bind="incidentTypeFilter: 'EvacuationSecondary', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label"
                                                     for="ddJobTypeEvacuationSecondary">Evacuation Secondary</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeWelfareCheck"
-                                                    data-bind="incidentTypeFilter: 'WelfareCheck'">
+                                                    data-bind="incidentTypeFilter: 'WelfareCheck', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeWelfareCheck">Welfare
                                                     Check</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeTransport"
-                                                    data-bind="incidentTypeFilter: 'Transport'">
+                                                    data-bind="incidentTypeFilter: 'Transport', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label"
                                                     for="ddJobTypeTransport">Transport</label>
                                             </div>
                                             <div class="form-check mb-0">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeOther"
-                                                    data-bind="incidentTypeFilter: 'Tsunami'">
+                                                    data-bind="incidentTypeFilter: 'Tsunami', click: $root.config.saveAndLoadJobData">
                                                 <label class="form-check-label" for="ddJobTypeOther">Tsunami</label>
                                             </div>
                                         </div>
@@ -866,23 +866,32 @@
                                 <!-- Results "dropdown" rendered via KO -->
                                 <ul class="dropdown-menu w-100 show" id="searchDropdown" role="listbox"
                                     data-bind="visible: config.dropdownOpen, foreach: config.results">
+
                                     <li>
-                                        <div class="d-flex justify-content-between align-items-center px-2">
-                                            <span class="dropdown-item-text text-truncate"
-                                                data-bind="text: name, attr:{title: name}"></span>
+                                        <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                            data-bind="click: $root.config.addTeamAndIncident">
+                                            <!-- Name / title -->
+                                            <span class="text-truncate"
+                                                data-bind="text: name, attr: { title: name }"></span>
+
+                                            <!-- Buttons for individual filters -->
                                             <div class="btn-group btn-group-sm ms-2">
-                                                <button class="btn btn-outline-primary"
-                                                    data-bind="click: $root.config.addTeam, clickBubble: true, css: { 'active': teamSelected() }">
-                                                    Filter Teams
+                                                <button type="button" class="btn btn-outline-primary" data-bind="click: $root.config.addTeam,
+                                   clickBubble: false,
+                                   css: { 'active': teamSelected() }">
+                                                    Teams
                                                 </button>
-                                                <button class="btn btn-outline-success"
-                                                    data-bind="click: $root.config.addIncident, clickBubble: true, css: { 'active': incidentSelected() }">
-                                                    Filter Incidents
+
+                                                <button type="button" class="btn btn-outline-success" data-bind="click: $root.config.addIncident,
+                                   clickBubble: false,
+                                   css: { 'active': incidentSelected() }">
+                                                    Incidents
                                                 </button>
                                             </div>
                                         </div>
                                     </li>
                                 </ul>
+
                             </div>
                         </div>
                     </div>
@@ -1305,7 +1314,7 @@
 
                     </div>
                     <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
-                        data-bind="click: config.save, disable: tokenLoading">
+                        data-bind="click: config.saveAndCloseAndLoad, disable: tokenLoading">
                         <span data-bind="visible: !tokenLoading()">Save & Close</span>
                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
                             data-bind="visible: tokenLoading"></span>
@@ -1442,56 +1451,48 @@
                     <!-- Contact Types -->
                     <h6>Contact Types</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[2]">
-                        <span class="tag-pill"
-                            data-bind="click: toggle,
+                        <span class="tag-pill" data-bind="click: toggle,
                                         css: { 'tag-selected': selected }">
 
                             <span data-bind="text: name"></span>
 
-                            <i class="far fa-times-circle tag-icon"
-                            data-bind="visible: selected"></i>
+                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
 
                     <!-- Contact Methods -->
                     <h6>Contact Methods</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[3]">
-                        <span class="tag-pill"
-                            data-bind="click: toggle,
+                        <span class="tag-pill" data-bind="click: toggle,
                                         css: { 'tag-selected': selected }">
 
                             <span data-bind="text: name"></span>
 
-                            <i class="far fa-times-circle tag-icon"
-                            data-bind="visible: selected"></i>
+                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
 
                     <!-- Entry Purpose -->
                     <h6>Entry Purpose</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[4]">
-                        <span class="tag-pill"
-                            data-bind="click: toggle,
+                        <span class="tag-pill" data-bind="click: toggle,
                                         css: { 'tag-selected': selected }">
 
                             <span data-bind="text: name"></span>
 
-                            <i class="far fa-times-circle tag-icon"
-                            data-bind="visible: selected"></i>
+                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
 
                     <!-- Action Items -->
                     <h6>Action Items</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[27]">
-                        <span class="action-pill"
-                            data-bind="click: toggle,
+                        <span class="action-pill" data-bind="click: toggle,
                                         css: { 'tag-selected': selected }">
 
                             <span data-bind="text: name"></span>
 
-                            <i class="far fa-times-circle tag-icon"
-                            data-bind="visible: selected"></i>
+                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
 
                         </span>
                     </div>
