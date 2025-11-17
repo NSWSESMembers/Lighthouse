@@ -16,14 +16,14 @@ function invalidateMap() { try { map.invalidateSize(); } catch(_) {} }
 // ===== Restore persisted sizes on load =====
 (function restoreSizes() {
   // Left↔Right
-  const savedSidebarPx = Number(localStorage.getItem('lh.sidebarWidthPx'));
+  const savedSidebarPx = Number(localStorage.getItem('lh.sidebarWidthPx'))   || 800;
   if (Number.isFinite(savedSidebarPx) && savedSidebarPx > 0) {
     sidebarEl.style.width = savedSidebarPx + 'px';
     appEl.style.setProperty('--sidebar-w', savedSidebarPx + 'px');
   }
 
   // Top↔Bottom
-  const savedTopPx = Number(localStorage.getItem('lh.paneTopHeightPx'));
+  const savedTopPx = Number(localStorage.getItem('lh.paneTopHeightPx')   || 500);
   if (Number.isFinite(savedTopPx) && savedTopPx > 0) {
     paneTopEl.style.height = savedTopPx + 'px';
     appEl.style.setProperty('--pane-top-h', savedTopPx + 'px');
