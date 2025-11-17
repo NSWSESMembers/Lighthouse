@@ -176,13 +176,20 @@ export function ConfigVM(root, deps) {
     };
 
     self.addTeamAndIncident = (item, ev) => {
-        const normed = norm(item);
-        upsert(self.teamFilters, normed);
-        upsert(self.incidentFilters, normed);
+
+        //force add to both if doesnt exist, dont remove if it does
+
+        const teamExists = self.teamFilters().some(x => x.id === norm(item).id);
+        if (!teamExists) self.teamFilters.push(item);
+
+        const incidentExists = self.incidentFilters().some(x => x.id === norm(item).id);
+        if (!incidentExists) self.incidentFilters.push(item);
+
         self.dropdownOpen(true);
         self.inputHasFocus(true);
         ev?.preventDefault();
         ev?.stopPropagation();
+
     }
 
     // Pills
@@ -208,7 +215,9 @@ export function ConfigVM(root, deps) {
             // Focus is moving into the dropdown (e.g., clicking a button) – keep it open
             return true;
         }
-        self.dropdownOpen(false);
+        window.setTimeout(function () {
+            self.dropdownOpen(false);
+        }, 150);
         return true;
     };
 

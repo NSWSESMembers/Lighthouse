@@ -866,23 +866,32 @@
                                 <!-- Results "dropdown" rendered via KO -->
                                 <ul class="dropdown-menu w-100 show" id="searchDropdown" role="listbox"
                                     data-bind="visible: config.dropdownOpen, foreach: config.results">
+
                                     <li>
-                                        <div class="d-flex justify-content-between align-items-center px-2">
-                                            <span class="dropdown-item-text text-truncate"
-                                                data-bind="text: name, attr:{title: name}"></span>
+                                        <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                            data-bind="click: $root.config.addTeamAndIncident">
+                                            <!-- Name / title -->
+                                            <span class="text-truncate"
+                                                data-bind="text: name, attr: { title: name }"></span>
+
+                                            <!-- Buttons for individual filters -->
                                             <div class="btn-group btn-group-sm ms-2">
-                                                <button class="btn btn-outline-primary"
-                                                    data-bind="click: $root.config.addTeam, clickBubble: true, css: { 'active': teamSelected() }">
-                                                    Filter Teams
+                                                <button type="button" class="btn btn-outline-primary" data-bind="click: $root.config.addTeam,
+                                   clickBubble: false,
+                                   css: { 'active': teamSelected() }">
+                                                    Teams
                                                 </button>
-                                                <button class="btn btn-outline-success"
-                                                    data-bind="click: $root.config.addIncident, clickBubble: true, css: { 'active': incidentSelected() }">
-                                                    Filter Incidents
+
+                                                <button type="button" class="btn btn-outline-success" data-bind="click: $root.config.addIncident,
+                                   clickBubble: false,
+                                   css: { 'active': incidentSelected() }">
+                                                    Incidents
                                                 </button>
                                             </div>
                                         </div>
                                     </li>
                                 </ul>
+
                             </div>
                         </div>
                     </div>
@@ -1442,56 +1451,48 @@
                     <!-- Contact Types -->
                     <h6>Contact Types</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[2]">
-                        <span class="tag-pill"
-                            data-bind="click: toggle,
+                        <span class="tag-pill" data-bind="click: toggle,
                                         css: { 'tag-selected': selected }">
 
                             <span data-bind="text: name"></span>
 
-                            <i class="far fa-times-circle tag-icon"
-                            data-bind="visible: selected"></i>
+                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
 
                     <!-- Contact Methods -->
                     <h6>Contact Methods</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[3]">
-                        <span class="tag-pill"
-                            data-bind="click: toggle,
+                        <span class="tag-pill" data-bind="click: toggle,
                                         css: { 'tag-selected': selected }">
 
                             <span data-bind="text: name"></span>
 
-                            <i class="far fa-times-circle tag-icon"
-                            data-bind="visible: selected"></i>
+                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
 
                     <!-- Entry Purpose -->
                     <h6>Entry Purpose</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[4]">
-                        <span class="tag-pill"
-                            data-bind="click: toggle,
+                        <span class="tag-pill" data-bind="click: toggle,
                                         css: { 'tag-selected': selected }">
 
                             <span data-bind="text: name"></span>
 
-                            <i class="far fa-times-circle tag-icon"
-                            data-bind="visible: selected"></i>
+                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
 
                     <!-- Action Items -->
                     <h6>Action Items</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[27]">
-                        <span class="action-pill"
-                            data-bind="click: toggle,
+                        <span class="action-pill" data-bind="click: toggle,
                                         css: { 'tag-selected': selected }">
 
                             <span data-bind="text: name"></span>
 
-                            <i class="far fa-times-circle tag-icon"
-                            data-bind="visible: selected"></i>
+                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
 
                         </span>
                     </div>
