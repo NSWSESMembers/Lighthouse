@@ -5,7 +5,7 @@ import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
 // 
 
 
-const FUNCTION_URL = "https://y4lq7u7ga3zhugj7ltx2kvju4y0zwnak.lambda-url.us-east-1.on.aws/";
+const FUNCTION_URL = "https://lambda.lighthouse-extension.com/";
 
 
 
