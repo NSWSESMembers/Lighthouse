@@ -86,6 +86,15 @@ export function Tasking(data = {}) {
     self.prettyAddress = ko.pureComputed(() => self.job.address.prettyAddress() || self.job.address.short());
 
 
+
+    //task has job thats visible in the current filter
+    self.hasJob = ko.pureComputed(() => !!self.job.isFilteredIn());
+
+    //same same but different ^
+    self.hasTeam = ko.pureComputed(() => !!self.team.isFilteredIn());
+
+
+
     // patch model with partial updates
     self.updateFrom = (patch = {}) => {
         if (patch.CurrentStatus !== undefined) self.currentStatus(patch.CurrentStatus);
@@ -116,6 +125,8 @@ export function Tasking(data = {}) {
             if (!exists) newJob.taskings.push(self);
         }
     };
+    
+
 
 
     self.getTeamLatLng = function () {
@@ -139,5 +150,23 @@ export function Tasking(data = {}) {
         return Number.isFinite(lat) && Number.isFinite(lng) ? L.latLng(lat, lng) : null;
     }
 
+    self.openRadioLogModal = function () {
+        this.job.openRadioLogModal(self);
+    };
 
+    self.tagColorFromStatus = function () {
+        const status = (self.currentStatus() || "").toLowerCase();
+        switch (status) {
+            case "tasked":
+                return "bg-primary";
+            case "enroute":
+                return "bg-info";
+            case "onsite":
+                return "bg-warning";
+            case "complete":
+                return "bg-success";
+            default:
+                return "bg-secondary";
+        }
+    }
 }

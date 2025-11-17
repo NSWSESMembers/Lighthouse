@@ -25,6 +25,9 @@ export class AssetPopupViewModel {
   }
 
   drawCrowsFliesToJob = (tasking) => {
+    if (tasking.job.isFilteredIn() === false) {
+      return;
+    }
     // clear any existing one first
     this.api.clearCrowFliesLine();
     if (!tasking) return;
@@ -158,5 +161,10 @@ export class AssetPopupViewModel {
     window.dispatchEvent(new CustomEvent('assignTeamToAsset', { detail: { assetId: id } }));
   }
 
+  dispose = () => {
+    // clean up any subscriptions or resources here
+    this.removeRouteToJob();
+    this.removeCrowsFliesToJob();
+  }
 
 }

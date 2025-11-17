@@ -21,7 +21,7 @@
                     <span class="small fw-semibold text-center flex-grow-1">Teams</span>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
-                        <div class="input-group input-group-sm" style="width:150px;">
+                        <div class="input-group input-group-sm" style="width:250px;">
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
                             <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: teamSearch, valueUpdate: 'input'">
@@ -46,12 +46,12 @@
                     </div>
                 </div>
                 <div class="table-responsive">
-                    <table class="teams table table-striped table-hover align-middle">
+                    <table class="teams table align-middle">
                         <colgroup>
                             <col style="width: 5%;"> <!-- chevron -->
-                            <col style="width: 30%;"> <!-- callsign -->
+                            <col style="width: 25%;"> <!-- callsign -->
                             <col style="width: 10%;"> <!-- status -->
-                            <col style="width: 15%;"> <!-- assigned hq -->
+                            <col style="width: 10%;"> <!-- assigned hq -->
                             <col style="width: 15%;"> <!-- Task Count -->
                             <col style="width: 20%"> <!-- team lead -->
                             <col style="width: 20%"> <!-- Actions -->
@@ -81,96 +81,210 @@
                             </tr>
                         </thead>
                         <tbody data-bind="foreach: { data: sortedTeams, as: 't' }">
-                            <tr class="team" data-bind="css:{expanded: t.expanded()}, droppableRow: { team: t, onDrop: $root.assignJobToTeam },
-                     attr:{'aria-expanded': t.expanded}, style: { '--bs-table-bg': t.taskingRowColour()}">
-                                <td class="chev">
-                                    <button type="button" class="btn btn-link p-0 text-decoration-none"
-                                        data-bind="click: t.toggle, attr:{ 'aria-expanded': t.expanded }"
-                                        aria-label="Expand/collapse team">
-                                        <i class="fa fa-solid"
-                                            data-bind="css: { 'fa-plus': !t.expanded(), 'fa-minus': t.expanded() }"></i>
-                                    </button>
-                                </td>
-                                <td data-bind="text: t.callsign"></td>
-                                <td data-bind="text: t.statusName"></td>
-                                <td data-bind="text: t.assignedTo.code"></td>
-                                <td data-bind="text: t.activeTaskingsCount"></td>
-                                <td data-bind="text: t.teamLeader"></td>
-                                <td>
-                                    <div class="btn-group btn-group-sm" role="group" aria-label="Tasking actions">
-                                        <button type="button" class="btn btn-outline-secondary" title="Radio Log"
-                                            data-bind="click: t.openRadioLog, clickBubble: false">
-                                            <i class="fa fa-solid fa-clipboard-list"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" title="Message"
-                                            data-bind="click: t.openMessage, clickBubble: false">
-                                            <i class="fa fa-solid fa-envelope"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" title="Edit"
-                                            data-bind="click: t.openBeaconEditTeam, clickBubble: false">
-                                            <i class="fas fa-external-link-alt"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-outline-secondary" title="Zoom to"
-                                            data-bind="click: t.markerFocus, disable: !t.trackableAssets().length, clickBubble: false">
-                                            <i class="fa fa-solid fa-crosshairs"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <!-- Expanded details row -->
-                            <tr class="team_body" data-bind="trVisible: t.expanded">
-                                <!-- colspan must equal column count (4) -->
+                            <tr class="team-row" data-bind="css:{expanded: t.expanded()},
+                   droppableRow: { team: t, onDrop: $root.assignJobToTeam },
+                   attr:{'aria-expanded': t.expanded}">
                                 <td colspan="7">
-                                    <div class="p-2">
-                                        <div class="btn-toolbar mb-2" role="toolbar" aria-label="Team actions">
-                                            <div class="btn-group me-2" role="group">
-                                                <button type="button" class="btn btn-sm btn-secondary"
-                                                    data-bind="click: t.fetchTasking">⟲</button>
+                                    <div class="team-card"
+                                        data-bind="css:{'team-card--expanded': t.expanded()}, click: t.toggle, attr:{ 'aria-expanded': t.expanded }">
+
+                                        <!-- SUMMARY BAR -->
+                                        <div class="team-summary"
+                                            data-bind="style: { 'background': t.taskingRowColour() }">
+                                            <!-- 1. Chevron -->
+                                            <div class="team-cell team-cell--chev">
+                                                <button type="button" class="btn btn-link p-0 text-decoration-none"
+                                                    data-bind="attr:{ 'aria-expanded': t.expanded }"
+                                                    aria-label="Expand/collapse team">
+                                                    <i class="fa fa-solid"
+                                                        data-bind="css: { 'fa-plus': !t.expanded(), 'fa-minus': t.expanded() }"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- 2. Callsign -->
+                                            <div class="team-cell team-cell--callsign" data-bind="text: t.callsign">
+                                            </div>
+
+                                            <!-- 3. Status -->
+                                            <div class="team-cell" data-bind="text: t.statusName"></div>
+
+                                            <!-- 4. HQ -->
+                                            <div class="team-cell" data-bind="text: t.assignedTo.code"></div>
+
+                                            <!-- 5. Task Count -->
+                                            <div class="team-cell" data-bind="text: t.activeTaskingsCount"></div>
+
+                                            <!-- 6. Team Leader -->
+                                            <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader">
+                                            </div>
+
+                                            <!-- 7. Actions -->
+                                            <div class="team-cell">
+                                                <div class="btn-group btn-group-sm" role="group"
+                                                    aria-label="Tasking actions">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        title="Radio Log"
+                                                        data-bind="click: t.openRadioLogModal, clickBubble: false">
+                                                        <i class="fa fa-solid fa-microphone"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        title="Message"
+                                                        data-bind="click: t.openMessage, clickBubble: false">
+                                                        <i class="fa fa-solid fa-envelope"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary" title="Edit"
+                                                        data-bind="click: t.openBeaconEditTeam, clickBubble: false">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        title="Zoom to"
+                                                        data-bind="click: t.markerFocus, disable: !t.trackableAssets().length, clickBubble: false">
+                                                        <i class="fa fa-solid fa-crosshairs"></i>
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
+                                        <!-- /team-summary -->
 
-                                        <div data-bind="visible: t.taskingLoading" class="text-center">
-                                            <div class="spinner-border" role="status" aria-label="Loading"></div>
-                                        </div>
+                                        <!-- EXPANDED PANEL (moved from old .team_body row) -->
+                                        <div class="team-details" data-bind="slideVisible: t.expanded">
+                                            <div class="card border-0 mb-0">
+                                                <div class="card-body p-2">
+                                                    <div class="row g-2">
 
-                                        <div class="table-responsive" data-bind="visible: !t.taskingLoading()">
-                                            <table
-                                                class="table table-sm table-striped table-bordered mb-0 align-middle">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th scope="col" style="width:5%;">#</th>
-                                                        <th scope="col" style="width:10%;">Type</th>
-                                                        <th scope="col" style="width:50%;">Address</th>
-                                                        <th scope="col" style="width:10%;">Status</th>
-                                                        <th scope="col" style="width:15%;">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody data-bind="foreach: { data: filteredTaskings, as: 't' }">
-                                                    <tr>
-                                                        <td data-bind="text: t.job.id"></td>
-                                                        <td data-bind="text: t.jobTypeName"></td>
-                                                        <td data-bind="text: t.prettyAddress"></td>
-                                                        <td>
-                                                            <span class="badge bg-warning text-dark"
-                                                                data-bind="text: t.currentStatus"></span>
-                                                        </td>
-                                                        <td>
-                                                            <div class="btn-group" role="group">
-                                                                <button type="button"
-                                                                    class="btn btn-sm btn-outline-primary"
-                                                                    data-bind="click: t.job.focusMap"
-                                                                    title="Focus on Map">Zoom</button>
+                                                        <!-- LEFT: team members + capabilities -->
+                                                        <div class="col-md-3 col-lg-3">
+                                                            <h6 class="text-muted mb-2">Team Members</h6>
+                                                            <ul class="list-unstyled team-members-list mb-0"
+                                                                data-bind="foreach: { data: members, as: 'm' }">
+                                                                <li class="team-member-row mb-1">
+                                                                    <div class="d-flex flex-column">
+                                                                        <div class="d-flex align-items-center">
+                                                                            <span class="fw-semibold me-2"
+                                                                                data-bind="text: m.Person.FirstName + ' ' + m.Person.LastName"></span>
+                                                                            <span class="badge bg-primary"
+                                                                                data-bind="visible: m.TeamLeader === true">TL</span>
+                                                                        </div>
+
+                                                                        <!-- optional role/position if present -->
+                                                                        <!-- <div class="small text-muted"
+                                                                            data-bind="text: m.Role"></div> -->
+
+                                                                        <!-- capabilities tags -->
+                                                                        <div class="team-member-tags mt-1"
+                                                                            data-bind="foreach: m.PersonCapabilityTags">
+                                                                            <span
+                                                                                class="badge rounded-pill bg-info text-dark me-1 mb-1"
+                                                                                data-bind="text: Name"></span>
+                                                                        </div>
+                                                                    </div>
+                                                                </li>
+                                                            </ul>
+                                                            <div class="text-muted"
+                                                                data-bind="visible: members().length === 0">
+                                                                Team has no members assigned.
                                                             </div>
-                                                        </td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div> <!-- /table-responsive -->
-                                    </div>
+                                                        </div>
+
+                                                        <!-- RIGHT: existing taskings table / summary -->
+                                                        <div class="col-md-9 col-lg-9">
+                                                            <div
+                                                                class="d-flex justify-content-between align-items-center mb-2">
+                                                                <h6 class="text-muted mb-0">Taskings</h6>
+                                                                <div class="btn-group btn-group-sm" role="group"
+                                                                    aria-label="Team actions">
+                                                                    <button type="button"
+                                                                        class="btn btn-outline-secondary"
+                                                                        title="Refresh taskings"
+                                                                        data-bind="click: t.fetchTasking">
+                                                                        <i class="fa fa-sync"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- loading indicator -->
+                                                            <div data-bind="visible: t.taskingLoading"
+                                                                class="text-center py-2">
+                                                                <div class="spinner-border spinner-border-sm"
+                                                                    role="status" aria-label="Loading"></div>
+                                                            </div>
+
+                                                            <!-- taskings table (use your existing markup here) -->
+                                                            <div class="table-responsive"
+                                                                data-bind="visible: !t.taskingLoading()">
+                                                                <table
+                                                                    class="table table-sm table-striped table-bordered mb-0 align-middle">
+                                                                    <thead class="table-light">
+                                                                        <tr>
+                                                                            <th style="width:15%;">#</th>
+                                                                            <th style="width:15%;">Type</th>
+                                                                            <th style="width:45%;">Address</th>
+                                                                            <th style="width:10%;">Status</th>
+                                                                            <th style="width:20%;">Actions</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody
+                                                                        data-bind="foreach: { data: filteredTaskings, as: 'ts' }">
+                                                                        <tr>
+                                                                            <td data-bind="text: ts.job.identifier">
+                                                                            </td>
+                                                                            <td data-bind="text: ts.jobTypeName"></td>
+                                                                            <td data-bind="text: ts.prettyAddress"></td>
+                                                                            <td>
+                                                                                <span class="badge"
+                                                                                    data-bind="class: ts.tagColorFromStatus(), text: ts.currentStatus"></span>
+                                                                            </td>
+                                                                            <td>
+                                                                                <div class="btn-group btn-group-sm"
+                                                                                    role="group">
+                                                                                    <button type="button"
+                                                                                        class="btn btn-outline-secondary"
+                                                                                        title="Radio Log"
+                                                                                        data-bind="click: ts.openRadioLogModal, clickBubble: false">
+                                                                                        <i class="fa fa-microphone"></i>
+                                                                                    </button>
+                                                                                    <button type="button"
+                                                                                        class="btn btn-outline-secondary"
+                                                                                        title="Update Team Status">
+                                                                                        <i class="fa fa-tasks"></i>
+                                                                                    </button>
+                                                                                    <button type="button"
+                                                                                        class="btn btn-outline-secondary"
+                                                                                        title="Message">
+                                                                                        <i class="fa fa-envelope"></i>
+                                                                                    </button>
+                                                                                    <button type="button"
+                                                                                        class="btn btn-outline-secondary"
+                                                                                        title="Edit">
+                                                                                        <i
+                                                                                            class="fas fa-external-link-alt"></i>
+                                                                                    </button>
+                                                                                    <button type="button"
+                                                                                        class="btn btn-outline-secondary"
+                                                                                        title="Zoom to"
+                                                                                        data-bind="click: ts.job.focusMap">
+                                                                                        <i class="fa fa-crosshairs"></i>
+                                                                                    </button>
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+
+                                                        </div><!-- /col taskings -->
+                                                    </div><!-- /row -->
+                                                </div><!-- /card-body -->
+                                            </div><!-- /card -->
+                                        </div><!-- /team-details -->
+
+                                        <!-- /team-details -->
+
+                                    </div><!-- /team-card -->
                                 </td>
                             </tr>
                         </tbody>
+
                     </table>
                 </div>
             </div>
@@ -190,7 +304,7 @@
                     <span class="small fw-semibold text-center flex-grow-1">Incidents</span>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
-                        <div class="input-group input-group-sm" style="width:150px;">
+                        <div class="input-group input-group-sm" style="width:250px;">
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
                             <input type="search" id="jobSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: jobSearch, valueUpdate: 'input'">
@@ -198,31 +312,226 @@
 
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
-                                id="jobMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa fa-cog"></i>
+                                id="jobMenu" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                aria-expanded="false">
+                                <i class="fa fa-filter"></i>
                             </button>
+
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jobMenu">
-                                <li><a class="dropdown-item" href="#" data-bind="click: fetchAllJobsData">Refresh
-                                        Jobs</a></li>
-                                <li><a class="dropdown-item" href="#">Show Only Open</a></li>
+
+                                <!-- Basic actions -->
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bind="click: fetchAllJobsData">
+                                        Refresh Jobs
+                                    </a>
+                                </li>
+
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#configModal">Page Config</a></li>
+
+                                <!-- INCIDENT STATUS FILTERS (collapsible section) -->
+                                <li>
+                                    <button class="dropdown-item d-flex justify-content-between align-items-center"
+                                        type="button" data-bs-toggle="collapse" data-bs-target="#jobStatusFilterMenu"
+                                        aria-expanded="false" aria-controls="jobStatusFilterMenu">
+                                        Incident Status Filters
+                                        <span class="ms-2 fa fa-chevron-right small"></span>
+                                    </button>
+                                    <div class="collapse dropdown-collapse-body" id="jobStatusFilterMenu">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusNew"
+                                                data-bind="jobStatusFilter: 'New', click: $root.config.save">
+                                            <label class="form-check-label" for="ddStatusNew">New</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusActive"
+                                                data-bind="jobStatusFilter: 'Active', click: $root.config.save">
+                                            <label class="form-check-label" for="ddStatusActive">Active</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusComplete"
+                                                data-bind="jobStatusFilter: 'Complete', click: $root.config.save">
+                                            <label class="form-check-label" for="ddStatusComplete">Complete</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusCancelled"
+                                                data-bind="jobStatusFilter: 'Cancelled', click: $root.config.save">
+                                            <label class="form-check-label" for="ddStatusCancelled">Cancelled</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusFinalised"
+                                                data-bind="jobStatusFilter: 'Finalised', click: $root.config.save">
+                                            <label class="form-check-label" for="ddStatusFinalised">Finalised</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusReferred"
+                                                data-bind="jobStatusFilter: 'Referred', click: $root.config.save">
+                                            <label class="form-check-label" for="ddStatusReferred">Referred</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusRejected"
+                                                data-bind="jobStatusFilter: 'Rejected', click: $root.config.save">
+                                            <label class="form-check-label" for="ddStatusRejected">Rejected</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusTasked"
+                                                data-bind="jobStatusFilter: 'Tasked', click: $root.config.save">
+                                            <label class="form-check-label" for="ddStatusTasked">Tasked</label>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+
+                                <!-- JOB TYPE FILTERS (collapsible section) -->
+                                <li>
+                                    <button class="dropdown-item d-flex justify-content-between align-items-center"
+                                        type="button" data-bs-toggle="collapse" data-bs-target="#jobTypeFilterMenu"
+                                        aria-expanded="false" aria-controls="jobTypeFilterMenu">
+                                        Incident Type Filters
+                                        <span class="ms-2 fa fa-chevron-right small"></span>
+                                    </button>
+                                    <div class="collapse dropdown-collapse-body" id="jobTypeFilterMenu">
+                                        <div class="dropdown-two-col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeStorm"
+                                                    data-bind="incidentTypeFilter: 'Storm', click: $root.config.save">
+                                                <label class="form-check-label" for="ddJobTypeStorm">Storm</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeSupport"
+                                                    data-bind="incidentTypeFilter: 'Support', click: $root.config.save">
+                                                <label class="form-check-label" for="ddJobTypeSupport">Support</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeFR"
+                                                    data-bind="incidentTypeFilter: 'FR', click: $root.config.save">
+                                                <label class="form-check-label" for="ddJobTypeFR">Flood Rescue
+                                                    (FR)</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeRCR"
+                                                    data-bind="incidentTypeFilter: 'RCR', click: $root.config.save">
+                                                <label class="form-check-label" for="ddJobTypeRCR">RCR</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeGLR"
+                                                    data-bind="incidentTypeFilter: 'GLR', click: $root.config.save">
+                                                <label class="form-check-label" for="ddJobTypeGLR">GLR</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeCFR"
+                                                    data-bind="incidentTypeFilter: 'CFR', click: $root.config.save">
+                                                <label class="form-check-label" for="ddJobTypeCFR">CFR</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeVR"
+                                                    data-bind="incidentTypeFilter: 'VR', click: $root.config.save">
+                                                <label class="form-check-label" for="ddJobTypeVR">VR</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeLAR"
+                                                    data-bind="incidentTypeFilter: 'LAR', click: $root.config.save">
+                                                <label class="form-check-label" for="ddJobTypeLAR">LAR</label>
+                                            </div>
+                                        </div>
+
+                                        <div class="dropdown-two-col">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeResupply"
+                                                    data-bind="incidentTypeFilter: 'Resupply'">
+                                                <label class="form-check-label" for="ddJobTypeResupply">Resupply</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeMedicalResupply"
+                                                    data-bind="incidentTypeFilter: 'MedicalResupply'">
+                                                <label class="form-check-label" for="ddJobTypeMedicalResupply">Medical
+                                                    Resupply</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeFodderDrop"
+                                                    data-bind="incidentTypeFilter: 'FodderDrop'">
+                                                <label class="form-check-label" for="ddJobTypeFodderDrop">Fodder
+                                                    Drop</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeVetAssistance"
+                                                    data-bind="incidentTypeFilter: 'VetAssistance'">
+                                                <label class="form-check-label" for="ddJobTypeVetAssistance">Vet
+                                                    Assistance</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeFloodMisc"
+                                                    data-bind="incidentTypeFilter: 'FloodMisc'">
+                                                <label class="form-check-label" for="ddJobTypeFloodMisc">Flood
+                                                    Misc</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeEvacuationPriority"
+                                                    data-bind="incidentTypeFilter: 'EvacuationPriority'">
+                                                <label class="form-check-label"
+                                                    for="ddJobTypeEvacuationPriority">Evacuation Priority</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeEvacuationSecondary"
+                                                    data-bind="incidentTypeFilter: 'EvacuationSecondary'">
+                                                <label class="form-check-label"
+                                                    for="ddJobTypeEvacuationSecondary">Evacuation Secondary</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox"
+                                                    id="ddJobTypeWelfareCheck"
+                                                    data-bind="incidentTypeFilter: 'WelfareCheck'">
+                                                <label class="form-check-label" for="ddJobTypeWelfareCheck">Welfare
+                                                    Check</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeTransport"
+                                                    data-bind="incidentTypeFilter: 'Transport'">
+                                                <label class="form-check-label"
+                                                    for="ddJobTypeTransport">Transport</label>
+                                            </div>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input" type="checkbox" id="ddJobTypeOther"
+                                                    data-bind="incidentTypeFilter: 'Tsunami'">
+                                                <label class="form-check-label" for="ddJobTypeOther">Tsunami</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+
+                                <!-- Open full config modal -->
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                        data-bs-target="#configModal">
+                                        Page Config
+                                    </a>
+                                </li>
                             </ul>
                         </div>
+
                     </div>
                 </div>
                 <div class="table-responsive">
                     <table class="jobs table align-middle">
                         <colgroup>
-                            <col style="width: 4%;"> <!-- chevron -->
+                            <col style="width: 2%;"> <!-- chevron -->
                             <col style="width: 10%;"> <!-- Id -->
                             <col style="width: 8%;"> <!-- Recieved -->
                             <col style="width: 8%;"> <!-- HQ -->
                             <col style="width: 8%;"> <!-- Type -->
-                            <col style="width: 30%;"> <!-- Situation -->
+                            <col style="width: 28%;"> <!-- Situation -->
                             <col style="width: 8%;"> <!-- Status -->
                             <col style="width: 22%;"> <!-- Address -->
                             <col style="width: 4%"> <!-- Actions -->
@@ -256,172 +565,241 @@
                                 <th scope="col">Actions</th>
                             </tr>
                         </thead>
+
                         <tbody data-bind="foreach: { data: sortedJobs, as: 'j' }">
-                            <!-- Summary row -->
-                            <tr class="job" draggable="true" data-bind="
-                                css: { expanded: j.expanded() },
-                                draggableRow: { data: j, kind: 'job' },
-                                attr: { 'aria-expanded': j.expanded },
-                                style: { '--bs-table-bg': j.rowColour()}
-                                ">
-                                <td class="chev">
-                                    <button type="button" class="btn btn-link p-0 text-decoration-none"
-                                        data-bind="click: j.toggle, attr:{ 'aria-expanded': j.expanded }"
-                                        aria-label="Expand/collapse incident">
-                                        <i class="fa fa-solid"
-                                            data-bind="css: { 'fa-plus': !j.expanded(), 'fa-minus': j.expanded() }"></i>
-                                    </button>
-                                </td>
-                                <td>
-                                    <span class="no-drag" data-bind="text: j.identifier"></span>
-                                    <em class="fa fa-fw fa-share-alt"
-                                        data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
-                                </td>
-                                <td><span class="no-drag" data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
-                                    data-bs-toggle="tooltip"></span></td>
-                                <td><span class="no-drag" data-bind="text: j.entityAssignedTo.code"></span></td>
-                                <td><span class="no-drag" data-bind="text: j.type + j.categoriesNameNumberDash"></span></td>
-                                <td><span class="no-drag" data-bind="text: j.situationOnScene"></span></td>
-                                <td><span class="no-drag" data-bind="text: j.statusName"></span></td>
-                                <td><span class="no-drag"
-                                        data-bind="text: j.address.prettyAddress()"></span>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm" role="group" aria-label="Incident actions">
-                                        <button type="button" class="btn btn-outline-secondary" title="Zoom to"
-                                            data-bind="click: j.focusMap, lickBubble: false">
-                                            <i id="drag-ignore" class="fa fa-solid fa-crosshairs"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-
-                            <!-- Expanded details row -->
-                            <tr class="job_body"
-                                data-bind="trVisible: j.expanded,  style: { '--bs-table-bg': j.rowColour(), color: j.rowColour() }">
+                            <tr class="job-row" data-bind="attr: { 'data-job-id': j.id }">
                                 <td colspan="9">
-                                    <div class="card">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong data-bind="text: j.identifier"></strong>
-                                                <span class="badge bg-secondary ms-2"
-                                                    data-bind="text: j.statusName"></span>
-                                            </div>
-                                            <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-small dropdown-toggle btn-outline-primary"
-                                                    type="button" id="assignTeamBtn" data-bs-toggle="dropdown"
-                                                    aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-solid fa-user-plus"></i>
-                                                </button>
-                                                <button class="btn btn-outline-secondary"
-                                                    data-bind="click: j.refreshData">
-                                                    <i class="fa fa-sync"></i> Refresh
-                                                </button>
-                                                <button class="btn btn-outline-primary" data-bind="click: j.focusMap">
-                                                    <i class="fa fa-crosshairs"></i> Focus
-                                                </button>
-                                                <button class="btn btn-outline-dark"
-                                                    data-bind="click: j.attachAndFillOpsLogModal">
-                                                    <i class="fa fa-list"></i> Ops Log
-                                                </button>
-                                                <button type="button" class="btn btn-outline-secondary" title="Edit"
-                                                    data-bind="click: j.openBeaconJobDetails, clickBubble: false">
-                                                    <i class="fas fa-external-link-alt"></i>
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div class="job-card" data-bind="css: { 'job-card--expanded': j.expanded() }">
 
-                                        <div class="card-body">
-                                            <div class="row mb-3">
-                                                <div class="col-md-6">
-                                                    <h6 class="text-muted mb-1">Incident Details</h6>
-                                                    <ul class="list-unstyled mb-0 small">
-                                                        <li><strong>Type:</strong> <span
-                                                                data-bind="text: j.typeName"></span></li>
-                                                        <li><strong>Priority:</strong> <span
-                                                                data-bind="text: j.priorityName"></span></li>
-                                                        <li><strong>Received:</strong> <span
-                                                                data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
-                                                                data-bs-toggle="tooltip"></span></li>
-                                                        <li><strong>Assigned HQ:</strong> <span
-                                                                data-bind="text: j.entityAssignedTo.name"></span></li>
-                                                    </ul>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <h6 class="text-muted mb-1">Location</h6>
-                                                    <ul class="list-unstyled mb-0 small">
-                                                        <li><strong>Address:</strong> <span
-                                                                data-bind="text: j.address.prettyAddress"></span></li>
-                                                        <li><strong>LGA:</strong> <span data-bind="text: j.lga"></span>
-                                                        </li>
-                                                        <li><strong>Latitude:</strong> <span
-                                                                data-bind="text: j.address.latitude"></span></li>
-                                                        <li><strong>Longitude:</strong> <span
-                                                                data-bind="text: j.address.longitude"></span></li>
-                                                    </ul>
-                                                </div>
+                                        <!-- SUMMARY BAR -->
+                                        <div class="job-summary"
+                                            data-bind="click: j.toggleAndLoad, style: { 'background': rowColour() }">
+                                            <!-- 1. Chevron / drag handle -->
+                                            <div class="job-cell job-cell--chev" draggable="true"
+                                                data-bind="draggableRow: { job: j }, click: j.toggleAndLoad, clickBubble: false">
+                                                <button type="button" class="btn btn-link p-0 text-decoration-none"
+                                                    data-bind="attr:{ 'aria-expanded': j.expanded }"
+                                                    aria-label="Expand/collapse incident">
+                                                    <i class="fa fa-solid"
+                                                        data-bind="css: { 'fa-plus': !j.expanded(), 'fa-minus': j.expanded() }"></i>
+                                                </button>
                                             </div>
 
-                                            <div class="border-top pt-2">
-                                                <h6 class="text-muted">Taskings</h6>
-                                                <div data-bind="visible: j.taskingLoading" class="text-center py-3">
-                                                    <div class="spinner-border" role="status"></div>
-                                                </div>
+                                            <!-- 2. Id -->
+                                            <div class="job-cell job-cell--id">
+                                                <span data-bind="text: j.identifierTrimmed"></span>
+                                                <em class="far fa-image"
+                                                    data-bind="visible: j.imageCount  > 0, attr:{ title: j.imageCount }"></em>
+                                                <em class="fa fa-fw fa-share-alt"
+                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
+                                            </div>
 
-                                                <div class="table-responsive" data-bind="visible: !j.taskingLoading()">
-                                                    <table class="table table-sm table-hover align-middle">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th>ID</th>
-                                                                <th>Team</th>
-                                                                <th>Status</th>
-                                                                <th>Updated</th>
-                                                                <th>Actions</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody data-bind="foreach: { data: j.sortedTaskings, as: 't' }">
-                                                            <tr>
-                                                                <td data-bind="text: t.id"></td>
-                                                                <td data-bind="text: t.teamCallsign"></td>
-                                                                <td>
-                                                                    <span class="badge bg-info text-dark"
-                                                                        data-bind="text: t.currentStatus"></span>
-                                                                </td>
-                                                                <td data-bind="text: t.statusTimeAgoLabel"></td>
-                                                                <td>
-                                                                    <div class="btn-group btn-group-sm">
-                                                                        <button class="btn btn-outline-secondary"
-                                                                            title="Radio Log"
-                                                                            data-bind="click: t.openRadioLog, clickBubble: false">
-                                                                            <i class="fa fa-clipboard-list"></i>
-                                                                        </button>
-                                                                        <button class="btn btn-outline-secondary"
-                                                                            title="Message"
-                                                                            data-bind="click: t.openMessage, clickBubble: false">
-                                                                            <i class="fa fa-envelope"></i>
-                                                                        </button>
-                                                                        <button class="btn btn-outline-secondary"
-                                                                            title="Edit"
-                                                                            data-bind="click: t.team.openBeaconEditTeam, clickBubble: false">
-                                                                            <i class="fas fa-external-link-alt"></i>
-                                                                        </button>
-                                                                        <button class="btn btn-outline-secondary"
-                                                                            title="Zoom to"
-                                                                            data-bind="click: t.team.markerFocus, disable: !t.team.trackableAssets().length, clickBubble: false">
-                                                                            <i class="fa fa-crosshairs"></i>
-                                                                        </button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
+                                            <!-- 3. Received -->
+                                            <div class="job-cell job-cell--received">
+                                                <span data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
+                                                    data-bs-toggle="tooltip"></span>
+                                            </div>
+
+                                            <!-- 4. HQ -->
+                                            <div class="job-cell job-cell--hq">
+                                                <span data-bind="text: j.entityAssignedTo.code"></span>
+                                            </div>
+
+                                            <!-- 5. Type -->
+                                            <div class="job-cell job-cell--type">
+                                                <span data-bind="text: j.typeShort + j.categoriesNameNumberDash"></span>
+                                            </div>
+
+                                            <!-- 6. Situation -->
+                                            <div class="job-cell job-cell--situation">
+                                                <span data-bind="text: j.situationOnScene"></span>
+                                            </div>
+
+                                            <!-- 7. Status -->
+                                            <div class="job-cell job-cell--status">
+                                                <span data-bind="text: j.statusName"></span>
+                                            </div>
+
+                                            <!-- 8. Address -->
+                                            <div class="job-cell job-cell--address">
+                                                <span data-bind="text: j.address.prettyAddress()"></span>
+                                            </div>
+
+                                            <!-- 9. Actions -->
+                                            <div class="job-cell job-cell--actions">
+                                                <div class="btn-group btn-group-sm" role="group"
+                                                    aria-label="Incident actions">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                        title="Zoom to"
+                                                        data-bind="click: j.focusMap, clickBubble: false">
+                                                        <i id="drag-ignore" class="fa fa-solid fa-crosshairs"></i>
+                                                    </button>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
+                                        </div><!-- /job-summary -->
+
+
+                                        <!-- DETAILS PANEL -->
+                                        <div class="job-details" data-bind="slideVisible: j.expanded">
+                                            <div class="card border-0 mb-0">
+                                                <div
+                                                    class="card-header d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong data-bind="text: j.identifier"></strong>
+                                                        <span class="badge bg-secondary ms-2"
+                                                            data-bind="text: j.statusName"></span>
+                                                    </div>
+                                                    <div class="btn-group btn-group-sm">
+                                                        <button
+                                                            class="btn btn-small dropdown-toggle btn-outline-primary"
+                                                            type="button" id="assignTeamBtn" data-bs-toggle="dropdown"
+                                                            aria-haspopup="true" aria-expanded="false">
+                                                            <i class="fa fa-solid fa-user-plus"></i>
+                                                        </button>
+                                                        <button class="btn btn-outline-secondary"
+                                                            data-bind="click: j.refreshData">
+                                                            <i class="fa fa-sync"></i> Refresh
+                                                        </button>
+                                                        <button class="btn btn-outline-primary"
+                                                            data-bind="click: j.focusMap">
+                                                            <i class="fa fa-crosshairs"></i> Focus
+                                                        </button>
+                                                        <button class="btn btn-outline-dark"
+                                                            data-bind="click: j.attachAndFillOpsLogModal">
+                                                            <i class="fa fa-list"></i> Ops Log
+                                                        </button>
+                                                        <button class="btn btn-outline-dark"
+                                                            data-bind="click: j.openNewOpsLogModal">
+                                                            <i class="fa fa-list"></i> New Ops Log
+                                                        </button>
+                                                        <button type="button" class="btn btn-outline-secondary"
+                                                            title="Edit"
+                                                            data-bind="click: j.openBeaconJobDetails, clickBubble: false">
+                                                            <i class="fas fa-external-link-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div class="card-body">
+                                                    <!-- Incident Details / Location -->
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <h6 class="text-muted mb-1">Incident Details</h6>
+                                                            <ul class="list-unstyled mb-0 small">
+                                                                <li><strong>Type:</strong> <span
+                                                                        data-bind="text: j.typeName"></span></li>
+                                                                <li><strong>Priority:</strong> <span
+                                                                        data-bind="text: j.priorityName"></span></li>
+                                                                <li><strong>Received:</strong>
+                                                                    <span
+                                                                        data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
+                                                                        data-bs-toggle="tooltip"></span>
+                                                                </li>
+                                                                <li><strong>Assigned HQ:</strong>
+                                                                    <span
+                                                                        data-bind="text: j.entityAssignedTo.name"></span>
+                                                                </li>
+                                                                <li><strong>Assigned Zone:</strong>
+                                                                    <span
+                                                                        data-bind="text: j.returnParentEntityName()"></span>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <h6 class="text-muted mb-1">Location</h6>
+                                                            <ul class="list-unstyled mb-0 small">
+                                                                <li><strong>Address:</strong>
+                                                                    <span
+                                                                        data-bind="text: j.address.prettyAddress"></span>
+                                                                </li>
+                                                                <li><strong>LGA:</strong> <span
+                                                                        data-bind="text: j.lga"></span></li>
+                                                                <li><strong>Latitude:</strong>
+                                                                    <span data-bind="text: j.address.latitude"></span>
+                                                                </li>
+                                                                <li><strong>Longitude:</strong>
+                                                                    <span data-bind="text: j.address.longitude"></span>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="border-top pt-2">
+                                                        <!-- ko if: j.taskingLoading -->
+                                                        <h6 class="text-muted">Loading Taskings...</h6>
+                                                        <!-- /ko -->
+                                                        <!-- ko ifnot: j.taskingLoading -->
+                                                        <h6 class="text-muted">Taskings</h6>
+                                                        <!-- /ko -->
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm table-hover align-middle">
+                                                                <thead class="table-light">
+                                                                    <tr>
+                                                                        <th>ID</th>
+                                                                        <th>Team</th>
+                                                                        <th>Status</th>
+                                                                        <th>Updated</th>
+                                                                        <th>Actions</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody
+                                                                    data-bind="foreach: { data: j.sortedTaskings, as: 't' }">
+                                                                    <tr>
+                                                                        <td data-bind="text: t.id"></td>
+                                                                        <td data-bind="text: t.teamCallsign"></td>
+                                                                        <td>
+                                                                            <span class="badge"
+                                                                                data-bind="text: t.currentStatus, css: t.tagColorFromStatus()"></span>
+                                                                        </td>
+                                                                        <td data-bind="text: t.statusTimeAgoLabel"></td>
+                                                                        <td>
+                                                                            <div class="btn-group btn-group-sm">
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Radio Log"
+                                                                                    data-bind="click: t.openRadioLogModal, clickBubble: false">
+                                                                                    <i class="fa fa-microphone"></i>
+                                                                                </button>
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Update Team Status">
+                                                                                    <i class="fa fa-tasks"></i>
+                                                                                </button>
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Message"
+                                                                                    data-bind="click: t.openMessage, clickBubble: false">
+                                                                                    <i class="fa fa-envelope"></i>
+                                                                                </button>
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Edit"
+                                                                                    data-bind="click: t.team.openBeaconEditTeam, clickBubble: false">
+                                                                                    <i
+                                                                                        class="fas fa-external-link-alt"></i>
+                                                                                </button>
+                                                                                <button
+                                                                                    class="btn btn-outline-secondary"
+                                                                                    title="Zoom to"
+                                                                                    data-bind="click: t.team.markerFocus, disable: !t.team.trackableAssets().length, clickBubble: false">
+                                                                                    <i class="fa fa-crosshairs"></i>
+                                                                                </button>
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div><!-- /border-top -->
+                                                </div><!-- /card-body -->
+                                            </div><!-- /card -->
+                                        </div><!-- /job-details -->
+                                    </div><!-- /job-card -->
                                 </td>
                             </tr>
                         </tbody>
+
+
                     </table>
                 </div>
             </div>
@@ -461,9 +839,15 @@
     <div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Page Configuration</h5>
+                <div class="modal-header py-2 px-3">
+
+                    <div class="d-flex flex-column">
+                        <h5 class="modal-title mb-1">Page Configuration</h5>
+                    </div>
+
+
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+
                 </div>
 
                 <div class="modal-body">
@@ -605,42 +989,263 @@
                                             controls</label>
                                     </div>
                                 </div>
-                                <div class="col-sm-6 col-md-3">
-                                    <label for="defaultHQ" class="form-label">Default HQ</label>
-                                    <input id="defaultHQ" type="text" class="form-control"
-                                        data-bind="value: config.defaultHQ">
-                                </div>
 
                                 <!-- inside Other Settings card -->
-                                <div class="col-12">
-                                    <label class="form-label d-block mb-2">Show Teams With Status:</label>
-                                    <div class="border rounded p-2" id="teamStatusBox">
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox"
-                                                id="statusActivated" value="Activated" checked>
-                                            <label class="form-check-label" for="statusActivated">Activated</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox"
-                                                id="statusStandby" value="Standby" checked>
-                                            <label class="form-check-label" for="statusStandby">Standby</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox"
-                                                id="statusStoodDown" value="Stood down" checked>
-                                            <label class="form-check-label" for="statusStoodDown">Stood down</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox" id="statusRest"
-                                                value="Rest" checked>
-                                            <label class="form-check-label" for="statusRest">Rest</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input team-status" type="checkbox"
-                                                id="statusOnAlert" value="On Alert" checked>
-                                            <label class="form-check-label" for="statusOnAlert">On Alert</label>
+                                <div class="row">
+                                    <div class="col-3">
+                                        <label class="form-label d-block mb-2">Show Incidents With Status:</label>
+                                        <div class="border rounded p-2" id="jobStatusBox">
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusFinalised" value="Finalised"
+                                                    data-bind="jobStatusFilter: 'Finalised'">
+                                                <label class="form-check-label" for="statusFinalised">Finalised</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusCancelled" value="Cancelled"
+                                                    data-bind="jobStatusFilter: 'Cancelled'">
+                                                <label class="form-check-label" for="statusCancelled">Cancelled</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusComplete" value="Complete"
+                                                    data-bind="jobStatusFilter: 'Complete'">
+                                                <label class="form-check-label" for="statusComplete">Complete</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusActive" value="Active"
+                                                    data-bind="jobStatusFilter: 'Active'">
+                                                <label class="form-check-label" for="statusActive">Active</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusPending" value="New" data-bind="jobStatusFilter: 'New'">
+                                                <label class="form-check-label" for="statusPending">New</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusOnHold" value="Referred"
+                                                    data-bind="jobStatusFilter: 'Referred'">
+                                                <label class="form-check-label" for="statusOnHold">Referred</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusRejected" value="Rejected"
+                                                    data-bind="jobStatusFilter: 'Rejected'">
+                                                <label class="form-check-label" for="statusRejected">Rejected</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusTasked" value="Tasked"
+                                                    data-bind="jobStatusFilter: 'Tasked'">
+                                                <label class="form-check-label" for="statusTasked">Tasked</label>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div class="col-3">
+                                        <label class="form-label d-block mb-2">Show Teams With Status:</label>
+                                        <div class="border rounded p-2" id="teamStatusBox">
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusActivated" value="Activated"
+                                                    data-bind="teamStatusFilter: 'Activated'">
+                                                <label class="form-check-label" for="statusActivated">Activated</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusStandby" value="Standby"
+                                                    data-bind="teamStatusFilter: 'Standby'">
+                                                <label class="form-check-label" for="statusStandby">Standby</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusStoodDown" value="Stood down"
+                                                    data-bind="teamStatusFilter: 'Stood down'">
+                                                <label class="form-check-label" for="statusStoodDown">Stood
+                                                    down</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusRest" value="Rest" data-bind="teamStatusFilter: 'Rest'">
+                                                <label class="form-check-label" for="statusRest">Rest</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="statusOnAlert" value="On Alert"
+                                                    data-bind="teamStatusFilter: 'On Alert'">
+                                                <label class="form-check-label" for="statusOnAlert">On Alert</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-3">
+                                        <label class="form-label d-block mb-2">Show Incidents Of Type:</label>
+                                        <div class="border rounded p-2" id="jobTypeBox">
+
+                                            <!-- Storm -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeStorm" value="Storm"
+                                                    data-bind="incidentTypeFilter: 'Storm'">
+                                                <label class="form-check-label" for="jobTypeStorm">Storm</label>
+                                            </div>
+
+                                            <!-- Support -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeSupport" value="Support"
+                                                    data-bind="incidentTypeFilter: 'Support'">
+                                                <label class="form-check-label" for="jobTypeSupport">Support</label>
+                                            </div>
+
+                                            <!-- Flood Rescue (FR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeFR"
+                                                    value="FR" data-bind="incidentTypeFilter: 'FR'">
+                                                <label class="form-check-label" for="jobTypeFR">Flood Rescue
+                                                    (FR)</label>
+                                            </div>
+
+                                            <!-- Road Crash Rescue (RCR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeRCR"
+                                                    value="RCR" data-bind="incidentTypeFilter: 'RCR'">
+                                                <label class="form-check-label" for="jobTypeRCR">Road Crash Rescue
+                                                    (RCR)</label>
+                                            </div>
+
+                                            <!-- General Land Rescue (GLR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeGLR"
+                                                    value="GLR" data-bind="incidentTypeFilter: 'GLR'">
+                                                <label class="form-check-label" for="jobTypeGLR">General Land Rescue
+                                                    (GLR)</label>
+                                            </div>
+
+                                            <!-- Community First Responder (CFR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeCFR"
+                                                    value="CFR" data-bind="incidentTypeFilter: 'CFR'">
+                                                <label class="form-check-label" for="jobTypeCFR">Community First
+                                                    Responder (CFR)</label>
+                                            </div>
+
+                                            <!-- Vertical Rescue (VR) -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeVR"
+                                                    value="VR" data-bind="incidentTypeFilter: 'VR'">
+                                                <label class="form-check-label" for="jobTypeVR">Vertical Rescue
+                                                    (VR)</label>
+                                            </div>
+
+                                            <!-- LAR -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeLAR"
+                                                    value="LAR" data-bind="incidentTypeFilter: 'LAR'">
+                                                <label class="form-check-label" for="jobTypeLAR">Large Animal Rescue
+                                                    (LAR)</label>
+                                            </div>
+
+                                            <!-- Resupply -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeResupply" value="Resupply"
+                                                    data-bind="incidentTypeFilter: 'Resupply'">
+                                                <label class="form-check-label" for="jobTypeResupply">Resupply</label>
+                                            </div>
+
+                                            <!-- Medical Resupply -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeMedicalResupply" value="MedicalResupply"
+                                                    data-bind="incidentTypeFilter: 'MedicalResupply'">
+                                                <label class="form-check-label" for="jobTypeMedicalResupply">Medical
+                                                    Resupply</label>
+                                            </div>
+
+                                            <!-- Fodder Drop -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeFodderDrop" value="FodderDrop"
+                                                    data-bind="incidentTypeFilter: 'FodderDrop'">
+                                                <label class="form-check-label" for="jobTypeFodderDrop">Fodder
+                                                    Drop</label>
+                                            </div>
+
+                                            <!-- Vet Assistance -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeVetAssistance" value="VetAssistance"
+                                                    data-bind="incidentTypeFilter: 'VetAssistance'">
+                                                <label class="form-check-label" for="jobTypeVetAssistance">Vet
+                                                    Assistance</label>
+                                            </div>
+
+                                            <!-- Flood Misc -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeFloodMisc" value="FloodMisc"
+                                                    data-bind="incidentTypeFilter: 'FloodMisc'">
+                                                <label class="form-check-label" for="jobTypeFloodMisc">Flood
+                                                    Misc</label>
+                                            </div>
+
+                                            <!-- Evacuation A -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeEvacA" value="EvacuationPriority"
+                                                    data-bind="incidentTypeFilter: 'EvacuationPriority'">
+                                                <label class="form-check-label" for="jobTypeEvacA">Evacuation Priority
+                                                    (A)</label>
+                                            </div>
+
+                                            <!-- Evacuation B -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeEvacB" value="EvacuationSecondary"
+                                                    data-bind="incidentTypeFilter: 'EvacuationSecondary'">
+                                                <label class="form-check-label" for="jobTypeEvacB">Evacuation Secondary
+                                                    (B)</label>
+                                            </div>
+
+                                            <!-- Welfare Check -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeWelfareCheck" value="WelfareCheck"
+                                                    data-bind="incidentTypeFilter: 'WelfareCheck'">
+                                                <label class="form-check-label" for="jobTypeWelfareCheck">Welfare Check
+                                                    (B)</label>
+                                            </div>
+
+                                            <!-- Transport -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeTransport" value="Transport"
+                                                    data-bind="incidentTypeFilter: 'Transport'">
+                                                <label class="form-check-label" for="jobTypeTransport">Transport
+                                                    (B)</label>
+                                            </div>
+
+                                            <!-- Other -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeOther" value="Other"
+                                                    data-bind="incidentTypeFilter: 'Other'">
+                                                <label class="form-check-label" for="jobTypeOther">Other (B)</label>
+                                            </div>
+
+                                            <!-- Tsunami -->
+                                            <div class="form-check">
+                                                <input class="form-check-input job-type" type="checkbox"
+                                                    id="jobTypeTsunami" value="Tsunami"
+                                                    data-bind="incidentTypeFilter: 'Tsunami'">
+                                                <label class="form-check-label" for="jobTypeTsunami">Tsunami</label>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
                                 </div>
                             </form>
                         </div>
@@ -648,10 +1253,60 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+
+                        <!-- Shared key -->
+                        <div class="small" data-bind="visible: config.shareId || config.sharing()">
+                            <!-- Spinner when loading -->
+                            <span class="spinner-border spinner-border-sm text-muted" role="status"
+                                data-bind="visible: config.sharing"></span>
+
+                            <!-- Key when NOT loading -->
+                            <code class="user-select-all sharecode"
+                                data-bind="visible: !config.sharing(), text: config.shareId"></code>
+                        </div>
+                        <button type="button" class="btn btn-outline-secondary px-2"
+                            data-bind="click: config.share, disable: config.sharing">
+                            <i class="fa fa-share-alt me-1"></i> Share
+                        </button>
+
+
+                        <!-- LOAD wrapper -->
+                        <div class="load-wrapper d-flex align-items-center"
+                            data-bind="css: { 'load-expanded': config.loadExpanded() }">
+
+                            <!-- Collapsed "Load" button -->
+                            <button type="button" class="btn btn-outline-secondary px-2" data-bind="click: config.openLoadBox,
+                               visible: !config.loadExpanded()">
+                                <i class="fas fa-cloud-download-alt"></i> Load
+                            </button>
+
+                            <!-- Expanded form -->
+                            <form class="d-flex align-items-center gap-2 load-form" data-bind="visible: config.loadExpanded,
+                             submit: config.loadSharedFromField">
+
+                                <input type="text" class="form-control form-control-sm load-input"
+                                    placeholder="Enter key" style="width:0; opacity:0;" data-bind="textInput: config.shareKeyInput,
+                                  enable: !config.loadingShared(),
+                                  css: { 'expanded-input': config.loadExpanded() }">
+
+                                <button type="submit" class="btn btn-outline-secondary"
+                                    data-bind="disable: config.loadingShared, visible: config.loadExpanded">
+                                    Go
+                                </button>
+
+                                <button type="button" class="btn btn-outline-secondary"
+                                    data-bind="click: config.closeLoadBox, visible: config.loadExpanded">
+                                    Cancel
+                                </button>
+                            </form>
+
+                        </div>
+
+                    </div>
                     <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
                         data-bind="click: config.save, disable: tokenLoading">
-                        <span data-bind="visible: !tokenLoading()">Save</span>
+                        <span data-bind="visible: !tokenLoading()">Save & Close</span>
                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
                             data-bind="visible: tokenLoading"></span>
                         <span data-bind="visible: tokenLoading">Loading...</span>
@@ -733,6 +1388,125 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Radio Log Modal -->
+    <!-- Need to add some sort of error message if it fails -->
+    <div class="modal fade" id="RadioLogModal" tabindex="-1" aria-labelledby="RadioLogModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" data-bind="with: NewOpsLogModalVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="RadioLogModalLabel">
+                        <span data-bind="text: headerLabel"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
+                        <span data-bind="text: errorMessage"></span>
+                    </div>
+                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
+                        data-bind="value: text"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bind="click: submit">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Ops Log Modal -->
+    <!-- Need to add some sort of error message if it fails -->
+    <div class="modal fade" id="NewOpsLogModal" tabindex="-1" aria-labelledby="NewOpsLogModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" data-bind="with: NewOpsLogModalVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="NewOpsLogModalLabel">
+                        <span data-bind="text: headerLabel"></span>
+                    </h5>
+
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
+                        <span data-bind="text: errorMessage"></span>
+                    </div>
+                    <!-- Contact Types -->
+                    <h6>Contact Types</h6>
+                    <div class="tag-list" data-bind="foreach: tagsByGroup[2]">
+                        <span class="tag-pill"
+                            data-bind="click: toggle,
+                                        css: { 'tag-selected': selected }">
+
+                            <span data-bind="text: name"></span>
+
+                            <i class="far fa-times-circle tag-icon"
+                            data-bind="visible: selected"></i>
+                        </span>
+                    </div>
+
+                    <!-- Contact Methods -->
+                    <h6>Contact Methods</h6>
+                    <div class="tag-list" data-bind="foreach: tagsByGroup[3]">
+                        <span class="tag-pill"
+                            data-bind="click: toggle,
+                                        css: { 'tag-selected': selected }">
+
+                            <span data-bind="text: name"></span>
+
+                            <i class="far fa-times-circle tag-icon"
+                            data-bind="visible: selected"></i>
+                        </span>
+                    </div>
+
+                    <!-- Entry Purpose -->
+                    <h6>Entry Purpose</h6>
+                    <div class="tag-list" data-bind="foreach: tagsByGroup[4]">
+                        <span class="tag-pill"
+                            data-bind="click: toggle,
+                                        css: { 'tag-selected': selected }">
+
+                            <span data-bind="text: name"></span>
+
+                            <i class="far fa-times-circle tag-icon"
+                            data-bind="visible: selected"></i>
+                        </span>
+                    </div>
+
+                    <!-- Action Items -->
+                    <h6>Action Items</h6>
+                    <div class="tag-list" data-bind="foreach: tagsByGroup[27]">
+                        <span class="action-pill"
+                            data-bind="click: toggle,
+                                        css: { 'tag-selected': selected }">
+
+                            <span data-bind="text: name"></span>
+
+                            <i class="far fa-times-circle tag-icon"
+                            data-bind="visible: selected"></i>
+
+                        </span>
+                    </div>
+                    <h6>Subject</h6>
+                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="1" maxlength="50"
+                        data-bind="value: subject"></textarea>
+                    <h6>Text</h6>
+                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
+                        data-bind="value: text"></textarea>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bind="click: submit">Submit</button>
                 </div>
             </div>
         </div>

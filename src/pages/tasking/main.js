@@ -13,6 +13,8 @@ import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
 import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
+import { NewOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
+import { getAllStaticTags, Tag } from "./models/Tag.js";
 
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
@@ -23,6 +25,7 @@ import { Team } from './models/Team.js';
 import { Job } from './models/Job.js';
 
 import { canon } from './utils/common.js';
+import { Enum } from './utils/enum.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
 
@@ -252,10 +255,13 @@ function VM() {
     self.jobs = ko.observableArray();
     self.taskings = ko.observableArray();
     self.trackableAssets = ko.observableArray([]);
-
-
+    self.allTags = ko.observableArray(
+        getAllStaticTags().map(t => new Tag(t))
+    );
+    
     ///opslog short cuts
     self.opsLogModalVM = new OpsLogModalVM(self);
+    self.NewOpsLogModalVM = new NewOpsLogModalVM(self);
     self.selectedJob = ko.observable(null);
 
 
@@ -340,40 +346,32 @@ function VM() {
 
     // --- END TABLE SORTING MAGIC ---
 
-    //TODO: make these user configurable via UI
-    // filters for what teams to ignore
-    self.teamStatusFilterList = ko.observableArray([
-        "Standby",
-        "Stood down"
-    ]);
-
-    //TODO: make these user configurable via UI
-    //filters for what jobs to ignore
-    self.jobsStatusFilterList = ko.observableArray([
-        "Finalised",
-        "Cancelled",
-        "Complete"
-    ])
-
     //Job filtering/searching
     self.jobSearch = ko.observable('');
 
     self.filteredJobs = ko.pureComputed(() => {
 
-        const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
+        const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
         const term = self.jobSearch().toLowerCase();
 
+        const allowedStatus = self.config.jobStatusFilter(); // allow-list
+        const incidentTypeAllowed = self.config.incidentTypeFilter();
+
         return ko.utils.arrayFilter(this.jobs(), jb => {
-
-            // If its an ignored status return false
-
-            if (self.jobsStatusFilterList().includes(jb.statusName())) {
-                return false
-            }
-
-            // If no HQ filters are active, skip HQ filtering
+            const statusName = jb.statusName();
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
 
+            // If allow-list non-empty, only show jobs whose status is in it
+            if (allowedStatus.length > 0 && !allowedStatus.includes(statusName)) {
+                return false;
+            }
+
+            // If incident type filter non-empty, only show jobs whose type is in it
+            if (incidentTypeAllowed.length > 0 && !incidentTypeAllowed.includes(jb.typeName())) {
+                return false;
+            }
+
+            //must match HQ filter
             if (!hqMatch) return false;
 
             // Apply text search
@@ -386,20 +384,28 @@ function VM() {
 
     self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
 
-        const ignoreList = self.jobsStatusFilterList();
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
+        const allowedStatus = self.config.jobStatusFilter(); // allow-list
+
+        const incidentTypeAllowed = self.config.incidentTypeFilter();
+
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
 
-            // If its an ignored status return false
+            const statusName = jb.statusName();
 
-            if (ignoreList.includes(jb.statusName())) {
-                return false
+            // If allow-list non-empty, only show jobs whose status is in it
+            if (allowedStatus.length > 0 && !allowedStatus.includes(statusName)) {
+                return false;
+            }
+
+            // If incident type filter non-empty, only show jobs whose type is in it
+            if (incidentTypeAllowed.length > 0 && !incidentTypeAllowed.includes(jb.typeName())) {
+                return false;
             }
 
             // If no HQ filters are active, skip HQ filtering
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
-
             if (!hqMatch) return false;
 
             return true
@@ -410,19 +416,33 @@ function VM() {
     self.teamSearch = ko.observable('');
 
     self.filteredTeams = ko.pureComputed(() => {
-        return ko.utils.arrayFilter(this.teams(), tm => {
-            if (tm.status() == null) {
-                return false
+        const allowed = self.config.teamStatusFilter(); // allow-list
+
+        return ko.utils.arrayFilter(self.teams(), tm => {
+
+            const status = tm.status()?.Name;
+            const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
+            if (status == null) {
+                return false;
             }
-            if (self.teamStatusFilterList().includes(tm.status())) {
-                return false
+
+            // If allow-list non-empty, only show teams whose status is in it
+            if (allowed.length > 0 && !allowed.includes(status)) {
+                return false;
             }
+
+            //must match HQ filter
+            if (!hqMatch) {
+                return false;
+            }
+
             const term = self.teamSearch().toLowerCase();
             if (tm.callsign().toLowerCase().includes(term)) {
-                return true
+                return true;
             }
-            return false
-        })
+
+            return false;
+        });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
 
@@ -433,6 +453,7 @@ function VM() {
         if (!self.trackableAssets) return [];
 
 
+
         return ko.utils.arrayFilter(self.trackableAssets() || [], a => {
             const teams = ko.unwrap(a.matchingTeams);
             if (!Array.isArray(teams) || teams.length === 0) return false;
@@ -440,7 +461,7 @@ function VM() {
             // Return true if at least one team's status() is not in ignoreList
             return teams.some(t => {
                 const status = ko.unwrap(t.status);
-                return status && !self.teamStatusFilterList().includes(status);
+                return status && !self.config.teamStatusFilter().includes(status) && t.isFilteredIn();
             });
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
@@ -470,6 +491,14 @@ function VM() {
                 self.attachOpsLogModal(job);
             },
 
+            openRadioLogModal: (tasking) => {
+                self.attachJobRadioLogModal(tasking);
+            },
+
+            openNewOpsLogModal: (job) => {
+                self.attachNewOpsLogModal(job);
+            },
+
             fetchUnacknowledgedJobNotifications: (job) => {
                 self.fetchUnacknowledgedJobNotifications(job);
             }
@@ -492,15 +521,16 @@ function VM() {
                     map.flyTo([lat, lng], 14, { animate: true, duration: 0.10 });
                     asset.marker?.openPopup?.();
                 }
-            }
+            },
+
+            openRadioLogModal: (team) => {
+                self.attachTeamRadioLogModal(team);
+            },
         };
 
         let team = self.teamsById.get(teamJson.Id);
         if (team) {
-            team.callsign(teamJson.Callsign ?? team.callsign());
-            if (teamJson.CurrentStatusId != null) team.updateStatusById(teamJson.CurrentStatusId);
-            else team.status(teamJson.TeamStatusType || team.status());
-            team.members = ko.observableArray(teamJson.Members);
+            team.updateFromJson(teamJson);
             self._refreshTeamTrackableAssets(team);
             return team;
         }
@@ -519,7 +549,44 @@ function VM() {
         self.selectedJob(job);
         self.opsLogModalVM.openForJob(job);
         modal.show();
-    }
+    };
+
+    self.attachJobRadioLogModal = function (tasking) {
+        const modalEl = document.getElementById('RadioLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.NewOpsLogModalVM;
+
+        vm.modalInstance = modal;
+
+        vm.openForTasking(tasking);
+        modal.show();
+    };
+
+    self.attachTeamRadioLogModal = function (team) {
+        const modalEl = document.getElementById('RadioLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.NewOpsLogModalVM;
+
+        vm.modalInstance = modal;
+
+        vm.openForTeam(team);
+        modal.show();
+    };
+
+    self.attachNewOpsLogModal = function (job) {
+        const modalEl = document.getElementById('NewOpsLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.NewOpsLogModalVM;
+
+        vm.modalInstance = modal;
+
+        vm.openForNewJobLog(job);
+        modal.show();
+    };
+
 
     // Job registry/upsert
     // might be called from tasking OR job fetch so values might be missing
@@ -529,7 +596,6 @@ function VM() {
         if (job) {
             console.log("Updating existing job:", job.id());
             job.updateFromJson(jobJson);
-            job.lastDataUpdate = new Date()
             return job;
         }
         job = new Job(jobJson, deps);
@@ -704,10 +770,13 @@ function VM() {
     }
 
     //fetch tasking if a team is added
-    self.filteredTeams.subscribe((data) => {
-        data.forEach(change => {
-            if (change.status === 'added') {
-                change.value.fetchTasking()
+    self.filteredTeams.subscribe((changes) => {
+        changes.forEach(ch => {
+            if (ch.status === 'added') {
+                ch.value.isFilteredIn(true);
+                ch.value.fetchTasking();
+            } else if (ch.status === 'deleted') {
+                ch.value.isFilteredIn(false);
             }
         });
     }, null, "arrayChange");
@@ -734,6 +803,7 @@ function VM() {
             if (ch.status === 'added') {
                 attachAssetMarker(ko, map, self, a);
             } else if (ch.status === 'deleted') {
+                console.log("Detaching marker for asset no longer filtered in:", a.id());
                 // keep the asset in registry, but remove map marker + subs
                 detachAssetMarker(ko, map, self, a);
             }
@@ -785,6 +855,16 @@ function VM() {
         });
     }
 
+    self.createOpsLogEntry = function (payload, cb) {
+        const form = BeaconClient.toFormUrlEncoded(payload);
+        BeaconClient.operationslog.create(apiHost, form, token, function (data) {
+            cb(data);
+        }, function (err) {
+            console.error("Failed to create ops log entry:", err);
+            cb(null);
+        });
+    }
+
     self.fetchJobById = function (jobId, cb) {
         BeaconClient.job.get(jobId, 1, apiHost, params.userId, token,
             function (res) {
@@ -833,11 +913,15 @@ function VM() {
         const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
         console.log("Fetching jobs for HQS:", hqsFilter);
 
+        const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => Enum.JobStatusType[status]?.Id).filter(id => id !== undefined);
+
+        const incidentTypeFilterToView = myViewModel.config.incidentTypeFilter().map(type => Enum.IncidentType[type]?.Id).filter(id => id !== undefined);
+
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - 30); // last 30 days
         myViewModel.jobsLoading(true);
-        BeaconClient.job.searchwithStatusFilter(hqsFilter, apiHost, start, end, params.userId, token, function (allJobs) {
+        BeaconClient.job.searchwithFilter(hqsFilter, apiHost, start, end, params.userId, token, function (allJobs) {
             console.log("Total jobs fetched:", allJobs.Results.length);
             myViewModel._markInitialFetchDone();
             myViewModel.jobsLoading(false);
@@ -845,7 +929,8 @@ function VM() {
             console.log("Progress: " + val + " / " + total)
         },
             1, //view model
-            [2, 1, 4, 5], //status filter
+            statusFilterToView, //status filter
+            incidentTypeFilterToView, //incident type filter
             function (jobs) {
                 jobs.Results.forEach(function (t) {
                     myViewModel.getOrCreateJob(t);
@@ -858,6 +943,7 @@ function VM() {
         const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
         console.log("Fetching teams for HQS:", hqsFilter);
 
+        const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => Enum.TeamStatusType[status]?.Id).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - 30); // last 30 days
@@ -873,7 +959,7 @@ function VM() {
         }, function () {
             //console.log("Progress: " + val + " / " + total)
         },
-            [1, 2, 3, 4],
+            statusFilterToView, //status filter
             function (teams) { //per page
                 teams.Results.forEach(function (t) {
                     myViewModel.getOrCreateTeam(t);
@@ -918,6 +1004,56 @@ document.addEventListener('DOMContentLoaded', function () {
             bindings: ko.bindingHandlers, // still use default binding handlers
             noVirtualElements: false
         };
+
+        ko.bindingHandlers.slideVisible = {
+            init: function (element, valueAccessor) {
+                const visible = ko.unwrap(valueAccessor());
+                $(element).toggle(!!visible);
+            },
+            update: function (element, valueAccessor) {
+                const visible = ko.unwrap(valueAccessor());
+                if (visible) {
+                    $(element).stop(true, true).slideDown(120);
+                } else {
+                    $(element).stop(true, true).slideUp(120);
+                }
+            }
+        };
+
+        // status filters: maintain arrays of *ignored* status names
+        function makeStatusFilterBinding(listName) {
+            return {
+                init: function (element, valueAccessor, _allBindings, _vm, ctx) {
+                    const status = ko.unwrap(valueAccessor());
+                    const cfg = ctx.$root.config;
+                    if (!cfg || typeof cfg[listName] !== 'function') return;
+
+                    // initial state
+                    element.checked = cfg[listName]().includes(status);
+
+                    element.addEventListener('change', function () {
+                        const arr = cfg[listName];
+                        if (element.checked) {
+                            if (!arr().includes(status)) {
+                                arr.push(status);
+                            }
+                        } else {
+                            arr.remove(status);
+                        }
+                    });
+                },
+                update: function (element, valueAccessor, _allBindings, _vm, ctx) {
+                    const status = ko.unwrap(valueAccessor());
+                    const cfg = ctx.$root.config;
+                    if (!cfg || typeof cfg[listName] !== 'function') return;
+                    element.checked = cfg[listName]().includes(status);
+                }
+            };
+        }
+
+        ko.bindingHandlers.teamStatusFilter = makeStatusFilterBinding('teamStatusFilter');
+        ko.bindingHandlers.jobStatusFilter = makeStatusFilterBinding('jobStatusFilter');
+        ko.bindingHandlers.incidentTypeFilter = makeStatusFilterBinding('incidentTypeFilter');
 
         ko.bindingHandlers.trVisible = {
             update: function (element, valueAccessor) {
@@ -964,23 +1100,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
 
                 el.addEventListener('dragstart', function (ev) {
-            // if draggable was disabled for text selection, cancel
-            if (el.getAttribute('draggable') !== 'true') {
-                ev.preventDefault();
-                return;
-            }
+                    if (el.getAttribute('draggable') !== 'true') {
+                        ev.preventDefault();
+                        return;
+                    }
 
-            const id = genId();
-            dragStore.set(id, payload);
+                    const id = genId();
+                    dragStore.set(id, payload);
 
-            ev.dataTransfer.setData('text/x-ko-drag-id', id);
-            ev.dataTransfer.effectAllowed = 'copyMove';
-            ev.dataTransfer.setData('text/plain', JSON.stringify({ kind: payload.kind }));
-        });
+                    ev.dataTransfer.setData('text/x-ko-drag-id', id);
+                    ev.dataTransfer.effectAllowed = 'copyMove';
+                    ev.dataTransfer.setData('text/plain', JSON.stringify({ kind: payload.kind }));
 
-        el.addEventListener('dragend', function () {
-            dragStore.forEach(function (_v, k) { dragStore.delete(k); });
-        });
+                    // NEW: use full row as drag preview
+                    const row = opts.dragSourceRow || el.closest('tr');
+                    if (row) {
+                        try {
+                            ev.dataTransfer.setDragImage(row, 0, 0);
+                        } catch (_) { /* empty */ }
+                    }
+                });
+
+                el.addEventListener('dragend', function () {
+                    dragStore.forEach(function (_v, k) { dragStore.delete(k); });
+                });
             }
         };
 
@@ -1048,6 +1191,36 @@ document.addEventListener('DOMContentLoaded', function () {
         bootstrap.Modal.getOrCreateInstance(el).show();
 
     })
+
+    // Toggle submenu on click
+    document.querySelectorAll('.dropdown-submenu > a').forEach(function (element) {
+        element.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const submenu = this.nextElementSibling;
+            if (!submenu) return;
+
+            // Close any open sibling submenus
+            const parentMenu = this.closest('.dropdown-menu');
+            parentMenu.querySelectorAll('.dropdown-menu.show').forEach(function (openMenu) {
+                if (openMenu !== submenu) {
+                    openMenu.classList.remove('show');
+                }
+            });
+
+            submenu.classList.toggle('show');
+        });
+    });
+
+    // When the main dropdown closes, close all submenus
+    document.querySelectorAll('.dropdown').forEach(function (dd) {
+        dd.addEventListener('hidden.bs.dropdown', function () {
+            this.querySelectorAll('.dropdown-menu.show').forEach(function (submenu) {
+                submenu.classList.remove('show');
+            });
+        });
+    });
 
 })
 

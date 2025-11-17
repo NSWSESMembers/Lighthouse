@@ -5,36 +5,25 @@
 
 html {
   height: 100%;
-  margin-top: 0;
-  margin-right: 0;
-  margin-bottom: 0;
-  margin-left: 0;
+  margin: 0;
 }
 
 body {
   height: 100%;
-  margin-top: 0;
-  margin-right: 0;
-  margin-bottom: 0;
-  margin-left: 0;
+  margin: 0;
   font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande',
     sans-serif;
   font-size: 13px;
 }
 
-tr[draggable="true"] * {
-    user-select: text !important;
-    -webkit-user-select: text !important;
+td.chev[draggable="true"] {
     cursor: grab;
 }
 
-div[draggable="true"] * {
-    user-select: text !important;
-    -webkit-user-select: text !important;
-    cursor: grab;
+td.chev[draggable="true"] * {
+    cursor: grab !important;
+    user-select: none !important;
 }
-
-
 
 /* Sidebar starts from a CSS var so JS can update it easily */
 .sidebar {
@@ -68,6 +57,7 @@ div[draggable="true"] * {
   height: 100%;
   min-height: 0;
 }
+
 /* The vertical splitter */
 .vsplit {
   width: 6px;
@@ -121,10 +111,7 @@ div[draggable="true"] * {
 }
 
 .pane {
-  padding-top: 12px;
-  padding-right: 0px;
-  padding-bottom: 3px;
-  padding-left: 0px;
+  padding: 12px 0 3px 0;
   overflow: auto;
 }
 
@@ -132,17 +119,7 @@ div[draggable="true"] * {
   flex-grow: 0;
   flex-shrink: 0;
   height: 50%;
-  border-right-width: 0;
-  border-bottom-width: 1px;
-  border-left-width: 0;
-  border-top-style: none;
-  border-right-style: none;
-  border-bottom-style: solid;
-  border-left-style: none;
-  border-top-color: transparent;
-  border-right-color: transparent;
-  border-bottom-color: #eeeeee;
-  border-left-color: transparent;
+  border-bottom: 1px solid #eeeeee;
 }
 
 .leaflet-popup-content-wrapper {
@@ -175,63 +152,20 @@ div[draggable="true"] * {
 }
 
 .list {
-  list-style-type: none;
-  list-style-position: outside;
-  list-style-image: none;
-  margin-top: 0;
-  margin-right: 0;
-  margin-bottom: 0;
-  margin-left: 0;
-  padding-top: 0;
-  padding-right: 0;
-  padding-bottom: 0;
-  padding-left: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .row {
-  padding-top: 6px;
-  padding-right: 8px;
-  padding-bottom: 6px;
-  padding-left: 8px;
+  padding: 6px 8px;
 }
 
 .row.selected {
   font-weight: bold;
-  text-decoration-line: underline;
-  text-decoration-style: solid;
-  text-decoration-color: currentColor;
+  text-decoration: underline;
 }
 
-/* Row (team) */
-.team-row {
-  border: 1px solid #dcdcdc;
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  background: #fff;
-}
-.team-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  justify-content: space-between;
-}
-.head-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.team-name {
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.meta {
-  color: #666;
-  font-size: 12px;
-}
 
 .pane {
   display: flex;
@@ -281,6 +215,7 @@ div[draggable="true"] * {
     grid-template-columns: 1fr;
   }
 }
+
 .card {
   border: 1px solid #e5e5e5;
   border-radius: 8px;
@@ -299,6 +234,7 @@ ul {
 li {
   margin: 4px 0;
 }
+
 input[type='text'] {
   padding: 6px 8px;
   border: 1px solid #cfcfcf;
@@ -324,15 +260,11 @@ select {
   margin-bottom: 12px;
 }
 
-
-
 /* table sorting icons */
 table thead th.sortable { cursor: pointer; user-select: none; }
 table thead th .sort-icon { margin-left:.35rem; opacity:.7; }
-table thead th[aria-sort="none"] .sort-icon { /* neutral icon */ }
 table thead th[aria-sort="ascending"] .sort-icon { transform: translateY(-1px); }
 table thead th[aria-sort="descending"] .sort-icon { transform: translateY(1px); }
-
 
 .teams, .jobs {
   width: 100%;
@@ -341,41 +273,30 @@ table thead th[aria-sort="descending"] .sort-icon { transform: translateY(1px); 
   border-collapse: separate;
 }
 
-.team {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-}
 
 .teams thead th,
 .jobs thead th {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    background: var(--bs-light, #f8f9fa);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bs-light, #f8f9fa);
 }
 
 /* Make the table body scroll within the pane */
 .pane .table-responsive {
-    max-height: 100%;
-    overflow-y: auto;
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 /* Ensure the pane flexes vertically */
 .pane {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .pane .table-responsive {
-    flex: 1 1 auto;
-    min-height: 0; /* required for flex scrolling */
-}
-
-.job {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
+  flex: 1 1 auto;
+  min-height: 0; /* required for flex scrolling */
 }
 
 td.chev {
@@ -386,23 +307,19 @@ td.chev .btn {
   line-height: 1;
 }
 
-.team_body {
-  display: none;
-  padding: 12px;
-}
-.team.expanded .team_body {
-  display: block;
-}
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+
+/* override generic card from above where needed */
 .card {
   border: 1px solid #eee;
   border-radius: 8px;
   padding: 10px;
 }
+
 .list {
   margin: 8px 0 0;
   padding: 0;
@@ -440,30 +357,14 @@ button.primary {
   border-color: #0077ff;
 }
 
+/* Header styling */
 .teams thead th {
-  background: #f8f9fa;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.03em;
-  border: none;
-  padding: 6px 8px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bs-light, #f8f9fa);
 }
 
-.teams tbody tr.team {
-  background: #ffffff;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
-  transition: background 0.15s ease;
-}
-
-.teams tbody tr.team:hover {
-  background: #f1f3f5;
-}
-
-.teams tbody tr.team.expanded {
-  border-left: 4px solid #0d6efd;
-  background: #eef4ff;
-}
 
 .teams td,
 .teams th {
@@ -471,22 +372,12 @@ button.primary {
   vertical-align: middle;
 }
 
-.team_body td {
-  background: #fafafa;
-  border-top: none;
-  border-bottom: 1px solid #dee2e6;
-  padding: 10px 14px;
-}
-
-.job_body {
-  display: none;
-  padding: 12px;
-}
-
+/* Job list behaviour */
 tr.job:hover {
   cursor: pointer;
 }
 
+/* drag target highlight */
 .drag-over {
   outline: 2px dashed #888;
   background: rgba(0, 0, 0, 0.04);
@@ -533,15 +424,14 @@ tr.job:hover {
   border: none;
   line-height: 1;
   transition: background-color 0.2s;
-  color: #ccc
+  color: #ccc;
 }
 .btn-load-children:hover {
   color: var(--bs-btn-close-color);
-    text-decoration: none;
-    background-color: unset;
-    opacity: 0.75;
+  text-decoration: none;
+  background-color: unset;
+  opacity: 0.75;
 }
-
 
 #searchDropdown.dropdown-menu {
   max-height: 150px;
@@ -577,6 +467,7 @@ tr.job:hover {
   margin-top: 0.25rem;
 }
 
+/* Marker / map UI */
 .marker-pin {
   width: 40px;
   height: 40px;
@@ -627,15 +518,23 @@ tr.job:hover {
   line-height: 1.25;
 }
 
-.veh-pop__tasking-list {
-
+.veh-pop__taskings-list-frame {
+  margin-left: -10px;
+  margin-right: -15px;
 }
 
-
-.veh-pop__tasking-item {
+.veh-pop__tasking-item,
+.veh-pop__tasking-item--no-job {
   padding: 4px 0;
   border-bottom: 1px dashed #e3e3e3;
+}
+.veh-pop__tasking-item {
   cursor: pointer;
+}
+
+.job-popup__tasking-row--no-job,
+.veh-pop__tasking-item--no-job {
+  cursor: not-allowed;
 }
 .veh-pop__tasking-item:last-child {
   border-bottom: none;
@@ -674,44 +573,109 @@ tr.job:hover {
   transition-duration: 100ms !important;
 }
 
+/* ============================
+   TEAM CARD + SUMMARY + PANEL
+   ============================ */
 
-
-/* Merge expanded incident row with parent row */
-.jobs tbody tr.job.expanded + tr.job_body td {
-  border-top: none !important;      /* remove dividing border */
-  padding-top: 0 !important;        /* eliminate gap */
+.team-row > td {
+  padding: 0;
+  border: none !important; /* the card draws the border */
 }
 
-.jobs tbody tr.job.expanded {
-  border-bottom-left-radius: 0;     /* visually merge rounded edges */
-  border-bottom-right-radius: 0;
+.team-card {
+  border: 1px solid #d0d7e2;
+  border-radius: 6px;
+  background: #ffffff;
+   margin-left: 4px;
+    margin-right: 4px;
+  overflow: hidden;
+  transition: box-shadow 120ms ease, border-color 120ms ease;
 }
 
-.jobs tbody tr.job_body td {
-  border-top: none;
+.team-card--expanded {
+  border-color: #0d6efd;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.16);
 }
 
-.jobs tbody tr.job_body .card {
-  border-top-left-radius: 0;        /* make card blend into the parent row */
-  border-top-right-radius: 0;
-  margin-top: -1px;                 /* pull upward slightly to hide seam */
+/* Match the Teams <colgroup>: 5,30,10,15,15,20,20 % */
+.team-summary {
+  display: grid;
+  grid-template-columns:
+      5%   /* chev */
+      25%  /* Callsign */
+      10%  /* Status */
+      10%  /* HQ */
+      15%  /* Task Count */
+      20%  /* Team Leader */
+      15%; /* Actions */
+  align-items: center;
+  padding: 4px 10px;
+  column-gap: 0;
+  background: var(--bs-table-bg, #fff);
+  cursor: pointer;
 }
 
-.jobs tbody tr.job_body > td {
-  background-color: var(--bs-table-bg) !important;
-  padding: 0;          /* remove extra white edge */
+.team-card--expanded .team-summary {
+  background: #eef4ff;
 }
 
-/* If you keep a card inside the expanded row, make it invisible */
-.jobs tbody tr.job_body .card {
-  background-color: transparent;
-  border: 0;
-  box-shadow: none;
+.team-cell {
+  min-width: 0;
+  padding: 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-cell--chev {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Allow long values to wrap onto multiple lines */
+.team-cell--callsign,
+.team-cell--leader {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Expanded panel inside same card */
+.team-details {
+  border-top: 1px solid #e1e4ec;
+  background: #f9fbff;
+  padding: 8px;
+}
+
+/* Team members list inside expanded team card */
+
+.team-members-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.team-member-row {
+  padding: 4px 0;
+  border-bottom: 1px dashed #dde2ec;
+}
+
+.team-member-row:last-child {
+  border-bottom: none;
+}
+
+.team-member-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+}
+
+.team-member-tags .badge {
+  font-size: 0.7rem;
 }
 
 
-tr.team_body > td { padding: 0; border-top: 0; }
-.team-card { border-top-left-radius: 0; border-top-right-radius: 0; }
 
 
 /* Base Leaflet divIcon wrapper for your SVG markers */
@@ -773,7 +737,7 @@ tr.team_body > td { padding: 0; border-top: 0; }
 }
 
 .legend-ring > div > .pulse-ring {
-  position: relative !important
+  position: relative !important;
 }
 
 .no-drag {
@@ -785,8 +749,7 @@ tr.team_body > td { padding: 0; border-top: 0; }
     cursor: unset !important;
 }
 
-
-
+/* Alerts control */
 .leaflet-control.alerts { pointer-events:auto; }
 .alerts {
   font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -820,14 +783,13 @@ tr.team_body > td { padding: 0; border-top: 0; }
 
 /* Intro animation on first mount */
 .alerts-root--intro {
-  animation: alerts-slide-pop 420ms cubic-bezier(.2,.8,.2,1),
+  animation: alerts-slide-pop 420ms cubic-bezier(.2,.8,.2,1);
 }
 @keyframes alerts-slide-pop {
   0% { opacity: 0; transform: translateY(-8px) scale(.98); }
   60% { opacity: 1; transform: translateY(0) scale(1.008); }
   100% { transform: translateY(0) scale(1); }
 }
-
 
 /* Subtle ping from the hazard icon once */
 .alerts__btn .alerts__icon {
@@ -855,10 +817,8 @@ tr.team_body > td { padding: 0; border-top: 0; }
   }
 }
 
-
-/* laayer UI */
-
-.layers-drawer { margin-top: 6px; border: 0px !important}
+/* Layer UI */
+.layers-drawer { margin-top: 6px; border: 0px !important; }
 
 .layers-drawer .ld-toggle {
   display:flex; align-items:center; justify-content:center;
@@ -873,7 +833,6 @@ tr.team_body > td { padding: 0; border-top: 0; }
 .layers-drawer .ld-title { font-weight:600; font-size:12px; margin-bottom:4px; }
 .layers-drawer .ld-list { display:flex; flex-direction:column; gap:4px; }
 .layers-drawer .ld-row { display:flex; align-items:center; gap:8px; font-size:12px; }
-
 
 .legend-container {
   background: rgba(255, 255, 255, 0.9);
@@ -897,14 +856,238 @@ tr.team_body > td { padding: 0; border-top: 0; }
   padding: 0 6px;
 }
 
-  .legend-box {
-    display:inline-block;
-    width:14px;
-    height:14px;
-    border:1px solid #333;
-    margin-right:4px;
-    vertical-align:middle;
-  }
-  .leaflet-control.legend svg {
-    vertical-align:middle;
-  }
+.legend-box {
+  display:inline-block;
+  width:14px;
+  height:14px;
+  border:1px solid #333;
+  margin-right:4px;
+  vertical-align:middle;
+}
+.leaflet-control.legend svg {
+  vertical-align:middle;
+}
+
+.modal-textarea-full {
+    width: 100%;
+    resize: none;
+    box-sizing: border-box;
+    display: block;
+    margin: 0;
+}
+
+#NewOpsLogModal h6 {
+    margin-top: 0.75rem !important;
+    margin-bottom: 0.35rem !important;
+    font-weight: 600;
+}
+
+#NewOpsLogModal input[type="text"],
+#NewOpsLogModal textarea {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus state */
+#NewOpsLogModal input[type="text"]:focus,
+#NewOpsLogModal textarea:focus {
+    border-color: #1e8740; /* theme colour? */
+    box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
+    outline: none;
+}
+
+#RadioLogModal input[type="text"],
+#RadioLogModal textarea {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+/* Focus state */
+#RadioLogModal input[type="text"]:focus,
+#RadioLogModal textarea:focus {
+    border-color: #1e8740; /* theme colour? */
+    box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
+    outline: none;
+}
+
+.tag-list {
+  margin-bottom: 0.25rem;
+}
+
+.tag-pill {
+    display: inline-block;
+    padding: 2px 6px;
+    margin: 2px 4px;
+    border-radius: 4px;
+    background: #b8a96a;
+    color: white;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.action-pill {
+    background: #d9534f;
+    display: inline-block;
+    padding: 2px 6px;
+    margin: 2px 4px;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.action-pill.tag-selected {
+  background: white;  
+  color: #d9534f;
+  border-color: #d9534f;
+  border: 1px;
+  border-style: solid;
+}
+
+
+.tag-pill.tag-selected {
+    background: white;
+    color: #b8a96a;
+    border-color: #b8a96a;
+    border: 1px;
+    border-style: solid;
+}
+
+/* Single-row Incident card accordion */
+
+.job-row > td {
+    padding: 0;              /* card owns padding */
+    border: none !important; /* no table cell borders for these */
+}
+
+.job-card {
+    border: 1px solid #d0d7e2;
+    border-radius: 6px;
+    background: #ffffff;
+    margin-left: 4px;
+    margin-right: 4px;
+    overflow: hidden;
+    transition: box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.job-summary:hover {
+    background: #f1f3f5;
+}
+
+.job-card--expanded {
+    border-color: #0d6efd;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+
+/* Top bar: behaves like the old summary row */
+.job-summary {
+    display: grid;
+    /* match thead/colgroup: 2,10,8,8,8,28,8,22,4 % */
+    grid-template-columns:
+        2%   /* chev */
+        10%  /* Id */
+        8%   /* Received */
+        8%   /* HQ */
+        8%   /* Type */
+        28%  /* Situation */
+        8%   /* Status */
+        22%  /* Address */
+        4%;  /* Actions */
+    align-items: center;
+    column-gap: 0;             /* let colgroup control spacing */
+    padding: 4px 10px;         /* close to your table cell padding */
+    background: var(--bs-table-bg, #fff);
+    cursor: pointer;
+}
+
+.job-card--expanded .job-summary {
+    background: #eef4ff;
+}
+
+.job-cell {
+    min-width: 0;
+    padding-right: 5px;
+    padding-left: 5px;
+    overflow: hidden;
+}
+
+/* Allow wrapping for the “long” columns so you don't lose information */
+.job-cell--situation,
+.job-cell--address {
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.job-cell--chev {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Details panel inside the same card – no seams possible */
+.job-details {
+    border-top: 1px solid #e1e4ec;
+    background: #f9fbff;
+    padding: 8px;
+}
+
+/* Rotate chevron instead of swapping icons (optional if you want) */
+.job-card .fa.fa-solid {
+    transition: transform 140ms ease;
+}
+.job-card--expanded .fa.fa-solid.fa-plus {
+    /* if you switch to a single chevron icon, rotate it here */
+}
+
+/* Wider dropdown specifically for the Jobs filter menu */
+#jobMenu + .dropdown-menu {
+    min-width: 400px;      /* adjust as needed */
+    padding: 0.5rem 0.75rem;
+}
+
+.dropdown-collapse-body {
+    padding: 0.25rem 0.5rem 0.5rem 0.5rem;
+}
+
+.dropdown-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;   /* two columns */
+    column-gap: 1rem;
+    row-gap: 0.15rem;
+    font-size: 0.8rem;
+}
+
+.dropdown-two-col .form-check {
+    margin: 0;
+    padding: 0;
+    margin-left: 10px;
+}
+
+#configModal .modal-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+#configModal .load-wrapper { position: relative; }
+
+#configModal .load-form input {
+    transition: width 0.25s ease, opacity 0.25s ease;
+}
+
+#configModal .expanded-input {
+    width: 160px !important;
+    opacity: 1 !important;
+}
+
+.sharecode {
+    font-family: monospace;
+    font-size: 1.3rem;
+    letter-spacing: 0.05rem;
+}

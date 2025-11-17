@@ -127,33 +127,38 @@ export function getTasking(id, host, userId = 'notPassed', token, callback) {
   });
 }
 
-export function searchwithStatusFilter(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, viewmodel, statusTypes = [], onPage) {
+export function searchwithFilter(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, viewmodel, statusTypes = [], jobType = [], onPage) {
 
   if (typeof viewmodel === 'undefined') //if they dont specify a viewmodel to load, pull the big one down.
   {
-    viewmodel = "1";
+    viewmodel = "6";
   }
 
   var url = "";
-  console.log("Client.job.searchwithStatusFilter() called with:" + StartDate + "," + EndDate + ", " + host);
+  console.log("Client.job.searchwithFilter() called with:" + StartDate + "," + EndDate + ", " + host);
+
+  var statusString = ""
+      statusTypes.forEach(function (s) {
+        statusString = statusString + "&JobStatusTypeIds=" + s
+      })
+      var jobString = ""
+      jobType.forEach(function (j) {
+        jobString = jobString + "&JobTypeIds=" + j
+      })
 
   if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) == false) {
-      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithStatusFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
+      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
     } else {
       var hqString = "";
       unit.forEach(function (d) {
         hqString = hqString + "&Hq=" + d.Id
       });
-      var statusString = ""
-      statusTypes.forEach(function (s) {
-        statusString = statusString + "&JobStatusTypeIds=" + s
-      })
-      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithStatusFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + statusString + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
+      
+      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + statusString + jobString + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
     }
   } else {
-    url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithStatusFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + statusString + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
-
+    url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + statusString + jobString + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
   }
 
   var lastDisplayedVal = 0;

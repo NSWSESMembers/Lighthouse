@@ -43,7 +43,9 @@ export function MapVM(Lmap, root) {
   self.destroyAssetPopupVM = (asset) => {
     const vm = self.assetPopups.get(asset.id());
     if (vm) {
+      console.log(vm)
       vm.dispose();
+
       self.assetPopups.delete(asset.id());
     }
   };
@@ -72,7 +74,6 @@ export function MapVM(Lmap, root) {
   }
 
   self.clearCrowFliesLine = () => {
-    console.log('clearing crow flies line');
     if (self.crowFliesLine) { self.map.removeLayer(self.crowFliesLine); self.crowFliesLine = null; }
   }
 

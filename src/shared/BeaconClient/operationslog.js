@@ -41,3 +41,27 @@ export function get(entryId, host, userId = 'notPassed', token, callback) {
     }
   })
 }
+
+export function create(host, payloadFormEncoded, token, callback) {
+  $.ajax({
+    type: 'POST',
+    url: host + '/Api/v1/OperationsLog',
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    data: payloadFormEncoded,                               
+    cache: false,
+    contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+    processData: false,
+
+    complete: function (response, textStatus) {
+      if (textStatus === 'success') {
+        if (typeof callback === 'function') {
+          callback(response.responseJSON);
+        }
+      } else {
+        console.error("OpsLog POST failed", response);
+      }
+    }
+  });
+}

@@ -63,51 +63,102 @@ export function Job(data = {}, deps = {}) {
 
     self.unacceptedNotifications = ko.observableArray([]);
 
+
+    //refs to other obs
+    self.marker = null;  // will hold the L.Marker instance
+    self.taskings = ko.observableArray(); //array of taskings
+
+
+    // computed
+    self.jobLink = ko.pureComputed(() => makeJobLink(self.id()));
+    self.priorityName = ko.pureComputed(() => (self.jobPriorityType() && self.jobPriorityType().Name) || "");
+    self.statusName = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Name) || "");
+    self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
+    self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
+    self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
+    self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));
+
+
+
     self.lastDataUpdate = new Date();
-    let refreshTimer = null;
 
-    let unacceptedNotificationsTimer = null;
+    // ---- DATA REFRESH CHECK ----
+    const dataRefreshInterval = makeFilteredInterval(async () => {
+        const now = Date.now();
+        const last = self.lastDataUpdate?.getTime?.() ?? 0;
+        // only refresh if we haven't had an update in > 2 minutes
+        if (now - last > 120000) {
+            await self.refreshData();
+        }
+    }, 30000, { runImmediately: false });
+
+    self.startDataRefreshCheck = function () {
+        dataRefreshInterval.start();
+    };
+
+    self.stopDataRefreshCheck = function () {
+        dataRefreshInterval.stop();
+    };
+
+    // Start/stop with filter state
+    self.isFilteredIn.subscribe((flag) => {
+        if (flag) {
+            self.startDataRefreshCheck();
+        } else {
+            self.stopDataRefreshCheck();
+        }
+    });
 
 
-    // functions to poll unaccepted notifications if theres an icems ID
-    function pollUnacceptedNotifications() {
+    // ---- UNACCEPTED NOTIFICATIONS POLLING ----
+    const unacceptedNotificationsInterval = makeFilteredInterval(() => {
+        // extra guard: only if ICEMS id exists
         if (!self.icemsIncidentIdentifier()) return;
-        if (!self.isFilteredIn()) return;
         console.log("Polling unaccepted notifications for job", self.id());
         fetchUnacknowledgedJobNotifications(self);
-    }
+    }, 30000, { runImmediately: true });
 
     self.startUnacceptedNotificationsPolling = function () {
-        self.stopUnacceptedNotificationsPolling();
-        if (!self.icemsIncidentIdentifier()) return;
-        if (!self.isFilteredIn()) return;
-        console.log(self.isFilteredIn(), self.icemsIncidentIdentifier(), self.id());
-        console.log("Starting unaccepted notifications polling for job", self.id());
-        pollUnacceptedNotifications();
-        unacceptedNotificationsTimer = setInterval(pollUnacceptedNotifications, 30000);
+        unacceptedNotificationsInterval.start();
     };
 
     self.stopUnacceptedNotificationsPolling = function () {
-        if (unacceptedNotificationsTimer) {
-            clearInterval(unacceptedNotificationsTimer);
-            unacceptedNotificationsTimer = null;
-        }
+        unacceptedNotificationsInterval.stop();
     };
 
-    self.icemsIncidentIdentifier.subscribe(() => {
-        if (!self.icemsIncidentIdentifier()) return;
-        if (!self.isFilteredIn()) return;
-        self.startUnacceptedNotificationsPolling();
+    // Restart / stop polling when identifiers or filters change
+    self.icemsIncidentIdentifier.subscribe((id) => {
+        if (id && self.isFilteredIn()) {
+            self.startUnacceptedNotificationsPolling();
+        } else {
+            self.stopUnacceptedNotificationsPolling();
+        }
     });
 
-    self.isFilteredIn.subscribe(() => {
-        if (!self.icemsIncidentIdentifier()) return;
-        if (!self.isFilteredIn()) return;
-        self.startUnacceptedNotificationsPolling();
+    self.isFilteredIn.subscribe((flag) => {
+        if (flag && self.icemsIncidentIdentifier()) {
+            self.startUnacceptedNotificationsPolling();
+        } else {
+            self.stopUnacceptedNotificationsPolling();
+        }
     });
 
-    self.startUnacceptedNotificationsPolling();
-    //
+
+
+
+    self.toggleAndLoad = function () {
+        if (!self.expanded()) {
+            self.fetchTasking();
+            self.refreshData();
+        }
+        self.expanded(!self.expanded())
+    };
+
+    self.typeShort = ko.pureComputed(() => {
+        const fullType = self.type() || "";
+        return fullType.replace(/Evacuation/i, 'Evac').trim();
+    })
+
 
 
 
@@ -116,26 +167,13 @@ export function Job(data = {}, deps = {}) {
         attachAndFillOpsLogModal(self)
     }
 
-    self.startDataRefreshCheck = function () {
-        self.stopDataRefreshCheck();
-        refreshTimer = setInterval(async () => {
-            const now = Date.now();
-            const last = self.lastDataUpdate?.getTime?.() ?? 0;
-            if (now - last > 120000) {
-                await self.refreshData();
-            }
-        }, 30000);
+    self.openRadioLogModal = function (tasking) {
+        deps.openRadioLogModal(tasking)
     };
 
-    self.stopDataRefreshCheck = function () {
-        if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+    self.openNewOpsLogModal = function (job) {
+        deps.openNewOpsLogModal(job)
     };
-
-    self.startDataRefreshCheck();
-
-    //refs to other obs
-    self.marker = null;  // will hold the L.Marker instance
-    self.taskings = ko.observableArray(); //array of taskings
 
 
     self.incompleteTaskingsOnly = ko.computed(() =>
@@ -151,14 +189,12 @@ export function Job(data = {}, deps = {}) {
         )
     );
 
-    // computed
-    self.jobLink = ko.pureComputed(() => makeJobLink(self.id()));
-    self.priorityName = ko.pureComputed(() => (self.jobPriorityType() && self.jobPriorityType().Name) || "");
-    self.statusName = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Name) || "");
-    self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
-    self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
-    self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
-    self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));
+
+
+    self.identifierTrimmed = ko.pureComputed(() => {
+        //trim leading zeros for compact display
+        return self.identifier().replace(/^0+/, '') || '0';
+    });
 
     self.ageSeconds = ko.pureComputed(() => {
         const d = self.receivedAt();
@@ -226,10 +262,19 @@ export function Job(data = {}, deps = {}) {
         return beaconJobParentCats[c] || "";
     })
 
+    self.returnParentEntityName = ko.pureComputed(() => {
+        if (self.entityAssignedTo.parentEntity()) {
+            return self.entityAssignedTo.parentEntity().name();
+        }
+        return '-';
+    })
+
+
 
     Job.prototype.updateFromJson = function (d = {}) {
 
-        self.startDataRefreshCheck(); // restart timer
+        this.lastDataUpdate = new Date();
+        this.startDataRefreshCheck(); // restart timer
 
 
         // scalars
@@ -259,20 +304,30 @@ export function Job(data = {}, deps = {}) {
         if (d.JobType !== undefined) this.jobType(d.JobType || null);
 
         if (d.EntityAssignedTo !== undefined) {
-            this.entityAssignedTo.id(d.EntityAssignedTo?.Id ?? null);
-            this.entityAssignedTo.code(d.EntityAssignedTo?.Code ?? "");
-            this.entityAssignedTo.name(d.EntityAssignedTo?.Name ?? "");
-            this.entityAssignedTo.latitude(d.EntityAssignedTo?.Latitude ?? null);
-            this.entityAssignedTo.longitude(d.EntityAssignedTo?.Longitude ?? null);
-            this.entityAssignedTo.parentEntity(
-                d.EntityAssignedTo?.ParentEntity
-                    ? {
-                        id: d.EntityAssignedTo.ParentEntity.Id,
-                        code: d.EntityAssignedTo.ParentEntity.Code,
-                        name: d.EntityAssignedTo.ParentEntity.Name
-                    }
-                    : null
-            );
+            const ea = d.EntityAssignedTo;
+
+            this.entityAssignedTo.id(ea?.Id ?? null);
+            this.entityAssignedTo.code(ea?.Code ?? "");
+            this.entityAssignedTo.name(ea?.Name ?? "");
+            this.entityAssignedTo.latitude(ea?.Latitude ?? null);
+            this.entityAssignedTo.longitude(ea?.Longitude ?? null);
+
+            // Correct handling of ParentEntity
+            if (ea.ParentEntity !== null) {
+                const existingParent = this.entityAssignedTo.parentEntity();
+                if (existingParent) {
+                    // update existing parent entity observables
+                    existingParent.id(ea.ParentEntity.Id ?? null);
+                    existingParent.code(ea.ParentEntity.Code ?? "");
+                    existingParent.name(ea.ParentEntity.Name ?? "");
+                } else {
+                    // or create a new one if none exists yet
+                    this.entityAssignedTo.parentEntity(new Entity(ea.ParentEntity));
+                }
+            } else {
+                // if API can legitimately send "no parent", clear it
+                this.entityAssignedTo.parentEntity(null);
+            }
         }
 
         if (d.Address !== undefined) {
@@ -323,14 +378,57 @@ export function Job(data = {}, deps = {}) {
         openURLInBeacon(url);
     }
     // ---- map focus (delegated) ----
-    self.focusMap = function () { flyToJob(self); };
+    self.focusMap = function () {
+        if (self.isFilteredIn() === false) return;
+        flyToJob(self);
+    };
+
+    self.focusAndExpandInList = function () {
+        // expand the job row
+        self.expand();
+
+        requestAnimationFrame(() => {
+            // find the row for this job
+            const row = document.querySelector(`tr.job-row[data-job-id="${self.id()}"]`);
+            if (!row) return;
+
+            // find the scroll container (the table wrapper in the bottom pane)
+            const container = row.closest('.pane--bottom .table-responsive')
+                || row.closest('.table-responsive')
+                || row.parentElement?.parentElement; // fallback
+
+            if (!container) {
+                // fallback to normal scrollIntoView if we can't find a container
+                row.scrollIntoView({ behavior: "smooth", block: "start" });
+                return;
+            }
+
+            // sticky header height
+            const table = row.closest('table');
+            const thead = table ? table.querySelector('thead') : null;
+            const headerHeight = thead ? thead.getBoundingClientRect().height : 0;
+
+            // compute how far we need to move the container's scrollTop
+            const containerRect = container.getBoundingClientRect();
+            const rowRect = row.getBoundingClientRect();
+
+            // desired: row just under header, with a tiny padding
+            const padding = 2;
+            const delta = (rowRect.top - containerRect.top) - headerHeight - padding;
+
+            container.scrollTo({
+                top: container.scrollTop + delta,
+                behavior: "smooth"
+            });
+        });
+    };
+
 
     // ---- lifecycle hooks (delegated) ----
-    self.onPopupOpen = function () { self.fetchTasking(); self.refreshData() };
-    self.onPopupClose = function () { /* popup closing logic goes here */ };
+    self.onPopupOpen = function () { self.refreshDataAndTasking(); self.focusAndExpandInList(); };
 
     self.onPopupClose = function () {
-        // popup closing logic goes here
+        self.collapse();
     };
 
     self.refreshDataAndTasking = function () {
@@ -347,10 +445,41 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.refreshData = async function () {
+
+
+
         self.taskingLoading(true);
         fetchJobById(self.id(), () => {
             self.taskingLoading(false);
         });
     };
 
+    // interval that only runs while job is filtered in
+    function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
+        let handle = null;
+
+        const tick = () => {
+            // global guard: only run if still filtered in
+            if (!self.isFilteredIn()) return;
+            fn();
+        };
+
+        const start = () => {
+            if (!self.isFilteredIn()) return; // don't start if already filtered out
+            if (handle) clearInterval(handle);
+            if (runImmediately) tick();
+            handle = setInterval(tick, intervalMs);
+        };
+
+        const stop = () => {
+            if (handle) {
+                clearInterval(handle);
+                handle = null;
+            }
+        };
+
+        return { start, stop };
+    }
+
 }
+

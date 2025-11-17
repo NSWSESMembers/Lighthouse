@@ -67,6 +67,9 @@ export class JobPopupViewModel {
     }
 
     drawCrowsFliesToAsset = (tasking) => {
+        if (tasking.job.isFilteredIn() === false) {
+            return;
+        }
         // clear any existing one first
         this.api.clearCrowFliesLine();
         if (!tasking) return;
@@ -203,6 +206,12 @@ export class JobPopupViewModel {
 
     removeRouteToAsset = () => {
         this.api.clearRoutes();
+    }
+
+    dispose = () => {
+        // clean up any subscriptions or resources here
+        this.removeRouteToAsset();
+        this.removeCrowsFliesToAsset();
     }
 
 

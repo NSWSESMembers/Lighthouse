@@ -83,12 +83,8 @@ export function buildJobPopupKO() {
       <div id="JobTags" class="text-center pt-2" data-bind="text: tagsCsv()"></div>
 
       <!-- Taskings: loading / table / empty -->
-      <div class="text-center p-2" data-bind="visible: taskingLoading()">
-        <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
-        <span class="ms-1">Loading taskings…</span>
-      </div>
       <div class="table-responsive job-popup_taskings">
-      <div data-bind="visible: !taskingLoading() && taskings().length > 0" style="padding-top:10px">
+      <div data-bind="visible: taskings().length > 0" style="padding-top:10px">
         <table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead>
             <tr style="text-align:left;background:#f8f9fa">
@@ -102,23 +98,25 @@ export function buildJobPopupKO() {
             <tr data-bind="event: {
             mouseenter: $root.drawCrowsFliesToAsset,
             mouseleave: $root.removeCrowsFliesToAsset
-            }, click: team.markerFocus, clickBubble: false" class="job-popup__tasking-row" style="cursor:pointer">
+            }, click: team.markerFocus,
+            clickBubble: false,
+            css: { 'job-popup__tasking-row': hasTeam(), 'job-popup__tasking-row--no-job': !hasTeam() }">
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
                   data-bind="text: teamCallsign"></td>
-              <td style="padding:4px 8px;border-bottom:1px solid #eee"
-                  data-bind="text: currentStatus"></td>
+              <td style="padding:4px 8px;border-bottom:1px solid #eee"><span class="badge"
+                data-bind="text: currentStatus, css: tagColorFromStatus()"></span></td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
                   data-bind="text: statusTimeAgoLabel"></td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Tasking actions">               
                   <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Route to Asset"
-                      data-bind="click: $root.drawRouteToAsset, disable: !team.trackableAssets().length, clickBubble: false">
+                      data-bind="click: $root.drawRouteToAsset, disable: !team.trackableAndIsFiltered(), clickBubble: false">
                       <i class="fa fa-solid fa-car"></i>
                   </button>
                   <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Fit Bounds"
-                      data-bind="click: $root.fitBoundsWithAsset, disable: !team.trackableAssets().length, clickBubble: false">
+                      data-bind="click: $root.fitBoundsWithAsset, disable: !team.trackableAndIsFiltered(), clickBubble: false">
                       <i class="fa fa-solid fa-object-group"></i>
                   </button>
                 </div>
@@ -128,6 +126,10 @@ export function buildJobPopupKO() {
         </table>
       </div>
 </div>
+      <div class="text-center text-muted" data-bind="visible: taskingLoading()">
+        <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+        <span class="ms-1">Loading taskings…</span>
+      </div>
       <div class="text-center text-muted" data-bind="visible: !taskingLoading() && taskings().length === 0">
         No taskings yet.
       </div>
