@@ -14,6 +14,7 @@ import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
 import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { NewOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
+import { getAllStaticTags, Tag } from "./models/Tag.js";
 
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
@@ -254,8 +255,10 @@ function VM() {
     self.jobs = ko.observableArray();
     self.taskings = ko.observableArray();
     self.trackableAssets = ko.observableArray([]);
-
-
+    self.allTags = ko.observableArray(
+        getAllStaticTags().map(t => new Tag(t))
+    );
+    
     ///opslog short cuts
     self.opsLogModalVM = new OpsLogModalVM(self);
     self.NewOpsLogModalVM = new NewOpsLogModalVM(self);

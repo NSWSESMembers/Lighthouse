@@ -139,50 +139,96 @@ export function NewOpsLogModalVM(parentVM) {
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const self = this;
 
-  self.entityId          = ko.observable(null);
-  self.jobId             = ko.observable(null);
-  self.eventId           = ko.observable(null);
-  self.talkgroupId       = ko.observable(null);
-  self.talkgroupRequestId= ko.observable(null);
+  self.entityId = ko.observable(null);
+  self.jobId = ko.observable(null);
+  self.eventId = ko.observable(null);
+  self.talkgroupId = ko.observable(null);
+  self.talkgroupRequestId = ko.observable(null);
 
-  self.subject           = ko.observable("");
-  self.text              = ko.observable("");
-  self.position          = ko.observable(null);
-  self.personFromId      = ko.observable(null);
-  self.personTold        = ko.observable(null);
+  self.subject = ko.observable("");
+  self.text = ko.observable("");
+  self.position = ko.observable(null);
+  self.personFromId = ko.observable(null);
+  self.personTold = ko.observable(null);
 
-  self.important         = ko.observable(false);
-  self.restricted        = ko.observable(false);
-  self.actionRequired    = ko.observable(false);
-  self.actionReminder    = ko.observable(null);
+  self.important = ko.observable(false);
+  self.restricted = ko.observable(false);
+  self.actionRequired = ko.observable(false);
+  self.actionReminder = ko.observable(null);
 
-  self.tagIds            = ko.observableArray([]);
-  self.timeLogged        = ko.observable(null);
+  self.tagIds = ko.observableArray([]);
+  self.timeLogged = ko.observable(null);
 
-  // UI header
-  self.headerLabel       = ko.observable("");
+  // UI
+  self.headerLabel = ko.observable("");
+  self.tagsByGroup = {};
+  self.errorMessage = ko.observable("");
+  self.showError = ko.observable(false);
+
+  self.uiTags = ko.observableArray([]);
+
+  self.initTags = () => {
+    const tags = parentVM.allTags ? parentVM.allTags() : [];
+    self.uiTags(tags.map(tag => createUiTag(tag)));
+  };
+
+  self.tagIds = ko.computed(() =>
+    self.uiTags()
+      .filter(t => t.selected())
+      .map(t => t.id())
+  );
+
+  [2, 3, 4, 27].forEach(gid => {
+    self.tagsByGroup[gid] = ko.pureComputed(() =>
+        self.uiTags().filter(t => t.groupId() === gid)
+    );
+  });
+
+  function preselectTag(idToSelect) {
+    self.uiTags().forEach(t => {
+      t.selected(t.id() === idToSelect);
+    });
+  }
+
+  self.tagIds = ko.computed(() =>
+    self.uiTags()
+      .filter(t => t.selected())
+      .map(t => t.id())
+  );
+
+  self.ActionRequiredCheck = ko.computed(() => {
+    const anyActionTagSelected = self.uiTags().some(
+        t => t.selected() && t.groupId() === 27
+    );
+
+    self.actionRequired(anyActionTagSelected);
+  });
 
   self.openForTasking = async (tasking) => {
     self.resetFields();
     self.jobId(tasking.job.id() || "");
     self.subject(tasking.teamCallsign() || "");
-    self.tagIds([6]);
+    self.initTags();
+    preselectTag(6);
 
-    self.headerLabel(`New Radio Log for ${tasking.teamCallsign?.() || ""} ON ${tasking.job.identifier() || ""}`);
+    self.headerLabel(`New Radio Log for ${tasking.teamCallsign?.() || ""} on ${tasking.job.identifier() || ""}`);
   }
 
   self.openForTeam = async (team) => {
     // NEED TO COME BACK AND ADD HQ ONCE TIM HAS SETUP THE CONFIG PAGE TO USE IT.
     self.resetFields();
     self.subject(team.callsign() || "");
-    self.tagIds([6]);
+    self.initTags();
+    preselectTag(6);
 
     self.headerLabel(`New Radio Log for ${team.callsign?.() || ""}`);
   }
 
   self.openForNewJobLog = async (job) => {
     self.resetFields();
+    self.jobId(job.id() || "");
     console.log(job);
+    self.initTags();
     self.headerLabel(`New Ops Log for ${job.identifier() || ""}`);
   }
 
@@ -210,7 +256,31 @@ export function NewOpsLogModalVM(parentVM) {
     };
   };
 
+  function validate() {
+      self.showError(false);
+      self.errorMessage("");
+
+      // No text
+      if (!self.text() || self.text().trim().length === 0) {
+          self.errorMessage("Text is required.");
+          self.showError(true);
+          return false;
+      }
+
+      // No tags
+      if (self.tagIds().length === 0) {
+          self.errorMessage("You must select at least one tag.");
+          self.showError(true);
+          return false;
+      }
+
+      return true;
+  }
+
   self.submit = function () {
+    if (!validate()) {
+        return;
+    }
     const payload = self.toPayload();
 
     parentVM.createOpsLogEntry(payload, function (result) {
@@ -220,9 +290,6 @@ export function NewOpsLogModalVM(parentVM) {
             return;
         }
 
-        console.log("Ops Log successfully created:", result);
-
-        // use the modal instance passed from main.js
         if (self.modalInstance) {
             self.modalInstance.hide();
         }
@@ -230,34 +297,42 @@ export function NewOpsLogModalVM(parentVM) {
   };
 
   self.resetFields = function () {
-      // Core fields
       self.entityId(null);
       self.jobId(null);
       self.eventId(null);
       self.talkgroupId(null);
       self.talkgroupRequestId(null);
 
-      // Content
       self.subject("");
       self.text("");
       self.position(null);
       self.personFromId(null);
       self.personTold(null);
 
-      // Flags
       self.important(false);
       self.restricted(false);
       self.actionRequired(false);
       self.actionReminder(null);
 
-      // Arrays
-      self.tagIds([]);
-
-      // Metadata
       self.timeLogged(null);
 
-      // UI header
+      self.uiTags([]);
       self.headerLabel("");
   };
 
+  function createUiTag(tag) {
+    return {
+        model: tag,
+
+        id: tag.id,
+        name: tag.name,
+        groupId: tag.tagGroupId,
+
+        selected: ko.observable(false),
+
+        toggle() {
+        this.selected(!this.selected());
+        }
+    };
+  }
 }

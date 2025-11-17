@@ -876,28 +876,88 @@ tr.job:hover {
     margin: 0;
 }
 
+#NewOpsLogModal h6 {
+    margin-top: 0.75rem !important;
+    margin-bottom: 0.35rem !important;
+    font-weight: 600;
+}
+
+#NewOpsLogModal input[type="text"],
+#NewOpsLogModal textarea {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus state */
+#NewOpsLogModal input[type="text"]:focus,
+#NewOpsLogModal textarea:focus {
+    border-color: #1e8740; /* theme colour? */
+    box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
+    outline: none;
+}
+
+#RadioLogModal input[type="text"],
+#RadioLogModal textarea {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+/* Focus state */
+#RadioLogModal input[type="text"]:focus,
+#RadioLogModal textarea:focus {
+    border-color: #1e8740; /* theme colour? */
+    box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
+    outline: none;
+}
+
 .tag-list {
-  margin-bottom: 12px;
+  margin-bottom: 0.25rem;
 }
 
 .tag-pill {
     display: inline-block;
-    padding: 6px 10px;
-    margin: 4px;
+    padding: 2px 6px;
+    margin: 2px 4px;
     border-radius: 4px;
-    background: #b8a96a;   /* unselected default */
+    background: #b8a96a;
     color: white;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 .action-pill {
-    background: #d9534f;   /* red group */
+    background: #d9534f;
+    display: inline-block;
+    padding: 2px 6px;
+    margin: 2px 4px;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: 0.75rem;
 }
 
-.tag-selected {
-    background: #05314D !important;  /* SES dark blue or whatever you want */
-    color: #fff;
+.action-pill.tag-selected {
+  background: white;  
+  color: #d9534f;
+  border-color: #d9534f;
+  border: 1px;
+  border-style: solid;
+}
+
+
+.tag-pill.tag-selected {
+    background: white;
+    color: #b8a96a;
+    border-color: #b8a96a;
+    border: 1px;
+    border-style: solid;
 }
 
 /* Single-row Incident card accordion */
