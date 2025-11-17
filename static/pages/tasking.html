@@ -1406,6 +1406,9 @@
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
+                        <span data-bind="text: errorMessage"></span>
+                    </div>
                     <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
                         data-bind="value: text"></textarea>
                 </div>
@@ -1433,36 +1436,64 @@
                 </div>
 
                 <div class="modal-body">
+                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
+                        <span data-bind="text: errorMessage"></span>
+                    </div>
                     <!-- Contact Types -->
                     <h6>Contact Types</h6>
-                    <div class="tag-list" data-bind=""> <!-- foreach: byGroup(2) -->
-                        <span class="tag-pill" data-bind="text: name,
-                                        click: toggle,
-                                        css: { 'tag-selected': selected }"></span>
+                    <div class="tag-list" data-bind="foreach: tagsByGroup[2]">
+                        <span class="tag-pill"
+                            data-bind="click: toggle,
+                                        css: { 'tag-selected': selected }">
+
+                            <span data-bind="text: name"></span>
+
+                            <i class="far fa-times-circle tag-icon"
+                            data-bind="visible: selected"></i>
+                        </span>
                     </div>
 
                     <!-- Contact Methods -->
                     <h6>Contact Methods</h6>
-                    <div class="tag-list" data-bind=""> <!-- foreach: byGroup(3)-->
-                        <span class="tag-pill" data-bind="text: name,
-                                        click: toggle,
-                                        css: { 'tag-selected': selected }"></span>
+                    <div class="tag-list" data-bind="foreach: tagsByGroup[3]">
+                        <span class="tag-pill"
+                            data-bind="click: toggle,
+                                        css: { 'tag-selected': selected }">
+
+                            <span data-bind="text: name"></span>
+
+                            <i class="far fa-times-circle tag-icon"
+                            data-bind="visible: selected"></i>
+                        </span>
                     </div>
 
                     <!-- Entry Purpose -->
                     <h6>Entry Purpose</h6>
-                    <div class="tag-list" data-bind=""> <!-- foreach: byGroup(4)-->
-                        <span class="tag-pill" data-bind="text: name,
-                                        click: toggle,
-                                        css: { 'tag-selected': selected }"></span>
+                    <div class="tag-list" data-bind="foreach: tagsByGroup[4]">
+                        <span class="tag-pill"
+                            data-bind="click: toggle,
+                                        css: { 'tag-selected': selected }">
+
+                            <span data-bind="text: name"></span>
+
+                            <i class="far fa-times-circle tag-icon"
+                            data-bind="visible: selected"></i>
+                        </span>
                     </div>
 
                     <!-- Action Items -->
                     <h6>Action Items</h6>
-                    <div class="tag-list" data-bind=""> <!-- foreach: byGroup(27)-->
-                        <span class="tag-pill action-pill" data-bind="text: name,
-                                        click: toggle,
-                                        css: { 'tag-selected': selected }"></span>
+                    <div class="tag-list" data-bind="foreach: tagsByGroup[27]">
+                        <span class="action-pill"
+                            data-bind="click: toggle,
+                                        css: { 'tag-selected': selected }">
+
+                            <span data-bind="text: name"></span>
+
+                            <i class="far fa-times-circle tag-icon"
+                            data-bind="visible: selected"></i>
+
+                        </span>
                     </div>
                     <h6>Subject</h6>
                     <textarea class="modal-textarea-full" id="RadioLogInput" rows="1" maxlength="50"
