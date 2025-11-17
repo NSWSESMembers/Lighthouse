@@ -3,6 +3,12 @@ import ko from 'knockout';
 
 import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
 // 
+
+
+const FUNCTION_URL = "https://y4lq7u7ga3zhugj7ltx2kvju4y0zwnak.lambda-url.us-east-1.on.aws/";
+
+
+
 export function ConfigVM(root, deps) {
     const self = this;
 
@@ -12,6 +18,13 @@ export function ConfigVM(root, deps) {
     self.searching = ko.observable(false);
     self.dropdownOpen = ko.observable(false);
     self.inputHasFocus = ko.observable(false);
+
+    // Share / load shared config state
+    self.shareId = ko.observable('');          // last successful share key
+    self.shareError = ko.observable('');       // error message (if any)
+    self.sharing = ko.observable(false);       // POST in progress
+    self.loadingShared = ko.observable(false); // GET in progress
+    self.shareKeyInput = ko.observable('');    // bound to header input
 
     // Selected location filters
     self.teamFilters = ko.observableArray([]);     // [{id, name, entityType}]
@@ -29,8 +42,11 @@ export function ConfigVM(root, deps) {
     //blown away on load
     self.jobStatusFilter = ko.observableArray([]);
 
-
     self.incidentTypeFilter = ko.observableArray([]); // [{id, name, entityType}]
+
+
+
+
 
     // self.incidentTypeFilter.subscribe(() => {
     //     self.save();
@@ -70,6 +86,23 @@ export function ConfigVM(root, deps) {
         "Support",
         "Storm"
     ]
+
+
+
+    // Build the current config payload (used by save + share)
+    const buildConfig = () => ({
+        refreshInterval: Number(self.refreshInterval()),
+        theme: self.theme(),
+        showAdvanced: !!self.showAdvanced(),
+        locationFilters: {
+            teams: ko.toJS(self.teamFilters),
+            incidents: ko.toJS(self.incidentFilters)
+        },
+        // these are your “ignored” statuses used by main.js filters
+        teamStatusFilter: ko.toJS(self.teamStatusFilter),
+        jobStatusFilter: ko.toJS(self.jobStatusFilter),
+        incidentTypeFilter: ko.toJS(self.incidentTypeFilter)
+    });
 
     // Helpers
     const norm = (item) => ({
@@ -176,20 +209,8 @@ export function ConfigVM(root, deps) {
     const STORAGE_KEY = 'lh-taskingConfig';
 
     self.save = () => {
-        const cfg = {
-            refreshInterval: Number(self.refreshInterval()),
-            theme: self.theme(),
-            showAdvanced: !!self.showAdvanced(),
-            locationFilters: {
-                teams: ko.toJS(self.teamFilters),
-                incidents: ko.toJS(self.incidentFilters)
-            },
-            // these are your “ignored” statuses used by main.js filters
-            teamStatusFilter: ko.toJS(self.teamStatusFilter),
-            jobStatusFilter: ko.toJS(self.jobStatusFilter),
-            incidentTypeFilter: ko.toJS(self.incidentTypeFilter)
+        const cfg = buildConfig();
 
-        };
 
         console.log('Saving config:', cfg);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
@@ -257,6 +278,92 @@ export function ConfigVM(root, deps) {
 
     };
 
+    self.share = async () => {
+        self.shareError('');
+        self.sharing(true);
+
+        try {
+            const savedConfig = buildConfig();
+
+            const res = await fetch(FUNCTION_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ config: savedConfig })
+            });
+
+            if (!res.ok) {
+                throw new Error(`Share failed with status ${res.status}`);
+            }
+
+            const { id } = await res.json();
+
+            if (!id) {
+                throw new Error("No id returned from share service");
+            }
+
+            self.shareId(id);
+        } catch (err) {
+            console.error('Error sharing config:', err);
+            self.shareError('Failed to share config. Try again later.');
+            self.shareId('');
+        } finally {
+            self.sharing(false);
+        }
+    };
+
+    // GET shared config from Lambda -> apply + refresh
+    self.loadShared = async (id) => {
+        if (!id) return;
+
+        self.shareError('');
+        self.loadingShared(true);
+
+        try {
+            // Adjust to match your handler: expects ?id=...
+            const url = `${FUNCTION_URL}?id=${encodeURIComponent(id)}`;
+
+            const res = await fetch(url, {
+                method: "GET",
+                headers: { "Accept": "application/json" }
+            });
+
+            if (!res.ok) {
+                throw new Error(`Load failed with status ${res.status}`);
+            }
+
+            const data = await res.json();
+            const cfg = data.config || data; // support {config: ...} or raw
+
+            if (!cfg || typeof cfg !== 'object') {
+                throw new Error('Invalid config returned from share service');
+            }
+
+            // Persist + apply
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+            self.loadFromStorage();
+
+            // Refresh data based on new filters
+            root.fetchAllTeamData();
+            root.fetchAllJobsData();
+            root.fetchAllTrackableAssets();
+
+            self.shareId(id);
+            self.shareKeyInput(id);
+        } catch (err) {
+            console.error('Error loading shared config:', err);
+            self.shareError('Failed to load shared config. Check the key and try again.');
+        } finally {
+            self.loadingShared(false);
+        }
+    };
+
+    // Used by the header form (enter key + press Enter / click Load)
+    self.loadSharedFromField = () => {
+        const id = (self.shareKeyInput() || '').trim();
+        if (!id) return;
+        self.loadShared(id);
+    };
+    
 
     // run once on construction
     self.loadFromStorage();

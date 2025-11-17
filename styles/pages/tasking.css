@@ -1009,3 +1009,16 @@ tr.job:hover {
     padding: 0;
     margin-left: 10px;
 }
+
+#configModal .modal-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+#configModal .modal-header .modal-title {
+    margin-right: auto;
+}
+
+
+.sharecode {
+  font-size: 1.875em;
+}
