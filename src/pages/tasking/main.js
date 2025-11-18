@@ -14,6 +14,9 @@ import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
 import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { NewOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
+
+import { JobTimeline } from "./viewmodels/JobTimeline.js";
+
 import { getAllStaticTags, Tag } from "./models/Tag.js";
 
 import { installAlerts } from './components/alerts.js';
@@ -264,6 +267,8 @@ function VM() {
     self.NewOpsLogModalVM = new NewOpsLogModalVM(self);
     self.selectedJob = ko.observable(null);
 
+    self.jobTimelineVM = new JobTimeline(self);
+
 
     // --- TABLE SORTING MAGIC ---
     self.teamSortKey = ko.observable('callsign');
@@ -499,6 +504,10 @@ function VM() {
                 self.attachNewOpsLogModal(job);
             },
 
+            attachAndFillTimelineModal: (job) => {
+                self.attachJobTimelineModal(job);
+            },
+
             fetchUnacknowledgedJobNotifications: (job) => {
                 self.fetchUnacknowledgedJobNotifications(job);
             }
@@ -550,6 +559,13 @@ function VM() {
         self.opsLogModalVM.openForJob(job);
         modal.show();
     };
+
+    self.attachJobTimelineModal = function (job) {
+        const modalEl = document.getElementById('jobTimelineModal');
+        const modal = new bootstrap.Modal(modalEl);
+        self.jobTimelineVM.openForJob(job);
+        modal.show();
+    }
 
     self.attachJobRadioLogModal = function (tasking) {
         const modalEl = document.getElementById('RadioLogModal');
@@ -851,6 +867,15 @@ function VM() {
             cb(data?.Results || []);
         }, function (err) {
             console.error("Failed to fetch ops log for job:", err);
+            cb([]);
+        });
+    }
+
+    self.fetchHistoryForJob = function (jobId, cb) {
+        BeaconClient.job.getHistory(jobId, apiHost, params.userId, token, function (data) {
+            cb(data || []);
+        }, function (err) {
+            console.error("Failed to fetch history for job:", err);
             cb([]);
         });
     }

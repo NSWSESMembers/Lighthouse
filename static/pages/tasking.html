@@ -626,10 +626,10 @@
 
                                         <!-- SUMMARY BAR -->
                                         <div class="job-summary"
-                                            data-bind="click: j.toggleAndLoad, style: { 'background': rowColour() }">
+                                            data-bind="click: j.toggleAndExpand, style: { 'background': rowColour() }">
                                             <!-- 1. Chevron / drag handle -->
                                             <div class="job-cell job-cell--chev" draggable="true"
-                                                data-bind="draggableRow: { job: j }, click: j.toggleAndLoad, clickBubble: false">
+                                                data-bind="draggableRow: { job: j }, click: j.toggleAndExpand, clickBubble: false">
                                                 <button type="button" class="btn btn-link p-0 text-decoration-none"
                                                     data-bind="attr:{ 'aria-expanded': j.expanded }"
                                                     aria-label="Expand/collapse incident">
@@ -718,8 +718,8 @@
                                                             <i class="fa fa-crosshairs"></i> Focus
                                                         </button>
                                                         <button class="btn btn-outline-dark"
-                                                            data-bind="click: j.attachAndFillOpsLogModal">
-                                                            <i class="fa fa-list"></i> Ops Log
+                                                            data-bind="click: j.attachAndFillTimelineModal">
+                                                            <i class="fas fa-book"></i> Time Line
                                                         </button>
                                                         <button class="btn btn-outline-dark"
                                                             data-bind="click: j.openNewOpsLogModal">
@@ -1455,7 +1455,196 @@
         </div>
     </div>
 
-    <!-- Radio Log Modal -->
+    <!-- Job Timeline Modal -->
+    <div class="modal fade" id="jobTimelineModal" tabindex="-1" aria-labelledby="jobTimelineModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" data-bind="with: jobTimelineVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="jobTimelineModalLabel">
+                        Incident History — <span data-bind="text: jobIdentifier"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Tag filter bar -->
+                    <!-- ko if: tagFilterItems().length -->
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="fw-semibold small me-2">Tag filter (AND):</span>
+
+                        <div class="d-flex align-items-center flex-wrap" data-bind="foreach: tagFilterItems">
+                            <button type="button" class="btn btn-sm me-1 mb-1" data-bind="text: name, click: $parent.toggleTagFilter, css: cssClasses">
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <!-- /ko -->
+                    <!-- Loading indicator -->
+                    <div data-bind="visible: loading" class="text-center my-3">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+
+                    <!-- No data message -->
+                    <div class="alert alert-info py-2 small"
+                        data-bind="visible: !loading() && timelineBuckets().length === 0">
+                        No history or ops log entries have been recorded for this incident yet.
+                    </div>
+
+
+
+                    <!-- Two-lane timeline -->
+                    <div class="job-history-timeline"
+                        data-bind="foreach: timelineBuckets, visible: !loading() && timelineBuckets().length > 0">
+
+                        <div class="job-history-row row gx-3 mb-3">
+                            <!-- LEFT: Ops Log -->
+                            <div data-bind="attr: { 'class': $parent.opsColClass }">
+                                <h6 class="text-muted text-uppercase small mb-1" data-bind="visible: ops.length">Ops Log
+                                </h6>
+
+                                <div data-bind="foreach: ops">
+                                    <div class="card shadow-sm job-history-card mb-2 job-history-card-ops" data-bind="css: {
+                                    'job-history-card-flagged': important,
+                                     'job-history-card-icems': isIcemsEntry
+                                    }">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <div>
+                                                    <strong data-bind="text: subject"></strong>
+                                                </div>
+                                                <div class="small text-muted ms-2 text-end">
+                                                    <i class="fa fa-user me-1"></i>
+                                                    <!-- fullName is an observable -->
+                                                    <span data-bind="text: createdBy.fullName"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="small text-muted mb-1">
+                                                <span data-bind="text: timeLoggedFormatted"></span>
+                                                <span class="mx-1">•</span>
+                                                <span data-bind="text: timeLoggedAgo"></span>
+                                            </div>
+
+                                            <div data-bind="text: text"></div>
+
+                                            <div class="mt-1 small">
+                                                <!-- tags -->
+                                                <span class="badge rounded-pill bg-secondary me-1"
+                                                    data-bind="text: tagsCsv, visible: tagsCsv"></span>
+
+                                                <!-- flags; subtle, not layout-dominant -->
+                                                <span
+                                                    class="badge rounded-pill bg-warning-subtle text-warning-emphasis me-1"
+                                                    data-bind="visible: important">Important</span>
+                                                <span class="badge rounded-pill bg-info-subtle text-info-emphasis me-1"
+                                                    data-bind="visible: isIcemsEntry">ICEMS</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- CENTRE: shared time axis -->
+                            <div data-bind="attr: { 'class': $parent.middleColClass }">
+                                <div class="job-history-rail">
+                                    <div class="job-history-dot"></div>
+                                    <div class="job-history-line"></div>
+                                </div>
+                                <div class="small text-muted mt-1" data-bind="text: label"></div>
+                                <div class="small text-muted" data-bind="text: rel"></div>
+                            </div>
+
+                            <!-- RIGHT: Incident History -->
+                            <div data-bind="attr: { 'class': $parent.historyColClass }">
+                                <h6 class="text-muted text-uppercase small mb-1" data-bind="visible: history.length">
+                                    Incident History</h6>
+
+                                <div data-bind="foreach: history">
+                                    <div class="card shadow-sm job-history-card mb-2 job-history-card-history">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <div>
+                                                    <strong data-bind="text: name"></strong>
+                                                </div>
+                                                <div class="small text-muted ms-2 text-end">
+                                                    <i class="fa fa-user me-1"></i>
+                                                    <span data-bind="text: createdByDisplay"></span>
+                                                </div>
+                                            </div>
+                                            <div class="small text-muted mb-1">
+                                                <span data-bind="text: timeStamp"></span>
+                                                <span class="mx-1">•</span>
+                                                <span data-bind="text: timeStampAgo"></span>
+                                            </div>
+                                            <div data-bind="text: description"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /job-history-row -->
+                    </div><!-- /job-history-timeline -->
+                </div>
+
+                <div class="modal-footer d-flex justify-content-between align-items-center">
+
+                    <!-- LEFT: Legend -->
+                    <div class="jobhistory-legend small d-flex flex-wrap align-items-center">
+                        <div class="d-flex align-items-center me-3 mb-1">
+                            <span class="jobhistory-legend-swatch jobhistory-legend-history me-1"></span>
+                            <span>Incident History</span>
+                        </div>
+
+                        <div class="d-flex align-items-center me-3 mb-1">
+                            <span class="jobhistory-legend-swatch jobhistory-legend-ops-normal me-1"></span>
+                            <span>Ops Log</span>
+                        </div>
+
+                        <div class="d-flex align-items-center me-3 mb-1">
+                            <span class="jobhistory-legend-swatch jobhistory-legend-ops-important me-1"></span>
+                            <span>Important</span>
+                        </div>
+
+                        <div class="d-flex align-items-center me-3 mb-1">
+                            <span class="jobhistory-legend-swatch jobhistory-legend-ops-icems me-1"></span>
+                            <span>ICEMS</span>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Lane buttons + Close -->
+                    <div class="d-flex align-items-center gap-2">
+
+                        <!-- Lane view toggle -->
+                        <div class="btn-group btn-group-sm btn-primary" role="group" aria-label="Timeline lanes">
+                            <button type="button" data-bind="click: setLaneViewBoth,
+                               attr: { 'class': laneBtnBothClass }">
+                                Both
+                            </button>
+                            <button type="button" data-bind="click: setLaneViewHistory,
+                               attr: { 'class': laneBtnHistoryClass }">
+                                Incident History
+                            </button>
+                            <button type="button" data-bind="click: setLaneViewOps,
+                               attr: { 'class': laneBtnOpsClass }">
+                                Ops Log
+                            </button>
+                        </div>
+
+                        <!-- Close button -->
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+
+
     <!-- Need to add some sort of error message if it fails -->
     <div class="modal fade" id="RadioLogModal" tabindex="-1" aria-labelledby="RadioLogModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
