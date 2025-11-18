@@ -19,6 +19,7 @@ export function Job(data = {}, deps = {}) {
         fetchJobById = (_jobId, cb) => cb(null),
         flyToJob = (_job) => {/* noop */ },
         attachAndFillOpsLogModal = (_jobId) => ([]),
+        attachAndFillTimelineModal = (_job) => { /* noop */ },
         fetchUnacknowledgedJobNotifications = async (_job) => ([]),
     } = deps;
 
@@ -143,9 +144,6 @@ export function Job(data = {}, deps = {}) {
         }
     });
 
-
-
-
     self.toggleAndLoad = function () {
         if (!self.expanded()) {
             self.fetchTasking();
@@ -165,6 +163,11 @@ export function Job(data = {}, deps = {}) {
     self.attachAndFillOpsLogModal = function () {
         console.log("Fetching ops log entries for job", self.id());
         attachAndFillOpsLogModal(self)
+    }
+
+    self.attachAndFillTimelineModal = function () {
+        console.log("Fetching timeline entries for job", self.id());
+        attachAndFillTimelineModal(self)
     }
 
     self.openRadioLogModal = function (tasking) {
@@ -382,6 +385,48 @@ export function Job(data = {}, deps = {}) {
         if (self.isFilteredIn() === false) return;
         flyToJob(self);
     };
+
+    self.toggleAndExpand = function () {
+        self.toggleAndLoad();
+        if (!self.expanded()) {
+            self.fetchTasking();
+            self.refreshData();
+        }
+        requestAnimationFrame(() => {
+            // find the row for this job
+            const row = document.querySelector(`tr.job-row[data-job-id="${self.id()}"]`);
+            if (!row) return;
+
+            // find the scroll container (the table wrapper in the bottom pane)
+            const container = row.closest('.pane--bottom .table-responsive')
+                || row.closest('.table-responsive')
+                || row.parentElement?.parentElement; // fallback
+
+            if (!container) {
+                // fallback to normal scrollIntoView if we can't find a container
+                row.scrollIntoView({ behavior: "smooth", block: "start" });
+                return;
+            }
+
+            // sticky header height
+            const table = row.closest('table');
+            const thead = table ? table.querySelector('thead') : null;
+            const headerHeight = thead ? thead.getBoundingClientRect().height : 0;
+
+            // compute how far we need to move the container's scrollTop
+            const containerRect = container.getBoundingClientRect();
+            const rowRect = row.getBoundingClientRect();
+
+            // desired: row just under header, with a tiny padding
+            const padding = 2;
+            const delta = (rowRect.top - containerRect.top) - headerHeight - padding;
+
+            container.scrollTo({
+                top: container.scrollTop + delta,
+                behavior: "smooth"
+            });
+        });
+    }
 
     self.focusAndExpandInList = function () {
         // expand the job row

@@ -26,21 +26,74 @@
                             <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: teamSearch, valueUpdate: 'input'">
                         </div>
-
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
-                                id="teamMenu" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa fa-cog"></i>
+                                id="teamMenu" data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                                aria-expanded="false">
+                                <i class="fa fa-filter"></i>
                             </button>
+
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="teamMenu">
-                                <li><a class="dropdown-item" href="#" data-bind="click: fetchAllTeamData">Refresh
-                                        Teams</a></li>
-                                <li><a class="dropdown-item" href="#">Show Only Active</a></li>
+
+                                <!-- Basic actions -->
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bind="click: fetchAllTeamData">
+                                        Refresh Teams
+                                    </a>
+                                </li>
+
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-                                <li><a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#configModal">Page Config</a></li>
+
+                                <!-- TEAM STATUS FILTERS (collapsible section) -->
+                                <li>
+                                    <button class="dropdown-item d-flex justify-content-between align-items-center"
+                                        type="button" data-bs-toggle="collapse" data-bs-target="#teamStatusFilterMenu"
+                                        aria-expanded="false" aria-controls="teamStatusFilterMenu">
+                                        Team Status Filters
+                                        <span class="ms-2 fa fa-chevron-right small"></span>
+                                    </button>
+                                    <div class="collapse dropdown-collapse-body" id="teamStatusFilterMenu">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddStatusActivated"
+                                                data-bind="teamStatusFilterAndFetch: 'Activated'">
+                                            <label class="form-check-label" for="tddStatusActivated">Activated</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddStatusStandby"
+                                                data-bind="teamStatusFilterAndFetch: 'Standby'">
+                                            <label class="form-check-label" for="tddStatusStandby">Standby</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddStatusCancelled"
+                                                data-bind="teamStatusFilterAndFetch: 'Stood down'">
+                                            <label class="form-check-label" for="tddStatusCancelled">Stood down</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddStatusRest"
+                                                data-bind="teamStatusFilterAndFetch: 'Rest'">
+                                            <label class="form-check-label" for="tddStatusRest">Rest</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddStatusOnAlert"
+                                                data-bind="teamStatusFilterAndFetch: 'On Alert'">
+                                            <label class="form-check-label" for="tddStatusOnAlert">On Alert</label>
+                                        </div>
+                                    </div>
+                                </li>
+
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+
+                                <!-- Open full config modal -->
+                                <li>
+                                    <a class="dropdown-item" href="#" data-bs-toggle="modal"
+                                        data-bs-target="#configModal">
+                                        Page Config
+                                    </a>
+                                </li>
                             </ul>
                         </div>
                     </div>
@@ -341,42 +394,42 @@
                                     <div class="collapse dropdown-collapse-body" id="jobStatusFilterMenu">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusNew"
-                                                data-bind="jobStatusFilter: 'New', click: $root.config.saveAndLoadJobData">
+                                                data-bind="jobStatusFilterAndFetch: 'New'">
                                             <label class="form-check-label" for="ddStatusNew">New</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusActive"
-                                                data-bind="jobStatusFilter: 'Active', click: $root.config.saveAndLoadJobData">
+                                                data-bind="jobStatusFilterAndFetch: 'Active'">
                                             <label class="form-check-label" for="ddStatusActive">Active</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusComplete"
-                                                data-bind="jobStatusFilter: 'Complete', click: $root.config.saveAndLoadJobData">
+                                                data-bind="jobStatusFilterAndFetch: 'Complete'">
                                             <label class="form-check-label" for="ddStatusComplete">Complete</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusCancelled"
-                                                data-bind="jobStatusFilter: 'Cancelled', click: $root.config.saveAndLoadJobData">
+                                                data-bind="jobStatusFilterAndFetch: 'Cancelled'">
                                             <label class="form-check-label" for="ddStatusCancelled">Cancelled</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusFinalised"
-                                                data-bind="jobStatusFilter: 'Finalised', click: $root.config.saveAndLoadJobData">
+                                                data-bind="jobStatusFilterAndFetch: 'Finalised'">
                                             <label class="form-check-label" for="ddStatusFinalised">Finalised</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusReferred"
-                                                data-bind="jobStatusFilter: 'Referred', click: $root.config.saveAndLoadJobData">
+                                                data-bind="jobStatusFilterAndFetch: 'Referred'">
                                             <label class="form-check-label" for="ddStatusReferred">Referred</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusRejected"
-                                                data-bind="jobStatusFilter: 'Rejected', click: $root.config.saveAndLoadJobData">
+                                                data-bind="jobStatusFilterAndFetch: 'Rejected'">
                                             <label class="form-check-label" for="ddStatusRejected">Rejected</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusTasked"
-                                                data-bind="jobStatusFilter: 'Tasked', click: $root.config.saveAndLoadJobData">
+                                                data-bind="jobStatusFilterAndFetch: 'Tasked'">
                                             <label class="form-check-label" for="ddStatusTasked">Tasked</label>
                                         </div>
                                     </div>
@@ -398,43 +451,43 @@
                                         <div class="dropdown-two-col">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeStorm"
-                                                    data-bind="incidentTypeFilter: 'Storm', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'Storm'">
                                                 <label class="form-check-label" for="ddJobTypeStorm">Storm</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeSupport"
-                                                    data-bind="incidentTypeFilter: 'Support', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'Support'">
                                                 <label class="form-check-label" for="ddJobTypeSupport">Support</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeFR"
-                                                    data-bind="incidentTypeFilter: 'FR', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'FR'">
                                                 <label class="form-check-label" for="ddJobTypeFR">Flood Rescue
                                                     (FR)</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeRCR"
-                                                    data-bind="incidentTypeFilter: 'RCR', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'RCR'">
                                                 <label class="form-check-label" for="ddJobTypeRCR">RCR</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeGLR"
-                                                    data-bind="incidentTypeFilter: 'GLR', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'GLR'">
                                                 <label class="form-check-label" for="ddJobTypeGLR">GLR</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeCFR"
-                                                    data-bind="incidentTypeFilter: 'CFR', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'CFR'">
                                                 <label class="form-check-label" for="ddJobTypeCFR">CFR</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeVR"
-                                                    data-bind="incidentTypeFilter: 'VR', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'VR'">
                                                 <label class="form-check-label" for="ddJobTypeVR">VR</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeLAR"
-                                                    data-bind="incidentTypeFilter: 'LAR', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'LAR'">
                                                 <label class="form-check-label" for="ddJobTypeLAR">LAR</label>
                                             </div>
                                         </div>
@@ -442,65 +495,65 @@
                                         <div class="dropdown-two-col">
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeResupply"
-                                                    data-bind="incidentTypeFilter: 'Resupply', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'Resupply'">
                                                 <label class="form-check-label" for="ddJobTypeResupply">Resupply</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeMedicalResupply"
-                                                    data-bind="incidentTypeFilter: 'MedicalResupply', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'MedicalResupply'">
                                                 <label class="form-check-label" for="ddJobTypeMedicalResupply">Medical
                                                     Resupply</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeFodderDrop"
-                                                    data-bind="incidentTypeFilter: 'FodderDrop', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'FodderDrop'">
                                                 <label class="form-check-label" for="ddJobTypeFodderDrop">Fodder
                                                     Drop</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeVetAssistance"
-                                                    data-bind="incidentTypeFilter: 'VetAssistance', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'VetAssistance'">
                                                 <label class="form-check-label" for="ddJobTypeVetAssistance">Vet
                                                     Assistance</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeFloodMisc"
-                                                    data-bind="incidentTypeFilter: 'FloodMisc', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'FloodMisc'">
                                                 <label class="form-check-label" for="ddJobTypeFloodMisc">Flood
                                                     Misc</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeEvacuationPriority"
-                                                    data-bind="incidentTypeFilter: 'EvacuationPriority', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'EvacuationPriority'">
                                                 <label class="form-check-label"
                                                     for="ddJobTypeEvacuationPriority">Evacuation Priority</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeEvacuationSecondary"
-                                                    data-bind="incidentTypeFilter: 'EvacuationSecondary', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'EvacuationSecondary'">
                                                 <label class="form-check-label"
                                                     for="ddJobTypeEvacuationSecondary">Evacuation Secondary</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeWelfareCheck"
-                                                    data-bind="incidentTypeFilter: 'WelfareCheck', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'WelfareCheck'">
                                                 <label class="form-check-label" for="ddJobTypeWelfareCheck">Welfare
                                                     Check</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeTransport"
-                                                    data-bind="incidentTypeFilter: 'Transport', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'Transport'">
                                                 <label class="form-check-label"
                                                     for="ddJobTypeTransport">Transport</label>
                                             </div>
                                             <div class="form-check mb-0">
                                                 <input class="form-check-input" type="checkbox" id="ddJobTypeOther"
-                                                    data-bind="incidentTypeFilter: 'Tsunami', click: $root.config.saveAndLoadJobData">
+                                                    data-bind="incidentTypeFilterAndFetch: 'Tsunami'">
                                                 <label class="form-check-label" for="ddJobTypeOther">Tsunami</label>
                                             </div>
                                         </div>
@@ -573,10 +626,10 @@
 
                                         <!-- SUMMARY BAR -->
                                         <div class="job-summary"
-                                            data-bind="click: j.toggleAndLoad, style: { 'background': rowColour() }">
+                                            data-bind="click: j.toggleAndExpand, style: { 'background': rowColour() }">
                                             <!-- 1. Chevron / drag handle -->
                                             <div class="job-cell job-cell--chev" draggable="true"
-                                                data-bind="draggableRow: { job: j }, click: j.toggleAndLoad, clickBubble: false">
+                                                data-bind="draggableRow: { job: j }, click: j.toggleAndExpand, clickBubble: false">
                                                 <button type="button" class="btn btn-link p-0 text-decoration-none"
                                                     data-bind="attr:{ 'aria-expanded': j.expanded }"
                                                     aria-label="Expand/collapse incident">
@@ -665,8 +718,8 @@
                                                             <i class="fa fa-crosshairs"></i> Focus
                                                         </button>
                                                         <button class="btn btn-outline-dark"
-                                                            data-bind="click: j.attachAndFillOpsLogModal">
-                                                            <i class="fa fa-list"></i> Ops Log
+                                                            data-bind="click: j.attachAndFillTimelineModal">
+                                                            <i class="fas fa-book"></i> Time Line
                                                         </button>
                                                         <button class="btn btn-outline-dark"
                                                             data-bind="click: j.openNewOpsLogModal">
@@ -1402,11 +1455,200 @@
         </div>
     </div>
 
-    <!-- Radio Log Modal -->
+    <!-- Job Timeline Modal -->
+    <div class="modal fade" id="jobTimelineModal" tabindex="-1" aria-labelledby="jobTimelineModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" data-bind="with: jobTimelineVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="jobTimelineModalLabel">
+                        Incident History — <span data-bind="text: jobIdentifier"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Tag filter bar -->
+                    <!-- ko if: tagFilterItems().length -->
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="fw-semibold small me-2">Tag filter (AND):</span>
+
+                        <div class="d-flex align-items-center flex-wrap" data-bind="foreach: tagFilterItems">
+                            <button type="button" class="btn btn-sm me-1 mb-1" data-bind="text: name, click: $parent.toggleTagFilter, css: cssClasses">
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr />
+                    <!-- /ko -->
+                    <!-- Loading indicator -->
+                    <div data-bind="visible: loading" class="text-center my-3">
+                        <div class="spinner-border" role="status"></div>
+                    </div>
+
+                    <!-- No data message -->
+                    <div class="alert alert-info py-2 small"
+                        data-bind="visible: !loading() && timelineBuckets().length === 0">
+                        No history or ops log entries have been recorded for this incident yet.
+                    </div>
+
+
+
+                    <!-- Two-lane timeline -->
+                    <div class="job-history-timeline"
+                        data-bind="foreach: timelineBuckets, visible: !loading() && timelineBuckets().length > 0">
+
+                        <div class="job-history-row row gx-3 mb-3">
+                            <!-- LEFT: Ops Log -->
+                            <div data-bind="attr: { 'class': $parent.opsColClass }">
+                                <h6 class="text-muted text-uppercase small mb-1" data-bind="visible: ops.length">Ops Log
+                                </h6>
+
+                                <div data-bind="foreach: ops">
+                                    <div class="card shadow-sm job-history-card mb-2 job-history-card-ops" data-bind="css: {
+                                    'job-history-card-flagged': important,
+                                     'job-history-card-icems': isIcemsEntry
+                                    }">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <div>
+                                                    <strong data-bind="text: subject"></strong>
+                                                </div>
+                                                <div class="small text-muted ms-2 text-end">
+                                                    <i class="fa fa-user me-1"></i>
+                                                    <!-- fullName is an observable -->
+                                                    <span data-bind="text: createdBy.fullName"></span>
+                                                </div>
+                                            </div>
+
+                                            <div class="small text-muted mb-1">
+                                                <span data-bind="text: timeLoggedFormatted"></span>
+                                                <span class="mx-1">•</span>
+                                                <span data-bind="text: timeLoggedAgo"></span>
+                                            </div>
+
+                                            <div data-bind="text: text"></div>
+
+                                            <div class="mt-1 small">
+                                                <!-- tags -->
+                                                <span class="badge rounded-pill bg-secondary me-1"
+                                                    data-bind="text: tagsCsv, visible: tagsCsv"></span>
+
+                                                <!-- flags; subtle, not layout-dominant -->
+                                                <span
+                                                    class="badge rounded-pill bg-warning-subtle text-warning-emphasis me-1"
+                                                    data-bind="visible: important">Important</span>
+                                                <span class="badge rounded-pill bg-info-subtle text-info-emphasis me-1"
+                                                    data-bind="visible: isIcemsEntry">ICEMS</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- CENTRE: shared time axis -->
+                            <div data-bind="attr: { 'class': $parent.middleColClass }">
+                                <div class="job-history-rail">
+                                    <div class="job-history-dot"></div>
+                                    <div class="job-history-line"></div>
+                                </div>
+                                <div class="small text-muted mt-1" data-bind="text: label"></div>
+                                <div class="small text-muted" data-bind="text: rel"></div>
+                            </div>
+
+                            <!-- RIGHT: Incident History -->
+                            <div data-bind="attr: { 'class': $parent.historyColClass }">
+                                <h6 class="text-muted text-uppercase small mb-1" data-bind="visible: history.length">
+                                    Incident History</h6>
+
+                                <div data-bind="foreach: history">
+                                    <div class="card shadow-sm job-history-card mb-2 job-history-card-history">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <div>
+                                                    <strong data-bind="text: name"></strong>
+                                                </div>
+                                                <div class="small text-muted ms-2 text-end">
+                                                    <i class="fa fa-user me-1"></i>
+                                                    <span data-bind="text: createdByDisplay"></span>
+                                                </div>
+                                            </div>
+                                            <div class="small text-muted mb-1">
+                                                <span data-bind="text: timeStamp"></span>
+                                                <span class="mx-1">•</span>
+                                                <span data-bind="text: timeStampAgo"></span>
+                                            </div>
+                                            <div data-bind="text: description"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- /job-history-row -->
+                    </div><!-- /job-history-timeline -->
+                </div>
+
+                <div class="modal-footer d-flex justify-content-between align-items-center">
+
+                    <!-- LEFT: Legend -->
+                    <div class="jobhistory-legend small d-flex flex-wrap align-items-center">
+                        <div class="d-flex align-items-center me-3 mb-1">
+                            <span class="jobhistory-legend-swatch jobhistory-legend-history me-1"></span>
+                            <span>Incident History</span>
+                        </div>
+
+                        <div class="d-flex align-items-center me-3 mb-1">
+                            <span class="jobhistory-legend-swatch jobhistory-legend-ops-normal me-1"></span>
+                            <span>Ops Log</span>
+                        </div>
+
+                        <div class="d-flex align-items-center me-3 mb-1">
+                            <span class="jobhistory-legend-swatch jobhistory-legend-ops-important me-1"></span>
+                            <span>Important</span>
+                        </div>
+
+                        <div class="d-flex align-items-center me-3 mb-1">
+                            <span class="jobhistory-legend-swatch jobhistory-legend-ops-icems me-1"></span>
+                            <span>ICEMS</span>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Lane buttons + Close -->
+                    <div class="d-flex align-items-center gap-2">
+
+                        <!-- Lane view toggle -->
+                        <div class="btn-group btn-group-sm btn-primary" role="group" aria-label="Timeline lanes">
+                            <button type="button" data-bind="click: setLaneViewBoth,
+                               attr: { 'class': laneBtnBothClass }">
+                                Both
+                            </button>
+                            <button type="button" data-bind="click: setLaneViewHistory,
+                               attr: { 'class': laneBtnHistoryClass }">
+                                Incident History
+                            </button>
+                            <button type="button" data-bind="click: setLaneViewOps,
+                               attr: { 'class': laneBtnOpsClass }">
+                                Ops Log
+                            </button>
+                        </div>
+
+                        <!-- Close button -->
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+
+
+
     <!-- Need to add some sort of error message if it fails -->
     <div class="modal fade" id="RadioLogModal" tabindex="-1" aria-labelledby="RadioLogModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" data-bind="with: NewOpsLogModalVM">
+            <div class="modal-content" data-bind="with: CreateRadioLogModalVM">
                 <div class="modal-header bg-dark text-white">
                     <h5 class="modal-title" id="RadioLogModalLabel">
                         <span data-bind="text: headerLabel"></span>
@@ -1432,11 +1674,11 @@
 
     <!-- New Ops Log Modal -->
     <!-- Need to add some sort of error message if it fails -->
-    <div class="modal fade" id="NewOpsLogModal" tabindex="-1" aria-labelledby="NewOpsLogModalLabel" aria-hidden="true">
+    <div class="modal fade" id="CreateOpsLogModal" tabindex="-1" aria-labelledby="CreateOpsLogModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" data-bind="with: NewOpsLogModalVM">
+            <div class="modal-content" data-bind="with: CreateOpsLogModalVM">
                 <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="NewOpsLogModalLabel">
+                    <h5 class="modal-title" id="CreateOpsLogModalLabel">
                         <span data-bind="text: headerLabel"></span>
                     </h5>
 

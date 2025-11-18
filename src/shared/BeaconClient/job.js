@@ -188,3 +188,20 @@ export function searchwithFilter(unit, host, StartDate, EndDate, userId = 'notPa
   );
 
 }
+
+export function getHistory(id, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'GET',
+    url: host + "/Api/v1/Jobs/" + id + "/History/?LighthouseFunction=getHistory&userId=" + userId,
+    beforeSend: function (n) {
+      n.setRequestHeader("Authorization", "Bearer " + token)
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        callback(response.responseJSON);
+      }
+    }
+  });
+}

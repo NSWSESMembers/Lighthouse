@@ -876,14 +876,14 @@ tr.job:hover {
     margin: 0;
 }
 
-#NewOpsLogModal h6 {
+#CreateOpsLogModal h6 {
     margin-top: 0.75rem !important;
     margin-bottom: 0.35rem !important;
     font-weight: 600;
 }
 
-#NewOpsLogModal input[type="text"],
-#NewOpsLogModal textarea {
+#CreateOpsLogModal input[type="text"],
+#CreateOpsLogModal textarea {
     width: 100%;
     border-radius: 6px;
     border: 1px solid #ccc;
@@ -893,8 +893,8 @@ tr.job:hover {
 }
 
 /* Focus state */
-#NewOpsLogModal input[type="text"]:focus,
-#NewOpsLogModal textarea:focus {
+#CreateOpsLogModal input[type="text"]:focus,
+#CreateOpsLogModal textarea:focus {
     border-color: #1e8740; /* theme colour? */
     box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
     outline: none;
@@ -1090,4 +1090,137 @@ tr.job:hover {
     font-family: monospace;
     font-size: 1.3rem;
     letter-spacing: 0.05rem;
+}
+
+
+
+
+/* === Job History / Ops Log two-lane timeline === */
+
+.job-history-timeline {
+  margin-top: 0.5rem;
+}
+
+.job-history-row {
+  position: relative;
+}
+
+/* centre rail (time axis) */
+.job-history-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 3rem;
+}
+
+.job-history-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--bs-primary);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
+  z-index: 1;
+}
+
+.job-history-line {
+  flex: 1;
+  width: 2px;
+  background-color: #dee2e6;
+  margin-top: 2px;
+}
+
+.jobhistory-tag-btn {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  vertical-align: middle;  /* THIS FIXES THE FLOATING */
+  line-height: 1.2;        /* Helps even out height across browsers */
+}
+
+/* Legend container */
+.jobhistory-legend {
+  color: #6c757d; /* muted */
+}
+
+/* Swatch shape: little bar matching card borders */
+.jobhistory-legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background-color: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+/* Match your card border colours */
+
+.jobhistory-legend-history {
+  border-left-color: var(--bs-success);   /* .job-history-card-history */
+}
+
+.jobhistory-legend-ops-normal {
+  border-left-color: var(--bs-primary);   /* .job-history-card-ops default */
+}
+
+.jobhistory-legend-ops-important {
+  border-left-color: var(--bs-warning);    /* .job-history-card-flagged */
+}
+
+/* ICEMS: hint at double border */
+.jobhistory-legend-ops-icems {
+  border-left-color: var(--bs-primary);
+  border-left-style: double;
+}
+
+/* cards */
+
+.job-history-card {
+  border-radius: 0.5rem;
+  border: 1px solid #dee2e6;
+  border-left-width: 4px;
+  background-color: #fff;
+}
+
+.job-history-card-ops {
+  border-left-color: var(--bs-primary);
+}
+
+.job-history-card-history {
+  border-left-color: var(--bs-success);
+}
+.job-history-card-flagged {
+  border-left-color: var(--bs-warning);
+  border-left-style: solid !important;
+}
+
+.job-history-card-icems {
+  border-left-style: double;
+}
+
+/* common hover */
+.job-history-card-ops:hover,
+.job-history-card-history:hover {
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.08);
+}
+
+/* tighten spacing in the modal */
+#jobHistoryModal .modal-body {
+  padding-top: 0.75rem;
+}
+
+.jobhistory-tag-btn {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+}
+
+.jobhistory-tag-btn.jobhistory-tag-icems {
+  border-color: var(--bs-secondary);
+}
+
+/* when ICEMS is selected (btn-secondary active already applied) */
+.jobhistory-tag-btn.jobhistory-tag-icems.btn-secondary {
+  background-color: var(--bs-secondary);
 }
