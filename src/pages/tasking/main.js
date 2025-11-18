@@ -258,7 +258,7 @@ function VM() {
     self.allTags = ko.observableArray(
         getAllStaticTags().map(t => new Tag(t))
     );
-    
+
     ///opslog short cuts
     self.opsLogModalVM = new OpsLogModalVM(self);
     self.NewOpsLogModalVM = new NewOpsLogModalVM(self);
@@ -981,6 +981,34 @@ function VM() {
 
     startAssetDataRefreshTimer()
 
+    // ---------------- REFRESH TIMER FOR JOBS + TEAMS -----------------
+
+    let jobsTeamsTimer = null;
+
+    function startJobsTeamsTimer() {
+        // clear old timer
+        if (jobsTeamsTimer) clearInterval(jobsTeamsTimer);
+
+        // interval in seconds → ms
+        const interval = Number(self.config.refreshInterval() || 60) * 1000;
+
+        jobsTeamsTimer = setInterval(() => {
+            self.fetchAllJobsData();
+            self.fetchAllTeamData();
+        }, interval);
+
+        console.log("Jobs/Teams refresh timer started:", interval, "ms");
+    }
+
+    // run once on startup
+    startJobsTeamsTimer();
+
+    // re-arm timer when refreshInterval changes
+    self.config.refreshInterval.subscribe(() => {
+        console.log("refreshInterval changed → restarting timer");
+        startJobsTeamsTimer();
+    });
+
 
 }
 
@@ -1021,14 +1049,15 @@ document.addEventListener('DOMContentLoaded', function () {
         };
 
         // status filters: maintain arrays of *ignored* status names
-        function makeStatusFilterBinding(listName) {
+        function makeStatusFilterBinding(listName, onChanged) {
             return {
                 init: function (element, valueAccessor, _allBindings, _vm, ctx) {
                     const status = ko.unwrap(valueAccessor());
                     const cfg = ctx.$root.config;
+                    const vm = ctx.$root;
                     if (!cfg || typeof cfg[listName] !== 'function') return;
 
-                    // initial state
+                    // initial checkbox state
                     element.checked = cfg[listName]().includes(status);
 
                     element.addEventListener('change', function () {
@@ -1040,20 +1069,51 @@ document.addEventListener('DOMContentLoaded', function () {
                         } else {
                             arr.remove(status);
                         }
+
+                        // now data is updated → run callback
+                        if (typeof onChanged === 'function') {
+                            onChanged(vm, cfg);
+                        }
                     });
                 },
                 update: function (element, valueAccessor, _allBindings, _vm, ctx) {
                     const status = ko.unwrap(valueAccessor());
                     const cfg = ctx.$root.config;
                     if (!cfg || typeof cfg[listName] !== 'function') return;
+
                     element.checked = cfg[listName]().includes(status);
                 }
             };
         }
 
+
         ko.bindingHandlers.teamStatusFilter = makeStatusFilterBinding('teamStatusFilter');
         ko.bindingHandlers.jobStatusFilter = makeStatusFilterBinding('jobStatusFilter');
         ko.bindingHandlers.incidentTypeFilter = makeStatusFilterBinding('incidentTypeFilter');
+
+        ko.bindingHandlers.teamStatusFilterAndFetch = makeStatusFilterBinding(
+            'teamStatusFilter',
+            (vm, cfg) => {
+                cfg.save();          // or cfg.saveAndLoadTeamData() if you prefer
+                vm.fetchAllTeamData();
+            }
+        );
+
+        ko.bindingHandlers.jobStatusFilterAndFetch = makeStatusFilterBinding(
+            'jobStatusFilter',
+            (vm, cfg) => {
+                cfg.save();
+                vm.fetchAllJobsData();
+            }
+        );
+
+        ko.bindingHandlers.incidentTypeFilterAndFetch = makeStatusFilterBinding(
+            'incidentTypeFilter',
+            (vm, cfg) => {
+                cfg.save();
+                vm.fetchAllJobsData();
+            }
+        );
 
         ko.bindingHandlers.trVisible = {
             update: function (element, valueAccessor) {
