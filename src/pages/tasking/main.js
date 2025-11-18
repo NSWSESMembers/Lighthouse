@@ -17,6 +17,8 @@ import { NewOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 
 import { JobTimeline } from "./viewmodels/JobTimeline.js";
 
+import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
+import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { getAllStaticTags, Tag } from "./models/Tag.js";
 
 import { installAlerts } from './components/alerts.js';
@@ -264,7 +266,8 @@ function VM() {
 
     ///opslog short cuts
     self.opsLogModalVM = new OpsLogModalVM(self);
-    self.NewOpsLogModalVM = new NewOpsLogModalVM(self);
+    self.CreateOpsLogModalVM = new CreateOpsLogModalVM(self);
+    self.CreateRadioLogModalVM = new CreateRadioLogModalVM(self);
     self.selectedJob = ko.observable(null);
 
     self.jobTimelineVM = new JobTimeline(self);
@@ -571,7 +574,7 @@ function VM() {
         const modalEl = document.getElementById('RadioLogModal');
         const modal = new bootstrap.Modal(modalEl);
 
-        const vm = self.NewOpsLogModalVM;
+        const vm = self.CreateRadioLogModalVM;
 
         vm.modalInstance = modal;
 
@@ -583,7 +586,7 @@ function VM() {
         const modalEl = document.getElementById('RadioLogModal');
         const modal = new bootstrap.Modal(modalEl);
 
-        const vm = self.NewOpsLogModalVM;
+        const vm = self.CreateRadioLogModalVM;
 
         vm.modalInstance = modal;
 
@@ -592,10 +595,10 @@ function VM() {
     };
 
     self.attachNewOpsLogModal = function (job) {
-        const modalEl = document.getElementById('NewOpsLogModal');
+        const modalEl = document.getElementById('CreateOpsLogModal');
         const modal = new bootstrap.Modal(modalEl);
 
-        const vm = self.NewOpsLogModalVM;
+        const vm = self.CreateOpsLogModalVM;
 
         vm.modalInstance = modal;
 
