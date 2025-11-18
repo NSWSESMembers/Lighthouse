@@ -13,7 +13,6 @@ import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
 import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
-import { NewOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 
 import { JobTimeline } from "./viewmodels/JobTimeline.js";
 
