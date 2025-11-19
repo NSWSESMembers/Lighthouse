@@ -698,9 +698,14 @@
                                                 <div
                                                     class="card-header d-flex justify-content-between align-items-center">
                                                     <div>
-                                                        <strong data-bind="text: j.identifier"></strong>
-                                                        <span class="badge bg-secondary ms-2"
-                                                            data-bind="text: j.statusName"></span>
+                                                        <!-- Tags -->
+                                                        <div>
+                                                            <div class="job-tags-list" data-bind="foreach: j.sortedTags">
+                                                                <span class="badge bg-secondary"
+                                                                    data-bind="text: name"></span>
+                                                            </div>
+                                                        </div>
+
                                                     </div>
                                                     <div class="btn-group btn-group-sm">
                                                         <button
@@ -733,118 +738,239 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="card-body">
-                                                    <!-- Incident Details / Location -->
-                                                    <div class="row mb-3">
-                                                        <div class="col-md-6">
-                                                            <h6 class="text-muted mb-1">Incident Details</h6>
-                                                            <ul class="list-unstyled mb-0 small">
-                                                                <li><strong>Type:</strong> <span
-                                                                        data-bind="text: j.typeName"></span></li>
-                                                                <li><strong>Priority:</strong> <span
-                                                                        data-bind="text: j.priorityName"></span></li>
-                                                                <li><strong>Received:</strong>
-                                                                    <span
-                                                                        data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
-                                                                        data-bs-toggle="tooltip"></span>
-                                                                </li>
-                                                                <li><strong>Assigned HQ:</strong>
-                                                                    <span
-                                                                        data-bind="text: j.entityAssignedTo.name"></span>
-                                                                </li>
-                                                                <li><strong>Assigned Zone:</strong>
-                                                                    <span
-                                                                        data-bind="text: j.returnParentEntityName()"></span>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                        <div class="col-md-6">
-                                                            <h6 class="text-muted mb-1">Location</h6>
-                                                            <ul class="list-unstyled mb-0 small">
-                                                                <li><strong>Address:</strong>
-                                                                    <span
-                                                                        data-bind="text: j.address.prettyAddress"></span>
-                                                                </li>
-                                                                <li><strong>LGA:</strong> <span
-                                                                        data-bind="text: j.lga"></span></li>
-                                                                <li><strong>Latitude:</strong>
-                                                                    <span data-bind="text: j.address.latitude"></span>
-                                                                </li>
-                                                                <li><strong>Longitude:</strong>
-                                                                    <span data-bind="text: j.address.longitude"></span>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
+                                                <div class="card-body job-details-form">
+                                                    <div class="row g-3">
 
-                                                    <div class="border-top pt-2">
-                                                        <!-- ko if: j.taskingLoading -->
-                                                        <h6 class="text-muted">Loading Taskings...</h6>
-                                                        <!-- /ko -->
-                                                        <!-- ko ifnot: j.taskingLoading -->
-                                                        <h6 class="text-muted">Taskings</h6>
-                                                        <!-- /ko -->
-                                                        <div class="table-responsive">
-                                                            <table class="table table-sm table-hover align-middle">
-                                                                <thead class="table-light">
-                                                                    <tr>
-                                                                        <th>ID</th>
-                                                                        <th>Team</th>
-                                                                        <th>Status</th>
-                                                                        <th>Updated</th>
-                                                                        <th>Actions</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody
-                                                                    data-bind="foreach: { data: j.sortedTaskings, as: 't' }">
-                                                                    <tr>
-                                                                        <td data-bind="text: t.id"></td>
-                                                                        <td data-bind="text: t.teamCallsign"></td>
-                                                                        <td>
-                                                                            <span class="badge"
-                                                                                data-bind="text: t.currentStatus, css: t.tagColorFromStatus()"></span>
-                                                                        </td>
-                                                                        <td data-bind="text: t.statusTimeAgoLabel"></td>
-                                                                        <td>
-                                                                            <div class="btn-group btn-group-sm">
-                                                                                <button
-                                                                                    class="btn btn-outline-secondary"
-                                                                                    title="Radio Log"
-                                                                                    data-bind="click: t.openRadioLogModal, clickBubble: false">
-                                                                                    <i class="fa fa-microphone"></i>
-                                                                                </button>
-                                                                                <button
-                                                                                    class="btn btn-outline-secondary"
-                                                                                    title="Update Team Status">
-                                                                                    <i class="fa fa-tasks"></i>
-                                                                                </button>
-                                                                                <button
-                                                                                    class="btn btn-outline-secondary"
-                                                                                    title="Message"
-                                                                                    data-bind="click: t.openMessage, clickBubble: false">
-                                                                                    <i class="fa fa-envelope"></i>
-                                                                                </button>
-                                                                                <button
-                                                                                    class="btn btn-outline-secondary"
-                                                                                    title="Edit"
-                                                                                    data-bind="click: t.team.openBeaconEditTeam, clickBubble: false">
-                                                                                    <i
-                                                                                        class="fas fa-external-link-alt"></i>
-                                                                                </button>
-                                                                                <button
-                                                                                    class="btn btn-outline-secondary"
-                                                                                    title="Zoom to"
-                                                                                    data-bind="click: t.team.markerFocus, disable: !t.team.trackableAssets().length, clickBubble: false">
-                                                                                    <i class="fa fa-crosshairs"></i>
-                                                                                </button>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table>
+                                                        <!-- LEFT: Incident Details + Incident Location -->
+                                                        <div class="col-md-8">
+
+                                                            <!-- Incident Details (like editRfa) -->
+                                                            <fieldset class="mb-3">
+                                                                <legend class="job-details-legend">Incident Details
+                                                                </legend>
+
+                                                                <!-- Situation On Scene -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        Situation On Scene
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.situationOnScene"></p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Response Required / Priority -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        Response Required
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.priorityName"></p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Received -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        Received
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
+                                                                            data-bs-toggle="tooltip"></p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Assigned HQ -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        Assigned HQ
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.entityAssignedTo.name">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Assigned Zone -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        Assigned Zone
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.returnParentEntityName()">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                            </fieldset>
+
+                                                            <!-- Incident Location (like editRfa) -->
+                                                            <fieldset class="mb-3">
+                                                                <legend class="job-details-legend">Incident Location
+                                                                </legend>
+
+                                                                <!-- Address -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        Address
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.address.prettyAddress()">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- LGA -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        LGA
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.lga"></p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Lat/Long -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        Lat/Long
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.latLongDisplay()">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </fieldset>
+
+                                                        </div><!-- /col-md-8 -->
+
+                                                        <!-- RIGHT: Caller details (only – no messages/notes/history) -->
+                                                        <div class="col-md-4">
+                                                            <fieldset class="mb-3">
+                                                                <legend class="job-details-legend">Caller Details
+                                                                </legend>
+
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-4 text-sm-end">Number</label>
+                                                                    <div class="col-8">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.callerPhoneNumber"></p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-4 text-sm-end">Name</label>
+                                                                    <div class="col-8">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.callerFirstName + ' ' + j.callerLastName">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-4 text-sm-end">Incident
+                                                                        Contact</label>
+                                                                    <div class="col-8">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.contactCalling">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </fieldset>
+                                                        </div><!-- /col-md-4 -->
+
+                                                        <!-- FULL-WIDTH: Taskings (unchanged logic, just wrapped as a fieldset) -->
+                                                        <div class="col-12">
+                                                            <fieldset class="mb-0">
+                                                                <legend class="job-details-legend">Taskings</legend>
+
+                                                                <!-- ko if: j.taskingLoading -->
+                                                                <div class="small text-muted mb-2">
+                                                                    <i class="fa fa-spinner fa-spin me-1"></i> Loading
+                                                                    taskings…
+                                                                </div>
+                                                                <!-- /ko -->
+
+                                                                <!-- ko ifnot: j.taskingLoading -->
+                                                                <div class="table-responsive">
+                                                                    <table
+                                                                        class="table table-sm table-hover align-middle mb-0">
+                                                                        <thead class="table-light">
+                                                                            <tr>
+                                                                                <th style="width:35%;">Team</th>
+                                                                                <th style="width:20%;">Status</th>
+                                                                                <th style="width:10%;">Updated</th>
+                                                                                <th style="width:20%;">Actions</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody
+                                                                            data-bind="foreach: { data: j.sortedTaskings, as: 'ts' }">
+                                                                            <tr
+                                                                                data-bind="css: { 'job-popup__tasking-row--no-job': !ts.job }">
+
+                                                                                <td data-bind="text: ts.teamCallsign">
+                                                                                </td>
+                                                                                <td><span class="badge"
+                                                                                        data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus()"></span>
+                                                                                </td>
+                                                                                <td
+                                                                                    data-bind="text: ts.statusTimeAgoLabel">
+                                                                                </td>
+                                                                                <td>
+                                                                                    <div class="btn-group btn-group-sm"
+                                                                                        role="group">
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Radio Log"
+                                                                                            data-bind="click: ts.openRadioLogModal, clickBubble: false">
+                                                                                            <i
+                                                                                                class="fa fa-microphone"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Update Team Status">
+                                                                                            <i class="fa fa-tasks"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Message">
+                                                                                            <i
+                                                                                                class="fa fa-envelope"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Edit">
+                                                                                            <i
+                                                                                                class="fas fa-external-link-alt"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Zoom to"
+                                                                                            data-bind="enable: ts.job, click: ts.job && ts.job.focusMap">
+                                                                                            <i
+                                                                                                class="fa fa-crosshairs"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                                <!-- /ko -->
+                                                            </fieldset>
                                                         </div>
-                                                    </div><!-- /border-top -->
+
+                                                    </div><!-- /row -->
                                                 </div><!-- /card-body -->
+
                                             </div><!-- /card -->
                                         </div><!-- /job-details -->
                                     </div><!-- /job-card -->
@@ -1475,7 +1601,8 @@
                         <span class="fw-semibold small me-2">Tag filter (AND):</span>
 
                         <div class="d-flex align-items-center flex-wrap" data-bind="foreach: tagFilterItems">
-                            <button type="button" class="btn btn-sm me-1 mb-1" data-bind="text: name, click: $parent.toggleTagFilter, css: cssClasses">
+                            <button type="button" class="btn btn-sm me-1 mb-1"
+                                data-bind="text: name, click: $parent.toggleTagFilter, css: cssClasses">
                             </button>
                         </div>
                     </div>
@@ -1547,13 +1674,13 @@
                                 </div>
                             </div>
 
-
                             <!-- CENTRE: shared time axis -->
                             <div data-bind="attr: { 'class': $parent.middleColClass }">
                                 <div class="job-history-rail">
                                     <div class="job-history-dot"></div>
                                     <div class="job-history-line"></div>
                                 </div>
+                                <div data-bind="text: tPlus" class="small text-info mt-1"></div>
                                 <div class="small text-muted mt-1" data-bind="text: label"></div>
                                 <div class="small text-muted" data-bind="text: rel"></div>
                             </div>
@@ -1674,7 +1801,8 @@
 
     <!-- New Ops Log Modal -->
     <!-- Need to add some sort of error message if it fails -->
-    <div class="modal fade" id="CreateOpsLogModal" tabindex="-1" aria-labelledby="CreateOpsLogModalLabel" aria-hidden="true">
+    <div class="modal fade" id="CreateOpsLogModal" tabindex="-1" aria-labelledby="CreateOpsLogModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content" data-bind="with: CreateOpsLogModalVM">
                 <div class="modal-header bg-dark text-white">

@@ -30,10 +30,16 @@ export function Job(data = {}, deps = {}) {
     self.identifier = ko.observable(data.Identifier ?? "");
     self.typeId = ko.observable(data.TypeId ?? null);
     self.type = ko.observable(data.Type ?? "");
-    self.callerName = ko.observable(data.CallerName ?? "");
-    self.callerNumber = ko.observable(data.CallerNumber ?? "");
-    self.contactName = ko.observable(data.ContactName ?? "");
-    self.contactNumber = ko.observable(data.ContactNumber ?? "");
+
+    self.callerFirstName = ko.observable(data.CallerFirstName ?? "");
+    self.callerLastName = ko.observable(data.CallerLastName ?? "");
+    self.callerPhoneNumber = ko.observable(data.CallerPhoneNumber ?? "");
+
+    self.contactFirstName = ko.observable(data.ContactFirstName ?? "");
+    self.contactLastName = ko.observable(data.ContactLastName ?? "");
+    self.contactPhoneNumber = ko.observable(data.ContactPhoneNumber ?? "");
+
+
     self.permissionToEnterPremises = ko.observable(!!data.PermissionToEnterPremises);
     self.howToEnterPremises = ko.observable(data.HowToEnterPremises ?? null);
     self.jobReceived = ko.observable(data.JobReceived ?? null);
@@ -58,7 +64,7 @@ export function Job(data = {}, deps = {}) {
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
     self.taskingLoading = ko.observable(false);
-
+    self.contactCalled = ko.observable((data.ContactCalled !== undefined) ? !!data.ContactCalled : false);
     self.opsLogEntriesLoading = ko.observable(false);
     self.opsLogEntries = ko.observableArray([]);
 
@@ -78,6 +84,17 @@ export function Job(data = {}, deps = {}) {
     self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
     self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
     self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));
+    self.latLongDisplay = ko.pureComputed(function () {
+        var lat = self.address.latitude();
+        var lng = self.address.longitude();
+        if (!lat && !lng) {
+            return "";
+        }
+        return lat + " / " + lng;
+    });
+    self.contactCalling = ko.pureComputed(() => {
+        return self.contactCalled() ? "Yes" : "No";
+    })
 
 
 
@@ -192,6 +209,21 @@ export function Job(data = {}, deps = {}) {
         )
     );
 
+    self.sortedTags = ko.pureComputed(function () {
+        if (!self.tags || !self.tags()) return [];
+        // ensure array
+        var arr = ko.unwrap(self.tags);
+
+        // // ICEMS always first
+        // arr = arr.slice().sort(function (a, b) {
+        //     if (a.name === "ICEMS") return -1;
+        //     if (b.name === "ICEMS") return 1;
+        //     return a.name.localeCompare(b.name);
+        // });
+
+        return arr;
+    });
+
 
 
     self.identifierTrimmed = ko.pureComputed(() => {
@@ -284,10 +316,14 @@ export function Job(data = {}, deps = {}) {
         if (d.Identifier !== undefined) this.identifier(d.Identifier);
         if (d.TypeId !== undefined) this.typeId(d.TypeId);
         if (d.Type !== undefined) this.type(d.Type);
-        if (d.CallerName !== undefined) this.callerName(d.CallerName || "");
-        if (d.CallerNumber !== undefined) this.callerNumber(d.CallerNumber || "");
-        if (d.ContactName !== undefined) this.contactName(d.ContactName || "");
-        if (d.ContactNumber !== undefined) this.contactNumber(d.ContactNumber || "");
+
+        if (d.CallerFirstName !== undefined) this.callerFirstName(d.CallerFirstName || "");
+        if (d.CallerLastName !== undefined) this.callerLastName(d.CallerLastName || "");
+        if (d.CallerPhoneNumber !== undefined) this.callerPhoneNumber(d.CallerPhoneNumber || "");
+        if (d.ContactFirstName !== undefined) this.contactFirstName(d.ContactFirstName || "");
+        if (d.ContactLastName !== undefined) this.contactLastName(d.ContactLastName || "");
+        if (d.ContactPhoneNumber !== undefined) this.contactPhoneNumber(d.ContactPhoneNumber || "");
+
         if (d.PermissionToEnterPremises !== undefined) this.permissionToEnterPremises(!!d.PermissionToEnterPremises);
         if (d.HowToEnterPremises !== undefined) this.howToEnterPremises(d.HowToEnterPremises ?? null);
         if (d.JobReceived !== undefined) this.jobReceived(d.JobReceived || null);

@@ -558,6 +558,12 @@ tr.job:hover {
   min-height: 200px;
 }
 
+.job-tags-list .badge {
+    font-size: 0.72rem;
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+
 .btn-xs {
   --bs-btn-padding-y: 0.1rem;
   --bs-btn-padding-x: 0.35rem;
@@ -1037,6 +1043,35 @@ tr.job:hover {
     background: #f9fbff;
     padding: 8px;
 }
+
+.job-details-form fieldset {
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem 0.25rem;
+  margin-bottom: 0.75rem;
+  background-color: #ffffff;
+}
+
+.job-details-legend {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  padding: 0 4px;
+}
+
+.job-details-value {
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+
+.job-details-form .form-control-plaintext {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+
+
+
 
 /* Rotate chevron instead of swapping icons (optional if you want) */
 .job-card .fa.fa-solid {
