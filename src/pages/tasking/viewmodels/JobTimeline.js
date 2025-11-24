@@ -11,6 +11,8 @@ export function JobTimeline(parentVm) {
 
     self.job = ko.observable(null);
 
+    self.jobCreated = null;
+
     self.historyEntries = ko.observableArray([]);
     self.opsLogEntries = ko.observableArray([]);
 
@@ -293,11 +295,26 @@ export function JobTimeline(parentVm) {
             const key = minute.valueOf();
             let bucket = map.get(key);
             if (!bucket) {
+                let tPlus = "";
+                if (self.jobCreated) {
+                    const diffMs = minute.diff(self.jobCreated);   // milliseconds
+                    const dur = moment.duration(diffMs);
+
+                    // absolute values for formatting
+                    const hh = String(Math.floor(Math.abs(dur.asHours()))).padStart(2, "0");
+                    const mm = String(Math.abs(dur.minutes())).padStart(2, "0");
+                    const ss = String(Math.abs(dur.seconds())).padStart(2, "0");
+
+                    const prefix = diffMs >= 0 ? "T+" : "T-";
+                    tPlus = `${prefix}${hh}:${mm}:${ss}`;
+                }
+
+
                 bucket = {
                     key,
-                    // label based on minute start, not raw time
                     label: minute.format("DD/MM/YYYY HH:mm"),
                     rel: minute.fromNow(),
+                    tPlus: tPlus,
                     ops: [],
                     history: []
                 };
@@ -343,6 +360,12 @@ export function JobTimeline(parentVm) {
         self.laneViewMode("both"); //this is just better. force people to like it
         self.jobIdentifier(job.identifier() || "");
         self.job(job);
+
+        if (self.job() && self.job().receivedAt) {
+            self.jobCreated = moment(self.job().jobReceived());
+        }
+
+
         self.historyEntries([]);
         self.opsLogEntries([]);
         self.loading(true);

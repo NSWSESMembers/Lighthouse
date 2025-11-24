@@ -512,7 +512,10 @@ function VM() {
 
             fetchUnacknowledgedJobNotifications: (job) => {
                 self.fetchUnacknowledgedJobNotifications(job);
-            }
+            },
+            drawJobTargetRing: (job) => {
+                self.drawJobTargetRing(job);
+            },
         }
     }
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
@@ -771,6 +774,11 @@ function VM() {
 
 
     self.markerLayersControl = null;    // optional Leaflet layer control
+
+    self.drawJobTargetRing = function (job) {
+        if (!job || !job.address) return;
+        self.mapVM.drawJobAssetDistanceRings(job);
+    }
 
     self.fetchUnacknowledgedJobNotifications = function (job) {
         BeaconClient.notifications.unaccepted(job.id(), apiHost, params.userId, token, function (data) {
@@ -1307,6 +1315,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 submenu.classList.remove('show');
             });
         });
+    });
+
+
+
+    // wait for full CSS + DOM
+    window.addEventListener('load', function () {
+        document.body.style.opacity = '1';
     });
 
 })
