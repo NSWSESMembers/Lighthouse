@@ -158,7 +158,7 @@ td.chev[draggable="true"] * {
 }
 
 .row {
-  padding: 6px 8px;
+  padding: 0px 0px;
 }
 
 .row.selected {
@@ -995,17 +995,16 @@ tr.job:hover {
 /* Top bar: behaves like the old summary row */
 .job-summary {
     display: grid;
-    /* match thead/colgroup: 2,10,8,8,8,28,8,22,4 % */
+    /* match thead/colgroup: 2,10,8,8,8,28,8,22 % */
     grid-template-columns:
         2%   /* chev */
-        10%  /* Id */
-        8%   /* Received */
+        8%  /* Id */
+        12%   /* Received */
         8%   /* HQ */
         8%   /* Type */
-        28%  /* Situation */
+        32%  /* Situation */
         8%   /* Status */
-        22%  /* Address */
-        4%;  /* Actions */
+        22%;  /* Address */
     align-items: center;
     column-gap: 0;             /* let colgroup control spacing */
     padding: 4px 10px;         /* close to your table cell padding */

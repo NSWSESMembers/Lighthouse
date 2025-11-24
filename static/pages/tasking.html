@@ -238,7 +238,6 @@
                                                                 Team has no members assigned.
                                                             </div>
                                                         </div>
-
                                                         <!-- RIGHT: existing taskings table / summary -->
                                                         <div class="col-md-9 col-lg-9">
                                                             <div
@@ -262,7 +261,7 @@
                                                                     role="status" aria-label="Loading"></div>
                                                             </div>
 
-                                                            <!-- taskings table (use your existing markup here) -->
+                                                            <!-- taskings table -->
                                                             <div class="table-responsive"
                                                                 data-bind="visible: !t.taskingLoading()">
                                                                 <table
@@ -324,7 +323,6 @@
                                                                     </tbody>
                                                                 </table>
                                                             </div>
-
                                                         </div><!-- /col taskings -->
                                                     </div><!-- /row -->
                                                 </div><!-- /card-body -->
@@ -580,14 +578,13 @@
                     <table class="jobs table align-middle">
                         <colgroup>
                             <col style="width: 2%;"> <!-- chevron -->
-                            <col style="width: 10%;"> <!-- Id -->
-                            <col style="width: 8%;"> <!-- Recieved -->
+                            <col style="width: 8%;"> <!-- Id -->
+                            <col style="width: 12%;"> <!-- Recieved -->
                             <col style="width: 8%;"> <!-- HQ -->
                             <col style="width: 8%;"> <!-- Type -->
-                            <col style="width: 28%;"> <!-- Situation -->
+                            <col style="width: 32%;"> <!-- Situation -->
                             <col style="width: 8%;"> <!-- Status -->
                             <col style="width: 22%;"> <!-- Address -->
-                            <col style="width: 4%"> <!-- Actions -->
 
                         </colgroup>
                         <thead class="table-light">
@@ -615,13 +612,12 @@
                                     Status <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th scope="col">Address</th>
-                                <th scope="col">Actions</th>
                             </tr>
                         </thead>
 
                         <tbody data-bind="foreach: { data: sortedJobs, as: 'j' }">
                             <tr class="job-row" data-bind="attr: { 'data-job-id': j.id }">
-                                <td colspan="9">
+                                <td colspan="8">
                                     <div class="job-card" data-bind="css: { 'job-card--expanded': j.expanded() }">
 
                                         <!-- SUMMARY BAR -->
@@ -629,7 +625,7 @@
                                             data-bind="click: j.toggleAndExpand, style: { 'background': rowColour() }">
                                             <!-- 1. Chevron / drag handle -->
                                             <div class="job-cell job-cell--chev" draggable="true"
-                                                data-bind="draggableRow: { job: j }, click: j.toggleAndExpand, clickBubble: false">
+                                                data-bind="draggableRow: { job: j }, clickBubble: false">
                                                 <button type="button" class="btn btn-link p-0 text-decoration-none"
                                                     data-bind="attr:{ 'aria-expanded': j.expanded }"
                                                     aria-label="Expand/collapse incident">
@@ -675,20 +671,14 @@
 
                                             <!-- 8. Address -->
                                             <div class="job-cell job-cell--address">
-                                                <span data-bind="text: j.address.prettyAddress()"></span>
+                                                <span>
+                                                    <div class="d-grid gap-2">
+                                                        <button class="btn btn-sm btn-outline-dark"
+                                                            data-bind="text: j.addressDisplayOrGPS, click: j.focusMap, clickBubble: false,  event: { mouseover: j.mouseEnterAddressButton, mouseleave: j.mouseLeaveAddressButton }"></button>
+                                                    </div>
+                                                </span>
                                             </div>
 
-                                            <!-- 9. Actions -->
-                                            <div class="job-cell job-cell--actions">
-                                                <div class="btn-group btn-group-sm" role="group"
-                                                    aria-label="Incident actions">
-                                                    <button type="button" class="btn btn-outline-secondary"
-                                                        title="Zoom to"
-                                                        data-bind="click: j.focusMap, clickBubble: false">
-                                                        <i id="drag-ignore" class="fa fa-solid fa-crosshairs"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
                                         </div><!-- /job-summary -->
 
 
@@ -700,41 +690,13 @@
                                                     <div>
                                                         <!-- Tags -->
                                                         <div>
-                                                            <div class="job-tags-list" data-bind="foreach: j.sortedTags">
+                                                            <div class="job-tags-list"
+                                                                data-bind="foreach: j.sortedTags">
                                                                 <span class="badge bg-secondary"
                                                                     data-bind="text: name"></span>
                                                             </div>
                                                         </div>
 
-                                                    </div>
-                                                    <div class="btn-group btn-group-sm">
-                                                        <button
-                                                            class="btn btn-small dropdown-toggle btn-outline-primary"
-                                                            type="button" id="assignTeamBtn" data-bs-toggle="dropdown"
-                                                            aria-haspopup="true" aria-expanded="false">
-                                                            <i class="fa fa-solid fa-user-plus"></i>
-                                                        </button>
-                                                        <button class="btn btn-outline-secondary"
-                                                            data-bind="click: j.refreshData">
-                                                            <i class="fa fa-sync"></i> Refresh
-                                                        </button>
-                                                        <button class="btn btn-outline-primary"
-                                                            data-bind="click: j.focusMap">
-                                                            <i class="fa fa-crosshairs"></i> Focus
-                                                        </button>
-                                                        <button class="btn btn-outline-dark"
-                                                            data-bind="click: j.attachAndFillTimelineModal">
-                                                            <i class="fas fa-book"></i> Time Line
-                                                        </button>
-                                                        <button class="btn btn-outline-dark"
-                                                            data-bind="click: j.openNewOpsLogModal">
-                                                            <i class="fa fa-list"></i> New Ops Log
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-secondary"
-                                                            title="Edit"
-                                                            data-bind="click: j.openBeaconJobDetails, clickBubble: false">
-                                                            <i class="fas fa-external-link-alt"></i>
-                                                        </button>
                                                     </div>
                                                 </div>
 
@@ -744,21 +706,10 @@
                                                         <!-- LEFT: Incident Details + Incident Location -->
                                                         <div class="col-md-8">
 
-                                                            <!-- Incident Details (like editRfa) -->
+                                                            <!-- Incident Details -->
                                                             <fieldset class="mb-3">
                                                                 <legend class="job-details-legend">Incident Details
                                                                 </legend>
-
-                                                                <!-- Situation On Scene -->
-                                                                <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
-                                                                        Situation On Scene
-                                                                    </label>
-                                                                    <div class="col-sm-8 col-lg-9">
-                                                                        <p class="form-control-plaintext job-details-value"
-                                                                            data-bind="text: j.situationOnScene"></p>
-                                                                    </div>
-                                                                </div>
 
                                                                 <!-- Response Required / Priority -->
                                                                 <div class="row align-items-start">
@@ -854,6 +805,45 @@
 
                                                         <!-- RIGHT: Caller details (only – no messages/notes/history) -->
                                                         <div class="col-md-4">
+
+                                                            <!-- NEW: Job actions card -->
+                                                            <div class="card mb-3 job-actions-card">
+                                                                <div class="d-grid gap-2 job-actions-stack">
+                                                                    <div class="btn-group btn-group-sm" role="group">
+                                                                        <button class="btn btn-primary btn-sm w-50"
+                                                                            type="button" id="assignTeamBtn"
+                                                                            data-bs-toggle="dropdown"
+                                                                            aria-haspopup="true" aria-expanded="false">
+                                                                            <i class="fa fa-solid fa-user-plus"></i>
+                                                                            Task Team
+                                                                        </button>
+                                                                        <button class="btn btn-outline-dark btn-sm w-50"
+                                                                            type="button"
+                                                                            data-bind="click: j.drawJobTargetRing">
+                                                                            <i class="fas fa-bullseye"></i> Target Teams
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="btn-group btn-group-sm" role="group">
+                                                                        <button class="btn btn-outline-dark btn-sm w-50"
+                                                                            data-bind="click: j.attachAndFillTimelineModal">
+                                                                            <i class="fas fa-book"></i> Time Line
+                                                                        </button>
+
+                                                                        <button class="btn btn-outline-dark btn-sm w-50"
+                                                                            data-bind="click: j.openNewOpsLogModal">
+                                                                            <i class="fa fa-list"></i> New Ops Log
+                                                                        </button>
+                                                                    </div>
+                                                                    <button type="button"
+                                                                        class="btn btn-outline-secondary btn-sm"
+                                                                        title="Edit"
+                                                                        data-bind="click: j.openBeaconJobDetails, clickBubble: false">
+                                                                        <i class="fas fa-external-link-alt"></i>
+                                                                        Edit
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
                                                             <fieldset class="mb-3">
                                                                 <legend class="job-details-legend">Caller Details
                                                                 </legend>
@@ -862,7 +852,8 @@
                                                                     <label class="col-4 text-sm-end">Number</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
-                                                                            data-bind="text: j.callerPhoneNumber"></p>
+                                                                            data-bind="text: j.callerPhoneNumber">
+                                                                        </p>
                                                                     </div>
                                                                 </div>
 
@@ -888,13 +879,15 @@
                                                         </div><!-- /col-md-4 -->
 
                                                         <!-- FULL-WIDTH: Taskings (unchanged logic, just wrapped as a fieldset) -->
-                                                        <div class="col-12">
+                                                        <div class="col-12"
+                                                            data-bind="visible: j.sortedTaskings().length > 0">
                                                             <fieldset class="mb-0">
                                                                 <legend class="job-details-legend">Taskings</legend>
 
                                                                 <!-- ko if: j.taskingLoading -->
                                                                 <div class="small text-muted mb-2">
-                                                                    <i class="fa fa-spinner fa-spin me-1"></i> Loading
+                                                                    <i class="fa fa-spinner fa-spin me-1"></i>
+                                                                    Loading
                                                                     taskings…
                                                                 </div>
                                                                 <!-- /ko -->

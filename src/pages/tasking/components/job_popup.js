@@ -60,7 +60,7 @@ export function buildJobPopupKO() {
           <li>
             <div style="max-height: 220px; overflow: auto;"
                  data-bind="foreach: $root.popupFilteredTeams">
-              <button type="button" class="dropdown-item text-start py-1"
+              <button type="button" class="dropdown-item text-start py-1" 
   data-bind="html:
     '<div><strong>' + (team.callsign() || '') + '</strong>' +
     '<div class=&quot;small text-muted&quot;>' +
@@ -69,7 +69,11 @@ export function buildJobPopupKO() {
     '<div class=&quot;small text-muted&quot;>' +
       summaryLine +
     '</div>',
-    click: $root.taskTeamToJobWithConfirm">
+    click: $root.taskTeamToJobWithConfirm,
+    event: {
+        mouseover: $root.mouseOverTeamInPopup,
+        mouseleave: $root.mouseOutTeamInPopup
+    }">
 </button>
             </div>
           </li>
@@ -101,8 +105,8 @@ export function buildJobPopupKO() {
           </thead>
           <tbody data-bind="foreach: { data: taskings, afterRender:$root.updatePopup}">
             <tr data-bind="event: {
-            mouseenter: $root.drawCrowsFliesToAsset,
-            mouseleave: $root.removeCrowsFliesToAsset
+            mouseenter: $root.drawCrowsFliesToAssetFromTasking,
+            mouseleave: $root.removeCrowsFlies
             }, click: team.markerFocus,
             clickBubble: false,
             css: { 'job-popup__tasking-row': hasTeam(), 'job-popup__tasking-row--no-job': !hasTeam() }">
@@ -121,7 +125,7 @@ export function buildJobPopupKO() {
                   </button>
                   <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Fit Bounds"
-                      data-bind="click: $root.fitBoundsWithAsset, disable: !team.trackableAndIsFiltered(), clickBubble: false">
+                      data-bind="click: $root.fitBoundsWithTasking, disable: !team.trackableAndIsFiltered(), clickBubble: false">
                       <i class="fa fa-solid fa-object-group"></i>
                   </button>
                 </div>
