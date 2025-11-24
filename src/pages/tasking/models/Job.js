@@ -120,7 +120,7 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.drawJobTargetRing = function () {
-        deps.drawJobTargetRing(self);
+        drawJobTargetRing(self);
     };
 
     // Start/stop with filter state
