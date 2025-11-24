@@ -1317,6 +1317,13 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+
+
+    // wait for full CSS + DOM
+    window.addEventListener('load', function () {
+        document.body.style.opacity = '1';
+    });
+
 })
 
 function getSearchParameters() {
