@@ -413,6 +413,7 @@ export function MapVM(Lmap, root) {
 
   self.map.on('layeradd', (ev) => {
     // find which polling layer this corresponds to
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [key, entry] of self.onlineLayers.entries()) {
       if (entry.layerGroup === ev.layer) {
         // trigger immediate fetch now that it's visible
