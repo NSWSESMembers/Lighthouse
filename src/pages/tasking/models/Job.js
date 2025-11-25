@@ -21,6 +21,7 @@ export function Job(data = {}, deps = {}) {
         attachAndFillOpsLogModal = (_jobId) => ([]),
         attachAndFillTimelineModal = (_job) => { /* noop */ },
         fetchUnacknowledgedJobNotifications = async (_job) => ([]),
+        drawJobTargetRing = (_job) => { /* noop */ },
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
@@ -116,6 +117,10 @@ export function Job(data = {}, deps = {}) {
 
     self.stopDataRefreshCheck = function () {
         dataRefreshInterval.stop();
+    };
+
+    self.drawJobTargetRing = function () {
+        drawJobTargetRing(self);
     };
 
     // Start/stop with filter state
@@ -229,6 +234,14 @@ export function Job(data = {}, deps = {}) {
     });
 
 
+    self.addressDisplayOrGPS = ko.pureComputed(() => {
+
+        if (self.address.prettyAddress()) {
+            return self.address.prettyAddress();
+        } else {
+            return `${self.address.latitude()}, ${self.address.longitude()}`;
+        }
+    });
 
     self.identifierTrimmed = ko.pureComputed(() => {
         //trim leading zeros for compact display
@@ -427,6 +440,7 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.toggleAndExpand = function () {
+        console.log("Toggling and expanding job", self.id());
         self.toggleAndLoad();
         if (!self.expanded()) {
             self.fetchTasking();
@@ -508,11 +522,24 @@ export function Job(data = {}, deps = {}) {
         });
     };
 
+    self.rowHasFocus = ko.observable(false);
+
+    self.mouseEnterAddressButton = function () {
+        self.rowHasFocus(true);
+    }
+    self.mouseLeaveAddressButton = function () {
+        self.rowHasFocus(false);
+    }
 
     // ---- lifecycle hooks (delegated) ----
-    self.onPopupOpen = function () { self.refreshDataAndTasking(); self.focusAndExpandInList(); };
+    self.onPopupOpen = function () { 
+        if (self.rowHasFocus()) return;
+        self.refreshDataAndTasking(); 
+        self.focusAndExpandInList();
+    };
 
     self.onPopupClose = function () {
+        if (self.rowHasFocus()) return;
         self.collapse();
     };
 

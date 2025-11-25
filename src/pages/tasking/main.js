@@ -34,19 +34,55 @@ import { Enum } from './utils/enum.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
 
+import { installSlideVisibleBinding } from "./bindings/slideVisible.js";
+import { installStatusFilterBindings } from "./bindings/statusFilters.js";
+import { installRowVisibilityBindings } from "./bindings/rowVisibility.js";
+import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
+
+import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
+import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
+import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
+
 var $ = require('jquery');
 
 var L = require('leaflet');
 
 var esri = require('esri-leaflet');
 
+var MiniMap = require('leaflet-minimap');
 
 
-
-var token = '';
+let token = '';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-var tokenExp = '';
+let tokenExp = '';
 
+let resolveTokenReady;
+const tokenReady = new Promise((resolve) => {
+    resolveTokenReady = resolve;
+});
+
+/**
+ * Set the current token and wake any waiters.
+ */
+function setToken(newToken, newTokenExp) {
+    token = newToken;
+    tokenExp = newTokenExp;
+
+    if (resolveTokenReady) {
+        // First token arrival unblocks anyone awaiting getToken()
+        resolveTokenReady(token);
+        // Optional: keep future awaiters instant if they call before refresh:
+        resolveTokenReady = null;
+    }
+}
+
+/**
+ * Async getter that only resolves once a token exists.
+ */
+async function getToken() {
+    if (token) return token;     // already have one → return immediately
+    return tokenReady;           // wait for first setToken() call
+}
 
 
 require('leaflet-easybutton');
@@ -78,7 +114,8 @@ const map = L.map('map', {
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
 
-
+var osm2 = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { minZoom: 0, maxZoom: 13 });
+new MiniMap(osm2, { toggleDisplay: true }).addTo(map);
 
 const legend = new LegendControl({ collapsed: false, persist: true });
 legend.addTo(map);
@@ -92,7 +129,24 @@ esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(map);
 function VM() {
     const self = this;
 
+    const configDeps = {
+        entitiesSearch: (q) => new Promise((resolve) => {
+            BeaconClient.entities.search(q, apiHost, params.userId, token, (data) => resolve(data.Results || []));
+        }),
+        entitiesChildren: (parentId) => new Promise((resolve) => {
+            BeaconClient.entities.children(parentId, apiHost, params.userId, token, (data) => resolve(data || []));
+        })
+    };
+
     self.mapVM = new MapVM(map, self);
+
+    self.config = new ConfigVM(self, configDeps);
+
+    // --- Polling layers ---
+    registerTransportCamerasLayer(self, map, getToken, apiHost, params);
+    registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
+    registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
+    
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
@@ -149,52 +203,52 @@ function VM() {
                 localStorage.setItem("map.base", val);
             });
 
-            // build overlays from your existing layer groups
+                        // build overlays from MapVM (vehicles, jobs, online services, etc.)
             const overlaysEl = c.querySelector(".ld-overlays");
-            const overlayDefs = [];
+            const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
 
-            // Vehicles (single layer group)
-            if (this.options.vm?.mapVM?.vehicleLayer) {
-                overlayDefs.push({ key: "vehicles", label: "Vehicles", layer: this.options.vm.mapVM.vehicleLayer });
-            }
+            // Group by def.group (parent menu layer)
+            const groups = new Map();
+            overlayDefs.forEach(def => {
+                const g = def.group || ''; // '' = ungrouped
+                if (!groups.has(g)) groups.set(g, []);
+                groups.get(g).push(def);
+            });
 
-            // Job groups (Map of { key => { layerGroup } })
-            if (this.options.vm?.mapVM?.jobMarkerGroups instanceof Map) {
-                for (const [k, v] of this.options.vm.mapVM.jobMarkerGroups.entries()) {
-                    if (v?.layerGroup) {
-                        overlayDefs.push({ key: `jobs-${k}`, label: `Jobs: ${k}`, layer: v.layerGroup });
-                    }
+            groups.forEach((defs, groupKey) => {
+                // Bootstrap-style sub heading for parent group
+                if (groupKey) {
+                    const heading = document.createElement("div");
+                    heading.className = "text-muted text-uppercase fw-semibold small mt-2 mb-1";
+                    heading.textContent = groupKey;
+                    overlaysEl.appendChild(heading);
                 }
-            }
 
-            // Optional alerts layer if you expose it later:
-            // if (this.options.vm?.mapVM?.alertsLayer) {
-            //   overlayDefs.push({ key: "alerts", label: "Alerts", layer: this.options.vm.mapVM.alertsLayer });
-            // }
+                defs.forEach(({ key, label, layer }) => {
+                    const id = `ov-${key}`;
+                    const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
+                    if (saved) map.addLayer(layer);
 
-            overlayDefs.forEach(({ key, label, layer }) => {
-                const id = `ov-${key}`;
-                const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
-                if (saved) map.addLayer(layer);
+                    const row = document.createElement("label");
+                    row.className = "ld-row d-flex align-items-center gap-1";
+                    row.innerHTML = `
+            <input class="form-check-input m-0" type="checkbox" id="${id}" ${saved ? "checked" : ""}/>
+            <span class="">${label}</span>
+          `;
+                    overlaysEl.appendChild(row);
 
-                const row = document.createElement("label");
-                row.className = "ld-row";
-                row.innerHTML = `
-        <input type="checkbox" id="${id}" ${saved ? "checked" : ""}/>
-        <span>${label}</span>
-      `;
-                overlaysEl.appendChild(row);
-
-                row.querySelector("input").addEventListener("change", (e) => {
-                    if (e.target.checked) {
-                        map.addLayer(layer);
-                        localStorage.setItem(`ov.${key}`, "1");
-                    } else {
-                        map.removeLayer(layer);
-                        localStorage.setItem(`ov.${key}`, "0");
-                    }
+                    row.querySelector("input").addEventListener("change", (e) => {
+                        if (e.target.checked) {
+                            map.addLayer(layer);
+                            localStorage.setItem(`ov.${key}`, "1");
+                        } else {
+                            map.removeLayer(layer);
+                            localStorage.setItem(`ov.${key}`, "0");
+                        }
+                    });
                 });
             });
+
 
             // open/close toggle
             const btn = c.querySelector(".ld-toggle");
@@ -234,16 +288,8 @@ function VM() {
     const layersDrawer = new LayersDrawer({ vm: myViewModel });
     layersDrawer.addTo(map);
 
-    const configDeps = {
-        entitiesSearch: (q) => new Promise((resolve) => {
-            BeaconClient.entities.search(q, apiHost, params.userId, token, (data) => resolve(data.Results || []));
-        }),
-        entitiesChildren: (parentId) => new Promise((resolve) => {
-            BeaconClient.entities.children(parentId, apiHost, params.userId, token, (data) => resolve(data || []));
-        })
-    };
 
-    self.config = new ConfigVM(self, configDeps);
+
 
     self.tokenLoading = ko.observable(true);
     self.teamsLoading = ko.observable(true);
@@ -519,7 +565,10 @@ function VM() {
 
             fetchUnacknowledgedJobNotifications: (job) => {
                 self.fetchUnacknowledgedJobNotifications(job);
-            }
+            },
+            drawJobTargetRing: (job) => {
+                self.drawJobTargetRing(job);
+            },
         }
     }
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
@@ -623,7 +672,7 @@ function VM() {
         const deps = makeJobDeps();
         let job = this.jobsById.get(jobJson.Id);
         if (job) {
-            console.log("Updating existing job:", job.id());
+            //console.log("Updating existing job:", job.id());
             job.updateFromJson(jobJson);
             return job;
         }
@@ -709,10 +758,10 @@ function VM() {
         let t = self.taskingsById.get(taskingJson.Id);
 
         if (t) {
-            console.log("Updating existing tasking:", t.id());
+            //console.log("Updating existing tasking:", t.id());
             t.updateFrom(taskingJson); //update the tasking inplace
         } else {
-            console.log("Creating new tasking:", taskingJson.Id);
+            //console.log("Creating new tasking:", taskingJson.Id);
             t = new Tasking(taskingJson); //make a new one
             self.taskings.push(t);
             self.taskingsById.set(t.id(), t);
@@ -756,7 +805,7 @@ function VM() {
 
     // Call when each “first load” fetch finishes
     self._markInitialFetchDone = function () {
-        console.log("Initial fetch done, remaining:", initialFetchesPending - 1);
+        //console.log("Initial fetch done, remaining:", initialFetchesPending - 1);
         if (initialFetchesPending > 0) {
             initialFetchesPending -= 1;
             // Give subscriptions time to attach markers, then attempt fit
@@ -765,11 +814,11 @@ function VM() {
     };
 
     self._linkTaskingAndJob = function (tasking, job) {
-        console.log("Linking tasking:", tasking.id(), "with job:", job.id());
+        //console.log("Linking tasking:", tasking.id(), "with job:", job.id());
         if (!tasking) return;
         const prev = tasking.job && tasking.job.id && tasking.job || null; // current job ref
         if (prev && prev.id() !== job.id()) {
-            console.log("Previous job does not match the new job");
+            //console.log("Previous job does not match the new job");
             prev.removeTasking(tasking);   // detach from old job
         }
         if (job) {
@@ -783,16 +832,23 @@ function VM() {
 
     self.markerLayersControl = null;    // optional Leaflet layer control
 
-    self.fetchUnacknowledgedJobNotifications = function (job) {
-        BeaconClient.notifications.unaccepted(job.id(), apiHost, params.userId, token, function (data) {
+    self.drawJobTargetRing = function (job) {
+        if (!job || !job.address) return;
+        self.mapVM.drawJobAssetDistanceRings(job);
+    }
+
+    self.fetchUnacknowledgedJobNotifications = async function (job) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.notifications.unaccepted(job.id(), apiHost, params.userId, t, function (data) {
             job.unacceptedNotifications(data);
         }, function (err) {
             console.error("Failed to fetch unacknowledged job notifications:", err);
         });
     }
 
-    self.assignJobToTeam = function (teamVm, jobVm) {
-        BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, token, function () {
+    self.assignJobToTeam = async function (teamVm, jobVm) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, t, function () {
             jobVm.fetchTasking();
             teamVm.fetchTasking();
         })
@@ -832,7 +888,7 @@ function VM() {
             if (ch.status === 'added') {
                 attachAssetMarker(ko, map, self, a);
             } else if (ch.status === 'deleted') {
-                console.log("Detaching marker for asset no longer filtered in:", a.id());
+                //console.log("Detaching marker for asset no longer filtered in:", a.id());
                 // keep the asset in registry, but remove map marker + subs
                 detachAssetMarker(ko, map, self, a);
             }
@@ -840,7 +896,6 @@ function VM() {
     }, null, "arrayChange");
 
     self.showConfirmTaskingModal = function (jobVm, teamVm) {
-        console.log(jobVm, teamVm);
         if (!jobVm || !teamVm) return;
 
         // Fill modal text
@@ -866,8 +921,9 @@ function VM() {
         });
     };
 
-    self.attachAndFillOpsLogModal = function (jobId, cb) {
-        BeaconClient.operationslog.search(jobId, apiHost, params.userId, token, function (data) {
+    self.attachAndFillOpsLogModal = async function (jobId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.operationslog.search(jobId, apiHost, params.userId, t, function (data) {
             cb(data?.Results || []);
         }, function (err) {
             console.error("Failed to fetch ops log for job:", err);
@@ -875,8 +931,9 @@ function VM() {
         });
     }
 
-    self.fetchOpsLogForJob = function (jobId, cb) {
-        BeaconClient.operationslog.search(jobId, apiHost, params.userId, token, function (data) {
+    self.fetchOpsLogForJob = async function (jobId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.operationslog.search(jobId, apiHost, params.userId, t, function (data) {
             cb(data?.Results || []);
         }, function (err) {
             console.error("Failed to fetch ops log for job:", err);
@@ -884,8 +941,9 @@ function VM() {
         });
     }
 
-    self.fetchHistoryForJob = function (jobId, cb) {
-        BeaconClient.job.getHistory(jobId, apiHost, params.userId, token, function (data) {
+    self.fetchHistoryForJob = async function (jobId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.job.getHistory(jobId, apiHost, params.userId, t, function (data) {
             cb(data || []);
         }, function (err) {
             console.error("Failed to fetch history for job:", err);
@@ -893,9 +951,10 @@ function VM() {
         });
     }
 
-    self.createOpsLogEntry = function (payload, cb) {
+    self.createOpsLogEntry = async function (payload, cb) {
         const form = BeaconClient.toFormUrlEncoded(payload);
-        BeaconClient.operationslog.create(apiHost, form, token, function (data) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.operationslog.create(apiHost, form, t, function (data) {
             cb(data);
         }, function (err) {
             console.error("Failed to create ops log entry:", err);
@@ -930,10 +989,10 @@ function VM() {
             cb(null);
         });
     }
-    
 
-    self.fetchJobById = function (jobId, cb) {
-        BeaconClient.job.get(jobId, 1, apiHost, params.userId, token,
+    self.fetchJobById = async function (jobId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.job.get(jobId, 1, apiHost, params.userId, t,
             function (res) {
                 if (res) {
                     self.getOrCreateJob(res);
@@ -948,8 +1007,9 @@ function VM() {
         )
     }
 
-    self.fetchJobTasking = function (jobId, cb) {
-        BeaconClient.job.getTasking(jobId, apiHost, params.userId, token, (res) => {
+    self.fetchJobTasking = async function (jobId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.job.getTasking(jobId, apiHost, params.userId, t, (res) => {
             (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload((t)));
             cb(true);
         }, (err) => {
@@ -959,10 +1019,10 @@ function VM() {
     }
 
 
-    self.fetchAllTrackableAssets = function () {
+    self.fetchAllTrackableAssets = async function () {
         if (!assetDataRefreshInterlock) {
-            console.log("Fetching all trackable assets");
-            BeaconClient.asset.filter('', apiHost, params.userId, token, function (assets) {
+            const t = await getToken();   // blocks here until token is ready
+            BeaconClient.asset.filter('', apiHost, params.userId, t, function (assets) {
                 assets.forEach(function (a) {
                     myViewModel.getOrCreateAsset(a);
                 })
@@ -976,9 +1036,9 @@ function VM() {
         }
     }
 
-    self.fetchAllJobsData = function () {
+    self.fetchAllJobsData = async function () {
         const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
-        console.log("Fetching jobs for HQS:", hqsFilter);
+
 
         const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => Enum.JobStatusType[status]?.Id).filter(id => id !== undefined);
 
@@ -988,12 +1048,13 @@ function VM() {
         var start = new Date();
         start.setDate(end.getDate() - 30); // last 30 days
         myViewModel.jobsLoading(true);
-        BeaconClient.job.searchwithFilter(hqsFilter, apiHost, start, end, params.userId, token, function (allJobs) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.job.searchwithFilter(hqsFilter, apiHost, start, end, params.userId, t, function (allJobs) {
             console.log("Total jobs fetched:", allJobs.Results.length);
             myViewModel._markInitialFetchDone();
             myViewModel.jobsLoading(false);
-        }, function (val, total) {
-            console.log("Progress: " + val + " / " + total)
+        }, function (_val, _total) {
+            //console.log("Progress: " + _val + " / " + _total)
         },
             1, //view model
             statusFilterToView, //status filter
@@ -1006,16 +1067,16 @@ function VM() {
         )
     }
 
-    self.fetchAllTeamData = function () {
+    self.fetchAllTeamData = async function () {
         const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
-        console.log("Fetching teams for HQS:", hqsFilter);
 
         const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => Enum.TeamStatusType[status]?.Id).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - 30); // last 30 days
         myViewModel.teamsLoading(true);
-        BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, token, function (teams) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, t, function (teams) {
             // teams.Results.forEach(function (t) {
             //     myViewModel.getOrCreateTeam(t);
             // })
@@ -1089,6 +1150,19 @@ window.addEventListener('resize', () => map.invalidateSize());
 
 document.addEventListener('DOMContentLoaded', function () {
 
+
+    //get tokens
+    BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(
+        apiHost,
+        params.source,
+        function ({ token: rToken, tokenexp: rExp }) {
+            console.log("Fetched Beacon token," + rToken);
+            setToken(rToken, rExp);
+            myViewModel.tokenLoading(false);
+        }
+    );
+
+
     require(["knockout", "knockout-secure-binding"], function (komod, ksb) {
         ko = komod;
 
@@ -1100,199 +1174,11 @@ document.addEventListener('DOMContentLoaded', function () {
             noVirtualElements: false
         };
 
-        ko.bindingHandlers.slideVisible = {
-            init: function (element, valueAccessor) {
-                const visible = ko.unwrap(valueAccessor());
-                $(element).toggle(!!visible);
-            },
-            update: function (element, valueAccessor) {
-                const visible = ko.unwrap(valueAccessor());
-                if (visible) {
-                    $(element).stop(true, true).slideDown(120);
-                } else {
-                    $(element).stop(true, true).slideUp(120);
-                }
-            }
-        };
-
-        // status filters: maintain arrays of *ignored* status names
-        function makeStatusFilterBinding(listName, onChanged) {
-            return {
-                init: function (element, valueAccessor, _allBindings, _vm, ctx) {
-                    const status = ko.unwrap(valueAccessor());
-                    const cfg = ctx.$root.config;
-                    const vm = ctx.$root;
-                    if (!cfg || typeof cfg[listName] !== 'function') return;
-
-                    // initial checkbox state
-                    element.checked = cfg[listName]().includes(status);
-
-                    element.addEventListener('change', function () {
-                        const arr = cfg[listName];
-                        if (element.checked) {
-                            if (!arr().includes(status)) {
-                                arr.push(status);
-                            }
-                        } else {
-                            arr.remove(status);
-                        }
-
-                        // now data is updated → run callback
-                        if (typeof onChanged === 'function') {
-                            onChanged(vm, cfg);
-                        }
-                    });
-                },
-                update: function (element, valueAccessor, _allBindings, _vm, ctx) {
-                    const status = ko.unwrap(valueAccessor());
-                    const cfg = ctx.$root.config;
-                    if (!cfg || typeof cfg[listName] !== 'function') return;
-
-                    element.checked = cfg[listName]().includes(status);
-                }
-            };
-        }
-
-
-        ko.bindingHandlers.teamStatusFilter = makeStatusFilterBinding('teamStatusFilter');
-        ko.bindingHandlers.jobStatusFilter = makeStatusFilterBinding('jobStatusFilter');
-        ko.bindingHandlers.incidentTypeFilter = makeStatusFilterBinding('incidentTypeFilter');
-
-        ko.bindingHandlers.teamStatusFilterAndFetch = makeStatusFilterBinding(
-            'teamStatusFilter',
-            (vm, cfg) => {
-                cfg.save();          // or cfg.saveAndLoadTeamData() if you prefer
-                vm.fetchAllTeamData();
-            }
-        );
-
-        ko.bindingHandlers.jobStatusFilterAndFetch = makeStatusFilterBinding(
-            'jobStatusFilter',
-            (vm, cfg) => {
-                cfg.save();
-                vm.fetchAllJobsData();
-            }
-        );
-
-        ko.bindingHandlers.incidentTypeFilterAndFetch = makeStatusFilterBinding(
-            'incidentTypeFilter',
-            (vm, cfg) => {
-                cfg.save();
-                vm.fetchAllJobsData();
-            }
-        );
-
-        ko.bindingHandlers.trVisible = {
-            update: function (element, valueAccessor) {
-                const value = ko.unwrap(valueAccessor());
-                element.style.display = value ? 'table-row' : 'none';
-            }
-        };
-
-
-        const dragStore = new Map();
-        const genId = () => (crypto?.randomUUID?.() || Math.random().toString(36).slice(2));
-
-        ko.bindingHandlers.draggableRow = {
-            init(el, valueAccessor) {
-                const opts = valueAccessor() || {};
-                const payload = { data: opts.data, kind: opts.kind || 'item' };
-
-                el.setAttribute('draggable', 'true');
-
-                // Prevent drag from starting if clicking text or inside a selectable element
-                el.addEventListener('mousedown', function (ev) {
-
-                    // If target is a text node → allow selection, block drag
-                    if (ev.target.nodeType === Node.TEXT_NODE) {
-                        el.setAttribute('draggable', 'false');
-                        setTimeout(function () {
-                            el.setAttribute('draggable', 'true');
-                        }, 0);
-                        return;
-                    }
-
-                    // If clicking span, p, td, div containing text → also allow selection
-                    var tag = ev.target.tagName;
-                    if (tag === 'SPAN' || tag === 'P' || tag === 'TD' || tag === 'DIV') {
-                        // Only block drag if it actually contains text
-                        if (ev.target.innerText && ev.target.innerText.trim().length > 0) {
-                            el.setAttribute('draggable', 'false');
-                            setTimeout(function () {
-                                el.setAttribute('draggable', 'true');
-                            }, 0);
-                            return;
-                        }
-                    }
-                });
-
-                el.addEventListener('dragstart', function (ev) {
-                    if (el.getAttribute('draggable') !== 'true') {
-                        ev.preventDefault();
-                        return;
-                    }
-
-                    const id = genId();
-                    dragStore.set(id, payload);
-
-                    ev.dataTransfer.setData('text/x-ko-drag-id', id);
-                    ev.dataTransfer.effectAllowed = 'copyMove';
-                    ev.dataTransfer.setData('text/plain', JSON.stringify({ kind: payload.kind }));
-
-                    // NEW: use full row as drag preview
-                    const row = opts.dragSourceRow || el.closest('tr');
-                    if (row) {
-                        try {
-                            ev.dataTransfer.setDragImage(row, 0, 0);
-                        } catch (_) { /* empty */ }
-                    }
-                });
-
-                el.addEventListener('dragend', function () {
-                    dragStore.forEach(function (_v, k) { dragStore.delete(k); });
-                });
-            }
-        };
-
-        ko.bindingHandlers.droppableRow = {
-            init(el, valueAccessor, allBindings, viewModel, ctx) {
-                const opts = valueAccessor() || {};
-                const team = opts.team ?? viewModel;
-
-                // Resolve handler
-                const onDrop =
-                    (typeof opts.onDrop === 'function' && opts.onDrop) ||
-                    (typeof ctx.$root?.assignJobToTeam === 'function' && ctx.$root.assignJobToTeam) ||
-                    (typeof viewModel?.assignJobToTeam === 'function' && viewModel.assignJobToTeam);
-
-                if (typeof onDrop !== 'function') {
-                    console.warn('droppableRow: no onDrop handler found; define $root.assignJobToTeam or pass {onDrop: fn}.');
-                }
-
-                el.addEventListener('dragover', (ev) => {
-                    ev.preventDefault();
-                    ev.dataTransfer.dropEffect = 'copy';
-                    el.classList.add('drag-over');
-                });
-
-                el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
-
-                // capture ctx in closure for later use
-                el.addEventListener('drop', (ev) => {
-                    ev.preventDefault();
-                    el.classList.remove('drag-over');
-
-                    const id = ev.dataTransfer.getData('text/x-ko-drag-id');
-                    const payload = id && dragStore.get(id);
-                    if (!payload || payload.kind !== 'job') return;
-
-                    const jobVm = payload.data;
-                    const teamVm = team;
-                    ctx.$root.showConfirmTaskingModal(jobVm, teamVm);
-
-                });
-            }
-        };
+        // Install all custom bindings
+        installSlideVisibleBinding();
+        installStatusFilterBindings();
+        installRowVisibilityBindings();
+        installDragDropRowBindings();
 
         ko.bindingProvider.instance = new ksb(options);
         window.ko = ko;
@@ -1303,14 +1189,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Alerts overlay
         installAlerts(map, myViewModel);
-
-        //get tokens
-        BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(apiHost, params.source, function ({ token: rToken, tokenexp: rExp }) {
-            console.log("Fetched Beacon token," + rToken);
-            token = rToken;
-            tokenExp = rExp;
-            myViewModel.tokenLoading(false);
-        })
 
 
         //show config modal on load
@@ -1347,6 +1225,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 submenu.classList.remove('show');
             });
         });
+    });
+
+
+
+    // wait for full CSS + DOM
+    window.addEventListener('load', function () {
+        document.body.style.opacity = '1';
     });
 
 })

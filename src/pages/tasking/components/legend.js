@@ -2,7 +2,7 @@ var L = require('leaflet');
 
 // Legend control (collapsible)
 export const LegendControl = L.Control.extend({
-  options: { position: "bottomright", collapsed: false, persist: true },
+  options: { position: "bottomleft", collapsed: false, persist: true },
 
   onAdd() {
     const div = L.DomUtil.create("div", "legend-container leaflet-bar");

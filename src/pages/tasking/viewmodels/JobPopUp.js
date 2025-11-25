@@ -18,6 +18,14 @@ export class JobPopupViewModel {
         this.api.taskTeamToJobWithConfirm(this.job, team.team);
     }
 
+    mouseOverTeamInPopup = (team) => {
+        this.drawCrowsFliesToAssetPassedTeam(team.team);
+    }
+
+    mouseOutTeamInPopup = () => {
+        this.removeCrowsFlies();
+    }
+
     // --- popupFilteredTeams ---
     popupFilteredTeams = ko.pureComputed(() => {
         const term = (this.popupTeamFilter() || "").toLowerCase().trim();
@@ -25,31 +33,32 @@ export class JobPopupViewModel {
         const job = this.job;
         return list
             .filter(tm =>
-                !term || (tm.callsign() || "").toLowerCase().includes(term)
+            !term || (tm.callsign() || "").toLowerCase().includes(term)
             )
             .filter(tm =>
-                !(job.incompleteTaskingsOnly() || []).some(
-                    t => t.team.id === tm.id
-                )
+            !(job.incompleteTaskingsOnly() || []).some(
+                t => t.team.id === tm.id
+            )
             )
             .map(tm => {
-                const { distance, backBearing } = bestDistanceAndBearing(tm, job);
-                const summaryLine = [
-                    tm.filteredTaskings().length + ' tasking(s)',
-                    distance != null ? fmtDist(distance) : null,
-                    backBearing != null ? fmtBearing(backBearing) : null
-                ].filter(Boolean).join(' • ');
-                return {
-                    team: tm,
-                    taskings: tm.filteredTaskings,
-                    currentTaskingSummary: tm.currentTaskingSummary,
-                    summaryLine
-                };
+            const { distance, backBearing } = bestDistanceAndBearing(tm, job);
+            const summaryLine = [
+                tm.filteredTaskings().length + ' tasking(s)',
+                distance != null ? fmtDist(distance) : null,
+                backBearing != null ? fmtBearing(backBearing) : null
+            ].filter(Boolean).join(' • ');
+            return {
+                team: tm,
+                taskings: tm.filteredTaskings,
+                currentTaskingSummary: tm.currentTaskingSummary,
+                summaryLine,
+                distanceMeters: distance
+            };
             })
             .sort((a, b) => {
-                const da = a.distanceMeters ?? Number.POSITIVE_INFINITY;
-                const db = b.distanceMeters ?? Number.POSITIVE_INFINITY;
-                return da - db;
+            const da = a.distanceMeters ?? Number.POSITIVE_INFINITY;
+            const db = b.distanceMeters ?? Number.POSITIVE_INFINITY;
+            return da - db;
             });
     });
 
@@ -62,11 +71,43 @@ export class JobPopupViewModel {
         }
     }
 
-    removeCrowsFliesToAsset = () => {
+    removeCrowsFlies = () => {
         this.api.clearCrowFliesLine();
     }
 
-    drawCrowsFliesToAsset = (tasking) => {
+
+    drawCrowsFliesToAssetPassedTeam = (team) => {
+
+
+        console.log(team)
+        // clear any existing one first
+        this.api.clearCrowFliesLine();
+        if (!team) return;
+
+        // pick the team’s first asset coordinates
+        let fromLat = null, fromLng = null;
+        if (team.trackableAssets && team.trackableAssets().length > 0) {
+            const a = team.trackableAssets()[0];
+            fromLat = +ko.unwrap(a.latitude);
+            fromLng = +ko.unwrap(a.longitude);
+        }
+        const toLat = +ko.unwrap(this.job.address.latitude);
+        const toLng = +ko.unwrap(this.job.address.longitude);
+
+        if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
+            Number.isFinite(toLat) && Number.isFinite(toLng))) return;
+
+        this._polyline = L.polyline(
+            [
+                [fromLat, fromLng],
+                [toLat, toLng],
+            ],
+            { weight: 4, color: 'green', dashArray: '6' }
+        )
+        this.api.registerCrowFliesLine(this._polyline);
+    }
+
+    drawCrowsFliesToAssetFromTasking = (tasking) => {
         if (tasking.job.isFilteredIn() === false) {
             return;
         }
@@ -96,6 +137,7 @@ export class JobPopupViewModel {
         )
         this.api.registerCrowFliesLine(this._polyline);
     }
+
     displayOpsLogsForJob = () => {
         this.job.attachAndFillOpsLogModal(this.job);
     }
@@ -104,7 +146,7 @@ export class JobPopupViewModel {
         this.job.attachAndFillTimelineModal(this.job);
     }
 
-    fitBoundsWithAsset = (tasking) => {
+    fitBoundsWithTasking = (tasking) => {
         const bounds = L.latLngBounds([
             tasking.getTeamLatLng(),
             tasking.getJobLatLng()
@@ -115,6 +157,8 @@ export class JobPopupViewModel {
             duration: 1.2       // seconds; optional for smoother transition
         });
     }
+
+  
 
     drawRouteToAsset = (tasking) => {
         const from = tasking.getTeamLatLng();
