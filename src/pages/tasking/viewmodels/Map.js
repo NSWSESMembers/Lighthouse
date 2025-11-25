@@ -63,6 +63,7 @@ export function MapVM(Lmap, root) {
       fetchFn: opts.fetchFn,
       drawFn: opts.drawFn,
       timerId: null,
+      menuGroup: opts.menuGroup || null,
     };
 
     // Only fetch/draw if the layer is actually on the map
@@ -98,25 +99,25 @@ export function MapVM(Lmap, root) {
   };
 
 
-self.refreshPollingLayer = function (key) {
-  const entry = self.onlineLayers.get(key);
-  if (!entry) return;
+  self.refreshPollingLayer = function (key) {
+    const entry = self.onlineLayers.get(key);
+    if (!entry) return;
 
-  async function run() {
-    // bail if layer is not currently visible on the map
-    if (!self.map.hasLayer(entry.layerGroup)) return;
+    async function run() {
+      // bail if layer is not currently visible on the map
+      if (!self.map.hasLayer(entry.layerGroup)) return;
 
-    try {
-      const data = await entry.fetchFn();
-      entry.layerGroup.clearLayers();
-      entry.drawFn(entry.layerGroup, data);
-    } catch (e) {
-      console.error("Manual refresh failed for layer:", key, e);
+      try {
+        const data = await entry.fetchFn();
+        entry.layerGroup.clearLayers();
+        entry.drawFn(entry.layerGroup, data);
+      } catch (e) {
+        console.error("Manual refresh failed for layer:", key, e);
+      }
     }
-  }
 
-  run();
-};
+    run();
+  };
 
   /**
    * Return an array of overlay definitions for the layer control.
@@ -126,18 +127,18 @@ self.refreshPollingLayer = function (key) {
     const defs = [];
 
     // Vehicles
-    if (self.vehicleLayer) {
-      defs.push({ key: 'vehicles', label: 'Vehicles', layer: self.vehicleLayer });
-    }
+    // if (self.vehicleLayer) {
+    //   defs.push({ key: 'vehicles', label: 'Vehicles', layer: self.vehicleLayer });
+    // }
 
-    // Job groups
-    if (self.jobMarkerGroups instanceof Map) {
-      for (const [k, v] of self.jobMarkerGroups.entries()) {
-        if (v && v.layerGroup) {
-          defs.push({ key: 'jobs-' + k, label: 'Jobs: ' + k, layer: v.layerGroup });
-        }
-      }
-    }
+    // // Job groups
+    // if (self.jobMarkerGroups instanceof Map) {
+    //   for (const [k, v] of self.jobMarkerGroups.entries()) {
+    //     if (v && v.layerGroup) {
+    //       defs.push({ key: 'jobs-' + k, label: 'Jobs: ' + k, layer: v.layerGroup });
+    //     }
+    //   }
+    // }
 
     // Online/polling overlays
     for (const [k, entry] of self.onlineLayers.entries()) {
@@ -146,6 +147,7 @@ self.refreshPollingLayer = function (key) {
           key: 'online-' + k,
           label: entry.label || k,
           layer: entry.layerGroup,
+          group: entry.menuGroup || null,
         });
       }
     }

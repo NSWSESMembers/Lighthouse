@@ -143,6 +143,7 @@ function VM() {
 
     self.mapVM.registerPollingLayer('transport-cameras', {
         label: 'Transport NSW Cameras',
+        menuGroup: 'Transport NSW',
         refreshMs: 601200000, // 20 mins poll. the cameras list doesnt change and the images auto-refresh
         visibleByDefault: localStorage.getItem(`ov.transport-cameras`) || false,
         fetchFn: async () => {
@@ -189,6 +190,7 @@ function VM() {
 
     self.mapVM.registerPollingLayer('unit-boundary', {
         label: 'Unit Boundaries',
+        menuGroup: 'NSW SES Geoservices',
         refreshMs: 0, // 0 refresh. they dont change. only redraw on fiilter change
         visibleByDefault: localStorage.getItem(`ov.unit-boundary`) || false,
         fetchFn: async () => {
@@ -256,6 +258,7 @@ function VM() {
 
     self.mapVM.registerPollingLayer('transport-incidents', {
         label: 'Transport NSW Incidents',
+        menuGroup: 'Transport NSW',
         refreshMs: 601200000, // 20 mins poll. the cameras list doesnt change and the images auto-refresh
         visibleByDefault: localStorage.getItem(`ov.transport-incidents`) || false,
         fetchFn: async () => {
@@ -390,39 +393,52 @@ function VM() {
                 localStorage.setItem("map.base", val);
             });
 
-            // build overlays from MapVM (vehicles, jobs, online services, etc.)
+                        // build overlays from MapVM (vehicles, jobs, online services, etc.)
             const overlaysEl = c.querySelector(".ld-overlays");
-            const overlayDefs = (self.mapVM.getOverlayDefsForControl());
+            const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
 
+            // Group by def.group (parent menu layer)
+            const groups = new Map();
+            overlayDefs.forEach(def => {
+                const g = def.group || ''; // '' = ungrouped
+                if (!groups.has(g)) groups.set(g, []);
+                groups.get(g).push(def);
+            });
 
-            // Optional alerts layer if you expose it later:
-            // if (this.options.vm?.mapVM?.alertsLayer) {
-            //   overlayDefs.push({ key: "alerts", label: "Alerts", layer: this.options.vm.mapVM.alertsLayer });
-            // }
+            groups.forEach((defs, groupKey) => {
+                // Bootstrap-style sub heading for parent group
+                if (groupKey) {
+                    const heading = document.createElement("div");
+                    heading.className = "text-muted text-uppercase fw-semibold small mt-2 mb-1";
+                    heading.textContent = groupKey;
+                    overlaysEl.appendChild(heading);
+                }
 
-            overlayDefs.forEach(({ key, label, layer }) => {
-                const id = `ov-${key}`;
-                const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
-                if (saved) map.addLayer(layer);
+                defs.forEach(({ key, label, layer }) => {
+                    const id = `ov-${key}`;
+                    const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
+                    if (saved) map.addLayer(layer);
 
-                const row = document.createElement("label");
-                row.className = "ld-row";
-                row.innerHTML = `
-        <input type="checkbox" id="${id}" ${saved ? "checked" : ""}/>
-        <span>${label}</span>
-      `;
-                overlaysEl.appendChild(row);
+                    const row = document.createElement("label");
+                    row.className = "ld-row d-flex align-items-center gap-1";
+                    row.innerHTML = `
+            <input class="form-check-input m-0" type="checkbox" id="${id}" ${saved ? "checked" : ""}/>
+            <span class="">${label}</span>
+          `;
+                    overlaysEl.appendChild(row);
 
-                row.querySelector("input").addEventListener("change", (e) => {
-                    if (e.target.checked) {
-                        map.addLayer(layer);
-                        localStorage.setItem(`ov.${key}`, "1");
-                    } else {
-                        map.removeLayer(layer);
-                        localStorage.setItem(`ov.${key}`, "0");
-                    }
+                    row.querySelector("input").addEventListener("change", (e) => {
+                        if (e.target.checked) {
+                            map.addLayer(layer);
+                            localStorage.setItem(`ov.${key}`, "1");
+                        } else {
+                            map.removeLayer(layer);
+                            localStorage.setItem(`ov.${key}`, "0");
+                        }
+                    });
                 });
             });
+
 
             // open/close toggle
             const btn = c.querySelector(".ld-toggle");
@@ -836,7 +852,7 @@ function VM() {
         const deps = makeJobDeps();
         let job = this.jobsById.get(jobJson.Id);
         if (job) {
-            console.log("Updating existing job:", job.id());
+            //console.log("Updating existing job:", job.id());
             job.updateFromJson(jobJson);
             return job;
         }
@@ -922,10 +938,10 @@ function VM() {
         let t = self.taskingsById.get(taskingJson.Id);
 
         if (t) {
-            console.log("Updating existing tasking:", t.id());
+            //console.log("Updating existing tasking:", t.id());
             t.updateFrom(taskingJson); //update the tasking inplace
         } else {
-            console.log("Creating new tasking:", taskingJson.Id);
+            //console.log("Creating new tasking:", taskingJson.Id);
             t = new Tasking(taskingJson); //make a new one
             self.taskings.push(t);
             self.taskingsById.set(t.id(), t);
@@ -969,7 +985,7 @@ function VM() {
 
     // Call when each “first load” fetch finishes
     self._markInitialFetchDone = function () {
-        console.log("Initial fetch done, remaining:", initialFetchesPending - 1);
+        //console.log("Initial fetch done, remaining:", initialFetchesPending - 1);
         if (initialFetchesPending > 0) {
             initialFetchesPending -= 1;
             // Give subscriptions time to attach markers, then attempt fit
@@ -978,11 +994,11 @@ function VM() {
     };
 
     self._linkTaskingAndJob = function (tasking, job) {
-        console.log("Linking tasking:", tasking.id(), "with job:", job.id());
+        //console.log("Linking tasking:", tasking.id(), "with job:", job.id());
         if (!tasking) return;
         const prev = tasking.job && tasking.job.id && tasking.job || null; // current job ref
         if (prev && prev.id() !== job.id()) {
-            console.log("Previous job does not match the new job");
+            //console.log("Previous job does not match the new job");
             prev.removeTasking(tasking);   // detach from old job
         }
         if (job) {
@@ -1052,7 +1068,7 @@ function VM() {
             if (ch.status === 'added') {
                 attachAssetMarker(ko, map, self, a);
             } else if (ch.status === 'deleted') {
-                console.log("Detaching marker for asset no longer filtered in:", a.id());
+                //console.log("Detaching marker for asset no longer filtered in:", a.id());
                 // keep the asset in registry, but remove map marker + subs
                 detachAssetMarker(ko, map, self, a);
             }
