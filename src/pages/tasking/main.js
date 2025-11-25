@@ -19,6 +19,7 @@ import { JobTimeline } from "./viewmodels/JobTimeline.js";
 import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { getAllStaticTags, Tag } from "./models/Tag.js";
+import { UpdateTeamStatusDropdownVM } from './viewmodels/UpdateTeamStatusDropdownVM.js';
 
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
@@ -271,6 +272,8 @@ function VM() {
 
     self.jobTimelineVM = new JobTimeline(self);
 
+    // --- Team Status Update short cuts
+    self.updateTeamStatusDropdownPopup = new UpdateTeamStatusDropdownVM(self);
 
     // --- TABLE SORTING MAGIC ---
     self.teamSortKey = ko.observable('callsign');
@@ -506,6 +509,10 @@ function VM() {
                 self.attachNewOpsLogModal(job);
             },
 
+            UpdateTeamStatusDropdown: (tasking, anchorE1) => {
+                self.attachUpdateTeamStatusDropdown(tasking, anchorE1);
+            },
+
             attachAndFillTimelineModal: (job) => {
                 self.attachJobTimelineModal(job);
             },
@@ -603,6 +610,10 @@ function VM() {
 
         vm.openForNewJobLog(job);
         modal.show();
+    };
+
+    self.attachUpdateTeamStatusDropdown = function (tasking, anchorE1) {
+        self.updateTeamStatusDropdownPopup.openTeamStatusDropdown(tasking, anchorE1)
     };
 
 
@@ -891,6 +902,35 @@ function VM() {
             cb(null);
         });
     }
+
+    self.updateTeamStatus = function (taskingId, status, payload, cb) {
+        BeaconClient.tasking.updateTeamStatus(apiHost, taskingId, status, payload, token, function (data) {
+            cb(data || []);
+        }, function (err) {
+            console.error("Failed to update team status:", err);
+            cb([]);
+        });
+    }
+
+    self.callOffTeam = function (taskingId, payload, cb) {
+        BeaconClient.tasking.callOffTeam(apiHost, taskingId, payload, token, function (data) {
+            cb(data || []);
+        }, function (err) {
+            console.error("Failed to call off team:", err);
+            cb([]);
+        });
+    }
+
+    self.untaskTeam = function (taskingId, payload, cb) {
+        const form = BeaconClient.toFormUrlEncoded(payload);
+        BeaconClient.tasking.untaskTeam(apiHost, taskingId, form, token, function (data) {
+            cb(data);
+        }, function (err) {
+            console.error("Failed to create ops log entry:", err);
+            cb(null);
+        });
+    }
+    
 
     self.fetchJobById = function (jobId, cb) {
         BeaconClient.job.get(jobId, 1, apiHost, params.userId, token,
