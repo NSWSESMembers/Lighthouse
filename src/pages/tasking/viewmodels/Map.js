@@ -21,6 +21,140 @@ export function MapVM(Lmap, root) {
   self.vehicleLayer = L.layerGroup().addTo(Lmap);
   self.jobMarkerGroups = new Map();
 
+  // --- online/polling overlay layers registry ---
+  // key -> { key, label, layerGroup, refreshMs, timerId, visibleByDefault, fetchFn, drawFn }
+  self.onlineLayers = new Map();
+
+  /**
+   * Register a polling overlay layer that:
+   *  - owns its own L.layerGroup
+   *  - polls `fetchFn()` on an interval
+   *  - renders into the group via `drawFn(layerGroup, data)`
+   *
+   * @param {string} key - unique id for this overlay
+   * @param {{
+   *   label: string,
+   *   refreshMs?: number,
+   *   visibleByDefault?: boolean,
+   *   fetchFn: () => Promise<any>,
+   *   drawFn: (layerGroup: L.LayerGroup, data: any) => void
+   * }} opts
+   */
+  self.registerPollingLayer = function (key, opts) {
+    if (!opts || typeof opts.fetchFn !== 'function' || typeof opts.drawFn !== 'function') {
+      console.warn('registerPollingLayer requires fetchFn and drawFn');
+      return null;
+    }
+
+    // If already exists, clear its timer + layer
+    if (self.onlineLayers.has(key)) {
+      const existing = self.onlineLayers.get(key);
+      if (existing.timerId) clearInterval(existing.timerId);
+      if (existing.layerGroup) existing.layerGroup.clearLayers();
+    }
+
+    const layerGroup = L.layerGroup();
+    const entry = {
+      key,
+      label: opts.label || key,
+      layerGroup,
+      refreshMs: opts.refreshMs,
+      visibleByDefault: opts.visibleByDefault !== false,
+      fetchFn: opts.fetchFn,
+      drawFn: opts.drawFn,
+      timerId: null,
+      menuGroup: opts.menuGroup || null,
+    };
+
+    // Only fetch/draw if the layer is actually on the map
+    async function refreshIfVisible() {
+      if (!self.map.hasLayer(layerGroup)) return;
+
+      try {
+        const data = await entry.fetchFn();
+        layerGroup.clearLayers();
+        entry.drawFn(layerGroup, data);
+      } catch (err) {
+        console.error('Polling layer [' + key + '] refresh failed:', err);
+      }
+    }
+
+    // expose for manual refresh
+    entry.refresh = refreshIfVisible;
+
+    self.onlineLayers.set(key, entry);
+
+    // Add to map first if visibleByDefault, then do the initial fetch
+    if (entry.visibleByDefault) {
+      self.map.addLayer(layerGroup);
+      refreshIfVisible();
+    }
+
+    // Periodic refreshes – but still only fetch if visible
+    if (entry.refreshMs > 0) {
+      entry.timerId = setInterval(refreshIfVisible, entry.refreshMs);
+    }
+
+    return entry;
+  };
+
+
+  self.refreshPollingLayer = function (key) {
+    const entry = self.onlineLayers.get(key);
+    if (!entry) return;
+
+    async function run() {
+      // bail if layer is not currently visible on the map
+      if (!self.map.hasLayer(entry.layerGroup)) return;
+
+      try {
+        const data = await entry.fetchFn();
+        entry.layerGroup.clearLayers();
+        entry.drawFn(entry.layerGroup, data);
+      } catch (e) {
+        console.error("Manual refresh failed for layer:", key, e);
+      }
+    }
+
+    run();
+  };
+
+  /**
+   * Return an array of overlay definitions for the layer control.
+   * Each item: { key, label, layer }
+   */
+  self.getOverlayDefsForControl = function () {
+    const defs = [];
+
+    // Vehicles
+    // if (self.vehicleLayer) {
+    //   defs.push({ key: 'vehicles', label: 'Vehicles', layer: self.vehicleLayer });
+    // }
+
+    // // Job groups
+    // if (self.jobMarkerGroups instanceof Map) {
+    //   for (const [k, v] of self.jobMarkerGroups.entries()) {
+    //     if (v && v.layerGroup) {
+    //       defs.push({ key: 'jobs-' + k, label: 'Jobs: ' + k, layer: v.layerGroup });
+    //     }
+    //   }
+    // }
+
+    // Online/polling overlays
+    for (const [k, entry] of self.onlineLayers.entries()) {
+      if (entry.layerGroup) {
+        defs.push({
+          key: 'online-' + k,
+          label: entry.label || k,
+          layer: entry.layerGroup,
+          group: entry.menuGroup || null,
+        });
+      }
+    }
+    console.log('Overlay defs for control:', defs);
+    return defs;
+  };
+
   // helpers
   self.setOpen = (kind, ref) => self.openPopup({ kind, id: ref.id?.(), ref });
   self.clearOpen = () => self.openPopup(null);
@@ -40,7 +174,6 @@ export function MapVM(Lmap, root) {
   self.destroyAssetPopupVM = (asset) => {
     const vm = self.assetPopups.get(asset.id());
     if (vm) {
-      console.log(vm);
       vm.dispose();
       self.assetPopups.delete(asset.id());
     }
@@ -89,22 +222,25 @@ export function MapVM(Lmap, root) {
 
   // --- distance rings state ---
   self.jobAssetRings = [];
+  self.jobAssetSpokes = [];
+  self.jobAssetLabels = [];
 
-  self.clearJobAssetRings = () => {
-    if (!self.jobAssetRings || !self.jobAssetRings.length) return;
-    self.jobAssetRings.forEach((layer) => {
-      try {
-        self.map.removeLayer(layer);
-      } catch (_e) {
-        // ignore
-      }
-    });
+  self.clearJobAssetBullseye = () => {
+    self.jobAssetRings.forEach(l => { try { self.map.removeLayer(l); } catch (e) { /* empty */ } });
+    self.jobAssetSpokes.forEach(l => { try { self.map.removeLayer(l); } catch (e) { /* empty */ } });
+    self.jobAssetLabels.forEach(l => { try { self.map.removeLayer(l); } catch (e) { /* empty */ } });
+
     self.jobAssetRings = [];
+    self.jobAssetSpokes = [];
+    self.jobAssetLabels = [];
   };
 
   self.drawJobAssetDistanceRings = (job) => {
-    // clear any existing rings first
-    self.clearJobAssetRings();
+    // clear existing bullseye
+    self.clearJobAssetBullseye();
+
+    //close the job popup
+    self.map.closePopup();
 
     if (!job || !job.address || typeof job.address.latitude !== 'function') return;
 
@@ -114,24 +250,20 @@ export function MapVM(Lmap, root) {
 
     const center = L.latLng(lat, lng);
 
-    // Prefer filteredTrackableAssets, fall back to all trackableAssets
     const assets =
-      (root.filteredTrackableAssets && root.filteredTrackableAssets()) ||
-      (root.trackableAssets && root.trackableAssets()) ||
-      [];
+      (root.filteredTrackableAssets && root.filteredTrackableAssets()) || [];
 
     if (!assets || !assets.length) return;
 
-    // Build distance list
     const withDistance = assets
-      .map((a) => {
+      .map(a => {
         const alat = typeof a.latitude === 'function' ? a.latitude() : null;
         const alng = typeof a.longitude === 'function' ? a.longitude() : null;
         if (!Number.isFinite(alat) || !Number.isFinite(alng)) return null;
 
         const p = L.latLng(alat, alng);
         const d = self.map.distance(center, p); // metres
-        return { asset: a, distance: d };
+        return { asset: a, distance: d, point: p };
       })
       .filter(Boolean)
       .sort((a, b) => a.distance - b.distance)
@@ -139,33 +271,76 @@ export function MapVM(Lmap, root) {
 
     if (!withDistance.length) return;
 
-    withDistance.forEach((row, idx) => {
+    withDistance.forEach((row) => {
+      const km = row.distance / 1000;
+
+      // --- concentric circle ---
       const circle = L.circle(center, {
-        radius: row.distance, // metres
+        radius: row.distance,
         color: '#2563eb',
         weight: 1,
         dashArray: '4 4',
         fill: false,
         interactive: false,
       });
-
-      const km = row.distance / 1000;
-      const aName =
-        row.asset && typeof row.asset.name === 'function'
-          ? row.asset.name()
-          : 'Asset';
-
-      const label = `${idx + 1}. ${aName} — ${km.toFixed(2)} km`;
-
-      circle.bindTooltip(label, {
-        permanent: false,
-        sticky: true,
-      });
-
       circle.addTo(self.map);
       self.jobAssetRings.push(circle);
-      self.fitRingsBounds();
+
+      // --- spoke line job -> asset ---
+      const spoke = L.polyline([center, row.point], {
+        weight: 2,
+        dashArray: '4 4',
+        color: '#16a34a',
+        interactive: false,
+      });
+      spoke.addTo(self.map);
+      self.jobAssetSpokes.push(spoke);
+
+      // --- angled distance label along the line ---
+      // midpoint of the line
+      const mid = L.latLng(
+        (center.lat + row.point.lat) / 2,
+        (center.lng + row.point.lng) / 2
+      );
+
+      // angle in screen space so it matches the drawn line
+      const p1 = self.map.latLngToLayerPoint(center);
+      const p2 = self.map.latLngToLayerPoint(row.point);
+      let angleDeg = Math.atan2(p2.y - p1.y, p2.x - p1.x) * 180 / Math.PI;
+
+      if (angleDeg > 90 || angleDeg < -90) {
+        angleDeg += 180;
+      }
+
+      const html =
+        '<div class="bullseye-distance-label" ' +
+        'style="transform: rotate(' + angleDeg + 'deg);">' +
+        km.toFixed(2) + ' km' +
+        '</div>';
+
+      const labelMarker = L.marker(mid, {
+        icon: L.divIcon({
+          className: 'bullseye-distance-wrapper',
+          html,
+          iconSize: null,
+        }),
+        interactive: false,
+      });
+
+      labelMarker.addTo(self.map);
+      self.jobAssetLabels.push(labelMarker);
     });
+
+    // fit to full bullseye
+    const fg = L.featureGroup([
+      ...self.jobAssetRings,
+      ...self.jobAssetSpokes,
+      ...self.jobAssetLabels,
+    ]);
+    const b = fg.getBounds();
+    if (b.isValid()) {
+      self.map.fitBounds(b, { padding: [40, 40], maxZoom: 15 });
+    }
   };
 
   self.fitRingsBounds = () => {
@@ -184,7 +359,7 @@ export function MapVM(Lmap, root) {
 
   // Clear rings whenever the map is clicked
   self.map.on('click', () => {
-    self.clearJobAssetRings();
+    self.clearJobAssetBullseye();
   });
 
   const PopupStuff = {
@@ -225,7 +400,7 @@ export function MapVM(Lmap, root) {
     self.map.closePopup();
     self.clearOpen();
     self.clearRoutes();
-    self.clearJobAssetRings();
+    self.clearJobAssetBullseye();
   };
 
   self.ensureJobGroup = (typeName) => {
@@ -235,4 +410,19 @@ export function MapVM(Lmap, root) {
     }
     return self.jobMarkerGroups.get(typeName);
   };
+
+  self.map.on('layeradd', (ev) => {
+    // find which polling layer this corresponds to
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    for (const [key, entry] of self.onlineLayers.entries()) {
+      if (entry.layerGroup === ev.layer) {
+        // trigger immediate fetch now that it's visible
+        if (typeof entry.refresh === 'function') {
+          entry.refresh();
+        }
+        break;
+      }
+    }
+  });
+
 }

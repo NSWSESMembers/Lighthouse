@@ -2,6 +2,7 @@
 @import url('~@fortawesome/fontawesome-free/css/regular.min.css');
 @import url('~@fortawesome/fontawesome-free/css/fontawesome.min.css');
 @import url('~bootstrap5/dist/css/bootstrap.css');
+@import url('~leaflet-minimap/dist/Control.MiniMap.min.css');
 
 html {
   height: 100%;
@@ -1257,4 +1258,19 @@ tr.job:hover {
 /* when ICEMS is selected (btn-secondary active already applied) */
 .jobhistory-tag-btn.jobhistory-tag-icems.btn-secondary {
   background-color: var(--bs-secondary);
+}
+
+.bullseye-distance-wrapper {
+  pointer-events: none; /* don't block map clicks */
+}
+
+.bullseye-distance-label {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transform-origin: 50% 50%;
 }
