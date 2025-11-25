@@ -136,7 +136,7 @@
                         </thead>
                         <tbody data-bind="foreach: { data: sortedTeams, as: 't' }">
                             <tr class="team-row" data-bind="css:{expanded: t.expanded()},
-                   droppableRow: { team: t, onDrop: $root.assignJobToTeam },
+                   droppableRow: { team: t, onDrop: $root.showConfirmTaskingModal },
                    attr:{'aria-expanded': t.expanded}">
                                 <td colspan="7">
                                     <div class="team-card"
@@ -249,7 +249,7 @@
                                                                     <button type="button"
                                                                         class="btn btn-outline-secondary"
                                                                         title="Refresh taskings"
-                                                                        data-bind="click: t.fetchTasking">
+                                                                        data-bind="click: t.fetchTasking, clickBubble: false">
                                                                         <i class="fa fa-sync"></i>
                                                                     </button>
                                                                 </div>
@@ -626,7 +626,7 @@
                                             data-bind="click: j.toggleAndExpand, style: { 'background': rowColour() }">
                                             <!-- 1. Chevron / drag handle -->
                                             <div class="job-cell job-cell--chev" draggable="true"
-                                                data-bind="draggableRow: { job: j }, clickBubble: false">
+                                                data-bind="draggableRow: { data: j, kind: 'job' }, clickBubble: false">
                                                 <button type="button" class="btn btn-link p-0 text-decoration-none"
                                                     data-bind="attr:{ 'aria-expanded': j.expanded }"
                                                     aria-label="Expand/collapse incident">

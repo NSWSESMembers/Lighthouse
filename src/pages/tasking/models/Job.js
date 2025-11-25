@@ -521,11 +521,9 @@ export function Job(data = {}, deps = {}) {
     self.rowHasFocus = ko.observable(false);
 
     self.mouseEnterAddressButton = function () {
-        console.log("Job row mouse enter:", self.id());
         self.rowHasFocus(true);
     }
     self.mouseLeaveAddressButton = function () {
-        console.log("Job row mouse leave:", self.id());
         self.rowHasFocus(false);
     }
 
