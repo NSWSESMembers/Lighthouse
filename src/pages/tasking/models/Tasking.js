@@ -154,6 +154,15 @@ export function Tasking(data = {}) {
         this.job.openRadioLogModal(self);
     };
 
+    self.onClickUpdateStatus = function(tasking, evt) {
+        const anchorE1 = evt.target;
+        self.UpdateTeamStatusDropdown(tasking, anchorE1);
+    };
+
+    self.UpdateTeamStatusDropdown = function (tasking, anchorE1) {
+        this.job.UpdateTeamStatusDropdown(tasking, anchorE1);
+    };
+
     self.tagColorFromStatus = function () {
         const status = (self.currentStatus() || "").toLowerCase();
         switch (status) {

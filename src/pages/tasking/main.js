@@ -18,7 +18,8 @@ import { JobTimeline } from "./viewmodels/JobTimeline.js";
 
 import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
-import { getAllStaticTags, Tag } from "./models/Tag.js";
+import { Tag } from "./models/Tag.js";
+import { UpdateTeamStatusDropdownVM } from './viewmodels/UpdateTeamStatusDropdownVM.js';
 
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
@@ -145,7 +146,7 @@ function VM() {
     registerTransportCamerasLayer(self, map, getToken, apiHost, params);
     registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
     registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
-    
+
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
@@ -202,7 +203,7 @@ function VM() {
                 localStorage.setItem("map.base", val);
             });
 
-                        // build overlays from MapVM (vehicles, jobs, online services, etc.)
+            // build overlays from MapVM (vehicles, jobs, online services, etc.)
             const overlaysEl = c.querySelector(".ld-overlays");
             const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
 
@@ -288,11 +289,14 @@ function VM() {
     layersDrawer.addTo(map);
 
 
-
-
     self.tokenLoading = ko.observable(true);
     self.teamsLoading = ko.observable(true);
     self.jobsLoading = ko.observable(true);
+    self.tagsLoading = ko.observable(true);
+
+    self.pageIsLoading = ko.pureComputed(() => {
+        return self.tokenLoading() || self.tagsLoading();
+    });
 
     // Registries
     self.teamsById = new Map();
@@ -305,9 +309,8 @@ function VM() {
     self.jobs = ko.observableArray();
     self.taskings = ko.observableArray();
     self.trackableAssets = ko.observableArray([]);
-    self.allTags = ko.observableArray(
-        getAllStaticTags().map(t => new Tag(t))
-    );
+
+    self.allTags = ko.observableArray([]);
 
     ///opslog short cuts
     self.opsLogModalVM = new OpsLogModalVM(self);
@@ -317,12 +320,15 @@ function VM() {
 
     self.jobTimelineVM = new JobTimeline(self);
 
+    // --- Team Status Update short cuts
+    self.updateTeamStatusDropdownPopup = new UpdateTeamStatusDropdownVM(self);
 
     // --- TABLE SORTING MAGIC ---
     self.teamSortKey = ko.observable('callsign');
     self.teamSortAsc = ko.observable(true);
     self.jobSortKey = ko.observable('identifier');
     self.jobSortAsc = ko.observable(false);
+
 
     // --- sorted arrays ---
     self.sortedTeams = ko.pureComputed(function () {
@@ -552,6 +558,10 @@ function VM() {
                 self.attachNewOpsLogModal(job);
             },
 
+            UpdateTeamStatusDropdown: (tasking, anchorE1) => {
+                self.attachUpdateTeamStatusDropdown(tasking, anchorE1);
+            },
+
             attachAndFillTimelineModal: (job) => {
                 self.attachJobTimelineModal(job);
             },
@@ -652,6 +662,10 @@ function VM() {
 
         vm.openForNewJobLog(job);
         modal.show();
+    };
+
+    self.attachUpdateTeamStatusDropdown = function (tasking, anchorE1) {
+        self.updateTeamStatusDropdownPopup.openTeamStatusDropdown(tasking, anchorE1)
     };
 
 
@@ -951,6 +965,34 @@ function VM() {
         });
     }
 
+    self.updateTeamStatus = function (taskingId, status, payload, cb) {
+        BeaconClient.tasking.updateTeamStatus(apiHost, taskingId, status, payload, token, function (data) {
+            cb(data || []);
+        }, function (err) {
+            console.error("Failed to update team status:", err);
+            cb([]);
+        });
+    }
+
+    self.callOffTeam = function (taskingId, payload, cb) {
+        BeaconClient.tasking.callOffTeam(apiHost, taskingId, payload, token, function (data) {
+            cb(data || []);
+        }, function (err) {
+            console.error("Failed to call off team:", err);
+            cb([]);
+        });
+    }
+
+    self.untaskTeam = function (taskingId, payload, cb) {
+        const form = BeaconClient.toFormUrlEncoded(payload);
+        BeaconClient.tasking.untaskTeam(apiHost, taskingId, form, token, function (data) {
+            cb(data);
+        }, function (err) {
+            console.error("Failed to create ops log entry:", err);
+            cb(null);
+        });
+    }
+
     self.fetchJobById = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.job.get(jobId, 1, apiHost, params.userId, t,
@@ -999,7 +1041,6 @@ function VM() {
 
     self.fetchAllJobsData = async function () {
         const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
-
 
         const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => Enum.JobStatusType[status]?.Id).filter(id => id !== undefined);
 
@@ -1068,7 +1109,6 @@ function VM() {
         }, 30000);
     };
 
-    startAssetDataRefreshTimer()
 
     // ---------------- REFRESH TIMER FOR JOBS + TEAMS -----------------
 
@@ -1089,8 +1129,7 @@ function VM() {
         console.log("Jobs/Teams refresh timer started:", interval, "ms");
     }
 
-    // run once on startup
-    startJobsTeamsTimer();
+
 
     // re-arm timer when refreshInterval changes
     self.config.refreshInterval.subscribe(() => {
@@ -1098,6 +1137,49 @@ function VM() {
         startJobsTeamsTimer();
     });
 
+
+
+    const tagFetchPromises = Object.keys(Enum.TagGroup).map((key) => {
+        const groupId = Enum.TagGroup[key]?.Id;
+        if (groupId) {
+            return getToken()
+                .then((t) => {
+                    return new Promise((resolve, reject) => {
+                        BeaconClient.tags.getGroup(groupId, apiHost, params.userId, t, (tags) => {
+                            tags = (tags || []).map(tagData => new Tag(tagData));
+                            self.allTags.push(...tags);
+                            resolve();
+                        }, (err) => {
+                            console.error(`Failed to fetch tags for group ${key}:`, err);
+                            reject(err);
+                        });
+                    });
+                })
+                .catch((err) => {
+                    console.error(`Error fetching token for group ${key}:`, err);
+                });
+        }
+        return Promise.resolve();
+    });
+
+    Promise.all(tagFetchPromises)
+        .finally(() => {
+            self.tagsLoading(false);
+        });
+
+
+    self.UserPressedSaveOnTheConfigModal = function () {
+        //re-fetch data based on new config
+        initialFetchesPending = 2; // teams, jobs
+        self.fetchAllJobsData();
+        self.fetchAllTeamData();
+        self.fetchAllTrackableAssets();
+
+        
+        startJobsTeamsTimer();
+        startAssetDataRefreshTimer()
+
+    }
 
 }
 

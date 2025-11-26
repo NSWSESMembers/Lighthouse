@@ -34,12 +34,11 @@ export function Job(data = {}, deps = {}) {
 
     self.callerFirstName = ko.observable(data.CallerFirstName ?? "");
     self.callerLastName = ko.observable(data.CallerLastName ?? "");
-    self.callerPhoneNumber = ko.observable(data.CallerPhoneNumber ?? "");
+    self.callerPhoneNumber = ko.observable(data.CallerPhoneNumber ?? "-");
 
     self.contactFirstName = ko.observable(data.ContactFirstName ?? "");
     self.contactLastName = ko.observable(data.ContactLastName ?? "");
-    self.contactPhoneNumber = ko.observable(data.ContactPhoneNumber ?? "");
-
+    self.contactPhoneNumber = ko.observable(data.ContactPhoneNumber ?? "-");
 
     self.permissionToEnterPremises = ko.observable(!!data.PermissionToEnterPremises);
     self.howToEnterPremises = ko.observable(data.HowToEnterPremises ?? null);
@@ -65,7 +64,7 @@ export function Job(data = {}, deps = {}) {
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
     self.taskingLoading = ko.observable(false);
-    self.contactCalled = ko.observable((data.ContactCalled !== undefined) ? !!data.ContactCalled : false);
+    self.contactCalled = ko.observable((data.ContactCalled !== undefined) ? data.ContactCalled : false);
     self.opsLogEntriesLoading = ko.observable(false);
     self.opsLogEntries = ko.observableArray([]);
 
@@ -93,11 +92,27 @@ export function Job(data = {}, deps = {}) {
         }
         return lat + " / " + lng;
     });
+
+
     self.contactCalling = ko.pureComputed(() => {
         return self.contactCalled() ? "Yes" : "No";
     })
 
+    self.incidentContactName = ko.pureComputed(() => {
+        if (!self.contactCalled()) {
+            return self.contactFirstName() + " " + self.contactLastName();
+        } else {
+            return self.callerFirstName() + " " + self.callerLastName();
+        }
+    });
 
+    self.incidentContactNumber = ko.pureComputed(() => {
+        if (!self.contactCalled()) {
+            return self.contactPhoneNumber();
+        } else {
+            return self.callerPhoneNumber();
+        }
+    });
 
     self.lastDataUpdate = new Date();
 
@@ -198,6 +213,10 @@ export function Job(data = {}, deps = {}) {
 
     self.openNewOpsLogModal = function (job) {
         deps.openNewOpsLogModal(job)
+    };
+
+    self.UpdateTeamStatusDropdown = function (tasking, anchorE1) {
+        deps.UpdateTeamStatusDropdown(tasking, anchorE1)
     };
 
 
@@ -528,9 +547,9 @@ export function Job(data = {}, deps = {}) {
     }
 
     // ---- lifecycle hooks (delegated) ----
-    self.onPopupOpen = function () { 
+    self.onPopupOpen = function () {
         if (self.rowHasFocus()) return;
-        self.refreshDataAndTasking(); 
+        self.refreshDataAndTasking();
         self.focusAndExpandInList();
     };
 

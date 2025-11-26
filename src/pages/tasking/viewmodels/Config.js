@@ -235,10 +235,7 @@ export function ConfigVM(root, deps) {
     self.saveAndCloseAndLoad = () => {
         self.save();
 
-        // Kick initial loads using the KO arrays (not Maps)
-        root.fetchAllTeamData();
-        root.fetchAllJobsData();
-        root.fetchAllTrackableAssets();
+        root.UserPressedSaveOnTheConfigModal()
 
         // Close the Bootstrap modal
         const el = document.getElementById('configModal');
