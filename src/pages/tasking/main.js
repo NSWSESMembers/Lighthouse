@@ -18,7 +18,7 @@ import { JobTimeline } from "./viewmodels/JobTimeline.js";
 
 import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
-import { getAllStaticTags, Tag } from "./models/Tag.js";
+import { Tag } from "./models/Tag.js";
 import { UpdateTeamStatusDropdownVM } from './viewmodels/UpdateTeamStatusDropdownVM.js';
 
 import { installAlerts } from './components/alerts.js';
