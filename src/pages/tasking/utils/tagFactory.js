@@ -1,12 +1,10 @@
     export function returnTagClass(groupId) {
-        console.log('TagGroupId:', groupId);
         const tagGroupConfig = TagGroupButtonFactory[groupId] || TagGroupButtonFactory.default;
         if (tagGroupConfig) {
             return tagGroupConfig.class;
         }
     }
     export function returnTagIcon(groupId) {
-        console.log('TagGroupId:', groupId);
         const tagGroupConfig = TagGroupButtonFactory[groupId] || TagGroupButtonFactory.default;
         if (tagGroupConfig) {
             return tagGroupConfig.icon;
