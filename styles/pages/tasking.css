@@ -1041,10 +1041,10 @@ tr.job:hover {
 .job-details {
     border-top: 1px solid #e1e4ec;
     background: #f9fbff;
-    padding: 8px;
 }
 
 .job-details-form fieldset {
+  height: 100%;
   border: 1px solid #e5e5e5;
   border-radius: 4px;
   padding: 0.5rem 0.75rem 0.25rem;
@@ -1053,14 +1053,14 @@ tr.job:hover {
 }
 
 .job-details-legend {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   margin-bottom: 0.35rem;
   padding: 0 4px;
 }
 
 .job-details-value {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   margin-bottom: 0;
 }
 
@@ -1273,4 +1273,89 @@ tr.job:hover {
   padding: 2px 4px;
   border-radius: 3px;
   transform-origin: 50% 50%;
+}
+
+.tag-text:before {
+    font-family: FontAwesome;
+    padding-right: 5px
+}
+
+.tag-text:after {
+    font-family: FontAwesome;
+    content: '';
+    padding-left: 5px;
+    font-size: 1.2em
+}
+
+.tag.label {
+
+    font-size: 12px
+}
+
+.tag {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border: 1px solid #a445b1;
+    color: #fff;
+    background-color: #d13cd1;
+    margin: 0 5px 5px 0;
+    cursor: pointer;
+    float: left
+}
+
+.tag > i {
+    padding-left: 5px;
+}
+
+.tag > span {
+    padding-right: 5px;
+}
+
+.tag-damage {
+    color: #fff;
+    background-color: #e24d00;
+    border: 1px solid #e24d00
+}
+
+.tag-hazard {
+    color: #fff;
+    background-color: #c23434;
+    border: 1px solid #c23434;
+}
+
+.tag-property {
+    color: #fff;
+    background-color: #0f9369;
+    border: 1px solid #0f9369;
+}
+
+.tag-special-needs {
+    color: #fff;
+    background-color: #0f8b94;
+    border: 1px solid #0f8b94;
+}
+
+.tag-task {
+    color: #fff;
+    background-color: #1e8740;
+    border: 1px solid #1e8740;
+}
+
+.tag-aviation {
+    color: #ffffff;
+    background-color: #05636b;
+    border: 1px solid #05636b;
+}
+
+.tag-note {
+    color: #ffffff;
+    background-color: #6e663c;
+    border-color: #6e663c
+}
+
+
+.tag-note-selected {
+    color: #6e663c;
+    background-color: #ffffff;
+    border-color: #6e663c
 }
