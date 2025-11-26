@@ -1275,6 +1275,60 @@ tr.job:hover {
   transform-origin: 50% 50%;
 }
 
+.team-status-button {
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+#TeamStatusDropdown {
+  display: none;
+}
+
+.team-status-dropdown {
+    position: absolute;
+    z-index: 99999;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    min-width: 160px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    padding: 4px 0;
+}
+
+.dropdown-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.dropdown-item:hover {
+    background: #f2f2f2;
+}
+
+.quick-buttons {
+    margin-top: 6px;
+    display: flex;
+    gap: 6px;
+}
+
+.quick-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #f6f6f6;
+}
+
 .tag-text:before {
     font-family: FontAwesome;
     padding-right: 5px

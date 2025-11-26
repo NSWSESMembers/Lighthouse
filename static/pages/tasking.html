@@ -9,6 +9,69 @@
 <body style="opacity:0; transition: opacity .25s ease;">
 
     <div class="app"><!-- make .app a flex row in tasking.css -->
+        <!-- GLOBAL TEAM STATUS DROPDOWN POPUP -->
+        <div id="TeamStatusDropdown"
+            data-bind="with: updateTeamStatusDropdownPopup"
+            class="team-status-dropdown">
+
+            <!-- PAGE 1 -->
+            <div class="dropdown-list" data-bind="visible: currentPage() === 'selectStatus'">
+                <!-- ko if: canUntask --><div class="dropdown-item" data-bind="click: selectUntask">Untask</div><!-- /ko -->
+                <!-- ko if: canEnroute --><div class="dropdown-item" data-bind="click: selectEnRoute">En-Route</div><!-- /ko -->
+                <!-- ko if: canCalloff --><div class="dropdown-item" data-bind="click: selectCallOff">Call Off</div><!-- /ko -->
+                <!-- ko if: canOnsite --><div class="dropdown-item" data-bind="click: selectOnSite">On-Site</div><!-- /ko -->
+                <!-- ko if: canOffsite --><div class="dropdown-item" data-bind="click: selectOffSite">Off-Site</div><!-- /ko -->
+                <!-- ko if: canComplete --><div class="dropdown-item" data-bind="click: selectComplete">Complete</div><!-- /ko -->
+                <!-- ko if: cannotUpdateStatus --><div class="dropdown-item">You cannot change this team's status.</div><!-- /ko -->
+            </div>
+            <!-- PAGE 2: DETAILS -->
+            <div data-bind="visible: currentPage() === 'details'" class="page-two">
+
+                <!-- Time input -->
+                <div class="form-row" data-bind="visible: selectedStatus() === 'En-Route'
+                         || selectedStatus() === 'On-Site'
+                         || selectedStatus() === 'Off-Site'">
+                    <label>Time:</label>
+                    <input type="datetime-local" data-bind="value: time">
+                </div>
+
+                <!-- ETA (En-Route only) -->
+                <div class="form-row" data-bind="visible: selectedStatus() === 'En-Route'">
+                    <label>ETA:</label>
+                    <input type="datetime-local" data-bind="value: eta">
+                    <div class="quick-buttons" data-bind="visible: selectedStatus() === 'En-Route'">
+                        <button class="quick-btn" data-bind="click: addETA1">+1</button>
+                        <button class="quick-btn" data-bind="click: addETA5">+5</button>
+                        <button class="quick-btn" data-bind="click: addETA10">+10</button>
+                        <button class="quick-btn" data-bind="click: addETA30">+30</button>
+                    </div>
+                </div>
+
+                <!-- ETC (On-Site only) -->
+                <div class="form-row" data-bind="visible: selectedStatus() === 'On-Site'">
+                    <label>ETC:</label>
+                    <input type="datetime-local" data-bind="value: etc">
+                    <div class="quick-buttons" data-bind="visible: selectedStatus() === 'On-Site'">
+                        <button class="quick-btn" data-bind="click: addETC1">+1</button>
+                        <button class="quick-btn" data-bind="click: addETC5">+5</button>
+                        <button class="quick-btn" data-bind="click: addETC10">+10</button>
+                        <button class="quick-btn" data-bind="click: addETC30">+30</button>
+                    </div>
+                </div>
+
+                <!-- Call Off reason -->
+                <div class="form-row" data-bind="visible: selectedStatus() === 'Call Off'">
+                    <label>Reason:</label>
+                    <textarea data-bind="value: callOffReason"></textarea>
+                </div>
+
+                <!-- Submit -->
+                <button class="submit-btn" data-bind="click: submitFinal">
+                    Submit
+                </button>
+
+            </div>
+        </div>
         <aside class="sidebar"><!-- fixed-width column in tasking.css -->
             <div class="pane pane--top" id="paneTop">
                 <!-- TEAMS (top pane) -->
@@ -295,11 +358,6 @@
                                                                                         title="Radio Log"
                                                                                         data-bind="click: ts.openRadioLogModal, clickBubble: false">
                                                                                         <i class="fa fa-microphone"></i>
-                                                                                    </button>
-                                                                                    <button type="button"
-                                                                                        class="btn btn-outline-secondary"
-                                                                                        title="Update Team Status">
-                                                                                        <i class="fa fa-tasks"></i>
                                                                                     </button>
                                                                                     <button type="button"
                                                                                         class="btn btn-outline-secondary"
@@ -911,8 +969,7 @@
                                                                                 <td data-bind="text: ts.teamCallsign">
                                                                                 </td>
                                                                                 <td>
-                                                                                    <span class="badge"
-                                                                                        data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus()"></span>
+                                                                                    <button class="team-status-button" data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus"></button>
                                                                                 </td>
                                                                                 <td
                                                                                     data-bind="text: ts.statusTimeAgoLabel">
@@ -926,11 +983,6 @@
                                                                                             data-bind="click: ts.openRadioLogModal, clickBubble: false">
                                                                                             <i
                                                                                                 class="fa fa-microphone"></i>
-                                                                                        </button>
-                                                                                        <button type="button"
-                                                                                            class="btn btn-outline-secondary"
-                                                                                            title="Update Team Status">
-                                                                                            <i class="fa fa-tasks"></i>
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
@@ -1765,7 +1817,7 @@
 
 
 
-    <!-- Need to add some sort of error message if it fails -->
+    <!-- RADIO LOG MODAL -->
     <div class="modal fade" id="RadioLogModal" tabindex="-1" aria-labelledby="RadioLogModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content" data-bind="with: CreateRadioLogModalVM">
