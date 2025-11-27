@@ -43,9 +43,10 @@ export function ConfigVM(root, deps) {
     //blown away on load
     self.jobStatusFilter = ko.observableArray([]);
 
-    self.incidentTypeFilter = ko.observableArray([]); // [{id, name, entityType}]
+    self.incidentTypeFilter = ko.observableArray([]);
 
 
+    self.teamTaskStatusFilter = ko.observableArray([]); 
 
     self.openLoadBox = function () {
         self.loadExpanded(true);
@@ -64,6 +65,12 @@ export function ConfigVM(root, deps) {
     //     self.save();
     // });
 
+    self.teamTaskStatusFilterDefaults = [
+        "Tasked",
+        "Onsite",
+        "Offsite",
+        "Enroute",
+    ];
 
     self.jobStatusFilterDefaults = [
         "Active", "New", "Tasked"
@@ -106,10 +113,11 @@ export function ConfigVM(root, deps) {
             teams: ko.toJS(self.teamFilters),
             incidents: ko.toJS(self.incidentFilters)
         },
-        // these are your “ignored” statuses used by main.js filters
+        // these are your “ignored” statuses used by filters
         teamStatusFilter: ko.toJS(self.teamStatusFilter),
         jobStatusFilter: ko.toJS(self.jobStatusFilter),
-        incidentTypeFilter: ko.toJS(self.incidentTypeFilter)
+        incidentTypeFilter: ko.toJS(self.incidentTypeFilter),
+        teamTaskStatusFilter: ko.toJS(self.teamTaskStatusFilter)
     });
 
     // Helpers
@@ -276,6 +284,7 @@ export function ConfigVM(root, deps) {
             cfg.teamStatusFilter = self.teamStatusFilterDefaults;
             cfg.jobStatusFilter = self.jobStatusFilterDefaults;
             cfg.incidentTypeFilter = self.incidentTypeFilterDefaults;
+            cfg.teamTaskStatusFilter = self.teamTaskStatusFilterDefaults;
 
         }
         console.log('Loaded config:', cfg);
@@ -306,6 +315,9 @@ export function ConfigVM(root, deps) {
         }
         if (Array.isArray(cfg.incidentTypeFilter)) {
             self.incidentTypeFilter(cfg.incidentTypeFilter);
+        }
+        if (Array.isArray(cfg.teamTaskStatusFilter)) {
+            self.teamTaskStatusFilter(cfg.teamTaskStatusFilter);
         }
 
     };
