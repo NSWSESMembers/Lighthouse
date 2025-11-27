@@ -72,8 +72,7 @@ export function registerUnitBoundaryLayer(vm, map, getToken, apiHost, params) {
           });
 
           const popup = L.popup()
-            .setLatLng(this.getBounds().getCenter())
-            .setContent(`${f.unit?.name} Unit` || "Unknown Unit")
+            .setContent(`${f.unit?.name || "Unknown Unit"} Unit`)
             .openOn(map);
 
           this._popup = popup;

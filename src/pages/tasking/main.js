@@ -475,10 +475,10 @@ function VM() {
     self.teamSearch = ko.observable('');
 
     self.filteredTeams = ko.pureComputed(() => {
+
         const allowed = self.config.teamStatusFilter(); // allow-list
 
         return ko.utils.arrayFilter(self.teams(), tm => {
-
             const status = tm.status()?.Name;
             const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
             if (status == null) {
@@ -596,6 +596,9 @@ function VM() {
             openRadioLogModal: (team) => {
                 self.attachTeamRadioLogModal(team);
             },
+            
+            teamTaskStatusFilter: () => self.config.teamTaskStatusFilter(),
+
         };
 
         let team = self.teamsById.get(teamJson.Id);

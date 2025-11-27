@@ -10,31 +10,79 @@ import { Enum } from '../utils/enum.js';
 export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
+    self.lastDataUpdate = new Date();
 
     const {
         upsertTasking,              // (taskingJson, {teamContext}) => Tasking
         getTeamTasking,            // (teamId) => Promise<{Results:[]}>
         makeTeamLink = (_id) => '#',
         flyToAsset = () => {
-            // No operation (noop) function.
-        }
+            // No operation (noop) function.        
+        },
+        teamTaskStatusFilter = () => []  // () => Array of status names to ignore
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
-    self.lastDataUpdate = new Date();
-
 
     self.id = ko.observable(data.Id ?? null);
     self.callsign = ko.observable(data.Callsign ?? "");
-    self.assignedTo = ko.observable(new Entity(data.AssignedTo || data.CreatedAt));
+    self.assignedTo = ko.observable(new Entity(data.AssignedTo || data.CreatedAt)); //safety code for beacon bug
     self.status = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
     self.members = ko.observableArray(data.Members);
+    self.taskedJobCount = ko.observable(data.TaskedJobCount || 0);
     self.teamLeader = ko.computed(function () {
         const leader = ko.unwrap(self.members).find(m => m.TeamLeader === true);
         return leader ? `${leader.Person.FirstName} ${leader.Person.LastName}` : '-';
     });
 
     self.trackableAssets = ko.observableArray([]);
+
+
+    // ---- DATA REFRESH CHECK ----
+    const dataRefreshInterval = makeFilteredInterval(async () => {
+        const now = Date.now();
+        const last = self.lastDataUpdate?.getTime?.() ?? 0;
+        // only refresh if we haven't had an update in > 1 minute
+        if (now - last > 60000) {
+            self.fetchTasking();
+        }
+    }, 30000, { runImmediately: false });
+
+    self.startDataRefreshCheck = function () {
+        dataRefreshInterval.start();
+    };
+
+    self.stopDataRefreshCheck = function () {
+        dataRefreshInterval.stop();
+    };
+
+
+    // interval that only runs while team is filtered in
+    function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
+        let handle = null;
+
+        const tick = () => {
+            // global guard: only run if still filtered in
+            if (!self.isFilteredIn()) return;
+            fn();
+        };
+
+        const start = () => {
+            if (!self.isFilteredIn()) return; // don't start if already filtered out
+            if (handle) clearInterval(handle);
+            if (runImmediately) tick();
+            handle = setInterval(tick, intervalMs);
+        };
+
+        const stop = () => {
+            if (handle) {
+                clearInterval(handle);
+                handle = null;
+            }
+        };
+
+        return { start, stop };
+    }
 
     self.trackableAndIsFiltered = ko.pureComputed(() => {
         return self.isFilteredIn() && self.trackableAssets().length > 0;
@@ -57,6 +105,8 @@ export function Team(data = {}, deps = {}) {
     self.activeTaskingsCount = ko.pureComputed(() => {
         return self.filteredTaskings() && self.filteredTaskings().length || 0;
     })
+
+    
 
     self.currentTaskingSummary = ko.pureComputed(() => {
         const typeCounts = {};
@@ -89,16 +139,12 @@ export function Team(data = {}, deps = {}) {
     });
 
     self.filteredTaskings = ko.pureComputed(() => {
-        const ignoreList = [
-            "Complete",
-            "Untasked",
-            "CalledOff"
-        ];
+
         return ko.utils.arrayFilter(this.taskings(), ts => {
-            if (ignoreList.includes(ts.currentStatus())) {
-                return false;
+            if (teamTaskStatusFilter().includes(ts.currentStatus())) {
+                return true;
             }
-            return true;
+            return false;
         }).sort((a, b) => new Date(b.currentStatusTime()) - new Date(a.currentStatusTime()));
     });
 
@@ -123,7 +169,7 @@ export function Team(data = {}, deps = {}) {
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
     self.expanded.subscribe(function (isExpanded) {
-        if (isExpanded && self.taskingLoading()) {
+        if (isExpanded && !self.taskingLoading()) {
             self.fetchTasking();
         }
     });
@@ -182,12 +228,13 @@ export function Team(data = {}, deps = {}) {
     };
 
     Team.prototype.updateFromJson = function (d = {}) {
-
+        this.lastDataUpdate = new Date();
         if (d.Id !== undefined) this.id(d.Id);
+        if (d.TaskedJobCount !== undefined) this.taskedJobCount(d.TaskedJobCount);
         if (d.Callsign !== undefined) this.callsign(d.Callsign);
         if (d.TeamStatusType !== undefined) this.status(d.TeamStatusType);
         if (d.Members !== undefined) this.members(d.Members);
-        if (d.AssignedTo !== undefined) this.assignedTo(new Entity(d.AssignedTo));
+        if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) this.assignedTo(new Entity(d.AssignedTo || d.CreatedAt)); //safety for beacon bug
         if (d.statusId !== undefined) this.updateStatusById(d.statusId);
     }
 }
