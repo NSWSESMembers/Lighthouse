@@ -202,7 +202,6 @@
                                 <li>
                                     <hr class="dropdown-divider">
                                 </li>
-
                                 <!-- Open full config modal -->
                                 <li>
                                     <a class="dropdown-item" href="#" data-bs-toggle="modal"
@@ -252,10 +251,10 @@
                         <tbody data-bind="foreach: { data: sortedTeams, as: 't' }">
                             <tr class="team-row" data-bind="css:{expanded: t.expanded()},
                    droppableRow: { team: t, onDrop: $root.showConfirmTaskingModal },
-                   attr:{'aria-expanded': t.expanded}">
+                   attr:{'aria-expanded': t.expanded}, attr: { 'data-team-id': t.id }">
                                 <td colspan="7">
                                     <div class="team-card"
-                                        data-bind="css:{'team-card--expanded': t.expanded()}, click: t.toggle, attr:{ 'aria-expanded': t.expanded }">
+                                        data-bind="css:{'team-card--expanded': t.expanded()}, click: t.toggleAndExpand, attr:{ 'aria-expanded': t.expanded }">
 
                                         <!-- SUMMARY BAR -->
                                         <div class="team-summary"

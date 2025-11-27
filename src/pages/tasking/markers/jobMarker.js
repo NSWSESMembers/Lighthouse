@@ -172,6 +172,8 @@ function safeMove(marker, job) {
     if (Number.isFinite(lat) && Number.isFinite(lng)) marker.setLatLng([lat, lng]);
 }
 
+
+
 function wireKoForPopup(ko, marker, job, vm, popupVM) {
     if (marker._koWired) return;
     marker.on('popupopen', e => {

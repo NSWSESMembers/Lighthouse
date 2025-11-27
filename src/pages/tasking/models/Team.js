@@ -38,6 +38,84 @@ export function Team(data = {}, deps = {}) {
     self.trackableAssets = ko.observableArray([]);
 
 
+    self.toggleAndExpand = function () {
+        const wasExpanded = self.expanded();
+        self.expanded(!wasExpanded);
+
+        // If we just collapsed, no scroll
+        if (wasExpanded) return;
+
+        scrollToThisInTable();
+
+    };
+
+
+
+
+
+
+
+    self.focusAndExpandInList = function () {
+        self.expand();
+
+
+        scrollToThisInTable();
+    };
+
+
+    function scrollToThisInTable() {
+        setTimeout(() => {
+            const row = document.querySelector(
+                `tr.team-row[data-team-id="${self.id()}"]`
+            );
+            if (!row) return;
+
+            // Scroll container is the top pane
+            const container = document.querySelector('#paneTop .table-responsive');
+            if (!container) {
+                row.scrollIntoView({ behavior: "smooth", block: "start" });
+                return;
+            }
+
+            // Sticky header height
+            const table = row.closest("table");
+            const thead = table ? table.querySelector("thead") : null;
+            const headerHeight = thead
+                ? thead.getBoundingClientRect().height
+                : 0;
+
+            const containerRect = container.getBoundingClientRect();
+            const rowRect = row.getBoundingClientRect();
+            const padding = 2;
+
+            // Where we *want* the row: just under the header
+            let target =
+                container.scrollTop +
+                (rowRect.top - containerRect.top) -
+                headerHeight -
+                padding;
+
+            // Only clamp to >= 0; don't clamp to maxScroll here
+            if (target < 0) target = 0;
+
+
+            container.scrollTo({
+                top: target,
+                behavior: "smooth",
+            });
+        }, 150);
+    }
+
+
+    self.onPopupOpen = function () {
+        self.focusAndExpandInList();
+    };
+
+    self.onPopupClose = function () {
+        self.collapse();
+    };
+
+
     // ---- DATA REFRESH CHECK ----
     const dataRefreshInterval = makeFilteredInterval(async () => {
         const now = Date.now();
@@ -106,7 +184,7 @@ export function Team(data = {}, deps = {}) {
         return self.filteredTaskings() && self.filteredTaskings().length || 0;
     })
 
-    
+
 
     self.currentTaskingSummary = ko.pureComputed(() => {
         const typeCounts = {};
@@ -149,7 +227,7 @@ export function Team(data = {}, deps = {}) {
     });
 
     self.taskingRowColour = ko.pureComputed(() => {
-        if (self.activeTaskingsCount() === 0) {
+        if (self.taskedJobCount() === 0) {
             return '#d4edda'; // light green
         }
     })
@@ -218,12 +296,13 @@ export function Team(data = {}, deps = {}) {
 
     //only handle single asset for now
     self.markerFocus = function () {
+        if (self.isFilteredIn() === false) return;
         const a = self.trackableAssets()[0];
         if (!a) return;
         flyToAsset(a); // map logic stays out of the model
     };
 
-        self.openRadioLogModal = function () {
+    self.openRadioLogModal = function () {
         deps.openRadioLogModal(self);
     };
 
