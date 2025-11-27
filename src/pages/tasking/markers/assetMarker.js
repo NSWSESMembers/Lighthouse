@@ -159,7 +159,7 @@ function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
         const el = e.popup.getContent(); // our stable node
         vm.mapVM.setOpen?.('asset', asset);
         bindKoToPopup(ko, popupVm, el);
-        asset.matchingTeams()?.length !==0 && asset.matchingTeams()[0].onPopupOpen()
+        asset.matchingTeamsInView()?.length !==0 && asset.matchingTeamsInView()[0].onPopupOpen()
         popupVm.updatePopup?.();
         deferPopupUpdate(e.popup);
     };
@@ -169,7 +169,7 @@ function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
         vm.mapVM.clearRoutes?.();
         vm.mapVM.clearOpen?.();
         unbindKoFromPopup(ko, el);
-        asset.matchingTeams()?.length !==0 && asset.matchingTeams()[0].onPopupClose()
+        asset.matchingTeamsInView()?.length !==0 && asset.matchingTeamsInView()[0].onPopupClose()
     };
     marker._koWired = true;
     marker.on('popupopen', openHandler);

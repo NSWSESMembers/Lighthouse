@@ -20,6 +20,9 @@ export function Asset(data = {}) {
     self.marker = null;
     self.matchingTeams = ko.observableArray();
     
+    self.matchingTeamsInView = ko.pureComputed(() => {
+        return self.matchingTeams().filter(t => t.isFilteredIn());
+    });
 
     self.lastSeenText = ko.pureComputed(() => {
         const v = safeStr(self.lastSeen?.());

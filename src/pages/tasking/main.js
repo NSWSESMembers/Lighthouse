@@ -436,11 +436,12 @@ function VM() {
             // Apply text search
             return (!term ||
                 jb.identifier().toLowerCase().includes(term) ||
+                jb.id().toString().toLowerCase().includes(term) ||
                 jb.address.prettyAddress().toLowerCase().includes(term));
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
-
+    //ignores the word filering. Maybe dont need this anymore.
     self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
 
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
@@ -596,7 +597,7 @@ function VM() {
             openRadioLogModal: (team) => {
                 self.attachTeamRadioLogModal(team);
             },
-            
+
             teamTaskStatusFilter: () => self.config.teamTaskStatusFilter(),
 
         };
@@ -874,7 +875,7 @@ function VM() {
 
 
     // automatically refresh markers when jobs change
-    self.filteredJobsIgnoreSearch.subscribe((changes) => {
+    self.filteredJobs.subscribe((changes) => {
         changes.forEach(ch => {
             if (ch.status === 'added') {
                 addOrUpdateJobMarker(ko, map, self, ch.value);
@@ -1056,6 +1057,43 @@ function VM() {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.job.searchwithFilter(hqsFilter, apiHost, start, end, params.userId, t, function (allJobs) {
             console.log("Total jobs fetched:", allJobs.Results.length);
+
+            // Clean up jobs that no longer exist in the feed
+            const fetchedJobIds = new Set((allJobs.Results || []).map(j => j.Id));
+            const existingJobIds = new Set(self.jobs().map(j => j.id()));
+
+            const jobsToRemove = [...existingJobIds].filter(id => !fetchedJobIds.has(id));
+
+            jobsToRemove.forEach(id => {
+                console.log("Removing job no longer in feed:", id);
+                const job = self.jobsById.get(id);
+                if (!job) return;
+
+                // --- detach and remove tasking refs belonging to this job ---
+                const jobTaskings = job.taskings && job.taskings();
+                if (Array.isArray(jobTaskings)) {
+                    // copy to avoid mutating while iterating
+                    jobTaskings.slice().forEach(tasking => {
+                        // clear the back-ref to this job (we'll also remove the job itself)
+                        tasking.job = null;
+                    });
+
+                    if (typeof job.taskings === "function") {
+                        job.taskings.removeAll();
+                    }
+                }
+
+                // --- clear selection if this job is currently selected ---
+                if (self.selectedJob && self.selectedJob() === job) {
+                    self.selectedJob(null);
+                }
+
+                // --- finally, remove job from registries ---
+                self.jobs.remove(job);
+                self.jobsById.delete(id);
+            });
+
+
             myViewModel._markInitialFetchDone();
             myViewModel.jobsLoading(false);
         }, function (_val, _total) {
@@ -1064,7 +1102,7 @@ function VM() {
             1, //view model
             statusFilterToView, //status filter
             incidentTypeFilterToView, //incident type filter
-            function (jobs) {
+            function (jobs) { //call back as they come in per page
                 jobs.Results.forEach(function (t) {
                     myViewModel.getOrCreateJob(t);
                 })
@@ -1088,6 +1126,53 @@ function VM() {
             console.log("Total teams fetched:", teams.Results.length);
             myViewModel._markInitialFetchDone();
             myViewModel.teamsLoading(false);
+
+            // Loop over all the teams in the results and compare them to self.teams
+            const fetchedTeamIds = new Set(teams.Results.map(t => t.Id));
+            const existingTeamIds = new Set(self.teams().map(t => t.id()));
+
+            // Find teams that exist in self.teams but not in the fetched results
+            const teamsToRemove = [...existingTeamIds].filter(id => !fetchedTeamIds.has(id));
+
+            // Remove the unmatched teams
+            teamsToRemove.forEach(id => {
+                console.log("Removing team no longer in feed:", id, self.teamsById.get(id)?.callsign());
+                const team = self.teamsById.get(id);
+                if (!team) return;
+
+                // Detach from assets
+                const assets = team.trackableAssets && team.trackableAssets();
+                if (Array.isArray(assets)) {
+                    assets.forEach(a => {
+                        // remove this team from each asset’s matchingTeams
+                        if (a && typeof a.matchingTeams === 'function') {
+                            a.matchingTeams.remove(team);
+                        }
+                    });
+                    team.trackableAssets.removeAll();
+                }
+
+                // Detach from taskings
+                const taskings = team.taskings && team.taskings();
+                if (Array.isArray(taskings)) {
+                    taskings.forEach(tsk => {
+                        if (tsk && tsk.team === team) {
+                            tsk.team = null;
+                        }
+                    });
+                    team.taskings.removeAll();
+                }
+
+                // Stop any team-level timers
+                if (typeof team.stopDataRefreshCheck === 'function') {
+                    team.stopDataRefreshCheck();
+                }
+
+                // Remove from registries
+                self.teams.remove(team);
+                self.teamsById.delete(id);
+            });
+
 
         }, function () {
             //console.log("Progress: " + val + " / " + total)
@@ -1178,7 +1263,7 @@ function VM() {
         self.fetchAllTeamData();
         self.fetchAllTrackableAssets();
 
-        
+
         startJobsTeamsTimer();
         startAssetDataRefreshTimer()
 

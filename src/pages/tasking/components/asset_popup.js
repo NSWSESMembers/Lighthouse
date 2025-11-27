@@ -33,11 +33,11 @@ export function buildAssetPopupKO() {
     </div>
 
     <!-- Teams bound to this asset -->
-    <div class="veh-pop__teams" data-bind="visible: matchingTeams && matchingTeams().length">
+    <div class="veh-pop__teams" data-bind="visible: matchingTeamsInView && matchingTeamsInView().length">
       <hr class="my-2" />
       <div class="fw-bold small mb-1">Team(s)</div>
 
-      <div class="veh-pop__team-list" data-bind="foreach: { data: matchingTeams, as: 'tm' }">
+      <div class="veh-pop__team-list" data-bind="foreach: { data: matchingTeamsInView, as: 'tm' }">
         <div class="veh-pop__team mb-2">
           <!-- Team header row -->
           <div class="d-flex align-items-start justify-content-between">
