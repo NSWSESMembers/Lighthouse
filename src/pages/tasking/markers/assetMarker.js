@@ -76,6 +76,13 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
         m.addTo(layer);
         asset.marker = m;
 
+        // Register with spiderfier
+        if (window.oms) {
+            window.oms.addMarker(m);
+            m.on('mouseover', () => window.oms.spiderfy(m));
+            m.on('mouseout', () => window.oms.unspiderfy());
+        }
+
         // Ask MapVM to create the AssetPopupViewModel for this asset:
         const popupVm = viewModel.mapVM.makeAssetPopupVM(asset);
         bindPopupWithKO(ko, asset.marker, viewModel, asset, popupVm);
@@ -152,6 +159,8 @@ function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
         const el = e.popup.getContent(); // our stable node
         vm.mapVM.setOpen?.('asset', asset);
         bindKoToPopup(ko, popupVm, el);
+        asset.matchingTeams()?.length !==0 && asset.matchingTeams()[0].onPopupOpen()
+        popupVm.updatePopup?.();
         deferPopupUpdate(e.popup);
     };
     const closeHandler = (e) => {
@@ -160,7 +169,7 @@ function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
         vm.mapVM.clearRoutes?.();
         vm.mapVM.clearOpen?.();
         unbindKoFromPopup(ko, el);
-
+        asset.matchingTeams()?.length !==0 && asset.matchingTeams()[0].onPopupClose()
     };
     marker._koWired = true;
     marker.on('popupopen', openHandler);
