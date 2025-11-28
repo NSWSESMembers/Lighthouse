@@ -962,8 +962,9 @@ function VM() {
         });
     }
 
-    self.updateTeamStatus = function (taskingId, status, payload, cb) {
-        BeaconClient.tasking.updateTeamStatus(apiHost, taskingId, status, payload, token, function (data) {
+    self.updateTeamStatus = function (tasking, status, payload, cb) {
+        BeaconClient.tasking.updateTeamStatus(apiHost, tasking.id(), status, payload, token, function (data) {
+            tasking.job.fetchTasking();
             cb(data || []);
         }, function (err) {
             console.error("Failed to update team status:", err);
@@ -971,8 +972,9 @@ function VM() {
         });
     }
 
-    self.callOffTeam = function (taskingId, payload, cb) {
-        BeaconClient.tasking.callOffTeam(apiHost, taskingId, payload, token, function (data) {
+    self.callOffTeam = function (tasking, payload, cb) {
+        BeaconClient.tasking.callOffTeam(apiHost, tasking.id(), payload, token, function (data) {
+            tasking.job.fetchTasking();
             cb(data || []);
         }, function (err) {
             console.error("Failed to call off team:", err);
@@ -980,9 +982,10 @@ function VM() {
         });
     }
 
-    self.untaskTeam = function (taskingId, payload, cb) {
+    self.untaskTeam = function (tasking, payload, cb) {
         const form = BeaconClient.toFormUrlEncoded(payload);
-        BeaconClient.tasking.untaskTeam(apiHost, taskingId, form, token, function (data) {
+        BeaconClient.tasking.untaskTeam(apiHost, tasking.id(), form, token, function (data) {
+            tasking.job.fetchTasking();
             cb(data);
         }, function (err) {
             console.error("Failed to create ops log entry:", err);

@@ -1276,12 +1276,25 @@ tr.job:hover {
 }
 
 .team-status-button {
-    border: none;
-    padding: 4px 8px;
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: 4px 24px 4px 8px; /* space for icon on the right */
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.8rem;
     line-height: 1.2;
+    position: relative;
+}
+
+.team-status-button::after {
+    content: "▾";                 /* small dropdown arrow */
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    pointer-events: none;
+    opacity: 0.7;
 }
 
 #TeamStatusDropdown {
