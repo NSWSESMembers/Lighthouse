@@ -34,7 +34,7 @@ export function ConfigVM(root, deps) {
 
     // Other settings
     self.refreshInterval = ko.observable(60);
-    self.theme = ko.observable('light');
+    self.fetchPeriod = ko.observable(7);
     self.showAdvanced = ko.observable(false);
 
     //blown away on load
@@ -43,9 +43,10 @@ export function ConfigVM(root, deps) {
     //blown away on load
     self.jobStatusFilter = ko.observableArray([]);
 
-    self.incidentTypeFilter = ko.observableArray([]); // [{id, name, entityType}]
+    self.incidentTypeFilter = ko.observableArray([]);
 
 
+    self.teamTaskStatusFilter = ko.observableArray([]); 
 
     self.openLoadBox = function () {
         self.loadExpanded(true);
@@ -64,6 +65,12 @@ export function ConfigVM(root, deps) {
     //     self.save();
     // });
 
+    self.teamTaskStatusFilterDefaults = [
+        "Tasked",
+        "Onsite",
+        "Offsite",
+        "Enroute",
+    ];
 
     self.jobStatusFilterDefaults = [
         "Active", "New", "Tasked"
@@ -100,16 +107,17 @@ export function ConfigVM(root, deps) {
     // Build the current config payload (used by save + share)
     const buildConfig = () => ({
         refreshInterval: Number(self.refreshInterval()),
-        theme: self.theme(),
+        fetchPeriod: Number(self.fetchPeriod()),
         showAdvanced: !!self.showAdvanced(),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
             incidents: ko.toJS(self.incidentFilters)
         },
-        // these are your “ignored” statuses used by main.js filters
+        // these are your “ignored” statuses used by filters
         teamStatusFilter: ko.toJS(self.teamStatusFilter),
         jobStatusFilter: ko.toJS(self.jobStatusFilter),
-        incidentTypeFilter: ko.toJS(self.incidentTypeFilter)
+        incidentTypeFilter: ko.toJS(self.incidentTypeFilter),
+        teamTaskStatusFilter: ko.toJS(self.teamTaskStatusFilter)
     });
 
     // Helpers
@@ -235,10 +243,7 @@ export function ConfigVM(root, deps) {
     self.saveAndCloseAndLoad = () => {
         self.save();
 
-        // Kick initial loads using the KO arrays (not Maps)
-        root.fetchAllTeamData();
-        root.fetchAllJobsData();
-        root.fetchAllTrackableAssets();
+        root.UserPressedSaveOnTheConfigModal()
 
         // Close the Bootstrap modal
         const el = document.getElementById('configModal');
@@ -274,11 +279,12 @@ export function ConfigVM(root, deps) {
             cfg = {}
             console.log('Using defaults.');
             cfg.refreshInterval = self.refreshInterval();
-            cfg.theme = self.theme();
+            cfg.fetchPeriod = self.fetchPeriod();
             cfg.showAdvanced = self.showAdvanced();
             cfg.teamStatusFilter = self.teamStatusFilterDefaults;
             cfg.jobStatusFilter = self.jobStatusFilterDefaults;
             cfg.incidentTypeFilter = self.incidentTypeFilterDefaults;
+            cfg.teamTaskStatusFilter = self.teamTaskStatusFilterDefaults;
 
         }
         console.log('Loaded config:', cfg);
@@ -286,8 +292,8 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.refreshInterval === 'number') {
             self.refreshInterval(cfg.refreshInterval);
         }
-        if (typeof cfg.theme === 'string') {
-            self.theme(cfg.theme);
+        if (typeof cfg.fetchPeriod === 'number') {
+            self.fetchPeriod(cfg.fetchPeriod);
         }
         if (typeof cfg.showAdvanced === 'boolean') {
             self.showAdvanced(cfg.showAdvanced);
@@ -309,6 +315,9 @@ export function ConfigVM(root, deps) {
         }
         if (Array.isArray(cfg.incidentTypeFilter)) {
             self.incidentTypeFilter(cfg.incidentTypeFilter);
+        }
+        if (Array.isArray(cfg.teamTaskStatusFilter)) {
+            self.teamTaskStatusFilter(cfg.teamTaskStatusFilter);
         }
 
     };

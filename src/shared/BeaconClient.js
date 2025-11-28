@@ -13,8 +13,10 @@ import * as entities from './BeaconClient/entities.js';
 import * as tasking from './BeaconClient/tasking.js';
 import * as notifications from './BeaconClient/notifications.js';
 import * as geoservices from './BeaconClient/geoservices.js';
+import * as tags from './BeaconClient/tags.js';
 
-export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, toFormUrlEncoded };
+// re-export tags functions
+export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, toFormUrlEncoded };
 
 export function toFormUrlEncoded(obj) {
     const params = [];

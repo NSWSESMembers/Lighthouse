@@ -7,12 +7,12 @@
 </head>
 
 <body style="opacity:0; transition: opacity .25s ease;">
+    <div id="alerts-container" class="position-fixed top-0 start-50 translate-middle-x mt-3"
+        style="z-index:2000; width:600px; max-width:90%;"></div>
 
     <div class="app"><!-- make .app a flex row in tasking.css -->
         <!-- GLOBAL TEAM STATUS DROPDOWN POPUP -->
-        <div id="TeamStatusDropdown"
-            data-bind="with: updateTeamStatusDropdownPopup"
-            class="team-status-dropdown">
+        <div id="TeamStatusDropdown" data-bind="with: updateTeamStatusDropdownPopup" class="team-status-dropdown">
 
             <!-- PAGE 1 -->
             <div class="dropdown-list" data-bind="visible: currentPage() === 'selectStatus'">
@@ -99,16 +99,7 @@
 
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="teamMenu">
 
-                                <!-- Basic actions -->
-                                <li>
-                                    <a class="dropdown-item" href="#" data-bind="click: fetchAllTeamData">
-                                        Refresh Teams
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
+                       
 
                                 <!-- TEAM STATUS FILTERS (collapsible section) -->
                                 <li>
@@ -130,9 +121,9 @@
                                             <label class="form-check-label" for="tddStatusStandby">Standby</label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="tddStatusCancelled"
+                                            <input class="form-check-input" type="checkbox" id="tddStatusStoodDown"
                                                 data-bind="teamStatusFilterAndFetch: 'Stood down'">
-                                            <label class="form-check-label" for="tddStatusCancelled">Stood down</label>
+                                            <label class="form-check-label" for="tddStatusStoodDown">Stood down</label>
                                         </div>
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="tddStatusRest"
@@ -146,20 +137,61 @@
                                         </div>
                                     </div>
                                 </li>
-
                                 <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-
-                                <!-- Open full config modal -->
-                                <li>
-                                    <a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#configModal">
-                                        Page Config
-                                    </a>
+                                    <button class="dropdown-item d-flex justify-content-between align-items-center"
+                                        type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#teamTaskStatusFilterMenu" aria-expanded="false"
+                                        aria-controls="teamTaskStatusFilterMenu">
+                                        Team Task Status Filters
+                                        <span class="ms-2 fa fa-chevron-right small"></span>
+                                    </button>
+                                    <div class="collapse dropdown-collapse-body" id="teamTaskStatusFilterMenu">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamStatusUntasked"
+                                                data-bind="teamTaskStatusFilterAndFetch: 'Untasked'">
+                                            <label class="form-check-label" for="tddTeamStatusUntasked">Untasked</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamStatusTasked"
+                                                data-bind="teamTaskStatusFilterAndFetch: 'Tasked'">
+                                            <label class="form-check-label" for="tddTeamStatusTasked">Tasked</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamStatusOnsite"
+                                                data-bind="teamTaskStatusFilterAndFetch: 'Onsite'">
+                                            <label class="form-check-label" for="tddTeamStatusOnsite">Onsite</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamStatusOffsite"
+                                                data-bind="teamTaskStatusFilterAndFetch: 'Offsite'">
+                                            <label class="form-check-label" for="tddTeamStatusOffsite">Offsite</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamStatusEnroute"
+                                                data-bind="teamTaskStatusFilterAndFetch: 'Enroute'">
+                                            <label class="form-check-label" for="tddTeamStatusEnroute">Enroute</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamStatusComplete"
+                                                data-bind="teamTaskStatusFilterAndFetch: 'Complete'">
+                                            <label class="form-check-label" for="tddTeamStatusComplete">Complete</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamStatusCalledOff"
+                                                data-bind="teamTaskStatusFilterAndFetch: 'CalledOff'">
+                                            <label class="form-check-label"
+                                                for="tddTeamStatusCalledOff">CalledOff</label>
+                                        </div>
+                                    </div>
                                 </li>
                             </ul>
                         </div>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Teams" data-bind="click: fetchAllTeamData">
+                            <i class="fa fa-sync"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config" data-bs-toggle="modal" data-bs-target="#configModal">
+                            <i class="fa fa-cog"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -189,7 +221,7 @@
                                     data-bind="event: { click: setTeamSortFromElement }">
                                     HQ <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="sortable" data-sort-key="activeTaskingsCount" aria-sort="none"
+                                <th class="sortable" data-sort-key="taskedJobCount" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
                                     Task Count <i class="fa sort-icon fa-sort"></i>
                                 </th>
@@ -200,10 +232,10 @@
                         <tbody data-bind="foreach: { data: sortedTeams, as: 't' }">
                             <tr class="team-row" data-bind="css:{expanded: t.expanded()},
                    droppableRow: { team: t, onDrop: $root.showConfirmTaskingModal },
-                   attr:{'aria-expanded': t.expanded}">
+                   attr:{'aria-expanded': t.expanded}, attr: { 'data-team-id': t.id }">
                                 <td colspan="7">
                                     <div class="team-card"
-                                        data-bind="css:{'team-card--expanded': t.expanded()}, click: t.toggle, attr:{ 'aria-expanded': t.expanded }">
+                                        data-bind="css:{'team-card--expanded': t.expanded()}, click: t.toggleAndExpand, attr:{ 'aria-expanded': t.expanded }">
 
                                         <!-- SUMMARY BAR -->
                                         <div class="team-summary"
@@ -229,7 +261,7 @@
                                             <div class="team-cell" data-bind="text: t.assignedTo.code"></div>
 
                                             <!-- 5. Task Count -->
-                                            <div class="team-cell" data-bind="text: t.activeTaskingsCount"></div>
+                                            <div class="team-cell" data-bind="text: t.taskedJobCount"></div>
 
                                             <!-- 6. Team Leader -->
                                             <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader">
@@ -306,7 +338,12 @@
                                                         <div class="col-md-9 col-lg-9">
                                                             <div
                                                                 class="d-flex justify-content-between align-items-center mb-2">
+                                                                <!-- ko if: t.taskingLoading -->
+                                                                <h6 class="text-muted mb-0">Loading taskings...</h6>
+                                                                <!-- /ko -->
+                                                                <!-- ko ifnot: t.taskingLoading -->
                                                                 <h6 class="text-muted mb-0">Taskings</h6>
+                                                                <!-- /ko -->
                                                                 <div class="btn-group btn-group-sm" role="group"
                                                                     aria-label="Team actions">
                                                                     <button type="button"
@@ -318,16 +355,9 @@
                                                                 </div>
                                                             </div>
 
-                                                            <!-- loading indicator -->
-                                                            <div data-bind="visible: t.taskingLoading"
-                                                                class="text-center py-2">
-                                                                <div class="spinner-border spinner-border-sm"
-                                                                    role="status" aria-label="Loading"></div>
-                                                            </div>
 
                                                             <!-- taskings table -->
-                                                            <div class="table-responsive"
-                                                                data-bind="visible: !t.taskingLoading()">
+                                                            <div class="table-responsive">
                                                                 <table
                                                                     class="table table-sm table-striped table-bordered mb-0 align-middle">
                                                                     <thead class="table-light">
@@ -429,16 +459,6 @@
 
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jobMenu">
 
-                                <!-- Basic actions -->
-                                <li>
-                                    <a class="dropdown-item" href="#" data-bind="click: fetchAllJobsData">
-                                        Refresh Jobs
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
 
                                 <!-- INCIDENT STATUS FILTERS (collapsible section) -->
                                 <li>
@@ -492,11 +512,7 @@
                                     </div>
                                 </li>
 
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-
-                                <!-- JOB TYPE FILTERS (collapsible section) -->
+                                    <!-- JOB TYPE FILTERS (collapsible section) -->
                                 <li>
                                     <button class="dropdown-item d-flex justify-content-between align-items-center"
                                         type="button" data-bs-toggle="collapse" data-bs-target="#jobTypeFilterMenu"
@@ -617,20 +633,16 @@
                                     </div>
                                 </li>
 
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
+                     
 
-                                <!-- Open full config modal -->
-                                <li>
-                                    <a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#configModal">
-                                        Page Config
-                                    </a>
-                                </li>
                             </ul>
                         </div>
-
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Jobs" data-bind="click: fetchAllJobsData">
+                            <i class="fa fa-sync"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config" data-bs-toggle="modal" data-bs-target="#configModal">
+                            <i class="fa fa-cog"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -742,6 +754,7 @@
 
 
                                         <!-- DETAILS PANEL -->
+                                        <!-- DETAILS PANEL -->
                                         <div class="job-details" data-bind="slideVisible: j.expanded">
                                             <div class="card border-0 mb-0">
                                                 <div
@@ -751,22 +764,23 @@
                                                         <div>
                                                             <div class="job-tags-list"
                                                                 data-bind="foreach: j.sortedTags">
-                                                                <span class="badge bg-secondary"
-                                                                    data-bind="text: name"></span>
+                                                                <span data-bind="class: returnTagClass">
+                                                                    <i data-bind="class: returnTagIcon"></i> <span
+                                                                        data-bind="text: name"></span>
+                                                                </span>
                                                             </div>
                                                         </div>
-
                                                     </div>
                                                 </div>
 
                                                 <div class="card-body job-details-form">
                                                     <div class="row g-3">
 
-                                                        <!-- LEFT: Incident Details + Incident Location -->
-                                                        <div class="col-md-8">
+                                                        <!-- ROW 1: Incident Details + Actions -->
 
-                                                            <!-- Incident Details -->
-                                                            <fieldset class="mb-3">
+                                                        <!-- Incident Details -->
+                                                        <div class="col-md-8">
+                                                            <fieldset>
                                                                 <legend class="job-details-legend">Incident Details
                                                                 </legend>
 
@@ -818,55 +832,11 @@
                                                                 </div>
 
                                                             </fieldset>
+                                                        </div>
 
-                                                            <!-- Incident Location (like editRfa) -->
-                                                            <fieldset class="mb-3">
-                                                                <legend class="job-details-legend">Incident Location
-                                                                </legend>
-
-                                                                <!-- Address -->
-                                                                <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
-                                                                        Address
-                                                                    </label>
-                                                                    <div class="col-sm-8 col-lg-9">
-                                                                        <p class="form-control-plaintext job-details-value"
-                                                                            data-bind="text: j.address.prettyAddress()">
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <!-- LGA -->
-                                                                <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
-                                                                        LGA
-                                                                    </label>
-                                                                    <div class="col-sm-8 col-lg-9">
-                                                                        <p class="form-control-plaintext job-details-value"
-                                                                            data-bind="text: j.lga"></p>
-                                                                    </div>
-                                                                </div>
-
-                                                                <!-- Lat/Long -->
-                                                                <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
-                                                                        Lat/Long
-                                                                    </label>
-                                                                    <div class="col-sm-8 col-lg-9">
-                                                                        <p class="form-control-plaintext job-details-value"
-                                                                            data-bind="text: j.latLongDisplay()">
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                            </fieldset>
-
-                                                        </div><!-- /col-md-8 -->
-
-                                                        <!-- RIGHT: Caller details (only – no messages/notes/history) -->
+                                                        <!-- Actions -->
                                                         <div class="col-md-4">
-
-                                                            <!-- NEW: Job actions card -->
-                                                            <div class="card mb-3 job-actions-card">
+                                                            <div class="card job-actions-card">
                                                                 <div class="d-grid gap-2 job-actions-stack">
                                                                     <div class="btn-group btn-group-sm" role="group">
                                                                         <button class="btn btn-primary btn-sm w-50"
@@ -902,16 +872,63 @@
                                                                     </button>
                                                                 </div>
                                                             </div>
+                                                        </div>
 
-                                                            <fieldset class="mb-3">
-                                                                <legend class="job-details-legend">Caller Details
+                                                        <!-- ROW 2: Incident Location + Caller Details -->
+
+                                                        <!-- Incident Location -->
+                                                        <div class="col-md-8">
+                                                            <fieldset>
+                                                                <legend class="job-details-legend">Incident Location
+                                                                </legend>
+
+                                                                <!-- Address -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        Address
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.address.prettyAddress()">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- LGA -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        LGA
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.lga"></p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Lat/Long -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                        Lat/Long
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.latLongDisplay()"></p>
+                                                                    </div>
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+
+                                                        <!-- Caller Details -->
+                                                        <div class="col-md-4">
+                                                            <fieldset>
+                                                                <legend class="job-details-legend">Contact Details
                                                                 </legend>
 
                                                                 <div class="row align-items-start">
                                                                     <label class="col-4 text-sm-end">Number</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
-                                                                            data-bind="text: j.callerPhoneNumber">
+                                                                            data-bind="text: j.incidentContactNumber">
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -920,24 +937,23 @@
                                                                     <label class="col-4 text-sm-end">Name</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
-                                                                            data-bind="text: j.callerFirstName + ' ' + j.callerLastName">
+                                                                            data-bind="text: j.incidentContactName">
                                                                         </p>
                                                                     </div>
                                                                 </div>
-
-                                                                <div class="row align-items-start">
-                                                                    <label class="col-4 text-sm-end">Incident
-                                                                        Contact</label>
+                                                                <div class="row align-items-start"
+                                                                    data-bind="visible: !j.contactCalled">
+                                                                    <label class="col-4 text-sm-end">Called By</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
-                                                                            data-bind="text: j.contactCalling">
+                                                                            data-bind="text: j.callerFirstName + ' ' + j.callerLastName + ' - ' + j.callerPhoneNumber">
                                                                         </p>
                                                                     </div>
                                                                 </div>
                                                             </fieldset>
-                                                        </div><!-- /col-md-4 -->
+                                                        </div>
 
-                                                        <!-- FULL-WIDTH: Taskings (unchanged logic, just wrapped as a fieldset) -->
+                                                        <!-- FULL-WIDTH: Taskings -->
                                                         <div class="col-12"
                                                             data-bind="visible: j.sortedTaskings().length > 0">
                                                             <fieldset class="mb-0">
@@ -946,8 +962,7 @@
                                                                 <!-- ko if: j.taskingLoading -->
                                                                 <div class="small text-muted mb-2">
                                                                     <i class="fa fa-spinner fa-spin me-1"></i>
-                                                                    Loading
-                                                                    taskings…
+                                                                    Loading taskings…
                                                                 </div>
                                                                 <!-- /ko -->
 
@@ -966,11 +981,11 @@
                                                                             data-bind="foreach: { data: j.sortedTaskings, as: 'ts' }">
                                                                             <tr
                                                                                 data-bind="css: { 'job-popup__tasking-row--no-job': !ts.job }">
-
                                                                                 <td data-bind="text: ts.teamCallsign">
                                                                                 </td>
                                                                                 <td>
-                                                                                    <button class="team-status-button" data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus"></button>
+                                                                                    <button class="team-status-button"
+                                                                                        data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus"></button>
                                                                                 </td>
                                                                                 <td
                                                                                     data-bind="text: ts.statusTimeAgoLabel">
@@ -1015,9 +1030,9 @@
 
                                                     </div><!-- /row -->
                                                 </div><!-- /card-body -->
-
                                             </div><!-- /card -->
                                         </div><!-- /job-details -->
+
                                     </div><!-- /job-card -->
                                 </td>
                             </tr>
@@ -1206,12 +1221,9 @@
                                         data-bind="value: config.refreshInterval">
                                 </div>
                                 <div class="col-sm-6 col-md-3">
-                                    <label for="themeSelect" class="form-label">Theme</label>
-                                    <select id="themeSelect" class="form-select" data-bind="value: config.theme">
-                                        <option value="system">System</option>
-                                        <option value="light">Light</option>
-                                        <option value="dark">Dark</option>
-                                    </select>
+                                    <label for="fetchPeriod" class="form-label">Fetch period (days)</label>
+                                    <input id="fetchPeriod" type="number" min="0" step="1" class="form-control"
+                                        data-bind="value: config.fetchPeriod">
                                 </div>
                                 <div class="col-sm-6 col-md-3">
                                     <label class="form-label d-block">Options</label>
@@ -1309,6 +1321,54 @@
                                                     id="statusOnAlert" value="On Alert"
                                                     data-bind="teamStatusFilter: 'On Alert'">
                                                 <label class="form-check-label" for="statusOnAlert">On Alert</label>
+                                            </div>
+                                        </div>
+                                        <label class="form-label d-block mb-2">Show Teams Tasking With Status:</label>
+                                        <div class="border rounded p-2" id="teamStatusBox">
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="taskStatusUntasked" value="Untasked"
+                                                    data-bind="teamTaskStatusFilter: 'Untasked'">
+                                                <label class="form-check-label"
+                                                    for="taskStatusUntasked">Untasked</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="taskStatusTasked" value="Tasked"
+                                                    data-bind="teamTaskStatusFilter: 'Tasked'">
+                                                <label class="form-check-label" for="taskStatusTasked">Tasked</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="taskStatusOnsite" value="Onsite"
+                                                    data-bind="teamTaskStatusFilter: 'Onsite'">
+                                                <label class="form-check-label" for="taskStatusOnsite">Onsite</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="taskStatusOffsite" value="Offsite"
+                                                    data-bind="teamTaskStatusFilter: 'Offsite'">
+                                                <label class="form-check-label" for="taskStatusOffsite">Offsite</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="taskStatusEnroute" value="Enroute"
+                                                    data-bind="teamTaskStatusFilter: 'Enroute'">
+                                                <label class="form-check-label" for="taskStatusEnroute">Enroute</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="taskStatusComplete" value="Complete"
+                                                    data-bind="teamTaskStatusFilter: 'Complete'">
+                                                <label class="form-check-label"
+                                                    for="taskStatusComplete">Complete</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input team-status" type="checkbox"
+                                                    id="taskStatusCalledOff" value="CalledOff"
+                                                    data-bind="teamTaskStatusFilter: 'CalledOff'">
+                                                <label class="form-check-label"
+                                                    for="taskStatusCalledOff">CalledOff</label>
                                             </div>
                                         </div>
                                     </div>
@@ -1538,11 +1598,11 @@
 
                     </div>
                     <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
-                        data-bind="click: config.saveAndCloseAndLoad, disable: tokenLoading">
-                        <span data-bind="visible: !tokenLoading()">Save & Close</span>
+                        data-bind="click: config.saveAndCloseAndLoad, disable: pageIsLoading">
+                        <span data-bind="visible: !pageIsLoading">Save & Close</span>
                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
-                            data-bind="visible: tokenLoading"></span>
-                        <span data-bind="visible: tokenLoading">Loading...</span>
+                            data-bind="visible: pageIsLoading"></span>
+                        <span data-bind="visible: pageIsLoading">Loading...</span>
                     </button>
                 </div>
             </div>
@@ -1897,7 +1957,7 @@
                         <span class="tag-pill" data-bind="click: toggle,
                                         css: { 'tag-selected': selected }">
 
-                            <span data-bind="text: name"></span>
+                            <i data-bind="class: returnTagIcon"></i><span data-bind="text: name"></span>
 
                             <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>

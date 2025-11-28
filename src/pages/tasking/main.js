@@ -8,6 +8,8 @@ require('../lib/shared_chrome_code.js'); // side-effect
 
 import '../../../styles/pages/tasking.css';
 
+import { showAlert } from './components/windowAlert.js';
+
 import { ResizeDividers } from './resize.js';
 import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
@@ -18,7 +20,7 @@ import { JobTimeline } from "./viewmodels/JobTimeline.js";
 
 import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
-import { getAllStaticTags, Tag } from "./models/Tag.js";
+import { Tag } from "./models/Tag.js";
 import { UpdateTeamStatusDropdownVM } from './viewmodels/UpdateTeamStatusDropdownVM.js';
 
 import { installAlerts } from './components/alerts.js';
@@ -146,7 +148,7 @@ function VM() {
     registerTransportCamerasLayer(self, map, getToken, apiHost, params);
     registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
     registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
-    
+
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
@@ -203,7 +205,7 @@ function VM() {
                 localStorage.setItem("map.base", val);
             });
 
-                        // build overlays from MapVM (vehicles, jobs, online services, etc.)
+            // build overlays from MapVM (vehicles, jobs, online services, etc.)
             const overlaysEl = c.querySelector(".ld-overlays");
             const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
 
@@ -289,11 +291,14 @@ function VM() {
     layersDrawer.addTo(map);
 
 
-
-
     self.tokenLoading = ko.observable(true);
     self.teamsLoading = ko.observable(true);
     self.jobsLoading = ko.observable(true);
+    self.tagsLoading = ko.observable(true);
+
+    self.pageIsLoading = ko.pureComputed(() => {
+        return self.tokenLoading() || self.tagsLoading();
+    });
 
     // Registries
     self.teamsById = new Map();
@@ -306,9 +311,8 @@ function VM() {
     self.jobs = ko.observableArray();
     self.taskings = ko.observableArray();
     self.trackableAssets = ko.observableArray([]);
-    self.allTags = ko.observableArray(
-        getAllStaticTags().map(t => new Tag(t))
-    );
+
+    self.allTags = ko.observableArray([]);
 
     ///opslog short cuts
     self.opsLogModalVM = new OpsLogModalVM(self);
@@ -326,6 +330,7 @@ function VM() {
     self.teamSortAsc = ko.observable(true);
     self.jobSortKey = ko.observable('identifier');
     self.jobSortAsc = ko.observable(false);
+
 
     // --- sorted arrays ---
     self.sortedTeams = ko.pureComputed(function () {
@@ -413,7 +418,13 @@ function VM() {
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
         const incidentTypeAllowed = self.config.incidentTypeFilter();
 
+        var start = new Date();
+        var end = new Date();
+
+        start.setDate(end.getDate() - self.config.fetchPeriod());
+
         return ko.utils.arrayFilter(this.jobs(), jb => {
+
             const statusName = jb.statusName();
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
 
@@ -427,17 +438,25 @@ function VM() {
                 return false;
             }
 
+            //date matching
+            const jobDate = new Date(jb.jobReceived());
+
+            if (jobDate < start || jobDate > end) {
+                return false;
+            }
+
             //must match HQ filter
             if (!hqMatch) return false;
 
             // Apply text search
             return (!term ||
                 jb.identifier().toLowerCase().includes(term) ||
+                jb.id().toString().toLowerCase().includes(term) ||
                 jb.address.prettyAddress().toLowerCase().includes(term));
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
-
+    //ignores the word filering. Maybe dont need this anymore.
     self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
 
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
@@ -472,11 +491,11 @@ function VM() {
     self.teamSearch = ko.observable('');
 
     self.filteredTeams = ko.pureComputed(() => {
+
         const allowed = self.config.teamStatusFilter(); // allow-list
 
         return ko.utils.arrayFilter(self.teams(), tm => {
-
-            const status = tm.status()?.Name;
+            const status = tm.teamStatusType()?.Name;
             const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
             if (status == null) {
                 return false;
@@ -590,9 +609,17 @@ function VM() {
                 }
             },
 
+            fetchTeamById: (teamId) =>
+                new Promise((resolve, reject) => {
+                    self.fetchTeamById(teamId, resolve, reject); //can only resolve due to lazy code
+                }),
+
             openRadioLogModal: (team) => {
                 self.attachTeamRadioLogModal(team);
             },
+
+            teamTaskStatusFilter: () => self.config.teamTaskStatusFilter(),
+
         };
 
         let team = self.teamsById.get(teamJson.Id);
@@ -756,7 +783,6 @@ function VM() {
         const teamRef = teamContext || self.getOrCreateTeam(taskingJson.Team);
 
         let t = self.taskingsById.get(taskingJson.Id);
-
         if (t) {
             //console.log("Updating existing tasking:", t.id());
             t.updateFrom(taskingJson); //update the tasking inplace
@@ -771,6 +797,8 @@ function VM() {
         if (teamRef) t.team = teamRef; //bind the team to the tasking
         self._linkTaskingAndJob(t, jobRef);  //bind the tasking to the job
         teamRef.addTaskingIfNotExists(t);              //ensure the team has the tasking listed
+        if (teamRef) teamRef.lastTaskingDataUpdate = new Date();    //touch last tasking update timer
+        if (jobRef) jobRef.lastTaskingDataUpdate = new Date();      //touch last tasking update timer
         return t;
     };
 
@@ -861,6 +889,10 @@ function VM() {
                 ch.value.isFilteredIn(true);
                 ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
+                if (ch.value.expanded() || ch.value.popUpIsOpen()) {
+                    showAlert("The team you were viewing has been refreshed and filtered out based on the current filters", "warning", 4000);
+
+                }
                 ch.value.isFilteredIn(false);
             }
         });
@@ -868,13 +900,18 @@ function VM() {
 
 
     // automatically refresh markers when jobs change
-    self.filteredJobsIgnoreSearch.subscribe((changes) => {
+    self.filteredJobs.subscribe((changes) => {
         changes.forEach(ch => {
             if (ch.status === 'added') {
                 addOrUpdateJobMarker(ko, map, self, ch.value);
                 ch.value.isFilteredIn(true);
+                ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
+                if (ch.value.expanded() || ch.value.popUpIsOpen()) {
+                    showAlert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.", "warning", 4000);
+                }
                 removeJobMarker(self, ch.value);
+
                 ch.value.isFilteredIn(false);
             }
         });
@@ -1010,6 +1047,24 @@ function VM() {
         )
     }
 
+    self.fetchTeamById = async function (teamId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        console.log("Fetching team by ID:", teamId);
+        BeaconClient.team.get(teamId, 1, apiHost, params.userId, t,
+            function (res) {
+                if (res) {
+                    self.getOrCreateTeam(res);
+                    cb(true);
+                } else {
+                    cb(false);
+                }
+            },
+            function (_err) {
+                cb(false);
+            }
+        )
+    }
+
     self.fetchJobTasking = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.job.getTasking(jobId, apiHost, params.userId, t, (res) => {
@@ -1042,18 +1097,34 @@ function VM() {
     self.fetchAllJobsData = async function () {
         const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
 
-
         const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => Enum.JobStatusType[status]?.Id).filter(id => id !== undefined);
 
         const incidentTypeFilterToView = myViewModel.config.incidentTypeFilter().map(type => Enum.IncidentType[type]?.Id).filter(id => id !== undefined);
 
         var end = new Date();
         var start = new Date();
-        start.setDate(end.getDate() - 30); // last 30 days
+        start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
         myViewModel.jobsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.job.searchwithFilter(hqsFilter, apiHost, start, end, params.userId, t, function (allJobs) {
             console.log("Total jobs fetched:", allJobs.Results.length);
+
+            // Clean up jobs that no longer exist in the feed
+            const fetchedJobIds = new Set((allJobs.Results || []).map(j => j.Id));
+            const existingJobIds = new Set(self.jobs().map(j => j.id()));
+
+            const jobsToQuery = [...existingJobIds].filter(id => !fetchedJobIds.has(id));
+
+            jobsToQuery.forEach(id => {
+                const job = self.jobsById.get(id);
+                if (!job) return;
+                if (!job.isFilteredIn()) return;
+                console.log("Refreshing job no longer in feed:", id);
+                job.refreshDataAndTasking(); // ensure latest data
+
+            });
+
+
             myViewModel._markInitialFetchDone();
             myViewModel.jobsLoading(false);
         }, function (_val, _total) {
@@ -1062,7 +1133,7 @@ function VM() {
             1, //view model
             statusFilterToView, //status filter
             incidentTypeFilterToView, //incident type filter
-            function (jobs) {
+            function (jobs) { //call back as they come in per page
                 jobs.Results.forEach(function (t) {
                     myViewModel.getOrCreateJob(t);
                 })
@@ -1076,7 +1147,7 @@ function VM() {
         const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => Enum.TeamStatusType[status]?.Id).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
-        start.setDate(end.getDate() - 30); // last 30 days
+        start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
         myViewModel.teamsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, t, function (teams) {
@@ -1086,6 +1157,24 @@ function VM() {
             console.log("Total teams fetched:", teams.Results.length);
             myViewModel._markInitialFetchDone();
             myViewModel.teamsLoading(false);
+
+            // Loop over all the teams in the results and compare them to self.teams
+            const fetchedTeamIds = new Set(teams.Results.map(t => t.Id));
+            const existingTeamIds = new Set(self.teams().map(t => t.id()));
+
+            // Find teams that exist in self.teams but not in the fetched results
+            const teamsToQuery = [...existingTeamIds].filter(id => !fetchedTeamIds.has(id));
+
+            // Remove the unmatched teams
+            teamsToQuery.forEach(id => {
+                const team = self.teamsById.get(id);
+                if (!team) return;
+                if (!team.isFilteredIn()) return;
+                console.log("Refreshing team no longer in feed:", id, team.callsign());
+                team.refreshDataAndTasking(); // ensure latest data
+
+            });
+
 
         }, function () {
             //console.log("Progress: " + val + " / " + total)
@@ -1110,7 +1199,6 @@ function VM() {
         }, 30000);
     };
 
-    startAssetDataRefreshTimer()
 
     // ---------------- REFRESH TIMER FOR JOBS + TEAMS -----------------
 
@@ -1131,14 +1219,55 @@ function VM() {
         console.log("Jobs/Teams refresh timer started:", interval, "ms");
     }
 
-    // run once on startup
-    startJobsTeamsTimer();
+
 
     // re-arm timer when refreshInterval changes
     self.config.refreshInterval.subscribe(() => {
         console.log("refreshInterval changed → restarting timer");
         startJobsTeamsTimer();
     });
+
+
+
+    const tagFetchPromises = Object.keys(Enum.TagGroup).map((key) => {
+        const groupId = Enum.TagGroup[key]?.Id;
+        if (groupId) {
+            return getToken()
+                .then((t) => {
+                    return new Promise((resolve, reject) => {
+                        BeaconClient.tags.getGroup(groupId, apiHost, params.userId, t, (tags) => {
+                            tags = (tags || []).map(tagData => new Tag(tagData));
+                            self.allTags.push(...tags);
+                            resolve();
+                        }, (err) => {
+                            console.error(`Failed to fetch tags for group ${key}:`, err);
+                            reject(err);
+                        });
+                    });
+                })
+                .catch((err) => {
+                    console.error(`Error fetching token for group ${key}:`, err);
+                });
+        }
+        return Promise.resolve();
+    });
+
+    Promise.all(tagFetchPromises)
+        .finally(() => {
+            self.tagsLoading(false);
+        });
+
+
+    self.UserPressedSaveOnTheConfigModal = function () {
+        //re-fetch data based on new config
+        initialFetchesPending = 2; // teams, jobs
+        self.fetchAllJobsData();
+        self.fetchAllTeamData();
+        self.fetchAllTrackableAssets();
+
+        startJobsTeamsTimer();
+        startAssetDataRefreshTimer()
+    }
 
 
 }
@@ -1152,6 +1281,16 @@ window.addEventListener('resize', () => map.invalidateSize());
 
 
 document.addEventListener('DOMContentLoaded', function () {
+
+
+
+    $('.dropdown-menu').on('show.bs.dropdown', function () {
+        $('body').append($('.dropdown-menu').css({
+            position: 'absolute',
+            left: $('.dropdown-menu').offset().left,
+            top: $('.dropdown-menu').offset().top
+        }).detach());
+    });
 
 
     //get tokens

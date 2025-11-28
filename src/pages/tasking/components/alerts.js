@@ -77,7 +77,7 @@ export function registerAlertRule(fn) {
 
 
 function buildDefaultRules(vm) {
-  const jobs = vm.filteredJobsIgnoreSearch(); // already respects status/HQ filters
+  const jobs = vm.filteredJobs(); // already respects status/HQ filters
 
   const newJobs = jobs.filter(j => (j.statusName && j.statusName() === 'New'));
   const untasked = jobs.filter(j => (Array.isArray(j.taskings()) && j.taskings().length === 0) && j.statusName && j.statusName() == 'Active');

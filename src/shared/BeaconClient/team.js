@@ -18,7 +18,6 @@ export function getTasking(id, host, userId = 'notPassed', token, callback) {
       callback(obj);
     }
   );
-
 }
 
 //limited to single page result
@@ -39,6 +38,27 @@ export function getHistory(id, host, userId = 'notPassed', token, callback) {
   );
 
 }
+
+export function get(id, viewModelType = 1, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'GET',
+    url: host + "/Api/v1/Teams/" + id + "?LighthouseFunction=GetTeamfromBeacon&userId=" + userId + "&viewModelType=" + viewModelType,
+    beforeSend: function (n) {
+      n.setRequestHeader("Authorization", "Bearer " + token)
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        let results = response.responseJSON;
+        if (typeof callback === "function") {
+          callback(results);
+        }
+      }
+    }
+  })
+}
+
 
 //make the call to beacon
 export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = [], onPage) {

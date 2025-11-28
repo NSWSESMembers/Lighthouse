@@ -79,7 +79,6 @@ export class JobPopupViewModel {
     drawCrowsFliesToAssetPassedTeam = (team) => {
 
 
-        console.log(team)
         // clear any existing one first
         this.api.clearCrowFliesLine();
         if (!team) return;
@@ -109,6 +108,9 @@ export class JobPopupViewModel {
 
     drawCrowsFliesToAssetFromTasking = (tasking) => {
         if (tasking.job.isFilteredIn() === false) {
+            return;
+        }
+        if (tasking.team.isFilteredIn() === false) {
             return;
         }
         // clear any existing one first

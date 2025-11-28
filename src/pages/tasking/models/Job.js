@@ -34,12 +34,11 @@ export function Job(data = {}, deps = {}) {
 
     self.callerFirstName = ko.observable(data.CallerFirstName ?? "");
     self.callerLastName = ko.observable(data.CallerLastName ?? "");
-    self.callerPhoneNumber = ko.observable(data.CallerPhoneNumber ?? "");
+    self.callerPhoneNumber = ko.observable(data.CallerPhoneNumber ?? "-");
 
     self.contactFirstName = ko.observable(data.ContactFirstName ?? "");
     self.contactLastName = ko.observable(data.ContactLastName ?? "");
-    self.contactPhoneNumber = ko.observable(data.ContactPhoneNumber ?? "");
-
+    self.contactPhoneNumber = ko.observable(data.ContactPhoneNumber ?? "-");
 
     self.permissionToEnterPremises = ko.observable(!!data.PermissionToEnterPremises);
     self.howToEnterPremises = ko.observable(data.HowToEnterPremises ?? null);
@@ -65,7 +64,7 @@ export function Job(data = {}, deps = {}) {
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
     self.taskingLoading = ko.observable(false);
-    self.contactCalled = ko.observable((data.ContactCalled !== undefined) ? !!data.ContactCalled : false);
+    self.contactCalled = ko.observable((data.ContactCalled !== undefined) ? data.ContactCalled : false);
     self.opsLogEntriesLoading = ko.observable(false);
     self.opsLogEntries = ko.observableArray([]);
 
@@ -93,21 +92,39 @@ export function Job(data = {}, deps = {}) {
         }
         return lat + " / " + lng;
     });
+
+
     self.contactCalling = ko.pureComputed(() => {
         return self.contactCalled() ? "Yes" : "No";
     })
 
+    self.incidentContactName = ko.pureComputed(() => {
+        if (!self.contactCalled()) {
+            return self.contactFirstName() + " " + self.contactLastName();
+        } else {
+            return self.callerFirstName() + " " + self.callerLastName();
+        }
+    });
+
+    self.incidentContactNumber = ko.pureComputed(() => {
+        if (!self.contactCalled()) {
+            return self.contactPhoneNumber();
+        } else {
+            return self.callerPhoneNumber();
+        }
+    });
+
+    self.lastTaskingDataUpdate = new Date();
 
 
-    self.lastDataUpdate = new Date();
-
-    // ---- DATA REFRESH CHECK ----
+    // ---- Tasking REFRESH CHECK ----
+    // ---- Because the tasking doesnt come down in the job search ----
     const dataRefreshInterval = makeFilteredInterval(async () => {
         const now = Date.now();
-        const last = self.lastDataUpdate?.getTime?.() ?? 0;
+        const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
         // only refresh if we haven't had an update in > 2 minutes
         if (now - last > 120000) {
-            await self.refreshData();
+            self.fetchTasking();
         }
     }, 30000, { runImmediately: false });
 
@@ -178,8 +195,6 @@ export function Job(data = {}, deps = {}) {
         const fullType = self.type() || "";
         return fullType.replace(/Evacuation/i, 'Evac').trim();
     })
-
-
 
 
     self.attachAndFillOpsLogModal = function () {
@@ -325,7 +340,6 @@ export function Job(data = {}, deps = {}) {
 
     Job.prototype.updateFromJson = function (d = {}) {
 
-        this.lastDataUpdate = new Date();
         this.startDataRefreshCheck(); // restart timer
 
 
@@ -433,6 +447,7 @@ export function Job(data = {}, deps = {}) {
         console.log("Opening job in Beacon:", url);
         openURLInBeacon(url);
     }
+
     // ---- map focus (delegated) ----
     self.focusMap = function () {
         if (self.isFilteredIn() === false) return;
@@ -442,87 +457,61 @@ export function Job(data = {}, deps = {}) {
     self.toggleAndExpand = function () {
         console.log("Toggling and expanding job", self.id());
         self.toggleAndLoad();
-        if (!self.expanded()) {
-            self.fetchTasking();
-            self.refreshData();
-        }
-        requestAnimationFrame(() => {
-            // find the row for this job
-            const row = document.querySelector(`tr.job-row[data-job-id="${self.id()}"]`);
-            if (!row) return;
-
-            // find the scroll container (the table wrapper in the bottom pane)
-            const container = row.closest('.pane--bottom .table-responsive')
-                || row.closest('.table-responsive')
-                || row.parentElement?.parentElement; // fallback
-
-            if (!container) {
-                // fallback to normal scrollIntoView if we can't find a container
-                row.scrollIntoView({ behavior: "smooth", block: "start" });
-                return;
-            }
-
-            // sticky header height
-            const table = row.closest('table');
-            const thead = table ? table.querySelector('thead') : null;
-            const headerHeight = thead ? thead.getBoundingClientRect().height : 0;
-
-            // compute how far we need to move the container's scrollTop
-            const containerRect = container.getBoundingClientRect();
-            const rowRect = row.getBoundingClientRect();
-
-            // desired: row just under header, with a tiny padding
-            const padding = 2;
-            const delta = (rowRect.top - containerRect.top) - headerHeight - padding;
-
-            container.scrollTo({
-                top: container.scrollTop + delta,
-                behavior: "smooth"
-            });
-        });
+        scrollToThisInTable();
     }
 
     self.focusAndExpandInList = function () {
         // expand the job row
         self.expand();
 
-        requestAnimationFrame(() => {
-            // find the row for this job
-            const row = document.querySelector(`tr.job-row[data-job-id="${self.id()}"]`);
+        scrollToThisInTable();
+    };
+
+
+    function scrollToThisInTable() {
+        setTimeout(() => {
+            const row = document.querySelector(
+                `tr.job-row[data-job-id="${self.id()}"]`
+            );
             if (!row) return;
 
-            // find the scroll container (the table wrapper in the bottom pane)
-            const container = row.closest('.pane--bottom .table-responsive')
-                || row.closest('.table-responsive')
-                || row.parentElement?.parentElement; // fallback
-
+            // Scroll container is the top pane
+            const container = document.querySelector('#paneBottom .table-responsive');
             if (!container) {
-                // fallback to normal scrollIntoView if we can't find a container
                 row.scrollIntoView({ behavior: "smooth", block: "start" });
                 return;
             }
 
-            // sticky header height
-            const table = row.closest('table');
-            const thead = table ? table.querySelector('thead') : null;
-            const headerHeight = thead ? thead.getBoundingClientRect().height : 0;
+            // Sticky header height
+            const table = row.closest("table");
+            const thead = table ? table.querySelector("thead") : null;
+            const headerHeight = thead
+                ? thead.getBoundingClientRect().height
+                : 0;
 
-            // compute how far we need to move the container's scrollTop
             const containerRect = container.getBoundingClientRect();
             const rowRect = row.getBoundingClientRect();
-
-            // desired: row just under header, with a tiny padding
             const padding = 2;
-            const delta = (rowRect.top - containerRect.top) - headerHeight - padding;
+
+            // Where we *want* the row: just under the header
+            let target =
+                container.scrollTop +
+                (rowRect.top - containerRect.top) -
+                headerHeight -
+                padding;
+
+            // Only clamp to >= 0; don't clamp to maxScroll here
+            if (target < 0) target = 0;
 
             container.scrollTo({
-                top: container.scrollTop + delta,
-                behavior: "smooth"
+                top: target,
+                behavior: "smooth",
             });
-        });
-    };
+        }, 150);
+    }
 
     self.rowHasFocus = ko.observable(false);
+    self.popUpIsOpen = ko.observable(false);
 
     self.mouseEnterAddressButton = function () {
         self.rowHasFocus(true);
@@ -532,13 +521,15 @@ export function Job(data = {}, deps = {}) {
     }
 
     // ---- lifecycle hooks (delegated) ----
-    self.onPopupOpen = function () { 
+    self.onPopupOpen = function () {
+        self.popUpIsOpen(true);
         if (self.rowHasFocus()) return;
-        self.refreshDataAndTasking(); 
         self.focusAndExpandInList();
+        self.refreshDataAndTasking();
     };
 
     self.onPopupClose = function () {
+        self.popUpIsOpen(false);
         if (self.rowHasFocus()) return;
         self.collapse();
     };
@@ -557,9 +548,6 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.refreshData = async function () {
-
-
-
         self.taskingLoading(true);
         fetchJobById(self.id(), () => {
             self.taskingLoading(false);
@@ -594,4 +582,3 @@ export function Job(data = {}, deps = {}) {
     }
 
 }
-

@@ -40,7 +40,7 @@ export function fetchBeaconTokenAndKeepReturningValidTokens(apiHost, source, cb)
         if (periodicCheck == null) {
           periodicCheck = setInterval(function () {
             validateBeaconTokenKeepReturning(apiHost, source, cb)
-          }, 3e5);
+          }, 1 * 60 * 1000); // 1 minute
         }
 
         cb({

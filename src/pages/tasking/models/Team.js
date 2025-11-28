@@ -10,31 +10,172 @@ import { Enum } from '../utils/enum.js';
 export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
+    self.lastTaskingDataUpdate = new Date();
 
     const {
         upsertTasking,              // (taskingJson, {teamContext}) => Tasking
         getTeamTasking,            // (teamId) => Promise<{Results:[]}>
+        fetchTeamById,             // (teamId) => Promise<Team>
         makeTeamLink = (_id) => '#',
         flyToAsset = () => {
-            // No operation (noop) function.
-        }
+            // No operation (noop) function.        
+        },
+        teamTaskStatusFilter = () => []  // () => Array of status names to ignore
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
-    self.lastDataUpdate = new Date();
-
 
     self.id = ko.observable(data.Id ?? null);
     self.callsign = ko.observable(data.Callsign ?? "");
-    self.assignedTo = ko.observable(new Entity(data.AssignedTo || data.CreatedAt));
-    self.status = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
+    self.assignedTo = ko.observable(new Entity(data.AssignedTo || data.CreatedAt)); //safety code for beacon bug
+    self.teamStatusType = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
     self.members = ko.observableArray(data.Members);
+    self.taskedJobCount = ko.observable(data.TaskedJobCount || 0);
     self.teamLeader = ko.computed(function () {
         const leader = ko.unwrap(self.members).find(m => m.TeamLeader === true);
         return leader ? `${leader.Person.FirstName} ${leader.Person.LastName}` : '-';
     });
 
+    self.popUpIsOpen = ko.observable(false);
+
+
     self.trackableAssets = ko.observableArray([]);
+
+
+    self.toggleAndExpand = function () {
+        const wasExpanded = self.expanded();
+        self.expanded(!wasExpanded);
+
+        // If we just collapsed, no scroll
+        if (wasExpanded) return;
+        self.refreshDataAndTasking();
+        scrollToThisInTable();
+
+    };
+
+
+
+    self.refreshData = async function () {
+        self.taskingLoading(true);
+        fetchTeamById(self.id(), () => {
+            self.taskingLoading(false);
+        });
+    };
+
+
+    self.refreshDataAndTasking = function () {
+        self.fetchTasking();
+        self.refreshData();
+    }
+
+    self.focusAndExpandInList = function () {
+        self.focusAndExpandInList();
+        self.expand();
+        scrollToThisInTable();
+    };
+
+
+    function scrollToThisInTable() {
+        setTimeout(() => {
+            const row = document.querySelector(
+                `tr.team-row[data-team-id="${self.id()}"]`
+            );
+            if (!row) return;
+
+            // Scroll container is the top pane
+            const container = document.querySelector('#paneTop .table-responsive');
+            if (!container) {
+                row.scrollIntoView({ behavior: "smooth", block: "start" });
+                return;
+            }
+
+            // Sticky header height
+            const table = row.closest("table");
+            const thead = table ? table.querySelector("thead") : null;
+            const headerHeight = thead
+                ? thead.getBoundingClientRect().height
+                : 0;
+
+            const containerRect = container.getBoundingClientRect();
+            const rowRect = row.getBoundingClientRect();
+            const padding = 2;
+
+            // Where we *want* the row: just under the header
+            let target =
+                container.scrollTop +
+                (rowRect.top - containerRect.top) -
+                headerHeight -
+                padding;
+
+            // Only clamp to >= 0; don't clamp to maxScroll here
+            if (target < 0) target = 0;
+
+
+            container.scrollTo({
+                top: target,
+                behavior: "smooth",
+            });
+        }, 150);
+    }
+
+
+    self.onPopupOpen = function () {
+        self.popUpIsOpen(true);
+        self.focusAndExpandInList();
+    };
+
+    self.onPopupClose = function () {
+        self.popUpIsOpen(false);
+        self.collapse();
+    };
+
+
+    // ---- Tasking REFRESH CHECK ----
+    // ---- Because the tasking doesnt come down in the team search ----
+    const dataRefreshInterval = makeFilteredInterval(async () => {
+        const now = Date.now();
+        const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
+        // only refresh if we haven't had an update in > 1 minute
+        if (now - last > 60000) {
+            self.fetchTasking();
+        }
+    }, 30000, { runImmediately: false });
+
+    self.startDataRefreshCheck = function () {
+        dataRefreshInterval.start();
+    };
+
+    self.stopDataRefreshCheck = function () {
+        dataRefreshInterval.stop();
+    };
+
+
+    // interval that only runs while team is filtered in
+    function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
+        let handle = null;
+
+        const tick = () => {
+            // global guard: only run if still filtered in
+            if (!self.isFilteredIn()) return;
+            fn();
+        };
+
+        const start = () => {
+            if (!self.isFilteredIn()) return; // don't start if already filtered out
+            if (handle) clearInterval(handle);
+            if (runImmediately) tick();
+            handle = setInterval(tick, intervalMs);
+        };
+
+        const stop = () => {
+            if (handle) {
+                clearInterval(handle);
+                handle = null;
+            }
+        };
+
+        return { start, stop };
+    }
 
     self.trackableAndIsFiltered = ko.pureComputed(() => {
         return self.isFilteredIn() && self.trackableAssets().length > 0;
@@ -51,12 +192,14 @@ export function Team(data = {}, deps = {}) {
     self.taskings = ko.observableArray([]);
 
     self.statusName = ko.pureComputed(() => {
-        return (self.status() && self.status().Name) || "Unknown";
+        return (self.teamStatusType() && self.teamStatusType().Name) || "Unknown";
     })
 
     self.activeTaskingsCount = ko.pureComputed(() => {
         return self.filteredTaskings() && self.filteredTaskings().length || 0;
     })
+
+
 
     self.currentTaskingSummary = ko.pureComputed(() => {
         const typeCounts = {};
@@ -89,21 +232,17 @@ export function Team(data = {}, deps = {}) {
     });
 
     self.filteredTaskings = ko.pureComputed(() => {
-        const ignoreList = [
-            "Complete",
-            "Untasked",
-            "CalledOff"
-        ];
+
         return ko.utils.arrayFilter(this.taskings(), ts => {
-            if (ignoreList.includes(ts.currentStatus())) {
-                return false;
+            if (teamTaskStatusFilter().includes(ts.currentStatus())) {
+                return true;
             }
-            return true;
+            return false;
         }).sort((a, b) => new Date(b.currentStatusTime()) - new Date(a.currentStatusTime()));
     });
 
     self.taskingRowColour = ko.pureComputed(() => {
-        if (self.activeTaskingsCount() === 0) {
+        if (self.taskedJobCount() === 0) {
             return '#d4edda'; // light green
         }
     })
@@ -123,7 +262,7 @@ export function Team(data = {}, deps = {}) {
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
     self.expanded.subscribe(function (isExpanded) {
-        if (isExpanded && self.taskingLoading()) {
+        if (isExpanded && !self.taskingLoading()) {
             self.fetchTasking();
         }
     });
@@ -131,7 +270,7 @@ export function Team(data = {}, deps = {}) {
     self.updateStatusById = function (statusId) {
         const status = Enum.TeamStatusType.some(s => s.Id === statusId);
         if (status) {
-            self.status(status);
+            self.teamStatusType(status);
         }
     }
 
@@ -172,22 +311,23 @@ export function Team(data = {}, deps = {}) {
 
     //only handle single asset for now
     self.markerFocus = function () {
+        if (self.isFilteredIn() === false) return;
         const a = self.trackableAssets()[0];
         if (!a) return;
         flyToAsset(a); // map logic stays out of the model
     };
 
-        self.openRadioLogModal = function () {
+    self.openRadioLogModal = function () {
         deps.openRadioLogModal(self);
     };
 
     Team.prototype.updateFromJson = function (d = {}) {
-
         if (d.Id !== undefined) this.id(d.Id);
+        if (d.TaskedJobCount !== undefined) this.taskedJobCount(d.TaskedJobCount);
         if (d.Callsign !== undefined) this.callsign(d.Callsign);
-        if (d.TeamStatusType !== undefined) this.status(d.TeamStatusType);
+        if (d.TeamStatusType !== undefined) this.teamStatusType(d.TeamStatusType);
         if (d.Members !== undefined) this.members(d.Members);
-        if (d.AssignedTo !== undefined) this.assignedTo(new Entity(d.AssignedTo));
+        if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) this.assignedTo(new Entity(d.AssignedTo || d.CreatedAt)); //safety for beacon bug
         if (d.statusId !== undefined) this.updateStatusById(d.statusId);
     }
 }
