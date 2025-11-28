@@ -511,6 +511,7 @@ export function Job(data = {}, deps = {}) {
     }
 
     self.rowHasFocus = ko.observable(false);
+    self.popUpIsOpen = ko.observable(false);
 
     self.mouseEnterAddressButton = function () {
         self.rowHasFocus(true);
@@ -521,12 +522,14 @@ export function Job(data = {}, deps = {}) {
 
     // ---- lifecycle hooks (delegated) ----
     self.onPopupOpen = function () {
+        self.popUpIsOpen(true);
         if (self.rowHasFocus()) return;
-        self.refreshDataAndTasking();
         self.focusAndExpandInList();
+        self.refreshDataAndTasking();
     };
 
     self.onPopupClose = function () {
+        self.popUpIsOpen(false);
         if (self.rowHasFocus()) return;
         self.collapse();
     };

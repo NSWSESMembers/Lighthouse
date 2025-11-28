@@ -156,19 +156,28 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   } else if (request.type === 'tasking-register-for-remote') {
     activeTabForTaskingRemote = sender.tab.id
     console.log("Registered tab for tasking remote:", activeTabForTaskingRemote)
-    console.log(sender.tab)
     return true;
   } else if (request.type === 'tasking-openURL') {
     console.log("Sending tasking remote command to tab:", activeTabForTaskingRemote)
-      chrome.tabs.update(activeTabForTaskingRemote, { url: request.url }, function () {
-        if (chrome.runtime.lastError) {
-          console.error("Error sending tasking remote command:", chrome.runtime.lastError);
-          sendResponse({ error: 'Failed to send tasking remote command', message: chrome.runtime.lastError.message });
-        } else {
-          console.log("Tasking remote command sent");
-          sendResponse({ success: true });
-        }
-      });
+    if (activeTabForTaskingRemote === sender.tab.id) {
+      console.log("Refusing to send tasking remote command to same tab that sent it")
+      sendResponse({ error: 'Cannot send tasking remote command to same tab that sent it' });
+      return true;
+    }
+    if (activeTabForTaskingRemote === null) {
+      console.log("Remote tab is null")
+      sendResponse({ error: 'No remote tab registered' });
+      return true;
+    }
+    chrome.tabs.update(activeTabForTaskingRemote, { url: request.url }, function () {
+      if (chrome.runtime.lastError) {
+        console.error("Error sending tasking remote command:", chrome.runtime.lastError);
+        sendResponse({ error: 'Failed to send tasking remote command', message: chrome.runtime.lastError.message });
+      } else {
+        console.log("Tasking remote command sent");
+        sendResponse({ success: true });
+      }
+    });
     return true;
   }
 });
