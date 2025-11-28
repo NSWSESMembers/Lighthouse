@@ -7,6 +7,8 @@
 </head>
 
 <body style="opacity:0; transition: opacity .25s ease;">
+    <div id="alerts-container" class="position-fixed top-0 start-50 translate-middle-x mt-3"
+        style="z-index:2000; width:600px; max-width:90%;"></div>
 
     <div class="app"><!-- make .app a flex row in tasking.css -->
         <!-- GLOBAL TEAM STATUS DROPDOWN POPUP -->
@@ -104,16 +106,7 @@
 
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="teamMenu">
 
-                                <!-- Basic actions -->
-                                <li>
-                                    <a class="dropdown-item" href="#" data-bind="click: fetchAllTeamData">
-                                        Refresh Teams
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
+                       
 
                                 <!-- TEAM STATUS FILTERS (collapsible section) -->
                                 <li>
@@ -198,19 +191,14 @@
                                         </div>
                                     </div>
                                 </li>
-
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <!-- Open full config modal -->
-                                <li>
-                                    <a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#configModal">
-                                        Page Config
-                                    </a>
-                                </li>
                             </ul>
                         </div>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Teams" data-bind="click: fetchAllTeamData">
+                            <i class="fa fa-sync"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config" data-bs-toggle="modal" data-bs-target="#configModal">
+                            <i class="fa fa-cog"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -478,16 +466,6 @@
 
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jobMenu">
 
-                                <!-- Basic actions -->
-                                <li>
-                                    <a class="dropdown-item" href="#" data-bind="click: fetchAllJobsData">
-                                        Refresh Jobs
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
 
                                 <!-- INCIDENT STATUS FILTERS (collapsible section) -->
                                 <li>
@@ -670,16 +648,14 @@
                                     <hr class="dropdown-divider">
                                 </li>
 
-                                <!-- Open full config modal -->
-                                <li>
-                                    <a class="dropdown-item" href="#" data-bs-toggle="modal"
-                                        data-bs-target="#configModal">
-                                        Page Config
-                                    </a>
-                                </li>
                             </ul>
                         </div>
-
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Jobs" data-bind="click: fetchAllJobsData">
+                            <i class="fa fa-sync"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config" data-bs-toggle="modal" data-bs-target="#configModal">
+                            <i class="fa fa-cog"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="table-responsive">
