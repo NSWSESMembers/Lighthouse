@@ -1413,3 +1413,13 @@ tr.job:hover {
     background-color: #ffffff;
     border-color: #6e663c
 }
+
+/* Ensure team/job dropdown menus appear above pane overflow */
+.sidebar .dropdown-menu,
+.pane .dropdown-menu,
+.table-responsive .dropdown-menu {
+    position: fixed !important;   /* escape overflow containers */
+    z-index: 3000 !important;     /* above map, table scroll, etc. */
+    transform: none !important;   /* disable BS placement transforms */
+    inset: auto !important;       /* let JS set the coords */
+}

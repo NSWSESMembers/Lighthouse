@@ -1280,6 +1280,16 @@ window.addEventListener('resize', () => map.invalidateSize());
 document.addEventListener('DOMContentLoaded', function () {
 
 
+
+    $('.dropdown-menu').on('show.bs.dropdown', function () {
+        $('body').append($('.dropdown-menu').css({
+            position: 'absolute',
+            left: $('.dropdown-menu').offset().left,
+            top: $('.dropdown-menu').offset().top
+        }).detach());
+    });
+
+
     //get tokens
     BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(
         apiHost,
