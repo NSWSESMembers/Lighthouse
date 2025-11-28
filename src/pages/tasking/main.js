@@ -8,6 +8,8 @@ require('../lib/shared_chrome_code.js'); // side-effect
 
 import '../../../styles/pages/tasking.css';
 
+import { showAlert } from './components/windowAlert.js';
+
 import { ResizeDividers } from './resize.js';
 import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
@@ -888,7 +890,8 @@ function VM() {
                 ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
                 if (ch.value.expanded() || ch.value.popUpIsOpen()) {
-                    alert("The team you were viewing has been refreshed and filtered out based on the current filters");
+                    showAlert("The team you were viewing has been refreshed and filtered out based on the current filters", "warning", 4000);
+
                 }
                 ch.value.isFilteredIn(false);
             }
@@ -905,7 +908,7 @@ function VM() {
                 ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
                 if (ch.value.expanded() || ch.value.popUpIsOpen()) {
-                    alert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.");
+                    showAlert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.", "warning", 4000);
                 }
                 removeJobMarker(self, ch.value);
 
