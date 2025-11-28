@@ -114,15 +114,17 @@ export function Job(data = {}, deps = {}) {
         }
     });
 
-    self.lastDataUpdate = new Date();
+    self.lastTaskingDataUpdate = new Date();
 
-    // ---- DATA REFRESH CHECK ----
+
+    // ---- Tasking REFRESH CHECK ----
+    // ---- Because the tasking doesnt come down in the job search ----
     const dataRefreshInterval = makeFilteredInterval(async () => {
         const now = Date.now();
-        const last = self.lastDataUpdate?.getTime?.() ?? 0;
+        const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
         // only refresh if we haven't had an update in > 2 minutes
         if (now - last > 120000) {
-            await self.refreshData();
+            self.fetchTasking();
         }
     }, 30000, { runImmediately: false });
 
@@ -193,8 +195,6 @@ export function Job(data = {}, deps = {}) {
         const fullType = self.type() || "";
         return fullType.replace(/Evacuation/i, 'Evac').trim();
     })
-
-
 
 
     self.attachAndFillOpsLogModal = function () {
@@ -340,7 +340,6 @@ export function Job(data = {}, deps = {}) {
 
     Job.prototype.updateFromJson = function (d = {}) {
 
-        this.lastDataUpdate = new Date();
         this.startDataRefreshCheck(); // restart timer
 
 
@@ -448,6 +447,7 @@ export function Job(data = {}, deps = {}) {
         console.log("Opening job in Beacon:", url);
         openURLInBeacon(url);
     }
+
     // ---- map focus (delegated) ----
     self.focusMap = function () {
         if (self.isFilteredIn() === false) return;
@@ -457,10 +457,6 @@ export function Job(data = {}, deps = {}) {
     self.toggleAndExpand = function () {
         console.log("Toggling and expanding job", self.id());
         self.toggleAndLoad();
-        if (!self.expanded()) {
-            self.fetchTasking();
-            self.refreshData();
-        }
         scrollToThisInTable();
     }
 
@@ -549,9 +545,6 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.refreshData = async function () {
-
-
-
         self.taskingLoading(true);
         fetchJobById(self.id(), () => {
             self.taskingLoading(false);
@@ -586,4 +579,3 @@ export function Job(data = {}, deps = {}) {
     }
 
 }
-

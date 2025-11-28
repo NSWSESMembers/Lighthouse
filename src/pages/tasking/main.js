@@ -416,7 +416,13 @@ function VM() {
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
         const incidentTypeAllowed = self.config.incidentTypeFilter();
 
+        var start = new Date();
+        var end = new Date();
+
+        start.setDate(end.getDate() - self.config.fetchPeriod());
+
         return ko.utils.arrayFilter(this.jobs(), jb => {
+
             const statusName = jb.statusName();
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
 
@@ -427,6 +433,13 @@ function VM() {
 
             // If incident type filter non-empty, only show jobs whose type is in it
             if (incidentTypeAllowed.length > 0 && !incidentTypeAllowed.includes(jb.typeName())) {
+                return false;
+            }
+
+            //date matching
+            const jobDate = new Date(jb.jobReceived());
+            
+            if (jobDate < start || jobDate > end) {
                 return false;
             }
 
@@ -593,6 +606,11 @@ function VM() {
                     asset.marker?.openPopup?.();
                 }
             },
+
+            fetchTeamById: (teamId) =>
+                new Promise((resolve, reject) => {
+                    BeaconClient.team.get(teamId, 1, apiHost, params.userId, token, resolve, reject);
+                }),
 
             openRadioLogModal: (team) => {
                 self.attachTeamRadioLogModal(team);
@@ -763,7 +781,6 @@ function VM() {
         const teamRef = teamContext || self.getOrCreateTeam(taskingJson.Team);
 
         let t = self.taskingsById.get(taskingJson.Id);
-
         if (t) {
             //console.log("Updating existing tasking:", t.id());
             t.updateFrom(taskingJson); //update the tasking inplace
@@ -778,6 +795,8 @@ function VM() {
         if (teamRef) t.team = teamRef; //bind the team to the tasking
         self._linkTaskingAndJob(t, jobRef);  //bind the tasking to the job
         teamRef.addTaskingIfNotExists(t);              //ensure the team has the tasking listed
+        if (teamRef) teamRef.lastTaskingDataUpdate = new Date();    //touch last tasking update timer
+        if (jobRef) jobRef.lastTaskingDataUpdate = new Date();      //touch last tasking update timer
         return t;
     };
 
@@ -880,6 +899,7 @@ function VM() {
             if (ch.status === 'added') {
                 addOrUpdateJobMarker(ko, map, self, ch.value);
                 ch.value.isFilteredIn(true);
+                ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
                 removeJobMarker(self, ch.value);
                 ch.value.isFilteredIn(false);
@@ -1014,6 +1034,24 @@ function VM() {
         )
     }
 
+    self.fetchTeamById = async function (teamId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        console.log("Fetching team by ID:", teamId);
+        BeaconClient.team.get(teamId, 1, apiHost, params.userId, t,
+            function (res) {
+                if (res) {
+                    self.getOrCreateTeam(res);
+                    cb(true);
+                } else {
+                    cb(false);
+                }
+            },
+            function (_err) {
+                cb(false);
+            }
+        )
+    }
+
     self.fetchJobTasking = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.job.getTasking(jobId, apiHost, params.userId, t, (res) => {
@@ -1052,7 +1090,7 @@ function VM() {
 
         var end = new Date();
         var start = new Date();
-        start.setDate(end.getDate() - 30); // last 30 days
+        start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
         myViewModel.jobsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.job.searchwithFilter(hqsFilter, apiHost, start, end, params.userId, t, function (allJobs) {
@@ -1062,35 +1100,15 @@ function VM() {
             const fetchedJobIds = new Set((allJobs.Results || []).map(j => j.Id));
             const existingJobIds = new Set(self.jobs().map(j => j.id()));
 
-            const jobsToRemove = [...existingJobIds].filter(id => !fetchedJobIds.has(id));
+            const jobsToQuery = [...existingJobIds].filter(id => !fetchedJobIds.has(id));
 
-            jobsToRemove.forEach(id => {
-                console.log("Removing job no longer in feed:", id);
+            jobsToQuery.forEach(id => {
                 const job = self.jobsById.get(id);
                 if (!job) return;
+                if (!job.isFilteredIn()) return;
+                console.log("Refreshing job no longer in feed:", id);
+                job.refreshDataAndTasking(); // ensure latest data
 
-                // --- detach and remove tasking refs belonging to this job ---
-                const jobTaskings = job.taskings && job.taskings();
-                if (Array.isArray(jobTaskings)) {
-                    // copy to avoid mutating while iterating
-                    jobTaskings.slice().forEach(tasking => {
-                        // clear the back-ref to this job (we'll also remove the job itself)
-                        tasking.job = null;
-                    });
-
-                    if (typeof job.taskings === "function") {
-                        job.taskings.removeAll();
-                    }
-                }
-
-                // --- clear selection if this job is currently selected ---
-                if (self.selectedJob && self.selectedJob() === job) {
-                    self.selectedJob(null);
-                }
-
-                // --- finally, remove job from registries ---
-                self.jobs.remove(job);
-                self.jobsById.delete(id);
             });
 
 
@@ -1116,7 +1134,7 @@ function VM() {
         const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => Enum.TeamStatusType[status]?.Id).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
-        start.setDate(end.getDate() - 30); // last 30 days
+        start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
         myViewModel.teamsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, t, function (teams) {
@@ -1132,45 +1150,16 @@ function VM() {
             const existingTeamIds = new Set(self.teams().map(t => t.id()));
 
             // Find teams that exist in self.teams but not in the fetched results
-            const teamsToRemove = [...existingTeamIds].filter(id => !fetchedTeamIds.has(id));
+            const teamsToQuery = [...existingTeamIds].filter(id => !fetchedTeamIds.has(id));
 
             // Remove the unmatched teams
-            teamsToRemove.forEach(id => {
-                console.log("Removing team no longer in feed:", id, self.teamsById.get(id)?.callsign());
+            teamsToQuery.forEach(id => {
                 const team = self.teamsById.get(id);
                 if (!team) return;
+                if (!team.isFilteredIn()) return;
+                console.log("Refreshing team no longer in feed:", id, team.callsign());
+                team.refreshDataAndTasking(); // ensure latest data
 
-                // Detach from assets
-                const assets = team.trackableAssets && team.trackableAssets();
-                if (Array.isArray(assets)) {
-                    assets.forEach(a => {
-                        // remove this team from each asset’s matchingTeams
-                        if (a && typeof a.matchingTeams === 'function') {
-                            a.matchingTeams.remove(team);
-                        }
-                    });
-                    team.trackableAssets.removeAll();
-                }
-
-                // Detach from taskings
-                const taskings = team.taskings && team.taskings();
-                if (Array.isArray(taskings)) {
-                    taskings.forEach(tsk => {
-                        if (tsk && tsk.team === team) {
-                            tsk.team = null;
-                        }
-                    });
-                    team.taskings.removeAll();
-                }
-
-                // Stop any team-level timers
-                if (typeof team.stopDataRefreshCheck === 'function') {
-                    team.stopDataRefreshCheck();
-                }
-
-                // Remove from registries
-                self.teams.remove(team);
-                self.teamsById.delete(id);
             });
 
 

@@ -1260,12 +1260,9 @@
                                         data-bind="value: config.refreshInterval">
                                 </div>
                                 <div class="col-sm-6 col-md-3">
-                                    <label for="themeSelect" class="form-label">Theme</label>
-                                    <select id="themeSelect" class="form-select" data-bind="value: config.theme">
-                                        <option value="system">System</option>
-                                        <option value="light">Light</option>
-                                        <option value="dark">Dark</option>
-                                    </select>
+                                    <label for="fetchPeriod" class="form-label">Fetch period (days)</label>
+                                    <input id="fetchPeriod" type="number" min="0" step="1" class="form-control"
+                                        data-bind="value: config.fetchPeriod">
                                 </div>
                                 <div class="col-sm-6 col-md-3">
                                     <label class="form-label d-block">Options</label>

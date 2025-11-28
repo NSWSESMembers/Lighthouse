@@ -34,7 +34,7 @@ export function ConfigVM(root, deps) {
 
     // Other settings
     self.refreshInterval = ko.observable(60);
-    self.theme = ko.observable('light');
+    self.fetchPeriod = ko.observable(7);
     self.showAdvanced = ko.observable(false);
 
     //blown away on load
@@ -107,7 +107,7 @@ export function ConfigVM(root, deps) {
     // Build the current config payload (used by save + share)
     const buildConfig = () => ({
         refreshInterval: Number(self.refreshInterval()),
-        theme: self.theme(),
+        fetchPeriod: Number(self.fetchPeriod()),
         showAdvanced: !!self.showAdvanced(),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
@@ -279,7 +279,7 @@ export function ConfigVM(root, deps) {
             cfg = {}
             console.log('Using defaults.');
             cfg.refreshInterval = self.refreshInterval();
-            cfg.theme = self.theme();
+            cfg.fetchPeriod = self.fetchPeriod();
             cfg.showAdvanced = self.showAdvanced();
             cfg.teamStatusFilter = self.teamStatusFilterDefaults;
             cfg.jobStatusFilter = self.jobStatusFilterDefaults;
@@ -292,8 +292,8 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.refreshInterval === 'number') {
             self.refreshInterval(cfg.refreshInterval);
         }
-        if (typeof cfg.theme === 'string') {
-            self.theme(cfg.theme);
+        if (typeof cfg.fetchPeriod === 'number') {
+            self.fetchPeriod(cfg.fetchPeriod);
         }
         if (typeof cfg.showAdvanced === 'boolean') {
             self.showAdvanced(cfg.showAdvanced);

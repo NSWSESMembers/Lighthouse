@@ -10,11 +10,12 @@ import { Enum } from '../utils/enum.js';
 export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
-    self.lastDataUpdate = new Date();
+    self.lastTaskingDataUpdate = new Date();
 
     const {
         upsertTasking,              // (taskingJson, {teamContext}) => Tasking
         getTeamTasking,            // (teamId) => Promise<{Results:[]}>
+        fetchTeamById,             // (teamId) => Promise<Team>
         makeTeamLink = (_id) => '#',
         flyToAsset = () => {
             // No operation (noop) function.        
@@ -44,21 +45,29 @@ export function Team(data = {}, deps = {}) {
 
         // If we just collapsed, no scroll
         if (wasExpanded) return;
-
+        self.refreshDataAndTasking();
         scrollToThisInTable();
 
     };
 
 
 
+    self.refreshData = async function () {
+        self.taskingLoading(true);
+        fetchTeamById(self.id(), () => {
+            self.taskingLoading(false);
+        });
+    };
 
 
-
+    self.refreshDataAndTasking = function () {
+        self.fetchTasking();
+        self.refreshData();
+    }
 
     self.focusAndExpandInList = function () {
+        self.focusAndExpandInList();
         self.expand();
-
-
         scrollToThisInTable();
     };
 
@@ -116,10 +125,11 @@ export function Team(data = {}, deps = {}) {
     };
 
 
-    // ---- DATA REFRESH CHECK ----
+    // ---- Tasking REFRESH CHECK ----
+    // ---- Because the tasking doesnt come down in the team search ----
     const dataRefreshInterval = makeFilteredInterval(async () => {
         const now = Date.now();
-        const last = self.lastDataUpdate?.getTime?.() ?? 0;
+        const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
         // only refresh if we haven't had an update in > 1 minute
         if (now - last > 60000) {
             self.fetchTasking();
@@ -307,7 +317,6 @@ export function Team(data = {}, deps = {}) {
     };
 
     Team.prototype.updateFromJson = function (d = {}) {
-        this.lastDataUpdate = new Date();
         if (d.Id !== undefined) this.id(d.Id);
         if (d.TaskedJobCount !== undefined) this.taskedJobCount(d.TaskedJobCount);
         if (d.Callsign !== undefined) this.callsign(d.Callsign);
