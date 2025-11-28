@@ -322,7 +322,6 @@ export function Team(data = {}, deps = {}) {
     };
 
     Team.prototype.updateFromJson = function (d = {}) {
-        console.log("Updating team from json:", d);
         if (d.Id !== undefined) this.id(d.Id);
         if (d.TaskedJobCount !== undefined) this.taskedJobCount(d.TaskedJobCount);
         if (d.Callsign !== undefined) this.callsign(d.Callsign);
