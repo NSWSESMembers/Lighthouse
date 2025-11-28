@@ -12,9 +12,37 @@ html {
 body {
   height: 100%;
   margin: 0;
-  font-family: 'HelveticaNeue-Light', 'Helvetica Neue Light', 'Helvetica Neue', Helvetica, Arial, 'Lucida Grande',
-    sans-serif;
-  font-size: 13px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 12px; 
+  line-height: 1.35;
+}
+
+/* Ensure key UI elements follow the smaller base size */
+button,
+input,
+select,
+textarea,
+.table,
+.dropdown-menu,
+.input-group-text,
+.badge,
+.nav-link,
+.modal,
+.form-control {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Optional: slightly tighter tables (teams + jobs) */
+.teams,
+.jobs {
+  font-size: 12px;         /* make tables a bit denser than rest */
+}
+
+/* Optional: make "small" really small for helper text */
+.small,
+.text-muted {
+  font-size: 11px;
 }
 
 td.chev[draggable="true"] {
