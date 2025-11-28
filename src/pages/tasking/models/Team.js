@@ -28,13 +28,16 @@ export function Team(data = {}, deps = {}) {
     self.id = ko.observable(data.Id ?? null);
     self.callsign = ko.observable(data.Callsign ?? "");
     self.assignedTo = ko.observable(new Entity(data.AssignedTo || data.CreatedAt)); //safety code for beacon bug
-    self.status = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
+    self.teamStatusType = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
     self.members = ko.observableArray(data.Members);
     self.taskedJobCount = ko.observable(data.TaskedJobCount || 0);
     self.teamLeader = ko.computed(function () {
         const leader = ko.unwrap(self.members).find(m => m.TeamLeader === true);
         return leader ? `${leader.Person.FirstName} ${leader.Person.LastName}` : '-';
     });
+
+    self.popUpIsOpen = ko.observable(false);
+
 
     self.trackableAssets = ko.observableArray([]);
 
@@ -117,10 +120,12 @@ export function Team(data = {}, deps = {}) {
 
 
     self.onPopupOpen = function () {
+        self.popUpIsOpen(true);
         self.focusAndExpandInList();
     };
 
     self.onPopupClose = function () {
+        self.popUpIsOpen(false);
         self.collapse();
     };
 
@@ -187,7 +192,7 @@ export function Team(data = {}, deps = {}) {
     self.taskings = ko.observableArray([]);
 
     self.statusName = ko.pureComputed(() => {
-        return (self.status() && self.status().Name) || "Unknown";
+        return (self.teamStatusType() && self.teamStatusType().Name) || "Unknown";
     })
 
     self.activeTaskingsCount = ko.pureComputed(() => {
@@ -265,7 +270,7 @@ export function Team(data = {}, deps = {}) {
     self.updateStatusById = function (statusId) {
         const status = Enum.TeamStatusType.some(s => s.Id === statusId);
         if (status) {
-            self.status(status);
+            self.teamStatusType(status);
         }
     }
 
@@ -317,10 +322,11 @@ export function Team(data = {}, deps = {}) {
     };
 
     Team.prototype.updateFromJson = function (d = {}) {
+        console.log("Updating team from json:", d);
         if (d.Id !== undefined) this.id(d.Id);
         if (d.TaskedJobCount !== undefined) this.taskedJobCount(d.TaskedJobCount);
         if (d.Callsign !== undefined) this.callsign(d.Callsign);
-        if (d.TeamStatusType !== undefined) this.status(d.TeamStatusType);
+        if (d.TeamStatusType !== undefined) this.teamStatusType(d.TeamStatusType);
         if (d.Members !== undefined) this.members(d.Members);
         if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) this.assignedTo(new Entity(d.AssignedTo || d.CreatedAt)); //safety for beacon bug
         if (d.statusId !== undefined) this.updateStatusById(d.statusId);

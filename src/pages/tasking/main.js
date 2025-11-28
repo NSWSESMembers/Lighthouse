@@ -493,7 +493,7 @@ function VM() {
         const allowed = self.config.teamStatusFilter(); // allow-list
 
         return ko.utils.arrayFilter(self.teams(), tm => {
-            const status = tm.status()?.Name;
+            const status = tm.teamStatusType()?.Name;
             const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
             if (status == null) {
                 return false;
@@ -609,7 +609,7 @@ function VM() {
 
             fetchTeamById: (teamId) =>
                 new Promise((resolve, reject) => {
-                    BeaconClient.team.get(teamId, 1, apiHost, params.userId, token, resolve, reject);
+                    self.fetchTeamById(teamId, resolve, reject); //can only resolve due to lazy code
                 }),
 
             openRadioLogModal: (team) => {
@@ -887,6 +887,9 @@ function VM() {
                 ch.value.isFilteredIn(true);
                 ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
+                if (ch.value.expanded() || ch.value.popUpIsOpen()) {
+                    alert("The team you were viewing has been refreshed and filtered out based on the current filters");
+                }
                 ch.value.isFilteredIn(false);
             }
         });
