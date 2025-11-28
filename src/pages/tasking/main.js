@@ -416,7 +416,13 @@ function VM() {
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
         const incidentTypeAllowed = self.config.incidentTypeFilter();
 
+        var start = new Date();
+        var end = new Date();
+
+        start.setDate(end.getDate() - self.config.fetchPeriod());
+
         return ko.utils.arrayFilter(this.jobs(), jb => {
+
             const statusName = jb.statusName();
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
 
@@ -430,17 +436,25 @@ function VM() {
                 return false;
             }
 
+            //date matching
+            const jobDate = new Date(jb.jobReceived());
+            
+            if (jobDate < start || jobDate > end) {
+                return false;
+            }
+
             //must match HQ filter
             if (!hqMatch) return false;
 
             // Apply text search
             return (!term ||
                 jb.identifier().toLowerCase().includes(term) ||
+                jb.id().toString().toLowerCase().includes(term) ||
                 jb.address.prettyAddress().toLowerCase().includes(term));
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
-
+    //ignores the word filering. Maybe dont need this anymore.
     self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
 
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
@@ -593,10 +607,15 @@ function VM() {
                 }
             },
 
+            fetchTeamById: (teamId) =>
+                new Promise((resolve, reject) => {
+                    BeaconClient.team.get(teamId, 1, apiHost, params.userId, token, resolve, reject);
+                }),
+
             openRadioLogModal: (team) => {
                 self.attachTeamRadioLogModal(team);
             },
-            
+
             teamTaskStatusFilter: () => self.config.teamTaskStatusFilter(),
 
         };
@@ -762,7 +781,6 @@ function VM() {
         const teamRef = teamContext || self.getOrCreateTeam(taskingJson.Team);
 
         let t = self.taskingsById.get(taskingJson.Id);
-
         if (t) {
             //console.log("Updating existing tasking:", t.id());
             t.updateFrom(taskingJson); //update the tasking inplace
@@ -777,6 +795,8 @@ function VM() {
         if (teamRef) t.team = teamRef; //bind the team to the tasking
         self._linkTaskingAndJob(t, jobRef);  //bind the tasking to the job
         teamRef.addTaskingIfNotExists(t);              //ensure the team has the tasking listed
+        if (teamRef) teamRef.lastTaskingDataUpdate = new Date();    //touch last tasking update timer
+        if (jobRef) jobRef.lastTaskingDataUpdate = new Date();      //touch last tasking update timer
         return t;
     };
 
@@ -874,11 +894,12 @@ function VM() {
 
 
     // automatically refresh markers when jobs change
-    self.filteredJobsIgnoreSearch.subscribe((changes) => {
+    self.filteredJobs.subscribe((changes) => {
         changes.forEach(ch => {
             if (ch.status === 'added') {
                 addOrUpdateJobMarker(ko, map, self, ch.value);
                 ch.value.isFilteredIn(true);
+                ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
                 removeJobMarker(self, ch.value);
                 ch.value.isFilteredIn(false);
@@ -1013,6 +1034,24 @@ function VM() {
         )
     }
 
+    self.fetchTeamById = async function (teamId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        console.log("Fetching team by ID:", teamId);
+        BeaconClient.team.get(teamId, 1, apiHost, params.userId, t,
+            function (res) {
+                if (res) {
+                    self.getOrCreateTeam(res);
+                    cb(true);
+                } else {
+                    cb(false);
+                }
+            },
+            function (_err) {
+                cb(false);
+            }
+        )
+    }
+
     self.fetchJobTasking = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.job.getTasking(jobId, apiHost, params.userId, t, (res) => {
@@ -1051,11 +1090,28 @@ function VM() {
 
         var end = new Date();
         var start = new Date();
-        start.setDate(end.getDate() - 30); // last 30 days
+        start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
         myViewModel.jobsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.job.searchwithFilter(hqsFilter, apiHost, start, end, params.userId, t, function (allJobs) {
             console.log("Total jobs fetched:", allJobs.Results.length);
+
+            // Clean up jobs that no longer exist in the feed
+            const fetchedJobIds = new Set((allJobs.Results || []).map(j => j.Id));
+            const existingJobIds = new Set(self.jobs().map(j => j.id()));
+
+            const jobsToQuery = [...existingJobIds].filter(id => !fetchedJobIds.has(id));
+
+            jobsToQuery.forEach(id => {
+                const job = self.jobsById.get(id);
+                if (!job) return;
+                if (!job.isFilteredIn()) return;
+                console.log("Refreshing job no longer in feed:", id);
+                job.refreshDataAndTasking(); // ensure latest data
+
+            });
+
+
             myViewModel._markInitialFetchDone();
             myViewModel.jobsLoading(false);
         }, function (_val, _total) {
@@ -1064,7 +1120,7 @@ function VM() {
             1, //view model
             statusFilterToView, //status filter
             incidentTypeFilterToView, //incident type filter
-            function (jobs) {
+            function (jobs) { //call back as they come in per page
                 jobs.Results.forEach(function (t) {
                     myViewModel.getOrCreateJob(t);
                 })
@@ -1078,7 +1134,7 @@ function VM() {
         const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => Enum.TeamStatusType[status]?.Id).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
-        start.setDate(end.getDate() - 30); // last 30 days
+        start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
         myViewModel.teamsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, t, function (teams) {
@@ -1088,6 +1144,24 @@ function VM() {
             console.log("Total teams fetched:", teams.Results.length);
             myViewModel._markInitialFetchDone();
             myViewModel.teamsLoading(false);
+
+            // Loop over all the teams in the results and compare them to self.teams
+            const fetchedTeamIds = new Set(teams.Results.map(t => t.Id));
+            const existingTeamIds = new Set(self.teams().map(t => t.id()));
+
+            // Find teams that exist in self.teams but not in the fetched results
+            const teamsToQuery = [...existingTeamIds].filter(id => !fetchedTeamIds.has(id));
+
+            // Remove the unmatched teams
+            teamsToQuery.forEach(id => {
+                const team = self.teamsById.get(id);
+                if (!team) return;
+                if (!team.isFilteredIn()) return;
+                console.log("Refreshing team no longer in feed:", id, team.callsign());
+                team.refreshDataAndTasking(); // ensure latest data
+
+            });
+
 
         }, function () {
             //console.log("Progress: " + val + " / " + total)
@@ -1178,7 +1252,7 @@ function VM() {
         self.fetchAllTeamData();
         self.fetchAllTrackableAssets();
 
-        
+
         startJobsTeamsTimer();
         startAssetDataRefreshTimer()
 
