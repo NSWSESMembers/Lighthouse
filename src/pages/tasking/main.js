@@ -438,7 +438,7 @@ function VM() {
 
             //date matching
             const jobDate = new Date(jb.jobReceived());
-            
+
             if (jobDate < start || jobDate > end) {
                 return false;
             }
@@ -901,7 +901,11 @@ function VM() {
                 ch.value.isFilteredIn(true);
                 ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
+                if (ch.value.expanded() || ch.value.popUpIsOpen()) {
+                    alert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.");
+                }
                 removeJobMarker(self, ch.value);
+
                 ch.value.isFilteredIn(false);
             }
         });
@@ -1252,11 +1256,10 @@ function VM() {
         self.fetchAllTeamData();
         self.fetchAllTrackableAssets();
 
-
         startJobsTeamsTimer();
         startAssetDataRefreshTimer()
-
     }
+
 
 }
 
