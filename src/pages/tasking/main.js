@@ -526,7 +526,7 @@ function VM() {
         if (!self.trackableAssets) return [];
 
         return ko.utils.arrayFilter(self.trackableAssets() || [], a => {
-            const teams = ko.unwrap(a.matchingTeams);
+            const teams = a.matchingTeams();
             if (!Array.isArray(teams) || teams.length === 0) return false;
             const allowed = self.config.teamStatusFilter(); // allow-list
 
@@ -726,7 +726,7 @@ function VM() {
 
     self._assetMatchesTeam = function (asset, team) {
         if (!asset || !team) return false;
-        const cs = canon(ko.unwrap(team.callsign));
+        const cs = canon(team.callsign());
         if (!cs) return false;     // prefer explicit name fields; fall back defensively
         const nameCanon = canon(asset.name());
         if (!nameCanon) return false;
