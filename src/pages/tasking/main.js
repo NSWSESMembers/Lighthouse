@@ -522,31 +522,11 @@ function VM() {
 
     self.filteredTrackableAssets = ko.pureComputed(() => {
 
-        // No teams? Return nothing
+        // No assets? Return nothing
         if (!self.trackableAssets) return [];
+        // for each filtered team, get their trackable assets and flatten to single array
+        return self.filteredTeams().flatMap(t => t.trackableAssets() || []);
 
-        return ko.utils.arrayFilter(self.trackableAssets() || [], a => {
-            const teams = a.matchingTeams();
-            if (!Array.isArray(teams) || teams.length === 0) return false;
-            const allowed = self.config.teamStatusFilter(); // allow-list
-
-            // Return true if at least one team's status() is not in ignoreList
-            return teams.some(t => {
-                const status = t.teamStatusType()?.Name;
-                const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == t.assignedTo().id());
-                // If allow-list non-empty, only show teams whose status is in it
-                if (allowed.length > 0 && !allowed.includes(status)) {
-                    return false;
-                }
-                //must match HQ filter
-                if (!hqMatch) {
-                    return false;
-                }
-                if (t.isFilteredIn == null) return false;
-
-                return true;
-            });
-        });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
     function makeJobDeps() {

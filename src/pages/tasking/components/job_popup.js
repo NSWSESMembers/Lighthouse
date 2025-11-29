@@ -84,7 +84,11 @@ export function buildJobPopupKO() {
       <div class="text-center no-drag" data-bind="visible: !situationOnScene()"><i>No situation on scene available.</i></div>
 
       <!-- Tags -->
-      <div id="JobTags" class="text-center pt-2" data-bind="text: tagsCsv()"></div>
+      <div id="JobTags" class="text-center d-flex flex-wrap mt-1" data-bind="foreach: tags">
+        <span data-bind="class: returnTagClass" style="cursor: default;">
+          <i data-bind="class: returnTagIcon"></i> <span data-bind="text: name"></span>
+        </span>
+      </div>
 
       <!-- Taskings: loading / table / empty -->
       <div class="table-responsive job-popup_taskings">
