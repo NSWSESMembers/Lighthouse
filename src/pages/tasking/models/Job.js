@@ -18,7 +18,6 @@ export function Job(data = {}, deps = {}) {
         fetchJobTasking = (_jobId, cb) => cb(null),
         fetchJobById = (_jobId, cb) => cb(null),
         flyToJob = (_job) => {/* noop */ },
-        attachAndFillOpsLogModal = (_jobId) => ([]),
         attachAndFillTimelineModal = (_job) => { /* noop */ },
         fetchUnacknowledgedJobNotifications = async (_job) => ([]),
         drawJobTargetRing = (_job) => { /* noop */ },
@@ -195,12 +194,6 @@ export function Job(data = {}, deps = {}) {
         const fullType = self.type() || "";
         return fullType.replace(/Evacuation/i, 'Evac').trim();
     })
-
-
-    self.attachAndFillOpsLogModal = function () {
-        console.log("Fetching ops log entries for job", self.id());
-        attachAndFillOpsLogModal(self)
-    }
 
     self.attachAndFillTimelineModal = function () {
         console.log("Fetching timeline entries for job", self.id());

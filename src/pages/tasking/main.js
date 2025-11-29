@@ -14,7 +14,6 @@ import { ResizeDividers } from './resize.js';
 import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { MapVM } from './viewmodels/Map.js';
-import { OpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 
 import { JobTimeline } from "./viewmodels/JobTimeline.js";
 
@@ -315,7 +314,6 @@ function VM() {
     self.allTags = ko.observableArray([]);
 
     ///opslog short cuts
-    self.opsLogModalVM = new OpsLogModalVM(self);
     self.CreateOpsLogModalVM = new CreateOpsLogModalVM(self);
     self.CreateRadioLogModalVM = new CreateRadioLogModalVM(self);
     self.selectedJob = ko.observable(null);
@@ -527,16 +525,26 @@ function VM() {
         // No teams? Return nothing
         if (!self.trackableAssets) return [];
 
-
-
         return ko.utils.arrayFilter(self.trackableAssets() || [], a => {
             const teams = ko.unwrap(a.matchingTeams);
             if (!Array.isArray(teams) || teams.length === 0) return false;
+            const allowed = self.config.teamStatusFilter(); // allow-list
 
             // Return true if at least one team's status() is not in ignoreList
             return teams.some(t => {
-                const status = ko.unwrap(t.status);
-                return status && !self.config.teamStatusFilter().includes(status) && t.isFilteredIn();
+                const status = t.teamStatusType()?.Name;
+                const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == t.assignedTo().id());
+                // If allow-list non-empty, only show teams whose status is in it
+                if (allowed.length > 0 && !allowed.includes(status)) {
+                    return false;
+                }
+                //must match HQ filter
+                if (!hqMatch) {
+                    return false;
+                }
+                if (t.isFilteredIn == null) return false;
+
+                return true;
             });
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
@@ -560,10 +568,6 @@ function VM() {
                     map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
                     job.marker?.openPopup?.();
                 }
-            },
-
-            attachAndFillOpsLogModal: (job) => {
-                self.attachOpsLogModal(job);
             },
 
             openRadioLogModal: (tasking) => {
@@ -634,15 +638,6 @@ function VM() {
         self.teamsById.set(team.id(), team);
         self._refreshTeamTrackableAssets(team);
         return team;
-    };
-
-    self.attachOpsLogModal = function (job) {
-        const modalEl = document.getElementById('opsLogModal');
-        const modal = new bootstrap.Modal(modalEl);
-
-        self.selectedJob(job);
-        self.opsLogModalVM.openForJob(job);
-        modal.show();
     };
 
     self.attachJobTimelineModal = function (job) {
@@ -742,7 +737,6 @@ function VM() {
     self._refreshTeamTrackableAssets = function (team) {
         if (!team || typeof team.trackableAssets !== 'function') return;
         const list = team.trackableAssets();
-
         (self.trackableAssets() || []).forEach(a => {
             const has = list.find(x => x.id() === a.id())
             const match = self._assetMatchesTeam(a, team);
@@ -891,7 +885,6 @@ function VM() {
             } else if (ch.status === 'deleted') {
                 if (ch.value.expanded() || ch.value.popUpIsOpen()) {
                     showAlert("The team you were viewing has been refreshed and filtered out based on the current filters", "warning", 4000);
-
                 }
                 ch.value.isFilteredIn(false);
             }
@@ -958,16 +951,6 @@ function VM() {
         });
     };
 
-    self.attachAndFillOpsLogModal = async function (jobId, cb) {
-        const t = await getToken();   // blocks here until token is ready
-        BeaconClient.operationslog.search(jobId, apiHost, params.userId, t, function (data) {
-            cb(data?.Results || []);
-        }, function (err) {
-            console.error("Failed to fetch ops log for job:", err);
-            cb([]);
-        });
-    }
-
     self.fetchOpsLogForJob = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.operationslog.search(jobId, apiHost, params.userId, t, function (data) {
@@ -999,8 +982,9 @@ function VM() {
         });
     }
 
-    self.updateTeamStatus = function (taskingId, status, payload, cb) {
-        BeaconClient.tasking.updateTeamStatus(apiHost, taskingId, status, payload, token, function (data) {
+    self.updateTeamStatus = function (tasking, status, payload, cb) {
+        BeaconClient.tasking.updateTeamStatus(apiHost, tasking.id(), status, payload, token, function (data) {
+            tasking.job.fetchTasking();
             cb(data || []);
         }, function (err) {
             console.error("Failed to update team status:", err);
@@ -1008,8 +992,9 @@ function VM() {
         });
     }
 
-    self.callOffTeam = function (taskingId, payload, cb) {
-        BeaconClient.tasking.callOffTeam(apiHost, taskingId, payload, token, function (data) {
+    self.callOffTeam = function (tasking, payload, cb) {
+        BeaconClient.tasking.callOffTeam(apiHost, tasking.id(), payload, token, function (data) {
+            tasking.job.fetchTasking();
             cb(data || []);
         }, function (err) {
             console.error("Failed to call off team:", err);
@@ -1017,9 +1002,10 @@ function VM() {
         });
     }
 
-    self.untaskTeam = function (taskingId, payload, cb) {
+    self.untaskTeam = function (tasking, payload, cb) {
         const form = BeaconClient.toFormUrlEncoded(payload);
-        BeaconClient.tasking.untaskTeam(apiHost, taskingId, form, token, function (data) {
+        BeaconClient.tasking.untaskTeam(apiHost, tasking.id(), form, token, function (data) {
+            tasking.job.fetchTasking();
             cb(data);
         }, function (err) {
             console.error("Failed to create ops log entry:", err);
@@ -1278,6 +1264,16 @@ window.addEventListener('resize', () => map.invalidateSize());
 
 
 document.addEventListener('DOMContentLoaded', function () {
+
+
+
+    $('.dropdown-menu').on('show.bs.dropdown', function () {
+        $('body').append($('.dropdown-menu').css({
+            position: 'absolute',
+            left: $('.dropdown-menu').offset().left,
+            top: $('.dropdown-menu').offset().top
+        }).detach());
+    });
 
 
     //get tokens

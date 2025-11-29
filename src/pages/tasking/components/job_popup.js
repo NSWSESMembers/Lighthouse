@@ -29,11 +29,6 @@ export function buildJobPopupKO() {
                                 <i class="fa fa-solid fa-user-plus"></i>
 
         </button>
-      <button type="button" class="btn btn-small btn-outline-secondary"
-                      title="Ops Log"
-                      data-bind="click: $root.displayOpsLogsForJob, clickBubble: false">
-                      <i class="fas fa-list"></i>
-        </button>
         <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Job Timeline"
                       data-bind="click: $root.displayTimelineForJob, clickBubble: false">

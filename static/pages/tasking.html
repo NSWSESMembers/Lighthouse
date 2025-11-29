@@ -16,20 +16,13 @@
 
             <!-- PAGE 1 -->
             <div class="dropdown-list" data-bind="visible: currentPage() === 'selectStatus'">
-                <!-- ko if: canUntask -->
-                <div class="dropdown-item" data-bind="click: selectUntask">Untask</div><!-- /ko -->
-                <!-- ko if: canEnroute -->
-                <div class="dropdown-item" data-bind="click: selectEnRoute">En-Route</div><!-- /ko -->
-                <!-- ko if: canCalloff -->
-                <div class="dropdown-item" data-bind="click: selectCallOff">Call Off</div><!-- /ko -->
-                <!-- ko if: canOnsite -->
-                <div class="dropdown-item" data-bind="click: selectOnSite">On-Site</div><!-- /ko -->
-                <!-- ko if: canOffsite -->
-                <div class="dropdown-item" data-bind="click: selectOffSite">Off-Site</div><!-- /ko -->
-                <!-- ko if: canComplete -->
-                <div class="dropdown-item" data-bind="click: selectComplete">Complete</div><!-- /ko -->
-                <!-- ko if: cannotUpdateStatus -->
-                <div class="dropdown-item">You cannot change this team's status.</div><!-- /ko -->
+                <!-- ko if: canUntask --><div class="dropdown-item" data-bind="click: selectUntask">Remove Tasking</div><!-- /ko -->
+                <!-- ko if: canEnroute --><div class="dropdown-item" data-bind="click: selectEnRoute">En-Route</div><!-- /ko -->
+                <!-- ko if: canCalloff --><div class="dropdown-item" data-bind="click: selectCallOff">Call Off</div><!-- /ko -->
+                <!-- ko if: canOnsite --><div class="dropdown-item" data-bind="click: selectOnSite">On-Site</div><!-- /ko -->
+                <!-- ko if: canOffsite --><div class="dropdown-item" data-bind="click: selectOffSite">Off-Site</div><!-- /ko -->
+                <!-- ko if: canComplete --><div class="dropdown-item" data-bind="click: selectComplete">Complete</div><!-- /ko -->
+                <!-- ko if: cannotUpdateStatus --><div class="dropdown-item">You cannot change this team's status.</div><!-- /ko -->
             </div>
             <!-- PAGE 2: DETAILS -->
             <div data-bind="visible: currentPage() === 'details'" class="page-two">
@@ -384,8 +377,8 @@
                                                                             <td data-bind="text: ts.jobTypeName"></td>
                                                                             <td data-bind="text: ts.prettyAddress"></td>
                                                                             <td>
-                                                                                <span class="badge"
-                                                                                    data-bind="class: ts.tagColorFromStatus(), text: ts.currentStatus"></span>
+                                                                                <button class="team-status-button" data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus, clickBubble: false
+                                                                                "></button>
                                                                             </td>
                                                                             <td>
                                                                                 <div class="btn-group btn-group-sm"
@@ -519,11 +512,7 @@
                                     </div>
                                 </li>
 
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-
-                                <!-- JOB TYPE FILTERS (collapsible section) -->
+                                    <!-- JOB TYPE FILTERS (collapsible section) -->
                                 <li>
                                     <button class="dropdown-item d-flex justify-content-between align-items-center"
                                         type="button" data-bs-toggle="collapse" data-bs-target="#jobTypeFilterMenu"
@@ -644,9 +633,7 @@
                                     </div>
                                 </li>
 
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
+                     
 
                             </ul>
                         </div>
@@ -979,7 +966,6 @@
                                                                 </div>
                                                                 <!-- /ko -->
 
-                                                                <!-- ko ifnot: j.taskingLoading -->
                                                                 <div class="table-responsive">
                                                                     <table
                                                                         class="table table-sm table-hover align-middle mb-0">
@@ -1029,7 +1015,7 @@
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Zoom to"
-                                                                                            data-bind="enable: ts.job, click: ts.job && ts.job.focusMap">
+                                                                                            data-bind="enable: ts.job, click: ts.team.markerFocus">
                                                                                             <i
                                                                                                 class="fa fa-crosshairs"></i>
                                                                                         </button>
@@ -1039,7 +1025,6 @@
                                                                         </tbody>
                                                                     </table>
                                                                 </div>
-                                                                <!-- /ko -->
                                                             </fieldset>
                                                         </div>
 
@@ -1890,7 +1875,35 @@
         </div>
     </div>
 
+    
+    <!-- SMS MODAL
+    <div class="modal fade" id="SendSMSModal" tabindex="-1" aria-labelledby="SendSMSModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" data-bind="with: SendSMSModalVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="SendSMSModalLabel">
+                        <span data-bind="text: headerLabel"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
+                        <span data-bind="text: errorMessage"></span>
+                    </div>
+                    <textarea class="modal-textarea-full" id="SMSMessageInput" rows="8" maxlength="4000"
+                        data-bind="value: text"></textarea>
+                </div>
 
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bind="click: submit">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    -->
+    
 
     <!-- RADIO LOG MODAL -->
     <div class="modal fade" id="RadioLogModal" tabindex="-1" aria-labelledby="RadioLogModalLabel" aria-hidden="true">

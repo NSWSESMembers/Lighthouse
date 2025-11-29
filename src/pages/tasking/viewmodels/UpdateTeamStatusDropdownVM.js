@@ -5,11 +5,12 @@ import moment from "moment";
 export function UpdateTeamStatusDropdownVM(parentVM) {
     const self = this;
 
+    self.openForTaskingId = ko.observable(null);
     self.currentTasking = ko.observable(null);
     self.isVisible = ko.observable(false);
     self.top = ko.pureComputed(() => self.posY() + "px");
     self.left = ko.pureComputed(() => self.posX() + "px");
-    self.currentPage = ko.observable("selectStatus"); 
+    self.currentPage = ko.observable("closed"); 
     self.currentStatus = ko.observable(null);
     self.selectedStatus = ko.observable(null);
     let scrollHandler = null;
@@ -109,27 +110,54 @@ export function UpdateTeamStatusDropdownVM(parentVM) {
 
     // Open popup next to clicked button
     self.openTeamStatusDropdown = function (tasking, anchorE1) {
+
+        if (self.openForTaskingId() === tasking.id()) {
+            if(self.currentPage() === "selectStatus" || self.currentPage() === "details") {
+                self.close();
+                return;
+            }
+        }
+
         self.currentTasking(tasking);
+        self.openForTaskingId(tasking.id());
         self.currentStatus(self.currentTasking().currentStatus());
+        self.currentPage("selectStatus");
 
         const rect = anchorE1.getBoundingClientRect();
 
         // Yes, this is very hacky code - need to come back and fix this - TODO
-        const visibleCount =
-            (self.canUntask() ? 1 : 0) +
-            (self.canEnroute() ? 1 : 0) +
-            (self.canOnsite() ? 1 : 0) +
-            (self.canOffsite() ? 1 : 0) +
-            (self.canUntask() ? 1 : 0) +
-            (self.canCalloff() ? 1 : 0);
-        const popupHeight = visibleCount * 45;
+        let popupHeight;
         const spaceBelow = window.innerHeight - rect.bottom;
+
+        switch (self.currentStatus()) {
+            case "Tasked":
+                popupHeight = 228; //done
+                break;
+            case "Enroute":
+                popupHeight = 190; //done
+                break;
+            case "Onsite":
+                popupHeight = 155; //done
+                break;
+            case "Offsite":
+                popupHeight = 155; //done
+                break;
+            case "Untasked":
+                popupHeight = 45;
+                break;
+            case "Complete":
+                popupHeight = 45;
+                break;
+            case "CalledOff":
+                popupHeight = 45;
+                break;
+        }
 
         let top;
         if (spaceBelow >= popupHeight) {
             top = rect.bottom;            // Popup below the button - this is the preference if there is space to do it.
         } else {
-            top = rect.top - popupHeight - rect.height; // Popup above the button
+            top = rect.top - popupHeight; // Popup above the button
         }
 
         self.posX(rect.left);
@@ -210,13 +238,21 @@ export function UpdateTeamStatusDropdownVM(parentVM) {
         // Construct Payload for En-Route
         if (self.selectedStatus() === "En-Route") {
             action = "Enroute";
-            payload.estimatedCompletion = moment(self.eta()).format("YYYY-MM-DDTHH:mm:ssZ");
+            if (self.eta() && moment(self.eta()).isValid()) {
+                payload.estimatedCompletion = moment(self.eta()).format("YYYY-MM-DDTHH:mm:ssZ");
+            } else {
+                payload.estimatedCompletion = null;
+            }
         }
 
         // Construct Payload for On-Site
         if (self.selectedStatus() === "On-Site") {
             action = "Onsite";
-            payload.estimatedCompletion = moment(self.etc()).format("YYYY-MM-DDTHH:mm:ssZ");
+            if (self.etc() && moment(self.etc()).isValid()) {
+                payload.estimatedCompletion = moment(self.etc()).format("YYYY-MM-DDTHH:mm:ssZ");
+            } else {
+                payload.estimatedCompletion = null;
+            }
         }
 
         // Construct Payload for Off-Site
@@ -267,10 +303,10 @@ export function UpdateTeamStatusDropdownVM(parentVM) {
         }
 
         // Send to ParentVM to make API Call
-        // If it's a POST Request send it to the UpdateTeamStatus API - sends TaskingID, Action (what status we are changing to), Payload and Callback.
+        // If it's a POST Request send it to the UpdateTeamStatus API - sends Tasking, Action (what status we are changing to), Payload and Callback.
         const UpdateTeamStatusAPI = ['Enroute','Onsite','Offsite']
         if (UpdateTeamStatusAPI.includes(action)) {
-            parentVM.updateTeamStatus(self.currentTasking().id(), action, payload, function (result) {
+            parentVM.updateTeamStatus(self.currentTasking(), action, payload, function (result) {
 
                 if (!result) {
                     console.error("Team Status Update failed");
@@ -279,9 +315,9 @@ export function UpdateTeamStatusDropdownVM(parentVM) {
             });
         }
 
-        // If it's a PUT request to Call off we need to send it to the callOffTeam API - Sends TaskingID, Payload and Callback.
+        // If it's a PUT request to Call off we need to send it to the callOffTeam API - Sends Tasking, Payload and Callback.
         if (action === "CallOff") {
-            parentVM.callOffTeam(self.currentTasking().id(), payload, function (result) {
+            parentVM.callOffTeam(self.currentTasking(), payload, function (result) {
 
                 if (!result) {
                     console.error("Failed to CallOff Team");
@@ -290,9 +326,9 @@ export function UpdateTeamStatusDropdownVM(parentVM) {
             });
         }
 
-        // If it's a DELETE request for Untask we need to send it to the untaskTeam API - sends TaskingID, Payload and Callback.
+        // If it's a DELETE request for Untask we need to send it to the untaskTeam API - sends Tasking, Payload and Callback.
         if (action === "Untask") {
-            parentVM.untaskTeam(self.currentTasking().id(), payload, function (result) {
+            parentVM.untaskTeam(self.currentTasking(), payload, function (result) {
 
                 if (!result) {
                     console.error("Failed to Untask Team");
@@ -315,10 +351,9 @@ export function UpdateTeamStatusDropdownVM(parentVM) {
 
     // Close
     self.close = function () {
-        // ⭐ REPLACE isVisible(false) WITH hide()
         self.hide();
         detachOutsideClick();
-        self.currentPage("selectStatus");
+        self.currentPage("closed");
         self.selectedStatus(null);
         self.time("");
         self.eta("");
@@ -334,16 +369,23 @@ export function UpdateTeamStatusDropdownVM(parentVM) {
     function attachOutsideClick() {
         outsideHandler = (evt) => {
             const dropdown = document.getElementById("TeamStatusDropdown");
-            if (!dropdown.contains(evt.target)) {
+
+            // NEW: detect ANY of your team-status buttons
+            const isToggle = evt.target.closest(".team-status-button");
+
+            // Close only if click is outside both the dropdown AND the toggle button
+            if (!dropdown.contains(evt.target) && !isToggle) {
                 self.close();
             }
         };
-        document.addEventListener("mousedown", outsideHandler);
+
+        // Use click, not mousedown
+        document.addEventListener("click", outsideHandler);
     }
 
     function detachOutsideClick() {
         if (outsideHandler) {
-            document.removeEventListener("mousedown", outsideHandler);
+            document.removeEventListener("click", outsideHandler);
             outsideHandler = null;
         }
     }
