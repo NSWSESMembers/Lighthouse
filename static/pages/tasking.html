@@ -776,7 +776,7 @@
                                                         <div>
                                                             <div class="job-tags-list"
                                                                 data-bind="foreach: j.sortedTags">
-                                                                <span data-bind="class: returnTagClass">
+                                                                <span data-bind="class: returnTagClass" style="cursor: default;">
                                                                     <i data-bind="class: returnTagIcon"></i> <span
                                                                         data-bind="text: name"></span>
                                                                 </span>
@@ -1778,17 +1778,16 @@
                                             <div class="mt-1 small">
                                                 <!-- tags -->
                                                 <!-- Render one pill per tag -->
-                                                <div data-bind="foreach: tags">
-                                                    <span class="badge rounded-pill bg-secondary me-1">
-                                                        <span data-bind="text: name"></span>
+                                                <div class="job-tags-list" data-bind="foreach: tags">
+                                                    <span data-bind="class: returnTagClass" style="cursor: default;">
+                                                        <i data-bind="class: returnTagIcon"></i> <span
+                                                            data-bind="text: name"></span>
                                                     </span>
                                                 </div>
                                                 <!-- flags; subtle, not layout-dominant -->
                                                 <span
                                                     class="badge rounded-pill bg-warning-subtle text-warning-emphasis me-1"
                                                     data-bind="visible: important">Important</span>
-                                                <span class="badge rounded-pill bg-info-subtle text-info-emphasis me-1"
-                                                    data-bind="visible: isIcemsEntry">ICEMS</span>
                                             </div>
                                         </div>
                                     </div>

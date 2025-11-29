@@ -19,8 +19,8 @@ export function Tag(data = {}) {
   });
 
   this.returnTagIcon = ko.pureComputed(() => {
-    return returnTagIcon(this.tagGroupId());
+    return returnTagIcon(this.tagGroupId(), this.id());
   });
+
+  
 }
-
-

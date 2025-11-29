@@ -1455,6 +1455,12 @@ tr.job:hover {
     border-color: #6e663c
 }
 
+.tag-further-action {
+    color: #fff;
+    background-color: #ee0039;
+    border-color: #ee0039
+}
+
 /* Ensure team/job dropdown menus appear above pane overflow */
 .sidebar .dropdown-menu,
 .pane .dropdown-menu,
