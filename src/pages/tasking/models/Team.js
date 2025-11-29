@@ -69,7 +69,6 @@ export function Team(data = {}, deps = {}) {
     }
 
     self.focusAndExpandInList = function () {
-        self.focusAndExpandInList();
         self.expand();
         scrollToThisInTable();
     };
