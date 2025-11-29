@@ -769,12 +769,13 @@
                                         <!-- DETAILS PANEL -->
                                         <div class="job-details" data-bind="slideVisible: j.expanded">
                                             <div class="card border-0 mb-0">
+                                            <!-- ko if: j.sortedTags().length -->
                                                 <div
                                                     class="card-header d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <!-- Tags -->
                                                         <div>
-                                                            <div class="job-tags-list"
+                                                            <div class="job-tags-list d-flex flex-wrap"
                                                                 data-bind="foreach: j.sortedTags">
                                                                 <span data-bind="class: returnTagClass" style="cursor: default;">
                                                                     <i data-bind="class: returnTagIcon"></i> <span
@@ -784,6 +785,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                            <!-- /ko -->
 
                                                 <div class="card-body job-details-form">
                                                     <div class="row g-3">
@@ -1021,13 +1023,12 @@
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Edit">
-                                                                                            <i
-                                                                                                class="fas fa-external-link-alt"></i>
+                                                                                            <i class="fas fa-external-link-alt"></i>
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Zoom to"
-                                                                                            data-bind="enable: ts.job, click: ts.team.markerFocus">
+                                                                                            data-bind="enable: ts.job, click: ts.team.markerFocus disable: !ts.team.trackableAndIsFiltered()">
                                                                                             <i
                                                                                                 class="fa fa-crosshairs"></i>
                                                                                         </button>
@@ -1778,7 +1779,7 @@
                                             <div class="mt-1 small">
                                                 <!-- tags -->
                                                 <!-- Render one pill per tag -->
-                                                <div class="job-tags-list" data-bind="foreach: tags">
+                                                <div class="job-tags-list d-flex flex-wrap mt-1" data-bind="foreach: tags">
                                                     <span data-bind="class: returnTagClass" style="cursor: default;">
                                                         <i data-bind="class: returnTagIcon"></i> <span
                                                             data-bind="text: name"></span>
