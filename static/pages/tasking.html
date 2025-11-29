@@ -16,13 +16,20 @@
 
             <!-- PAGE 1 -->
             <div class="dropdown-list" data-bind="visible: currentPage() === 'selectStatus'">
-                <!-- ko if: canUntask --><div class="dropdown-item" data-bind="click: selectUntask">Remove Tasking</div><!-- /ko -->
-                <!-- ko if: canEnroute --><div class="dropdown-item" data-bind="click: selectEnRoute">En-Route</div><!-- /ko -->
-                <!-- ko if: canCalloff --><div class="dropdown-item" data-bind="click: selectCallOff">Call Off</div><!-- /ko -->
-                <!-- ko if: canOnsite --><div class="dropdown-item" data-bind="click: selectOnSite">On-Site</div><!-- /ko -->
-                <!-- ko if: canOffsite --><div class="dropdown-item" data-bind="click: selectOffSite">Off-Site</div><!-- /ko -->
-                <!-- ko if: canComplete --><div class="dropdown-item" data-bind="click: selectComplete">Complete</div><!-- /ko -->
-                <!-- ko if: cannotUpdateStatus --><div class="dropdown-item">You cannot change this team's status.</div><!-- /ko -->
+                <!-- ko if: canUntask -->
+                <div class="dropdown-item" data-bind="click: selectUntask">Remove Tasking</div><!-- /ko -->
+                <!-- ko if: canEnroute -->
+                <div class="dropdown-item" data-bind="click: selectEnRoute">En-Route</div><!-- /ko -->
+                <!-- ko if: canCalloff -->
+                <div class="dropdown-item" data-bind="click: selectCallOff">Call Off</div><!-- /ko -->
+                <!-- ko if: canOnsite -->
+                <div class="dropdown-item" data-bind="click: selectOnSite">On-Site</div><!-- /ko -->
+                <!-- ko if: canOffsite -->
+                <div class="dropdown-item" data-bind="click: selectOffSite">Off-Site</div><!-- /ko -->
+                <!-- ko if: canComplete -->
+                <div class="dropdown-item" data-bind="click: selectComplete">Complete</div><!-- /ko -->
+                <!-- ko if: cannotUpdateStatus -->
+                <div class="dropdown-item">You cannot change this team's status.</div><!-- /ko -->
             </div>
             <!-- PAGE 2: DETAILS -->
             <div data-bind="visible: currentPage() === 'details'" class="page-two">
@@ -99,7 +106,7 @@
 
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="teamMenu">
 
-                       
+
 
                                 <!-- TEAM STATUS FILTERS (collapsible section) -->
                                 <li>
@@ -186,10 +193,12 @@
                                 </li>
                             </ul>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Teams" data-bind="click: fetchAllTeamData">
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Teams"
+                            data-bind="click: fetchAllTeamData">
                             <i class="fa fa-sync"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config" data-bs-toggle="modal" data-bs-target="#configModal">
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config"
+                            data-bs-toggle="modal" data-bs-target="#configModal">
                             <i class="fa fa-cog"></i>
                         </button>
                     </div>
@@ -377,7 +386,8 @@
                                                                             <td data-bind="text: ts.jobTypeName"></td>
                                                                             <td data-bind="text: ts.prettyAddress"></td>
                                                                             <td>
-                                                                                <button class="team-status-button" data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus, clickBubble: false
+                                                                                <button class="team-status-button"
+                                                                                    data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus, clickBubble: false
                                                                                 "></button>
                                                                             </td>
                                                                             <td>
@@ -480,6 +490,11 @@
                                             <label class="form-check-label" for="ddStatusActive">Active</label>
                                         </div>
                                         <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="ddStatusTasked"
+                                                data-bind="jobStatusFilterAndFetch: 'Tasked'">
+                                            <label class="form-check-label" for="ddStatusTasked">Tasked</label>
+                                        </div>
+                                        <div class="form-check">
                                             <input class="form-check-input" type="checkbox" id="ddStatusComplete"
                                                 data-bind="jobStatusFilterAndFetch: 'Complete'">
                                             <label class="form-check-label" for="ddStatusComplete">Complete</label>
@@ -504,15 +519,10 @@
                                                 data-bind="jobStatusFilterAndFetch: 'Rejected'">
                                             <label class="form-check-label" for="ddStatusRejected">Rejected</label>
                                         </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="ddStatusTasked"
-                                                data-bind="jobStatusFilterAndFetch: 'Tasked'">
-                                            <label class="form-check-label" for="ddStatusTasked">Tasked</label>
-                                        </div>
                                     </div>
                                 </li>
 
-                                    <!-- JOB TYPE FILTERS (collapsible section) -->
+                                <!-- JOB TYPE FILTERS (collapsible section) -->
                                 <li>
                                     <button class="dropdown-item d-flex justify-content-between align-items-center"
                                         type="button" data-bs-toggle="collapse" data-bs-target="#jobTypeFilterMenu"
@@ -633,14 +643,16 @@
                                     </div>
                                 </li>
 
-                     
+
 
                             </ul>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Jobs" data-bind="click: fetchAllJobsData">
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Jobs"
+                            data-bind="click: fetchAllJobsData">
                             <i class="fa fa-sync"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config" data-bs-toggle="modal" data-bs-target="#configModal">
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config"
+                            data-bs-toggle="modal" data-bs-target="#configModal">
                             <i class="fa fa-cog"></i>
                         </button>
                     </div>
@@ -1242,21 +1254,8 @@
                                         <div class="border rounded p-2" id="jobStatusBox">
                                             <div class="form-check">
                                                 <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusFinalised" value="Finalised"
-                                                    data-bind="jobStatusFilter: 'Finalised'">
-                                                <label class="form-check-label" for="statusFinalised">Finalised</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusCancelled" value="Cancelled"
-                                                    data-bind="jobStatusFilter: 'Cancelled'">
-                                                <label class="form-check-label" for="statusCancelled">Cancelled</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusComplete" value="Complete"
-                                                    data-bind="jobStatusFilter: 'Complete'">
-                                                <label class="form-check-label" for="statusComplete">Complete</label>
+                                                    id="statusPending" value="New" data-bind="jobStatusFilter: 'New'">
+                                                <label class="form-check-label" for="statusPending">New</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input job-status" type="checkbox"
@@ -1266,8 +1265,27 @@
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusPending" value="New" data-bind="jobStatusFilter: 'New'">
-                                                <label class="form-check-label" for="statusPending">New</label>
+                                                    id="statusTasked" value="Tasked"
+                                                    data-bind="jobStatusFilter: 'Tasked'">
+                                                <label class="form-check-label" for="statusTasked">Tasked</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusComplete" value="Complete"
+                                                    data-bind="jobStatusFilter: 'Complete'">
+                                                <label class="form-check-label" for="statusComplete">Complete</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusFinalised" value="Finalised"
+                                                    data-bind="jobStatusFilter: 'Finalised'">
+                                                <label class="form-check-label" for="statusFinalised">Finalised</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input job-status" type="checkbox"
+                                                    id="statusCancelled" value="Cancelled"
+                                                    data-bind="jobStatusFilter: 'Cancelled'">
+                                                <label class="form-check-label" for="statusCancelled">Cancelled</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input job-status" type="checkbox"
@@ -1281,12 +1299,7 @@
                                                     data-bind="jobStatusFilter: 'Rejected'">
                                                 <label class="form-check-label" for="statusRejected">Rejected</label>
                                             </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusTasked" value="Tasked"
-                                                    data-bind="jobStatusFilter: 'Tasked'">
-                                                <label class="form-check-label" for="statusTasked">Tasked</label>
-                                            </div>
+
                                         </div>
                                     </div>
                                     <div class="col-3">
@@ -1764,9 +1777,12 @@
 
                                             <div class="mt-1 small">
                                                 <!-- tags -->
-                                                <span class="badge rounded-pill bg-secondary me-1"
-                                                    data-bind="text: tagsCsv, visible: tagsCsv"></span>
-
+                                                <!-- Render one pill per tag -->
+                                                <div data-bind="foreach: tags">
+                                                    <span class="badge rounded-pill bg-secondary me-1">
+                                                        <span data-bind="text: name"></span>
+                                                    </span>
+                                                </div>
                                                 <!-- flags; subtle, not layout-dominant -->
                                                 <span
                                                     class="badge rounded-pill bg-warning-subtle text-warning-emphasis me-1"
@@ -1875,7 +1891,7 @@
         </div>
     </div>
 
-    
+
     <!-- SMS MODAL
     <div class="modal fade" id="SendSMSModal" tabindex="-1" aria-labelledby="SendSMSModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -1903,7 +1919,7 @@
         </div>
     </div>
     -->
-    
+
 
     <!-- RADIO LOG MODAL -->
     <div class="modal fade" id="RadioLogModal" tabindex="-1" aria-labelledby="RadioLogModalLabel" aria-hidden="true">
