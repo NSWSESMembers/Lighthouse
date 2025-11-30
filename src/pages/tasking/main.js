@@ -53,6 +53,8 @@ var esri = require('esri-leaflet');
 
 var MiniMap = require('leaflet-minimap');
 
+var esriVector = require('esri-leaflet-vector');
+
 
 let token = '';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -180,20 +182,33 @@ function VM() {
     `;
 
             // build basemap list
+            // NSW Spatial Services + ESRI basemaps
             const basemapNames = [
-                { name: "Esri Topographic", esri: "Topographic" }, { name: "Esri Streets", esri: "Streets" }, { name: "Esri Imagery", esri: "Imagery" }, { name: "Esri Dark", esri: "DarkGray" },
+                { name: "Esri Topographic", key: "Topographic" },
+                { name: "Esri Streets", key: "Streets" },
+                { name: "Esri Imagery", key: "Imagery" },
+                { name: "Esri Dark", key: "DarkGray" },
+                { name: "SIX Maps Topographic", key: "nsw-vector" },
+                { name: "SIX Maps Base Map", key: "nsw-base" },
+                { name: "SIX Maps Imagery", key: "nsw-imagery" },
             ];
+
             const basesEl = c.querySelector(".ld-bases");
-            basemapNames.forEach(({ name, esri }) => {
-                const id = `base-${esri}`;
+            basemapNames.forEach(({ name, key }) => {
+                const id = `base-${key}`;
                 const row = document.createElement("label");
                 row.className = "ld-row";
                 row.innerHTML = `
-        <input type="radio" name="esri-base" id="${id}" value="${esri}" ${esri === this._baseKey ? "checked" : ""}/>
+        <input type="radio"
+               name="basemap"
+               id="${id}"
+               value="${key}"
+               ${key === this._baseKey ? "checked" : ""}/>
         <span>${name}</span>
-      `;
+    `;
                 basesEl.appendChild(row);
             });
+
 
             // apply initial basemap
             this._setBasemap(this._baseKey, map);
@@ -279,11 +294,53 @@ function VM() {
 
         onRemove() { /* nothing to clean up */ },
 
-        _setBasemap(name, map) {
-            if (this._currentBase) map.removeLayer(this._currentBase);
-            this._currentBase = esri.basemapLayer(name, { ignoreDeprecationWarning: true });
-            this._currentBase.addTo(map);
+        _setBasemap(key, map) {
+            if (this._currentBase) {
+                map.removeLayer(this._currentBase);
+                this._currentBase = null;
+            }
+
+            // --- NSW VECTOR BASEMAP (Topographic style) ---
+            if (key === "nsw-vector") {
+                // Uses the NSW_BaseMap_VectorTile VectorTileServer
+                this._currentBase = esriVector.vectorTileLayer(
+                    "https://portal.spatial.nsw.gov.au/vectortileservices/rest/services/Hosted/NSW_BaseMap_VectorTile/VectorTileServer",
+                    {
+                        attribution: "© NSW Spatial Services"
+                    }
+                );
+            }
+
+            // --- NSW RASTER BASEMAPS (tile MapServer) ---
+            else if (key === "nsw-base") {
+                this._currentBase = L.tileLayer(
+                    "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
+                    {
+                        maxZoom: 20,
+                        attribution: "© NSW Spatial Services"
+                    }
+                );
+            } else if (key === "nsw-imagery") {
+                this._currentBase = L.tileLayer(
+                    "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
+                    {
+                        maxZoom: 20,
+                        attribution: "© NSW Spatial Services"
+                    }
+                );
+            }
+
+            // --- EXISTING ESRI BASEMAPS ---
+            else {
+                this._currentBase = esri.basemapLayer(key, { ignoreDeprecationWarning: true });
+            }
+
+            if (this._currentBase) {
+                this._currentBase.addTo(map);
+            }
         }
+
+
     });
 
     // create & add (after VM so we can pass it in)
