@@ -114,14 +114,6 @@ export function buildAssetPopupKO() {
                        clickBubble:false">
       <i class="fa fa-external-link-alt"></i>
     </button>
-
-    <button class="btn btn-outline-secondary"
-            title="Refresh"
-            data-bind="click: $root.safeJobRefresh,
-                       disable: !hasJob(),
-                       clickBubble:false">
-      <i class="fa fa-sync"></i>
-    </button>
   </div>
 </div>
                 </li>

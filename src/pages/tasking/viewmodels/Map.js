@@ -184,9 +184,7 @@ export function MapVM(Lmap, root) {
     if (!vm) {
       vm = new JobPopupViewModel({
         job,
-        map: self.map,
         api: PopupStuff,
-        filteredTeams: root.filteredTeams,
       });
       self.jobPopups.set(job.id(), vm);
     }
@@ -213,12 +211,77 @@ export function MapVM(Lmap, root) {
     }
   };
 
-  self.clearCrowFliesLine = () => {
-    if (self.crowFliesLine) {
-      self.map.removeLayer(self.crowFliesLine);
-      self.crowFliesLine = null;
-    }
+    self.clearCrowFliesLine = () => {
+      if (self.crowFliesLine) {
+        self.map.removeLayer(self.crowFliesLine);
+        self.crowFliesLine = null;
+      }
+    };
+
+  self.registerCrowFliesLine = (line) => {
+    self.crowFliesLine = line;
+    self.crowFliesLine.addTo(self.map);
   };
+
+  self.drawCrowsFliesToAssetPassedTeam = (team, job) => {
+    self.clearCrowFliesLine();
+    if (!team || !job) return;
+    // pick the team’s first asset coordinates
+    let fromLat = null, fromLng = null;
+    if (team.trackableAssets && team.trackableAssets().length > 0) {
+      const a = team.trackableAssets()[0];
+      fromLat = +ko.unwrap(a.latitude);
+      fromLng = +ko.unwrap(a.longitude);
+    }
+    const toLat = +ko.unwrap(job.address.latitude);
+    const toLng = +ko.unwrap(job.address.longitude);
+
+    if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
+      Number.isFinite(toLat) && Number.isFinite(toLng))) return;
+
+    this._polyline = L.polyline(
+      [
+        [fromLat, fromLng],
+        [toLat, toLng],
+      ],
+      { weight: 4, color: 'green', dashArray: '6' }
+    )
+    self.registerCrowFliesLine(this._polyline);
+  }
+
+  self.drawCrowsFliesToAssetFromTasking = (tasking) => {
+    if (tasking.job.isFilteredIn() === false) {
+      return;
+    }
+    if (tasking.team.isFilteredIn() === false) {
+      return;
+    }
+    // clear any existing one first
+    self.clearCrowFliesLine();
+    if (!tasking) return;
+
+    // pick the team’s first asset coordinates
+    let fromLat = null, fromLng = null;
+    if (tasking.team.trackableAssets && tasking.team.trackableAssets().length > 0) {
+      const a = tasking.team.trackableAssets()[0];
+      fromLat = +ko.unwrap(a.latitude);
+      fromLng = +ko.unwrap(a.longitude);
+    }
+    const toLat = +ko.unwrap(tasking.job.address.latitude);
+    const toLng = +ko.unwrap(tasking.job.address.longitude);
+
+    if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
+      Number.isFinite(toLat) && Number.isFinite(toLng))) return;
+
+    this._polyline = L.polyline(
+      [
+        [fromLat, fromLng],
+        [toLat, toLng],
+      ],
+      { weight: 4, color: 'green', dashArray: '6' }
+    )
+    self.registerCrowFliesLine(this._polyline);
+  }
 
   // --- distance rings state ---
   self.jobAssetRings = [];
@@ -380,21 +443,20 @@ export function MapVM(Lmap, root) {
       self.distanceMarker.addTo(self.map);
     },
 
-    registerCrowFliesLine: (line) => {
-      self.crowFliesLine = line;
-      self.crowFliesLine.addTo(self.map);
-    },
-
-    clearCrowFliesLine: self.clearCrowFliesLine,
-
     // expose rings via popup API so Job/Asset popups can trigger them
     drawJobAssetDistanceRings: (job) => self.drawJobAssetDistanceRings(job),
+
     clearJobAssetRings: () => self.clearJobAssetRings(),
 
-    taskTeamToJobWithConfirm: (job, team) => {
-      root.showConfirmTaskingModal(job, team);
-    },
+    drawCrowsFliesToAssetFromTasking: (tasking) => {
+      self.drawCrowsFliesToAssetFromTasking(tasking);
+    }
   };
+
+
+  self.taskTeamToJobWithConfirm = (job, team) => {
+    root.showConfirmTaskingModal(job, team);
+  }
 
   self.closeAllPopups = () => {
     self.map.closePopup();

@@ -23,6 +23,8 @@ export function Team(data = {}, deps = {}) {
         teamTaskStatusFilter = () => []  // () => Array of status names to ignore
     } = deps;
 
+    self.instantTask = ko.observable(null);
+
     self.isFilteredIn = ko.observable(false);
 
     self.id = ko.observable(data.Id ?? null);
@@ -69,7 +71,6 @@ export function Team(data = {}, deps = {}) {
     }
 
     self.focusAndExpandInList = function () {
-        self.focusAndExpandInList();
         self.expand();
         scrollToThisInTable();
     };

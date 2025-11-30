@@ -44,35 +44,49 @@ export function buildJobPopupKO() {
                       data-bind="click: refreshDataAndTasking, clickBubble: false">
                       <i class="fa fa-sync"></i>
                   </button>                 
-        <ul class="dropdown-menu dropdown-menu-end p-2" aria-labelledby="assignTeamBtn" style="min-width: 260px;">
-          <li class="mb-2">
-            <input type="text"
-                   class="form-control form-control-sm"
-                   placeholder="Filter teams…"
-                   data-bind="textInput: $root.popupTeamFilter, valueUpdate: 'afterkeydown'">
-          </li>
-          <li><hr class="dropdown-divider"></li>
-          <li>
-            <div style="max-height: 220px; overflow: auto;"
-                 data-bind="foreach: $root.popupFilteredTeams">
-              <button type="button" class="dropdown-item text-start py-1" 
-  data-bind="html:
-    '<div><strong>' + (team.callsign() || '') + '</strong>' +
-    '<div class=&quot;small text-muted&quot;>' +
-      currentTaskingSummary() +
-    '</div>' +
-    '<div class=&quot;small text-muted&quot;>' +
-      summaryLine +
-    '</div>',
-    click: $root.taskTeamToJobWithConfirm,
-    event: {
-        mouseover: $root.mouseOverTeamInPopup,
-        mouseleave: $root.mouseOutTeamInPopup
-    }">
-</button>
-            </div>
-          </li>
-        </ul>
+           <ul class="dropdown-menu dropdown-menu-end p-2  job-taskteam-dropdown"
+       data-bind="attr: { id: 'tmAssignTeamMenu-' + $root.job.id, 'aria-labelledby': 'tmAssignTeamBtn-' + $root.job.id }"
+       style="min-width: 260px;"
+       data-bs-popper="static">
+       <li class="mb-2">
+           <input type="text"
+               class="form-control form-control-sm"
+               placeholder="Filter teams…"
+               data-bind="textInput: $root.job.instantTask.popupTeamFilter, valueUpdate: 'afterkeydown'">
+       </li>
+       <li>
+           <hr class="dropdown-divider">
+       </li>
+       <li>
+           <div
+               style="max-height: 220px; overflow-y: auto; overflow-x: hidden; width: 260px;">
+               <!-- ko if: $root.job.instantTask.popupFilteredTeams().length > 0 -->
+               <!-- ko foreach: $root.job.instantTask.popupFilteredTeams -->
+               <button type="button"
+                   class="dropdown-item text-start py-1"
+                   data-bind="click: taskTeamToJobWithConfirm, 
+                              event: { mouseenter: mouseInTeamInInstantTaskPopup, mouseleave: mouseOutTeamInInstantTaskPopup }">
+                   <div>
+                       <strong
+                           data-bind="text: team.callsign() || ''"></strong>
+                   </div>
+                   <div class="small text-muted"
+                       data-bind="text: currentTaskingSummary()">
+                   </div>
+                   <div class="small text-muted"
+                       data-bind="text: summaryLine">
+                   </div>
+               </button>
+               <!-- /ko -->
+               <!-- /ko -->
+               <!-- ko if: $root.job.instantTask.popupFilteredTeams().length === 0 -->
+               <div class="text-muted text-center py-2">
+                   No results found.
+               </div>
+               <!-- /ko -->
+           </div>
+       </li>
+     </ul>
       </div>
     </div>
     <!-- Address -->
@@ -84,7 +98,11 @@ export function buildJobPopupKO() {
       <div class="text-center no-drag" data-bind="visible: !situationOnScene()"><i>No situation on scene available.</i></div>
 
       <!-- Tags -->
-      <div id="JobTags" class="text-center pt-2" data-bind="text: tagsCsv()"></div>
+      <div id="JobTags" class="text-center d-flex flex-wrap mt-1" data-bind="foreach: tags">
+        <span data-bind="class: returnTagClass" style="cursor: default;">
+          <i data-bind="class: returnTagIcon"></i> <span data-bind="text: name"></span>
+        </span>
+      </div>
 
       <!-- Taskings: loading / table / empty -->
       <div class="table-responsive job-popup_taskings">
@@ -98,7 +116,7 @@ export function buildJobPopupKO() {
               <th style="padding:6px 8px;border-bottom:1px solid #ddd">Actions</th>
             </tr>
           </thead>
-          <tbody data-bind="foreach: { data: taskings, afterRender:$root.updatePopup}">
+          <tbody data-bind="foreach: { data: sortedTaskings, afterRender:$root.updatePopup}">
             <tr data-bind="event: {
             mouseenter: $root.drawCrowsFliesToAssetFromTasking,
             mouseleave: $root.removeCrowsFlies
