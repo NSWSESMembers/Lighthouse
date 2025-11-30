@@ -85,11 +85,11 @@
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
                     <!-- ko if: teamsLoading -->
                     <span class="small fw-semibold text-center flex-grow-1 text-muted">
-                        <i class="fa fa-spinner fa-spin me-1"></i> Loading Teams…
+                        <i class="fa fa-spinner fa-spin me-1"></i> Loading Teams… (<span data-bind="text: filteredTeams().length"></span>)
                     </span>
                     <!-- /ko -->
                     <!-- ko ifnot: teamsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1">Teams</span>
+                    <span class="small fw-semibold text-center flex-grow-1">Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:250px;">
@@ -104,7 +104,8 @@
                                 <i class="fa fa-filter"></i>
                             </button>
 
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="teamMenu">
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="teamMenu"
+                                id="teamFilterDropdown" data-bs-popper="static">
 
 
 
@@ -447,11 +448,11 @@
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
                     <!-- ko if: jobsLoading -->
                     <span class="small fw-semibold text-center flex-grow-1 text-muted">
-                        <i class="fa fa-spinner fa-spin me-1"></i> Loading Incidents...
+                        <i class="fa fa-spinner fa-spin me-1"></i>Loading Incidents... (<span data-bind="text: filteredJobs().length"></span>)
                     </span>
                     <!-- /ko -->
                     <!-- ko ifnot: jobsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1">Incidents</span>
+                    <span class="small fw-semibold text-center flex-grow-1">Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:250px;">
@@ -463,11 +464,12 @@
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
                                 id="jobMenu" data-bs-toggle="dropdown" data-bs-auto-close="outside"
-                                aria-expanded="false">
+                                data-bs-reference="parent" data-bs-boundary="viewport" aria-expanded="false">
                                 <i class="fa fa-filter"></i>
                             </button>
 
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jobMenu">
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jobMenu"
+                                data-bs-popper="static" id="jobFilterDropDown">
 
 
                                 <!-- INCIDENT STATUS FILTERS (collapsible section) -->
@@ -769,7 +771,7 @@
                                         <!-- DETAILS PANEL -->
                                         <div class="job-details" data-bind="slideVisible: j.expanded">
                                             <div class="card border-0 mb-0">
-                                            <!-- ko if: j.sortedTags().length -->
+                                                <!-- ko if: j.sortedTags().length -->
                                                 <div
                                                     class="card-header d-flex justify-content-between align-items-center">
                                                     <div>
@@ -777,7 +779,8 @@
                                                         <div>
                                                             <div class="job-tags-list d-flex flex-wrap"
                                                                 data-bind="foreach: j.sortedTags">
-                                                                <span data-bind="class: returnTagClass" style="cursor: default;">
+                                                                <span data-bind="class: returnTagClass"
+                                                                    style="cursor: default;">
                                                                     <i data-bind="class: returnTagIcon"></i> <span
                                                                         data-bind="text: name"></span>
                                                                 </span>
@@ -785,7 +788,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                            <!-- /ko -->
+                                                <!-- /ko -->
 
                                                 <div class="card-body job-details-form">
                                                     <div class="row g-3">
@@ -852,14 +855,64 @@
                                                         <div class="col-md-4">
                                                             <div class="card job-actions-card">
                                                                 <div class="d-grid gap-2 job-actions-stack">
-                                                                    <div class="btn-group btn-group-sm" role="group">
-                                                                        <button class="btn btn-primary btn-sm w-50"
-                                                                            type="button" id="assignTeamBtn"
-                                                                            data-bs-toggle="dropdown"
-                                                                            aria-haspopup="true" aria-expanded="false">
+                                                                    <div class="btn-group btn-group-sm d-flex"
+                                                                        role="group">
+
+                                                                        <button
+                                                                            class="btn btn-primary btn-sm flex-fill w-50"
+                                                                            type="button" data-bs-toggle="dropdown"
+                                                                            data-bs-auto-close="outside"
+                                                                            data-bs-reference="parent"
+                                                                            data-bs-boundary="viewport"
+                                                                            data-bind="attr: { id: 'tmAssignTeamBtn-' + j.id }">
                                                                             <i class="fa fa-solid fa-user-plus"></i>
                                                                             Task Team
                                                                         </button>
+                                                                        <div class="dropdown">
+                                                                            <ul class="dropdown-menu dropdown-menu-end p-2  job-taskteam-dropdown"
+                                                                                data-bind="attr: { id: 'tmAssignTeamMenu-' + j.id, 'aria-labelledby': 'tmAssignTeamBtn-' + j.id }"
+                                                                                style="min-width: 260px;"
+                                                                                data-bs-popper="static">
+                                                                                <li class="mb-2">
+                                                                                    <input type="text"
+                                                                                        class="form-control form-control-sm"
+                                                                                        placeholder="Filter teams…"
+                                                                                        data-bind="textInput: j.instantTask.popupTeamFilter, valueUpdate: 'afterkeydown'">
+                                                                                </li>
+                                                                                <li>
+                                                                                    <hr class="dropdown-divider">
+                                                                                </li>
+                                                                                <li>
+                                                                                    <div
+                                                                                        style="max-height: 220px; overflow-y: auto; overflow-x: hidden; width: 260px;">
+                                                                                        <!-- ko if: j.instantTask.popupFilteredTeams().length > 0 -->
+                                                                                        <!-- ko foreach: j.instantTask.popupFilteredTeams -->
+                                                                                        <button type="button"
+                                                                                            class="dropdown-item text-start py-1"
+                                                                                            data-bind="click: taskTeamToJobWithConfirm, 
+                                                                                                       event: { mouseenter: mouseInTeamInInstantTaskPopup, mouseleave: mouseOutTeamInInstantTaskPopup }">
+                                                                                            <div>
+                                                                                                <strong
+                                                                                                    data-bind="text: team.callsign() || ''"></strong>
+                                                                                            </div>
+                                                                                            <div class="small text-muted"
+                                                                                                data-bind="text: currentTaskingSummary()">
+                                                                                            </div>
+                                                                                            <div class="small text-muted"
+                                                                                                data-bind="text: summaryLine">
+                                                                                            </div>
+                                                                                        </button>
+                                                                                        <!-- /ko -->
+                                                                                        <!-- /ko -->
+                                                                                        <!-- ko if: j.instantTask.popupFilteredTeams().length === 0 -->
+                                                                                        <div class="text-muted text-center py-2">
+                                                                                            No results found.
+                                                                                        </div>
+                                                                                        <!-- /ko -->
+                                                                                    </div>
+                                                                                </li>
+                                                                            </ul>
+                                                                        </div>
                                                                         <button class="btn btn-outline-dark btn-sm w-50"
                                                                             type="button"
                                                                             data-bind="click: j.drawJobTargetRing">
@@ -1023,7 +1076,8 @@
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Edit">
-                                                                                            <i class="fas fa-external-link-alt"></i>
+                                                                                            <i
+                                                                                                class="fas fa-external-link-alt"></i>
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
@@ -1045,13 +1099,10 @@
                                                 </div><!-- /card-body -->
                                             </div><!-- /card -->
                                         </div><!-- /job-details -->
-
                                     </div><!-- /job-card -->
                                 </td>
                             </tr>
                         </tbody>
-
-
                     </table>
                 </div>
             </div>
@@ -1779,7 +1830,8 @@
                                             <div class="mt-1 small">
                                                 <!-- tags -->
                                                 <!-- Render one pill per tag -->
-                                                <div class="job-tags-list d-flex flex-wrap mt-1" data-bind="foreach: tags">
+                                                <div class="job-tags-list d-flex flex-wrap mt-1"
+                                                    data-bind="foreach: tags">
                                                     <span data-bind="class: returnTagClass" style="cursor: default;">
                                                         <i data-bind="class: returnTagIcon"></i> <span
                                                             data-bind="text: name"></span>

@@ -54,12 +54,7 @@ td.chev[draggable="true"] * {
     user-select: none !important;
 }
 
-/* Sidebar starts from a CSS var so JS can update it easily */
-.sidebar {
-  width: var(--sidebar-w, 420px);
-  min-width: 260px;
-  max-width: 80vw;
-}
+
 
 .pane .small {
   font-size: 0.8rem;
@@ -114,8 +109,6 @@ td.chev[draggable="true"] * {
 
 .sidebar {
   width: var(--sidebar-w, 420px);
-  min-width: 260px;
-  max-width: 70vw;
   display: flex;
   flex-direction: column;
 }
@@ -303,11 +296,12 @@ table thead th[aria-sort="descending"] .sort-icon { transform: translateY(1px); 
 }
 
 
+
 .teams thead th,
 .jobs thead th {
   position: sticky;
+  z-index: 1001;
   top: 0;
-  z-index: 5;
   background: var(--bs-light, #f8f9fa);
 }
 
@@ -384,14 +378,6 @@ button {
 }
 button.primary {
   border-color: #0077ff;
-}
-
-/* Header styling */
-.teams thead th {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: var(--bs-light, #f8f9fa);
 }
 
 
@@ -1468,11 +1454,10 @@ tr.job:hover {
 }
 
 /* Ensure team/job dropdown menus appear above pane overflow */
-.sidebar .dropdown-menu,
-.pane .dropdown-menu,
-.table-responsive .dropdown-menu {
+#teamFilterDropdown, #jobFilterDropDown{
     position: fixed !important;   /* escape overflow containers */
-    z-index: 3000 !important;     /* above map, table scroll, etc. */
     transform: none !important;   /* disable BS placement transforms */
     inset: auto !important;       /* let JS set the coords */
+    z-index: 3000 !important;
 }
+

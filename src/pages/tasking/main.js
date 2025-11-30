@@ -22,6 +22,7 @@ import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { Tag } from "./models/Tag.js";
 import { UpdateTeamStatusDropdownVM } from './viewmodels/UpdateTeamStatusDropdownVM.js';
 
+
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
 
@@ -572,6 +573,8 @@ function VM() {
             drawJobTargetRing: (job) => {
                 self.drawJobTargetRing(job);
             },
+            map: self.mapVM,
+            filteredTeams: self.filteredTeams,
         }
     }
     // Team registry/upsert - called from tasking OR team fetch so values might be missing

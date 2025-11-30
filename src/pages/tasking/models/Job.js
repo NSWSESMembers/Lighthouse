@@ -8,6 +8,9 @@ import { Tag } from "./Tag.js";
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 import { jobsToUI } from "../utils/jobTypesToUI.js";
 
+import { InstantTaskViewModel } from '../viewmodels/InstantTask.js';
+
+
 
 export function Job(data = {}, deps = {}) {
     const self = this;
@@ -21,6 +24,8 @@ export function Job(data = {}, deps = {}) {
         attachAndFillTimelineModal = (_job) => { /* noop */ },
         fetchUnacknowledgedJobNotifications = async (_job) => ([]),
         drawJobTargetRing = (_job) => { /* noop */ },
+        map = null,
+        filteredTeams = ko.observableArray([]),
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
@@ -69,6 +74,8 @@ export function Job(data = {}, deps = {}) {
 
     self.unacceptedNotifications = ko.observableArray([]);
 
+    self.instantTask = new InstantTaskViewModel({ job: self, map: map, filteredTeams: filteredTeams });
+
 
     //refs to other obs
     self.marker = null;  // will hold the L.Marker instance
@@ -91,6 +98,10 @@ export function Job(data = {}, deps = {}) {
         }
         return lat + " / " + lng;
     });
+
+
+    self.rowHasFocus = ko.observable(false);
+    self.popUpIsOpen = ko.observable(false);
 
 
     self.contactCalling = ko.pureComputed(() => {
@@ -146,6 +157,14 @@ export function Job(data = {}, deps = {}) {
         } else {
             self.stopDataRefreshCheck();
         }
+    });
+
+    self.expanded.subscribe((isExpanded) => {
+        self.instantTask.popupActive(isExpanded || self.popUpIsOpen());
+    });
+
+    self.popUpIsOpen.subscribe((isOpen) => {
+        self.instantTask.popupActive(isOpen || self.expanded());
     });
 
 
@@ -366,6 +385,8 @@ export function Job(data = {}, deps = {}) {
         if (d.JobStatusType !== undefined) this.jobStatusType(d.JobStatusType || null);
         if (d.JobType !== undefined) this.jobType(d.JobType || null);
 
+
+
         if (d.EntityAssignedTo !== undefined) {
             const ea = d.EntityAssignedTo;
 
@@ -503,8 +524,7 @@ export function Job(data = {}, deps = {}) {
         }, 150);
     }
 
-    self.rowHasFocus = ko.observable(false);
-    self.popUpIsOpen = ko.observable(false);
+
 
     self.mouseEnterAddressButton = function () {
         self.rowHasFocus(true);
