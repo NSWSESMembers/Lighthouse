@@ -106,6 +106,10 @@ export function Job(data = {}, deps = {}) {
     self.popUpIsOpen = ko.observable(false);
 
 
+    self.rowHasFocus = ko.observable(false);
+    self.popUpIsOpen = ko.observable(false);
+
+
     self.contactCalling = ko.pureComputed(() => {
         return self.contactCalled() ? "Yes" : "No";
     })
