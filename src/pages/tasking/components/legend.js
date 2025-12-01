@@ -8,7 +8,7 @@ export const LegendControl = L.Control.extend({
     const div = L.DomUtil.create("div", "legend-container leaflet-bar");
     div.innerHTML = `
       <div class="legend-header d-flex justify-content-between align-items-center">
-        <span class="fw-semibold">Legend</span>
+        <span class="fw-semibold">Legend</span><br>
         <button class="btn btn-sm btn-outline-secondary toggle-legend" type="button" aria-expanded="true">−</button>
       </div>
       <div class="legend-body mt-1">
@@ -53,6 +53,92 @@ export const LegendControl = L.Control.extend({
         <div><div class="pulse-ring-icon"></div><svg  class="pulse-ring" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="2"/></svg> Unacknowledged incident</div>
       </div>
     </div>
+    <div class="legend-section">
+    <br>
+  <div class="fw-semibold small mb-1">Assets</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:2px;">
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#FFD600;margin-right:6px;border:1px solid #333;"></span>
+      <span>Bus</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#1565C0;margin-right:6px;border:1px solid #333;"></span>
+      <span>Command</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#D32F2F;margin-right:6px;border:1px solid #333;"></span>
+      <span>Community First Responder</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#8E24AA;margin-right:6px;border:1px solid:#333;"></span>
+      <span>General Purpose</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#795548;margin-right:6px;border:1px solid:#333;"></span>
+      <span>Logistics</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#FB8C00;margin-right:6px;border:1px solid:#333;"></span>
+      <span>Light Storm</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#EF6C00;margin-right:6px;border:1px solid:#333;"></span>
+      <span>Medium Storm</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#C62828;margin-right:6px;border:1px solid:#333;"></span>
+      <span>Light Rescue</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#B71C1C;margin-right:6px;border:1px solid:#333;"></span>
+      <span>Medium Rescue</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#880E4F;margin-right:6px;border:1px solid:#333;"></span>
+      <span>Heavy Rescue</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#5D4037;margin-right:6px;border:1px solid:#333;"></span>
+      <span>SHQ Pool</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#0288D1;margin-right:6px;border:1px solid:#333;"></span>
+      <span>Vessel</span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#43A047;margin-right:6px;border:1px solid:#333;"></span>
+      <span>Portable</span>
+    </div>
+
+  </div>
+</div>
+
     </div>
     `;
 

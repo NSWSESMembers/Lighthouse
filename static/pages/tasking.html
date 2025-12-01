@@ -85,11 +85,13 @@
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
                     <!-- ko if: teamsLoading -->
                     <span class="small fw-semibold text-center flex-grow-1 text-muted">
-                        <i class="fa fa-spinner fa-spin me-1"></i> Loading Teams… (<span data-bind="text: filteredTeams().length"></span>)
+                        <i class="fa fa-spinner fa-spin me-1"></i> Loading Teams… (<span
+                            data-bind="text: filteredTeams().length"></span>)
                     </span>
                     <!-- /ko -->
                     <!-- ko ifnot: teamsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1">Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
+                    <span class="small fw-semibold text-center flex-grow-1">Teams (<span
+                            data-bind="text: filteredTeams().length"></span>)</span>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:250px;">
@@ -448,11 +450,13 @@
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
                     <!-- ko if: jobsLoading -->
                     <span class="small fw-semibold text-center flex-grow-1 text-muted">
-                        <i class="fa fa-spinner fa-spin me-1"></i>Loading Incidents... (<span data-bind="text: filteredJobs().length"></span>)
+                        <i class="fa fa-spinner fa-spin me-1"></i>Loading Incidents... (<span
+                            data-bind="text: filteredJobs().length"></span>)
                     </span>
                     <!-- /ko -->
                     <!-- ko ifnot: jobsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1">Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
+                    <span class="small fw-semibold text-center flex-grow-1">Incidents (<span
+                            data-bind="text: filteredJobs().length"></span>)</span>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:250px;">
@@ -644,6 +648,37 @@
                                         </div>
                                     </div>
                                 </li>
+                                <!-- SECTOR FILTERS (collapsible section) -->
+                                <li>
+                                    <button class="dropdown-item d-flex justify-content-between align-items-center"
+                                        type="button" data-bs-toggle="collapse" data-bs-target="#sectorFilterMenu"
+                                        aria-expanded="false" aria-controls="sectorFilterMenu">
+                                        Sector Filters
+                                        <span class="ms-2 fa fa-chevron-right small"></span>
+                                    </button>
+                                    <div class="collapse dropdown-collapse-body" id="sectorFilterMenu">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="overrideNoSector"
+                                                data-bind="checked: config.includeIncidentsWithoutSector">
+                                            <label class="form-check-label" for="overrideNoSector">
+                                                Incidents without a sector
+                                            </label>
+                                        </div>
+                                        <div class="dropdown-three-col" data-bind="foreach: sectors">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" data-bind="
+                                       sectorFilterAndFetch: { id: id(), name: name() },
+                                       attr: { id: 'sectorFilter_' + id() }
+                                   ">
+                                                <label class="form-check-label"
+                                                    data-bind="text: name, attr: { for: 'sectorFilter_' + id() }">
+                                                </label>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                </li>
 
 
 
@@ -803,7 +838,7 @@
 
                                                                 <!-- Response Required / Priority -->
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
                                                                         Response Required
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
@@ -814,7 +849,7 @@
 
                                                                 <!-- Received -->
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
                                                                         Received
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
@@ -826,7 +861,7 @@
 
                                                                 <!-- Assigned HQ -->
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
                                                                         Assigned HQ
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
@@ -838,12 +873,24 @@
 
                                                                 <!-- Assigned Zone -->
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
                                                                         Assigned Zone
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
                                                                         <p class="form-control-plaintext job-details-value"
                                                                             data-bind="text: j.returnParentEntityName()">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Assigned Sector -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
+                                                                        Assigned Sector
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.sectorName()">
                                                                         </p>
                                                                     </div>
                                                                 </div>
@@ -905,7 +952,8 @@
                                                                                         <!-- /ko -->
                                                                                         <!-- /ko -->
                                                                                         <!-- ko if: j.instantTask.popupFilteredTeams().length === 0 -->
-                                                                                        <div class="text-muted text-center py-2">
+                                                                                        <div
+                                                                                            class="text-muted text-center py-2">
                                                                                             No results found.
                                                                                         </div>
                                                                                         <!-- /ko -->
@@ -951,7 +999,7 @@
 
                                                                 <!-- Address -->
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
                                                                         Address
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
@@ -963,7 +1011,7 @@
 
                                                                 <!-- LGA -->
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
                                                                         LGA
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
@@ -974,7 +1022,7 @@
 
                                                                 <!-- Lat/Long -->
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-sm-4 col-lg-3 text-sm-end">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
                                                                         Lat/Long
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
@@ -992,7 +1040,7 @@
                                                                 </legend>
 
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-4 text-sm-end">Number</label>
+                                                                    <label class="col-4 text-sm-end lmt-25">Number</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
                                                                             data-bind="text: j.incidentContactNumber">
@@ -1001,7 +1049,7 @@
                                                                 </div>
 
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-4 text-sm-end">Name</label>
+                                                                    <label class="col-4 text-sm-end lmt-25">Name</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
                                                                             data-bind="text: j.incidentContactName">
@@ -1010,7 +1058,7 @@
                                                                 </div>
                                                                 <div class="row align-items-start"
                                                                     data-bind="visible: !j.contactCalled">
-                                                                    <label class="col-4 text-sm-end">Called By</label>
+                                                                    <label class="col-4 text-sm-end lmt-25">Called By</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
                                                                             data-bind="text: j.callerFirstName + ' ' + j.callerLastName + ' - ' + j.callerPhoneNumber">
@@ -1275,339 +1323,520 @@
 
 
                     <!-- CONFIG -->
+                    <!-- CONFIG -->
                     <div class="card config-card mt-3">
-                        <div class="card-header py-2"><strong>Other Settings</strong></div>
+                        <div class="card-header py-2">
+                            <strong>Other Settings</strong>
+                        </div>
                         <div class="card-body">
-                            <form id="configForm" class="row g-3">
-                                <div class="col-sm-6 col-md-3">
-                                    <label for="refreshInterval" class="form-label">Refresh interval (s)</label>
-                                    <input id="refreshInterval" type="number" min="5" step="5" class="form-control"
-                                        data-bind="value: config.refreshInterval">
-                                </div>
-                                <div class="col-sm-6 col-md-3">
-                                    <label for="fetchPeriod" class="form-label">Fetch period (days)</label>
-                                    <input id="fetchPeriod" type="number" min="0" step="1" class="form-control"
-                                        data-bind="value: config.fetchPeriod">
-                                </div>
-                                <div class="col-sm-6 col-md-3">
-                                    <label class="form-label d-block">Options</label>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="showAdvanced"
-                                            data-bind="checked: config.showAdvanced">
-                                        <label class="form-check-label" for="showAdvanced">Show advanced
-                                            controls</label>
-                                    </div>
-                                </div>
+                            <form id="configForm">
+                                <div class="accordion" id="configOtherSettingsAccordion">
 
-                                <!-- inside Other Settings card -->
-                                <div class="row">
-                                    <div class="col-3">
-                                        <label class="form-label d-block mb-2">Show Incidents With Status:</label>
-                                        <div class="border rounded p-2" id="jobStatusBox">
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusPending" value="New" data-bind="jobStatusFilter: 'New'">
-                                                <label class="form-check-label" for="statusPending">New</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusActive" value="Active"
-                                                    data-bind="jobStatusFilter: 'Active'">
-                                                <label class="form-check-label" for="statusActive">Active</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusTasked" value="Tasked"
-                                                    data-bind="jobStatusFilter: 'Tasked'">
-                                                <label class="form-check-label" for="statusTasked">Tasked</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusComplete" value="Complete"
-                                                    data-bind="jobStatusFilter: 'Complete'">
-                                                <label class="form-check-label" for="statusComplete">Complete</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusFinalised" value="Finalised"
-                                                    data-bind="jobStatusFilter: 'Finalised'">
-                                                <label class="form-check-label" for="statusFinalised">Finalised</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusCancelled" value="Cancelled"
-                                                    data-bind="jobStatusFilter: 'Cancelled'">
-                                                <label class="form-check-label" for="statusCancelled">Cancelled</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusOnHold" value="Referred"
-                                                    data-bind="jobStatusFilter: 'Referred'">
-                                                <label class="form-check-label" for="statusOnHold">Referred</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input job-status" type="checkbox"
-                                                    id="statusRejected" value="Rejected"
-                                                    data-bind="jobStatusFilter: 'Rejected'">
-                                                <label class="form-check-label" for="statusRejected">Rejected</label>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                    <div class="col-3">
-                                        <label class="form-label d-block mb-2">Show Teams With Status:</label>
-                                        <div class="border rounded p-2" id="teamStatusBox">
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="statusActivated" value="Activated"
-                                                    data-bind="teamStatusFilter: 'Activated'">
-                                                <label class="form-check-label" for="statusActivated">Activated</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="statusStandby" value="Standby"
-                                                    data-bind="teamStatusFilter: 'Standby'">
-                                                <label class="form-check-label" for="statusStandby">Standby</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="statusStoodDown" value="Stood down"
-                                                    data-bind="teamStatusFilter: 'Stood down'">
-                                                <label class="form-check-label" for="statusStoodDown">Stood
-                                                    down</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="statusRest" value="Rest" data-bind="teamStatusFilter: 'Rest'">
-                                                <label class="form-check-label" for="statusRest">Rest</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="statusOnAlert" value="On Alert"
-                                                    data-bind="teamStatusFilter: 'On Alert'">
-                                                <label class="form-check-label" for="statusOnAlert">On Alert</label>
-                                            </div>
-                                        </div>
-                                        <label class="form-label d-block mb-2">Show Teams Tasking With Status:</label>
-                                        <div class="border rounded p-2" id="teamStatusBox">
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="taskStatusUntasked" value="Untasked"
-                                                    data-bind="teamTaskStatusFilter: 'Untasked'">
-                                                <label class="form-check-label"
-                                                    for="taskStatusUntasked">Untasked</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="taskStatusTasked" value="Tasked"
-                                                    data-bind="teamTaskStatusFilter: 'Tasked'">
-                                                <label class="form-check-label" for="taskStatusTasked">Tasked</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="taskStatusOnsite" value="Onsite"
-                                                    data-bind="teamTaskStatusFilter: 'Onsite'">
-                                                <label class="form-check-label" for="taskStatusOnsite">Onsite</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="taskStatusOffsite" value="Offsite"
-                                                    data-bind="teamTaskStatusFilter: 'Offsite'">
-                                                <label class="form-check-label" for="taskStatusOffsite">Offsite</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="taskStatusEnroute" value="Enroute"
-                                                    data-bind="teamTaskStatusFilter: 'Enroute'">
-                                                <label class="form-check-label" for="taskStatusEnroute">Enroute</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="taskStatusComplete" value="Complete"
-                                                    data-bind="teamTaskStatusFilter: 'Complete'">
-                                                <label class="form-check-label"
-                                                    for="taskStatusComplete">Complete</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input team-status" type="checkbox"
-                                                    id="taskStatusCalledOff" value="CalledOff"
-                                                    data-bind="teamTaskStatusFilter: 'CalledOff'">
-                                                <label class="form-check-label"
-                                                    for="taskStatusCalledOff">CalledOff</label>
+                                    <!-- General -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingGeneral">
+                                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                                data-bs-target="#collapseGeneral" aria-expanded="true"
+                                                aria-controls="collapseGeneral">
+                                                General
+                                            </button>
+                                        </h2>
+                                        <div id="collapseGeneral" class="accordion-collapse collapse show"
+                                            aria-labelledby="headingGeneral"
+                                            data-bs-parent="#configOtherSettingsAccordion">
+                                            <div class="accordion-body">
+                                                <div class="row g-3">
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label for="refreshInterval" class="form-label">Refresh interval
+                                                            (s)</label>
+                                                        <input id="refreshInterval" type="number" min="5" step="5"
+                                                            class="form-control"
+                                                            data-bind="value: config.refreshInterval">
+                                                    </div>
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label for="fetchPeriod" class="form-label">Fetch period
+                                                            (days)</label>
+                                                        <input id="fetchPeriod" type="number" min="0" step="1"
+                                                            class="form-control" data-bind="value: config.fetchPeriod">
+                                                    </div>
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label class="form-label d-block">Options</label>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                id="showAdvanced"
+                                                                data-bind="checked: config.showAdvanced">
+                                                            <label class="form-check-label" for="showAdvanced">
+                                                                Show advanced controls
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-3">
-                                        <label class="form-label d-block mb-2">Show Incidents Of Type:</label>
-                                        <div class="border rounded p-2" id="jobTypeBox">
 
-                                            <!-- Storm -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeStorm" value="Storm"
-                                                    data-bind="incidentTypeFilter: 'Storm'">
-                                                <label class="form-check-label" for="jobTypeStorm">Storm</label>
+                                    <!-- Incident Status -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingIncidentStatus">
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapseIncidentStatus"
+                                                aria-expanded="false" aria-controls="collapseIncidentStatus">
+                                                Incident Status
+                                            </button>
+                                        </h2>
+                                        <div id="collapseIncidentStatus" class="accordion-collapse collapse"
+                                            aria-labelledby="headingIncidentStatus"
+                                            data-bs-parent="#configOtherSettingsAccordion">
+                                            <div class="accordion-body">
+                                                <label class="form-label d-block mb-2">Show Incidents With
+                                                    Status:</label>
+                                                <div class="border rounded p-2" id="jobStatusBox">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input job-status" type="checkbox"
+                                                            id="statusPending" value="New"
+                                                            data-bind="jobStatusFilter: 'New'">
+                                                        <label class="form-check-label" for="statusPending">New</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input job-status" type="checkbox"
+                                                            id="statusActive" value="Active"
+                                                            data-bind="jobStatusFilter: 'Active'">
+                                                        <label class="form-check-label"
+                                                            for="statusActive">Active</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input job-status" type="checkbox"
+                                                            id="statusTasked" value="Tasked"
+                                                            data-bind="jobStatusFilter: 'Tasked'">
+                                                        <label class="form-check-label"
+                                                            for="statusTasked">Tasked</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input job-status" type="checkbox"
+                                                            id="statusComplete" value="Complete"
+                                                            data-bind="jobStatusFilter: 'Complete'">
+                                                        <label class="form-check-label"
+                                                            for="statusComplete">Complete</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input job-status" type="checkbox"
+                                                            id="statusFinalised" value="Finalised"
+                                                            data-bind="jobStatusFilter: 'Finalised'">
+                                                        <label class="form-check-label"
+                                                            for="statusFinalised">Finalised</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input job-status" type="checkbox"
+                                                            id="statusCancelled" value="Cancelled"
+                                                            data-bind="jobStatusFilter: 'Cancelled'">
+                                                        <label class="form-check-label"
+                                                            for="statusCancelled">Cancelled</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input job-status" type="checkbox"
+                                                            id="statusOnHold" value="Referred"
+                                                            data-bind="jobStatusFilter: 'Referred'">
+                                                        <label class="form-check-label"
+                                                            for="statusOnHold">Referred</label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input job-status" type="checkbox"
+                                                            id="statusRejected" value="Rejected"
+                                                            data-bind="jobStatusFilter: 'Rejected'">
+                                                        <label class="form-check-label"
+                                                            for="statusRejected">Rejected</label>
+                                                    </div>
+                                                </div>
                                             </div>
-
-                                            <!-- Support -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeSupport" value="Support"
-                                                    data-bind="incidentTypeFilter: 'Support'">
-                                                <label class="form-check-label" for="jobTypeSupport">Support</label>
-                                            </div>
-
-                                            <!-- Flood Rescue (FR) -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeFR"
-                                                    value="FR" data-bind="incidentTypeFilter: 'FR'">
-                                                <label class="form-check-label" for="jobTypeFR">Flood Rescue
-                                                    (FR)</label>
-                                            </div>
-
-                                            <!-- Road Crash Rescue (RCR) -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeRCR"
-                                                    value="RCR" data-bind="incidentTypeFilter: 'RCR'">
-                                                <label class="form-check-label" for="jobTypeRCR">Road Crash Rescue
-                                                    (RCR)</label>
-                                            </div>
-
-                                            <!-- General Land Rescue (GLR) -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeGLR"
-                                                    value="GLR" data-bind="incidentTypeFilter: 'GLR'">
-                                                <label class="form-check-label" for="jobTypeGLR">General Land Rescue
-                                                    (GLR)</label>
-                                            </div>
-
-                                            <!-- Community First Responder (CFR) -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeCFR"
-                                                    value="CFR" data-bind="incidentTypeFilter: 'CFR'">
-                                                <label class="form-check-label" for="jobTypeCFR">Community First
-                                                    Responder (CFR)</label>
-                                            </div>
-
-                                            <!-- Vertical Rescue (VR) -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeVR"
-                                                    value="VR" data-bind="incidentTypeFilter: 'VR'">
-                                                <label class="form-check-label" for="jobTypeVR">Vertical Rescue
-                                                    (VR)</label>
-                                            </div>
-
-                                            <!-- LAR -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox" id="jobTypeLAR"
-                                                    value="LAR" data-bind="incidentTypeFilter: 'LAR'">
-                                                <label class="form-check-label" for="jobTypeLAR">Large Animal Rescue
-                                                    (LAR)</label>
-                                            </div>
-
-                                            <!-- Resupply -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeResupply" value="Resupply"
-                                                    data-bind="incidentTypeFilter: 'Resupply'">
-                                                <label class="form-check-label" for="jobTypeResupply">Resupply</label>
-                                            </div>
-
-                                            <!-- Medical Resupply -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeMedicalResupply" value="MedicalResupply"
-                                                    data-bind="incidentTypeFilter: 'MedicalResupply'">
-                                                <label class="form-check-label" for="jobTypeMedicalResupply">Medical
-                                                    Resupply</label>
-                                            </div>
-
-                                            <!-- Fodder Drop -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeFodderDrop" value="FodderDrop"
-                                                    data-bind="incidentTypeFilter: 'FodderDrop'">
-                                                <label class="form-check-label" for="jobTypeFodderDrop">Fodder
-                                                    Drop</label>
-                                            </div>
-
-                                            <!-- Vet Assistance -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeVetAssistance" value="VetAssistance"
-                                                    data-bind="incidentTypeFilter: 'VetAssistance'">
-                                                <label class="form-check-label" for="jobTypeVetAssistance">Vet
-                                                    Assistance</label>
-                                            </div>
-
-                                            <!-- Flood Misc -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeFloodMisc" value="FloodMisc"
-                                                    data-bind="incidentTypeFilter: 'FloodMisc'">
-                                                <label class="form-check-label" for="jobTypeFloodMisc">Flood
-                                                    Misc</label>
-                                            </div>
-
-                                            <!-- Evacuation A -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeEvacA" value="EvacuationPriority"
-                                                    data-bind="incidentTypeFilter: 'EvacuationPriority'">
-                                                <label class="form-check-label" for="jobTypeEvacA">Evacuation Priority
-                                                    (A)</label>
-                                            </div>
-
-                                            <!-- Evacuation B -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeEvacB" value="EvacuationSecondary"
-                                                    data-bind="incidentTypeFilter: 'EvacuationSecondary'">
-                                                <label class="form-check-label" for="jobTypeEvacB">Evacuation Secondary
-                                                    (B)</label>
-                                            </div>
-
-                                            <!-- Welfare Check -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeWelfareCheck" value="WelfareCheck"
-                                                    data-bind="incidentTypeFilter: 'WelfareCheck'">
-                                                <label class="form-check-label" for="jobTypeWelfareCheck">Welfare Check
-                                                    (B)</label>
-                                            </div>
-
-                                            <!-- Transport -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeTransport" value="Transport"
-                                                    data-bind="incidentTypeFilter: 'Transport'">
-                                                <label class="form-check-label" for="jobTypeTransport">Transport
-                                                    (B)</label>
-                                            </div>
-
-                                            <!-- Other -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeOther" value="Other"
-                                                    data-bind="incidentTypeFilter: 'Other'">
-                                                <label class="form-check-label" for="jobTypeOther">Other (B)</label>
-                                            </div>
-
-                                            <!-- Tsunami -->
-                                            <div class="form-check">
-                                                <input class="form-check-input job-type" type="checkbox"
-                                                    id="jobTypeTsunami" value="Tsunami"
-                                                    data-bind="incidentTypeFilter: 'Tsunami'">
-                                                <label class="form-check-label" for="jobTypeTsunami">Tsunami</label>
-                                            </div>
-
                                         </div>
                                     </div>
 
-                                </div>
+                                    <!-- Team Status & Tasking -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingTeamStatus">
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapseTeamStatus"
+                                                aria-expanded="false" aria-controls="collapseTeamStatus">
+                                                Team Status &amp; Tasking
+                                            </button>
+                                        </h2>
+                                        <div id="collapseTeamStatus" class="accordion-collapse collapse"
+                                            aria-labelledby="headingTeamStatus"
+                                            data-bs-parent="#configOtherSettingsAccordion">
+                                            <div class="accordion-body">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6 col-lg-4">
+                                                        <label class="form-label d-block mb-2">Show Teams With
+                                                            Status:</label>
+                                                        <div class="border rounded p-2" id="teamStatusBox">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="statusActivated"
+                                                                    value="Activated"
+                                                                    data-bind="teamStatusFilter: 'Activated'">
+                                                                <label class="form-check-label"
+                                                                    for="statusActivated">Activated</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="statusStandby" value="Standby"
+                                                                    data-bind="teamStatusFilter: 'Standby'">
+                                                                <label class="form-check-label"
+                                                                    for="statusStandby">Standby</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="statusStoodDown"
+                                                                    value="Stood down"
+                                                                    data-bind="teamStatusFilter: 'Stood down'">
+                                                                <label class="form-check-label"
+                                                                    for="statusStoodDown">Stood down</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="statusRest" value="Rest"
+                                                                    data-bind="teamStatusFilter: 'Rest'">
+                                                                <label class="form-check-label"
+                                                                    for="statusRest">Rest</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="statusOnAlert" value="On Alert"
+                                                                    data-bind="teamStatusFilter: 'On Alert'">
+                                                                <label class="form-check-label" for="statusOnAlert">On
+                                                                    Alert</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 col-lg-4">
+                                                        <label class="form-label d-block mb-2">Show Teams Tasking With
+                                                            Status:</label>
+                                                        <div class="border rounded p-2" id="teamTaskStatusBox">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="taskStatusUntasked"
+                                                                    value="Untasked"
+                                                                    data-bind="teamTaskStatusFilter: 'Untasked'">
+                                                                <label class="form-check-label"
+                                                                    for="taskStatusUntasked">Untasked</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="taskStatusTasked" value="Tasked"
+                                                                    data-bind="teamTaskStatusFilter: 'Tasked'">
+                                                                <label class="form-check-label"
+                                                                    for="taskStatusTasked">Tasked</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="taskStatusOnsite" value="Onsite"
+                                                                    data-bind="teamTaskStatusFilter: 'Onsite'">
+                                                                <label class="form-check-label"
+                                                                    for="taskStatusOnsite">Onsite</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="taskStatusOffsite"
+                                                                    value="Offsite"
+                                                                    data-bind="teamTaskStatusFilter: 'Offsite'">
+                                                                <label class="form-check-label"
+                                                                    for="taskStatusOffsite">Offsite</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="taskStatusEnroute"
+                                                                    value="Enroute"
+                                                                    data-bind="teamTaskStatusFilter: 'Enroute'">
+                                                                <label class="form-check-label"
+                                                                    for="taskStatusEnroute">Enroute</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="taskStatusComplete"
+                                                                    value="Complete"
+                                                                    data-bind="teamTaskStatusFilter: 'Complete'">
+                                                                <label class="form-check-label"
+                                                                    for="taskStatusComplete">Complete</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="taskStatusCalledOff"
+                                                                    value="CalledOff"
+                                                                    data-bind="teamTaskStatusFilter: 'CalledOff'">
+                                                                <label class="form-check-label"
+                                                                    for="taskStatusCalledOff">CalledOff</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div> <!-- /row -->
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Incident Types -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingIncidentTypes">
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapseIncidentTypes"
+                                                aria-expanded="false" aria-controls="collapseIncidentTypes">
+                                                Incident Types
+                                            </button>
+                                        </h2>
+                                        <div id="collapseIncidentTypes" class="accordion-collapse collapse"
+                                            aria-labelledby="headingIncidentTypes"
+                                            data-bs-parent="#configOtherSettingsAccordion">
+                                            <div class="accordion-body">
+                                                <label class="form-label d-block mb-2">Show Incidents Of Type:</label>
+                                                <div class="border rounded p-2" id="jobTypeBox">
+                                                    <div class="row row-cols-2 g-2">
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeStorm" value="Storm"
+                                                                    data-bind="incidentTypeFilter: 'Storm'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeStorm">Storm</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeSupport" value="Support"
+                                                                    data-bind="incidentTypeFilter: 'Support'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeSupport">Support</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeFR" value="FR"
+                                                                    data-bind="incidentTypeFilter: 'FR'">
+                                                                <label class="form-check-label" for="jobTypeFR">Flood
+                                                                    Rescue (FR)</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeRCR" value="RCR"
+                                                                    data-bind="incidentTypeFilter: 'RCR'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeRCR">RCR</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeGLR" value="GLR"
+                                                                    data-bind="incidentTypeFilter: 'GLR'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeGLR">GLR</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeCFR" value="CFR"
+                                                                    data-bind="incidentTypeFilter: 'CFR'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeCFR">CFR</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeVR" value="VR"
+                                                                    data-bind="incidentTypeFilter: 'VR'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeVR">VR</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeLAR" value="LAR"
+                                                                    data-bind="incidentTypeFilter: 'LAR'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeLAR">LAR</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeResupply" value="Resupply"
+                                                                    data-bind="incidentTypeFilter: 'Resupply'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeResupply">Resupply</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeMedicalResupply" value="MedicalResupply"
+                                                                    data-bind="incidentTypeFilter: 'MedicalResupply'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeMedicalResupply">Medical
+                                                                    Resupply</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeFodderDrop" value="FodderDrop"
+                                                                    data-bind="incidentTypeFilter: 'FodderDrop'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeFodderDrop">Fodder Drop</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeVetAssistance" value="VetAssistance"
+                                                                    data-bind="incidentTypeFilter: 'VetAssistance'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeVetAssistance">Vet Assistance</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeFloodMisc" value="FloodMisc"
+                                                                    data-bind="incidentTypeFilter: 'FloodMisc'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeFloodMisc">Flood Misc</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeEvacA" value="EvacuationPriority"
+                                                                    data-bind="incidentTypeFilter: 'EvacuationPriority'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeEvacA">Evacuation Priority (A)</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeEvacB" value="EvacuationSecondary"
+                                                                    data-bind="incidentTypeFilter: 'EvacuationSecondary'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeEvacB">Evacuation Secondary (B)</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeWelfareCheck" value="WelfareCheck"
+                                                                    data-bind="incidentTypeFilter: 'WelfareCheck'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeWelfareCheck">Welfare Check (B)</label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col">
+                                                            <div class="form-check mb-0">
+                                                                <input class="form-check-input job-type" type="checkbox"
+                                                                    id="jobTypeTransport" value="Transport"
+                                                                    data-bind="incidentTypeFilter: 'Transport'">
+                                                                <label class="form-check-label"
+                                                                    for="jobTypeTransport">Transport</label>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sectors -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingSectors">
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapseSectors"
+                                                aria-expanded="false" aria-controls="collapseSectors">
+                                                Sectors <span class="spinner-border spinner-border-sm text-muted mx-2"
+                                                    role="status" data-bind="visible: sectorsLoading"></span>
+                                            </button>
+                                        </h2>
+                                        <div id="collapseSectors" class="accordion-collapse collapse"
+                                            aria-labelledby="headingSectors"
+                                            data-bs-parent="#configOtherSettingsAccordion">
+
+                                            <div class="accordion-body">
+
+                                                <div class="mb-3">
+                                                    <label class="form-label d-block mb-1">Overrides:</label>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="overrideNoSector"
+                                                            data-bind="checked: config.includeIncidentsWithoutSector">
+                                                        <label class="form-check-label" for="overrideNoSector">
+                                                            Show incidents without a sector
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <label class="form-label d-block mb-2">Show Incidents From
+                                                    Sectors:</label>
+
+                                                <div class="mb-2 d-flex flex-wrap gap-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        data-bind="click: config.clearSectors">
+                                                        Clear all
+                                                    </button>
+                                                </div>
+
+                                                <div class="border rounded p-2" id="sectorFiltersBox">
+                                                    <!-- Grid of sector checkboxes: 2 columns -->
+                                                    <div class="row row-cols-2 g-2" data-bind="foreach: sectors">
+                                                        <div class="col">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    data-bind="
+                                       sectorFilterAndFetch: { id: id(), name: name() },
+                                       attr: { id: 'sectorFilter_' + id() }
+                                   ">
+                                                                <label class="form-check-label"
+                                                                    data-bind="text: name, attr: { for: 'sectorFilter_' + id() }">
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="text-muted small"
+                                                        data-bind="visible: !sectors().length">
+                                                        No sectors loaded for current incident filters.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div><!-- /accordion -->
                             </form>
                         </div>
                     </div>
+
                 </div>
 
                 <div class="modal-footer">
@@ -1943,7 +2172,26 @@
         </div>
     </div>
 
-    
+
+    <!-- SMS MODAL
+    <div class="modal fade" id="SendSMSModal" tabindex="-1" aria-labelledby="SendSMSModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" data-bind="with: SendSMSModalVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="SendSMSModalLabel">
+                        <span data-bind="text: headerLabel"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
+                        <span data-bind="text: errorMessage"></span>
+                    </div>
+                    <textarea class="modal-textarea-full" id="SMSMessageInput" rows="8" maxlength="4000"
+                        data-bind="value: text"></textarea>
+                </div>
+
     <!-- SMS MODAL
     <div class="modal fade" id="SendSMSModal" tabindex="-1" aria-labelledby="SendSMSModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">

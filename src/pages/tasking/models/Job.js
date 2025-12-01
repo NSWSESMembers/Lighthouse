@@ -4,7 +4,7 @@ import moment from "moment";
 import { Entity } from "./Entity.js";
 import { Address } from "./Address.js";
 import { Tag } from "./Tag.js";
-
+import { Sector } from "./Sector.js";
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 import { jobsToUI } from "../utils/jobTypesToUI.js";
 
@@ -80,6 +80,7 @@ export function Job(data = {}, deps = {}) {
     //refs to other obs
     self.marker = null;  // will hold the L.Marker instance
     self.taskings = ko.observableArray(); //array of taskings
+    self.sector = new Sector(data.Sector || {});
 
 
     // computed
@@ -98,6 +99,11 @@ export function Job(data = {}, deps = {}) {
         }
         return lat + " / " + lng;
     });
+
+    self.sectorName = ko.pureComputed(() => self.sector.name() || "Unassigned");
+
+    self.rowHasFocus = ko.observable(false);
+    self.popUpIsOpen = ko.observable(false);
 
 
     self.rowHasFocus = ko.observable(false);
@@ -355,6 +361,7 @@ export function Job(data = {}, deps = {}) {
         this.startDataRefreshCheck(); // restart timer
 
 
+        if (d.Sector !== null) this.sector.updateFromJson(d.Sector);
         // scalars
         if (d.Identifier !== undefined) this.identifier(d.Identifier);
         if (d.TypeId !== undefined) this.typeId(d.TypeId);

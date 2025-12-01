@@ -31,6 +31,9 @@ export function ConfigVM(root, deps) {
     self.teamFilters = ko.observableArray([]);     // [{id, name, entityType}]
     self.incidentFilters = ko.observableArray([]); // [{id, name, entityType}]
 
+    //Sectors
+    self.sectorFilters = ko.observableArray([]);   // [{id, name}]
+    self.includeIncidentsWithoutSector = ko.observable(true);
 
     // Other settings
     self.refreshInterval = ko.observable(60);
@@ -46,7 +49,7 @@ export function ConfigVM(root, deps) {
     self.incidentTypeFilter = ko.observableArray([]);
 
 
-    self.teamTaskStatusFilter = ko.observableArray([]); 
+    self.teamTaskStatusFilter = ko.observableArray([]);
 
     self.openLoadBox = function () {
         self.loadExpanded(true);
@@ -56,14 +59,6 @@ export function ConfigVM(root, deps) {
         self.loadExpanded(false);
         self.shareKeyInput("");
     };
-
-    // self.incidentTypeFilter.subscribe(() => {
-    //     self.save();
-    // });
-
-    // self.jobStatusFilter.subscribe(() => {
-    //     self.save();
-    // });
 
     self.teamTaskStatusFilterDefaults = [
         "Tasked",
@@ -117,7 +112,9 @@ export function ConfigVM(root, deps) {
         teamStatusFilter: ko.toJS(self.teamStatusFilter),
         jobStatusFilter: ko.toJS(self.jobStatusFilter),
         incidentTypeFilter: ko.toJS(self.incidentTypeFilter),
-        teamTaskStatusFilter: ko.toJS(self.teamTaskStatusFilter)
+        teamTaskStatusFilter: ko.toJS(self.teamTaskStatusFilter),
+        sectorFilters: ko.toJS(self.sectorFilters),
+        includeIncidentsWithoutSector: !!self.includeIncidentsWithoutSector(),
     });
 
     // Helpers
@@ -148,6 +145,7 @@ export function ConfigVM(root, deps) {
 
     self.clearTeams = () => self.teamFilters.removeAll();
     self.clearIncidents = () => self.incidentFilters.removeAll();
+    self.clearSectors = () => self.sectorFilters.removeAll();
 
     // Search (debounced)
     self.query
@@ -285,6 +283,8 @@ export function ConfigVM(root, deps) {
             cfg.jobStatusFilter = self.jobStatusFilterDefaults;
             cfg.incidentTypeFilter = self.incidentTypeFilterDefaults;
             cfg.teamTaskStatusFilter = self.teamTaskStatusFilterDefaults;
+            cfg.sectorFilters = [];
+            cfg.includeIncidentsWithoutSector = true;
 
         }
         console.log('Loaded config:', cfg);
@@ -297,6 +297,9 @@ export function ConfigVM(root, deps) {
         }
         if (typeof cfg.showAdvanced === 'boolean') {
             self.showAdvanced(cfg.showAdvanced);
+        }
+          if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
+            self.includeIncidentsWithoutSector(cfg.includeIncidentsWithoutSector);
         }
 
         // filters
@@ -319,6 +322,14 @@ export function ConfigVM(root, deps) {
         if (Array.isArray(cfg.teamTaskStatusFilter)) {
             self.teamTaskStatusFilter(cfg.teamTaskStatusFilter);
         }
+        if (Array.isArray(cfg.sectorFilters)) {
+            self.sectorFilters(cfg.sectorFilters);
+        }
+
+      
+
+
+        self.afterConfigLoad()
 
     };
 
@@ -408,7 +419,20 @@ export function ConfigVM(root, deps) {
         self.loadShared(id);
     };
 
+    self.afterConfigLoad = () => {
+        deps.fetchAllSectors(self.incidentFilters().map(i => i.id));
+    }
+
 
     // run once on construction
-    self.loadFromStorage();
+    self.loadFromStorage()
+
+    self.incidentFilters.subscribe(() => {
+        deps.fetchAllSectors(self.incidentFilters().map(i => i.id));
+    }, null, "arrayChange");
+
+    self.includeIncidentsWithoutSector.subscribe(() => {
+        root.fetchAllJobsData();
+    })
+
 }

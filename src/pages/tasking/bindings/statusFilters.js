@@ -37,6 +37,48 @@ function makeStatusFilterBinding(listName, onChanged) {
     };
 }
 
+function makeSectorFilterBinding(onChanged) {
+    return {
+        init: function (element, valueAccessor, _allBindings, _vm, ctx) {
+            const val = ko.unwrap(valueAccessor()) || {};
+            const cfg = ctx.$root.config;
+            const vm = ctx.$root;
+            if (!cfg || typeof cfg.sectorFilters !== "function") return;
+
+            const id = val.id;
+            const name = val.name;
+
+            // initial checkbox state
+            element.checked = cfg.sectorFilters().some(s => s.id === id);
+
+            element.addEventListener("change", function () {
+                const arr = cfg.sectorFilters;
+
+                if (element.checked) {
+                    if (!arr().some(s => s.id === id)) {
+                        arr.push({ id, name });
+                    }
+                } else {
+                    arr.remove(s => s.id === id);
+                }
+
+                if (typeof onChanged === "function") {
+                    onChanged(vm, cfg);
+                }
+            });
+        },
+        update: function (element, valueAccessor, _allBindings, _vm, ctx) {
+            const val = ko.unwrap(valueAccessor()) || {};
+            const cfg = ctx.$root.config;
+            if (!cfg || typeof cfg.sectorFilters !== "function") return;
+
+            const id = val.id;
+            element.checked = cfg.sectorFilters().some(s => s.id === id);
+        }
+    };
+}
+
+
 export function installStatusFilterBindings() {
     // basic filters
     ko.bindingHandlers.teamStatusFilter = makeStatusFilterBinding("teamStatusFilter");
@@ -74,6 +116,14 @@ export function installStatusFilterBindings() {
         (vm, cfg) => {
             cfg.save();
             vm.fetchAllJobsData();
+        }
+    );
+
+    ko.bindingHandlers.sectorFilterAndFetch = makeSectorFilterBinding(
+        (vm, cfg) => {
+            cfg.save();
+            vm.fetchAllJobsData();
+
         }
     );
 
