@@ -50,6 +50,39 @@ export function search(unit, host, StartDate, EndDate, userId = 'notPassed', tok
 
 }
 
+export function searchRaw(rawURL, host, userId = 'notPassed', token, callback, progressCallBack, onPage) {
+
+
+  var url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=" + userId + "&" + rawURL;
+
+  var lastDisplayedVal = 0;
+  getJsonPaginated(
+    url, token, 0, 50,
+    function (count, total) {
+      if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
+        lastDisplayedVal = count;
+        progressCallBack(count, total);
+      }
+      if (count == -1 && total == -1) { //allow errors
+        progressCallBack(count, total);
+      }
+
+    },
+    function (results) { //call for the JSON, rebuild the array and return it when done.
+      console.log("GetJSONfromBeacon call back with: ");
+      var obj = {
+        "Results": results
+      }
+      callback(obj);
+    }, function (pageResult) {
+      if (typeof onPage === 'function') {
+        onPage(pageResult);
+      }
+    }
+  );
+
+}
+
 export function summary(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack) {
   var url = "";
   console.log("Client.job.summary() called with:" + StartDate + "," + EndDate + ", " + host);
@@ -138,13 +171,13 @@ export function searchwithFilter(unit, host, StartDate, EndDate, userId = 'notPa
   console.log("Client.job.searchwithFilter() called with:" + StartDate + "," + EndDate + ", " + host);
 
   var statusString = ""
-      statusTypes.forEach(function (s) {
-        statusString = statusString + "&JobStatusTypeIds=" + s
-      })
-      var jobString = ""
-      jobType.forEach(function (j) {
-        jobString = jobString + "&JobTypeIds=" + j
-      })
+  statusTypes.forEach(function (s) {
+    statusString = statusString + "&JobStatusTypeIds=" + s
+  })
+  var jobString = ""
+  jobType.forEach(function (j) {
+    jobString = jobString + "&JobTypeIds=" + j
+  })
 
   if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) == false) {
@@ -154,7 +187,7 @@ export function searchwithFilter(unit, host, StartDate, EndDate, userId = 'notPa
       unit.forEach(function (d) {
         hqString = hqString + "&Hq=" + d.Id
       });
-      
+
       url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + statusString + jobString + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
     }
   } else {

@@ -30,6 +30,7 @@ import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
 import { Team } from './models/Team.js';
 import { Job } from './models/Job.js';
+import { Sector } from './models/Sector.js';
 
 import { canon } from './utils/common.js';
 import { Enum } from './utils/enum.js';
@@ -133,220 +134,8 @@ esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(map);
 function VM() {
     const self = this;
 
-    const configDeps = {
-        entitiesSearch: (q) => new Promise((resolve) => {
-            BeaconClient.entities.search(q, apiHost, params.userId, token, (data) => resolve(data.Results || []));
-        }),
-        entitiesChildren: (parentId) => new Promise((resolve) => {
-            BeaconClient.entities.children(parentId, apiHost, params.userId, token, (data) => resolve(data || []));
-        })
-    };
 
     self.mapVM = new MapVM(map, self);
-
-    self.config = new ConfigVM(self, configDeps);
-
-    // --- Polling layers ---
-    registerTransportCamerasLayer(self, map, getToken, apiHost, params);
-    registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
-    registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
-
-
-    // --- Layers Drawer (under zoom)
-    const LayersDrawer = L.Control.extend({
-        options: { position: "topleft" },
-
-        initialize(opts = {}) {
-            L.Util.setOptions(this, opts);
-            this._currentBase = null;
-            this._baseKey = localStorage.getItem("map.base") || "Topographic";
-            this._open = localStorage.getItem("layers.open") === "1";
-        },
-
-        onAdd(map) {
-            const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
-            c.innerHTML = `
-      <button class="ld-toggle" title="Layers" aria-expanded="${this._open ? "true" : "false"}">
-        <i class="fas fa-layer-group"></i>
-      </button>
-      <div class="ld-panel ${this._open ? "" : "d-none"}">
-        <div class="ld-section">
-          <div class="ld-title">Basemap</div>
-          <div class="ld-list ld-bases"></div>
-        </div>
-        <div class="ld-section">
-          <div class="ld-title">Overlays</div>
-          <div class="ld-list ld-overlays"></div>
-        </div>
-      </div>
-    `;
-
-            // build basemap list
-            // NSW Spatial Services + ESRI basemaps
-            const basemapNames = [
-                { name: "Esri Topographic", key: "Topographic" },
-                { name: "Esri Streets", key: "Streets" },
-                { name: "Esri Imagery", key: "Imagery" },
-                { name: "Esri Dark", key: "DarkGray" },
-                { name: "SIX Maps Topographic", key: "nsw-vector" },
-                { name: "SIX Maps Base Map", key: "nsw-base" },
-                { name: "SIX Maps Imagery", key: "nsw-imagery" },
-            ];
-
-            const basesEl = c.querySelector(".ld-bases");
-            basemapNames.forEach(({ name, key }) => {
-                const id = `base-${key}`;
-                const row = document.createElement("label");
-                row.className = "ld-row";
-                row.innerHTML = `
-        <input type="radio"
-               name="basemap"
-               id="${id}"
-               value="${key}"
-               ${key === this._baseKey ? "checked" : ""}/>
-        <span>${name}</span>
-    `;
-                basesEl.appendChild(row);
-            });
-
-
-            // apply initial basemap
-            this._setBasemap(this._baseKey, map);
-
-            basesEl.addEventListener("change", (e) => {
-                const val = e.target?.value;
-                if (!val) return;
-                this._setBasemap(val, map);
-                localStorage.setItem("map.base", val);
-            });
-
-            // build overlays from MapVM (vehicles, jobs, online services, etc.)
-            const overlaysEl = c.querySelector(".ld-overlays");
-            const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
-
-            // Group by def.group (parent menu layer)
-            const groups = new Map();
-            overlayDefs.forEach(def => {
-                const g = def.group || ''; // '' = ungrouped
-                if (!groups.has(g)) groups.set(g, []);
-                groups.get(g).push(def);
-            });
-
-            groups.forEach((defs, groupKey) => {
-                // Bootstrap-style sub heading for parent group
-                if (groupKey) {
-                    const heading = document.createElement("div");
-                    heading.className = "text-muted text-uppercase fw-semibold small mt-2 mb-1";
-                    heading.textContent = groupKey;
-                    overlaysEl.appendChild(heading);
-                }
-
-                defs.forEach(({ key, label, layer }) => {
-                    const id = `ov-${key}`;
-                    const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
-                    if (saved) map.addLayer(layer);
-
-                    const row = document.createElement("label");
-                    row.className = "ld-row d-flex align-items-center gap-1";
-                    row.innerHTML = `
-            <input class="form-check-input m-0" type="checkbox" id="${id}" ${saved ? "checked" : ""}/>
-            <span class="">${label}</span>
-          `;
-                    overlaysEl.appendChild(row);
-
-                    row.querySelector("input").addEventListener("change", (e) => {
-                        if (e.target.checked) {
-                            map.addLayer(layer);
-                            localStorage.setItem(`ov.${key}`, "1");
-                        } else {
-                            map.removeLayer(layer);
-                            localStorage.setItem(`ov.${key}`, "0");
-                        }
-                    });
-                });
-            });
-
-
-            // open/close toggle
-            const btn = c.querySelector(".ld-toggle");
-            const panel = c.querySelector(".ld-panel");
-            L.DomEvent.on(btn, "click", (ev) => {
-                L.DomEvent.stop(ev);
-                const show = panel.classList.toggle("d-none");
-                btn.setAttribute("aria-expanded", (!show).toString());
-                localStorage.setItem("layers.open", show ? "0" : "1");
-            });
-
-            // don’t propagate scroll/drag
-            L.DomEvent.disableClickPropagation(c);
-
-            // nudge under the zoom buttons
-            setTimeout(() => {
-                const zoom = map._controlCorners.topleft.querySelector(".leaflet-control-zoom");
-                if (zoom && c.parentElement === map._controlCorners.topleft) {
-                    zoom.insertAdjacentElement("afterend", c);
-                }
-            }, 0);
-
-            this._container = c;
-            return c;
-        },
-
-        onRemove() { /* nothing to clean up */ },
-
-        _setBasemap(key, map) {
-            if (this._currentBase) {
-                map.removeLayer(this._currentBase);
-                this._currentBase = null;
-            }
-
-            // --- NSW VECTOR BASEMAP (Topographic style) ---
-            if (key === "nsw-vector") {
-                // Uses the NSW_BaseMap_VectorTile VectorTileServer
-                this._currentBase = esriVector.vectorTileLayer(
-                    "https://portal.spatial.nsw.gov.au/vectortileservices/rest/services/Hosted/NSW_BaseMap_VectorTile/VectorTileServer",
-                    {
-                        attribution: "© NSW Spatial Services"
-                    }
-                );
-            }
-
-            // --- NSW RASTER BASEMAPS (tile MapServer) ---
-            else if (key === "nsw-base") {
-                this._currentBase = L.tileLayer(
-                    "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
-                    {
-                        maxZoom: 20,
-                        attribution: "© NSW Spatial Services"
-                    }
-                );
-            } else if (key === "nsw-imagery") {
-                this._currentBase = L.tileLayer(
-                    "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
-                    {
-                        maxZoom: 20,
-                        attribution: "© NSW Spatial Services"
-                    }
-                );
-            }
-
-            // --- EXISTING ESRI BASEMAPS ---
-            else {
-                this._currentBase = esri.basemapLayer(key, { ignoreDeprecationWarning: true });
-            }
-
-            if (this._currentBase) {
-                this._currentBase.addTo(map);
-            }
-        }
-
-
-    });
-
-    // create & add (after VM so we can pass it in)
-    const layersDrawer = new LayersDrawer({ vm: myViewModel });
-    layersDrawer.addTo(map);
-
 
     self.tokenLoading = ko.observable(true);
     self.teamsLoading = ko.observable(true);
@@ -362,12 +151,14 @@ function VM() {
     self.jobsById = new Map();
     self.taskingsById = new Map();
     self.assetsById = new Map();
+    self.sectorsById = new Map();
 
     // Global collections
     self.teams = ko.observableArray();
     self.jobs = ko.observableArray();
     self.taskings = ko.observableArray();
     self.trackableAssets = ko.observableArray([]);
+    self.sectors = ko.observableArray([]);
 
     self.allTags = ko.observableArray([]);
 
@@ -386,7 +177,6 @@ function VM() {
     self.teamSortAsc = ko.observable(true);
     self.jobSortKey = ko.observable('identifier');
     self.jobSortAsc = ko.observable(false);
-
 
     // --- sorted arrays ---
     self.sortedTeams = ko.pureComputed(function () {
@@ -469,6 +259,11 @@ function VM() {
     self.filteredJobs = ko.pureComputed(() => {
 
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
+        const sectorFilter = self.config.sectorFilters().map(s => s.id);
+
+        // If sector filtering is active, only include jobs in those sectors
+
+
         const term = self.jobSearch().toLowerCase();
 
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
@@ -480,9 +275,18 @@ function VM() {
         start.setDate(end.getDate() - self.config.fetchPeriod());
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
-
             const statusName = jb.statusName();
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
+            const sectorMatch = sectorFilter.length === 0 || (jb.sector && sectorFilter.includes(jb.sector.id()));
+            //must match sector filter
+
+            //if no sector and config says to exclude, filter out
+            if (!jb.sector.id() && self.config.includeIncidentsWithoutSector() === false) {
+                return false;
+            }
+
+            if (jb.sector.id() && !sectorMatch) return false;
+
 
             // If allow-list non-empty, only show jobs whose status is in it
             if (allowedStatus.length > 0 && !allowedStatus.includes(statusName)) {
@@ -587,6 +391,35 @@ function VM() {
 
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
+
+
+    self.sectorsLoading = ko.observable(false);
+
+    // --- Fetch sectors for current filters
+    self.fetchAllSectors = async function (hqs) {
+        console.log("Fetching sectors for HQs:", hqs);
+        self.sectorsLoading(true);
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.sectors.search(hqs, apiHost, params.userId, t, (res) => {
+            (res?.Results || []).forEach(
+                (sectorJson) => {
+                    let sector = self.sectorsById.get(sectorJson.Id);
+                    if (sector) {
+                        sector.updateFromJson(sectorJson);
+                    } else {
+                        // new sector
+                        sector = new Sector(sectorJson);
+                        self.sectorsById.set(sector.id(), sector);
+                        self.sectors.push(sector);
+                    }
+                }
+            );
+            self.sectorsLoading(false);
+        }, (count, total) => {
+            console.log(`Fetched ${count} / ${total} sectors...`);
+        });
+    }
+
     function makeJobDeps() {
         return {
             makeJobLink: (id) => `${params.source}/Jobs/${id}`,
@@ -679,6 +512,20 @@ function VM() {
         self._refreshTeamTrackableAssets(team);
         return team;
     };
+    
+    
+    const configDeps = {
+        entitiesSearch: (q) => new Promise((resolve) => {
+            BeaconClient.entities.search(q, apiHost, params.userId, token, (data) => resolve(data.Results || []));
+        }),
+        entitiesChildren: (parentId) => new Promise((resolve) => {
+            BeaconClient.entities.children(parentId, apiHost, params.userId, token, (data) => resolve(data || []));
+        }),
+        fetchAllSectors: (hqs) => self.fetchAllSectors(hqs),
+    };
+
+    self.config = new ConfigVM(self, configDeps);
+
 
     self.attachJobTimelineModal = function (job) {
         const modalEl = document.getElementById('jobTimelineModal');
@@ -1118,18 +965,33 @@ function VM() {
     }
 
     self.fetchAllJobsData = async function () {
-        const hqsFilter = myViewModel.config.incidentFilters().map(f => ({ Id: f.id }));
-
-        const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => Enum.JobStatusType[status]?.Id).filter(id => id !== undefined);
-
-        const incidentTypeFilterToView = myViewModel.config.incidentTypeFilter().map(type => Enum.IncidentType[type]?.Id).filter(id => id !== undefined);
-
+        const hqsFilter = myViewModel.config.incidentFilters().map(f => `Hq=${f.id}`).join('&');
+        const statusFilterToView = myViewModel.config.jobStatusFilter().map(status => `JobStatusTypeIds=${Enum.JobStatusType[status]?.Id}`).filter(id => id !== undefined).join('&');
+        const incidentTypeFilterToView = myViewModel.config.incidentTypeFilter().map(type => `JobTypeIds=${Enum.IncidentType[type]?.Id}`).filter(id => id !== undefined).join('&');
+        const sectorToView = myViewModel.config.sectorFilters().map(s => `SectorIds=${s.id}`).join('&');
         var end = new Date();
         var start = new Date();
+
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
+
         myViewModel.jobsLoading(true);
+
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.job.searchwithFilter(hqsFilter, apiHost, start, end, params.userId, t, function (allJobs) {
+
+        const paramsArray = [
+            `StartDate=${start.toISOString()}`,
+            `EndDate=${end.toISOString()}`,
+            hqsFilter,
+            statusFilterToView,
+            incidentTypeFilterToView,
+            sectorToView,
+            `Unsectorised=${self.config.includeIncidentsWithoutSector()}`,
+            `ViewModelType=6`,
+        ].filter(param => param && param.trim() !== '');
+
+        const url = paramsArray.join('&');
+
+        BeaconClient.job.searchRaw(url, apiHost, params.userId, t, function (allJobs) {
             console.log("Total jobs fetched:", allJobs.Results.length);
 
             // Clean up jobs that no longer exist in the feed
@@ -1152,16 +1014,11 @@ function VM() {
             myViewModel.jobsLoading(false);
         }, function (_val, _total) {
             //console.log("Progress: " + _val + " / " + _total)
-        },
-            1, //view model
-            statusFilterToView, //status filter
-            incidentTypeFilterToView, //incident type filter
-            function (jobs) { //call back as they come in per page
-                jobs.Results.forEach(function (t) {
-                    myViewModel.getOrCreateJob(t);
-                })
-            }
-        )
+        }, function (jobs) { //call back as they come in per page
+            jobs.Results.forEach(function (t) {
+                myViewModel.getOrCreateJob(t);
+            })
+        })
     }
 
     self.fetchAllTeamData = async function () {
@@ -1291,6 +1148,211 @@ function VM() {
         startJobsTeamsTimer();
         startAssetDataRefreshTimer()
     }
+
+    // --- Polling layers ---
+    registerTransportCamerasLayer(self, map, getToken, apiHost, params);
+    registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
+    registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
+
+
+
+    // --- Layers Drawer (under zoom)
+    const LayersDrawer = L.Control.extend({
+        options: { position: "topleft" },
+
+        initialize(opts = {}) {
+            L.Util.setOptions(this, opts);
+            this._currentBase = null;
+            this._baseKey = localStorage.getItem("map.base") || "Topographic";
+            this._open = localStorage.getItem("layers.open") === "1";
+        },
+
+        onAdd(map) {
+            const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
+            c.addEventListener('wheel', (e) => {
+                e.stopPropagation();   // stop Leaflet zoom
+            }, { passive: false });
+            c.innerHTML = `
+      <button class="ld-toggle" title="Layers" aria-expanded="${this._open ? "true" : "false"}">
+        <i class="fas fa-layer-group"></i>
+      </button>
+      <div class="ld-panel ${this._open ? "" : "d-none"}">
+        <div class="ld-section">
+          <div class="ld-title">Basemap</div>
+          <div class="ld-list ld-bases"></div>
+        </div>
+        <div class="ld-section">
+          <div class="ld-title">Overlays</div>
+          <div class="ld-list ld-overlays"></div>
+        </div>
+      </div>
+    `;
+
+            // build basemap list
+            // NSW Spatial Services + ESRI basemaps
+            const basemapNames = [
+                { name: "Esri Topographic", key: "Topographic" },
+                { name: "Esri Streets", key: "Streets" },
+                { name: "Esri Imagery", key: "Imagery" },
+                { name: "Esri Dark", key: "DarkGray" },
+                { name: "SIX Maps Topographic", key: "nsw-vector" },
+                { name: "SIX Maps Base Map", key: "nsw-base" },
+                { name: "SIX Maps Imagery", key: "nsw-imagery" },
+            ];
+
+            const basesEl = c.querySelector(".ld-bases");
+            basemapNames.forEach(({ name, key }) => {
+                const id = `base-${key}`;
+                const row = document.createElement("label");
+                row.className = "ld-row";
+                row.innerHTML = `
+        <input type="radio"
+               name="basemap"
+               id="${id}"
+               value="${key}"
+               ${key === this._baseKey ? "checked" : ""}/>
+        <span>${name}</span>
+    `;
+                basesEl.appendChild(row);
+            });
+
+
+            // apply initial basemap
+            this._setBasemap(this._baseKey, map);
+
+            basesEl.addEventListener("change", (e) => {
+                const val = e.target?.value;
+                if (!val) return;
+                this._setBasemap(val, map);
+                localStorage.setItem("map.base", val);
+            });
+
+            // build overlays from MapVM (vehicles, jobs, online services, etc.)
+            const overlaysEl = c.querySelector(".ld-overlays");
+            const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
+
+            // Group by def.group (parent menu layer)
+            const groups = new Map();
+            overlayDefs.forEach(def => {
+                const g = def.group || ''; // '' = ungrouped
+                if (!groups.has(g)) groups.set(g, []);
+                groups.get(g).push(def);
+            });
+
+            groups.forEach((defs, groupKey) => {
+                // Bootstrap-style sub heading for parent group
+                if (groupKey) {
+                    const heading = document.createElement("div");
+                    heading.className = "text-muted text-uppercase fw-semibold small mt-2 mb-1";
+                    heading.textContent = groupKey;
+                    overlaysEl.appendChild(heading);
+                }
+
+                defs.forEach(({ key, label, layer }) => {
+                    const id = `ov-${key}`;
+                    const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
+                    if (saved) map.addLayer(layer);
+
+                    const row = document.createElement("label");
+                    row.className = "ld-row d-flex align-items-center gap-1";
+                    row.innerHTML = `
+            <input class="form-check-input m-0" type="checkbox" id="${id}" ${saved ? "checked" : ""}/>
+            <span class="">${label}</span>
+          `;
+                    overlaysEl.appendChild(row);
+
+                    row.querySelector("input").addEventListener("change", (e) => {
+                        if (e.target.checked) {
+                            map.addLayer(layer);
+                            localStorage.setItem(`ov.${key}`, "1");
+                        } else {
+                            map.removeLayer(layer);
+                            localStorage.setItem(`ov.${key}`, "0");
+                        }
+                    });
+                });
+            });
+
+
+            // open/close toggle
+            const btn = c.querySelector(".ld-toggle");
+            const panel = c.querySelector(".ld-panel");
+            L.DomEvent.on(btn, "click", (ev) => {
+                L.DomEvent.stop(ev);
+                const show = panel.classList.toggle("d-none");
+                btn.setAttribute("aria-expanded", (!show).toString());
+                localStorage.setItem("layers.open", show ? "0" : "1");
+            });
+
+            // don’t propagate scroll/drag
+            L.DomEvent.disableClickPropagation(c);
+
+            // nudge under the zoom buttons
+            setTimeout(() => {
+                const zoom = map._controlCorners.topleft.querySelector(".leaflet-control-zoom");
+                if (zoom && c.parentElement === map._controlCorners.topleft) {
+                    zoom.insertAdjacentElement("afterend", c);
+                }
+            }, 0);
+
+            this._container = c;
+            return c;
+        },
+
+        onRemove() { /* nothing to clean up */ },
+
+        _setBasemap(key, map) {
+            if (this._currentBase) {
+                map.removeLayer(this._currentBase);
+                this._currentBase = null;
+            }
+
+            // --- NSW VECTOR BASEMAP (Topographic style) ---
+            if (key === "nsw-vector") {
+                // Uses the NSW_BaseMap_VectorTile VectorTileServer
+                this._currentBase = esriVector.vectorTileLayer(
+                    "https://portal.spatial.nsw.gov.au/vectortileservices/rest/services/Hosted/NSW_BaseMap_VectorTile/VectorTileServer",
+                    {
+                        attribution: "© NSW Spatial Services"
+                    }
+                );
+            }
+
+            // --- NSW RASTER BASEMAPS (tile MapServer) ---
+            else if (key === "nsw-base") {
+                this._currentBase = L.tileLayer(
+                    "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
+                    {
+                        maxZoom: 20,
+                        attribution: "© NSW Spatial Services"
+                    }
+                );
+            } else if (key === "nsw-imagery") {
+                this._currentBase = L.tileLayer(
+                    "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
+                    {
+                        maxZoom: 20,
+                        attribution: "© NSW Spatial Services"
+                    }
+                );
+            }
+
+            // --- EXISTING ESRI BASEMAPS ---
+            else {
+                this._currentBase = esri.basemapLayer(key, { ignoreDeprecationWarning: true });
+            }
+
+            if (this._currentBase) {
+                this._currentBase.addTo(map);
+            }
+        }
+
+
+    });
+
+    // create & add (after VM so we can pass it in)
+    const layersDrawer = new LayersDrawer({ vm: myViewModel });
+    layersDrawer.addTo(map);
 
 
 }

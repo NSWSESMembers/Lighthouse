@@ -1126,6 +1126,20 @@ tr.job:hover {
     margin-left: 10px;
 }
 
+.dropdown-three-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;   /* three columns */
+    column-gap: 1rem;
+    row-gap: 0.15rem;
+    font-size: 0.8rem;
+}
+
+.dropdown-three-col .form-check {
+    margin: 0;
+    padding: 0;
+    margin-left: 10px;
+}
+
 #configModal .modal-header {
     flex-wrap: wrap;
     gap: 0.5rem;
@@ -1149,7 +1163,9 @@ tr.job:hover {
 }
 
 
-
+.lmt-25 {
+    margin-top: 2.5px !important;
+} 
 
 /* === Job History / Ops Log two-lane timeline === */
 
