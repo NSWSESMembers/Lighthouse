@@ -2226,6 +2226,25 @@
                         data-bind="value: text"></textarea>
                 </div>
 
+    <!-- SMS MODAL
+    <div class="modal fade" id="SendSMSModal" tabindex="-1" aria-labelledby="SendSMSModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content" data-bind="with: SendSMSModalVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="SendSMSModalLabel">
+                        <span data-bind="text: headerLabel"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
+                        <span data-bind="text: errorMessage"></span>
+                    </div>
+                    <textarea class="modal-textarea-full" id="SMSMessageInput" rows="8" maxlength="4000"
+                        data-bind="value: text"></textarea>
+                </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-outline-secondary" data-bind="click: submit">Submit</button>
