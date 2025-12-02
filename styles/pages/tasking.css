@@ -1520,3 +1520,29 @@ tr.job:hover {
     border-right: 4px solid transparent;
     vertical-align: middle;
 }
+
+.zone-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow:
+    -1px -1px 1px #fff,
+     1px -1px 1px #fff,
+    -1px  1px 1px #fff,
+     1px  1px 1px #fff;
+  pointer-events: none;
+}
+
+.unit-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow:
+    -1px -1px 1px #ffffff,
+     1px -1px 1px #ffffff,
+    -1px  1px 1px #ffffff,
+     1px  1px 1px #ffffff;
+  pointer-events: none;
+}

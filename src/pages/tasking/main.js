@@ -44,11 +44,17 @@ import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
 import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
+import { registerSESZonesGridLayer } from "./mapLayers/geoservices.js";
+import { registerSESUnitsZonesHybridGridLayer } from "./mapLayers/geoservices.js";
+import { registerSESUnitLocationsLayer } from "./mapLayers/geoservices.js";
 import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
+
+import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
 var $ = require('jquery');
 
 var L = require('leaflet');
+require('leaflet.vectorgrid');
 
 var esri = require('esri-leaflet');
 
@@ -431,7 +437,7 @@ function VM() {
         });
     }
 
-        self.unSetSectorForJob = async function (job) {
+    self.unSetSectorForJob = async function (job) {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.sectors.unSetSector(job, apiHost, params.userId, t, (success) => {
             if (success) {
@@ -535,8 +541,8 @@ function VM() {
         self._refreshTeamTrackableAssets(team);
         return team;
     };
-    
-    
+
+
     const configDeps = {
         entitiesSearch: (q) => new Promise((resolve) => {
             BeaconClient.entities.search(q, apiHost, params.userId, token, (data) => resolve(data.Results || []));
@@ -550,35 +556,35 @@ function VM() {
     self.config = new ConfigVM(self, configDeps);
 
     self.sectorSelectorClick = function (sectorVm, event) {
-    // Find the KO context for the clicked element
-    var ctx = ko.contextFor(event.currentTarget || event.target);
-    if (!ctx) return;
+        // Find the KO context for the clicked element
+        var ctx = ko.contextFor(event.currentTarget || event.target);
+        if (!ctx) return;
 
-    // Walk up until we find the context that has 'j' (the job VM)
-    var jobCtx = ctx;
-    while (jobCtx && !jobCtx.j) {
-        jobCtx = jobCtx.$parentContext;
-    }
-    if (!jobCtx || !jobCtx.j) return;
+        // Walk up until we find the context that has 'j' (the job VM)
+        var jobCtx = ctx;
+        while (jobCtx && !jobCtx.j) {
+            jobCtx = jobCtx.$parentContext;
+        }
+        if (!jobCtx || !jobCtx.j) return;
 
-    var job = jobCtx.j;
+        var job = jobCtx.j;
 
-    // Now we have both job and sector VMs
-    var jobId = job.id();
-    var sectorId = sectorVm.id();
+        // Now we have both job and sector VMs
+        var jobId = job.id();
+        var sectorId = sectorVm.id();
 
-    if (job.sector().id() === sectorId) {
-        // Sector is already assigned to job; unassign it
-        self.unSetSectorForJob(jobId);
-        console.log("Unassigning sector from job", jobId);
-        return;
-    }
+        if (job.sector().id() === sectorId) {
+            // Sector is already assigned to job; unassign it
+            self.unSetSectorForJob(jobId);
+            console.log("Unassigning sector from job", jobId);
+            return;
+        }
 
-    self.setSectorForJob(jobId, sectorId);
+        self.setSectorForJob(jobId, sectorId);
 
-    console.log("Assigning sector", sectorId, "to job", jobId);
-    
-};
+        console.log("Assigning sector", sectorId, "to job", jobId);
+
+    };
 
     self.attachJobTimelineModal = function (job) {
         const modalEl = document.getElementById('jobTimelineModal');
@@ -1206,8 +1212,9 @@ function VM() {
     registerTransportCamerasLayer(self, map, getToken, apiHost, params);
     registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
     registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
-
-
+    registerSESZonesGridLayer(self);
+    registerSESUnitsZonesHybridGridLayer(self, map);
+    registerSESUnitLocationsLayer(self);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
@@ -1406,6 +1413,22 @@ function VM() {
     // create & add (after VM so we can pass it in)
     const layersDrawer = new LayersDrawer({ vm: myViewModel });
     layersDrawer.addTo(map);
+
+    self.fetchHQDetails = async function (hqName) {
+        console.log("Fetching HQ details for:", hqName);
+        const t = await getToken(); // Wait for the token to be ready
+
+        return new Promise((resolve, reject) => {
+            fetchHqDetailsSummary(hqName, apiHost, t, (hqDetails) => {
+                if (hqDetails) {
+                    resolve(hqDetails); // Resolve the promise with the result
+                } else {
+                    console.warn("No HQ details found for name:", hqName);
+                    reject(new Error("No HQ details found"));
+                }
+            });
+        });
+    };
 
 
 }
