@@ -29,7 +29,6 @@ export class InstantTaskViewModel {
 
     popupFilteredTeams = ko.pureComputed(() => {
 
-
         if (!this.popupActive()) return []; // short-circuit
 
         const term = (this.popupTeamFilter() || "").toLowerCase().trim();

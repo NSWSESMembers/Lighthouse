@@ -80,7 +80,7 @@ export function Job(data = {}, deps = {}) {
     //refs to other obs
     self.marker = null;  // will hold the L.Marker instance
     self.taskings = ko.observableArray(); //array of taskings
-    self.sector = new Sector(data.Sector || {});
+    self.sector = ko.observable(new Sector(data.Sector || {}));
 
 
     // computed
@@ -100,7 +100,7 @@ export function Job(data = {}, deps = {}) {
         return lat + " / " + lng;
     });
 
-    self.sectorName = ko.pureComputed(() => self.sector.name() || "Unassigned");
+    self.sectorName = ko.pureComputed(() => self.sector().name() || "Unassigned");
 
     self.rowHasFocus = ko.observable(false);
     self.popUpIsOpen = ko.observable(false);
@@ -356,8 +356,14 @@ export function Job(data = {}, deps = {}) {
 
         this.startDataRefreshCheck(); // restart timer
 
-
-        if (d.Sector !== null) this.sector.updateFromJson(d.Sector);
+        // sector might be undefined or null. they mean different things
+        if (d.Sector !== undefined) { //sector present in payload
+            if (d.Sector === null) { //theres no sector assigned
+                this.sector(new Sector({}));
+            } else {
+                this.sector().updateFromJson(d.Sector);
+            }
+        }
         // scalars
         if (d.Identifier !== undefined) this.identifier(d.Identifier);
         if (d.TypeId !== undefined) this.typeId(d.TypeId);

@@ -1,4 +1,6 @@
 import { getJsonPaginated } from './json.js';
+import $ from 'jquery';
+
 
 export function search(unit, host, userId = 'notPassed', token, callback, progressCallBack) {
 
@@ -41,5 +43,43 @@ export function search(unit, host, userId = 'notPassed', token, callback, progre
       callback(obj);
     }
   );
+}
 
+
+export function setSector(jobId, sectorId, host, userId, token, callback) {
+  $.ajax({
+    type: 'PUT',
+    url: host + '/Api/v1/Sectors/' + sectorId + '/Jobs?LighthouseFunction=SetSectorForJob',
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    data: JSON.stringify({ IdsToAdd: [jobId], userId: userId }),
+    cache: false,
+    dataType: 'json',
+    contentType: 'application/json; charset=utf-8',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        callback(true)
+        }
+    },
+  });
+}
+
+export function unSetSector(jobId, host, userId, token, callback) {
+  $.ajax({
+    type: 'PUT',
+    url: host + '/Api/v1/Sectors/RemoveJobFromSector/' + jobId + '?LighthouseFunction=unSetSectorForJob',
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    data: JSON.stringify({ userId: userId }),
+    cache: false,
+    dataType: 'json',
+    contentType: 'application/json; charset=utf-8',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        callback(true)
+        }
+    },
+  });
 }
