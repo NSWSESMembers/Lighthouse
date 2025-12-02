@@ -1470,10 +1470,53 @@ tr.job:hover {
 }
 
 /* Ensure team/job dropdown menus appear above pane overflow */
-#teamFilterDropdown, #jobFilterDropDown{
+#teamFilterDropdown, #jobFilterDropDown {
     position: fixed !important;   /* escape overflow containers */
     transform: none !important;   /* disable BS placement transforms */
     inset: auto !important;       /* let JS set the coords */
     z-index: 3000 !important;
 }
 
+#sectorDropdown {
+    z-index: 3000 !important;
+}
+
+#sectorDropdown.show {
+    position: fixed !important;
+}
+
+.job-taskteam-dropdown {
+    z-index: 3000 !important;
+}
+
+.job-taskteam-dropdown.show {
+    position: fixed !important;
+}
+
+
+
+/* Sector dropdown button */
+.sector-dropdown-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    margin-top: 2px;
+}
+
+.sector-dropdown-btn:hover {
+    text-decoration: underline;
+}
+
+/* Small caret */
+.sector-dropdown-btn .caret {
+    display: inline-block;
+    margin-left: 4px;
+    border-top: 4px solid currentColor;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    vertical-align: middle;
+}

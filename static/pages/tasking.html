@@ -107,7 +107,7 @@
                             </button>
 
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="teamMenu"
-                                id="teamFilterDropdown" data-bs-popper="static">
+                                id="teamFilterDropdown">
 
 
 
@@ -889,9 +889,25 @@
                                                                         Assigned Sector
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
-                                                                        <p class="form-control-plaintext job-details-value"
-                                                                            data-bind="text: j.sectorName()">
-                                                                        </p>
+                                                                        <div class="dropdown">
+                                                                            <button class="sector-dropdown-btn"
+                                                                                type="button" data-bs-toggle="dropdown">
+                                                                                <span data-bind="text: j.sectorName()"></span>
+                                                                                <span class="caret"></span>
+                                                                            </button>
+                                                                            <ul class="dropdown-menu"
+                                                                                id="sectorDropdown"
+                                                                                data-bs-popper="static">
+                                                                                <!-- ko foreach: $root.sectors -->
+                                                                                <li>
+                                                                                    <button type="button"
+                                                                                        class="dropdown-item"
+                                                                                        data-bind=" text: name, css: { active: id() == j.sector().id() }, click: $root.sectorSelectorClick">
+                                                                                    </button>
+                                                                                </li>
+                                                                                <!-- /ko -->
+                                                                            </ul>
+                                                                        </div>
                                                                     </div>
                                                                 </div>
 
@@ -909,8 +925,6 @@
                                                                             class="btn btn-primary btn-sm flex-fill w-50"
                                                                             type="button" data-bs-toggle="dropdown"
                                                                             data-bs-auto-close="outside"
-                                                                            data-bs-reference="parent"
-                                                                            data-bs-boundary="viewport"
                                                                             data-bind="attr: { id: 'tmAssignTeamBtn-' + j.id }">
                                                                             <i class="fa fa-solid fa-user-plus"></i>
                                                                             Task Team
@@ -918,8 +932,7 @@
                                                                         <div class="dropdown">
                                                                             <ul class="dropdown-menu dropdown-menu-end p-2  job-taskteam-dropdown"
                                                                                 data-bind="attr: { id: 'tmAssignTeamMenu-' + j.id, 'aria-labelledby': 'tmAssignTeamBtn-' + j.id }"
-                                                                                style="min-width: 260px;"
-                                                                                data-bs-popper="static">
+                                                                                style="min-width: 260px;">
                                                                                 <li class="mb-2">
                                                                                     <input type="text"
                                                                                         class="form-control form-control-sm"
@@ -1040,7 +1053,8 @@
                                                                 </legend>
 
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-4 text-sm-end lmt-25">Number</label>
+                                                                    <label
+                                                                        class="col-4 text-sm-end lmt-25">Number</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
                                                                             data-bind="text: j.incidentContactNumber">
@@ -1058,7 +1072,8 @@
                                                                 </div>
                                                                 <div class="row align-items-start"
                                                                     data-bind="visible: !j.contactCalled">
-                                                                    <label class="col-4 text-sm-end lmt-25">Called By</label>
+                                                                    <label class="col-4 text-sm-end lmt-25">Called
+                                                                        By</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
                                                                             data-bind="text: j.callerFirstName + ' ' + j.callerLastName + ' - ' + j.callerPhoneNumber">

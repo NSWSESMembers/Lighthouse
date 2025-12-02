@@ -2,7 +2,7 @@ import ko from 'knockout';
 import { Entity } from './Entity.js';
 
 export function Sector(data) {
-    
+
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
 
@@ -37,7 +37,6 @@ export function Sector(data) {
     self.Boundary = ko.observableArray(data.Boundary || []);
 
     self.updateFromJson = function (data) {
-        if (!data) return;
         self.id(data.Id || null);
         self.name(data.Name || null);
 

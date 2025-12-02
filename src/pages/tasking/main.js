@@ -281,12 +281,11 @@ function VM() {
             //must match sector filter
 
             //if no sector and config says to exclude, filter out
-            if (!jb.sector.id() && self.config.includeIncidentsWithoutSector() === false) {
+            if (!jb.sector().id() && self.config.includeIncidentsWithoutSector() === false) {
                 return false;
             }
 
-            if (jb.sector.id() && !sectorMatch) return false;
-
+            if (jb.sector().id() && !sectorMatch) return false;
 
             // If allow-list non-empty, only show jobs whose status is in it
             if (allowedStatus.length > 0 && !allowedStatus.includes(statusName)) {
@@ -420,6 +419,30 @@ function VM() {
         });
     }
 
+    self.setSectorForJob = async function (job, sector) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.sectors.setSector(job, sector, apiHost, params.userId, t, (success) => {
+            if (success) {
+                showAlert('Incident assigned to sector successfully.', 'success', 3000);
+                self.fetchJobById(job, null);
+            } else {
+                showAlert('Failed to assign incident to sector.', 'danger', 5000);
+            }
+        });
+    }
+
+        self.unSetSectorForJob = async function (job) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.sectors.unSetSector(job, apiHost, params.userId, t, (success) => {
+            if (success) {
+                showAlert('Incident removed from sector successfully.', 'success', 3000);
+                self.fetchJobById(job, null);
+            } else {
+                showAlert('Failed to remove incident from sector.', 'danger', 5000);
+            }
+        });
+    }
+
     function makeJobDeps() {
         return {
             makeJobLink: (id) => `${params.source}/Jobs/${id}`,
@@ -526,6 +549,36 @@ function VM() {
 
     self.config = new ConfigVM(self, configDeps);
 
+    self.sectorSelectorClick = function (sectorVm, event) {
+    // Find the KO context for the clicked element
+    var ctx = ko.contextFor(event.currentTarget || event.target);
+    if (!ctx) return;
+
+    // Walk up until we find the context that has 'j' (the job VM)
+    var jobCtx = ctx;
+    while (jobCtx && !jobCtx.j) {
+        jobCtx = jobCtx.$parentContext;
+    }
+    if (!jobCtx || !jobCtx.j) return;
+
+    var job = jobCtx.j;
+
+    // Now we have both job and sector VMs
+    var jobId = job.id();
+    var sectorId = sectorVm.id();
+
+    if (job.sector().id() === sectorId) {
+        // Sector is already assigned to job; unassign it
+        self.unSetSectorForJob(jobId);
+        console.log("Unassigning sector from job", jobId);
+        return;
+    }
+
+    self.setSectorForJob(jobId, sectorId);
+
+    console.log("Assigning sector", sectorId, "to job", jobId);
+    
+};
 
     self.attachJobTimelineModal = function (job) {
         const modalEl = document.getElementById('jobTimelineModal');
@@ -906,13 +959,13 @@ function VM() {
             function (res) {
                 if (res) {
                     self.getOrCreateJob(res);
-                    cb(true);
+                    cb && cb(true);
                 } else {
-                    cb(false);
+                    cb && cb(false);
                 }
             },
             function (_err) {
-                cb(false);
+                cb && cb(false);
             }
         )
     }
