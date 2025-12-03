@@ -15,9 +15,9 @@ async function fetchFRAOSAsync(startDate, endDate, apiHost, userId, token) {
           } else {
             res({ ok: true, data: response });
           }
-        }, function (count, total) {
+        }, function (_count, _total) {
           //progress callback - we dont need this here
-        }, function (pageResult) {
+        }, function (_pageResult) {
           // on page callback - we dont need this here
         });
       });
