@@ -1562,3 +1562,17 @@ tr.job:hover {
   justify-content: center;
   align-items: center;
 }
+
+.layers-drawer .ld-panel {
+  background: #fff;
+  padding: 8px;
+  width: 260px;
+  max-height: 50%;
+  overflow: auto;
+  border-top: 1px solid #ccc;
+  border-radius: 0.5rem;
+}
+
+.layers-drawer .ld-overlay-btn {
+  font-size: 12px;
+}

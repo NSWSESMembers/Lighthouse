@@ -64,27 +64,6 @@ export function registerUnitBoundaryLayer(vm, map, getToken, apiHost, params) {
           fill: false,
         });
 
-        polygon.on("mouseover", function () {
-          this.setStyle({
-            fill: true,
-            fillColor: "rgba(255, 56, 238, 0.3)",
-            fillOpacity: 0.5,
-          });
-
-          const popup = L.popup()
-            .setContent(`${f.unit?.name || "Unknown Unit"} Unit`)
-            .openOn(map);
-
-          this._popup = popup;
-        });
-
-        polygon.on("mouseout", function () {
-          this.setStyle({ fill: false });
-          if (this._popup) {
-            map.closePopup(this._popup);
-            this._popup = null;
-          }
-        });
 
         layerGroup.addLayer(polygon);
       });

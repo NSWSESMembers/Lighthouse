@@ -52,7 +52,6 @@ import { renderFRAOSLayer } from "./mapLayers/frao.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
-import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
 var $ = require('jquery');
 
@@ -1232,136 +1231,186 @@ function VM() {
         },
 
         onAdd(map) {
-            const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
-            c.addEventListener('wheel', (e) => {
-                e.stopPropagation();   // stop Leaflet zoom
-            }, { passive: false });
-            c.innerHTML = `
-      <button class="ld-toggle" title="Layers" aria-expanded="${this._open ? "true" : "false"}">
+    const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
+
+    // stop wheel -> no map zoom when scrolling the panel
+    c.addEventListener(
+        "wheel",
+        (e) => {
+            e.stopPropagation();
+        },
+        { passive: false }
+    );
+
+    // Bootstrap-flavoured shell
+    c.innerHTML = `
+      <button class="ld-toggle btn btn-light btn-sm shadow-sm"
+              title="Layers"
+              aria-expanded="${this._open ? "true" : "false"}">
         <i class="fas fa-layer-group"></i>
       </button>
-      <div class="ld-panel ${this._open ? "" : "d-none"}">
-        <div class="ld-section">
-          <div class="ld-title">Basemap</div>
-          <div class="ld-list ld-bases"></div>
+
+      <div class="ld-panel ${this._open ? "" : "d-none"} shadow-sm rounded-3">
+        <div class="ld-section mb-2">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <span class="ld-title text-uppercase small text-muted">Basemap</span>
+          </div>
+          <div class="btn-group btn-group-sm d-flex flex-wrap ld-bases"
+               role="group"
+               aria-label="Basemap selection"></div>
         </div>
+
+        <hr class="my-2">
+
         <div class="ld-section">
-          <div class="ld-title">Overlays</div>
+          <div class="ld-title text-uppercase small text-muted mb-1">Overlays</div>
           <div class="ld-list ld-overlays"></div>
         </div>
       </div>
     `;
 
-            // build basemap list
-            // NSW Spatial Services + ESRI basemaps
-            const basemapNames = [
-                { name: "Esri Topographic", key: "Topographic" },
-                { name: "Esri Streets", key: "Streets" },
-                { name: "Esri Imagery", key: "Imagery" },
-                { name: "Esri Dark", key: "DarkGray" },
-                { name: "SIX Maps Topographic", key: "nsw-vector" },
-                { name: "SIX Maps Base Map", key: "nsw-base" },
-                { name: "SIX Maps Imagery", key: "nsw-imagery" },
-            ];
+    // --- Basemap buttons (single-select) ---
+    const basemapNames = [
+        { name: "Esri Topographic", key: "Topographic" },
+        { name: "Esri Streets",     key: "Streets"     },
+        { name: "Esri Imagery",     key: "Imagery"     },
+        { name: "Esri Dark",        key: "DarkGray"    },
+        { name: "SIX Maps Topographic", key: "nsw-vector" },
+        { name: "SIX Maps Base Map",    key: "nsw-base"   },
+        { name: "SIX Maps Imagery",     key: "nsw-imagery"}
+    ];
 
-            const basesEl = c.querySelector(".ld-bases");
-            basemapNames.forEach(({ name, key }) => {
-                const id = `base-${key}`;
-                const row = document.createElement("label");
-                row.className = "ld-row";
-                row.innerHTML = `
-        <input type="radio"
-               name="basemap"
-               id="${id}"
-               value="${key}"
-               ${key === this._baseKey ? "checked" : ""}/>
-        <span>${name}</span>
-    `;
-                basesEl.appendChild(row);
+    const basesEl = c.querySelector(".ld-bases");
+
+    basemapNames.forEach(({ name, key }) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className =
+            "btn btn-outline-secondary flex-grow-1 mb-1" +
+            (key === this._baseKey ? " active btn-primary" : "");
+        btn.textContent = name;
+        btn.dataset.baseKey = key;
+
+        btn.addEventListener("click", () => {
+            if (key === this._baseKey) return;
+
+            this._setBasemap(key, map);
+            this._baseKey = key;
+            localStorage.setItem("map.base", key);
+
+            // update active styles
+            basesEl.querySelectorAll("button").forEach((b) => {
+                b.classList.remove("active", "btn-primary");
+                b.classList.add("btn-outline-secondary");
             });
+            btn.classList.add("active", "btn-primary");
+            btn.classList.remove("btn-outline-secondary");
+        });
 
+        basesEl.appendChild(btn);
+    });
 
-            // apply initial basemap
-            this._setBasemap(this._baseKey, map);
+    // apply initial basemap
+    this._setBasemap(this._baseKey, map);
 
-            basesEl.addEventListener("change", (e) => {
-                const val = e.target?.value;
-                if (!val) return;
-                this._setBasemap(val, map);
-                localStorage.setItem("map.base", val);
-            });
+    // --- Overlays as toggle buttons (multi-select) ---
+    const overlaysEl = c.querySelector(".ld-overlays");
+    const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
 
-            // build overlays from MapVM (vehicles, jobs, online services, etc.)
-            const overlaysEl = c.querySelector(".ld-overlays");
-            const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
+    // Group by def.group (parent menu layer)
+    const groups = new Map();
+    overlayDefs.forEach((def) => {
+        const g = def.group || ""; // '' = ungrouped
+        if (!groups.has(g)) groups.set(g, []);
+        groups.get(g).push(def);
+    });
 
-            // Group by def.group (parent menu layer)
-            const groups = new Map();
-            overlayDefs.forEach(def => {
-                const g = def.group || ''; // '' = ungrouped
-                if (!groups.has(g)) groups.set(g, []);
-                groups.get(g).push(def);
-            });
+    groups.forEach((defs, groupKey) => {
+        // Group heading using Bootstrap text utilities
+        if (groupKey) {
+            const heading = document.createElement("div");
+            heading.className =
+                "text-muted text-uppercase fw-semibold small mt-2 mb-1";
+            heading.textContent = groupKey;
+            overlaysEl.appendChild(heading);
+        }
 
-            groups.forEach((defs, groupKey) => {
-                // Bootstrap-style sub heading for parent group
-                if (groupKey) {
-                    const heading = document.createElement("div");
-                    heading.className = "text-muted text-uppercase fw-semibold small mt-2 mb-1";
-                    heading.textContent = groupKey;
-                    overlaysEl.appendChild(heading);
+        defs.forEach(({ key, label, layer }) => {
+            const stored = localStorage.getItem(`ov.${key}`);
+            const saved = stored !== "0"; // default ON
+            if (saved) map.addLayer(layer);
+
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className =
+                "btn btn-sm w-100 text-start d-flex align-items-center justify-content-between mb-1 ld-overlay-btn " +
+                (saved ? "btn-primary" : "btn-outline-secondary");
+            btn.dataset.key = key;
+            btn.innerHTML = `
+              <span class="me-2">${label}</span>
+              <span class="ms-auto">
+                <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
+              </span>
+            `;
+
+            btn.addEventListener("click", () => {
+                const icon = btn.querySelector("i");
+                const isOn = btn.classList.contains("btn-primary");
+
+                if (isOn) {
+                    // turn OFF
+                    map.removeLayer(layer);
+                    localStorage.setItem(`ov.${key}`, "0");
+                    btn.classList.remove("btn-primary");
+                    btn.classList.add("btn-outline-secondary");
+                    if (icon) {
+                        icon.classList.remove("fa-toggle-on");
+                        icon.classList.add("fa-toggle-off");
+                    }
+                } else {
+                    // turn ON
+                    map.addLayer(layer);
+                    localStorage.setItem(`ov.${key}`, "1");
+                    btn.classList.add("btn-primary");
+                    btn.classList.remove("btn-outline-secondary");
+                    if (icon) {
+                        icon.classList.remove("fa-toggle-off");
+                        icon.classList.add("fa-toggle-on");
+                    }
                 }
-
-                defs.forEach(({ key, label, layer }) => {
-                    const id = `ov-${key}`;
-                    const saved = localStorage.getItem(`ov.${key}`) !== "0"; // default on
-                    if (saved) map.addLayer(layer);
-
-                    const row = document.createElement("label");
-                    row.className = "ld-row d-flex align-items-center gap-1";
-                    row.innerHTML = `
-            <input class="form-check-input m-0" type="checkbox" id="${id}" ${saved ? "checked" : ""}/>
-            <span class="">${label}</span>
-          `;
-                    overlaysEl.appendChild(row);
-
-                    row.querySelector("input").addEventListener("change", (e) => {
-                        if (e.target.checked) {
-                            map.addLayer(layer);
-                            localStorage.setItem(`ov.${key}`, "1");
-                        } else {
-                            map.removeLayer(layer);
-                            localStorage.setItem(`ov.${key}`, "0");
-                        }
-                    });
-                });
             });
 
+            overlaysEl.appendChild(btn);
+        });
+    });
 
-            // open/close toggle
-            const btn = c.querySelector(".ld-toggle");
-            const panel = c.querySelector(".ld-panel");
-            L.DomEvent.on(btn, "click", (ev) => {
-                L.DomEvent.stop(ev);
-                const show = panel.classList.toggle("d-none");
-                btn.setAttribute("aria-expanded", (!show).toString());
-                localStorage.setItem("layers.open", show ? "0" : "1");
-            });
+    // --- open/close toggle is unchanged, just wired to new markup ---
+    const btn = c.querySelector(".ld-toggle");
+    const panel = c.querySelector(".ld-panel");
+    L.DomEvent.on(btn, "click", (ev) => {
+        L.DomEvent.stop(ev);
+        const hidden = panel.classList.toggle("d-none");
+        btn.setAttribute("aria-expanded", (!hidden).toString());
+        localStorage.setItem("layers.open", hidden ? "0" : "1");
+    });
 
-            // don’t propagate scroll/drag
-            L.DomEvent.disableClickPropagation(c);
+    // prevent clicks/scrolls from falling through to map
+    L.DomEvent.disableClickPropagation(c);
 
-            // nudge under the zoom buttons
-            setTimeout(() => {
-                const zoom = map._controlCorners.topleft.querySelector(".leaflet-control-zoom");
-                if (zoom && c.parentElement === map._controlCorners.topleft) {
-                    zoom.insertAdjacentElement("afterend", c);
-                }
-            }, 0);
+    // tuck the drawer under the zoom control
+    setTimeout(() => {
+        const zoom = map._controlCorners.topleft.querySelector(
+            ".leaflet-control-zoom"
+        );
+        if (zoom && c.parentElement === map._controlCorners.topleft) {
+            zoom.insertAdjacentElement("afterend", c);
+        }
+    }, 0);
 
-            this._container = c;
-            return c;
-        },
+    this._container = c;
+    return c;
+},
+
 
         onRemove() { /* nothing to clean up */ },
 
