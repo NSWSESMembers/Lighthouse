@@ -52,6 +52,8 @@ import { renderFRAOSLayer } from "./mapLayers/frao.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
+import { fetchHqDetailsSummary } from './utils/hqSummary.js';
+
 var $ = require('jquery');
 
 var L = require('leaflet');
