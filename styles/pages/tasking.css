@@ -1546,3 +1546,19 @@ tr.job:hover {
      1px  1px 1px #ffffff;
   pointer-events: none;
 }
+
+.frao-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  text-shadow:
+    0 0 3px #ffffff,
+    0 0 3px #ffffff,
+    0 0 3px #ffffff;
+  pointer-events: none; /* don't interfere with map clicks */
+  white-space: nowrap;
+  text-align: center;
+   display: flex;
+  justify-content: center;
+  align-items: center;
+}

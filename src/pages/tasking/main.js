@@ -48,6 +48,9 @@ import { registerSESZonesGridLayer } from "./mapLayers/geoservices.js";
 import { registerSESUnitsZonesHybridGridLayer } from "./mapLayers/geoservices.js";
 import { registerSESUnitLocationsLayer } from "./mapLayers/geoservices.js";
 import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
+import { renderFRAOSLayer } from "./mapLayers/frao.js";
+
+import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
@@ -1215,6 +1218,7 @@ function VM() {
     registerSESZonesGridLayer(self);
     registerSESUnitsZonesHybridGridLayer(self, map);
     registerSESUnitLocationsLayer(self);
+    renderFRAOSLayer(self, map, getToken, apiHost, params);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
