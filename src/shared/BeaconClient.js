@@ -15,9 +15,10 @@ import * as notifications from './BeaconClient/notifications.js';
 import * as geoservices from './BeaconClient/geoservices.js';
 import * as tags from './BeaconClient/tags.js';
 import * as sectors from './BeaconClient/sectors.js';
+import * as frao from './BeaconClient/frao.js';
 
 // re-export functions
-export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, toFormUrlEncoded };
+export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, toFormUrlEncoded };
 
 export function toFormUrlEncoded(obj) {
     const params = [];

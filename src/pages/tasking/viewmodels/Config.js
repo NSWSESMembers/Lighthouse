@@ -5,7 +5,7 @@ import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
 // 
 
 
-const FUNCTION_URL = "https://lambda.lighthouse-extension.com/";
+const FUNCTION_URL = "https://lambda.lighthouse-extension.com/lad/share";
 
 
 
