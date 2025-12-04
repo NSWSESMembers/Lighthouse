@@ -33,7 +33,7 @@ body.env-trainbeacon::after {
     content: "TRAIN BEACON";
     position: fixed;
     top: 50%;
-    left: 50%;
+    left: 25%;
     transform: translate(-50%, -50%) rotate(-30deg);
     font-size: 6rem;
     font-weight: 900;
