@@ -17,6 +17,21 @@ body {
   line-height: 1.35;
 }
 
+body.env-trainbeacon::before {
+    content: "";
+    position: fixed;
+    z-index: 999999;      /* above everything */
+    pointer-events: none; /* don’t block clicks */
+    inset: 0;
+    border: 8px solid #00c853; /* thick visible green */
+    box-sizing: border-box;
+}
+
+body.env-trainbeacon {
+    outline: 6px solid #00c853;   /* strong green frame */
+    outline-offset: 0;
+}
+
 /* Ensure key UI elements follow the smaller base size */
 button,
 input,

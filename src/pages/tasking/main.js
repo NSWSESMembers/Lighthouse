@@ -117,6 +117,11 @@ var ko;
 var myViewModel;
 
 
+if (params.source === "https://trainbeacon.ses.nsw.gov.au") {
+    document.body.classList.add("env-trainbeacon");
+}
+
+
 /////////DATA REFRESH CODE   
 
 // --- Leaflet map with Esri basemap
@@ -247,22 +252,8 @@ function VM() {
         var key = th.getAttribute('data-sort-key');
         if (!key) return;
 
-        if (key === 'statusName') {
-            const customOrder = ['New', 'Active', 'Tasked', 'Referred', 'Complete', 'Cancelled', 'Finalised', 'Rejected' ]; // Custom sort order
-            self.sortedJobs = ko.pureComputed(function () {
-                var arr = self.filteredJobs();
-                return arr.slice().sort(function (a, b) {
-                    var av = ko.unwrap(a[key]);
-                    var bv = ko.unwrap(b[key]);
-                    var ai = customOrder.indexOf(av);
-                    var bi = customOrder.indexOf(bv);
-                    return self.jobSortAsc() ? ai - bi : bi - ai;
-                });
-            });
-        } else {
-            if (self.jobSortKey() === key) self.jobSortAsc(!self.jobSortAsc());
-            else { self.jobSortKey(key); self.jobSortAsc(true); }
-        }
+        if (self.jobSortKey() === key) self.jobSortAsc(!self.jobSortAsc());
+        else { self.jobSortKey(key); self.jobSortAsc(true); }
 
         updateSortHeaderUI(th, self.jobSortAsc());
     };
