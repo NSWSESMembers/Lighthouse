@@ -1,6 +1,8 @@
 import L from 'leaflet';
 import ko from 'knockout';
 
+const ruleState = new Map(); // key: rule.id -> { collapsed: boolean, lastCount: number }
+
 /**
  * SVG hazard icon used in the header
  */
@@ -31,19 +33,46 @@ function createLeafletControl(L) {
  * Render a list of active rules into the container. - RAW html no KO here yet
  * Each rule: { id, level, title, items:[{id,label}], count, onClick? }
  */
+/**
+ * Render a list of active rules into the container. - RAW html no KO here yet
+ * Each rule: { id, level, title, items:[{id,label}], count, onClick? }
+ */
 function renderRules(container, rules) {
   container.style.display = rules.length ? '' : 'none';
   container.innerHTML = '';
 
   for (const rule of rules) {
+    // --- restore / update state for this rule ---
+    let state = ruleState.get(rule.id);
+    if (!state) {
+      state = { collapsed: false, lastCount: rule.count };
+    } else {
+      // if the count changed while collapsed, auto-expand
+      if (state.collapsed && rule.count !== state.lastCount) {
+        state.collapsed = false;
+      }
+      state.lastCount = rule.count;
+    }
+    ruleState.set(rule.id, state);
+
     const div = document.createElement('div');
+    var width = '280px'
     div.className = `leaflet-control alerts alerts--${rule.level}`;
+    if (state.collapsed) {
+      div.classList.add('alerts--collapsed');
+      width = "24px"
+  }
+
     div.innerHTML = `
-      <div class="alerts">
-        <button type="button" class="alerts__btn" aria-expanded="false">
-          ${hazardSvg()} <span class="alerts__title">${rule.title}</span>
-          <span class="alerts__count">${rule.count}</span>
-        </button>
+      <div class="alerts" style="width: ${width};">
+        <div class="alerts__header">
+          <button type="button" class="alerts__btn" aria-expanded="${!state.collapsed}">
+            ${hazardSvg()}
+            <span class="alerts__title">${rule.title}</span>
+            <span class="alerts__count">${rule.count}</span>
+          </button>
+          <button type="button" class="alerts__hide-btn" aria-label="Hide alerts">&times;</button>
+        </div>
         <div class="alerts__panel">
           <ul class="alerts__list small">
             ${rule.items.map(it => `<li data-id="${it.id}">${it.label}</li>`).join('')}
@@ -51,8 +80,46 @@ function renderRules(container, rules) {
         </div>
       </div>
     `;
+
     const btn = div.querySelector('.alerts__btn');
-    btn.addEventListener('click', () => div.classList.toggle('alerts--open'));
+    const hideBtn = div.querySelector('.alerts__hide-btn');
+
+    // main button: toggle open; if collapsed, un-collapse first
+    btn.addEventListener('click', () => {
+      const st = ruleState.get(rule.id) || { collapsed: false, lastCount: rule.count };
+
+      if (st.collapsed) {
+        st.collapsed = false;
+        ruleState.set(rule.id, st);
+        div.classList.remove('alerts--collapsed');
+              div.querySelector('.alerts').style.width = '280px';
+
+      }
+
+      const openNow = !div.classList.contains('alerts--open');
+      div.classList.toggle('alerts--open', openNow);
+      btn.setAttribute('aria-expanded', String(openNow));
+    });
+
+    // hide button: collapse down to icon
+    hideBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const st = ruleState.get(rule.id) || { collapsed: false, lastCount: rule.count };
+      st.collapsed = true;
+      st.lastCount = rule.count;
+      ruleState.set(rule.id, st);
+
+      div.classList.remove('alerts--open');
+      btn.setAttribute('aria-expanded', 'false');
+      
+      div.querySelector('.alerts').animate(
+        [{ width: '280px' }, { width: '24px' }],
+        { duration: 300, easing: 'ease-in-out' }
+      ).onfinish = () => {
+        div.querySelector('.alerts').style.width = '24px';
+      };
+      div.classList.add('alerts--collapsed');
+    });
 
     // optional item click handler (e.g. fly to job)
     if (typeof rule.onClick === 'function') {
@@ -65,6 +132,8 @@ function renderRules(container, rules) {
     container.appendChild(div);
   }
 }
+
+
 
 
 const ruleBuilders = [];

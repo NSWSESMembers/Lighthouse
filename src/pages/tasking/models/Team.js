@@ -23,8 +23,6 @@ export function Team(data = {}, deps = {}) {
         teamTaskStatusFilter = () => []  // () => Array of status names to ignore
     } = deps;
 
-    self.instantTask = ko.observable(null);
-
     self.isFilteredIn = ko.observable(false);
 
     self.id = ko.observable(data.Id ?? null);
@@ -246,6 +244,13 @@ export function Team(data = {}, deps = {}) {
         if (self.taskedJobCount() === 0) {
             return '#d4edda'; // light green
         }
+        if (self.taskedJobCount() >= 1 && self.taskedJobCount() <= 2) {
+            return '#fff3cd';
+        }
+        if (self.taskedJobCount() > 2) {
+            return '#f8d7da'; // light red
+        }
+        return 'transparent';
     })
 
     //url to open in beacon

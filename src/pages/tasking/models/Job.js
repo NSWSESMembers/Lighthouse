@@ -24,6 +24,7 @@ export function Job(data = {}, deps = {}) {
         attachAndFillTimelineModal = (_job) => { /* noop */ },
         fetchUnacknowledgedJobNotifications = async (_job) => ([]),
         drawJobTargetRing = (_job) => { /* noop */ },
+        fetchUnresolvedActionsLog = async (_job) => { /* noop */ },
         map = null,
         filteredTeams = ko.observableArray([]),
     } = deps;
@@ -58,7 +59,11 @@ export function Job(data = {}, deps = {}) {
     self.situationOnScene = ko.observable(data.SituationOnScene ?? "");
     self.eventId = ko.observable(data.EventId ?? null);
     self.printCount = ko.observable(data.PrintCount ?? 0);
-    self.actionRequiredTags = ko.observableArray(data.ActionRequiredTags || []);
+    self.actionRequiredTags = ko.observableArray(
+        (data.ActionRequiredTags || [])
+            .filter(t => t.TagGroupId === 27)
+            .map(t => new Tag(t))
+    ).extend({ rateLimit: 500 });
     self.categories = ko.observableArray((data.Categories || []).filter(c => (c?.Id ?? 0) >= 9)); //ditch pscu categories
     self.inFrao = ko.observable(!!data.InFrao);
     self.imageCount = ko.observable(data.ImageCount ?? 0);
@@ -87,6 +92,15 @@ export function Job(data = {}, deps = {}) {
     self.jobLink = ko.pureComputed(() => makeJobLink(self.id()));
     self.priorityName = ko.pureComputed(() => (self.jobPriorityType() && self.jobPriorityType().Name) || "");
     self.statusName = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Name) || "");
+    self.statusNameAndCount = ko.pureComputed(() => {
+        const statusName = self.statusName();
+        if (statusName === "Active" || statusName === "Tasked") {
+            const taskingCount = self.taskings().length;
+            return `${statusName} (${taskingCount})`;
+        }
+        return statusName;
+    });
+
     self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
     self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
     self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
@@ -442,7 +456,11 @@ export function Job(data = {}, deps = {}) {
             this.tags(d.Tags.map(t => new Tag(t)));
         }
         if (Array.isArray(d.ActionRequiredTags)) {
-            this.actionRequiredTags(d.ActionRequiredTags.slice());
+            this.actionRequiredTags(
+                d.ActionRequiredTags
+                    .filter(t => t.TagGroupId === 27)
+                    .map(t => new Tag(t))
+            );
         }
         //ditch pscu categories
         if (Array.isArray(d.Categories)) {
@@ -575,6 +593,7 @@ export function Job(data = {}, deps = {}) {
 
     self.refreshData = async function () {
         self.taskingLoading(true);
+        fetchUnresolvedActionsLog(self);
         fetchJobById(self.id(), () => {
             self.taskingLoading(false);
         });

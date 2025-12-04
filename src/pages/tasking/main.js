@@ -117,6 +117,11 @@ var ko;
 var myViewModel;
 
 
+if (params.source === "https://trainbeacon.ses.nsw.gov.au") {
+    document.body.classList.add("env-trainbeacon");
+}
+
+
 /////////DATA REFRESH CODE   
 
 // --- Leaflet map with Esri basemap
@@ -246,8 +251,10 @@ function VM() {
         var th = e.currentTarget;
         var key = th.getAttribute('data-sort-key');
         if (!key) return;
+
         if (self.jobSortKey() === key) self.jobSortAsc(!self.jobSortAsc());
         else { self.jobSortKey(key); self.jobSortAsc(true); }
+
         updateSortHeaderUI(th, self.jobSortAsc());
     };
 
@@ -493,6 +500,9 @@ function VM() {
             },
             drawJobTargetRing: (job) => {
                 self.drawJobTargetRing(job);
+            },
+            fetchUnresolvedActionsLog: (job) => {
+                self.fetchUnresolvedActionsLog(job);
             },
             map: self.mapVM,
             filteredTeams: self.filteredTeams,
@@ -805,6 +815,15 @@ function VM() {
     self.drawJobTargetRing = function (job) {
         if (!job || !job.address) return;
         self.mapVM.drawJobAssetDistanceRings(job);
+    }
+
+    self.fetchUnresolvedActionsLog = async function (job) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.operationslog.unresolvedActionsLog(job, apiHost, params.userId, t, function (data) {
+            job.updateFromJson({ActionRequiredTags: data.Results.flatMap(entry => entry.Tags || [])});
+        }, function (err) {
+            console.error("Failed to fetch unresolved actions log entries for job:", err);
+        });
     }
 
     self.fetchUnacknowledgedJobNotifications = async function (job) {

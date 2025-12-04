@@ -17,6 +17,21 @@ body {
   line-height: 1.35;
 }
 
+body.env-trainbeacon::before {
+    content: "";
+    position: fixed;
+    z-index: 999999;      /* above everything */
+    pointer-events: none; /* don’t block clicks */
+    inset: 0;
+    border: 8px solid #00c853; /* thick visible green */
+    box-sizing: border-box;
+}
+
+body.env-trainbeacon {
+    outline: 6px solid #00c853;   /* strong green frame */
+    outline-offset: 0;
+}
+
 /* Ensure key UI elements follow the smaller base size */
 button,
 input,
@@ -774,7 +789,6 @@ tr.job:hover {
 .leaflet-control.alerts { pointer-events:auto; }
 .alerts {
   font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  min-width: 250px;
   max-width: 360px;
   backdrop-filter: blur(2px);
   border-radius: 10px;
@@ -1575,4 +1589,40 @@ tr.job:hover {
 
 .layers-drawer .ld-overlay-btn {
   font-size: 12px;
+}
+
+
+/* header layout: bar + small hide button */
+.alerts__header {
+  display: flex;
+  align-items: center;
+}
+
+.alerts__btn {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.alerts__hide-btn {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0 6px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* collapsed: only icon shows */
+.leaflet-control.alerts.alerts--collapsed .alerts__title,
+.leaflet-control.alerts.alerts--collapsed .alerts__count,
+.leaflet-control.alerts.alerts--collapsed .alerts__panel,
+.leaflet-control.alerts.alerts--collapsed .alerts__hide-btn {
+  display: none;
+}
+
+
+.leaflet-control.alerts.alerts--collapsed .alerts__btn {
+  padding: 4px;
+  min-width: auto;
 }

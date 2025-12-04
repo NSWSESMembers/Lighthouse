@@ -18,9 +18,14 @@ export function buildJobPopupKO() {
          class="text-center"
          style="color:white;"
          data-bind="style: { backgroundColor: bannerBGColour}">
-      <span id="priAndCat"
-            data-bind="text: priorityName +' '+categoriesName"></span>
+      <span id="priAndCat" data-bind="text: priorityName +' '+categoriesName"></span>
     </div>
+    <!-- New line to show tag.Name if actionRequiredTags has length -->
+    <div id="actionRequiredTags" class="text-center d-flex flex-wrap mt-1" data-bind="visible: actionRequiredTags().length > 0, foreach: actionRequiredTags">
+        <span data-bind="class: returnTagClass" style="cursor: default; width: 100%;">
+          <i data-bind="class: returnTagIcon"></i> <span data-bind="text: name"></span>
+        </span>
+      </div>
 <!-- Assign to Team Dropdown -->
     <div class="text-center mt-2">
       <div class="dropdown d-inline-block">
