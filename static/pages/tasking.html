@@ -786,7 +786,7 @@
 
                                             <!-- 7. Status -->
                                             <div class="job-cell job-cell--status">
-                                                <span data-bind="text: j.statusName"></span>
+                                                <span data-bind="text: j.statusNameAndCount"></span>
                                             </div>
 
                                             <!-- 8. Address -->
@@ -802,7 +802,6 @@
                                         </div><!-- /job-summary -->
 
 
-                                        <!-- DETAILS PANEL -->
                                         <!-- DETAILS PANEL -->
                                         <div class="job-details" data-bind="slideVisible: j.expanded">
                                             <div class="card border-0 mb-0">
@@ -832,6 +831,17 @@
 
                                                         <!-- Incident Details -->
                                                         <div class="col-md-8">
+
+                                                            <!-- New line to show tag.Name if actionRequiredTags has length -->
+                                                            <div id="actionRequiredTags"
+                                                                class="text-center d-flex flex-wrap justify-content-center mt-1"
+                                                                data-bind="visible: j.actionRequiredTags().length > 0, foreach: j.actionRequiredTags">
+                                                                <span data-bind="class: returnTagClass"
+                                                                    style="cursor: default; width: 95%; margin-left: 5px; text-align: center;">
+                                                                    <i data-bind="class: returnTagIcon"></i> <span
+                                                                        data-bind="text: name"></span>
+                                                                </span>
+                                                            </div>
                                                             <fieldset>
                                                                 <legend class="job-details-legend">Incident Details
                                                                 </legend>
@@ -892,7 +902,8 @@
                                                                         <div class="dropdown">
                                                                             <button class="sector-dropdown-btn"
                                                                                 type="button" data-bs-toggle="dropdown">
-                                                                                <span data-bind="text: j.sectorName()"></span>
+                                                                                <span
+                                                                                    data-bind="text: j.sectorName()"></span>
                                                                                 <span class="caret"></span>
                                                                             </button>
                                                                             <ul class="dropdown-menu"
@@ -1063,7 +1074,8 @@
                                                                 </div>
 
                                                                 <div class="row align-items-start">
-                                                                    <label class="col-4 text-sm-end lmt-25">Name:</label>
+                                                                    <label
+                                                                        class="col-4 text-sm-end lmt-25">Name:</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
                                                                             data-bind="text: j.incidentContactName">
@@ -1072,7 +1084,8 @@
                                                                 </div>
                                                                 <div class="row align-items-start"
                                                                     data-bind="visible: !j.contactCalled">
-                                                                    <label class="col-4 text-sm-end lmt-25">Called By:</label>
+                                                                    <label class="col-4 text-sm-end lmt-25">Called
+                                                                        By:</label>
                                                                     <div class="col-8">
                                                                         <p class="form-control-plaintext job-details-value"
                                                                             data-bind="text: j.callerFirstName + ' ' + j.callerLastName + ' - ' + j.callerPhoneNumber">

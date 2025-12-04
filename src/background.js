@@ -39,6 +39,14 @@ const hazardWatchUrl = 'https://feed.firesnearme.hazards.rfs.nsw.gov.au/';
 
 var activeTabForTaskingRemote = null
 
+// Load from storage on startup
+chrome.storage.local.get(['activeTabForTaskingRemote']).then((res) => {
+  if (res.activeTabForTaskingRemote) {
+    activeTabForTaskingRemote = res.activeTabForTaskingRemote;
+    console.log("Loaded activeTabForTaskingRemote from storage:", activeTabForTaskingRemote);
+  }
+});
+
 //Catch nativation changes in REACT app myAvailability
 //CAUTION - DONT USE INJECTS HERE AS THEY WILL STACK UP
 chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
@@ -156,15 +164,18 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   } else if (request.type === 'tasking-register-for-remote') {
     activeTabForTaskingRemote = sender.tab.id
     console.log("Registered tab for tasking remote:", activeTabForTaskingRemote)
+    chrome.storage.local.set({ activeTabForTaskingRemote }).then(() => {
+      console.log("activeTabForTaskingRemote saved to storage");
+    });
     return true;
   } else if (request.type === 'tasking-openURL') {
     console.log("Sending tasking remote command to tab:", activeTabForTaskingRemote)
-    if (activeTabForTaskingRemote === sender.tab.id) {
+    if (activeTabForTaskingRemote == sender.tab.id) {
       console.log("Refusing to send tasking remote command to same tab that sent it")
       sendResponse({ error: 'Cannot send tasking remote command to same tab that sent it' });
       return true;
     }
-    if (activeTabForTaskingRemote === null) {
+    if (activeTabForTaskingRemote == null) {
       console.log("Remote tab is null")
       sendResponse({ error: 'No remote tab registered' });
       return true;

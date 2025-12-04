@@ -246,8 +246,24 @@ function VM() {
         var th = e.currentTarget;
         var key = th.getAttribute('data-sort-key');
         if (!key) return;
-        if (self.jobSortKey() === key) self.jobSortAsc(!self.jobSortAsc());
-        else { self.jobSortKey(key); self.jobSortAsc(true); }
+
+        if (key === 'statusName') {
+            const customOrder = ['New', 'Active', 'Tasked', 'Referred', 'Complete', 'Cancelled', 'Finalised', 'Rejected' ]; // Custom sort order
+            self.sortedJobs = ko.pureComputed(function () {
+                var arr = self.filteredJobs();
+                return arr.slice().sort(function (a, b) {
+                    var av = ko.unwrap(a[key]);
+                    var bv = ko.unwrap(b[key]);
+                    var ai = customOrder.indexOf(av);
+                    var bi = customOrder.indexOf(bv);
+                    return self.jobSortAsc() ? ai - bi : bi - ai;
+                });
+            });
+        } else {
+            if (self.jobSortKey() === key) self.jobSortAsc(!self.jobSortAsc());
+            else { self.jobSortKey(key); self.jobSortAsc(true); }
+        }
+
         updateSortHeaderUI(th, self.jobSortAsc());
     };
 
@@ -493,6 +509,9 @@ function VM() {
             },
             drawJobTargetRing: (job) => {
                 self.drawJobTargetRing(job);
+            },
+            fetchUnresolvedActionsLog: (job) => {
+                self.fetchUnresolvedActionsLog(job);
             },
             map: self.mapVM,
             filteredTeams: self.filteredTeams,
@@ -805,6 +824,15 @@ function VM() {
     self.drawJobTargetRing = function (job) {
         if (!job || !job.address) return;
         self.mapVM.drawJobAssetDistanceRings(job);
+    }
+
+    self.fetchUnresolvedActionsLog = async function (job) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.operationslog.unresolvedActionsLog(job, apiHost, params.userId, t, function (data) {
+            job.updateFromJson({ActionRequiredTags: data.Results.flatMap(entry => entry.Tags || [])});
+        }, function (err) {
+            console.error("Failed to fetch unresolved actions log entries for job:", err);
+        });
     }
 
     self.fetchUnacknowledgedJobNotifications = async function (job) {
