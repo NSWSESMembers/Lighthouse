@@ -94,7 +94,7 @@ export function registerSESZonesGridLayer(vm) {
       if (!data) return;
 
       const vectorGrid = L.vectorGrid.protobuf(
-        `https://gis.lighthouse-extension.com/map/seszones/tiles/{z}/{x}/{y}.pbf`, // Replace with actual path
+        `https://map.lighthouse-extension.com/seszones/tiles/{z}/{x}/{y}.pbf`, // Replace with actual path
         {
           vectorTileLayerStyles: {
             'SESZone_JSON': (props) => {
@@ -129,7 +129,7 @@ export function registerSESZonesGridLayer(vm) {
         }
       });
 
-      fetch('https://gis.lighthouse-extension.com/map/seszones/labels.geojson')
+      fetch('https://map.lighthouse-extension.com/seszones/labels.geojson')
         .then(r => r.json())
         .then(data => zoneLabelLayer.addData(data));
 
@@ -153,7 +153,7 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
       const LABEL_ZOOM_THRESHOLD = 10;  // tweak to taste
 
       const vectorGrid = L.vectorGrid.protobuf(
-        `https://gis.lighthouse-extension.com/map/sesunits/tiles/{z}/{x}/{y}.pbf`, // Replace with actual path
+        `https://map.lighthouse-extension.com/sesunits/tiles/{z}/{x}/{y}.pbf`, // Replace with actual path
         {
 
           vectorTileLayerStyles: {
@@ -211,7 +211,7 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
 
 
       // Load unit labels
-      fetch('https://gis.lighthouse-extension.com/map/sesunits/labels.geojson')
+      fetch('https://map.lighthouse-extension.com/sesunits/labels.geojson')
         .then(r => r.json())
         .then(data => {
           unitLabelLayer.addData(data);
@@ -219,7 +219,7 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
         });
 
       // Load zone labels
-      fetch('https://gis.lighthouse-extension.com/map/seszones/labels.geojson')
+      fetch('https://map.lighthouse-extension.com/seszones/labels.geojson')
         .then(r => r.json())
         .then(data => {
           zoneLabelLayer.addData(data);
