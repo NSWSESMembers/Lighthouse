@@ -835,7 +835,7 @@
                                                             <!-- New line to show tag.Name if actionRequiredTags has length -->
                                                             <div id="actionRequiredTags"
                                                                 class="text-center d-flex flex-wrap justify-content-center mt-1"
-                                                                data-bind="visible: j.actionRequiredTags().length > 0, foreach: j.actionRequiredTags">
+                                                                data-bind="visible: j.actionRequiredTags().length > 0, foreach: j.actionRequiredTagsDeduplicated">
                                                                 <span data-bind="class: returnTagClass"
                                                                     style="cursor: default; width: 95%; margin-left: 5px; text-align: center;">
                                                                     <i data-bind="class: returnTagIcon"></i> <span
@@ -1290,7 +1290,7 @@
                                 <!-- Selected filters: TEAMS -->
                                 <div data-bind="if: config.teamFilters().length === 0">
                                     <div class="card-body py-2 selected-box">
-                                        <span class="text-muted small">No Filters Applied</span>
+                                        <span class="text-muted small">No Filters Applied - Teams from all units will be fetched</span>
                                     </div>
                                 </div>
                                 <div data-bind="if: config.teamFilters().length > 0">
@@ -1325,7 +1325,7 @@
                                 <!-- Selected filters: INCIDENTS -->
                                 <div data-bind="if: config.incidentFilters().length === 0">
                                     <div class="card-body py-2 selected-box">
-                                        <span class="text-muted small">No Filters Applied</span>
+                                        <span class="text-muted small">No Filters Applied - Incidents from all units will be fetched</span>
                                     </div>
                                 </div>
                                 <div data-bind="if: config.incidentFilters().length > 0">

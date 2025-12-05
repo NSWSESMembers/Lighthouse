@@ -450,7 +450,13 @@ export function MapVM(Lmap, root) {
 
     drawCrowsFliesToAssetFromTasking: (tasking) => {
       self.drawCrowsFliesToAssetFromTasking(tasking);
+    },
+
+    clearCrowFliesLine: () => {
+      self.clearCrowFliesLine();
     }
+
+
   };
 
 
