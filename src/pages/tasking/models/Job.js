@@ -101,6 +101,18 @@ export function Job(data = {}, deps = {}) {
         return statusName;
     });
 
+    self.actionRequiredTagsDeduplicated = ko.pureComputed(() => {
+        const seen = new Set();
+        return self.actionRequiredTags().filter(tag => {
+            const name = tag.name().toLowerCase(); // Deduplicate by name (case-insensitive)
+            if (seen.has(name)) {
+                return false;
+            }
+            seen.add(name);
+            return true;
+        });
+    });
+
     self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
     self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
     self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));

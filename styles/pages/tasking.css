@@ -17,14 +17,31 @@ body {
   line-height: 1.35;
 }
 
+
+
 body.env-trainbeacon::before {
     content: "";
     position: fixed;
     z-index: 999999;      /* above everything */
     pointer-events: none; /* don’t block clicks */
     inset: 0;
-    border: 8px solid #00c853; /* thick visible green */
+    border: 8px solid #219f56; /* thick visible green */
     box-sizing: border-box;
+}
+
+body.env-trainbeacon::after {
+    content: "TRAIN BEACON";
+    position: fixed;
+    top: 50%;
+    left: 25%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    font-size: 6rem;
+    font-weight: 900;
+    color: rgba(0, 200, 83, 0.25); /* green, semi-transparent */
+    z-index: 99998;
+    pointer-events: none;
+    white-space: nowrap;
+    user-select: none;
 }
 
 body.env-trainbeacon {
