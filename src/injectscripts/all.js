@@ -11,12 +11,48 @@ window.postMessage(
 
 
 document.addEventListener('keydown', function(event) {
-  if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') {
-      event.preventDefault(); // Prevents the default action (e.g., focusing on the address bar)
-      layout.createRadioEntry();
-      // Add your custom logic here
+  if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'l') { //create radio
+    event.preventDefault();
+    layout.createRadioEntry();
+  } else if (event.altKey && event.shiftKey && event.code === "KeyO") {
+    event.preventDefault(); 
+    window.location = "/OperationsLog";
+  } else if (event.altKey && event.code === "KeyO") { //create ops log 
+    event.preventDefault(); 
+    layout.createEntry();
+  } else if (event.altKey && event.shiftKey && event.code === "KeyI") {
+    event.preventDefault();
+    window.location = "/jobs";
+  } else if (event.altKey && event.code === "KeyI") {
+    event.preventDefault(); 
+    window.location = "/jobs/create";
+  } else if (event.altKey && event.shiftKey && event.code === "KeyM") {
+    event.preventDefault();
+    window.location = "/Messages";
+  } else if (event.altKey && event.code === "KeyM") {
+    event.preventDefault();
+    window.location = "/Messages/Create";
+  } else if (event.altKey && event.code === "KeyH") {
+    event.preventDefault();
+    window.location = "/Headquarters/Manage";
+  } else if (event.altKey && event.code === "KeyC") {
+    event.preventDefault();
+    window.location = "/ContactGroup";
+  } else if (event.altKey && event.code === "KeyZ") { //ICEMS IAR
+    event.preventDefault();
+    var button = document.querySelector(".btn-success[data-bind*='requestAgency']");    
+    if (button && button.offsetParent !== null) {
+      button.click();
+    }
+  } else if (event.altKey && event.code === "KeyX") { //ICEMS IUM
+    event.preventDefault();
+    button = document.querySelector(".btn-acknowledge[data-bind*='showIUMModal']");    
+    if (button && button.offsetParent !== null) {
+      button.click();
+    }
   }
 });
+
 
 window.addEventListener('message', function (event) {
   // We only accept messages from content scrip
@@ -29,7 +65,6 @@ window.addEventListener('message', function (event) {
     }
   }
 });
-
 whenWeAreReady(function () {
   if (typeof urls.Base == 'undefined') {
     urls.Base = 'https://' + location.hostname;
