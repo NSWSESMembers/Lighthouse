@@ -804,8 +804,8 @@ function VM() {
         // Resolve shared refs
         const jobRef = self.getOrCreateJob(taskingJson.Job);
 
-        //flag the team creation/update as from tasking
-        //otherwise we might overwrite an active team with stale data
+        //flag the team creation/update as from tasking so its not updated with stale data
+        //otherwise we might overwrite an active team with old stuff
         const teamRef = teamContext || self.getOrCreateTeam(taskingJson.Team, 'tasking');
 
         let t = self.taskingsById.get(taskingJson.Id);
