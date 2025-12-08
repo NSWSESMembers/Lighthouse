@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 global.jQuery = $;
 
-import BeaconClient from '../../shared/BeaconClient.js';
+import BeaconClient, { job } from '../../shared/BeaconClient.js';
 const BeaconToken = require('../lib/shared_token_code.js');
 
 require('../lib/shared_chrome_code.js'); // side-effect
