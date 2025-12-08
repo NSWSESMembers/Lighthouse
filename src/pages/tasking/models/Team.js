@@ -327,6 +327,15 @@ export function Team(data = {}, deps = {}) {
         deps.openRadioLogModal(self);
     };
 
+    //allow the team to call this with no tasking.
+    self.sendSMS = function () {
+        deps.openSMSTeamModal(self);
+    }
+
+    self.sendSMSwithTasking = function (tasking) {
+        deps.openSMSTeamModal(self, tasking);
+    }
+
     Team.prototype.updateFromJson = function (d = {}) {
         if (d.Id !== undefined) this.id(d.Id);
         if (d.TaskedJobCount !== undefined) this.taskedJobCount(d.TaskedJobCount);

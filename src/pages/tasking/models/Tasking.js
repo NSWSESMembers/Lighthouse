@@ -127,7 +127,9 @@ export function Tasking(data = {}) {
     };
     
 
-
+    self.sendSMS = function () {
+        self.team.sendSMSwithTasking(self);
+    }
 
     self.getTeamLatLng = function () {
         // Prefer live asset location if available; otherwise fall back to team HQ (assignedTo)

@@ -16,9 +16,13 @@ import * as geoservices from './BeaconClient/geoservices.js';
 import * as tags from './BeaconClient/tags.js';
 import * as sectors from './BeaconClient/sectors.js';
 import * as frao from './BeaconClient/frao.js';
+import * as contacts from './BeaconClient/contacts.js';
+import * as messages from './BeaconClient/messages.js';
+
+export { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages };
 
 // re-export functions
-export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, toFormUrlEncoded };
+export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, toFormUrlEncoded };
 
 export function toFormUrlEncoded(obj) {
     const params = [];
