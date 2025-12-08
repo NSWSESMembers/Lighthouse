@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 global.jQuery = $;
 
-import BeaconClient from '../../shared/BeaconClient.js';
+import BeaconClient, { job } from '../../shared/BeaconClient.js';
 const BeaconToken = require('../lib/shared_token_code.js');
 
 require('../lib/shared_chrome_code.js'); // side-effect
@@ -19,7 +19,9 @@ import { JobTimeline } from "./viewmodels/JobTimeline.js";
 
 import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
-import { Tag } from "./models/Tag.js";
+import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
+
+
 import { UpdateTeamStatusDropdownVM } from './viewmodels/UpdateTeamStatusDropdownVM.js';
 
 
@@ -31,6 +33,7 @@ import { Tasking } from './models/Tasking.js';
 import { Team } from './models/Team.js';
 import { Job } from './models/Job.js';
 import { Sector } from './models/Sector.js';
+import { Tag } from "./models/Tag.js";
 
 import { canon } from './utils/common.js';
 import { Enum } from './utils/enum.js';
@@ -178,6 +181,7 @@ function VM() {
     ///opslog short cuts
     self.CreateOpsLogModalVM = new CreateOpsLogModalVM(self);
     self.CreateRadioLogModalVM = new CreateRadioLogModalVM(self);
+    self.SendSMSModalVM = new SendSMSModalVM(self);
     self.selectedJob = ko.observable(null);
 
     self.jobTimelineVM = new JobTimeline(self);
@@ -509,9 +513,22 @@ function VM() {
         }
     }
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
-    self.getOrCreateTeam = function (teamJson) {
+    self.getOrCreateTeam = function (teamJson, source) {
         if (!teamJson || teamJson.Id == null) return null;
 
+        let team = self.teamsById.get(teamJson.Id);
+        if (team) {
+            //if the team is from tasking, ignore as dont want to overwrite with old data
+            if (source === 'tasking') {
+                return team;
+            }
+            team.updateFromJson(teamJson);
+            self._refreshTeamTrackableAssets(team);
+            return team;
+        }
+
+
+        //new team
         const deps = {
             upsertTasking: (tj, opts) => self.upsertTaskingFromPayload(tj, opts),
             getTeamTasking: (teamId) =>
@@ -538,14 +555,12 @@ function VM() {
 
             teamTaskStatusFilter: () => self.config.teamTaskStatusFilter(),
 
-        };
+            openSMSTeamModal: (team, tasking) => {
+                console.log("Opening SMS modal for team:", team, " tasking:", tasking);
+                self.attachSendSMSModal([], team, tasking);
+            },
 
-        let team = self.teamsById.get(teamJson.Id);
-        if (team) {
-            team.updateFromJson(teamJson);
-            self._refreshTeamTrackableAssets(team);
-            return team;
-        }
+        };
 
         team = new Team(teamJson, deps);
         self.teams.push(team);
@@ -609,13 +624,69 @@ function VM() {
         const modalEl = document.getElementById('RadioLogModal');
         const modal = new bootstrap.Modal(modalEl);
 
-        const vm = self.CreateRadioLogModalVM;
+        self.CreateRadioLogModalVM.modalInstance = modal;
 
-        vm.modalInstance = modal;
-
-        vm.openForTasking(tasking);
+        self.CreateRadioLogModalVM.openForTasking(tasking);
         modal.show();
     };
+
+    self.attachSendSMSModal = function (recipients, team = null, tasking = null, job = null) {
+        var msgRecipients = [];
+        var taskId = null;
+        var headerLabel = "Send SMS";
+        var initialText = "";
+
+        // If team provided, use its members as recipients
+        if (team) {
+            msgRecipients = team.members().map(t => {
+                console.log("Mapping team member for SMS:", t);
+                return {
+                    id: t.Person.Id,
+                    name: t.Person.FirstName + ' ' + t.Person.LastName,
+                    isTeamLeader: t.TeamLeader,
+                }
+            });
+        } else {
+            msgRecipients = recipients
+        }
+
+        // if a task was provided, use its job info to prefill
+        if (tasking) {
+            console.log("Opening SMS modal for tasking:", tasking);
+            taskId = tasking.job.id();
+            headerLabel = `Send SMS - Incident: ${tasking.job.identifier()}`;
+            initialText = `Re: Inc ${tasking.job.identifier()} at ${tasking.job.address.prettyAddress()}: `;
+        }
+
+        // if a job was provided, use its info to prefill and assume its a new tasking
+        if (job) {
+            console.log("Opening SMS modal for job:", job);
+            headerLabel = `Send SMS - Incident: ${job.identifier()}`;
+            initialText = [
+                job.priorityName(),
+                job.typeShort() + job.categoriesNameNumberDash(),
+                job.entityAssignedTo?.code(),
+                job.identifier(),
+                job.contactFirstName(),
+                job.contactLastName(),
+                job.address?.prettyAddress(),
+                job.contactPhoneNumber(),
+                job.tagsCsv(),
+                job.situationOnScene()
+            ]
+            .filter(value => value) // Remove empty or undefined values
+            .join(' ');
+            initialText = initialText.toUpperCase();
+        }
+
+        const modalEl = document.getElementById('SendSMSModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        self.SendSMSModalVM.modalInstance = modal;
+
+        self.SendSMSModalVM.openWithRecipients(msgRecipients, {taskId: taskId, headerLabel: headerLabel, initialText: initialText});
+        modal.show();
+    }
 
     self.attachTeamRadioLogModal = function (team) {
         const modalEl = document.getElementById('RadioLogModal');
@@ -732,7 +803,10 @@ function VM() {
 
         // Resolve shared refs
         const jobRef = self.getOrCreateJob(taskingJson.Job);
-        const teamRef = teamContext || self.getOrCreateTeam(taskingJson.Team);
+
+        //flag the team creation/update as from tasking
+        //otherwise we might overwrite an active team with stale data
+        const teamRef = teamContext || self.getOrCreateTeam(taskingJson.Team, 'tasking');
 
         let t = self.taskingsById.get(taskingJson.Id);
         if (t) {
@@ -817,10 +891,33 @@ function VM() {
         self.mapVM.drawJobAssetDistanceRings(job);
     }
 
+    self.fetchContactNumbers = async function (id) {
+        const t = await getToken();   // blocks here until token is ready
+        return new Promise((resolve) => {
+            BeaconClient.contacts.search(id, apiHost, params.userId, t, function (data) {
+                resolve(data.Results || []);
+            })
+        });
+    }
+
+    self.sendSMS = async function (recipients, jobId = '', message) {
+        console.log(jobId);
+        const t = await getToken();   // blocks here until token is ready
+        return new Promise((resolve, reject) => {
+            BeaconClient.messages.send(recipients, jobId, message, apiHost, params.userId, t, function (data) {
+                if (data) {
+                    resolve(data);
+                } else {
+                    reject(false);
+                }
+            })
+        });
+    }
+
     self.fetchUnresolvedActionsLog = async function (job) {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.operationslog.unresolvedActionsLog(job, apiHost, params.userId, t, function (data) {
-            job.updateFromJson({ActionRequiredTags: data.Results.flatMap(entry => entry.Tags || [])});
+            job.updateFromJson({ ActionRequiredTags: data.Results.flatMap(entry => entry.Tags || []) });
         }, function (err) {
             console.error("Failed to fetch unresolved actions log entries for job:", err);
         });
@@ -835,11 +932,18 @@ function VM() {
         });
     }
 
-    self.assignJobToTeam = async function (teamVm, jobVm) {
+    self.assignJobToTeam = async function (teamVm, jobVm, cb) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, t, function () {
+        BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, t, function (r) {
+            console.log(r)
+            if (r && r.length > 0) {
+                showAlert(`Incident ${jobVm.identifier()} assigned to team ${teamVm.callsign()}.`, 'success', 3000);
+            } else {
+                showAlert(`Failed to assign incident ${jobVm.identifier()} to team ${teamVm.callsign()}.`, 'danger', 5000);
+            }
             jobVm.fetchTasking();
             teamVm.fetchTasking();
+            if (cb) cb(r);
         })
     }
 
@@ -916,6 +1020,21 @@ function VM() {
             modal.hide();
             self.assignJobToTeam(teamVm, jobVm);
         });
+
+        const oldSMSBtn = document.getElementById('confirmTaskingYesSMS');
+        if (!oldSMSBtn) return;
+        oldSMSBtn.replaceWith(oldSMSBtn.cloneNode(true));
+        const yesSMSBtn = document.getElementById('confirmTaskingYesSMS');
+
+        yesSMSBtn.addEventListener('click', () => {
+            modal.hide();
+            self.assignJobToTeam(teamVm, jobVm, (r) => {
+                if (r && r.length > 0) {
+                    self.attachSendSMSModal([], teamVm, null, jobVm);
+                }
+            });
+        });
+
     };
 
     self.fetchOpsLogForJob = async function (jobId, cb) {
@@ -1250,19 +1369,19 @@ function VM() {
         },
 
         onAdd(map) {
-    const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
+            const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
 
-    // stop wheel -> no map zoom when scrolling the panel
-    c.addEventListener(
-        "wheel",
-        (e) => {
-            e.stopPropagation();
-        },
-        { passive: false }
-    );
+            // stop wheel -> no map zoom when scrolling the panel
+            c.addEventListener(
+                "wheel",
+                (e) => {
+                    e.stopPropagation();
+                },
+                { passive: false }
+            );
 
-    // Bootstrap-flavoured shell
-    c.innerHTML = `
+            // Bootstrap-flavoured shell
+            c.innerHTML = `
       <button class="ld-toggle btn btn-light btn-sm shadow-sm"
               title="Layers"
               aria-expanded="${this._open ? "true" : "false"}">
@@ -1288,147 +1407,147 @@ function VM() {
       </div>
     `;
 
-    // --- Basemap buttons (single-select) ---
-    const basemapNames = [
-        { name: "Esri Topographic", key: "Topographic" },
-        { name: "Esri Streets",     key: "Streets"     },
-        { name: "Esri Imagery",     key: "Imagery"     },
-        { name: "Esri Dark",        key: "DarkGray"    },
-        { name: "SIX Maps Topographic", key: "nsw-vector" },
-        { name: "SIX Maps Base Map",    key: "nsw-base"   },
-        { name: "SIX Maps Imagery",     key: "nsw-imagery"}
-    ];
+            // --- Basemap buttons (single-select) ---
+            const basemapNames = [
+                { name: "Esri Topographic", key: "Topographic" },
+                { name: "Esri Streets", key: "Streets" },
+                { name: "Esri Imagery", key: "Imagery" },
+                { name: "Esri Dark", key: "DarkGray" },
+                { name: "SIX Maps Topographic", key: "nsw-vector" },
+                { name: "SIX Maps Base Map", key: "nsw-base" },
+                { name: "SIX Maps Imagery", key: "nsw-imagery" }
+            ];
 
-    const basesEl = c.querySelector(".ld-bases");
+            const basesEl = c.querySelector(".ld-bases");
 
-    basemapNames.forEach(({ name, key }) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className =
-            "btn btn-outline-secondary flex-grow-1 mb-1" +
-            (key === this._baseKey ? " active btn-primary" : "");
-        btn.textContent = name;
-        btn.dataset.baseKey = key;
+            basemapNames.forEach(({ name, key }) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className =
+                    "btn btn-outline-secondary flex-grow-1 mb-1" +
+                    (key === this._baseKey ? " active btn-primary" : "");
+                btn.textContent = name;
+                btn.dataset.baseKey = key;
 
-        btn.addEventListener("click", () => {
-            if (key === this._baseKey) return;
+                btn.addEventListener("click", () => {
+                    if (key === this._baseKey) return;
 
-            this._setBasemap(key, map);
-            this._baseKey = key;
-            localStorage.setItem("map.base", key);
+                    this._setBasemap(key, map);
+                    this._baseKey = key;
+                    localStorage.setItem("map.base", key);
 
-            // update active styles
-            basesEl.querySelectorAll("button").forEach((b) => {
-                b.classList.remove("active", "btn-primary");
-                b.classList.add("btn-outline-secondary");
+                    // update active styles
+                    basesEl.querySelectorAll("button").forEach((b) => {
+                        b.classList.remove("active", "btn-primary");
+                        b.classList.add("btn-outline-secondary");
+                    });
+                    btn.classList.add("active", "btn-primary");
+                    btn.classList.remove("btn-outline-secondary");
+                });
+
+                basesEl.appendChild(btn);
             });
-            btn.classList.add("active", "btn-primary");
-            btn.classList.remove("btn-outline-secondary");
-        });
 
-        basesEl.appendChild(btn);
-    });
+            // apply initial basemap
+            this._setBasemap(this._baseKey, map);
 
-    // apply initial basemap
-    this._setBasemap(this._baseKey, map);
+            // --- Overlays as toggle buttons (multi-select) ---
+            const overlaysEl = c.querySelector(".ld-overlays");
+            const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
 
-    // --- Overlays as toggle buttons (multi-select) ---
-    const overlaysEl = c.querySelector(".ld-overlays");
-    const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
+            // Group by def.group (parent menu layer)
+            const groups = new Map();
+            overlayDefs.forEach((def) => {
+                const g = def.group || ""; // '' = ungrouped
+                if (!groups.has(g)) groups.set(g, []);
+                groups.get(g).push(def);
+            });
 
-    // Group by def.group (parent menu layer)
-    const groups = new Map();
-    overlayDefs.forEach((def) => {
-        const g = def.group || ""; // '' = ungrouped
-        if (!groups.has(g)) groups.set(g, []);
-        groups.get(g).push(def);
-    });
+            groups.forEach((defs, groupKey) => {
+                // Group heading using Bootstrap text utilities
+                if (groupKey) {
+                    const heading = document.createElement("div");
+                    heading.className =
+                        "text-muted text-uppercase fw-semibold small mt-2 mb-1";
+                    heading.textContent = groupKey;
+                    overlaysEl.appendChild(heading);
+                }
 
-    groups.forEach((defs, groupKey) => {
-        // Group heading using Bootstrap text utilities
-        if (groupKey) {
-            const heading = document.createElement("div");
-            heading.className =
-                "text-muted text-uppercase fw-semibold small mt-2 mb-1";
-            heading.textContent = groupKey;
-            overlaysEl.appendChild(heading);
-        }
+                defs.forEach(({ key, label, layer }) => {
+                    const stored = localStorage.getItem(`ov.${key}`);
+                    const saved = stored !== "0"; // default ON
+                    if (saved) map.addLayer(layer);
 
-        defs.forEach(({ key, label, layer }) => {
-            const stored = localStorage.getItem(`ov.${key}`);
-            const saved = stored !== "0"; // default ON
-            if (saved) map.addLayer(layer);
-
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.className =
-                "btn btn-sm w-100 text-start d-flex align-items-center justify-content-between mb-1 ld-overlay-btn " +
-                (saved ? "btn-primary" : "btn-outline-secondary");
-            btn.dataset.key = key;
-            btn.innerHTML = `
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className =
+                        "btn btn-sm w-100 text-start d-flex align-items-center justify-content-between mb-1 ld-overlay-btn " +
+                        (saved ? "btn-primary" : "btn-outline-secondary");
+                    btn.dataset.key = key;
+                    btn.innerHTML = `
               <span class="me-2">${label}</span>
               <span class="ms-auto">
                 <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
               </span>
             `;
 
-            btn.addEventListener("click", () => {
-                const icon = btn.querySelector("i");
-                const isOn = btn.classList.contains("btn-primary");
+                    btn.addEventListener("click", () => {
+                        const icon = btn.querySelector("i");
+                        const isOn = btn.classList.contains("btn-primary");
 
-                if (isOn) {
-                    // turn OFF
-                    map.removeLayer(layer);
-                    localStorage.setItem(`ov.${key}`, "0");
-                    btn.classList.remove("btn-primary");
-                    btn.classList.add("btn-outline-secondary");
-                    if (icon) {
-                        icon.classList.remove("fa-toggle-on");
-                        icon.classList.add("fa-toggle-off");
-                    }
-                } else {
-                    // turn ON
-                    map.addLayer(layer);
-                    localStorage.setItem(`ov.${key}`, "1");
-                    btn.classList.add("btn-primary");
-                    btn.classList.remove("btn-outline-secondary");
-                    if (icon) {
-                        icon.classList.remove("fa-toggle-off");
-                        icon.classList.add("fa-toggle-on");
-                    }
-                }
+                        if (isOn) {
+                            // turn OFF
+                            map.removeLayer(layer);
+                            localStorage.setItem(`ov.${key}`, "0");
+                            btn.classList.remove("btn-primary");
+                            btn.classList.add("btn-outline-secondary");
+                            if (icon) {
+                                icon.classList.remove("fa-toggle-on");
+                                icon.classList.add("fa-toggle-off");
+                            }
+                        } else {
+                            // turn ON
+                            map.addLayer(layer);
+                            localStorage.setItem(`ov.${key}`, "1");
+                            btn.classList.add("btn-primary");
+                            btn.classList.remove("btn-outline-secondary");
+                            if (icon) {
+                                icon.classList.remove("fa-toggle-off");
+                                icon.classList.add("fa-toggle-on");
+                            }
+                        }
+                    });
+
+                    overlaysEl.appendChild(btn);
+                });
             });
 
-            overlaysEl.appendChild(btn);
-        });
-    });
+            // --- open/close toggle is unchanged, just wired to new markup ---
+            const btn = c.querySelector(".ld-toggle");
+            const panel = c.querySelector(".ld-panel");
+            L.DomEvent.on(btn, "click", (ev) => {
+                L.DomEvent.stop(ev);
+                const hidden = panel.classList.toggle("d-none");
+                btn.setAttribute("aria-expanded", (!hidden).toString());
+                localStorage.setItem("layers.open", hidden ? "0" : "1");
+            });
 
-    // --- open/close toggle is unchanged, just wired to new markup ---
-    const btn = c.querySelector(".ld-toggle");
-    const panel = c.querySelector(".ld-panel");
-    L.DomEvent.on(btn, "click", (ev) => {
-        L.DomEvent.stop(ev);
-        const hidden = panel.classList.toggle("d-none");
-        btn.setAttribute("aria-expanded", (!hidden).toString());
-        localStorage.setItem("layers.open", hidden ? "0" : "1");
-    });
+            // prevent clicks/scrolls from falling through to map
+            L.DomEvent.disableClickPropagation(c);
 
-    // prevent clicks/scrolls from falling through to map
-    L.DomEvent.disableClickPropagation(c);
+            // tuck the drawer under the zoom control
+            setTimeout(() => {
+                const zoom = map._controlCorners.topleft.querySelector(
+                    ".leaflet-control-zoom"
+                );
+                if (zoom && c.parentElement === map._controlCorners.topleft) {
+                    zoom.insertAdjacentElement("afterend", c);
+                }
+            }, 0);
 
-    // tuck the drawer under the zoom control
-    setTimeout(() => {
-        const zoom = map._controlCorners.topleft.querySelector(
-            ".leaflet-control-zoom"
-        );
-        if (zoom && c.parentElement === map._controlCorners.topleft) {
-            zoom.insertAdjacentElement("afterend", c);
-        }
-    }, 0);
-
-    this._container = c;
-    return c;
-},
+            this._container = c;
+            return c;
+        },
 
 
         onRemove() { /* nothing to clean up */ },

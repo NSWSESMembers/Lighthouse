@@ -12,41 +12,39 @@ html {
 body {
   height: 100%;
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 12px; 
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 12px;
   line-height: 1.35;
 }
 
-
-
 body.env-trainbeacon::before {
-    content: "";
-    position: fixed;
-    z-index: 999999;      /* above everything */
-    pointer-events: none; /* don’t block clicks */
-    inset: 0;
-    border: 8px solid #219f56; /* thick visible green */
-    box-sizing: border-box;
+  content: '';
+  position: fixed;
+  z-index: 999999; /* above everything */
+  pointer-events: none; /* don’t block clicks */
+  inset: 0;
+  border: 8px solid #219f56; /* thick visible green */
+  box-sizing: border-box;
 }
 
 body.env-trainbeacon::after {
-    content: "TRAIN BEACON";
-    position: fixed;
-    top: 50%;
-    left: 25%;
-    transform: translate(-50%, -50%) rotate(-30deg);
-    font-size: 6rem;
-    font-weight: 900;
-    color: rgba(0, 200, 83, 0.25); /* green, semi-transparent */
-    z-index: 99998;
-    pointer-events: none;
-    white-space: nowrap;
-    user-select: none;
+  content: 'TRAIN BEACON';
+  position: fixed;
+  top: 50%;
+  left: 25%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 6rem;
+  font-weight: 900;
+  color: rgba(0, 200, 83, 0.25); /* green, semi-transparent */
+  z-index: 99998;
+  pointer-events: none;
+  white-space: nowrap;
+  user-select: none;
 }
 
 body.env-trainbeacon {
-    outline: 6px solid #00c853;   /* strong green frame */
-    outline-offset: 0;
+  outline: 6px solid #00c853; /* strong green frame */
+  outline-offset: 0;
 }
 
 /* Ensure key UI elements follow the smaller base size */
@@ -68,7 +66,7 @@ textarea,
 /* Optional: slightly tighter tables (teams + jobs) */
 .teams,
 .jobs {
-  font-size: 12px;         /* make tables a bit denser than rest */
+  font-size: 12px; /* make tables a bit denser than rest */
 }
 
 /* Optional: make "small" really small for helper text */
@@ -77,16 +75,14 @@ textarea,
   font-size: 11px;
 }
 
-td.chev[draggable="true"] {
-    cursor: grab;
+td.chev[draggable='true'] {
+  cursor: grab;
 }
 
-td.chev[draggable="true"] * {
-    cursor: grab !important;
-    user-select: none !important;
+td.chev[draggable='true'] * {
+  cursor: grab !important;
+  user-select: none !important;
 }
-
-
 
 .pane .small {
   font-size: 0.8rem;
@@ -220,7 +216,6 @@ td.chev[draggable="true"] * {
   text-decoration: underline;
 }
 
-
 .pane {
   display: flex;
   flex-direction: column;
@@ -315,19 +310,28 @@ select {
 }
 
 /* table sorting icons */
-table thead th.sortable { cursor: pointer; user-select: none; }
-table thead th .sort-icon { margin-left:.35rem; opacity:.7; }
-table thead th[aria-sort="ascending"] .sort-icon { transform: translateY(-1px); }
-table thead th[aria-sort="descending"] .sort-icon { transform: translateY(1px); }
+table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+table thead th .sort-icon {
+  margin-left: 0.35rem;
+  opacity: 0.7;
+}
+table thead th[aria-sort='ascending'] .sort-icon {
+  transform: translateY(-1px);
+}
+table thead th[aria-sort='descending'] .sort-icon {
+  transform: translateY(1px);
+}
 
-.teams, .jobs {
+.teams,
+.jobs {
   width: 100%;
   table-layout: auto;
   border-spacing: 0 3px; /* gap between rows */
   border-collapse: separate;
 }
-
-
 
 .teams thead th,
 .jobs thead th {
@@ -411,7 +415,6 @@ button {
 button.primary {
   border-color: #0077ff;
 }
-
 
 .teams td,
 .teams th {
@@ -606,9 +609,9 @@ tr.job:hover {
 }
 
 .job-tags-list .badge {
-    font-size: 0.72rem;
-    padding: 4px 6px;
-    border-radius: 4px;
+  font-size: 0.72rem;
+  padding: 4px 6px;
+  border-radius: 4px;
 }
 
 .btn-xs {
@@ -639,28 +642,28 @@ tr.job:hover {
   border: 1px solid #d0d7e2;
   border-radius: 6px;
   background: #ffffff;
-   margin-left: 4px;
-    margin-right: 4px;
+  margin-left: 4px;
+  margin-right: 4px;
   overflow: hidden;
   transition: box-shadow 120ms ease, border-color 120ms ease;
 }
 
 .team-card--expanded {
   border-color: #0d6efd;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.16);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
 }
 
 /* Match the Teams <colgroup>: 5,30,10,15,15,20,20 % */
 .team-summary {
   display: grid;
   grid-template-columns:
-      5%   /* chev */
-      25%  /* Callsign */
-      10%  /* Status */
-      10%  /* HQ */
-      15%  /* Task Count */
-      20%  /* Team Leader */
-      15%; /* Actions */
+    5% /* chev */
+    25% /* Callsign */
+    10% /* Status */
+    10% /* HQ */
+    15% /* Task Count */
+    20% /* Team Leader */
+    15%; /* Actions */
   align-items: center;
   padding: 4px 10px;
   column-gap: 0;
@@ -728,29 +731,26 @@ tr.job:hover {
   font-size: 0.7rem;
 }
 
-
-
-
 /* Base Leaflet divIcon wrapper for your SVG markers */
 .leaflet-marker-icon.job-svg-marker {
-  display: block;          /* kill inline baseline spacing */
-  line-height: 0;          /* no extra vertical space */
-  font-size: 0;            /* no text metrics */
+  display: block; /* kill inline baseline spacing */
+  line-height: 0; /* no extra vertical space */
+  font-size: 0; /* no text metrics */
   margin: 0;
   padding: 0;
   border: 0;
   background: transparent; /* no default bg from themes */
   box-sizing: content-box; /* width/height = SVG box exactly */
-  pointer-events: auto;    /* marker remains clickable */
+  pointer-events: auto; /* marker remains clickable */
   user-select: none;
   -webkit-user-drag: none;
-  will-change: transform;  /* Leaflet translates this */
+  will-change: transform; /* Leaflet translates this */
 }
 
 /* Ensure the embedded SVG is a tight, block-level box */
 .leaflet-marker-icon.job-svg-marker > svg {
-  display: block;                  /* no inline baseline */
-  overflow: visible;               /* avoid stroke clipping */
+  display: block; /* no inline baseline */
+  overflow: visible; /* avoid stroke clipping */
   shape-rendering: geometricPrecision;
   vector-effect: non-scaling-stroke; /* keeps stroke width stable if scaled */
 }
@@ -764,7 +764,7 @@ tr.job:hover {
 
 /* PULSE RING (separate follower marker using L.divIcon) */
 .pulse-ring-icon {
-  pointer-events: none;  /* clicks go to the base marker */
+  pointer-events: none; /* clicks go to the base marker */
   margin: 0;
   padding: 0;
   border: 0;
@@ -776,17 +776,26 @@ tr.job:hover {
 
 .pulse-ring {
   position: absolute;
-  inset: 0;              /* fills its icon box exactly */
+  inset: 0; /* fills its icon box exactly */
   border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(255,0,0,0.8);
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8);
   transform-origin: 50% 50%;
   animation: pulse-ring 1.4s ease-out infinite;
 }
 
 @keyframes pulse-ring {
-  0%   { transform: scale(0.6); opacity: 0.9; }
-  80%  { transform: scale(1.1); opacity: 0.15; }
-  100% { transform: scale(1.2); opacity: 0; }
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  80% {
+    transform: scale(1.1);
+    opacity: 0.15;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
 }
 
 .legend-ring > div > .pulse-ring {
@@ -794,53 +803,102 @@ tr.job:hover {
 }
 
 .no-drag {
-    user-select: text !important;
-    cursor: text !important;
+  user-select: text !important;
+  cursor: text !important;
 }
 
 #drag-ignore {
-    cursor: unset !important;
+  cursor: unset !important;
 }
 
 /* Alerts control */
-.leaflet-control.alerts { pointer-events:auto; }
+.leaflet-control.alerts {
+  pointer-events: auto;
+}
 .alerts {
   font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   max-width: 360px;
   backdrop-filter: blur(2px);
   border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.2);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
   overflow: hidden;
 }
 .alerts__btn {
-  display:flex; align-items:center; gap:8px;
-  padding:8px 10px; width:100%; background:transparent; border:0; cursor:pointer;
-  text-align:left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
 }
-.alerts__icon { width:16px; height:16px; flex:0 0 16px; }
-.alerts__title { font-weight:600; }
-.alerts__count { margin-left:auto; font-weight:700; }
-.alerts__panel { display:none; padding:8px 10px; border-top:1px dashed currentColor; color:black }
-.alerts--open .alerts__panel { display:block; }
+.alerts__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+.alerts__title {
+  font-weight: 600;
+}
+.alerts__count {
+  margin-left: auto;
+  font-weight: 700;
+}
+.alerts__panel {
+  display: none;
+  padding: 8px 10px;
+  border-top: 1px dashed currentColor;
+  color: black;
+}
+.alerts--open .alerts__panel {
+  display: block;
+}
 
 /* Levels — extend as needed */
-.alerts--warning { color:#664d03; background:rgba(255,193,7,.20); border:1px solid rgba(255,193,7,.7); }
-.alerts--danger  { color:#58151c; background:rgba(220,53,69,.20); border:1px solid rgba(220,53,69,.6); }
-.alerts--caution { color:#084298; background:rgba(13,110,253,.15); border:1px solid rgba(13,110,253,.5); }
+.alerts--warning {
+  color: #664d03;
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.7);
+}
+.alerts--danger {
+  color: #58151c;
+  background: rgba(220, 53, 69, 0.2);
+  border: 1px solid rgba(220, 53, 69, 0.6);
+}
+.alerts--caution {
+  color: #084298;
+  background: rgba(13, 110, 253, 0.15);
+  border: 1px solid rgba(13, 110, 253, 0.5);
+}
 
-.alerts__list { margin:0; padding-left:18px; }
+.alerts__list {
+  margin: 0;
+  padding-left: 18px;
+}
 
 /* Root container for the control (set this class in onAdd) */
-.alerts-root { position: relative; }
+.alerts-root {
+  position: relative;
+}
 
 /* Intro animation on first mount */
 .alerts-root--intro {
-  animation: alerts-slide-pop 420ms cubic-bezier(.2,.8,.2,1);
+  animation: alerts-slide-pop 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 @keyframes alerts-slide-pop {
-  0% { opacity: 0; transform: translateY(-8px) scale(.98); }
-  60% { opacity: 1; transform: translateY(0) scale(1.008); }
-  100% { transform: translateY(0) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.008);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* Subtle ping from the hazard icon once */
@@ -848,17 +906,27 @@ tr.job:hover {
   position: relative;
 }
 .alerts-root--intro .alerts__btn .alerts__icon::after {
-  content: "";
-  position: absolute; inset: -2px;
+  content: '';
+  position: absolute;
+  inset: -2px;
   border-radius: 50%;
   border: 2px solid currentColor;
-  opacity: .6;
+  opacity: 0.6;
   animation: alerts-ping 800ms ease-out forwards;
 }
 @keyframes alerts-ping {
-  0%   { transform: scale(.8); opacity: .75; }
-  70%  { transform: scale(1.6); opacity: .25; }
-  100% { transform: scale(2.2); opacity: 0; }
+  0% {
+    transform: scale(0.8);
+    opacity: 0.75;
+  }
+  70% {
+    transform: scale(1.6);
+    opacity: 0.25;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
 /* Respect reduced motion */
@@ -870,27 +938,57 @@ tr.job:hover {
 }
 
 /* Layer UI */
-.layers-drawer { margin-top: 6px; border: 0px !important; }
+.layers-drawer {
+  margin-top: 6px;
+  border: 0px !important;
+}
 
 .layers-drawer .ld-toggle {
-  display:flex; align-items:center; justify-content:center;
-  width:34px; height:34px; background:#fff; border:none; cursor:pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  border: none;
+  cursor: pointer;
 }
-.layers-drawer .ld-toggle:focus { outline: 2px solid #66afe9; }
+.layers-drawer .ld-toggle:focus {
+  outline: 2px solid #66afe9;
+}
 .layers-drawer .ld-panel {
-  background:#fff; padding:6px; width: 220px; max-height: 280px; overflow:auto;
+  background: #fff;
+  padding: 6px;
+  width: 220px;
+  max-height: 280px;
+  overflow: auto;
   border-top: 1px solid #ccc;
 }
-.layers-drawer .ld-section + .ld-section { margin-top:8px; }
-.layers-drawer .ld-title { font-weight:600; font-size:12px; margin-bottom:4px; }
-.layers-drawer .ld-list { display:flex; flex-direction:column; gap:4px; }
-.layers-drawer .ld-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+.layers-drawer .ld-section + .ld-section {
+  margin-top: 8px;
+}
+.layers-drawer .ld-title {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.layers-drawer .ld-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.layers-drawer .ld-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
 
 .legend-container {
   background: rgba(255, 255, 255, 0.9);
   padding: 6px 10px;
   border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   min-width: 120px;
   font-size: 13px;
 }
@@ -909,64 +1007,64 @@ tr.job:hover {
 }
 
 .legend-box {
-  display:inline-block;
-  width:14px;
-  height:14px;
-  border:1px solid #333;
-  margin-right:4px;
-  vertical-align:middle;
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #333;
+  margin-right: 4px;
+  vertical-align: middle;
 }
 .leaflet-control.legend svg {
-  vertical-align:middle;
+  vertical-align: middle;
 }
 
 .modal-textarea-full {
-    width: 100%;
-    resize: none;
-    box-sizing: border-box;
-    display: block;
-    margin: 0;
+  width: 100%;
+  resize: none;
+  box-sizing: border-box;
+  display: block;
+  margin: 0;
 }
 
 #CreateOpsLogModal h6 {
-    margin-top: 0.75rem !important;
-    margin-bottom: 0.35rem !important;
-    font-weight: 600;
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.35rem !important;
+  font-weight: 600;
 }
 
-#CreateOpsLogModal input[type="text"],
+#CreateOpsLogModal input[type='text'],
 #CreateOpsLogModal textarea {
-    width: 100%;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    padding: 6px 8px;
-    font-size: 0.9rem;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 /* Focus state */
-#CreateOpsLogModal input[type="text"]:focus,
+#CreateOpsLogModal input[type='text']:focus,
 #CreateOpsLogModal textarea:focus {
-    border-color: #1e8740; /* theme colour? */
-    box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
-    outline: none;
+  border-color: #1e8740; /* theme colour? */
+  box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
+  outline: none;
 }
 
-#RadioLogModal input[type="text"],
+#RadioLogModal input[type='text'],
 #RadioLogModal textarea {
-    width: 100%;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    padding: 6px 8px;
-    font-size: 0.9rem;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 /* Focus state */
-#RadioLogModal input[type="text"]:focus,
+#RadioLogModal input[type='text']:focus,
 #RadioLogModal textarea:focus {
-    border-color: #1e8740; /* theme colour? */
-    box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
-    outline: none;
+  border-color: #1e8740; /* theme colour? */
+  box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
+  outline: none;
 }
 
 .tag-list {
@@ -974,125 +1072,128 @@ tr.job:hover {
 }
 
 .tag-pill {
-    display: inline-block;
-    padding: 2px 6px;
-    margin: 2px 4px;
-    border-radius: 4px;
-    background: #b8a96a;
-    color: white;
-    cursor: pointer;
-    font-size: 0.75rem;
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 2px 4px;
+  border-radius: 4px;
+  background: #b8a96a;
+  color: white;
+  cursor: pointer;
+  font-size: 0.75rem;
 }
 
 .action-pill {
-    background: #d9534f;
-    display: inline-block;
-    padding: 2px 6px;
-    margin: 2px 4px;
-    border-radius: 4px;
-    color: white;
-    cursor: pointer;
-    font-size: 0.75rem;
+  background: #d9534f;
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 2px 4px;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.75rem;
 }
 
 .action-pill.tag-selected {
-  background: white;  
+  background: white;
   color: #d9534f;
   border-color: #d9534f;
   border: 1px;
   border-style: solid;
 }
 
-
 .tag-pill.tag-selected {
-    background: white;
-    color: #b8a96a;
-    border-color: #b8a96a;
-    border: 1px;
-    border-style: solid;
+  background: white;
+  color: #b8a96a;
+  border-color: #b8a96a;
+  border: 1px;
+  border-style: solid;
 }
 
 /* Single-row Incident card accordion */
 
 .job-row > td {
-    padding: 0;              /* card owns padding */
-    border: none !important; /* no table cell borders for these */
+  padding: 0; /* card owns padding */
+  border: none !important; /* no table cell borders for these */
 }
 
 .job-card {
-    border: 1px solid #d0d7e2;
-    border-radius: 6px;
-    background: #ffffff;
-    margin-left: 4px;
-    margin-right: 4px;
-    overflow: hidden;
-    transition: box-shadow 120ms ease, border-color 120ms ease;
+  border: 1px solid #d0d7e2;
+  border-radius: 6px;
+  background: #ffffff;
+  margin-left: 4px;
+  margin-right: 4px;
+  overflow: hidden;
+  transition: box-shadow 120ms ease, border-color 120ms ease;
 }
 
-
-
-.job-summary, .team-summary {
-    transition: background-color 120ms ease, box-shadow 120ms ease;
+.job-summary,
+.team-summary {
+  transition: background-color 120ms ease, box-shadow 120ms ease;
 }
 
-.job-summary:hover, .team-summary:hover {
-    box-shadow: inset 0 0 0 2px rgba(0,0,0,0.12);
-    cursor: pointer;
+.job-summary:hover,
+.team-summary:hover {
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
 }
 
 .job-card--expanded {
-    border-color: #0d6efd;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  border-color: #0d6efd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 /* Top bar: behaves like the old summary row */
 .job-summary {
-    display: grid;
-    /* match thead/colgroup: 2,10,8,8,8,28,8,22 % */
-    grid-template-columns:
-        2%   /* chev */
-        8%  /* Id */
-        12%   /* Received */
-        8%   /* HQ */
-        8%   /* Type */
-        32%  /* Situation */
-        8%   /* Status */
-        22%;  /* Address */
-    align-items: center;
-    column-gap: 0;             /* let colgroup control spacing */
-    padding: 4px 10px;         /* close to your table cell padding */
-    background: var(--bs-table-bg, #fff);
-    cursor: pointer;
+  display: grid;
+  /* match thead/colgroup: 2,10,8,8,8,28,8,22 % */
+  grid-template-columns:
+    2% /* chev */
+    8% /* Id */
+    12% /* Received */
+    8% /* HQ */
+    8% /* Type */
+    32% /* Situation */
+    8% /* Status */
+    22%; /* Address */
+  align-items: center;
+  column-gap: 0; /* let colgroup control spacing */
+  padding: 4px 10px; /* close to your table cell padding */
+  background: var(--bs-table-bg, #fff);
+  cursor: pointer;
 }
 
 .job-card--expanded .job-summary {
-    background: #eef4ff;
+  background: #eef4ff;
 }
 
 .job-cell {
-    min-width: 0;
-    padding-right: 5px;
-    padding-left: 5px;
-    overflow: hidden;
+  min-width: 0;
+  padding-right: 5px;
+  padding-left: 5px;
+  overflow: hidden;
 }
 
 /* Allow wrapping for the “long” columns so you don't lose information */
 .job-cell--situation,
 .job-cell--address {
-    white-space: normal;
-    overflow-wrap: anywhere;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .job-cell--chev {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.job-cell--chev > .btn {
+  cursor: grabbing !important;
 }
 
 /* Details panel inside the same card – no seams possible */
 .job-details {
-    border-top: 1px solid #e1e4ec;
-    background: #f9fbff;
+  border-top: 1px solid #e1e4ec;
+  background: #f9fbff;
 }
 
 .job-details-form fieldset {
@@ -1121,82 +1222,79 @@ tr.job:hover {
   padding-bottom: 0;
 }
 
-
-
-
-
 /* Rotate chevron instead of swapping icons (optional if you want) */
 .job-card .fa.fa-solid {
-    transition: transform 140ms ease;
+  transition: transform 140ms ease;
 }
 .job-card--expanded .fa.fa-solid.fa-plus {
-    /* if you switch to a single chevron icon, rotate it here */
+  /* if you switch to a single chevron icon, rotate it here */
 }
 
 /* Wider dropdown specifically for the Jobs filter menu */
 #jobMenu + .dropdown-menu {
-    min-width: 400px;      /* adjust as needed */
-    padding: 0.5rem 0.75rem;
+  min-width: 400px; /* adjust as needed */
+  padding: 0.5rem 0.75rem;
 }
 
 .dropdown-collapse-body {
-    padding: 0.25rem 0.5rem 0.5rem 0.5rem;
+  padding: 0.25rem 0.5rem 0.5rem 0.5rem;
 }
 
 .dropdown-two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;   /* two columns */
-    column-gap: 1rem;
-    row-gap: 0.15rem;
-    font-size: 0.8rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* two columns */
+  column-gap: 1rem;
+  row-gap: 0.15rem;
+  font-size: 0.8rem;
 }
 
 .dropdown-two-col .form-check {
-    margin: 0;
-    padding: 0;
-    margin-left: 10px;
+  margin: 0;
+  padding: 0;
+  margin-left: 10px;
 }
 
 .dropdown-three-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;   /* three columns */
-    column-gap: 1rem;
-    row-gap: 0.15rem;
-    font-size: 0.8rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* three columns */
+  column-gap: 1rem;
+  row-gap: 0.15rem;
+  font-size: 0.8rem;
 }
 
 .dropdown-three-col .form-check {
-    margin: 0;
-    padding: 0;
-    margin-left: 10px;
+  margin: 0;
+  padding: 0;
+  margin-left: 10px;
 }
 
 #configModal .modal-header {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-#configModal .load-wrapper { position: relative; }
+#configModal .load-wrapper {
+  position: relative;
+}
 
 #configModal .load-form input {
-    transition: width 0.25s ease, opacity 0.25s ease;
+  transition: width 0.25s ease, opacity 0.25s ease;
 }
 
 #configModal .expanded-input {
-    width: 160px !important;
-    opacity: 1 !important;
+  width: 160px !important;
+  opacity: 1 !important;
 }
 
 .sharecode {
-    font-family: monospace;
-    font-size: 1.3rem;
-    letter-spacing: 0.05rem;
+  font-family: monospace;
+  font-size: 1.3rem;
+  letter-spacing: 0.05rem;
 }
 
-
 .lmt-25 {
-    margin-top: 2.5px !important;
-} 
+  margin-top: 2.5px !important;
+}
 
 /* === Job History / Ops Log two-lane timeline === */
 
@@ -1237,8 +1335,8 @@ tr.job:hover {
 .jobhistory-tag-btn {
   font-size: 0.75rem;
   padding: 0.1rem 0.4rem;
-  vertical-align: middle;  /* THIS FIXES THE FLOATING */
-  line-height: 1.2;        /* Helps even out height across browsers */
+  vertical-align: middle; /* THIS FIXES THE FLOATING */
+  line-height: 1.2; /* Helps even out height across browsers */
 }
 
 /* Legend container */
@@ -1261,15 +1359,15 @@ tr.job:hover {
 /* Match your card border colours */
 
 .jobhistory-legend-history {
-  border-left-color: var(--bs-success);   /* .job-history-card-history */
+  border-left-color: var(--bs-success); /* .job-history-card-history */
 }
 
 .jobhistory-legend-ops-normal {
-  border-left-color: var(--bs-primary);   /* .job-history-card-ops default */
+  border-left-color: var(--bs-primary); /* .job-history-card-ops default */
 }
 
 .jobhistory-legend-ops-important {
-  border-left-color: var(--bs-warning);    /* .job-history-card-flagged */
+  border-left-color: var(--bs-warning); /* .job-history-card-flagged */
 }
 
 /* ICEMS: hint at double border */
@@ -1344,25 +1442,25 @@ tr.job:hover {
 }
 
 .team-status-button {
-    border: 1px solid #ccc;
-    background: #fff;
-    padding: 4px 24px 4px 8px; /* space for icon on the right */
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    line-height: 1.2;
-    position: relative;
+  border: 1px solid #ccc;
+  background: #fff;
+  padding: 4px 24px 4px 8px; /* space for icon on the right */
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  position: relative;
 }
 
 .team-status-button::after {
-    content: "▾";                 /* small dropdown arrow */
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.7rem;
-    pointer-events: none;
-    opacity: 0.7;
+  content: '▾'; /* small dropdown arrow */
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  pointer-events: none;
+  opacity: 0.7;
 }
 
 #TeamStatusDropdown {
@@ -1370,186 +1468,183 @@ tr.job:hover {
 }
 
 .team-status-dropdown {
-    position: absolute;
-    z-index: 99999;
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    min-width: 160px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    padding: 4px 0;
+  position: absolute;
+  z-index: 99999;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
 }
 
 .dropdown-list {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .dropdown-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    font-size: 0.85rem;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
 }
 
 .dropdown-item:hover {
-    background: #f2f2f2;
+  background: #f2f2f2;
 }
 
 .quick-buttons {
-    margin-top: 6px;
-    display: flex;
-    gap: 6px;
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
 }
 
 .quick-btn {
-    padding: 4px 8px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background: #f6f6f6;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f6f6f6;
 }
 
 .tag-text:before {
-    font-family: FontAwesome;
-    padding-right: 5px
+  font-family: FontAwesome;
+  padding-right: 5px;
 }
 
 .tag-text:after {
-    font-family: FontAwesome;
-    content: '';
-    padding-left: 5px;
-    font-size: 1.2em
+  font-family: FontAwesome;
+  content: '';
+  padding-left: 5px;
+  font-size: 1.2em;
 }
 
 .tag.label {
-
-    font-size: 12px
+  font-size: 12px;
 }
 
 .tag {
-    padding-top: 2px;
-    padding-bottom: 2px;
-    border: 1px solid #a445b1;
-    color: #fff;
-    background-color: #d13cd1;
-    margin: 0 5px 5px 0;
-    cursor: pointer;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border: 1px solid #a445b1;
+  color: #fff;
+  background-color: #d13cd1;
+  margin: 0 5px 5px 0;
+  cursor: pointer;
 }
 
 .tag > i {
-    padding-left: 5px;
+  padding-left: 5px;
 }
 
 .tag > span {
-    padding-right: 5px;
+  padding-right: 5px;
 }
 
 .tag-damage {
-    color: #fff;
-    background-color: #e24d00;
-    border: 1px solid #e24d00
+  color: #fff;
+  background-color: #e24d00;
+  border: 1px solid #e24d00;
 }
 
 .tag-hazard {
-    color: #fff;
-    background-color: #c23434;
-    border: 1px solid #c23434;
+  color: #fff;
+  background-color: #c23434;
+  border: 1px solid #c23434;
 }
 
 .tag-property {
-    color: #fff;
-    background-color: #0f9369;
-    border: 1px solid #0f9369;
+  color: #fff;
+  background-color: #0f9369;
+  border: 1px solid #0f9369;
 }
 
 .tag-special-needs {
-    color: #fff;
-    background-color: #0f8b94;
-    border: 1px solid #0f8b94;
+  color: #fff;
+  background-color: #0f8b94;
+  border: 1px solid #0f8b94;
 }
 
 .tag-task {
-    color: #fff;
-    background-color: #1e8740;
-    border: 1px solid #1e8740;
+  color: #fff;
+  background-color: #1e8740;
+  border: 1px solid #1e8740;
 }
 
 .tag-aviation {
-    color: #ffffff;
-    background-color: #05636b;
-    border: 1px solid #05636b;
+  color: #ffffff;
+  background-color: #05636b;
+  border: 1px solid #05636b;
 }
 
 .tag-note {
-    color: #ffffff;
-    background-color: #6e663c;
-    border-color: #6e663c
+  color: #ffffff;
+  background-color: #6e663c;
+  border-color: #6e663c;
 }
 
-
 .tag-note-selected {
-    color: #6e663c;
-    background-color: #ffffff;
-    border-color: #6e663c
+  color: #6e663c;
+  background-color: #ffffff;
+  border-color: #6e663c;
 }
 
 .tag-further-action {
-    color: #fff;
-    background-color: #ee0039;
-    border-color: #ee0039
+  color: #fff;
+  background-color: #ee0039;
+  border-color: #ee0039;
 }
 
 /* Ensure team/job dropdown menus appear above pane overflow */
-#teamFilterDropdown, #jobFilterDropDown {
-    position: fixed !important;   /* escape overflow containers */
-    transform: none !important;   /* disable BS placement transforms */
-    inset: auto !important;       /* let JS set the coords */
-    z-index: 3000 !important;
+#teamFilterDropdown,
+#jobFilterDropDown {
+  position: fixed !important; /* escape overflow containers */
+  transform: none !important; /* disable BS placement transforms */
+  inset: auto !important; /* let JS set the coords */
+  z-index: 3000 !important;
 }
 
 #sectorDropdown {
-    z-index: 3000 !important;
+  z-index: 3000 !important;
 }
 
 #sectorDropdown.show {
-    position: fixed !important;
+  position: fixed !important;
 }
 
 .job-taskteam-dropdown {
-    z-index: 3000 !important;
+  z-index: 3000 !important;
 }
 
 .job-taskteam-dropdown.show {
-    position: fixed !important;
+  position: fixed !important;
 }
-
-
 
 /* Sector dropdown button */
 .sector-dropdown-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    margin-top: 2px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  margin-top: 2px;
 }
 
 .sector-dropdown-btn:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 /* Small caret */
 .sector-dropdown-btn .caret {
-    display: inline-block;
-    margin-left: 4px;
-    border-top: 4px solid currentColor;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    vertical-align: middle;
+  display: inline-block;
+  margin-left: 4px;
+  border-top: 4px solid currentColor;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  vertical-align: middle;
 }
 
 .zone-label {
@@ -1557,11 +1652,7 @@ tr.job:hover {
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
-  text-shadow:
-    -1px -1px 1px #fff,
-     1px -1px 1px #fff,
-    -1px  1px 1px #fff,
-     1px  1px 1px #fff;
+  text-shadow: -1px -1px 1px #fff, 1px -1px 1px #fff, -1px 1px 1px #fff, 1px 1px 1px #fff;
   pointer-events: none;
 }
 
@@ -1570,11 +1661,7 @@ tr.job:hover {
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
-  text-shadow:
-    -1px -1px 1px #ffffff,
-     1px -1px 1px #ffffff,
-    -1px  1px 1px #ffffff,
-     1px  1px 1px #ffffff;
+  text-shadow: -1px -1px 1px #ffffff, 1px -1px 1px #ffffff, -1px 1px 1px #ffffff, 1px 1px 1px #ffffff;
   pointer-events: none;
 }
 
@@ -1582,14 +1669,11 @@ tr.job:hover {
   font-size: 12px;
   font-weight: 600;
   color: #333;
-  text-shadow:
-    0 0 3px #ffffff,
-    0 0 3px #ffffff,
-    0 0 3px #ffffff;
+  text-shadow: 0 0 3px #ffffff, 0 0 3px #ffffff, 0 0 3px #ffffff;
   pointer-events: none; /* don't interfere with map clicks */
   white-space: nowrap;
   text-align: center;
-   display: flex;
+  display: flex;
   justify-content: center;
   align-items: center;
 }
@@ -1607,7 +1691,6 @@ tr.job:hover {
 .layers-drawer .ld-overlay-btn {
   font-size: 12px;
 }
-
 
 /* header layout: bar + small hide button */
 .alerts__header {
@@ -1638,8 +1721,19 @@ tr.job:hover {
   display: none;
 }
 
-
 .leaflet-control.alerts.alerts--collapsed .alerts__btn {
   padding: 4px;
   min-width: auto;
+}
+
+#SendSMSModal .sms-recipient-list {
+  max-height: 140px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 0.35rem 0.5rem;
+}
+
+#SendSMSModal .form-check-sm {
+  font-size: 0.85rem;
 }

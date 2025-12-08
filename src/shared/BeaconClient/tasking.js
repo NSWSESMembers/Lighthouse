@@ -21,6 +21,8 @@ export function task(teamID, jobId, host, userId = 'notPassed', token, callback)
       if (textStatus == 'success') {
         //work around for beacon bug returning error 500 for no reason
         callback(response.responseJSON);
+        } else {
+          callback(null);
         }
     },
   });

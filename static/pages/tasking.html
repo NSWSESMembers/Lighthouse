@@ -290,7 +290,7 @@
                                                     </button>
                                                     <button type="button" class="btn btn-outline-secondary"
                                                         title="Message"
-                                                        data-bind="click: t.openMessage, clickBubble: false">
+                                                        data-bind="click: t.sendSMS, clickBubble: false, disable: !t.members().length">
                                                         <i class="fa fa-solid fa-envelope"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-outline-secondary" title="Edit"
@@ -404,6 +404,7 @@
                                                                                     </button>
                                                                                     <button type="button"
                                                                                         class="btn btn-outline-secondary"
+                                                                                        data-bind="click: ts.sendSMS, clickBubble: false"
                                                                                         title="Message">
                                                                                         <i class="fa fa-envelope"></i>
                                                                                     </button>
@@ -1144,6 +1145,7 @@
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
+                                                                                            data-bind="click: ts.sendSMS, clickBubble: false"
                                                                                             title="Message">
                                                                                             <i
                                                                                                 class="fa fa-envelope"></i>
@@ -1203,10 +1205,9 @@
                     to team <span id="confirmTeamCallsign" class="fw-bold"></span>?
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Oh fuck</button>
-                    <button type="button" class="btn btn-primary" id="confirmTaskingYes">Yes, Task</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-info" id="confirmTaskingYesSMS">Task & SMS Details</button>
-
+                    <button type="button" class="btn btn-primary" id="confirmTaskingYes">Task</button>
                 </div>
             </div>
         </div>
@@ -1290,7 +1291,8 @@
                                 <!-- Selected filters: TEAMS -->
                                 <div data-bind="if: config.teamFilters().length === 0">
                                     <div class="card-body py-2 selected-box">
-                                        <span class="text-muted small">No Filters Applied - Teams from all units will be fetched</span>
+                                        <span class="text-muted small">No Filters Applied - Teams from all units will be
+                                            fetched</span>
                                     </div>
                                 </div>
                                 <div data-bind="if: config.teamFilters().length > 0">
@@ -1325,7 +1327,8 @@
                                 <!-- Selected filters: INCIDENTS -->
                                 <div data-bind="if: config.incidentFilters().length === 0">
                                     <div class="card-body py-2 selected-box">
-                                        <span class="text-muted small">No Filters Applied - Incidents from all units will be fetched</span>
+                                        <span class="text-muted small">No Filters Applied - Incidents from all units
+                                            will be fetched</span>
                                     </div>
                                 </div>
                                 <div data-bind="if: config.incidentFilters().length > 0">
@@ -2200,7 +2203,7 @@
     </div>
 
 
-    <!-- SMS MODAL
+    <!-- SMS MODAL -->
     <div class="modal fade" id="SendSMSModal" tabindex="-1" aria-labelledby="SendSMSModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content" data-bind="with: SendSMSModalVM">
@@ -2210,61 +2213,74 @@
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
-                        <span data-bind="text: errorMessage"></span>
-                    </div>
-                    <textarea class="modal-textarea-full" id="SMSMessageInput" rows="8" maxlength="4000"
-                        data-bind="value: text"></textarea>
                 </div>
 
-    <!-- SMS MODAL
-    <div class="modal fade" id="SendSMSModal" tabindex="-1" aria-labelledby="SendSMSModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" data-bind="with: SendSMSModalVM">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="SendSMSModalLabel">
-                        <span data-bind="text: headerLabel"></span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
                 <div class="modal-body">
                     <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
                         <span data-bind="text: errorMessage"></span>
                     </div>
-                    <textarea class="modal-textarea-full" id="SMSMessageInput" rows="8" maxlength="4000"
-                        data-bind="value: text"></textarea>
-                </div>
 
-    <!-- SMS MODAL
-    <div class="modal fade" id="SendSMSModal" tabindex="-1" aria-labelledby="SendSMSModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" data-bind="with: SendSMSModalVM">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="SendSMSModalLabel">
-                        <span data-bind="text: headerLabel"></span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
-                        <span data-bind="text: errorMessage"></span>
+                    <!-- Recipients list -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Recipients</label>
+
+                        <!-- ko if: recipients().length === 0 -->
+                        <div class="text-muted small">
+                            No recipients were provided.
+                        </div>
+                        <!-- /ko -->
+
+                        <!-- ko if: recipients().length > 0 -->
+                        <div class="sms-recipient-list" data-bind="foreach: recipients">
+                            <div class="form-check form-check-sm mb-1">
+                                <input class="form-check-input" type="checkbox" data-bind="checked: selected" />
+                                <label class="form-check-label">
+                                    <span data-bind="text: displayLabel"></span>
+                                    <!-- ko if: isTeamLeader -->
+                                    <span class="badge bg-secondary ms-1">TL</span>
+                                    <!-- /ko -->
+                                    <!-- ko if: id -->
+                                    <span class="text-muted ms-2 small" data-bind="text: id"></span>
+                                    <!-- /ko -->
+                                    <!-- ko if: loading -->
+                                    <span class="text-warning ms-2 small">(Loading...)</span>
+                                    <!-- /ko -->
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="text-muted small mt-1">
+                            <span data-bind="text: selectedCount"></span>
+                            <span> of </span>
+                            <span data-bind="text: recipients().length"></span>
+                            <span> selected</span>
+                        </div>
+                        <!-- /ko -->
                     </div>
-                    <textarea class="modal-textarea-full" id="SMSMessageInput" rows="8" maxlength="4000"
-                        data-bind="value: text"></textarea>
+
+                    <!-- Message body -->
+                    <div class="mb-0">
+                        <label for="SMSMessageInput" class="form-label fw-semibold">Message</label>
+                        <textarea class="modal-textarea-full" id="SMSMessageInput" rows="6" maxlength="4000"
+                            data-bind="value: text"></textarea>
+                    </div>
+                    
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-outline-secondary" data-bind="click: submit">Submit</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary" data-bind="click: submit, disable: isSending">
+                        <span data-bind="visible: !isSending()">Send</span>
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" data-bind="visible: isSending"></span>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
-    -->
+
+
 
 
     <!-- RADIO LOG MODAL -->
