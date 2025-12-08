@@ -17,6 +17,8 @@ body {
   line-height: 1.35;
 }
 
+
+
 body.env-trainbeacon::before {
   content: '';
   position: fixed;
@@ -40,6 +42,21 @@ body.env-trainbeacon::after {
   pointer-events: none;
   white-space: nowrap;
   user-select: none;
+}
+
+body.env-trainbeacon::after {
+    content: "TRAIN BEACON";
+    position: fixed;
+    top: 50%;
+    left: 25%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    font-size: 6rem;
+    font-weight: 900;
+    color: rgba(0, 200, 83, 0.25); /* green, semi-transparent */
+    z-index: 99998;
+    pointer-events: none;
+    white-space: nowrap;
+    user-select: none;
 }
 
 body.env-trainbeacon {
