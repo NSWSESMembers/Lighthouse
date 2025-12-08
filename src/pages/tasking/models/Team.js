@@ -9,6 +9,12 @@ import { Enum } from '../utils/enum.js';
 
 export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
+
+
+/// TEAMS MIGHT NOT HAVE A CURRENTSTATUS IF THEY WERE CREATED FROM TASKING ONLY
+/// THERES ENOUGH GUARDS AROUND THIS NOW TO PREVENT ISSUES
+
+
     const self = this;
     self.lastTaskingDataUpdate = new Date();
 
@@ -37,7 +43,6 @@ export function Team(data = {}, deps = {}) {
     });
 
     self.popUpIsOpen = ko.observable(false);
-
 
     self.trackableAssets = ko.observableArray([]);
 

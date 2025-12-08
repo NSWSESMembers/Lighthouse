@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 global.jQuery = $;
 
-import BeaconClient, { job } from '../../shared/BeaconClient.js';
+import BeaconClient from '../../shared/BeaconClient.js';
 const BeaconToken = require('../lib/shared_token_code.js');
 
 require('../lib/shared_chrome_code.js'); // side-effect
@@ -804,8 +804,8 @@ function VM() {
         // Resolve shared refs
         const jobRef = self.getOrCreateJob(taskingJson.Job);
 
-        //flag the team creation/update as from tasking
-        //otherwise we might overwrite an active team with stale data
+        //flag the team creation/update as from tasking so its not updated with stale data
+        //otherwise we might overwrite an active team with old stuff
         const teamRef = teamContext || self.getOrCreateTeam(taskingJson.Team, 'tasking');
 
         let t = self.taskingsById.get(taskingJson.Id);
