@@ -44,6 +44,7 @@ import { installSlideVisibleBinding } from "./bindings/slideVisible.js";
 import { installStatusFilterBindings } from "./bindings/statusFilters.js";
 import { installRowVisibilityBindings } from "./bindings/rowVisibility.js";
 import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
+import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
 import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
@@ -1673,6 +1674,7 @@ document.addEventListener('DOMContentLoaded', function () {
         installStatusFilterBindings();
         installRowVisibilityBindings();
         installDragDropRowBindings();
+        noBubbleFromDisabledButtonsBindings();
 
         ko.bindingProvider.instance = new ksb(options);
         window.ko = ko;

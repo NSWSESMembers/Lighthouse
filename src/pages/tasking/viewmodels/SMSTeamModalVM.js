@@ -80,6 +80,24 @@ export function SendSMSModalVM(parentVM) {
 
     };
 
+    self.messageLengthInfo = ko.pureComputed(() => {
+        const len = (self.text()).length;
+        return `${len} characters (${Math.ceil(len / 160)} message will be sent)`;
+    });
+
+    self.updateMessageLength = () => {
+        // Trigger re-computation of messageLengthInfo
+        self.text(self.text());
+    }
+
+    self.setAsOperationalSMS = function () {
+        self.operationalSMS(true);
+    }
+
+    self.setAsNonOperationalSMS = function () {
+        self.operationalSMS(false);
+    }
+
     self.getSelectedRecipients = function () {
         return self.recipients().filter(function (r) { return r.selected(); });
     };

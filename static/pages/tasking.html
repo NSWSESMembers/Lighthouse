@@ -273,7 +273,8 @@
                                             <div class="team-cell" data-bind="text: t.assignedTo().code"></div>
 
                                             <!-- 5. Task Count -->
-                                            <div class="team-cell" data-bind="text: t.taskedJobCount() + ' Active'"></div>
+                                            <div class="team-cell" data-bind="text: t.taskedJobCount() + ' Active'">
+                                            </div>
 
                                             <!-- 6. Team Leader -->
                                             <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader">
@@ -282,7 +283,7 @@
                                             <!-- 7. Actions -->
                                             <div class="team-cell">
                                                 <div class="btn-group btn-group-sm" role="group"
-                                                    aria-label="Tasking actions">
+                                                    aria-label="Tasking actions" data-bind="noBubbleFromDisabledButtons: true">
                                                     <button type="button" class="btn btn-outline-secondary"
                                                         title="Radio Log"
                                                         data-bind="click: t.openRadioLogModal, clickBubble: false">
@@ -354,8 +355,12 @@
                                                                 <h6 class="text-muted mb-0">Loading taskings...</h6>
                                                                 <!-- /ko -->
                                                                 <!-- ko ifnot: t.taskingLoading -->
-                                                                <h6 class="text-muted mb-0" data-bind="visible: t.hiddenTaskingCount, text: 'Taskings (' + t.hiddenTaskingCount() + ' hidden)'"></h6>
-                                                                <h6 class="text-muted mb-0" data-bind="visible: !t.hiddenTaskingCount">Taskings</h6>
+                                                                <h6 class="text-muted mb-0"
+                                                                    data-bind="visible: t.hiddenTaskingCount, text: 'Taskings (' + t.hiddenTaskingCount() + ' hidden)'">
+                                                                </h6>
+                                                                <h6 class="text-muted mb-0"
+                                                                    data-bind="visible: !t.hiddenTaskingCount">Taskings
+                                                                </h6>
                                                                 <!-- /ko -->
                                                                 <div class="btn-group btn-group-sm" role="group"
                                                                     aria-label="Team actions">
@@ -396,7 +401,7 @@
                                                                             </td>
                                                                             <td>
                                                                                 <div class="btn-group btn-group-sm"
-                                                                                    role="group">
+                                                                                    role="group" data-bind="noBubbleFromDisabledButtons: true">
                                                                                     <button type="button"
                                                                                         class="btn btn-outline-secondary"
                                                                                         title="Radio Log"
@@ -405,7 +410,7 @@
                                                                                     </button>
                                                                                     <button type="button"
                                                                                         class="btn btn-outline-secondary"
-                                                                                        data-bind="click: ts.sendSMS, clickBubble: false"
+                                                                                        data-bind="click: ts.sendSMS, clickBubble: false, disable: !t.members().length"
                                                                                         title="Message">
                                                                                         <i class="fa fa-envelope"></i>
                                                                                     </button>
@@ -700,12 +705,12 @@
                     <table class="jobs table align-middle">
                         <colgroup>
                             <col style="width: 2%;"> <!-- chevron -->
-                            <col style="width: 8%;"> <!-- Id -->
+                            <col style="width: 7%;"> <!-- Id -->
                             <col style="width: 12%;"> <!-- Recieved -->
                             <col style="width: 8%;"> <!-- HQ -->
                             <col style="width: 8%;"> <!-- Type -->
                             <col style="width: 32%;"> <!-- Situation -->
-                            <col style="width: 8%;"> <!-- Status -->
+                            <col style="width: 9%;"> <!-- Status -->
                             <col style="width: 22%;"> <!-- Address -->
 
                         </colgroup>
@@ -1136,7 +1141,7 @@
                                                                                 </td>
                                                                                 <td>
                                                                                     <div class="btn-group btn-group-sm"
-                                                                                        role="group">
+                                                                                        role="group" data-bind="noBubbleFromDisabledButtons: true">
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Radio Log"
@@ -1146,7 +1151,7 @@
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
-                                                                                            data-bind="click: ts.sendSMS, clickBubble: false"
+                                                                                            data-bind="click: ts.sendSMS, clickBubble: false, disable: !ts.team.members().length"
                                                                                             title="Message">
                                                                                             <i
                                                                                                 class="fa fa-envelope"></i>
@@ -2240,9 +2245,6 @@
                                     <!-- ko if: isTeamLeader -->
                                     <span class="badge bg-secondary ms-1">TL</span>
                                     <!-- /ko -->
-                                    <!-- ko if: id -->
-                                    <span class="text-muted ms-2 small" data-bind="text: id"></span>
-                                    <!-- /ko -->
                                     <!-- ko if: loading -->
                                     <span class="text-warning ms-2 small">(Loading...)</span>
                                     <!-- /ko -->
@@ -2260,12 +2262,28 @@
                     </div>
 
                     <!-- Message body -->
-                    <div class="mb-0">
+                    <div class="mb-3">
                         <label for="SMSMessageInput" class="form-label fw-semibold">Message</label>
                         <textarea class="modal-textarea-full" id="SMSMessageInput" rows="6" maxlength="4000"
-                            data-bind="value: text"></textarea>
+                            data-bind="textInput: text"></textarea>
+                        <div class="small text-muted mt-1" data-bind="text: messageLengthInfo"></div>
                     </div>
-                    
+
+                    <div class="mb-0">
+                        <!-- Subheading -->
+                        <label class="form-label fw-semibold">Operational</label>
+                        <!-- Full-width button group -->
+                        <div class="btn-group d-flex" role="group" aria-label="Operational SMS">
+                            <button type="button" class="btn btn-outline-success flex-fill"
+                                data-bind="click: setAsOperationalSMS, css: { active: operationalSMS() === true }">
+                                Yes
+                            </button>
+                            <button type="button" class="btn btn-outline-success flex-fill"
+                                data-bind="click: setAsNonOperationalSMS, css: { active: operationalSMS() === false }">
+                                No
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
@@ -2274,7 +2292,8 @@
                     </button>
                     <button type="button" class="btn btn-primary" data-bind="click: submit, disable: isSending">
                         <span data-bind="visible: !isSending()">Send</span>
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" data-bind="visible: isSending"></span>
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
+                            data-bind="visible: isSending"></span>
                     </button>
                 </div>
             </div>
