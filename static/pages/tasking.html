@@ -247,11 +247,11 @@
                    attr:{'aria-expanded': t.expanded}, attr: { 'data-team-id': t.id }">
                                 <td colspan="7">
                                     <div class="team-card"
-                                        data-bind="css:{'team-card--expanded': t.expanded()}, click: t.toggleAndExpand, attr:{ 'aria-expanded': t.expanded }">
+                                        data-bind="css:{'team-card--expanded': t.expanded()}, attr:{ 'aria-expanded': t.expanded }">
 
                                         <!-- SUMMARY BAR -->
                                         <div class="team-summary"
-                                            data-bind="style: { 'background': t.taskingRowColour() }">
+                                            data-bind="style: { 'background': t.taskingRowColour() }, click: t.toggleAndExpand">
                                             <!-- 1. Chevron -->
                                             <div class="team-cell team-cell--chev">
                                                 <button type="button" class="btn btn-link p-0 text-decoration-none"
