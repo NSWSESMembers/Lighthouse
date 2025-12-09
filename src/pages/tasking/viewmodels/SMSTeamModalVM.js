@@ -35,7 +35,7 @@ export function SendSMSModalVM(parentVM) {
     self.openWithRecipients = function (passedRecipients, opts) {
         console.log("Opening SMS modal with recipients:", passedRecipients);
         const options = opts || {};
-
+        self.operationalSMS(true)
         self.headerLabel(options.headerLabel || "Send SMS");
         self.showError(false);
         self.errorMessage("");
