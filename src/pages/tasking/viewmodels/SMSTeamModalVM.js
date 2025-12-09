@@ -79,6 +79,14 @@ export function SendSMSModalVM(parentVM) {
         self.recipients(mapped);
 
     };
+    
+    self.sendingOrLoading = ko.pureComputed(() => {
+        return self.isSending() || self.recipientsLoading();
+    });
+
+    self.recipientsLoading = ko.pureComputed(() => {
+        return self.recipients().some(r => r.loading());
+    });
 
     self.messageLengthInfo = ko.pureComputed(() => {
         const len = (self.text()).length;
