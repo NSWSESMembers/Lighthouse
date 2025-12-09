@@ -1,10 +1,9 @@
 import $ from 'jquery';
 
 
-export function send(recipients, jobId, messageText, host, userId = 'notPassed', token, callback) {
-
+export function send(recipients, jobId, messageText, isOperational, host, userId = 'notPassed', token, callback) {
 const data = {
-  Operational: true,
+  Operational: isOperational,
   MessageText: messageText,
   JobId: jobId
 };

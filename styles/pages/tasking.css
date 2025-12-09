@@ -1165,12 +1165,12 @@ tr.job:hover {
   /* match thead/colgroup: 2,10,8,8,8,28,8,22 % */
   grid-template-columns:
     2% /* chev */
-    8% /* Id */
+    7% /* Id */
     12% /* Received */
     8% /* HQ */
     8% /* Type */
     32% /* Situation */
-    8% /* Status */
+    9% /* Status */
     22%; /* Address */
   align-items: center;
   column-gap: 0; /* let colgroup control spacing */

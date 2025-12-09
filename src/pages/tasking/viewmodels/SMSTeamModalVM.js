@@ -35,7 +35,7 @@ export function SendSMSModalVM(parentVM) {
     self.openWithRecipients = function (passedRecipients, opts) {
         console.log("Opening SMS modal with recipients:", passedRecipients);
         const options = opts || {};
-
+        self.operationalSMS(true)
         self.headerLabel(options.headerLabel || "Send SMS");
         self.showError(false);
         self.errorMessage("");
@@ -79,6 +79,32 @@ export function SendSMSModalVM(parentVM) {
         self.recipients(mapped);
 
     };
+    
+    self.sendingOrLoading = ko.pureComputed(() => {
+        return self.isSending() || self.recipientsLoading();
+    });
+
+    self.recipientsLoading = ko.pureComputed(() => {
+        return self.recipients().some(r => r.loading());
+    });
+
+    self.messageLengthInfo = ko.pureComputed(() => {
+        const len = (self.text()).length;
+        return `${len} characters (${Math.ceil(len / 160)} message will be sent)`;
+    });
+
+    self.updateMessageLength = () => {
+        // Trigger re-computation of messageLengthInfo
+        self.text(self.text());
+    }
+
+    self.setAsOperationalSMS = function () {
+        self.operationalSMS(true);
+    }
+
+    self.setAsNonOperationalSMS = function () {
+        self.operationalSMS(false);
+    }
 
     self.getSelectedRecipients = function () {
         return self.recipients().filter(function (r) { return r.selected(); });

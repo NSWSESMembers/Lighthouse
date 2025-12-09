@@ -203,6 +203,10 @@ export function Team(data = {}, deps = {}) {
         return self.filteredTaskings() && self.filteredTaskings().length || 0;
     })
 
+    self.hiddenTaskingCount = ko.pureComputed(() => {
+        return self.taskings().length - self.filteredTaskings().length;
+    })
+
 
 
     self.currentTaskingSummary = ko.pureComputed(() => {

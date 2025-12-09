@@ -44,6 +44,7 @@ import { installSlideVisibleBinding } from "./bindings/slideVisible.js";
 import { installStatusFilterBindings } from "./bindings/statusFilters.js";
 import { installRowVisibilityBindings } from "./bindings/rowVisibility.js";
 import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
+import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
 import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
@@ -900,11 +901,10 @@ function VM() {
         });
     }
 
-    self.sendSMS = async function (recipients, jobId = '', message) {
-        console.log(jobId);
+    self.sendSMS = async function (recipients, jobId = '', message, isOperational) {
         const t = await getToken();   // blocks here until token is ready
         return new Promise((resolve, reject) => {
-            BeaconClient.messages.send(recipients, jobId, message, apiHost, params.userId, t, function (data) {
+            BeaconClient.messages.send(recipients, jobId, message, isOperational, apiHost, params.userId, t, function (data) {
                 if (data) {
                     resolve(data);
                 } else {
@@ -1673,6 +1673,7 @@ document.addEventListener('DOMContentLoaded', function () {
         installStatusFilterBindings();
         installRowVisibilityBindings();
         installDragDropRowBindings();
+        noBubbleFromDisabledButtonsBindings();
 
         ko.bindingProvider.instance = new ksb(options);
         window.ko = ko;
