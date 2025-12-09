@@ -901,11 +901,10 @@ function VM() {
         });
     }
 
-    self.sendSMS = async function (recipients, jobId = '', message) {
-        console.log(jobId);
+    self.sendSMS = async function (recipients, jobId = '', message, isOperational) {
         const t = await getToken();   // blocks here until token is ready
         return new Promise((resolve, reject) => {
-            BeaconClient.messages.send(recipients, jobId, message, apiHost, params.userId, t, function (data) {
+            BeaconClient.messages.send(recipients, jobId, message, isOperational, apiHost, params.userId, t, function (data) {
                 if (data) {
                     resolve(data);
                 } else {
