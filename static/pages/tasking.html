@@ -270,10 +270,10 @@
                                             <div class="team-cell" data-bind="text: t.statusName"></div>
 
                                             <!-- 4. HQ -->
-                                            <div class="team-cell" data-bind="text: t.assignedTo.code"></div>
+                                            <div class="team-cell" data-bind="text: t.assignedTo().code"></div>
 
                                             <!-- 5. Task Count -->
-                                            <div class="team-cell" data-bind="text: t.taskedJobCount"></div>
+                                            <div class="team-cell" data-bind="text: t.taskedJobCount() + ' Active'"></div>
 
                                             <!-- 6. Team Leader -->
                                             <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader">
@@ -354,7 +354,8 @@
                                                                 <h6 class="text-muted mb-0">Loading taskings...</h6>
                                                                 <!-- /ko -->
                                                                 <!-- ko ifnot: t.taskingLoading -->
-                                                                <h6 class="text-muted mb-0">Taskings</h6>
+                                                                <h6 class="text-muted mb-0" data-bind="visible: t.hiddenTaskingCount, text: 'Taskings (' + t.hiddenTaskingCount() + ' hidden)'"></h6>
+                                                                <h6 class="text-muted mb-0" data-bind="visible: !t.hiddenTaskingCount">Taskings</h6>
                                                                 <!-- /ko -->
                                                                 <div class="btn-group btn-group-sm" role="group"
                                                                     aria-label="Team actions">
