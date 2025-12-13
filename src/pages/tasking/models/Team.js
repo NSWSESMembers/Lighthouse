@@ -42,6 +42,8 @@ export function Team(data = {}, deps = {}) {
         return leader ? `${leader.Person.FirstName} ${leader.Person.LastName}` : '-';
     });
 
+    self.statusDate = ko.observable((data.TeamStatusStartDate) ? new Date(data.TeamStatusStartDate) : null);
+
     self.popUpIsOpen = ko.observable(false);
 
     self.trackableAssets = ko.observableArray([]);
@@ -353,5 +355,6 @@ export function Team(data = {}, deps = {}) {
         if (d.Members !== undefined) this.members(d.Members);
         if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) this.assignedTo(new Entity(d.AssignedTo || d.CreatedAt)); //safety for beacon bug
         if (d.statusId !== undefined) this.updateStatusById(d.statusId);
+        if (d.teamStatusStartDate !== undefined) this.statusDate(new Date(d.TeamStatusStartDate));
     }
 }

@@ -147,22 +147,44 @@ export function ConfigVM(root, deps) {
     self.clearIncidents = () => self.incidentFilters.removeAll();
     self.clearSectors = () => self.sectorFilters.removeAll();
 
-    // Search (debounced)
-    self.query
-        .extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } })
-        .subscribe(q => {
-            const t = (q || '').trim();
-            if (!t) {
-                self.results([]);
-                self.dropdownOpen(false);
-                return;
-            }
-            self.searching(true);
-            deps.entitiesSearch(t).then(list => {
-                self.results(list.map(e => makeResultVM({ id: e.Id, name: e.Name, entityType: e.EntityTypeId })));
-                self.dropdownOpen(true);
-            }).finally(() => self.searching(false));
-        });
+// Search (debounced)
+let searchSeq = 0;
+
+self.query
+  .extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } })
+  .subscribe(q => {
+    const t = (q || '').trim();
+    if (!t) {
+      searchSeq++;
+      self.searching(false);
+      self.results([]);
+      self.dropdownOpen(false);
+      return;
+    }
+
+    const mySeq = ++searchSeq;
+
+    // show dropdown immediately with loading state + clear old results
+    self.results([]);
+    self.dropdownOpen(true);
+    self.searching(true);
+
+    deps.entitiesSearch(t)
+      .then(list => {
+        if (mySeq !== searchSeq) return; // ignore stale responses
+        self.results(list.map(e => makeResultVM({ id: e.Id, name: e.Name, entityType: e.EntityTypeId })));
+        self.dropdownOpen(true);
+      })
+      .catch(() => {
+        if (mySeq !== searchSeq) return;
+        self.results([]);      // triggers "No results found."
+        self.dropdownOpen(true);
+      })
+      .finally(() => {
+        if (mySeq === searchSeq) self.searching(false);
+      });
+  });
+
 
     // Actions from results
     self.addTeam = (item, ev) => {

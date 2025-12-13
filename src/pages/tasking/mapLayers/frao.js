@@ -2,7 +2,7 @@ import BeaconClient from "../../../shared/BeaconClient";
 import L from "leaflet";
 
 const NSW_LGA_QUERY_URL =
-    "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Administrative_Boundaries/MapServer/1/query";
+    "https://six.lighthouse-extension.com/arcgis/rest/services/public/NSW_Administrative_Boundaries/MapServer/1/query";
 
 
 async function fetchFRAOSAsync(startDate, endDate, apiHost, userId, token) {
@@ -28,15 +28,17 @@ async function FRAOToUnionAsync(lgas) {
     const names = lgas.map(lga => String(lga).toUpperCase());
 
     // Build ArcGIS "IN" clause: lganame IN ('PARRAMATTA','CUMBERLAND',...)
-    const escaped = names.map(n => `'${n.replace(/'/g, "''")}'`);
-    const where = `lganame IN (${escaped.join(",")})`;
-
+    const where = names
+        .map(n => {
+            const esc = String(n).replace(/'/g, "''");
+            return `lganame LIKE '%${esc}%'`;
+        })
+        .join(' OR ');
     const params = new URLSearchParams({
         f: "geojson",
         where,
         outFields: "*",
         returnGeometry: "true",
-        outSR: "4326",
     });
 
     const url = `${NSW_LGA_QUERY_URL}?${params.toString()}`;
@@ -114,7 +116,9 @@ export function renderFRAOSLayer(vm, map, getToken, apiHost, params) {
 
             const getPastelColor = (index) => {
                 const hue = (index * 137.508) % 360;
-                return `hsl(${hue}, 60%, 80%)`;
+                // Avoid light green, blue, and cyan hues by shifting the hue range
+                const adjustedHue = (hue >= 60 && hue <= 240) ? (hue + 120) % 360 : hue;
+                return `hsl(${adjustedHue}, 60%, 80%)`;
             };
 
             data.forEach((f, idx) => {

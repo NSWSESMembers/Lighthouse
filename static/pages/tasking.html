@@ -263,7 +263,14 @@
                                             </div>
 
                                             <!-- 2. Callsign -->
-                                            <div class="team-cell team-cell--callsign" data-bind="text: t.callsign">
+                                            <div class="team-cell">
+                                                <span data-bind="text: t.callsign"></span>
+
+                                                <span class="fa-stack" data-bind="visible: !t.trackableAssets().length">
+                                                    <i class="fas fa-map-marker-alt fa-stack-1x"></i>
+                                                    <i class="fa fa-ban fa-stack-2x text-danger"
+                                                        style="color:Tomato"></i>
+                                                </span>
                                             </div>
 
                                             <!-- 3. Status -->
@@ -283,7 +290,8 @@
                                             <!-- 7. Actions -->
                                             <div class="team-cell">
                                                 <div class="btn-group btn-group-sm" role="group"
-                                                    aria-label="Tasking actions" data-bind="noBubbleFromDisabledButtons: true">
+                                                    aria-label="Tasking actions"
+                                                    data-bind="noBubbleFromDisabledButtons: true">
                                                     <button type="button" class="btn btn-outline-secondary"
                                                         title="Radio Log"
                                                         data-bind="click: t.openRadioLogModal, clickBubble: false">
@@ -401,7 +409,8 @@
                                                                             </td>
                                                                             <td>
                                                                                 <div class="btn-group btn-group-sm"
-                                                                                    role="group" data-bind="noBubbleFromDisabledButtons: true">
+                                                                                    role="group"
+                                                                                    data-bind="noBubbleFromDisabledButtons: true">
                                                                                     <button type="button"
                                                                                         class="btn btn-outline-secondary"
                                                                                         title="Radio Log"
@@ -1141,7 +1150,8 @@
                                                                                 </td>
                                                                                 <td>
                                                                                     <div class="btn-group btn-group-sm"
-                                                                                        role="group" data-bind="noBubbleFromDisabledButtons: true">
+                                                                                        role="group"
+                                                                                        data-bind="noBubbleFromDisabledButtons: true">
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Radio Log"
@@ -1250,32 +1260,56 @@
 
                                 <!-- Results "dropdown" rendered via KO -->
                                 <ul class="dropdown-menu w-100 show" id="searchDropdown" role="listbox"
-                                    data-bind="visible: config.dropdownOpen, foreach: config.results">
+                                    data-bind="visible: config.dropdownOpen">
 
+                                    <!-- Loading state -->
+                                    <!-- ko if: config.searching -->
+                                    <li>
+                                        <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2"
+                                            style="pointer-events:none;">
+                                            <i class="fa fa-spinner fa-spin me-2"></i>
+                                            Searching…
+                                        </div>
+                                    </li>
+                                    <!-- /ko -->
+
+                                    <!-- Not loading -->
+                                    <!-- ko ifnot: config.searching -->
+                                    <!-- Results -->
+                                    <!-- ko if: config.results().length > 0 -->
+                                    <!-- ko foreach: config.results -->
                                     <li>
                                         <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
                                             data-bind="click: $root.config.addTeamAndIncident">
-                                            <!-- Name / title -->
                                             <span class="text-truncate"
                                                 data-bind="text: name, attr: { title: name }"></span>
-
-                                            <!-- Buttons for individual filters -->
                                             <div class="btn-group btn-group-sm ms-2">
-                                                <button type="button" class="btn btn-outline-primary" data-bind="click: $root.config.addTeam,
-                                   clickBubble: false,
-                                   css: { 'active': teamSelected() }">
+                                                <button type="button" class="btn btn-outline-primary"
+                                                    data-bind="click: $root.config.addTeam, clickBubble: false, css: { 'active': teamSelected() }">
                                                     Teams
                                                 </button>
-
-                                                <button type="button" class="btn btn-outline-success" data-bind="click: $root.config.addIncident,
-                                   clickBubble: false,
-                                   css: { 'active': incidentSelected() }">
+                                                <button type="button" class="btn btn-outline-success"
+                                                    data-bind="click: $root.config.addIncident, clickBubble: false, css: { 'active': incidentSelected() }">
                                                     Incidents
                                                 </button>
                                             </div>
                                         </div>
                                     </li>
+                                    <!-- /ko -->
+                                    <!-- /ko -->
+
+                                    <!-- No results -->
+                                    <!-- ko if: config.results().length === 0 -->
+                                    <li>
+                                        <div class="dropdown-item text-muted text-center py-2"
+                                            style="pointer-events:none;">
+                                            No results found.
+                                        </div>
+                                    </li>
+                                    <!-- /ko -->
+                                    <!-- /ko -->
                                 </ul>
+
 
                             </div>
                         </div>
@@ -2224,6 +2258,37 @@
                 <div class="modal-body">
                     <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
                         <span data-bind="text: errorMessage"></span>
+                    </div>
+
+                    <!-- recipient search -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Add recipient</label>
+
+                        <div class="input-group position-relative">
+                            <input id="smsRecipientSearch" type="search" class="form-control"
+                                placeholder="Search contacts…" autocomplete="off" data-bind="
+        value: recipientSearchQuery,
+        valueUpdate: 'afterkeydown',
+        hasFocus: recipientSearchHasFocus,
+        event: { blur: closeRecipientSearchDropdown, keydown: onRecipientSearchKeydown }
+      " />
+                            <button class="btn btn-outline-secondary" type="button" title="Clear"
+                                data-bind="click: clearRecipientSearch, enable: recipientSearchQuery">&times;</button>
+
+                            <ul class="dropdown-menu w-100 show" id="smsRecipientSearchDropdown" role="listbox"
+                                data-bind="visible: recipientSearchDropdownOpen, foreach: recipientSearchResults">
+                                <li>
+                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                        data-bind="click: $parent.addRecipientFromSearch">
+                                        <span class="text-truncate"
+                                            data-bind="text: name + ' - ' + detail, attr: { title: description }"></span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Status line -->
+                        <div class="small text-muted mt-1" data-bind="visible: recipientSearchLoading">Searching…</div>
                     </div>
 
                     <!-- Recipients list -->

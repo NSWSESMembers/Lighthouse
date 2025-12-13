@@ -287,7 +287,7 @@ function VM() {
         const term = self.jobSearch().toLowerCase();
 
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
-        const incidentTypeAllowed = self.config.incidentTypeFilter();
+        const incidentTypeAllowedById = self.config.incidentTypeFilter().map(type => Enum.IncidentType[type]?.Id).filter(id => id !== undefined);
 
         var start = new Date();
         var end = new Date();
@@ -313,7 +313,7 @@ function VM() {
             }
 
             // If incident type filter non-empty, only show jobs whose type is in it
-            if (incidentTypeAllowed.length > 0 && !incidentTypeAllowed.includes(jb.typeName())) {
+            if (incidentTypeAllowedById.length > 0 && !incidentTypeAllowedById.includes(jb.typeId())) {
                 return false;
             }
 
@@ -341,8 +341,7 @@ function VM() {
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
 
-        const incidentTypeAllowed = self.config.incidentTypeFilter();
-
+        const incidentTypeAllowedById = self.config.incidentTypeFilter().map(type => Enum.IncidentType[type]?.Id).filter(id => id !== undefined);
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
 
@@ -354,7 +353,7 @@ function VM() {
             }
 
             // If incident type filter non-empty, only show jobs whose type is in it
-            if (incidentTypeAllowed.length > 0 && !incidentTypeAllowed.includes(jb.typeName())) {
+            if (incidentTypeAllowedById.length > 0 && !incidentTypeAllowedById.includes(jb.typeId())) {
                 return false;
             }
 
@@ -373,6 +372,11 @@ function VM() {
 
         const allowed = self.config.teamStatusFilter(); // allow-list
 
+        var start = new Date();
+        var end = new Date();
+
+        start.setDate(end.getDate() - self.config.fetchPeriod());
+
         return ko.utils.arrayFilter(self.teams(), tm => {
             const status = tm.teamStatusType()?.Name;
             const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
@@ -387,6 +391,11 @@ function VM() {
 
             //must match HQ filter
             if (!hqMatch) {
+                return false;
+            }
+
+            const statusDate = tm.statusDate();
+            if (statusDate < start || statusDate > end) {
                 return false;
             }
 
@@ -675,8 +684,8 @@ function VM() {
                 job.tagsCsv(),
                 job.situationOnScene()
             ]
-            .filter(value => value) // Remove empty or undefined values
-            .join(' ');
+                .filter(value => value) // Remove empty or undefined values
+                .join(' ');
             initialText = initialText.toUpperCase();
         }
 
@@ -685,7 +694,7 @@ function VM() {
 
         self.SendSMSModalVM.modalInstance = modal;
 
-        self.SendSMSModalVM.openWithRecipients(msgRecipients, {taskId: taskId, headerLabel: headerLabel, initialText: initialText});
+        self.SendSMSModalVM.openWithRecipients(msgRecipients, { taskId: taskId, headerLabel: headerLabel, initialText: initialText });
         modal.show();
     }
 
@@ -896,6 +905,15 @@ function VM() {
         const t = await getToken();   // blocks here until token is ready
         return new Promise((resolve) => {
             BeaconClient.contacts.search(id, apiHost, params.userId, t, function (data) {
+                resolve(data.Results || []);
+            })
+        });
+    }
+
+    self.searchContacts = async function (query) {
+        const t = await getToken();   // blocks here until token is ready
+        return new Promise((resolve) => {
+            BeaconClient.contacts.searchAll(query, apiHost, params.userId, t, function (data) {
                 resolve(data.Results || []);
             })
         });
