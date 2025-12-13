@@ -241,7 +241,6 @@ export function SendSMSModalVM(parentVM) {
 
         const match = self.recipientSearchResults().find(r => String(r.id) === String(id));
         if (!match) return;
-        console.log(match)
         self.recipients.push(new SMSRecipient({
             id: match.id,
             name: match.name,
