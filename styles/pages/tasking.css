@@ -1754,3 +1754,18 @@ tr.job:hover {
 #SendSMSModal .form-check-sm {
   font-size: 0.85rem;
 }
+
+#smsRecipientSearchDropdown.dropdown-menu {
+  max-height: 220px;
+  overflow: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1055; /* above modal body contents */
+  transform: none !important;
+  margin-top: 2px;
+}
+
+::-ms-clear {
+    display: none;
+}

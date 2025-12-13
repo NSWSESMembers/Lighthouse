@@ -16,6 +16,18 @@ export function SendSMSModalVM(parentVM) {
     self.text = ko.observable("");
     self.taskId = ko.observable(null);
     self.operationalSMS = ko.observable(true);
+
+    // ----------------------------
+    // Recipient search + add
+    // ----------------------------
+    self.recipientSearchQuery = ko.observable("");
+    self.recipientSearchResults = ko.observableArray([]);
+    self.recipientSearchDropdownOpen = ko.observable(false);
+    self.recipientSearchLoading = ko.observable(false);
+    self.recipientSearchHasFocus = ko.observable(false);
+
+    let _recipientSearchTimer = null;
+
     // Recipients
     self.recipients = ko.observableArray([]);
     self.selectedCount = ko.pureComputed(function () {
@@ -147,5 +159,97 @@ export function SendSMSModalVM(parentVM) {
                 self.errorMessage("Failed to send SMS. Please try again.");
                 console.error("Error sending SMS:", error);
             })
+    };
+
+      self.clearRecipientSearch = function () {
+        self.recipientSearchQuery("");
+        self.recipientSearchResults([]);
+        self.recipientSearchDropdownOpen(false);
+    };
+
+    self.closeRecipientSearchDropdown = function () {
+        // allow click on dropdown items to fire before closing
+        setTimeout(function () {
+            self.recipientSearchDropdownOpen(false);
+        }, 150);
+    };
+
+    self.onRecipientSearchKeydown = function (_vm, e) {
+        if (e.key === "Escape") {
+            self.clearRecipientSearch();
+            return true;
+        }
+        if (e.key === "Enter") {
+            const first = self.recipientSearchResults()[0];
+            if (first) self.addRecipientFromSearch(first);
+            return false;
+        }
+        return true;
+    };
+
+    self._searchContacts = async function (q) {
+        // Prefer whichever your main VM exposes.
+        // Implement ONE of these in main.js:
+        //   parentVM.searchContacts(q) -> [{ id, name }, ...]
+        // OR parentVM.searchPeople(q) -> [{ id, name }, ...]
+        return await parentVM.searchContacts(q);
+    
+    }
+    self._runRecipientSearch = async function () {
+        const q = (self.recipientSearchQuery() || "").trim();
+        if (q.length < 2) {
+            self.recipientSearchResults([]);
+            self.recipientSearchDropdownOpen(false);
+            return;
+        }
+
+        self.recipientSearchLoading(true);
+        try {
+            const rows = await self._searchContacts(q);
+ 
+            self.recipientSearchResults(rows);
+            self.recipientSearchDropdownOpen(rows.length > 0 && self.recipientSearchHasFocus());
+        } catch (err) {
+            console.error("Recipient search failed:", err);
+            self.recipientSearchResults([]);
+            self.recipientSearchDropdownOpen(false);
+        } finally {
+            self.recipientSearchLoading(false);
+        }
+    };
+
+    self.recipientSearchQuery.subscribe(function () {
+        if (_recipientSearchTimer) clearTimeout(_recipientSearchTimer);
+        _recipientSearchTimer = setTimeout(function () {
+            self._runRecipientSearch();
+        }, 250);
+    });
+
+    self._addRecipientByIdName = function (id) {
+        const already = self.recipients().some(r => String(r.id) === String(id));
+        
+        if (already) return;
+
+        const match = self.recipientSearchResults().find(r => String(r.id) === String(id));
+        if (!match) return;
+        const recipient = new SMSRecipient({
+            id: match.Id,
+            name: match.Description,
+            isTeamLeader: false,
+            selected: ko.observable(true),
+            displayLabel: match.Description,
+            beaconContact: [match],
+            loading: ko.observable(false)
+        });
+
+        self.recipients.push(recipient);
+
+        
+    };
+
+    self.addRecipientFromSearch = function (row) {
+        if (!row) return;
+        self._addRecipientByIdName(row.id);
+        self.clearRecipientSearch();
     };
 }

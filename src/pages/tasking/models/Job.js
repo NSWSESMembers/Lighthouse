@@ -114,6 +114,7 @@ export function Job(data = {}, deps = {}) {
     });
 
     self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
+    self.typeId = ko.pureComputed(() => (self.jobType() && self.jobType().Id) || self.type());
     self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
     self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
     self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));

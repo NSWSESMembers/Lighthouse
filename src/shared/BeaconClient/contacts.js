@@ -26,3 +26,30 @@ export function search(personID, host, userId = 'notPassed', token, callback) {
     }
   })
 }
+
+export function searchAll(query, host, userId = 'notPassed', token, callback) {
+  console.log("contacts.searchAll called with:" + host);
+  $.ajax({
+    type: 'GET',
+    url: host + "/Api/v1/Contacts/SearchAll?SearchTerm=" + encodeURIComponent(query) + "&PageIndex=1&PageSize=20&LighthouseFunction=SearchAll&userId=" + userId,
+    beforeSend: function(n) {
+      n.setRequestHeader("Authorization", "Bearer " + token)
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function(response, textStatus) {
+      if (textStatus == 'success') {
+        let results = response.responseJSON;
+        if (typeof callback === "function") {
+          console.log("contacts.searchAll call back");
+          callback(results);
+        }
+      } else {
+        if (typeof callback === "function") {
+          console.log("contacts.searchAll errored out");
+          callback('', textStatus);
+        }
+      }
+    }
+  })
+}
