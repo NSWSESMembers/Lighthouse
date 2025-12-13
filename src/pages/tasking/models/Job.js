@@ -397,7 +397,6 @@ export function Job(data = {}, deps = {}) {
         }
         // scalars
         if (d.Identifier !== undefined) this.identifier(d.Identifier);
-        if (d.TypeId !== undefined) this.typeId(d.TypeId);
         if (d.Type !== undefined) this.type(d.Type);
 
         if (d.CallerFirstName !== undefined) this.callerFirstName(d.CallerFirstName || "");

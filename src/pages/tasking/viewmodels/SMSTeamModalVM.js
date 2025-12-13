@@ -76,7 +76,7 @@ export function SendSMSModalVM(parentVM) {
                 if (contacts.length > 0) {
                     const filtered = contacts.filter(c => c.Description === "SMS");
                     recipient.beaconContact.push(...filtered)
-                    recipient.displayLabel(`${recipient.name} (${filtered.map(c => c.Detail).join(", ")})`);
+                    recipient.displayLabel(`${recipient.name} (SMS ${filtered.map(c => c.Detail).join(", ")})`);
                 } else {
                     recipient.displayLabel(`${recipient.name} (No SMS number found)`);
                     recipient.selected(false);
@@ -91,7 +91,7 @@ export function SendSMSModalVM(parentVM) {
         self.recipients(mapped);
 
     };
-    
+
     self.sendingOrLoading = ko.pureComputed(() => {
         return self.isSending() || self.recipientsLoading();
     });
@@ -142,26 +142,26 @@ export function SendSMSModalVM(parentVM) {
         self.errorMessage("");
 
         self.isSending(true)
-           parentVM.sendSMS(
-                    selected.flatMap(function (r) {
-                        return r.beaconContact.map(c => c);
-                    }),
-                    self.taskId(),
-                    msg,
-                    self.operationalSMS()
-                ).then(function (_response) {
-                    self.isSending(false);
-                    self.modalInstance.hide();
-                    showAlert(`SMS sent successfully!`, 'success', 3000);
-                }).catch(function (error) {
-                self.isSending(false);
-                self.showError(true);
-                self.errorMessage("Failed to send SMS. Please try again.");
-                console.error("Error sending SMS:", error);
-            })
+        parentVM.sendSMS(
+            selected.flatMap(function (r) {
+                return r.beaconContact.map(c => c);
+            }),
+            self.taskId(),
+            msg,
+            self.operationalSMS()
+        ).then(function (_response) {
+            self.isSending(false);
+            self.modalInstance.hide();
+            showAlert(`SMS sent successfully!`, 'success', 3000);
+        }).catch(function (error) {
+            self.isSending(false);
+            self.showError(true);
+            self.errorMessage("Failed to send SMS. Please try again.");
+            console.error("Error sending SMS:", error);
+        })
     };
 
-      self.clearRecipientSearch = function () {
+    self.clearRecipientSearch = function () {
         self.recipientSearchQuery("");
         self.recipientSearchResults([]);
         self.recipientSearchDropdownOpen(false);
@@ -188,13 +188,9 @@ export function SendSMSModalVM(parentVM) {
     };
 
     self._searchContacts = async function (q) {
-        // Prefer whichever your main VM exposes.
-        // Implement ONE of these in main.js:
-        //   parentVM.searchContacts(q) -> [{ id, name }, ...]
-        // OR parentVM.searchPeople(q) -> [{ id, name }, ...]
         return await parentVM.searchContacts(q);
-    
     }
+
     self._runRecipientSearch = async function () {
         const q = (self.recipientSearchQuery() || "").trim();
         if (q.length < 2) {
@@ -206,9 +202,22 @@ export function SendSMSModalVM(parentVM) {
         self.recipientSearchLoading(true);
         try {
             const rows = await self._searchContacts(q);
- 
-            self.recipientSearchResults(rows);
-            self.recipientSearchDropdownOpen(rows.length > 0 && self.recipientSearchHasFocus());
+            const cleanedRows = rows
+                .map((r) => {
+                    let detail = r.Detail || "";
+                    if (r.ContactTypeId === 0) {
+                        detail = `${r.Location} Group`;
+                    } else if (r.ContactTypeId === 2) {
+                        detail = `SMS ${detail}`;
+                    }
+                    return {
+                        id: r.Id,
+                        name: r.Description,
+                        detail: detail
+                    };
+                });
+            self.recipientSearchResults(cleanedRows);
+            self.recipientSearchDropdownOpen(cleanedRows.length > 0 && self.recipientSearchHasFocus());
         } catch (err) {
             console.error("Recipient search failed:", err);
             self.recipientSearchResults([]);
@@ -227,24 +236,24 @@ export function SendSMSModalVM(parentVM) {
 
     self._addRecipientByIdName = function (id) {
         const already = self.recipients().some(r => String(r.id) === String(id));
-        
+
         if (already) return;
 
         const match = self.recipientSearchResults().find(r => String(r.id) === String(id));
         if (!match) return;
-        const recipient = new SMSRecipient({
-            id: match.Id,
-            name: match.Description,
+        console.log(match)
+        self.recipients.push(new SMSRecipient({
+            id: match.id,
+            name: match.name,
             isTeamLeader: false,
-            selected: ko.observable(true),
-            displayLabel: match.Description,
+            selected: true,
+            displayLabel: `${match.name} (${match.detail})`,
             beaconContact: [match],
-            loading: ko.observable(false)
-        });
+            loading: false
+        }));
 
-        self.recipients.push(recipient);
 
-        
+
     };
 
     self.addRecipientFromSearch = function (row) {

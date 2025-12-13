@@ -1261,7 +1261,6 @@
                                 <!-- Results "dropdown" rendered via KO -->
                                 <ul class="dropdown-menu w-100 show" id="searchDropdown" role="listbox"
                                     data-bind="visible: config.dropdownOpen, foreach: config.results">
-
                                     <li>
                                         <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
                                             data-bind="click: $root.config.addTeamAndIncident">
@@ -2257,8 +2256,7 @@
                                     <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
                                         data-bind="click: $parent.addRecipientFromSearch">
                                         <span class="text-truncate"
-                                            data-bind="text: Description + ' - ' + Type, attr: { title: Description }"></span>
-                                        <span class="badge bg-secondary ms-2" data-bind="text: id"></span>
+                                            data-bind="text: name + ' - ' + detail, attr: { title: description }"></span>
                                     </div>
                                 </li>
                             </ul>

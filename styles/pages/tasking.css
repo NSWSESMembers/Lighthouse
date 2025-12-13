@@ -1744,7 +1744,8 @@ tr.job:hover {
 }
 
 #SendSMSModal .sms-recipient-list {
-  max-height: 140px;
+  max-height: 150;
+  min-height: 150px;
   overflow-y: auto;
   border: 1px solid #dee2e6;
   border-radius: 0.25rem;
@@ -1765,7 +1766,22 @@ tr.job:hover {
   transform: none !important;
   margin-top: 2px;
 }
+/* They wont fuck off. im putting all the browsers in and something will work */
+/* Clears the 'X' button in search inputs for Chrome, Safari, and newer browsers */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  display: none;
+  /* Additional styles to ensure no space is taken */
+  -webkit-appearance: none;
+  appearance: none;
+}
 
-::-ms-clear {
-    display: none;
+/* Clears the 'X' button in text or search inputs for Internet Explorer 10+ */
+input[type="text"]::-ms-clear,
+input[type="search"]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
 }
