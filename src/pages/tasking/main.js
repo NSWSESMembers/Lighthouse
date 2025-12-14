@@ -1619,9 +1619,64 @@ function VM() {
 
     });
 
-    // create & add (after VM so we can pass it in)
-    const layersDrawer = new LayersDrawer({ vm: myViewModel });
+    // --- Sidebar collapse button (under Layers drawer)
+    const SidebarToggle = L.Control.extend({
+        options: { position: "topleft" },
+
+        initialize() {
+            this._collapsed = localStorage.getItem("sidebar.collapsed") === "1";
+        },
+
+        onAdd(map) {
+            const c = L.DomUtil.create("div", "leaflet-control sidebar-toggle leaflet-bar");
+            c.innerHTML = `
+      <button type="button" class="st-btn" title="Collapse/expand left panel">
+        <i class="fas ${this._collapsed ? "fa-angle-double-right" : "fa-angle-double-left"}"></i>
+      </button>
+    `;
+
+            const btn = c.querySelector(".st-btn");
+            L.DomEvent.on(btn, "click", (ev) => {
+                L.DomEvent.stop(ev);
+
+                this._collapsed = !this._collapsed;
+                document.body.classList.toggle("sidebar-collapsed", this._collapsed);
+                localStorage.setItem("sidebar.collapsed", this._collapsed ? "1" : "0");
+
+                const icon = btn.querySelector("i");
+                if (icon) {
+                    icon.classList.toggle("fa-angle-double-left", !this._collapsed);
+                    icon.classList.toggle("fa-angle-double-right", this._collapsed);
+                }
+
+                // Leaflet needs a resize after layout change
+                setTimeout(() => map.invalidateSize(true), 0);
+            });
+
+            // apply initial state
+            if (this._collapsed) document.body.classList.add("sidebar-collapsed");
+
+            L.DomEvent.disableClickPropagation(c);
+            this._container = c;
+            return c;
+        }
+    });
+
+    const layersDrawer = new LayersDrawer();
     layersDrawer.addTo(map);
+
+    const sidebarToggle = new SidebarToggle();
+    sidebarToggle.addTo(map);
+
+    
+    setTimeout(() => {
+        const tl = map._controlCorners.topleft;
+        const ld = tl.querySelector(".layers-drawer");
+        const st = tl.querySelector(".leaflet-control.sidebar-toggle");
+        if (ld && st) ld.insertAdjacentElement("afterend", st);
+    }, 0);
+
+
 
     self.fetchHQDetails = async function (hqName) {
         console.log("Fetching HQ details for:", hqName);
