@@ -18,8 +18,10 @@ export function MapVM(Lmap, root) {
   self.crowFliesLine = null;
 
   // layers
-  self.vehicleLayer = L.layerGroup().addTo(Lmap);
+  self.assetLayer = L.layerGroup().addTo(Lmap);
   self.jobMarkerGroups = new Map();
+  self.unmatchedAssetLayer = L.layerGroup();   // not added by default
+
 
   // --- online/polling overlay layers registry ---
   // key -> { key, label, layerGroup, refreshMs, timerId, visibleByDefault, fetchFn, drawFn }
@@ -41,6 +43,7 @@ export function MapVM(Lmap, root) {
    * }} opts
    */
   self.registerPollingLayer = function (key, opts) {
+
     if (!opts || typeof opts.fetchFn !== 'function' || typeof opts.drawFn !== 'function') {
       console.warn('registerPollingLayer requires fetchFn and drawFn');
       return null;
@@ -59,12 +62,13 @@ export function MapVM(Lmap, root) {
       label: opts.label || key,
       layerGroup,
       refreshMs: opts.refreshMs,
-      visibleByDefault: opts.visibleByDefault !== false,
+      visibleByDefault: opts.visibleByDefault === true,
       fetchFn: opts.fetchFn,
       drawFn: opts.drawFn,
       timerId: null,
       menuGroup: opts.menuGroup || null,
     };
+
 
     // Only fetch/draw if the layer is actually on the map
     async function refreshIfVisible() {
@@ -126,19 +130,30 @@ export function MapVM(Lmap, root) {
   self.getOverlayDefsForControl = function () {
     const defs = [];
 
-    // Vehicles
-    // if (self.vehicleLayer) {
-    //   defs.push({ key: 'vehicles', label: 'Vehicles', layer: self.vehicleLayer });
-    // }
 
-    // // Job groups
-    // if (self.jobMarkerGroups instanceof Map) {
-    //   for (const [k, v] of self.jobMarkerGroups.entries()) {
-    //     if (v && v.layerGroup) {
-    //       defs.push({ key: 'jobs-' + k, label: 'Jobs: ' + k, layer: v.layerGroup });
-    //     }
-    //   }
-    // }
+      // matched assets layer
+    if (self.assetLayer) {
+    defs.push({
+      key: 'matched-assets',
+      label: 'Matched against Teams',
+      layer: self.assetLayer,
+      group: 'Assets',
+      visibleByDefault: true,
+    });
+  }
+
+
+  // unmatched assets layer
+    if (self.unmatchedAssetLayer) {
+    defs.push({
+      key: 'unmatched-assets',
+      label: 'Unmatched against Teams',
+      layer: self.unmatchedAssetLayer,
+      group: 'Assets',
+      visibleByDefault: false,
+    });
+  }
+
 
     // Online/polling overlays
     for (const [k, entry] of self.onlineLayers.entries()) {
@@ -151,7 +166,6 @@ export function MapVM(Lmap, root) {
         });
       }
     }
-    console.log('Overlay defs for control:', defs);
     return defs;
   };
 
@@ -200,7 +214,6 @@ export function MapVM(Lmap, root) {
   };
 
   self.clearRoutes = () => {
-    console.log('clearing routes');
     if (self.activeRouteControl) {
       self.map.removeControl(self.activeRouteControl);
       self.activeRouteControl = null;

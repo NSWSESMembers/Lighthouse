@@ -13,6 +13,8 @@ import { showAlert } from './components/windowAlert.js';
 import { ResizeDividers } from './resize.js';
 import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
+import { attachUnmatchedAssetMarker, detachUnmatchedAssetMarker } from './markers/assetMarker.js';
+
 import { MapVM } from './viewmodels/Map.js';
 
 import { JobTimeline } from "./viewmodels/JobTimeline.js";
@@ -135,6 +137,10 @@ const map = L.map('map', {
     // Faster debounce time while zooming
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
+
+map.createPane('pane-lowest'); map.getPane('pane-lowest').style.zIndex = 300;
+map.createPane('pane-middle'); map.getPane('pane-middle').style.zIndex = 400;
+map.createPane('pane-top'); map.getPane('pane-top').style.zIndex = 600;
 
 var osm2 = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { minZoom: 0, maxZoom: 13 });
 new MiniMap(osm2, { toggleDisplay: true }).addTo(map);
@@ -420,6 +426,13 @@ function VM() {
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
 
+    self.unmatchedTrackableAssets = ko.pureComputed(() => {
+        const all = self.trackableAssets?.() || [];
+        return all.filter(a => {
+            const mt = (typeof a.matchingTeams === 'function') ? a.matchingTeams() : [];
+            return !mt || mt.length === 0;
+        });
+    }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
     self.sectorsLoading = ko.observable(false);
 
@@ -853,7 +866,7 @@ function VM() {
         const fg = L.featureGroup();
 
         // vehicle (assets)
-        self.mapVM.vehicleLayer.eachLayer(l => fg.addLayer(l));
+        self.mapVM.assetLayer.eachLayer(l => fg.addLayer(l));
 
         // all job marker layer groups
         for (const { layerGroup } of self.mapVM.jobMarkerGroups.values()) {
@@ -1011,6 +1024,17 @@ function VM() {
                 //console.log("Detaching marker for asset no longer filtered in:", a.id());
                 // keep the asset in registry, but remove map marker + subs
                 detachAssetMarker(ko, map, self, a);
+            }
+        });
+    }, null, "arrayChange");
+
+    self.unmatchedTrackableAssets.subscribe((changes) => {
+        changes.forEach(ch => {
+            const a = ch.value;
+            if (ch.status === 'added') {
+                attachUnmatchedAssetMarker(ko, map, self, a);
+            } else if (ch.status === 'deleted') {
+                detachUnmatchedAssetMarker(ko, map, self, a);
             }
         });
     }, null, "arrayChange");
@@ -1401,7 +1425,7 @@ function VM() {
 
             // Bootstrap-flavoured shell
             c.innerHTML = `
-      <button class="ld-toggle btn btn-light btn-sm shadow-sm"
+      <button class="btn btn-light btn-sm shadow-sm" style="border: 10px;"
               title="Layers"
               aria-expanded="${this._open ? "true" : "false"}">
         <i class="fas fa-layer-group"></i>
@@ -1492,9 +1516,12 @@ function VM() {
                     overlaysEl.appendChild(heading);
                 }
 
-                defs.forEach(({ key, label, layer }) => {
+                defs.forEach(({ key, label, layer, visibleByDefault }) => {
                     const stored = localStorage.getItem(`ov.${key}`);
-                    const saved = stored !== "0"; // default ON
+                    // If nothing stored yet, use visibleByDefault from the definition
+                    const saved = (stored === null)
+                        ? (visibleByDefault === true)
+                        : (stored === "1");
                     if (saved) map.addLayer(layer);
 
                     const btn = document.createElement("button");
@@ -1541,13 +1568,13 @@ function VM() {
                 });
             });
 
-            // --- open/close toggle is unchanged, just wired to new markup ---
-            const btn = c.querySelector(".ld-toggle");
+            const btn = c.querySelector(".btn");
             const panel = c.querySelector(".ld-panel");
             L.DomEvent.on(btn, "click", (ev) => {
                 L.DomEvent.stop(ev);
                 const hidden = panel.classList.toggle("d-none");
                 btn.setAttribute("aria-expanded", (!hidden).toString());
+                btn.parentElement.classList.toggle("no-border", !hidden);
                 localStorage.setItem("layers.open", hidden ? "0" : "1");
             });
 
@@ -1631,12 +1658,12 @@ function VM() {
         onAdd(map) {
             const c = L.DomUtil.create("div", "leaflet-control sidebar-toggle leaflet-bar");
             c.innerHTML = `
-      <button type="button" class="st-btn" title="Collapse/expand left panel">
+      <button type="button" class="btn btn-light btn-sm shadow-sm" title="Collapse/expand left panel">
         <i class="fas ${this._collapsed ? "fa-angle-double-right" : "fa-angle-double-left"}"></i>
       </button>
     `;
 
-            const btn = c.querySelector(".st-btn");
+            const btn = c.querySelector(".btn");
             L.DomEvent.on(btn, "click", (ev) => {
                 L.DomEvent.stop(ev);
 
@@ -1663,18 +1690,20 @@ function VM() {
         }
     });
 
-    const layersDrawer = new LayersDrawer();
-    layersDrawer.addTo(map);
-
     const sidebarToggle = new SidebarToggle();
     sidebarToggle.addTo(map);
 
-    
+    const layersDrawer = new LayersDrawer();
+    layersDrawer.addTo(map);
+
+
+
+
     setTimeout(() => {
         const tl = map._controlCorners.topleft;
         const ld = tl.querySelector(".layers-drawer");
         const st = tl.querySelector(".leaflet-control.sidebar-toggle");
-        if (ld && st) ld.insertAdjacentElement("afterend", st);
+        if (ld && st) ld.insertAdjacentElement("beforebegin", st);
     }, 0);
 
 

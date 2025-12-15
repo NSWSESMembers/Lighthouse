@@ -169,20 +169,8 @@ body.sidebar-collapsed .vsplit {
   display: none !important;
 }
 
-/* Leaflet button that matches the other map controls */
-.leaflet-control.sidebar-toggle .st-btn {
-  width: 34px;
-  height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fff;
-  border: none;
-  cursor: pointer;
-}
-.leaflet-control.sidebar-toggle .st-btn:focus {
-  outline: 2px solid #66afe9;
-}
+
+
 
 
 .hsplit {
@@ -981,9 +969,8 @@ tr.job:hover {
   }
 }
 
-/* Layer UI */
-.layers-drawer {
-  margin-top: 6px;
+/* Layer UI no stupid border*/
+.no-border {
   border: 0px !important;
 }
 
