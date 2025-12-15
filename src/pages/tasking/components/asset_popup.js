@@ -55,7 +55,7 @@ export function buildAssetPopupKO() {
               <button class="btn btn-xs btn-outline-secondary"
                       title="Open team"
                       data-bind="click: $root.openBeaconEditTeam">
-                Edit
+                <i class="fa fa-external-link-alt"></i>
               </button>
             </div>
           </div>
