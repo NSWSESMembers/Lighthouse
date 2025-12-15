@@ -49,6 +49,7 @@ export function Team(data = {}, deps = {}) {
     self.statusDate = ko.observable((data.TeamStatusStartDate) ? new Date(data.TeamStatusStartDate) : null);
 
     self.popUpIsOpen = ko.observable(false);
+    self.rowHasFocus = ko.observable(false);
 
     self.trackableAssets = ko.observableArray([]);
 
@@ -64,7 +65,12 @@ export function Team(data = {}, deps = {}) {
 
     };
 
-
+    self.mouseEnterButton = function () {
+        self.rowHasFocus(true);
+    }
+    self.mouseLeaveButton = function () {
+        self.rowHasFocus(false);
+    }
 
     self.refreshData = async function () {
         self.taskingLoading(true);
@@ -131,11 +137,13 @@ export function Team(data = {}, deps = {}) {
 
     self.onPopupOpen = function () {
         self.popUpIsOpen(true);
+        if (self.rowHasFocus()) return;
         self.focusAndExpandInList();
     };
 
     self.onPopupClose = function () {
         self.popUpIsOpen(false);
+        if (self.rowHasFocus()) return;
         self.collapse();
     };
 
