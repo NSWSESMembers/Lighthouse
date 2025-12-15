@@ -50,14 +50,14 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
     if (!asset) return;
 
     // Ensure layer exists
-    const layer = viewModel.mapVM.vehicleLayer;
+    const layer = viewModel.mapVM.assetLayer;
 
     // Marker create (once)
     const lat = +asset.latitude?.();
     const lng = +asset.longitude?.();
     if (Number.isFinite(lat) && Number.isFinite(lng) && !asset.marker) {
-        const icon = buildIcon(asset);
-        const m = L.marker([lat, lng], { icon });
+        const icon = buildIcon(asset, 'matched');
+        const m = L.marker([lat, lng], { icon, pane: 'pane-top' });
         m._assetId = asset.id?.();
         const html = buildAssetPopupKO();
         const contentEl = makePopupNode(html, 'veh-pop-root'); // stable node
@@ -69,19 +69,10 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
             autoPanPadding: [16, 16],
         }).setContent(contentEl);
 
-        // m.bindPopup(() =>
-        //     html
-        // );
+        
         m.bindPopup(popup)
         m.addTo(layer);
         asset.marker = m;
-
-        // Register with spiderfier
-        if (window.oms) {
-            window.oms.addMarker(m);
-            m.on('mouseover', () => window.oms.spiderfy(m));
-            m.on('mouseout', () => window.oms.unspiderfy());
-        }
 
         // Ask MapVM to create the AssetPopupViewModel for this asset:
         const popupVm = viewModel.mapVM.makeAssetPopupVM(asset);
@@ -113,29 +104,13 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
         }
     }));
 
-    // Icon-affecting changes (label/capability/lastSeen)
-    // const refreshIcon = (a) => {
-    //     if (!asset.marker) return;
-    //     asset.marker.setIcon(buildIcon(asset));
-    // };
-    // subs.push(asset.markerLabel.subscribe(refreshIcon));
-    // subs.push(asset.capability.subscribe(refreshIcon));
-    // subs.push(asset.lastSeen.subscribe(refreshIcon));
 
-    // Popup-affecting changes (name/entity/capability)
-    // const refreshPopup = () => {
-    //     if (!asset.marker) return;
-    //     asset.marker.setPopupContent(
-    //         `<div class="p-1"><strong>${asset.name()}</strong><br/>${asset.entity()}<br/>${asset.capability()}</div>`
-    //     );
-    // };
-    // subs.push(asset.name.subscribe(refreshPopup));
-    // subs.push(asset.entity.subscribe(refreshPopup));
-    // subs.push(asset.capability.subscribe(refreshPopup)); // also included above, but harmless
 
     asset._markerSubs = subs;
 
 }
+
+
 
 /**
  * Detach subscriptions and remove the marker for an asset.
@@ -147,11 +122,83 @@ export function detachAssetMarker(ko, map, viewModel, asset) {
         asset._markerSubs = [];
     }
     if (asset.marker) {
-        viewModel.mapVM.vehicleLayer.removeLayer(asset.marker);
+        viewModel.mapVM.assetLayer.removeLayer(asset.marker);
         asset.marker = null;
     }
     viewModel.mapVM.destroyAssetPopupVM(asset);
 }
+
+export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
+  if (!asset) return;
+
+  const layer = viewModel.mapVM.unmatchedAssetLayer;
+
+  const lat = +asset.latitude?.();
+  const lng = +asset.longitude?.();
+
+  if (Number.isFinite(lat) && Number.isFinite(lng) && !asset.unmatchedMarker) {
+    const icon = buildIcon(asset, 'unmatched');
+    const m = L.marker([lat, lng], { icon, pane: 'pane-middle' });
+    m._assetId = asset.id?.();
+
+    const html = buildAssetPopupKO();
+    const contentEl = makePopupNode(html, 'veh-pop-root');
+    const popup = L.popup({
+      minWidth: 360,
+      maxWidth: 360,
+      maxHeight: 360,
+      autoPan: true,
+      autoPanPadding: [16, 16],
+    }).setContent(contentEl);
+
+    m.bindPopup(popup);
+    m.addTo(layer);
+    asset.unmatchedMarker = m;
+
+    const popupVm = viewModel.mapVM.makeAssetPopupVM(asset);
+    bindPopupWithKO(ko, asset.unmatchedMarker, viewModel, asset, popupVm);
+
+    asset.unmatchedMarker.on('popupopen', () => {
+      viewModel.mapVM.setOpen('asset', asset);
+    });
+  }
+
+  // subs (separate from asset._markerSubs)
+  if (asset._unmatchedMarkerSubs && asset._unmatchedMarkerSubs.length) return;
+
+  const subs = [];
+  subs.push(asset.latitude.subscribe(v => {
+    const latNow = +v, lngNow = +asset.longitude();
+    if (asset.unmatchedMarker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
+      moveMarker(asset.unmatchedMarker, latNow, lngNow);
+    }
+  }));
+  subs.push(asset.longitude.subscribe(v => {
+    const latNow = +asset.latitude(), lngNow = +v;
+    if (asset.unmatchedMarker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
+      moveMarker(asset.unmatchedMarker, latNow, lngNow);
+    }
+  }));
+
+  asset._unmatchedMarkerSubs = subs;
+}
+
+export function detachUnmatchedAssetMarker(ko, map, viewModel, asset) {
+  if (!asset) return;
+
+  if (asset._unmatchedMarkerSubs) {
+    asset._unmatchedMarkerSubs.forEach(s => s.dispose?.());
+    asset._unmatchedMarkerSubs = [];
+  }
+  if (asset.unmatchedMarker) {
+    viewModel.mapVM.unmatchedAssetLayer.removeLayer(asset.unmatchedMarker);
+    asset.unmatchedMarker = null;
+  }
+
+  // keep popup VM (shared) alive; OR destroy if you prefer symmetry:
+  // viewModel.mapVM.destroyAssetPopupVM(asset);
+}
+
 
 
 function bindPopupWithKO(ko, marker, vm, asset, popupVm) {

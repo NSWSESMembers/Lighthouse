@@ -131,6 +131,7 @@ function upsertPulseRing(layerGroup, job, marker) {
     const ringAnchor = [Math.round(baseAnchor[0]*k), Math.round(baseAnchor[1]*k)];
 
     const ring = L.marker(marker.getLatLng(), {
+      pane: 'pane-top',
       icon: L.divIcon({
         className: 'pulse-ring-icon',
         html: '<div class="pulse-ring"></div>',

@@ -44,25 +44,7 @@ body.env-trainbeacon::after {
   user-select: none;
 }
 
-body.env-trainbeacon::after {
-    content: "TRAIN BEACON";
-    position: fixed;
-    top: 50%;
-    left: 25%;
-    transform: translate(-50%, -50%) rotate(-30deg);
-    font-size: 6rem;
-    font-weight: 900;
-    color: rgba(0, 200, 83, 0.25); /* green, semi-transparent */
-    z-index: 99998;
-    pointer-events: none;
-    white-space: nowrap;
-    user-select: none;
-}
 
-body.env-trainbeacon {
-  outline: 6px solid #00c853; /* strong green frame */
-  outline-offset: 0;
-}
 
 /* Ensure key UI elements follow the smaller base size */
 button,
@@ -157,6 +139,21 @@ td.chev[draggable='true'] * {
   display: flex;
   flex-direction: column;
 }
+
+/* Full sidebar collapse driven by a body class */
+body.sidebar-collapsed .sidebar {
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden;
+}
+
+body.sidebar-collapsed .vsplit {
+  display: none !important;
+}
+
+
+
+
 
 .hsplit {
   height: 6px;
@@ -954,9 +951,8 @@ tr.job:hover {
   }
 }
 
-/* Layer UI */
-.layers-drawer {
-  margin-top: 6px;
+/* Layer UI no stupid border*/
+.no-border {
   border: 0px !important;
 }
 

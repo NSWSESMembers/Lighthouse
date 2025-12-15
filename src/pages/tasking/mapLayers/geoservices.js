@@ -62,6 +62,7 @@ export function registerUnitBoundaryLayer(vm, map, getToken, apiHost, params) {
         const polygon = L.polygon(points, {
           color: "rgb(255, 56, 238)",
           fill: false,
+          pane: 'pane-lowest',
         });
 
 
@@ -120,6 +121,7 @@ export function registerSESZonesGridLayer(vm) {
           const name = feature.properties.ZONENAME;
           return L.marker(latlng, {
             interactive: false,
+            pane: 'pane-middle',
             icon: L.divIcon({
               className: 'zone-label',
               html: name,
@@ -165,6 +167,7 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
               const fill = useUnitColors ? unitColor : zoneColor;
 
               return {
+                pane: 'pane-middle',
                 weight: useUnitColors ? 1 : 1.2,
                 color: '#333',
                 opacity: 1,
@@ -200,6 +203,7 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
 
           return L.marker(latlng, {
             interactive: false,
+            pane: 'pane-middle',
             icon: L.divIcon({
               className: 'unit-label',
               html: name,
@@ -295,6 +299,7 @@ export function registerSESUnitLocationsLayer(vm) {
         pointToLayer: (feature, latlng) => {
           const name = `${feature.properties.HQNAME}` || "Unknown Unit";
           const marker = L.marker(latlng, {
+            pane: 'pane-middle',
             icon: L.icon({
               iconUrl: '/icons/ses_small.png',
               iconSize: [16, 16], // Adjust size as needed

@@ -1,7 +1,7 @@
 import L from 'leaflet';
 import moment from 'moment';
 
-export function buildIcon(asset) {
+export function buildIcon(asset, matchStatus) {
     const capabilityColors = {
         'Bus': '#FFD600',
         'Command': '#1565C0',
@@ -26,9 +26,11 @@ export function buildIcon(asset) {
         } catch { return ''; }
     })();
 
+    const matchTextColor = matchStatus === 'unmatched' ? 'grey' : 'white';
+
     const html =
         `<div style="background-color:${bg};${dull}" class="marker-pin"></div>
-     <div class="assetMarker" style="position:absolute;margin:24px 13px;line-height:10px;text-align:center;color:white;font-size:11px;width:60%">
+     <div class="assetMarker" style="position:absolute;margin:24px 13px;line-height:10px;text-align:center;color:${matchTextColor};font-size:11px;width:60%">
        <p>${asset.markerLabel()}</p>
      </div>`;
 
