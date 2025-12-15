@@ -11,22 +11,26 @@ export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
 
 
-/// TEAMS MIGHT NOT HAVE A CURRENTSTATUS IF THEY WERE CREATED FROM TASKING ONLY
-/// THERES ENOUGH GUARDS AROUND THIS NOW TO PREVENT ISSUES
+    /// TEAMS MIGHT NOT HAVE A CURRENTSTATUS IF THEY WERE CREATED FROM TASKING ONLY
+    /// THERES ENOUGH GUARDS AROUND THIS NOW TO PREVENT ISSUES
 
 
     const self = this;
     self.lastTaskingDataUpdate = new Date();
 
     const {
-        upsertTasking,              // (taskingJson, {teamContext}) => Tasking
-        getTeamTasking,            // (teamId) => Promise<{Results:[]}>
-        fetchTeamById,             // (teamId) => Promise<Team>
-        makeTeamLink = (_id) => '#',
-        flyToAsset = () => {
-            // No operation (noop) function.        
-        },
-        teamTaskStatusFilter = () => []  // () => Array of status names to ignore
+        upsertTasking,
+        getTeamTasking,
+        fetchTeamById,
+        makeTeamLink = () => '#',
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        flyToAsset = () => { },
+        teamTaskStatusFilter = () => [],
+        currentlyOpenMapPopup = () => null,
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        openRadioLogModal = () => { },
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        openSMSTeamModal = () => { },
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
@@ -326,25 +330,38 @@ export function Team(data = {}, deps = {}) {
         if (!existsLocally) self.taskings.push(t);
     };
 
-    //only handle single asset for now
     self.markerFocus = function () {
         if (self.isFilteredIn() === false) return;
-        const a = self.trackableAssets()[0];
-        if (!a) return;
-        flyToAsset(a); // map logic stays out of the model
+
+        const assets = self.trackableAssets();
+        if (!assets || assets.length === 0) return;
+        const op = currentlyOpenMapPopup();
+        let nextIdx = 0;
+
+        if (op && op.kind === 'asset') {
+            const curIdx = assets.findIndex(a => a.id() === op.id);
+            if (curIdx !== -1) {
+                nextIdx = (curIdx + 1) % assets.length;
+            }
+        }
+
+        const asset = assets[nextIdx];
+        if (!asset) return;
+
+        flyToAsset(asset);
     };
 
     self.openRadioLogModal = function () {
-        deps.openRadioLogModal(self);
+        openRadioLogModal(self);
     };
 
     //allow the team to call this with no tasking.
     self.sendSMS = function () {
-        deps.openSMSTeamModal(self);
+        openSMSTeamModal(self);
     }
 
     self.sendSMSwithTasking = function (tasking) {
-        deps.openSMSTeamModal(self, tasking);
+        openSMSTeamModal(self, tasking);
     }
 
     Team.prototype.updateFromJson = function (d = {}) {
@@ -355,6 +372,6 @@ export function Team(data = {}, deps = {}) {
         if (d.Members !== undefined) this.members(d.Members);
         if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) this.assignedTo(new Entity(d.AssignedTo || d.CreatedAt)); //safety for beacon bug
         if (d.statusId !== undefined) this.updateStatusById(d.statusId);
-        if (d.teamStatusStartDate !== undefined) this.statusDate(new Date(d.TeamStatusStartDate));
+        if (d.TeamStatusStartDate !== undefined) this.statusDate(new Date(d.TeamStatusStartDate));
     }
 }

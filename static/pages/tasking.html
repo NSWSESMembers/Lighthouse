@@ -310,6 +310,9 @@
                                                         title="Zoom to"
                                                         data-bind="click: t.markerFocus, disable: !t.trackableAssets().length, clickBubble: false">
                                                         <i class="fa fa-solid fa-crosshairs"></i>
+                                                        <span class="position-absolute top-0 start-100 badge rounded-pill bg-info" style="font-size:0.6em; transform: translate(-50%, 5%);"
+                                                            data-bind="text: t.trackableAssets().length, visible: t.trackableAssets().length > 1"></span>
+
                                                     </button>
                                                 </div>
                                             </div>

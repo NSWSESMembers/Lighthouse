@@ -570,6 +570,7 @@ function VM() {
                 self.attachSendSMSModal([], team, tasking);
             },
 
+            currentlyOpenMapPopup: self.mapVM?.openPopup,
         };
 
         team = new Team(teamJson, deps);
