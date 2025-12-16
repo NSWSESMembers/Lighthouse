@@ -986,6 +986,7 @@ function VM() {
             job.updateFromJson({ ActionRequiredTags: data.Results.flatMap(entry => entry.Tags || []) });
         }, function (err) {
             console.error("Failed to fetch unresolved actions log entries for job:", err);
+            showAlert('Failed to fetch unresolved actions log entries. Your session may have expired', 'danger', 5000);
         });
     }
 
@@ -995,6 +996,7 @@ function VM() {
             job.unacceptedNotifications(data);
         }, function (err) {
             console.error("Failed to fetch unacknowledged job notifications:", err);
+            showAlert('Failed to fetch unacknowledged job notifications. Your session may have expired', 'danger', 5000);
         });
     }
 
@@ -1120,6 +1122,7 @@ function VM() {
             cb(data?.Results || []);
         }, function (err) {
             console.error("Failed to fetch ops log for job:", err);
+            showAlert("Failed to fetch ops log. Your session may have expired", "danger", 5000);
             cb([]);
         });
     }
@@ -1130,6 +1133,7 @@ function VM() {
             cb(data || []);
         }, function (err) {
             console.error("Failed to fetch history for job:", err);
+            showAlert("Failed to fetch job history. Your session may have expired", "danger", 5000);
             cb([]);
         });
     }
@@ -1141,6 +1145,7 @@ function VM() {
             cb(data);
         }, function (err) {
             console.error("Failed to create ops log entry:", err);
+            showAlert("Failed to create ops log entry.", "danger", 5000);
             cb(null);
         });
     }
@@ -1151,6 +1156,7 @@ function VM() {
             cb(data || []);
         }, function (err) {
             console.error("Failed to update team status:", err);
+            showAlert("Failed to update team status.", "danger", 5000);
             cb([]);
         });
     }
@@ -1161,6 +1167,7 @@ function VM() {
             cb(data || []);
         }, function (err) {
             console.error("Failed to call off team:", err);
+            showAlert("Failed to call off team.", "danger", 5000);
             cb([]);
         });
     }
@@ -1172,6 +1179,7 @@ function VM() {
             cb(data);
         }, function (err) {
             console.error("Failed to create ops log entry:", err);
+            showAlert("Failed to create ops log entry.", "danger", 5000);
             cb(null);
         });
     }
@@ -1234,6 +1242,7 @@ function VM() {
                 assetDataRefreshInterlock = false;
             }, function (err) {
                 console.error("Error fetching trackable assets:", err);
+                showAlert('Failed to fetch trackable assets. Your session may have expired', 'danger', 5000);
                 assetDataRefreshInterlock = false;
             }
             )
