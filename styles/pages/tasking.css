@@ -43,7 +43,13 @@ body.env-trainbeacon::after {
   white-space: nowrap;
   user-select: none;
 }
+body .modal-header {
+  background-color: #f7931d !important;
+}
 
+body.env-trainbeacon .modal-header {
+  background-color: #219f56 !important;
+}
 
 
 /* Ensure key UI elements follow the smaller base size */
