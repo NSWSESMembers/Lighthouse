@@ -1246,7 +1246,7 @@
                     </div>
 
 
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" aria-label="Close" data-bind="click: config.saveAndCloseAndLoad"></button>
 
                 </div>
 
@@ -1968,7 +1968,7 @@
                     </div>
                     <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
                         data-bind="click: config.saveAndCloseAndLoad, disable: pageIsLoading">
-                        <span data-bind="visible: !pageIsLoading">Save & Close</span>
+                        <span data-bind="visible: !pageIsLoading">Close</span>
                         <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
                             data-bind="visible: pageIsLoading"></span>
                         <span data-bind="visible: pageIsLoading">Loading...</span>
@@ -2389,12 +2389,14 @@
                         <span data-bind="text: errorMessage"></span>
                     </div>
                     <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
-                        data-bind="value: text"></textarea>
+                        data-bind="textInput: text"></textarea>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-outline-secondary" data-bind="click: submit">Submit</button>
+                    <button type="button" class="btn btn-primary d-flex align-items-center gap-2" data-bind="click: submit">
+                        <span>Submit</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -2478,7 +2480,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-outline-secondary" data-bind="click: submit">Submit</button>
+                    <button type="button" class="btn btn-primary" data-bind="click: submit">Submit</button>
                 </div>
             </div>
         </div>

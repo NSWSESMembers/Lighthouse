@@ -58,6 +58,9 @@ import { renderFRAOSLayer } from "./mapLayers/frao.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
+import { installModalHotkeys } from './components/modalHotkeys.js';
+
+
 
 var $ = require('jquery');
 
@@ -652,6 +655,14 @@ function VM() {
 
         self.CreateRadioLogModalVM.openForTasking(tasking);
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => self.CreateRadioLogModalVM.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
     };
 
     self.attachSendSMSModal = function (recipients, team = null, tasking = null, job = null) {
@@ -710,6 +721,14 @@ function VM() {
 
         self.SendSMSModalVM.openWithRecipients(msgRecipients, { taskId: taskId, headerLabel: headerLabel, initialText: initialText });
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => self.SendSMSModalVM.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
     }
 
     self.attachTeamRadioLogModal = function (team) {
@@ -722,6 +741,14 @@ function VM() {
 
         vm.openForTeam(team);
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => self.CreateRadioLogModalVM.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
     };
 
     self.attachNewOpsLogModal = function (job) {
@@ -734,6 +761,13 @@ function VM() {
 
         vm.openForNewJobLog(job);
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => vm.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
     };
 
     self.attachUpdateTeamStatusDropdown = function (tasking, anchorE1) {
@@ -1790,8 +1824,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         //show config modal on load
-        const el = document.getElementById('configModal');
-        bootstrap.Modal.getOrCreateInstance(el).show();
+        const configModalEl = document.getElementById('configModal');
+        bootstrap.Modal.getOrCreateInstance(configModalEl).show();
+
+        installModalHotkeys({
+            modalEl: configModalEl,
+            onSave: () => myViewModel.config.saveAndCloseAndLoad(),
+            onClose: () => bootstrap.Modal.getInstance(configModalEl).hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
+        configModalEl.addEventListener('hidden.bs.modal', () => {
+            myViewModel.config.saveAndCloseAndLoad();
+        });
 
     })
 
