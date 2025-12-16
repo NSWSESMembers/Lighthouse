@@ -673,23 +673,47 @@ tr.job:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
 }
 
-/* Match the Teams <colgroup>: 5,30,10,15,15,20,20 % */
-.team-summary {
-  display: grid;
-  grid-template-columns:
-    5% /* chev */
-    25% /* Callsign */
-    10% /* Status */
-    10% /* HQ */
-    15% /* Task Count */
-    20% /* Team Leader */
-    15%; /* Actions */
-  align-items: center;
-  padding: 4px 10px;
-  column-gap: 0;
-  background: var(--bs-table-bg, #fff);
-  cursor: pointer;
+.teams{
+  --team-cols:
+    30px      /* chevron */
+    1.2fr     /* callsign */
+    0.8fr     /* status */
+    60px      /* HQ */
+    120px     /* task count */
+    1fr       /* leader */
+    140px;    /* actions (fixed) */
 }
+
+/* header */
+.teams thead tr{
+  display: grid;
+  grid-template-columns: var(--team-cols);
+  align-items: center;
+}
+
+.teams thead th{
+  box-sizing: border-box;
+  padding-left: 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teams thead th .sort-icon{
+  width: 10px;
+  flex-shrink: 0;
+}
+
+/* body card */
+.team-summary{
+  display: grid;
+  grid-template-columns: var(--team-cols);
+  align-items: center;
+  padding: 4px 0px;
+}
+
+
 
 .team-card--expanded .team-summary {
   background: #eef4ff;
@@ -1161,24 +1185,46 @@ tr.job:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
-/* Top bar: behaves like the old summary row */
+/* one source of truth (jobs) */
+.jobs{
+  --job-cols:
+    30px   /* chev */
+    100px   /* Id */
+    0.5fr  /* Received */
+    60px   /* HQ */
+    0.3fr   /* Type */
+    1fr  /* Situation */
+    0.5fr   /* Status */
+    1fr; /* Address */
+}
+
+/* body */
 .job-summary {
   display: grid;
-  /* match thead/colgroup: 2,10,8,8,8,28,8,22 % */
-  grid-template-columns:
-    2% /* chev */
-    7% /* Id */
-    12% /* Received */
-    8% /* HQ */
-    8% /* Type */
-    32% /* Situation */
-    9% /* Status */
-    22%; /* Address */
+  grid-template-columns: var(--job-cols);
   align-items: center;
-  column-gap: 0; /* let colgroup control spacing */
-  padding: 4px 10px; /* close to your table cell padding */
+  column-gap: 0;
+  padding: 4px 0px;
   background: var(--bs-table-bg, #fff);
   cursor: pointer;
+}
+
+/* header: turn the <tr> into a grid too */
+.jobs thead tr{
+  display: grid;
+  grid-template-columns: var(--job-cols);
+  align-items: center;
+}
+
+/* header cells behave like blocks inside the grid */
+.jobs thead th{
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 4px;
 }
 
 .job-card--expanded .job-summary {
