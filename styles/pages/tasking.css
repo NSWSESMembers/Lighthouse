@@ -435,8 +435,10 @@ button.primary {
 }
 
 .teams td,
-.teams th {
-  padding: 8px 10px;
+.teams th,
+.jobs td,
+.jobs th {
+  padding: 8px 4px;
   vertical-align: middle;
 }
 
