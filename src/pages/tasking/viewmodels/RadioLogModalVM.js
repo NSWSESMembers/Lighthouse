@@ -86,7 +86,8 @@ export function CreateRadioLogModalVM(parentVM) {
     self.subject(team.callsign() || "");
     self.initTags();
     preselectTag(6);
-
+    self.showError(false);
+      self.errorMessage("");
     self.headerLabel(`New Radio Log for ${team.callsign?.() || ""}`);
   }
 

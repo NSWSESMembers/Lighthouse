@@ -58,6 +58,9 @@ import { renderFRAOSLayer } from "./mapLayers/frao.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
+import { installModalHotkeys } from './components/modalHotkeys.js';
+
+
 
 var $ = require('jquery');
 
@@ -652,6 +655,14 @@ function VM() {
 
         self.CreateRadioLogModalVM.openForTasking(tasking);
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => self.CreateRadioLogModalVM.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
     };
 
     self.attachSendSMSModal = function (recipients, team = null, tasking = null, job = null) {
@@ -710,6 +721,14 @@ function VM() {
 
         self.SendSMSModalVM.openWithRecipients(msgRecipients, { taskId: taskId, headerLabel: headerLabel, initialText: initialText });
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => self.SendSMSModalVM.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
     }
 
     self.attachTeamRadioLogModal = function (team) {
@@ -722,6 +741,14 @@ function VM() {
 
         vm.openForTeam(team);
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => self.CreateRadioLogModalVM.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
     };
 
     self.attachNewOpsLogModal = function (job) {
@@ -734,6 +761,13 @@ function VM() {
 
         vm.openForNewJobLog(job);
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => vm.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
     };
 
     self.attachUpdateTeamStatusDropdown = function (tasking, anchorE1) {
@@ -952,6 +986,7 @@ function VM() {
             job.updateFromJson({ ActionRequiredTags: data.Results.flatMap(entry => entry.Tags || []) });
         }, function (err) {
             console.error("Failed to fetch unresolved actions log entries for job:", err);
+            showAlert('Failed to fetch unresolved actions log entries. Your session may have expired', 'danger', 5000);
         });
     }
 
@@ -961,6 +996,7 @@ function VM() {
             job.unacceptedNotifications(data);
         }, function (err) {
             console.error("Failed to fetch unacknowledged job notifications:", err);
+            showAlert('Failed to fetch unacknowledged job notifications. Your session may have expired', 'danger', 5000);
         });
     }
 
@@ -1086,6 +1122,7 @@ function VM() {
             cb(data?.Results || []);
         }, function (err) {
             console.error("Failed to fetch ops log for job:", err);
+            showAlert("Failed to fetch ops log. Your session may have expired", "danger", 5000);
             cb([]);
         });
     }
@@ -1096,6 +1133,7 @@ function VM() {
             cb(data || []);
         }, function (err) {
             console.error("Failed to fetch history for job:", err);
+            showAlert("Failed to fetch job history. Your session may have expired", "danger", 5000);
             cb([]);
         });
     }
@@ -1107,6 +1145,7 @@ function VM() {
             cb(data);
         }, function (err) {
             console.error("Failed to create ops log entry:", err);
+            showAlert("Failed to create ops log entry.", "danger", 5000);
             cb(null);
         });
     }
@@ -1117,6 +1156,7 @@ function VM() {
             cb(data || []);
         }, function (err) {
             console.error("Failed to update team status:", err);
+            showAlert("Failed to update team status.", "danger", 5000);
             cb([]);
         });
     }
@@ -1127,6 +1167,7 @@ function VM() {
             cb(data || []);
         }, function (err) {
             console.error("Failed to call off team:", err);
+            showAlert("Failed to call off team.", "danger", 5000);
             cb([]);
         });
     }
@@ -1138,6 +1179,7 @@ function VM() {
             cb(data);
         }, function (err) {
             console.error("Failed to create ops log entry:", err);
+            showAlert("Failed to create ops log entry.", "danger", 5000);
             cb(null);
         });
     }
@@ -1200,6 +1242,7 @@ function VM() {
                 assetDataRefreshInterlock = false;
             }, function (err) {
                 console.error("Error fetching trackable assets:", err);
+                showAlert('Failed to fetch trackable assets. Your session may have expired', 'danger', 5000);
                 assetDataRefreshInterlock = false;
             }
             )
@@ -1790,8 +1833,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         //show config modal on load
-        const el = document.getElementById('configModal');
-        bootstrap.Modal.getOrCreateInstance(el).show();
+        const configModalEl = document.getElementById('configModal');
+        bootstrap.Modal.getOrCreateInstance(configModalEl).show();
+
+        installModalHotkeys({
+            modalEl: configModalEl,
+            onSave: () => myViewModel.config.saveAndCloseAndLoad(),
+            onClose: () => bootstrap.Modal.getInstance(configModalEl).hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
+        configModalEl.addEventListener('hidden.bs.modal', () => {
+            myViewModel.config.saveAndCloseAndLoad();
+        });
 
     })
 

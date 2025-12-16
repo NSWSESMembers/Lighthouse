@@ -53,7 +53,6 @@ export function Team(data = {}, deps = {}) {
 
     self.trackableAssets = ko.observableArray([]);
 
-
     self.toggleAndExpand = function () {
         const wasExpanded = self.expanded();
         self.expanded(!wasExpanded);

@@ -97,8 +97,9 @@ function ReturnAssetLocations(host, userId = 'notPassed', token, cb, err) {
 }
 
 function fetchRadioAssets(host, userId = 'notPassed', token) {
+  const source = host.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return new Promise((resolve, reject) => {
-    const cache = localStorage.getItem(`LighthouseFetchedRadioAssets`);
+    const cache = localStorage.getItem(`${source}-LighthouseFetchedRadioAssets`);
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
     if (cache != null) {
       const cacheJson = JSON.parse(cache);
@@ -140,7 +141,7 @@ function fetchAllResources() {
             const mergedData = results.flat(); // joins all arrays into one
       
       localStorage.setItem(
-        `LighthouseFetchedRadioAssets`,
+        `${source}-LighthouseFetchedRadioAssets`,
         JSON.stringify({ timestamp: secondsSinceEpoch, data: mergedData })
       );
 
@@ -152,13 +153,13 @@ function fetchAllResources() {
       reject(error);
     });
 }
-
   });
 }
 
 function fetchTeleAssets(host, userId = 'notPassed', token) {
+  const source = host.replace(/^https?:\/\//, '').replace(/\/$/, '');
   return new Promise((resolve, reject) => {
-    const cache = localStorage.getItem(`LighthouseFetchedTeleAssets`);
+    const cache = localStorage.getItem(`${source}-LighthouseFetchedTeleAssets`);
     const secondsSinceEpoch = Math.round(Date.now() / 1000);
     if (cache != null) {
       const cacheJson = JSON.parse(cache);
@@ -185,7 +186,7 @@ function fetchTeleAssets(host, userId = 'notPassed', token) {
         type: 'GET',
         success: function (data) {
           localStorage.setItem(
-            `LighthouseFetchedTeleAssets`,
+            `${source}-LighthouseFetchedTeleAssets`,
             JSON.stringify({ timestamp: secondsSinceEpoch, data: data }),
           );
           console.log('fetchTeleAssets served from server');

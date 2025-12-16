@@ -183,6 +183,9 @@ export function CreateOpsLogModalVM(parentVM) {
 
       self.uiTags([]);
       self.headerLabel("");
+
+      self.showError(false);
+      self.errorMessage("");
   };
 
   function createUiTag(tag) {
