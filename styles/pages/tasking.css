@@ -1186,14 +1186,14 @@ tr.job:hover {
 /* one source of truth (jobs) */
 .jobs{
   --job-cols:
-    30px   /* chev */
-    100px   /* Id */
+    0.1fr   /* chev */
+    0.3fr   /* Id */
     0.5fr  /* Received */
-    60px   /* HQ */
+    0.3fr   /* HQ */
     0.3fr   /* Type */
-    1fr  /* Situation */
+    1.5fr  /* Situation */
     0.5fr   /* Status */
-    1fr; /* Address */
+    1.0fr; /* Address */
 }
 
 /* body */
@@ -1791,7 +1791,7 @@ tr.job:hover {
 }
 
 #SendSMSModal .sms-recipient-list {
-  max-height: 100;
+  max-height: 140px;
   min-height: 100px;
   overflow-y: auto;
   border: 1px solid #dee2e6;
@@ -1841,10 +1841,6 @@ input[type="search"]::-ms-clear {
   top: 0;
   z-index: 1050;         /* above cards/rows */
   background: var(--bs-light, #f8f9fa);
-}
-
-.jobs > tbody {
-  display: block;
 }
 
 /* Keep your existing grid header row definitions */
