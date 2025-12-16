@@ -54,6 +54,11 @@ export function Team(data = {}, deps = {}) {
     self.trackableAssets = ko.observableArray([]);
 
 
+    self.trackableAssets.subscribe(function () {
+        console.log(self.trackableAssets().length + " trackable assets for team " + self.callsign());
+        console.log(self.trackableAssets())
+    });
+
     self.toggleAndExpand = function () {
         const wasExpanded = self.expanded();
         self.expanded(!wasExpanded);
