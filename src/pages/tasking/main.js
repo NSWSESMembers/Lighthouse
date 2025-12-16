@@ -58,7 +58,7 @@ import { renderFRAOSLayer } from "./mapLayers/frao.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
-import { installModalHotkeys } from './components/modalHotkeys.js';
+import { installModalHotkeys } from './components/modalHotKeys.js';
 
 
 
