@@ -19,15 +19,6 @@ body {
 
 
 
-body.env-trainbeacon::before {
-  content: '';
-  position: fixed;
-  z-index: 999999; /* above everything */
-  pointer-events: none; /* don’t block clicks */
-  inset: 0;
-  border: 8px solid #219f56; /* thick visible green */
-  box-sizing: border-box;
-}
 
 body.env-trainbeacon::after {
   content: 'TRAIN BEACON';
@@ -43,6 +34,8 @@ body.env-trainbeacon::after {
   white-space: nowrap;
   user-select: none;
 }
+
+/* Modal header colours per environment */
 body .modal-header {
   background-color: #f7931d !important;
 }
@@ -206,7 +199,8 @@ body.sidebar-collapsed .vsplit {
   flex-basis: 60%;
 }
 
-.table-responsive {
+.team-table-container,
+.job-table-container {
   flex: 1 1 auto;
   overflow-y: auto;
 }
@@ -216,7 +210,8 @@ body.sidebar-collapsed .vsplit {
   overflow-y: auto;
 }
 
-.table-responsive table {
+.team-table-container table,
+.job-table-container table {
   margin-bottom: 0; /* prevent layout shift when scrollbar appears */
   width: 100%;
 }
@@ -243,14 +238,16 @@ body.sidebar-collapsed .vsplit {
   overflow: hidden; /* prevent outer scrolling */
 }
 
-.pane > .table-responsive {
+.pane > .team-table-container,
+.pane > .job-table-container {
+  position: relative;
+  overflow-y: auto;
   flex: 1 1 auto;
-  overflow-y: auto; /* scroll only table */
-  overflow-x: hidden;
-  height: 100%;
+  min-height: 0;
 }
 
-.pane > .table-responsive table {
+.pane > .team-table-container > table,
+.pane > .job-table-container > table {
   width: 100%;
   margin-bottom: 0;
 }
@@ -347,22 +344,22 @@ table thead th[aria-sort='descending'] .sort-icon {
 
 .teams,
 .jobs {
-  width: 100%;
   table-layout: auto;
   border-spacing: 0 3px; /* gap between rows */
   border-collapse: separate;
 }
 
-.teams thead th,
-.jobs thead th {
+.teams > thead > th,
+.jobs > thead > th {
   position: sticky;
-  z-index: 1001;
   top: 0;
-  background: var(--bs-light, #f8f9fa);
+  z-index: 1001;        /* above rows/cards */
+  background: #f8f9fa; /* solid background */
 }
 
 /* Make the table body scroll within the pane */
-.pane .table-responsive {
+.pane .team-table-container,
+.pane .job-table-container {
   max-height: 100%;
   overflow-y: auto;
 }
@@ -373,7 +370,8 @@ table thead th[aria-sort='descending'] .sort-icon {
   flex-direction: column;
 }
 
-.pane .table-responsive {
+.pane .team-table-container,
+.pane .job-table-container {
   flex: 1 1 auto;
   min-height: 0; /* required for flex scrolling */
 }
@@ -685,13 +683,13 @@ tr.job:hover {
 }
 
 /* header */
-.teams thead tr{
+.teams > thead > tr{
   display: grid;
   grid-template-columns: var(--team-cols);
   align-items: center;
 }
 
-.teams thead th{
+.teams > thead > th{
   box-sizing: border-box;
   padding-left: 4px;
   min-width: 0;
@@ -700,7 +698,7 @@ tr.job:hover {
   white-space: nowrap;
 }
 
-.teams thead th .sort-icon{
+.teams > thead > th .sort-icon{
   width: 10px;
   flex-shrink: 0;
 }
@@ -1210,14 +1208,15 @@ tr.job:hover {
 }
 
 /* header: turn the <tr> into a grid too */
-.jobs thead tr{
+.jobs > thead > tr{
   display: grid;
   grid-template-columns: var(--job-cols);
   align-items: center;
 }
 
 /* header cells behave like blocks inside the grid */
-.jobs thead th{
+.jobs > thead > th{
+  position: sticky;
   display: block;
   box-sizing: border-box;
   min-width: 0;
@@ -1832,4 +1831,43 @@ input[type="search"]::-ms-clear {
   display: none;
   width: 0;
   height: 0;
+}
+
+
+.teams > thead,
+.jobs > thead {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 1050;         /* above cards/rows */
+  background: var(--bs-light, #f8f9fa);
+}
+
+.jobs > tbody {
+  display: block;
+}
+
+/* Keep your existing grid header row definitions */
+.teams > thead > tr,
+.jobs > thead > tr {
+  display: grid;
+}
+
+/* Header cells should just be normal blocks now */
+.teams > thead > th,
+.jobs > thead > th {
+  position: static !important;   /* override your current sticky-on-th */
+  display: block;
+  background: transparent;
+}
+
+
+
+.team-details fieldset {
+  height: 100%;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem 0.25rem;
+  margin-bottom: 0.75rem;
+  background-color: #ffffff;
 }

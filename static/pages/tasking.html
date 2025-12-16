@@ -206,7 +206,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive team-table-container">
                     <table class="teams table align-middle">
                         <thead class="table-light">
                             <tr>
@@ -317,7 +317,8 @@
 
                                                         <!-- LEFT: team members + capabilities -->
                                                         <div class="col-md-3 col-lg-3">
-                                                            <h6 class="text-muted mb-2">Team Members</h6>
+                                                            <fieldset>
+                                                                <div class="d-flex justify-content-between align-items-center mb-2"><legend class="job-details-legend">Team Members</legend></div>
                                                             <ul class="list-unstyled team-members-list mb-0"
                                                                 data-bind="foreach: { data: members, as: 'm' }">
                                                                 <li class="team-member-row mb-1">
@@ -347,21 +348,22 @@
                                                                 data-bind="visible: members().length === 0">
                                                                 Team has no members assigned.
                                                             </div>
+                                                            </fieldset>
                                                         </div>
                                                         <!-- RIGHT: existing taskings table / summary -->
                                                         <div class="col-md-9 col-lg-9">
-                                                            <div
-                                                                class="d-flex justify-content-between align-items-center mb-2">
+                                                            <fieldset>
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
                                                                 <!-- ko if: t.taskingLoading -->
-                                                                <h6 class="text-muted mb-0">Loading taskings...</h6>
+                                                                <legend class="job-details-legend">Loading taskings...</legend>
                                                                 <!-- /ko -->
                                                                 <!-- ko ifnot: t.taskingLoading -->
-                                                                <h6 class="text-muted mb-0"
+                                                                <legend class="job-details-legend"
                                                                     data-bind="visible: t.hiddenTaskingCount, text: 'Taskings (' + t.hiddenTaskingCount() + ' hidden)'">
-                                                                </h6>
-                                                                <h6 class="text-muted mb-0"
+                                                                </legend>
+                                                                <legend class="job-details-legend"
                                                                     data-bind="visible: !t.hiddenTaskingCount">Taskings
-                                                                </h6>
+                                                                </legend>
                                                                 <!-- /ko -->
                                                                 <div class="btn-group btn-group-sm" role="group"
                                                                     aria-label="Team actions">
@@ -434,6 +436,11 @@
                                                                     </tbody>
                                                                 </table>
                                                             </div>
+                                                            <div class="text-muted mt-2"
+                                                                data-bind="visible: filteredTaskings().length === 0">
+                                                                Team has no tasking assigned.
+                                                            </div>
+                                                            </fieldset>
                                                         </div><!-- /col taskings -->
                                                     </div><!-- /row -->
                                                 </div><!-- /card-body -->
@@ -698,7 +705,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive job-table-container">
                     <table class="jobs table align-middle">
                         <thead class="table-light">
                             <tr>
