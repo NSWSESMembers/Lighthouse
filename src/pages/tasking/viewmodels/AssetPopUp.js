@@ -25,34 +25,7 @@ export class AssetPopupViewModel {
   }
 
   drawCrowsFliesToJob = (tasking) => {
-    if (tasking.job.isFilteredIn() === false) {
-      return;
-    }
-    // clear any existing one first
-    this.api.clearCrowFliesLine();
-    if (!tasking) return;
-
-    // pick the team’s first asset coordinates
-    let fromLat = null, fromLng = null;
-    if (tasking.team.trackableAssets && tasking.team.trackableAssets().length > 0) {
-      const a = tasking.team.trackableAssets()[0];
-      fromLat = +ko.unwrap(a.latitude);
-      fromLng = +ko.unwrap(a.longitude);
-    }
-    const toLat = +ko.unwrap(tasking.job.address.latitude);
-    const toLng = +ko.unwrap(tasking.job.address.longitude);
-
-    if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
-      Number.isFinite(toLat) && Number.isFinite(toLng))) return;
-
-    this._polyline = L.polyline(
-      [
-        [fromLat, fromLng],
-        [toLat, toLng],
-      ],
-      { weight: 4, color: 'green', dashArray: '6' }
-    )
-    this.api.registerCrowFliesLine(this._polyline);
+    this.api.drawCrowsFliesToAssetFromTasking(tasking, this.asset);
   }
 
   removeCrowsFliesToJob = () => {

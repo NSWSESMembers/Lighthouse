@@ -262,7 +262,7 @@ export function MapVM(Lmap, root) {
     self.registerCrowFliesLine(this._polyline);
   }
 
-  self.drawCrowsFliesToAssetFromTasking = (tasking) => {
+  self.drawCrowsFliesToAssetFromTasking = (tasking, asset = null) => {
     if (tasking.job.isFilteredIn() === false) {
       return;
     }
@@ -276,7 +276,7 @@ export function MapVM(Lmap, root) {
     // pick the team’s first asset coordinates
     let fromLat = null, fromLng = null;
     if (tasking.team.trackableAssets && tasking.team.trackableAssets().length > 0) {
-      const a = tasking.team.trackableAssets()[0];
+      const a = asset || tasking.team.trackableAssets()[0];
       fromLat = +ko.unwrap(a.latitude);
       fromLng = +ko.unwrap(a.longitude);
     }
@@ -295,6 +295,8 @@ export function MapVM(Lmap, root) {
     )
     self.registerCrowFliesLine(this._polyline);
   }
+
+
 
   // --- distance rings state ---
   self.jobAssetRings = [];
