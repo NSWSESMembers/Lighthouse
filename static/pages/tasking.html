@@ -939,7 +939,7 @@
                                                                             class="btn btn-primary btn-sm flex-fill w-50"
                                                                             type="button" data-bs-toggle="dropdown"
                                                                             data-bs-auto-close="outside"
-                                                                            data-bind="attr: { id: 'tmAssignTeamBtn-' + j.id }">
+                                                                            data-bind="attr: { id: 'tmAssignTeamBtn-' + j.id }, disable: !j.canTaskJob()">
                                                                             <i class="fa fa-solid fa-user-plus"></i>
                                                                             Task Team
                                                                         </button>

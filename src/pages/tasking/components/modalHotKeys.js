@@ -5,7 +5,6 @@ export function installModalHotkeys({
   onClose,
   allowInInputs = false
 }) {
-    console.log(modalEl)
   if (!modalEl) return;
 
   const handler = (e) => {

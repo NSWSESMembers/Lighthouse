@@ -534,6 +534,9 @@ function VM() {
             fetchUnresolvedActionsLog: (job) => {
                 self.fetchUnresolvedActionsLog(job);
             },
+            fetchSuppliersForJob: (jobId) => {
+                return self.fetchSuppliersForJob(jobId);
+            },
             map: self.mapVM,
             filteredTeams: self.filteredTeams,
         }
@@ -947,6 +950,15 @@ function VM() {
     self.drawJobTargetRing = function (job) {
         if (!job || !job.address) return;
         self.mapVM.drawJobAssetDistanceRings(job);
+    }
+
+        self.fetchSuppliersForJob = async function (id) {
+        const t = await getToken();   // blocks here until token is ready
+        return new Promise((resolve) => {
+            BeaconClient.suppliers.get(id, apiHost, params.userId, t, function (data) {
+                resolve(data.Results || []);
+            })
+        });
     }
 
     self.fetchContactNumbers = async function (id) {
@@ -1782,13 +1794,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
-    $('.dropdown-menu').on('show.bs.dropdown', function () {
-        $('body').append($('.dropdown-menu').css({
-            position: 'absolute',
-            left: $('.dropdown-menu').offset().left,
-            top: $('.dropdown-menu').offset().top
-        }).detach());
-    });
+    // $('.dropdown-menu').on('show.bs.dropdown', function () {
+    //     $('body').append($('.dropdown-menu').css({
+    //         position: 'absolute',
+    //         left: $('.dropdown-menu').offset().left,
+    //         top: $('.dropdown-menu').offset().top
+    //     }).detach());
+    // });
 
 
     //get tokens
