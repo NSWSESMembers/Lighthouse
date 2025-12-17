@@ -1,5 +1,4 @@
 var L = require('leaflet');
-var ko = require('knockout');
 var moment = require('moment');
 
 export class AssetPopupViewModel {
