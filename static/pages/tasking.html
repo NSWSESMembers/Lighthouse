@@ -334,11 +334,11 @@
                                                                     <tbody
                                                                         data-bind="foreach: { data: filteredTaskings, as: 'ts' }">
                                                                         <tr>
-                                                                            <td data-bind="text: ts.job.identifier">
+                                                                            <td data-bind="text: ts.job.identifier, style: { 'background': ts.job.rowColour() }">
                                                                             </td>
-                                                                            <td data-bind="text: ts.jobTypeName"></td>
-                                                                            <td data-bind="text: ts.prettyAddress"></td>
-                                                                            <td>
+                                                                            <td data-bind="text: ts.jobTypeName, style: { 'background': ts.job.rowColour() }"></td>
+                                                                            <td data-bind="text: ts.prettyAddress, style: { 'background': ts.job.rowColour() }"></td>
+                                                                            <td data-bind="style: { 'background': ts.job.rowColour() }">
                                                                                 <div class="dropdown" id="team-tasking-status-dropdown">
                                                                                     <button class="team-status-button dropdown-toggle"
                                                                                             type="button"
@@ -420,7 +420,7 @@
                                                                                         <!-- /ko -->
                                                                                     </div>
                                                                                 </div>
-                                                                            <td>
+                                                                            <td data-bind="style: { 'background': ts.job.rowColour() }">
                                                                                 <div class="btn-group btn-group-sm"
                                                                                     role="group"
                                                                                     data-bind="noBubbleFromDisabledButtons: true">
@@ -438,6 +438,7 @@
                                                                                     </button>
                                                                                     <button type="button"
                                                                                         class="btn btn-outline-secondary"
+                                                                                        data-bind="click: ts.job.openBeaconJobDetails, clickBubble: false"
                                                                                         title="Edit">
                                                                                         <i
                                                                                             class="fas fa-external-link-alt"></i>
@@ -445,7 +446,7 @@
                                                                                     <button type="button"
                                                                                         class="btn btn-outline-secondary"
                                                                                         title="Zoom to"
-                                                                                        data-bind="click: ts.job.focusMap">
+                                                                                        data-bind="click: ts.job.focusMap, disable: !ts.job.isFilteredIn(), clickBubble: false">
                                                                                         <i class="fa fa-crosshairs"></i>
                                                                                     </button>
                                                                                 </div>
