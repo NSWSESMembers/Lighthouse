@@ -664,7 +664,7 @@ tr.job:hover {
   background: #ffffff;
   margin-left: 4px;
   margin-right: 4px;
-  overflow: visible;
+  overflow: hidden;
   transition: box-shadow 120ms ease, border-color 120ms ease;
 }
 
