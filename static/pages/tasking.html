@@ -11,74 +11,6 @@
         style="z-index:2000; width:600px; max-width:90%;"></div>
 
     <div class="app"><!-- make .app a flex row in tasking.css -->
-        <!-- GLOBAL TEAM STATUS DROPDOWN POPUP -->
-        <div id="TeamStatusDropdown" data-bind="with: updateTeamStatusDropdownPopup" class="team-status-dropdown">
-
-            <!-- PAGE 1 -->
-            <div class="dropdown-list" data-bind="visible: currentPage() === 'selectStatus'">
-                <!-- ko if: canUntask -->
-                <div class="dropdown-item" data-bind="click: selectUntask">Remove Tasking</div><!-- /ko -->
-                <!-- ko if: canEnroute -->
-                <div class="dropdown-item" data-bind="click: selectEnRoute">En-Route</div><!-- /ko -->
-                <!-- ko if: canCalloff -->
-                <div class="dropdown-item" data-bind="click: selectCallOff">Call Off</div><!-- /ko -->
-                <!-- ko if: canOnsite -->
-                <div class="dropdown-item" data-bind="click: selectOnSite">On-Site</div><!-- /ko -->
-                <!-- ko if: canOffsite -->
-                <div class="dropdown-item" data-bind="click: selectOffSite">Off-Site</div><!-- /ko -->
-                <!-- ko if: canComplete -->
-                <div class="dropdown-item" data-bind="click: selectComplete">Complete</div><!-- /ko -->
-                <!-- ko if: cannotUpdateStatus -->
-                <div class="dropdown-item">You cannot change this team's status.</div><!-- /ko -->
-            </div>
-            <!-- PAGE 2: DETAILS -->
-            <div data-bind="visible: currentPage() === 'details'" class="page-two">
-
-                <!-- Time input -->
-                <div class="form-row" data-bind="visible: selectedStatus() === 'En-Route'
-                         || selectedStatus() === 'On-Site'
-                         || selectedStatus() === 'Off-Site'">
-                    <label>Time:</label>
-                    <input type="datetime-local" data-bind="value: time">
-                </div>
-
-                <!-- ETA (En-Route only) -->
-                <div class="form-row" data-bind="visible: selectedStatus() === 'En-Route'">
-                    <label>ETA:</label>
-                    <input type="datetime-local" data-bind="value: eta">
-                    <div class="quick-buttons" data-bind="visible: selectedStatus() === 'En-Route'">
-                        <button class="quick-btn" data-bind="click: addETA1">+1</button>
-                        <button class="quick-btn" data-bind="click: addETA5">+5</button>
-                        <button class="quick-btn" data-bind="click: addETA10">+10</button>
-                        <button class="quick-btn" data-bind="click: addETA30">+30</button>
-                    </div>
-                </div>
-
-                <!-- ETC (On-Site only) -->
-                <div class="form-row" data-bind="visible: selectedStatus() === 'On-Site'">
-                    <label>ETC:</label>
-                    <input type="datetime-local" data-bind="value: etc">
-                    <div class="quick-buttons" data-bind="visible: selectedStatus() === 'On-Site'">
-                        <button class="quick-btn" data-bind="click: addETC1">+1</button>
-                        <button class="quick-btn" data-bind="click: addETC5">+5</button>
-                        <button class="quick-btn" data-bind="click: addETC10">+10</button>
-                        <button class="quick-btn" data-bind="click: addETC30">+30</button>
-                    </div>
-                </div>
-
-                <!-- Call Off reason -->
-                <div class="form-row" data-bind="visible: selectedStatus() === 'Call Off'">
-                    <label>Reason:</label>
-                    <textarea data-bind="value: callOffReason"></textarea>
-                </div>
-
-                <!-- Submit -->
-                <button class="submit-btn" data-bind="click: submitFinal">
-                    Submit
-                </button>
-
-            </div>
-        </div>
         <aside class="sidebar"><!-- fixed-width column in tasking.css -->
             <div class="pane pane--top" id="paneTop">
                 <!-- TEAMS (top pane) -->
@@ -398,10 +330,87 @@
                                                                             <td data-bind="text: ts.jobTypeName"></td>
                                                                             <td data-bind="text: ts.prettyAddress"></td>
                                                                             <td>
-                                                                                <button class="team-status-button"
-                                                                                    data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus, clickBubble: false
-                                                                                "></button>
-                                                                            </td>
+                                                                                <div class="dropdown" id="team-tasking-status-dropdown">
+                                                                                    <button class="team-status-button dropdown-toggle"
+                                                                                            type="button"
+                                                                                            data-bs-toggle="dropdown"
+                                                                                            data-bs-auto-close="outside"
+                                                                                            data-bind="text: ts.currentStatus,
+                                                                                                    css: ts.tagColorFromStatus(),
+                                                                                                    click: ts.onStatusDropdownToggleClick">
+                                                                                    </button>
+                                                                                    <div class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
+                                                                                        <!-- ko if: ts.statusPageVisible -->
+                                                                                        <div>
+                                                                                            <!-- ko if: ts.cannotUpdateStatus -->
+                                                                                            <p>You cannot change statuses.</p>
+                                                                                            <!-- /ko -->
+                                                                                            <!-- ko foreach: ts.statusOptions -->
+                                                                                            <li>
+                                                                                                <button type="button"
+                                                                                                        class="dropdown-item"
+                                                                                                        data-bind="text: label,
+                                                                                                                    enable: enabled,
+                                                                                                                    click: $parent.onStatusOptionClick,
+                                                                                                                    clickBubble: false">
+                                                                                                </button>
+                                                                                            </li>
+                                                                                            <!-- /ko -->
+                                                                                        </div>
+                                                                                        <!-- /ko -->
+
+                                                                                        <!-- ko if: detailsPageVisible -->
+                                                                                        <div>
+                                                                                            <!-- ko if: ts.needsTimeSet -->
+                                                                                            <div>
+                                                                                                <label>Time:</label>
+                                                                                                <input type="datetime-local" data-bind="value: ts.time">
+                                                                                            </div>
+                                                                                            <!-- /ko -->
+
+                                                                                            <!-- ko if: ts.needsETA -->
+                                                                                            <div>
+                                                                                                <label>ETA:</label>
+                                                                                                <input type="datetime-local" data-bind="value: ts.eta">
+                                                                                                <div class="quick-buttons">
+                                                                                                    <!-- ko foreach: ts.etaQuickButtons -->
+                                                                                                    <button type="button" class="quick-btn" data-bind="text: label,
+                                                                                                                                                    click: $parent.onEtaQuickButtonClick,
+                                                                                                                                                    clickbubble: false">
+                                                                                                    </button>
+                                                                                                    <!-- /ko -->
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <!-- /ko -->
+
+                                                                                            <!-- ko if: ts.needsETC -->
+                                                                                            <div>
+                                                                                                <label>ETC:</label>
+                                                                                                <input type="datetime-local" data-bind="value: ts.etc">
+                                                                                                <div class="quick-buttons">
+                                                                                                    <!-- ko foreach: ts.etcQuickButtons -->
+                                                                                                    <button type="button" class="quick-btn" data-bind="text: label,
+                                                                                                                                                    click: $parent.onEtcQuickButtonClick,
+                                                                                                                                                    clickbubble: false">
+                                                                                                    </button>
+                                                                                                    <!-- /ko -->
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <!-- /ko -->
+
+                                                                                            <!-- ko if: ts.needsReason -->
+                                                                                            <div>
+                                                                                                <label>Reason:</label>
+                                                                                                <textarea data-bind="value: ts.callOffReason"></textarea>
+                                                                                            </div>
+                                                                                            <!-- /ko -->
+                                                                                            <button class="submit-btn" data-bind="click: updateTaskingStatus">
+                                                                                                Submit
+                                                                                            </button>
+                                                                                        </div>
+                                                                                        <!-- /ko -->
+                                                                                    </div>
+                                                                                </div>
                                                                             <td>
                                                                                 <div class="btn-group btn-group-sm"
                                                                                     role="group"
@@ -1129,8 +1138,87 @@
                                                                                 <td data-bind="text: ts.teamCallsign">
                                                                                 </td>
                                                                                 <td>
-                                                                                    <button class="team-status-button"
-                                                                                        data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus"></button>
+                                                                                    <div class="dropdown" id="team-tasking-status-dropdown">
+                                                                                    <button class="team-status-button dropdown-toggle"
+                                                                                            type="button"
+                                                                                            data-bs-toggle="dropdown"
+                                                                                            data-bs-auto-close="outside"
+                                                                                            data-bind="text: ts.currentStatus,
+                                                                                                    css: ts.tagColorFromStatus(),
+                                                                                                    click: ts.onStatusDropdownToggleClick">
+                                                                                    </button>
+                                                                                    <div class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
+                                                                                        <!-- ko if: ts.statusPageVisible -->
+                                                                                        <div>
+                                                                                            <!-- ko if: ts.cannotUpdateStatus -->
+                                                                                            <p>You cannot change statuses.</p>
+                                                                                            <!-- /ko -->
+                                                                                            <!-- ko foreach: ts.statusOptions -->
+                                                                                            <li>
+                                                                                                <button type="button"
+                                                                                                        class="dropdown-item"
+                                                                                                        data-bind="text: label,
+                                                                                                                    enable: enabled,
+                                                                                                                    click: $parent.onStatusOptionClick,
+                                                                                                                    clickBubble: false">
+                                                                                                </button>
+                                                                                            </li>
+                                                                                            <!-- /ko -->
+                                                                                        </div>
+                                                                                        <!-- /ko -->
+
+                                                                                        <!-- ko if: detailsPageVisible -->
+                                                                                        <div>
+                                                                                            <!-- ko if: ts.needsTimeSet -->
+                                                                                            <div>
+                                                                                                <label>Time:</label>
+                                                                                                <input type="datetime-local" data-bind="value: ts.time">
+                                                                                            </div>
+                                                                                            <!-- /ko -->
+
+                                                                                            <!-- ko if: ts.needsETA -->
+                                                                                            <div>
+                                                                                                <label>ETA:</label>
+                                                                                                <input type="datetime-local" data-bind="value: ts.eta">
+                                                                                                <div class="quick-buttons">
+                                                                                                    <!-- ko foreach: ts.etaQuickButtons -->
+                                                                                                    <button type="button" class="quick-btn" data-bind="text: label,
+                                                                                                                                                    click: $parent.onEtaQuickButtonClick,
+                                                                                                                                                    clickbubble: false">
+                                                                                                    </button>
+                                                                                                    <!-- /ko -->
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <!-- /ko -->
+
+                                                                                            <!-- ko if: ts.needsETC -->
+                                                                                            <div>
+                                                                                                <label>ETC:</label>
+                                                                                                <input type="datetime-local" data-bind="value: ts.etc">
+                                                                                                <div class="quick-buttons">
+                                                                                                    <!-- ko foreach: ts.etcQuickButtons -->
+                                                                                                    <button type="button" class="quick-btn" data-bind="text: label,
+                                                                                                                                                    click: $parent.onEtcQuickButtonClick,
+                                                                                                                                                    clickbubble: false">
+                                                                                                    </button>
+                                                                                                    <!-- /ko -->
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <!-- /ko -->
+
+                                                                                            <!-- ko if: ts.needsReason -->
+                                                                                            <div>
+                                                                                                <label>Reason:</label>
+                                                                                                <textarea data-bind="value: ts.callOffReason"></textarea>
+                                                                                            </div>
+                                                                                            <!-- /ko -->
+                                                                                            <button class="submit-btn" data-bind="click: updateTaskingStatus">
+                                                                                                Submit
+                                                                                            </button>
+                                                                                        </div>
+                                                                                        <!-- /ko -->
+                                                                                    </div>
+                                                                                </div>
                                                                                 </td>
                                                                                 <td
                                                                                     data-bind="text: ts.statusTimeAgoLabel">
