@@ -209,7 +209,7 @@ export function Team(data = {}, deps = {}) {
     self.taskings = ko.observableArray([]);
 
     self.statusName = ko.pureComputed(() => {
-        return (self.teamStatusType() && self.teamStatusType().Name) || "Unknown";
+        return (self.teamStatusType() && self.teamStatusType().Name);
     })
 
     self.activeTaskingsCount = ko.pureComputed(() => {
