@@ -645,5 +645,95 @@ export const Enum = {
             "GroupId": null,
             "Colour": null
         }
+    }, JobSupplierStatusType: {
+        "Requested": {
+            "Id": 1,
+            "Name": "Requested",
+            "Description": "Requested",
+            "ParentId": null,
+            "GroupId": null,
+            "Colour": null
+        },
+        "Referred": {
+            "Id": 2,
+            "Name": "Referred",
+            "Description": "Referred",
+            "ParentId": null,
+            "GroupId": null,
+            "Colour": null
+        },
+        "Complete": {
+            "Id": 3,
+            "Name": "Complete",
+            "Description": "Complete",
+            "ParentId": null,
+            "GroupId": null,
+            "Colour": null
+        },
+        "Cancelled": {
+            "Id": 4,
+            "Name": "Cancelled",
+            "Description": "Cancelled",
+            "ParentId": null,
+            "GroupId": null,
+            "Colour": null
+        }
+    }, JobTeamStatusType: {
+    "Tasked": {
+        "Id": 1,
+        "Name": "Tasked",
+        "Description": "Tasked",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Untasked": {
+        "Id": 2,
+        "Name": "Untasked",
+        "Description": "Untasked",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Enroute": {
+        "Id": 3,
+        "Name": "Enroute",
+        "Description": "Enroute",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Onsite": {
+        "Id": 4,
+        "Name": "Onsite",
+        "Description": "Onsite",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Offsite": {
+        "Id": 5,
+        "Name": "Offsite",
+        "Description": "Offsite",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Complete": {
+        "Id": 6,
+        "Name": "Complete",
+        "Description": "Complete",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "CalledOff": {
+        "Id": 7,
+        "Name": "CalledOff",
+        "Description": "CalledOff",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
     }
+}
 }

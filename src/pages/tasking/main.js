@@ -22,6 +22,7 @@ import { JobTimeline } from "./viewmodels/JobTimeline.js";
 import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
+import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
 
 
 import { UpdateTeamStatusDropdownVM } from './viewmodels/UpdateTeamStatusDropdownVM.js';
@@ -194,6 +195,25 @@ function VM() {
     self.SendSMSModalVM = new SendSMSModalVM(self);
     self.selectedJob = ko.observable(null);
 
+    self.jobStatusConfirmVM = new JobStatusConfirmModalVM(self);
+
+    self.attachJobStatusConfirmModal = function (job, newStatus) {
+        const modalEl = document.getElementById("JobStatusConfirmModal");
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.jobStatusConfirmVM;
+        vm.modalInstance = modal;
+
+        vm.open(job, newStatus);
+        modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => vm.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true
+        });
+    };
     self.jobTimelineVM = new JobTimeline(self);
 
     // --- Team Status Update short cuts
@@ -533,6 +553,12 @@ function VM() {
             },
             fetchUnresolvedActionsLog: (job) => {
                 self.fetchUnresolvedActionsLog(job);
+            },
+            fetchSuppliersForJob: (jobId) => {
+                return self.fetchSuppliersForJob(jobId);
+            },
+            openJobStatusConfirmModal: (job, newStatus) => {
+                self.attachJobStatusConfirmModal(job, newStatus);
             },
             map: self.mapVM,
             filteredTeams: self.filteredTeams,
@@ -949,6 +975,15 @@ function VM() {
         self.mapVM.drawJobAssetDistanceRings(job);
     }
 
+    self.fetchSuppliersForJob = async function (id) {
+        const t = await getToken();   // blocks here until token is ready
+        return new Promise((resolve) => {
+            BeaconClient.suppliers.get(id, apiHost, params.userId, t, function (data) {
+                resolve(data || []);
+            })
+        });
+    }
+
     self.fetchContactNumbers = async function (id) {
         const t = await getToken();   // blocks here until token is ready
         return new Promise((resolve) => {
@@ -1230,6 +1265,36 @@ function VM() {
         });
     }
 
+    self.setJobStatus = async function (jobId, statusName, text, cb) {
+        console.log("Setting job status:", jobId, " to ", statusName, " with text:", text);
+        const t = await getToken();
+        return new Promise((resolve, reject) => {
+            function handleResult(res) {
+                if (cb) cb(res);
+                if (res) resolve(res);
+                else reject(res);
+            }
+            switch (statusName) {
+                case 'Acknowledge':
+                    BeaconClient.job.acknowledge(jobId, apiHost, params.userId, t, handleResult);
+                    break;
+                case 'Complete':
+                    BeaconClient.job.setStatusClosed(jobId, text, apiHost, params.userId, t, handleResult);
+                    break;
+                case 'Reject':
+                    BeaconClient.job.reject(jobId, text, apiHost, params.userId, t, handleResult);
+                    break;
+                case 'Cancel':
+                    BeaconClient.job.cancel(jobId, text, apiHost, params.userId, t, handleResult);
+                    break;
+                case 'Reopen':
+                    BeaconClient.job.reopen(jobId, apiHost, params.userId, t, handleResult);
+                    break;
+                default:
+                    reject(new Error('Unknown statusName'));
+            }
+        });
+    }
 
     self.fetchAllTrackableAssets = async function () {
         if (!assetDataRefreshInterlock) {
@@ -1781,15 +1846,17 @@ window.addEventListener('resize', () => map.invalidateSize());
 document.addEventListener('DOMContentLoaded', function () {
 
 
+    // Ensure only one job status dropdown is open at a time
+document.addEventListener('show.bs.dropdown', (e) => {
+  const btn = e.target;
+  if (!btn.classList.contains('jobstatus-dropdown-btn')) return;
 
-    $('.dropdown-menu').on('show.bs.dropdown', function () {
-        $('body').append($('.dropdown-menu').css({
-            position: 'absolute',
-            left: $('.dropdown-menu').offset().left,
-            top: $('.dropdown-menu').offset().top
-        }).detach());
-    });
-
+  document.querySelectorAll('.jobstatus-dropdown-btn[aria-expanded="true"]').forEach((other) => {
+    if (other === btn) return;
+    const inst = bootstrap.Dropdown.getInstance(other) || bootstrap.Dropdown.getOrCreateInstance(other);
+    inst.hide();
+  });
+});
 
     //get tokens
     BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(

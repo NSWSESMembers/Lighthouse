@@ -21,10 +21,10 @@ console.log('Running inject script');
 
 //track if shift is held down for the form submit shortcut in instant radio logs
 var shiftKeyHeld = false;
-window.onkeyup = function(e) { 
+window.onkeyup = function (e) {
   shiftKeyHeld = e.shiftKey
 }
-window.onkeydown = function(e) { 
+window.onkeydown = function (e) {
   shiftKeyHeld = e.shiftKey
 }
 ///
@@ -139,73 +139,73 @@ function lighthouseETA() {
 
 function lighthouseTasking() {
   whenLighthouseIsReady(function () {
-  console.log('Tasking Changes, adding buttons where needed per team');
-  ///Horrible nasty code for untasking
+    console.log('Tasking Changes, adding buttons where needed per team');
+    ///Horrible nasty code for untasking
 
-  $("a[data-bind=\"attr: {href: '/Teams/' + Team.Id + '/Edit'}, text: Team.Callsign\"").each(function (k, v) {
-    //for every dom that shows team name
-    if ($(v).parent().find('#message').length == 0) {
-      //check for an existing msg button
-      let DOMCallsign = $(this)[0].href.split('/')[4];
-      //for every tasked team
-      $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function (k, vv) {
-        //match against this DOM
-        if (vv.Team.Id == DOMCallsign && vv.Team.Members.length) {
-          //attach a sms button
-          let msg = return_message_button();
-          $(v).after(msg);
+    $("a[data-bind=\"attr: {href: '/Teams/' + Team.Id + '/Edit'}, text: Team.Callsign\"").each(function (k, v) {
+      //for every dom that shows team name
+      if ($(v).parent().find('#message').length == 0) {
+        //check for an existing msg button
+        let DOMCallsign = $(this)[0].href.split('/')[4];
+        //for every tasked team
+        $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function (k, vv) {
+          //match against this DOM
+          if (vv.Team.Id == DOMCallsign && vv.Team.Members.length) {
+            //attach a sms button
+            let msg = return_message_button();
+            $(v).after(msg);
 
-          //click function
-          $(msg).click(function () {
-            event.stopImmediatePropagation();
-            var tightarray = [];
-            vv.Team.Members.map(function (member) {
-              tightarray.push(member.Person.Id);
+            //click function
+            $(msg).click(function () {
+              event.stopImmediatePropagation();
+              var tightarray = [];
+              vv.Team.Members.map(function (member) {
+                tightarray.push(member.Person.Id);
+              });
+              window.open(
+                '/Messages/Create?jobId=' + escape(jobId) + '&lhquickrecipient=' + escape(JSON.stringify(tightarray)),
+                '_blank',
+              );
             });
-            window.open(
-              '/Messages/Create?jobId=' + escape(jobId) + '&lhquickrecipient=' + escape(JSON.stringify(tightarray)),
-              '_blank',
-            );
-          });
-        }
-      });
-    } else {
-      console.log('already has a sms button');
-    }
-  });
+          }
+        });
+      } else {
+        console.log('already has a sms button');
+      }
+    });
 
-  $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function (
-    k,
-    v,
-  ) {
-    //for every team dom
-    if ($(v).parent().find('#untask').length == 0) {
-      //check for an existing untask button
+    $('div.widget-content div.list-group div.list-group-item.clearfix div.col-xs-6.small.text-right').each(function (
+      k,
+      v,
+    ) {
+      //for every team dom
+      if ($(v).parent().find('#untask').length == 0) {
+        //check for an existing untask button
 
-      //pull out the call sign and the status
-      let DOMCallsign = $(this)[0].parentNode.children[0].children[0].href.split('/')[4];
-      let DOMStatus = $(this)[0].parentNode.children[1].innerText.split(' ')[0];
-      //for every tasked team
-      $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function (k, vv) {
-        //match against this DOM
-        if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) {
-          //only show for tasking that can be deleted (tasked only)
-          //attached a X button if its matched and deletable
-          let untask = return_untask_button();
-          $(v).append(untask);
+        //pull out the call sign and the status
+        let DOMCallsign = $(this)[0].parentNode.children[0].children[0].href.split('/')[4];
+        let DOMStatus = $(this)[0].parentNode.children[1].innerText.split(' ')[0];
+        //for every tasked team
+        $.each(masterViewModel.teamsViewModel.taskedTeams.peek(), function (k, vv) {
+          //match against this DOM
+          if (vv.Team.Id == DOMCallsign && vv.CurrentStatus == DOMStatus && vv.CurrentStatusId == 1) {
+            //only show for tasking that can be deleted (tasked only)
+            //attached a X button if its matched and deletable
+            let untask = return_untask_button();
+            $(v).append(untask);
 
-          //click function
-          $(untask).click(function () {
-            event.stopImmediatePropagation();
-            untaskTeamFromJob(vv.Team.Id, jobId, vv.Id); //untask it
-          });
-        }
-      });
-    } else {
-      console.log('already has untask button');
-    }
-  });
-})
+            //click function
+            $(untask).click(function () {
+              event.stopImmediatePropagation();
+              untaskTeamFromJob(vv.Team.Id, jobId, vv.Id); //untask it
+            });
+          }
+        });
+      } else {
+        console.log('already has untask button');
+      }
+    });
+  })
 }
 
 //call on run
@@ -256,7 +256,7 @@ whenLighthouseIsReady(function () {
       }
     });
 
-     if (typeof masterViewModel.geocodedAddress.peek() != 'undefined') {
+    if (typeof masterViewModel.geocodedAddress.peek() != 'undefined') {
       if (
         masterViewModel.geocodedAddress.peek().Latitude != null ||
         masterViewModel.geocodedAddress.peek().Longitude != null
@@ -461,20 +461,20 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                             .find('#lhqContacts')
                             .append(
                               '<tr><td style="word-wrap:break-word; white-space:normal;">' +
-                                v.Description.replace('Phone', '').replace('Number', '') +
-                                '</td><td>' +
-                                v.Detail +
-                                '</td></tr>',
+                              v.Description.replace('Phone', '').replace('Number', '') +
+                              '</td><td>' +
+                              v.Detail +
+                              '</td></tr>',
                             );
                         } else {
                           toolTip
                             .find('#lhqContacts')
                             .append(
                               '<tr style="background-color:#e8e8e8"><td>' +
-                                v.Description.replace('Phone', '').replace('Number', '') +
-                                '</td><td>' +
-                                v.Detail +
-                                '</td></tr>',
+                              v.Description.replace('Phone', '').replace('Number', '') +
+                              '</td><td>' +
+                              v.Detail +
+                              '</td></tr>',
                             );
                         }
                       }
@@ -625,9 +625,8 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
 
                 row = $(`
            <tr style="${moment().diff(v.lastSeen, 'days') > 1 ? 'font-style: italic;' : ''}  cursor: pointer;">
-        <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${v.entity != "N/A" ? v.entity+"'s" : ''} ${v.capability} ${
-                  v.resourceType
-                }">${v.name}</div></th>
+        <th scope="row"><div data-toggle="tooltip" data-placement="left" title="${v.entity != "N/A" ? v.entity + "'s" : ''} ${v.capability} ${v.resourceType
+                  }">${v.name}</div></th>
         <td><div id="locate" style="background:${uniqueColor}"></div></td>
         <td>${v.entity}</td>
         <td>${v.distance.toFixed(2)} km ${getCardinal(v.bearing)}</td>
@@ -639,9 +638,8 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                 row.find($('[data-toggle="tooltip"]')).tooltip();
                 var situationVehicle = L.divIcon({
                   className: 'custom-div-icon',
-                  html: `<div style='background-color:${bgcolor}; ${
-                    moment().diff(v.lastSeen, 'days') > 1 ? 'filter: contrast(0.3);' : ''
-                  }' class='marker-pin'></div>
+                  html: `<div style='background-color:${bgcolor}; ${moment().diff(v.lastSeen, 'days') > 1 ? 'filter: contrast(0.3);' : ''
+                    }' class='marker-pin'></div>
                 <div class="assetMarker" style="position: absolute; margin: 24px 13px; line-height: 10px; text-align: center; color:white; font-size: 11px;">
                   <p>${v.markerLabel}</p>
                 </div>`,
@@ -667,7 +665,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                     Math.log(
                       Math.sqrt(
                         (Math.tan(dstLatRad) + 1 / Math.cos(dstLatRad)) *
-                          (Math.tan(srcLatRad) + 1 / Math.cos(srcLatRad)),
+                        (Math.tan(srcLatRad) + 1 / Math.cos(srcLatRad)),
                       ),
                     ),
                   ),
@@ -806,8 +804,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                       assetMap,
                     ); //opacity may be set to zero
                     _distanceMarkerRoute.bindTooltip(
-                      `<div style="text-align: center;"><strong style="color:${uniqueColor}">${v.name}${
-                        name ? ' via ' : ''
+                      `<div style="text-align: center;"><strong style="color:${uniqueColor}">${v.name}${name ? ' via ' : ''
                       }${name ? name : ''}</strong><br><strong>${(distance / 1000).toFixed(
                         1,
                       )} km - ${timeText}</strong></div>`,
@@ -1006,9 +1003,9 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
         console.log('Call to calculate distances from assets took ' + (t1 - t0) + ' milliseconds.');
         cb();
       }
-    }, function(error) {
+    }, function (error) {
       $('#map-errors').html(error);
-      $('#map-errors').css('visibility', 'unset'); 
+      $('#map-errors').css('visibility', 'unset');
     });
   }
 }
@@ -1064,12 +1061,12 @@ $('#assetLocationButtonOff').click(function () {
 
   $('#assetLocationButtonOff').addClass('btn-active');
   $('#assetLocationButtonOff').removeClass('btn-inactive');
-  $('#map-errors').css('visibility', 'hidden'); 
+  $('#map-errors').css('visibility', 'hidden');
   assetLocationMapOff();
 });
 
 $('#assetLocationButtonAll').click(function () {
-  $('#map-errors').css('visibility', 'hidden'); 
+  $('#map-errors').css('visibility', 'hidden');
   assetLocationButtonAll();
 });
 
@@ -1078,7 +1075,7 @@ function assetLocationButtonAll() {
   if ($('#assetLocationButtonActiveOnly').hasClass('btn-active')) {
     $('#assetLocationButtonActiveOnly').removeClass('btn-active');
     $('#assetLocationButtonActiveOnly').addClass('btn-inactive');
-    $('#map-errors').css('visibility', 'hidden'); 
+    $('#map-errors').css('visibility', 'hidden');
     assetLocationMapOff();
   }
 
@@ -1086,7 +1083,7 @@ function assetLocationButtonAll() {
   if ($('#assetLocationButtonFiltered').hasClass('btn-active')) {
     $('#assetLocationButtonFiltered').removeClass('btn-active');
     $('#assetLocationButtonFiltered').addClass('btn-inactive');
-    $('#map-errors').css('visibility', 'hidden'); 
+    $('#map-errors').css('visibility', 'hidden');
     assetLocationMapOff();
   }
 
@@ -1297,10 +1294,9 @@ function assetLocationButtonFiltered(bypassUI) {
 
         sorted.forEach(function (v) {
           $('#assetFilterListAll').append(
-            `<option ${
-              $('#assetFilterListSelected').find(`option[value|="${v}"]`).toArray().length
-                ? "style='display:none' "
-                : ''
+            `<option ${$('#assetFilterListSelected').find(`option[value|="${v}"]`).toArray().length
+              ? "style='display:none' "
+              : ''
             }value="${v}">${v}</option>`,
           );
         });
@@ -1336,7 +1332,7 @@ function assetLocationButtonFiltered(bypassUI) {
         //     $("#assetFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
         // })
       }
-    },function(error) {
+    }, function (error) {
       alert(`Lighthouse error - ${error}`)
     });
 
@@ -1417,7 +1413,7 @@ $(quickRadioLog)
 
 // submit radio log on enter press in message body
 $('#instantRadioLogText').keydown(function (event) {
-  if (event.keyCode == 13 && !$('#submitInstantRadioLogButton').prop('disabled') && shiftKeyHeld == false ) {
+  if (event.keyCode == 13 && !$('#submitInstantRadioLogButton').prop('disabled') && shiftKeyHeld == false) {
     processSubmitInstantRadioLog();
     return false;
   }
@@ -1503,46 +1499,67 @@ whenJobIsReady(function () {
 });
 
 whenLighthouseIsReady(function () {
-whenTeamsAreReady(function () {
-  lighthouseTasking();
+  whenTeamsAreReady(function () {
 
-  //Bold the team action taken
-  $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css('font-weight', 'bold');
 
-  //checkbox for hide completed tasking
-  $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox());
 
-  if (masterViewModel.sector.peek() !== null) {
-    console.log('sector filter enabled');
-    $('#lighthouse_actions div.widget-header').append(renderSectorFilterCheckBox());
+    //handle getting passed a tasking ID and opening the Complete Team Moadal
+    var query = window.location.search.substring(1);
+    var qs = parse_query_string(query);
 
-    $('#lighthouseSectorFilterEnabled').click(function () {
+    $.each(qs, function (key, value) {
+      switch (key) {
+        case 'lhquickComplete':
+          masterViewModel.teamsViewModel.taskedTeams().forEach(function (task) {
+            console.log('Checking task ' + task.Id + ' against ' + value);
+            if (task.Id == value) {
+              masterViewModel.completeTeam(task);
+            }
+          });
+          break;
+      }
+    })
+
+
+    lighthouseTasking();
+
+    //Bold the team action taken
+    $('#content div.col-md-5 div[data-bind="text: ActionTaken"]').css('font-weight', 'bold');
+
+    //checkbox for hide completed tasking
+    $('#content div.col-md-5 div[data-bind="visible: teamsLoaded()"] div.widget-header').append(renderCheckBox());
+
+    if (masterViewModel.sector.peek() !== null) {
+      console.log('sector filter enabled');
+      $('#lighthouse_actions div.widget-header').append(renderSectorFilterCheckBox());
+
+      $('#lighthouseSectorFilterEnabled').click(function () {
+        // Toggle Value
+        var lh_SectorFilterEnabled = !(
+          localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' ||
+          localStorage.getItem('LighthouseSectorFilterEnabled') == null
+        );
+        // Save Value
+        localStorage.setItem('LighthouseSectorFilterEnabled', lh_SectorFilterEnabled);
+        sectorfilter_switch();
+      });
+      sectorfilter_switch();
+    }
+
+    $('#lighthouseEnabled').click(function () {
       // Toggle Value
-      var lh_SectorFilterEnabled = !(
-        localStorage.getItem('LighthouseSectorFilterEnabled') == 'true' ||
-        localStorage.getItem('LighthouseSectorFilterEnabled') == null
+      var lh_hideComplete = !(
+        localStorage.getItem('LighthouseHideCompletedEnabled') == 'true' ||
+        localStorage.getItem('LighthouseHideCompletedEnabled') == null
       );
       // Save Value
-      localStorage.setItem('LighthouseSectorFilterEnabled', lh_SectorFilterEnabled);
-      sectorfilter_switch();
+      localStorage.setItem('LighthouseHideCompletedEnabled', lh_hideComplete);
+      // Trigger Display Change
+      jobView_teamsTasked_completedHiddenSwitch();
     });
-    sectorfilter_switch();
-  }
 
-  $('#lighthouseEnabled').click(function () {
-    // Toggle Value
-    var lh_hideComplete = !(
-      localStorage.getItem('LighthouseHideCompletedEnabled') == 'true' ||
-      localStorage.getItem('LighthouseHideCompletedEnabled') == null
-    );
-    // Save Value
-    localStorage.setItem('LighthouseHideCompletedEnabled', lh_hideComplete);
-    // Trigger Display Change
-    jobView_teamsTasked_completedHiddenSwitch();
+    jobView_teamsTasked_itemsPrepare();
   });
-
-  jobView_teamsTasked_itemsPrepare();
-});
 });
 
 
@@ -1666,7 +1683,7 @@ function returnTTime(messageDate) {
 }
 
 function lighthouseDictionary() {
-  
+
   var $targetElements = $('.job-details-page div[data-bind="foreach: Text"] div[data-bind="text: $data"]');
 
   var ICEMS_Dictionary = {
@@ -2130,7 +2147,7 @@ function InstantTaskButton() {
                     }
 
                     //click handler (before clone function)
-                    $(item).on( "click", function(e) {
+                    $(item).on("click", function (e) {
                       TaskTeam(v.Id);
                       e.preventDefault();
                     });
@@ -2635,10 +2652,10 @@ function checkAddressHistory() {
       .empty()
       .append(
         '<em>Unable to Perform Address Search. Address does not appear valid (Not Geocoded).<br/>' +
-          (masterViewModel.canEdit()
-            ? '<a href="/Jobs/' + jobId + '/Edit' + '">Please edit the job and geocode the job location.</a>'
-            : 'Have an authorised user edit the job and geocode the job location.') +
-          '</em>',
+        (masterViewModel.canEdit()
+          ? '<a href="/Jobs/' + jobId + '/Edit' + '">Please edit the job and geocode the job location.</a>'
+          : 'Have an authorised user edit the job and geocode the job location.') +
+        '</em>',
       );
   }
 
@@ -2648,7 +2665,7 @@ function checkAddressHistory() {
       .empty()
       .append(
         '<em>Unable to Perform Address Search. Address does not appear valid (Only GPS Lat/Long).<br/>' +
-          'Please edit the job and geocode the job location.</em>',
+        'Please edit the job and geocode the job location.</em>',
       );
   }
 
@@ -3108,18 +3125,18 @@ function getCardinal(angle) {
   return offsetAngle >= 0 * degreePerDirection && offsetAngle < 1 * degreePerDirection
     ? 'North'
     : offsetAngle >= 1 * degreePerDirection && offsetAngle < 2 * degreePerDirection
-    ? 'NE'
-    : offsetAngle >= 2 * degreePerDirection && offsetAngle < 3 * degreePerDirection
-    ? 'East'
-    : offsetAngle >= 3 * degreePerDirection && offsetAngle < 4 * degreePerDirection
-    ? 'SE'
-    : offsetAngle >= 4 * degreePerDirection && offsetAngle < 5 * degreePerDirection
-    ? 'South'
-    : offsetAngle >= 5 * degreePerDirection && offsetAngle < 6 * degreePerDirection
-    ? 'SW'
-    : offsetAngle >= 6 * degreePerDirection && offsetAngle < 7 * degreePerDirection
-    ? 'West'
-    : 'NW';
+      ? 'NE'
+      : offsetAngle >= 2 * degreePerDirection && offsetAngle < 3 * degreePerDirection
+        ? 'East'
+        : offsetAngle >= 3 * degreePerDirection && offsetAngle < 4 * degreePerDirection
+          ? 'SE'
+          : offsetAngle >= 4 * degreePerDirection && offsetAngle < 5 * degreePerDirection
+            ? 'South'
+            : offsetAngle >= 5 * degreePerDirection && offsetAngle < 6 * degreePerDirection
+              ? 'SW'
+              : offsetAngle >= 6 * degreePerDirection && offsetAngle < 7 * degreePerDirection
+                ? 'West'
+                : 'NW';
 }
 
 //-- Define radius function
@@ -3385,9 +3402,9 @@ function editRfaFormDOMWatcher() {
             whenJobIsReady(function () {
               //another race conditon!
               if ($thing.attr('lhTPlus') === undefined || $thing.attr('lhTPlus') === false) {
-              let tPlusText = returnTTime(res[1]);
-              $thing.attr('lhTPlus', tPlusText);
-              $thing.text($thing.text().replace(res[1], `${res[1]} (${tPlusText})`));
+                let tPlusText = returnTTime(res[1]);
+                $thing.attr('lhTPlus', tPlusText);
+                $thing.text($thing.text().replace(res[1], `${res[1]} (${tPlusText})`));
               }
             });
           }
@@ -3399,4 +3416,24 @@ function editRfaFormDOMWatcher() {
       subtree: true,
     });
   }
+}
+
+function parse_query_string(query) {
+  var vars = query.split('&');
+  var query_string = {};
+  for (var i = 0; i < vars.length; i++) {
+    var pair = vars[i].split('=');
+    // If first entry with this name
+    if (typeof query_string[pair[0]] === 'undefined') {
+      query_string[pair[0]] = decodeURIComponent(pair[1]);
+      // If second entry with this name
+    } else if (typeof query_string[pair[0]] === 'string') {
+      var arr = [query_string[pair[0]], decodeURIComponent(pair[1])];
+      query_string[pair[0]] = arr;
+      // If third or later entry with this name
+    } else {
+      query_string[pair[0]].push(decodeURIComponent(pair[1]));
+    }
+  }
+  return query_string;
 }

@@ -1679,6 +1679,14 @@ tr.job:hover {
   position: fixed !important;
 }
 
+.jobstatusDropdown {
+  z-index: 3000 !important;
+}
+
+.jobstatusDropdown.show {
+  position: fixed !important;
+}
+
 .job-taskteam-dropdown {
   z-index: 3000 !important;
 }
@@ -1705,6 +1713,33 @@ tr.job:hover {
 
 /* Small caret */
 .sector-dropdown-btn .caret {
+  display: inline-block;
+  margin-left: 4px;
+  border-top: 4px solid currentColor;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  vertical-align: middle;
+}
+
+
+/* Sector dropdown button */
+.jobstatus-dropdown-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.jobstatus-dropdown-btn:hover {
+  text-decoration: underline;
+}
+
+/* Small caret */
+.jobstatus-dropdown-btn .caret {
   display: inline-block;
   margin-left: 4px;
   border-top: 4px solid currentColor;
@@ -1869,3 +1904,4 @@ input[type="search"]::-ms-clear {
   margin-bottom: 0.75rem;
   background-color: #ffffff;
 }
+

@@ -238,3 +238,93 @@ export function getHistory(id, host, userId = 'notPassed', token, callback) {
     }
   });
 }
+
+
+
+export function cancel(jobId, text, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'POST',
+    url: host + `/Api/v1/Jobs/${jobId}/Cancel?LighthouseFunction=JobCancel&userId=` + userId,
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    data: JSON.stringify({
+      Text: text,
+      Date: new Date().toISOString()
+    }),
+    cache: false,
+    dataType: 'json',
+    contentType: 'application/json; charset=utf-8',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        callback(true);
+        } else {
+          callback(false);
+        }
+    },
+  });
+}
+
+export function reopen(jobId, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'POST',
+    url: host + `/Api/v1/Jobs/${jobId}/Reopen?LighthouseFunction=JobReopen&userId=` + userId,
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    cache: false,
+    dataType: 'json',
+    contentType: 'application/json; charset=utf-8',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        callback(true);
+        } else {
+          callback(false);
+        }
+    },
+  });
+}
+
+export function reject(jobId, text, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'POST',
+    url: host + `/Api/v1/Jobs/${jobId}/Reject?LighthouseFunction=JobReject&userId=` + userId,
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    data: JSON.stringify({
+      Text: text,
+      Date: new Date().toISOString()
+    }),
+    cache: false,
+    dataType: 'json',
+    contentType: 'application/json; charset=utf-8',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        callback(true);
+        } else {
+          callback(false);
+        }
+    },
+  });
+}
+
+export function acknowledge(jobId, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'POST',
+    url: host + `/Api/v1/Jobs/${jobId}/Acknowledge?LighthouseFunction=JobAcknowledge&userId=` + userId,
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    cache: false,
+    dataType: 'json',
+    contentType: 'application/json; charset=utf-8',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        callback(true);
+        } else {
+          callback(false);
+        }
+    },
+  });
+}
