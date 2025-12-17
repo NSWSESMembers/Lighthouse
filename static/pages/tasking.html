@@ -300,7 +300,9 @@
                                                         title="Zoom to"
                                                         data-bind="click: t.markerFocus, disable: !t.trackableAssets().length, clickBubble: false, event: { mouseover: t.mouseEnterButton, mouseleave: t.mouseLeaveButton }">
                                                         <i class="fa fa-solid fa-crosshairs"></i>
-                                                        <span class="position-absolute top-0 start-100 badge rounded-pill bg-info" style="font-size:0.6em; transform: translate(-50%, 5%);"
+                                                        <span
+                                                            class="position-absolute top-0 start-100 badge rounded-pill bg-info"
+                                                            style="font-size:0.6em; transform: translate(-50%, 5%);"
                                                             data-bind="text: t.trackableAssets().length, visible: t.trackableAssets().length > 1"></span>
 
                                                     </button>
@@ -318,128 +320,140 @@
                                                         <!-- LEFT: team members + capabilities -->
                                                         <div class="col-md-3 col-lg-3">
                                                             <fieldset>
-                                                                <div class="d-flex justify-content-between align-items-center mb-2"><legend class="job-details-legend">Team Members</legend></div>
-                                                            <ul class="list-unstyled team-members-list mb-0"
-                                                                data-bind="foreach: { data: members, as: 'm' }">
-                                                                <li class="team-member-row mb-1">
-                                                                    <div class="d-flex flex-column">
-                                                                        <div class="d-flex align-items-center">
-                                                                            <span class="fw-semibold me-2"
-                                                                                data-bind="text: m.Person.FirstName + ' ' + m.Person.LastName"></span>
-                                                                            <span class="badge bg-primary"
-                                                                                data-bind="visible: m.TeamLeader === true">TL</span>
-                                                                        </div>
+                                                                <div
+                                                                    class="d-flex justify-content-between align-items-center mb-2">
+                                                                    <legend class="job-details-legend">Team Members
+                                                                    </legend>
+                                                                </div>
+                                                                <ul class="list-unstyled team-members-list mb-0"
+                                                                    data-bind="foreach: { data: members, as: 'm' }">
+                                                                    <li class="team-member-row mb-1">
+                                                                        <div class="d-flex flex-column">
+                                                                            <div class="d-flex align-items-center">
+                                                                                <span class="fw-semibold me-2"
+                                                                                    data-bind="text: m.Person.FirstName + ' ' + m.Person.LastName"></span>
+                                                                                <span class="badge bg-primary"
+                                                                                    data-bind="visible: m.TeamLeader === true">TL</span>
+                                                                            </div>
 
-                                                                        <!-- optional role/position if present -->
-                                                                        <!-- <div class="small text-muted"
+                                                                            <!-- optional role/position if present -->
+                                                                            <!-- <div class="small text-muted"
                                                                             data-bind="text: m.Role"></div> -->
 
-                                                                        <!-- capabilities tags -->
-                                                                        <div class="team-member-tags mt-1"
-                                                                            data-bind="foreach: m.PersonCapabilityTags">
-                                                                            <span
-                                                                                class="badge rounded-pill bg-info text-dark me-1 mb-1"
-                                                                                data-bind="text: Name"></span>
+                                                                            <!-- capabilities tags -->
+                                                                            <div class="team-member-tags mt-1"
+                                                                                data-bind="foreach: m.PersonCapabilityTags">
+                                                                                <span
+                                                                                    class="badge rounded-pill bg-info text-dark me-1 mb-1"
+                                                                                    data-bind="text: Name"></span>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
-                                                                </li>
-                                                            </ul>
-                                                            <div class="text-muted"
-                                                                data-bind="visible: members().length === 0">
-                                                                Team has no members assigned.
-                                                            </div>
+                                                                    </li>
+                                                                </ul>
+                                                                <div class="text-muted"
+                                                                    data-bind="visible: members().length === 0">
+                                                                    Team has no members assigned.
+                                                                </div>
                                                             </fieldset>
                                                         </div>
                                                         <!-- RIGHT: existing taskings table / summary -->
                                                         <div class="col-md-9 col-lg-9">
                                                             <fieldset>
-                                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                                <!-- ko if: t.taskingLoading -->
-                                                                <legend class="job-details-legend">Loading taskings...</legend>
-                                                                <!-- /ko -->
-                                                                <!-- ko ifnot: t.taskingLoading -->
-                                                                <legend class="job-details-legend"
-                                                                    data-bind="visible: t.hiddenTaskingCount, text: 'Taskings (' + t.hiddenTaskingCount() + ' hidden)'">
-                                                                </legend>
-                                                                <legend class="job-details-legend"
-                                                                    data-bind="visible: !t.hiddenTaskingCount">Taskings
-                                                                </legend>
-                                                                <!-- /ko -->
-                                                                <div class="btn-group btn-group-sm" role="group"
-                                                                    aria-label="Team actions">
-                                                                    <button type="button"
-                                                                        class="btn btn-outline-secondary"
-                                                                        title="Refresh taskings"
-                                                                        data-bind="click: t.fetchTasking, clickBubble: false">
-                                                                        <i class="fa fa-sync"></i>
-                                                                    </button>
+                                                                <div
+                                                                    class="d-flex justify-content-between align-items-center mb-2">
+                                                                    <!-- ko if: t.taskingLoading -->
+                                                                    <legend class="job-details-legend">Loading
+                                                                        taskings...</legend>
+                                                                    <!-- /ko -->
+                                                                    <!-- ko ifnot: t.taskingLoading -->
+                                                                    <legend class="job-details-legend"
+                                                                        data-bind="visible: t.hiddenTaskingCount, text: 'Taskings (' + t.hiddenTaskingCount() + ' hidden)'">
+                                                                    </legend>
+                                                                    <legend class="job-details-legend"
+                                                                        data-bind="visible: !t.hiddenTaskingCount">
+                                                                        Taskings
+                                                                    </legend>
+                                                                    <!-- /ko -->
+                                                                    <div class="btn-group btn-group-sm" role="group"
+                                                                        aria-label="Team actions">
+                                                                        <button type="button"
+                                                                            class="btn btn-outline-secondary"
+                                                                            title="Refresh taskings"
+                                                                            data-bind="click: t.fetchTasking, clickBubble: false">
+                                                                            <i class="fa fa-sync"></i>
+                                                                        </button>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
 
 
-                                                            <!-- taskings table -->
-                                                            <div class="table-responsive">
-                                                                <table
-                                                                    class="table table-sm table-striped table-bordered mb-0 align-middle">
-                                                                    <thead class="table-light">
-                                                                        <tr>
-                                                                            <th style="width:15%;">#</th>
-                                                                            <th style="width:15%;">Type</th>
-                                                                            <th style="width:45%;">Address</th>
-                                                                            <th style="width:10%;">Status</th>
-                                                                            <th style="width:20%;">Actions</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody
-                                                                        data-bind="foreach: { data: filteredTaskings, as: 'ts' }">
-                                                                        <tr>
-                                                                            <td data-bind="text: ts.job.identifier">
-                                                                            </td>
-                                                                            <td data-bind="text: ts.jobTypeName"></td>
-                                                                            <td data-bind="text: ts.prettyAddress"></td>
-                                                                            <td>
-                                                                                <button class="team-status-button"
-                                                                                    data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus, clickBubble: false
+                                                                <!-- taskings table -->
+                                                                <div class="table-responsive">
+                                                                    <table
+                                                                        class="table table-sm table-striped table-bordered mb-0 align-middle">
+                                                                        <thead class="table-light">
+                                                                            <tr>
+                                                                                <th style="width:15%;">#</th>
+                                                                                <th style="width:15%;">Type</th>
+                                                                                <th style="width:45%;">Address</th>
+                                                                                <th style="width:10%;">Status</th>
+                                                                                <th style="width:20%;">Actions</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody
+                                                                            data-bind="foreach: { data: filteredTaskings, as: 'ts' }">
+                                                                            <tr>
+                                                                                <td data-bind="text: ts.job.identifier">
+                                                                                </td>
+                                                                                <td data-bind="text: ts.jobTypeName">
+                                                                                </td>
+                                                                                <td data-bind="text: ts.prettyAddress">
+                                                                                </td>
+                                                                                <td>
+                                                                                    <button class="team-status-button"
+                                                                                        data-bind="text: ts.currentStatus, css: ts.tagColorFromStatus(), click: onClickUpdateStatus, clickBubble: false
                                                                                 "></button>
-                                                                            </td>
-                                                                            <td>
-                                                                                <div class="btn-group btn-group-sm"
-                                                                                    role="group"
-                                                                                    data-bind="noBubbleFromDisabledButtons: true">
-                                                                                    <button type="button"
-                                                                                        class="btn btn-outline-secondary"
-                                                                                        title="Radio Log"
-                                                                                        data-bind="click: ts.openRadioLogModal, clickBubble: false">
-                                                                                        <i class="fa fa-microphone"></i>
-                                                                                    </button>
-                                                                                    <button type="button"
-                                                                                        class="btn btn-outline-secondary"
-                                                                                        data-bind="click: ts.sendSMS, clickBubble: false, disable: !t.members().length"
-                                                                                        title="Message">
-                                                                                        <i class="fa fa-envelope"></i>
-                                                                                    </button>
-                                                                                    <button type="button"
-                                                                                        class="btn btn-outline-secondary"
-                                                                                        title="Edit">
-                                                                                        <i
-                                                                                            class="fas fa-external-link-alt"></i>
-                                                                                    </button>
-                                                                                    <button type="button"
-                                                                                        class="btn btn-outline-secondary"
-                                                                                        title="Zoom to"
-                                                                                        data-bind="click: ts.job.focusMap">
-                                                                                        <i class="fa fa-crosshairs"></i>
-                                                                                    </button>
-                                                                                </div>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                            <div class="text-muted mt-2"
-                                                                data-bind="visible: filteredTaskings().length === 0">
-                                                                Team has no tasking assigned.
-                                                            </div>
+                                                                                </td>
+                                                                                <td>
+                                                                                    <div class="btn-group btn-group-sm"
+                                                                                        role="group"
+                                                                                        data-bind="noBubbleFromDisabledButtons: true">
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Radio Log"
+                                                                                            data-bind="click: ts.openRadioLogModal, clickBubble: false">
+                                                                                            <i
+                                                                                                class="fa fa-microphone"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            data-bind="click: ts.sendSMS, clickBubble: false, disable: !t.members().length"
+                                                                                            title="Message">
+                                                                                            <i
+                                                                                                class="fa fa-envelope"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Edit">
+                                                                                            <i
+                                                                                                class="fas fa-external-link-alt"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Zoom to"
+                                                                                            data-bind="click: ts.job.focusMap">
+                                                                                            <i
+                                                                                                class="fa fa-crosshairs"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                                <div class="text-muted mt-2"
+                                                                    data-bind="visible: filteredTaskings().length === 0">
+                                                                    Team has no tasking assigned.
+                                                                </div>
                                                             </fieldset>
                                                         </div><!-- /col taskings -->
                                                     </div><!-- /row -->
@@ -785,9 +799,27 @@
                                             </div>
 
                                             <!-- 7. Status -->
-                                            <div class="job-cell job-cell--status">
-                                                <span data-bind="text: j.statusNameAndCount"></span>
+                                            <div class="job-cell job-cell--status"
+                                                data-bind="noBubbleFromDisabledButtons: true">
+                                                <div class="dropdown">
+                                                    <button class="jobstatus-dropdown-btn" type="button"
+                                                        data-bs-toggle="dropdown"
+                                                        data-bind="click: j.onStatusNameClick">
+                                                        <span data-bind="text: j.statusNameAndCount"></span>
+                                                        <span class="caret"></span>
+                                                    </button>
+                                                    <ul class="dropdown-menu jobstatusDropdown">
+                                                        <!-- ko foreach: j.statusOptions -->
+                                                        <li>
+                                                            <button type="button" class="dropdown-item"
+                                                                data-bind="text: label, enable: enabled, click: $parent.onStatusOptionClick, clickBubble: false"></button>
+                                                        </li>
+                                                        <!-- /ko -->
+                                                    </ul>
+                                                </div>
                                             </div>
+
+
 
                                             <!-- 8. Address -->
                                             <div class="job-cell job-cell--address">
@@ -909,8 +941,7 @@
                                                                                     data-bind="text: j.sectorName()"></span>
                                                                                 <span class="caret"></span>
                                                                             </button>
-                                                                            <ul class="dropdown-menu"
-                                                                                id="sectorDropdown"
+                                                                            <ul class="dropdown-menu sectorDropdown"
                                                                                 data-bs-popper="static">
                                                                                 <!-- ko foreach: $root.sectors -->
                                                                                 <li>
@@ -1215,6 +1246,52 @@
         </div>
     </div>
 
+    <!-- Job Status Confirm Modal -->
+    <div class="modal fade" id="JobStatusConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content" data-bind="with: jobStatusConfirmVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">
+                        Confirm status change — <span data-bind="text: jobLabel"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        Change status to: <strong data-bind="text: newStatus"></strong>
+                    </div>
+
+                    <!-- ko if: requiresExtraText -->
+                    <div class="mb-2">
+                        <label class="form-label" data-bind="text: extraTextLabel"></label>
+                        <textarea class="form-control" rows="3"
+                            data-bind="textInput: extraText, attr: { placeholder: extraTextPlaceholder }"></textarea>
+                    </div>
+                    <!-- /ko -->
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
+                        data-bind="disable: isSubmitting">
+                        Cancel
+                    </button>
+
+                    <button type="button" class="btn btn-primary"
+                        data-bind="click: submit, enable: canSubmit, disable: isSubmitting">
+                        <!-- ko if: isSubmitting -->
+                        <i class="fa fa-spinner fa-spin me-2"></i>Saving…
+                        <!-- /ko -->
+                        <!-- ko ifnot: isSubmitting -->
+                        Confirm
+                        <!-- /ko -->
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Config Modal -->
     <div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -1227,7 +1304,8 @@
                     </div>
 
 
-                    <button type="button" class="btn-close" aria-label="Close" data-bind="click: config.saveAndCloseAndLoad"></button>
+                    <button type="button" class="btn-close" aria-label="Close"
+                        data-bind="click: config.saveAndCloseAndLoad"></button>
 
                 </div>
 
@@ -2375,7 +2453,8 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary d-flex align-items-center gap-2" data-bind="click: submit">
+                    <button type="button" class="btn btn-primary d-flex align-items-center gap-2"
+                        data-bind="click: submit">
                         <span>Submit</span>
                     </button>
                 </div>

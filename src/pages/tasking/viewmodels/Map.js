@@ -296,8 +296,6 @@ export function MapVM(Lmap, root) {
     self.registerCrowFliesLine(this._polyline);
   }
 
-
-
   // --- distance rings state ---
   self.jobAssetRings = [];
   self.jobAssetSpokes = [];

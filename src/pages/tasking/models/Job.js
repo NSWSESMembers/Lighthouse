@@ -26,6 +26,7 @@ export function Job(data = {}, deps = {}) {
         drawJobTargetRing = (_job) => { /* noop */ },
         fetchUnresolvedActionsLog = async (_job) => { /* noop */ },
         fetchSuppliersForJob = async (_jobId) => ([]),
+        openJobStatusConfirmModal = (_job, _newStatus) => { /* noop */ },
         map = null,
         filteredTeams = ko.observableArray([]),
     } = deps;
@@ -104,26 +105,79 @@ export function Job(data = {}, deps = {}) {
     });
 
 
+    //possible status actions for this job
+    self.statusOptions = ko.pureComputed(() => ([
+        { key: "Acknowledge", label: "Acknowledge", enabled: self.canAcknowledgeJob },
+        { key: "Reopen", label: "Reopen", enabled: self.canReopenJob },
+        { key: "Complete", label: "Complete", enabled: self.canCompleteJob },
+        { key: "Reject", label: "Reject", enabled: self.canRejectJob },
+        { key: "Cancel", label: "Cancel", enabled: self.canCancelJob }
+    ]));
+
+
     //actions we can take
     self.canCompleteJob = ko.pureComputed(() => {
-        return self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Complete.Id && self.statusId() !== Enum.JobStatusType.Rejected.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (!self.teams || self.teams().length == 0 || self.taskings().every(task => task.currentStatusId === Enum.JobTeamStatusType.Complete.Id || task.CurrentStatusId === Enum.JobTeamStatusType.CalledOff.Id)) && (!self.suppliers() || self.suppliers().length == 0 || self.suppliers().every((supplier) => { return supplier.Status.Id === Enum.JobSupplierStatusType.Complete.Id || supplier.Status.Id === Enum.JobSupplierStatusType.Cancelled.Id }));
+        return self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Complete.Id && self.statusId() !== Enum.JobStatusType.Rejected.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (!self.taskings() || self.taskings().length == 0 || self.taskings().every(task => task.currentStatusId === Enum.JobTeamStatusType.Complete.Id || task.CurrentStatusId === Enum.JobTeamStatusType.CalledOff.Id)) && (!self.suppliers() || self.suppliers().length == 0 || self.suppliers().every((supplier) => { return supplier.Status.Id === Enum.JobSupplierStatusType.Complete.Id || supplier.Status.Id === Enum.JobSupplierStatusType.Cancelled.Id }));
     })
 
     self.canRejectJob = ko.pureComputed(() => {
         return (self.statusId() === Enum.JobStatusType.New.Id || self.statusId() === Enum.JobStatusType.Active.Id);
     })
-    
+
     self.canAcknowledgeJob = ko.pureComputed(() => {
         return (self.statusId() === Enum.JobStatusType.New.Id || self.statusId() === Enum.JobStatusType.Rejected.Id);
     })
-    
+
     self.canTaskJob = ko.pureComputed(() => {
         return self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Complete.Id && self.statusId() !== Enum.JobStatusType.Rejected.Id;
     })
 
     self.canCancelJob = ko.pureComputed(() => {
-        return self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (self.statusId() !== Enum.JobStatusType.Rejected.Id || (self.statusId() === Enum.JobStatusType.Rejected.Id && self.statusId() === Enum.JobPriorityType.Rescue.Id)) && (!self.taskings || self.taskings.length == 0 || self.taskings().every(task => task.currentStatusId === Enum.JobTeamStatusType.Complete.Id || task.CurrentStatusId === Enum.JobTeamStatusType.CalledOff.Id));
+        return self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (self.statusId() !== Enum.JobStatusType.Rejected.Id || (self.statusId() === Enum.JobStatusType.Rejected.Id && self.statusId() === Enum.JobPriorityType.Rescue.Id)) && (!self.taskings() || self.taskings().length == 0 || self.taskings().every(task => task.currentStatusId === Enum.JobTeamStatusType.Complete.Id || task.CurrentStatusId === Enum.JobTeamStatusType.CalledOff.Id));
     })
+
+    self.canReopenJob = ko.pureComputed(() => {
+        return (self.statusId() === Enum.JobStatusType.Finalised.Id || self.statusId() === Enum.JobStatusType.Cancelled.Id || self.statusId() === Enum.JobStatusType.Complete.Id);
+    })
+
+    self.onStatusNameClick = function (_, f) {
+        //only refresh this when the popup is OPENING not closing.
+        if (f.delegateTarget.className == "jobstatus-dropdown-btn show") {
+            self.refreshData();
+        }
+    }
+
+    self.onStatusOptionClick = function (opt, e) {
+        //pulling data from the self.statusOptions array as opt
+        // if (e && e.stopPropagation) e.stopPropagation();
+        if (!opt) return;
+
+        const enabled = opt.enabled;
+        const isEnabled = typeof enabled === "function" ? ko.utils.unwrapObservable(enabled) : !!enabled;
+        if (!isEnabled) return;
+
+        // hard-close the dropdown UI
+        const dropdown = e?.target?.closest?.(".dropdown");
+        const menu = dropdown?.querySelector?.(".dropdown-menu");
+        const toggle = dropdown?.querySelector?.('[data-bs-toggle="dropdown"]');
+
+        if (menu) menu.classList.remove("show");
+        if (toggle) {
+            toggle.classList.remove("show");
+            toggle.setAttribute("aria-expanded", "false");
+        }
+
+
+        self.requestJobStatusChange(opt.key);
+        return true;
+    };
+
+
+    self.requestJobStatusChange = function (newStatus) {
+        console.log("Requesting job status change for job", self.id(), "to status ", newStatus);
+        openJobStatusConfirmModal(self, newStatus);
+    }
+
 
     self.actionRequiredTagsDeduplicated = ko.pureComputed(() => {
         const seen = new Set();
@@ -586,7 +640,6 @@ export function Job(data = {}, deps = {}) {
             });
         }, 150);
     }
-
 
 
     self.mouseEnterAddressButton = function () {

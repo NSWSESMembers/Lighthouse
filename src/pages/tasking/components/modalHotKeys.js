@@ -8,7 +8,6 @@ export function installModalHotkeys({
   if (!modalEl) return;
 
   const handler = (e) => {
-    console.log(e)
     const tag = (e.target.tagName || '').toLowerCase();
     const isInput = ['input', 'textarea', 'select'].includes(tag);
     if (isInput && !allowInInputs && !(e.ctrlKey || e.metaKey)) return;
