@@ -24,10 +24,6 @@ import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
 import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
 
-
-import { UpdateTeamStatusDropdownVM } from './viewmodels/UpdateTeamStatusDropdownVM.js';
-
-
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
 
@@ -157,7 +153,6 @@ ResizeDividers(map)
 // Esri default basemap (others: 'Streets','Imagery','Topographic','Gray','DarkGray', etc.)
 esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(map);
 
-
 function VM() {
     const self = this;
 
@@ -215,9 +210,6 @@ function VM() {
         });
     };
     self.jobTimelineVM = new JobTimeline(self);
-
-    // --- Team Status Update short cuts
-    self.updateTeamStatusDropdownPopup = new UpdateTeamStatusDropdownVM(self);
 
     // --- TABLE SORTING MAGIC ---
     self.teamSortKey = ko.observable('callsign');
@@ -537,12 +529,20 @@ function VM() {
                 self.attachNewOpsLogModal(job);
             },
 
-            UpdateTeamStatusDropdown: (tasking, anchorE1) => {
-                self.attachUpdateTeamStatusDropdown(tasking, anchorE1);
-            },
-
             attachAndFillTimelineModal: (job) => {
                 self.attachJobTimelineModal(job);
+            },
+
+            updateTeamStatus: (tasking, status, payload, cb) => {
+                self.updateTeamStatus(tasking, status, payload, cb)
+            },
+
+            callOffTeam: (tasking, payload, cb) => {
+                self.callOffTeam(tasking, payload, cb)
+            },
+
+            untaskTeam: (tasking, payload, cb) => {
+                self.untaskTeam(tasking, payload, cb)
             },
 
             fetchUnacknowledgedJobNotifications: (job) => {
@@ -794,10 +794,6 @@ function VM() {
             onClose: () => modal.hide(),
             allowInInputs: true // text-heavy modal
         });
-    };
-
-    self.attachUpdateTeamStatusDropdown = function (tasking, anchorE1) {
-        self.updateTeamStatusDropdownPopup.openTeamStatusDropdown(tasking, anchorE1)
     };
 
 

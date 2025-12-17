@@ -17,9 +17,6 @@ body {
   line-height: 1.35;
 }
 
-
-
-
 body.env-trainbeacon::after {
   content: 'TRAIN BEACON';
   position: fixed;
@@ -42,6 +39,12 @@ body .modal-header {
 
 body.env-trainbeacon .modal-header {
   background-color: #219f56 !important;
+}
+
+.tasking-dropdown-menu {
+  position: fixed !important;
+  inset: auto auto auto auto;
+  z-index: 2000;
 }
 
 
@@ -149,9 +152,6 @@ body.sidebar-collapsed .sidebar {
 body.sidebar-collapsed .vsplit {
   display: none !important;
 }
-
-
-
 
 
 .hsplit {

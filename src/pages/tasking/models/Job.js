@@ -334,9 +334,17 @@ export function Job(data = {}, deps = {}) {
         deps.openNewOpsLogModal(job)
     };
 
-    self.UpdateTeamStatusDropdown = function (tasking, anchorE1) {
-        deps.UpdateTeamStatusDropdown(tasking, anchorE1)
-    };
+    self.updateTeamStatus = function (tasking, status, payload, cb) {
+        deps.updateTeamStatus(tasking, status, payload, cb)
+    }
+
+    self.callOffTeam = function (tasking, payload, cb) {
+        deps.callOffTeam(tasking, payload, cb)
+    }
+
+    self.untaskTeam = function (tasking, payload, cb) {
+        deps.untaskTeam(tasking, payload, cb)
+    }
 
 
     self.incompleteTaskingsOnly = ko.computed(() =>
