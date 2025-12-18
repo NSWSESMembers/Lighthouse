@@ -46,6 +46,16 @@ export function Team(data = {}, deps = {}) {
         return leader ? `${leader.Person.FirstName} ${leader.Person.LastName}` : '-';
     });
 
+
+    self.membersSorted = ko.pureComputed(() => {
+        const members = ko.unwrap(self.members);
+        return members.sort((a, b) => {
+            if (a.TeamLeader && !b.TeamLeader) return -1;
+            if (!a.TeamLeader && b.TeamLeader) return 1;
+            return 0;
+        });
+    })
+
     self.statusDate = ko.observable((data.TeamStatusStartDate) ? new Date(data.TeamStatusStartDate) : null);
 
     self.popUpIsOpen = ko.observable(false);
@@ -357,6 +367,11 @@ export function Team(data = {}, deps = {}) {
 
         flyToAsset(asset);
     };
+
+    self.flyToAsset = function (asset) {
+        console.log("Team.flyToAsset", asset);
+        flyToAsset(asset);
+    }
 
     self.openRadioLogModal = function () {
         openRadioLogModal(self);
