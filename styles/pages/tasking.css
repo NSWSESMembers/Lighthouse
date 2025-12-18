@@ -17,20 +17,6 @@ body {
   line-height: 1.35;
 }
 
-body.env-trainbeacon::after {
-  content: 'TRAIN BEACON';
-  position: fixed;
-  top: 50%;
-  left: 25%;
-  transform: translate(-50%, -50%) rotate(-30deg);
-  font-size: 6rem;
-  font-weight: 900;
-  color: rgba(0, 200, 83, 0.1); /* green, semi-transparent */
-  z-index: 99998;
-  pointer-events: none;
-  white-space: nowrap;
-  user-select: none;
-}
 
 /* Modal header colours per environment */
 body .modal-header {
@@ -434,10 +420,10 @@ button.primary {
   border-color: #0077ff;
 }
 
-.teams td,
-.teams th,
-.jobs td,
-.jobs th {
+.teams > td,
+.teams > th,
+.jobs > td,
+.jobs > th {
   padding: 8px 4px;
   vertical-align: middle;
 }
@@ -758,7 +744,6 @@ tr.job:hover {
 
 .team-member-row {
   padding: 4px 0;
-  border-bottom: 1px dashed #dde2ec;
 }
 
 .team-member-row:last-child {
@@ -773,6 +758,21 @@ tr.job:hover {
 
 .team-member-tags .badge {
   font-size: 0.7rem;
+}
+
+.team-asset-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.team-asset-row {
+  padding: 4px 0;
+}
+
+.team-asset-row:last-child {
+  border-bottom: none;
 }
 
 /* Base Leaflet divIcon wrapper for your SVG markers */
@@ -1901,7 +1901,9 @@ input[type="search"]::-ms-clear {
   border: 1px solid #e5e5e5;
   border-radius: 4px;
   padding: 0.5rem 0.75rem 0.25rem;
-  margin-bottom: 0.75rem;
   background-color: #ffffff;
 }
 
+.job-actions-card {
+  height: 100%
+}

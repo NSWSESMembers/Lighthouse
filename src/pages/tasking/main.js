@@ -817,6 +817,12 @@ function VM() {
     self.getOrCreateAsset = function (assetJson) {
         if (assetJson.type === 'telematics') return null;
         if (!assetJson || assetJson.properties.id == null) return null;
+        if (assetJson.properties.lastSeen) {
+            const lastSeenDate = new Date(assetJson.properties.lastSeen);
+            const now = new Date();
+            const diffDays = (now - lastSeenDate) / (1000 * 60 * 60 * 24);
+            if (diffDays > 14) return null;
+        }
 
         let asset = self.assetsById.get(assetJson.properties.id);
         if (asset) {
@@ -1299,6 +1305,23 @@ function VM() {
                 assets.forEach(function (a) {
                     myViewModel.getOrCreateAsset(a);
                 })
+                const fetchedAssetIds = new Set((assets || []).map(a => a.properties.id));
+                const existingAssetIds = self.assetsById.keys();
+                const assetsToRemove = [...existingAssetIds].filter(id => !fetchedAssetIds.has(id));
+                assetsToRemove.forEach(id => {
+                    const asset = self.assetsById.get(id);
+                    if (!asset) return;
+                    // Unlink from matching teams
+                    if (Array.isArray(asset.matchingTeams)) {
+                        asset.matchingTeams.slice().forEach(team => {
+                            if (team.trackableAssets) team.trackableAssets.remove(asset);
+                            asset.matchingTeams.remove(team);
+                        });
+                    }
+                    // Remove from observable array and registry
+                    self.trackableAssets.remove(asset);
+                    self.assetsById.delete(id);
+                });
                 myViewModel._markInitialFetchDone();
                 assetDataRefreshInterlock = false;
             }, function (err) {

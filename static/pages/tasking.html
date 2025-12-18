@@ -247,49 +247,74 @@
                                         <div class="team-details" data-bind="slideVisible: t.expanded">
                                             <div class="card border-0 mb-0">
                                                 <div class="card-body p-2">
-                                                    <div class="row g-2">
+                                                    <div class="row g-3">
+                                                        <div class="col-12 col-lg-3">
+                                                            <div class="row g-2">
+                                                                <!-- LEFT: team members + capabilities -->
+                                                                <fieldset>
+                                                                    <div
+                                                                        class="d-flex justify-content-between align-items-center mb-2">
+                                                                        <legend class="job-details-legend">Team Members (<span data-bind="text: membersSorted().length"></span>)
+                                                                        </legend>
+                                                                    </div>
+                                                                    <ul class="list-unstyled team-members-list mb-0"
+                                                                        data-bind="foreach: { data: membersSorted, as: 'm' }">
+                                                                        <li class="team-member-row mb-1">
+                                                                            <div class="d-flex flex-column">
+                                                                                <div class="d-flex align-items-center">
+                                                                                    <span class="fw-semibold me-2"
+                                                                                        data-bind="text: m.Person.FirstName + ' ' + m.Person.LastName"></span>
+                                                                                    <span class="badge bg-primary"
+                                                                                        data-bind="visible: m.TeamLeader === true">TL</span>
+                                                                                </div>
 
-                                                        <!-- LEFT: team members + capabilities -->
-                                                        <div class="col-md-3 col-lg-3">
-                                                            <fieldset>
-                                                                <div
-                                                                    class="d-flex justify-content-between align-items-center mb-2">
-                                                                    <legend class="job-details-legend">Team Members
-                                                                    </legend>
-                                                                </div>
-                                                                <ul class="list-unstyled team-members-list mb-0"
-                                                                    data-bind="foreach: { data: members, as: 'm' }">
-                                                                    <li class="team-member-row mb-1">
-                                                                        <div class="d-flex flex-column">
-                                                                            <div class="d-flex align-items-center">
-                                                                                <span class="fw-semibold me-2"
-                                                                                    data-bind="text: m.Person.FirstName + ' ' + m.Person.LastName"></span>
-                                                                                <span class="badge bg-primary"
-                                                                                    data-bind="visible: m.TeamLeader === true">TL</span>
-                                                                            </div>
-
-                                                                            <!-- optional role/position if present -->
-                                                                            <!-- <div class="small text-muted"
+                                                                                <!-- optional role/position if present -->
+                                                                                <!-- <div class="small text-muted"
                                                                             data-bind="text: m.Role"></div> -->
 
-                                                                            <!-- capabilities tags -->
-                                                                            <div class="team-member-tags mt-1"
-                                                                                data-bind="foreach: m.PersonCapabilityTags">
-                                                                                <span
-                                                                                    class="badge rounded-pill bg-info text-dark me-1 mb-1"
-                                                                                    data-bind="text: Name"></span>
+                                                                                <!-- capabilities tags -->
+                                                                                <div class="team-member-tags mt-1"
+                                                                                    data-bind="foreach: m.Person.PersonCapabilityTags">
+                                                                                    <span
+                                                                                        class="badge rounded-pill bg-info text-dark me-1 mb-1"
+                                                                                        data-bind="text: Name"></span>
+                                                                                </div>
                                                                             </div>
-                                                                        </div>
-                                                                    </li>
-                                                                </ul>
-                                                                <div class="text-muted"
-                                                                    data-bind="visible: members().length === 0">
-                                                                    Team has no members assigned.
-                                                                </div>
-                                                            </fieldset>
+                                                                        </li>
+                                                                    </ul>
+                                                                    <div class="text-muted"
+                                                                        data-bind="visible: members().length === 0">
+                                                                        Team has no members assigned.
+                                                                    </div>
+                                                                </fieldset>
+
+                                                                <fieldset>
+                                                                    <div
+                                                                        class="d-flex justify-content-between align-items-center mb-2">
+                                                                        <legend class="job-details-legend">Matched
+                                                                            Assets (<span data-bind="text: trackableAssets().length"></span>)
+                                                                        </legend>
+                                                                    </div>
+                                                                    <ul class="list-unstyled team-asset-list mb-0"
+                                                                        data-bind="foreach: { data: trackableAssets, as: 'as' }">
+                                                                        <li class="team-asset-row mb-1">
+                                                                            <div class="d-flex flex-column">
+                                                                                <div class="d-flex align-items-center">
+                                                                                    <button class="fw-semibold w-100"
+                                                                                        data-bind="click: $parent.flyToAsset"><span data-bind="text: as.name + ' (' + as.resourceType + ')'"  class="me-1"></span><i class="fa fa-crosshairs"></i></button>
+                                                                                </div>
+                                                                            </div>
+                                                                        </li>
+                                                                    </ul>
+                                                                    <div class="text-muted"
+                                                                        data-bind="visible: trackableAssets().length === 0">
+                                                                        Team has no matching assets.
+                                                                    </div>
+                                                                </fieldset>
+                                                            </div><!-- /col-md-4 -->
                                                         </div>
-                                                        <!-- RIGHT: existing taskings table / summary -->
-                                                        <div class="col-md-9 col-lg-9">
+                                                        <div class="col-12 col-lg-9">
+                                                            <!-- RIGHT: existing taskings table / summary -->
                                                             <fieldset>
                                                                 <div
                                                                     class="d-flex justify-content-between align-items-center mb-2">
@@ -318,157 +343,187 @@
                                                                 </div>
 
 
-                                                            <!-- taskings table -->
-                                                            <div class="table-responsive">
-                                                                <table
-                                                                    class="table table-sm table-striped table-bordered mb-0 align-middle">
-                                                                    <thead class="table-light">
-                                                                        <tr>
-                                                                            <th style="width:15%;">#</th>
-                                                                            <th style="width:15%;">Type</th>
-                                                                            <th style="width:45%;">Address</th>
-                                                                            <th style="width:10%;">Status</th>
-                                                                            <th style="width:20%;">Actions</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody
-                                                                        data-bind="foreach: { data: filteredTaskings, as: 'ts' }">
-                                                                        <tr>
-                                                                            <td data-bind="text: ts.job.identifier, style: { 'background': ts.job.rowColour() }">
-                                                                            </td>
-                                                                            <td data-bind="text: ts.jobTypeName, style: { 'background': ts.job.rowColour() }"></td>
-                                                                            <td data-bind="text: ts.prettyAddress, style: { 'background': ts.job.rowColour() }"></td>
-                                                                            <td data-bind="style: { 'background': ts.job.rowColour() }">
-                                                                                <div class="dropdown" id="team-tasking-status-dropdown">
-                                                                                    <button class="team-status-button dropdown-toggle"
+                                                                <!-- taskings table -->
+                                                                <div class="table-responsive">
+                                                                    <table
+                                                                        class="table table-sm table-hover align-middle mb-0">
+                                                                        <thead class="table-light">
+                                                                            <tr>
+                                                                                <th style="width:15%;">#</th>
+                                                                                <th style="width:15%;">Type</th>
+                                                                                <th style="width:45%;">Address</th>
+                                                                                <th style="width:10%;">Status</th>
+                                                                                <th style="width:20%;">Actions</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody
+                                                                            data-bind="foreach: { data: filteredTaskings, as: 'ts' }">
+                                                                            <tr>
+                                                                                <td
+                                                                                    data-bind="text: ts.job.identifier, style: { 'background': ts.job.rowColour() }">
+                                                                                </td>
+                                                                                <td
+                                                                                    data-bind="text: ts.jobTypeName, style: { 'background': ts.job.rowColour() }">
+                                                                                </td>
+                                                                                <td
+                                                                                    data-bind="text: ts.prettyAddress, style: { 'background': ts.job.rowColour() }">
+                                                                                </td>
+                                                                                <td
+                                                                                    data-bind="style: { 'background': ts.job.rowColour() }">
+                                                                                    <div class="dropdown"
+                                                                                        id="team-tasking-status-dropdown">
+                                                                                        <button
+                                                                                            class="team-status-button dropdown-toggle"
                                                                                             type="button"
                                                                                             data-bs-toggle="dropdown"
                                                                                             data-bs-auto-close="outside"
                                                                                             data-bind="text: ts.currentStatus,
                                                                                                     css: ts.tagColorFromStatus(),
                                                                                                     click: ts.onStatusDropdownToggleClick">
-                                                                                    </button>
-                                                                                    <div class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
-                                                                                        <!-- ko if: ts.statusPageVisible -->
-                                                                                        <div>
-                                                                                            <!-- ko if: ts.cannotUpdateStatus -->
-                                                                                            <p>You cannot change statuses.</p>
-                                                                                            <!-- /ko -->
-                                                                                            <!-- ko foreach: ts.statusOptions -->
-                                                                                            <li>
-                                                                                                <button type="button"
+                                                                                        </button>
+                                                                                        <div
+                                                                                            class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
+                                                                                            <!-- ko if: ts.statusPageVisible -->
+                                                                                            <div>
+                                                                                                <!-- ko if: ts.cannotUpdateStatus -->
+                                                                                                <p>You cannot change
+                                                                                                    statuses.</p>
+                                                                                                <!-- /ko -->
+                                                                                                <!-- ko foreach: ts.statusOptions -->
+                                                                                                <li>
+                                                                                                    <button
+                                                                                                        type="button"
                                                                                                         class="dropdown-item"
                                                                                                         data-bind="text: label,
                                                                                                                     enable: enabled,
                                                                                                                     click: $parent.onStatusOptionClick,
                                                                                                                     clickBubble: false">
-                                                                                                </button>
-                                                                                            </li>
-                                                                                            <!-- /ko -->
-                                                                                        </div>
-                                                                                        <!-- /ko -->
-
-                                                                                        <!-- ko if: detailsPageVisible -->
-                                                                                        <div>
-                                                                                            <!-- ko if: ts.needsTimeSet -->
-                                                                                            <div>
-                                                                                                <label>Time:</label>
-                                                                                                <input type="datetime-local" data-bind="value: ts.time">
+                                                                                                    </button>
+                                                                                                </li>
+                                                                                                <!-- /ko -->
                                                                                             </div>
                                                                                             <!-- /ko -->
 
-                                                                                            <!-- ko if: ts.needsETA -->
+                                                                                            <!-- ko if: detailsPageVisible -->
                                                                                             <div>
-                                                                                                <label>ETA:</label>
-                                                                                                <input type="datetime-local" data-bind="value: ts.eta">
-                                                                                                <div class="quick-buttons">
-                                                                                                    <!-- ko foreach: ts.etaQuickButtons -->
-                                                                                                    <button type="button" class="quick-btn" data-bind="text: label,
+                                                                                                <!-- ko if: ts.needsTimeSet -->
+                                                                                                <div>
+                                                                                                    <label>Time:</label>
+                                                                                                    <input
+                                                                                                        type="datetime-local"
+                                                                                                        data-bind="value: ts.time">
+                                                                                                </div>
+                                                                                                <!-- /ko -->
+
+                                                                                                <!-- ko if: ts.needsETA -->
+                                                                                                <div>
+                                                                                                    <label>ETA:</label>
+                                                                                                    <input
+                                                                                                        type="datetime-local"
+                                                                                                        data-bind="value: ts.eta">
+                                                                                                    <div
+                                                                                                        class="quick-buttons">
+                                                                                                        <!-- ko foreach: ts.etaQuickButtons -->
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            class="quick-btn"
+                                                                                                            data-bind="text: label,
                                                                                                                                                     click: $parent.onEtaQuickButtonClick,
                                                                                                                                                     clickbubble: false">
-                                                                                                    </button>
-                                                                                                    <!-- /ko -->
+                                                                                                        </button>
+                                                                                                        <!-- /ko -->
+                                                                                                    </div>
                                                                                                 </div>
-                                                                                            </div>
-                                                                                            <!-- /ko -->
+                                                                                                <!-- /ko -->
 
-                                                                                            <!-- ko if: ts.needsETC -->
-                                                                                            <div>
-                                                                                                <label>ETC:</label>
-                                                                                                <input type="datetime-local" data-bind="value: ts.etc">
-                                                                                                <div class="quick-buttons">
-                                                                                                    <!-- ko foreach: ts.etcQuickButtons -->
-                                                                                                    <button type="button" class="quick-btn" data-bind="text: label,
+                                                                                                <!-- ko if: ts.needsETC -->
+                                                                                                <div>
+                                                                                                    <label>ETC:</label>
+                                                                                                    <input
+                                                                                                        type="datetime-local"
+                                                                                                        data-bind="value: ts.etc">
+                                                                                                    <div
+                                                                                                        class="quick-buttons">
+                                                                                                        <!-- ko foreach: ts.etcQuickButtons -->
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            class="quick-btn"
+                                                                                                            data-bind="text: label,
                                                                                                                                                     click: $parent.onEtcQuickButtonClick,
                                                                                                                                                     clickbubble: false">
-                                                                                                    </button>
-                                                                                                    <!-- /ko -->
+                                                                                                        </button>
+                                                                                                        <!-- /ko -->
+                                                                                                    </div>
                                                                                                 </div>
-                                                                                            </div>
-                                                                                            <!-- /ko -->
+                                                                                                <!-- /ko -->
 
-                                                                                            <!-- ko if: ts.needsReason -->
-                                                                                            <div>
-                                                                                                <label>Reason:</label>
-                                                                                                <textarea data-bind="value: ts.callOffReason"></textarea>
+                                                                                                <!-- ko if: ts.needsReason -->
+                                                                                                <div>
+                                                                                                    <label>Reason:</label>
+                                                                                                    <textarea
+                                                                                                        data-bind="value: ts.callOffReason"></textarea>
+                                                                                                </div>
+                                                                                                <!-- /ko -->
+                                                                                                <button
+                                                                                                    class="submit-btn"
+                                                                                                    data-bind="click: updateTaskingStatus">
+                                                                                                    Submit
+                                                                                                </button>
                                                                                             </div>
                                                                                             <!-- /ko -->
-                                                                                            <button class="submit-btn" data-bind="click: updateTaskingStatus">
-                                                                                                Submit
-                                                                                            </button>
                                                                                         </div>
-                                                                                        <!-- /ko -->
                                                                                     </div>
-                                                                                </div>
-                                                                            <td data-bind="style: { 'background': ts.job.rowColour() }">
-                                                                                <div class="btn-group btn-group-sm"
-                                                                                    role="group"
-                                                                                    data-bind="noBubbleFromDisabledButtons: true">
-                                                                                    <button type="button"
-                                                                                        class="btn btn-outline-secondary"
-                                                                                        title="Radio Log"
-                                                                                        data-bind="click: ts.openRadioLogModal, clickBubble: false">
-                                                                                        <i class="fa fa-microphone"></i>
-                                                                                    </button>
-                                                                                    <button type="button"
-                                                                                        class="btn btn-outline-secondary"
-                                                                                        data-bind="click: ts.sendSMS, clickBubble: false, disable: !t.members().length"
-                                                                                        title="Message">
-                                                                                        <i class="fa fa-envelope"></i>
-                                                                                    </button>
-                                                                                    <button type="button"
-                                                                                        class="btn btn-outline-secondary"
-                                                                                        data-bind="click: ts.job.openBeaconJobDetails, clickBubble: false"
-                                                                                        title="Edit">
-                                                                                        <i
-                                                                                            class="fas fa-external-link-alt"></i>
-                                                                                    </button>
-                                                                                    <button type="button"
-                                                                                        class="btn btn-outline-secondary"
-                                                                                        title="Zoom to"
-                                                                                        data-bind="click: ts.job.focusMap, disable: !ts.job.isFilteredIn(), clickBubble: false">
-                                                                                        <i class="fa fa-crosshairs"></i>
-                                                                                    </button>
-                                                                                </div>
-                                                                            </td>
-                                                                        </tr>
-                                                                    </tbody>
-                                                                </table>
-                                                            </div>
-                                                            <div class="text-muted mt-2"
-                                                                data-bind="visible: filteredTaskings().length === 0">
-                                                                Team has no tasking assigned.
-                                                            </div>
+                                                                                </td>
+                                                                                <td
+                                                                                    data-bind="style: { 'background': ts.job.rowColour() }">
+                                                                                    <div class="btn-group btn-group-sm"
+                                                                                        role="group"
+                                                                                        data-bind="noBubbleFromDisabledButtons: true">
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Radio Log"
+                                                                                            data-bind="click: ts.openRadioLogModal, clickBubble: false">
+                                                                                            <i
+                                                                                                class="fa fa-microphone"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            data-bind="click: ts.sendSMS, clickBubble: false, disable: !t.members().length"
+                                                                                            title="Message">
+                                                                                            <i
+                                                                                                class="fa fa-envelope"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            data-bind="click: ts.job.openBeaconJobDetails, clickBubble: false"
+                                                                                            title="Edit">
+                                                                                            <i
+                                                                                                class="fas fa-external-link-alt"></i>
+                                                                                        </button>
+                                                                                        <button type="button"
+                                                                                            class="btn btn-outline-secondary"
+                                                                                            title="Zoom to"
+                                                                                            data-bind="click: ts.job.focusMap, disable: !ts.job.isFilteredIn(), clickBubble: false">
+                                                                                            <i
+                                                                                                class="fa fa-crosshairs"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                                <div class="text-muted mt-2"
+                                                                    data-bind="visible: filteredTaskings().length === 0">
+                                                                    Team has no tasking assigned.
+                                                                </div>
                                                             </fieldset>
-                                                        </div><!-- /col taskings -->
-                                                    </div><!-- /row -->
-                                                </div><!-- /card-body -->
-                                            </div><!-- /card -->
+                                                        </div><!-- /row -->
+                                                    </div>
+                                                </div><!-- /col-md-4 -->
+                                            </div><!-- /card-body -->
                                         </div><!-- /team-details -->
-
-                                        <!-- /team-details -->
-
-                                    </div><!-- /team-card -->
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -653,14 +708,16 @@
                                                     id="ddJobTypeEvacuationPriority"
                                                     data-bind="incidentTypeFilterAndFetch: 'EvacuationPriority'">
                                                 <label class="form-check-label"
-                                                    for="ddJobTypeEvacuationPriority">Evacuation Priority</label>
+                                                    for="ddJobTypeEvacuationPriority">Evacuation
+                                                    Priority</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
                                                     id="ddJobTypeEvacuationSecondary"
                                                     data-bind="incidentTypeFilterAndFetch: 'EvacuationSecondary'">
                                                 <label class="form-check-label"
-                                                    for="ddJobTypeEvacuationSecondary">Evacuation Secondary</label>
+                                                    for="ddJobTypeEvacuationSecondary">Evacuation
+                                                    Secondary</label>
                                             </div>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox"
@@ -1165,87 +1222,109 @@
                                                                                 <td data-bind="text: ts.teamCallsign">
                                                                                 </td>
                                                                                 <td>
-                                                                                    <div class="dropdown" id="team-tasking-status-dropdown">
-                                                                                    <button class="team-status-button dropdown-toggle"
+                                                                                    <div class="dropdown"
+                                                                                        id="team-tasking-status-dropdown">
+                                                                                        <button
+                                                                                            class="team-status-button dropdown-toggle"
                                                                                             type="button"
                                                                                             data-bs-toggle="dropdown"
                                                                                             data-bs-auto-close="outside"
                                                                                             data-bind="text: ts.currentStatus,
                                                                                                     css: ts.tagColorFromStatus(),
                                                                                                     click: ts.onStatusDropdownToggleClick">
-                                                                                    </button>
-                                                                                    <div class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
-                                                                                        <!-- ko if: ts.statusPageVisible -->
-                                                                                        <div>
-                                                                                            <!-- ko if: ts.cannotUpdateStatus -->
-                                                                                            <p>You cannot change statuses.</p>
-                                                                                            <!-- /ko -->
-                                                                                            <!-- ko foreach: ts.statusOptions -->
-                                                                                            <li>
-                                                                                                <button type="button"
+                                                                                        </button>
+                                                                                        <div
+                                                                                            class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
+                                                                                            <!-- ko if: ts.statusPageVisible -->
+                                                                                            <div>
+                                                                                                <!-- ko if: ts.cannotUpdateStatus -->
+                                                                                                <p>You cannot change
+                                                                                                    statuses.</p>
+                                                                                                <!-- /ko -->
+                                                                                                <!-- ko foreach: ts.statusOptions -->
+                                                                                                <li>
+                                                                                                    <button
+                                                                                                        type="button"
                                                                                                         class="dropdown-item"
                                                                                                         data-bind="text: label,
                                                                                                                     enable: enabled,
                                                                                                                     click: $parent.onStatusOptionClick,
                                                                                                                     clickBubble: false">
-                                                                                                </button>
-                                                                                            </li>
-                                                                                            <!-- /ko -->
-                                                                                        </div>
-                                                                                        <!-- /ko -->
-
-                                                                                        <!-- ko if: detailsPageVisible -->
-                                                                                        <div>
-                                                                                            <!-- ko if: ts.needsTimeSet -->
-                                                                                            <div>
-                                                                                                <label>Time:</label>
-                                                                                                <input type="datetime-local" data-bind="value: ts.time">
+                                                                                                    </button>
+                                                                                                </li>
+                                                                                                <!-- /ko -->
                                                                                             </div>
                                                                                             <!-- /ko -->
 
-                                                                                            <!-- ko if: ts.needsETA -->
+                                                                                            <!-- ko if: detailsPageVisible -->
                                                                                             <div>
-                                                                                                <label>ETA:</label>
-                                                                                                <input type="datetime-local" data-bind="value: ts.eta">
-                                                                                                <div class="quick-buttons">
-                                                                                                    <!-- ko foreach: ts.etaQuickButtons -->
-                                                                                                    <button type="button" class="quick-btn" data-bind="text: label,
+                                                                                                <!-- ko if: ts.needsTimeSet -->
+                                                                                                <div>
+                                                                                                    <label>Time:</label>
+                                                                                                    <input
+                                                                                                        type="datetime-local"
+                                                                                                        data-bind="value: ts.time">
+                                                                                                </div>
+                                                                                                <!-- /ko -->
+
+                                                                                                <!-- ko if: ts.needsETA -->
+                                                                                                <div>
+                                                                                                    <label>ETA:</label>
+                                                                                                    <input
+                                                                                                        type="datetime-local"
+                                                                                                        data-bind="value: ts.eta">
+                                                                                                    <div
+                                                                                                        class="quick-buttons">
+                                                                                                        <!-- ko foreach: ts.etaQuickButtons -->
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            class="quick-btn"
+                                                                                                            data-bind="text: label,
                                                                                                                                                     click: $parent.onEtaQuickButtonClick,
                                                                                                                                                     clickbubble: false">
-                                                                                                    </button>
-                                                                                                    <!-- /ko -->
+                                                                                                        </button>
+                                                                                                        <!-- /ko -->
+                                                                                                    </div>
                                                                                                 </div>
-                                                                                            </div>
-                                                                                            <!-- /ko -->
+                                                                                                <!-- /ko -->
 
-                                                                                            <!-- ko if: ts.needsETC -->
-                                                                                            <div>
-                                                                                                <label>ETC:</label>
-                                                                                                <input type="datetime-local" data-bind="value: ts.etc">
-                                                                                                <div class="quick-buttons">
-                                                                                                    <!-- ko foreach: ts.etcQuickButtons -->
-                                                                                                    <button type="button" class="quick-btn" data-bind="text: label,
+                                                                                                <!-- ko if: ts.needsETC -->
+                                                                                                <div>
+                                                                                                    <label>ETC:</label>
+                                                                                                    <input
+                                                                                                        type="datetime-local"
+                                                                                                        data-bind="value: ts.etc">
+                                                                                                    <div
+                                                                                                        class="quick-buttons">
+                                                                                                        <!-- ko foreach: ts.etcQuickButtons -->
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            class="quick-btn"
+                                                                                                            data-bind="text: label,
                                                                                                                                                     click: $parent.onEtcQuickButtonClick,
                                                                                                                                                     clickbubble: false">
-                                                                                                    </button>
-                                                                                                    <!-- /ko -->
+                                                                                                        </button>
+                                                                                                        <!-- /ko -->
+                                                                                                    </div>
                                                                                                 </div>
-                                                                                            </div>
-                                                                                            <!-- /ko -->
+                                                                                                <!-- /ko -->
 
-                                                                                            <!-- ko if: ts.needsReason -->
-                                                                                            <div>
-                                                                                                <label>Reason:</label>
-                                                                                                <textarea data-bind="value: ts.callOffReason"></textarea>
+                                                                                                <!-- ko if: ts.needsReason -->
+                                                                                                <div>
+                                                                                                    <label>Reason:</label>
+                                                                                                    <textarea
+                                                                                                        data-bind="value: ts.callOffReason"></textarea>
+                                                                                                </div>
+                                                                                                <!-- /ko -->
+                                                                                                <button
+                                                                                                    class="submit-btn"
+                                                                                                    data-bind="click: updateTaskingStatus">
+                                                                                                    Submit
+                                                                                                </button>
                                                                                             </div>
                                                                                             <!-- /ko -->
-                                                                                            <button class="submit-btn" data-bind="click: updateTaskingStatus">
-                                                                                                Submit
-                                                                                            </button>
                                                                                         </div>
-                                                                                        <!-- /ko -->
                                                                                     </div>
-                                                                                </div>
                                                                                 </td>
                                                                                 <td
                                                                                     data-bind="text: ts.statusTimeAgoLabel">
