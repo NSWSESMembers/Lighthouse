@@ -21,18 +21,53 @@ body {
 /* Modal header colours per environment */
 body .modal-header {
   background-color: #f7931d !important;
+  color: white !important;
 }
 
 body.env-trainbeacon .modal-header {
   background-color: #219f56 !important;
+  color: white !important;
 }
+
+body.env-devbeacon .modal-header {
+  background-color: #2d9ee0 !important;
+  color: white !important;
+}
+
+body .team-header,
+body .incidents-header {
+color: white !important;
+border-radius: 10px;
+height: 100%;
+line-height: 30px;
+background-color: #f7931d !important;
+}
+
+
+body.env-trainbeacon .team-header,
+body.env-trainbeacon .incidents-header {
+color: white !important;
+border-radius: 10px;
+height: 100%;
+line-height: 30px;
+background-color: #219f56 !important;
+}
+
+body.env-devbeacon .team-header,
+body.env-devbeacon .incidents-header {
+color: white !important;
+border-radius: 10px;
+height: 100%;
+line-height: 30px;
+background-color: #2d9ee0 !important;
+}
+
 
 .tasking-dropdown-menu {
   position: fixed !important;
   inset: auto auto auto auto;
   z-index: 2000;
 }
-
 
 /* Ensure key UI elements follow the smaller base size */
 button,
@@ -321,11 +356,32 @@ table thead th .sort-icon {
   margin-left: 0.35rem;
   opacity: 0.7;
 }
+
 table thead th[aria-sort='ascending'] .sort-icon {
   transform: translateY(-1px);
 }
 table thead th[aria-sort='descending'] .sort-icon {
   transform: translateY(1px);
+}
+
+/* keep sortable headers on one line, with ellipsis on label */
+table thead th.sortable {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+table thead th.sortable .th-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table thead th.sortable .sort-icon {
+  flex: 0 0 auto;        /* never wrap/shrink */
 }
 
 .teams,
@@ -662,8 +718,8 @@ tr.job:hover {
 .teams{
   --team-cols:
     30px      /* chevron */
-    1.2fr     /* callsign */
-    0.8fr     /* status */
+    1.4fr     /* callsign */
+    0.5fr     /* status */
     60px      /* HQ */
     120px     /* task count */
     1fr       /* leader */
