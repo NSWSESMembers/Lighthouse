@@ -975,6 +975,14 @@ function VM() {
 
     self.markerLayersControl = null;    // optional Leaflet layer control
 
+    self.collapseAllIncidentPanels = function () {
+        self.filteredJobs().forEach(j => j.expanded(false));
+    }
+
+    self.collapseAllTeamPanels = function () {
+        self.filteredTeams().forEach(t => t.expanded(false));
+    }
+
     self.drawJobTargetRing = function (job) {
         if (!job || !job.address) return;
         self.mapVM.drawJobAssetDistanceRings(job);

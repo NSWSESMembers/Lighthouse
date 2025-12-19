@@ -1963,3 +1963,9 @@ input[type="search"]::-ms-clear {
 .job-actions-card {
   height: 100%
 }
+
+
+.collapseAll {
+  margin-left: 4px;
+  cursor: pointer;
+}
