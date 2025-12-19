@@ -735,5 +735,38 @@ export const Enum = {
         "GroupId": null,
         "Colour": null
     }
+}, JobPriorityType: {
+    "Rescue": {
+        "Id": 1,
+        "Name": "Rescue",
+        "Description": "Life Threatening",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Immediate": {
+        "Id": 2,
+        "Name": "Immediate",
+        "Description": "Immediate Response",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Priority": {
+        "Id": 3,
+        "Name": "Priority",
+        "Description": "Priority Response",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "General": {
+        "Id": 4,
+        "Name": "General",
+        "Description": "General Response",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    }
 }
 }

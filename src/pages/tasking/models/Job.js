@@ -118,7 +118,7 @@ export function Job(data = {}, deps = {}) {
 
     //actions we can take
     self.canCompleteJob = ko.pureComputed(() => {
-        return self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Complete.Id && self.statusId() !== Enum.JobStatusType.Rejected.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (!self.taskings() || self.taskings().length == 0 || self.taskings().every(task => task.currentStatusId() === Enum.JobTeamStatusType.Complete.Id || task.currentStatusId() === Enum.JobTeamStatusType.CalledOff.Id)) && (!self.suppliers() || self.suppliers().length == 0 || self.suppliers().every((supplier) => { return supplier.Status.Id === Enum.JobSupplierStatusType.Complete.Id || supplier.Status.Id === Enum.JobSupplierStatusType.Cancelled.Id }));
+        return self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Complete.Id && self.statusId() !== Enum.JobStatusType.Rejected.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (!self.taskings() || self.taskings().length == 0 || self.taskings().every(task => task.currentStatusId() === Enum.JobTeamStatusType.Complete.Id || task.currentStatusId() === Enum.JobTeamStatusType.CalledOff.Id || task.currentStatusId() === Enum.JobTeamStatusType.Untasked.Id)) && (!self.suppliers() || self.suppliers().length == 0 || self.suppliers().every((supplier) => { return supplier.Status.Id === Enum.JobSupplierStatusType.Complete.Id || supplier.Status.Id === Enum.JobSupplierStatusType.Cancelled.Id }));
     })
 
     self.canRejectJob = ko.pureComputed(() => {
@@ -134,7 +134,7 @@ export function Job(data = {}, deps = {}) {
     })
 
     self.canCancelJob = ko.pureComputed(() => {
-        return self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (self.statusId() !== Enum.JobStatusType.Rejected.Id || (self.statusId() === Enum.JobStatusType.Rejected.Id && self.priorityId() === Enum.JobPriorityType.Rescue.Id)) && (!self.taskings() || self.taskings().length == 0 || self.taskings().every(task => task.currentStatusId() === Enum.JobTeamStatusType.Complete.Id || task.currentStatusId() === Enum.JobTeamStatusType.CalledOff.Id));
+        return self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (self.statusId() !== Enum.JobStatusType.Rejected.Id || (self.statusId() === Enum.JobStatusType.Rejected.Id && self.priorityId() === Enum.JobPriorityType.Rescue.Id)) && (!self.taskings() || self.taskings().length == 0 || self.taskings().every(task => task.currentStatusId() === Enum.JobTeamStatusType.Complete.Id || task.currentStatusId() === Enum.JobTeamStatusType.CalledOff.Id || task.currentStatusId() === Enum.JobTeamStatusType.Untasked.Id));
     })
 
     self.canReopenJob = ko.pureComputed(() => {
@@ -585,6 +585,7 @@ export function Job(data = {}, deps = {}) {
     self.openBeaconJobDetails = function () {
         const url = self.jobLink();
         console.log("Opening job in Beacon:", url);
+        
         openURLInBeacon(url);
     }
 
