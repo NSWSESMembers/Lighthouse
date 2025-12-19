@@ -142,7 +142,7 @@
                     <table class="teams table align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th scope="col"><span style="visibility:hidden;">#</span></th>
+                                <th scope="col"><span data-bind="click: collapseAllTeamPanels"><i class="fas fa-angle-double-up collapseAll"></i></span></th>
                                 <th class="sortable" data-sort-key="callsign" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
                                     <span class="th-label">Callsign</span> <i class="fa sort-icon fa-sort"></i>
@@ -791,7 +791,7 @@
                     <table class="jobs table align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th scope="col"><span style="visibility:hidden;">#</span></th>
+                                <th scope="col"><span data-bind="click: collapseAllIncidentPanels"><i class="fas fa-angle-double-up collapseAll"></i></span></th>
                                 <th class="sortable" data-sort-key="identifier" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">Id</span> <i class="fa sort-icon fa-sort"></i>

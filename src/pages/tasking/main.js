@@ -321,7 +321,7 @@ function VM() {
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
-            const sectorMatch = sectorFilter.length === 0 || (jb.sector && sectorFilter.includes(jb.sector.id()));
+            const sectorMatch = sectorFilter.length === 0 || (jb.sector() && sectorFilter.includes(jb.sector().id()));
             //must match sector filter
 
             //if no sector and config says to exclude, filter out
@@ -974,6 +974,14 @@ function VM() {
 
 
     self.markerLayersControl = null;    // optional Leaflet layer control
+
+    self.collapseAllIncidentPanels = function () {
+        self.filteredJobs().forEach(j => j.expanded(false));
+    }
+
+    self.collapseAllTeamPanels = function () {
+        self.filteredTeams().forEach(t => t.expanded(false));
+    }
 
     self.drawJobTargetRing = function (job) {
         if (!job || !job.address) return;
