@@ -16,13 +16,13 @@
                 <!-- TEAMS (top pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
                     <!-- ko if: teamsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1 text-muted">
+                    <span class="small fw-semibold text-center flex-grow-1 text-muted team-header">
                         <i class="fa fa-spinner fa-spin me-1"></i> Loading Teams… (<span
                             data-bind="text: filteredTeams().length"></span>)
                     </span>
                     <!-- /ko -->
                     <!-- ko ifnot: teamsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1">Teams (<span
+                    <span class="small fw-semibold text-center flex-grow-1 team-header">Teams (<span
                             data-bind="text: filteredTeams().length"></span>)</span>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
@@ -145,19 +145,19 @@
                                 <th scope="col"><span style="visibility:hidden;">#</span></th>
                                 <th class="sortable" data-sort-key="callsign" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
-                                    Callsign <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Callsign</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-sort-key="statusName" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
-                                    Status <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Status</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-sort-key="assignedToCode" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
-                                    HQ <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">HQ</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-sort-key="taskedJobCount" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
-                                    Task Count <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Task Count</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th scope="col">Team Leader</th>
                                 <th scope="col">Actions</th>
@@ -545,13 +545,13 @@
                 <!-- JOBS (bottom pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
                     <!-- ko if: jobsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1 text-muted">
+                    <span class="small fw-semibold text-center flex-grow-1 text-muted incidents-header">
                         <i class="fa fa-spinner fa-spin me-1"></i>Loading Incidents... (<span
                             data-bind="text: filteredJobs().length"></span>)
                     </span>
                     <!-- /ko -->
                     <!-- ko ifnot: jobsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1">Incidents (<span
+                    <span class="small fw-semibold text-center flex-grow-1 incidents-header">Incidents (<span
                             data-bind="text: filteredJobs().length"></span>)</span>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
@@ -794,24 +794,24 @@
                                 <th scope="col"><span style="visibility:hidden;">#</span></th>
                                 <th class="sortable" data-sort-key="identifier" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
-                                    Id <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Id</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-sort-key="receivedAt" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
-                                    Received <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Received</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-sort-key="entityAssignedToCode" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
-                                    HQ <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">HQ</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-sort-key="type" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
-                                    Type <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Type</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th scope="col">Situation</th>
                                 <th class="sortable" data-sort-key="statusName" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
-                                    Status <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Status</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th scope="col">Address</th>
                             </tr>
