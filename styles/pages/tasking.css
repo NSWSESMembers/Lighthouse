@@ -29,6 +29,11 @@ body.env-trainbeacon .modal-header {
   color: white !important;
 }
 
+body.env-devbeacon .modal-header {
+  background-color: #2d9ee0 !important;
+  color: white !important;
+}
+
 body .team-header,
 body .incidents-header {
 color: white !important;
@@ -47,6 +52,16 @@ height: 100%;
 line-height: 30px;
 background-color: #219f56 !important;
 }
+
+body.env-devbeacon .team-header,
+body.env-devbeacon .incidents-header {
+color: white !important;
+border-radius: 10px;
+height: 100%;
+line-height: 30px;
+background-color: #2d9ee0 !important;
+}
+
 
 .tasking-dropdown-menu {
   position: fixed !important;

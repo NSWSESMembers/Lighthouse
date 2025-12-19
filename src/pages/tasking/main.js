@@ -127,6 +127,9 @@ if (params.source === "https://trainbeacon.ses.nsw.gov.au") {
     document.body.classList.add("env-trainbeacon");
 }
 
+if (params.source === "https://devbeacon.ses.nsw.gov.au") {
+    document.body.classList.add("env-devbeacon");
+}
 
 /////////DATA REFRESH CODE   
 
