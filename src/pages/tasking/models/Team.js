@@ -31,9 +31,23 @@ export function Team(data = {}, deps = {}) {
         openRadioLogModal = () => { },
         // eslint-disable-next-line @typescript-eslint/no-empty-function
         openSMSTeamModal = () => { },
+        isTeamPinned = () => false,
+        toggleTeamPinned = () => false,
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
+
+    // pinning
+    self.isPinned = ko.pureComputed(() => {
+        try { return !!isTeamPinned(self.id()); } catch (e) { return false; }
+    });
+
+    self.togglePinned = function (_, e) {
+        try { toggleTeamPinned(self.id()); } catch (err) { /* ignore */ }
+        if (e) { e.stopPropagation?.(); e.preventDefault?.(); }
+        return false;
+    };
+
 
     self.id = ko.observable(data.Id ?? null);
     self.callsign = ko.observable(data.Callsign ?? "");
@@ -62,6 +76,10 @@ export function Team(data = {}, deps = {}) {
     self.rowHasFocus = ko.observable(false);
 
     self.trackableAssets = ko.observableArray([]);
+
+    self.trackableAssetsWithMultipleTeams = ko.pureComputed(() => {
+        return self.trackableAssets().filter(a => a.matchingTeamsInView().length > 1);
+    });
 
     self.toggleAndExpand = function () {
         const wasExpanded = self.expanded();
@@ -274,13 +292,13 @@ export function Team(data = {}, deps = {}) {
 
     self.taskingRowColour = ko.pureComputed(() => {
         if (self.taskedJobCount() === 0) {
-            return '#d4edda'; // light green
+            return 'row-team-green'; // light green
         }
         if (self.taskedJobCount() >= 1 && self.taskedJobCount() <= 2) {
-            return '#fff3cd';
+            return 'row-team-yellow';
         }
         if (self.taskedJobCount() > 2) {
-            return '#f8d7da'; // light red
+            return 'row-team-red'; // light red
         }
         return 'transparent';
     })

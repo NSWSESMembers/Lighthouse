@@ -29,9 +29,23 @@ export function Job(data = {}, deps = {}) {
         openJobStatusConfirmModal = (_job, _newStatus) => { /* noop */ },
         map = null,
         filteredTeams = ko.observableArray([]),
+        isIncidentPinned = () => false,
+        toggleIncidentPinned = () => false,
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
+
+    // pinning
+    self.isPinned = ko.pureComputed(() => {
+        try { return !!isIncidentPinned(self.id()); } catch (e) { return false; }
+    });
+
+    self.togglePinned = function (_, e) {
+        try { toggleIncidentPinned(self.id()); } catch (err) { /* ignore */ }
+        if (e) { e.stopPropagation?.(); e.preventDefault?.(); }
+        return false;
+    };
+
 
     // raw
     self.id = ko.observable(data.Id ?? null);
@@ -398,10 +412,10 @@ export function Job(data = {}, deps = {}) {
 
     self.rowColour = ko.pureComputed(() => {
         switch (self.priorityName()) {
-            case 'Rescue': return '#f1bfbf';
-            case 'Priority': return '#fcf8e3';
-            case 'Immediate': return '#d9edf7';
-            case 'General': return '#ffffff';
+            case 'Rescue': return 'row-rescue';
+            case 'Priority': return 'row-priority';
+            case 'Immediate': return 'row-immediate';
+            case 'General': return 'row-general';
             default: return '';
         }
     });

@@ -220,6 +220,45 @@ function VM() {
     self.jobSortKey = ko.observable('identifier');
     self.jobSortAsc = ko.observable(false);
 
+    // --- pinning ---
+    self.showPinnedTeamsOnly = ko.observable(false);
+    self.showPinnedIncidentsOnly = ko.observable(false);
+
+    self.togglePinnedTeamsOnly = () => { self.showPinnedTeamsOnly(!self.showPinnedTeamsOnly()); return true; };
+    self.togglePinnedIncidentsOnly = () => { self.showPinnedIncidentsOnly(!self.showPinnedIncidentsOnly()); return true; };
+
+    const normPinId = (v) => (v == null ? '' : String(v));
+
+    self.isTeamPinned = (teamId) => {
+        const arr = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
+        return arr.includes(normPinId(teamId));
+    };
+
+    self.isIncidentPinned = (jobId) => {
+        const arr = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
+        return arr.includes(normPinId(jobId));
+    };
+
+    self.toggleTeamPinned = (teamId) => {
+        if (!self.config || !self.config.pinnedTeamIds) return false;
+        const id = normPinId(teamId);
+        const arr = self.config.pinnedTeamIds();
+        if (arr.includes(id)) self.config.pinnedTeamIds.remove(id);
+        else self.config.pinnedTeamIds.push(id);
+        self.config.save?.();
+        return true;
+    };
+
+    self.toggleIncidentPinned = (jobId) => {
+        if (!self.config || !self.config.pinnedIncidentIds) return false;
+        const id = normPinId(jobId);
+        const arr = self.config.pinnedIncidentIds();
+        if (arr.includes(id)) self.config.pinnedIncidentIds.remove(id);
+        else self.config.pinnedIncidentIds.push(id);
+        self.config.save?.();
+        return true;
+    };
+
     // --- sorted arrays ---
     self.sortedTeams = ko.pureComputed(function () {
         var key = self.teamSortKey(), asc = self.teamSortAsc();
@@ -234,15 +273,44 @@ function VM() {
         });
     });
 
+    const JOB_STATUS_ORDER = [
+        'New',
+        'Active',
+        'Tasked',
+        'Referred',
+        'Complete',
+        'Cancelled',
+        'Rejected',
+        'Finalised'
+    ];
+
+    const JOB_STATUS_RANK = JOB_STATUS_ORDER.reduce((m, s, i) => {
+        m[s] = i;
+        return m;
+    }, Object.create(null));
+
     self.sortedJobs = ko.pureComputed(function () {
         var key = self.jobSortKey(), asc = self.jobSortAsc();
         var arr = self.filteredJobs();
+
         return arr.slice().sort(function (a, b) {
-            var av = ko.unwrap(a[key]), bv = ko.unwrap(b[key]);
+            var av = ko.unwrap(a[key]);
+            var bv = ko.unwrap(b[key]);
+
+            // --- custom status order ---
+            if (key === 'statusName') {
+                var ar = JOB_STATUS_RANK[av] ?? Number.MAX_SAFE_INTEGER;
+                var br = JOB_STATUS_RANK[bv] ?? Number.MAX_SAFE_INTEGER;
+                return asc ? (ar - br) : (br - ar);
+            }
+
+            // --- default behaviour ---
             var an = typeof av === 'number' || /^\d+(\.\d+)?$/.test(av);
             var bn = typeof bv === 'number' || /^\d+(\.\d+)?$/.test(bv);
-            var cmp = (an && bn) ? (Number(av) - Number(bv))
+            var cmp = (an && bn)
+                ? (Number(av) - Number(bv))
                 : String(av || '').localeCompare(String(bv || ''), undefined, { numeric: true });
+
             return asc ? cmp : -cmp;
         });
     });
@@ -287,7 +355,7 @@ function VM() {
         updateSortHeaderUI(th, self.jobSortAsc());
     };
 
-    // --- (optional) initialize default icons on first render ---
+    // initialize default icons on first render ---
     ko.tasks.schedule(function () {
         var thTeams = document.querySelector('.teams thead th.sortable[data-sort-key="' + self.teamSortKey() + '"]');
         if (thTeams) updateSortHeaderUI(thTeams, self.teamSortAsc());
@@ -318,8 +386,16 @@ function VM() {
 
         start.setDate(end.getDate() - self.config.fetchPeriod());
 
+        const pinnedOnlyIncidents = self.showPinnedIncidentsOnly();
+        const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
+
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
+
+            // pinned-only filter
+            if (pinnedOnlyIncidents && !pinnedIncidentIds.includes(String(jb.id()))) {
+                return false;
+            }
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
             const sectorMatch = sectorFilter.length === 0 || (jb.sector() && sectorFilter.includes(jb.sector().id()));
             //must match sector filter
@@ -401,8 +477,16 @@ function VM() {
 
         start.setDate(end.getDate() - self.config.fetchPeriod());
 
+        const pinnedOnlyTeams = self.showPinnedTeamsOnly();
+        const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
+
         return ko.utils.arrayFilter(self.teams(), tm => {
             const status = tm.teamStatusType()?.Name;
+
+            // pinned-only filter
+            if (pinnedOnlyTeams && !pinnedTeamIds.includes(String(tm.id()))) {
+                return false;
+            }
             const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
             if (status == null) {
                 return false;
@@ -565,6 +649,8 @@ function VM() {
             },
             map: self.mapVM,
             filteredTeams: self.filteredTeams,
+            isIncidentPinned: (id) => self.isIncidentPinned(id),
+            toggleIncidentPinned: (id) => self.toggleIncidentPinned(id),
         }
     }
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
@@ -615,6 +701,8 @@ function VM() {
                 self.attachSendSMSModal([], team, tasking);
             },
 
+            isTeamPinned: (id) => self.isTeamPinned(id),
+            toggleTeamPinned: (id) => self.toggleTeamPinned(id),
             currentlyOpenMapPopup: self.mapVM?.openPopup,
         };
 
@@ -1877,16 +1965,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Ensure only one job status dropdown is open at a time
-document.addEventListener('show.bs.dropdown', (e) => {
-  const btn = e.target;
-  if (!btn.classList.contains('jobstatus-dropdown-btn')) return;
+    document.addEventListener('show.bs.dropdown', (e) => {
+        const btn = e.target;
+        if (!btn.classList.contains('jobstatus-dropdown-btn')) return;
 
-  document.querySelectorAll('.jobstatus-dropdown-btn[aria-expanded="true"]').forEach((other) => {
-    if (other === btn) return;
-    const inst = bootstrap.Dropdown.getInstance(other) || bootstrap.Dropdown.getOrCreateInstance(other);
-    inst.hide();
-  });
-});
+        document.querySelectorAll('.jobstatus-dropdown-btn[aria-expanded="true"]').forEach((other) => {
+            if (other === btn) return;
+            const inst = bootstrap.Dropdown.getInstance(other) || bootstrap.Dropdown.getOrCreateInstance(other);
+            inst.hide();
+        });
+    });
 
     //get tokens
     BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(

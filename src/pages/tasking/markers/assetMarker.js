@@ -206,7 +206,11 @@ function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
         const el = e.popup.getContent(); // our stable node
         vm.mapVM.setOpen?.('asset', asset);
         bindKoToPopup(ko, popupVm, el);
-        asset.matchingTeamsInView()?.length !==0 && asset.matchingTeamsInView()[0].onPopupOpen()
+        // If no team row has focus, open the first team's popup. stops fucky UI jumps when theres multiple teams bound to one asset
+        // where it would jump to a different row when you cycle the assets
+        if (!asset.matchingTeamsInView()?.some(team => team.rowHasFocus && team.rowHasFocus())) {
+          asset.matchingTeamsInView()?.length !== 0 && asset.matchingTeamsInView()[0].onPopupOpen();
+        }
         popupVm.updatePopup?.();
         deferPopupUpdate(e.popup);
     };

@@ -51,6 +51,10 @@ export function ConfigVM(root, deps) {
 
     self.teamTaskStatusFilter = ko.observableArray([]);
 
+    // pinned rows
+    self.pinnedTeamIds = ko.observableArray([]);
+    self.pinnedIncidentIds = ko.observableArray([]);
+
     self.openLoadBox = function () {
         self.loadExpanded(true);
     };
@@ -115,6 +119,8 @@ export function ConfigVM(root, deps) {
         teamTaskStatusFilter: ko.toJS(self.teamTaskStatusFilter),
         sectorFilters: ko.toJS(self.sectorFilters),
         includeIncidentsWithoutSector: !!self.includeIncidentsWithoutSector(),
+        pinnedTeamIds: ko.toJS(self.pinnedTeamIds),
+        pinnedIncidentIds: ko.toJS(self.pinnedIncidentIds),
     });
 
     // Helpers
@@ -235,6 +241,23 @@ self.query
     self.clearSearch = () => { self.query(''); self.results([]); self.dropdownOpen(false); };
 
 
+    self.clearPinnedTeams = () => {
+    self.pinnedTeamIds.removeAll();
+    self.save();
+};
+
+self.clearPinnedIncidents = () => {
+    self.pinnedIncidentIds.removeAll();
+    self.save();
+};
+
+self.clearAllPinned = () => {
+    self.pinnedTeamIds.removeAll();
+    self.pinnedIncidentIds.removeAll();
+    self.save();
+};
+
+
     // Only close if focus moved *outside* the dropdown
     self.closeDropdown = (_data, ev) => {
         const dd = document.getElementById('searchDropdown');
@@ -307,6 +330,8 @@ self.query
             cfg.teamTaskStatusFilter = self.teamTaskStatusFilterDefaults;
             cfg.sectorFilters = [];
             cfg.includeIncidentsWithoutSector = true;
+            cfg.pinnedTeamIds = [];
+            cfg.pinnedIncidentIds = [];
 
         }
         console.log('Loaded config:', cfg);
@@ -346,6 +371,13 @@ self.query
         }
         if (Array.isArray(cfg.sectorFilters)) {
             self.sectorFilters(cfg.sectorFilters);
+        }
+
+        if (Array.isArray(cfg.pinnedTeamIds)) {
+            self.pinnedTeamIds(cfg.pinnedTeamIds.map(x => String(x)));
+        }
+        if (Array.isArray(cfg.pinnedIncidentIds)) {
+            self.pinnedIncidentIds(cfg.pinnedIncidentIds.map(x => String(x)));
         }
 
       

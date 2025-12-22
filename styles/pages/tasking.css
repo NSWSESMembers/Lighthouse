@@ -17,6 +17,104 @@ body {
   line-height: 1.35;
 }
 
+.row-rescue {
+  background-color: #f1bfbf !important;
+}
+
+.row-priority {
+  background-color: #fcf8e3 !important;
+}
+
+.row-immediate {
+  background-color: #d9edf7 !important;
+}
+
+.row-general {
+  background-color: #ffffff !important;
+}
+
+.row-rescue > div > button > .is-pinned {
+  color: white !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-rescue > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-priority > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-priority > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-immediate > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-immediate > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-general > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-general > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-team-green {
+  background-color: #d4edda !important;
+}
+
+.row-team-yellow {
+  background-color: #fff3cd !important;
+}
+
+.row-team-red {
+  background-color: #f8d7da !important;
+}
+
+
+.row-team-green > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-team-green > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-team-yellow > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-team-yellow > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-team-red > div > button > .is-pinned {
+  color: white !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-team-red > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
 
 /* Modal header colours per environment */
 body .modal-header {
@@ -619,7 +717,7 @@ tr.job:hover {
 .veh-pop {
   min-width: 360px;
   max-width: 360px;
-  max-height: 360px;
+  max-height: 420px;
 }
 .veh-pop__title {
   font-weight: 700;
@@ -629,11 +727,26 @@ tr.job:hover {
   font-size: 12px;
   line-height: 1.25;
 }
+/* Constrain the whole Teams section, not just taskings */
+.veh-pop__teams {
+  max-height: 220px;          /* tune as needed */
+  overflow-y: auto;
+  padding-right: 4px;         /* avoid scrollbar overlaying content */
+}
 
+/* Each team stays visually grouped */
+.veh-pop__team {
+  padding-bottom: 6px;
+}
+
+/* Remove nested scrolling – let the parent scroll */
 .veh-pop__taskings-list-frame {
+  max-height: none !important;
+  overflow: visible !important;
   margin-left: -10px;
   margin-right: -15px;
 }
+
 
 .veh-pop__tasking-item,
 .veh-pop__tasking-item--no-job {
@@ -654,6 +767,51 @@ tr.job:hover {
 .veh-pop__tasking-item:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
+
+
+/* Team list should never scroll horizontally */
+.veh-pop__team-list {
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Each team must respect popup width */
+.veh-pop__team {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure flex rows don’t force overflow */
+.veh-pop__team > .d-flex {
+  width: 100%;
+}
+
+/* Allow text containers to shrink instead of overflow */
+.veh-pop__team-title,
+.veh-pop__team-title * {
+  min-width: 0;
+}
+
+/* Fix taskings frame causing width overflow */
+.veh-pop__taskings-list-frame {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Prevent long content (addresses, situation text) from forcing width */
+.veh-pop__tasking-item {
+  overflow-x: hidden;
+}
+
+.veh-pop__tasking-item .text-truncate,
+.veh-pop__tasking-item [style*="pre-wrap"] {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 
 .job-popup__tasking-row {
   padding: 4px 0;
@@ -718,7 +876,8 @@ tr.job:hover {
 .teams{
   --team-cols:
     30px      /* chevron */
-    1.4fr     /* callsign */
+    30px      /* pin */
+    1.35fr    /* callsign */
     0.5fr     /* status */
     60px      /* HQ */
     120px     /* task count */
@@ -1244,14 +1403,15 @@ tr.job:hover {
 /* one source of truth (jobs) */
 .jobs{
   --job-cols:
-    0.1fr   /* chev */
-    0.3fr   /* Id */
-    0.5fr  /* Received */
+    30px    /* chev */
+    30px    /* pin */
+    0.28fr  /* Id */
+    0.5fr   /* Received */
     0.3fr   /* HQ */
     0.3fr   /* Type */
-    1.5fr  /* Situation */
+    1.5fr   /* Situation */
     0.5fr   /* Status */
-    1.0fr; /* Address */
+    1.0fr;  /* Address */
 }
 
 /* body */
@@ -1968,4 +2128,23 @@ input[type="search"]::-ms-clear {
 .collapseAll {
   margin-left: 4px;
   cursor: pointer;
+}
+
+/* pin buttons */
+.team-cell--chev, .team-cell--pin {
+  display: flex;
+  justify-content: center;
+}
+.job-cell--chev, .job-cell--pin {
+  display: flex;
+  justify-content: center;
+}
+.pin-btn {
+  line-height: 1;
+}
+.pin-toggle.btn-xs {
+  font-size: 0.75rem;
+}
+.pin-toggle.active {
+  border-color: #ffc107;
 }
