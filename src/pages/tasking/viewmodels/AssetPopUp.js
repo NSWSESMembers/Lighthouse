@@ -14,7 +14,6 @@ export class AssetPopupViewModel {
   }
 
   updatePopup = () => {
-    console.log('AssetPopupViewModel.updatePopup called');
     if (this.asset.marker && this.asset.marker.isPopupOpen()) {
       const popup = this.asset.marker.getPopup();
       if (popup) {

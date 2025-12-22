@@ -63,6 +63,10 @@ export function Team(data = {}, deps = {}) {
 
     self.trackableAssets = ko.observableArray([]);
 
+    self.trackableAssetsWithMultipleTeams = ko.pureComputed(() => {
+        return self.trackableAssets().filter(a => a.matchingTeamsInView().length > 1);
+    });
+
     self.toggleAndExpand = function () {
         const wasExpanded = self.expanded();
         self.expanded(!wasExpanded);

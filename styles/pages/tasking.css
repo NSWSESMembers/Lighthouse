@@ -619,7 +619,7 @@ tr.job:hover {
 .veh-pop {
   min-width: 360px;
   max-width: 360px;
-  max-height: 360px;
+  max-height: 420px;
 }
 .veh-pop__title {
   font-weight: 700;
@@ -629,11 +629,26 @@ tr.job:hover {
   font-size: 12px;
   line-height: 1.25;
 }
+/* Constrain the whole Teams section, not just taskings */
+.veh-pop__teams {
+  max-height: 220px;          /* tune as needed */
+  overflow-y: auto;
+  padding-right: 4px;         /* avoid scrollbar overlaying content */
+}
 
+/* Each team stays visually grouped */
+.veh-pop__team {
+  padding-bottom: 6px;
+}
+
+/* Remove nested scrolling – let the parent scroll */
 .veh-pop__taskings-list-frame {
+  max-height: none !important;
+  overflow: visible !important;
   margin-left: -10px;
   margin-right: -15px;
 }
+
 
 .veh-pop__tasking-item,
 .veh-pop__tasking-item--no-job {
@@ -654,6 +669,51 @@ tr.job:hover {
 .veh-pop__tasking-item:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
+
+
+/* Team list should never scroll horizontally */
+.veh-pop__team-list {
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Each team must respect popup width */
+.veh-pop__team {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure flex rows don’t force overflow */
+.veh-pop__team > .d-flex {
+  width: 100%;
+}
+
+/* Allow text containers to shrink instead of overflow */
+.veh-pop__team-title,
+.veh-pop__team-title * {
+  min-width: 0;
+}
+
+/* Fix taskings frame causing width overflow */
+.veh-pop__taskings-list-frame {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Prevent long content (addresses, situation text) from forcing width */
+.veh-pop__tasking-item {
+  overflow-x: hidden;
+}
+
+.veh-pop__tasking-item .text-truncate,
+.veh-pop__tasking-item [style*="pre-wrap"] {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 
 .job-popup__tasking-row {
   padding: 4px 0;

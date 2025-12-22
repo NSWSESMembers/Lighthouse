@@ -262,7 +262,7 @@ export function MapVM(Lmap, root) {
     self.registerCrowFliesLine(this._polyline);
   }
 
-  self.drawCrowsFliesToAssetFromTasking = (tasking, asset = null) => {
+  self.drawCrowsFliesToAssetFromTasking = (tasking, asset) => {
     if (tasking.job.isFilteredIn() === false) {
       return;
     }
@@ -461,8 +461,8 @@ export function MapVM(Lmap, root) {
 
     clearJobAssetRings: () => self.clearJobAssetRings(),
 
-    drawCrowsFliesToAssetFromTasking: (tasking) => {
-      self.drawCrowsFliesToAssetFromTasking(tasking);
+    drawCrowsFliesToAssetFromTasking: (tasking, asset) => {
+      self.drawCrowsFliesToAssetFromTasking(tasking, asset);
     },
 
     clearCrowFliesLine: () => {
