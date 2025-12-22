@@ -17,6 +17,104 @@ body {
   line-height: 1.35;
 }
 
+.row-rescue {
+  background-color: #f1bfbf !important;
+}
+
+.row-priority {
+  background-color: #fcf8e3 !important;
+}
+
+.row-immediate {
+  background-color: #d9edf7 !important;
+}
+
+.row-general {
+  background-color: #ffffff !important;
+}
+
+.row-rescue > div > button > .is-pinned {
+  color: white !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-rescue > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-priority > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-priority > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-immediate > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-immediate > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-general > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-general > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-team-green {
+  background-color: #d4edda !important;
+}
+
+.row-team-yellow {
+  background-color: #fff3cd !important;
+}
+
+.row-team-red {
+  background-color: #f8d7da !important;
+}
+
+
+.row-team-green > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-team-green > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-team-yellow > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-team-yellow > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-team-red > div > button > .is-pinned {
+  color: white !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-team-red > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
 
 /* Modal header colours per environment */
 body .modal-header {
@@ -778,7 +876,8 @@ tr.job:hover {
 .teams{
   --team-cols:
     30px      /* chevron */
-    1.4fr     /* callsign */
+    30px      /* pin */
+    1.35fr    /* callsign */
     0.5fr     /* status */
     60px      /* HQ */
     120px     /* task count */
@@ -1304,14 +1403,15 @@ tr.job:hover {
 /* one source of truth (jobs) */
 .jobs{
   --job-cols:
-    0.1fr   /* chev */
-    0.3fr   /* Id */
-    0.5fr  /* Received */
+    30px    /* chev */
+    30px    /* pin */
+    0.28fr  /* Id */
+    0.5fr   /* Received */
     0.3fr   /* HQ */
     0.3fr   /* Type */
-    1.5fr  /* Situation */
+    1.5fr   /* Situation */
     0.5fr   /* Status */
-    1.0fr; /* Address */
+    1.0fr;  /* Address */
 }
 
 /* body */
@@ -2028,4 +2128,23 @@ input[type="search"]::-ms-clear {
 .collapseAll {
   margin-left: 4px;
   cursor: pointer;
+}
+
+/* pin buttons */
+.team-cell--chev, .team-cell--pin {
+  display: flex;
+  justify-content: center;
+}
+.job-cell--chev, .job-cell--pin {
+  display: flex;
+  justify-content: center;
+}
+.pin-btn {
+  line-height: 1;
+}
+.pin-toggle.btn-xs {
+  font-size: 0.75rem;
+}
+.pin-toggle.active {
+  border-color: #ffc107;
 }

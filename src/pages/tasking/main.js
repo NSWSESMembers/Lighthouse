@@ -220,6 +220,45 @@ function VM() {
     self.jobSortKey = ko.observable('identifier');
     self.jobSortAsc = ko.observable(false);
 
+    // --- pinning ---
+    self.showPinnedTeamsOnly = ko.observable(false);
+    self.showPinnedIncidentsOnly = ko.observable(false);
+
+    self.togglePinnedTeamsOnly = () => { self.showPinnedTeamsOnly(!self.showPinnedTeamsOnly()); return true; };
+    self.togglePinnedIncidentsOnly = () => { self.showPinnedIncidentsOnly(!self.showPinnedIncidentsOnly()); return true; };
+
+    const normPinId = (v) => (v == null ? '' : String(v));
+
+    self.isTeamPinned = (teamId) => {
+        const arr = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
+        return arr.includes(normPinId(teamId));
+    };
+
+    self.isIncidentPinned = (jobId) => {
+        const arr = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
+        return arr.includes(normPinId(jobId));
+    };
+
+    self.toggleTeamPinned = (teamId) => {
+        if (!self.config || !self.config.pinnedTeamIds) return false;
+        const id = normPinId(teamId);
+        const arr = self.config.pinnedTeamIds();
+        if (arr.includes(id)) self.config.pinnedTeamIds.remove(id);
+        else self.config.pinnedTeamIds.push(id);
+        self.config.save?.();
+        return true;
+    };
+
+    self.toggleIncidentPinned = (jobId) => {
+        if (!self.config || !self.config.pinnedIncidentIds) return false;
+        const id = normPinId(jobId);
+        const arr = self.config.pinnedIncidentIds();
+        if (arr.includes(id)) self.config.pinnedIncidentIds.remove(id);
+        else self.config.pinnedIncidentIds.push(id);
+        self.config.save?.();
+        return true;
+    };
+
     // --- sorted arrays ---
     self.sortedTeams = ko.pureComputed(function () {
         var key = self.teamSortKey(), asc = self.teamSortAsc();
@@ -347,8 +386,16 @@ function VM() {
 
         start.setDate(end.getDate() - self.config.fetchPeriod());
 
+        const pinnedOnlyIncidents = self.showPinnedIncidentsOnly();
+        const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
+
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
+
+            // pinned-only filter
+            if (pinnedOnlyIncidents && !pinnedIncidentIds.includes(String(jb.id()))) {
+                return false;
+            }
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
             const sectorMatch = sectorFilter.length === 0 || (jb.sector() && sectorFilter.includes(jb.sector().id()));
             //must match sector filter
@@ -430,8 +477,16 @@ function VM() {
 
         start.setDate(end.getDate() - self.config.fetchPeriod());
 
+        const pinnedOnlyTeams = self.showPinnedTeamsOnly();
+        const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
+
         return ko.utils.arrayFilter(self.teams(), tm => {
             const status = tm.teamStatusType()?.Name;
+
+            // pinned-only filter
+            if (pinnedOnlyTeams && !pinnedTeamIds.includes(String(tm.id()))) {
+                return false;
+            }
             const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
             if (status == null) {
                 return false;
@@ -594,6 +649,8 @@ function VM() {
             },
             map: self.mapVM,
             filteredTeams: self.filteredTeams,
+            isIncidentPinned: (id) => self.isIncidentPinned(id),
+            toggleIncidentPinned: (id) => self.toggleIncidentPinned(id),
         }
     }
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
@@ -644,6 +701,8 @@ function VM() {
                 self.attachSendSMSModal([], team, tasking);
             },
 
+            isTeamPinned: (id) => self.isTeamPinned(id),
+            toggleTeamPinned: (id) => self.toggleTeamPinned(id),
             currentlyOpenMapPopup: self.mapVM?.openPopup,
         };
 

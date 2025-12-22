@@ -16,14 +16,17 @@
                 <!-- TEAMS (top pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
                     <!-- ko if: teamsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1 text-muted team-header">
-                        <i class="fa fa-spinner fa-spin me-1"></i> Loading Teams… (<span
-                            data-bind="text: filteredTeams().length"></span>)
-                    </span>
+                    <div
+                        class="small fw-semibold text-center flex-grow-1 text-muted team-header d-flex align-items-center justify-content-center gap-2">
+                        <span><i class="fa fa-spinner fa-spin me-1"></i>Loading Teams… (<span
+                                data-bind="text: filteredTeams().length"></span>)</span>
+                    </div>
                     <!-- /ko -->
                     <!-- ko ifnot: teamsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1 team-header">Teams (<span
-                            data-bind="text: filteredTeams().length"></span>)</span>
+                    <div
+                        class="small fw-semibold text-center flex-grow-1 team-header d-flex align-items-center justify-content-center gap-2">
+                        <span>Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
+                    </div>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:250px;">
@@ -31,6 +34,11 @@
                             <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: teamSearch, valueUpdate: 'input'">
                         </div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle"
+                            title="Toggle pinned-only teams"
+                            data-bind="click: togglePinnedTeamsOnly, css: { active: showPinnedTeamsOnly }">
+                            <i class="fa fa-thumbtack"></i>
+                        </button>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
                                 id="teamMenu" data-bs-toggle="dropdown" data-bs-auto-close="outside"
@@ -142,7 +150,11 @@
                     <table class="teams table align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th scope="col"><span data-bind="click: collapseAllTeamPanels"><i class="fas fa-angle-double-up collapseAll"></i></span></th>
+                                <th scope="col"><span data-bind="click: collapseAllTeamPanels"><i
+                                            class="fas fa-angle-double-up collapseAll"></i></span></th>
+                                <th scope="col"><span style="visibility: hidden;">
+                                        #
+                                    </span></th>
                                 <th class="sortable" data-sort-key="callsign" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
                                     <span class="th-label">Callsign</span> <i class="fa sort-icon fa-sort"></i>
@@ -167,13 +179,13 @@
                             <tr class="team-row" data-bind="css:{expanded: t.expanded()},
                    droppableRow: { team: t, onDrop: $root.showConfirmTaskingModal },
                    attr:{'aria-expanded': t.expanded}, attr: { 'data-team-id': t.id }">
-                                <td colspan="7">
+                                <td colspan="8">
                                     <div class="team-card"
                                         data-bind="css:{'team-card--expanded': t.expanded()}, attr:{ 'aria-expanded': t.expanded }">
 
                                         <!-- SUMMARY BAR -->
                                         <div class="team-summary"
-                                            data-bind="style: { 'background': t.taskingRowColour() }, click: t.toggleAndExpand">
+                                            data-bind="css: t.taskingRowColour(), click: t.toggleAndExpand">
                                             <!-- 1. Chevron -->
                                             <div class="team-cell team-cell--chev">
                                                 <button type="button" class="btn btn-link p-0 text-decoration-none"
@@ -181,6 +193,16 @@
                                                     aria-label="Expand/collapse team">
                                                     <i class="fa fa-solid"
                                                         data-bind="css: { 'fa-plus': !t.expanded(), 'fa-minus': t.expanded() }"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- 1b. Pin -->
+                                            <div class="team-cell team-cell--pin" data-bind="clickBubble: false">
+                                                <button type="button"
+                                                    class="btn btn-link p-0 text-decoration-none pin-btn"
+                                                    title="Pin/unpin team" data-bind="click: t.togglePinned">
+                                                    <i class="fa fa-thumbtack"
+                                                        data-bind="css: { 'is-pinned': t.isPinned(), 'not-pinned': !t.isPinned() }"></i>
                                                 </button>
                                             </div>
 
@@ -240,7 +262,8 @@
                                                         <span
                                                             class="position-absolute top-0 start-100 badge rounded-pill bg-warning"
                                                             style="font-size:0.6em; transform: translate(-50%, 105%);"
-                                                            data-bind="visible: t.trackableAssetsWithMultipleTeams().length > 0"><i class="fa fa-users" aria-hidden="true"></i>
+                                                            data-bind="visible: t.trackableAssetsWithMultipleTeams().length > 0"><i
+                                                                class="fa fa-users" aria-hidden="true"></i>
 
                                                         </span>
                                                     </button>
@@ -372,16 +395,16 @@
                                                                             data-bind="foreach: { data: filteredTaskings, as: 'ts' }">
                                                                             <tr>
                                                                                 <td
-                                                                                    data-bind="text: ts.job.identifier, style: { 'background': ts.job.rowColour() }">
+                                                                                    data-bind="text: ts.job.identifier, css: ts.job.rowColour()">
                                                                                 </td>
                                                                                 <td
-                                                                                    data-bind="text: ts.jobTypeName, style: { 'background': ts.job.rowColour() }">
+                                                                                    data-bind="text: ts.jobTypeName, css: ts.job.rowColour()">
                                                                                 </td>
                                                                                 <td
-                                                                                    data-bind="text: ts.prettyAddress, style: { 'background': ts.job.rowColour() }">
+                                                                                    data-bind="text: ts.prettyAddress, css: ts.job.rowColour()">
                                                                                 </td>
                                                                                 <td
-                                                                                    data-bind="style: { 'background': ts.job.rowColour() }">
+                                                                                    data-bind="css: ts.job.rowColour()">
                                                                                     <div class="dropdown"
                                                                                         id="team-tasking-status-dropdown">
                                                                                         <button
@@ -487,7 +510,7 @@
                                                                                     </div>
                                                                                 </td>
                                                                                 <td
-                                                                                    data-bind="style: { 'background': ts.job.rowColour() }">
+                                                                                    data-bind="css: ts.job.rowColour()">
                                                                                     <div class="btn-group btn-group-sm"
                                                                                         role="group"
                                                                                         data-bind="noBubbleFromDisabledButtons: true">
@@ -551,14 +574,17 @@
                 <!-- JOBS (bottom pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
                     <!-- ko if: jobsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1 text-muted incidents-header">
-                        <i class="fa fa-spinner fa-spin me-1"></i>Loading Incidents... (<span
-                            data-bind="text: filteredJobs().length"></span>)
-                    </span>
+                    <div
+                        class="small fw-semibold text-center flex-grow-1 text-muted incidents-header d-flex align-items-center justify-content-center gap-2">
+                        <span><i class="fa fa-spinner fa-spin me-1"></i>Loading Incidents... (<span
+                                data-bind="text: filteredJobs().length"></span>)</span>
+                    </div>
                     <!-- /ko -->
                     <!-- ko ifnot: jobsLoading -->
-                    <span class="small fw-semibold text-center flex-grow-1 incidents-header">Incidents (<span
-                            data-bind="text: filteredJobs().length"></span>)</span>
+                    <div
+                        class="small fw-semibold text-center flex-grow-1 incidents-header d-flex align-items-center justify-content-center gap-2">
+                        <span>Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
+                    </div>
                     <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:250px;">
@@ -566,7 +592,11 @@
                             <input type="search" id="jobSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: jobSearch, valueUpdate: 'input'">
                         </div>
-
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle"
+                            title="Toggle pinned-only incidents"
+                            data-bind="click: togglePinnedIncidentsOnly, css: { active: showPinnedIncidentsOnly }">
+                            <i class="fa fa-thumbtack"></i>
+                        </button>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
                                 id="jobMenu" data-bs-toggle="dropdown" data-bs-auto-close="outside"
@@ -797,7 +827,11 @@
                     <table class="jobs table align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th scope="col"><span data-bind="click: collapseAllIncidentPanels"><i class="fas fa-angle-double-up collapseAll"></i></span></th>
+                                <th scope="col"><span data-bind="click: collapseAllIncidentPanels"><i
+                                            class="fas fa-angle-double-up collapseAll"></i></span></th>
+                                <th scope="col"><span style="visibility: hidden;">
+                                        #
+                                    </span></th>
                                 <th class="sortable" data-sort-key="identifier" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">Id</span> <i class="fa sort-icon fa-sort"></i>
@@ -825,12 +859,12 @@
 
                         <tbody data-bind="foreach: { data: sortedJobs, as: 'j' }">
                             <tr class="job-row" data-bind="attr: { 'data-job-id': j.id }">
-                                <td colspan="8">
+                                <td colspan="9">
                                     <div class="job-card" data-bind="css: { 'job-card--expanded': j.expanded() }">
 
                                         <!-- SUMMARY BAR -->
                                         <div class="job-summary"
-                                            data-bind="click: j.toggleAndExpand, style: { 'background': rowColour() }">
+                                            data-bind="click: j.toggleAndExpand, class: rowColour()">
                                             <!-- 1. Chevron / drag handle -->
                                             <div class="job-cell job-cell--chev" draggable="true"
                                                 data-bind="draggableRow: { data: j, kind: 'job' }, clickBubble: false">
@@ -839,6 +873,16 @@
                                                     aria-label="Expand/collapse incident">
                                                     <i class="fa fa-solid"
                                                         data-bind="css: { 'fa-plus': !j.expanded(), 'fa-minus': j.expanded() }"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- 1b. Pin -->
+                                            <div class="job-cell job-cell--pin" data-bind="clickBubble: false">
+                                                <button type="button"
+                                                    class="btn btn-link p-0 text-decoration-none pin-btn"
+                                                    title="Pin/unpin incident" data-bind="click: j.togglePinned">
+                                                    <i class="fa fa-thumbtack"
+                                                        data-bind="css: { 'is-pinned': j.isPinned(), 'not-pinned': !j.isPinned() }"></i>
                                                 </button>
                                             </div>
 
@@ -2140,8 +2184,80 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <!-- Pinned Teams & Incidents -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingPinned">
+                                            <button class="accordion-button collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapsePinned"
+                                                aria-expanded="false" aria-controls="collapsePinned">
+                                                Pinned Teams &amp; Incidents
+                                            </button>
+                                        </h2>
 
+                                        <div id="collapsePinned" class="accordion-collapse collapse"
+                                            aria-labelledby="headingPinned"
+                                            data-bs-parent="#configOtherSettingsAccordion">
+                                            <div class="accordion-body">
+                                                <div
+                                                    class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                                    <div class="small text-muted">
+                                                        Pinned teams: <span class="badge bg-primary"
+                                                            data-bind="text: config.pinnedTeamIds().length"></span>
+                                                        &nbsp;•&nbsp;
+                                                        Pinned incidents: <span class="badge bg-success"
+                                                            data-bind="text: config.pinnedIncidentIds().length"></span>
+                                                    </div>
+
+                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        data-bind="click: config.clearAllPinned, enable: (config.pinnedTeamIds().length + config.pinnedIncidentIds().length) > 0">
+                                                        Clear all pinned
+                                                    </button>
+                                                </div>
+
+                                                <div class="row g-2">
+                                                    <div class="col-12 col-md-6">
+                                                        <div class="border rounded p-2">
+                                                            <div
+                                                                class="d-flex align-items-center justify-content-between">
+                                                                <div class="fw-semibold small">Pinned Teams</div>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <span class="badge bg-primary"
+                                                                        data-bind="text: config.pinnedTeamIds().length"></span>
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-outline-secondary"
+                                                                        data-bind="click: config.clearPinnedTeams, enable: config.pinnedTeamIds().length > 0">
+                                                                        Clear
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-12 col-md-6">
+                                                        <div class="border rounded p-2">
+                                                            <div
+                                                                class="d-flex align-items-center justify-content-between">
+                                                                <div class="fw-semibold small">Pinned Incidents</div>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <span class="badge bg-success"
+                                                                        data-bind="text: config.pinnedIncidentIds().length"></span>
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-outline-secondary"
+                                                                        data-bind="click: config.clearPinnedIncidents, enable: config.pinnedIncidentIds().length > 0">
+                                                                        Clear
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div><!-- /accordion -->
+
+
                             </form>
                         </div>
                     </div>
