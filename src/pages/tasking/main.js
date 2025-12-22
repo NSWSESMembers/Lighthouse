@@ -234,15 +234,44 @@ function VM() {
         });
     });
 
+    const JOB_STATUS_ORDER = [
+        'New',
+        'Active',
+        'Tasked',
+        'Referred',
+        'Complete',
+        'Cancelled',
+        'Rejected',
+        'Finalised'
+    ];
+
+    const JOB_STATUS_RANK = JOB_STATUS_ORDER.reduce((m, s, i) => {
+        m[s] = i;
+        return m;
+    }, Object.create(null));
+
     self.sortedJobs = ko.pureComputed(function () {
         var key = self.jobSortKey(), asc = self.jobSortAsc();
         var arr = self.filteredJobs();
+
         return arr.slice().sort(function (a, b) {
-            var av = ko.unwrap(a[key]), bv = ko.unwrap(b[key]);
+            var av = ko.unwrap(a[key]);
+            var bv = ko.unwrap(b[key]);
+
+            // --- custom status order ---
+            if (key === 'statusName') {
+                var ar = JOB_STATUS_RANK[av] ?? Number.MAX_SAFE_INTEGER;
+                var br = JOB_STATUS_RANK[bv] ?? Number.MAX_SAFE_INTEGER;
+                return asc ? (ar - br) : (br - ar);
+            }
+
+            // --- default behaviour ---
             var an = typeof av === 'number' || /^\d+(\.\d+)?$/.test(av);
             var bn = typeof bv === 'number' || /^\d+(\.\d+)?$/.test(bv);
-            var cmp = (an && bn) ? (Number(av) - Number(bv))
+            var cmp = (an && bn)
+                ? (Number(av) - Number(bv))
                 : String(av || '').localeCompare(String(bv || ''), undefined, { numeric: true });
+
             return asc ? cmp : -cmp;
         });
     });
@@ -287,7 +316,7 @@ function VM() {
         updateSortHeaderUI(th, self.jobSortAsc());
     };
 
-    // --- (optional) initialize default icons on first render ---
+    // initialize default icons on first render ---
     ko.tasks.schedule(function () {
         var thTeams = document.querySelector('.teams thead th.sortable[data-sort-key="' + self.teamSortKey() + '"]');
         if (thTeams) updateSortHeaderUI(thTeams, self.teamSortAsc());
@@ -1877,16 +1906,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // Ensure only one job status dropdown is open at a time
-document.addEventListener('show.bs.dropdown', (e) => {
-  const btn = e.target;
-  if (!btn.classList.contains('jobstatus-dropdown-btn')) return;
+    document.addEventListener('show.bs.dropdown', (e) => {
+        const btn = e.target;
+        if (!btn.classList.contains('jobstatus-dropdown-btn')) return;
 
-  document.querySelectorAll('.jobstatus-dropdown-btn[aria-expanded="true"]').forEach((other) => {
-    if (other === btn) return;
-    const inst = bootstrap.Dropdown.getInstance(other) || bootstrap.Dropdown.getOrCreateInstance(other);
-    inst.hide();
-  });
-});
+        document.querySelectorAll('.jobstatus-dropdown-btn[aria-expanded="true"]').forEach((other) => {
+            if (other === btn) return;
+            const inst = bootstrap.Dropdown.getInstance(other) || bootstrap.Dropdown.getOrCreateInstance(other);
+            inst.hide();
+        });
+    });
 
     //get tokens
     BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(
