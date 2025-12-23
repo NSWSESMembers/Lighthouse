@@ -144,21 +144,32 @@ export function registerAlertRule(fn) {
   if (typeof fn === 'function') ruleBuilders.push(fn);
 }
 
-
 function buildDefaultRules(vm) {
-  const jobs = vm.filteredJobs(); // already respects status/HQ filters
+  const allJobs = vm.filteredJobsAgainstConfig(); // respects status/HQ filters but ignores pinned
 
-  const newJobs = jobs.filter(j => (j.statusName && j.statusName() === 'New'));
-  const untasked = jobs.filter(j => (Array.isArray(j.taskings()) && j.taskings().length === 0) && j.statusName && j.statusName() == 'Active');
-  const unackedNotifications = jobs.filter(j => (Array.isArray(j.unacceptedNotifications()) && j.unacceptedNotifications().length > 0));
-  const unGeoCoded = jobs.filter(j => {
+  const pinnedOnlyIncidents = vm.showPinnedIncidentsOnly();
+  const pinnedIncidentIds = (vm.config && vm.config.pinnedIncidentIds) ? vm.config.pinnedIncidentIds() : [];
+  const pinnedSet = new Set((pinnedIncidentIds || []).map(String));
+
+  const jobKey = (j) => String(j.id?.());
+  const isPinnedIncident = (j) => pinnedSet.has(jobKey(j));
+
+  // If pinned-only: alerts should be generated ONLY from pinned incidents.
+  const jobs = pinnedOnlyIncidents ? allJobs.filter(isPinnedIncident) : allJobs;
+
+  // --- helpers / predicates used by both pinned + hidden summarisation ---
+  const isNew = (j) => (j.statusName && j.statusName() === 'New');
+  const isUntaskedActive = (j) =>
+    (Array.isArray(j.taskings()) && j.taskings().length === 0) && j.statusName && j.statusName() === 'Active';
+  const hasUnackedNotifications = (j) =>
+    (Array.isArray(j.unacceptedNotifications()) && j.unacceptedNotifications().length > 0);
+  const isUnGeoCoded = (j) => {
     const lat = j.address?.latitude?.();
     const lng = j.address?.longitude?.();
     return lat == null || lng == null;
-  });
-  // jobs that are active with atleast one tasking that is completed
-  const completableJobs = jobs.filter(j => {
-    if (j.statusName && j.statusName() != 'Active') return false;
+  };
+  const isCompletable = (j) => {
+    if (j.statusName && j.statusName() !== 'Active') return false;
     if (j.taskings().length === 0) return false;
     const incompleteTaskings = j.taskings().every(t => t.isComplete?.() === false);
     const someoneDidSomething = j.taskings().some(t => t.isComplete?.() === true);
@@ -166,17 +177,48 @@ function buildDefaultRules(vm) {
     if (!incompleteTaskings) return false;
     if (!someoneDidSomething) return false;
     return true;
-  })
+  };
+
+  // --- rules (based on `jobs`, which respects pinnedOnlyIncidents) ---
+  const newJobs = jobs.filter(isNew);
+  const untasked = jobs.filter(isUntaskedActive);
+  const unackedNotifications = jobs.filter(hasUnackedNotifications);
+  const unGeoCoded = jobs.filter(isUnGeoCoded);
+  const completableJobs = jobs.filter(isCompletable);
+
   const asItem = j => ({
-    id: j.identifier?.() ?? j.id?.(),
-    label: (j.identifier?.() || j.id?.()) + ' — ' + j.type() + ' — '+ (j.address?.prettyAddress?.() || '')
+    id: jobKey(j),
+    label: jobKey(j) + ' — ' + j.type() + ' — ' + (j.address?.prettyAddress?.() || '')
   });
 
-  //warning
-  //danger
-  //caution
+  // --- single summary rule for “alerts hidden because incident isn’t pinned” ---
+  let hiddenCount = 0;
+  if (pinnedOnlyIncidents) {
+    const hiddenJobs = allJobs.filter(j => !isPinnedIncident(j));
+    const hiddenThatWouldAlert = hiddenJobs.filter(j =>
+      isNew(j) || isUntaskedActive(j) || hasUnackedNotifications(j) || isCompletable(j) || isUnGeoCoded(j)
+    );
+
+    // count unique incidents (defensive)
+    const uniq = new Set(hiddenThatWouldAlert.map(jobKey));
+    hiddenCount = uniq.size;
+  }
 
   return [
+    ...(pinnedOnlyIncidents && hiddenCount > 0 ? [{
+      id: 'hidden-unpinned-summary',
+      level: 'info',
+      title: 'Alerts hidden (from unpinned incidents)',
+      active: true,
+      items: [{ id: '__show_all__', label: `Show all incidents (${hiddenCount} hidden)` }],
+      count: hiddenCount,
+      onClick: (id) => {
+        if (id === '__show_all__' && typeof vm.showPinnedIncidentsOnly === 'function') {
+          vm.showPinnedIncidentsOnly(false);
+        }
+      }
+    }] : []),
+
     {
       id: 'new-jobs',
       level: 'warning',
@@ -185,8 +227,7 @@ function buildDefaultRules(vm) {
       items: newJobs.slice(0, 10).map(asItem),
       count: newJobs.length,
       onClick: (id) => {
-        // focus the job if present
-        const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
+        const found = jobs.find(j => jobKey(j) === id);
         found?.focusMap();
       }
     },
@@ -198,12 +239,11 @@ function buildDefaultRules(vm) {
       items: untasked.slice(0, 10).map(asItem),
       count: untasked.length,
       onClick: (id) => {
-        // focus the job if present
-        const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
+        const found = jobs.find(j => jobKey(j) === id);
         found?.focusMap();
       }
     },
-     {
+    {
       id: 'unacked-notifications',
       level: 'danger',
       title: 'Unacknowledged notifications',
@@ -211,8 +251,7 @@ function buildDefaultRules(vm) {
       items: unackedNotifications.slice(0, 10).map(asItem),
       count: unackedNotifications.length,
       onClick: (id) => {
-        // optional: focus the job if present
-        const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
+        const found = jobs.find(j => jobKey(j) === id);
         found?.focusMap();
       }
     },
@@ -224,8 +263,7 @@ function buildDefaultRules(vm) {
       items: completableJobs.slice(0, 10).map(asItem),
       count: completableJobs.length,
       onClick: (id) => {
-        // focus the job if present
-        const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
+        const found = jobs.find(j => jobKey(j) === id);
         found?.focusMap();
       }
     },
@@ -237,13 +275,13 @@ function buildDefaultRules(vm) {
       items: unGeoCoded.slice(0, 10).map(asItem),
       count: unGeoCoded.length,
       onClick: (id) => {
-        // focus the job if present
-        const found = jobs.find(j => (j.identifier?.() ?? j.id?.()) === id);
+        const found = jobs.find(j => jobKey(j) === id);
         found?.focusAndExpandInList();
       }
     }
   ];
 }
+
 
 /**
  * installAlerts(map, vm)

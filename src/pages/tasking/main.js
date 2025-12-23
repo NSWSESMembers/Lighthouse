@@ -368,7 +368,7 @@ function VM() {
     //Job filtering/searching
     self.jobSearch = ko.observable('');
 
-    self.filteredJobs = ko.pureComputed(() => {
+    self.filteredJobsAgainstConfig = ko.pureComputed(() => {
 
         const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
         const sectorFilter = self.config.sectorFilters().map(s => s.id);
@@ -386,16 +386,11 @@ function VM() {
 
         start.setDate(end.getDate() - self.config.fetchPeriod());
 
-        const pinnedOnlyIncidents = self.showPinnedIncidentsOnly();
-        const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
 
-            // pinned-only filter
-            if (pinnedOnlyIncidents && !pinnedIncidentIds.includes(String(jb.id()))) {
-                return false;
-            }
+
             const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
             const sectorMatch = sectorFilter.length === 0 || (jb.sector() && sectorFilter.includes(jb.sector().id()));
             //must match sector filter
@@ -433,6 +428,22 @@ function VM() {
                 jb.id().toString().toLowerCase().includes(term) ||
                 jb.address.prettyAddress().toLowerCase().includes(term));
         });
+    }).extend({ trackArrayChanges: true, rateLimit: 50 });
+
+        self.filteredJobs = ko.pureComputed(() => {
+
+        const pinnedOnlyIncidents = self.showPinnedIncidentsOnly();
+        const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
+
+        return ko.utils.arrayFilter(this.filteredJobsAgainstConfig(), jb => {
+
+            // pinned-only filter
+            if (pinnedOnlyIncidents && !pinnedIncidentIds.includes(String(jb.id()))) {
+                return false;
+            }
+            return true;
+        })
+
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
     //ignores the word filering. Maybe dont need this anymore.

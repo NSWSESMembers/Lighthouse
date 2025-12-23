@@ -1404,7 +1404,7 @@ tr.job:hover {
 .jobs{
   --job-cols:
     30px    /* chev */
-    30px    /* pin */
+    20px    /* pin */
     0.28fr  /* Id */
     0.5fr   /* Received */
     0.3fr   /* HQ */
