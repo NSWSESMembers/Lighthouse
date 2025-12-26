@@ -52,6 +52,7 @@ import { registerSESUnitsZonesHybridGridLayer } from "./mapLayers/geoservices.js
 import { registerSESUnitLocationsLayer } from "./mapLayers/geoservices.js";
 import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
 import { renderFRAOSLayer } from "./mapLayers/frao.js";
+import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
@@ -430,7 +431,7 @@ function VM() {
         });
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
-        self.filteredJobs = ko.pureComputed(() => {
+    self.filteredJobs = ko.pureComputed(() => {
 
         const pinnedOnlyIncidents = self.showPinnedIncidentsOnly();
         const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
@@ -1634,6 +1635,7 @@ function VM() {
     registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
     registerSESZonesGridLayer(self);
     registerSESUnitsZonesHybridGridLayer(self, map);
+    registerHazardWatchWarningsLayer(self, apiHost);
     registerSESUnitLocationsLayer(self);
     renderFRAOSLayer(self, map, getToken, apiHost, params);
 
@@ -1743,57 +1745,114 @@ function VM() {
                 groups.get(g).push(def);
             });
 
-            groups.forEach((defs, groupKey) => {
-                // Group heading using Bootstrap text utilities
-                if (groupKey) {
-                    const heading = document.createElement("div");
-                    heading.className =
-                        "text-muted text-uppercase fw-semibold small mt-2 mb-1";
-                    heading.textContent = groupKey;
-                    overlaysEl.appendChild(heading);
-                }
+            // Build Bootstrap accordion container
+            const acc = document.createElement("div");
+            acc.className = "accordion accordion-flush";
+            acc.id = "ld-overlays-accordion";
+            overlaysEl.appendChild(acc);
 
+            // Helpers
+            const safeId = (s) =>
+                String(s || "")
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "-")
+                    .replace(/(^-|-$)/g, "") || "other";
+
+            const groupTitle = (k) => (k && String(k).trim() ? k : "Other");
+
+            // Build one accordion item per group (sub section)
+            let idx = 0;
+            groups.forEach((defs, groupKey) => {
+                idx += 1;
+
+                const gid = safeId(groupKey);
+                const storeKey = `layers.ovgrp.${gid}`;
+                const open = localStorage.getItem(storeKey) !== "0"; // default open
+
+                const item = document.createElement("div");
+                item.className = "accordion-item";
+
+                const headerId = `ld-ov-h-${gid}-${idx}`;
+                const collapseId = `ld-ov-c-${gid}-${idx}`;
+
+                item.innerHTML = `
+      <h2 class="accordion-header" id="${headerId}">
+        <button class="accordion-button layermenu-accordion ${open ? "" : "collapsed"} py-2 px-2"
+                type="button"
+                aria-expanded="${open ? "true" : "false"}"
+                aria-controls="${collapseId}">
+          <span class="text-muted text-uppercase fw-semibold small">${groupTitle(groupKey)}</span>
+        </button>
+      </h2>
+      <div id="${collapseId}"
+     class="accordion-collapse collapse ${open ? "show" : ""}"
+     aria-labelledby="${headerId}"
+     data-bs-parent="#ld-overlays-accordion">
+        <div class="accordion-body p-2"></div>
+      </div>
+    `;
+
+                acc.appendChild(item);
+
+                const btn = item.querySelector(".accordion-button");
+                const body = item.querySelector(".accordion-body");
+                const collapseEl = item.querySelector(".accordion-collapse");
+
+                // Bootstrap Collapse instance with accordion behaviour (only one open at a time)
+                const collapse = new bootstrap.Collapse(collapseEl, { toggle: false, parent: acc });
+
+                btn.addEventListener("click", () => collapse.toggle());
+
+                collapseEl.addEventListener("shown.bs.collapse", () => {
+                    localStorage.setItem(storeKey, "1");
+                    btn.classList.remove("collapsed");
+                    btn.setAttribute("aria-expanded", "true");
+                });
+
+                collapseEl.addEventListener("hidden.bs.collapse", () => {
+                    localStorage.setItem(storeKey, "0");
+                    btn.classList.add("collapsed");
+                    btn.setAttribute("aria-expanded", "false");
+                });
+
+                // Render overlay buttons inside this group's accordion body
                 defs.forEach(({ key, label, layer, visibleByDefault }) => {
                     const stored = localStorage.getItem(`ov.${key}`);
-                    // If nothing stored yet, use visibleByDefault from the definition
                     const saved = (stored === null)
                         ? (visibleByDefault === true)
                         : (stored === "1");
+
                     if (saved) map.addLayer(layer);
 
-                    const btn = document.createElement("button");
-                    btn.type = "button";
-                    btn.className =
+                    const obtn = document.createElement("button");
+                    obtn.type = "button";
+                    obtn.className =
                         "btn btn-sm w-100 text-start d-flex align-items-center justify-content-between mb-1 ld-overlay-btn " +
-                        (saved ? "btn-primary" : "btn-outline-secondary");
-                    btn.dataset.key = key;
-                    btn.innerHTML = `
-              <span class="me-2">${label}</span>
-              <span class="ms-auto">
-                <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
-              </span>
-            `;
+                        (saved ? "btn-outline-secondary active" : "btn-outline-secondary");
+                    obtn.dataset.key = key;
+                    obtn.innerHTML = `
+          <span class="me-2">${label}</span>
+          <span class="ms-auto">
+            <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
+          </span>
+        `;
 
-                    btn.addEventListener("click", () => {
-                        const icon = btn.querySelector("i");
-                        const isOn = btn.classList.contains("btn-primary");
+                    obtn.addEventListener("click", () => {
+                        const icon = obtn.querySelector("i");
+                        const isOn = obtn.classList.contains("active");
 
                         if (isOn) {
-                            // turn OFF
                             map.removeLayer(layer);
                             localStorage.setItem(`ov.${key}`, "0");
-                            btn.classList.remove("btn-primary");
-                            btn.classList.add("btn-outline-secondary");
+                            obtn.classList.remove("active");
                             if (icon) {
                                 icon.classList.remove("fa-toggle-on");
                                 icon.classList.add("fa-toggle-off");
                             }
                         } else {
-                            // turn ON
                             map.addLayer(layer);
                             localStorage.setItem(`ov.${key}`, "1");
-                            btn.classList.add("btn-primary");
-                            btn.classList.remove("btn-outline-secondary");
+                            obtn.classList.add("active");
                             if (icon) {
                                 icon.classList.remove("fa-toggle-off");
                                 icon.classList.add("fa-toggle-on");
@@ -1801,9 +1860,11 @@ function VM() {
                         }
                     });
 
-                    overlaysEl.appendChild(btn);
+
+                    body.appendChild(obtn);
                 });
             });
+
 
             const btn = c.querySelector(".btn");
             const panel = c.querySelector(".ld-panel");
