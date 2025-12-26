@@ -181,19 +181,4 @@ export function CreateOpsLogModalVM(parentVM) {
     });
   }
 
-  function createUiTag(tag) {
-    return {
-        model: tag,
-
-        id: tag.id,
-        name: tag.name,
-        groupId: tag.tagGroupId,
-
-        selected: ko.observable(false),
-
-        toggle() {
-        this.selected(!this.selected());
-        }
-    };
-  }
 }
