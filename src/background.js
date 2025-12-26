@@ -34,7 +34,9 @@ const essentialEnergyOutagesFeed =
 const endeavourEnergyOutagesFeed =
   'https://www.endeavourenergy.com.au/designs/connectors/outage-feeds/get-current-outage';
 const ausgridBaseUrl = 'https://www.ausgrid.com.au/';
-const hazardWatchUrl = 'https://feed.firesnearme.hazards.rfs.nsw.gov.au/';
+const hazardWatchTrainingUrl = 'https://training.hazardwatch.gov.au/feed/v1/nswses-cap-au-active-warnings.geojson';
+const hazardWatchUrl = 'https://hazardwatch.gov.au/feed/v1/nswses-cap-au-active-warnings.geojson ';
+
 //external libs
 
 var activeTabForTaskingRemote = null
@@ -156,6 +158,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       sendResponse(data);
     });
     return true;
+  } else if (request.type === 'hazard-watch-training') {
+    fetchTrainingHazardWatch(function (data) {
+      sendResponse(data);
+    });
+    return true;
   } else if (request.type === 'myAvailabilityOOAACSV') {
     pullmyAvailOOAACSV(request.url, function (data) {
       sendResponse(data);
@@ -209,7 +216,6 @@ function pullmyAvailOOAACSV(url, cb) {
       cb(text)
     });
 }
-
 
 /**
  * Fetches the current RFS incidents from their JSON feed.
@@ -319,7 +325,6 @@ function fetchHelicopterLocations(params, callback) {
 /**
  * Fetches the hazard watch.
  *
- * @param params the HTTP URL parameters to add.
  * @param callback the callback to send the data to.
  */
 function fetchHazardWatch(callback) {
@@ -329,6 +334,38 @@ function fetchHazardWatch(callback) {
       if (resp.ok) {
         resp.json().then((json) => {
           console.info('sending hazard watch');
+          callback(json);
+        });
+      } else {
+        // error
+        var response = {
+          error: 'Request failed',
+          httpCode: 'error',
+        };
+        callback(response);
+      }
+    })
+    .catch(() => {
+      // error
+      var response = {
+        error: 'Request failed',
+        httpCode: 'error',
+      };
+      callback(response);
+    });
+}
+
+/**
+ * Fetches the hazard watch training data.
+ *
+ * @param callback the callback to send the data to.
+ */
+function fetchTrainingHazardWatch(callback) {
+  console.info('fetching hazard watch training data');
+  fetch(hazardWatchTrainingUrl)
+    .then((resp) => {
+      if (resp.ok) {
+        resp.json().then((json) => {
           callback(json);
         });
       } else {
