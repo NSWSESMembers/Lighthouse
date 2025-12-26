@@ -243,7 +243,7 @@ export function Tasking(data = {}) {
     );
 
     self.canEnroute = ko.pureComputed(() =>
-    !self.cannotUpdateStatus() && self.isActiveStatus()
+    !self.cannotUpdateStatus() && self.isTasked()
     );
 
     self.canCalloff = ko.pureComputed(() =>
@@ -251,11 +251,11 @@ export function Tasking(data = {}) {
     );
 
     self.canOnsite = ko.pureComputed(() =>
-    !self.cannotUpdateStatus() && self.isActiveStatus()
+    !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute())
     );
 
     self.canOffsite = ko.pureComputed(() =>
-    !self.cannotUpdateStatus() && self.isActiveStatus()
+    !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute() || self.isOnsite())
     );
 
     self.canComplete = ko.pureComputed(() =>
