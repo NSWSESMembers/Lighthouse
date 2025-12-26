@@ -2148,3 +2148,9 @@ input[type="search"]::-ms-clear {
 .pin-toggle.active {
   border-color: #ffc107;
 }
+
+/* hide popups + tooltips while hotkey held */
+.map-popups-hidden .leaflet-popup-pane,
+.map-popups-hidden .leaflet-tooltip-pane {
+  display: none !important;
+}

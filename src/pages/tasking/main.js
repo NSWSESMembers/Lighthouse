@@ -2022,6 +2022,38 @@ function VM() {
         });
     };
 
+    (function installPopupHideHotkey() {
+        let active = false;
+
+        function isTypingTarget(e) {
+            const t = e.target;
+            return t &&
+                (t.tagName === 'INPUT' ||
+                    t.tagName === 'TEXTAREA' ||
+                    t.isContentEditable);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code !== 'Space') return;
+            if (e.repeat) return;
+            if (isTypingTarget(e)) return;
+
+            e.preventDefault(); // stop page scroll
+            if (active) return;
+            active = true;
+
+            document.body.classList.add('map-popups-hidden');
+        }, { passive: false });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code !== 'Space') return;
+            active = false;
+
+            document.body.classList.remove('map-popups-hidden');
+        });
+    })();
+
+
 
 }
 
