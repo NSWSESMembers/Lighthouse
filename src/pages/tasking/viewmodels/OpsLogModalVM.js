@@ -27,68 +27,38 @@ export function CreateOpsLogModalVM(parentVM) {
 
   // UI
   self.headerLabel = ko.observable("");
-  self.tagsByGroup = {};
   self.errorMessage = ko.observable("");
   self.showError = ko.observable(false);
 
   self.uiTags = ko.observableArray([]);
+  self.tagsByGroup = {};
 
   self.initTags = () => {
-    const tags = parentVM.allTags ? parentVM.allTags() : [];
-    self.uiTags(tags.map(tag => createUiTag(tag)));
+    const tags = ko.unwrap(parentVM.allTags) || {};
+
+    self.uiTags(tags.map(t => new uiTag(t)));
   };
 
-  self.tagIds = ko.computed(() =>
+  self.tagIds = ko.pureComputed(() =>
     self.uiTags()
       .filter(t => t.selected())
       .map(t => t.id())
-  );
+      .filter(id => id != null)
+  );  
 
   [2, 3, 4, 27].forEach(gid => {
     self.tagsByGroup[gid] = ko.pureComputed(() =>
-        self.uiTags().filter(t => t.groupId() === gid)
+      self.uiTags().filter(t => t.tagGroupId() === gid)
     );
   });
 
-  function preselectTag(idToSelect) {
-    self.uiTags().forEach(t => {
-      t.selected(t.id() === idToSelect);
-    });
-  }
-
-  self.tagIds = ko.computed(() =>
-    self.uiTags()
-      .filter(t => t.selected())
-      .map(t => t.id())
-  );
-
   self.ActionRequiredCheck = ko.computed(() => {
     const anyActionTagSelected = self.uiTags().some(
-        t => t.selected() && t.groupId() === 27
+        t => t.selected() && t.tagGroupId() === 27
     );
 
     self.actionRequired(anyActionTagSelected);
   });
-
-  self.openForTasking = async (tasking) => {
-    self.resetFields();
-    self.jobId(tasking.job.id() || "");
-    self.subject(tasking.teamCallsign() || "");
-    self.initTags();
-    preselectTag(6);
-
-    self.headerLabel(`New Radio Log for ${tasking.teamCallsign?.() || ""} on ${tasking.job.identifier() || ""}`);
-  }
-
-  self.openForTeam = async (team) => {
-    // NEED TO COME BACK AND ADD HQ ONCE TIM HAS SETUP THE CONFIG PAGE TO USE IT.
-    self.resetFields();
-    self.subject(team.callsign() || "");
-    self.initTags();
-    preselectTag(6);
-
-    self.headerLabel(`New Radio Log for ${team.callsign?.() || ""}`);
-  }
 
   self.openForNewJobLog = async (job) => {
     self.resetFields();
@@ -127,14 +97,14 @@ export function CreateOpsLogModalVM(parentVM) {
 
       // No text
       if (!self.text() || self.text().trim().length === 0) {
-          self.errorMessage("Text is required.");
+          self.errorMessage("Error: You must enter text.");
           self.showError(true);
           return false;
       }
 
       // No tags
       if (self.tagIds().length === 0) {
-          self.errorMessage("You must select at least one tag.");
+          self.errorMessage("Error: You must select at least one tag.");
           self.showError(true);
           return false;
       }
@@ -188,19 +158,27 @@ export function CreateOpsLogModalVM(parentVM) {
       self.errorMessage("");
   };
 
-  function createUiTag(tag) {
-    return {
-        model: tag,
+  function uiTag(tag) {
+    this.tag = tag;
 
-        id: tag.id,
-        name: tag.name,
-        groupId: tag.tagGroupId,
+    this.id = tag.id;
+    this.name = tag.name;
+    this.tagGroupId = tag.tagGroupId;
 
-        selected: ko.observable(false),
+    this.returnTagText = tag.returnTagText;
+    this.returnTagClass = tag.returnTagClass;
+    this.returnTagClassSelected = tag.returnTagClassSelected;
+    this.returnTagIcon = tag.returnTagIcon;
 
-        toggle() {
-        this.selected(!this.selected());
-        }
-    };
+    this.selected = ko.observable(false);
+
+    this.toggle = () => this.selected(!this.selected());
+
+    this.pillClass = ko.pureComputed(() => {
+      return this.selected()
+        ? this.returnTagClassSelected()
+        : this.returnTagClass();
+    });
   }
+
 }

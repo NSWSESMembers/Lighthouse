@@ -1326,8 +1326,8 @@ function VM() {
             tasking.job.fetchTasking();
             cb(data);
         }, function (err) {
-            console.error("Failed to create ops log entry:", err);
-            showAlert("Failed to create ops log entry.", "danger", 5000);
+            console.error("Failed to Untask Team:", err);
+            showAlert("Failed to Untask Team.", "danger", 5000);
             cb(null);
         });
     }

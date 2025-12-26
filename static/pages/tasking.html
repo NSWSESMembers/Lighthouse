@@ -1533,7 +1533,7 @@
                     <div class="row g-3 align-items-start top-band">
                         <!-- Search area -->
                         <div class="col-lg-12">
-                            <label class="form-label">Filter by Head Quarters</label>
+                            <label class="form-label">Filter by Headquarters</label>
                             <div class="input-group position-relative">
                                 <input id="locationSearch" type="search" class="form-control" placeholder="Search…"
                                     autocomplete="off" data-bind="value: config.query, valueUpdate: 'afterkeydown', hasFocus: config.inputHasFocus,
@@ -2775,49 +2775,44 @@
                     <!-- Contact Types -->
                     <h6>Contact Types</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[2]">
-                        <span class="tag-pill" data-bind="click: toggle,
-                                        css: { 'tag-selected': selected }">
-
-                            <i data-bind="class: returnTagIcon"></i><span data-bind="text: name"></span>
-
-                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
+                        <span class="tag-pill"
+                            data-bind="click: toggle, css: pillClass">
+                        <i data-bind="attr: { class: returnTagIcon() }"></i>
+                        <span data-bind="text: returnTagText"></span>
+                        <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
 
                     <!-- Contact Methods -->
                     <h6>Contact Methods</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[3]">
-                        <span class="tag-pill" data-bind="click: toggle,
-                                        css: { 'tag-selected': selected }">
-
-                            <span data-bind="text: name"></span>
-
-                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
+                        <span class="tag-pill"
+                            data-bind="click: toggle, css: pillClass">
+                        <i data-bind="attr: { class: returnTagIcon() }"></i>
+                        <span data-bind="text: returnTagText"></span>
+                        <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
 
                     <!-- Entry Purpose -->
                     <h6>Entry Purpose</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[4]">
-                        <span class="tag-pill" data-bind="click: toggle,
-                                        css: { 'tag-selected': selected }">
-
-                            <span data-bind="text: name"></span>
-
-                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
+                        <span class="tag-pill"
+                            data-bind="click: toggle, css: pillClass">
+                        <i data-bind="attr: { class: returnTagIcon() }"></i>
+                        <span data-bind="text: returnTagText"></span>
+                        <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
 
                     <!-- Action Items -->
                     <h6>Action Items</h6>
                     <div class="tag-list" data-bind="foreach: tagsByGroup[27]">
-                        <span class="action-pill" data-bind="click: toggle,
-                                        css: { 'tag-selected': selected }">
-
-                            <span data-bind="text: name"></span>
-
-                            <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
-
+                        <span class="tag-pill"
+                            data-bind="click: toggle, css: pillClass">
+                        <i data-bind="attr: { class: returnTagIcon() }"></i>
+                        <span data-bind="text: returnTagText"></span>
+                        <i class="far fa-times-circle tag-icon" data-bind="visible: selected"></i>
                         </span>
                     </div>
                     <h6>Subject</h6>

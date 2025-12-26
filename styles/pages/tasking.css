@@ -1735,7 +1735,6 @@ tr.job:hover {
 }
 
 .team-status-button::after {
-  content: '▾'; /* small dropdown arrow */
   position: absolute;
   right: 8px;
   top: 50%;
@@ -1743,6 +1742,10 @@ tr.job:hover {
   font-size: 0.7rem;
   pointer-events: none;
   opacity: 0.7;
+}
+
+.team-status-button.dropdown-toggle::after {
+  display: inline-block;
 }
 
 #TeamStatusDropdown {
@@ -1875,6 +1878,12 @@ tr.job:hover {
 .tag-further-action {
   color: #fff;
   background-color: #ee0039;
+  border-color: #ee0039;
+}
+
+.tag-further-action-selected {
+  color: #ee0039;
+  background-color: #fff;
   border-color: #ee0039;
 }
 
