@@ -36,7 +36,7 @@
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle"
                             title="Toggle pinned-only teams"
-                            data-bind="click: togglePinnedTeamsOnly, css: { active: showPinnedTeamsOnly }">
+                            data-bind="click: togglePinnedTeamsOnly, css: { active: showPinnedTeamsOnly }, disable: !countPinnedTeams()">
                             <i class="fa fa-thumbtack"></i>
                         </button>
                         <div class="dropdown">
@@ -664,7 +664,7 @@
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle"
                             title="Toggle pinned-only incidents"
-                            data-bind="click: togglePinnedIncidentsOnly, css: { active: showPinnedIncidentsOnly }">
+                            data-bind="click: togglePinnedIncidentsOnly, css: { active: showPinnedIncidentsOnly }, disable: !countPinnedIncidents()">
                             <i class="fa fa-thumbtack"></i>
                         </button>
                         <div class="dropdown">

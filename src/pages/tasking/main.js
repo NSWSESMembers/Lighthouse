@@ -240,6 +240,16 @@ function VM() {
         return arr.includes(normPinId(jobId));
     };
 
+    self.countPinnedTeams = ko.pureComputed(() => {
+        if (!self.config || !self.config.pinnedTeamIds) return 0;
+        return self.filteredTeams().filter(t => self.isTeamPinned(t.id())).length;
+    })
+
+    self.countPinnedIncidents = ko.pureComputed(() => {
+        if (!self.config || !self.config.pinnedIncidentIds) return 0;
+        return self.filteredJobs().filter(j => self.isIncidentPinned(j.id())).length;
+    })
+
     self.toggleTeamPinned = (teamId) => {
         if (!self.config || !self.config.pinnedTeamIds) return false;
         const id = normPinId(teamId);
@@ -247,6 +257,9 @@ function VM() {
         if (arr.includes(id)) self.config.pinnedTeamIds.remove(id);
         else self.config.pinnedTeamIds.push(id);
         self.config.save?.();
+        if (self.countPinnedTeams() === 0) {
+            self.showPinnedTeamsOnly(false);
+        }
         return true;
     };
 
@@ -257,6 +270,9 @@ function VM() {
         if (arr.includes(id)) self.config.pinnedIncidentIds.remove(id);
         else self.config.pinnedIncidentIds.push(id);
         self.config.save?.();
+        if (self.countPinnedIncidents() === 0) {
+            self.showPinnedIncidentsOnly(false);
+        }
         return true;
     };
 
