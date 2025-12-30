@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Lighthouse Tasking</title>
+    <title>Lighthouse - LAD</title>
 </head>
 
 <body style="opacity:0; transition: opacity .25s ease;">
@@ -210,10 +210,9 @@
                                             <div class="team-cell">
                                                 <span data-bind="text: t.callsign"></span>
 
-                                                <span class="fa-stack" data-bind="visible: !t.trackableAssets().length">
-                                                    <i class="fas fa-map-marker-alt fa-stack-1x"></i>
-                                                    <i class="fa fa-ban fa-stack-2x text-danger"
-                                                        style="color:Tomato"></i>
+                                                <span class="fa-stack" data-bind="visible: !t.trackableAssets().length" title="No matching asset found">
+                                                    <i class="fas fa-car fa-stack-1x"></i>
+                                                    <i class="fa fa-ban fa-stack-2x text-danger" style="color:Tomato"></i>
                                                 </span>
                                             </div>
 
@@ -246,7 +245,7 @@
                                                         data-bind="click: t.sendSMS, clickBubble: false, disable: !t.members().length">
                                                         <i class="fa fa-solid fa-envelope"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-outline-secondary" title="Edit"
+                                                    <button type="button" class="btn btn-outline-secondary" title="Edit in beacon"
                                                         data-bind="click: t.openBeaconEditTeam, clickBubble: false">
                                                         <i class="fas fa-external-link-alt"></i>
                                                     </button>
@@ -257,13 +256,15 @@
                                                         <span
                                                             class="position-absolute top-0 start-100 badge rounded-pill bg-info"
                                                             style="font-size:0.6em; transform: translate(-50%, 5%);"
-                                                            data-bind="text: t.trackableAssets().length, visible: t.trackableAssets().length > 1">
+                                                            data-bind="text: t.trackableAssets().length, visible: t.trackableAssets().length > 1"
+                                                            title="More than one match">
                                                         </span>
                                                         <span
                                                             class="position-absolute top-0 start-100 badge rounded-pill bg-warning"
                                                             style="font-size:0.6em; transform: translate(-50%, 105%);"
-                                                            data-bind="visible: t.trackableAssetsWithMultipleTeams().length > 0"><i
-                                                                class="fa fa-users" aria-hidden="true"></i>
+                                                            data-bind="visible: t.trackableAssetsWithMultipleTeams().length > 0"
+                                                            title="More than one team matches this asset"><i
+                                                            class="fa fa-users" aria-hidden="true"></i>
 
                                                         </span>
                                                     </button>
@@ -1519,7 +1520,7 @@
                 <div class="modal-header py-2 px-3">
 
                     <div class="d-flex flex-column">
-                        <h5 class="modal-title mb-1">Page Configuration</h5>
+                        <h5 class="modal-title mb-1">LAD - Configuration</h5>
                     </div>
 
 
