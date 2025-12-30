@@ -1725,6 +1725,7 @@ tr.job:hover {
 
 .team-status-button {
   border: 1px solid #ccc;
+  min-width: 90px;
   background: #fff;
   padding: 4px 24px 4px 8px; /* space for icon on the right */
   border-radius: 4px;
