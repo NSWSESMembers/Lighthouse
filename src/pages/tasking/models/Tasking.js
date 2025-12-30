@@ -60,25 +60,25 @@ export function Tasking(data = {}) {
     });
     self.statusSetAt = ko.pureComputed(() => (self.currentStatusTime() ? moment(self.currentStatusTime()).format("DD/MM/YYYY HH:mm:ss") : null));
 
- self.statusTimeAgo = ko.pureComputed(() => {
-    // read _tick so this recomputes every second
-    _tick();
+    self.statusTimeAgo = ko.pureComputed(() => {
+        // read _tick so this recomputes every second
+        _tick();
 
-    const time = self.currentStatusTime();
-    return time ? Math.floor((Date.now() - new Date(time).getTime()) / 1000) : null;
-  });
+        const time = self.currentStatusTime();
+        return time ? Math.floor((Date.now() - new Date(time).getTime()) / 1000) : null;
+    });
 
-  // optional: nice label (e.g., "3m", "1h")
-  self.statusTimeAgoLabel = ko.pureComputed(() => {
-    const s = self.statusTimeAgo();
-    if (s == null) return "-";
-    if (s < 60) return `${s}s ago`;
-    const m = Math.floor(s / 60);
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    const mr = m % 60;
-    return mr ? `${h}h ${mr}m ago` : `${h}h ago`;
-  });
+    // optional: nice label (e.g., "3m", "1h")
+    self.statusTimeAgoLabel = ko.pureComputed(() => {
+        const s = self.statusTimeAgo();
+        if (s == null) return "-";
+        if (s < 60) return `${s}s ago`;
+        const m = Math.floor(s / 60);
+        if (m < 60) return `${m}m ago`;
+        const h = Math.floor(m / 60);
+        const mr = m % 60;
+        return mr ? `${h}h ${mr}m ago` : `${h}h ago`;
+    });
 
     self.isTasked = ko.pureComputed(() => (self.currentStatus() || "").toLowerCase() === "tasked");
     self.isEnroute = ko.pureComputed(() => (self.currentStatus() || "").toLowerCase() === "enroute");
@@ -135,7 +135,7 @@ export function Tasking(data = {}) {
             if (!exists) newJob.taskings.push(self);
         }
     };
-    
+
 
     self.sendSMS = function () {
         self.team.sendSMSwithTasking(self);
@@ -166,18 +166,18 @@ export function Tasking(data = {}) {
         this.job.openRadioLogModal(self);
     };
 
-/*
-    self.UpdateTeamStatusDropdown = function (tasking, anchorE1) {
-        this.job.UpdateTeamStatusDropdown(tasking, anchorE1);
-    };
-
-    Need to get rid fo this.
-*/ 
+    /*
+        self.UpdateTeamStatusDropdown = function (tasking, anchorE1) {
+            this.job.UpdateTeamStatusDropdown(tasking, anchorE1);
+        };
+    
+        Need to get rid fo this.
+    */
     self.tagColorFromStatus = function () {
         const status = (self.currentStatus() || "").toLowerCase();
         switch (status) {
             case "tasked":
-                return "bg-primary";
+                return "bg-primary text-white";
             case "enroute":
                 return "bg-info";
             case "onsite":
@@ -185,7 +185,7 @@ export function Tasking(data = {}) {
             case "complete":
                 return "bg-success";
             default:
-                return "bg-secondary";
+                return "bg-secondary text-white";
         }
     }
 
@@ -208,6 +208,7 @@ export function Tasking(data = {}) {
     self.statusPageVisible = ko.pureComputed(() => self.statusDropdownPage() === "status");
     self.detailsPageVisible = ko.pureComputed(() => self.statusDropdownPage() === "details");
     self.needsTimeSet = ko.observable(false);
+
     self.needsETA = ko.observable(false);
     self.needsETC = ko.observable(false);
     self.needsReason = ko.observable(false);
@@ -217,9 +218,17 @@ export function Tasking(data = {}) {
     self.etc = ko.observable(null);
     self.callOffReason = ko.observable(null);
 
+    // UI-only state for time override checkbox
+    self.timeOverrideEnabled = ko.observable(false);
+
     function getQueryParam(name) {
         return new URLSearchParams(window.location.search).get(name);
     }
+
+    // effective visibility
+    self.showTimeInput = ko.pureComputed(function () {
+        return self.needsTimeSet() && self.timeOverrideEnabled();
+    });
 
     self.taskCompletionLink = function () {
         const source = getQueryParam("source");
@@ -231,35 +240,35 @@ export function Tasking(data = {}) {
     }
 
     self.cannotUpdateStatus = ko.pureComputed(() =>
-    self.isUntasked() || self.isCalledOff() || self.isComplete()
+        self.isUntasked() || self.isCalledOff() || self.isComplete()
     );
 
     self.isActiveStatus = ko.pureComputed(() =>
-    self.isTasked() || self.isEnroute() || self.isOnsite() || self.isOffsite()
+        self.isTasked() || self.isEnroute() || self.isOnsite() || self.isOffsite()
     );
 
     self.canUntask = ko.pureComputed(() =>
-    !self.cannotUpdateStatus() && self.isTasked()
+        !self.cannotUpdateStatus() && self.isTasked()
     );
 
     self.canEnroute = ko.pureComputed(() =>
-    !self.cannotUpdateStatus() && self.isTasked()
+        !self.cannotUpdateStatus() && self.isTasked()
     );
 
     self.canCalloff = ko.pureComputed(() =>
-    !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute())
+        !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute())
     );
 
     self.canOnsite = ko.pureComputed(() =>
-    !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute())
+        !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute())
     );
 
     self.canOffsite = ko.pureComputed(() =>
-    !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute() || self.isOnsite())
+        !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute() || self.isOnsite())
     );
 
     self.canComplete = ko.pureComputed(() =>
-    !self.cannotUpdateStatus() && self.isActiveStatus()
+        !self.cannotUpdateStatus() && self.isActiveStatus()
     );
 
     self.etaQuickButtons = [
@@ -293,49 +302,49 @@ export function Tasking(data = {}) {
     }
 
     self.statusOptions = ko.pureComputed(function () {
-    return [
-        { key: "Untask", label: "Remove Tasking", enabled: self.canUntask(), needsDetails: false ,needsTimeSet: false, needsETA: false, needsETC: false, needsReason: false },
-        { key: "Enroute", label: "En route", enabled: self.canEnroute(), needsDetails: true , needsTimeSet: true, needsETA: true, needsETC: false, needsReason: false },
-        { key: "CallOff", label: "Call off", enabled: self.canCalloff(), needsDetails: true , needsTimeSet: false, needsETA: false, needsETC: false, needsReason: true },
-        { key: "Onsite", label: "On site", enabled: self.canOnsite(), needsDetails: true , needsTimeSet: true, needsETA: false, needsETC: true, needsReason: false },
-        { key: "Offsite", label: "Off site", enabled: self.canOffsite(), needsDetails: true , needsTimeSet: true, needsETA: false, needsETC: false, needsReason: false },
-        { key: "Complete", label: "Complete", enabled: self.canComplete(), needsDetails: false , needsTimeSet: false, needsETA: false, needsETC: false, needsReason: false }
-    ];
+        return [
+            { key: "Untask", label: "Remove Tasking", enabled: self.canUntask(), needsDetails: false, needsTimeSet: false, needsETA: false, needsETC: false, needsReason: false },
+            { key: "Enroute", label: "En route", enabled: self.canEnroute(), needsDetails: true, needsTimeSet: true, needsETA: true, needsETC: false, needsReason: false },
+            { key: "CallOff", label: "Call off", enabled: self.canCalloff(), needsDetails: true, needsTimeSet: false, needsETA: false, needsETC: false, needsReason: true },
+            { key: "Onsite", label: "On site", enabled: self.canOnsite(), needsDetails: true, needsTimeSet: true, needsETA: false, needsETC: true, needsReason: false },
+            { key: "Offsite", label: "Off site", enabled: self.canOffsite(), needsDetails: true, needsTimeSet: true, needsETA: false, needsETC: false, needsReason: false },
+            { key: "Complete", label: "Complete", enabled: self.canComplete(), needsDetails: false, needsTimeSet: false, needsETA: false, needsETC: false, needsReason: false }
+        ];
     });
 
     self.onStatusOptionClick = function (option, event) {
         if (!option || !option.enabled) return;
-
+        self.timeOverrideEnabled(false); // reset time override
         self.time(moment().seconds(0).milliseconds(0).format("YYYY-MM-DDTHH:mm"));
 
         self.newStatus(option.key)
         console.log("Selected Status: ", option.key);
 
-        if(option.needsDetails) {
+        if (option.needsDetails) {
             self.statusDropdownPage("details");
         }
 
-        if(option.needsTimeSet) {
+        if (option.needsTimeSet) {
             self.needsTimeSet(true);
         }
 
-        if(option.needsETA) {
+        if (option.needsETA) {
             self.needsETA(true);
         }
 
-        if(option.needsETC) {
+        if (option.needsETC) {
             self.needsETC(true);
         }
 
-        if(option.needsReason){
+        if (option.needsReason) {
             self.needsReason(true);
         }
 
-        if(option.key === "Untask") {
+        if (option.key === "Untask") {
             self.updateTaskingStatus();
         }
 
-        if(option.key === "Complete") {
+        if (option.key === "Complete") {
             //DO THE MAGIC LIGHTHOUSE STUFF OPENING HERE THINGO
             const url = self.taskCompletionLink()
             if (url) {
@@ -368,6 +377,13 @@ export function Tasking(data = {}) {
         );
     }
 
+    self.goBackFromDetails = function () {
+        self.statusDropdownPage("status");
+        self.needsTimeSet(false);
+        self.needsETA(false);
+        self.needsETC(false);
+    }
+
     self.updateTaskingStatus = function () {
         console.log("SUBMITTING");
         const formattedTime = moment(self.time()).format("YYYY-MM-DDTHH:mm:ssZ");
@@ -375,12 +391,12 @@ export function Tasking(data = {}) {
         let payload = { timeLogged: formattedTime, overrideFutureStatuses: 0, description: "", LighthouseFunction: "updatingTeamStatus" };
 
         if (self.newStatus() === "Enroute") {
-                action = "Enroute";
-                if (self.eta() && moment(self.eta()).isValid()) {
-                    payload.estimatedCompletion = moment(self.eta()).format("YYYY-MM-DDTHH:mm:ssZ");
-                } else {
-                    payload.estimatedCompletion = null;
-                }
+            action = "Enroute";
+            if (self.eta() && moment(self.eta()).isValid()) {
+                payload.estimatedCompletion = moment(self.eta()).format("YYYY-MM-DDTHH:mm:ssZ");
+            } else {
+                payload.estimatedCompletion = null;
+            }
         }
 
         // CONSTRUCT PAYLOD FOR ONSITE
@@ -443,7 +459,7 @@ export function Tasking(data = {}) {
 
         // Send to ParentVM to make API Call
         // If it's a POST Request send it to the UpdateTeamStatus API - sends Tasking, Action (what status we are changing to), Payload and Callback.
-        const UpdateTeamStatusAPI = ['Enroute','Onsite','Offsite']
+        const UpdateTeamStatusAPI = ['Enroute', 'Onsite', 'Offsite']
         if (UpdateTeamStatusAPI.includes(action)) {
             this.job.updateTeamStatus(self, action, payload, function (result) {
 
@@ -474,7 +490,7 @@ export function Tasking(data = {}) {
                     console.error("Failed to Untask Team");
                     return;
                 }
-            });  
+            });
         }
 
         self.closeStatusDropdown();
@@ -487,6 +503,6 @@ export function Tasking(data = {}) {
             }
         });
     }
-    
+
 
 }
