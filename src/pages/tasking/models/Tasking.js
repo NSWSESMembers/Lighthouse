@@ -177,7 +177,7 @@ export function Tasking(data = {}) {
         const status = (self.currentStatus() || "").toLowerCase();
         switch (status) {
             case "tasked":
-                return "bg-primary";
+                return "bg-primary text-white";
             case "enroute":
                 return "bg-info";
             case "onsite":
