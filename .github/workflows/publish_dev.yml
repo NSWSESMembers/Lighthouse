@@ -2,7 +2,7 @@ name: Publish Dev Preview to Chrome Store
 on:
   push:
     branches:
-      - '**'
+      - 'master-dev'
 jobs:
   lintandpublish:
     name: Publish Dev
@@ -26,5 +26,5 @@ jobs:
           client-id: ${{ secrets.CHROMESTORE_CLIENT_ID }}
           client-secret: ${{ secrets.CHROMESTORE_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROMESTORE_REFRESH_TOKEN }}
-          publish: false
+          publish: true
           glob: true

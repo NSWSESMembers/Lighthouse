@@ -42,7 +42,6 @@ function MyViewModel() {
   this.setShowTeamMemberChanges = ko.observable(true)
   this.setShowTeamResources = ko.observable(true)
 
-
   this.teams = ko.observableArray()
 
   this.boxFlexWidth = ko.computed(() => {

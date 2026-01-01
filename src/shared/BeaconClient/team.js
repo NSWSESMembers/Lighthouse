@@ -6,7 +6,7 @@ export function getTasking(id, host, userId = 'notPassed', token, callback) {
   console.log("GetTaskingfromBeacon called with:" + id + ", " + host);
 
     getJsonPaginated(
-    host+"/Api/v1/Tasking/Search?LighthouseFunction=GetTaskingfromBeacon&userId=" + userId + "&TeamIds=" + id, token, 0, 100,
+    host+"/Api/v1/Tasking/Search?LighthouseFunction=GetTaskingfromBeacon&ViewModelType=1&userId=" + userId + "&TeamIds=" + id, token, 0, 100,
     function(_res) {
       console.log("Progress CB");
     },
@@ -18,7 +18,6 @@ export function getTasking(id, host, userId = 'notPassed', token, callback) {
       callback(obj);
     }
   );
-
 }
 
 //limited to single page result
@@ -40,8 +39,29 @@ export function getHistory(id, host, userId = 'notPassed', token, callback) {
 
 }
 
+export function get(id, viewModelType = 1, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'GET',
+    url: host + "/Api/v1/Teams/" + id + "?LighthouseFunction=GetTeamfromBeacon&userId=" + userId + "&viewModelType=" + viewModelType,
+    beforeSend: function (n) {
+      n.setRequestHeader("Authorization", "Bearer " + token)
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        let results = response.responseJSON;
+        if (typeof callback === "function") {
+          callback(results);
+        }
+      }
+    }
+  })
+}
+
+
 //make the call to beacon
-export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = []) {
+export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = [], onPage) {
   console.debug("teamSearch called");
   let params = {};
   params['StatusStartDate'] = StartDate.toISOString();
@@ -58,7 +78,6 @@ export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed',
     } else {
       let assignedToId = [];
       let createdAtId = [];
-
       unit.forEach(function(d){
         assignedToId.push(d.Id);
         createdAtId.push(d.Id);
@@ -72,7 +91,7 @@ export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed',
   var url = host+"/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon&userId=" + userId + "&" + $.param(params, true);
   var lastDisplayedVal = 0 ;
   getJsonPaginated(
-    url, token, 0, 100,
+    url, token, 0, 50,
     function(count,total){
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
         lastDisplayedVal = count;
@@ -89,6 +108,10 @@ export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed',
         "Results": results
       };
       callback(obj);
+    }, function (pageResult) {
+      if (typeof onPage === 'function') {
+        onPage(pageResult);
+      }
     }
   );
 

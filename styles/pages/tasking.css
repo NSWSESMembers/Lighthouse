@@ -1,0 +1,2166 @@
+@import url('~@fortawesome/fontawesome-free/css/solid.min.css');
+@import url('~@fortawesome/fontawesome-free/css/regular.min.css');
+@import url('~@fortawesome/fontawesome-free/css/fontawesome.min.css');
+@import url('~bootstrap5/dist/css/bootstrap.css');
+@import url('~leaflet-minimap/dist/Control.MiniMap.min.css');
+
+html {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.row-rescue {
+  background-color: #f1bfbf !important;
+}
+
+.row-priority {
+  background-color: #fcf8e3 !important;
+}
+
+.row-immediate {
+  background-color: #d9edf7 !important;
+}
+
+.row-general {
+  background-color: #ffffff !important;
+}
+
+.row-rescue > div > button > .is-pinned {
+  color: white !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-rescue > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-priority > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-priority > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-immediate > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-immediate > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-general > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-general > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-team-green {
+  background-color: #d4edda !important;
+}
+
+.row-team-yellow {
+  background-color: #fff3cd !important;
+}
+
+.row-team-red {
+  background-color: #f8d7da !important;
+}
+
+
+.row-team-green > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-team-green > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-team-yellow > div > button > .is-pinned {
+  color: black !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-team-yellow > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-team-red > div > button > .is-pinned {
+  color: white !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-team-red > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+/* Modal header colours per environment */
+body .modal-header {
+  background-color: #f7931d !important;
+  color: white !important;
+}
+
+body.env-trainbeacon .modal-header {
+  background-color: #219f56 !important;
+  color: white !important;
+}
+
+body.env-devbeacon .modal-header {
+  background-color: #2d9ee0 !important;
+  color: white !important;
+}
+
+body .team-header,
+body .incidents-header {
+color: white !important;
+border-radius: 10px;
+height: 100%;
+line-height: 30px;
+background-color: #f7931d !important;
+}
+
+
+body.env-trainbeacon .team-header,
+body.env-trainbeacon .incidents-header {
+color: white !important;
+border-radius: 10px;
+height: 100%;
+line-height: 30px;
+background-color: #219f56 !important;
+}
+
+body.env-devbeacon .team-header,
+body.env-devbeacon .incidents-header {
+color: white !important;
+border-radius: 10px;
+height: 100%;
+line-height: 30px;
+background-color: #2d9ee0 !important;
+}
+
+
+.tasking-dropdown-menu {
+  position: fixed !important;
+  inset: auto auto auto auto;
+  z-index: 2000;
+}
+
+/* Ensure key UI elements follow the smaller base size */
+button,
+input,
+select,
+textarea,
+.table,
+.dropdown-menu,
+.input-group-text,
+.badge,
+.nav-link,
+.modal,
+.form-control {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* Optional: slightly tighter tables (teams + jobs) */
+.teams,
+.jobs {
+  font-size: 12px; /* make tables a bit denser than rest */
+}
+
+/* Optional: make "small" really small for helper text */
+.small,
+.text-muted {
+  font-size: 11px;
+}
+
+td.chev[draggable='true'] {
+  cursor: grab;
+}
+
+td.chev[draggable='true'] * {
+  cursor: grab !important;
+  user-select: none !important;
+}
+
+.pane .small {
+  font-size: 0.8rem;
+}
+.input-group-sm .form-control {
+  font-size: 0.75rem;
+}
+.input-group-text {
+  background: transparent;
+  border: none;
+}
+.dropdown-toggle::after {
+  display: none;
+} /* hides caret */
+
+/* Map area flexes to fill the rest */
+.map-wrap {
+  flex: 1 1 auto;
+  min-width: 200px;
+}
+#map {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* The vertical splitter */
+.vsplit {
+  width: 6px;
+  cursor: col-resize;
+  position: relative;
+  user-select: none;
+  touch-action: none;
+}
+.vsplit::after {
+  content: '';
+  position: absolute;
+  inset: 0 1px;
+  background: rgba(0, 0, 0, 0.08);
+}
+.vsplit:hover::after,
+.vsplit.resizing::after {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.app {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
+
+.sidebar {
+  width: var(--sidebar-w, 420px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Full sidebar collapse driven by a body class */
+body.sidebar-collapsed .sidebar {
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden;
+}
+
+body.sidebar-collapsed .vsplit {
+  display: none !important;
+}
+
+
+.hsplit {
+  height: 6px;
+  cursor: row-resize;
+  user-select: none;
+  touch-action: none;
+  position: relative;
+  flex: 0 0 auto;
+}
+.hsplit::after {
+  content: '';
+  position: absolute;
+  inset: 1px 0;
+  background: rgba(0, 0, 0, 0.08);
+}
+.hsplit:hover::after,
+.hsplit.resizing::after {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.pane {
+  padding: 12px 0 3px 0;
+  overflow: auto;
+}
+
+.pane--top {
+  flex-grow: 0;
+  flex-shrink: 0;
+  height: 50%;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.leaflet-popup-content-wrapper {
+  opacity: 0.9;
+  transition: opacity 0.1s ease;
+}
+.leaflet-popup-content-wrapper:hover {
+  opacity: 1;
+}
+
+.pane--bottom {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 60%;
+}
+
+.team-table-container,
+.job-table-container {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.job-popup_taskings {
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.team-table-container table,
+.job-table-container table {
+  margin-bottom: 0; /* prevent layout shift when scrollbar appears */
+  width: 100%;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  padding: 0px 0px;
+}
+
+.row.selected {
+  font-weight: bold;
+  text-decoration: underline;
+}
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden; /* prevent outer scrolling */
+}
+
+.pane > .team-table-container,
+.pane > .job-table-container {
+  position: relative;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.pane > .team-table-container > table,
+.pane > .job-table-container > table {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+/* Expandable panel (CSS-only smoothish expand/collapse) */
+.panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-inner {
+  padding: 10px 4px 2px;
+  border-top: 1px dashed #e0e0e0;
+  margin-top: 10px;
+}
+.panel.hidden {
+  max-height: 0;
+}
+.panel.visible {
+  max-height: 800px;
+} /* big enough to cover content */
+
+/* Two sub-columns inside expanded area */
+.panel-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 800px) {
+  .panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card {
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fafafa;
+}
+.card h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+li {
+  margin: 4px 0;
+}
+
+input[type='text'] {
+  padding: 6px 8px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  font-size: 13px;
+}
+select {
+  padding: 6px 8px;
+  border: 1px solid #cfcfcf;
+  border-radius: 6px;
+  font-size: 13px;
+}
+.row-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+/* table sorting icons */
+table thead th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+table thead th .sort-icon {
+  margin-left: 0.35rem;
+  opacity: 0.7;
+}
+
+table thead th[aria-sort='ascending'] .sort-icon {
+  transform: translateY(-1px);
+}
+table thead th[aria-sort='descending'] .sort-icon {
+  transform: translateY(1px);
+}
+
+/* keep sortable headers on one line, with ellipsis on label */
+table thead th.sortable {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+table thead th.sortable .th-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+table thead th.sortable .sort-icon {
+  flex: 0 0 auto;        /* never wrap/shrink */
+}
+
+.teams,
+.jobs {
+  table-layout: auto;
+  border-spacing: 0 3px; /* gap between rows */
+  border-collapse: separate;
+}
+
+.teams > thead > th,
+.jobs > thead > th {
+  position: sticky;
+  top: 0;
+  z-index: 1001;        /* above rows/cards */
+  background: #f8f9fa; /* solid background */
+}
+
+/* Make the table body scroll within the pane */
+.pane .team-table-container,
+.pane .job-table-container {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+/* Ensure the pane flexes vertically */
+.pane {
+  display: flex;
+  flex-direction: column;
+}
+
+.pane .team-table-container,
+.pane .job-table-container {
+  flex: 1 1 auto;
+  min-height: 0; /* required for flex scrolling */
+}
+
+td.chev {
+  width: 1%;
+  white-space: nowrap;
+}
+td.chev .btn {
+  line-height: 1;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* override generic card from above where needed */
+.card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px dotted #eee;
+}
+.list li:last-child {
+  border-bottom: 0;
+}
+.row-actions {
+  display: flex;
+  gap: 6px;
+}
+input[type='text'],
+select {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+button {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+button.primary {
+  border-color: #0077ff;
+}
+
+.teams > td,
+.teams > th,
+.jobs > td,
+.jobs > th {
+  padding: 8px 4px;
+  vertical-align: middle;
+}
+
+/* Job list behaviour */
+tr.job:hover {
+  cursor: pointer;
+}
+
+/* drag target highlight */
+.drag-over {
+  outline: 2px dashed #888;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.btn-vvvsmall {
+  padding: 2px 6px;
+  font-size: 0.45rem;
+  line-height: 1;
+  border-radius: 0.2rem;
+}
+
+.btn-vsmall {
+  padding: 2px 6px;
+  font-size: 0.65rem;
+  line-height: 1;
+  border-radius: 0.2rem;
+}
+
+.modal-xl {
+  --bs-modal-width: 1200px;
+}
+
+.status-line {
+  font-size: 0.875rem;
+  opacity: 0.75;
+}
+
+/* Top band: search (left) + two selected boxes (right) */
+.top-band {
+  margin-bottom: 0.75rem;
+}
+.selected-box {
+  min-height: 58px;
+  max-height: 120px;
+  overflow: auto;
+}
+.pill {
+  margin: 0.125rem;
+}
+
+.btn-load-children {
+  padding: 2px;
+  border: none;
+  line-height: 1;
+  transition: background-color 0.2s;
+  color: #ccc;
+}
+.btn-load-children:hover {
+  color: var(--bs-btn-close-color);
+  text-decoration: none;
+  background-color: unset;
+  opacity: 0.75;
+}
+
+#searchDropdown.dropdown-menu {
+  max-height: 150px;
+  overflow: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1055; /* above modals but below tooltips */
+  transform: none !important;
+  margin-top: 2px;
+}
+
+/* Results full width, tall */
+.results {
+  height: 80px;
+  overflow: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #f1f3f5;
+}
+.result-item:last-child {
+  border-bottom: 0;
+}
+
+/* Config placed BELOW filters+results to give filters more space */
+.config-card .form-label {
+  margin-top: 0.25rem;
+}
+
+/* Marker / map UI */
+.marker-pin {
+  width: 40px;
+  height: 40px;
+  border-radius: 50% 50% 50% 0;
+  background: #c30b82;
+  position: absolute;
+  transform: rotate(-45deg);
+  left: 50%;
+  top: 50%;
+  margin: -15px 0 0 -15px;
+}
+
+.marker-pin::after {
+  content: '';
+  width: 34px;
+  height: 34px;
+  margin: 3px 0 0 3px;
+  background: #000;
+  position: absolute;
+  border-radius: 50%;
+}
+
+.custom-div-icon i {
+  position: absolute;
+  width: 22px;
+  font-size: 22px;
+  left: 0;
+  right: 0;
+  margin: 10px auto;
+  text-align: center;
+}
+
+.assetMarker {
+  font-family: monospace;
+}
+
+.veh-pop {
+  min-width: 360px;
+  max-width: 360px;
+  max-height: 420px;
+}
+.veh-pop__title {
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.veh-pop__meta {
+  font-size: 12px;
+  line-height: 1.25;
+}
+/* Constrain the whole Teams section, not just taskings */
+.veh-pop__teams {
+  max-height: 220px;          /* tune as needed */
+  overflow-y: auto;
+  padding-right: 4px;         /* avoid scrollbar overlaying content */
+}
+
+/* Each team stays visually grouped */
+.veh-pop__team {
+  padding-bottom: 6px;
+}
+
+/* Remove nested scrolling – let the parent scroll */
+.veh-pop__taskings-list-frame {
+  max-height: none !important;
+  overflow: visible !important;
+  margin-left: -10px;
+  margin-right: -15px;
+}
+
+
+.veh-pop__tasking-item,
+.veh-pop__tasking-item--no-job {
+  padding: 4px 0;
+  border-bottom: 1px dashed #e3e3e3;
+}
+.veh-pop__tasking-item {
+  cursor: pointer;
+}
+
+.job-popup__tasking-row--no-job,
+.veh-pop__tasking-item--no-job {
+  cursor: not-allowed;
+}
+.veh-pop__tasking-item:last-child {
+  border-bottom: none;
+}
+.veh-pop__tasking-item:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+
+/* Team list should never scroll horizontally */
+.veh-pop__team-list {
+  width: 100%;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Each team must respect popup width */
+.veh-pop__team {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure flex rows don’t force overflow */
+.veh-pop__team > .d-flex {
+  width: 100%;
+}
+
+/* Allow text containers to shrink instead of overflow */
+.veh-pop__team-title,
+.veh-pop__team-title * {
+  min-width: 0;
+}
+
+/* Fix taskings frame causing width overflow */
+.veh-pop__taskings-list-frame {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Prevent long content (addresses, situation text) from forcing width */
+.veh-pop__tasking-item {
+  overflow-x: hidden;
+}
+
+.veh-pop__tasking-item .text-truncate,
+.veh-pop__tasking-item [style*="pre-wrap"] {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+
+.job-popup__tasking-row {
+  padding: 4px 0;
+  border-bottom: 1px dashed #e3e3e3;
+  cursor: pointer;
+}
+.job-popup__tasking-row:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.job-popup {
+  min-width: 380px;
+  max-width: 380px;
+  min-height: 200px;
+}
+
+.job-tags-list .badge {
+  font-size: 0.72rem;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.btn-xs {
+  --bs-btn-padding-y: 0.1rem;
+  --bs-btn-padding-x: 0.35rem;
+  --bs-btn-font-size: 0.7rem;
+}
+
+.leaflet-routing-container {
+  display: none;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+  transition-timing-function: linear !important;
+  transition-duration: 100ms !important;
+}
+
+/* ============================
+   TEAM CARD + SUMMARY + PANEL
+   ============================ */
+
+.team-row > td {
+  padding: 0;
+  border: none !important; /* the card draws the border */
+}
+
+.team-card {
+  border: 1px solid #d0d7e2;
+  border-radius: 6px;
+  background: #ffffff;
+  margin-left: 4px;
+  margin-right: 4px;
+  overflow: hidden;
+  transition: box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.team-card--expanded {
+  border-color: #0d6efd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
+}
+
+.teams{
+  --team-cols:
+    30px      /* chevron */
+    30px      /* pin */
+    1.35fr    /* callsign */
+    0.5fr     /* status */
+    60px      /* HQ */
+    120px     /* task count */
+    1fr       /* leader */
+    140px;    /* actions (fixed) */
+}
+
+/* header */
+.teams > thead > tr{
+  display: grid;
+  grid-template-columns: var(--team-cols);
+  align-items: center;
+}
+
+.teams > thead > th{
+  box-sizing: border-box;
+  padding-left: 4px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teams > thead > th .sort-icon{
+  width: 10px;
+  flex-shrink: 0;
+}
+
+/* body card */
+.team-summary{
+  display: grid;
+  grid-template-columns: var(--team-cols);
+  align-items: center;
+  padding: 4px 0px;
+}
+
+
+
+.team-card--expanded .team-summary {
+  background: #eef4ff;
+}
+
+.team-cell {
+  min-width: 0;
+  padding: 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-cell--chev {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Allow long values to wrap onto multiple lines */
+.team-cell--callsign,
+.team-cell--leader {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Expanded panel inside same card */
+.team-details {
+  border-top: 1px solid #e1e4ec;
+  background: #f9fbff;
+  padding: 8px;
+}
+
+/* Team members list inside expanded team card */
+
+.team-members-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.team-member-row {
+  padding: 4px 0;
+}
+
+.team-member-row:last-child {
+  border-bottom: none;
+}
+
+.team-member-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+}
+
+.team-member-tags .badge {
+  font-size: 0.7rem;
+}
+
+.team-asset-list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.team-asset-row {
+  padding: 4px 0;
+}
+
+.team-asset-row:last-child {
+  border-bottom: none;
+}
+
+/* Base Leaflet divIcon wrapper for your SVG markers */
+.leaflet-marker-icon.job-svg-marker {
+  display: block; /* kill inline baseline spacing */
+  line-height: 0; /* no extra vertical space */
+  font-size: 0; /* no text metrics */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent; /* no default bg from themes */
+  box-sizing: content-box; /* width/height = SVG box exactly */
+  pointer-events: auto; /* marker remains clickable */
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform; /* Leaflet translates this */
+}
+
+/* Ensure the embedded SVG is a tight, block-level box */
+.leaflet-marker-icon.job-svg-marker > svg {
+  display: block; /* no inline baseline */
+  overflow: visible; /* avoid stroke clipping */
+  shape-rendering: geometricPrecision;
+  vector-effect: non-scaling-stroke; /* keeps stroke width stable if scaled */
+}
+
+/* Optional: crisper edges on some displays */
+.leaflet-marker-icon.job-svg-marker,
+.leaflet-marker-icon.job-svg-marker > svg {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* PULSE RING (separate follower marker using L.divIcon) */
+.pulse-ring-icon {
+  pointer-events: none; /* clicks go to the base marker */
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  font-size: 0;
+  will-change: transform;
+}
+
+.pulse-ring {
+  position: absolute;
+  inset: 0; /* fills its icon box exactly */
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8);
+  transform-origin: 50% 50%;
+  animation: pulse-ring 1.4s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  80% {
+    transform: scale(1.1);
+    opacity: 0.15;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+.legend-ring > div > .pulse-ring {
+  position: relative !important;
+}
+
+.no-drag {
+  user-select: text !important;
+  cursor: text !important;
+}
+
+#drag-ignore {
+  cursor: unset !important;
+}
+
+/* Alerts control */
+.leaflet-control.alerts {
+  pointer-events: auto;
+}
+.alerts {
+  font: 13px/1.2 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  max-width: 360px;
+  backdrop-filter: blur(2px);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+.alerts__btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.alerts__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+.alerts__title {
+  font-weight: 600;
+}
+.alerts__count {
+  margin-left: auto;
+  font-weight: 700;
+}
+.alerts__panel {
+  display: none;
+  padding: 8px 10px;
+  border-top: 1px dashed currentColor;
+  color: black;
+}
+.alerts--open .alerts__panel {
+  display: block;
+}
+
+/* Levels — extend as needed */
+.alerts--warning {
+  color: #664d03;
+  background: rgba(255, 193, 7, 0.2);
+  border: 1px solid rgba(255, 193, 7, 0.7);
+}
+.alerts--danger {
+  color: #58151c;
+  background: rgba(220, 53, 69, 0.2);
+  border: 1px solid rgba(220, 53, 69, 0.6);
+}
+.alerts--caution {
+  color: #084298;
+  background: rgba(13, 110, 253, 0.15);
+  border: 1px solid rgba(13, 110, 253, 0.5);
+}
+
+.alerts__list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+/* Root container for the control (set this class in onAdd) */
+.alerts-root {
+  position: relative;
+}
+
+/* Intro animation on first mount */
+.alerts-root--intro {
+  animation: alerts-slide-pop 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes alerts-slide-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.008);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Subtle ping from the hazard icon once */
+.alerts__btn .alerts__icon {
+  position: relative;
+}
+.alerts-root--intro .alerts__btn .alerts__icon::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0.6;
+  animation: alerts-ping 800ms ease-out forwards;
+}
+@keyframes alerts-ping {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.75;
+  }
+  70% {
+    transform: scale(1.6);
+    opacity: 0.25;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .alerts-root--intro,
+  .alerts-root--intro .alerts__btn .alerts__icon::after {
+    animation: none !important;
+  }
+}
+
+/* Layer UI no stupid border*/
+.no-border {
+  border: 0px !important;
+}
+
+.layers-drawer .ld-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: #fff;
+  border: none;
+  cursor: pointer;
+}
+.layers-drawer .ld-toggle:focus {
+  outline: 2px solid #66afe9;
+}
+.layers-drawer .ld-panel {
+  background: #fff;
+  padding: 6px;
+  width: 220px;
+  max-height: 280px;
+  overflow: auto;
+  border-top: 1px solid #ccc;
+}
+.layers-drawer .ld-section + .ld-section {
+  margin-top: 8px;
+}
+.layers-drawer .ld-title {
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+.layers-drawer .ld-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.layers-drawer .ld-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.legend-container {
+  background: rgba(255, 255, 255, 0.9);
+  padding: 6px 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  min-width: 120px;
+  font-size: 13px;
+}
+
+.legend-container i {
+  width: 16px;
+  height: 16px;
+  float: left;
+  margin-right: 8px;
+  opacity: 0.7;
+}
+
+.legend-header button {
+  line-height: 1;
+  padding: 0 6px;
+}
+
+.legend-box {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #333;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.leaflet-control.legend svg {
+  vertical-align: middle;
+}
+
+.modal-textarea-full {
+  width: 100%;
+  resize: none;
+  box-sizing: border-box;
+  display: block;
+  margin: 0;
+}
+
+#CreateOpsLogModal h6 {
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.35rem !important;
+  font-weight: 600;
+}
+
+#CreateOpsLogModal input[type='text'],
+#CreateOpsLogModal textarea {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Focus state */
+#CreateOpsLogModal input[type='text']:focus,
+#CreateOpsLogModal textarea:focus {
+  border-color: #1e8740; /* theme colour? */
+  box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
+  outline: none;
+}
+
+#RadioLogModal input[type='text'],
+#RadioLogModal textarea {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+/* Focus state */
+#RadioLogModal input[type='text']:focus,
+#RadioLogModal textarea:focus {
+  border-color: #1e8740; /* theme colour? */
+  box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
+  outline: none;
+}
+
+.tag-list {
+  margin-bottom: 0.25rem;
+}
+
+.tag-pill {
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 2px 4px;
+  border-radius: 4px;
+  background: #b8a96a;
+  color: white;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.action-pill {
+  background: #d9534f;
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 2px 4px;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.action-pill.tag-selected {
+  background: white;
+  color: #d9534f;
+  border-color: #d9534f;
+  border: 1px;
+  border-style: solid;
+}
+
+.tag-pill.tag-selected {
+  background: white;
+  color: #b8a96a;
+  border-color: #b8a96a;
+  border: 1px;
+  border-style: solid;
+}
+
+/* Single-row Incident card accordion */
+
+.job-row > td {
+  padding: 0; /* card owns padding */
+  border: none !important; /* no table cell borders for these */
+}
+
+.job-card {
+  border: 1px solid #d0d7e2;
+  border-radius: 6px;
+  background: #ffffff;
+  margin-left: 4px;
+  margin-right: 4px;
+  overflow: hidden;
+  transition: box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.job-summary,
+.team-summary {
+  transition: background-color 120ms ease, box-shadow 120ms ease;
+}
+
+.job-summary:hover,
+.team-summary:hover {
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+.job-card--expanded {
+  border-color: #0d6efd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+/* one source of truth (jobs) */
+.jobs{
+  --job-cols:
+    30px    /* chev */
+    20px    /* pin */
+    0.28fr  /* Id */
+    0.5fr   /* Received */
+    0.3fr   /* HQ */
+    0.3fr   /* Type */
+    1.5fr   /* Situation */
+    0.5fr   /* Status */
+    1.0fr;  /* Address */
+}
+
+/* body */
+.job-summary {
+  display: grid;
+  grid-template-columns: var(--job-cols);
+  align-items: center;
+  column-gap: 0;
+  padding: 4px 0px;
+  background: var(--bs-table-bg, #fff);
+  cursor: pointer;
+}
+
+/* header: turn the <tr> into a grid too */
+.jobs > thead > tr{
+  display: grid;
+  grid-template-columns: var(--job-cols);
+  align-items: center;
+}
+
+/* header cells behave like blocks inside the grid */
+.jobs > thead > th{
+  position: sticky;
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 4px;
+}
+
+.job-card--expanded .job-summary {
+  background: #eef4ff;
+}
+
+.job-cell {
+  min-width: 0;
+  padding-right: 5px;
+  padding-left: 5px;
+  overflow: hidden;
+}
+
+/* Allow wrapping for the “long” columns so you don't lose information */
+.job-cell--situation,
+.job-cell--address {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.job-cell--chev {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.job-cell--chev > .btn {
+  cursor: grabbing !important;
+}
+
+/* Details panel inside the same card – no seams possible */
+.job-details {
+  border-top: 1px solid #e1e4ec;
+  background: #f9fbff;
+}
+
+.job-details-form fieldset {
+  height: 100%;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem 0.25rem;
+  margin-bottom: 0.75rem;
+  background-color: #ffffff;
+}
+
+.job-details-legend {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  padding: 0 4px;
+}
+
+.job-details-value {
+  font-size: 0.75rem;
+  margin-bottom: 0;
+}
+
+.job-details-form .form-control-plaintext {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* Rotate chevron instead of swapping icons (optional if you want) */
+.job-card .fa.fa-solid {
+  transition: transform 140ms ease;
+}
+.job-card--expanded .fa.fa-solid.fa-plus {
+  /* if you switch to a single chevron icon, rotate it here */
+}
+
+/* Wider dropdown specifically for the Jobs filter menu */
+#jobMenu + .dropdown-menu {
+  min-width: 400px; /* adjust as needed */
+  padding: 0.5rem 0.75rem;
+}
+
+.dropdown-collapse-body {
+  padding: 0.25rem 0.5rem 0.5rem 0.5rem;
+}
+
+.dropdown-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* two columns */
+  column-gap: 1rem;
+  row-gap: 0.15rem;
+  font-size: 0.8rem;
+}
+
+.dropdown-two-col .form-check {
+  margin: 0;
+  padding: 0;
+  margin-left: 10px;
+}
+
+.dropdown-three-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* three columns */
+  column-gap: 1rem;
+  row-gap: 0.15rem;
+  font-size: 0.8rem;
+}
+
+.dropdown-three-col .form-check {
+  margin: 0;
+  padding: 0;
+  margin-left: 10px;
+}
+
+#configModal .modal-header {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+#configModal .load-wrapper {
+  position: relative;
+}
+
+#configModal .load-form input {
+  transition: width 0.25s ease, opacity 0.25s ease;
+}
+
+#configModal .expanded-input {
+  width: 160px !important;
+  opacity: 1 !important;
+}
+
+.sharecode {
+  font-family: monospace;
+  font-size: 1.3rem;
+  letter-spacing: 0.05rem;
+}
+
+.lmt-25 {
+  margin-top: 2.5px !important;
+}
+
+/* === Job History / Ops Log two-lane timeline === */
+
+.job-history-timeline {
+  margin-top: 0.5rem;
+}
+
+.job-history-row {
+  position: relative;
+}
+
+/* centre rail (time axis) */
+.job-history-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 3rem;
+}
+
+.job-history-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--bs-primary);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.25);
+  z-index: 1;
+}
+
+.job-history-line {
+  flex: 1;
+  width: 2px;
+  background-color: #dee2e6;
+  margin-top: 2px;
+}
+
+.jobhistory-tag-btn {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  vertical-align: middle; /* THIS FIXES THE FLOATING */
+  line-height: 1.2; /* Helps even out height across browsers */
+}
+
+/* Legend container */
+.jobhistory-legend {
+  color: #6c757d; /* muted */
+}
+
+/* Swatch shape: little bar matching card borders */
+.jobhistory-legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background-color: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+/* Match your card border colours */
+
+.jobhistory-legend-history {
+  border-left-color: var(--bs-success); /* .job-history-card-history */
+}
+
+.jobhistory-legend-ops-normal {
+  border-left-color: var(--bs-primary); /* .job-history-card-ops default */
+}
+
+.jobhistory-legend-ops-important {
+  border-left-color: var(--bs-warning); /* .job-history-card-flagged */
+}
+
+/* ICEMS: hint at double border */
+.jobhistory-legend-ops-icems {
+  border-left-color: var(--bs-primary);
+  border-left-style: double;
+}
+
+/* cards */
+
+.job-history-card {
+  border-radius: 0.5rem;
+  border: 1px solid #dee2e6;
+  border-left-width: 4px;
+  background-color: #fff;
+}
+
+.job-history-card-ops {
+  border-left-color: var(--bs-primary);
+}
+
+.job-history-card-history {
+  border-left-color: var(--bs-success);
+}
+.job-history-card-flagged {
+  border-left-color: var(--bs-warning);
+  border-left-style: solid !important;
+}
+
+.job-history-card-icems {
+  border-left-style: double;
+}
+
+/* common hover */
+.job-history-card-ops:hover,
+.job-history-card-history:hover {
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.08);
+}
+
+/* tighten spacing in the modal */
+#jobHistoryModal .modal-body {
+  padding-top: 0.75rem;
+}
+
+.jobhistory-tag-btn {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+}
+
+.jobhistory-tag-btn.jobhistory-tag-icems {
+  border-color: var(--bs-secondary);
+}
+
+/* when ICEMS is selected (btn-secondary active already applied) */
+.jobhistory-tag-btn.jobhistory-tag-icems.btn-secondary {
+  background-color: var(--bs-secondary);
+}
+
+.bullseye-distance-wrapper {
+  pointer-events: none; /* don't block map clicks */
+}
+
+.bullseye-distance-label {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 2px 4px;
+  border-radius: 3px;
+  transform-origin: 50% 50%;
+}
+
+.team-status-button {
+  border: 1px solid #ccc;
+  min-width: 90px;
+  background: #fff;
+  padding: 4px 24px 4px 8px; /* space for icon on the right */
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  position: relative;
+}
+
+.team-status-button::after {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.team-status-button.dropdown-toggle::after {
+  display: inline-block;
+}
+
+#TeamStatusDropdown {
+  display: none;
+}
+
+.team-status-dropdown {
+  position: absolute;
+  z-index: 99999;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+}
+
+.dropdown-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.dropdown-item:hover {
+  background: #f2f2f2;
+}
+
+.quick-buttons {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.quick-btn {
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f6f6f6;
+}
+
+.tag-text:before {
+  font-family: FontAwesome;
+  padding-right: 5px;
+}
+
+.tag-text:after {
+  font-family: FontAwesome;
+  content: '';
+  padding-left: 5px;
+  font-size: 1.2em;
+}
+
+.tag.label {
+  font-size: 12px;
+}
+
+.tag {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  border: 1px solid #a445b1;
+  color: #fff;
+  background-color: #d13cd1;
+  margin: 0 5px 5px 0;
+  cursor: pointer;
+}
+
+.tag > i {
+  padding-left: 5px;
+}
+
+.tag > span {
+  padding-right: 5px;
+}
+
+.tag-damage {
+  color: #fff;
+  background-color: #e24d00;
+  border: 1px solid #e24d00;
+}
+
+.tag-hazard {
+  color: #fff;
+  background-color: #c23434;
+  border: 1px solid #c23434;
+}
+
+.tag-property {
+  color: #fff;
+  background-color: #0f9369;
+  border: 1px solid #0f9369;
+}
+
+.tag-special-needs {
+  color: #fff;
+  background-color: #0f8b94;
+  border: 1px solid #0f8b94;
+}
+
+.tag-task {
+  color: #fff;
+  background-color: #1e8740;
+  border: 1px solid #1e8740;
+}
+
+.tag-aviation {
+  color: #ffffff;
+  background-color: #05636b;
+  border: 1px solid #05636b;
+}
+
+.tag-note {
+  color: #ffffff;
+  background-color: #6e663c;
+  border-color: #6e663c;
+}
+
+.tag-note-selected {
+  color: #6e663c;
+  background-color: #ffffff;
+  border-color: #6e663c;
+}
+
+.tag-further-action {
+  color: #fff;
+  background-color: #ee0039;
+  border-color: #ee0039;
+}
+
+.tag-further-action-selected {
+  color: #ee0039;
+  background-color: #fff;
+  border-color: #ee0039;
+}
+
+/* Ensure team/job dropdown menus appear above pane overflow */
+#teamFilterDropdown,
+#jobFilterDropDown {
+  position: fixed !important; /* escape overflow containers */
+  transform: none !important; /* disable BS placement transforms */
+  inset: auto !important; /* let JS set the coords */
+  z-index: 3000 !important;
+}
+
+#sectorDropdown {
+  z-index: 3000 !important;
+}
+
+#sectorDropdown.show {
+  position: fixed !important;
+}
+
+.jobstatusDropdown {
+  z-index: 3000 !important;
+}
+
+.jobstatusDropdown.show {
+  position: fixed !important;
+}
+
+.job-taskteam-dropdown {
+  z-index: 3000 !important;
+}
+
+.job-taskteam-dropdown.show {
+  position: fixed !important;
+}
+
+/* Sector dropdown button */
+.sector-dropdown-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.sector-dropdown-btn:hover {
+  text-decoration: underline;
+}
+
+/* Small caret */
+.sector-dropdown-btn .caret {
+  display: inline-block;
+  margin-left: 4px;
+  border-top: 4px solid currentColor;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  vertical-align: middle;
+}
+
+
+/* Sector dropdown button */
+.jobstatus-dropdown-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.jobstatus-dropdown-btn:hover {
+  text-decoration: underline;
+}
+
+/* Small caret */
+.jobstatus-dropdown-btn .caret {
+  display: inline-block;
+  margin-left: 4px;
+  border-top: 4px solid currentColor;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  vertical-align: middle;
+}
+
+.zone-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: -1px -1px 1px #fff, 1px -1px 1px #fff, -1px 1px 1px #fff, 1px 1px 1px #fff;
+  pointer-events: none;
+}
+
+.unit-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: -1px -1px 1px #ffffff, 1px -1px 1px #ffffff, -1px 1px 1px #ffffff, 1px 1px 1px #ffffff;
+  pointer-events: none;
+}
+
+.frao-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #333;
+  text-shadow: 0 0 3px #ffffff, 0 0 3px #ffffff, 0 0 3px #ffffff;
+  pointer-events: none; /* don't interfere with map clicks */
+  white-space: nowrap;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.layers-drawer .ld-panel {
+  background: #fff;
+  padding: 8px;
+  width: 260px;
+  max-height: 50%;
+  overflow: auto;
+  border-top: 1px solid #ccc;
+  border-radius: 0.5rem;
+}
+
+.layers-drawer .ld-overlay-btn {
+  font-size: 12px;
+}
+
+/* header layout: bar + small hide button */
+.alerts__header {
+  display: flex;
+  align-items: center;
+}
+
+.alerts__btn {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.alerts__hide-btn {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0 6px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* collapsed: only icon shows */
+.leaflet-control.alerts.alerts--collapsed .alerts__title,
+.leaflet-control.alerts.alerts--collapsed .alerts__count,
+.leaflet-control.alerts.alerts--collapsed .alerts__panel,
+.leaflet-control.alerts.alerts--collapsed .alerts__hide-btn {
+  display: none;
+}
+
+.leaflet-control.alerts.alerts--collapsed .alerts__btn {
+  padding: 4px;
+  min-width: auto;
+}
+
+#SendSMSModal .sms-recipient-list {
+  max-height: 140px;
+  min-height: 100px;
+  overflow-y: auto;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 0.35rem 0.5rem;
+}
+
+#SendSMSModal .form-check-sm {
+  font-size: 0.85rem;
+}
+
+#smsRecipientSearchDropdown.dropdown-menu {
+  max-height: 220px;
+  overflow: auto;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1055; /* above modal body contents */
+  transform: none !important;
+  margin-top: 2px;
+}
+/* They wont fuck off. im putting all the browsers in and something will work */
+/* Clears the 'X' button in search inputs for Chrome, Safari, and newer browsers */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  display: none;
+  /* Additional styles to ensure no space is taken */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Clears the 'X' button in text or search inputs for Internet Explorer 10+ */
+input[type="text"]::-ms-clear,
+input[type="search"]::-ms-clear {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+
+.teams > thead,
+.jobs > thead {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 1050;         /* above cards/rows */
+  background: var(--bs-light, #f8f9fa);
+}
+
+/* Keep your existing grid header row definitions */
+.teams > thead > tr,
+.jobs > thead > tr {
+  display: grid;
+}
+
+/* Header cells should just be normal blocks now */
+.teams > thead > th,
+.jobs > thead > th {
+  position: static !important;   /* override your current sticky-on-th */
+  display: block;
+  background: transparent;
+}
+
+
+
+.team-details fieldset {
+  height: 100%;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem 0.25rem;
+  background-color: #ffffff;
+}
+
+.job-actions-card {
+  height: 100%
+}
+
+
+.collapseAll {
+  margin-left: 4px;
+  cursor: pointer;
+}
+
+/* pin buttons */
+.team-cell--chev, .team-cell--pin {
+  display: flex;
+  justify-content: center;
+}
+.job-cell--chev, .job-cell--pin {
+  display: flex;
+  justify-content: center;
+}
+.pin-btn {
+  line-height: 1;
+}
+.pin-toggle.btn-xs {
+  font-size: 0.75rem;
+}
+.pin-toggle.active {
+  border-color: #ffc107;
+}
+
+/* hide popups + tooltips while hotkey held */
+.map-popups-hidden .leaflet-popup-pane,
+.map-popups-hidden .leaflet-tooltip-pane {
+  display: none !important;
+}

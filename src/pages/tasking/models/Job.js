@@ -1,0 +1,743 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
+import ko from "knockout";
+import moment from "moment";
+import { Entity } from "./Entity.js";
+import { Address } from "./Address.js";
+import { Tag } from "./Tag.js";
+import { Sector } from "./Sector.js";
+import { openURLInBeacon } from '../utils/chromeRunTime.js';
+import { jobsToUI } from "../utils/jobTypesToUI.js";
+
+import { InstantTaskViewModel } from '../viewmodels/InstantTask.js';
+
+import { Enum } from "../utils/enum.js";
+
+export function Job(data = {}, deps = {}) {
+    const self = this;
+
+    // ---- injected adapters (all optional, safe defaults) ----
+    const {
+        makeJobLink = (_id) => "#",
+        fetchJobTasking = (_jobId, cb) => cb(null),
+        fetchJobById = (_jobId, cb) => cb(null),
+        flyToJob = (_job) => {/* noop */ },
+        attachAndFillTimelineModal = (_job) => { /* noop */ },
+        fetchUnacknowledgedJobNotifications = async (_job) => ([]),
+        drawJobTargetRing = (_job) => { /* noop */ },
+        fetchUnresolvedActionsLog = async (_job) => { /* noop */ },
+        fetchSuppliersForJob = async (_jobId) => ([]),
+        openJobStatusConfirmModal = (_job, _newStatus) => { /* noop */ },
+        map = null,
+        filteredTeams = ko.observableArray([]),
+        isIncidentPinned = () => false,
+        toggleIncidentPinned = () => false,
+    } = deps;
+
+    self.isFilteredIn = ko.observable(false);
+
+    // pinning
+    self.isPinned = ko.pureComputed(() => {
+        try { return !!isIncidentPinned(self.id()); } catch (e) { return false; }
+    });
+
+    self.togglePinned = function (_, e) {
+        try { toggleIncidentPinned(self.id()); } catch (err) { /* ignore */ }
+        if (e) { e.stopPropagation?.(); e.preventDefault?.(); }
+        return false;
+    };
+
+
+    // raw
+    self.id = ko.observable(data.Id ?? null);
+    self.identifier = ko.observable(data.Identifier ?? "");
+    self.typeId = ko.observable(data.TypeId ?? null);
+    self.type = ko.observable(data.Type ?? "");
+
+    self.callerFirstName = ko.observable(data.CallerFirstName ?? "");
+    self.callerLastName = ko.observable(data.CallerLastName ?? "");
+    self.callerPhoneNumber = ko.observable(data.CallerPhoneNumber ?? "-");
+
+    self.contactFirstName = ko.observable(data.ContactFirstName ?? "");
+    self.contactLastName = ko.observable(data.ContactLastName ?? "");
+    self.contactPhoneNumber = ko.observable(data.ContactPhoneNumber ?? "-");
+
+    self.permissionToEnterPremises = ko.observable(!!data.PermissionToEnterPremises);
+    self.howToEnterPremises = ko.observable(data.HowToEnterPremises ?? null);
+    self.jobReceived = ko.observable(data.JobReceived ?? null);
+    self.jobPriorityType = ko.observable(data.JobPriorityType || null); // {Id,Name,Description}
+    self.jobStatusType = ko.observable(data.JobStatusType || null);     // {Id,Name,Description}
+    self.jobType = ko.observable(data.JobType || null);                 // {Id,Name,...}
+    self.entityAssignedTo = new Entity(data.EntityAssignedTo || {});
+    self.lga = ko.observable(data.LGA ?? "");
+    self.address = new Address(data.Address || {});
+    self.tags = ko.observableArray((data.Tags || []).map(t => new Tag(t)));
+    self.taskingCategory = ko.observable(data.TaskingCategory ?? 0);
+    self.situationOnScene = ko.observable(data.SituationOnScene ?? "");
+    self.eventId = ko.observable(data.EventId ?? null);
+    self.printCount = ko.observable(data.PrintCount ?? 0);
+    self.actionRequiredTags = ko.observableArray(
+        (data.ActionRequiredTags || [])
+            .filter(t => t.TagGroupId === 27)
+            .map(t => new Tag(t))
+    ).extend({ rateLimit: 500 });
+    self.categories = ko.observableArray((data.Categories || []).filter(c => (c?.Id ?? 0) >= 9)); //ditch pscu categories
+    self.inFrao = ko.observable(!!data.InFrao);
+    self.imageCount = ko.observable(data.ImageCount ?? 0);
+    self.icemsIncidentIdentifier = ko.observable(data.ICEMSIncidentIdentifier);
+    self.expanded = ko.observable(false);
+    self.toggle = () => self.expanded(!self.expanded());
+    self.expand = () => self.expanded(true);
+    self.collapse = () => self.expanded(false);
+    self.taskingLoading = ko.observable(false);
+    self.contactCalled = ko.observable((data.ContactCalled !== undefined) ? data.ContactCalled : false);
+    self.opsLogEntriesLoading = ko.observable(false);
+    self.opsLogEntries = ko.observableArray([]);
+
+    self.unacceptedNotifications = ko.observableArray([]);
+
+    self.instantTask = new InstantTaskViewModel({ job: self, map: map, filteredTeams: filteredTeams });
+
+
+    //refs to other obs
+    self.marker = null;  // will hold the L.Marker instance
+    self.taskings = ko.observableArray(); //array of taskings
+    self.sector = ko.observable(new Sector(data.Sector || {}));
+    self.suppliers = ko.observableArray([]);
+
+    // computed
+    self.jobLink = ko.pureComputed(() => makeJobLink(self.id()));
+    self.priorityName = ko.pureComputed(() => (self.jobPriorityType() && self.jobPriorityType().Name) || "");
+    self.priorityId = ko.pureComputed(() => (self.jobPriorityType() && self.jobPriorityType().Id) || null);
+    self.statusName = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Name) || "");
+    self.statusId = ko.pureComputed(() => (self.jobStatusType() && self.jobStatusType().Id) || null);
+    self.statusNameAndCount = ko.pureComputed(() => {
+        const statusName = self.statusName();
+        if (statusName === "Active" || statusName === "Tasked") {
+            const taskingCount = self.taskings().length;
+            return `${statusName} (${taskingCount})`;
+        }
+        return statusName;
+    });
+
+
+    //possible status actions for this job
+    self.statusOptions = ko.pureComputed(() => ([
+        { key: "Acknowledge", label: "Acknowledge", enabled: self.canAcknowledgeJob },
+        { key: "Reopen", label: "Reopen", enabled: self.canReopenJob },
+        { key: "Complete", label: "Complete", enabled: self.canCompleteJob },
+        { key: "Reject", label: "Reject", enabled: self.canRejectJob },
+        { key: "Cancel", label: "Cancel", enabled: self.canCancelJob }
+    ]));
+
+
+    //actions we can take
+    self.canCompleteJob = ko.pureComputed(() => {
+        return self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Complete.Id && self.statusId() !== Enum.JobStatusType.Rejected.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (!self.taskings() || self.taskings().length == 0 || self.taskings().every(task => task.currentStatusId() === Enum.JobTeamStatusType.Complete.Id || task.currentStatusId() === Enum.JobTeamStatusType.CalledOff.Id || task.currentStatusId() === Enum.JobTeamStatusType.Untasked.Id)) && (!self.suppliers() || self.suppliers().length == 0 || self.suppliers().every((supplier) => { return supplier.Status.Id === Enum.JobSupplierStatusType.Complete.Id || supplier.Status.Id === Enum.JobSupplierStatusType.Cancelled.Id }));
+    })
+
+    self.canRejectJob = ko.pureComputed(() => {
+        return (self.statusId() === Enum.JobStatusType.New.Id || self.statusId() === Enum.JobStatusType.Active.Id);
+    })
+
+    self.canAcknowledgeJob = ko.pureComputed(() => {
+        return (self.statusId() === Enum.JobStatusType.New.Id || self.statusId() === Enum.JobStatusType.Rejected.Id);
+    })
+
+    self.canTaskJob = ko.pureComputed(() => {
+        return self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Complete.Id && self.statusId() !== Enum.JobStatusType.Rejected.Id;
+    })
+
+    self.canCancelJob = ko.pureComputed(() => {
+        return self.statusId() !== Enum.JobStatusType.Cancelled.Id && self.statusId() !== Enum.JobStatusType.Finalised.Id && self.statusId() !== Enum.JobStatusType.Referred.Id && (self.statusId() !== Enum.JobStatusType.Rejected.Id || (self.statusId() === Enum.JobStatusType.Rejected.Id && self.priorityId() === Enum.JobPriorityType.Rescue.Id)) && (!self.taskings() || self.taskings().length == 0 || self.taskings().every(task => task.currentStatusId() === Enum.JobTeamStatusType.Complete.Id || task.currentStatusId() === Enum.JobTeamStatusType.CalledOff.Id || task.currentStatusId() === Enum.JobTeamStatusType.Untasked.Id));
+    })
+
+    self.canReopenJob = ko.pureComputed(() => {
+        return (self.statusId() === Enum.JobStatusType.Finalised.Id || self.statusId() === Enum.JobStatusType.Cancelled.Id || self.statusId() === Enum.JobStatusType.Complete.Id);
+    })
+
+    self.onStatusNameClick = function (_, f) {
+        //only refresh this when the popup is OPENING not closing.
+        if (f.delegateTarget.className == "jobstatus-dropdown-btn show") {
+            self.refreshData();
+        }
+    }
+
+    self.onStatusOptionClick = function (opt, e) {
+        //pulling data from the self.statusOptions array as opt
+        // if (e && e.stopPropagation) e.stopPropagation();
+        if (!opt) return;
+
+        const enabled = opt.enabled;
+        const isEnabled = typeof enabled === "function" ? ko.utils.unwrapObservable(enabled) : !!enabled;
+        if (!isEnabled) return;
+
+        // hard-close the dropdown UI
+        const dropdown = e?.target?.closest?.(".dropdown");
+        const menu = dropdown?.querySelector?.(".dropdown-menu");
+        const toggle = dropdown?.querySelector?.('[data-bs-toggle="dropdown"]');
+
+        if (menu) menu.classList.remove("show");
+        if (toggle) {
+            toggle.classList.remove("show");
+            toggle.setAttribute("aria-expanded", "false");
+        }
+
+
+        self.requestJobStatusChange(opt.key);
+        return true;
+    };
+
+
+    self.requestJobStatusChange = function (newStatus) {
+        console.log("Requesting job status change for job", self.id(), "to status ", newStatus);
+        openJobStatusConfirmModal(self, newStatus);
+    }
+
+
+    self.actionRequiredTagsDeduplicated = ko.pureComputed(() => {
+        const seen = new Set();
+        return self.actionRequiredTags().filter(tag => {
+            const name = tag.name().toLowerCase(); // Deduplicate by name (case-insensitive)
+            if (seen.has(name)) {
+                return false;
+            }
+            seen.add(name);
+            return true;
+        });
+    });
+
+    self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());
+    self.typeId = ko.pureComputed(() => (self.jobType() && self.jobType().Id) || self.type());
+    self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
+    self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
+    self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));
+    self.latLongDisplay = ko.pureComputed(function () {
+        var lat = self.address.latitude();
+        var lng = self.address.longitude();
+        if (!lat && !lng) {
+            return "";
+        }
+        return lat + " / " + lng;
+    });
+
+    self.sectorName = ko.pureComputed(() => self.sector().name() || "Unassigned");
+
+    self.rowHasFocus = ko.observable(false);
+    self.popUpIsOpen = ko.observable(false);
+
+
+    self.contactCalling = ko.pureComputed(() => {
+        return self.contactCalled() ? "Yes" : "No";
+    })
+
+    self.incidentContactName = ko.pureComputed(() => {
+        if (!self.contactCalled()) {
+            return self.contactFirstName() + " " + self.contactLastName();
+        } else {
+            return self.callerFirstName() + " " + self.callerLastName();
+        }
+    });
+
+    self.incidentContactNumber = ko.pureComputed(() => {
+        if (!self.contactCalled()) {
+            return self.contactPhoneNumber();
+        } else {
+            return self.callerPhoneNumber();
+        }
+    });
+
+    self.lastTaskingDataUpdate = new Date();
+
+
+    // ---- Tasking REFRESH CHECK ----
+    // ---- Because the tasking doesnt come down in the job search ----
+    const dataRefreshInterval = makeFilteredInterval(async () => {
+        const now = Date.now();
+        const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
+        // only refresh if we haven't had an update in > 2 minutes
+        if (now - last > 120000) {
+            self.fetchTasking();
+        }
+    }, 30000, { runImmediately: false });
+
+    self.startDataRefreshCheck = function () {
+        dataRefreshInterval.start();
+    };
+
+    self.stopDataRefreshCheck = function () {
+        dataRefreshInterval.stop();
+    };
+
+    self.drawJobTargetRing = function () {
+        drawJobTargetRing(self);
+    };
+
+    // Start/stop with filter state
+    self.isFilteredIn.subscribe((flag) => {
+        if (flag) {
+            self.startDataRefreshCheck();
+        } else {
+            self.stopDataRefreshCheck();
+        }
+    });
+
+    self.expanded.subscribe((isExpanded) => {
+        self.instantTask.popupActive(isExpanded || self.popUpIsOpen());
+    });
+
+    self.popUpIsOpen.subscribe((isOpen) => {
+        self.instantTask.popupActive(isOpen || self.expanded());
+    });
+
+
+    // ---- UNACCEPTED NOTIFICATIONS POLLING ----
+    const unacceptedNotificationsInterval = makeFilteredInterval(() => {
+        // extra guard: only if ICEMS id exists
+        if (!self.icemsIncidentIdentifier()) return;
+        console.log("Polling unaccepted notifications for job", self.id());
+        fetchUnacknowledgedJobNotifications(self);
+    }, 30000, { runImmediately: true });
+
+    self.startUnacceptedNotificationsPolling = function () {
+        unacceptedNotificationsInterval.start();
+    };
+
+    self.stopUnacceptedNotificationsPolling = function () {
+        unacceptedNotificationsInterval.stop();
+    };
+
+    // Restart / stop polling when identifiers or filters change
+    self.icemsIncidentIdentifier.subscribe((id) => {
+        if (id && self.isFilteredIn()) {
+            self.startUnacceptedNotificationsPolling();
+        } else {
+            self.stopUnacceptedNotificationsPolling();
+        }
+    });
+
+    self.isFilteredIn.subscribe((flag) => {
+        if (flag && self.icemsIncidentIdentifier()) {
+            self.startUnacceptedNotificationsPolling();
+        } else {
+            self.stopUnacceptedNotificationsPolling();
+        }
+    });
+
+    self.toggleAndLoad = function () {
+        if (!self.expanded()) {
+            self.fetchTasking();
+            self.refreshData();
+        }
+        self.expanded(!self.expanded())
+    };
+
+    self.typeShort = ko.pureComputed(() => {
+        const fullType = self.type() || "";
+        return fullType.replace(/Evacuation/i, 'Evac').trim();
+    })
+
+    self.attachAndFillTimelineModal = function () {
+        console.log("Fetching timeline entries for job", self.id());
+        attachAndFillTimelineModal(self)
+    }
+
+    self.openRadioLogModal = function (tasking) {
+        deps.openRadioLogModal(tasking)
+    };
+
+    self.openNewOpsLogModal = function (job) {
+        deps.openNewOpsLogModal(job)
+    };
+
+    self.updateTeamStatus = function (tasking, status, payload, cb) {
+        deps.updateTeamStatus(tasking, status, payload, cb)
+    }
+
+    self.callOffTeam = function (tasking, payload, cb) {
+        deps.callOffTeam(tasking, payload, cb)
+    }
+
+    self.untaskTeam = function (tasking, payload, cb) {
+        deps.untaskTeam(tasking, payload, cb)
+    }
+
+
+    self.incompleteTaskingsOnly = ko.computed(() =>
+        self.taskings().filter(t => {
+            const status = t.currentStatus();
+            return status !== "Complete" && status !== "CalledOff";
+        })
+    );
+
+    self.sortedTaskings = ko.computed(() =>
+        self.taskings().slice().sort((a, b) =>
+            new Date(a.currentStatusTime) - new Date(b.currentStatusTime)
+        )
+    );
+
+    self.sortedTags = ko.pureComputed(function () {
+        if (!self.tags || !self.tags()) return [];
+        // ensure array
+        var arr = ko.unwrap(self.tags);
+
+        // // ICEMS always first
+        // arr = arr.slice().sort(function (a, b) {
+        //     if (a.name === "ICEMS") return -1;
+        //     if (b.name === "ICEMS") return 1;
+        //     return a.name.localeCompare(b.name);
+        // });
+
+        return arr;
+    });
+
+
+    self.addressDisplayOrGPS = ko.pureComputed(() => {
+
+        if (self.address.prettyAddress()) {
+            return self.address.prettyAddress();
+        } else {
+            return `${self.address.latitude()}, ${self.address.longitude()}`;
+        }
+    });
+
+    self.identifierTrimmed = ko.pureComputed(() => {
+        //trim leading zeros for compact display
+        return self.identifier().replace(/^0+/, '') || '0';
+    });
+
+    self.ageSeconds = ko.pureComputed(() => {
+        const d = self.receivedAt();
+        return d ? Math.max(0, Math.floor((Date.now() - d.getTime()) / 1000)) : null;
+    });
+
+    self.rowColour = ko.pureComputed(() => {
+        switch (self.priorityName()) {
+            case 'Rescue': return 'row-rescue';
+            case 'Priority': return 'row-priority';
+            case 'Immediate': return 'row-immediate';
+            case 'General': return 'row-general';
+            default: return '';
+        }
+    });
+
+    self.bannerBGColour = ko.pureComputed(() => {
+        const style = jobsToUI(self);
+        return style.fillcolor || '#6b7280ff'; // default gray
+    })
+
+
+    self.categoriesName = ko.pureComputed(() => {
+        const beaconCats = {
+            7: "Orange",
+            8: "Red",
+            9: "Category1",
+            10: "Category2",
+            11: "Category3",
+            12: "Category4",
+            13: "Category5"
+        }
+        if (!self.categories || self.categories().length === 0) return "";
+        const c = self.categories()[0].Id;
+        return beaconCats[c] || "";
+    })
+
+
+    self.categoriesNameNumberDash = ko.pureComputed(() => {
+        const beaconCats = {
+            7: "-Orange",
+            8: "-Red",
+            9: "-1",
+            10: "-2",
+            11: "-3",
+            12: "-4",
+            13: "-5"
+        }
+        if (!self.categories || self.categories().length === 0) return "";
+        const c = self.categories()[0].Id;
+        return beaconCats[c] || "";
+    })
+
+
+    self.categoriesParent = ko.pureComputed(() => {
+        const beaconJobParentCats = {
+            1: "Storm",
+            2: "Support",
+            4: "FloodSupport",
+            5: "Rescue",
+            6: "Tsunami"
+        }
+        if (!self.jobType) return "";
+        const c = self.jobType().ParentId;
+        return beaconJobParentCats[c] || "";
+    })
+
+    self.returnParentEntityName = ko.pureComputed(() => {
+        if (self.entityAssignedTo.parentEntity()) {
+            return self.entityAssignedTo.parentEntity().name();
+        }
+        return '-';
+    })
+
+
+
+    Job.prototype.updateFromJson = function (d = {}) {
+
+        this.startDataRefreshCheck(); // restart timer
+
+        // sector might be undefined or null. they mean different things
+        if (d.Sector !== undefined) { //sector present in payload
+            if (d.Sector === null) { //theres no sector assigned
+                this.sector(new Sector({}));
+            } else {
+                this.sector().updateFromJson(d.Sector);
+            }
+        }
+        // scalars
+        if (d.Identifier !== undefined) this.identifier(d.Identifier);
+        if (d.Type !== undefined) this.type(d.Type);
+
+        if (d.CallerFirstName !== undefined) this.callerFirstName(d.CallerFirstName || "");
+        if (d.CallerLastName !== undefined) this.callerLastName(d.CallerLastName || "");
+        if (d.CallerPhoneNumber !== undefined) this.callerPhoneNumber(d.CallerPhoneNumber || "");
+        if (d.ContactFirstName !== undefined) this.contactFirstName(d.ContactFirstName || "");
+        if (d.ContactLastName !== undefined) this.contactLastName(d.ContactLastName || "");
+        if (d.ContactPhoneNumber !== undefined) this.contactPhoneNumber(d.ContactPhoneNumber || "");
+
+        if (d.PermissionToEnterPremises !== undefined) this.permissionToEnterPremises(!!d.PermissionToEnterPremises);
+        if (d.HowToEnterPremises !== undefined) this.howToEnterPremises(d.HowToEnterPremises ?? null);
+        if (d.JobReceived !== undefined) this.jobReceived(d.JobReceived || null);
+        if (d.LGA !== undefined) this.lga(d.LGA || "");
+        if (d.TaskingCategory !== undefined) this.taskingCategory(d.TaskingCategory ?? 0);
+        if (d.SituationOnScene !== undefined) this.situationOnScene(d.SituationOnScene || "");
+        if (d.EventId !== undefined) this.eventId(d.EventId ?? null);
+        if (d.PrintCount !== undefined) this.printCount(d.PrintCount ?? 0);
+        if (d.InFrao !== undefined) this.inFrao(!!d.InFrao);
+        if (d.ImageCount !== undefined) this.imageCount(d.ImageCount ?? 0);
+
+        if (d.ICEMSIncidentIdentifier !== undefined) this.icemsIncidentIdentifier(d.ICEMSIncidentIdentifier || null);
+
+        // structured
+        if (d.JobPriorityType !== undefined) this.jobPriorityType(d.JobPriorityType || null);
+        if (d.JobStatusType !== undefined) this.jobStatusType(d.JobStatusType || null);
+        if (d.JobType !== undefined) this.jobType(d.JobType || null);
+
+
+
+        if (d.EntityAssignedTo !== undefined) {
+            const ea = d.EntityAssignedTo;
+
+            this.entityAssignedTo.id(ea?.Id ?? null);
+            this.entityAssignedTo.code(ea?.Code ?? "");
+            this.entityAssignedTo.name(ea?.Name ?? "");
+            this.entityAssignedTo.latitude(ea?.Latitude ?? null);
+            this.entityAssignedTo.longitude(ea?.Longitude ?? null);
+
+            // Correct handling of ParentEntity
+            if (ea.ParentEntity !== null) {
+                const existingParent = this.entityAssignedTo.parentEntity();
+                if (existingParent) {
+                    // update existing parent entity observables
+                    existingParent.id(ea.ParentEntity.Id ?? null);
+                    existingParent.code(ea.ParentEntity.Code ?? "");
+                    existingParent.name(ea.ParentEntity.Name ?? "");
+                } else {
+                    // or create a new one if none exists yet
+                    this.entityAssignedTo.parentEntity(new Entity(ea.ParentEntity));
+                }
+            } else {
+                // if API can legitimately send "no parent", clear it
+                this.entityAssignedTo.parentEntity(null);
+            }
+        }
+
+        if (d.Address !== undefined) {
+            this.address.gnafId(d.Address?.GnafId ?? null);
+            this.address.latitude(d.Address?.Latitude ?? null);
+            this.address.longitude(d.Address?.Longitude ?? null);
+            this.address.streetNumber(d.Address?.StreetNumber ?? "");
+            this.address.street(d.Address?.Street ?? "");
+            this.address.locality(d.Address?.Locality ?? "");
+            this.address.postCode(d.Address?.PostCode ?? "");
+            this.address.prettyAddress(d.Address?.PrettyAddress ?? "");
+        }
+
+        if (Array.isArray(d.Tags)) {
+            this.tags(d.Tags.map(t => new Tag(t)));
+        }
+        if (Array.isArray(d.ActionRequiredTags)) {
+            this.actionRequiredTags(
+                d.ActionRequiredTags
+                    .filter(t => t.TagGroupId === 27)
+                    .map(t => new Tag(t))
+            );
+        }
+        //ditch pscu categories
+        if (Array.isArray(d.Categories)) {
+            this.categories(d.Categories.filter(c => (c?.Id ?? 0) >= 9));
+        }
+    };
+
+    self.addTasking = function (t) {
+        if (!t || typeof t.id !== 'function') return;
+        const id = t.id();
+        if (!self.taskings().some(x => x.id() === id)) self.taskings.push(t);
+        // ensure backref points to this canonical job
+        if (!t.job || typeof t.job !== 'function' || t.job() !== self) {
+            t.setJob(self);
+        }
+    };
+
+    self.removeTasking = function (t) {
+        if (!t || typeof t.id !== 'function') return;
+        const id = t.id();
+        self.taskings.remove(x => x.id() === id);
+        if (t.job && typeof t.job === 'function' && t.job() === self) {
+            t.setJob(null);
+        }
+    };
+
+    self.openBeaconJobDetails = function () {
+        const url = self.jobLink();
+        console.log("Opening job in Beacon:", url);
+        
+        openURLInBeacon(url);
+    }
+
+    // ---- map focus (delegated) ----
+    self.focusMap = function () {
+        if (self.isFilteredIn() === false) return;
+        flyToJob(self);
+    };
+
+    self.toggleAndExpand = function () {
+        console.log("Toggling and expanding job", self.id());
+        self.toggleAndLoad();
+        scrollToThisInTable();
+    }
+
+    self.focusAndExpandInList = function () {
+        // expand the job row
+        self.expand();
+
+        scrollToThisInTable();
+    };
+
+
+    function scrollToThisInTable() {
+        setTimeout(() => {
+            const row = document.querySelector(
+                `tr.job-row[data-job-id="${self.id()}"]`
+            );
+            if (!row) return;
+
+            // Scroll container is the top pane
+            const container = document.querySelector('#paneBottom .table-responsive');
+            if (!container) {
+                row.scrollIntoView({ behavior: "smooth", block: "start" });
+                return;
+            }
+
+            // Sticky header height
+            const table = row.closest("table");
+            const thead = table ? table.querySelector("thead") : null;
+            const headerHeight = thead
+                ? thead.getBoundingClientRect().height
+                : 0;
+
+            const containerRect = container.getBoundingClientRect();
+            const rowRect = row.getBoundingClientRect();
+            const padding = 2;
+
+            // Where we *want* the row: just under the header
+            let target =
+                container.scrollTop +
+                (rowRect.top - containerRect.top) -
+                headerHeight -
+                padding;
+
+            // Only clamp to >= 0; don't clamp to maxScroll here
+            if (target < 0) target = 0;
+
+            container.scrollTo({
+                top: target,
+                behavior: "smooth",
+            });
+        }, 150);
+    }
+
+
+    self.mouseEnterAddressButton = function () {
+        self.rowHasFocus(true);
+    }
+    self.mouseLeaveAddressButton = function () {
+        self.rowHasFocus(false);
+    }
+
+    // ---- lifecycle hooks (delegated) ----
+    self.onPopupOpen = function () {
+        self.popUpIsOpen(true);
+        if (self.rowHasFocus()) return;
+        self.focusAndExpandInList();
+        self.refreshDataAndTasking();
+    };
+
+    self.onPopupClose = function () {
+        self.popUpIsOpen(false);
+        if (self.rowHasFocus()) return;
+        self.collapse();
+    };
+
+    self.refreshDataAndTasking = function () {
+        self.fetchTasking();
+        self.refreshData();
+    }
+
+    self.fetchTasking = function () {
+        self.taskingLoading(true);
+        fetchJobTasking(self.id(), () => {
+            self.taskingLoading(false);
+        });
+
+    };
+
+    self.refreshData = async function () {
+        self.taskingLoading(true);
+        fetchUnresolvedActionsLog(self);
+        fetchJobById(self.id(), () => {
+            self.taskingLoading(false);
+        });
+        fetchSuppliersForJob(self.id()).then(suppliers => {
+            self.suppliers(suppliers);
+        });
+    };
+
+
+    // interval that only runs while job is filtered in
+    function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
+        let handle = null;
+
+        const tick = () => {
+            // global guard: only run if still filtered in
+            if (!self.isFilteredIn()) return;
+            fn();
+        };
+
+        const start = () => {
+            if (!self.isFilteredIn()) return; // don't start if already filtered out
+            if (handle) clearInterval(handle);
+            if (runImmediately) tick();
+            handle = setInterval(tick, intervalMs);
+        };
+
+        const stop = () => {
+            if (handle) {
+                clearInterval(handle);
+                handle = null;
+            }
+        };
+
+        return { start, stop };
+    }
+
+}
+
