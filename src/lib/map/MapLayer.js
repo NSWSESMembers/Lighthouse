@@ -179,6 +179,29 @@ export default class MapLayer {
         this._graphicsLayer.add(lineGraphic);
     }
 
+    /**
+     * Adds a line.
+     *
+     * @param points the array of arrays of [lon/lat] points.
+     * @param lineColour the outline colour.
+     * @param thickness the line thickness.
+     * @param style the line style.
+     */
+    addPolygon(points, lineColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID, title='', details='') {
+        let lineSymbol = new SimpleLineSymbol(style);
+        lineSymbol.setWidth(thickness);
+        lineSymbol.setColor(new Color(lineColour));
+
+        // expect GPS lat/long data
+        let lineGeometry = new Polyline(new SpatialReference({wkid:4326}));
+        lineGeometry.addPath(points);
+
+        let lineGraphic = new Graphic(lineGeometry, lineSymbol);
+        lineGraphic.setAttributes({title:title,details:details})
+
+        this._graphicsLayer.add(lineGraphic);
+    }
+
      /**
      * Adds a (complex) polygon using the ERSi polygon geometry.
      *

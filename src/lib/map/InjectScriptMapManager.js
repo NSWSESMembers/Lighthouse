@@ -35,10 +35,10 @@ window.addEventListener('message', function (event) {
   if (event.data.type) {
     if (event.data.type === 'LH_REQUEST_HELI_PARAMS') {
       let params = buildHeliParams();
-      window.postMessage(
-        { type: 'LH_RESPONSE_HELI_PARAMS', params: params },
-        '*',
-      );
+      window.postMessage({ type: 'LH_RESPONSE_HELI_PARAMS', params: params },'*');
+    } else if (event.data.type === 'LH_REQUEST_ADSB_PARAMS') {
+      let adsb_params = buildAdsbParams();
+      window.postMessage({ type: 'LH_RESPONSE_ADSB_PARAMS', params: adsb_params },'*');
     } else if (event.data.type === 'LH_UPDATE_LAYERS_DATA') {
       let mapLayerName = event.data.layer;
       let mapLayer = lighthouseMap.layers()[mapLayerName];
@@ -50,10 +50,14 @@ window.addEventListener('message', function (event) {
         showTransportIncidents(mapLayer, event.data.response);
       } else if (event.data.layer === 'transport-flood-reports') {
         showTransportFlooding(mapLayer, event.data.response);
+      } else if (event.data.layer === 'transport-local-reports') {
+        showTransportLocal(mapLayer, event.data.response);
       } else if (event.data.layer === 'transport-cameras') {
         showTransportCameras(mapLayer, event.data.response);
       } else if (event.data.layer === 'helicopters') {
         showRescueHelicopters(mapLayer, event.data.response);
+      } else if (event.data.layer === 'adsb') {
+        showAdsbHelicopters(mapLayer, event.data.response);
       } else if (event.data.layer === 'ses-teams') {
         showSesTeamsLocations(mapLayer, event.data.response);
       } else if (event.data.layer === 'ses-assets-filtered') {
@@ -190,32 +194,125 @@ const rfsIcons = {
 function addTransportPoint(mapLayer, point, icon) {
   let lat = point.geometry.coordinates[1];
   let lon = point.geometry.coordinates[0];
-
+  let transportPolyline = '';
+  let reportedBy = point.properties.OrgName ? point.properties.OrgName : "Transport Management Centre";
+  let incidentId = point.id;
+  let incidentUrl = `https://www.livetraffic.com/incident-details/${incidentId}`;
   let name = point.properties.displayName;
-
-  let created = moment(point.properties.created).format('DD/MM/YYYY HH:mm:ss');
+  let roadDetail = point.properties.roads[0];
+  let crossStreet = roadDetail.crossStreet ? `${roadDetail.mainStreet} ${roadDetail.locationQualifier} ${roadDetail.crossStreet}` : `${roadDetail.mainStreet}`;
+  let secondLocation = roadDetail.secondLocation ? `${roadDetail.mainStreet} ${roadDetail.locationQualifier} ${roadDetail.crossStreet} and ${roadDetail.secondLocation}` : `${crossStreet}`;
+  
+  let created = moment(point.properties.created).format('DD/MM/YY HH:mm');
   let createddiff = moment(point.properties.created).fromNow();
-
-  let updated = moment(point.properties.lastUpdated).format(
-    'DD/MM/YYYY HH:mm:ss',
-  );
+  let updated = moment(point.properties.lastUpdated).format('DD/MM/YY HH:mm',);
   let updateddiff = moment(point.properties.lastUpdated).fromNow();
 
-  let dateDetails = `<div class="dateDetails">\
+  let dateDetails = `<hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+    <div class="dateDetails" style="font-size: x-small">\
+    <div><span class="dateDetailsLabel">Reported By: </span> ${reportedBy}</div>\
     <div><span class="dateDetailsLabel">Created: </span> ${created}</div>\
     <div><span class="dateDetailsLabel">Created: </span> ${createddiff}</div>\
     <div><span class="dateDetailsLabel">Updated: </span> ${updated}</div>\
     <div><span class="dateDetailsLabel">Updated: </span> ${updateddiff}</div>\
     </div>`;
 
+  let footerDetails =`
+    <span style="text-style:italic;font-size:smaller;display:block;text-align:center">\
+    <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+    Live Traffic Incident ID: <a href="${incidentUrl}" target="_blank">#${incidentId}</a>
+    </span>`;
+
+  let adviceItems = `
+    <li>${point.properties.adviceA}</li>
+    ${point.properties.adviceB ? `<li>${point.properties.adviceB}</li>` : ""}
+    ${point.properties.adviceC ? `<li>${point.properties.adviceC}</li>` : ""}
+  `;
+
+    let adviceList = [
+      point.properties.adviceA,
+      point.properties.adviceB,
+      point.properties.adviceC
+    ]
+    .map(v => typeof v === "string" ? v.trim() : "")
+    .filter(v => v) // removes null, undefined, empty string
+    .map(v => `<li>${v}</li>`)
+    .join("");
+
   let details = `<div><strong>${point.properties.headline}</strong></div>\
-    <div style="margin-top:0.5em">${point.properties.adviceA}</div>\
-    <div>${point.properties.adviceB}</div>\
+  <div style="margin-top:0.5em"><b>${secondLocation}, ${roadDetail.suburb}</b></div>\
+    <div style="margin-top:0.5em">\
+    <ul>\
+    ${adviceList}\
+    </ul>\
+    </div>\
     <div>${point.properties.otherAdvice}</div>\
-    ${dateDetails}`;
+    ${dateDetails}\
+    ${footerDetails}
+    `;
+
+  // Add any polylines associated with the incident
+  if(point.properties.encodedPolylines) {
+    point.properties.encodedPolylines.forEach(function (area) {
+      let polylineColour = '#E87637';
+      let transportPolyline = decodeEncodedPolyline(area.coords);
+      switch (point.properties.CategoryIcon) {
+        case 'Flood':
+          polylineColour = '#2665A4';
+          break;
+        case 'AdverseWeather':
+          polylineColour = '#2665A4';
+          break;    
+        case 'Fire':
+          polylineColour = '#941309';
+          break;   
+      }
+      mapLayer.addPolygon(transportPolyline,polylineColour,2,SimpleLineSymbol.STYLE_SOLID,name,details);
+    });
+  }
 
   console.debug(`RMS incident at [${lat},${lon}]: ${name}`);
   mapLayer.addImageMarker(lat, lon, icon, name, details);
+}
+
+/**
+ * Decodes an encodedPolyline feature based on the Google Maps algorithim.
+ * These encodedPolyline features are present in TFNSW data feeds.
+ * 
+ * @param encodedPolyline An encodedPolyline feature
+ */
+function decodeEncodedPolyline(encodedPolyline) {
+  let index = 0;
+  const len = encodedPolyline.length;
+  let lat = 0;
+  let lng = 0;
+  const coordinates = [];
+
+  while (index < len) {
+    let b, shift = 0, result = 0;
+    do {
+      b = encodedPolyline.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const deltaLat = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lat += deltaLat;
+
+    shift = 0;
+    result = 0;
+    do {
+      b = encodedPolyline.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const deltaLng = (result & 1) ? ~(result >> 1) : (result >> 1);
+    lng += deltaLng;
+
+    // ArcGIS uses [longitude, latitude]
+    coordinates.push([lng * 1e-5, lat * 1e-5]);
+  }
+
+  return coordinates;
 }
 
 /**
@@ -274,14 +371,45 @@ function showTransportFlooding(mapLayer, data) {
       let feature = data.features[i];
 
       if (feature.geometry.type.toLowerCase() === 'point') {
-        let icon =
-          'https://www.livetraffic.com/assets/icons/map/other-hazards/flood.svg';
+        let icon = 'https://www.livetraffic.com/assets/icons/map/other-hazards/flood.svg';
         addTransportPoint(mapLayer, feature, icon);
         count++;
       }
     }
   }
   console.info(`added ${count} RMS flooding markers`);
+}
+
+/**
+ * Shows flooding as reported by RMS.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+function showTransportLocal(mapLayer, data) {
+  console.info('showing RMS reported local council reports');
+
+  let count = 0;
+  if (data && data.features) {
+    // filter out specific types of hazards since this is a merged feed
+    const excludedCategoryIcons = ["Roadworks"];
+    const filteredFeatures = data.features.filter(f =>
+      !excludedCategoryIcons.includes(f.properties.CategoryIcon)
+    );
+
+    for (let i = 0; i < filteredFeatures.length; i++) {
+      let feature = filteredFeatures[i];
+
+      if (feature.geometry.type.toLowerCase() === 'point') {
+        let icon = getTransportIncidentIcon(feature.properties.CategoryIcon);
+        addTransportPoint(mapLayer, feature, icon);
+        count++;
+      }
+    }
+
+    console.info(`RMS Local Incidents: ${data.features.length} Original / ${filteredFeatures.length} Filtered / ${count} Added`);
+
+  }
 }
 
 /**
@@ -298,37 +426,57 @@ function showTransportIncidents(mapLayer, data) {
     for (let i = 0; i < data.features.length; i++) {
       let feature = data.features[i];
       if (feature.geometry.type.toLowerCase() === 'point') {
-        let icon =
-          'https://www.livetraffic.com/assets/icons/map/general-hazards/moderate-now.svg';
-
-        switch (feature.properties.mainCategory) {
-          case 'Hazard':
-            icon =
-              'https://www.livetraffic.com/assets/icons/map/general-hazards/moderate-now.svg';
-            break;
-          case 'Crash':
-            icon =
-              'https://www.livetraffic.com/assets/icons/map/crashes/moderate-now.svg';
-            break;
-          case 'Breakdown':
-            icon =
-              'https://www.livetraffic.com/assets/icons/map/breakdowns/moderate-now.svg';
-            break;
-          case 'Traffic lights blacked out':
-            icon =
-              'https://www.livetraffic.com/assets/icons/map/other-hazards/tralights.svg';
-            break;
-          case 'Changed traffic conditions':
-            icon =
-              'https://www.livetraffic.com/assets/icons/map/changed-traffic/moderate-now.svg';
-            break;
-        }
+        let icon = getTransportIncidentIcon(feature.properties.CategoryIcon);
         addTransportPoint(mapLayer, feature, icon);
         count++;
       }
     }
   }
   console.info(`added ${count} RMS incidents`);
+}
+
+/**
+ * Returns icon for LiveTraffic categoryIcon value from property.
+ *
+ * @param categoryIcon the categoryIcon property from the feature.
+ */
+function getTransportIncidentIcon(categoryIcon) {
+  let icon = 'https://www.livetraffic.com/assets/icons/map/general-hazards/moderate-now.svg';
+  switch (categoryIcon) {
+    case 'Hazard':
+      icon = 'https://www.livetraffic.com/assets/icons/map/general-hazards/moderate-now.svg';
+      break;
+    case 'Crash':
+      icon = 'https://www.livetraffic.com/assets/icons/map/crashes/moderate-now.svg';
+      break;
+    case 'Breakdown':
+      icon = 'https://www.livetraffic.com/assets/icons/map/breakdowns/moderate-now.svg';
+      break;
+    case 'TrafficSignals':
+      //icon = 'https://www.livetraffic.com/assets/icons/map/other-hazards/tralights.svg';
+      icon = 'https://www.livetraffic.com/assets/icons/map/traffic-lights/moderate-now.svg';
+      break;
+    case 'ChangedConditions':
+      icon = 'https://www.livetraffic.com/assets/icons/map/changed-traffic/low-now.svg';
+      break;
+    case 'Flood':
+      icon = 'https://www.livetraffic.com/assets/icons/map/other-hazards/flood.svg';
+      break;
+    case 'Roadworks':
+      icon = 'https://www.livetraffic.com/assets/icons/map/roadworks/moderate-now.svg';
+      break;
+    case 'PublicEvent':
+      icon = 'https://www.livetraffic.com/assets/icons/map/events/major-now.svg';
+      break;
+    case 'AdverseWeather':
+      icon = 'https://www.livetraffic.com/assets/icons/map/other-hazards/adverse-weather.svg';
+      break;    
+    case 'Fire':
+      icon = 'https://www.livetraffic.com/assets/icons/map/other-hazards/fire.svg';
+      break;   
+  }
+
+  return icon;
 }
 
 /**
@@ -660,10 +808,25 @@ function buildHeliParams() {
     params += i === 0 ? '?' : '&';
     params += 'icao24=' + aircraft[i].icao24.toLowerCase();
   }
-
+  // console.debug('heli params:' + params);
   return params;
 }
 
+
+/**
+ * Builds the params string for the helicopter's update request.
+ *
+ * @returns the params.
+ */
+function buildAdsbParams() {
+  // Build the query url
+  let params = '';
+  for (let i = 0; i < aircraft.length; i++) {
+    params += i === 0 ? '' : ',';
+    params += aircraft[i].icao24.toLowerCase();
+  }
+  return params;
+}
 
 /**
  * Show Electricity Distribution Network Boundaries on the map.
@@ -871,6 +1034,8 @@ function showRescueHelicopters(mapLayer, data) {
           lon,
           alt,
           heading,
+          heli.icon,
+          'opensky'
         );
         position.save();
         aircraftLastPositions[icao24] = position;
@@ -884,6 +1049,8 @@ function showRescueHelicopters(mapLayer, data) {
         lon,
         alt,
         heading,
+        null,
+        'opensky'
       );
 
       count++;
@@ -916,10 +1083,108 @@ function showRescueHelicopters(mapLayer, data) {
           alt,
           heading,
           helicopterLastKnownIcon,
+          'opensky-lastknown'
         );
       }
     }
   }
+}
+
+/**
+ * Shows the current position of known rescue helicopters on the map via ADSB API
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+function showAdsbHelicopters(mapLayer, data) {
+  console.info('showing adsb helicopters');
+    // if (developmentMode) {
+    //   mapLayer.addImageMarker(-33.940117, 151.176749, lighthouseIcon, 'ADSB Test Icon', 'This is a test marker. It is used to check whether the map access is working', );
+    // }
+
+  let count = 0;
+  let updatedAircraft = new Set();
+
+  if (data && data.ac) {
+    data.ac.forEach(function (adsbAircraft) {
+      let icao24 = adsbAircraft.hex;
+      // let rego = adsbAircraft.r;
+      // let callsign = adsbAircraft.flight;
+      // let type = adsbAircraft.t;
+      let lon = adsbAircraft.lon;
+      let lat = adsbAircraft.lat;
+      let alt = adsbAircraft.alt_baro || 0;
+      let heading = adsbAircraft.track || 0;
+      // let speed = adsbAircraft.gs || 0;
+      let positionUpdated = adsbAircraft.seen;
+
+      // Save off the updated position
+      if (positionUpdated) {
+        let heli = findAircraftById(icao24);
+        updatedAircraft.add(icao24);
+        let position = new AdsbPosition(
+          heli,
+          positionUpdated,
+          lat,
+          lon,
+          alt,
+          heading,
+          heli.icon,
+          'adsb'
+        );
+        position.save();
+        adsbLastPositions[icao24] = position;
+      }
+
+      addAircraftMarker(
+        mapLayer,
+        icao24,
+        positionUpdated,
+        lat,
+        lon,
+        alt,
+        heading,
+        null,
+        'adsb'
+      );
+
+      count++;
+
+    });
+  }
+
+  console.info(`added ${count} adsb aircraft`);
+
+  // Go through the known aircraft, and put down markers for any we didn't just see
+  for (let i = 0; i < aircraft.length; i++) {
+    let currentAircraft = aircraft[i];
+    let icao24 = currentAircraft.icao24.toLowerCase();
+
+    if (!updatedAircraft.has(icao24)) {
+      let lastKnownPosition = aircraftLastPositions[icao24];
+
+      if (lastKnownPosition && lastKnownPosition.aircraft.heli) {
+        let positionUpdated = lastKnownPosition.lastUpdate;
+        let lat = lastKnownPosition.lat;
+        let lon = lastKnownPosition.lon;
+        let alt = lastKnownPosition.alt;
+        let heading = lastKnownPosition.heading;
+
+        addAircraftMarker(
+          mapLayer,
+          icao24,
+          positionUpdated,
+          lat,
+          lon,
+          alt,
+          heading,
+          helicopterLastKnownIcon,
+          'adsb-lastknown'
+        );
+      }
+    }
+  }
+
 }
 
 /**
@@ -932,6 +1197,7 @@ function showRescueHelicopters(mapLayer, data) {
  * @param lon the aircraft longitude.
  * @param alt the aircraft altitude.
  * @param heading the aircraft heading.
+ * @param source the aircraft tracking source.
  */
 function addAircraftMarker(
   mapLayer,
@@ -942,23 +1208,57 @@ function addAircraftMarker(
   alt,
   heading,
   icon,
+  source
 ) {
   let updated = 'unknown';
   let updatedMoment = 'unknown';
-
-  if (positionUpdated) {
+  let sourcePretty = 'Other';
+  let altGround = (alt === "ground" || alt <= 0) ? true : false;
+  let altPretty = !altGround ? `${alt.toLocaleString('en-AU')} ft` : `On Ground`;
+  if (positionUpdated && source == 'opensky') {
     updated = moment(positionUpdated * 1000).format('DD/MM/YY HH:mm:ss');
     updatedMoment = moment(positionUpdated * 1000).fromNow();
   }
 
+  /* ADSB API provides time in 'seconds since' last contact, not full DateTime */
+  if (positionUpdated && source == 'adsb') {
+    let positionUpdatedRelative = moment().subtract(positionUpdated, 's');
+    updated = moment(positionUpdatedRelative).format('DD/MM/YY HH:mm:ss');
+    updatedMoment = moment(positionUpdatedRelative).fromNow();
+  }
+
+
+  
+
   let heli = findAircraftById(icao24);
   let name = heli.name + ' ' + heli.rego + ' - ' + heli.operator;
+
   if (!icon) {
     icon = heli.getIcon();
   }
 
+  switch(source) {
+    case 'adsb':
+      sourcePretty = 'ADSB Network';
+      break;
+    case 'adsb-lastknown':
+      sourcePretty = 'ADSB Network (Last Known)';
+      break;
+    case 'opensky':
+      sourcePretty = 'OpenSky Network';
+      break;
+    case 'opensky':
+      sourcePretty = 'OpenSky Network (Last Known)';
+      break;
+    default:
+      break;
+  }
+
   let details = `<div>Model: ${heli.model}</div>\
-    <div style="margin-top:0.5em"><strong>Lat:</strong> ${lat}<br><strong>Lon:</strong> ${lon}<br><strong>Alt:</strong> ${alt}</div>\
+    <div style="margin-top:0.5em">\
+    <strong>Lat/Lon:</strong> ${lat}, ${lon}<br>\
+    <strong>Alt:</strong> ${altPretty}</div>\
+    <strong>Source:</strong> ${sourcePretty}</div>\
     <div class="dateDetails">\
     <div><span class="dateDetailsLabel">Last Position Update: </span> ${updated}</div>\
     <div><span class="dateDetailsLabel">Last Position Update: </span> ${updatedMoment}</div>\
@@ -968,8 +1268,9 @@ function addAircraftMarker(
     <a target='_blank' href="https://www.flightradar24.com/data/aircraft/${heli.rego}">[history]</a>\
     </div>`;
 
-  console.debug(`aircraft at [${lat},${lon}]: ${name}`);
-  let marker = MapLayer.createImageMarker(icon, name, details);
+  console.debug(`aircraft at [${lat},${lon}]: ${name} via ${source} (${sourcePretty})`);
+  // fixed bug here with aircraft positions not fixed on map due to name,details being passed
+  let marker = MapLayer.createImageMarker(icon);
   marker.setWidth(32);
   marker.setHeight(32);
   marker.setAngle(heading);
@@ -1123,7 +1424,6 @@ function showPowerOutages(mapLayer, data) {
           } else if (geometry.type.toLowerCase() === 'point') {
             let lat = geometry.coordinates[1];
             let lon = geometry.coordinates[0];
-            console.log()
             mapLayer.addImageMarker(
               lat,
               lon,
@@ -1502,77 +1802,128 @@ class AircraftPosition {
   }
 }
 
+/**
+ * A class for a holding details of an aircraft position.
+ */
+class AdsbPosition {
+  /**
+   * Constructs a new aircraft position.
+   *
+   * @param aircraft the aircraft details.
+   * @param lastUpdate the last update time.
+   * @param lat the last known latitude.
+   * @param lon the last known longitude.
+   * @param alt the last known altitude.
+   * @param heading the last known heading.
+   * @param source the last known tracking source.
+   */
+  constructor(aircraft, lastUpdate, lat, lon, alt, heading, source) {
+    this.aircraft = aircraft;
+    this.lastUpdate = lastUpdate;
+    this.lat = lat;
+    this.lon = lon;
+    this.alt = alt;
+    this.heading = heading;
+    this.source = source;
+  }
+
+  /**
+   * Saves this position into local storage.
+   */
+  save() {
+    let icao24 = this.aircraft.icao24;
+    localStorage.setItem(
+      'Lighthouse-adsb-last-position-' + icao24,
+      JSON.stringify(this),
+    );
+  }
+
+  /**
+   * Loads a position from local storage.
+   *
+   * @param icao24 the ICAO24 address.
+   * @return an AircraftPosition, or undefined.
+   */
+  static load(icao24) {
+    icao24 = icao24.toLowerCase();
+    let cachedLastPosition = localStorage.getItem(
+      'Lighthouse-adsb-last-position-' + icao24,
+    );
+    if (cachedLastPosition) {
+      return JSON.parse(cachedLastPosition);
+    }
+  }
+}
+
 // A list of rescue helicopters
 const aircraft = [
   // Toll Air Ambulance
-  new Helicopter('7C6178', 'VH-TJE', 'RSCU201', 'AW-139', 'Toll Air'),
-  new Helicopter('7C6179', 'VH-TJF', 'RSCU202', 'AW-139', 'Toll Air'),
-  new Helicopter('7C617A', 'VH-TJG', 'RSCU203', 'AW-139', 'Toll Air'),
-  new Helicopter('7C617B', 'VH-TJH', 'RSCU204', 'AW-139', 'Toll Air'),
-  new Helicopter('7C617C', 'VH-TJI', 'RSCU206', 'AW-139', 'Toll Air'),
-  new Helicopter('7C617D', 'VH-TJJ', 'RSCU207', 'AW-139', 'Toll Air'),
-  new Helicopter('7C617E', 'VH-TJK', 'RSCU208', 'AW-139', 'Toll Air'),
-  new Helicopter('7C6182', 'VH-TJO', 'RSCU209', 'AW-139', 'Toll Air'),
-
+  new Helicopter('7C6178', 'VH-TJE', 'RSCU201', 'AW139', 'Toll Air'),
+  new Helicopter('7C6179', 'VH-TJF', 'RSCU202', 'AW139', 'Toll Air'),
+  new Helicopter('7C617A', 'VH-TJG', 'RSCU203', 'AW139', 'Toll Air'),
+  new Helicopter('7C617B', 'VH-TJH', 'RSCU204', 'AW139', 'Toll Air'),
+  new Helicopter('7C617C', 'VH-TJI', 'RSCU206', 'AW139', 'Toll Air'),
+  new Helicopter('7C617D', 'VH-TJJ', 'RSCU207', 'AW139', 'Toll Air'),
+  new Helicopter('7C617E', 'VH-TJK', 'RSCU208', 'AW139', 'Toll Air'),
+  new Helicopter('7C6182', 'VH-TJO', 'RSCU209', 'AW139', 'Toll Air'),
   // Careflight
   new Helicopter('7C2A34', 'VH-IME', 'CFH3', 'BK117', 'Careflight'),
   new Helicopter('7C0635', 'VH-BIF', 'CFH4', 'BK117', 'Careflight'),
-
   // Westpac
   new Helicopter('7C5CC0', 'VH-SLU', 'LIFE21', 'BK117', 'Westpac'),
   new Helicopter('7C5CAC', 'VH-SLA', 'LIFE23', 'BK117', 'Westpac'),
-  new Helicopter('7C81CC', 'VH-ZXA', 'WP1', 'AW-139', 'Westpac'),
-  new Helicopter('7C81CD', 'VH-ZXB', 'WP2', 'AW-139', 'Westpac'),
-  new Helicopter('7C81CE', 'VH-ZXC', 'WP3', 'AW-139', 'Westpac'),
-  new Helicopter('7C81CF', 'VH-ZXD', 'WP4', 'AW-139', 'Westpac'),
+  new Helicopter('7C81CC', 'VH-ZXA', 'WP1', 'AW139', 'Westpac'),
+  new Helicopter('7C81CD', 'VH-ZXB', 'WP2', 'AW139', 'Westpac'),
+  new Helicopter('7C81CE', 'VH-ZXC', 'WP3', 'AW139', 'Westpac'),
+  new Helicopter('7C81CF', 'VH-ZXD', 'WP4', 'AW139', 'Westpac'),
+  new Helicopter('7C7591', 'VH-XIB', 'WP5', 'AW139', 'Westpac'),
   new Helicopter('7C25E5', 'VH-HRR', 'WP6', 'BK117', 'Westpac'),
-
   // PolAir
-  new Helicopter('7C4D02', 'VH-PHW', 'POLAIR1', 'EC-AS350B2', 'PolAir'),
-  new Helicopter('7C4D03', 'VH-PHX', 'POLAIR2', 'EC-AS355', 'PolAir'),
-  new Helicopter('7C4CED', 'VH-PHB', 'POLAIR3', 'EC-AS350B2', 'PolAir'),
-  new Helicopter('7C4CF8', 'VH-PHM', 'POLAIR4', 'EC-135', 'PolAir'),
-  new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'Bell 412EPI', 'PolAir'),
+  new Helicopter('7C4CED', 'VH-PHB', 'POLAIR3', 'B429', 'PolAir'),
+  new Helicopter('7C4CF8', 'VH-PHM', 'POLAIR4', 'B429', 'PolAir'),
+  new Helicopter('7C4D02', 'VH-PHW', 'POLAIR1', 'B429', 'PolAir'),
+  new Helicopter('7C4D05', 'VH-PHZ', 'POLAIR5', 'B412', 'PolAir'),
+  new Helicopter('7C4E49', 'VH-PQZ', 'POLAIR2', 'B412', 'PolAir'),
+  new Helicopter('7C0FF9', 'VH-DFV', 'POLAIR7', 'C208B', 'PolAir', false),
+  new Helicopter('7C1185', 'VH-DQV', 'POLAIR8', 'C208B', 'PolAir', false),
+  new Helicopter('7C1239', 'VH-DVV', 'POLAIR6', 'C208B', 'PolAir', false),
+  // AMSA
+  new Helicopter('7C7648', 'VH-XNE', 'RSCU330', 'CL60', 'AMSA', false),
+  new Helicopter('7C7649', 'VH-XNF', 'RSCU550', 'CL60', 'AMSA', false),
+  new Helicopter('7C7647', 'VH-XND', 'RSCU660', 'CL60', 'AMSA', false),
+  new Helicopter('7C7646', 'VH-XNC', 'RSCU440', 'CL60', 'AMSA', false),
 
   // Royal Australian Navy / CHC
-  new Helicopter(
-    '7C37B8',
-    'VH-LAI',
-    'CHOP22',
-    'Sikorsky S-76A',
-    'Royal Australian Navy',
-  ),
-  new Helicopter(
-    '7C44C8',
-    'VH-NVE',
-    'CHOP26',
-    'AW-139',
-    'Royal Australian Navy',
-  ),
-
+  new Helicopter('7C37B8','VH-LAI','CHOP22','Sikorsky S-76A','Royal Australian Navy'),
+  new Helicopter('7C44C8', 'VH-NVE', 'CHOP26', 'AW-139', 'Royal Australian Navy'),
   // Some QLD based helicopters which may cross south
   // QLD Westpac
   new Helicopter('7C44CA', 'VH-NVG', 'LIFE45', 'EC-135', 'Westpac'),
-
   // QLD RAAF Rescue helicopter
   new Helicopter('7C37B7', 'VH-LAH', 'CHOP41', 'Sikorsky S-76A', 'RAAF'),
-
   // RACQ Lifeflight
   new Helicopter('7C759B', 'VH-XIL', 'RSCU511', 'AW139', 'RACQ Lifeflight'),
   new Helicopter('7C7599', 'VH-XIJ', 'RSCU533', 'AW139', 'RACQ Lifeflight'),
   new Helicopter('7C74C6', 'VH-XCO', 'RSCU588', 'Bell 412', 'RACQ Lifeflight'),
-
   // Some VIC base helicopters which may cross north
   // Victoria Helicopter Emergency Medical Service (HEMS)
   new Helicopter('7C7CC6', 'VH-YXK', 'HEMS1', 'AW-139', 'HEMS'),
   new Helicopter('7C7CC3', 'VH-YXH', 'HEMS2', 'AW-139', 'HEMS'),
   new Helicopter('7C7CC5', 'VH-YXJ', 'HEMS4', 'AW-139', 'HEMS'),
   new Helicopter('7C7CC1', 'VH-YXF', 'HEMS5', 'AW-139', 'HEMS'),
-
-  // RFS fixed wing aircraft
-  new Helicopter('A4C031', 'N405LC', 'Thor', 'C130', 'RFS', false),
-  new Helicopter('ACC37A', 'N512AX', '', 'DC-10', 'RFS', false), // Bomber 910?
-
+  // RFS aircraft
+  new Helicopter('A4C031', 'N405LC', 'B132 Thor', 'C130', 'RFS', false),
+  new Helicopter('a09922', 'N138CG', 'LAT Marie Bashir', 'B737-LAT', 'RFS', false),
+  new Helicopter('7c6ba7', 'VH-VJT', 'FSCN200', 'C560', 'RFS', false),
+  new Helicopter('7c6ba2', 'VH-VJO', 'FSCN201', 'C560', 'RFS', false),
+  new Helicopter('7c41de', 'VH-NAO', 'FSCN202', 'King Air B350', 'RFS', false),
+  new Helicopter('a5bf06', 'N47CU', 'HT211', 'CH47D Chinook', 'RFS'),
+  new Helicopter('7c6c91', 'VH-VQB', 'Helitak 201', 'B412EP', 'RFS'),
+  new Helicopter('7C6A85', 'VH-VBR', 'Helitak 202', 'B412EP', 'RFS'),
+  new Helicopter('7C6B97', 'VH-VJD', 'Helitak 203', 'B412EP', 'RFS'),
+  new Helicopter('7C6B99', 'VH-VJF', 'Helitak 204', 'B412EP', 'RFS'),
+  new Helicopter('7C4401', 'VH-NPV', 'Helitak 205', 'B412EP', 'RFS'),
+  new Helicopter('7C658F', 'VH-UCH', 'Helitak 206', 'B412EP', 'RFS'),
   // Whoa, there appear to be a lot of these...
 ];
 
@@ -1582,8 +1933,16 @@ if (developmentMode) {
     // ASNSW fixed wing
     new Helicopter(
       '7C41DE',
+      'VH-AAS',
+      'AM222',
+      'B350',
+      'ASNSW',
+      false,
+    ),
+    new Helicopter(
+      '7C0012',
       'VH-NAO',
-      'AM262',
+      'AM222',
       'Super King 350C',
       'ASNSW',
       false,
@@ -1634,6 +1993,7 @@ if (developmentMode) {
 }
 
 var aircraftLastPositions = {};
+var adsbLastPositions = {};
 
 /**
  * Loads the last known aircraft positions.
@@ -1646,6 +2006,20 @@ function loadAircraftLastKnownPositions() {
     let icao24 = currentAircraft.icao24.toLowerCase();
 
     aircraftLastPositions[icao24] = AircraftPosition.load(icao24);
+  }
+}
+
+/**
+ * Loads the last known aircraft positions.
+ */
+function loadAdsbLastKnownPositions() {
+  console.debug('loading adsb last known positions from cache');
+
+  for (let i = 0; i < aircraft.length; i++) {
+    let currentAircraft = aircraft[i];
+    let icao24 = currentAircraft.icao24.toLowerCase();
+
+    adsbLastPositions[icao24] = AircraftPosition.load(icao24);
   }
 }
 
@@ -1703,8 +2077,10 @@ export default class InjectScriptMapManager {
     // Layers to show above beacon jobs
     lighthouseMap.createLayer('transport-incidents');
     lighthouseMap.createLayer('transport-flood-reports');
+    lighthouseMap.createLayer('transport-local-reports');
     lighthouseMap.createLayer('transport-cameras');
     lighthouseMap.createLayer('helicopters');
+    lighthouseMap.createLayer('adsb');
     lighthouseMap.createLayer('ses-teams');
 
     // Layers to show under beacon jobs
@@ -1943,12 +2319,14 @@ ${rows.join('\r')}
     let buttons = [
       'toggleRfsIncidentsBtn',
       'toggleRmsIncidentsBtn',
+      'toggleRmsLocalBtn',
       'toggleRmsFloodingBtn',
       'toggleRmsCamerasBtn',
       'toggleSesTeamsBtn',
       'toggleSesFilteredAssetsBtn',
       'toggleHazardWatchBtn',
       'toggleHelicoptersBtn',
+      'toggleAdsbBtn',
       'togglelhqsBtn',
       'togglePowerOutagesBtn',
       'toggleBoundaryAusgridBtn',
@@ -1965,5 +2343,6 @@ ${rows.join('\r')}
     });
 
     loadAircraftLastKnownPositions();
+    loadAdsbLastKnownPositions();
   }
 }

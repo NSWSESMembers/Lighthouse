@@ -157,6 +157,10 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/assets/icons/map/other-hazards/flood.svg" />
             <span class="tag-text">RMS Flood Reports</span>
             </span>
+            <span id="toggleRmsLocalBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/assets/icons/map/general-hazards/low-now.svg" />
+            <span class="tag-text">Local Council Incidents</span>
+            </span>
             <span id="toggleRmsCamerasBtn" class="label tag tag-lh-filter tag-disabled">
             <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src="https://www.livetraffic.com/assets/icons/map/others/camera-N.svg" />
             <span class="tag-text">RMS Cameras</span>
@@ -219,7 +223,11 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             <li class="clearfix">
             <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
             <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
-            <span class="tag-text">Rescue Aircraft</span>
+            <span class="tag-text">Rescue Aircraft (OpenSky)</span>
+            </span>
+            <span id="toggleAdsbBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
+            <span class="tag-text">Rescue Aircraft (ADSB)</span>
             </span>
             </li>
             </ul>
@@ -235,8 +243,10 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
         this._registerClickHandler('toggleRfsIncidentsBtn', 'rfs', this._requestRfsLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('toggleRmsIncidentsBtn', 'transport-incidents', this._requestTransportIncidentsLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('toggleRmsFloodingBtn', 'transport-flood-reports', this._requestTransportFloodReportsLayerUpdate, 5 * 60000); // every 5 mins
+        this._registerClickHandler('toggleRmsLocalBtn', 'transport-local-reports', this._requestTransportLocalReportsLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('toggleRmsCamerasBtn', 'transport-cameras', this._requestTransportCamerasLayerUpdate, 10 * 60000); // every 10 mins
-        this._registerClickHandler('toggleHelicoptersBtn', 'helicopters', ContentScriptMapManager._requestHelicoptersLayerUpdate, 10000); // every 10s
+        this._registerClickHandler('toggleHelicoptersBtn', 'helicopters', ContentScriptMapManager._requestHelicoptersLayerUpdate, 6 * 10000); // every 60s
+        this._registerClickHandler('toggleAdsbBtn', 'adsb', ContentScriptMapManager._requestAdsbLayerUpdate, 6 * 10000); // every 60s
         this._registerClickHandler('toggleSesTeamsBtn', 'ses-teams', this._requestSesTeamsLayerUpdate, 5 * 60000); // every 5 minutes
         this._registerClickHandler('toggleSesFilteredAssetsBtn', 'ses-assets-filtered', this._requestSesFilteredAssets, 60000); // every 1 minutes
         //this._registerClickHandler('toggleHazardWatchBtn', 'hazard-watch', this._requestHazardWatchLayerUpdate, 5 * 60000); // every 5 minutes
@@ -284,7 +294,9 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
     } else if (event.data.type === 'LH_RESPONSE_HELI_PARAMS') {
         let params = event.data.params;
         this._requestLayerUpdate('helicopters', params);
-
+    } else if (event.data.type === 'LH_RESPONSE_ADSB_PARAMS') {
+        let params = event.data.params;
+        this._requestLayerUpdate('adsb', params);
     } else if (event.data.type === 'LH_RESPONSE_TRANSPORT_KEY') {
 
         let sessionKey = 'lighthouseTransportApiKeyCache';
@@ -439,10 +451,17 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
      * Sends a request to the background script to get the latest transport flood reports.
      */
      _requestTransportFloodReportsLayerUpdate() {
-        //console.debug('updating transport incidents layer');
+        //console.debug('updating transport flood layer');
         this._fetchTransportResource('transport-flood-reports');
     }
 
+    /**
+     * Sends a request to the background script to get the latest transport local reports.
+     */
+     _requestTransportLocalReportsLayerUpdate() {
+        //console.debug('updating transport local layer');
+        this._fetchTransportResource('transport-local-reports');
+    }
 
     /**
      * asks for the cameras via the fetchTransportResource function
@@ -538,11 +557,17 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
      * Sends a request to the background script to get the latest helicopter positions.
      */
      static _requestHelicoptersLayerUpdate() {
-        //console.debug('updating transport incidents layer');
+        console.debug('updating helicopter opensky layer');
         window.postMessage({type: 'LH_REQUEST_HELI_PARAMS'}, '*');
     }
 
-    
+     /**
+     * Sends a request to the background script to get the latest ADSB positions.
+     */
+     static _requestAdsbLayerUpdate() {
+        console.debug('updating helicopter adsb layer');
+        window.postMessage({type: 'LH_REQUEST_ADSB_PARAMS'}, '*');
+    }   
 
     /**
      * Sends a message to the background script with layer name and params.
@@ -556,8 +581,6 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             if (response.error) {
                 console.error(`Update to ${layer} failed: ${response.error} http-code:${response.httpCode}`);
             } else {
-                console.log(layer);
-                console.log(response);
                 ContentScriptMapManager._passLayerDataToInject(layer, response)
             }
         }.bind(this));
