@@ -153,6 +153,21 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       sendResponse(data);
     });
     return true;
+  } else if (request.type === 'power-outages-ausgrid') {
+    fetchAusgridOutages(function (data) {
+      sendResponse(data);
+    });
+    return true;
+  } else if (request.type === 'power-outages-endeavour') {
+    fetchEndeavourEnergyOutages(function (data) {
+      sendResponse(data);
+    });
+    return true;
+  } else if (request.type === 'power-outages-essential') {
+    fetchEssentialEnergyOutages(function (data) {
+      sendResponse(data);
+    });
+    return true;
   } else if (request.type === 'hazard-watch') {
     fetchHazardWatch(function (data) {
       sendResponse(data);

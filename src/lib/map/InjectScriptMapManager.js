@@ -60,14 +60,28 @@ window.addEventListener('message', function (event) {
         showSesFilteredAssets(mapLayer, event.data.response);
       } else if (event.data.layer === 'lhqs') {
         showLhqs(mapLayer, event.data.response);
-      } else if (event.data.layer === 'power-outages') {
+      } else if (['power-outages','power-outages-ausgrid','power-outages-endeavour','power-outages-essential'].includes(event.data.layer)) {
         showPowerOutages(mapLayer, event.data.response);
       } else if (event.data.layer === 'hazard-watch') {
         showHazardWatch(mapLayer, event.data.response);
+      } else if (['power-boundary-ausgrid','power-boundary-endeavour','power-boundary-essential','power-boundary-evo'].includes(event.data.layer)) {
+        showElectricityDistributionBoundary(mapLayer, event.data.response);
       }
     } else if (event.data.type === 'LH_CLEAR_LAYER_DATA') {
-      console.info('clearing layer:' + event.data.layer);
-      lighthouseMap.layers()[event.data.layer].clear();
+        console.info('clearing layer:' + event.data.layer);
+        lighthouseMap.layers()[event.data.layer].clear();
+        
+        switch(event.data.layer) {
+          case ('power-boundary-ausgrid'):
+            lighthouseMap.layers()['power-outages-ausgrid'].clear();
+            break;
+          case ('power-boundary-endeavour'):
+            lighthouseMap.layers()['power-outages-endeavour'].clear();
+            break;
+          case ('power-boundary-essential'):
+            lighthouseMap.layers()['power-outages-essential'].clear();
+            break;
+        }
     } else if (event.data.type === 'LH_GET_TRANSPORT_KEY') {
       var transportApiKeyOpsLog = '';
       switch (location.origin) {
@@ -135,8 +149,10 @@ function getOpsLog(id, cb) {
 const developmentMode = lighthouseEnviroment === 'Development';
 const lighthouseIcon = lighthouseUrl + 'icons/lh-black.png';
 const powerIcon = lighthouseUrl + 'icons/power.png';
-const helicopterLastKnownIcon =
-  lighthouseUrl + 'icons/helicopter-last-known.png';
+const powerOutageIcon = lighthouseUrl + 'icons/power_outage.png';
+const powerPlannedIcon = lighthouseUrl + 'icons/power_planned.png';
+const powerCompleteIcon = lighthouseUrl + 'icons/power_complete.png';
+const helicopterLastKnownIcon = lighthouseUrl + 'icons/helicopter-last-known.png';
 const teamEnrouteIcon = lighthouseUrl + 'icons/enroute.png';
 const teamOnsiteIcon = lighthouseUrl + 'icons/bus.png';
 const teamOffsiteIcon = lighthouseUrl + 'icons/offsite.png';
@@ -149,6 +165,11 @@ const assetYellowIcon = lighthouseUrl + 'icons/asset-icons/asset-yellow';
 const assetBrownIcon = lighthouseUrl + 'icons/asset-icons/asset-brown';
 const assetPurpleIcon = lighthouseUrl + 'icons/asset-icons/asset-purple';
 const assetBlackIcon = lighthouseUrl + 'icons/asset-icons/asset-black';
+
+const ausgridIcon   = lighthouseUrl + 'icons/ausgrid.png';
+const endeavourIcon = lighthouseUrl + 'icons/endeavour.png';
+const essentialIcon = lighthouseUrl + 'icons/essential.png';
+const evoIcon       = lighthouseUrl + 'icons/evo.png';
 
 // A map of RFS categories to icons
 const rfsIcons = {
@@ -643,6 +664,81 @@ function buildHeliParams() {
   return params;
 }
 
+
+/**
+ * Show Electricity Distribution Network Boundaries on the map.
+ * Handles multiple providers based on GeoJSON file with simple polygon boundaries.
+ * Uses the ERSI polygon feature to draw on map.
+ *
+ * @param mapLayer the map layer to add to.
+ * @param data the data to add to the layer.
+ */
+function showElectricityDistributionBoundary(mapLayer, data) {
+  if (data && data.features) {
+    data.features.forEach(function (area) {
+
+      console.info('showing elec distribution boundary: ' + area.properties.name);
+      let layerName = data.name;
+      let provider = area.properties.name;
+      let icon = '';
+      let fill = [255, 0, 0, 0.05];
+      let line = '#555555';
+      let contact = '';
+      let providerWeb = ''; 
+      if (layerName === 'power-boundary-ausgrid') {
+        icon = `<img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="${ausgridIcon}" /> `;
+        fill = [0, 0, 255, 0.1];
+        contact = '131 388';
+        providerWeb = "http://ausgrid.com.au";
+      } else if(layerName === 'power-boundary-endeavour') {
+        icon = `<img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="${endeavourIcon}" /> `;
+        fill = [0, 255, 0, 0.1];
+        contact = '131 003';	
+        providerWeb = "https://www.endeavourenergy.com.au/";
+      } else if(layerName === 'power-boundary-essential') {
+        icon = `<img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="${essentialIcon}" /> `;
+        fill = [255, 128, 0, 0.1];
+        contact = '132 080';
+        providerWeb = "https://www.essentialenergy.com.au/";
+      } else if(layerName === 'power-boundary-evo') {
+        icon = `<img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src="${evoIcon}" /> `;
+        fill = [255, 0, 233, 0.1 ];
+        contact = '131 093';
+        providerWeb = "https://www.evoenergy.com.au/";
+      } 
+
+      let headline = icon + provider + ' Area';
+      let description = `<p><b>Electricity Distributor:</b> ${provider}</p>\
+                        <p><b>Emergency Contact:</b> ${contact}</p>\
+                        <p><a target="_blank" href="${providerWeb}">${provider} Website</p>
+                        <p><a target="_blank" href="https://byda.maps.arcgis.com/apps/webappviewer/index.html?id=8a8f088ca9774464884d6711b347fff8">BYDA Look Up & Live Map</a></p>\
+                        <span style="text-style:italic;font-size:smaller;display:block;text-align:left">\
+                        <hr style="height: 1px;margin-top:5px;margin-bottom:5px">\
+                        &mdash; Report any electrical hazards or emergencies to ${provider} on ${contact}.
+                        <br />
+                        &mdash; Stay at least 8m away from any wires down or electrical hazards, and assume all electrical hazards are live.
+                        </span>`;
+
+          if (area.geometry.type.toLowerCase() == 'polygon') {
+
+            let polygons = area.geometry.coordinates;
+            // addComplexPolygon(points,outlineColor,fillColor,lineThickness,lineStyle)
+            mapLayer.addComplexPolygon(
+              polygons,
+              line,
+              fill,
+              1,
+              SimpleLineSymbol.STYLE_LONGDASH,
+              headline,
+              description,
+            );
+          }
+    });
+  } else {
+    console.log("No elec boundary data available.");
+  }
+}
+
 /**
  * Shows the current hazard watch hazards.
  *
@@ -888,11 +984,12 @@ function addAircraftMarker(
  */
 function showPowerOutages(mapLayer, data) {
   console.info('showing power outages');
-
   let count = 0;
   if (data && data.features) {
     for (let i = 0; i < data.features.length; i++) {
       let feature = data.features[i];
+
+      
 
       const PowerOutageDetails = function (source) {
         var name,
@@ -901,6 +998,8 @@ function showPowerOutages(mapLayer, data) {
           reason,
           status,
           type,
+          typeCode = 'U', /* typeCode: U = Unplanned, P = Planned, C = Complete (default=U) */
+          featureIcon = powerIcon,
           CustomerAffected,
           contact = 'Unknown';
         switch (source.owner) {
@@ -915,8 +1014,9 @@ function showPowerOutages(mapLayer, data) {
             reason = source.properties.reason;
             status = source.properties.status;
             type = source.properties.outageType;
-            if (type == 'U') type = 'Unknown';
-            if (type == 'P') type = 'Planned';
+            if (type == 'U') type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
+            if (type == 'P') type = 'Planned',typeCode = 'P',featureIcon = powerPlannedIcon;
+            if (status == 'OUTAGE COMPLETED') featureIcon = powerCompleteIcon;
             CustomerAffected = source.properties.numberCustomerAffected;
             contact = 'Endeavour Energy 131 003';
             break;
@@ -931,7 +1031,11 @@ function showPowerOutages(mapLayer, data) {
             reason = source.properties.reason;
             type = source.properties.outageType;
             status = source.properties.status;
-            if (status == '') status = 'Unknown';
+            if (status == '') status = 'Unknown', type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
+            if (status == '1') status = 'Reported', type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
+            if (status == '2') status = 'Under Investigation', type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
+            if (status == '3') status = 'Repair In Progress', type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
+            if (status == '4') status = 'Restored', type = 'Outage',typeCode = 'U',featureIcon = powerCompleteIcon;
             type = source.properties.type;
             CustomerAffected = source.properties.numberCustomerAffected;
             contact = 'Ausgrid 13 13 88';
@@ -955,15 +1059,25 @@ function showPowerOutages(mapLayer, data) {
               status = 'NA';
             }
             type = source.properties.outageType;
+            reason = 'Unknown';
             if (source.properties.styleUrl.match('unplanned')) {
               type = 'Unplanned';
-              reason = 'Unknown';
+              reason = /Reason:<\/span>(.*?)<\/div>/g.exec(
+                source.properties.description.value,
+              )[1];
             } else {
               type = 'Planned';
               reason = /Reason:<\/span>(.*?)<\/div>/g.exec(
                 source.properties.description.value,
               )[1];
             }
+
+            if(type == 'Unplanned') {
+              featureIcon = powerOutageIcon;
+            } else if (type == 'Planned') {
+              featureIcon = powerPlannedIcon;
+            }
+
             CustomerAffected =
               /No\. of Customers affected:<\/span>(\d*)<\/div>/g.exec(
                 source.properties.description.value,
@@ -986,7 +1100,7 @@ function showPowerOutages(mapLayer, data) {
                 ${contact}\
                 </span>`;
 
-        return { name: name, details: details };
+        return { name: name, details: details, markerIcon: featureIcon};
       };
 
       if (feature.geometry.type.toLowerCase() === 'geometrycollection') {
@@ -1009,11 +1123,11 @@ function showPowerOutages(mapLayer, data) {
           } else if (geometry.type.toLowerCase() === 'point') {
             let lat = geometry.coordinates[1];
             let lon = geometry.coordinates[0];
-
+            console.log()
             mapLayer.addImageMarker(
               lat,
               lon,
-              powerIcon,
+              details.markerIcon,
               details.name,
               details.details,
             );
@@ -1030,7 +1144,7 @@ function showPowerOutages(mapLayer, data) {
         mapLayer.addImageMarker(
           lat,
           lon,
-          powerIcon,
+          details.markerIcon,
           details.name,
           details.details,
         );
@@ -1594,11 +1708,21 @@ export default class InjectScriptMapManager {
     lighthouseMap.createLayer('ses-teams');
 
     // Layers to show under beacon jobs
-    lighthouseMap.createLayer('power-outages', 1);
-    lighthouseMap.createLayer('rfs', 1);
     lighthouseMap.createLayer('lhqs', 3);
     lighthouseMap.createLayer('ses-assets-filtered', 3);
     lighthouseMap.createLayer('hazard-watch', 3);
+
+    lighthouseMap.createLayer('rfs', 2);
+
+    lighthouseMap.createLayer('power-outages', 2);
+    lighthouseMap.createLayer('power-outages-ausgrid', 2);
+    lighthouseMap.createLayer('power-outages-endeavour', 2);
+    lighthouseMap.createLayer('power-outages-essential', 2);
+
+    lighthouseMap.createLayer('power-boundary-ausgrid', 1);
+    lighthouseMap.createLayer('power-boundary-endeavour', 1);
+    lighthouseMap.createLayer('power-boundary-essential', 1);
+    lighthouseMap.createLayer('power-boundary-evo', 1);
 
     //bind to the click event for the jobs and fiddle with the popups Onclick
     lighthouseMap._map._layers.graphicsLayer3.onClick.after.advice = function (
@@ -1827,6 +1951,10 @@ ${rows.join('\r')}
       'toggleHelicoptersBtn',
       'togglelhqsBtn',
       'togglePowerOutagesBtn',
+      'toggleBoundaryAusgridBtn',
+      'toggleBoundaryEndeavourBtn',
+      'toggleBoundaryEssentialBtn',
+      'toggleBoundaryEvoBtn'
     ];
     buttons.forEach(function (buttonId) {
       if (localStorage.getItem('Lighthouse-' + buttonId) === 'true') {

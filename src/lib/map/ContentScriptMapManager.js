@@ -16,7 +16,10 @@ const rmsIcon = chrome.runtime.getURL('icons/rms.png');
 const rfscorpIcon = chrome.runtime.getURL('icons/rfs.png');
 const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
 
-
+const ausgridIcon = chrome.runtime.getURL('icons/ausgrid.png');
+const endeavourIcon = chrome.runtime.getURL('icons/endeavour.png');
+const essentialIcon = chrome.runtime.getURL('icons/essential.png');
+// const evoIcon = chrome.runtime.getURL('icons/evo.png');
 
 /**
  * A class for helping out with map layer access on the content script side.
@@ -95,6 +98,14 @@ const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
     <span class="tag-text">Hazard Watch</span>
     </span>
     */
+
+    /** PLACEHOLDER: Evo Energy Boundary Button
+     * Comments: Removed as not within NSW boundary. Here for future. 
+        <span id="toggleBoundaryEvoBtn" class="label tag tag-lh-filter tag-disabled">
+        <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={evoIcon} />
+        <span class="tag-text">Evo Energy</span>
+        </span>
+     */
    
     /**
      * Creates a menu for the map layers.
@@ -169,6 +180,38 @@ const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
             </li>
             <li>
             <a class="js-sub-sub-menu-toggle" href="#">
+            <i class="toggle-icon-sub fa fa-flash"></i>
+            <span class="text toggle-tag-text">Energy &amp; Utilities</span>
+            </a>
+            <ul class="sub-sub-menu">
+            <li class="clearfix">
+            <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
+            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
+            <span class="tag-text"> All Power Outages</span>
+            </span>
+            </li>
+            <li class="clearfix">
+            <hr style="height: 1px;margin-top:5px;margin-bottom:5px" />
+            <span style="font-weight: bold;display: block;font-size: smaller;">
+                Electricity Boundaries &amp; Outages by Provider
+            </span>
+            <span id="toggleBoundaryAusgridBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={ausgridIcon} />
+            <span class="tag-text">Ausgrid</span>
+            </span>
+            <span id="toggleBoundaryEndeavourBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={endeavourIcon} />
+            <span class="tag-text">Endeavour Energy</span>
+            </span>
+            <span id="toggleBoundaryEssentialBtn" class="label tag tag-lh-filter tag-disabled">
+            <img style="max-width: 16px;vertical-align: top;margin-right: 4px;" src={essentialIcon} />
+            <span class="tag-text">Essential Energy</span>
+            </span>
+            </li>
+            </ul>
+            </li>
+            <li>
+            <a class="js-sub-sub-menu-toggle" href="#">
             <i class="toggle-icon-sub fa fa-bell"></i>
             <span class="text toggle-tag-text">Other</span>
             </a>
@@ -177,10 +220,6 @@ const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
             <span id="toggleHelicoptersBtn" class="label tag tag-lh-filter tag-disabled">
             <img style="max-width: 16px; background: #fff;vertical-align: top;margin-right: 4px;" src={helicopterIcon} />
             <span class="tag-text">Rescue Aircraft</span>
-            </span>
-            <span id="togglePowerOutagesBtn" class="label tag tag-lh-filter tag-disabled">
-            <span class="glyphicon glyphicon-flash" aria-hidden="true"></span>
-            <span class="tag-text">Power Outages</span>
             </span>
             </li>
             </ul>
@@ -203,6 +242,12 @@ const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
         //this._registerClickHandler('toggleHazardWatchBtn', 'hazard-watch', this._requestHazardWatchLayerUpdate, 5 * 60000); // every 5 minutes
         this._registerClickHandler('togglePowerOutagesBtn', 'power-outages', this._requestPowerOutagesLayerUpdate, 5 * 60000); // every 5 mins
         this._registerClickHandler('togglelhqsBtn', 'lhqs', this._requestLhqsLayerUpdate, 60 * 60000); // every 60 mins
+
+        this._registerClickHandler('toggleBoundaryAusgridBtn', 'power-boundary-ausgrid', this._requestAusgridBoundaryOutageLayerUpdate, 5 * 60000); // every 60 mins
+
+        this._registerClickHandler('toggleBoundaryEndeavourBtn', 'power-boundary-endeavour', this._requestEndeavourBoundaryOutageLayerUpdate, 5 * 60000); // every 60 mins
+
+        this._registerClickHandler('toggleBoundaryEssentialBtn', 'power-boundary-essential', this._requestEssentialBoundaryOutageLayerUpdate, 5 * 60000); // every 60 mins
 
         window.addEventListener('message', function (event) {
             // We only accept messages from background
@@ -301,6 +346,76 @@ const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
         console.debug('updating LHQs layer');
         $.getJSON(chrome.runtime.getURL('resources/SES_HQs.geojson'), function (data) {
             ContentScriptMapManager._passLayerDataToInject('lhqs', data);
+        }.bind(this))
+    }
+    
+    /**
+     * Sends a request to the background script to get the electricity distribution area polygons and outages
+     */
+
+     _requestAllElectricityBoundaryLayerUpdate() {
+        this._requestAusgridBoundaryLayerUpdate();
+        this._requestEndeavourBoundaryLayerUpdate();
+        this._requestEssentialBoundaryLayerUpdate();
+    }
+
+    // Ausgrid
+     _requestAusgridBoundaryOutageLayerUpdate() {
+        this._requestAusgridBoundaryLayerUpdate();
+        this._requestAusgridOutagesLayerUpdate();
+    }
+
+     _requestAusgridBoundaryLayerUpdate() {
+        console.debug('updating Ausdgrid boundary layer');
+        $.getJSON(chrome.runtime.getURL('resources/ausgrid_boundary.geojson'), function (data) {
+            ContentScriptMapManager._passLayerDataToInject('power-boundary-ausgrid', data);
+        }.bind(this))
+    }
+
+     _requestAusgridOutagesLayerUpdate() {
+        this._requestLayerUpdate('power-outages-ausgrid')
+    }
+
+    // Endeavour
+    _requestEndeavourBoundaryOutageLayerUpdate() {
+        this._requestEndeavourBoundaryLayerUpdate();
+        this._requestEndeavourOutagesLayerUpdate();
+    }
+
+    _requestEndeavourBoundaryLayerUpdate() {
+        console.debug('updating Endeavour boundary layer');
+        $.getJSON(chrome.runtime.getURL('resources/endeavour_boundary.geojson'), function (data) {
+            ContentScriptMapManager._passLayerDataToInject('power-boundary-endeavour', data);
+        }.bind(this))
+    }
+
+     _requestEndeavourOutagesLayerUpdate() {
+        this._requestLayerUpdate('power-outages-endeavour')
+    }
+
+    // Essential
+
+    _requestEssentialBoundaryOutageLayerUpdate() {
+        this._requestEssentialBoundaryLayerUpdate();
+        this._requestEssentialOutagesLayerUpdate();
+    }
+     _requestEssentialBoundaryLayerUpdate() {
+        console.debug('updating Essential boundary layer');
+        $.getJSON(chrome.runtime.getURL('resources/essential_boundary.geojson'), function (data) {
+            ContentScriptMapManager._passLayerDataToInject('power-boundary-essential', data);
+        }.bind(this))
+    }
+
+    _requestEssentialOutagesLayerUpdate() {
+        this._requestLayerUpdate('power-outages-essential')
+    }
+
+
+    // Evo (ACT) Boundary Only
+     _requestEvoBoundaryLayerUpdate() {
+        console.debug('updating Evo boundary layer');
+        $.getJSON(chrome.runtime.getURL('resources/evo_boundary.geojson'), function (data) {
+            ContentScriptMapManager._passLayerDataToInject('evo-boundary', data);
         }.bind(this))
     }
 
@@ -441,6 +556,8 @@ const sesIcon = chrome.runtime.getURL('icons/ses_corp.png');
             if (response.error) {
                 console.error(`Update to ${layer} failed: ${response.error} http-code:${response.httpCode}`);
             } else {
+                console.log(layer);
+                console.log(response);
                 ContentScriptMapManager._passLayerDataToInject(layer, response)
             }
         }.bind(this));
