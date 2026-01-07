@@ -194,7 +194,6 @@ const rfsIcons = {
 function addTransportPoint(mapLayer, point, icon) {
   let lat = point.geometry.coordinates[1];
   let lon = point.geometry.coordinates[0];
-  let transportPolyline = '';
   let reportedBy = point.properties.OrgName ? point.properties.OrgName : "Transport Management Centre";
   let incidentId = point.id;
   let incidentUrl = `https://www.livetraffic.com/incident-details/${incidentId}`;
@@ -223,21 +222,14 @@ function addTransportPoint(mapLayer, point, icon) {
     Live Traffic Incident ID: <a href="${incidentUrl}" target="_blank">#${incidentId}</a>
     </span>`;
 
-  let adviceItems = `
-    <li>${point.properties.adviceA}</li>
-    ${point.properties.adviceB ? `<li>${point.properties.adviceB}</li>` : ""}
-    ${point.properties.adviceC ? `<li>${point.properties.adviceC}</li>` : ""}
-  `;
-
-    let adviceList = [
+  let adviceList = [
       point.properties.adviceA,
       point.properties.adviceB,
       point.properties.adviceC
-    ]
-    .map(v => typeof v === "string" ? v.trim() : "")
-    .filter(v => v) // removes null, undefined, empty string
-    .map(v => `<li>${v}</li>`)
-    .join("");
+  ].map(v => typeof v === "string" ? v.trim() : "")
+   .filter(v => v)
+   .map(v => `<li>${v}</li>`)
+   .join("");
 
   let details = `<div><strong>${point.properties.headline}</strong></div>\
   <div style="margin-top:0.5em"><b>${secondLocation}, ${roadDetail.suburb}</b></div>\
@@ -267,7 +259,7 @@ function addTransportPoint(mapLayer, point, icon) {
           polylineColour = '#941309';
           break;   
       }
-      mapLayer.addPolygon(transportPolyline,polylineColour,2,SimpleLineSymbol.STYLE_SOLID,name,details);
+      mapLayer.addPolyline(transportPolyline,polylineColour,2,SimpleLineSymbol.STYLE_SOLID,name,details);
     });
   }
 
@@ -1247,7 +1239,7 @@ function addAircraftMarker(
     case 'opensky':
       sourcePretty = 'OpenSky Network';
       break;
-    case 'opensky':
+    case 'opensky-lastknown':
       sourcePretty = 'OpenSky Network (Last Known)';
       break;
     default:
@@ -1299,7 +1291,6 @@ function showPowerOutages(mapLayer, data) {
           reason,
           status,
           type,
-          typeCode = 'U', /* typeCode: U = Unplanned, P = Planned, C = Complete (default=U) */
           featureIcon = powerIcon,
           CustomerAffected,
           contact = 'Unknown';
@@ -1315,8 +1306,8 @@ function showPowerOutages(mapLayer, data) {
             reason = source.properties.reason;
             status = source.properties.status;
             type = source.properties.outageType;
-            if (type == 'U') type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
-            if (type == 'P') type = 'Planned',typeCode = 'P',featureIcon = powerPlannedIcon;
+            if (type == 'U') type = 'Outage',featureIcon = powerOutageIcon;
+            if (type == 'P') type = 'Planned',featureIcon = powerPlannedIcon;
             if (status == 'OUTAGE COMPLETED') featureIcon = powerCompleteIcon;
             CustomerAffected = source.properties.numberCustomerAffected;
             contact = 'Endeavour Energy 131 003';
@@ -1332,11 +1323,11 @@ function showPowerOutages(mapLayer, data) {
             reason = source.properties.reason;
             type = source.properties.outageType;
             status = source.properties.status;
-            if (status == '') status = 'Unknown', type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
-            if (status == '1') status = 'Reported', type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
-            if (status == '2') status = 'Under Investigation', type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
-            if (status == '3') status = 'Repair In Progress', type = 'Outage',typeCode = 'U',featureIcon = powerOutageIcon;
-            if (status == '4') status = 'Restored', type = 'Outage',typeCode = 'U',featureIcon = powerCompleteIcon;
+            if (status == '') status = 'Unknown', type = 'Outage',featureIcon = powerOutageIcon;
+            if (status == '1') status = 'Reported', type = 'Outage',featureIcon = powerOutageIcon;
+            if (status == '2') status = 'Under Investigation', type = 'Outage',featureIcon = powerOutageIcon;
+            if (status == '3') status = 'Repair In Progress', type = 'Outage',featureIcon = powerOutageIcon;
+            if (status == '4') status = 'Restored', type = 'Outage',featureIcon = powerCompleteIcon;
             type = source.properties.type;
             CustomerAffected = source.properties.numberCustomerAffected;
             contact = 'Ausgrid 13 13 88';

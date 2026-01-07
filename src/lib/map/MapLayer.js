@@ -187,7 +187,7 @@ export default class MapLayer {
      * @param thickness the line thickness.
      * @param style the line style.
      */
-    addPolygon(points, lineColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID, title='', details='') {
+    addPolyline(points, lineColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID, title='', details='') {
         let lineSymbol = new SimpleLineSymbol(style);
         lineSymbol.setWidth(thickness);
         lineSymbol.setColor(new Color(lineColour));
