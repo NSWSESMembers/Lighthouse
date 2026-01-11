@@ -1405,13 +1405,13 @@ tr.job:hover {
   --job-cols:
     30px    /* chev */
     20px    /* pin */
-    0.28fr  /* Id */
+    0.38fr  /* Id */
     0.5fr   /* Received */
     0.3fr   /* HQ */
     0.3fr   /* Type */
     1.5fr   /* Situation */
     0.5fr   /* Status */
-    1.0fr;  /* Address */
+    0.9fr;  /* Address */
 }
 
 /* body */
