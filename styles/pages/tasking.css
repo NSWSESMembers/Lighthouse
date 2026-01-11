@@ -2164,3 +2164,5 @@ input[type="search"]::-ms-clear {
 .map-popups-hidden .leaflet-tooltip-pane {
   display: none !important;
 }
+
+.fa-center { line-height: inherit!important; vertical-align: middle; }

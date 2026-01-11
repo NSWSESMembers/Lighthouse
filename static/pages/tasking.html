@@ -34,10 +34,10 @@
                             <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: teamSearch, valueUpdate: 'input'">
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle"
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
                             title="Toggle pinned-only teams"
                             data-bind="click: togglePinnedTeamsOnly, css: { active: showPinnedTeamsOnly }, disable: !countPinnedTeams()">
-                            <i class="fa fa-thumbtack"></i>
+                            <i class="fa fa-star fa-center"></i>
                         </button>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
@@ -199,9 +199,9 @@
                                             <!-- 1b. Pin -->
                                             <div class="team-cell team-cell--pin" data-bind="clickBubble: false">
                                                 <button type="button"
-                                                    class="btn btn-link p-0 text-decoration-none pin-btn"
+                                                    class="btn btn-link p-0 text-decoration-none pin-btn fa-center"
                                                     title="Pin/unpin team" data-bind="click: t.togglePinned">
-                                                    <i class="fa fa-thumbtack"
+                                                    <i class="fa fa-star fa-center"
                                                         data-bind="css: { 'is-pinned': t.isPinned(), 'not-pinned': !t.isPinned() }"></i>
                                                 </button>
                                             </div>
@@ -662,10 +662,10 @@
                             <input type="search" id="jobSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: jobSearch, valueUpdate: 'input'">
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle"
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
                             title="Toggle pinned-only incidents"
                             data-bind="click: togglePinnedIncidentsOnly, css: { active: showPinnedIncidentsOnly }, disable: !countPinnedIncidents()">
-                            <i class="fa fa-thumbtack"></i>
+                            <i class="fa fa-star fa-center"></i>
                         </button>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
@@ -949,9 +949,9 @@
                                             <!-- 1b. Pin -->
                                             <div class="job-cell job-cell--pin" data-bind="clickBubble: false">
                                                 <button type="button"
-                                                    class="btn btn-link p-0 text-decoration-none pin-btn"
+                                                    class="btn btn-link p-0 text-decoration-none pin-btn fa-center"
                                                     title="Pin/unpin incident" data-bind="click: j.togglePinned">
-                                                    <i class="fa fa-thumbtack"
+                                                    <i class="fa fa-star fa-center"
                                                         data-bind="css: { 'is-pinned': j.isPinned(), 'not-pinned': !j.isPinned() }"></i>
                                                 </button>
                                             </div>
@@ -2322,13 +2322,13 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- Pinned Teams & Incidents -->
+                                    <!-- Starred Teams & Incidents -->
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingPinned">
                                             <button class="accordion-button collapsed" type="button"
                                                 data-bs-toggle="collapse" data-bs-target="#collapsePinned"
                                                 aria-expanded="false" aria-controls="collapsePinned">
-                                                Pinned Teams &amp; Incidents
+                                                Starred Teams &amp; Incidents
                                             </button>
                                         </h2>
 
@@ -2339,16 +2339,16 @@
                                                 <div
                                                     class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
                                                     <div class="small text-muted">
-                                                        Pinned teams: <span class="badge bg-primary"
+                                                        Starred teams: <span class="badge bg-primary"
                                                             data-bind="text: config.pinnedTeamIds().length"></span>
                                                         &nbsp;•&nbsp;
-                                                        Pinned incidents: <span class="badge bg-success"
+                                                        Starred incidents: <span class="badge bg-success"
                                                             data-bind="text: config.pinnedIncidentIds().length"></span>
                                                     </div>
 
                                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                                         data-bind="click: config.clearAllPinned, enable: (config.pinnedTeamIds().length + config.pinnedIncidentIds().length) > 0">
-                                                        Clear all pinned
+                                                        Clear all Starred
                                                     </button>
                                                 </div>
 
@@ -2357,7 +2357,7 @@
                                                         <div class="border rounded p-2">
                                                             <div
                                                                 class="d-flex align-items-center justify-content-between">
-                                                                <div class="fw-semibold small">Pinned Teams</div>
+                                                                <div class="fw-semibold small">Starred Teams</div>
                                                                 <div class="d-flex align-items-center gap-2">
                                                                     <span class="badge bg-primary"
                                                                         data-bind="text: config.pinnedTeamIds().length"></span>
@@ -2376,7 +2376,7 @@
                                                         <div class="border rounded p-2">
                                                             <div
                                                                 class="d-flex align-items-center justify-content-between">
-                                                                <div class="fw-semibold small">Pinned Incidents</div>
+                                                                <div class="fw-semibold small">Starred Incidents</div>
                                                                 <div class="d-flex align-items-center gap-2">
                                                                     <span class="badge bg-success"
                                                                         data-bind="text: config.pinnedIncidentIds().length"></span>
