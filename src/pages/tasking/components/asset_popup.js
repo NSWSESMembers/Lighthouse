@@ -100,16 +100,8 @@ export function buildAssetPopupKO() {
   <!-- Action buttons -->
   <div class="btn-group btn-group-sm ms-1" role="group">
     <button class="btn btn-outline-secondary"
-            title="Focus on job"
-            data-bind="click: $root.safeJobFocus,
-                       disable: !hasJob(),
-                       clickBubble:false">
-      <i class="fa fa-crosshairs"></i>
-    </button>
-
-    <button class="btn btn-outline-secondary"
             title="Open in Beacon"
-            data-bind="click: $root.safeJobOpen,
+            data-bind="click: job.openBeaconJobDetails,
                        disable: !hasJob(),
                        clickBubble:false">
       <i class="fa fa-external-link-alt"></i>
