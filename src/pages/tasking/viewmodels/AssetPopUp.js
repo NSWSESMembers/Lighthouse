@@ -1,5 +1,6 @@
 var L = require('leaflet');
 var moment = require('moment');
+var ko = require('knockout');
 
 export class AssetPopupViewModel {
   constructor({ asset, map, api }) {
@@ -7,6 +8,8 @@ export class AssetPopupViewModel {
     this.map = map;
     this.api = api;
   }
+
+  routeLoading = ko.observable(false);
 
 
   openBeaconEditTeam = (team) => {
@@ -30,6 +33,8 @@ export class AssetPopupViewModel {
     this.api.clearCrowFliesLine();
   }
 
+
+
   drawRouteToJob = (tasking) => {
     const from = tasking.getTeamLatLng();
     const to = tasking.getJobLatLng();
@@ -37,7 +42,7 @@ export class AssetPopupViewModel {
       console.warn('Cannot draw route: missing team or job coordinates.');
       return;
     }
-
+    this.routeLoading(true);
     const routeControl = L.Routing.control({
       waypoints: [from, to],
       router: L.Routing.graphHopper('lighthouse', {
@@ -117,14 +122,15 @@ export class AssetPopupViewModel {
           if (s && d && routeControl) routeControl.setWaypoints([s, d]);
         }));
       }
+      this.routeLoading(false);
     });
 
 
   }
 
-    removeRouteToJob = () => {
-      this.api.clearRoutes();
-    }
+  removeRouteToJob = () => {
+    this.api.clearRoutes();
+  }
 
   // Example hook – wire this to your app-level handler if needed.
   assignTeam() {

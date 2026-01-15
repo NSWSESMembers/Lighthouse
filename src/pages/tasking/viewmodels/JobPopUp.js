@@ -1,5 +1,6 @@
 var L = require('leaflet');
 var moment = require('moment');
+var ko = require('knockout');
 
 
 export class JobPopupViewModel {
@@ -7,6 +8,9 @@ export class JobPopupViewModel {
         this.job = job;   // expects KO observables on the job (latitude/longitude/name/etc.)
         this.api = api;
     }
+
+    routeLoading = ko.observable(false);
+
 
     updatePopup = () => {
         if (this.job.marker && this.job.marker.isPopupOpen()) {
@@ -46,7 +50,7 @@ export class JobPopupViewModel {
             console.warn('Cannot draw route: missing team or job coordinates.');
             return;
         }
-
+        this.routeLoading(true);
         const routeControl = L.Routing.control({
             waypoints: [from, to],
             router: L.Routing.graphHopper('lighthouse', {
@@ -126,6 +130,7 @@ export class JobPopupViewModel {
                     if (s && d && routeControl) routeControl.setWaypoints([s, d]);
                 }));
             }
+            this.routeLoading(false);
         });
     }
 

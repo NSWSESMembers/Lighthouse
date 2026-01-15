@@ -99,6 +99,14 @@ export function buildAssetPopupKO() {
 
   <!-- Action buttons -->
   <div class="btn-group btn-group-sm ms-1" role="group">
+    <button type="button" class="btn btn-small btn-outline-secondary" title="Route to Job" data-bind="click: $root.drawRouteToJob, disable: !tsk.hasJob(), clickBubble: false">
+        <!-- ko ifnot: $root.routeLoading -->
+        <i class="fa fa-solid fa-car"></i>
+        <!-- /ko -->
+        <!-- ko if: $root.routeLoading -->
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <!-- /ko -->
+    </button>
     <button class="btn btn-outline-secondary"
             title="Open in Beacon"
             data-bind="click: job.openBeaconJobDetails,
@@ -121,7 +129,7 @@ export function buildAssetPopupKO() {
         </div>
 
         <!-- Divider between teams -->
-        <hr class="my-2" data-bind="visible: $index() < ($parent.matchingTeams().length - 1)"/>
+        <hr class="my-2" data-bind="visible: $index() < ($parent.matchingTeamsInView().length - 1)"/>
       </div>
     </div>
   </div>`;
