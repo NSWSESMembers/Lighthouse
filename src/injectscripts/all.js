@@ -133,6 +133,9 @@ whenWeAreReady(function () {
     <a href="#" id="LHClearStorage">Delete All Collections</a>\
     </li>\
     <li>\
+    <a href="http://lighthouse.ses.nsw.gov.au/guides.html">User Guides</a>\
+    </li>\
+    <li>\
     <a href="http://lighthouse.ses.nsw.gov.au">About Lighthouse</a>\
     </li>\
     </ul>\
@@ -195,7 +198,10 @@ whenWeAreReady(function () {
     <a href="#" id="LHClearStorage">Delete All Collections</a>\
     </li>\
     <li>\
-    <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
+    <a href="http://lighthouse.ses.nsw.gov.au/guides.html">User Guides</a>\
+    </li>\
+    <li>\
+    <a href="http://lighthouse.ses.nsw.gov.au">About Lighthouse</a>\
     </li>\
     </ul>\
     </li>\
