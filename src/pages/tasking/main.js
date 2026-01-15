@@ -1520,7 +1520,11 @@ function VM() {
     self.fetchAllTeamData = async function () {
         const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
 
-        const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => Enum.TeamStatusType[status]?.Id).filter(id => id !== undefined);
+        const statusFilterToView = myViewModel.config.teamStatusFilter().map(desc => {
+            // Find the Enum.TeamStatusType entry whose Description matches desc
+            const entry = Object.values(Enum.TeamStatusType).find(e => e.Description === desc);
+            return entry ? entry.Id : undefined;
+        }).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
