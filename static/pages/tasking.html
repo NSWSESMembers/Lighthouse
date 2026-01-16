@@ -134,6 +134,14 @@
                                         </div>
                                     </div>
                                 </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" type="button"
+                                        data-bind="click: openTrackableAssetsModal">
+                                        Trackable Asset Library
+                                    </button>
                             </ul>
                         </div>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Teams"
@@ -559,7 +567,8 @@
                                                                                                 <!-- /ko -->
 
                                                                                                 <!-- Submit & Back -->
-                                                                                                <div class="d-flex justify-content-end gap-2">
+                                                                                                <div
+                                                                                                    class="d-flex justify-content-end gap-2">
                                                                                                     <button
                                                                                                         type="button"
                                                                                                         class="btn btn-sm btn-secondary"
@@ -1397,7 +1406,8 @@
                                                                                                     <label
                                                                                                         class="form-check-label"
                                                                                                         for="timeOverrideChk">
-                                                                                                        Override set time
+                                                                                                        Override set
+                                                                                                        time
                                                                                                         for this status
                                                                                                     </label>
                                                                                                 </div>
@@ -1498,7 +1508,8 @@
                                                                                                 <!-- /ko -->
 
                                                                                                 <!-- Submit & Back -->
-                                                                                                <div class="d-flex justify-content-end gap-2">
+                                                                                                <div
+                                                                                                    class="d-flex justify-content-end gap-2">
                                                                                                     <button
                                                                                                         type="button"
                                                                                                         class="btn btn-sm btn-secondary"
@@ -1514,7 +1525,6 @@
                                                                                                 </div>
 
                                                                                             </div>
-                                                                                            <!-- details panel -->
 
                                                                                             <!-- /ko -->
                                                                                         </div>
@@ -1561,10 +1571,10 @@
                                                                     </table>
                                                                 </div>
                                                             </fieldset>
-                                                        </div>
-                                                    </div><!-- /row -->
-                                                </div><!-- /card-body -->
-                                            </div><!-- /card -->
+                                                        </div><!-- /row -->
+                                                    </div>
+                                                </div><!-- /col-md-4 -->
+                                            </div><!-- /card-body -->
                                         </div><!-- /job-details -->
                                     </div><!-- /job-card -->
                                 </td>
@@ -2438,7 +2448,7 @@
                                 <input type="text" class="form-control form-control-sm load-input"
                                     placeholder="Enter key" style="width:0; opacity:0;" data-bind="textInput: config.shareKeyInput,
                                   enable: !config.loadingShared(),
-                                  css: { 'expanded-input': config.loadExpanded() }">
+                                  css: { 'expanded-input': config.loadExpanded }">
 
                                 <button type="submit" class="btn btn-outline-secondary"
                                     data-bind="disable: config.loadingShared, visible: config.loadExpanded">
@@ -2961,6 +2971,85 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" data-bind="click: submit">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trackable Assets Modal -->
+    <div class="modal fade" id="trackableAssetsModal" tabindex="-1" aria-labelledby="trackableAssetsModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" data-bind="with: trackableAssetsModalVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="trackableAssetsModalLabel">Trackable Assets Library</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Subheading -->
+                    <div class="mb-2 text-muted">
+                        This list shows all possible trackable assets <b>(seen within the last 14 days)</b>. Its just a helper to lookup asset callsigns by name, PSN ID, Talkgroup, Unit etc. If you can't find it here, it won't be trackable.
+                    </div>
+                    <!-- Search box -->
+                    <div class="mb-3">
+                        <input type="search" class="form-control" placeholder="Search by callsign, unit or radio ID..."
+                            data-bind="value: searchQuery, valueUpdate: 'input'">
+                    </div>
+                    <!-- Talkgroup filter -->
+                    <div class="mb-3">
+                        <select class="form-select"
+                            data-bind="options: talkgroups, value: selectedTalkgroup, optionsCaption: 'All Talkgroups'"></select>
+                    </div>
+                    <!-- Asset list -->                     
+                    <div data-bind="foreach: filteredAssets" style="max-height: 400px; overflow-y: auto;">
+                        <div class="card mb-2">
+                            <div class="card-body py-2 d-flex">
+                                <!-- Column 1: Callsign -->
+                                <div class="flex-shrink-0 text-center" style="width: 160px;">
+                                    <div class="fw-bold fs-4" data-bind="text: name"></div>
+                                    <div class="fw-bold fs-7" data-bind="text: entity"></div>
+
+                                </div>
+                                <!-- Column 2: Details -->
+                                <div class="flex-grow-1 ps-3 border-start" style="min-width: 0;">
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Capability:</span>
+                                        <span class="text-muted" data-bind="text: capability"></span>
+                                    </div>
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Type:</span>
+                                        <span data-bind="text: resourceType"></span>
+                                    </div>
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Talkgroup:</span>
+                                        <span class="text-muted" data-bind="text: talkgroup"></span>
+                                    </div>
+                                </div>
+                                <!-- Column 3: IDs & Last Seen -->
+                                <div class="flex-shrink-0 ps-3 border-start text-start" style="width: 180px;">
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Radio ID:</span>
+                                        <span class="text-muted" data-bind="text: radioId"></span>
+                                    </div>
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Last Seen:</span>
+                                        <span class="text-muted" data-bind="text: lastSeenJustAgoText"></span>
+                                    </div>
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Vehicle Rego:</span>
+                                        <span class="text-muted" data-bind="text: licensePlate"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-muted" data-bind="visible: filteredAssets().length === 0">
+                        No assets match your search.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

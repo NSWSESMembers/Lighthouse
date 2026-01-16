@@ -13,15 +13,24 @@ export function Asset(data = {}) {
     self.entity = ko.observable(data.properties.entity ?? "");
     self.resourceType = ko.observable(data.properties.resourceType ?? "");
     self.lastSeen = ko.observable(data.lastSeen ?? "");
-    self.licensePlate = ko.observable(data.properties.licensePlate ?? "");
+    self.licensePlate = ko.observable(data.properties.licensePlate ?? "-");
     self.direction = ko.observable(data.properties.direction ?? null);
     self.talkgroup = ko.observable(data.properties.talkgroup ?? "");
     self.talkgroupLastUpdated = ko.observable(data.properties.talkgroupLastUpdated ?? "");
+    self.radioId = ko.observable(data.properties.radioId ?? "");
     self.marker = null;
     self.matchingTeams = ko.observableArray();
     
     self.matchingTeamsInView = ko.pureComputed(() => {
         return self.matchingTeams().filter(t => t.isFilteredIn());
+    });
+
+    self.lastSeenJustAgoText = ko.pureComputed(() => {
+        const v = safeStr(self.lastSeen?.());
+        if (!v) return "";
+        const d = new Date(v);
+        if (isNaN(d)) return v;
+        return fmtRelative(d);
     });
 
     self.lastSeenText = ko.pureComputed(() => {
