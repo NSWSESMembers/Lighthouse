@@ -13,6 +13,8 @@ const Polyline = eval('require("esri/geometry/Polyline");');
 const Point = eval('require("esri/geometry/Point");');
 const Graphic = eval('require("esri/graphic");');
 const Color = eval('require("esri/Color");');
+const Polygon = eval('require("esri/geometry/Polygon");');
+
 
 /**
  * A class for helping out with map layer access.
@@ -176,6 +178,57 @@ export default class MapLayer {
 
         this._graphicsLayer.add(lineGraphic);
     }
+
+    /**
+     * Adds a line.
+     *
+     * @param points the array of arrays of [lon/lat] points.
+     * @param lineColour the outline colour.
+     * @param thickness the line thickness.
+     * @param style the line style.
+     */
+    addPolyline(points, lineColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID, title='', details='') {
+        let lineSymbol = new SimpleLineSymbol(style);
+        lineSymbol.setWidth(thickness);
+        lineSymbol.setColor(new Color(lineColour));
+
+        // expect GPS lat/long data
+        let lineGeometry = new Polyline(new SpatialReference({wkid:4326}));
+        lineGeometry.addPath(points);
+
+        let lineGraphic = new Graphic(lineGeometry, lineSymbol);
+        lineGraphic.setAttributes({title:title,details:details})
+
+        this._graphicsLayer.add(lineGraphic);
+    }
+
+     /**
+     * Adds a (complex) polygon using the ERSi polygon geometry.
+     *
+     * @param points the array of arrays of [lon/lat] points.
+     * @param outlineColour the outline colour.
+     * @param fillColour the fill colour.
+     * @param thickness the line thickness.
+     * @param style the line style.
+     */
+    addComplexPolygon(points, outlineColour, fillColour, thickness = 1, style=SimpleLineSymbol.STYLE_SOLID, title='', details='') {
+
+        let polyGeometry = new Polygon({
+            rings: points
+        });
+
+        let polySymbol = new SimpleFillSymbol();
+        polySymbol.setOutline(new SimpleLineSymbol(style, new Color(outlineColour), thickness));
+        polySymbol.setColor(new Color(fillColour));
+
+        let polyGraphic = new Graphic(polyGeometry, polySymbol);
+        polyGraphic.setAttributes({title:title,details:details})
+
+        this._graphicsLayer.add(polyGraphic);
+
+
+
+    }   
 
     /**
      * Adds a symbol marker to the map.

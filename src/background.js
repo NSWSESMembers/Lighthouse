@@ -29,6 +29,7 @@ const rfsMajorIncidentsFeed =
   'https://www.rfs.nsw.gov.au/feeds/majorIncidents.json';
 const transportFeed = 'https://api.transport.nsw.gov.au/';
 const openSkyFeed = 'https://opensky-network.org/api/states/all';
+const adsbFeed = "https://api.adsb.lol/v2/hex/"
 const essentialEnergyOutagesFeed =
   'https://www.essentialenergy.com.au/Assets/kmz/current.kml';
 const endeavourEnergyOutagesFeed =
@@ -134,7 +135,16 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       request.params.apiKey,
     );
     return true;
-  } else if (request.type === 'transport-cameras') {
+  } else if (request.type === 'transport-local-reports') {
+    fetchTransportResource(
+      'v1/live/hazards/regional-lga-incident/open',
+      function (data) {
+        sendResponse(data);
+      },
+      request.params.apiKey,
+    );
+    return true;
+  }  else if (request.type === 'transport-cameras') {
     fetchTransportResource(
       'v1/live/cameras',
       function (data) {
@@ -148,8 +158,28 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       sendResponse(data);
     });
     return true;
+  } else if (request.type === 'adsb') {
+    fetchAdsbLocations(request.params, function (data) {
+      sendResponse(data);
+    });
+    return true;
   } else if (request.type === 'power-outages') {
     fetchPowerOutages(function (data) {
+      sendResponse(data);
+    });
+    return true;
+  } else if (request.type === 'power-outages-ausgrid') {
+    fetchAusgridOutages(function (data) {
+      sendResponse(data);
+    });
+    return true;
+  } else if (request.type === 'power-outages-endeavour') {
+    fetchEndeavourEnergyOutages(function (data) {
+      sendResponse(data);
+    });
+    return true;
+  } else if (request.type === 'power-outages-essential') {
+    fetchEssentialEnergyOutages(function (data) {
       sendResponse(data);
     });
     return true;
@@ -301,6 +331,38 @@ function fetchHelicopterLocations(params, callback) {
       if (resp.ok) {
         resp.json().then((json) => {
           console.info('sending back helicopter locations');
+          callback(json);
+        });
+      } else {
+        // error
+        var response = {
+          error: 'Request failed',
+          httpCode: 'error',
+        };
+        callback(response);
+      }
+    })
+    .catch(() => {
+      // error
+      var response = {
+        error: 'Request failed',
+        httpCode: 'error',
+      };
+      callback(response);
+    });
+}
+
+/**
+ * Fetches the current rescue helicopter locations via ADSB API.
+ *
+ * @param params the HTTP URL parameters to add.
+ * @param callback the callback to send the data to.
+ */
+function fetchAdsbLocations(params, callback) {
+  fetch(`${adsbFeed}${params}`)
+    .then((resp) => {
+      if (resp.ok) {
+        resp.json().then((json) => {
           callback(json);
         });
       } else {
