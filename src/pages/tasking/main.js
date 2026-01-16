@@ -23,6 +23,7 @@ import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
 import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
+import { TrackableAssetsModalVM } from "./viewmodels/TrackableAssetsModalVM.js";
 
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
@@ -193,6 +194,8 @@ function VM() {
     self.CreateRadioLogModalVM = new CreateRadioLogModalVM(self);
     self.SendSMSModalVM = new SendSMSModalVM(self);
     self.selectedJob = ko.observable(null);
+
+    self.trackableAssetsModalVM = new TrackableAssetsModalVM(self);
 
     self.jobStatusConfirmVM = new JobStatusConfirmModalVM(self);
 
@@ -915,6 +918,32 @@ function VM() {
         });
     };
 
+    self.openTrackableAssetsModal = function (data, event) {
+        // If called from a dropdown menu, close the dropdown
+        if (event && event.target) {
+            // Find the closest .dropdown and its .dropdown-toggle button
+            let dropdown = event.target.closest('.dropdown');
+            if (dropdown) {
+                let toggleBtn = dropdown.querySelector('[data-bs-toggle="dropdown"]');
+                if (toggleBtn) {
+                    // Use Bootstrap 5 API to close the dropdown
+                    let dropdownInstance = bootstrap.Dropdown.getOrCreateInstance(toggleBtn);
+                    dropdownInstance.hide();
+                }
+            }
+        }
+        const modalEl = document.getElementById('trackableAssetsModal');
+        if (modalEl) {
+            self.trackableAssetsModalVM.isOpen(true)
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                self.trackableAssetsModalVM.isOpen(false);
+            });
+        }
+    }
+
 
     // Job registry/upsert
     // might be called from tasking OR job fetch so values might be missing
@@ -1520,7 +1549,11 @@ function VM() {
     self.fetchAllTeamData = async function () {
         const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
 
-        const statusFilterToView = myViewModel.config.teamStatusFilter().map(status => Enum.TeamStatusType[status]?.Id).filter(id => id !== undefined);
+        const statusFilterToView = myViewModel.config.teamStatusFilter().map(desc => {
+            // Find the Enum.TeamStatusType entry whose Description matches desc
+            const entry = Object.values(Enum.TeamStatusType).find(e => e.Description === desc);
+            return entry ? entry.Id : undefined;
+        }).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
@@ -2184,14 +2217,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-
-
-    // wait for full CSS + DOM
-    window.addEventListener('load', function () {
-        document.body.style.opacity = '1';
-    });
-
 })
+
+// wait for full CSS + DOM
+window.addEventListener('load', function () {
+    document.body.style.opacity = '1';
+});
+
+
 
 function getSearchParameters() {
     var prmstr = window.location.search.substr(1);

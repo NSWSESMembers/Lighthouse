@@ -257,6 +257,7 @@ td.chev[draggable='true'] * {
 
 .sidebar {
   width: var(--sidebar-w, 420px);
+  min-width: 1010px;
   display: flex;
   flex-direction: column;
 }
@@ -477,6 +478,14 @@ table thead th.sortable .th-label {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+table thead th.not-sortable {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 
 table thead th.sortable .sort-icon {
   flex: 0 0 auto;        /* never wrap/shrink */
@@ -1405,13 +1414,13 @@ tr.job:hover {
   --job-cols:
     30px    /* chev */
     20px    /* pin */
-    0.28fr  /* Id */
+    0.38fr  /* Id */
     0.5fr   /* Received */
     0.3fr   /* HQ */
     0.3fr   /* Type */
     1.5fr   /* Situation */
     0.5fr   /* Status */
-    1.0fr;  /* Address */
+    0.9fr;  /* Address */
 }
 
 /* body */
@@ -2164,3 +2173,5 @@ input[type="search"]::-ms-clear {
 .map-popups-hidden .leaflet-tooltip-pane {
   display: none !important;
 }
+
+.fa-center { line-height: inherit!important; vertical-align: middle; }

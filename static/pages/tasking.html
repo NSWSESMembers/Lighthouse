@@ -34,10 +34,10 @@
                             <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: teamSearch, valueUpdate: 'input'">
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle"
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
                             title="Toggle pinned-only teams"
                             data-bind="click: togglePinnedTeamsOnly, css: { active: showPinnedTeamsOnly }, disable: !countPinnedTeams()">
-                            <i class="fa fa-thumbtack"></i>
+                            <i class="fa fa-star fa-center"></i>
                         </button>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
@@ -134,6 +134,14 @@
                                         </div>
                                     </div>
                                 </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <button class="dropdown-item" type="button"
+                                        data-bind="click: openTrackableAssetsModal">
+                                        Trackable Asset Library
+                                    </button>
                             </ul>
                         </div>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh Teams"
@@ -171,8 +179,8 @@
                                     data-bind="event: { click: setTeamSortFromElement }">
                                     <span class="th-label">Task Count</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th scope="col">Team Leader</th>
-                                <th scope="col">Actions</th>
+                                <th class="not-sortable"scope="col">Team Leader</th>
+                                <th class="not-sortable" scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody data-bind="foreach: { data: sortedTeams, as: 't' }">
@@ -199,9 +207,9 @@
                                             <!-- 1b. Pin -->
                                             <div class="team-cell team-cell--pin" data-bind="clickBubble: false">
                                                 <button type="button"
-                                                    class="btn btn-link p-0 text-decoration-none pin-btn"
+                                                    class="btn btn-link p-0 text-decoration-none pin-btn fa-center"
                                                     title="Pin/unpin team" data-bind="click: t.togglePinned">
-                                                    <i class="fa fa-thumbtack"
+                                                    <i class="fa fa-star fa-center"
                                                         data-bind="css: { 'is-pinned': t.isPinned(), 'not-pinned': !t.isPinned() }"></i>
                                                 </button>
                                             </div>
@@ -559,7 +567,8 @@
                                                                                                 <!-- /ko -->
 
                                                                                                 <!-- Submit & Back -->
-                                                                                                <div class="d-flex justify-content-end gap-2">
+                                                                                                <div
+                                                                                                    class="d-flex justify-content-end gap-2">
                                                                                                     <button
                                                                                                         type="button"
                                                                                                         class="btn btn-sm btn-secondary"
@@ -662,10 +671,10 @@
                             <input type="search" id="jobSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: jobSearch, valueUpdate: 'input'">
                         </div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle"
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
                             title="Toggle pinned-only incidents"
                             data-bind="click: togglePinnedIncidentsOnly, css: { active: showPinnedIncidentsOnly }, disable: !countPinnedIncidents()">
-                            <i class="fa fa-thumbtack"></i>
+                            <i class="fa fa-star fa-center"></i>
                         </button>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
@@ -949,9 +958,9 @@
                                             <!-- 1b. Pin -->
                                             <div class="job-cell job-cell--pin" data-bind="clickBubble: false">
                                                 <button type="button"
-                                                    class="btn btn-link p-0 text-decoration-none pin-btn"
+                                                    class="btn btn-link p-0 text-decoration-none pin-btn fa-center"
                                                     title="Pin/unpin incident" data-bind="click: j.togglePinned">
-                                                    <i class="fa fa-thumbtack"
+                                                    <i class="fa fa-star fa-center"
                                                         data-bind="css: { 'is-pinned': j.isPinned(), 'not-pinned': !j.isPinned() }"></i>
                                                 </button>
                                             </div>
@@ -1397,7 +1406,8 @@
                                                                                                     <label
                                                                                                         class="form-check-label"
                                                                                                         for="timeOverrideChk">
-                                                                                                        Override set time
+                                                                                                        Override set
+                                                                                                        time
                                                                                                         for this status
                                                                                                     </label>
                                                                                                 </div>
@@ -1498,7 +1508,8 @@
                                                                                                 <!-- /ko -->
 
                                                                                                 <!-- Submit & Back -->
-                                                                                                <div class="d-flex justify-content-end gap-2">
+                                                                                                <div
+                                                                                                    class="d-flex justify-content-end gap-2">
                                                                                                     <button
                                                                                                         type="button"
                                                                                                         class="btn btn-sm btn-secondary"
@@ -1514,7 +1525,6 @@
                                                                                                 </div>
 
                                                                                             </div>
-                                                                                            <!-- details panel -->
 
                                                                                             <!-- /ko -->
                                                                                         </div>
@@ -1561,10 +1571,10 @@
                                                                     </table>
                                                                 </div>
                                                             </fieldset>
-                                                        </div>
-                                                    </div><!-- /row -->
-                                                </div><!-- /card-body -->
-                                            </div><!-- /card -->
+                                                        </div><!-- /row -->
+                                                    </div>
+                                                </div><!-- /col-md-4 -->
+                                            </div><!-- /card-body -->
                                         </div><!-- /job-details -->
                                     </div><!-- /job-card -->
                                 </td>
@@ -2322,13 +2332,13 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- Pinned Teams & Incidents -->
+                                    <!-- Starred Teams & Incidents -->
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingPinned">
                                             <button class="accordion-button collapsed" type="button"
                                                 data-bs-toggle="collapse" data-bs-target="#collapsePinned"
                                                 aria-expanded="false" aria-controls="collapsePinned">
-                                                Pinned Teams &amp; Incidents
+                                                Starred Teams &amp; Incidents
                                             </button>
                                         </h2>
 
@@ -2339,16 +2349,16 @@
                                                 <div
                                                     class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
                                                     <div class="small text-muted">
-                                                        Pinned teams: <span class="badge bg-primary"
+                                                        Starred teams: <span class="badge bg-primary"
                                                             data-bind="text: config.pinnedTeamIds().length"></span>
                                                         &nbsp;•&nbsp;
-                                                        Pinned incidents: <span class="badge bg-success"
+                                                        Starred incidents: <span class="badge bg-success"
                                                             data-bind="text: config.pinnedIncidentIds().length"></span>
                                                     </div>
 
                                                     <button type="button" class="btn btn-sm btn-outline-danger"
                                                         data-bind="click: config.clearAllPinned, enable: (config.pinnedTeamIds().length + config.pinnedIncidentIds().length) > 0">
-                                                        Clear all pinned
+                                                        Clear all Starred
                                                     </button>
                                                 </div>
 
@@ -2357,7 +2367,7 @@
                                                         <div class="border rounded p-2">
                                                             <div
                                                                 class="d-flex align-items-center justify-content-between">
-                                                                <div class="fw-semibold small">Pinned Teams</div>
+                                                                <div class="fw-semibold small">Starred Teams</div>
                                                                 <div class="d-flex align-items-center gap-2">
                                                                     <span class="badge bg-primary"
                                                                         data-bind="text: config.pinnedTeamIds().length"></span>
@@ -2376,7 +2386,7 @@
                                                         <div class="border rounded p-2">
                                                             <div
                                                                 class="d-flex align-items-center justify-content-between">
-                                                                <div class="fw-semibold small">Pinned Incidents</div>
+                                                                <div class="fw-semibold small">Starred Incidents</div>
                                                                 <div class="d-flex align-items-center gap-2">
                                                                     <span class="badge bg-success"
                                                                         data-bind="text: config.pinnedIncidentIds().length"></span>
@@ -2438,7 +2448,7 @@
                                 <input type="text" class="form-control form-control-sm load-input"
                                     placeholder="Enter key" style="width:0; opacity:0;" data-bind="textInput: config.shareKeyInput,
                                   enable: !config.loadingShared(),
-                                  css: { 'expanded-input': config.loadExpanded() }">
+                                  css: { 'expanded-input': config.loadExpanded }">
 
                                 <button type="submit" class="btn btn-outline-secondary"
                                     data-bind="disable: config.loadingShared, visible: config.loadExpanded">
@@ -2961,6 +2971,85 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" data-bind="click: submit">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trackable Assets Modal -->
+    <div class="modal fade" id="trackableAssetsModal" tabindex="-1" aria-labelledby="trackableAssetsModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" data-bind="with: trackableAssetsModalVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="trackableAssetsModalLabel">Trackable Assets Library</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Subheading -->
+                    <div class="mb-2 text-muted">
+                        This list shows all possible trackable assets <b>(seen within the last 14 days)</b>. Its just a helper to lookup asset callsigns by name, PSN ID, Talkgroup, Unit etc. If you can't find it here, it won't be trackable.
+                    </div>
+                    <!-- Search box -->
+                    <div class="mb-3">
+                        <input type="search" class="form-control" placeholder="Search by callsign, unit or PSN radio ID..."
+                            data-bind="value: searchQuery, valueUpdate: 'input'">
+                    </div>
+                    <!-- Talkgroup filter -->
+                    <div class="mb-3">
+                        <select class="form-select"
+                            data-bind="options: talkgroups, value: selectedTalkgroup, optionsCaption: 'All Talkgroups'"></select>
+                    </div>
+                    <!-- Asset list -->                     
+                    <div data-bind="foreach: filteredAssets" style="max-height: 400px; overflow-y: auto;">
+                        <div class="card mb-2">
+                            <div class="card-body py-2 d-flex">
+                                <!-- Column 1: Callsign -->
+                                <div class="flex-shrink-0 text-center" style="width: 160px;">
+                                    <div class="fw-bold fs-4" data-bind="text: name"></div>
+                                    <div class="fw-bold fs-7" data-bind="text: entity"></div>
+
+                                </div>
+                                <!-- Column 2: Details -->
+                                <div class="flex-grow-1 ps-3 border-start" style="min-width: 0;">
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Capability:</span>
+                                        <span class="text-muted" data-bind="text: capability"></span>
+                                    </div>
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Type:</span>
+                                        <span data-bind="text: resourceType"></span>
+                                    </div>
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Talkgroup:</span>
+                                        <span class="text-muted" data-bind="text: talkgroup"></span>
+                                    </div>
+                                </div>
+                                <!-- Column 3: IDs & Last Seen -->
+                                <div class="flex-shrink-0 ps-3 border-start text-start" style="width: 180px;">
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">PSN ID:</span>
+                                        <span class="text-muted" data-bind="text: radioId"></span>
+                                    </div>
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Last Seen:</span>
+                                        <span class="text-muted" data-bind="text: lastSeenJustAgoText"></span>
+                                    </div>
+                                    <div class="small mb-1">
+                                        <span class="fw-semibold">Vehicle Rego:</span>
+                                        <span class="text-muted" data-bind="text: licensePlate"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-muted" data-bind="visible: filteredAssets().length === 0">
+                        No assets match your search.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

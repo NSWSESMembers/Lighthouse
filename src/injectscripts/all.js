@@ -133,6 +133,9 @@ whenWeAreReady(function () {
     <a href="#" id="LHClearStorage">Delete All Collections</a>\
     </li>\
     <li>\
+    <a href="http://lighthouse.ses.nsw.gov.au/guides.html">User Guides</a>\
+    </li>\
+    <li>\
     <a href="http://lighthouse.ses.nsw.gov.au">About Lighthouse</a>\
     </li>\
     </ul>\
@@ -178,18 +181,6 @@ whenWeAreReady(function () {
         unitName +
         ' Today)</a>\
     </li>\
-    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Tasking\
-    </li>\
-    <li id="lhtaskingmenuitem">\
-    <a href="' +
-        lighthouseUrl +
-        'pages/tasking.html' +
-        vars +
-        '" target="_blank">Lighthouse Aided Dispatch (LAD!)</a>\
-    </li>\
-    <li id="lhtaskingremoteregister">\
-    <a href="">Register Tab For Remote Control</a>\
-    </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
@@ -207,7 +198,10 @@ whenWeAreReady(function () {
     <a href="#" id="LHClearStorage">Delete All Collections</a>\
     </li>\
     <li>\
-    <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/README.md">About Lighthouse</a>\
+    <a href="http://lighthouse.ses.nsw.gov.au/guides.html">User Guides</a>\
+    </li>\
+    <li>\
+    <a href="http://lighthouse.ses.nsw.gov.au">About Lighthouse</a>\
     </li>\
     </ul>\
     </li>\

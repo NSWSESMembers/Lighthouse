@@ -139,7 +139,12 @@ export function buildJobPopupKO() {
                   <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Route to Asset"
                       data-bind="click: $root.drawRouteToAsset, disable: !team.trackableAndIsFiltered(), clickBubble: false">
+                      <!-- ko if: !$root.routeLoading() -->
                       <i class="fa fa-solid fa-car"></i>
+                      <!-- /ko -->
+                      <!-- ko if: $root.routeLoading() -->
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <!-- /ko -->
                   </button>
                   <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Fit Bounds"
