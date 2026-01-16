@@ -179,8 +179,8 @@
                                     data-bind="event: { click: setTeamSortFromElement }">
                                     <span class="th-label">Task Count</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th scope="col">Team Leader</th>
-                                <th scope="col">Actions</th>
+                                <th class="not-sortable"scope="col">Team Leader</th>
+                                <th class="not-sortable" scope="col">Actions</th>
                             </tr>
                         </thead>
                         <tbody data-bind="foreach: { data: sortedTeams, as: 't' }">

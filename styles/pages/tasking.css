@@ -478,6 +478,14 @@ table thead th.sortable .th-label {
   white-space: nowrap;
 }
 
+table thead th.not-sortable {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
 table thead th.sortable .sort-icon {
   flex: 0 0 auto;        /* never wrap/shrink */
 }
