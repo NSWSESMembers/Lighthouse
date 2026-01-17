@@ -181,6 +181,18 @@ whenWeAreReady(function () {
         unitName +
         ' Today)</a>\
     </li>\
+        <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Tasking\
+    </li>\
+    <li id="lhtaskingmenuitem">\
+    <a href="' +
+        lighthouseUrl +
+        'pages/tasking.html' +
+        vars +
+        '" target="_blank">Lighthouse Aided Dispatch (LAD!)</a>\
+    </li>\
+    <li id="lhtaskingremoteregister">\
+    <a href="">Register Tab For Remote Control</a>\
+    </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
