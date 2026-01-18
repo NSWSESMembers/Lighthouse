@@ -35,7 +35,6 @@ import { Job } from './models/Job.js';
 import { Sector } from './models/Sector.js';
 import { Tag } from "./models/Tag.js";
 
-import { canon } from './utils/common.js';
 import { Enum } from './utils/enum.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
