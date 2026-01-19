@@ -1419,6 +1419,20 @@ $('#instantRadioLogText').keydown(function (event) {
   }
 });
 
+// keybindings on the photo carousel
+$('#imageCarouselModal').keydown(function (event) {
+  var nextButton = $('#imageCarouselModal button.next-button').first()
+  var prevButton = $('#imageCarouselModal button.prev-button').first()
+  // right arrow
+  if (event.keyCode == 39) {
+    nextButton.trigger('click')
+  }
+  // left arrow
+  if (event.keyCode == 37) {
+    prevButton.trigger('click')
+  }
+});
+
 //submit radio log on submit button press
 $(instantRadiologModal)
   .find('#submitInstantRadioLogButton')
