@@ -260,6 +260,7 @@ td.chev[draggable='true'] * {
 
 .sidebar {
   width: var(--sidebar-w, 420px);
+  min-width: 1010px;
   display: flex;
   flex-direction: column;
 }
