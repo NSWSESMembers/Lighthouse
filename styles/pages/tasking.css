@@ -139,6 +139,9 @@ border-radius: 10px;
 height: 100%;
 line-height: 30px;
 background-color: #f7931d !important;
+text-overflow: ellipsis;
+overflow: hidden;
+white-space: nowrap;
 }
 
 
@@ -947,7 +950,8 @@ tr.job:hover {
 .team-cell--callsign,
 .team-cell--leader {
   white-space: normal;
-  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 /* Expanded panel inside same card */

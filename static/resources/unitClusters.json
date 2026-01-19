@@ -12,8 +12,8 @@
     "clusterName": "State Capability Cluster"
   },
   "Armidale-Dumaresq": {
-    "clusterCode": "NEC",
-    "clusterName": "New England"
+    "clusterCode": "LTC",
+    "clusterName": "Lower Northern Tablelands"
   },
   "Ashfield-Leichhardt": {
     "clusterCode": "IWC",
@@ -36,8 +36,8 @@
     "clusterName": "Wilson Richmond"
   },
   "Balranald": {
-    "clusterCode": "CMC",
-    "clusterName": "Central Murray"
+    "clusterCode": "RPC",
+    "clusterName": "Riverina Plains"
   },
   "Bankstown": {
     "clusterCode": "SLC",
@@ -152,20 +152,20 @@
     "clusterName": "Inner West"
   },
   "Bush Search & Rescue": {
-    "clusterCode": "SPC",
-    "clusterName": "State Capability Cluster"
+    "clusterCode": "MZC",
+    "clusterName": "Metro Zone Capability"
   },
   "Camden": {
-    "clusterCode": "MRC",
-    "clusterName": "Macarthur"
+    "clusterCode": "STC",
+    "clusterName": "South West"
   },
   "Camden Haven": {
     "clusterCode": "HAC",
     "clusterName": "Hastings"
   },
   "Campbelltown": {
-    "clusterCode": "MRC",
-    "clusterName": "Macarthur"
+    "clusterCode": "STC",
+    "clusterName": "South West"
   },
   "Canada Bay": {
     "clusterCode": "IWC",
@@ -292,8 +292,8 @@
     "clusterName": "Northern Illawarra"
   },
   "Deepwater": {
-    "clusterCode": "NEC",
-    "clusterName": "New England"
+    "clusterCode": "UTC",
+    "clusterName": "Upper Northern Tablelands"
   },
   "Deniliquin-Conargo": {
     "clusterCode": "CMC",
@@ -332,8 +332,8 @@
     "clusterName": "Canobolas"
   },
   "Fairfield": {
-    "clusterCode": "STC",
-    "clusterName": "South West"
+    "clusterCode": "SLC",
+    "clusterName": "South Central"
   },
   "Far West Support Unit": {
     "clusterCode": "WCC",
@@ -360,8 +360,8 @@
     "clusterName": "Kempsey Nambucca"
   },
   "Glen Innes": {
-    "clusterCode": "NEC",
-    "clusterName": "New England"
+    "clusterCode": "UTC",
+    "clusterName": "Upper Northern Tablelands"
   },
   "Glengarry": {
     "clusterCode": "BWC",
@@ -376,8 +376,8 @@
     "clusterName": "Barwon"
   },
   "Goolgowi": {
-    "clusterCode": "MIC",
-    "clusterName": "Murrumbidgee Irrigation"
+    "clusterCode": "RPC",
+    "clusterName": "Riverina Plains"
   },
   "Gooloogong": {
     "clusterCode": "BDC",
@@ -412,8 +412,8 @@
     "clusterName": "Upper Namoi"
   },
   "Guyra": {
-    "clusterCode": "NEC",
-    "clusterName": "New England"
+    "clusterCode": "LTC",
+    "clusterName": "Lower Northern Tablelands"
   },
   "Harden": {
     "clusterCode": "YHC",
@@ -428,16 +428,16 @@
     "clusterName": "North West"
   },
   "Hay": {
-    "clusterCode": "CMC",
-    "clusterName": "Central Murray"
+    "clusterCode": "RPC",
+    "clusterName": "Riverina Plains"
   },
   "Heathcote": {
     "clusterCode": "TSC",
     "clusterName": "The Shire"
   },
   "Hillston": {
-    "clusterCode": "MIC",
-    "clusterName": "Murrumbidgee Irrigation"
+    "clusterCode": "RPC",
+    "clusterName": "Riverina Plains"
   },
   "Holbrook": {
     "clusterCode": "HMC",
@@ -568,12 +568,12 @@
     "clusterName": "Peel"
   },
   "Manly": {
-    "clusterCode": "NBC",
-    "clusterName": "Northern Beaches"
+    "clusterCode": "NSC",
+    "clusterName": "Northern Sydney"
   },
   "Marrickville": {
-    "clusterCode": "IWC",
-    "clusterName": "Inner West"
+    "clusterCode": "CYC",
+    "clusterName": "City"
   },
   "Mathoura": {
     "clusterCode": "CMC",
@@ -748,8 +748,8 @@
     "clusterName": "Binda"
   },
   "Penrith": {
-    "clusterCode": "NPC",
-    "clusterName": "Nepean"
+    "clusterCode": "WTC",
+    "clusterName": "West Central"
   },
   "Pilliga": {
     "clusterCode": "LMC",
@@ -820,8 +820,8 @@
     "clusterName": "Shoalhaven"
   },
   "Strathfield": {
-    "clusterCode": "SLC",
-    "clusterName": "South Central"
+    "clusterCode": "IWC",
+    "clusterName": "Inner West"
   },
   "Stroud": {
     "clusterCode": "MCC",
@@ -832,8 +832,8 @@
     "clusterName": "The Shire"
   },
   "Sutton": {
-    "clusterCode": "QPC",
-    "clusterName": "Queanbeyan-Palerang"
+    "clusterCode": "YHC",
+    "clusterName": "Yass-Hilltops"
   },
   "Swansea": {
     "clusterCode": "LSC",
@@ -860,8 +860,8 @@
     "clusterName": "Riverina"
   },
   "Tenterfield": {
-    "clusterCode": "NEC",
-    "clusterName": "New England"
+    "clusterCode": "UTC",
+    "clusterName": "Upper Northern Tablelands"
   },
   "The Hills": {
     "clusterCode": "NWC",
@@ -880,8 +880,8 @@
     "clusterName": "Macintyre"
   },
   "Tocumwal": {
-    "clusterCode": "HMC",
-    "clusterName": "Hume"
+    "clusterCode": "CMC",
+    "clusterName": "Central Murray"
   },
   "Tomaree": {
     "clusterCode": "LNC",
@@ -916,8 +916,8 @@
     "clusterName": "Clarence Valley"
   },
   "Uralla": {
-    "clusterCode": "NEC",
-    "clusterName": "New England"
+    "clusterCode": "LTC",
+    "clusterName": "Lower Northern Tablelands"
   },
   "Urana": {
     "clusterCode": "HMC",
@@ -936,8 +936,8 @@
     "clusterName": "Riverina"
   },
   "Walcha": {
-    "clusterCode": "NEC",
-    "clusterName": "New England"
+    "clusterCode": "LTC",
+    "clusterName": "Lower Northern Tablelands"
   },
   "Walgett": {
     "clusterCode": "BWC",
@@ -952,8 +952,8 @@
     "clusterName": "Mitchell"
   },
   "Warringah-Pittwater": {
-    "clusterCode": "NBC",
-    "clusterName": "Northern Beaches"
+    "clusterCode": "NSC",
+    "clusterName": "Northern Sydney"
   },
   "Wauchope": {
     "clusterCode": "HAC",
@@ -988,8 +988,8 @@
     "clusterName": "Barrier East"
   },
   "Willoughby-Lane Cove": {
-    "clusterCode": "NSC",
-    "clusterName": "Northern Sydney"
+    "clusterCode": "NCC",
+    "clusterName": "North Central"
   },
   "Windellama": {
     "clusterCode": "ARC",

@@ -35,7 +35,6 @@ import { Job } from './models/Job.js';
 import { Sector } from './models/Sector.js';
 import { Tag } from "./models/Tag.js";
 
-import { canon } from './utils/common.js';
 import { Enum } from './utils/enum.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
@@ -987,48 +986,216 @@ function VM() {
     };
 
 
-    self._assetMatchesTeam = function (asset, team) {
-        if (!asset || !team) return false;
-        const cs = canon(team.callsign());
-        if (!cs) return false;     // prefer explicit name fields; fall back defensively
-        const nameCanon = canon(asset.name());
-        if (!nameCanon) return false;
-        return nameCanon.includes(cs) || cs.includes(nameCanon);
+    // ---- Trackable asset matching (exact-first, fuzzy-second; token consumed once) ----
+
+    function _normAssetName(v) {
+        // asset names are like PAR56 / SES47 / SES47T (no spaces)
+        const s = (v == null) ? '' : String(v);
+        return s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function _splitTeamCallsignIntoParts(v) {
+        const s0 = (v == null) ? '' : String(v);
+
+        // Make separators explicit BEFORE stripping spaces
+        // e.g. "PAR56 + PAR18" => ["PAR56", "PAR18"]
+        // also handle "and"
+        const s1 = s0
+            .replace(/\bteam\b/ig, ' ')
+            .replace(/\s+\+\s+/g, '|')
+            .replace(/[+&/,;]+/g, '|')
+            .replace(/\s+\band\b\s+/ig, '|')
+            .replace(/\s+\bwith\b\s+/ig, '|');
+
+        return s1.split('|').map(p => p.trim()).filter(Boolean);
+    }
+
+    function _tokenVariantsFromPart(part) {
+        // produce a small set of candidate tokens from one callsign part
+        const raw = _normAssetName(part);
+        if (!raw) return [];
+
+        const out = new Set();
+
+        // 1) raw as-is (already no spaces / punctuation)
+        out.add(raw);
+
+        // 2) if looks like <letters><digits><many letters>, drop the trailing word
+        //    e.g. "par56truck" => "par56"
+        const mLongSuffix = raw.match(/^([a-z]+[0-9]+)[a-z]{2,}$/);
+        if (mLongSuffix) out.add(mLongSuffix[1]);
+
+        // 3) if contains <letters><digits><optional single letter>, keep that prefix too
+        //    e.g. "ses47talpha" => "ses47t"
+        const mCore = raw.match(/^([a-z]+[0-9]+[a-z]?)$/) || raw.match(/^([a-z]+[0-9]+[a-z]?)/);
+        if (mCore && mCore[1]) out.add(mCore[1]);
+
+        // prune empties
+        return [...out].map(x => x.trim()).filter(Boolean);
+    }
+
+    function _extractTeamTokens(team) {
+        const cs = team?.callsign?.();
+        if (!cs) return [];
+
+        const s = String(cs);
+
+        // 1) Primary: extract ALL occurrences of <letters><optional space><digits><optional letter>
+        //    Handles: "PAR18 PAR911", "PAR 56 Team", "PAR56 + PAR18", "SES47T"
+        const re = /[a-z]{2,6}\s*\d+[a-z]?/ig;
+        const seen = new Set();
+        const tokens = [];
+
+        for (const m of s.matchAll(re)) {
+            const tok = _normAssetName(m[0]); // strips spaces/punct => "par56"
+            if (!tok || seen.has(tok)) continue;
+            seen.add(tok);
+            tokens.push(tok);
+        }
+
+        // If we found any, we're done (prevents weird whitespace-only splitting issues).
+        if (tokens.length) return tokens;
+
+        // 2) Fallback: previous behaviour (kept for edge cases)
+        const parts = _splitTeamCallsignIntoParts(s);
+        for (const p of parts) {
+            for (const t of _tokenVariantsFromPart(p)) {
+                if (!t || seen.has(t)) continue;
+                seen.add(t);
+                tokens.push(t);
+            }
+        }
+        return tokens;
+    }
+
+    function _scoreFuzzy(token, assetName) {
+        // Lower is better.
+        // Exact matches are handled before fuzzy, so no 0 here.
+        if (assetName.startsWith(token)) return 1;
+        if (assetName.includes(token)) return 2;
+        if (token.includes(assetName)) return 3;
+        return 99;
+    }
+
+    function _computeMatchedAssetsForTeam(team, allAssets) {
+        const tokens = _extractTeamTokens(team);
+        if (!tokens.length) return new Set();
+
+        // Map assetName -> list of assets (usually 1)
+        const byName = new Map();
+        for (const a of (allAssets || [])) {
+            const n = _normAssetName(a?.name?.());
+            if (!n) continue;
+            if (!byName.has(n)) byName.set(n, []);
+            byName.get(n).push(a);
+        }
+
+        const matchedAssetIds = new Set();
+        const matchedAssets = new Set();
+        const usedTokens = new Set();
+
+        // 1) EXACT first: token === assetName
+        for (const tok of tokens) {
+            const exactList = byName.get(tok);
+            if (!exactList || !exactList.length) continue;
+
+            // allow multiple exact matches (duplicate assets with same name)
+            let addedAny = false;
+            for (const a of exactList) {
+                if (matchedAssetIds.has(a.id())) continue;
+                matchedAssetIds.add(a.id());
+                matchedAssets.add(a);
+                addedAny = true;
+            }
+
+            // consume the token if it produced at least one exact match,
+            // so it won't be used for fuzzy matching.
+            if (addedAny) usedTokens.add(tok);
+        }
+
+        // 2) FUZZY second (token consumed once; asset matched once)
+        //    This is what prevents "SES59" matching "SES59T" when "SES59" exists:
+        //    the exact pass consumes "ses59" and matches SES59 before fuzzy runs.
+        for (const tok of tokens) {
+            if (usedTokens.has(tok)) continue;
+
+            let best = null;
+            let bestScore = 999;
+
+            for (const [assetName, list] of byName.entries()) {
+                const score = _scoreFuzzy(tok, assetName);
+                if (score >= 99) continue;
+
+                // prefer shortest assetName on ties (reduces suffix grabs like SES59T)
+                // and skip assets already matched
+                for (const a of list) {
+                    if (matchedAssetIds.has(a.id())) continue;
+
+                    const tieBreaker = best ? (assetName.length - _normAssetName(best.name()).length) : 0;
+                    const better =
+                        (score < bestScore) ||
+                        (score === bestScore && best && assetName.length < _normAssetName(best.name()).length) ||
+                        (score === bestScore && !best);
+
+                    if (better && tieBreaker <= 0) {
+                        best = a;
+                        bestScore = score;
+                    }
+                }
+            }
+
+            if (best) {
+                usedTokens.add(tok);
+                matchedAssetIds.add(best.id());
+                matchedAssets.add(best);
+            }
+        }
+
+        return matchedAssets;
+    }
+
+    // Replaces the old pairwise matcher :contentReference[oaicite:1]{index=1}
+    self._assetMatchesTeam = function (_asset, _team) {
+        // no longer used as the primary mechanism; keep for safety if anything external calls it
+        // (fall back to the new computed set for correctness).
+        try {
+            const matches = _computeMatchedAssetsForTeam(_team, self.trackableAssets?.() || []);
+            return [...matches].some(a => a?.id?.() === _asset?.id?.());
+        } catch (_e) {
+            return false;
+        }
     };
 
-    // recompute one team's asset list
+
+    // recompute one team's asset list :contentReference[oaicite:2]{index=2}
     self._refreshTeamTrackableAssets = function (team) {
         if (!team || typeof team.trackableAssets !== 'function') return;
-        const list = team.trackableAssets();
-        (self.trackableAssets() || []).forEach(a => {
-            const has = list.find(x => x.id() === a.id())
-            const match = self._assetMatchesTeam(a, team);
-            if (match && !has) {
-                team.trackableAssets.push(a);
-                a.matchingTeams.push(team)
-            }
-            if (!match && has) {
-                a.matchingTeams.remove(team)
+
+        const all = self.trackableAssets?.() || [];
+        const desired = _computeMatchedAssetsForTeam(team, all); // Set<Asset>
+
+        // Remove no-longer-matching
+        (team.trackableAssets() || []).slice().forEach(a => {
+            if (!desired.has(a)) {
+                a?.matchingTeams?.remove?.(team);
                 team.trackableAssets.remove(a);
             }
         });
+
+        // Add new matches
+        for (const a of desired) {
+            const has = (team.trackableAssets() || []).includes(a);
+            if (!has) {
+                team.trackableAssets.push(a);
+                a?.matchingTeams?.push?.(team);
+            }
+        }
     };
 
-    // when a single asset changes/arrives, patch all teams that match
-    self._attachAssetToMatchingTeams = function (asset) {
-        (self.teams() || []).forEach(team => {
-            const list = team.trackableAssets();
-            const has = list.includes(asset);
-            const match = self._assetMatchesTeam(asset, team);
-            if (match && !has) {
-                asset.matchingTeams.push(team)
-                team.trackableAssets.push(asset);
-            }
-            if (!match && has) {
-                asset.matchingTeams.remove(team)
-                team.trackableAssets.remove(asset);
-            }
-        });
+    // when a single asset changes/arrives, patch all teams that match :contentReference[oaicite:3]{index=3}
+    self._attachAssetToMatchingTeams = function (_asset) {
+        // For correctness (token consumption + exact-first), reconcile per-team against full asset set
+        (self.teams?.() || []).forEach(team => self._refreshTeamTrackableAssets(team));
     };
 
     // Tasking registry/upsert (NEW magical 2.0 way of doing it)

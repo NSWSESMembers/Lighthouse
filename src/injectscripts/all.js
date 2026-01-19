@@ -181,7 +181,7 @@ whenWeAreReady(function () {
         unitName +
         ' Today)</a>\
     </li>\
-        <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Tasking\
+    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Tasking\
     </li>\
     <li id="lhtaskingmenuitem">\
     <a href="' +
