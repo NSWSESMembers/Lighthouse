@@ -3065,7 +3065,7 @@
 
     <!-- Images Modal  -->
     <div class="modal fade" id="incidentImagesModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content" data-bind="with: incidentImagesVM">
                 <div class="modal-header">
                     <h5 class="modal-title" data-bind="text: title"></h5>
@@ -3115,9 +3115,10 @@
                                 <span>Loading full image…</span>
                             </div>
                             <!-- /ko -->
-                            <button type="button" style="background:none; border:none; box-shadow:none; padding:0;" data-bind="click: openImageInNewTab">
-                            <img alt="" style="max-width: 100%; max-height: 75vh; object-fit: contain;"
-                                data-bind="attr: { src: selectedFullSrc }, visible: selectedFullReady" />
+                            <button type="button" style="background:none; border:none; box-shadow:none; padding:0;"
+                                data-bind="click: openImageInNewTab">
+                                <img alt="" style="max-width: 100%; max-height: 75vh; object-fit: contain;"
+                                    data-bind="attr: { src: selectedFullSrc }, visible: selectedFullReady" />
                             </button>
                             <div class="text-muted" data-bind="visible: showSelectHint">
                                 Select an image.
@@ -3130,10 +3131,9 @@
                     </div>
 
                 </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
