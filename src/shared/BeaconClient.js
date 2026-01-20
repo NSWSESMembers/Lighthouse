@@ -19,11 +19,12 @@ import * as frao from './BeaconClient/frao.js';
 import * as contacts from './BeaconClient/contacts.js';
 import * as messages from './BeaconClient/messages.js';
 import * as suppliers from './BeaconClient/suppliers.js';
+import * as images from './BeaconClient/images.js';
 
-export { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers };
+export { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers, images };
 
 // re-export functions
-export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers, toFormUrlEncoded };
+export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers, images, toFormUrlEncoded };
 
 export function toFormUrlEncoded(obj) {
     const params = [];
