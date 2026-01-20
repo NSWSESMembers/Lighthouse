@@ -37,6 +37,16 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
     vm.selectedFullReady = ko.pureComputed(() => !!vm.selectedFullSrc());
     vm.selectedNameReady = ko.pureComputed(() => !!vm.selectedName());
 
+    vm.openImageInNewTab = () => {
+        const src = vm.selectedFullSrc();
+        if (!src) return;
+        const win = window.open();
+        if (win) {
+            win.document.write(`<img src="${src}" style="max-width:100%;max-height:100%;">`);
+            win.document.title = vm.selectedName();
+        }
+    };
+
     vm.showSelectHint = ko.pureComputed(() => {
         return !vm.loadingList() && !vm.loadingFull() && vm.images().length > 0 && !vm.selectedFullReady();
     });
@@ -78,7 +88,7 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
 
             const ext = (extHint || "jpeg").toLowerCase();
             const mime =
-                ext === "jpg" || ext === "jpeg" ? "image/jpeg" :
+                ext === "jpg" || ext === "jpeg" || ext === "thumb" ? "image/jpeg" :
                     ext === "png" ? "image/png" :
                         ext === "gif" ? "image/gif" :
                             "application/octet-stream";
@@ -99,27 +109,48 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
         return new Promise((resolve, reject) => {
             BeaconClient.images.getIncidentImages(
                 jobId, apiHost, userId, token,
-                (list) => resolve(list || []),
-                (err) => reject(err)
+                (list, err) => {
+                    if (err) {
+                        resolve(null);
+                    } else {
+                        resolve(list || []);
+                    }
+                }
             );
         });
     }
 
     function getImageData(name, token) {
-        console.log(name,token)
         return new Promise((resolve, reject) => {
             BeaconClient.images.getImageData(
                 vm.job().id(), name, apiHost, userId, token,
-                (data) => resolve(data),
-                (err) => reject(err)
+                (data) => {
+                    if (data == null) {
+                        reject(new Error("No data returned"));
+                    } else {
+                        resolve(data);
+                    }
+                }
             );
         });
     }
 
     vm._loadThumb = async (im, token) => {
-        if (!im || im.thumbUrl() || im.loadingThumb()) return;
+        if (!im) return;
+
+        // If already cached, make sure spinner is off
+        if (im.thumbUrl && im.thumbUrl()) {
+            im.loadingThumb(false);
+            return;
+        }
+
+        if (im.loadingThumb()) return;
+
         const thumbName = im.thumbName();
-        if (!thumbName) return;
+        if (!thumbName) {
+            im.loadingThumb(false);
+            return;
+        }
 
         im.loadingThumb(true);
         try {
@@ -135,9 +166,23 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
     };
 
     vm._loadFull = async (im, token) => {
-        if (!im || im.fullUrl() || im.loadingFull()) return;
+        if (!im) return;
+
+        // If already cached, make sure spinners are off
+        if (im.fullUrl && im.fullUrl()) {
+            im.loadingFull(false);
+            vm.loadingFull(false);
+            return;
+        }
+
+        if (im.loadingFull()) return;
+
         const imageName = im.imageName();
-        if (!imageName) return;
+        if (!imageName) {
+            im.loadingFull(false);
+            vm.loadingFull(false);
+            return;
+        }
 
         im.loadingFull(true);
         vm.loadingFull(true);
@@ -154,7 +199,6 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
             vm.loadingFull(false);
         }
     };
-
     async function prefetchThumbs(list, token, concurrency = 4) {
         let i = 0;
         async function worker() {
@@ -174,12 +218,22 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
         vm.selectedName(im ? im.imageName() : "");
         vm.errorText("");
 
+        // always reset VM-level spinner on selection change
+        vm.loadingFull(false);
+
         if (!im) return;
+
+        // If already cached, show immediately and ensure spinners are off
+        if (im.fullUrl && im.fullUrl()) {
+            im.loadingFull(false);
+            vm.loadingFull(false);
+            vm.selectedFullSrc(im.fullUrl());
+            return;
+        }
 
         const token = await getToken();
         await vm._loadFull(im, token);
 
-        // after full loads, push to VM-level observable for simple binding
         vm.selectedFullSrc(im.fullUrl() || "");
     };
 
@@ -207,7 +261,7 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
             const vms = (list || []).map(dto => new ImageVM(dto));
             vm.images(vms);
             // thumbs in background
-            prefetchThumbs(job.id(), vms, token, 4);
+            prefetchThumbs(vms, token, 4);
 
             if (vms.length) await vm.selectImage(vms[0]);
         } catch (e) {

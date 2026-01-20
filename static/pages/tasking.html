@@ -969,7 +969,7 @@
                                             <div class="job-cell job-cell--id">
                                                 <span data-bind="text: j.identifierTrimmed"></span>
                                                 <button type="button"
-                                                    class="btn btn-link p-0 text-decoration-none fa-center"
+                                                    class="btn btn-link p-0 text-decoration-none fa-center images-button"
                                                     title="View incident images"
                                                     data-bind="visible: j.imageCount() > 0, click: $root.openIncidentImages, clickBubble: false">
                                                     <i class="far fa-image"></i>
@@ -3073,65 +3073,70 @@
                 </div>
 
                 <div class="modal-body">
-                    <div class="d-flex align-items-center gap-2 mb-2" data-bind="visible: loadingList">
+                    <!-- ko if: loadingList -->
+                    <div class="d-flex align-items-center gap-2 mb-2">
                         <i class="fa fa-spinner fa-spin"></i>
                         <span>Loading images…</span>
                     </div>
-
-                    <div class="alert alert-danger py-2" data-bind="visible: hasError">
-                        <span data-bind="text: errorText"></span>
-                    </div>
-
-                    <div class="row g-3">
-                        <!-- thumbs -->
-                        <div class="col-12 col-lg-4">
-                            <div class="text-muted" data-bind="visible: showNoImages">No images.</div>
-
-                            <div class="d-flex flex-wrap gap-2" data-bind="foreach: images">
-                                <button type="button" class="btn p-0 border rounded overflow-hidden"
-                                    style="width: 140px; height: 105px;" data-bind="click: $parent.selectImage">
-
-                                    <img alt="" style="width: 100%; height: 100%; object-fit: cover; display:block;"
-                                        data-bind="attr: { src: thumbUrl }, visible: thumbReady" />
-
-                                    <div class="d-flex align-items-center justify-content-center"
-                                        style="width: 100%; height: 100%;" data-bind="visible: loadingThumb">
-                                        <i class="fa fa-spinner fa-spin"></i>
-                                    </div>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- preview -->
-                        <div class="col-12 col-lg-8">
-                            <div class="border rounded p-2 d-flex align-items-center justify-content-center"
-                                style="min-height: 60vh;">
-
-                                <div class="d-flex align-items-center gap-2" data-bind="visible: loadingFull">
-                                    <i class="fa fa-spinner fa-spin"></i>
-                                    <span>Loading full image…</span>
-                                </div>
-
-                                <img alt="" style="max-width: 100%; max-height: 75vh; object-fit: contain;"
-                                    data-bind="attr: { src: selectedFullSrc }, visible: selectedFullReady" />
-
-                                <div class="text-muted" data-bind="visible: showSelectHint">
-                                    Select an image.
-                                </div>
-                            </div>
-
-                            <div class="small text-muted mt-2" data-bind="visible: selectedNameReady">
-                                <span data-bind="text: selectedName"></span>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- /ko -->
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="alert alert-danger py-2" data-bind="visible: hasError">
+                    <span data-bind="text: errorText"></span>
+                </div>
+
+                <div class="row g-3">
+                    <!-- thumbs -->
+                    <div class="col-12 col-lg-4 d-flex flex-column align-items-center justify-content-center">
+                        <div class="text-muted" data-bind="visible: showNoImages">No images.</div>
+
+                        <div class="d-flex flex-wrap gap-2 justify-content-center ms-2" data-bind="foreach: images">
+                            <button type="button" class="btn p-0 border rounded overflow-hidden"
+                                style="width: 140px; height: 105px;" data-bind="click: $parent.selectImage">
+
+                                <img alt="" style="width: 100%; height: 100%; object-fit: cover; display:block;"
+                                    data-bind="attr: { src: thumbUrl }, visible: thumbReady" />
+
+                                <div class="d-flex align-items-center justify-content-center"
+                                    style="width: 100%; height: 100%;" data-bind="visible: loadingThumb">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- preview -->
+                    <div class="col-12 col-lg-8">
+                        <div class="border rounded p-2 d-flex align-items-center justify-content-center me-2"
+                            style="min-height: 60vh;">
+                            <!-- ko if: loadingFull -->
+                            <div class="d-flex align-items-center gap-2" data-bind="visible: loadingFull">
+                                <i class="fa fa-spinner fa-spin"></i>
+                                <span>Loading full image…</span>
+                            </div>
+                            <!-- /ko -->
+                            <button type="button" style="background:none; border:none; box-shadow:none; padding:0;" data-bind="click: openImageInNewTab">
+                            <img alt="" style="max-width: 100%; max-height: 75vh; object-fit: contain;"
+                                data-bind="attr: { src: selectedFullSrc }, visible: selectedFullReady" />
+                            </button>
+                            <div class="text-muted" data-bind="visible: showSelectHint">
+                                Select an image.
+                            </div>
+                        </div>
+
+                        <div class="small text-muted mt-2" data-bind="visible: selectedNameReady">
+                            <span data-bind="text: selectedName"></span>
+                        </div>
+                    </div>
+
                 </div>
             </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
+    </div>
     </div>
 
 

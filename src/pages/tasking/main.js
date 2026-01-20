@@ -207,7 +207,6 @@ function VM() {
     });
 
     self.openIncidentImages = function (job, e) {
-        console.log("Opening incident images modal");
         if (e) { e.stopPropagation?.(); e.preventDefault?.(); }
         if (!job || typeof job.id !== "function") return false;
         self.incidentImagesVM.openForJob(job);
