@@ -24,6 +24,7 @@ import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
 import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
 import { TrackableAssetsModalVM } from "./viewmodels/TrackableAssetsModalVM.js";
+import IncidentImagesModalVM from "./viewmodels/IncidentImagesModalVM";
 
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
@@ -197,6 +198,21 @@ function VM() {
     self.trackableAssetsModalVM = new TrackableAssetsModalVM(self);
 
     self.jobStatusConfirmVM = new JobStatusConfirmModalVM(self);
+
+    self.incidentImagesVM = new IncidentImagesModalVM({
+        getToken,
+        apiHost,
+        userId: params.userId,
+        BeaconClient
+    });
+
+    self.openIncidentImages = function (job, e) {
+        console.log("Opening incident images modal");
+        if (e) { e.stopPropagation?.(); e.preventDefault?.(); }
+        if (!job || typeof job.id !== "function") return false;
+        self.incidentImagesVM.openForJob(job);
+        return false;
+    };
 
     self.attachJobStatusConfirmModal = function (job, newStatus) {
         const modalEl = document.getElementById("JobStatusConfirmModal");
