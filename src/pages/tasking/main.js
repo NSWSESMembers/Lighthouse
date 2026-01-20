@@ -688,13 +688,16 @@ function VM() {
         if (!teamJson || teamJson.Id == null) return null;
 
         let team = self.teamsById.get(teamJson.Id);
-        if (team) {
+        if (team) { //existing team
             //if the team is from tasking, ignore as dont want to overwrite with old data
             if (source === 'tasking') {
                 return team;
             }
+            const prevCallsign = team.callsign?.();
             team.updateFromJson(teamJson);
-            self._refreshTeamTrackableAssets(team);
+            if (team.callsign?.() !== prevCallsign) { //only remap assets if the callsign changes
+                self._refreshTeamTrackableAssets(team);
+            }
             return team;
         }
 
@@ -972,14 +975,12 @@ function VM() {
         }
 
         let asset = self.assetsById.get(assetJson.properties.id);
-        if (asset) {
+        if (asset) { //existing asset - update values
             asset.updateFromJson(assetJson);
-            self._attachAssetToMatchingTeams(asset);
             return asset;
-        } else {
+        } else { //new asset - create, store, attach to teams
             asset = new Asset(assetJson);
             self.trackableAssets.push(asset);
-            self._attachAssetToMatchingTeams(asset);
             self.assetsById.set(asset.id(), asset);
         }
         return asset;
@@ -1169,31 +1170,35 @@ function VM() {
 
     // recompute one team's asset list :contentReference[oaicite:2]{index=2}
     self._refreshTeamTrackableAssets = function (team) {
+        console.log("Refreshing trackable assets for team:", team?.callsign?.());
         if (!team || typeof team.trackableAssets !== 'function') return;
 
-        const all = self.trackableAssets?.() || [];
-        const desired = _computeMatchedAssetsForTeam(team, all); // Set<Asset>
+        // Defer execution to avoid blocking UI thread
+        setTimeout(() => {
+            const all = self.trackableAssets?.() || [];
+            const desired = _computeMatchedAssetsForTeam(team, all); // Set<Asset>
 
-        // Remove no-longer-matching
-        (team.trackableAssets() || []).slice().forEach(a => {
-            if (!desired.has(a)) {
-                a?.matchingTeams?.remove?.(team);
-                team.trackableAssets.remove(a);
-            }
-        });
+            // Remove no-longer-matching
+            (team.trackableAssets() || []).slice().forEach(a => {
+                if (!desired.has(a)) {
+                    a?.matchingTeams?.remove?.(team);
+                    team.trackableAssets.remove(a);
+                }
+            });
 
-        // Add new matches
-        for (const a of desired) {
-            const has = (team.trackableAssets() || []).includes(a);
-            if (!has) {
-                team.trackableAssets.push(a);
-                a?.matchingTeams?.push?.(team);
+            // Add new matches
+            for (const a of desired) {
+                const has = (team.trackableAssets() || []).includes(a);
+                if (!has) {
+                    team.trackableAssets.push(a);
+                    a?.matchingTeams?.push?.(team);
+                }
             }
-        }
+        }, 0);
     };
 
-    // when a single asset changes/arrives, patch all teams that match :contentReference[oaicite:3]{index=3}
-    self._attachAssetToMatchingTeams = function (_asset) {
+    // redo matching assets after an asset update
+    self._attachAssetsToMatchingTeams = function () {
         // For correctness (token consumption + exact-first), reconcile per-team against full asset set
         (self.teams?.() || []).forEach(team => self._refreshTeamTrackableAssets(team));
     };
@@ -1644,6 +1649,10 @@ function VM() {
                     // Remove from observable array and registry
                     self.trackableAssets.remove(asset);
                     self.assetsById.delete(id);
+
+                    //Update Asset/Team mappings only once after all changes
+                    self._attachAssetsToMatchingTeams();
+
                 });
                 myViewModel._markInitialFetchDone();
                 assetDataRefreshInterlock = false;
