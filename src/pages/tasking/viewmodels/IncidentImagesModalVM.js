@@ -106,7 +106,7 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
     }
 
     function getIncidentImages(jobId, token) {
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             BeaconClient.images.getIncidentImages(
                 jobId, apiHost, userId, token,
                 (list, err) => {
