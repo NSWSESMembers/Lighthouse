@@ -85,7 +85,6 @@ body {
   background-color: #f8d7da !important;
 }
 
-
 .row-team-green > div > button > .is-pinned {
   color: black !important;
   --bs-text-opacity: 1 !important;
@@ -134,35 +133,33 @@ body.env-devbeacon .modal-header {
 
 body .team-header,
 body .incidents-header {
-color: white !important;
-border-radius: 10px;
-height: 100%;
-line-height: 30px;
-background-color: #f7931d !important;
-text-overflow: ellipsis;
-overflow: hidden;
-white-space: nowrap;
+  color: white !important;
+  border-radius: 10px;
+  height: 100%;
+  line-height: 30px;
+  background-color: #f7931d !important;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
-
 
 body.env-trainbeacon .team-header,
 body.env-trainbeacon .incidents-header {
-color: white !important;
-border-radius: 10px;
-height: 100%;
-line-height: 30px;
-background-color: #219f56 !important;
+  color: white !important;
+  border-radius: 10px;
+  height: 100%;
+  line-height: 30px;
+  background-color: #219f56 !important;
 }
 
 body.env-devbeacon .team-header,
 body.env-devbeacon .incidents-header {
-color: white !important;
-border-radius: 10px;
-height: 100%;
-line-height: 30px;
-background-color: #2d9ee0 !important;
+  color: white !important;
+  border-radius: 10px;
+  height: 100%;
+  line-height: 30px;
+  background-color: #2d9ee0 !important;
 }
-
 
 .tasking-dropdown-menu {
   position: fixed !important;
@@ -275,7 +272,6 @@ body.sidebar-collapsed .sidebar {
 body.sidebar-collapsed .vsplit {
   display: none !important;
 }
-
 
 .hsplit {
   height: 6px;
@@ -489,9 +485,8 @@ table thead th.not-sortable {
   white-space: nowrap;
 }
 
-
 table thead th.sortable .sort-icon {
-  flex: 0 0 auto;        /* never wrap/shrink */
+  flex: 0 0 auto; /* never wrap/shrink */
 }
 
 .teams,
@@ -505,7 +500,7 @@ table thead th.sortable .sort-icon {
 .jobs > thead > th {
   position: sticky;
   top: 0;
-  z-index: 1001;        /* above rows/cards */
+  z-index: 1001; /* above rows/cards */
   background: #f8f9fa; /* solid background */
 }
 
@@ -741,9 +736,9 @@ tr.job:hover {
 }
 /* Constrain the whole Teams section, not just taskings */
 .veh-pop__teams {
-  max-height: 220px;          /* tune as needed */
+  max-height: 220px; /* tune as needed */
   overflow-y: auto;
-  padding-right: 4px;         /* avoid scrollbar overlaying content */
+  padding-right: 4px; /* avoid scrollbar overlaying content */
 }
 
 /* Each team stays visually grouped */
@@ -758,7 +753,6 @@ tr.job:hover {
   margin-left: -10px;
   margin-right: -15px;
 }
-
 
 .veh-pop__tasking-item,
 .veh-pop__tasking-item--no-job {
@@ -779,7 +773,6 @@ tr.job:hover {
 .veh-pop__tasking-item:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
-
 
 /* Team list should never scroll horizontally */
 .veh-pop__team-list {
@@ -819,11 +812,10 @@ tr.job:hover {
 }
 
 .veh-pop__tasking-item .text-truncate,
-.veh-pop__tasking-item [style*="pre-wrap"] {
+.veh-pop__tasking-item [style*='pre-wrap'] {
   max-width: 100%;
   overflow-wrap: anywhere;
 }
-
 
 .job-popup__tasking-row {
   padding: 4px 0;
@@ -885,26 +877,19 @@ tr.job:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
 }
 
-.teams{
-  --team-cols:
-    30px      /* chevron */
-    30px      /* pin */
-    1.35fr    /* callsign */
-    0.5fr     /* status */
-    60px      /* HQ */
-    120px     /* task count */
-    1fr       /* leader */
-    140px;    /* actions (fixed) */
+.teams {
+  --team-cols: 30px /* chevron */ 30px /* pin */ 1.35fr /* callsign */ 0.5fr /* status */ 60px /* HQ */ 120px
+    /* task count */ 1fr /* leader */ 140px; /* actions (fixed) */
 }
 
 /* header */
-.teams > thead > tr{
+.teams > thead > tr {
   display: grid;
   grid-template-columns: var(--team-cols);
   align-items: center;
 }
 
-.teams > thead > th{
+.teams > thead > th {
   box-sizing: border-box;
   padding-left: 4px;
   min-width: 0;
@@ -913,20 +898,18 @@ tr.job:hover {
   white-space: nowrap;
 }
 
-.teams > thead > th .sort-icon{
+.teams > thead > th .sort-icon {
   width: 10px;
   flex-shrink: 0;
 }
 
 /* body card */
-.team-summary{
+.team-summary {
   display: grid;
   grid-template-columns: var(--team-cols);
   align-items: center;
   padding: 4px 0px;
 }
-
-
 
 .team-card--expanded .team-summary {
   background: #eef4ff;
@@ -1414,17 +1397,9 @@ tr.job:hover {
 }
 
 /* one source of truth (jobs) */
-.jobs{
-  --job-cols:
-    30px    /* chev */
-    20px    /* pin */
-    0.38fr  /* Id */
-    0.5fr   /* Received */
-    0.3fr   /* HQ */
-    0.3fr   /* Type */
-    1.5fr   /* Situation */
-    0.5fr   /* Status */
-    0.9fr;  /* Address */
+.jobs {
+  --job-cols: 30px /* chev */ 20px /* pin */ 0.38fr /* Id */ 0.5fr /* Received */ 0.3fr /* HQ */ 0.3fr /* Type */ 1.5fr
+    /* Situation */ 0.5fr /* Status */ 0.9fr; /* Address */
 }
 
 /* body */
@@ -1439,14 +1414,14 @@ tr.job:hover {
 }
 
 /* header: turn the <tr> into a grid too */
-.jobs > thead > tr{
+.jobs > thead > tr {
   display: grid;
   grid-template-columns: var(--job-cols);
   align-items: center;
 }
 
 /* header cells behave like blocks inside the grid */
-.jobs > thead > th{
+.jobs > thead > th {
   position: sticky;
   display: block;
   box-sizing: border-box;
@@ -1960,7 +1935,6 @@ tr.job:hover {
   vertical-align: middle;
 }
 
-
 /* Sector dropdown button */
 .jobstatus-dropdown-btn {
   background: none;
@@ -2091,10 +2065,10 @@ tr.job:hover {
 }
 /* They wont fuck off. im putting all the browsers in and something will work */
 /* Clears the 'X' button in search inputs for Chrome, Safari, and newer browsers */
-input[type="search"]::-webkit-search-decoration,
-input[type="search"]::-webkit-search-cancel-button,
-input[type="search"]::-webkit-search-results-button,
-input[type="search"]::-webkit-search-results-decoration {
+input[type='search']::-webkit-search-decoration,
+input[type='search']::-webkit-search-cancel-button,
+input[type='search']::-webkit-search-results-button,
+input[type='search']::-webkit-search-results-decoration {
   display: none;
   /* Additional styles to ensure no space is taken */
   -webkit-appearance: none;
@@ -2102,20 +2076,19 @@ input[type="search"]::-webkit-search-results-decoration {
 }
 
 /* Clears the 'X' button in text or search inputs for Internet Explorer 10+ */
-input[type="text"]::-ms-clear,
-input[type="search"]::-ms-clear {
+input[type='text']::-ms-clear,
+input[type='search']::-ms-clear {
   display: none;
   width: 0;
   height: 0;
 }
-
 
 .teams > thead,
 .jobs > thead {
   display: block;
   position: sticky;
   top: 0;
-  z-index: 1050;         /* above cards/rows */
+  z-index: 1050; /* above cards/rows */
   background: var(--bs-light, #f8f9fa);
 }
 
@@ -2128,12 +2101,10 @@ input[type="search"]::-ms-clear {
 /* Header cells should just be normal blocks now */
 .teams > thead > th,
 .jobs > thead > th {
-  position: static !important;   /* override your current sticky-on-th */
+  position: static !important; /* override your current sticky-on-th */
   display: block;
   background: transparent;
 }
-
-
 
 .team-details fieldset {
   height: 100%;
@@ -2144,9 +2115,8 @@ input[type="search"]::-ms-clear {
 }
 
 .job-actions-card {
-  height: 100%
+  height: 100%;
 }
-
 
 .collapseAll {
   margin-left: 4px;
@@ -2154,11 +2124,13 @@ input[type="search"]::-ms-clear {
 }
 
 /* pin buttons */
-.team-cell--chev, .team-cell--pin {
+.team-cell--chev,
+.team-cell--pin {
   display: flex;
   justify-content: center;
 }
-.job-cell--chev, .job-cell--pin {
+.job-cell--chev,
+.job-cell--pin {
   display: flex;
   justify-content: center;
 }
@@ -2178,4 +2150,17 @@ input[type="search"]::-ms-clear {
   display: none !important;
 }
 
-.fa-center { line-height: inherit!important; vertical-align: middle; }
+.fa-center {
+  line-height: inherit !important;
+  vertical-align: middle;
+}
+
+#incidentImagesModal .col-12.col-lg-4 {
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.images-button {
+  color: var(--bs-secondary-color) !important;
+  font-size: 13px;
+}

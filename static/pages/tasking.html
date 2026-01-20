@@ -179,7 +179,7 @@
                                     data-bind="event: { click: setTeamSortFromElement }">
                                     <span class="th-label">Task Count</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="not-sortable"scope="col">Team Leader</th>
+                                <th class="not-sortable" scope="col">Team Leader</th>
                                 <th class="not-sortable" scope="col">Actions</th>
                             </tr>
                         </thead>
@@ -968,8 +968,13 @@
                                             <!-- 2. Id -->
                                             <div class="job-cell job-cell--id">
                                                 <span data-bind="text: j.identifierTrimmed"></span>
-                                                <em class="far fa-image" style="width: 1em;"
-                                                    data-bind="visible: j.imageCount  > 0, attr:{ title: j.imageCount }"></em>
+                                                <button type="button"
+                                                    class="btn btn-link p-0 text-decoration-none fa-center images-button"
+                                                    title="View incident images"
+                                                    data-bind="visible: j.imageCount() > 0, click: $root.openIncidentImages, clickBubble: false">
+                                                    <i class="far fa-image"></i>
+                                                    <span class="visually-hidden">Images</span>
+                                                </button>
                                                 <em class="fa fa-fw fa-share-alt" style="width: 1em;"
                                                     data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
                                             </div>
@@ -2989,11 +2994,14 @@
                 <div class="modal-body">
                     <!-- Subheading -->
                     <div class="mb-2 text-muted">
-                        This list shows all possible trackable assets <b>(seen within the last 14 days)</b>. Its just a helper to lookup asset callsigns by name, PSN ID, Talkgroup, Unit etc. If you can't find it here, it won't be trackable.
+                        This list shows all possible trackable assets <b>(seen within the last 14 days)</b>. Its just a
+                        helper to lookup asset callsigns by name, PSN ID, Talkgroup, Unit etc. If you can't find it
+                        here, it won't be trackable.
                     </div>
                     <!-- Search box -->
                     <div class="mb-3">
-                        <input type="search" class="form-control" placeholder="Search by callsign, unit or PSN radio ID..."
+                        <input type="search" class="form-control"
+                            placeholder="Search by callsign, unit or PSN radio ID..."
                             data-bind="value: searchQuery, valueUpdate: 'input'">
                     </div>
                     <!-- Talkgroup filter -->
@@ -3001,7 +3009,7 @@
                         <select class="form-select"
                             data-bind="options: talkgroups, value: selectedTalkgroup, optionsCaption: 'All Talkgroups'"></select>
                     </div>
-                    <!-- Asset list -->                     
+                    <!-- Asset list -->
                     <div data-bind="foreach: filteredAssets" style="max-height: 400px; overflow-y: auto;">
                         <div class="card mb-2">
                             <div class="card-body py-2 d-flex">
@@ -3054,6 +3062,84 @@
             </div>
         </div>
     </div>
+
+    <!-- Images Modal  -->
+    <div class="modal fade" id="incidentImagesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" data-bind="with: incidentImagesVM">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-bind="text: title"></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- ko if: loadingList -->
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="fa fa-spinner fa-spin"></i>
+                        <span>Loading images…</span>
+                    </div>
+                    <!-- /ko -->
+                </div>
+
+                <div class="alert alert-danger py-2" data-bind="visible: hasError">
+                    <span data-bind="text: errorText"></span>
+                </div>
+
+                <div class="row g-3">
+                    <!-- thumbs -->
+                    <div class="col-12 col-lg-4 d-flex flex-column align-items-center justify-content-center">
+                        <div class="text-muted" data-bind="visible: showNoImages">No images.</div>
+
+                        <div class="d-flex flex-wrap gap-2 justify-content-center ms-2" data-bind="foreach: images">
+                            <button type="button" class="btn p-0 border rounded overflow-hidden"
+                                style="width: 140px; height: 105px;" data-bind="click: $parent.selectImage">
+
+                                <img alt="" style="width: 100%; height: 100%; object-fit: cover; display:block;"
+                                    data-bind="attr: { src: thumbUrl }, visible: thumbReady" />
+
+                                <div class="d-flex align-items-center justify-content-center"
+                                    style="width: 100%; height: 100%;" data-bind="visible: loadingThumb">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- preview -->
+                    <div class="col-12 col-lg-8">
+                        <div class="border rounded p-2 d-flex align-items-center justify-content-center me-2"
+                            style="min-height: 60vh;">
+                            <!-- ko if: loadingFull -->
+                            <div class="d-flex align-items-center gap-2" data-bind="visible: loadingFull">
+                                <i class="fa fa-spinner fa-spin"></i>
+                                <span>Loading full image…</span>
+                            </div>
+                            <!-- /ko -->
+                            <button type="button" style="background:none; border:none; box-shadow:none; padding:0;" data-bind="click: openImageInNewTab">
+                            <img alt="" style="max-width: 100%; max-height: 75vh; object-fit: contain;"
+                                data-bind="attr: { src: selectedFullSrc }, visible: selectedFullReady" />
+                            </button>
+                            <div class="text-muted" data-bind="visible: showSelectHint">
+                                Select an image.
+                            </div>
+                        </div>
+
+                        <div class="small text-muted mt-2" data-bind="visible: selectedNameReady">
+                            <span data-bind="text: selectedName"></span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+    </div>
+
+
 
     <script src="tasking/main.js" type="text/javascript"></script>
 
