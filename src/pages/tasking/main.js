@@ -44,6 +44,7 @@ import { installSlideVisibleBinding } from "./bindings/slideVisible.js";
 import { installStatusFilterBindings } from "./bindings/statusFilters.js";
 import { installRowVisibilityBindings } from "./bindings/rowVisibility.js";
 import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
+import { installSortableArrayBindings } from "./bindings/sortableArray.js";
 import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
@@ -144,8 +145,19 @@ const map = L.map('map', {
 }).setView([-33.8688, 151.2093], 11);
 
 map.createPane('pane-lowest'); map.getPane('pane-lowest').style.zIndex = 300;
+map.createPane('pane-lowest-plus'); map.getPane('pane-lowest-plus').style.zIndex = 301;
+    
 map.createPane('pane-middle'); map.getPane('pane-middle').style.zIndex = 400;
+map.createPane('pane-middle-plus'); map.getPane('pane-middle-plus').style.zIndex = 401;
+
+
 map.createPane('pane-top'); map.getPane('pane-top').style.zIndex = 600;
+map.createPane('pane-top-plus'); map.getPane('pane-top-plus').style.zIndex = 601;
+
+
+map.createPane('pane-tippy-top'); map.getPane('pane-tippy-top').style.zIndex = 700;
+map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.zIndex = 701;
+
 
 var osm2 = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { minZoom: 0, maxZoom: 13 });
 new MiniMap(osm2, { toggleDisplay: true }).addTo(map);
@@ -2357,6 +2369,7 @@ document.addEventListener('DOMContentLoaded', function () {
         installRowVisibilityBindings();
         installDragDropRowBindings();
         noBubbleFromDisabledButtonsBindings();
+        installSortableArrayBindings();
 
         ko.bindingProvider.instance = new ksb(options);
         window.ko = ko;

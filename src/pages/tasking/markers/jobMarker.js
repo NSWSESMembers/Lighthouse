@@ -31,6 +31,7 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
 
 
     const marker = L.marker([lat, lng], {
+        pane: 'pane-tippy-top',
         icon: makeShapeIcon(style),
         title: job.identifier?.()
     }).bindPopup(popup);
@@ -126,12 +127,12 @@ function upsertPulseRing(layerGroup, job, marker) {
     const baseAnchor = base.iconAnchor || [baseSize[0] / 2, baseSize[1] / 2];
 
     if (isNew && !marker._pulseRing) {
-        const k = 4;
+        const k = 3;
         const ringSize = [Math.round(baseSize[0] * k), Math.round(baseSize[1] * k)];
         const ringAnchor = [Math.round(baseAnchor[0] * k), Math.round(baseAnchor[1] * k)];
 
         const ring = L.marker(marker.getLatLng(), {
-            pane: 'pane-top',
+            pane: 'pane-tippy-top',
             icon: L.divIcon({
                 className: 'pulse-ring-icon',
                 html: '<div class="pulse-ring"></div>',

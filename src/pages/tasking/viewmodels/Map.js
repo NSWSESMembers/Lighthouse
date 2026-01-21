@@ -22,6 +22,26 @@ export function MapVM(Lmap, root) {
   self.jobMarkerGroups = new Map();
   self.unmatchedAssetLayer = L.layerGroup();   // not added by default
 
+  self.applyPaneOrder = function (paneOrderTopToBottom) {
+    if (!Array.isArray(paneOrderTopToBottom) || paneOrderTopToBottom.length === 0) return;
+
+    // Keep big gaps so you can still place other UI panes/overlays between if needed
+    const base = 300;
+    const step = 100;
+
+    paneOrderTopToBottom.forEach((paneName, idx) => {
+      const pane = self.map.getPane(paneName);
+      const panePlus = self.map.getPane(`${paneName}-plus`);
+
+      if (!pane || !panePlus) return;
+      // topmost gets highest zIndex
+      const z = base + (step * (paneOrderTopToBottom.length - 1 - idx));
+      pane.style.zIndex = String(z);
+      panePlus.style.zIndex = String(z + 1);
+
+    });
+  };
+
 
   // --- online/polling overlay layers registry ---
   // key -> { key, label, layerGroup, refreshMs, timerId, visibleByDefault, fetchFn, drawFn }
@@ -131,28 +151,28 @@ export function MapVM(Lmap, root) {
     const defs = [];
 
 
-      // matched assets layer
+    // matched assets layer
     if (self.assetLayer) {
-    defs.push({
-      key: 'matched-assets',
-      label: 'Matched against Teams',
-      layer: self.assetLayer,
-      group: 'Assets',
-      visibleByDefault: true,
-    });
-  }
+      defs.push({
+        key: 'matched-assets',
+        label: 'Matched against Teams',
+        layer: self.assetLayer,
+        group: 'Assets',
+        visibleByDefault: true,
+      });
+    }
 
 
-  // unmatched assets layer
+    // unmatched assets layer
     if (self.unmatchedAssetLayer) {
-    defs.push({
-      key: 'unmatched-assets',
-      label: 'Unmatched against Teams',
-      layer: self.unmatchedAssetLayer,
-      group: 'Assets',
-      visibleByDefault: false,
-    });
-  }
+      defs.push({
+        key: 'unmatched-assets',
+        label: 'Unmatched against Teams',
+        layer: self.unmatchedAssetLayer,
+        group: 'Assets',
+        visibleByDefault: false,
+      });
+    }
 
 
     // Online/polling overlays
@@ -224,12 +244,12 @@ export function MapVM(Lmap, root) {
     }
   };
 
-    self.clearCrowFliesLine = () => {
-      if (self.crowFliesLine) {
-        self.map.removeLayer(self.crowFliesLine);
-        self.crowFliesLine = null;
-      }
-    };
+  self.clearCrowFliesLine = () => {
+    if (self.crowFliesLine) {
+      self.map.removeLayer(self.crowFliesLine);
+      self.crowFliesLine = null;
+    }
+  };
 
   self.registerCrowFliesLine = (line) => {
     self.crowFliesLine = line;

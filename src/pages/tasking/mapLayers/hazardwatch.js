@@ -193,7 +193,7 @@ export function registerHazardWatchWarningsLayer(vm, apiHost) {
 
                     const marker = L.marker(center, {
                         icon,
-                        pane: "pane-lowest",
+                        pane: "pane-middle",
                         interactive: true,
                     });
 

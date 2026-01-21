@@ -41,6 +41,33 @@ export function ConfigVM(root, deps) {
     self.sectorFilters = ko.observableArray([]);   // [{id, name}]
     self.includeIncidentsWithoutSector = ko.observable(true);
 
+    //Map layer order
+
+    self.paneDefs = [
+        { id: 'pane-tippy-top', name: 'Incident markers' },
+        { id: 'pane-top', name: 'Asset markers' },
+        { id: 'pane-middle', name: 'Map overlays icons' },
+        { id: 'pane-lowest', name: 'Map overlay polygons' }
+    ];
+
+    // UI list (objects so bindings are property-only)
+    self.paneOrder = ko.observableArray(self.paneDefs.map(p => ({ id: p.id, name: p.name })));
+
+    self.rebuildPaneOrderFromIds = function (ids) {
+        const byId = new Map(self.paneDefs.map(p => [p.id, p]));
+        const list = (ids || [])
+            .map(id => byId.get(id))
+            .filter(Boolean)
+            .map(p => ({ id: p.id, name: p.name }));
+
+        // ensure all panes exist (append any missing)
+        self.paneDefs.forEach(p => {
+            if (!list.some(x => x.id === p.id)) list.push({ id: p.id, name: p.name });
+        });
+
+        self.paneOrder(list);
+    }
+
     // Other settings
     self.refreshInterval = ko.observable(60);
     self.fetchPeriod = ko.observable(7);
@@ -129,6 +156,7 @@ export function ConfigVM(root, deps) {
         includeIncidentsWithoutSector: !!self.includeIncidentsWithoutSector(),
         pinnedTeamIds: ko.toJS(self.pinnedTeamIds),
         pinnedIncidentIds: ko.toJS(self.pinnedIncidentIds),
+        paneOrder: self.paneOrder().map(p => p.id),
     });
 
     // Helpers
@@ -388,7 +416,11 @@ export function ConfigVM(root, deps) {
             self.pinnedIncidentIds(cfg.pinnedIncidentIds.map(x => String(x)));
         }
 
-
+        if (Array.isArray(cfg.paneOrder)) {
+            self.rebuildPaneOrderFromIds(cfg.paneOrder);
+        } else {
+            self.rebuildPaneOrderFromIds(); // defaults
+        }
 
 
         self.afterConfigLoad()
@@ -483,6 +515,7 @@ export function ConfigVM(root, deps) {
 
     self.afterConfigLoad = () => {
         deps.fetchAllSectors(self.incidentFilters().map(i => i.id));
+        root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
     }
 
 
@@ -495,6 +528,10 @@ export function ConfigVM(root, deps) {
 
     self.includeIncidentsWithoutSector.subscribe(() => {
         root.fetchAllJobsData();
+    })
+
+    self.paneOrder.subscribe(() => {
+        root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
     })
 
 }
