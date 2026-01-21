@@ -1417,7 +1417,6 @@ function VM() {
 
     //fetch tasking if a team is added
     self.filteredTeams.subscribe((changes) => {
-        console.log("Filtered teams changed:", changes);
         changes.forEach(ch => {
             if (ch.status === 'added') {
                 console.log("Team filtered in, fetching tasking:", ch.value.callsign());
