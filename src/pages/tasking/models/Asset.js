@@ -24,8 +24,17 @@ export function Asset(data = {}) {
     self.matchingTeamsInView = ko.pureComputed(() => {
         return self.matchingTeams().filter(t => t.isFilteredIn());
     });
+    
+    // Force updates for computed observables using fmtRelative every 30 seconds
+    self._relativeUpdateTick = ko.observable(0);
 
+    setInterval(() => {
+        self._relativeUpdateTick(self._relativeUpdateTick() + 1);
+    }, 1000 * 30);
+
+    // Patch computeds to depend on _relativeUpdateTick
     self.lastSeenJustAgoText = ko.pureComputed(() => {
+        self._relativeUpdateTick(); // dependency
         const v = safeStr(self.lastSeen?.());
         if (!v) return "";
         const d = new Date(v);
@@ -34,6 +43,7 @@ export function Asset(data = {}) {
     });
 
     self.lastSeenText = ko.pureComputed(() => {
+        self._relativeUpdateTick(); // dependency
         const v = safeStr(self.lastSeen?.());
         if (!v) return "";
         const d = new Date(v);
@@ -42,12 +52,14 @@ export function Asset(data = {}) {
     });
 
     self.talkgroupLastUpdatedText = ko.pureComputed(() => {
+        self._relativeUpdateTick(); // dependency
         const v = safeStr(self.talkgroupLastUpdated?.());
         if (!v) return "";
         const d = new Date(v);
         if (isNaN(d)) return v;
         return fmtRelative(d);
     });
+
 
     self.latLngText = ko.pureComputed(() => {
         const lat = self.latitude?.();

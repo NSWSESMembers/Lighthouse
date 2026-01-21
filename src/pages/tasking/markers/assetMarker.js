@@ -202,28 +202,35 @@ export function detachUnmatchedAssetMarker(ko, map, viewModel, asset) {
 
 
 function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
-    const openHandler = (e) => {
-        const el = e.popup.getContent(); // our stable node
-        vm.mapVM.setOpen?.('asset', asset);
-        bindKoToPopup(ko, popupVm, el);
-        // If no team row has focus, open the first team's popup. stops fucky UI jumps when theres multiple teams bound to one asset
-        // where it would jump to a different row when you cycle the assets
-        if (!asset.matchingTeamsInView()?.some(team => team.rowHasFocus && team.rowHasFocus())) {
-          asset.matchingTeamsInView()?.length !== 0 && asset.matchingTeamsInView()[0].onPopupOpen();
-        }
-        popupVm.updatePopup?.();
-        deferPopupUpdate(e.popup);
-    };
-    const closeHandler = (e) => {
-        const el = e.popup?.getContent();
-        vm.mapVM.clearCrowFliesLine();
-        vm.mapVM.clearRoutes?.();
-        vm.mapVM.clearOpen?.();
-        unbindKoFromPopup(ko, el);
-        asset.matchingTeamsInView()?.length !==0 && asset.matchingTeamsInView()[0].onPopupClose()
-    };
-    marker._koWired = true;
-    marker.on('popupopen', openHandler);
-    marker.on('popupclose', closeHandler);
-    marker.on('remove', closeHandler); // safety
+  const openHandler = (e) => {
+    const el = e.popup.getContent(); // our stable node
+    vm.mapVM.setOpen?.('asset', asset);
+    bindKoToPopup(ko, popupVm, el);
+
+    // If no team row has focus, open the first team's popup.
+    if (!asset.matchingTeamsInView()?.some(team => team.rowHasFocus && team.rowHasFocus())) {
+      asset.matchingTeamsInView()?.length !== 0 && asset.matchingTeamsInView()[0].onPopupOpen();
+    }
+    popupVm.updatePopup?.();
+    deferPopupUpdate(e.popup);
+  };
+
+  // Unbind after popup is fully closed for visual cleanliness
+  const closeHandler = (e) => {
+    const el = e.popup?.getContent();
+    vm.mapVM.clearCrowFliesLine();
+    vm.mapVM.clearRoutes?.();
+    vm.mapVM.clearOpen?.();
+    asset.matchingTeamsInView()?.length !== 0 && asset.matchingTeamsInView()[0].onPopupClose();
+
+    // Defer unbinding to after the close animation completes
+    setTimeout(() => {
+      unbindKoFromPopup(ko, el);
+    }, 250); // 250ms matches Leaflet's default fade animation
+  };
+
+  marker._koWired = true;
+  marker.on('popupopen', openHandler);
+  marker.on('popupclose', closeHandler);
+  marker.on('remove', closeHandler); // safety
 }

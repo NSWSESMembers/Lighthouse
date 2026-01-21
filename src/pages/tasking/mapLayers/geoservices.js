@@ -157,7 +157,7 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
       const vectorGrid = L.vectorGrid.protobuf(
         `https://map.lighthouse-extension.com/sesunits/tiles/{z}/{x}/{y}.pbf`, // Replace with actual path
         {
-
+          pane: 'pane-lowest',
           vectorTileLayerStyles: {
             'SESUnit_JSON': (props, zoom) => {
               const zoneColor = zoneFillColor(props.ZONECODE);     // shared per zone
@@ -167,7 +167,6 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
               const fill = useUnitColors ? unitColor : zoneColor;
 
               return {
-                pane: 'pane-middle',
                 weight: useUnitColors ? 1 : 1.2,
                 color: '#333',
                 opacity: 1,
@@ -188,6 +187,7 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
           const name = feature.properties.ZONENAME;
           return L.marker(latlng, {
             interactive: false,
+            pane: 'pane-middle-plus',
             icon: L.divIcon({
               className: 'zone-label',
               html: name,
@@ -203,7 +203,7 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
 
           return L.marker(latlng, {
             interactive: false,
-            pane: 'pane-middle',
+            pane: 'pane-middle-plus',
             icon: L.divIcon({
               className: 'unit-label',
               html: name,

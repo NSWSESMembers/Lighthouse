@@ -134,6 +134,7 @@ export function renderFRAOSLayer(vm, map, getToken, apiHost, params) {
                         if (!polygonGeoJson || polygonGeoJson.message) return;
 
                         const polygon = L.geoJSON(polygonGeoJson, {
+                            pane: 'pane-lowest',
                             style: {
                                 color,
                                 weight: 2,
@@ -151,6 +152,7 @@ export function renderFRAOSLayer(vm, map, getToken, apiHost, params) {
 
                             const labelMarker = L.marker(center, {
                                 interactive: false,
+                                pane: 'pane-lowest-plus',
                                 icon: L.divIcon({
                                     className: "frao-label",
                                     html: labelText,

@@ -61,7 +61,7 @@ export function Tasking(data = {}) {
     self.statusSetAt = ko.pureComputed(() => (self.currentStatusTime() ? moment(self.currentStatusTime()).format("DD/MM/YYYY HH:mm:ss") : null));
 
     self.statusTimeAgo = ko.pureComputed(() => {
-        // read _tick so this recomputes every second
+        // read _tick so this recomputes every 30 seconds
         _tick();
 
         const time = self.currentStatusTime();
