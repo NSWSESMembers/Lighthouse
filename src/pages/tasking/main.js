@@ -294,18 +294,38 @@ function VM() {
     };
 
     // --- sorted arrays ---
-    self.sortedTeams = ko.pureComputed(function () {
-        var key = self.teamSortKey(), asc = self.teamSortAsc();
-        var arr = self.filteredTeams(); // existing
-        return arr.slice().sort(function (a, b) {
-            var av = ko.unwrap(a[key]), bv = ko.unwrap(b[key]);
+    let teamLastKey, teamLastAsc, teamLastInput, teamLastOutput;
+
+    self.sortedTeams = ko.pureComputed(function () { //heavy caching to reduce the slice/sort load
+        const key = self.teamSortKey();
+        const asc = self.teamSortAsc();
+        const input = self.filteredTeams();
+
+        if (input === teamLastInput && key === teamLastKey && asc === teamLastAsc) {
+            return teamLastOutput;
+        }
+
+        teamLastInput = input;
+        teamLastKey = key;
+        teamLastAsc = asc;
+        teamLastOutput = input.slice().sort(function (a, b) {
+            // Support nested keys like "entityAssignedTo.code"
+            var av = key.includes('.')
+                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), a)
+                : ko.unwrap(a[key]);
+
+            var bv = key.includes('.')
+                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), b)
+                : ko.unwrap(b[key]);
+
             var an = typeof av === 'number' || /^\d+(\.\d+)?$/.test(av);
             var bn = typeof bv === 'number' || /^\d+(\.\d+)?$/.test(bv);
             var cmp = (an && bn) ? (Number(av) - Number(bv))
                 : String(av || '').localeCompare(String(bv || ''), undefined, { numeric: true });
             return asc ? cmp : -cmp;
         });
-    });
+        return teamLastOutput;
+    }).extend({ rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
     const JOB_STATUS_ORDER = [
         'New',
@@ -323,13 +343,30 @@ function VM() {
         return m;
     }, Object.create(null));
 
-    self.sortedJobs = ko.pureComputed(function () {
-        var key = self.jobSortKey(), asc = self.jobSortAsc();
-        var arr = self.filteredJobs();
+    let jobLastKey, jobLastAsc, jobLastInput, jobLastOutput;
 
-        return arr.slice().sort(function (a, b) {
-            var av = ko.unwrap(a[key]);
-            var bv = ko.unwrap(b[key]);
+    self.sortedJobs = ko.pureComputed(function () {
+        const key = self.jobSortKey()
+        const asc = self.jobSortAsc();
+        const input = self.filteredJobs();
+
+        if (input === jobLastInput && key === jobLastKey && asc === jobLastAsc) {
+            return jobLastOutput;
+        }
+
+        jobLastInput = input;
+        jobLastKey = key;
+        jobLastAsc = asc;
+
+        jobLastOutput = input.slice().sort(function (a, b) {
+            // Support nested keys like "entityAssignedTo.code"
+            var av = key.includes('.')
+                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), a)
+                : ko.unwrap(a[key]);
+
+            var bv = key.includes('.')
+                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), b)
+                : ko.unwrap(b[key]);
 
             // --- custom status order ---
             if (key === 'statusName') {
@@ -347,6 +384,7 @@ function VM() {
 
             return asc ? cmp : -cmp;
         });
+        return jobLastOutput;
     });
 
     // --- UI updater shared helper ---
@@ -413,7 +451,7 @@ function VM() {
         const term = self.jobSearch().toLowerCase();
 
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
-        const incidentTypeAllowedById = self.config.incidentTypeFilter().map(type => Enum.IncidentType[type]?.Id).filter(id => id !== undefined);
+        const incidentTypeAllowedById = self.config.allowedIncidentTypeIds(); // allow-list
 
         var start = new Date();
         var end = new Date();
@@ -478,37 +516,7 @@ function VM() {
             return true;
         })
 
-    }).extend({ trackArrayChanges: true, rateLimit: 50 });
-
-    //ignores the word filering. Maybe dont need this anymore.
-    self.filteredJobsIgnoreSearch = ko.pureComputed(() => {
-
-        const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
-        const allowedStatus = self.config.jobStatusFilter(); // allow-list
-
-        const incidentTypeAllowedById = self.config.incidentTypeFilter().map(type => Enum.IncidentType[type]?.Id).filter(id => id !== undefined);
-
-        return ko.utils.arrayFilter(this.jobs(), jb => {
-
-            const statusName = jb.statusName();
-
-            // If allow-list non-empty, only show jobs whose status is in it
-            if (allowedStatus.length > 0 && !allowedStatus.includes(statusName)) {
-                return false;
-            }
-
-            // If incident type filter non-empty, only show jobs whose type is in it
-            if (incidentTypeAllowedById.length > 0 && !incidentTypeAllowedById.includes(jb.typeId())) {
-                return false;
-            }
-
-            // If no HQ filters are active, skip HQ filtering
-            const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
-            if (!hqMatch) return false;
-
-            return true
-        });
-    }).extend({ trackArrayChanges: true });
+    }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
     // Team filtering/searching
     self.teamSearch = ko.observable('');
@@ -559,7 +567,7 @@ function VM() {
 
             return false;
         });
-    }).extend({ trackArrayChanges: true, rateLimit: 50 });
+    }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
 
 
@@ -570,7 +578,7 @@ function VM() {
         // for each filtered team, get their trackable assets and flatten to single array
         return self.filteredTeams().flatMap(t => t.trackableAssets() || []);
 
-    }).extend({ trackArrayChanges: true, rateLimit: 50 });
+    }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
 
     self.unmatchedTrackableAssets = ko.pureComputed(() => {
@@ -579,7 +587,7 @@ function VM() {
             const mt = (typeof a.matchingTeams === 'function') ? a.matchingTeams() : [];
             return !mt || mt.length === 0;
         });
-    }).extend({ trackArrayChanges: true, rateLimit: 50 });
+    }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
     self.sectorsLoading = ko.observable(false);
 
@@ -1397,8 +1405,10 @@ function VM() {
 
     //fetch tasking if a team is added
     self.filteredTeams.subscribe((changes) => {
+        console.log("Filtered teams changed:", changes);
         changes.forEach(ch => {
             if (ch.status === 'added') {
+                console.log("Team filtered in, fetching tasking:", ch.value.callsign());
                 ch.value.isFilteredIn(true);
                 ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
@@ -1664,11 +1674,9 @@ function VM() {
                     // Remove from observable array and registry
                     self.trackableAssets.remove(asset);
                     self.assetsById.delete(id);
-
-                    //Update Asset/Team mappings only once after all changes
-                    self._attachAssetsToMatchingTeams();
-
                 });
+                //Update Asset/Team mappings only once after all changes
+                self._attachAssetsToMatchingTeams();
                 myViewModel._markInitialFetchDone();
                 assetDataRefreshInterlock = false;
             }, function (err) {

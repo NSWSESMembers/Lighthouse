@@ -132,12 +132,6 @@ export class AssetPopupViewModel {
     this.api.clearRoutes();
   }
 
-  // Example hook – wire this to your app-level handler if needed.
-  assignTeam() {
-    const id = this.asset.id?.() ?? this.asset.Identifier ?? this.asset.ID;
-    window.dispatchEvent(new CustomEvent('assignTeamToAsset', { detail: { assetId: id } }));
-  }
-
   dispose = () => {
     // clean up any subscriptions or resources here
     this.removeRouteToJob();

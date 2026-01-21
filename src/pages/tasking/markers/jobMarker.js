@@ -120,42 +120,42 @@ export function removeJobMarker(vm, jobOrId) {
 
 //complicated for some reason. has to support different icons sizes and anchors
 function upsertPulseRing(layerGroup, job, marker) {
-  const isNew = (job.statusName?.() || '').toLowerCase() === 'new';
-  const base = marker.options.icon?.options || {};
-  const baseSize   = base.iconSize  || [14, 14];
-  const baseAnchor = base.iconAnchor|| [baseSize[0]/2, baseSize[1]/2];
+    const isNew = (job.statusName?.() || '').toLowerCase() === 'new';
+    const base = marker.options.icon?.options || {};
+    const baseSize = base.iconSize || [14, 14];
+    const baseAnchor = base.iconAnchor || [baseSize[0] / 2, baseSize[1] / 2];
 
-  if (isNew && !marker._pulseRing) {
-    const k = 4;
-    const ringSize   = [Math.round(baseSize[0]*k),   Math.round(baseSize[1]*k)];
-    const ringAnchor = [Math.round(baseAnchor[0]*k), Math.round(baseAnchor[1]*k)];
+    if (isNew && !marker._pulseRing) {
+        const k = 4;
+        const ringSize = [Math.round(baseSize[0] * k), Math.round(baseSize[1] * k)];
+        const ringAnchor = [Math.round(baseAnchor[0] * k), Math.round(baseAnchor[1] * k)];
 
-    const ring = L.marker(marker.getLatLng(), {
-      pane: 'pane-top',
-      icon: L.divIcon({
-        className: 'pulse-ring-icon',
-        html: '<div class="pulse-ring"></div>',
-        iconSize: ringSize,
-        iconAnchor: ringAnchor
-      }),
-      interactive: false,
-      keyboard: false
-    });
+        const ring = L.marker(marker.getLatLng(), {
+            pane: 'pane-top',
+            icon: L.divIcon({
+                className: 'pulse-ring-icon',
+                html: '<div class="pulse-ring"></div>',
+                iconSize: ringSize,
+                iconAnchor: ringAnchor
+            }),
+            interactive: false,
+            keyboard: false
+        });
 
-    const follow = () => ring.setLatLng(marker.getLatLng());
-    marker.on('move', follow);
-    ring._detach = () => marker.off('move', follow);
+        const follow = () => ring.setLatLng(marker.getLatLng());
+        marker.on('move', follow);
+        ring._detach = () => marker.off('move', follow);
 
-    ring.setZIndexOffset((marker.options?.zIndexOffset||0)+1);
-    ring.addTo(layerGroup);
-    marker._pulseRing = ring;
-  }
+        ring.setZIndexOffset((marker.options?.zIndexOffset || 0) + 1);
+        ring.addTo(layerGroup);
+        marker._pulseRing = ring;
+    }
 
-  if (!isNew && marker._pulseRing) {
-    marker._pulseRing._detach?.();
-    layerGroup.removeLayer(marker._pulseRing);
-    marker._pulseRing = null;
-  }
+    if (!isNew && marker._pulseRing) {
+        marker._pulseRing._detach?.();
+        layerGroup.removeLayer(marker._pulseRing);
+        marker._pulseRing = null;
+    }
 }
 
 // --- internals ---
@@ -187,7 +187,10 @@ function wireKoForPopup(ko, marker, job, vm, popupVM) {
     });
     marker.on('popupclose', e => {
         const el = e.popup.getContent();
-        unbindKoFromPopup(ko, el);       // clean -> reset
+        // Defer unbinding to after the close animation completes
+        setTimeout(() => {
+            unbindKoFromPopup(ko, el);
+        }, 250); // 250ms matches Leaflet's default fade animation
         job.onPopupClose && job.onPopupClose();
         vm.mapVM.clearCrowFliesLine();
         vm.mapVM.clearRoutes();

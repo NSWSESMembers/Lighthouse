@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 import ko from 'knockout';
 
-import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
-// 
+import * as bootstrap from 'bootstrap5'; // Modal, Tooltip, etc.
+import { Enum } from '../utils/enum.js';
+
 
 
 const FUNCTION_URL = "https://lambda.lighthouse-extension.com/lad/share";
@@ -30,6 +31,11 @@ export function ConfigVM(root, deps) {
     // Selected location filters
     self.teamFilters = ko.observableArray([]);     // [{id, name, entityType}]
     self.incidentFilters = ko.observableArray([]); // [{id, name, entityType}]
+    self.allowedIncidentTypeIds = ko.pureComputed(() =>
+        new Set(self.incidentTypeFilter()
+            .map(t => Enum.IncidentType[t]?.Id)
+            .filter(Boolean))
+    );
 
     //Sectors
     self.sectorFilters = ko.observableArray([]);   // [{id, name}]
@@ -54,6 +60,8 @@ export function ConfigVM(root, deps) {
     // pinned rows
     self.pinnedTeamIds = ko.observableArray([]);
     self.pinnedIncidentIds = ko.observableArray([]);
+
+
 
     self.openLoadBox = function () {
         self.loadExpanded(true);
@@ -153,43 +161,43 @@ export function ConfigVM(root, deps) {
     self.clearIncidents = () => self.incidentFilters.removeAll();
     self.clearSectors = () => self.sectorFilters.removeAll();
 
-// Search (debounced)
-let searchSeq = 0;
+    // Search (debounced)
+    let searchSeq = 0;
 
-self.query
-  .extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } })
-  .subscribe(q => {
-    const t = (q || '').trim();
-    if (!t) {
-      searchSeq++;
-      self.searching(false);
-      self.results([]);
-      self.dropdownOpen(false);
-      return;
-    }
+    self.query
+        .extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } })
+        .subscribe(q => {
+            const t = (q || '').trim();
+            if (!t) {
+                searchSeq++;
+                self.searching(false);
+                self.results([]);
+                self.dropdownOpen(false);
+                return;
+            }
 
-    const mySeq = ++searchSeq;
+            const mySeq = ++searchSeq;
 
-    // show dropdown immediately with loading state + clear old results
-    self.results([]);
-    self.dropdownOpen(true);
-    self.searching(true);
+            // show dropdown immediately with loading state + clear old results
+            self.results([]);
+            self.dropdownOpen(true);
+            self.searching(true);
 
-    deps.entitiesSearch(t)
-      .then(list => {
-        if (mySeq !== searchSeq) return; // ignore stale responses
-        self.results(list.map(e => makeResultVM({ id: e.Id, name: e.Name, entityType: e.EntityTypeId })));
-        self.dropdownOpen(true);
-      })
-      .catch(() => {
-        if (mySeq !== searchSeq) return;
-        self.results([]);      // triggers "No results found."
-        self.dropdownOpen(true);
-      })
-      .finally(() => {
-        if (mySeq === searchSeq) self.searching(false);
-      });
-  });
+            deps.entitiesSearch(t)
+                .then(list => {
+                    if (mySeq !== searchSeq) return; // ignore stale responses
+                    self.results(list.map(e => makeResultVM({ id: e.Id, name: e.Name, entityType: e.EntityTypeId })));
+                    self.dropdownOpen(true);
+                })
+                .catch(() => {
+                    if (mySeq !== searchSeq) return;
+                    self.results([]);      // triggers "No results found."
+                    self.dropdownOpen(true);
+                })
+                .finally(() => {
+                    if (mySeq === searchSeq) self.searching(false);
+                });
+        });
 
 
     // Actions from results
@@ -242,20 +250,20 @@ self.query
 
 
     self.clearPinnedTeams = () => {
-    self.pinnedTeamIds.removeAll();
-    self.save();
-};
+        self.pinnedTeamIds.removeAll();
+        self.save();
+    };
 
-self.clearPinnedIncidents = () => {
-    self.pinnedIncidentIds.removeAll();
-    self.save();
-};
+    self.clearPinnedIncidents = () => {
+        self.pinnedIncidentIds.removeAll();
+        self.save();
+    };
 
-self.clearAllPinned = () => {
-    self.pinnedTeamIds.removeAll();
-    self.pinnedIncidentIds.removeAll();
-    self.save();
-};
+    self.clearAllPinned = () => {
+        self.pinnedTeamIds.removeAll();
+        self.pinnedIncidentIds.removeAll();
+        self.save();
+    };
 
 
     // Only close if focus moved *outside* the dropdown
@@ -345,7 +353,7 @@ self.clearAllPinned = () => {
         if (typeof cfg.showAdvanced === 'boolean') {
             self.showAdvanced(cfg.showAdvanced);
         }
-          if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
+        if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
             self.includeIncidentsWithoutSector(cfg.includeIncidentsWithoutSector);
         }
 
@@ -380,7 +388,7 @@ self.clearAllPinned = () => {
             self.pinnedIncidentIds(cfg.pinnedIncidentIds.map(x => String(x)));
         }
 
-      
+
 
 
         self.afterConfigLoad()

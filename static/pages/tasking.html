@@ -15,19 +15,17 @@
             <div class="pane pane--top" id="paneTop">
                 <!-- TEAMS (top pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
-                    <!-- ko if: teamsLoading -->
-                    <div
-                        class="small fw-semibold text-center flex-grow-1 text-muted team-header d-flex align-items-center justify-content-center gap-2">
-                        <span><i class="fa fa-spinner fa-spin me-1"></i>Loading Teams… (<span
-                                data-bind="text: filteredTeams().length"></span>)</span>
+                    <div class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
+                        <span style="width: 24px; display: inline-block; text-align: center;">
+                            <!-- ko if: teamsLoading -->
+                            <i class="fa fa-spinner fa-spin"></i>
+                            <!-- /ko -->
+                        </span>
+                        <div class="flex-grow-1 d-flex justify-content-center">
+                            <span>Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
+                        </div>
                     </div>
-                    <!-- /ko -->
-                    <!-- ko ifnot: teamsLoading -->
-                    <div
-                        class="small fw-semibold text-center flex-grow-1 team-header d-flex align-items-center justify-content-center gap-2">
-                        <span>Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
-                    </div>
-                    <!-- /ko -->
+
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:250px;">
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
@@ -171,7 +169,7 @@
                                     data-bind="event: { click: setTeamSortFromElement }">
                                     <span class="th-label">Status</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="sortable" data-sort-key="assignedToCode" aria-sort="none"
+                                <th class="sortable" data-sort-key="assignedTo.code" aria-sort="none"
                                     data-bind="event: { click: setTeamSortFromElement }">
                                     <span class="th-label">HQ</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
@@ -284,7 +282,8 @@
                                         </div>
                                         <!-- /team-summary -->
 
-                                        <!-- EXPANDED PANEL (moved from old .team_body row) -->
+                                        <!-- EXPANDED PANEL -->
+                                        <!-- ko if: t.expanded -->
                                         <div class="team-details" data-bind="slideVisible: t.expanded">
                                             <div class="card border-0 mb-0">
                                                 <div class="card-body p-2">
@@ -509,9 +508,9 @@
                                                                                                                 type="button"
                                                                                                                 class="btn btn-outline-secondary btn-sm"
                                                                                                                 data-bind="
-                        text: label,
-                        click: $parent.onEtaQuickButtonClick,
-                        clickbubble: false">
+                                                                                                                    text: label,
+                                                                                                                    click: $parent.onEtaQuickButtonClick,
+                                                                                                                    clickbubble: false">
                                                                                                             </button>
                                                                                                             <!-- /ko -->
                                                                                                         </div>
@@ -539,9 +538,9 @@
                                                                                                                 type="button"
                                                                                                                 class="btn btn-outline-secondary btn-sm"
                                                                                                                 data-bind="
-                        text: label,
-                        click: $parent.onEtcQuickButtonClick,
-                        clickbubble: false">
+                                                                                                                    text: label,
+                                                                                                                    click: $parent.onEtcQuickButtonClick,
+                                                                                                                    clickbubble: false">
                                                                                                             </button>
                                                                                                             <!-- /ko -->
                                                                                                         </div>
@@ -561,7 +560,7 @@
                                                                                                             class="form-control"
                                                                                                             rows="2"
                                                                                                             data-bind="value: ts.callOffReason">
-            </textarea>
+                                                                                                        </textarea>
                                                                                                     </div>
                                                                                                 </div>
                                                                                                 <!-- /ko -->
@@ -637,6 +636,7 @@
                                                 </div><!-- /col-md-4 -->
                                             </div><!-- /card-body -->
                                         </div><!-- /team-details -->
+                                        <!-- /ko -->
                                     </div>
                                 </td>
                             </tr>
@@ -652,19 +652,17 @@
             <div class="pane pane--bottom" id="paneBottom">
                 <!-- JOBS (bottom pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2 mb-2">
-                    <!-- ko if: jobsLoading -->
-                    <div
-                        class="small fw-semibold text-center flex-grow-1 text-muted incidents-header d-flex align-items-center justify-content-center gap-2">
-                        <span><i class="fa fa-spinner fa-spin me-1"></i>Loading Incidents... (<span
-                                data-bind="text: filteredJobs().length"></span>)</span>
+                    
+                    <div class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
+                        <span style="width: 24px; display: inline-block; text-align: center;">
+                            <!-- ko if: jobsLoading -->
+                            <i class="fa fa-spinner fa-spin"></i>
+                            <!-- /ko -->
+                        </span>
+                        <div class="flex-grow-1 d-flex justify-content-center">
+                            <span>Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
+                        </div>
                     </div>
-                    <!-- /ko -->
-                    <!-- ko ifnot: jobsLoading -->
-                    <div
-                        class="small fw-semibold text-center flex-grow-1 incidents-header d-flex align-items-center justify-content-center gap-2">
-                        <span>Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
-                    </div>
-                    <!-- /ko -->
                     <div class="d-flex align-items-center gap-2">
                         <div class="input-group input-group-sm" style="width:250px;">
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
@@ -919,7 +917,7 @@
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">Received</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="sortable" data-sort-key="entityAssignedToCode" aria-sort="none"
+                                <th class="sortable" data-sort-key="entityAssignedTo.code" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">HQ</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
@@ -1037,6 +1035,7 @@
 
 
                                         <!-- DETAILS PANEL -->
+                                        <!-- ko if: j.expanded -->
                                         <div class="job-details" data-bind="slideVisible: j.expanded">
                                             <div class="card border-0 mb-0">
                                                 <!-- ko if: j.sortedTags().length -->
@@ -1455,9 +1454,9 @@
                                                                                                                 type="button"
                                                                                                                 class="btn btn-outline-secondary btn-sm"
                                                                                                                 data-bind="
-                        text: label,
-                        click: $parent.onEtaQuickButtonClick,
-                        clickbubble: false">
+                                                                                                                    text: label,
+                                                                                                                    click: $parent.onEtaQuickButtonClick,
+                                                                                                                    clickbubble: false">
                                                                                                             </button>
                                                                                                             <!-- /ko -->
                                                                                                         </div>
@@ -1485,9 +1484,9 @@
                                                                                                                 type="button"
                                                                                                                 class="btn btn-outline-secondary btn-sm"
                                                                                                                 data-bind="
-                        text: label,
-                        click: $parent.onEtcQuickButtonClick,
-                        clickbubble: false">
+                                                                                                                    text: label,
+                                                                                                                    click: $parent.onEtcQuickButtonClick,
+                                                                                                                    clickbubble: false">
                                                                                                             </button>
                                                                                                             <!-- /ko -->
                                                                                                         </div>
@@ -1507,7 +1506,7 @@
                                                                                                             class="form-control"
                                                                                                             rows="2"
                                                                                                             data-bind="value: ts.callOffReason">
-            </textarea>
+                                                                                                        </textarea>
                                                                                                     </div>
                                                                                                 </div>
                                                                                                 <!-- /ko -->
@@ -1581,6 +1580,7 @@
                                                 </div><!-- /col-md-4 -->
                                             </div><!-- /card-body -->
                                         </div><!-- /job-details -->
+                                        <!-- /ko -->
                                     </div><!-- /job-card -->
                                 </td>
                             </tr>
