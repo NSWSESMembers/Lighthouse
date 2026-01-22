@@ -257,7 +257,6 @@ td.chev[draggable='true'] * {
 
 .sidebar {
   width: var(--sidebar-w, 420px);
-  min-width: 1010px;
   display: flex;
   flex-direction: column;
 }
@@ -293,7 +292,7 @@ body.sidebar-collapsed .vsplit {
 }
 
 .pane {
-  padding: 12px 0 3px 0;
+  padding: 3px 0 3px 0;
   overflow: auto;
 }
 
@@ -1036,6 +1035,8 @@ tr.job:hover {
   box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8);
   transform-origin: 50% 50%;
   animation: pulse-ring 1.4s ease-out infinite;
+  background: conic-gradient(red 257deg);
+  mask: radial-gradient(circle at center, transparent 10px, white 20px);
 }
 
 @keyframes pulse-ring {
