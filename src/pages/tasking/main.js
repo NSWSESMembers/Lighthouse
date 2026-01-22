@@ -146,7 +146,7 @@ const map = L.map('map', {
 
 map.createPane('pane-lowest'); map.getPane('pane-lowest').style.zIndex = 300;
 map.createPane('pane-lowest-plus'); map.getPane('pane-lowest-plus').style.zIndex = 301;
-    
+
 map.createPane('pane-middle'); map.getPane('pane-middle').style.zIndex = 400;
 map.createPane('pane-middle-plus'); map.getPane('pane-middle-plus').style.zIndex = 401;
 
@@ -1466,6 +1466,10 @@ function VM() {
     }, null, "arrayChange");
 
     self.unmatchedTrackableAssets.subscribe((changes) => {
+        // bail fast if the layer is not currently visible
+        if (!self.mapVM || !map.hasLayer(self.mapVM.unmatchedAssetLayer)) {
+            return;
+        }
         changes.forEach(ch => {
             const a = ch.value;
             if (ch.status === 'added') {
@@ -1475,6 +1479,24 @@ function VM() {
             }
         });
     }, null, "arrayChange");
+
+    map.on('layeradd', (ev) => {
+        if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
+        // initial populate unmatchedTrackableAssets only when layer becomes visible
+        const assets = self.unmatchedTrackableAssets?.() || [];
+        assets.forEach(a => {
+            attachUnmatchedAssetMarker(ko, self.map, self, a);
+        });
+    });
+
+    // catch the unmatchedTrackableAssets layer being turned off to remove markers
+    map.on('layerremove', (ev) => {
+        if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
+        const assets = self.unmatchedTrackableAssets?.() || [];
+        assets.forEach(a => {
+            attachUnmatchedAssetMarker(ko, self.map, self, a);
+        });
+    });
 
     self.showConfirmTaskingModal = function (jobVm, teamVm) {
         if (!jobVm || !teamVm) return;
