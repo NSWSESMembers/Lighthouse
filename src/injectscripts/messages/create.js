@@ -193,7 +193,7 @@ $(document).ready(function () {
             if (textStatus == 'success') {
               $.ajax({
                 type: 'GET',
-                url: `https://lighthouse-extension.com/static/message/templates`,
+                url: `https://static.lighthouse-extension.com/message/templates`,
                 cache: false,
                 dataType: 'json',
                 complete: function (lhResponse, textStatus) {

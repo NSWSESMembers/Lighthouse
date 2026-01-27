@@ -2,11 +2,15 @@ var L = require('leaflet');
 var moment = require('moment');
 var ko = require('knockout');
 
+import AmazonLocationRouter from "../../../shared/als.js";
+
+
 export class AssetPopupViewModel {
   constructor({ asset, map, api }) {
     this.asset = asset;   // expects KO observables on the asset (latitude/longitude/name/etc.)
     this.map = map;
     this.api = api;
+    this._routeSubs = []
   }
 
   routeLoading = ko.observable(false);
@@ -43,18 +47,22 @@ export class AssetPopupViewModel {
       return;
     }
     this.routeLoading(true);
+
+    const router = new AmazonLocationRouter({
+      serviceUrl: "https://lambda.lighthouse-extension.com/lad/route",
+      travelMode: "Car",
+    });
+
     const routeControl = L.Routing.control({
       waypoints: [from, to],
-      router: L.Routing.graphHopper('lighthouse', {
-        serviceUrl: 'https://graphhopper.lighthouse-extension.com/route',
-        urlParameters: { 'ch.disable': true, instructions: false },
-      }),
+      router,
       lineOptions: {
         styles: [{ opacity: 0.9, weight: 6 }, { opacity: 1.0, weight: 3, dashArray: '6,8' }]
       },
       addWaypoints: false,
       draggableWaypoints: false,
       fitSelectedRoutes: false,
+      showAlternatives: false,
       createMarker: function () { return null },
       show: false // keep the big itinerary panel hidden
     })
@@ -66,7 +74,7 @@ export class AssetPopupViewModel {
       if (!route || !route.coordinates) return;
 
       var r = e.routes[0]
-      let middle = r.coordinates[Math.floor(r.coordinates.length / 4)];
+      let middle = r.summary.midpoint;
 
       let distance = r.summary.totalDistance;
       let time = r.summary.totalTime;
@@ -82,7 +90,7 @@ export class AssetPopupViewModel {
       distanceMarker.bindTooltip(
         `<div style="text-align: center;"><strong>${(distance / 1000).toFixed(
           1,
-        )} km - ${timeText}</strong></div>`,
+        )} km - ${timeText} ${r.summary.routeLabel}</strong></div>`,
         { permanent: true, offset: [0, 0] },
       );
 
@@ -98,26 +106,26 @@ export class AssetPopupViewModel {
       });
 
       // Auto-update route when the team's first asset or job location moves
-      const team = self.team;
+      const team = tasking.team;
       if (team && team.trackableAssets && team.trackableAssets().length > 0) {
         const a = team.trackableAssets()[0];
-        self._routeSubs.push(a.latitude.subscribe(() => {
-          const s = tasking.getTeamLatLng(); const d = tasking.getJobLatLng();
-          if (s && d && routeControl) routeControl.setWaypoints([s, d]);
-        }));
-        self._routeSubs.push(a.longitude.subscribe(() => {
+
+      this._routeSubs.push(a.latLng.subscribe(() => {
+          if (!this.api.isRouteActive(routeControl)) return;
           const s = tasking.getTeamLatLng(); const d = tasking.getJobLatLng();
           if (s && d && routeControl) routeControl.setWaypoints([s, d]);
         }));
       }
 
-      const j = self.job;
+      const j = tasking.job;
       if (j) {
-        self._routeSubs.push(j.address.latitude.subscribe(() => {
+        this._routeSubs.push(j.address.latitude.subscribe(() => {
+          if (!this.api.isRouteActive(routeControl)) return;
           const s = tasking.getTeamLatLng(); const d = tasking.getJobLatLng();
           if (s && d && routeControl) routeControl.setWaypoints([s, d]);
         }));
-        self._routeSubs.push(j.address.longitude.subscribe(() => {
+        this._routeSubs.push(j.address.longitude.subscribe(() => {
+          if (!this.api.isRouteActive(routeControl)) return;
           const s = tasking.getTeamLatLng(); const d = tasking.getJobLatLng();
           if (s && d && routeControl) routeControl.setWaypoints([s, d]);
         }));
@@ -129,6 +137,8 @@ export class AssetPopupViewModel {
   }
 
   removeRouteToJob = () => {
+    this._routeSubs.forEach(sub => sub.dispose());
+    this._routeSubs = [];
     this.api.clearRoutes();
   }
 
