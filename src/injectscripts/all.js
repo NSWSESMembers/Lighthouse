@@ -1435,7 +1435,7 @@ function whenWeAreReady(cb) {
 $(function () {
   $.get({
     type: 'GET',
-    url: `https://lighthouse-extension.com/static/banners/list.json`,
+    url: `https://static.lighthouse-extension.com/banners/list.json`,
     cache: true,
     dataType: 'json',
     complete: function (response, textStatus) {

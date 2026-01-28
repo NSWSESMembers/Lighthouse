@@ -143,10 +143,33 @@ window.addEventListener("message", function(event) {
         //handle the drive rescue distances as an array of promises due to ajax calls to resolve them all
             for (let i = 0; i < 9; i++) {
               if (typeof _sortedRescueDistances[i] != "undefined") {
+                let from = [
+                  Number(_sortedRescueDistances[i].properties.POINT_X),
+                  Number(_sortedRescueDistances[i].properties.POINT_Y)
+                ];
+                let to = [
+                  Number(event.data.lng),
+                  Number(event.data.lat)
+                ];
+                let body = JSON.stringify({
+                  coordinates: [from, to],
+                  travelMode: "Car"
+                });
+
                 let promise = new Promise((resolve, reject) => {
-                  $.getJSON(`https://graphhopper.lighthouse-extension.com/route?point=${_sortedRescueDistances[i].properties.POINT_Y},${_sortedRescueDistances[i].properties.POINT_X}&point=${event.data.lat},${event.data.lng}&instructions=false&type=json&key=lighthouse&ch.disable=true`, function (data) {
-              resolve({ unit: _sortedRescueDistances[i], distance: data.paths[0].distance / 1000 });
-                  }).fail((error) => reject(error));
+                  $.ajax({
+                    url: "https://lambda.lighthouse-extension.com/lad/route",
+                    method: "POST",
+                    contentType: "application/json",
+                    data: body,
+                    dataType: "json",
+                    success: function(data) {
+                      resolve({ unit: _sortedRescueDistances[i], distance: data?.[0]?.Summary?.Distance / 1000});
+                    },
+                    error: function(xhr, status, error) {
+                      reject(error);
+                    }
+                  });
                 });
 
                 promises.push(promise);

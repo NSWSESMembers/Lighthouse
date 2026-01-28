@@ -3,6 +3,9 @@
 @import url('~@fortawesome/fontawesome-free/css/fontawesome.min.css');
 @import url('~bootstrap5/dist/css/bootstrap.css');
 @import url('~leaflet-minimap/dist/Control.MiniMap.min.css');
+@import url('leaflet/dist/leaflet.css');
+
+@import url('leaflet.polylinemeasure/Leaflet.PolylineMeasure.css');
 
 html {
   height: 100%;

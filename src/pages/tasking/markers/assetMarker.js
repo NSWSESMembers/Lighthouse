@@ -6,7 +6,7 @@ import { buildIcon } from '../components/asset_icon.js';
 
 function refreshAssetMarkerIcons(asset) {
   //check the html of a new icon vs the current icon to avoid unnecessary updates
-  
+
   // matched marker
   if (asset.marker) {
     const newIcon = buildIcon(asset, 'matched');
@@ -110,14 +110,8 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
   const subs = [];
 
   // Position changes -> smooth move
-  subs.push(asset.latitude.subscribe(v => {
-    const latNow = +v, lngNow = +asset.longitude();
-    if (asset.marker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
-      moveMarker(asset.marker, latNow, lngNow);
-    }
-  }));
-  subs.push(asset.longitude.subscribe(v => {
-    const latNow = +asset.latitude(), lngNow = +v;
+  subs.push(asset.latLng.subscribe(v => {
+    const latNow = +v?.lat, lngNow = +v?.lng;
     if (asset.marker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
       moveMarker(asset.marker, latNow, lngNow);
     }
@@ -191,22 +185,20 @@ export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
   if (asset._unmatchedMarkerSubs && asset._unmatchedMarkerSubs.length) return;
 
   const subs = [];
-  subs.push(asset.latitude.subscribe(v => {
-    const latNow = +v, lngNow = +asset.longitude();
+
+  //location changes
+  subs.push(asset.latLng.subscribe(v => {
+    const latNow = +v?.lat, lngNow = +v?.lng;
     if (asset.unmatchedMarker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
       moveMarker(asset.unmatchedMarker, latNow, lngNow);
     }
   }));
-  subs.push(asset.longitude.subscribe(v => {
-    const latNow = +asset.latitude(), lngNow = +v;
-    if (asset.unmatchedMarker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
-      moveMarker(asset.unmatchedMarker, latNow, lngNow);
-    }
-    //last seen changes
-    subs.push(asset.lastSeen.subscribe(() => {
-      refreshAssetMarkerIcons(asset);
-    }));
+
+  //last seen changes
+  subs.push(asset.lastSeen.subscribe(() => {
+    refreshAssetMarkerIcons(asset);
   }));
+
 
   asset._unmatchedMarkerSubs = subs;
 }

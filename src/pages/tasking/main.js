@@ -6,7 +6,6 @@ const BeaconToken = require('../lib/shared_token_code.js');
 
 require('../lib/shared_chrome_code.js'); // side-effect
 
-import '../../../styles/pages/tasking.css';
 
 import { showAlert } from './components/windowAlert.js';
 
@@ -60,6 +59,7 @@ import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
 import { installModalHotkeys } from './components/modalHotKeys.js';
 
+import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
 
 
 var $ = require('jquery');
@@ -72,6 +72,16 @@ var esri = require('esri-leaflet');
 var MiniMap = require('leaflet-minimap');
 
 var esriVector = require('esri-leaflet-vector');
+
+
+require('leaflet-easybutton');
+require('leaflet-routing-machine');
+require('leaflet-svg-shape-markers');
+
+import 'leaflet.polylinemeasure';
+
+//css order reasons... load this last
+import '../../../styles/pages/tasking.css';
 
 
 let token = '';
@@ -107,18 +117,6 @@ async function getToken() {
 }
 
 
-require('leaflet-easybutton');
-require('leaflet-routing-machine');
-require('leaflet-svg-shape-markers');
-require('lrm-graphhopper'); // Adds L.Routing.GraphHopper onto L.Routing
-require('leaflet/dist/leaflet.css');
-
-
-
-import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
-
-
-
 const params = getSearchParameters();
 const apiHost = params.host
 
@@ -143,6 +141,28 @@ const map = L.map('map', {
     // Faster debounce time while zooming
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
+
+
+const polylineMeasure = L.control.polylineMeasure({
+  position: 'topleft',
+
+  unit: 'kilometres',
+  showBearings: true,
+  clearMeasurementsOnStop: false,
+  showClearControl: true,
+  showUnitControl: false,
+
+  // Styling
+  lineColor: '#db4a29',
+  lineWeight: 3,
+  lineOpacity: 0.8,
+  tempLine: {
+    color: '#db4a29',
+    weight: 2
+  }
+});
+
+polylineMeasure.addTo(map);
 
 map.createPane('pane-lowest'); map.getPane('pane-lowest').style.zIndex = 300;
 map.createPane('pane-lowest-plus'); map.getPane('pane-lowest-plus').style.zIndex = 301;
@@ -2162,11 +2182,11 @@ function VM() {
 
             // tuck the drawer under the zoom control
             setTimeout(() => {
-                const zoom = map._controlCorners.topleft.querySelector(
-                    ".leaflet-control-zoom"
-                );
-                if (zoom && c.parentElement === map._controlCorners.topleft) {
-                    zoom.insertAdjacentElement("afterend", c);
+                const position = map._controlCorners.topleft.querySelector(
+                    ".polyline-measure-unicode-icon"
+                ).parentElement;
+                if (position && c.parentElement === map._controlCorners.topleft) {
+                    position.insertAdjacentElement("afterend", c);
                 }
             }, 0);
 
