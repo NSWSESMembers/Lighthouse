@@ -144,22 +144,22 @@ const map = L.map('map', {
 
 
 const polylineMeasure = L.control.polylineMeasure({
-  position: 'topleft',
+    position: 'topleft',
 
-  unit: 'kilometres',
-  showBearings: true,
-  clearMeasurementsOnStop: false,
-  showClearControl: true,
-  showUnitControl: false,
+    unit: 'kilometres',
+    showBearings: true,
+    clearMeasurementsOnStop: false,
+    showClearControl: true,
+    showUnitControl: false,
 
-  // Styling
-  lineColor: '#db4a29',
-  lineWeight: 3,
-  lineOpacity: 0.8,
-  tempLine: {
-    color: '#db4a29',
-    weight: 2
-  }
+    // Styling
+    lineColor: '#db4a29',
+    lineWeight: 3,
+    lineOpacity: 0.8,
+    tempLine: {
+        color: '#db4a29',
+        weight: 2
+    }
 });
 
 polylineMeasure.addTo(map);
@@ -1919,6 +1919,7 @@ function VM() {
         });
 
 
+
     self.UserPressedSaveOnTheConfigModal = function () {
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
@@ -2429,13 +2430,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
         installModalHotkeys({
             modalEl: configModalEl,
-            onSave: () => myViewModel.config.saveAndCloseAndLoad(),
+            onSave: () => bootstrap.Modal.getInstance(configModalEl).hide(),
             onClose: () => bootstrap.Modal.getInstance(configModalEl).hide(),
             allowInInputs: true // text-heavy modal
         });
 
+        //large amount of bs to fix this chrome aria hidden warning that wont go away
+        const configTrigger = () => document.querySelector('[data-bs-target="#configModal"]');
+
+        // a guaranteed focusable sink outside the modal
+        let focusSink = document.getElementById('focusSink');
+        if (!focusSink) {
+            focusSink = document.createElement('div');
+            focusSink.id = 'focusSink';
+            focusSink.tabIndex = -1;
+            focusSink.style.position = 'fixed';
+            focusSink.style.left = '-9999px';
+            focusSink.style.top = '0';
+            document.body.appendChild(focusSink);
+        }
+
+        // BEFORE Bootstrap applies aria-hidden
+        configModalEl.addEventListener('hide.bs.modal', () => {
+            const inst = bootstrap.Modal.getInstance(configModalEl) || bootstrap.Modal.getOrCreateInstance(configModalEl);
+
+            // stop Bootstrap from forcing focus back into the modal (private API but works)
+            inst?._focustrap?.deactivate?.();
+
+            // get focus out of modal immediately
+            document.activeElement?.blur?.();
+            (configTrigger() || focusSink).focus();
+        });
+
+        // AFTER hidden, restore focus to the real trigger (optional)
         configModalEl.addEventListener('hidden.bs.modal', () => {
-            myViewModel.config.saveAndCloseAndLoad();
+            configTrigger()?.focus();
         });
 
     })
