@@ -90,7 +90,8 @@
         "https://*.ses.nsw.gov.au/Jobs/Sectors*",
         "https://*.ses.nsw.gov.au/Jobs/*/Edit",
         "https://*.ses.nsw.gov.au/Jobs",
-        "https://*.ses.nsw.gov.au/Jobs/Create"
+        "https://*.ses.nsw.gov.au/Jobs/Create",
+        "https://*.ses.nsw.gov.au/Jobs/Create?*"
       ],
       "js": ["contentscripts/jobs/view.js"]
     },

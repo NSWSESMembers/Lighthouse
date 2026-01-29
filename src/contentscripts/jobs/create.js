@@ -350,6 +350,6 @@ $('#createRfaForm > fieldset:nth-child(10) > div:nth-child(2)').after(myAvailabi
 
 
 
-console.log("injecting")
+console.log("injecting jobs/create.js")
 
 inject('jobs/create.js');

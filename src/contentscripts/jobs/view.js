@@ -467,4 +467,6 @@ $( "body" ).append(asset_filter_modal)
 // needs to be injected so that it runs after the DOMs are created
 // We run this last because we want to ensure the elements created above have
 // been loaded into the DOM before the injected script runs
+console.log("injecting jobs/view.js")
+
 inject('jobs/view.js');

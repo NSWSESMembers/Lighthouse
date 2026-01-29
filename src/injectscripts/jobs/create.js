@@ -387,7 +387,7 @@ $(document).ready(function () {
     });
 
     vm.geocodedAddress.subscribe(function (newAddress) {
-      if (newAddress) {
+      if (newAddress != null) {
         $.ajax({
           type: 'GET',
           url: urls.Base + '/Api/v1/GeoServices/Unit/Containing',
@@ -404,49 +404,49 @@ $(document).ready(function () {
           dataType: 'json',
           complete: function (response, _textStatus) {
             vm.EntityManager.SearchEntityByName(response.responseJSON.unit_name, function (results) {
-                      if (results && results.Results.length > 0) {
-                        let data = results.Results[0];
+              if (results && results.Results.length > 0) {
+                let data = results.Results[0];
 
-              let containedWithin = [];
-              let newLHQDom = (
-                <a type="button" style="margin-bottom:5px" class="btn btn-default btn-sm" data-unit={data.Code}>
-                  {data.Name} Unit
-                </a>
-              );
-              $(newLHQDom).click(function (e) {
-                e.preventDefault();
-                vm.entityAssignedTo(data);
-              });
-              containedWithin.push(newLHQDom);
-              let newZoneDom = (
-                <a
-                  type="button"
-                  style="margin-bottom:5px"
-                  class="btn btn-default btn-sm"
-                  data-unit={data.ParentEntity.Code}
-                >
-                  {data.ParentEntity.Name}
-                </a>
-              );
-              $(newZoneDom).click(function (e) {
-                e.preventDefault();
-                vm.entityAssignedTo(data.ParentEntity);
-              });
-              containedWithin.push(newZoneDom);
-              let newStateDom = (
-                <a type="button" style="margin-bottom:5px" class="btn btn-default btn-sm" data-unit="SHQ">
-                  State Headquarters
-                </a>
-              );
-              $(newStateDom).click(function (e) {
-                e.preventDefault();
-                vm.entityAssignedTo({ Id: 1, Code: 'SHQ', Name: 'State Headquarters' });
-              });
-              containedWithin.push(newStateDom);
+                let containedWithin = [];
+                let newLHQDom = (
+                  <a type="button" style="margin-bottom:5px" class="btn btn-default btn-sm" data-unit={data.Code}>
+                    {data.Name} Unit
+                  </a>
+                );
+                $(newLHQDom).click(function (e) {
+                  e.preventDefault();
+                  vm.entityAssignedTo(data);
+                });
+                containedWithin.push(newLHQDom);
+                let newZoneDom = (
+                  <a
+                    type="button"
+                    style="margin-bottom:5px"
+                    class="btn btn-default btn-sm"
+                    data-unit={data.ParentEntity.Code}
+                  >
+                    {data.ParentEntity.Name}
+                  </a>
+                );
+                $(newZoneDom).click(function (e) {
+                  e.preventDefault();
+                  vm.entityAssignedTo(data.ParentEntity);
+                });
+                containedWithin.push(newZoneDom);
+                let newStateDom = (
+                  <a type="button" style="margin-bottom:5px" class="btn btn-default btn-sm" data-unit="SHQ">
+                    State Headquarters
+                  </a>
+                );
+                $(newStateDom).click(function (e) {
+                  e.preventDefault();
+                  vm.entityAssignedTo({ Id: 1, Code: 'SHQ', Name: 'State Headquarters' });
+                });
+                containedWithin.push(newStateDom);
 
-              $('#contained-within-lhq-text').empty();
-              $('#contained-within-lhq-text').append(containedWithin);
-            }
+                $('#contained-within-lhq-text').empty();
+                $('#contained-within-lhq-text').append(containedWithin);
+              }
             });
           },
         });
@@ -462,8 +462,8 @@ $(document).ready(function () {
                   type: 'FROM_PAGE_LHQ_DISTANCE',
                   jType: vm.jobType.peek().Name,
                   report: accreditations,
-                  lat: vm.geocodedAddress.peek().latitude,
-                  lng: vm.geocodedAddress.peek().longitude,
+                  lat: newAddress.latitude,
+                  lng: newAddress.longitude,
                 },
                 '*',
               );
@@ -474,8 +474,8 @@ $(document).ready(function () {
                 type: 'FROM_PAGE_LHQ_DISTANCE',
                 jType: vm.jobType.peek().Name,
                 report: accreditations,
-                lat: vm.geocodedAddress.peek().latitude,
-                lng: vm.geocodedAddress.peek().longitude,
+                lat: newAddress.latitude,
+                lng: newAddress.longitude,
               },
               '*',
             );
@@ -486,14 +486,14 @@ $(document).ready(function () {
               type: 'FROM_PAGE_LHQ_DISTANCE',
               jType: null,
               report: null,
-              lat: vm.geocodedAddress.peek().latitude,
-              lng: vm.geocodedAddress.peek().longitude,
+              lat: newAddress.latitude,
+              lng: newAddress.longitude,
             },
             '*',
           );
         }
 
-        let address = vm.geocodedAddress.peek();
+        let address = newAddress;
         if (address.street != '') {
           address.PrettyAddress = address.pretty_address;
           address.StreetNumber = address.number;
@@ -508,7 +508,7 @@ $(document).ready(function () {
             'margin-left': '0px',
           });
 
-          sesAsbestosSearch(vm.geocodedAddress.peek(), function (res) {
+          sesAsbestosSearch(address, function (res) {
             if (res == true) {
               window.postMessage(
                 {
@@ -536,6 +536,23 @@ $(document).ready(function () {
         $('#asbestos-register-flag').text('Waiting For An Address');
       }
     });
+
+    var query = window.location.search.substring(1);
+    var qs = parse_query_string(query);
+
+    $.each(qs, function (key, value) {
+      switch (key) {
+        case 'lhquickCreate':
+          var obj = JSON.parse(value);
+          vm.mapPinPlacementOption(3); //set to pinned
+          vm.enteredAddress(obj.geo.pretty_address);
+          vm.geocodedAddress(obj.geo)
+          vm.additionalAddressInfo(obj.additional || '')
+          break;
+      }
+    })
+
+
   });
 });
 
@@ -602,4 +619,26 @@ function tableToObj(table) {
     results[obj.Code] = obj;
   }
   return results;
+}
+
+
+
+function parse_query_string(query) {
+  var vars = query.split('&');
+  var query_string = {};
+  for (var i = 0; i < vars.length; i++) {
+    var pair = vars[i].split('=');
+    // If first entry with this name
+    if (typeof query_string[pair[0]] === 'undefined') {
+      query_string[pair[0]] = decodeURIComponent(pair[1]);
+      // If second entry with this name
+    } else if (typeof query_string[pair[0]] === 'string') {
+      var arr = [query_string[pair[0]], decodeURIComponent(pair[1])];
+      query_string[pair[0]] = arr;
+      // If third or later entry with this name
+    } else {
+      query_string[pair[0]].push(decodeURIComponent(pair[1]));
+    }
+  }
+  return query_string;
 }
