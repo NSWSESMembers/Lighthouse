@@ -58,6 +58,8 @@ import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
 import { installModalHotkeys } from './components/modalHotKeys.js';
+import { installMapContextMenu } from "./components/mapContextMenu.js";
+
 
 import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
 
@@ -73,10 +75,16 @@ var MiniMap = require('leaflet-minimap');
 
 var esriVector = require('esri-leaflet-vector');
 
+import { GeoSearchControl } from 'leaflet-geosearch';
+import { AwsLambdaGeocoderProvider } from './utils/geocode.js';
+
+
 
 require('leaflet-easybutton');
 require('leaflet-routing-machine');
 require('leaflet-svg-shape-markers');
+
+
 
 import 'leaflet.polylinemeasure';
 
@@ -91,6 +99,36 @@ let tokenExp = '';
 let resolveTokenReady;
 const tokenReady = new Promise((resolve) => {
     resolveTokenReady = resolve;
+});
+
+
+
+const defaultSvgIcon = L.divIcon({
+    className: "default-svg-marker",
+    html: `
+    <svg width="26" height="42" viewBox="0 0 26 42" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13 0C5.8 0 0 5.8 0 13c0 9.7 13 29 13 29s13-19.3 13-29C26 5.8 20.2 0 13 0z"
+            fill="#2A81CB"/>
+      <circle cx="13" cy="13" r="5" fill="#ffffff"/>
+    </svg>
+  `,
+    iconSize: [26, 42],
+    iconAnchor: [13, 42],
+    popupAnchor: [0, -36],
+});
+
+const defaultRedSvgIcon = L.divIcon({
+    className: "default-svg-marker",
+    html: `
+    <svg width="26" height="42" viewBox="0 0 26 42" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13 0C5.8 0 0 5.8 0 13c0 9.7 13 29 13 29s13-19.3 13-29C26 5.8 20.2 0 13 0z"
+            fill="#cb2a2aff"/>
+      <circle cx="13" cy="13" r="5" fill="#ffffff"/>
+    </svg>
+  `,
+    iconSize: [26, 42],
+    iconAnchor: [13, 42],
+    popupAnchor: [0, -36],
 });
 
 /**
@@ -143,6 +181,19 @@ const map = L.map('map', {
 }).setView([-33.8688, 151.2093], 11);
 
 
+installMapContextMenu({
+  map,
+  geocodeEndpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
+  geocodeMarkerIcon: defaultSvgIcon,
+  geocodeRedMarkerIcon: defaultRedSvgIcon,
+  geocodeMaxResults: 10,
+  onGeocodeResultClicked: (r) => {
+    // TODO: replace with real action
+    console.log("TODO: handle reverse-geocode pick", r);
+  },
+});
+
+
 const polylineMeasure = L.control.polylineMeasure({
     position: 'topleft',
 
@@ -163,6 +214,45 @@ const polylineMeasure = L.control.polylineMeasure({
 });
 
 polylineMeasure.addTo(map);
+
+const geocoder = new AwsLambdaGeocoderProvider({
+    endpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
+});
+
+const searchControl = new GeoSearchControl({
+    provider: geocoder,
+    style: 'button',          // looks like a button that expands
+    position: 'topleft',
+    autoClose: false,
+    retainZoomLevel: false,
+    searchLabel: 'Search address…',
+    marker: {
+        // optional: L.Marker    - default L.Icon.Default
+        icon: defaultSvgIcon,
+        draggable: false,
+    },
+    showMarker: true,
+    showPopup: true,
+    animateZoom: true,
+    keepResult: true,
+    updateMap: true,
+    autoComplete: true,
+    autoCompleteDelay: 250,
+});
+
+map.addControl(searchControl);
+
+// Leaflet-Geosearch renders a container with class "leaflet-geosearch"
+const gsEl = document.querySelector(".leaflet-control-geosearch");
+if (gsEl) {
+    L.DomEvent.disableScrollPropagation(gsEl);
+    L.DomEvent.disableClickPropagation(gsEl);
+    L.DomEvent.on(gsEl, "wheel", L.DomEvent.stopPropagation);
+    // optional: stop trackpad pinch-zoom triggering map zoom
+    L.DomEvent.on(gsEl, "mousewheel", L.DomEvent.stopPropagation);
+}
+
+
 
 map.createPane('pane-lowest'); map.getPane('pane-lowest').style.zIndex = 300;
 map.createPane('pane-lowest-plus'); map.getPane('pane-lowest-plus').style.zIndex = 301;
@@ -2184,8 +2274,8 @@ function VM() {
             // tuck the drawer under the zoom control
             setTimeout(() => {
                 const position = map._controlCorners.topleft.querySelector(
-                    ".polyline-measure-unicode-icon"
-                ).parentElement;
+                    ".leaflet-control-geosearch"
+                );
                 if (position && c.parentElement === map._controlCorners.topleft) {
                     position.insertAdjacentElement("afterend", c);
                 }
@@ -2258,10 +2348,10 @@ function VM() {
         onAdd(map) {
             const c = L.DomUtil.create("div", "leaflet-control sidebar-toggle leaflet-bar");
             c.innerHTML = `
-      <button type="button" class="btn btn-light btn-sm shadow-sm" title="Collapse/expand left panel">
-        <i class="fas ${this._collapsed ? "fa-angle-double-right" : "fa-angle-double-left"}"></i>
-      </button>
-    `;
+                <button type="button" class="btn btn-light btn-sm shadow-sm" title="Collapse/expand left panel">
+                    <i class="fas ${this._collapsed ? "fa-angle-double-right" : "fa-angle-double-left"}"></i>
+                </button>
+            `;
 
             const btn = c.querySelector(".btn");
             L.DomEvent.on(btn, "click", (ev) => {
@@ -2285,6 +2375,8 @@ function VM() {
             if (this._collapsed) document.body.classList.add("sidebar-collapsed");
 
             L.DomEvent.disableClickPropagation(c);
+
+
             this._container = c;
             return c;
         }
@@ -2296,14 +2388,13 @@ function VM() {
     const layersDrawer = new LayersDrawer();
     layersDrawer.addTo(map);
 
-
-
-
     setTimeout(() => {
-        const tl = map._controlCorners.topleft;
-        const ld = tl.querySelector(".layers-drawer");
-        const st = tl.querySelector(".leaflet-control.sidebar-toggle");
-        if (ld && st) ld.insertAdjacentElement("beforebegin", st);
+        // force ordering: place directly under zoom buttons
+        const zoom = document.querySelector('.leaflet-control-zoom');
+        const toggle = document.querySelector('.sidebar-toggle');
+        if (zoom && toggle) {
+            zoom.parentNode.insertBefore(toggle, zoom.nextSibling);
+        }
     }, 0);
 
 

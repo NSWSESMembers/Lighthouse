@@ -4,8 +4,9 @@
 @import url('~bootstrap5/dist/css/bootstrap.css');
 @import url('~leaflet-minimap/dist/Control.MiniMap.min.css');
 @import url('leaflet/dist/leaflet.css');
-
 @import url('leaflet.polylinemeasure/Leaflet.PolylineMeasure.css');
+@import url('leaflet-geosearch/dist/geosearch.css');
+
 
 html {
   height: 100%;
@@ -1068,6 +1069,14 @@ tr.job:hover {
 
 #drag-ignore {
   cursor: unset !important;
+}
+
+/* Window Alerts */
+.alert {
+overflow-wrap: anywhere;
+text-overflow: ellipsis;
+white-space: normal;
+overflow: hidden;
 }
 
 /* Alerts control */
@@ -2167,4 +2176,20 @@ input[type='search']::-ms-clear {
 .images-button {
   color: var(--bs-secondary-color) !important;
   font-size: 13px;
+}
+
+.leaflet-control-geosearch form {
+  left: 40px !important;
+}
+
+
+.leaflet-control-geosearch .results {
+  margin-bottom: 5px !important;
+}
+
+
+.geo-spinner {
+  background: rgb(0, 0, 0);
+  border-radius: 50%;
+  padding: 4px;
 }
