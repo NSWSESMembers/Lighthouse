@@ -1847,28 +1847,38 @@
                                             <div class="accordion-body">
                                                 <div class="row g-3">
                                                     <div class="col-sm-6 col-md-3">
-                                                        <label for="refreshInterval" class="form-label">Refresh interval
-                                                            (s)</label>
-                                                        <input id="refreshInterval" type="number" min="5" step="5"
-                                                            class="form-control"
-                                                            data-bind="value: config.refreshInterval">
-                                                    </div>
-                                                    <div class="col-sm-6 col-md-3">
-                                                        <label for="fetchPeriod" class="form-label">Fetch period
-                                                            (days)</label>
-                                                        <input id="fetchPeriod" type="number" min="0" step="1"
-                                                            class="form-control" data-bind="value: config.fetchPeriod">
-                                                    </div>
-                                                    <div class="col-sm-6 col-md-3">
-                                                        <label class="form-label d-block">Options</label>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox"
-                                                                id="showAdvanced"
-                                                                data-bind="checked: config.showAdvanced">
-                                                            <label class="form-check-label" for="showAdvanced">
-                                                                Show advanced controls
-                                                            </label>
+                                                        <label for="refreshInterval" class="form-label">
+                                                            <i class="fa fa-sync-alt me-1"></i>Refresh interval (seconds)
+                                                        </label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text"><i class="fa fa-clock"></i></span>
+                                                            <input id="refreshInterval" type="number" min="30" step="5"
+                                                                class="form-control"
+                                                                data-bind="value: config.refreshInterval">
                                                         </div>
+                                                        <div class="form-text">How often to fully refresh data.</div>
+                                                    </div>
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label for="fetchPeriod" class="form-label">
+                                                            <i class="fa fa-history me-1"></i>Fetch backwards (days)
+                                                        </label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text"><i class="fa fa-calendar-minus"></i></span>
+                                                            <input id="fetchPeriod" type="number" min="0" max="31" step="1"
+                                                                class="form-control" data-bind="value: config.fetchPeriod">
+                                                        </div>
+                                                        <div class="form-text">How many days in the past to fetch.</div>
+                                                    </div>
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label for="fetchForward" class="form-label">
+                                                            <i class="fa fa-calendar-plus me-1"></i>Fetch forward (days)
+                                                        </label>
+                                                        <div class="input-group">
+                                                            <span class="input-group-text"><i class="fa fa-calendar-plus"></i></span>
+                                                            <input id="fetchForward" type="number" min="0" step="1" class="form-control"
+                                                                data-bind="value: config.fetchForward">
+                                                        </div>
+                                                        <div class="form-text">How many days into the future to fetch.</div>
                                                     </div>
                                                 </div>
                                             </div>

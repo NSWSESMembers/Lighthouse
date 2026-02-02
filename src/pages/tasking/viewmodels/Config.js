@@ -70,7 +70,8 @@ export function ConfigVM(root, deps) {
 
     // Other settings
     self.refreshInterval = ko.observable(60);
-    self.fetchPeriod = ko.observable(7);
+    self.fetchPeriod = ko.observable(7).extend({ min: 0, max: 31, digit: true });
+    self.fetchForward = ko.observable(0).extend({ min: 0, max: 31, digit: true });
     self.showAdvanced = ko.observable(false);
 
     //blown away on load
@@ -142,6 +143,7 @@ export function ConfigVM(root, deps) {
     const buildConfig = () => ({
         refreshInterval: Number(self.refreshInterval()),
         fetchPeriod: Number(self.fetchPeriod()),
+        fetchForward: Number(self.fetchForward()),
         showAdvanced: !!self.showAdvanced(),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
@@ -360,6 +362,7 @@ export function ConfigVM(root, deps) {
             console.log('Using defaults.');
             cfg.refreshInterval = self.refreshInterval();
             cfg.fetchPeriod = self.fetchPeriod();
+            cfg.fetchForward = self.fetchForward();
             cfg.showAdvanced = self.showAdvanced();
             cfg.teamStatusFilter = self.teamStatusFilterDefaults;
             cfg.jobStatusFilter = self.jobStatusFilterDefaults;
@@ -378,6 +381,9 @@ export function ConfigVM(root, deps) {
         }
         if (typeof cfg.fetchPeriod === 'number') {
             self.fetchPeriod(cfg.fetchPeriod);
+        }
+        if (typeof cfg.fetchForward === 'number') {
+            self.fetchForward(cfg.fetchForward);
         }
         if (typeof cfg.showAdvanced === 'boolean') {
             self.showAdvanced(cfg.showAdvanced);
