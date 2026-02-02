@@ -580,6 +580,13 @@ function VM() {
 
         start.setDate(end.getDate() - self.config.fetchPeriod());
 
+        // Add 5 minutes to the start time just to account for drift
+        start.setMinutes(start.getMinutes() + 5);
+
+        end.setDate(end.getDate() + self.config.fetchForward());
+
+
+
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
@@ -651,6 +658,11 @@ function VM() {
         var end = new Date();
 
         start.setDate(end.getDate() - self.config.fetchPeriod());
+
+        // Add 5 minutes to the start time just to account for drift
+        start.setMinutes(start.getMinutes() + 5);
+
+        end.setDate(end.getDate() + self.config.fetchForward());
 
         const pinnedOnlyTeams = self.showPinnedTeamsOnly();
         const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
@@ -1841,6 +1853,10 @@ function VM() {
 
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
 
+        start.setMinutes(start.getMinutes() + 5); // slight overlap to catch late updates and drift
+        end.setDate(end.getDate() + self.config.fetchForward());
+
+
         myViewModel.jobsLoading(true);
 
         const t = await getToken();   // blocks here until token is ready
@@ -1899,6 +1915,8 @@ function VM() {
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
+        start.setMinutes(start.getMinutes() + 5); // slight overlap to catch late updates and drift
+        end.setDate(end.getDate() + self.config.fetchForward());
         myViewModel.teamsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, t, function (teams) {
