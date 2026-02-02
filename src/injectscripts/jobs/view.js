@@ -4,7 +4,6 @@ var DOM = require('jsx-dom-factory').default;
 var _ = require('underscore');
 var L = require('leaflet');
 var ReturnTeamsActiveAtLHQ = require('../../lib/getteams.js');
-var sesAsbestosSearch = require('../../lib/sesasbestos.js');
 var vincenty = require('../../lib/vincenty.js');
 var esri = require('esri-leaflet');
 var chroma = require('chroma-js');
@@ -221,42 +220,7 @@ lighthouseTimelineTPlusWatchers();
 //call when the address exists
 whenLighthouseIsReady(function () {
   whenJobIsReady(function () {
-    whenUrlIsReady(function () {
-      if (typeof masterViewModel.geocodedAddress.peek() == 'undefined') {
-        $('#asbestos-register-text').html('Not A Searchable Address');
-      } else if (
-        masterViewModel.geocodedAddress.peek().Street == null ||
-        masterViewModel.geocodedAddress.peek().StreetNumber == null
-      ) {
-        $('#asbestos-register-text').html('Not A Searchable Address');
-      } else {
-        sesAsbestosSearch(masterViewModel.geocodedAddress.peek(), function (res) {
-          //check the ses asbestos register first
-          if (res == true) {
-            //tell the inject page (rendering result handled on the inject page)
-            window.postMessage(
-              {
-                type: 'FROM_PAGE_SESASBESTOS_RESULT',
-                address: masterViewModel.geocodedAddress.peek(),
-                result: true,
-                color: 'red',
-              },
-              '*',
-            );
-          } else {
-            //otherwise check the fair trade database via background script
-            window.postMessage(
-              {
-                type: 'FROM_PAGE_FTASBESTOS_SEARCH',
-                address: masterViewModel.geocodedAddress.peek(),
-              },
-              '*',
-            );
-          }
-        });
-      }
-    });
-
+    
     if (typeof masterViewModel.geocodedAddress.peek() != 'undefined') {
       if (
         masterViewModel.geocodedAddress.peek().Latitude != null ||
@@ -2962,42 +2926,6 @@ function whenTeamsAreReady(cb) {
   }
 }
 
-// wait for address to have loaded
-//TODO: possibly redundant now
-// function whenAddressIsReady(cb) { //when external vars have loaded
-//   if (typeof masterViewModel !== "undefined" & typeof masterViewModel.geocodedAddress !== "undefined") {
-//     cb()
-//   } else {
-//     var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-//       if (typeof masterViewModel !== "undefined" & masterViewModel.geocodedAddress != "undefined") {
-//         if (typeof masterViewModel.geocodedAddress.peek() != "undefined" && masterViewModel.geocodedAddress.peek() !== null) {
-//           console.log("address is ready");
-//           clearInterval(waiting); //stop timer
-//           cb(); //call back
-//         }
-//       }
-//     }, 200);
-//   }
-// }
-
-// wait for urls to have loaded
-function whenUrlIsReady(cb) {
-  //when external vars have loaded
-  if ((typeof urls !== 'undefined') & (typeof urls.Base !== 'undefined')) {
-    cb();
-  } else {
-    var waiting = setInterval(function () {
-      //run every 1sec until we have loaded the page (dont hate me Sam)
-      if ((typeof urls !== 'undefined') & (typeof urls.Base !== 'undefined')) {
-        if (urls.Base !== null) {
-          console.log('urls is ready');
-          clearInterval(waiting); //stop timer
-          cb(); //call back
-        }
-      }
-    }, 200);
-  }
-}
 
 // wait for job to have loaded
 function whenJobIsReady(cb) {
