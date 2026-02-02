@@ -471,7 +471,13 @@ export function MapVM(Lmap, root) {
       self.activeRouteControl.addTo(self.map);
     },
 
+    isRouteActive: (rc) => !!(rc && self.activeRouteControl === rc && rc._map),
+
     registerDistanceMarker: (dm) => {
+      if (self.distanceMarker) {
+        self.map.removeLayer(self.distanceMarker);
+        self.distanceMarker = null;
+      }
       self.distanceMarker = dm;
       self.distanceMarker.addTo(self.map);
     },

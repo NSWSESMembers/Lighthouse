@@ -87,17 +87,7 @@ window.addEventListener("message", function(event) {
     
       })
     }
-  if (event.data.type && (event.data.type == "FROM_PAGE_FTASBESTOS_SEARCH")) {
-    chrome.runtime.sendMessage({type: "asbestos", address: event.data.address}, function(response) {
-    if (response.resultbool == false)
-      {
-        response.requrl = ''
-      }
-      asbestosBoxColor(response.result,response.colour,response.requrl)
-    });
-  } else if (event.data.type && (event.data.type == "FROM_PAGE_SESASBESTOS_RESULT")) {
-    asbestosBoxColor(event.data.address.PrettyAddress+" was FOUND on the SES asbestos register.",'red','')
-  } else if (event.data.type && (event.data.type == "FROM_PAGE_UPDATE_API_TOKEN")) {
+  if (event.data.type && (event.data.type == "FROM_PAGE_UPDATE_API_TOKEN")) {
     // do nothing
   } else if (event.data.type && (event.data.type == "FROM_PAGE_LHQ_DISTANCE")) {
     var t0 = performance.now();
@@ -130,23 +120,6 @@ window.addEventListener("message", function(event) {
     })
     }
 }, false);
-
-function asbestosBoxColor(text, color, url) {
-  $('#asbestos-register-text').html(text);
-  if (url != '')
-  {
-    $('#asbestos-register-box')
-      .css('cursor','pointer')
-      .click(function(){
-        window.open(url)
-      });
-  }
-  if (color != "") {
-    $('#asbestos-register-box')[0].style.color = "white"
-    $('#asbestos-register-box').css({'background' :'linear-gradient(transparent 8px, '+color+' -10px'});
-  }
-}
-
 
 function renderQuickText(id, selections) {
   return (
@@ -250,18 +223,6 @@ let job_view_history = (
   </div>
   </div>
   </fieldset>
-);
-
-// Insert element into DOM - Will populate with AJAX results via checkAddressHistory()
-let job_asbestos_history = (
-  <div class="form-group">
-  <label class="col-xs-3 col-sm-2 col-md-4 col-lg-3 control-label"><img style="margin-left:-21px;width:16px;vertical-align:inherit;margin-right:5px"
-  src={chrome.runtime.getURL("icons/lh-black.png")} />Asbestos Register</label>
-  <div id="asbestos-register-box" class="col-xs-9 col-sm-10 col-md-8 col-lg-9">
-  <a style="color:white;background-color:red" id="asbestos-register-error"></a>
-  <p id="asbestos-register-text" class="form-control-static">Searching...</p>
-  </div>
-  </div>
 );
 
 let job_nearest_lhq = (
@@ -408,16 +369,6 @@ $('fieldset.col-md-12').each(function(k,v){
   }
 });
 
-$('fieldset.col-md-12').each(function(k,v){
-  var $v = $(v);
-  var section_title = $v[0].children[0].innerText;
-
-  if(section_title.indexOf( 'Job Details' ) === 0 ) {
-    $v.append(job_asbestos_history)
-    return false;
-  }
-
-})
 
 $('#editRfaForm > fieldset.col-md-8 > div > label').each(function(k,v){
   var $v = $(v);
@@ -467,4 +418,6 @@ $( "body" ).append(asset_filter_modal)
 // needs to be injected so that it runs after the DOMs are created
 // We run this last because we want to ensure the elements created above have
 // been loaded into the DOM before the injected script runs
+console.log("injecting jobs/view.js")
+
 inject('jobs/view.js');

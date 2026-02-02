@@ -15,7 +15,8 @@
             <div class="pane pane--top" id="paneTop">
                 <!-- TEAMS (top pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2">
-                    <div class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
+                    <div
+                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
                         <div class="flex-grow-1 d-flex justify-content-center">
                             <span>Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
                         </div>
@@ -648,7 +649,8 @@
             <div class="pane pane--bottom" id="paneBottom">
                 <!-- JOBS (bottom pane) -->
                 <div class="d-flex align-items-center justify-content-between px-2">
-                    <div class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
+                    <div
+                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
                         <div class="flex-grow-1 d-flex justify-content-center">
                             <span>Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
                         </div>
@@ -1548,6 +1550,7 @@
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
+                                                                                            data-bind="click: ts.team.openBeaconEditTeam, clickBubble: false"
                                                                                             title="Edit">
                                                                                             <i
                                                                                                 class="fas fa-external-link-alt"></i>
@@ -3150,6 +3153,19 @@
             </div>
         </div>
     </div>
+
+    <!-- MAP CONTEXT MENU (floating) -->
+    <div id="mapContextMenu" class="dropdown-menu shadow"
+        style="position:fixed; display:none; z-index:5000; min-width: 220px;">
+        <button type="button" class="dropdown-item" id="ctxSearchHere">
+            <i class="fa fa-search me-2"></i>Address Search
+        </button>
+        <button type="button" class="dropdown-item" id="ctxGeocodeHere">
+            <i class="fa fa-map-marker-alt me-2"></i>Geocode here
+        </button>
+    </div>
+
+
     </div>
 
 

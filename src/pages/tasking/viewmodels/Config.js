@@ -320,6 +320,7 @@ export function ConfigVM(root, deps) {
     };
 
     self.saveAndCloseAndLoad = () => {
+        
         self.save();
 
         root.UserPressedSaveOnTheConfigModal()

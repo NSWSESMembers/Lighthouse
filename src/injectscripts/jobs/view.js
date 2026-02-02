@@ -4,16 +4,16 @@ var DOM = require('jsx-dom-factory').default;
 var _ = require('underscore');
 var L = require('leaflet');
 var ReturnTeamsActiveAtLHQ = require('../../lib/getteams.js');
-var sesAsbestosSearch = require('../../lib/sesasbestos.js');
 var vincenty = require('../../lib/vincenty.js');
 var esri = require('esri-leaflet');
 var chroma = require('chroma-js');
 import BeaconClient from '../../shared/BeaconClient.js';
+import AmazonLocationRouter from "../../shared/als.js";
+
 
 require('leaflet-easybutton');
 require('leaflet-routing-machine');
 require('leaflet-svg-shape-markers');
-require('lrm-graphhopper'); // Adds L.Routing.GraphHopper onto L.Routing
 require('leaflet/dist/leaflet.css');
 
 console.log('Running inject script');
@@ -220,42 +220,7 @@ lighthouseTimelineTPlusWatchers();
 //call when the address exists
 whenLighthouseIsReady(function () {
   whenJobIsReady(function () {
-    whenUrlIsReady(function () {
-      if (typeof masterViewModel.geocodedAddress.peek() == 'undefined') {
-        $('#asbestos-register-text').html('Not A Searchable Address');
-      } else if (
-        masterViewModel.geocodedAddress.peek().Street == null ||
-        masterViewModel.geocodedAddress.peek().StreetNumber == null
-      ) {
-        $('#asbestos-register-text').html('Not A Searchable Address');
-      } else {
-        sesAsbestosSearch(masterViewModel.geocodedAddress.peek(), function (res) {
-          //check the ses asbestos register first
-          if (res == true) {
-            //tell the inject page (rendering result handled on the inject page)
-            window.postMessage(
-              {
-                type: 'FROM_PAGE_SESASBESTOS_RESULT',
-                address: masterViewModel.geocodedAddress.peek(),
-                result: true,
-                color: 'red',
-              },
-              '*',
-            );
-          } else {
-            //otherwise check the fair trade database via background script
-            window.postMessage(
-              {
-                type: 'FROM_PAGE_FTASBESTOS_SEARCH',
-                address: masterViewModel.geocodedAddress.peek(),
-              },
-              '*',
-            );
-          }
-        });
-      }
-    });
-
+    
     if (typeof masterViewModel.geocodedAddress.peek() != 'undefined') {
       if (
         masterViewModel.geocodedAddress.peek().Latitude != null ||
@@ -697,316 +662,311 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                   ).addTo(assetMap);
                 }
 
+                const router = new AmazonLocationRouter({
+                  serviceUrl: "https://lambda.lighthouse-extension.com/lad/route",
+                  travelMode: "Car",
+                });
+
                 var routingControl = L.Routing.control({
-                  router: L.Routing.graphHopper('lighthouse', {
-                    serviceUrl: 'https://graphhopper.lighthouse-extension.com/route',
-                    urlParameters: { 'ch.disable': true, instructions: true },
-                  }),
-                  // waypoints added at request time so they flush out custom routing
+                  router, // waypoints added at request time so they flush out custom routing
                   draggableWaypoints: true,
                   routeWhileDragging: false,
                   reverseWaypoints: false,
                   useZoomParameter: false,
-                  showAlternatives: false,
                   fitSelectedRoutes: false,
+                  showAlternatives: false,
                   createMarker: function (i, wp, n) {
                     if (i == n - 1 || i == 0) {
-                      //dont draw first or last marker
-                      return null;
-                    } else {
-                      const marker = L.marker(wp.latLng, {
-                        draggable: true,
-                        icon: L.icon({
-                          iconUrl: `${lighthouseUrl}icons/marker-icon.png`,
-                          iconRetinaUrl: `${lighthouseUrl}icons/marker-icon-2x.png`,
-                          shadowUrl: `${lighthouseUrl}icons/marker-shadow.png`,
-                          iconSize: [25, 41],
-                          iconAnchor: [12, 41],
-                          popupAnchor: [1, -34],
-                          tooltipAnchor: [16, -28],
-                          shadowSize: [41, 41],
-                        }),
-                      });
-                      return marker;
-                    }
-                  },
-                  lineOptions: {
-                    styles: [{ color: uniqueColor, opacity: 0.9, weight: 3 }],
+                  //dont draw first or last marker
+                  return null;
+                } else {
+                  const marker = L.marker(wp.latLng, {
+                    draggable: true,
+                    icon: L.icon({
+                      iconUrl: `${lighthouseUrl}icons/marker-icon.png`,
+                      iconRetinaUrl: `${lighthouseUrl}icons/marker-icon-2x.png`,
+                      shadowUrl: `${lighthouseUrl}icons/marker-shadow.png`,
+                      iconSize: [25, 41],
+                      iconAnchor: [12, 41],
+                      popupAnchor: [1, -34],
+                      tooltipAnchor: [16, -28],
+                      shadowSize: [41, 41],
+                    }),
+                  });
+                  return marker;
+                }
+              },
+              lineOptions: {
+                styles: [{ color: uniqueColor, opacity: 0.9, weight: 3 }],
                     //addWaypoints: false,
                   },
-                  //  altLineOptions: {
-                  //        styles: [
-                  //            {color: 'red', opacity: 1, weight: 3},
-                  //        ],
-                  //       addWaypoints: false,
-                  //    },
-                });
+              //  altLineOptions: {
+              //        styles: [
+              //            {color: 'red', opacity: 1, weight: 3},
+              //        ],
+              //       addWaypoints: false,
+              //    },
+            });
 
-                routingControl.on('routingerror', function (e) {
-                  $('#asset-map-loading').css('visibility', 'hidden');
-                  let before = $('#asset-route-warning').html();
-                  let error;
-                  if (e.error.response) {
-                    error = e.error.response.message;
-                  } else {
-                    error = 'Error talking to routing server... try again soon';
-                  }
-                  $('#asset-route-warning').html(`Error Routing<br>${error}`);
-
-                  setTimeout(function () {
-                    $('#asset-route-warning')
-                      .fadeOut(400, function () {
-                        $(this).html(before);
-                      })
-                      .fadeIn();
-                  }, 4000);
-                });
-
-                routingControl.on('routesfound', function (e) {
-                  console.log(e);
-                  $('#asset-map-loading').fadeOut('fast', function () {
-                    //tidy up the css because we need table no none
-                    $('#asset-map-loading').css('visibility', 'hidden');
-                    $('#asset-map-loading').css('display', 'table');
-                  });
-                  distanceMarkerRoute.forEach(function (r) {
-                    r.remove(assetMap);
-                  });
-
-                  e.routes.forEach(function (r) {
-                    let routesSorted = r.instructions.sort(function (a, b) {
-                      return a.distance - b.distance;
-                    });
-                    //regex out to make the path name, if theres no known road name then null out
-                    // and let the truthy in the template catch it
-                    let name = routesSorted[routesSorted.length - 1].text.match(/onto (.+)$/i);
-                    if (name) {
-                      name = name[1];
-                    } else {
-                      name = null;
-                    }
-
-                    allRoutersOnMap[v.properties.name] = r.coordinates;
-
-                    let middle = r.coordinates[Math.floor(r.coordinates.length / 4)];
-
-                    let distance = r.summary.totalDistance;
-                    let time = r.summary.totalTime;
-                    let timeHr = parseInt(moment.utc(time * 1000).format('HH'));
-                    let timeMin = parseInt(moment.utc(time * 1000).format('mm'));
-                    let timeText = '';
-                    if (timeHr == 0) {
-                      timeText = `${timeMin} min`;
-                    } else {
-                      timeText = `${timeHr} hr ${timeMin} min`;
-                    }
-                    let _distanceMarkerRoute = new L.circleMarker([middle.lat, middle.lng], { radius: 0.1 }).addTo(
-                      assetMap,
-                    ); //opacity may be set to zero
-                    _distanceMarkerRoute.bindTooltip(
-                      `<div style="text-align: center;"><strong style="color:${uniqueColor}">${v.name}${name ? ' via ' : ''
-                      }${name ? name : ''}</strong><br><strong>${(distance / 1000).toFixed(
-                        1,
-                      )} km - ${timeText}</strong></div>`,
-                      { permanent: true, offset: [0, 0] },
-                    );
-                    distanceMarkerRoute.push(_distanceMarkerRoute);
-                  });
-
-                  zoomToFitRoutes();
-                });
-
-                //hold the zindex so we can restore it after we bring to front
-                var zindex = marker._zIndex;
-
-                //calculate it if its first
-                // if (used == 1) {
-                //   marker.setZIndexOffset(9999)
-                //   drawPathingAndUpdateRow()
-                // }
-
-                // hover over table rows
-
-                $(row)
-                  .mouseenter(function () {
-                    polyline.addTo(assetMap);
-                    distanceMarker.addTo(assetMap);
-                    marker.setZIndexOffset(9999);
-                  })
-                  .mouseleave(function () {
-                    polyline.remove(assetMap);
-                    distanceMarker.remove(assetMap);
-                    //reset the  zindex  if the row isnt clicked
-                    if (!row.hasClass('nearest-asset-table-selected')) {
-                      marker.setZIndexOffset(zindex);
-                    }
-                  });
-
-                $(row)
-                  .find('#locate')
-                  .on('click', function (e) {
-                    //fly to just this marker and the job
-                    e.stopPropagation();
-                    assetMap.setView([marker.getLatLng().lat, marker.getLatLng().lng], 15);
-                  });
-
-                $(row).on('click', function () {
-                  //path this marker
-                  drawPathingAndUpdateRow();
-                  marker.setZIndexOffset(9999);
-                });
-
-                marker.on('click', function () {
-                  drawPathingAndUpdateRow();
-                  marker.setZIndexOffset(9999);
-                });
-
-                marker.on('mouseover', function () {
-                  polyline.addTo(assetMap);
-                  distanceMarker.addTo(assetMap);
-                });
-
-                marker.on('mouseout', function () {
-                  polyline.remove(assetMap);
-                  distanceMarker.remove(assetMap);
-
-                  marker.setZIndexOffset(zindex);
-                });
-
-                mapMarkers.push(marker);
-              } else {
-                hiddenAssets = hiddenAssets + 1;
-              }
-            } else if (used == maxLength) {
-              hiddenAssets = hiddenAssets + 1; // count after maxLength
+          routingControl.on('routingerror', function (e) {
+            $('#asset-map-loading').css('visibility', 'hidden');
+            let before = $('#asset-route-warning').html();
+            let error;
+            if (e.error.response) {
+              error = e.error.response.message;
+            } else {
+              error = 'Error talking to routing server... try again soon';
             }
+            $('#asset-route-warning').html(`Error Routing<br>${error}`);
 
-            function zoomToFitRoutes() {
-              // Zoom to fit all drawn paths
-              var activePoints = [];
-              for (var k in allRoutersOnMap) {
-                if (Object.prototype.hasOwnProperty.call(allRoutersOnMap, k)) {
-                  allRoutersOnMap[k].map(function (c) {
-                    activePoints.push([c.lat, c.lng]);
-                  });
-                }
-              }
-              if (activePoints.length) {
-                let latlngBounds = L.latLngBounds(activePoints);
-                assetMap.flyToBounds(latlngBounds, { padding: [40, 40] });
-              }
-            }
-
-            function drawPathingAndUpdateRow() {
-              if (!row.hasClass('nearest-asset-table-selected')) {
-                $(row).addClass('nearest-asset-table-selected');
-                $('#asset-map-loading').css('visibility', 'unset');
-                //remove the crow flies and replace with true
-                polyline.remove(assetMap);
-                distanceMarker.remove(assetMap);
-
-                //reset waypoints each time just incase someone has repathed
-                routingControl.addTo(assetMap); // Ensure this is called only once
-                routingControl
-                  .getPlan()
-                  .setWaypoints([
-                    L.latLng(v.geometry.coordinates[1], v.geometry.coordinates[0]),
-                    L.latLng(
-                      masterViewModel.geocodedAddress.peek().Latitude,
-                      masterViewModel.geocodedAddress.peek().Longitude,
-                    ),
-                  ]);
-              } else {
-                $(row).removeClass('nearest-asset-table-selected');
-
-                delete allRoutersOnMap[v.properties.name];
-                routingControl.remove(assetMap);
-                distanceMarkerRoute.forEach(function (r) {
-                  r.remove(assetMap);
-                });
-                distanceMarkerRoute = [];
-                marker.unbindTooltip();
-                marker.setZIndexOffset(zindex);
-                zoomToFitRoutes();
-              }
-
-              if ($('.nearest-asset-table-selected').length == 0) {
-                $('#asset-route-warning').css('visibility', 'hidden');
-              } else {
-                $('#asset-route-warning').html(
-                  'Travel distance and time are estimates and should not be used for navigation or response times',
-                );
-                $('#asset-route-warning').css('visibility', 'unset');
-              }
-            }
+            setTimeout(function () {
+              $('#asset-route-warning')
+                .fadeOut(400, function () {
+                  $(this).html(before);
+                })
+                .fadeIn();
+            }, 4000);
           });
-          if (hiddenAssets > 0) {
-            $('#filter-warning').html(`Hiding ${hiddenAssets} inactive assets`);
-            $('#filter-warning').css('visibility', 'unset');
-          } else {
-            $('#filter-warning').css('visibility', 'hidden');
-          }
 
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          var s2circle = L.circle(
-            [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
-            {
-              color: 'red',
-              weight: 1,
-              fillColor: '#f03',
-              fillOpacity: 0.03,
-              radius: furthestDistance.distance * 1000,
-            },
-          ).addTo(assetMap);
+          routingControl.on('routesfound', function (e) {
+            console.log(e);
+            $('#asset-map-loading').fadeOut('fast', function () {
+              //tidy up the css because we need table no none
+              $('#asset-map-loading').css('visibility', 'hidden');
+              $('#asset-map-loading').css('display', 'table');
+            });
+            distanceMarkerRoute.forEach(function (r) {
+              r.remove(assetMap);
+            });
 
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          var s1circle = L.circle(
-            [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
-            {
-              color: 'green',
-              weight: 1,
-              fillColor: '#50C878',
-              fillOpacity: 0.03,
-              radius: nearestDistance.distance * 1000,
-            },
-          ).addTo(assetMap);
+            e.routes.forEach(function (r) {
+              
+              //regex out to make the path name, if theres no known road name then null out
+              // and let the truthy in the template catch it
+              let name = r.summary.routeLabel;
+              
 
-          let latlngs = mapMarkers.map((marker) => marker.getLatLng());
+              allRoutersOnMap[v.properties.name] = r.coordinates;
 
-          let latlngBounds = L.latLngBounds(latlngs);
+              let middle = r.summary.midpoint;
 
-          let ne = latlngBounds.getNorthEast();
-          let sw = latlngBounds.getSouthWest();
-          let neSymetric = [
-            ne.lat + (masterViewModel.geocodedAddress.peek().Latitude - ne.lat) * 2,
-            ne.lng + (masterViewModel.geocodedAddress.peek().Longitude - ne.lng) * 2,
-          ];
-          let swSymetric = [
-            sw.lat + (masterViewModel.geocodedAddress.peek().Latitude - sw.lat) * 2,
-            sw.lng + (masterViewModel.geocodedAddress.peek().Longitude - sw.lng) * 2,
-          ];
-          latlngBounds.extend(L.latLngBounds(swSymetric, neSymetric));
+              let distance = r.summary.totalDistance;
+              let time = r.summary.totalTime;
+              let timeHr = parseInt(moment.utc(time * 1000).format('HH'));
+              let timeMin = parseInt(moment.utc(time * 1000).format('mm'));
+              let timeText = '';
+              if (timeHr == 0) {
+                timeText = `${timeMin} min`;
+              } else {
+                timeText = `${timeHr} hr ${timeMin} min`;
+              }
+              let _distanceMarkerRoute = new L.circleMarker([middle.lat, middle.lng], { radius: 0.1 }).addTo(
+                assetMap,
+              ); //opacity may be set to zero
+              _distanceMarkerRoute.bindTooltip(
+                `<div style="text-align: center;"><strong style="color:${uniqueColor}">${v.name}${name ? ' ' : ''
+                }${name ? name : ''}</strong><br><strong>${(distance / 1000).toFixed(
+                  1,
+                )} km - ${timeText}</strong></div>`,
+                { permanent: true, offset: [0, 0] },
+              );
+              distanceMarkerRoute.push(_distanceMarkerRoute);
+            });
 
-          assetMap.fitBounds(latlngBounds, { padding: [10, 10] });
-          // assetMap.setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
+            zoomToFitRoutes();
+          });
 
-          //$('#nearest-asset-text').text($('#nearest-asset-text').text().slice(0,-2)) //trim the comma space from the very end
+          //hold the zindex so we can restore it after we bring to front
+          var zindex = marker._zIndex;
+
+          //calculate it if its first
+          // if (used == 1) {
+          //   marker.setZIndexOffset(9999)
+          //   drawPathingAndUpdateRow()
+          // }
+
+          // hover over table rows
+
+          $(row)
+            .mouseenter(function () {
+              polyline.addTo(assetMap);
+              distanceMarker.addTo(assetMap);
+              marker.setZIndexOffset(9999);
+            })
+            .mouseleave(function () {
+              polyline.remove(assetMap);
+              distanceMarker.remove(assetMap);
+              //reset the  zindex  if the row isnt clicked
+              if (!row.hasClass('nearest-asset-table-selected')) {
+                marker.setZIndexOffset(zindex);
+              }
+            });
+
+          $(row)
+            .find('#locate')
+            .on('click', function (e) {
+              //fly to just this marker and the job
+              e.stopPropagation();
+              assetMap.setView([marker.getLatLng().lat, marker.getLatLng().lng], 15);
+            });
+
+          $(row).on('click', function () {
+            //path this marker
+            drawPathingAndUpdateRow();
+            marker.setZIndexOffset(9999);
+          });
+
+          marker.on('click', function () {
+            drawPathingAndUpdateRow();
+            marker.setZIndexOffset(9999);
+          });
+
+          marker.on('mouseover', function () {
+            polyline.addTo(assetMap);
+            distanceMarker.addTo(assetMap);
+          });
+
+          marker.on('mouseout', function () {
+            polyline.remove(assetMap);
+            distanceMarker.remove(assetMap);
+
+            marker.setZIndexOffset(zindex);
+          });
+
+          mapMarkers.push(marker);
         } else {
-          let row = $(`
+          hiddenAssets = hiddenAssets + 1;
+        }
+      } else if (used == maxLength) {
+        hiddenAssets = hiddenAssets + 1; // count after maxLength
+      }
+
+      function zoomToFitRoutes() {
+        // Zoom to fit all drawn paths
+        var activePoints = [];
+        for (var k in allRoutersOnMap) {
+          if (Object.prototype.hasOwnProperty.call(allRoutersOnMap, k)) {
+            allRoutersOnMap[k].map(function (c) {
+              activePoints.push([c.lat, c.lng]);
+            });
+          }
+        }
+        if (activePoints.length) {
+          let latlngBounds = L.latLngBounds(activePoints);
+          assetMap.flyToBounds(latlngBounds, { padding: [40, 40] });
+        }
+      }
+
+      function drawPathingAndUpdateRow() {
+        if (!row.hasClass('nearest-asset-table-selected')) {
+          $(row).addClass('nearest-asset-table-selected');
+          $('#asset-map-loading').css('visibility', 'unset');
+          //remove the crow flies and replace with true
+          polyline.remove(assetMap);
+          distanceMarker.remove(assetMap);
+
+          //reset waypoints each time just incase someone has repathed
+          routingControl.addTo(assetMap); // Ensure this is called only once
+          routingControl
+            .getPlan()
+            .setWaypoints([
+              L.latLng(v.geometry.coordinates[1], v.geometry.coordinates[0]),
+              L.latLng(
+                masterViewModel.geocodedAddress.peek().Latitude,
+                masterViewModel.geocodedAddress.peek().Longitude,
+              ),
+            ]);
+        } else {
+          $(row).removeClass('nearest-asset-table-selected');
+
+          delete allRoutersOnMap[v.properties.name];
+          routingControl.remove(assetMap);
+          distanceMarkerRoute.forEach(function (r) {
+            r.remove(assetMap);
+          });
+          distanceMarkerRoute = [];
+          marker.unbindTooltip();
+          marker.setZIndexOffset(zindex);
+          zoomToFitRoutes();
+        }
+
+        if ($('.nearest-asset-table-selected').length == 0) {
+          $('#asset-route-warning').css('visibility', 'hidden');
+        } else {
+          $('#asset-route-warning').html(
+            'Travel distance and time are estimates and should not be used for navigation or response times',
+          );
+          $('#asset-route-warning').css('visibility', 'unset');
+        }
+      }
+    });
+    if (hiddenAssets > 0) {
+      $('#filter-warning').html(`Hiding ${hiddenAssets} inactive assets`);
+      $('#filter-warning').css('visibility', 'unset');
+    } else {
+      $('#filter-warning').css('visibility', 'hidden');
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    var s2circle = L.circle(
+      [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
+      {
+        color: 'red',
+        weight: 1,
+        fillColor: '#f03',
+        fillOpacity: 0.03,
+        radius: furthestDistance.distance * 1000,
+      },
+    ).addTo(assetMap);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    var s1circle = L.circle(
+      [masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude],
+      {
+        color: 'green',
+        weight: 1,
+        fillColor: '#50C878',
+        fillOpacity: 0.03,
+        radius: nearestDistance.distance * 1000,
+      },
+    ).addTo(assetMap);
+
+    let latlngs = mapMarkers.map((marker) => marker.getLatLng());
+
+    let latlngBounds = L.latLngBounds(latlngs);
+
+    let ne = latlngBounds.getNorthEast();
+    let sw = latlngBounds.getSouthWest();
+    let neSymetric = [
+      ne.lat + (masterViewModel.geocodedAddress.peek().Latitude - ne.lat) * 2,
+      ne.lng + (masterViewModel.geocodedAddress.peek().Longitude - ne.lng) * 2,
+    ];
+    let swSymetric = [
+      sw.lat + (masterViewModel.geocodedAddress.peek().Latitude - sw.lat) * 2,
+      sw.lng + (masterViewModel.geocodedAddress.peek().Longitude - sw.lng) * 2,
+    ];
+    latlngBounds.extend(L.latLngBounds(swSymetric, neSymetric));
+
+    assetMap.fitBounds(latlngBounds, { padding: [10, 10] });
+    // assetMap.setView([masterViewModel.geocodedAddress.peek().Latitude, masterViewModel.geocodedAddress.peek().Longitude], 13);
+
+    //$('#nearest-asset-text').text($('#nearest-asset-text').text().slice(0,-2)) //trim the comma space from the very end
+  } else {
+    let row = $(`
         <tr>
           <td colspan="5"><i>No assets found</i></td>
         </tr>
         `);
-          $('#nearest-asset-table tbody').append(row);
-        }
-        var t1 = performance.now();
-        console.log('Call to calculate distances from assets took ' + (t1 - t0) + ' milliseconds.');
-        cb();
-      }
+    $('#nearest-asset-table tbody').append(row);
+  }
+  var t1 = performance.now();
+  console.log('Call to calculate distances from assets took ' + (t1 - t0) + ' milliseconds.');
+  cb();
+}
     }, function (error) {
-      $('#map-errors').html(error);
-      $('#map-errors').css('visibility', 'unset');
-    });
+  $('#map-errors').html(error);
+  $('#map-errors').css('visibility', 'unset');
+});
   }
 }
 
@@ -2966,42 +2926,6 @@ function whenTeamsAreReady(cb) {
   }
 }
 
-// wait for address to have loaded
-//TODO: possibly redundant now
-// function whenAddressIsReady(cb) { //when external vars have loaded
-//   if (typeof masterViewModel !== "undefined" & typeof masterViewModel.geocodedAddress !== "undefined") {
-//     cb()
-//   } else {
-//     var waiting = setInterval(function() { //run every 1sec until we have loaded the page (dont hate me Sam)
-//       if (typeof masterViewModel !== "undefined" & masterViewModel.geocodedAddress != "undefined") {
-//         if (typeof masterViewModel.geocodedAddress.peek() != "undefined" && masterViewModel.geocodedAddress.peek() !== null) {
-//           console.log("address is ready");
-//           clearInterval(waiting); //stop timer
-//           cb(); //call back
-//         }
-//       }
-//     }, 200);
-//   }
-// }
-
-// wait for urls to have loaded
-function whenUrlIsReady(cb) {
-  //when external vars have loaded
-  if ((typeof urls !== 'undefined') & (typeof urls.Base !== 'undefined')) {
-    cb();
-  } else {
-    var waiting = setInterval(function () {
-      //run every 1sec until we have loaded the page (dont hate me Sam)
-      if ((typeof urls !== 'undefined') & (typeof urls.Base !== 'undefined')) {
-        if (urls.Base !== null) {
-          console.log('urls is ready');
-          clearInterval(waiting); //stop timer
-          cb(); //call back
-        }
-      }
-    }, 200);
-  }
-}
 
 // wait for job to have loaded
 function whenJobIsReady(cb) {

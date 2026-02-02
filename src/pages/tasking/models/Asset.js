@@ -7,8 +7,11 @@ export function Asset(data = {}) {
     self.id = ko.observable(data.properties.id ?? null);
     self.name = ko.observable(data.properties.name ?? "");
     self.markerLabel = ko.observable(data.markerLabel ?? "");
-    self.latitude = ko.observable(data.geometry.coordinates[1] ?? null);
-    self.longitude = ko.observable(data.geometry.coordinates[0] ?? null);
+
+    self.latLng = ko.observable({ lat: data.geometry?.coordinates?.[1], lng: data.geometry?.coordinates?.[0] });
+    self.latitude = ko.pureComputed(() => self.latLng()?.lat ?? null);
+    self.longitude = ko.pureComputed(() => self.latLng()?.lng ?? null);
+
     self.capability = ko.observable(data.properties.capability ?? "");
     self.entity = ko.observable(data.properties.entity ?? "");
     self.resourceType = ko.observable(data.properties.resourceType ?? "");
@@ -20,11 +23,11 @@ export function Asset(data = {}) {
     self.radioId = ko.observable(data.properties.radioId ?? "");
     self.marker = null;
     self.matchingTeams = ko.observableArray();
-    
+
     self.matchingTeamsInView = ko.pureComputed(() => {
         return self.matchingTeams().filter(t => t.isFilteredIn());
     });
-    
+
     // Force updates for computed observables using fmtRelative every 30 seconds
     self._relativeUpdateTick = ko.observable(0);
 
@@ -62,8 +65,9 @@ export function Asset(data = {}) {
 
 
     self.latLngText = ko.pureComputed(() => {
-        const lat = self.latitude?.();
-        const lng = self.longitude?.();
+        const p = self.latLng?.();
+        const lat = p?.lat;
+        const lng = p?.lng;
         if (lat == null || lng == null) return "";
         return `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
     });
@@ -78,9 +82,21 @@ export function Asset(data = {}) {
         }
 
         if (d.markerLabel !== undefined) this.markerLabel(d.markerLabel);
+
+
+        // SET ONCE: update both lat/lng in a single observable write
         if (d.geometry !== undefined && Array.isArray(d.geometry.coordinates)) {
-            if (d.geometry.coordinates[1] !== undefined) this.latitude(d.geometry.coordinates[1]);
-            if (d.geometry.coordinates[0] !== undefined) this.longitude(d.geometry.coordinates[0]);
+            const lat = d.geometry.coordinates[1];
+            const lng = d.geometry.coordinates[0];
+
+            // only write if at least one is present
+            if (lat !== undefined || lng !== undefined) {
+                const cur = this.latLng?.() || { lat: null, lng: null };
+                this.latLng({
+                    lat: (lat !== undefined ? lat : cur.lat),
+                    lng: (lng !== undefined ? lng : cur.lng),
+                });
+            }
         }
 
         if (d.lastSeen !== undefined) this.lastSeen(d.lastSeen);

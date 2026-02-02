@@ -27,8 +27,6 @@
     "https://testbeacon.ses.nsw.gov.au/*",
     "https://testbeaconau.ses.nsw.gov.au/*",
     "https://devbeacon.ses.nsw.gov.au/*",
-    "http://www.fairtrading.nsw.gov.au/*",
-    "https://www.fairtrading.nsw.gov.au/*",
     "https://www.rfs.nsw.gov.au/*",
     "https://api.transport.nsw.gov.au/*",
     "https://www.ausgrid.com.au/*",
@@ -42,7 +40,6 @@
     "https://app.ses-mams-uat.net/*",
     "https://api.ses-mams.net/*",
     "https://s3.ap-southeast-2.amazonaws.com/csv-download.ses-mams.net/*",
-    "https://graphhopper.lighthouse-extension.com/*",
     "https://api.adsb.lol/v2/*"
   ],
   "permissions": [
@@ -90,7 +87,8 @@
         "https://*.ses.nsw.gov.au/Jobs/Sectors*",
         "https://*.ses.nsw.gov.au/Jobs/*/Edit",
         "https://*.ses.nsw.gov.au/Jobs",
-        "https://*.ses.nsw.gov.au/Jobs/Create"
+        "https://*.ses.nsw.gov.au/Jobs/Create",
+        "https://*.ses.nsw.gov.au/Jobs/Create?*"
       ],
       "js": ["contentscripts/jobs/view.js"]
     },

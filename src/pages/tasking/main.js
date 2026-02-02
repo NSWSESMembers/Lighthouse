@@ -6,7 +6,6 @@ const BeaconToken = require('../lib/shared_token_code.js');
 
 require('../lib/shared_chrome_code.js'); // side-effect
 
-import '../../../styles/pages/tasking.css';
 
 import { showAlert } from './components/windowAlert.js';
 
@@ -59,7 +58,10 @@ import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
 import { installModalHotkeys } from './components/modalHotKeys.js';
+import { installMapContextMenu } from "./components/mapContextMenu.js";
 
+
+import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
 
 
 var $ = require('jquery');
@@ -73,6 +75,22 @@ var MiniMap = require('leaflet-minimap');
 
 var esriVector = require('esri-leaflet-vector');
 
+import { GeoSearchControl } from 'leaflet-geosearch';
+import { AwsLambdaGeocoderProvider } from './utils/geocode.js';
+
+
+
+require('leaflet-easybutton');
+require('leaflet-routing-machine');
+require('leaflet-svg-shape-markers');
+
+
+
+import 'leaflet.polylinemeasure';
+
+//css order reasons... load this last
+import '../../../styles/pages/tasking.css';
+
 
 let token = '';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -81,6 +99,36 @@ let tokenExp = '';
 let resolveTokenReady;
 const tokenReady = new Promise((resolve) => {
     resolveTokenReady = resolve;
+});
+
+
+
+const defaultSvgIcon = L.divIcon({
+    className: "default-svg-marker",
+    html: `
+    <svg width="26" height="42" viewBox="0 0 26 42" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13 0C5.8 0 0 5.8 0 13c0 9.7 13 29 13 29s13-19.3 13-29C26 5.8 20.2 0 13 0z"
+            fill="#2A81CB"/>
+      <circle cx="13" cy="13" r="5" fill="#ffffff"/>
+    </svg>
+  `,
+    iconSize: [26, 42],
+    iconAnchor: [13, 42],
+    popupAnchor: [0, -36],
+});
+
+const defaultRedSvgIcon = L.divIcon({
+    className: "default-svg-marker",
+    html: `
+    <svg width="26" height="42" viewBox="0 0 26 42" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13 0C5.8 0 0 5.8 0 13c0 9.7 13 29 13 29s13-19.3 13-29C26 5.8 20.2 0 13 0z"
+            fill="#cb2a2aff"/>
+      <circle cx="13" cy="13" r="5" fill="#ffffff"/>
+    </svg>
+  `,
+    iconSize: [26, 42],
+    iconAnchor: [13, 42],
+    popupAnchor: [0, -36],
 });
 
 /**
@@ -107,18 +155,6 @@ async function getToken() {
 }
 
 
-require('leaflet-easybutton');
-require('leaflet-routing-machine');
-require('leaflet-svg-shape-markers');
-require('lrm-graphhopper'); // Adds L.Routing.GraphHopper onto L.Routing
-require('leaflet/dist/leaflet.css');
-
-
-
-import * as bootstrap from 'bootstrap5'; // gives you Modal, Tooltip, etc.
-
-
-
 const params = getSearchParameters();
 const apiHost = params.host
 
@@ -143,6 +179,80 @@ const map = L.map('map', {
     // Faster debounce time while zooming
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
+
+
+installMapContextMenu({
+  map,
+  geocodeEndpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
+  geocodeMarkerIcon: defaultSvgIcon,
+  geocodeRedMarkerIcon: defaultRedSvgIcon,
+  geocodeMaxResults: 10,
+  onGeocodeResultClicked: (r) => {
+    // TODO: replace with real action
+    console.log("TODO: handle reverse-geocode pick", r);
+  },
+});
+
+
+const polylineMeasure = L.control.polylineMeasure({
+    position: 'topleft',
+
+    unit: 'kilometres',
+    showBearings: true,
+    clearMeasurementsOnStop: false,
+    showClearControl: true,
+    showUnitControl: false,
+
+    // Styling
+    lineColor: '#db4a29',
+    lineWeight: 3,
+    lineOpacity: 0.8,
+    tempLine: {
+        color: '#db4a29',
+        weight: 2
+    }
+});
+
+polylineMeasure.addTo(map);
+
+const geocoder = new AwsLambdaGeocoderProvider({
+    endpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
+});
+
+const searchControl = new GeoSearchControl({
+    provider: geocoder,
+    style: 'button',          // looks like a button that expands
+    position: 'topleft',
+    autoClose: false,
+    retainZoomLevel: false,
+    searchLabel: 'Search address…',
+    marker: {
+        // optional: L.Marker    - default L.Icon.Default
+        icon: defaultSvgIcon,
+        draggable: false,
+    },
+    showMarker: true,
+    showPopup: true,
+    animateZoom: true,
+    keepResult: true,
+    updateMap: true,
+    autoComplete: true,
+    autoCompleteDelay: 250,
+});
+
+map.addControl(searchControl);
+
+// Leaflet-Geosearch renders a container with class "leaflet-geosearch"
+const gsEl = document.querySelector(".leaflet-control-geosearch");
+if (gsEl) {
+    L.DomEvent.disableScrollPropagation(gsEl);
+    L.DomEvent.disableClickPropagation(gsEl);
+    L.DomEvent.on(gsEl, "wheel", L.DomEvent.stopPropagation);
+    // optional: stop trackpad pinch-zoom triggering map zoom
+    L.DomEvent.on(gsEl, "mousewheel", L.DomEvent.stopPropagation);
+}
+
+
 
 map.createPane('pane-lowest'); map.getPane('pane-lowest').style.zIndex = 300;
 map.createPane('pane-lowest-plus'); map.getPane('pane-lowest-plus').style.zIndex = 301;
@@ -1899,6 +2009,7 @@ function VM() {
         });
 
 
+
     self.UserPressedSaveOnTheConfigModal = function () {
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
@@ -2162,11 +2273,11 @@ function VM() {
 
             // tuck the drawer under the zoom control
             setTimeout(() => {
-                const zoom = map._controlCorners.topleft.querySelector(
-                    ".leaflet-control-zoom"
+                const position = map._controlCorners.topleft.querySelector(
+                    ".leaflet-control-geosearch"
                 );
-                if (zoom && c.parentElement === map._controlCorners.topleft) {
-                    zoom.insertAdjacentElement("afterend", c);
+                if (position && c.parentElement === map._controlCorners.topleft) {
+                    position.insertAdjacentElement("afterend", c);
                 }
             }, 0);
 
@@ -2237,10 +2348,10 @@ function VM() {
         onAdd(map) {
             const c = L.DomUtil.create("div", "leaflet-control sidebar-toggle leaflet-bar");
             c.innerHTML = `
-      <button type="button" class="btn btn-light btn-sm shadow-sm" title="Collapse/expand left panel">
-        <i class="fas ${this._collapsed ? "fa-angle-double-right" : "fa-angle-double-left"}"></i>
-      </button>
-    `;
+                <button type="button" class="btn btn-light btn-sm shadow-sm" title="Collapse/expand left panel">
+                    <i class="fas ${this._collapsed ? "fa-angle-double-right" : "fa-angle-double-left"}"></i>
+                </button>
+            `;
 
             const btn = c.querySelector(".btn");
             L.DomEvent.on(btn, "click", (ev) => {
@@ -2264,6 +2375,8 @@ function VM() {
             if (this._collapsed) document.body.classList.add("sidebar-collapsed");
 
             L.DomEvent.disableClickPropagation(c);
+
+
             this._container = c;
             return c;
         }
@@ -2275,14 +2388,13 @@ function VM() {
     const layersDrawer = new LayersDrawer();
     layersDrawer.addTo(map);
 
-
-
-
     setTimeout(() => {
-        const tl = map._controlCorners.topleft;
-        const ld = tl.querySelector(".layers-drawer");
-        const st = tl.querySelector(".leaflet-control.sidebar-toggle");
-        if (ld && st) ld.insertAdjacentElement("beforebegin", st);
+        // force ordering: place directly under zoom buttons
+        const zoom = document.querySelector('.leaflet-control-zoom');
+        const toggle = document.querySelector('.sidebar-toggle');
+        if (zoom && toggle) {
+            zoom.parentNode.insertBefore(toggle, zoom.nextSibling);
+        }
     }, 0);
 
 
@@ -2409,13 +2521,41 @@ document.addEventListener('DOMContentLoaded', function () {
 
         installModalHotkeys({
             modalEl: configModalEl,
-            onSave: () => myViewModel.config.saveAndCloseAndLoad(),
+            onSave: () => bootstrap.Modal.getInstance(configModalEl).hide(),
             onClose: () => bootstrap.Modal.getInstance(configModalEl).hide(),
             allowInInputs: true // text-heavy modal
         });
 
+        //large amount of bs to fix this chrome aria hidden warning that wont go away
+        const configTrigger = () => document.querySelector('[data-bs-target="#configModal"]');
+
+        // a guaranteed focusable sink outside the modal
+        let focusSink = document.getElementById('focusSink');
+        if (!focusSink) {
+            focusSink = document.createElement('div');
+            focusSink.id = 'focusSink';
+            focusSink.tabIndex = -1;
+            focusSink.style.position = 'fixed';
+            focusSink.style.left = '-9999px';
+            focusSink.style.top = '0';
+            document.body.appendChild(focusSink);
+        }
+
+        // BEFORE Bootstrap applies aria-hidden
+        configModalEl.addEventListener('hide.bs.modal', () => {
+            const inst = bootstrap.Modal.getInstance(configModalEl) || bootstrap.Modal.getOrCreateInstance(configModalEl);
+
+            // stop Bootstrap from forcing focus back into the modal (private API but works)
+            inst?._focustrap?.deactivate?.();
+
+            // get focus out of modal immediately
+            document.activeElement?.blur?.();
+            (configTrigger() || focusSink).focus();
+        });
+
+        // AFTER hidden, restore focus to the real trigger (optional)
         configModalEl.addEventListener('hidden.bs.modal', () => {
-            myViewModel.config.saveAndCloseAndLoad();
+            configTrigger()?.focus();
         });
 
     })
