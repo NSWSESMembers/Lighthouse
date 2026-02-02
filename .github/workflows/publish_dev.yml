@@ -1,6 +1,6 @@
 name: Publish Dev Preview to Chrome Store
 on:
-  push:
+  workflow_run:
     branches:
       - 'master-dev'
 jobs:

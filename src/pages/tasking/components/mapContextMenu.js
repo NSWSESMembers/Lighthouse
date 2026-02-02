@@ -159,7 +159,7 @@ export function installMapContextMenu({
 
         const bounds = [[lastLatLng.lat, lastLatLng.lng]];
 
-        top.forEach((r, idx) => {
+        top.forEach((r, _idx) => {
             const pt = r?.Position; // [lon, lat]
             const lon = Array.isArray(pt) ? Number(pt[0]) : NaN;
             const lat = Array.isArray(pt) ? Number(pt[1]) : NaN;
@@ -230,20 +230,6 @@ export function installMapContextMenu({
 
             // full details on click
             m.bindPopup(popupHtml);
-
-            const payload = {
-                index: idx,
-                lat,
-                lon,
-                label: shortLine || title || addrLabel || '',
-                raw: r,
-                // convenience fields (optional)
-                title,
-                addressLabel: addrLabel,
-                placeType,
-                distanceM,
-                categories: cats,
-            };
 
             m.on('popupopen', () => {
                 const popup = m.getPopup();

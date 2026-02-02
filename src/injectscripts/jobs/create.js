@@ -1,7 +1,6 @@
 /* global $, vm, moment, urls, user */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 var DOM = require('jsx-dom-factory').default;
-var sesAsbestosSearch = require('../../lib/sesasbestos.js');
 
 console.log('jobs/create.js inject running');
 
@@ -16,25 +15,6 @@ $(document).ready(function () {
           vm.entityAssignedTo(results.Results[0]);
         }
       })
-    }
-    if (event.data.type && event.data.type == 'FROM_LH_ASBESTOS') {
-      if (event.data.result == true) {
-        console.log('Applying Fibro/Asbestos tag');
-        $.each(vm.availableJobTags.peek(), function (k, v) {
-          if (v.Name == 'Fibro/Asbestos') {
-            vm.jobTagClicked(v);
-            return false;
-          }
-        });
-      } else {
-        console.log('Removing Fibro/Asbestos tag if present');
-        $.each(vm.selectedJobTags.peek(), function (k, v) {
-          if (v.Name == 'Fibro/Asbestos') {
-            vm.jobTagClicked(v);
-            return false;
-          }
-        });
-      }
     }
   });
 
@@ -451,8 +431,6 @@ $(document).ready(function () {
           },
         });
 
-        $('#asbestos-register-text').text('Searching...');
-
         if (vm.jobType.peek() && vm.jobType.peek().ParentId == 5) {
           if (accreditations == undefined) {
             fetchAccreditations(function (res) {
@@ -492,48 +470,6 @@ $(document).ready(function () {
             '*',
           );
         }
-
-        let address = newAddress;
-        if (address.street != '') {
-          address.PrettyAddress = address.pretty_address;
-          address.StreetNumber = address.number;
-          address.Street = address.street;
-          address.Locality = address.locality;
-          address.Flat = address.flat;
-
-          //reset the colors
-          $('#asbestos-register-box')[0].style.color = 'black';
-          $('#asbestos-register-box').css({
-            background: '',
-            'margin-left': '0px',
-          });
-
-          sesAsbestosSearch(address, function (res) {
-            if (res == true) {
-              window.postMessage(
-                {
-                  type: 'FROM_PAGE_SESASBESTOS_RESULT',
-                  address: address,
-                  result: true,
-                  color: 'red',
-                },
-                '*',
-              );
-            } else {
-              window.postMessage(
-                {
-                  type: 'FROM_PAGE_FTASBESTOS_SEARCH',
-                  address: address,
-                },
-                '*',
-              );
-            }
-          });
-        } else {
-          $('#asbestos-register-flag').text('Not A Searchable Address');
-        }
-      } else {
-        $('#asbestos-register-flag').text('Waiting For An Address');
       }
     });
 
