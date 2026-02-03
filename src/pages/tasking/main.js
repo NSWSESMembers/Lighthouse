@@ -27,6 +27,8 @@ import IncidentImagesModalVM from "./viewmodels/IncidentImagesModalVM";
 
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
+import { SpotlightSearchVM } from "./components/spotlightSearch.js";
+
 
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
@@ -182,21 +184,21 @@ const map = L.map('map', {
 
 
 installMapContextMenu({
-  map,
-  geocodeEndpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
-  geocodeMarkerIcon: defaultSvgIcon,
-  geocodeRedMarkerIcon: defaultRedSvgIcon,
-  geocodeMaxResults: 10,
-  onGeocodeResultClicked: (r) => {
-    // TODO: replace with real action
-    console.log("TODO: handle reverse-geocode pick", r);
-  },
+    map,
+    geocodeEndpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
+    geocodeMarkerIcon: defaultSvgIcon,
+    geocodeRedMarkerIcon: defaultRedSvgIcon,
+    geocodeMaxResults: 10,
+    onGeocodeResultClicked: (r) => {
+        // TODO: replace with real action
+        console.log("TODO: handle reverse-geocode pick", r);
+    },
 });
 
 
 const polylineMeasure = L.control.polylineMeasure({
     position: 'topleft',
-
+    measureControlLabel: '<i class="fas fa-ruler"></i>', // FontAwesome ruler icon
     unit: 'kilometres',
     showBearings: true,
     clearMeasurementsOnStop: false,
@@ -327,6 +329,7 @@ function VM() {
         userId: params.userId,
         BeaconClient
     });
+
 
     self.openIncidentImages = function (job, e) {
         if (e) { e.stopPropagation?.(); e.preventDefault?.(); }
@@ -580,6 +583,13 @@ function VM() {
 
         start.setDate(end.getDate() - self.config.fetchPeriod());
 
+        // Add 5 minutes to the start time just to account for drift
+        start.setMinutes(start.getMinutes() + 5);
+
+        end.setDate(end.getDate() + self.config.fetchForward());
+
+
+
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
@@ -643,7 +653,9 @@ function VM() {
     // Team filtering/searching
     self.teamSearch = ko.observable('');
 
-    self.filteredTeams = ko.pureComputed(() => {
+
+    //just filtered against config not against UI searching
+    self.filteredTeamsAgainstConfig = ko.pureComputed(() => {
 
         const allowed = self.config.teamStatusFilter(); // allow-list
 
@@ -652,16 +664,17 @@ function VM() {
 
         start.setDate(end.getDate() - self.config.fetchPeriod());
 
-        const pinnedOnlyTeams = self.showPinnedTeamsOnly();
-        const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
+        // Add 5 minutes to the start time just to account for drift
+        start.setMinutes(start.getMinutes() + 5);
+
+        end.setDate(end.getDate() + self.config.fetchForward());
+
+
 
         return ko.utils.arrayFilter(self.teams(), tm => {
             const status = tm.teamStatusType()?.Name;
 
-            // pinned-only filter
-            if (pinnedOnlyTeams && !pinnedTeamIds.includes(String(tm.id()))) {
-                return false;
-            }
+
             const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
             if (status == null) {
                 return false;
@@ -682,15 +695,30 @@ function VM() {
                 return false;
             }
 
+            return true;
+        });
+    }).extend({ trackArrayChanges: true, rateLimit: 50 });
+
+    self.filteredTeams = ko.pureComputed(() => {
+        const pinnedOnlyTeams = self.showPinnedTeamsOnly();
+        const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
+
+        return ko.utils.arrayFilter(self.filteredTeamsAgainstConfig(), tm => {
+
+            // pinned-only filter
+            if (pinnedOnlyTeams && !pinnedTeamIds.includes(String(tm.id()))) {
+                return false;
+            }
+
             const term = self.teamSearch().toLowerCase();
             if (tm.callsign().toLowerCase().includes(term)) {
                 return true;
             }
 
-            return false;
-        });
-    }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
+        })
 
+
+    }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
 
     self.filteredTrackableAssets = ko.pureComputed(() => {
@@ -1300,7 +1328,7 @@ function VM() {
         return matchedAssets;
     }
 
-    // Replaces the old pairwise matcher :contentReference[oaicite:1]{index=1}
+    // Replaces the old pairwise matcher
     self._assetMatchesTeam = function (_asset, _team) {
         // no longer used as the primary mechanism; keep for safety if anything external calls it
         // (fall back to the new computed set for correctness).
@@ -1313,7 +1341,7 @@ function VM() {
     };
 
 
-    // recompute one team's asset list :contentReference[oaicite:2]{index=2}
+    // recompute one team's asset list
     self._refreshTeamTrackableAssets = function (team) {
         console.log("Refreshing trackable assets for team:", team?.callsign?.());
         if (!team || typeof team.trackableAssets !== 'function') return;
@@ -1379,6 +1407,49 @@ function VM() {
         return t;
     };
 
+    self.spotlightSearchVM = new SpotlightSearchVM({
+        rootVm: self,
+        getTeams: () => ko.unwrap(self.filteredTeamsAgainstConfig()),
+        getJobs: () => ko.unwrap(self.filteredJobsAgainstConfig()),
+    });
+
+    self._spotlightModalEl = null;
+    self._spotlightModal = null;
+
+    self._openSpotlight = () => {
+
+        self.teamSearch(''); // clear team search to avoid confusion
+        self.jobSearch('');  // clear job search to avoid confusion
+
+        const el = document.getElementById("SpotlightSearchModal");
+        if (!el) return;
+
+        self._spotlightModalEl = el;
+        self._spotlightModal = bootstrap.Modal.getOrCreateInstance(el);
+
+        self.spotlightSearchVM.query("");
+        self.spotlightSearchVM.results.removeAll();
+        self.spotlightSearchVM.activeIndex(0);
+        self.spotlightSearchVM.rebuildIndex?.();
+
+        self._spotlightModal.show();
+
+        // focus input after show
+       document.getElementById("spotlightSearchInput")?.focus();
+        
+
+        installModalHotkeys({
+            modalEl: el,
+            onSave: () => { /* empty */ }, // enter handled in VM keydown
+            onClose: () => self._closeSpotlight(),
+            allowInInputs: true
+        });
+    };
+
+    self._closeSpotlight = () => {
+        try { self._spotlightModal?.hide(); } catch { /* empty */ }
+    };
+
     self.initialFitDone = false;
     let initialFetchesPending = 3; // teams, jobs, assets
 
@@ -1433,6 +1504,8 @@ function VM() {
             tasking.job = null;
         }
     };
+
+
 
 
     self.markerLayersControl = null;    // optional Leaflet layer control
@@ -1524,6 +1597,10 @@ function VM() {
             if (cb) cb(r);
         })
     }
+
+    //update spotlight index on team/job filter changes
+    self.filteredTeamsAgainstConfig.subscribe(() => { self.spotlightSearchVM.rebuildIndex?.() }, null, "arrayChange");
+    self.filteredJobsAgainstConfig.subscribe(() => { self.spotlightSearchVM.rebuildIndex?.() }, null, "arrayChange");
 
     //fetch tasking if a team is added
     self.filteredTeams.subscribe((changes) => {
@@ -1841,6 +1918,10 @@ function VM() {
 
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
 
+        start.setMinutes(start.getMinutes() + 5); // slight overlap to catch late updates and drift
+        end.setDate(end.getDate() + self.config.fetchForward());
+
+
         myViewModel.jobsLoading(true);
 
         const t = await getToken();   // blocks here until token is ready
@@ -1899,6 +1980,8 @@ function VM() {
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
+        start.setMinutes(start.getMinutes() + 5); // slight overlap to catch late updates and drift
+        end.setDate(end.getDate() + self.config.fetchForward());
         myViewModel.teamsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, t, function (teams) {
@@ -2521,10 +2604,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
         installModalHotkeys({
             modalEl: configModalEl,
-            onSave: () => bootstrap.Modal.getInstance(configModalEl).hide(),
-            onClose: () => bootstrap.Modal.getInstance(configModalEl).hide(),
+            onSave: () => myViewModel.config.saveAndCloseAndLoad(),
+            onClose: () => myViewModel.config.saveAndCloseAndLoad(),
             allowInInputs: true // text-heavy modal
         });
+
+        document.addEventListener("keydown", (e) => {
+            // Cmd+K / Ctrl+K to open Spotlight Search
+            const isK = (e.key || "").toLowerCase() === "k";
+            if (!isK) return;
+
+            const isCmd = e.metaKey === true;
+            const isCtrl = e.ctrlKey === true;
+
+            if (!(isCmd || isCtrl)) return;
+
+            // don't stack if already open
+            const open = document.getElementById("SpotlightSearchModal")?.classList.contains("show");
+            if (open) return;
+
+            e.preventDefault();
+            myViewModel._openSpotlight();
+        }, { capture: true });
+
 
         //large amount of bs to fix this chrome aria hidden warning that wont go away
         const configTrigger = () => document.querySelector('[data-bs-target="#configModal"]');
