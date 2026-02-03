@@ -267,7 +267,7 @@ export function installMapContextMenu({
 }
 
 function extractUnitLevel(secondaryAddressComponents) {
-    // SecondaryAddressComponents: [{ Designator, Number }] :contentReference[oaicite:2]{index=2}
+    // SecondaryAddressComponents
     const comps = Array.isArray(secondaryAddressComponents)
         ? secondaryAddressComponents
         : [];
@@ -311,8 +311,8 @@ const strOrNull = (v) => (s(v) ? s(v) : null);
 function toLadReverseGeocodeShape(item) {
     if (!item) return null;
 
-    const addr = item.Address ?? null; // :contentReference[oaicite:5]{index=5}
-    const pos = Array.isArray(item.Position) ? item.Position : null; // [lon, lat] :contentReference[oaicite:6]{index=6}
+    const addr = item.Address ?? null;
+    const pos = Array.isArray(item.Position) ? item.Position : null; // [lon, lat]
 
     const longitude = pos && Number.isFinite(pos[0]) ? pos[0] : null;
     const latitude = pos && Number.isFinite(pos[1]) ? pos[1] : null;
@@ -320,7 +320,7 @@ function toLadReverseGeocodeShape(item) {
     const { flat, level } = extractUnitLevel(addr?.SecondaryAddressComponents);
 
     return {
-        address_pid: null, // not returned by AWS ReverseGeocode :contentReference[oaicite:7]{index=7}
+        address_pid: null, // not returned by AWS ReverseGeocode
         latitude,
         longitude,
         flat,
