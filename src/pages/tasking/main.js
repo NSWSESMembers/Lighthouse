@@ -198,7 +198,7 @@ installMapContextMenu({
 
 const polylineMeasure = L.control.polylineMeasure({
     position: 'topleft',
-
+    measureControlLabel: '<i class="fas fa-ruler"></i>', // FontAwesome ruler icon
     unit: 'kilometres',
     showBearings: true,
     clearMeasurementsOnStop: false,
@@ -1328,7 +1328,7 @@ function VM() {
         return matchedAssets;
     }
 
-    // Replaces the old pairwise matcher :contentReference[oaicite:1]{index=1}
+    // Replaces the old pairwise matcher
     self._assetMatchesTeam = function (_asset, _team) {
         // no longer used as the primary mechanism; keep for safety if anything external calls it
         // (fall back to the new computed set for correctness).
@@ -1341,7 +1341,7 @@ function VM() {
     };
 
 
-    // recompute one team's asset list :contentReference[oaicite:2]{index=2}
+    // recompute one team's asset list
     self._refreshTeamTrackableAssets = function (team) {
         console.log("Refreshing trackable assets for team:", team?.callsign?.());
         if (!team || typeof team.trackableAssets !== 'function') return;
@@ -2610,9 +2610,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         document.addEventListener("keydown", (e) => {
-            // Cmd+B / Ctrl+B
-            const isB = (e.key || "").toLowerCase() === "b";
-            if (!isB) return;
+            // Cmd+K / Ctrl+K to open Spotlight Search
+            const isK = (e.key || "").toLowerCase() === "k";
+            if (!isK) return;
 
             const isCmd = e.metaKey === true;
             const isCtrl = e.ctrlKey === true;
