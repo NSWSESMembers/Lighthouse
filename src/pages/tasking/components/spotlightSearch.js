@@ -214,9 +214,9 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         self.matchedJob(null);
     }
 
-    function setCommandState({ stage, hint, team, job }) {
+    function setCommandState({ name, stage, hint, team, job }) {
         self.isCommandMode(true);
-        self.commandName("task");
+        self.commandName(name || "");
         self.commandStage(stage);
         self.commandHint(hint || "");
         self.matchedTeam(team || null);
@@ -508,12 +508,85 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         return decorateResults(teamRows.concat(jobRows));
     }
 
+    function commandResultsForLog(raw) {
+        const tokens = parseTokens(raw);
+        const cmd = (tokens[0] || "").toLowerCase();
+        if (cmd !== "log") return null;
+
+        const aTok = (tokens[1] || "").toLowerCase();
+
+        // No incident yet → show incident suggestions
+        if (!tokens[1]) {
+            setCommandState({
+                name: "log",
+                stage: "incident",
+                hint: "log <incident> — select an incident",
+                team: null,
+                job: null
+            });
+
+            const { jobMatches } = topMatchesForToken("");
+            return decorateResults(
+                jobMatches.slice(0, 15).map(({ item: j }) => ({
+                    kind: "Incident",
+                    ref: j.ref,
+                    primary: j.primary,
+                    secondary: j.secondary,
+                    badge: "incident",
+                    applyText: `log ${j.identifier}`
+                }))
+            );
+        }
+
+        const A = topMatchesForToken(aTok);
+
+        // Unique match → ready to run
+        if (A.uniqueJob) {
+            setCommandState({
+                name: "log",
+                stage: "ready",
+                hint: "Press Enter to open Ops Log.",
+                team: null,
+                job: A.uniqueJob
+            });
+
+            return decorateResults([{
+                kind: "Execute",
+                ref: { cmd: "log", job: A.uniqueJob },
+                primary: `Ops Log — ${safeStr(A.uniqueJob.identifier)}`,
+                secondary: "Open new Ops Log modal",
+                badge: "run",
+                applyText: null
+            }]);
+        }
+
+        // Not unique → show filtered incident suggestions
+        setCommandState({
+            name: "log",
+            stage: "incident",
+            hint: "Select an incident (or refine token)",
+            team: null,
+            job: null
+        });
+
+        return decorateResults(
+            A.jobMatches.slice(0, 15).map(({ item: j }) => ({
+                kind: "Incident",
+                ref: j.ref,
+                primary: j.primary,
+                secondary: j.secondary,
+                badge: "incident",
+                applyText: `log ${j.identifier}`
+            }))
+        );
+    }
+
 
     function runSearch() {
         const raw = (self.query() || "");
 
         // command mode?
-        const cmdResults = commandResultsForTask(raw);
+        const cmdResults = commandResultsForTask(raw) || commandResultsForLog(raw);
         if (cmdResults) {
             self.results(cmdResults);
             setActiveByIndex(0);
@@ -553,8 +626,14 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     function executeTask(teamVm, jobVm) {
         if (!teamVm || !jobVm) return;
         rootVm._closeSpotlight?.();
-        // NOTE: signature is (jobVm, teamVm) :contentReference[oaicite:1]{index=1}
+        // NOTE: signature is (jobVm, teamVm)
         rootVm.showConfirmTaskingModal?.(jobVm, teamVm);
+    }
+
+    function executeLog(jobVm) {
+        if (!jobVm) return;
+        rootVm._closeSpotlight?.();
+        rootVm.attachNewOpsLogModal?.(jobVm);
     }
 
     self.openResult = (r) => {
@@ -562,9 +641,9 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
         // Command-mode rows
         if (self.isCommandMode()) {
-            if (r.kind === "Execute" && r.ref?.team && r.ref?.job) {
-                executeTask(r.ref.team, r.ref.job);
-                return;
+            if (r.kind === "Execute") {
+                if (r.ref?.cmd === "log" && r.ref?.job) { executeLog(r.ref.job); return; }
+                if (r.ref?.team && r.ref?.job) { executeTask(r.ref.team, r.ref.job); return; }
             }
             if (r.applyText) {
                 self.query(r.applyText);
@@ -577,9 +656,20 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 return;
             }
             if (r.kind === "Incident" && r.ref?.identifier) {
-                const t = self.matchedTeam();
-                const tcs = t?.callsign?.() || safeStr(t?.callsign) || "";
-                if (tcs) self.query(`task ${tcs} ${safeStr(r.ref.identifier)}`);
+                const cmd = (self.commandName() || "").toLowerCase();
+
+                if (cmd === "task") {
+                    const t = self.matchedTeam();
+                    const tcs = t?.callsign?.() || safeStr(t?.callsign) || "";
+                    if (tcs) self.query(`task ${tcs} ${safeStr(r.ref.identifier)}`);
+                    return;
+                }
+
+                if (cmd === "log") {
+                    self.query(`log ${safeStr(r.ref.identifier)}`);
+                    return;
+                }
+
                 return;
             }
             return;
@@ -615,11 +705,17 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             e.preventDefault();
 
             if (self.isCommandMode() && self.commandStage() === "ready") {
-                const t = self.matchedTeam();
-                const j = self.matchedJob();
-                if (t && j) {
-                    executeTask(t, j);
-                    return true;
+                const cmd = (self.commandName() || "").toLowerCase();
+
+                if (cmd === "task") {
+                    const t = self.matchedTeam();
+                    const j = self.matchedJob();
+                    if (t && j) { executeTask(t, j); return true; }
+                }
+
+                if (cmd === "log") {
+                    const j = self.matchedJob();
+                    if (j) { executeLog(j); return true; }
                 }
             }
 

@@ -988,6 +988,24 @@ function VM() {
 
     };
 
+    self.attachJobRadioLogModalByTeamAndIncident = function (jobId, teamCallsign) {
+        const modalEl = document.getElementById('RadioLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        self.CreateRadioLogModalVM.modalInstance = modal;
+
+        self.CreateRadioLogModalVM.openFromTeamPlusIncident(jobId, teamCallsign);
+        modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => self.CreateRadioLogModalVM.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
+    };
+
     self.attachSendSMSModal = function (recipients, team = null, tasking = null, job = null) {
         var msgRecipients = [];
         var taskId = null;
