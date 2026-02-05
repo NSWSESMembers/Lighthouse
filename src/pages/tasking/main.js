@@ -762,7 +762,12 @@ function VM() {
             );
             self.sectorsLoading(false);
         }, (count, total) => {
+            if (count != -1 && total != -1) {
             console.log(`Fetched ${count} / ${total} sectors...`);
+            } else {
+                console.log("Sector fetching errored out or returned unknown total count.");
+                showAlert('Failed to fetching sectors. Your session may have expired', 'danger', 5000);
+            }
         });
     }
 
