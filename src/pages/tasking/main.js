@@ -1449,8 +1449,8 @@ function VM() {
         self.spotlightSearchVM.results.removeAll();
         self.spotlightSearchVM.activeIndex(0);
         self.spotlightSearchVM.rebuildIndex?.();
-
         self._spotlightModal.show();
+
 
         // focus input after show
        document.getElementById("spotlightSearchInput")?.focus();
@@ -1740,6 +1740,13 @@ function VM() {
                     self.attachSendSMSModal([], teamVm, null, jobVm);
                 }
             });
+        });
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => { self.assignJobToTeam(teamVm, jobVm), modal.hide(); },
+            onClose: () => modal.hide(),
+            allowInInputs: true
         });
 
     };
@@ -2581,7 +2588,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function ({ token: rToken, tokenexp: rExp }) {
             console.log("Fetched Beacon token," + rToken);
             setToken(rToken, rExp);
-            myViewModel.tokenLoading(false);
+            myViewModel?.tokenLoading(false);
         }
     );
 

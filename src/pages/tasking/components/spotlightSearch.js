@@ -78,13 +78,18 @@ function decorateResults(items) {
     }));
 }
 
-function parseTokens(raw) {
-    const s = String(raw ?? "");
-    const hasTrailingSpace = /\s$/.test(s);
-    const parts = s.trim().length ? s.trim().split(/\s+/) : [];
-    // If user just typed a space, conceptually they are starting a new token.
-    if (hasTrailingSpace) parts.push("");
-    return parts;
+function parseTokens(input) {
+    if (!input) return [];
+
+    const tokens = [];
+    const re = /"([^"]+)"|(\S+)/g;
+    let m;
+
+    while ((m = re.exec(input)) !== null) {
+        tokens.push(m[1] ?? m[2]);
+    }
+
+    return tokens;
 }
 
 function scoreMatch(haystackLower, needleLower) {
@@ -94,6 +99,39 @@ function scoreMatch(haystackLower, needleLower) {
     // startsWith > includes, then earlier index
     return (idx === 0 ? 1000 : 0) - idx;
 }
+
+function uniqById(items, getId) {
+    const out = [];
+    const seen = new Set();
+    for (const x of items || []) {
+        const id = getId(x);
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        out.push(x);
+    }
+    return out;
+}
+
+function safeId(vm) {
+    try { return String(vm?.id?.() ?? vm?.id ?? ""); } catch { return ""; }
+}
+
+function getTaskedJobsForTeam(teamVm) {
+    const ts = ko.unwrap(teamVm?.taskings) ? ko.unwrap(teamVm.taskings) : (teamVm?.taskings?.() || []);
+    const jobs = (ts || []).map(t => {
+        try { return ko.unwrap(t?.job) || t?.job?.() || t?.job || null; } catch { return null; }
+    }).filter(Boolean);
+    return uniqById(jobs, safeId);
+}
+
+function getTaskedTeamsForJob(jobVm) {
+    const ts = ko.unwrap(jobVm?.taskings) ? ko.unwrap(jobVm.taskings) : (jobVm?.taskings?.() || []);
+    const teams = (ts || []).map(t => {
+        try { return ko.unwrap(t?.team) || t?.team || null; } catch { return null; }
+    }).filter(Boolean);
+    return uniqById(teams, safeId);
+}
+
 
 export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     const self = this;
@@ -129,8 +167,48 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     self.positionText = ko.pureComputed(() => {
         const n = self.results().length;
         if (!n) return "";
-        return (self.activeIndex() + 1) + "/" + n;
+        const max = n == 20 ? "20+" : n; //hacky but no one will ever count them
+        return (self.activeIndex() + 1) + "/" + max;
     });
+
+    function foldTeamTokens(tokens) {
+        if (tokens.length < 2) return tokens;
+
+        // try longest-first folding after command token
+        for (let i = tokens.length; i > 1; i--) {
+            const joined = tokens.slice(1, i).join(" ");
+            const m = topMatchesForToken(joined);
+
+            if (m.uniqueTeam) {
+                return [tokens[0], joined, ...tokens.slice(i)];
+            }
+        }
+
+        return tokens;
+    }
+
+    function quoteIfNeeded(s) {
+        const v = safeStr(s).trim();
+        if (!v) return v;
+        return /\s/.test(v) ? `"${v.replace(/"/g, '\\"')}"` : v;
+    }
+
+    function scrollActiveIntoView(idx) {
+        const container = document.querySelector('#spotlightResults');
+        if (!container) return;
+
+        const el = container.querySelector(`[data-idx="${idx}"]`);
+        if (!el) return;
+
+        const cRect = container.getBoundingClientRect();
+        const eRect = el.getBoundingClientRect();
+
+        if (eRect.top < cRect.top) {
+            el.scrollIntoView({ block: 'nearest' });
+        } else if (eRect.bottom > cRect.bottom) {
+            el.scrollIntoView({ block: 'nearest' });
+        }
+    }
 
     function setActiveByIndex(idx) {
         const arr = self.results();
@@ -146,6 +224,10 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         for (let i = 0; i < n; i++) {
             arr[i].isActive(i === clamped);
         }
+
+        scrollActiveIntoView(clamped);
+
+
     }
 
     self.isActiveIndex = function (indexFn) {
@@ -223,6 +305,11 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         self.matchedJob(job || null);
     }
 
+    self.isOrderlessCommand = ko.pureComputed(() => {
+        const c = (self.commandName() || "").toLowerCase();
+        return c === "task" || c === "radio";
+    });
+
     function topMatchesForToken(tokenLower) {
         const teamMatches = [];
         const jobMatches = [];
@@ -261,8 +348,14 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     }
 
     function commandResultsForTask(raw) {
-        const tokens = parseTokens(raw);
+
+        let tokens = parseTokens(raw);
         const cmd = (tokens[0] || "").toLowerCase();
+
+        if (cmd === "task" || cmd === "radio") {
+            tokens = foldTeamTokens(tokens);
+        }
+
         if (cmd !== "task") return null;
 
         const aTok = (tokens[1] || "").toLowerCase();
@@ -271,6 +364,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         // No args yet → show teams by default (or you can show both groups)
         if (!tokens[1]) {
             setCommandState({
+                name: "task",
                 stage: "team",
                 hint: "task <team> <incident> (either order) — select first argument",
                 team: null,
@@ -284,8 +378,8 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                     ref: t.ref,
                     primary: t.primary,
                     secondary: t.secondary,
-                    badge: "team",
-                    applyText: `task ${t.callsign} `
+                    badge: "Team",
+                    applyText: `task ${quoteIfNeeded(t.callsign)} `
                 }))
             );
         }
@@ -299,6 +393,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
             if (aIsTeam) {
                 setCommandState({
+                    name: "task",
                     stage: "incident",
                     hint: `Team matched (${safeStr(A.uniqueTeam.callsign)}). Now select an incident.`,
                     team: A.uniqueTeam,
@@ -312,14 +407,15 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                         ref: j.ref,
                         primary: j.primary,
                         secondary: j.secondary,
-                        badge: "incident",
-                        applyText: `task ${safeStr(A.uniqueTeam.callsign)} ${j.identifier}`
+                        badge: "Incident",
+                        applyText: `task ${quoteIfNeeded(A.uniqueTeam.callsign)} ${quoteIfNeeded(j.identifier)}`
                     }))
                 );
             }
 
             if (aIsJob) {
                 setCommandState({
+                    name: "task",
                     stage: "team",
                     hint: `Incident matched (${safeStr(A.uniqueJob.identifier)}). Now select a team.`,
                     team: null,
@@ -333,14 +429,15 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                         ref: t.ref,
                         primary: t.primary,
                         secondary: t.secondary,
-                        badge: "team",
-                        applyText: `task ${safeStr(A.uniqueJob.identifier)} ${t.callsign}`
+                        badge: "Team",
+                        applyText: `task ${quoteIfNeeded(A.uniqueJob.identifier)} ${quoteIfNeeded(t.callsign)}`
                     }))
                 );
             }
 
             // Ambiguous first token → show both groups, top-ranked first
             setCommandState({
+                name: "task",
                 stage: "command",
                 hint: "First argument ambiguous — pick team or incident",
                 team: null,
@@ -352,7 +449,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 ref: t.ref,
                 primary: t.primary,
                 secondary: t.secondary,
-                badge: "team",
+                badge: "Team",
                 applyText: `task ${t.callsign} `
             }));
 
@@ -361,8 +458,8 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 ref: j.ref,
                 primary: j.primary,
                 secondary: j.secondary,
-                badge: "incident",
-                applyText: `task ${j.identifier} `
+                badge: "Incident",
+                applyText: `task ${quoteIfNeeded(j.identifier)} `
             }));
 
             return decorateResults(teamRows.concat(jobRows));
@@ -378,14 +475,14 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         const order2Ok = !!order2.team && !!order2.job;
 
         if (order1Ok && !order2Ok) {
-            setCommandState({ stage: "ready", hint: "Press Enter to task.", team: order1.team, job: order1.job });
+            setCommandState({ name: "task", stage: "ready", hint: "Press Enter to task.", team: order1.team, job: order1.job });
 
             const execRow = [{
                 kind: "Execute",
                 ref: { team: order1.team, job: order1.job },
                 primary: `Task ${safeStr(order1.job.identifier)} → ${safeStr(order1.team.callsign)}`,
                 secondary: "Open confirm tasking modal",
-                badge: "run",
+                badge: "Task Team",
                 applyText: null
             }];
 
@@ -393,14 +490,14 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         }
 
         if (order2Ok && !order1Ok) {
-            setCommandState({ stage: "ready", hint: "Press Enter to task.", team: order2.team, job: order2.job });
+            setCommandState({ name: "task", stage: "ready", hint: "Press Enter to task.", team: order2.team, job: order2.job });
 
             const execRow = [{
                 kind: "Execute",
                 ref: { team: order2.team, job: order2.job },
                 primary: `Task ${safeStr(order2.job.identifier)} → ${safeStr(order2.team.callsign)}`,
                 secondary: "Open confirm tasking modal",
-                badge: "run",
+                badge: "Task Team",
                 applyText: null
             }];
 
@@ -410,6 +507,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         if (order1Ok && order2Ok) {
             // Very rare (token A matches both uniquely etc). Force explicit choice.
             setCommandState({
+                name: "task",
                 stage: "error",
                 hint: "Both orders valid — choose the intended pairing below",
                 team: null,
@@ -421,14 +519,14 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 ref: { team: order1.team, job: order1.job },
                 primary: `Task ${safeStr(order1.job.identifier)} → ${safeStr(order1.team.callsign)}`,
                 secondary: "a=team, b=incident",
-                badge: "run",
+                badge: "Task Team",
                 applyText: null
             }, {
                 kind: "Execute",
                 ref: { team: order2.team, job: order2.job },
                 primary: `Task ${safeStr(order2.job.identifier)} → ${safeStr(order2.team.callsign)}`,
                 secondary: "a=incident, b=team",
-                badge: "run",
+                badge: "Task Team",
                 applyText: null
             }];
 
@@ -442,6 +540,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
         if (aLooksTeam) {
             setCommandState({
+                name: "task",
                 stage: "incident",
                 hint: "Select an incident (or refine incident token)",
                 team: A.uniqueTeam || null,
@@ -453,8 +552,8 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 ref: j.ref,
                 primary: j.primary,
                 secondary: j.secondary,
-                badge: "incident",
-                applyText: `task ${safeStr((A.uniqueTeam || A.teamMatches[0]?.item?.ref)?.callsign || "")} ${j.identifier}`.trim()
+                badge: "Incident",
+                applyText: `task ${quoteIfNeeded((A.uniqueTeam || A.teamMatches[0]?.item?.ref)?.callsign || "")} ${quoteIfNeeded(j.identifier)}`.trim()
             }));
 
             return decorateResults(rows);
@@ -462,6 +561,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
         if (aLooksJob) {
             setCommandState({
+                name: "task",
                 stage: "team",
                 hint: "Select a team (or refine team token)",
                 team: null,
@@ -473,14 +573,15 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 ref: t.ref,
                 primary: t.primary,
                 secondary: t.secondary,
-                badge: "team",
-                applyText: `task ${safeStr((A.uniqueJob || A.jobMatches[0]?.item?.ref)?.identifier || "")} ${t.callsign}`.trim()
+                badge: "Team",
+                applyText: `task ${quoteIfNeeded((A.uniqueJob || A.jobMatches[0]?.item?.ref)?.identifier || "")} ${quoteIfNeeded(t.callsign)}`.trim()
             }));
 
             return decorateResults(rows);
         }
 
         setCommandState({
+            name: "task",
             stage: "command",
             hint: "Both tokens ambiguous — pick team/incident from suggestions",
             team: null,
@@ -492,7 +593,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             ref: t.ref,
             primary: t.primary,
             secondary: t.secondary,
-            badge: "team",
+            badge: "Team",
             applyText: `task ${t.callsign} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
         }));
 
@@ -501,8 +602,8 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             ref: j.ref,
             primary: j.primary,
             secondary: j.secondary,
-            badge: "incident",
-            applyText: `task ${j.identifier} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
+            badge: "Incident",
+            applyText: `task ${quoteIfNeeded(j.identifier)} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
         }));
 
         return decorateResults(teamRows.concat(jobRows));
@@ -532,8 +633,8 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                     ref: j.ref,
                     primary: j.primary,
                     secondary: j.secondary,
-                    badge: "incident",
-                    applyText: `log ${j.identifier}`
+                    badge: "Incident",
+                    applyText: `log ${quoteIfNeeded(j.identifier)}`
                 }))
             );
         }
@@ -555,7 +656,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 ref: { cmd: "log", job: A.uniqueJob },
                 primary: `Ops Log — ${safeStr(A.uniqueJob.identifier)}`,
                 secondary: "Open new Ops Log modal",
-                badge: "run",
+                badge: "Create Log",
                 applyText: null
             }]);
         }
@@ -575,51 +676,312 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 ref: j.ref,
                 primary: j.primary,
                 secondary: j.secondary,
-                badge: "incident",
-                applyText: `log ${j.identifier}`
+                badge: "Incident",
+                applyText: `log ${quoteIfNeeded(j.identifier)}`
             }))
         );
     }
 
+    function commandResultsForRadio(raw) {
+        let tokens = parseTokens(raw);
+        const cmd = (tokens[0] || "").toLowerCase();
+
+        if (cmd === "task" || cmd === "radio") {
+            tokens = foldTeamTokens(tokens);
+        }
+        if (cmd !== "radio") return null;
+
+        const aTok = (tokens[1] || "").toLowerCase();
+        const bTok = (tokens[2] || "").toLowerCase();
+
+        // no args -> teams first (same UX as task)
+        if (!tokens[1]) {
+            setCommandState({
+                name: "radio",
+                stage: "team",
+                hint: "radio <team> <incident> (either order) — select first argument",
+                team: null,
+                job: null
+            });
+
+            const { teamMatches } = topMatchesForToken("");
+            return decorateResults(
+                teamMatches.slice(0, 15).map(({ item: t }) => ({
+                    kind: "Team",
+                    ref: t.ref,
+                    primary: t.primary,
+                    secondary: t.secondary,
+                    badge: "Team",
+                    applyText: `radio ${quoteIfNeeded(t.callsign)} `
+                }))
+            );
+        }
+
+        const A = topMatchesForToken(aTok);
+
+        // one arg only -> decide likely side and show other-side suggestions with tasking-first ordering
+        if (!tokens[2]) {
+            const aIsTeam = !!A.uniqueTeam && !A.uniqueJob;
+            const aIsJob = !!A.uniqueJob && !A.uniqueTeam;
+
+            if (aIsTeam) {
+                const team = A.uniqueTeam;
+
+                setCommandState({
+                    name: "radio",
+                    stage: "Incident",
+                    hint: `Team matched (${safeStr(team.callsign)}). Now select an incident.`,
+                    team,
+                    job: null
+                });
+
+                const preferred = new Set(getTaskedJobsForTeam(team).map(j => safeId(j)));
+                const { jobMatches } = topMatchesForToken(""); // allow anything
+
+                const pref = [];
+                const rest = [];
+                for (const { item: j } of jobMatches) {
+                    (preferred.has(safeId(j.ref)) ? pref : rest).push(j);
+                }
+
+                const rows = pref.concat(rest).slice(0, 20).map((j) => ({
+                    kind: "Incident",
+                    ref: j.ref,
+                    primary: j.primary,
+                    secondary: j.secondary,
+                    badge: preferred.has(safeId(j.ref)) ? "Active Tasking" : "Incident",
+                    applyText: `radio ${quoteIfNeeded(team.callsign)} ${quoteIfNeeded(j.identifier)}`
+                }));
+
+                return decorateResults(rows);
+            }
+
+            if (aIsJob) {
+                const job = A.uniqueJob;
+
+                setCommandState({
+                    name: "radio",
+                    stage: "team",
+                    hint: `Incident matched (${safeStr(job.identifier)}). Now select a team.`,
+                    team: null,
+                    job
+                });
+
+                const preferred = new Set(getTaskedTeamsForJob(job).map(t => safeId(t)));
+                const { teamMatches } = topMatchesForToken(""); // allow anything
+
+                const pref = [];
+                const rest = [];
+                for (const { item: t } of teamMatches) {
+                    (preferred.has(safeId(t.ref)) ? pref : rest).push(t);
+                }
+
+                const rows = pref.concat(rest).slice(0, 20).map((t) => ({
+                    kind: "Team",
+                    ref: t.ref,
+                    primary: t.primary,
+                    secondary: t.secondary,
+                    badge: preferred.has(safeId(t.ref)) ? "Active Tasking" : "Team",
+                    applyText: `radio ${quoteIfNeeded(job.identifier)} ${quoteIfNeeded(t.callsign)}`
+                }));
+
+                return decorateResults(rows);
+            }
+
+            // ambiguous first token -> show both lists (no special ordering yet)
+            setCommandState({
+                name: "radio",
+                stage: "command",
+                hint: "Pick a team or incident",
+                team: null,
+                job: null
+            });
+
+            const teamRows = A.teamMatches.slice(0, 8).map(({ item: t }) => ({
+                kind: "Team",
+                ref: t.ref,
+                primary: t.primary,
+                secondary: t.secondary,
+                badge: "Team",
+                applyText: `radio ${quoteIfNeeded(t.callsign)} `
+
+            }));
+
+            const jobRows = A.jobMatches.slice(0, 8).map(({ item: j }) => ({
+                kind: "Incident",
+                ref: j.ref,
+                primary: j.primary,
+                secondary: j.secondary,
+                badge: "Incident",
+                applyText: `radio ${quoteIfNeeded(j.identifier)} `
+
+            }));
+
+            return decorateResults(teamRows.concat(jobRows));
+        }
+
+        // two args -> resolve either order like task, but execute radio when both unique
+        const B = topMatchesForToken(bTok);
+
+        const team = A.uniqueTeam || B.uniqueTeam || null;
+        const job = A.uniqueJob || B.uniqueJob || null;
+
+        if (team && job) {
+            setCommandState({
+                name: "radio",
+                stage: "ready",
+                hint: "Press Enter to open Radio Log.",
+                team,
+                job
+            });
+
+            return decorateResults([{
+                kind: "Execute",
+                ref: { cmd: "radio", team, job },
+                primary: `Radio Log — ${safeStr(team.callsign)} / ${safeStr(job.identifier)}`,
+                secondary: "Open radio log modal",
+                badge: "Create Log",
+                applyText: null
+            }]);
+        }
+
+        // not resolvable yet -> whichever side is known, reorder suggestions with tasked-first
+        if (team && !job) {
+            setCommandState({
+                name: "radio",
+                stage: "incident",
+                hint: "Select an incident (tasked ones are shown first)",
+                team,
+                job: null
+            });
+
+            const preferred = new Set(getTaskedJobsForTeam(team).map(j => safeId(j)));
+            const { jobMatches } = topMatchesForToken(bTok);
+
+            const pref = [];
+            const rest = [];
+            for (const { item: j } of jobMatches) (preferred.has(safeId(j.ref)) ? pref : rest).push(j);
+
+            return decorateResults(
+                pref.concat(rest).slice(0, 20).map((j) => ({
+                    kind: "Incident",
+                    ref: j.ref,
+                    primary: j.primary,
+                    secondary: j.secondary,
+                    badge: preferred.has(safeId(j.ref)) ? "Tasked" : "Incident",
+                    applyText: `radio ${quoteIfNeeded(team.callsign)} ${quoteIfNeeded(j.identifier)}`
+                }))
+            );
+        }
+
+        if (job && !team) {
+            setCommandState({
+                name: "radio",
+                stage: "team",
+                hint: "Select a team (tasked ones are shown first)",
+                team: null,
+                job
+            });
+
+            const preferred = new Set(getTaskedTeamsForJob(job).map(t => safeId(t)));
+            const { teamMatches } = topMatchesForToken(bTok);
+
+            const pref = [];
+            const rest = [];
+            for (const { item: t } of teamMatches) (preferred.has(safeId(t.ref)) ? pref : rest).push(t);
+
+            return decorateResults(
+                pref.concat(rest).slice(0, 20).map((t) => ({
+                    kind: "Team",
+                    ref: t.ref,
+                    primary: t.primary,
+                    secondary: t.secondary,
+                    badge: preferred.has(safeId(t.ref)) ? "Tasked" : "Team",
+                    applyText: `radio ${quoteIfNeeded(job.identifier)} ${quoteIfNeeded(t.callsign)}`
+                }))
+            );
+        }
+
+        // still ambiguous -> show both token suggestions
+        setCommandState({
+            name: "radio",
+            stage: "command",
+            hint: "Both tokens ambiguous — pick team/incident",
+            team: null,
+            job: null
+        });
+
+        const teamRows = B.teamMatches.slice(0, 8).map(({ item: t }) => ({
+            kind: "Team",
+            ref: t.ref,
+            primary: t.primary,
+            secondary: t.secondary,
+            badge: "team",
+            applyText: `radio ${quoteIfNeeded(t.callsign)} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
+        }));
+
+        const jobRows = B.jobMatches.slice(0, 8).map(({ item: j }) => ({
+            kind: "Incident",
+            ref: j.ref,
+            primary: j.primary,
+            secondary: j.secondary,
+            badge: "Incident",
+            applyText: `radio ${quoteIfNeeded(j.identifier)} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
+        }));
+
+        return decorateResults(teamRows.concat(jobRows));
+    }
+
+
 
     function runSearch() {
+        const prev = self.results()[self.activeIndex()];
+        const prevId = prev?.ref ? safeId(prev.ref) : null;
+
         const raw = (self.query() || "");
 
-        // command mode?
-        const cmdResults = commandResultsForTask(raw) || commandResultsForLog(raw);
+        const cmdResults =
+            commandResultsForTask(raw) ||
+            commandResultsForLog(raw) ||
+            commandResultsForRadio(raw);
+
         if (cmdResults) {
             self.results(cmdResults);
-            setActiveByIndex(0);
+
+            const idx = prevId
+                ? cmdResults.findIndex(r => safeId(r.ref) === prevId)
+                : -1;
+
+            setActiveByIndex(idx >= 0 ? idx : 0);
             return;
         }
 
-        // otherwise: normal search
         resetCommandState();
 
         const q = raw.trim().toLowerCase();
-        if (!q) {
-            self.results.removeAll();
-            self.activeIndex(0);
-            return;
-        }
-
         const scored = [];
+
         const consider = (x) => {
-            const s = x.searchText;
-            const idx = s.indexOf(q);
+            const idx = x.searchText.indexOf(q);
             if (idx === -1) return;
-            const score = (idx === 0 ? 1000 : 0) - idx;
-            scored.push({ ...x, score });
+            scored.push({ ...x, score: (idx === 0 ? 1000 : 0) - idx });
         };
 
-        teamIndex.forEach(consider);
         jobIndex.forEach(consider);
+        teamIndex.forEach(consider);
+
         scored.sort((a, b) => b.score - a.score);
 
-        const rawItems = scored.slice(0, 40).map(({ _score, ...r }) => r);
-        self.results(decorateResults(rawItems));
-        setActiveByIndex(0);
+        const decorated = decorateResults(scored.slice(0, 20));
+        self.results(decorated);
+
+        const idx = prevId
+            ? decorated.findIndex(r => safeId(r.ref) === prevId)
+            : -1;
+
+        setActiveByIndex(idx >= 0 ? idx : 0);
     }
+
 
     self.query.subscribe(scheduleSearch);
 
@@ -636,6 +998,12 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         rootVm.attachNewOpsLogModal?.(jobVm);
     }
 
+    function executeRadio(teamVm, jobVm) {
+        if (!teamVm || !jobVm) return;
+        rootVm._closeSpotlight?.();
+        rootVm.attachJobRadioLogModalByTeamAndIncident?.(jobVm.id?.(), safeStr(teamVm.callsign));
+    }
+
     self.openResult = (r) => {
         if (!r) return;
 
@@ -643,7 +1011,8 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         if (self.isCommandMode()) {
             if (r.kind === "Execute") {
                 if (r.ref?.cmd === "log" && r.ref?.job) { executeLog(r.ref.job); return; }
-                if (r.ref?.team && r.ref?.job) { executeTask(r.ref.team, r.ref.job); return; }
+                if (r.ref?.cmd === "radio" && r.ref?.team && r.ref?.job) { executeRadio(r.ref.team, r.ref.job); return; }
+                if (r.ref?.cmd === "task" && r.ref?.team && r.ref?.job) { executeTask(r.ref.team, r.ref.job); return; }
             }
             if (r.applyText) {
                 self.query(r.applyText);
@@ -717,6 +1086,13 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                     const j = self.matchedJob();
                     if (j) { executeLog(j); return true; }
                 }
+
+                if (cmd === "radio") {
+                    const t = self.matchedTeam();
+                    const j = self.matchedJob();
+                    if (t && j) { executeRadio(t, j); return true; }
+                }
+
             }
 
             const r = self.results()[self.activeIndex()];
@@ -735,7 +1111,10 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
     // called by root when new data arrives
     self.rebuildIndex = () => {
+        const prev = self.results()[self.activeIndex()];
+        const prevId = prev?.ref ? safeId(prev.ref) : null;
+
         rebuildIndex();
-        runSearch();
+        runSearch(prevId);
     };
 }

@@ -1,4 +1,4 @@
-// hotkeys/modalHotkeys.js
+// hotkeys/modalHotKeys.js
 export function installModalHotkeys({
   modalEl,
   onSave,
@@ -26,7 +26,9 @@ export function installModalHotkeys({
   };
 
   modalEl.addEventListener('keydown', handler);
-  modalEl.addEventListener('hidden.bs.modal', () => {
-    modalEl.removeEventListener('keydown', handler);
-  }, { once: true });
+  modalEl.addEventListener(
+    'hidden.bs.modal',
+    () => modalEl.removeEventListener('keydown', handler),
+    { once: true }
+  );
 }
