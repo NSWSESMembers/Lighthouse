@@ -3179,27 +3179,54 @@
                 <div class="modal-body p-2">
 
                     <input id="spotlightSearchInput" type="search" class="form-control form-control-lg"
-                        placeholder="Search teams + incidents…" autocomplete="off" data-bind="
+                        placeholder="Search teams, incidents, or enter a command" autocomplete="off" data-bind="
             value: query,
             valueUpdate: 'afterkeydown',
             event: { keydown: onInputKeyDown }
           " />
+                    <!-- after the input, before the results list -->
+                    <div class="mt-2 d-flex flex-wrap gap-2 align-items-center" data-bind="visible: isCommandMode">
 
-                    <div class="mt-2 list-group" style="max-height: 420px; overflow:auto;" data-bind="foreach: results">
-                        <button type="button"
-                            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                            data-bind="
-            click: $parent.openResult,
-            css: { active: isActive }
-          ">
-                            <div class="me-2 text-start">
-                                <div class="fw-semibold" data-bind="text: primary"></div>
-                                <div class="small text-muted" data-bind="text: secondary"></div>
-                            </div>
-                            <span class="badge bg-secondary" data-bind="text: kind"></span>
-                        </button>
+                        <span class="badge bg-dark" data-bind="text: commandName"></span>
+
+                        <!-- TEAM badge (show for orderless commands) -->
+                         <span data-bind="visible: !matchedTeamText()">
+                        <span class="badge bg-secondary"
+                            data-bind="visible: isOrderlessCommand() && commandStage() === 'team'">team…</span>
+                        <span class="badge bg-light text-dark border"
+                            data-bind="visible: isOrderlessCommand() && commandStage() !== 'team'">team</span>
+                        </span>
+                        <!-- INCIDENT badge (show for orderless commands) -->
+                        <span data-bind="visible: !matchedJobText()">
+                        <span class="badge bg-secondary"
+                            data-bind="visible: isOrderlessCommand() && commandStage() === 'incident'">incident…</span>
+                        <span class="badge bg-light text-dark border"
+                            data-bind="visible: isOrderlessCommand() && commandStage() !== 'incident'">incident</span>
+                        </span>
+
+                        <span class="badge bg-success" data-bind="visible: matchedTeamText">
+                            <span data-bind="text: matchedTeamText"></span>
+                        </span>
+
+                        <span class="badge bg-success" data-bind="visible: matchedJobText">
+                            <span data-bind="text: matchedJobText"></span>
+                        </span>
+
+                        <span class="text-muted small ms-1" data-bind="text: commandHint"></span>
                     </div>
-
+                    <div id="spotlightResults">
+                        <div class="mt-2 list-group" data-bind="foreach: results">
+                            <button type="button"
+                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                                data-bind="click: $parent.openResult, css: { active: isActive }, attr:{'data-idx': $index}">
+                                <div class="me-2 text-start">
+                                    <div class="fw-semibold" data-bind="text: primary"></div>
+                                    <div class="small text-muted spotlight-secondary" data-bind="text: secondary"></div>
+                                </div>
+                                <span class="badge bg-secondary" data-bind="text: (badge || kind)"></span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="small text-muted mt-2 d-flex justify-content-between">
                         <span>↑↓ navigate • Enter open • Esc close</span>
                         <span data-bind="text: positionText, visible: positionText"></span>

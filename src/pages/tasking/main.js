@@ -993,6 +993,24 @@ function VM() {
 
     };
 
+    self.attachJobRadioLogModalByTeamAndIncident = function (jobId, teamCallsign) {
+        const modalEl = document.getElementById('RadioLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        self.CreateRadioLogModalVM.modalInstance = modal;
+
+        self.CreateRadioLogModalVM.openFromTeamPlusIncident(jobId, teamCallsign);
+        modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => self.CreateRadioLogModalVM.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
+    };
+
     self.attachSendSMSModal = function (recipients, team = null, tasking = null, job = null) {
         var msgRecipients = [];
         var taskId = null;
@@ -1436,8 +1454,8 @@ function VM() {
         self.spotlightSearchVM.results.removeAll();
         self.spotlightSearchVM.activeIndex(0);
         self.spotlightSearchVM.rebuildIndex?.();
-
         self._spotlightModal.show();
+
 
         // focus input after show
        document.getElementById("spotlightSearchInput")?.focus();
@@ -1727,6 +1745,13 @@ function VM() {
                     self.attachSendSMSModal([], teamVm, null, jobVm);
                 }
             });
+        });
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => { self.assignJobToTeam(teamVm, jobVm), modal.hide(); },
+            onClose: () => modal.hide(),
+            allowInInputs: true
         });
 
     };
@@ -2568,7 +2593,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function ({ token: rToken, tokenexp: rExp }) {
             console.log("Fetched Beacon token," + rToken);
             setToken(rToken, rExp);
-            myViewModel.tokenLoading(false);
+            myViewModel?.tokenLoading(false);
         }
     );
 
