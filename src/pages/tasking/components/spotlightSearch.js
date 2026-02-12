@@ -450,7 +450,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 primary: t.primary,
                 secondary: t.secondary,
                 badge: "Team",
-                applyText: `task ${t.callsign} `
+                applyText: `task ${quoteIfNeeded(t.callsign)} `
             }));
 
             const jobRows = A.jobMatches.slice(0, 8).map(({ item: j }) => ({
@@ -479,7 +479,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
             const execRow = [{
                 kind: "Execute",
-                ref: { team: order1.team, job: order1.job },
+                ref: { cmd: "task", team: order1.team, job: order1.job },
                 primary: `Task ${safeStr(order1.job.identifier)} → ${safeStr(order1.team.callsign)}`,
                 secondary: "Open confirm tasking modal",
                 badge: "Task Team",
@@ -1005,6 +1005,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     }
 
     self.openResult = (r) => {
+        console.log(r)
         if (!r) return;
 
         // Command-mode rows
@@ -1021,7 +1022,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             }
             // Fallback: if clicking on Team/Incident result without applyText, still apply
             if (r.kind === "Team" && r.ref?.callsign) {
-                self.query(`task ${safeStr(r.ref.callsign)} `);
+                self.query(`task ${quoteIfNeeded(r.ref.callsign)} `);
                 return;
             }
             if (r.kind === "Incident" && r.ref?.identifier) {
@@ -1030,12 +1031,12 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 if (cmd === "task") {
                     const t = self.matchedTeam();
                     const tcs = t?.callsign?.() || safeStr(t?.callsign) || "";
-                    if (tcs) self.query(`task ${tcs} ${safeStr(r.ref.identifier)}`);
+                    if (tcs) self.query(`task ${tcs} ${quoteIfNeeded(r.ref.identifier)}`);
                     return;
                 }
 
                 if (cmd === "log") {
-                    self.query(`log ${safeStr(r.ref.identifier)}`);
+                    self.query(`log ${quoteIfNeeded(r.ref.identifier)}`);
                     return;
                 }
 
