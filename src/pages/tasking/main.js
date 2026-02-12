@@ -762,7 +762,12 @@ function VM() {
             );
             self.sectorsLoading(false);
         }, (count, total) => {
+            if (count != -1 && total != -1) {
             console.log(`Fetched ${count} / ${total} sectors...`);
+            } else {
+                console.log("Sector fetching errored out or returned unknown total count.");
+                showAlert('Failed to fetching sectors. Your session may have expired', 'danger', 5000);
+            }
         });
     }
 
@@ -977,6 +982,24 @@ function VM() {
         self.CreateRadioLogModalVM.modalInstance = modal;
 
         self.CreateRadioLogModalVM.openForTasking(tasking);
+        modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => self.CreateRadioLogModalVM.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true // text-heavy modal
+        });
+
+    };
+
+    self.attachJobRadioLogModalByTeamAndIncident = function (jobId, teamCallsign) {
+        const modalEl = document.getElementById('RadioLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        self.CreateRadioLogModalVM.modalInstance = modal;
+
+        self.CreateRadioLogModalVM.openFromTeamPlusIncident(jobId, teamCallsign);
         modal.show();
 
         installModalHotkeys({
@@ -1431,8 +1454,8 @@ function VM() {
         self.spotlightSearchVM.results.removeAll();
         self.spotlightSearchVM.activeIndex(0);
         self.spotlightSearchVM.rebuildIndex?.();
-
         self._spotlightModal.show();
+
 
         // focus input after show
        document.getElementById("spotlightSearchInput")?.focus();
@@ -1722,6 +1745,13 @@ function VM() {
                     self.attachSendSMSModal([], teamVm, null, jobVm);
                 }
             });
+        });
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => { self.assignJobToTeam(teamVm, jobVm), modal.hide(); },
+            onClose: () => modal.hide(),
+            allowInInputs: true
         });
 
     };
@@ -2563,7 +2593,7 @@ document.addEventListener('DOMContentLoaded', function () {
         function ({ token: rToken, tokenexp: rExp }) {
             console.log("Fetched Beacon token," + rToken);
             setToken(rToken, rExp);
-            myViewModel.tokenLoading(false);
+            myViewModel?.tokenLoading(false);
         }
     );
 

@@ -46,7 +46,7 @@ export function CreateRadioLogModalVM(parentVM) {
 
   [2, 3, 4, 27].forEach(gid => {
     self.tagsByGroup[gid] = ko.pureComputed(() =>
-        self.uiTags().filter(t => t.groupId() === gid)
+      self.uiTags().filter(t => t.groupId() === gid)
     );
   });
 
@@ -64,7 +64,7 @@ export function CreateRadioLogModalVM(parentVM) {
 
   self.ActionRequiredCheck = ko.computed(() => {
     const anyActionTagSelected = self.uiTags().some(
-        t => t.selected() && t.groupId() === 27
+      t => t.selected() && t.groupId() === 27
     );
 
     self.actionRequired(anyActionTagSelected);
@@ -80,6 +80,16 @@ export function CreateRadioLogModalVM(parentVM) {
     self.headerLabel(`New Radio Log for ${tasking.teamCallsign?.() || ""} on ${tasking.job.identifier() || ""}`);
   }
 
+  self.openFromTeamPlusIncident = async (jobId, teamCallsign) => {
+    self.resetFields();
+    self.jobId(jobId || "");
+    self.subject(teamCallsign || "");
+    self.initTags();
+    preselectTag(6);
+
+    self.headerLabel(`New Radio Log for ${teamCallsign || ""} on ${jobId || ""}`);
+  }
+
   self.openForTeam = async (team) => {
     // NEED TO COME BACK AND ADD HQ ONCE TIM HAS SETUP THE CONFIG PAGE TO USE IT.
     self.resetFields();
@@ -87,111 +97,111 @@ export function CreateRadioLogModalVM(parentVM) {
     self.initTags();
     preselectTag(6);
     self.showError(false);
-      self.errorMessage("");
+    self.errorMessage("");
     self.headerLabel(`New Radio Log for ${team.callsign?.() || ""}`);
   }
 
   self.toPayload = function () {
     return {
-        EntityId: self.entityId(),
-        JobId: self.jobId(),
-        EventId: self.eventId(),
-        TalkgroupId: self.talkgroupId(),
-        TalkgroupRequestId: self.talkgroupRequestId(),
+      EntityId: self.entityId(),
+      JobId: self.jobId(),
+      EventId: self.eventId(),
+      TalkgroupId: self.talkgroupId(),
+      TalkgroupRequestId: self.talkgroupRequestId(),
 
-        Subject: self.subject(),
-        Text: self.text(),
-        Position: self.position(),
-        PersonFromId: self.personFromId(),
-        PersonTold: self.personTold(),
+      Subject: self.subject(),
+      Text: self.text(),
+      Position: self.position(),
+      PersonFromId: self.personFromId(),
+      PersonTold: self.personTold(),
 
-        Important: self.important(),
-        Restricted: self.restricted(),
-        ActionRequired: self.actionRequired(),
-        ActionReminder: self.actionReminder(),
+      Important: self.important(),
+      Restricted: self.restricted(),
+      ActionRequired: self.actionRequired(),
+      ActionReminder: self.actionReminder(),
 
-        TagIds: self.tagIds(),
-        TimeLogged: self.timeLogged()
+      TagIds: self.tagIds(),
+      TimeLogged: self.timeLogged()
     };
   };
 
   function validate() {
-      self.showError(false);
-      self.errorMessage("");
+    self.showError(false);
+    self.errorMessage("");
 
-      // No text
-      if (!self.text() || self.text().trim().length === 0) {
-          self.errorMessage("Text is required.");
-          self.showError(true);
-          return false;
-      }
+    // No text
+    if (!self.text() || self.text().trim().length === 0) {
+      self.errorMessage("Text is required.");
+      self.showError(true);
+      return false;
+    }
 
-      // No tags
-      if (self.tagIds().length === 0) {
-          self.errorMessage("You must select at least one tag.");
-          self.showError(true);
-          return false;
-      }
+    // No tags
+    if (self.tagIds().length === 0) {
+      self.errorMessage("You must select at least one tag.");
+      self.showError(true);
+      return false;
+    }
 
-      return true;
+    return true;
   }
 
   self.submit = function () {
     if (!validate()) {
-        return;
+      return;
     }
     const payload = self.toPayload();
 
     parentVM.createOpsLogEntry(payload, function (result) {
 
-        if (!result) {
-            console.error("Ops Log submit failed");
-            return;
-        }
+      if (!result) {
+        console.error("Ops Log submit failed");
+        return;
+      }
 
-        if (self.modalInstance) {
-            self.modalInstance.hide();
-        }
+      if (self.modalInstance) {
+        self.modalInstance.hide();
+      }
     });
   };
 
   self.resetFields = function () {
-      self.entityId(null);
-      self.jobId(null);
-      self.eventId(null);
-      self.talkgroupId(null);
-      self.talkgroupRequestId(null);
+    self.entityId(null);
+    self.jobId(null);
+    self.eventId(null);
+    self.talkgroupId(null);
+    self.talkgroupRequestId(null);
 
-      self.subject("");
-      self.text("");
-      self.position(null);
-      self.personFromId(null);
-      self.personTold(null);
+    self.subject("");
+    self.text("");
+    self.position(null);
+    self.personFromId(null);
+    self.personTold(null);
 
-      self.important(false);
-      self.restricted(false);
-      self.actionRequired(false);
-      self.actionReminder(null);
+    self.important(false);
+    self.restricted(false);
+    self.actionRequired(false);
+    self.actionReminder(null);
 
-      self.timeLogged(null);
+    self.timeLogged(null);
 
-      self.uiTags([]);
-      self.headerLabel("");
+    self.uiTags([]);
+    self.headerLabel("");
   };
 
   function createUiTag(tag) {
     return {
-        model: tag,
+      model: tag,
 
-        id: tag.id,
-        name: tag.name,
-        groupId: tag.tagGroupId,
+      id: tag.id,
+      name: tag.name,
+      groupId: tag.tagGroupId,
 
-        selected: ko.observable(false),
+      selected: ko.observable(false),
 
-        toggle() {
+      toggle() {
         this.selected(!this.selected());
-        }
+      }
     };
   }
 }
