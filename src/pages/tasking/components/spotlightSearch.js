@@ -734,7 +734,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
                 setCommandState({
                     name: "radio",
-                    stage: "Incident",
+                    stage: "incident",
                     hint: `Team matched (${safeStr(team.callsign)}). Now select an incident.`,
                     team,
                     job: null
@@ -762,17 +762,16 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             }
 
             if (aIsJob) {
-                const job = A.uniqueJob;
 
                 setCommandState({
                     name: "radio",
                     stage: "team",
-                    hint: `Incident matched (${safeStr(job.identifier)}). Now select a team.`,
+                    hint: `Incident matched (${safeStr(A.uniqueJob.identifier)}). Now select a team.`,
                     team: null,
-                    job
+                    job: A.uniqueJob
                 });
 
-                const preferred = new Set(getTaskedTeamsForJob(job).map(t => safeId(t)));
+                const preferred = new Set(getTaskedTeamsForJob(A.uniqueJob).map(t => safeId(t)));
                 const { teamMatches } = topMatchesForToken(""); // allow anything
 
                 const pref = [];
