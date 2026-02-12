@@ -246,7 +246,7 @@ function buildDefaultRules(vm) {
     {
       id: 'unacked-notifications',
       level: 'danger',
-      title: 'Unacknowledged notifications',
+      title: 'Unacknowledged ICEMS notifications',
       active: unackedNotifications.length > 0,
       items: unackedNotifications.slice(0, 10).map(asItem),
       count: unackedNotifications.length,
