@@ -3199,9 +3199,9 @@
                         <!-- INCIDENT badge (show for orderless commands) -->
                         <span data-bind="visible: !matchedJobText()">
                         <span class="badge bg-secondary"
-                            data-bind="visible: isOrderlessCommand() && commandStage() === 'incident'">incident…</span>
+                            data-bind="visible: (isOrderlessCommand() || commandNeedsOnlyJob()) && commandStage() === 'incident'">incident…</span>
                         <span class="badge bg-light text-dark border"
-                            data-bind="visible: isOrderlessCommand() && commandStage() !== 'incident'">incident</span>
+                            data-bind="visible: (isOrderlessCommand() || commandNeedsOnlyJob()) && commandStage() !== 'incident'">incident</span>
                         </span>
 
                         <span class="badge bg-success" data-bind="visible: matchedTeamText">
