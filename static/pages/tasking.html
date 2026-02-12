@@ -3204,12 +3204,12 @@
                             <span class="badge bg-light text-dark border"
                                 data-bind="visible: isOrderlessCommand() && commandStage() !== 'team'">team</span>
                         </span>
-                        <!-- INCIDENT badge (show for orderless commands) -->
+                        <!-- INCIDENT badge (show for orderless or single input commands) -->
                         <span data-bind="visible: !matchedJobText()">
                             <span class="badge bg-secondary"
-                                data-bind="visible: isOrderlessCommand() && commandStage() === 'incident'">incident…</span>
+                                data-bind="visible: (isOrderlessCommand() || commandNeedsOnlyJob()) && commandStage() === 'incident'">incident…</span>
                             <span class="badge bg-light text-dark border"
-                                data-bind="visible: isOrderlessCommand() && commandStage() !== 'incident'">incident</span>
+                                data-bind="visible: (isOrderlessCommand() || commandNeedsOnlyJob()) && commandStage() !== 'incident'">incident</span>
                         </span>
 
                         <span class="text-muted small ms-1" data-bind="text: commandHint"></span>
