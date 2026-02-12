@@ -998,7 +998,21 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         scored.sort((a, b) => b.score - a.score);
 
         const decorated = decorateResults(scored.slice(0, 20));
-        self.results(autocompleteResults.concat(decorated));
+        let finalResults = autocompleteResults.concat(decorated);
+
+        // Add "no results" message if empty
+        if (finalResults.length === 0 && q) {
+            finalResults = decorateResults([{
+                kind: "No Results",
+                ref: null,
+                primary: "No results found",
+                secondary: `Try searching for teams, incidents, or use commands: task, log, radio`,
+                badge: "",
+                applyText: null
+            }]);
+        }
+
+        self.results(finalResults);
 
         const idx = prevId
             ? decorated.findIndex(r => safeId(r.ref) === prevId)
