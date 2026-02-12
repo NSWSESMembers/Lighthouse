@@ -3189,7 +3189,21 @@
 
                         <span class="badge bg-dark" data-bind="text: commandName"></span>
 
-                        <!-- Matched badges first -->
+                        <!-- TEAM badge (show for orderless commands) -->
+                         <span data-bind="visible: !matchedTeamText()">
+                        <span class="badge bg-secondary"
+                            data-bind="visible: isOrderlessCommand() && commandStage() === 'team'">team…</span>
+                        <span class="badge bg-light text-dark border"
+                            data-bind="visible: isOrderlessCommand() && commandStage() !== 'team'">team</span>
+                        </span>
+                        <!-- INCIDENT badge (show for orderless commands) -->
+                        <span data-bind="visible: !matchedJobText()">
+                        <span class="badge bg-secondary"
+                            data-bind="visible: (isOrderlessCommand() || commandNeedsOnlyJob()) && commandStage() === 'incident'">incident…</span>
+                        <span class="badge bg-light text-dark border"
+                            data-bind="visible: (isOrderlessCommand() || commandNeedsOnlyJob()) && commandStage() !== 'incident'">incident</span>
+                        </span>
+
                         <span class="badge bg-success" data-bind="visible: matchedTeamText">
                             <span data-bind="text: matchedTeamText"></span>
                         </span>
