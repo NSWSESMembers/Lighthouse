@@ -616,9 +616,9 @@ export function Job(data = {}, deps = {}) {
     }
 
     self.focusAndExpandInList = function () {
+        self.focusMap();
         // expand the job row
         self.expand();
-
         scrollToThisInTable();
     };
 
