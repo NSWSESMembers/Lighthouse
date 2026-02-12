@@ -228,7 +228,7 @@ function buildDefaultRules(vm) {
       count: newJobs.length,
       onClick: (id) => {
         const found = jobs.find(j => jobKey(j) === id);
-        found?.focusMap();
+        found?.focusAndExpandInList();
       }
     },
     {
@@ -240,7 +240,7 @@ function buildDefaultRules(vm) {
       count: untasked.length,
       onClick: (id) => {
         const found = jobs.find(j => jobKey(j) === id);
-        found?.focusMap();
+        found?.focusAndExpandInList();
       }
     },
     {
@@ -252,7 +252,7 @@ function buildDefaultRules(vm) {
       count: unackedNotifications.length,
       onClick: (id) => {
         const found = jobs.find(j => jobKey(j) === id);
-        found?.focusMap();
+        found?.focusAndExpandInList();
       }
     },
     {
@@ -264,7 +264,7 @@ function buildDefaultRules(vm) {
       count: completableJobs.length,
       onClick: (id) => {
         const found = jobs.find(j => jobKey(j) === id);
-        found?.focusMap();
+        found?.focusAndExpandInList();
       }
     },
     {

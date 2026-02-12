@@ -59,8 +59,8 @@ function buildJobSearchText(j) {
         j.id, j.identifier,
         j.typeName, j.type,
         j.statusName,
-        () => { try { return j.entityAssignedTo?.code?.(); } catch { return ""; } },
-        () => { try { return j.entityAssignedTo?.name?.(); } catch { return ""; } },
+        (() => { try { return j.entityAssignedTo?.code?.(); } catch { return ""; } })(),
+        (() => { try { return j.entityAssignedTo?.name?.(); } catch { return ""; } })(),
         j.lga,
         j.sectorName,
         addr,
@@ -1030,7 +1030,6 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     }
 
     self.openResult = (r) => {
-        console.log(r)
         if (!r) return;
 
 
@@ -1087,7 +1086,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             r.ref.toggleAndExpand?.();
             r.ref.markerFocus?.();
         } else {
-            r.ref.focusMap?.();
+            r.ref.focusAndExpandInList?.();
         }
     };
 
