@@ -310,6 +310,11 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         return c === "task" || c === "radio";
     });
 
+    self.commandNeedsOnlyJob = ko.pureComputed(() => {
+        const c = (self.commandName() || "").toLowerCase();
+        return c === "log";
+    });
+
     function topMatchesForToken(tokenLower) {
         const teamMatches = [];
         const jobMatches = [];
@@ -940,13 +945,35 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
         const raw = (self.query() || "");
 
+        // Autocomplete for partial command keywords
+        const commandKeywords = ["task", "log", "radio"];
+        const q = raw.trim().toLowerCase();
+        let autocompleteResults = [];
+        if (q && !raw.includes(" ")) {
+            const suggestions = [];
+            for (const cmd of commandKeywords) {
+                if (cmd.startsWith(q) && cmd !== q) {
+                    suggestions.push({
+                        kind: "Autocomplete",
+                        ref: { cmd },
+                        primary: `Complete command: ${cmd}`,
+                        secondary: "Press Enter to autocomplete",
+                        badge: "Command",
+                        applyText: cmd + " "
+                    });
+                }
+            }
+            autocompleteResults = decorateResults(suggestions);
+        }
+
         const cmdResults =
             commandResultsForTask(raw) ||
             commandResultsForLog(raw) ||
             commandResultsForRadio(raw);
 
         if (cmdResults) {
-            self.results(cmdResults);
+            // Prepend autocomplete suggestions if present
+            self.results(autocompleteResults.concat(cmdResults));
 
             const idx = prevId
                 ? cmdResults.findIndex(r => safeId(r.ref) === prevId)
@@ -958,7 +985,6 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
         resetCommandState();
 
-        const q = raw.trim().toLowerCase();
         const scored = [];
 
         const consider = (x) => {
@@ -973,7 +999,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         scored.sort((a, b) => b.score - a.score);
 
         const decorated = decorateResults(scored.slice(0, 20));
-        self.results(decorated);
+        self.results(autocompleteResults.concat(decorated));
 
         const idx = prevId
             ? decorated.findIndex(r => safeId(r.ref) === prevId)
@@ -1008,6 +1034,13 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         console.log(r)
         if (!r) return;
 
+
+            if (r.kind === "Autocomplete" && r.ref?.cmd) {
+                self.query(r.ref.cmd + " ");
+                return;
+            }
+
+
         // Command-mode rows
         if (self.isCommandMode()) {
             if (r.kind === "Execute") {
@@ -1015,6 +1048,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 if (r.ref?.cmd === "radio" && r.ref?.team && r.ref?.job) { executeRadio(r.ref.team, r.ref.job); return; }
                 if (r.ref?.cmd === "task" && r.ref?.team && r.ref?.job) { executeTask(r.ref.team, r.ref.job); return; }
             }
+
             if (r.applyText) {
                 self.query(r.applyText);
                 // keep spotlight open; query subscription will refresh results
