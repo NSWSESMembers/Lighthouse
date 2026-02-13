@@ -1,4 +1,5 @@
 import BeaconClient from "../../../shared/BeaconClient";
+import { unitColorMap } from "../utils/unitColorMap";
 import L from "leaflet";
 
 
@@ -152,7 +153,7 @@ export function registerSESUnitsZonesHybridGridLayer(vm, map) {
     drawFn: (layerGroup, data) => {
 
       if (!data) return;
-      const LABEL_ZOOM_THRESHOLD = 10;  // tweak to taste
+      const LABEL_ZOOM_THRESHOLD = 9;  // tweak to taste
 
       const vectorGrid = L.vectorGrid.protobuf(
         `https://map.lighthouse-extension.com/sesunits/tiles/{z}/{x}/{y}.pbf`, // Replace with actual path
@@ -266,16 +267,7 @@ function zoneFillColor(code) {
 
 function colorByUnitCode(code) {
   if (!code) return '#999';
-
-  let hash = 0;
-  for (let i = 0; i < code.length; i++) {
-    hash = (hash << 5) - hash + code.charCodeAt(i);
-    hash |= 0;
-  }
-
-  // Spread around 360° hue wheel
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 70%, 50%)`;
+  return unitColorMap[code] || '#999';
 }
 
 
@@ -311,7 +303,6 @@ export function registerSESUnitLocationsLayer(vm) {
           marker.on('popupopen', async () => {
             try {
               const details = await vm.fetchHQDetails(feature.properties.HQNAME);
-              console.log("Fetched HQ details for popup:", details);
               const popupContent = `
             <div style="background-color: #333; color: #fff; padding: 5px; text-align: center; font-weight: bold; width: 300px;">
               ${name}
