@@ -18,7 +18,7 @@ export function MapVM(Lmap, root) {
   self.crowFliesLine = null;
 
   // layers
-  self.assetLayer = L.layerGroup().addTo(Lmap);
+  self.assetLayer = L.layerGroup();             // not added by default – layers drawer handles visibility
   self.jobMarkerGroups = new Map();
   self.unmatchedAssetLayer = L.layerGroup();   // not added by default
 
