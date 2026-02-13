@@ -19,7 +19,8 @@ export function TrackableAssetsModalVM(mainVM) {
         if (!self.isOpen) return [];
         const query = self.searchQuery().toLowerCase();
         const tg = self.selectedTalkgroup();
-        return mainVM.trackableAssets().filter(a => {
+        return mainVM.trackableAssets()
+            .filter(a => {
             const name = a.name && a.name().toLowerCase();
             const radioId = a.radioId && String(a.radioId()).toLowerCase();
             const talkgroup = a.talkgroup && a.talkgroup();
@@ -27,6 +28,14 @@ export function TrackableAssetsModalVM(mainVM) {
             const matchesQuery = !query || (name && name.includes(query)) || (radioId && radioId.includes(query)) || (entity && entity.includes(query));
             const matchesTG = !tg || talkgroup === tg;
             return matchesQuery && matchesTG;
-        });
+            })
+            .sort((a, b) => {
+            const nameA = a.name && a.name().toLowerCase();
+            const nameB = b.name && b.name().toLowerCase();
+            if (!nameA && !nameB) return 0;
+            if (!nameA) return 1;
+            if (!nameB) return -1;
+            return nameA.localeCompare(nameB);
+            });
     });
 }
