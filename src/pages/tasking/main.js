@@ -1664,6 +1664,10 @@ function VM() {
 
     // Maintain markers only for currently filtered assets
     self.filteredTrackableAssets.subscribe((changes) => {
+        // bail fast if the layer is not currently visible
+        if (!self.mapVM || !map.hasLayer(self.mapVM.assetLayer)) {
+            return;
+        }
         changes.forEach(ch => {
             const a = ch.value;
             if (ch.status === 'added') {
@@ -1691,21 +1695,37 @@ function VM() {
         });
     }, null, "arrayChange");
 
+    // --- Matched asset layer: populate / tear-down on toggle ---
     map.on('layeradd', (ev) => {
-        if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
-        // initial populate unmatchedTrackableAssets only when layer becomes visible
-        const assets = self.unmatchedTrackableAssets?.() || [];
+        if (ev.layer !== self.mapVM.assetLayer) return;
+        const assets = self.filteredTrackableAssets?.() || [];
         assets.forEach(a => {
-            attachUnmatchedAssetMarker(ko, self.map, self, a);
+            attachAssetMarker(ko, map, self, a);
         });
     });
 
-    // catch the unmatchedTrackableAssets layer being turned off to remove markers
+    map.on('layerremove', (ev) => {
+        if (ev.layer !== self.mapVM.assetLayer) return;
+        const assets = self.filteredTrackableAssets?.() || [];
+        assets.forEach(a => {
+            detachAssetMarker(ko, map, self, a);
+        });
+    });
+
+    // --- Unmatched asset layer: populate / tear-down on toggle ---
+    map.on('layeradd', (ev) => {
+        if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
+        const assets = self.unmatchedTrackableAssets?.() || [];
+        assets.forEach(a => {
+            attachUnmatchedAssetMarker(ko, map, self, a);
+        });
+    });
+
     map.on('layerremove', (ev) => {
         if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
         const assets = self.unmatchedTrackableAssets?.() || [];
         assets.forEach(a => {
-            attachUnmatchedAssetMarker(ko, self.map, self, a);
+            detachUnmatchedAssetMarker(ko, map, self, a);
         });
     });
 
@@ -2274,7 +2294,7 @@ function VM() {
 
                 const gid = safeId(groupKey);
                 const storeKey = `layers.ovgrp.${gid}`;
-                const open = localStorage.getItem(storeKey) !== "0"; // default open
+                const open = localStorage.getItem(storeKey) === "1"; // default closed
 
                 const item = document.createElement("div");
                 item.className = "accordion-item";
