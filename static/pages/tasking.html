@@ -1261,6 +1261,19 @@
                                                                     </div>
                                                                 </div>
 
+                                                                <!-- Additional Address Info -->
+                                                                <div class="row align-items-start"
+                                                                    data-bind="visible: j.address.additionalAddressInfo()">
+                                                                    <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
+                                                                        Additional Address Info:
+                                                                    </label>
+                                                                    <div class="col-sm-8 col-lg-9">
+                                                                        <p class="form-control-plaintext job-details-value"
+                                                                            data-bind="text: j.address.additionalAddressInfo()">
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+
                                                                 <!-- LGA -->
                                                                 <div class="row align-items-start">
                                                                     <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
