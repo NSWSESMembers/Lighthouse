@@ -2801,29 +2801,29 @@ document.addEventListener('DOMContentLoaded', function () {
             myViewModel._openSpotlight();
         }, { capture: true });
 
-document.addEventListener("keydown", (e) => {
-    // Ctrl+D to toggle Acronym Dictionary
-    const isD = (e.key || "").toLowerCase() === "d";
-    if (!isD) return;
+        document.addEventListener("keydown", (e) => {
+            // Ctrl+D to toggle Acronym Dictionary
+            const isD = (e.key || "").toLowerCase() === "d";
+            if (!isD) return;
 
-    const isCtrl = e.ctrlKey === true;
-    const isCmd = e.metaKey === true;
+            const isCtrl = e.ctrlKey === true;
+            const isCmd = e.metaKey === true;
 
-    if (!(isCmd || isCtrl)) return;
+            if (!(isCmd || isCtrl)) return;
 
-    e.preventDefault();
-    
-    const modalEl = document.getElementById("acronymDictionaryModal");
-    const isOpen = modalEl?.classList.contains("show");
-    
-    if (isOpen) {
-        // Close it
-        bootstrap.Modal.getInstance(modalEl)?.hide();
-    } else {
-        // Open it
-        myViewModel.openAcronymDictionaryModal();
-    }
-}, { capture: true });
+            e.preventDefault();
+            
+            const modalEl = document.getElementById("acronymDictionaryModal");
+            const isOpen = modalEl?.classList.contains("show");
+            
+            if (isOpen) {
+                // Close it
+                bootstrap.Modal.getInstance(modalEl)?.hide();
+            } else {
+                // Open it
+                myViewModel.openAcronymDictionaryModal();
+            }
+        }, { capture: true });
 
         //large amount of bs to fix this chrome aria hidden warning that wont go away
         const configTrigger = () => document.querySelector('[data-bs-target="#configModal"]');
