@@ -3,7 +3,7 @@ import L from "leaflet";
 export function registerPowerBoundariesGridLayer(vm, _map) {
   vm.mapVM.registerPollingLayer("powerBoundaries", {
     label: "Electrical Distribution Boundaries",
-    menuGroup: "Public Utilities",
+    menuGroup: "Public Service",
     refreshMs: 0, // No auto-refresh, only redraw on filter change
     visibleByDefault: localStorage.getItem(`ov.powerBoundaries`) || false,
     fetchFn: async () => {
