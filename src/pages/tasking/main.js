@@ -56,6 +56,7 @@ import { registerSESUnitLocationsLayer } from "./mapLayers/geoservices.js";
 import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
 import { renderFRAOSLayer } from "./mapLayers/frao.js";
 import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
+import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
@@ -2143,6 +2144,7 @@ function VM() {
     registerHazardWatchWarningsLayer(self, apiHost);
     registerSESUnitLocationsLayer(self);
     renderFRAOSLayer(self, map, getToken, apiHost, params);
+    registerPowerBoundariesGridLayer(self, map);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
