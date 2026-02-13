@@ -23,6 +23,7 @@ import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
 import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
 import { TrackableAssetsModalVM } from "./viewmodels/TrackableAssetsModalVM.js";
+import { AcronymDictionaryModalVM } from "./viewmodels/AcronymDictionaryModalVM.js";
 import IncidentImagesModalVM from "./viewmodels/IncidentImagesModalVM";
 
 import { installAlerts } from './components/alerts.js';
@@ -2559,63 +2560,61 @@ function VM() {
         });
     })();
 
-
-    
     // Acronym Dictionary
-    var acronymDictionary = {
-        AA: 'As Above',
-        ACK: 'Acknowledge',
-        ASNSW: 'NSW Ambulance',
-        ATTD: 'Attend',
-        B4: 'Before',
-        BET: 'Between',
-        BTW: 'Between OR By the Way',
-        'C[4F]W': 'Concern for Welfare',
-        CNCLD: 'Cancelled',
-        CNR: 'Corner',
-        DEC: 'Deceased',
-        ETA: 'Estimated Time of Arrival',
-        ETC: 'Estimated Time of Completion',
-        FRNSW: 'NSW Fire &amp; Rescue',
-        FB: 'Fire Brigade',
-        ICEMS: 'Integrated Case and Evidence Management System',
-        LOC: 'Location',
-        LS: 'Last Seen',
-        MP: 'Missing Person(s)',
-        NESB: 'Non-English Speaking Background',
-        NFA: 'No Further Action',
-        NPI: 'No Person(s) Injured',
-        NPT: 'No Person(s) Trapped',
-        NFI: 'No Further Information',
-        'NN[2T]A': 'No Need to Attend',
-        NSWPF: 'NSW Police Force',
-        POL: 'Police',
-        NVS: 'No Vehicle(s) Sighted',
-        OPP: 'Opposite',
-        OTW: 'On the Way',
-        'P[2T]P': 'Pole to Pole (Powerlines)',
-        'P[2T]H': 'Pole to House (Powerlines)',
-        '(\\d+)?PAX': 'Passenger',
-        PBY: "Passer By",
-        'POIS?': 'Person(s) Of Interest',
-        RCO: "Police Radio Rescue Coordinator",
-        REQ: "Require",
-        'VEHS?': 'Vehicle(s)',
-        'VOIS?': "Vehicle(s) Of Interest",
-        TMC: 'Transport Management Center',
-        NSWTMC: 'NSW Transport Management Center',
-        KLO4: 'Keep a Look Out For',
-        'INFTS?': 'Informant/Caller(s)',
-        '(\\d+)?POBS?': 'Person(s) On Board',
-        POSS: 'Possible',
-        'PTS?': 'Patient(s)',
-        'VICT?': 'Victim(s)',
-        YR: 'Years Old',
-        YO: 'Years Old',
-        YOM: 'Year Old Male',
-        YOF: 'Year Old Female',
-        THX: 'Thanks',
-    };
+    self.acronymDictionary = [
+        { regex: 'AA', meaning: 'As Above', name: 'AA', example: '' },
+        { regex: 'ACK', meaning: 'Acknowledge', name: 'ACK', example: '' },
+        { regex: 'ASNSW', meaning: 'NSW Ambulance', name: 'ASNSW', example: '' },
+        { regex: 'ATTD', meaning: 'Attend', name: 'ATTD', example: '' },
+        { regex: 'B4', meaning: 'Before', name: 'B4', example: '' },
+        { regex: 'BET', meaning: 'Between', name: 'BET', example: '' },
+        { regex: 'BTW', meaning: 'Between OR By the Way', name: 'BTW', example: '' },
+        { regex: 'C[4F]W', meaning: 'Concern for Welfare', name: 'CFW/C4W', example: '' },
+        { regex: 'CNCLD', meaning: 'Cancelled', name: 'CNCLD', example: '' },
+        { regex: 'CNR', meaning: 'Corner', name: 'CNR', example: '' },
+        { regex: 'DEC', meaning: 'Deceased', name: 'DEC', example: '' },
+        { regex: 'ETA', meaning: 'Estimated Time of Arrival', name: 'ETA', example: '' },
+        { regex: 'ETC', meaning: 'Estimated Time of Completion', name: 'ETC', example: '' },
+        { regex: 'FRNSW', meaning: 'NSW Fire &amp; Rescue', name: 'FRNSW', example: '' },
+        { regex: 'FB', meaning: 'Fire Brigade', name: 'FB', example: '' },
+        { regex: 'ICEMS', meaning: 'Interagency CAD Electronic Messaging System', name: 'ICEMS', example: '' },
+        { regex: 'LOC', meaning: 'Location', name: 'LOC', example: '' },
+        { regex: 'LS', meaning: 'Last Seen', name: 'LS', example: '' },
+        { regex: 'MP', meaning: 'Missing Person(s)', name: 'MP', example: '' },
+        { regex: 'NESB', meaning: 'Non-English Speaking Background', name: 'NESB', example: '' },
+        { regex: 'NFA', meaning: 'No Further Action', name: 'NFA', example: '' },
+        { regex: 'NPI', meaning: 'No Person(s) Injured', name: 'NPI', example: '' },
+        { regex: 'NPT', meaning: 'No Person(s) Trapped', name: 'NPT', example: '' },
+        { regex: 'NFI', meaning: 'No Further Information', name: 'NFI', example: '' },
+        { regex: 'NN[2T]A', meaning: 'No Need to Attend', name: 'NNTA/NN2A', example: '' },
+        { regex: 'NSWPF', meaning: 'NSW Police Force', name: 'NSWPF', example: '' },
+        { regex: 'POL', meaning: 'Police', name: 'POL', example: '' },
+        { regex: 'NVS', meaning: 'No Vehicle(s) Sighted', name: 'NVS', example: '' },
+        { regex: 'OPP', meaning: 'Opposite', name: 'OPP', example: '' },
+        { regex: 'OTW', meaning: 'On the Way', name: 'OTW', example: '' },
+        { regex: 'P[2T]P', meaning: 'Pole to Pole (Powerlines)', name: 'PTP/P2P', example: '' },
+        { regex: 'P[2T]H', meaning: 'Pole to House (Powerlines)', name: 'PTH/P2H', example: '' },
+        { regex: '(\\d+)?PAX', meaning: 'Passenger', name: 'PAX', example: 'PAX, 2PAX, 5PAX' },
+        { regex: 'PBY', meaning: 'Passer By', name: 'PBY', example: '' },
+        { regex: 'POIS?', meaning: 'Person(s) Of Interest', name: 'POI/POIS', example: '' },
+        { regex: 'RCO', meaning: 'Police Radio Rescue Coordinator', name: 'RCO', example: '' },
+        { regex: 'REQ', meaning: 'Require', name: 'REQ', example: '' },
+        { regex: 'VEHS?', meaning: 'Vehicle(s)', name: 'VEH/VEHS', example: '' },
+        { regex: 'VOIS?', meaning: 'Vehicle(s) Of Interest', name: 'VOI/VOIS', example: '' },
+        { regex: 'TMC', meaning: 'Transport Management Center', name: 'TMC', example: '' },
+        { regex: 'NSWTMC', meaning: 'NSW Transport Management Center', name: 'NSWTMC', example: '' },
+        { regex: 'KLO4', meaning: 'Keep a Look Out For', name: 'KLO4', example: '' },
+        { regex: 'INFTS?', meaning: 'Informant/Caller(s)', name: 'INFT/INFTS', example: '' },
+        { regex: '(\\d+)?POBS?', meaning: 'Person(s) On Board', name: 'POB/POBS', example: 'POB, POBS, 3POB, 5POBS' },
+        { regex: 'POSS', meaning: 'Possible', name: 'POSS', example: '' },
+        { regex: 'PTS?', meaning: 'Patient(s)', name: 'PT/PTS', example: 'PT, PTS' },
+        { regex: 'VICT?', meaning: 'Victim(s)', name: 'VIC/VICT', example: 'VIC, VICT' },
+        { regex: 'YR', meaning: 'Years Old', name: 'YR', example: '' },
+        { regex: 'YO', meaning: 'Years Old', name: 'YO', example: '' },
+        { regex: 'YOM', meaning: 'Year Old Male', name: 'YOM', example: '' },
+        { regex: 'YOF', meaning: 'Year Old Female', name: 'YOF', example: '' },
+        { regex: 'THX', meaning: 'Thanks', name: 'THX', example: '' },
+    ];
     
     // Custom Knockout Binding Handler (only define once)
     if (!ko.bindingHandlers.acronymText) {
@@ -2627,12 +2626,11 @@ function VM() {
                 var contentOrig = $element.html();
                 var contentRepl = contentOrig;
                 
-                // Apply acronym dictionary (without lodash)
-                Object.keys(acronymDictionary).forEach(function(abbrText) {
-                    var clearText = acronymDictionary[abbrText];
+                // Apply acronym dictionary
+                self.acronymDictionary.forEach(function(item) {
                     contentRepl = contentRepl.replace(
-                        new RegExp('\\b(' + abbrText + ')\\b', 'gi'),
-                        '<abbr title="' + clearText + '">$1</abbr>'
+                        new RegExp('\\b(' + item.regex + ')\\b', 'gi'),
+                        '<abbr title="' + item.meaning + '">$1</abbr>'
                     );
                 });
                 
@@ -2650,12 +2648,11 @@ function VM() {
                 var contentOrig = $element.html();
                 var contentRepl = contentOrig;
                 
-                // Apply acronym dictionary (without lodash)
-                Object.keys(acronymDictionary).forEach(function(abbrText) {
-                    var clearText = acronymDictionary[abbrText];
+                // Apply acronym dictionary
+                self.acronymDictionary.forEach(function(item) {
                     contentRepl = contentRepl.replace(
-                        new RegExp('\\b(' + abbrText + ')\\b', 'gi'),
-                        '<abbr title="' + clearText + '">$1</abbr>'
+                        new RegExp('\\b(' + item.regex + ')\\b', 'gi'),
+                        '<abbr title="' + item.meaning + '">$1</abbr>'
                     );
                 });
                 
@@ -2664,6 +2661,48 @@ function VM() {
                 }
             }
         };
+    }
+
+        // Initialize the Acronym Dictionary Modal VM
+    self.acronymDictionaryModalVM = new AcronymDictionaryModalVM(self);
+    
+    // Function to open the Acronym Dictionary Modal
+    self.openAcronymDictionaryModal = function (data, event) {
+        // If called from a dropdown menu, close the dropdown
+        if (event && event.target) {
+            let dropdown = event.target.closest('.dropdown');
+            if (dropdown) {
+                let toggleBtn = dropdown.querySelector('[data-bs-toggle="dropdown"]');
+                if (toggleBtn) {
+                    let dropdownInstance = bootstrap.Dropdown.getOrCreateInstance(toggleBtn);
+                    dropdownInstance.hide();
+                }
+            }
+        }
+        const modalEl = document.getElementById('acronymDictionaryModal');
+        if (modalEl) {
+            self.acronymDictionaryModalVM.isOpen(true);
+            const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl, {
+                backdrop: false,
+                keyboard: true,
+                focus: false
+            });
+            modalInstance.show();
+            
+            // Make only the modal dialog area interactive, not the overlay
+            setTimeout(() => {
+                const modalDialog = modalEl.querySelector('.modal-dialog');
+                modalEl.style.pointerEvents = 'none';
+                if (modalDialog) {
+                    modalDialog.style.pointerEvents = 'auto';
+                }
+            }, 100);
+        }
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                self.acronymDictionaryModalVM.isOpen(false);
+            });
+        }
     }
 
 }
@@ -2762,6 +2801,29 @@ document.addEventListener('DOMContentLoaded', function () {
             myViewModel._openSpotlight();
         }, { capture: true });
 
+document.addEventListener("keydown", (e) => {
+    // Ctrl+D to toggle Acronym Dictionary
+    const isD = (e.key || "").toLowerCase() === "d";
+    if (!isD) return;
+
+    const isCtrl = e.ctrlKey === true;
+    const isCmd = e.metaKey === true;
+
+    if (!(isCmd || isCtrl)) return;
+
+    e.preventDefault();
+    
+    const modalEl = document.getElementById("acronymDictionaryModal");
+    const isOpen = modalEl?.classList.contains("show");
+    
+    if (isOpen) {
+        // Close it
+        bootstrap.Modal.getInstance(modalEl)?.hide();
+    } else {
+        // Open it
+        myViewModel.openAcronymDictionaryModal();
+    }
+}, { capture: true });
 
         //large amount of bs to fix this chrome aria hidden warning that wont go away
         const configTrigger = () => document.querySelector('[data-bs-target="#configModal"]');

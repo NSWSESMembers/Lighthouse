@@ -3250,6 +3250,50 @@
         </div>
     </div>
 
+<!-- Acronym Dictionary Modal -->
+<div class="modal fade" id="acronymDictionaryModal" tabindex="-1" aria-labelledby="acronymDictionaryModalLabel"
+    aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-dialog-scrollable" style="position: fixed; right: 0; top: 0; margin: 0; height: 100vh; max-width: 450px;">
+        <div class="modal-content" style="height: 100%; border-radius: 0;" data-bind="with: acronymDictionaryModalVM">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="acronymDictionaryModalLabel">Acronym Dictionary</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Subheading -->
+                <div class="mb-3 text-muted">
+                    Quick reference guide for common acronyms and abbreviations used in entries.
+                </div>
+                
+                <!-- Acronym list -->
+                <div data-bind="foreach: sortedAcronyms">
+                    <div class="card mb-1">
+                        <div class="card-body py-1 px-2">
+                            <div class="d-flex align-items-start">
+                                <!-- Acronym name -->
+                                <div class="flex-shrink-0 me-2">
+                                    <span class="badge bg-primary" data-bind="text: name"></span>
+                                </div>
+                                <!-- Meaning -->
+                                <div class="flex-grow-1">
+                                    <div class="small fw-semibold" data-bind="text: meaning"></div>
+                                    <div class="small text-muted" style="font-size: 0.75rem;" data-bind="visible: example">
+                                        <span class="fw-semibold">Example:</span>
+                                        <span data-bind="text: example"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- MAP CONTEXT MENU (floating) -->
     <div id="mapContextMenu" class="dropdown-menu shadow"
