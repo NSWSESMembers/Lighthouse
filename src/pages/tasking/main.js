@@ -2560,6 +2560,111 @@ function VM() {
     })();
 
 
+    
+    // Acronym Dictionary
+    var acronymDictionary = {
+        AA: 'As Above',
+        ACK: 'Acknowledge',
+        ASNSW: 'NSW Ambulance',
+        ATTD: 'Attend',
+        B4: 'Before',
+        BET: 'Between',
+        BTW: 'Between OR By the Way',
+        'C[4F]W': 'Concern for Welfare',
+        CNCLD: 'Cancelled',
+        CNR: 'Corner',
+        DEC: 'Deceased',
+        ETA: 'Estimated Time of Arrival',
+        ETC: 'Estimated Time of Completion',
+        FRNSW: 'NSW Fire &amp; Rescue',
+        FB: 'Fire Brigade',
+        ICEMS: 'Integrated Case and Evidence Management System',
+        LOC: 'Location',
+        LS: 'Last Seen',
+        MP: 'Missing Person(s)',
+        NESB: 'Non-English Speaking Background',
+        NFA: 'No Further Action',
+        NPI: 'No Person(s) Injured',
+        NPT: 'No Person(s) Trapped',
+        NFI: 'No Further Information',
+        'NN[2T]A': 'No Need to Attend',
+        NSWPF: 'NSW Police Force',
+        POL: 'Police',
+        NVS: 'No Vehicle(s) Sighted',
+        OPP: 'Opposite',
+        OTW: 'On the Way',
+        'P[2T]P': 'Pole to Pole (Powerlines)',
+        'P[2T]H': 'Pole to House (Powerlines)',
+        '(\\d+)?PAX': 'Passenger',
+        PBY: "Passer By",
+        'POIS?': 'Person(s) Of Interest',
+        RCO: "Police Radio Rescue Coordinator",
+        REQ: "Require",
+        'VEHS?': 'Vehicle(s)',
+        'VOIS?': "Vehicle(s) Of Interest",
+        TMC: 'Transport Management Center',
+        NSWTMC: 'NSW Transport Management Center',
+        KLO4: 'Keep a Look Out For',
+        'INFTS?': 'Informant/Caller(s)',
+        '(\\d+)?POBS?': 'Person(s) On Board',
+        POSS: 'Possible',
+        'PTS?': 'Patient(s)',
+        'VICT?': 'Victim(s)',
+        YR: 'Years Old',
+        YO: 'Years Old',
+        YOM: 'Year Old Male',
+        YOF: 'Year Old Female',
+        THX: 'Thanks',
+    };
+    
+    // Custom Knockout Binding Handler (only define once)
+    if (!ko.bindingHandlers.acronymText) {
+        ko.bindingHandlers.acronymText = {
+            init: function(element, valueAccessor) {
+                var value = ko.unwrap(valueAccessor());
+                var $element = $(element);
+                
+                var contentOrig = $element.html();
+                var contentRepl = contentOrig;
+                
+                // Apply acronym dictionary (without lodash)
+                Object.keys(acronymDictionary).forEach(function(abbrText) {
+                    var clearText = acronymDictionary[abbrText];
+                    contentRepl = contentRepl.replace(
+                        new RegExp('\\b(' + abbrText + ')\\b', 'gi'),
+                        '<abbr title="' + clearText + '">$1</abbr>'
+                    );
+                });
+                
+                if (contentRepl != contentOrig) {
+                    $element.html(contentRepl);
+                }
+            },
+            update: function(element, valueAccessor) {
+                var value = ko.unwrap(valueAccessor());
+                var $element = $(element);
+                
+                // Reset to plain text first
+                $element.text(value);
+                
+                var contentOrig = $element.html();
+                var contentRepl = contentOrig;
+                
+                // Apply acronym dictionary (without lodash)
+                Object.keys(acronymDictionary).forEach(function(abbrText) {
+                    var clearText = acronymDictionary[abbrText];
+                    contentRepl = contentRepl.replace(
+                        new RegExp('\\b(' + abbrText + ')\\b', 'gi'),
+                        '<abbr title="' + clearText + '">$1</abbr>'
+                    );
+                });
+                
+                if (contentRepl != contentOrig) {
+                    $element.html(contentRepl);
+                }
+            }
+        };
+    }
 
 }
 
