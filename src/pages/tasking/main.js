@@ -1246,7 +1246,7 @@ function VM() {
 
         for (const m of s.matchAll(re)) {
             const tok = _normAssetName(m[0]); // strips spaces/punct => "par56"
-            if (!tok || seen.has(tok)) continue;
+            if (!tok) continue;
             seen.add(tok);
             tokens.push(tok);
         }
@@ -1292,23 +1292,27 @@ function VM() {
         const matchedAssets = new Set();
         const usedTokens = new Set();
 
-        // 1) EXACT first: token === assetName
+        // 1) EXACT first: token === assetName (one match per token)
+        //    If multiple exact matches exist, prefer non-Portable resourceType
         for (const tok of tokens) {
             const exactList = byName.get(tok);
             if (!exactList || !exactList.length) continue;
 
-            // allow multiple exact matches (duplicate assets with same name)
-            let addedAny = false;
-            for (const a of exactList) {
-                if (matchedAssetIds.has(a.id())) continue;
-                matchedAssetIds.add(a.id());
-                matchedAssets.add(a);
-                addedAny = true;
-            }
+            // Filter to unmatched candidates
+            const candidates = exactList.filter(a => !matchedAssetIds.has(a.id()));
+            if (!candidates.length) continue;
 
-            // consume the token if it produced at least one exact match,
-            // so it won't be used for fuzzy matching.
-            if (addedAny) usedTokens.add(tok);
+            // Sort so that Portable resourceType comes last (least preferable)
+            candidates.sort((a, b) => {
+            const aPortable = (ko.unwrap(a.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
+            const bPortable = (ko.unwrap(b.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
+            return aPortable - bPortable;
+            });
+
+            const best = candidates[0];
+            matchedAssetIds.add(best.id());
+            matchedAssets.add(best);
+            usedTokens.add(tok);
         }
 
         // 2) FUZZY second (token consumed once; asset matched once)
