@@ -1,5 +1,6 @@
 const path = require('path');
 const glob = require('glob');
+const webpack = require('webpack');
 
 const DotenvPlugin = require('dotenv-webpack');
 const ESLintPlugin = require('eslint-webpack-plugin');
@@ -81,6 +82,13 @@ module.exports = {
     clean: true,
   },
   plugins: [
+    // leaflet-geosearch optionally depends on @googlemaps/js-api-loader which
+    // dynamically injects <script> tags — forbidden under Chrome Extension MV3 CSP.
+    // Replace it with an empty module so webpack never bundles it.
+    new webpack.NormalModuleReplacementPlugin(
+      /@googlemaps\/js-api-loader/,
+      path.resolve(__dirname, 'src/lib/noop.js')
+    ),
     new DotenvPlugin(),
     new ESLintPlugin({
       extensions: ['js', 'ts'],

@@ -56,6 +56,10 @@ import { registerSESUnitLocationsLayer } from "./mapLayers/geoservices.js";
 import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
 import { renderFRAOSLayer } from "./mapLayers/frao.js";
 import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
+import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
+import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
+import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
+import { registerRainRadarLayer } from "./mapLayers/weather.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
@@ -1245,7 +1249,7 @@ function VM() {
 
         for (const m of s.matchAll(re)) {
             const tok = _normAssetName(m[0]); // strips spaces/punct => "par56"
-            if (!tok || seen.has(tok)) continue;
+            if (!tok) continue;
             seen.add(tok);
             tokens.push(tok);
         }
@@ -1291,23 +1295,27 @@ function VM() {
         const matchedAssets = new Set();
         const usedTokens = new Set();
 
-        // 1) EXACT first: token === assetName
+        // 1) EXACT first: token === assetName (one match per token)
+        //    If multiple exact matches exist, prefer non-Portable resourceType
         for (const tok of tokens) {
             const exactList = byName.get(tok);
             if (!exactList || !exactList.length) continue;
 
-            // allow multiple exact matches (duplicate assets with same name)
-            let addedAny = false;
-            for (const a of exactList) {
-                if (matchedAssetIds.has(a.id())) continue;
-                matchedAssetIds.add(a.id());
-                matchedAssets.add(a);
-                addedAny = true;
-            }
+            // Filter to unmatched candidates
+            const candidates = exactList.filter(a => !matchedAssetIds.has(a.id()));
+            if (!candidates.length) continue;
 
-            // consume the token if it produced at least one exact match,
-            // so it won't be used for fuzzy matching.
-            if (addedAny) usedTokens.add(tok);
+            // Sort so that Portable resourceType comes last (least preferable)
+            candidates.sort((a, b) => {
+            const aPortable = (ko.unwrap(a.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
+            const bPortable = (ko.unwrap(b.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
+            return aPortable - bPortable;
+            });
+
+            const best = candidates[0];
+            matchedAssetIds.add(best.id());
+            matchedAssets.add(best);
+            usedTokens.add(tok);
         }
 
         // 2) FUZZY second (token consumed once; asset matched once)
@@ -1663,6 +1671,10 @@ function VM() {
 
     // Maintain markers only for currently filtered assets
     self.filteredTrackableAssets.subscribe((changes) => {
+        // bail fast if the layer is not currently visible
+        if (!self.mapVM || !map.hasLayer(self.mapVM.assetLayer)) {
+            return;
+        }
         changes.forEach(ch => {
             const a = ch.value;
             if (ch.status === 'added') {
@@ -1690,21 +1702,37 @@ function VM() {
         });
     }, null, "arrayChange");
 
+    // --- Matched asset layer: populate / tear-down on toggle ---
     map.on('layeradd', (ev) => {
-        if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
-        // initial populate unmatchedTrackableAssets only when layer becomes visible
-        const assets = self.unmatchedTrackableAssets?.() || [];
+        if (ev.layer !== self.mapVM.assetLayer) return;
+        const assets = self.filteredTrackableAssets?.() || [];
         assets.forEach(a => {
-            attachUnmatchedAssetMarker(ko, self.map, self, a);
+            attachAssetMarker(ko, map, self, a);
         });
     });
 
-    // catch the unmatchedTrackableAssets layer being turned off to remove markers
+    map.on('layerremove', (ev) => {
+        if (ev.layer !== self.mapVM.assetLayer) return;
+        const assets = self.filteredTrackableAssets?.() || [];
+        assets.forEach(a => {
+            detachAssetMarker(ko, map, self, a);
+        });
+    });
+
+    // --- Unmatched asset layer: populate / tear-down on toggle ---
+    map.on('layeradd', (ev) => {
+        if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
+        const assets = self.unmatchedTrackableAssets?.() || [];
+        assets.forEach(a => {
+            attachUnmatchedAssetMarker(ko, map, self, a);
+        });
+    });
+
     map.on('layerremove', (ev) => {
         if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
         const assets = self.unmatchedTrackableAssets?.() || [];
         assets.forEach(a => {
-            attachUnmatchedAssetMarker(ko, self.map, self, a);
+            detachUnmatchedAssetMarker(ko, map, self, a);
         });
     });
 
@@ -2143,6 +2171,11 @@ function VM() {
     registerHazardWatchWarningsLayer(self, apiHost);
     registerSESUnitLocationsLayer(self);
     renderFRAOSLayer(self, map, getToken, apiHost, params);
+    registerPowerBoundariesGridLayer(self, map);
+    registerWaterNSWBoundariesLayer(self);
+    registerEPAContaminationSitesLayer(self);
+    registerBOMLandWarningsLayer(self);
+    registerRainRadarLayer(self, map);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
@@ -2272,7 +2305,7 @@ function VM() {
 
                 const gid = safeId(groupKey);
                 const storeKey = `layers.ovgrp.${gid}`;
-                const open = localStorage.getItem(storeKey) !== "0"; // default open
+                const open = localStorage.getItem(storeKey) === "1"; // default closed
 
                 const item = document.createElement("div");
                 item.className = "accordion-item";
