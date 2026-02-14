@@ -40,7 +40,10 @@
     "https://app.ses-mams-uat.net/*",
     "https://api.ses-mams.net/*",
     "https://s3.ap-southeast-2.amazonaws.com/csv-download.ses-mams.net/*",
-    "https://api.adsb.lol/v2/*"
+    "https://api.adsb.lol/v2/*",
+    "https://nula.waternsw.com.au/*",
+    "https://services1.arcgis.com/*",
+    "https://api.rainviewer.com/*"
   ],
   "permissions": [
     "storage",
