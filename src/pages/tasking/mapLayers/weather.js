@@ -25,6 +25,7 @@ export function registerRainRadarLayer(vm, map) {
   let playing      = false;
   let playTimer    = null;
   let dataTimer    = null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let activeGroup  = null;
   let control      = null;
   let speed        = FRAME_INTERVAL_MS;
