@@ -81,7 +81,7 @@ var MiniMap = require('leaflet-minimap');
 
 var esriVector = require('esri-leaflet-vector');
 
-import { GeoSearchControl } from 'leaflet-geosearch';
+import GeoSearchControl from 'leaflet-geosearch/lib/SearchControl';
 import { AwsLambdaGeocoderProvider } from './utils/geocode.js';
 
 
