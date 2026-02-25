@@ -21,8 +21,10 @@ const injectScripts = glob.sync('./src/injectscripts/**/*.js')
     return acc;
   }, {});
 
-const pagesScripts = glob.sync('./src/pages/**/*.js')
-  .reduce((acc, path) => {
+const pagesScripts = [
+  ...glob.sync('./src/pages/*.js'),
+  './src/pages/tasking/main.js',
+].reduce((acc, path) => {
     const entry = path.replace(/src\/pages\/(.*)\.js/, 'pages/$1');
     acc[entry] = path;
     return acc;
