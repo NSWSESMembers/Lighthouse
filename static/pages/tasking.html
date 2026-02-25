@@ -2450,7 +2450,13 @@
 
                 </div>
 
-                <div class="modal-footer">
+                <div class="modal-footer d-flex justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-outline-danger"
+                            data-bind="click: config.restoreDefaults">
+                            <i class="fa fa-undo me-1"></i>Restore Defaults
+                        </button>
+                    </div>
                     <div class="d-flex flex-wrap gap-2 align-items-center">
 
                         <!-- Shared key -->
@@ -2501,14 +2507,14 @@
 
                         </div>
 
+                        <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
+                            data-bind="click: config.saveAndCloseAndLoad, disable: pageIsLoading">
+                            <span data-bind="visible: !pageIsLoading">Close</span>
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
+                                data-bind="visible: pageIsLoading"></span>
+                            <span data-bind="visible: pageIsLoading">Loading...</span>
+                        </button>
                     </div>
-                    <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
-                        data-bind="click: config.saveAndCloseAndLoad, disable: pageIsLoading">
-                        <span data-bind="visible: !pageIsLoading">Close</span>
-                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
-                            data-bind="visible: pageIsLoading"></span>
-                        <span data-bind="visible: pageIsLoading">Loading...</span>
-                    </button>
                 </div>
             </div>
         </div>
