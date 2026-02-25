@@ -117,8 +117,8 @@ window.addEventListener('resize', () => {
   const splitW  = vsplitEl.getBoundingClientRect().width;
   const minSidebar = 260, minMap = 260;
   const maxSidebar = Math.min(appRect.width - splitW - minMap, appRect.width * 0.7);
-  const savedW = Number(localStorage.getItem('lh.sidebarWidthPx'));
-  if (Number.isFinite(savedW)) {
+  const savedW = Number(localStorage.getItem('lh.sidebarWidthPx')) || sidebarEl.getBoundingClientRect().width;
+  if (Number.isFinite(savedW) && savedW > 0) {
     const clamped = Math.max(minSidebar, Math.min(savedW, maxSidebar));
     sidebarEl.style.width = clamped + 'px';
     appEl.style.setProperty('--sidebar-w', clamped + 'px');
@@ -129,8 +129,8 @@ window.addEventListener('resize', () => {
   const splitH = hsplitEl.getBoundingClientRect().height;
   const minTop = 120, minBot = 120;
   const maxTop = Math.max(minTop, sbRect.height - splitH - minBot);
-  const savedTop = Number(localStorage.getItem('lh.paneTopHeightPx'));
-  if (Number.isFinite(savedTop)) {
+  const savedTop = Number(localStorage.getItem('lh.paneTopHeightPx')) || paneTopEl.getBoundingClientRect().height;
+  if (Number.isFinite(savedTop) && savedTop > 0) {
     const clampedTop = Math.max(minTop, Math.min(savedTop, maxTop));
     paneTopEl.style.height = clampedTop + 'px';
     appEl.style.setProperty('--pane-top-h', clampedTop + 'px');
