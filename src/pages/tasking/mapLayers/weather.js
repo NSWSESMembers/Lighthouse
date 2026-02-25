@@ -145,38 +145,29 @@ export function registerRainRadarLayer(vm, map) {
     }
   }
 
-  /* ── Leaflet control for playback ──────────────────────────── */
-  const RadarControl = L.Control.extend({
-    options: { position: "bottomleft" },
-    onAdd() {
-      const c = L.DomUtil.create("div", "leaflet-bar rv-control");
+  /* ── Radar playback bar (bottom-center of map) ─────────────── */
+  class RadarControl {
+    constructor() { this._container = null; this._map = null; }
+
+    addTo(m) {
+      this._map = m;
+      const c = document.createElement("div");
+      c.className = "rv-control";
       L.DomEvent.disableClickPropagation(c);
       L.DomEvent.disableScrollPropagation(c);
 
       c.innerHTML = `
-        <div style="
-          display:flex; align-items:center; gap:6px;
-          background:#fff; padding:4px 8px; border-radius:4px;
-          font-size:12px; font-family:monospace; box-shadow:0 1px 4px rgba(0,0,0,.3);
-          user-select:none;
-        ">
-          <button class="rv-step-back" title="Previous frame"
-            style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px;">⏮</button>
-          <button class="rv-play" title="Play / Pause"
-            style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px;">▶</button>
-          <button class="rv-step-fwd" title="Next frame"
-            style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px;">⏭</button>
-          <input class="rv-slider" type="range" min="0" max="0" value="0"
-            style="width:120px;cursor:pointer;" title="Scrub through frames" />
-          <span class="rv-timestamp" style="min-width:48px;text-align:center;">--:--</span>
-          <select class="rv-speed" title="Playback speed"
-            style="border:1px solid #ccc;border-radius:3px;font-size:11px;padding:1px 2px;cursor:pointer;">
-            <option value="1000">0.5×</option>
-            <option value="500" selected>1×</option>
-            <option value="250">2×</option>
-            <option value="125">4×</option>
-          </select>
-        </div>`;
+        <button class="rv-step-back" title="Previous frame">⏮</button>
+        <button class="rv-play" title="Play / Pause">▶</button>
+        <button class="rv-step-fwd" title="Next frame">⏭</button>
+        <input class="rv-slider" type="range" min="0" max="0" value="0" title="Scrub through frames" />
+        <span class="rv-timestamp">--:--</span>
+        <select class="rv-speed" title="Playback speed">
+          <option value="1000">0.5×</option>
+          <option value="500" selected>1×</option>
+          <option value="250">2×</option>
+          <option value="125">4×</option>
+        </select>`;
 
       c.querySelector(".rv-play").addEventListener("click", togglePlay);
       c.querySelector(".rv-step-back").addEventListener("click", () => { pause(); stepBack(); });
@@ -190,9 +181,19 @@ export function registerRainRadarLayer(vm, map) {
         if (playing) { pause(); play(); }
       });
 
-      return c;
-    },
-  });
+      m.getContainer().appendChild(c);
+      this._container = c;
+      return this;
+    }
+
+    remove() {
+      if (this._container && this._container.parentNode) {
+        this._container.parentNode.removeChild(this._container);
+      }
+      this._container = null;
+      this._map = null;
+    }
+  }
 
   /* ── layer registration ────────────────────────────────────── */
   vm.mapVM.registerPollingLayer("rainRadar", {
@@ -209,7 +210,7 @@ export function registerRainRadarLayer(vm, map) {
       // Clean up any previous cycle (toggle off → on)
       pause();
       if (dataTimer) { clearInterval(dataTimer); dataTimer = null; }
-      if (control) { map.removeControl(control); control = null; }
+      if (control) { control.remove(); control = null; }
       tileLayers = [];
       frames = [];
       frameIdx = -1;
@@ -217,7 +218,7 @@ export function registerRainRadarLayer(vm, map) {
 
       // Add playback control to the map
       control = new RadarControl();
-      map.addControl(control);
+      control.addTo(map);
 
       // Clean up control + timers when the layerGroup is removed from the map
       layerGroup.on("remove", cleanup);
@@ -234,7 +235,7 @@ export function registerRainRadarLayer(vm, map) {
   function cleanup() {
     pause();
     if (dataTimer) { clearInterval(dataTimer); dataTimer = null; }
-    if (control) { map.removeControl(control); control = null; }
+    if (control) { control.remove(); control = null; }
     tileLayers = [];
     frames = [];
     frameIdx = -1;

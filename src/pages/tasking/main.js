@@ -2189,7 +2189,7 @@ function VM() {
         },
 
         onAdd(map) {
-            const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
+            const c = L.DomUtil.create("div", "layers-drawer");
 
             // stop wheel -> no map zoom when scrolling the panel
             c.addEventListener(
@@ -2202,27 +2202,31 @@ function VM() {
 
             // Bootstrap-flavoured shell
             c.innerHTML = `
-      <button class="btn btn-light btn-sm shadow-sm" style="border: 10px;"
-              title="Layers"
-              aria-expanded="${this._open ? "true" : "false"}">
-        <i class="fas fa-layer-group"></i>
-      </button>
+      <div class="leaflet-bar">
+        <button class="btn btn-light btn-sm shadow-sm" style="border: 10px;"
+                title="Layers"
+                aria-expanded="${this._open ? "true" : "false"}">
+          <i class="fas fa-layer-group"></i>
+        </button>
+      </div>
 
       <div class="ld-panel ${this._open ? "" : "d-none"} shadow-sm rounded-3">
-        <div class="ld-section mb-2">
-          <div class="d-flex align-items-center justify-content-between mb-1">
-            <span class="ld-title text-uppercase small text-muted">Basemap</span>
+        <div class="accordion accordion-flush" id="ld-main-accordion">
+          <div class="accordion-item ld-basemap-accordion-item">
+            <h2 class="accordion-header" id="ld-basemap-header">
+              <button class="accordion-button layermenu-accordion collapsed py-2 px-2"
+                      type="button"
+                      aria-expanded="false"
+                      aria-controls="ld-basemap-collapse">
+                <span class="text-muted text-uppercase fw-semibold small">Basemap</span>
+              </button>
+            </h2>
+            <div id="ld-basemap-collapse"
+                 class="accordion-collapse collapse"
+                 aria-labelledby="ld-basemap-header">
+              <div class="accordion-body p-2 ld-basemap-body"></div>
+            </div>
           </div>
-          <div class="btn-group btn-group-sm d-flex flex-wrap ld-bases"
-               role="group"
-               aria-label="Basemap selection"></div>
-        </div>
-
-        <hr class="my-2">
-
-        <div class="ld-section">
-          <div class="ld-title text-uppercase small text-muted mb-1">Overlays</div>
-          <div class="ld-list ld-overlays"></div>
         </div>
       </div>
     `;
@@ -2233,46 +2237,84 @@ function VM() {
                 { name: "Esri Streets", key: "Streets" },
                 { name: "Esri Imagery", key: "Imagery" },
                 { name: "Esri Dark", key: "DarkGray" },
-                { name: "SIX Maps Topographic", key: "nsw-vector" },
+                { name: "Spatial NSW", key: "nsw-vector" },
                 { name: "SIX Maps Base Map", key: "nsw-base" },
                 { name: "SIX Maps Imagery", key: "nsw-imagery" }
             ];
 
-            const basesEl = c.querySelector(".ld-bases");
+            // Thumbnail URLs for each basemap (static map tile previews at z=10 Sydney)
+            const basemapThumbs = {
+                "Topographic":  "https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/16/39312/60258",
+                "Streets":      "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/16/39312/60258",
+                "Imagery":      "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/16/39312/60258",
+                "DarkGray":     "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/16/39312/60258",
+                "nsw-vector":   "https://static.lighthouse-extension.com/map/nsw_vector.png",
+                "nsw-base":     "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/16/39312/60258",
+                "nsw-imagery":  "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/16/39312/60258",
+            };
+
+            // Basemap accordion: remember open/closed state
+            const basemapAccBtn = c.querySelector("#ld-basemap-header .accordion-button");
+            const basemapCollapseEl = c.querySelector("#ld-basemap-collapse");
+            const basemapBody = c.querySelector(".ld-basemap-body");
+            const basemapOpen = localStorage.getItem("layers.ovgrp.basemap") === "1";
+
+            if (basemapOpen) {
+                basemapCollapseEl.classList.add("show");
+                basemapAccBtn.classList.remove("collapsed");
+                basemapAccBtn.setAttribute("aria-expanded", "true");
+            }
+
+            const basemapCollapse = new bootstrap.Collapse(basemapCollapseEl, { toggle: false });
+            basemapAccBtn.addEventListener("click", () => basemapCollapse.toggle());
+
+            basemapCollapseEl.addEventListener("shown.bs.collapse", () => {
+                localStorage.setItem("layers.ovgrp.basemap", "1");
+                basemapAccBtn.classList.remove("collapsed");
+                basemapAccBtn.setAttribute("aria-expanded", "true");
+            });
+            basemapCollapseEl.addEventListener("hidden.bs.collapse", () => {
+                localStorage.setItem("layers.ovgrp.basemap", "0");
+                basemapAccBtn.classList.add("collapsed");
+                basemapAccBtn.setAttribute("aria-expanded", "false");
+            });
+
+            // Build the thumbnail grid inside the accordion body
+            const grid = document.createElement("div");
+            grid.className = "ld-bases-grid";
+            basemapBody.appendChild(grid);
 
             basemapNames.forEach(({ name, key }) => {
-                const btn = document.createElement("button");
-                btn.type = "button";
-                btn.className =
-                    "btn btn-outline-secondary flex-grow-1 mb-1" +
-                    (key === this._baseKey ? " active btn-primary" : "");
-                btn.textContent = name;
-                btn.dataset.baseKey = key;
+                const tile = document.createElement("div");
+                tile.className = "ld-base-tile" + (key === this._baseKey ? " active" : "");
+                tile.dataset.baseKey = key;
+                tile.title = name;
 
-                btn.addEventListener("click", () => {
+                const thumb = basemapThumbs[key] || basemapThumbs["Topographic"];
+                tile.innerHTML = `
+                    <div class="ld-base-thumb" style="background-image:url('${thumb}')"></div>
+                    <span class="ld-base-name">${name.replace(/^Esri /, "").replace(/^SIX Maps /, "SIX ")}</span>
+                `;
+
+                tile.addEventListener("click", () => {
                     if (key === this._baseKey) return;
 
                     this._setBasemap(key, map);
                     this._baseKey = key;
                     localStorage.setItem("map.base", key);
 
-                    // update active styles
-                    basesEl.querySelectorAll("button").forEach((b) => {
-                        b.classList.remove("active", "btn-primary");
-                        b.classList.add("btn-outline-secondary");
-                    });
-                    btn.classList.add("active", "btn-primary");
-                    btn.classList.remove("btn-outline-secondary");
+                    // update active tile
+                    grid.querySelectorAll(".ld-base-tile").forEach((t) => t.classList.remove("active"));
+                    tile.classList.add("active");
                 });
 
-                basesEl.appendChild(btn);
+                grid.appendChild(tile);
             });
 
             // apply initial basemap
             this._setBasemap(this._baseKey, map);
 
             // --- Overlays as toggle buttons (multi-select) ---
-            const overlaysEl = c.querySelector(".ld-overlays");
             const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
 
             // Group by def.group (parent menu layer)
@@ -2283,11 +2325,8 @@ function VM() {
                 groups.get(g).push(def);
             });
 
-            // Build Bootstrap accordion container
-            const acc = document.createElement("div");
-            acc.className = "accordion accordion-flush";
-            acc.id = "ld-overlays-accordion";
-            overlaysEl.appendChild(acc);
+            // Append overlay groups as accordion items into the main accordion
+            const acc = c.querySelector("#ld-main-accordion");
 
             // Helpers
             const safeId = (s) =>
@@ -2325,7 +2364,7 @@ function VM() {
       <div id="${collapseId}"
      class="accordion-collapse collapse ${open ? "show" : ""}"
      aria-labelledby="${headerId}"
-     data-bs-parent="#ld-overlays-accordion">
+     data-bs-parent="#ld-main-accordion">
         <div class="accordion-body p-2"></div>
       </div>
     `;
@@ -2757,8 +2796,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 })
 
-// wait for full CSS + DOM
-window.addEventListener('load', function () {
+// show page once DOM + CSS are ready (don't wait for map tiles)
+document.addEventListener('DOMContentLoaded', function () {
     document.body.style.opacity = '1';
 });
 
