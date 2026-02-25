@@ -541,4 +541,20 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
     })
 
+    /** Wipe all Lighthouse localStorage keys and reload the page. */
+    self.restoreDefaults = () => {
+        if (!confirm(
+            'This will reset ALL settings (filters, layout, map layers, starred items, etc.) to their defaults and reload the page.\n\nContinue?'
+        )) return;
+
+        // Remove every key in localStorage (covers all lh-*, ov.*, layers.*, map.*, etc.)
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            keys.push(localStorage.key(i));
+        }
+        keys.forEach(k => localStorage.removeItem(k));
+
+        location.reload();
+    };
+
 }

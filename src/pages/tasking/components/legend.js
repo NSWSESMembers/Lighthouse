@@ -146,12 +146,9 @@ export const LegendControl = L.Control.extend({
     this._body = div.querySelector(".legend-body");
     this._btn = div.querySelector(".toggle-legend");
 
-    // initial state
-    const collapsed =
-      this.options.persist &&
-      localStorage.getItem("legendCollapsed") === "1"
-        ? true
-        : !!this.options.collapsed;
+    // initial state: use stored preference if available, otherwise fall back to option default
+    const stored = this.options.persist ? localStorage.getItem("legendCollapsed") : null;
+    const collapsed = stored !== null ? stored === "1" : !!this.options.collapsed;
     this._setCollapsed(collapsed);
 
     // prevent map drag/zoom on click

@@ -278,7 +278,7 @@ map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.
 var osm2 = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { minZoom: 0, maxZoom: 13 });
 new MiniMap(osm2, { toggleDisplay: true }).addTo(map);
 
-const legend = new LegendControl({ collapsed: false, persist: true });
+const legend = new LegendControl({ collapsed: true, persist: true });
 legend.addTo(map);
 
 ResizeDividers(map)
