@@ -39,7 +39,8 @@
     "https://api.adsb.lol/v2/*",
     "https://nula.waternsw.com.au/*",
     "https://services1.arcgis.com/*",
-    "https://api.rainviewer.com/*"
+    "https://api.rainviewer.com/*",
+    "https://portal.spatial.nsw.gov.au/*"
   ],
   "permissions": [
     "storage",

@@ -2008,7 +2008,7 @@ overflow: hidden;
 .layers-drawer .ld-panel {
   background: #fff;
   padding: 8px;
-  width: 260px;
+  width: 280px;
   max-height: 50%;
   overflow: auto;
   border-top: 1px solid #ccc;
@@ -2017,6 +2017,96 @@ overflow: hidden;
 
 .layers-drawer .ld-overlay-btn {
   font-size: 12px;
+}
+
+/* ── Radar playback bar (bottom-center) ── */
+.rv-control {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: monospace;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  user-select: none;
+  pointer-events: auto;
+}
+.rv-control button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px;
+}
+.rv-control .rv-slider {
+  width: 120px;
+  cursor: pointer;
+}
+.rv-control .rv-timestamp {
+  min-width: 48px;
+  text-align: center;
+}
+.rv-control .rv-speed {
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  font-size: 11px;
+  padding: 1px 2px;
+  cursor: pointer;
+}
+
+/* ── Basemap accordion with thumbnail grid ── */
+
+.ld-bases-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.ld-base-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 3px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.ld-base-tile:hover {
+  border-color: #90caf9;
+}
+
+.ld-base-tile.active {
+  border-color: #1a73e8;
+}
+
+.ld-base-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  background-size: cover;
+  background-position: center;
+  background-color: #e0e0e0;
+}
+
+.ld-base-name {
+  font-size: 9px;
+  text-align: center;
+  margin-top: 2px;
+  line-height: 1.1;
+  color: #444;
+  max-width: 54px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* header layout: bar + small hide button */
