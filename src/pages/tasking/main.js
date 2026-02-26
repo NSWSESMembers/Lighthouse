@@ -1178,6 +1178,14 @@ function VM() {
         if (job) {
             //console.log("Updating existing job:", job.id());
             job.updateFromJson(jobJson);
+
+            // If the job is filtered-in but has no marker yet (e.g. it was
+            // originally created without GPS coordinates and now has them),
+            // create the marker now.
+            if (job.isFilteredIn() && !job.marker) {
+                addOrUpdateJobMarker(ko, map, self, job);
+            }
+
             return job;
         }
         job = new Job(jobJson, deps);

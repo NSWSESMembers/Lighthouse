@@ -18,6 +18,12 @@ export function MapVM(Lmap, root) {
   self.distanceMarker = null;
   self.crowFliesLine = null;
 
+  // Guard flag: true while a flyToBounds animation is in progress.
+  // popupclose handlers check this to avoid clearing routes/crow-flies
+  // when the close was merely a side-effect of the zoom change (e.g.
+  // markercluster collapsing a spider during the animation).
+  self._flyingToBounds = false;
+
   // layers
   self.assetLayer = L.layerGroup();             // not added by default – layers drawer handles visibility
   self.unmatchedAssetLayer = L.layerGroup();   // not added by default
@@ -630,14 +636,22 @@ export function MapVM(Lmap, root) {
     }
   };
 
-  // Clear rings whenever the map is clicked
+  // Clear overlays whenever the map is clicked
   self.map.on('click', () => {
     self.clearJobAssetBullseye();
+    self.clearCrowFliesLine();
+    self.clearRoutes();
   });
 
   const PopupStuff = {
     flyToBounds: (bounds, { opts }) => {
+      self._flyingToBounds = true;
       self.map.flyToBounds(bounds, opts);
+      self.map.once('moveend zoomend', () => {
+        // Small delay so the popupclose that fires synchronously during
+        // the same tick as the final moveend is still covered.
+        setTimeout(() => { self._flyingToBounds = false; }, 100);
+      });
     },
 
     clearRoutes: self.clearRoutes,

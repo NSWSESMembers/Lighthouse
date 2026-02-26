@@ -207,8 +207,13 @@ function wireKoForPopup(ko, marker, job, vm, popupVM) {
             unbindKoFromPopup(ko, el);
         }, 250); // 250ms matches Leaflet's default fade animation
         job.onPopupClose && job.onPopupClose();
-        vm.mapVM.clearCrowFliesLine();
-        vm.mapVM.clearRoutes();
+        // Don't clear routes/crow-flies if the popup was closed as a
+        // side-effect of a flyToBounds animation (e.g. spider collapse
+        // from a zoom change after drawing a route).
+        if (!vm.mapVM._flyingToBounds) {
+            vm.mapVM.clearCrowFliesLine();
+            vm.mapVM.clearRoutes();
+        }
         vm.mapVM.clearOpen?.();
         if (vm?.mapVM?.openPopup()?.ref === job) vm.mapVM.clearOpen();
 

@@ -235,8 +235,13 @@ function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
   // Unbind after popup is fully closed for visual cleanliness
   const closeHandler = (e) => {
     const el = e.popup?.getContent();
-    vm.mapVM.clearCrowFliesLine();
-    vm.mapVM.clearRoutes?.();
+    // Don't clear routes/crow-flies if the popup was closed as a
+    // side-effect of a flyToBounds animation (e.g. spider collapse
+    // from a zoom change after drawing a route).
+    if (!vm.mapVM._flyingToBounds) {
+        vm.mapVM.clearCrowFliesLine();
+        vm.mapVM.clearRoutes?.();
+    }
     vm.mapVM.clearOpen?.();
     asset.matchingTeamsInView()?.length !== 0 && asset.matchingTeamsInView()[0].onPopupClose();
 
