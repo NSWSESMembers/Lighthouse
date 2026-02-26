@@ -129,6 +129,34 @@ export function MapVM(Lmap, root) {
   };
 
   /**
+   * Change the clustering aggressiveness by updating maxClusterRadius.
+   * markercluster doesn't support changing this dynamically, so we
+   * collect all markers, update the option, then re-add them which
+   * forces the internal grids to rebuild.
+   */
+  self.applyClusterRadius = function (radius) {
+    if (!self.clusteringEnabled) {
+      // Just store for when clustering is re-enabled
+      self.jobClusterGroup.options.maxClusterRadius = radius;
+      return;
+    }
+    if (self.jobClusterGroup.options.maxClusterRadius === radius) return;
+
+    // Collect current markers from the cluster group
+    const markers = [];
+    self.jobClusterGroup.eachLayer(m => markers.push(m));
+    self.jobClusterGroup.clearLayers();
+
+    // Update the option
+    self.jobClusterGroup.options.maxClusterRadius = radius;
+
+    // Re-add — clearLayers resets internal grid structures so addLayers
+    // will rebuild using the new radius.
+    if (markers.length) self.jobClusterGroup.addLayers(markers);
+    self._syncPulseRings();
+  };
+
+  /**
    * Enable or disable marker clustering entirely.
    * When disabled, all markers are moved from jobClusterGroup to a plain
    * layerGroup so they display individually without clustering behaviour.

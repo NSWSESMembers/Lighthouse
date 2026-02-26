@@ -2446,6 +2446,26 @@
                                                             </div>
 
                                                             <div data-bind="visible: config.clusterEnabled">
+                                                                <div class="ms-3 mb-3">
+                                                                    <label for="clusterRadiusRange" class="form-label mb-1">
+                                                                        Cluster radius:
+                                                                        <strong data-bind="text: config.clusterRadius() + 'px'"></strong>
+                                                                    </label>
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <small class="text-muted">Tight</small>
+                                                                        <input type="range" class="form-range flex-grow-1"
+                                                                            id="clusterRadiusRange" min="10" max="80"
+                                                                            step="5"
+                                                                            data-bind="value: config.clusterRadius, valueUpdate: 'input'">
+                                                                        <small class="text-muted">Aggressive</small>
+                                                                    </div>
+                                                                    <div class="form-text">
+                                                                        How close markers must be (in pixels) to be
+                                                                        grouped into a cluster. Lower values keep
+                                                                        markers separate; higher values merge more.
+                                                                    </div>
+                                                                </div>
+
                                                                 <div class="form-check form-switch ms-3">
                                                                     <input class="form-check-input" type="checkbox"
                                                                         role="switch" id="clusterRescueToggle"
