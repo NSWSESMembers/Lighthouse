@@ -85,6 +85,9 @@ export function ConfigVM(root, deps) {
 
     self.teamTaskStatusFilter = ko.observableArray([]);
 
+    // Map clustering
+    self.clusterRescueJobs = ko.observable(true);
+
     // pinned rows
     self.pinnedTeamIds = ko.observableArray([]);
     self.pinnedIncidentIds = ko.observableArray([]);
@@ -159,6 +162,7 @@ export function ConfigVM(root, deps) {
         pinnedTeamIds: ko.toJS(self.pinnedTeamIds),
         pinnedIncidentIds: ko.toJS(self.pinnedIncidentIds),
         paneOrder: self.paneOrder().map(p => p.id),
+        clusterRescueJobs: !!self.clusterRescueJobs(),
     });
 
     // Helpers
@@ -429,6 +433,10 @@ export function ConfigVM(root, deps) {
             self.rebuildPaneOrderFromIds(); // defaults
         }
 
+        if (typeof cfg.clusterRescueJobs === 'boolean') {
+            self.clusterRescueJobs(cfg.clusterRescueJobs);
+        }
+
 
         self.afterConfigLoad()
 
@@ -539,6 +547,11 @@ export function ConfigVM(root, deps) {
 
     self.paneOrder.subscribe(() => {
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
+    })
+
+    self.clusterRescueJobs.subscribe((v) => {
+        root.mapVM?.applyRescueClusterSetting?.(!!v);
+        self.save();
     })
 
     /** Wipe all Lighthouse localStorage keys and reload the page. */

@@ -15,8 +15,13 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
 
     if (!(Number.isFinite(lat) && Number.isFinite(lng)) || id == null) return;
 
-    const type = job.typeName?.() || "default";
-    const { layerGroup, markers } = ensureGroup(vm, map, type);
+    const isRescue = (job.priorityName?.() || '').toLowerCase() === 'rescue';
+    const clusterRescue = !!vm.config?.clusterRescueJobs?.();
+    const targetLayer = (isRescue && !clusterRescue)
+        ? vm.mapVM.rescueJobLayer
+        : vm.mapVM.jobClusterGroup;
+    const markers = vm.mapVM.jobMarkerIndex;
+    const pulseLayer = vm.mapVM.jobPulseLayer;
     const style = styleForJob(job);
     const html = buildJobPopupKO();
     const contentEl = makePopupNode(html, 'job-pop-root')
@@ -41,18 +46,21 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         const node = makePopupNode(html, 'job-pop-root');
         const m = markers.get(id);
         const pt = m.getLatLng();
-        if (pt.lat !== lat || pt.lng !== lng) m.setLatLng([lat, lng]);
+        // When spiderfied, _latlng is the spider position — don't overwrite
+        // it or the spider layout breaks.  The real position is stored in
+        // _preSpiderfyLatlng and will be restored on unspiderfy.
+        if (!m._spiderLeg && (pt.lat !== lat || pt.lng !== lng)) m.setLatLng([lat, lng]);
         const key = JSON.stringify(style);
         if (m._styleKey !== key) { m.setIcon(makeShapeIcon(style)); m._styleKey = key; }
         if (!m._popupBound) { m.setPopupContent(node); wireKoForPopup(ko, m, job, vm, popupVM); }
 
         // keep the "New" ring in correct state
-        upsertPulseRing(layerGroup, job, m);
+        upsertPulseRing(pulseLayer, job, m);
 
         // ensure we have a status subscription exactly once
         if (!m._pulseSubs || m._pulseSubs.length === 0) {
             (m._pulseSubs ||= []).push(
-                job.statusName.subscribe(() => upsertPulseRing(layerGroup, job, m))
+                job.statusName.subscribe(() => upsertPulseRing(pulseLayer, job, m))
             );
         }
 
@@ -63,13 +71,14 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
 
 
     marker._styleKey = JSON.stringify(style);
-    marker.addTo(layerGroup);
+    marker._isRescue = isRescue;
+    marker.addTo(targetLayer);
     markers.set(id, marker);
     job.marker = marker;
 
-    upsertPulseRing(layerGroup, job, marker);
+    upsertPulseRing(pulseLayer, job, marker);
     (marker._pulseSubs ||= []).push(
-        job.statusName.subscribe(() => upsertPulseRing(layerGroup, job, marker))
+        job.statusName.subscribe(() => upsertPulseRing(pulseLayer, job, marker))
     );
 
 
@@ -82,6 +91,9 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         job.address.longitude.subscribe(() => safeMove(marker, job)),
     ];
 
+    // Sync pulse ring visibility after adding
+    vm.mapVM._syncPulseRings?.();
+
     return marker;
 }
 
@@ -89,31 +101,34 @@ export function removeJobMarker(vm, jobOrId) {
     const id = typeof jobOrId === 'number' ? jobOrId : jobOrId?.id?.();
     if (id == null) return;
 
-    // find marker in any group
-    for (const { layerGroup, markers } of vm.mapVM.jobMarkerGroups.values()) {
-        const m = markers.get(id);
-        if (!m) continue;
+    const markers = vm.mapVM.jobMarkerIndex;
+    const clusterGroup = vm.mapVM.jobClusterGroup;
+    const rescueLayer = vm.mapVM.rescueJobLayer;
+    const pulseLayer = vm.mapVM.jobPulseLayer;
 
-        // dispose KO subscriptions
-        (m._subs || []).forEach(s => { try { s.dispose?.(); } catch { /* empty */ } });
-        m._subs = [];
+    const m = markers.get(id);
+    if (!m) return;
 
-        // unbind KO from popup if ever opened
-        const popupEl = m.getPopup()?.getElement?.();
-        if (popupEl && popupEl.__ko_bound__) { try { ko.cleanNode(popupEl); } catch { /* empty */ } delete popupEl.__ko_bound__; }
+    // dispose KO subscriptions
+    (m._subs || []).forEach(s => { try { s.dispose?.(); } catch { /* empty */ } });
+    m._subs = [];
 
-        if (m._pulseRing) {
-            m._pulseRing._detach?.();
-            (m._pulseSubs || []).forEach(s => { try { s.dispose?.(); } catch { /* empty */ } });
-            m._pulseSubs = [];
-            layerGroup.removeLayer(m._pulseRing);
-            m._pulseRing = null;
-        }
+    // unbind KO from popup if ever opened
+    const popupEl = m.getPopup()?.getElement?.();
+    if (popupEl && popupEl.__ko_bound__) { try { ko.cleanNode(popupEl); } catch { /* empty */ } delete popupEl.__ko_bound__; }
 
-        layerGroup.removeLayer(m);
-        markers.delete(id);
-        break;
+    if (m._pulseRing) {
+        m._pulseRing._detach?.();
+        (m._pulseSubs || []).forEach(s => { try { s.dispose?.(); } catch { /* empty */ } });
+        m._pulseSubs = [];
+        pulseLayer.removeLayer(m._pulseRing);
+        m._pulseRing = null;
     }
+
+    // Remove from whichever layer it's in
+    if (clusterGroup.hasLayer(m)) clusterGroup.removeLayer(m);
+    if (rescueLayer.hasLayer(m)) rescueLayer.removeLayer(m);
+    markers.delete(id);
 
     const job = vm.jobsById?.get?.(id);
     if (job) job.marker = null;
@@ -160,15 +175,11 @@ function upsertPulseRing(layerGroup, job, marker) {
 }
 
 // --- internals ---
-function ensureGroup(vm, map, typeName) {
-    if (!vm.mapVM.jobMarkerGroups.has(typeName)) {
-        const group = L.layerGroup().addTo(map);
-        vm.mapVM.jobMarkerGroups.set(typeName, { layerGroup: group, markers: new Map() });
-    }
-    return vm.mapVM.jobMarkerGroups.get(typeName);
-}
 
 function safeMove(marker, job) {
+    // Skip if the marker is currently spiderfied — moving it would break the
+    // spider layout.  The real position is restored on unspiderfy.
+    if (marker._spiderLeg) return;
     const lat = +job.address.latitude?.();
     const lng = +job.address.longitude?.();
     if (Number.isFinite(lat) && Number.isFinite(lng)) marker.setLatLng([lat, lng]);

@@ -6,6 +6,7 @@
 @import url('leaflet/dist/leaflet.css');
 @import url('leaflet.polylinemeasure/Leaflet.PolylineMeasure.css');
 @import url('leaflet-geosearch/dist/geosearch.css');
+@import url('leaflet.markercluster/dist/MarkerCluster.css');
 
 
 html {
@@ -1018,6 +1019,57 @@ tr.job:hover {
 .leaflet-marker-icon.job-svg-marker > svg {
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
+}
+
+/* ─── JOB CLUSTER ICON ─── */
+.job-cluster-icon {
+  background: transparent;
+  border: none;
+}
+
+.job-cluster-count {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(50, 50, 50, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 28px;
+  text-align: center;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.job-cluster-count:hover {
+  transform: scale(1.15);
+}
+
+/* Rescue indicator inside cluster badge */
+.job-cluster-count.has-rescue {
+  border-color: #dc3545;
+  background: rgba(60, 10, 10, 0.9);
+}
+
+.job-cluster-rescue-bang {
+  color: #dc3545;
+  font-weight: 900;
+  font-size: 14px;
+  margin-right: 1px;
+}
+
+/* Override markercluster defaults on our pane */
+.leaflet-cluster-anim .leaflet-marker-icon,
+.leaflet-cluster-anim .leaflet-marker-shadow {
+  transition: transform 0.25s ease-out, opacity 0.25s ease-in;
+}
+
+/* Spiderfy legs */
+.leaflet-cluster-spider-leg {
+  stroke: rgba(100, 100, 100, 0.5);
+  stroke-width: 1.5;
 }
 
 /* PULSE RING (separate follower marker using L.divIcon) */

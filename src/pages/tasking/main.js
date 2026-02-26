@@ -815,6 +815,13 @@ function VM() {
                 const lat = job.address.latitude?.();
                 const lng = job.address.longitude?.();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    // If the marker is currently spiderfied, do NOT flyTo or
+                    // re-open the popup.  flyTo triggers zoomstart which
+                    // collapses the spider (via markercluster's
+                    // _unspiderfyZoomStart handler), closing any popup that
+                    // was just opened on the spiderfied marker.
+                    if (job.marker?._spiderLeg) return;
+
                     map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
                     job.marker?.openPopup?.();
                 }

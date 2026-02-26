@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 var ko = require('knockout');
 var L = require('leaflet');
+import 'leaflet.markercluster';
 
 import { AssetPopupViewModel } from './AssetPopUp';
 import { JobPopupViewModel } from './JobPopUp';
@@ -19,8 +20,107 @@ export function MapVM(Lmap, root) {
 
   // layers
   self.assetLayer = L.layerGroup();             // not added by default – layers drawer handles visibility
-  self.jobMarkerGroups = new Map();
   self.unmatchedAssetLayer = L.layerGroup();   // not added by default
+
+  // --- Job marker clustering ---
+  // Single cluster group for all job markers (replaces per-type layerGroups)
+  self.jobClusterGroup = L.markerClusterGroup({
+    maxClusterRadius: 25,           // only cluster markers within 25px – tight grouping
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    spiderfyOnMaxZoom: true,
+    spiderfyDistanceMultiplier: 1.8,
+    animate: true,
+    clusterPane: 'pane-tippy-top',
+    spiderLegPolylineOptions: { weight: 1.5, color: '#888', opacity: 0.5, interactive: false },
+    iconCreateFunction: function (cluster) {
+      const children = cluster.getAllChildMarkers();
+      const count = children.length;
+      const hasRescue = children.some(m => m._isRescue);
+      const inner = hasRescue
+        ? '<span class="job-cluster-rescue-bang">!</span>' + count
+        : '' + count;
+      return L.divIcon({
+        className: 'job-cluster-icon',
+        html: '<div class="job-cluster-count' + (hasRescue ? ' has-rescue' : '') + '">' + inner + '</div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+    }
+  });
+  self.jobClusterGroup.addTo(self.map);
+
+  // ── Fix: prevent spider collapse when clicking a spiderfied marker ──
+  // When a spiderfied child marker is clicked, Leaflet's event propagation
+  // carries the 'click' up through _featureGroup → clusterGroup → map
+  // BEFORE _fireDOMEvent can check _stopped.  This triggers _unspiderfyWrapper
+  // on the map, which collapses the spider and immediately closes the popup
+  // that just opened.  Fix: replace the default _unspiderfyWrapper with one
+  // that checks whether a popup from a spiderfied child is currently open.
+  (function () {
+    var cg = self.jobClusterGroup;
+    // Remove the default wrapper that markercluster registered in _spiderfierOnAdd
+    self.map.off('click', cg._unspiderfyWrapper, cg);
+    // Replace with guarded version
+    cg._unspiderfyWrapper = function () {
+      if (!cg._spiderfied) return;
+      // If a popup belonging to a spiderfied child is currently open on the
+      // map, don't collapse.  The popup's autoClose (via preclick) will close
+      // it on the next outside click, and THAT click will then collapse the
+      // spider normally.  We must check map.hasLayer() because map._popup is
+      // never cleared — it always references the last-opened popup.
+      var popup = self.map._popup;
+      if (popup && self.map.hasLayer(popup) && popup._source && popup._source._spiderLeg) {
+        return;   // popup is open on a spider child – leave the spider alone
+      }
+      cg._unspiderfy();
+    };
+    self.map.on('click', cg._unspiderfyWrapper, cg);
+  })();
+
+  // Plain layer for rescue markers when clustering is disabled for them
+  self.rescueJobLayer = L.layerGroup().addTo(self.map);
+
+  // Separate plain layer for pulse rings – not clustered
+  self.jobPulseLayer = L.layerGroup().addTo(self.map);
+
+  // id → marker lookup (flat, no per-type groups)
+  self.jobMarkerIndex = new Map();
+
+  // Legacy compat: jobMarkerGroups iterator for tryInitialFit etc.
+  // Now wraps both the cluster group and the rescue layer
+  self.jobMarkerGroups = {
+    values: function () {
+      return [
+        { layerGroup: self.jobClusterGroup, markers: self.jobMarkerIndex },
+        { layerGroup: self.rescueJobLayer, markers: new Map() }
+      ][Symbol.iterator]();
+    }
+  };
+
+  /**
+   * Move rescue markers between the cluster group and the standalone
+   * rescue layer based on the clusterRescueJobs setting.
+   */
+  self.applyRescueClusterSetting = function (clusterThem) {
+    self.jobMarkerIndex.forEach((marker) => {
+      if (!marker._isRescue) return;
+      if (clusterThem) {
+        // move into cluster group
+        if (self.rescueJobLayer.hasLayer(marker)) {
+          self.rescueJobLayer.removeLayer(marker);
+          self.jobClusterGroup.addLayer(marker);
+        }
+      } else {
+        // move out of cluster group into plain layer
+        if (self.jobClusterGroup.hasLayer(marker)) {
+          self.jobClusterGroup.removeLayer(marker);
+          self.rescueJobLayer.addLayer(marker);
+        }
+      }
+    });
+    self._syncPulseRings();
+  };
 
   self.applyPaneOrder = function (paneOrderTopToBottom) {
     if (!Array.isArray(paneOrderTopToBottom) || paneOrderTopToBottom.length === 0) return;
@@ -510,13 +610,41 @@ export function MapVM(Lmap, root) {
     self.clearJobAssetBullseye();
   };
 
-  self.ensureJobGroup = (typeName) => {
-    if (!self.jobMarkerGroups.has(typeName)) {
-      const group = L.layerGroup().addTo(self.map);
-      self.jobMarkerGroups.set(typeName, { layerGroup: group, markers: new Map() });
-    }
-    return self.jobMarkerGroups.get(typeName);
+  // Pulse ring visibility management for clustering
+  // When markers get clustered, hide their pulse rings.
+  // When unclustered or spiderfied, show them again.
+  self._syncPulseRings = function () {
+    self.jobMarkerIndex.forEach((marker) => {
+      if (!marker._pulseRing) return;
+
+      // Markers on the standalone rescue layer (not in the cluster group)
+      // are always individually visible – skip cluster logic for them.
+      if (self.rescueJobLayer.hasLayer(marker)) {
+        if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
+          self.jobPulseLayer.addLayer(marker._pulseRing);
+        }
+        return;
+      }
+
+      const visibleParent = self.jobClusterGroup.getVisibleParent(marker);
+      if (visibleParent === marker) {
+        // Marker is individually visible – show pulse ring
+        if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
+          self.jobPulseLayer.addLayer(marker._pulseRing);
+        }
+      } else {
+        // Marker is inside a cluster – hide pulse ring
+        if (self.jobPulseLayer.hasLayer(marker._pulseRing)) {
+          self.jobPulseLayer.removeLayer(marker._pulseRing);
+        }
+      }
+    });
   };
+
+  self.jobClusterGroup.on('animationend', self._syncPulseRings);
+  self.jobClusterGroup.on('spiderfied', self._syncPulseRings);
+  self.jobClusterGroup.on('unspiderfied', self._syncPulseRings);
+  self.map.on('zoomend', self._syncPulseRings);
 
   self.map.on('layeradd', (ev) => {
     // find which polling layer this corresponds to
