@@ -87,7 +87,7 @@ export function ConfigVM(root, deps) {
 
     // Map clustering
     self.clusterEnabled = ko.observable(true);
-    self.clusterRadius = ko.observable(15);   // maxClusterRadius in px (10–80)
+    self.clusterRadius = ko.observable(60);   // maxClusterRadius in px (10–80)
     self.clusterRescueJobs = ko.observable(true);
 
     // pinned rows
@@ -165,7 +165,7 @@ export function ConfigVM(root, deps) {
         pinnedIncidentIds: ko.toJS(self.pinnedIncidentIds),
         paneOrder: self.paneOrder().map(p => p.id),
         clusterEnabled: !!self.clusterEnabled(),
-        clusterRadius: Number(self.clusterRadius()) || 25,
+        clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
     });
 
@@ -541,7 +541,7 @@ export function ConfigVM(root, deps) {
     self.afterConfigLoad = () => {
         deps.fetchAllSectors(self.incidentFilters().map(i => i.id));
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
-        root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 25);
+        root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
         root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
     }
 
@@ -562,7 +562,7 @@ export function ConfigVM(root, deps) {
     })
 
     self.clusterRadius.subscribe((v) => {
-        const r = Math.max(10, Math.min(80, Number(v) || 25));
+        const r = Math.max(10, Math.min(80, Number(v) || 60));
         root.mapVM?.applyClusterRadius?.(r);
         self.save();
     })

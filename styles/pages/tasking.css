@@ -1027,56 +1027,106 @@ tr.job:hover {
   border: none;
 }
 
+/* Inner wrapper – provides the positioning context for the
+   SVG ring and centred badge without interfering with
+   Leaflet's position:absolute on .leaflet-marker-icon */
+.cluster-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.15s ease;
+}
+
+.cluster-wrap:hover {
+  transform: scale(1.12);
+}
+
+/* SVG donut ring behind the badge */
+.cluster-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+}
+
 .job-cluster-count {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(50, 50, 50, 0.85);
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(50, 50, 50, 0.88);
+  border: none;
   color: #fff;
   font-weight: 700;
   font-size: 13px;
   line-height: 28px;
   text-align: center;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
   cursor: pointer;
   transition: transform 0.15s ease;
+  z-index: 2;
+}
+
+/* Size tiers – grow badge with count */
+.job-cluster-count.cluster-md {
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  font-size: 14px;
+  border-radius: 7px;
+}
+.job-cluster-count.cluster-lg {
+  width: 38px;
+  height: 38px;
+  line-height: 38px;
+  font-size: 15px;
+  border-radius: 8px;
 }
 
 .job-cluster-count:hover {
-  transform: scale(1.15);
+  /* hover scale handled by .cluster-wrap:hover */
 }
 
-/* Rescue indicator inside cluster badge */
+/* Rescue indicator – red text on the cluster count */
 .job-cluster-count.has-rescue {
-  border-color: #dc3545;
-  background: rgba(60, 10, 10, 0.9);
-}
-
-.job-cluster-rescue-bang {
   color: #dc3545;
-  font-weight: 900;
-  font-size: 14px;
-  margin-right: 1px;
 }
 
-/* Unacknowledged ("New") indicator – pulsing ring around cluster badge */
+/* Unacknowledged ("New") indicator – expanding-ring pulse around cluster badge.
+   Uses a ::after pseudo-element so the badge itself stays stable. */
 .job-cluster-count.has-new {
-  box-shadow: 0 0 0 3px rgba(247, 147, 29, 0.8),
-              0 1px 6px rgba(0, 0, 0, 0.4);
-  animation: cluster-pulse-new 1.4s ease-out infinite;
+  position: relative;
 }
 
-/* When both rescue and new, keep the red border from has-rescue and add the pulse */
-.job-cluster-count.has-rescue.has-new {
-  box-shadow: 0 0 0 3px rgba(247, 147, 29, 0.8),
-              0 1px 6px rgba(0, 0, 0, 0.4);
+.job-cluster-count.has-new::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 8px;
+  border: 2px solid rgba(247, 147, 29, 0.9);
+  background: conic-gradient(rgba(247, 147, 29, 0.6) 257deg, transparent 257deg);
+  mask: radial-gradient(circle at center, transparent 40%, white 70%);
+  transform-origin: 50% 50%;
+  animation: cluster-pulse-new 1.4s ease-out infinite;
+  pointer-events: none;
+}
+
+/* When both rescue and new, same pulse ring */
+.job-cluster-count.has-rescue.has-new::after {
+  border-color: rgba(247, 147, 29, 0.9);
 }
 
 @keyframes cluster-pulse-new {
-  0%   { box-shadow: 0 0 0 2px rgba(247, 147, 29, 0.9), 0 1px 6px rgba(0,0,0,0.4); }
-  50%  { box-shadow: 0 0 0 5px rgba(247, 147, 29, 0.35), 0 1px 6px rgba(0,0,0,0.4); }
-  100% { box-shadow: 0 0 0 2px rgba(247, 147, 29, 0.9), 0 1px 6px rgba(0,0,0,0.4); }
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  80%  { transform: scale(1.3); opacity: 0.15; }
+  100% { transform: scale(1.5); opacity: 0; }
 }
 
 /* Override markercluster defaults on our pane */
@@ -1127,10 +1177,6 @@ tr.job:hover {
     transform: scale(1.2);
     opacity: 0;
   }
-}
-
-.legend-ring > div > .pulse-ring {
-  position: relative !important;
 }
 
 .no-drag {

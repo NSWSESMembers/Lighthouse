@@ -55,6 +55,7 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         if (!m._spiderLeg && (pt.lat !== lat || pt.lng !== lng)) m.setLatLng([lat, lng]);
         const key = JSON.stringify(style);
         if (m._styleKey !== key) { m.setIcon(makeShapeIcon(style)); m._styleKey = key; }
+        m._priorityColor = style.fill || '#6b7280';
         if (!m._popupBound) { m.setPopupContent(node); wireKoForPopup(ko, m, job, vm, popupVM); }
 
         // keep the "New" ring and _isNew flag in correct state
@@ -88,6 +89,7 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     marker._styleKey = JSON.stringify(style);
     marker._isRescue = isRescue;
     marker._isNew = (job.statusName?.() || '').toLowerCase() === 'new';
+    marker._priorityColor = style.fill || '#6b7280';
     marker.addTo(targetLayer);
     markers.set(id, marker);
     job.marker = marker;

@@ -50,9 +50,10 @@ export const LegendControl = L.Control.extend({
     <div>
       <div class="fw-semibold small mb-1">Overlays</div>
       <div class="d-flex flex-wrap gap-2 small legend-ring ">
-        <div><div class="pulse-ring-icon"></div><svg  class="pulse-ring" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="2"/></svg> Unacknowledged incident</div>
-        <div><span class="job-cluster-count has-new" style="display:inline-block;width:20px;height:20px;line-height:16px;font-size:10px;vertical-align:middle;">3</span> Cluster contains unacknowledged</div>
-        <div><span class="job-cluster-count has-rescue" style="display:inline-block;width:20px;height:20px;line-height:16px;font-size:10px;vertical-align:middle;"><span class="job-cluster-rescue-bang" style="font-size:11px;">!</span>2</span> Cluster contains rescue</div>
+        <div><span style="display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #f7931d;animation:pulse-ring 1.4s ease-out infinite;vertical-align:middle;margin-right:4px;"></span> Unacknowledged incident</div>
+        <div style="display:inline-flex;align-items:center;gap:4px;vertical-align:middle;"><span style="position:relative;display:inline-block;width:28px;height:28px;"><svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 40 40" style="position:absolute;top:0;left:0;width:100%;height:100%;"><path d="M20,1.5 A18.5,18.5 0 0 1 38.5,20 L35.5,20 A15.5,15.5 0 0 0 20,4.5 Z" fill="#FFA500"/><path d="M38.5,20 A18.5,18.5 0 0 1 20,38.5 L20,35.5 A15.5,15.5 0 0 0 35.5,20 Z" fill="#4F92FF"/><path d="M20,38.5 A18.5,18.5 0 0 1 1.5,20 L4.5,20 A15.5,15.5 0 0 0 20,35.5 Z" fill="#0fcb35"/><path d="M1.5,20 A18.5,18.5 0 0 1 20,1.5 L20,4.5 A15.5,15.5 0 0 0 4.5,20 Z" fill="#FF0000"/></svg><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;border-radius:5px;background:rgba(50,50,50,0.88);color:#fff;font-weight:700;font-size:10px;line-height:20px;text-align:center;">8</span></span> Segmented priority ring</div>
+        <div><span style="display:inline-block;width:20px;height:20px;line-height:20px;font-size:10px;vertical-align:middle;border-radius:5px;background:rgba(50,50,50,0.88);color:#fff;font-weight:700;text-align:center;position:relative;" class="has-new">3</span> Cluster contains unacknowledged</div>
+        <div><span style="display:inline-block;width:20px;height:20px;line-height:20px;font-size:10px;vertical-align:middle;border-radius:5px;background:rgba(50,50,50,0.88);color:#dc3545;font-weight:700;text-align:center;">2</span> Cluster contains rescue</div>
       </div>
     </div>
     <div class="legend-section">

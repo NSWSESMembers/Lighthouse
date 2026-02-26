@@ -31,8 +31,8 @@ export function MapVM(Lmap, root) {
   // --- Job marker clustering ---
   // Single cluster group for all job markers (replaces per-type layerGroups)
   self.jobClusterGroup = L.markerClusterGroup({
-    maxClusterRadius: 25,           // only cluster markers within 25px – tight grouping
-    showCoverageOnHover: false,
+    maxClusterRadius: 60,           // default; overridden by Config.afterConfigLoad
+    showCoverageOnHover: true,
     zoomToBoundsOnClick: true,
     spiderfyOnMaxZoom: true,
     spiderfyDistanceMultiplier: 1.8,
@@ -42,18 +42,78 @@ export function MapVM(Lmap, root) {
     iconCreateFunction: function (cluster) {
       const children = cluster.getAllChildMarkers();
       const count = children.length;
-      const hasRescue = children.some(m => m._isRescue);
+      //const hasRescue = children.some(m => m._isRescue);
       const hasNew = children.some(m => m._isNew);
-      const badges = (hasRescue ? '<span class="job-cluster-rescue-bang">!</span>' : '')
-        + count;
-      const cls = 'job-cluster-count'
-        + (hasRescue ? ' has-rescue' : '')
+
+      // Size tier based on child count
+      const tier = count >= 20 ? 'lg' : count >= 6 ? 'md' : 'sm';
+      const cls = 'job-cluster-count cluster-' + tier
+        //+ (hasRescue ? ' has-rescue' : '')
         + (hasNew ? ' has-new' : '');
+
+      // --- Build segmented SVG donut ring ---
+      // Badge is a rounded-square; its diagonal corners extend further
+      // than a circle of the same half-width.  outerR must cover those
+      // corners: extent ≈ (half - borderRadius) * √2 + borderRadius.
+      //   sm 28px br6 → 17.3   md 32px br7 → 19.7   lg 38px br8 → 23.6
+      const innerR = tier === 'lg' ? 19 : tier === 'md' ? 16 : 14;
+      const outerR = tier === 'lg' ? 24 : tier === 'md' ? 20 : 18;
+      const ringW = outerR - innerR;
+      const size = outerR * 2;
+      const cx = size / 2, cy = size / 2;
+
+      // tally colours
+      const colorCounts = new Map();
+      for (const m of children) {
+        const c = m._priorityColor || '#6b7280';
+        colorCounts.set(c, (colorCounts.get(c) || 0) + 1);
+      }
+
+      let ringPaths = '';
+      if (colorCounts.size === 1) {
+        // single colour – simple circle
+        const col = colorCounts.keys().next().value;
+        ringPaths = '<circle cx="' + cx + '" cy="' + cy + '" r="' + ((outerR + innerR) / 2)
+          + '" fill="none" stroke="' + col + '" stroke-width="' + ringW + '"/>';
+      } else {
+        // multiple colours – arcs
+        let angle = -Math.PI / 2; // start at top
+        const gap = 0.03;         // small gap between segments (radians)
+        for (const [col, n] of colorCounts) {
+          const sweep = (n / count) * 2 * Math.PI - gap;
+          if (sweep <= 0) continue;
+          const a1 = angle + gap / 2;
+          const a2 = a1 + sweep;
+          const large = sweep > Math.PI ? 1 : 0;
+          // outer arc
+          const ox1 = cx + outerR * Math.cos(a1);
+          const oy1 = cy + outerR * Math.sin(a1);
+          const ox2 = cx + outerR * Math.cos(a2);
+          const oy2 = cy + outerR * Math.sin(a2);
+          // inner arc (reverse)
+          const ix1 = cx + innerR * Math.cos(a2);
+          const iy1 = cy + innerR * Math.sin(a2);
+          const ix2 = cx + innerR * Math.cos(a1);
+          const iy2 = cy + innerR * Math.sin(a1);
+          ringPaths += '<path d="M' + ox1 + ',' + oy1
+            + ' A' + outerR + ',' + outerR + ' 0 ' + large + ' 1 ' + ox2 + ',' + oy2
+            + ' L' + ix1 + ',' + iy1
+            + ' A' + innerR + ',' + innerR + ' 0 ' + large + ' 0 ' + ix2 + ',' + iy2
+            + ' Z" fill="' + col + '"/>';
+          angle += (n / count) * 2 * Math.PI;
+        }
+      }
+
+      const ringSvg = '<svg class="cluster-ring" xmlns="http://www.w3.org/2000/svg"'
+        + ' width="' + size + '" height="' + size + '"'
+        + ' viewBox="0 0 ' + size + ' ' + size + '">'
+        + ringPaths + '</svg>';
+
       return L.divIcon({
         className: 'job-cluster-icon',
-        html: '<div class="' + cls + '">' + badges + '</div>',
-        iconSize: [32, 32],
-        iconAnchor: [16, 16]
+        html: '<div class="cluster-wrap">' + ringSvg + '<div class="' + cls + '">' + count + '</div></div>',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2]
       });
     }
   });
@@ -144,6 +204,7 @@ export function MapVM(Lmap, root) {
    * forces the internal grids to rebuild.
    */
   self.applyClusterRadius = function (radius) {
+    radius = Number(radius) || 60;
     if (!self.clusteringEnabled) {
       // Just store for when clustering is re-enabled
       self.jobClusterGroup.options.maxClusterRadius = radius;
@@ -154,13 +215,15 @@ export function MapVM(Lmap, root) {
     // Collect current markers from the cluster group
     const markers = [];
     self.jobClusterGroup.eachLayer(m => markers.push(m));
+
+    // Update the option BEFORE clearLayers — clearLayers internally calls
+    // _generateInitialClusters which rebuilds the DistanceGrid structures
+    // using options.maxClusterRadius.  Setting after would leave stale grids.
+    self.jobClusterGroup.options.maxClusterRadius = radius;
     self.jobClusterGroup.clearLayers();
 
-    // Update the option
-    self.jobClusterGroup.options.maxClusterRadius = radius;
-
-    // Re-add — clearLayers resets internal grid structures so addLayers
-    // will rebuild using the new radius.
+    // Re-add — clearLayers rebuilt grid structures with the new radius so
+    // addLayers will cluster correctly.
     if (markers.length) self.jobClusterGroup.addLayers(markers);
     self._syncPulseRings();
   };
