@@ -2422,39 +2422,70 @@
                                             aria-labelledby="headingMapLayers"
                                             data-bs-parent="#configOtherSettingsAccordion">
                                             <div class="accordion-body">
-                                                <!-- Clustering options -->
-                                                <div class="col-md-8 mb-3">
-                                                    <fieldset>
-                                                        <legend class="form-label fw-semibold mb-2">Marker Clustering</legend>
-                                                        <div class="form-check form-switch">
-                                                            <input class="form-check-input" type="checkbox" role="switch"
-                                                                id="clusterRescueToggle"
-                                                                data-bind="checked: config.clusterRescueJobs">
-                                                            <label class="form-check-label" for="clusterRescueToggle">
-                                                                Include Rescue jobs in clustering
-                                                            </label>
-                                                            <div class="form-text">When enabled, Rescue-priority jobs
-                                                                cluster with other markers. The cluster badge shows
-                                                                a red <strong style="color:#dc3545">!</strong> when it
-                                                                contains a Rescue job.</div>
-                                                        </div>
-                                                    </fieldset>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <fieldset class="mt-3">
-                                                        <label class="form-label d-block mb-2">Map Icon Layer Order (top
-                                                            → bottom):</label>
-                                                        <div class="border rounded p-2" id="jobStatusBox">
-                                                            <ul class="list-group"
-                                                                data-bind="foreach: { data: config.paneOrder, as: 'p' }">
-                                                                <li class="list-group-item d-flex align-items-center gap-2"
-                                                                    data-bind="sortableRow: { array: $root.config.paneOrder, handle: '.pane-drag-handle' }">
-                                                                    <i class="fa fa-grip-vertical text-muted"></i>
-                                                                    <span data-bind="text: p.name"></span>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </fieldset>
+                                                <div class="row g-3">
+
+                                                    <!-- Clustering options -->
+                                                    <div class="col-md-6">
+                                                        <fieldset>
+                                                            <legend class="form-label fw-semibold mb-2">
+                                                                <i class="fa fa-layer-group me-1"></i>Marker Clustering
+                                                            </legend>
+
+                                                            <div class="form-check form-switch mb-2">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    role="switch" id="clusterEnabledToggle"
+                                                                    data-bind="checked: config.clusterEnabled">
+                                                                <label class="form-check-label"
+                                                                    for="clusterEnabledToggle">
+                                                                    Enable marker clustering
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-text mb-3">
+                                                                Groups nearby incident markers into numbered
+                                                                clusters that expand on click.
+                                                            </div>
+
+                                                            <div data-bind="visible: config.clusterEnabled">
+                                                                <div class="form-check form-switch ms-3">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="clusterRescueToggle"
+                                                                        data-bind="checked: config.clusterRescueJobs">
+                                                                    <label class="form-check-label"
+                                                                        for="clusterRescueToggle">
+                                                                        Include Rescue jobs in clustering
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-text ms-3">
+                                                                    When enabled, Rescue-priority jobs cluster with
+                                                                    other markers. The cluster badge shows a red
+                                                                    <strong style="color:#dc3545">!</strong> when it
+                                                                    contains a Rescue job.
+                                                                </div>
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+
+                                                    <!-- Layer order -->
+                                                    <div class="col-md-6">
+                                                        <fieldset>
+                                                            <legend class="form-label fw-semibold mb-2">
+                                                                <i class="fa fa-sort me-1"></i>Map Icon Layer Order
+                                                                <small class="text-muted fw-normal">(top → bottom)</small>
+                                                            </legend>
+                                                            <div class="border rounded p-2">
+                                                                <ul class="list-group"
+                                                                    data-bind="foreach: { data: config.paneOrder, as: 'p' }">
+                                                                    <li class="list-group-item d-flex align-items-center gap-2 py-1"
+                                                                        data-bind="sortableRow: { array: $root.config.paneOrder, handle: '.pane-drag-handle' }">
+                                                                        <i class="fa fa-grip-vertical text-muted pane-drag-handle"
+                                                                            style="cursor:grab"></i>
+                                                                        <span data-bind="text: p.name"></span>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+
                                                 </div>
                                             </div>
                                         </div>

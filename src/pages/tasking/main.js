@@ -815,15 +815,31 @@ function VM() {
                 const lat = job.address.latitude?.();
                 const lng = job.address.longitude?.();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
-                    // If the marker is currently spiderfied, do NOT flyTo or
-                    // re-open the popup.  flyTo triggers zoomstart which
-                    // collapses the spider (via markercluster's
-                    // _unspiderfyZoomStart handler), closing any popup that
-                    // was just opened on the spiderfied marker.
-                    if (job.marker?._spiderLeg) return;
+                    // If the popup is already open (i.e. this call originated
+                    // from the popupopen event chain rather than a deliberate
+                    // UI action), bail out.  flyTo can change the zoom level
+                    // which triggers markercluster reclustering — the marker
+                    // disappears and the popup is abruptly closed.
+                    if (job.marker?.isPopupOpen?.()) return;
 
-                    map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
-                    job.marker?.openPopup?.();
+                    const m = job.marker;
+                    const cg = self.mapVM?.jobClusterGroup;
+
+                    // If the marker lives in the cluster group, use
+                    // zoomToShowLayer – it zooms/pans as needed, spiderfies
+                    // the parent cluster if the markers can't separate
+                    // further, and only then fires the callback so the
+                    // popup opens on the visible, individual marker.
+                    if (m && cg && cg.hasLayer(m)) {
+                        cg.zoomToShowLayer(m, () => {
+                            m.openPopup();
+                        });
+                    } else {
+                        // Marker is on a standalone layer (rescueJobLayer,
+                        // unclusteredJobLayer) or doesn't exist yet – simple flyTo.
+                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
+                        m?.openPopup?.();
+                    }
                 }
             },
 

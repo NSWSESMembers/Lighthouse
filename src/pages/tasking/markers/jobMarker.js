@@ -17,9 +17,12 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
 
     const isRescue = (job.priorityName?.() || '').toLowerCase() === 'rescue';
     const clusterRescue = !!vm.config?.clusterRescueJobs?.();
-    const targetLayer = (isRescue && !clusterRescue)
-        ? vm.mapVM.rescueJobLayer
-        : vm.mapVM.jobClusterGroup;
+    const clusteringOn = vm.mapVM.clusteringEnabled;
+    const targetLayer = !clusteringOn
+        ? vm.mapVM.unclusteredJobLayer          // clustering disabled – plain layer
+        : (isRescue && !clusterRescue)
+            ? vm.mapVM.rescueJobLayer            // rescue excluded from clusters
+            : vm.mapVM.jobClusterGroup;          // normal clustering
     const markers = vm.mapVM.jobMarkerIndex;
     const pulseLayer = vm.mapVM.jobPulseLayer;
     const style = styleForJob(job);

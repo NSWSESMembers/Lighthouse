@@ -81,6 +81,12 @@ export function MapVM(Lmap, root) {
   // Plain layer for rescue markers when clustering is disabled for them
   self.rescueJobLayer = L.layerGroup().addTo(self.map);
 
+  // Plain layer for ALL job markers when clustering is entirely disabled
+  self.unclusteredJobLayer = L.layerGroup();  // not added to map by default
+
+  // Track whether clustering is currently active
+  self.clusteringEnabled = true;
+
   // Separate plain layer for pulse rings – not clustered
   self.jobPulseLayer = L.layerGroup().addTo(self.map);
 
@@ -92,7 +98,7 @@ export function MapVM(Lmap, root) {
   self.jobMarkerGroups = {
     values: function () {
       return [
-        { layerGroup: self.jobClusterGroup, markers: self.jobMarkerIndex },
+        { layerGroup: self.clusteringEnabled ? self.jobClusterGroup : self.unclusteredJobLayer, markers: self.jobMarkerIndex },
         { layerGroup: self.rescueJobLayer, markers: new Map() }
       ][Symbol.iterator]();
     }
@@ -119,6 +125,49 @@ export function MapVM(Lmap, root) {
         }
       }
     });
+    self._syncPulseRings();
+  };
+
+  /**
+   * Enable or disable marker clustering entirely.
+   * When disabled, all markers are moved from jobClusterGroup to a plain
+   * layerGroup so they display individually without clustering behaviour.
+   */
+  self.applyClusterEnabled = function (enabled) {
+    if (enabled === self.clusteringEnabled) return;
+    self.clusteringEnabled = enabled;
+
+    if (enabled) {
+      // Move all markers from the plain layer back into the cluster group
+      // (rescue markers go back to rescueJobLayer or clusterGroup per the
+      // clusterRescueJobs setting — we re-apply that afterwards).
+      self.map.removeLayer(self.unclusteredJobLayer);
+      const markers = [];
+      self.unclusteredJobLayer.eachLayer(m => markers.push(m));
+      self.unclusteredJobLayer.clearLayers();
+      // Also grab any rescue markers sitting on the rescue layer
+      self.rescueJobLayer.eachLayer(m => markers.push(m));
+      self.rescueJobLayer.clearLayers();
+      self.jobClusterGroup.addLayers(markers);
+      if (!self.map.hasLayer(self.jobClusterGroup)) {
+        self.jobClusterGroup.addTo(self.map);
+      }
+      // Now re-sort rescue markers per the rescue clustering setting
+      const clusterRescue = !!root.config?.clusterRescueJobs?.();
+      self.applyRescueClusterSetting(clusterRescue);
+    } else {
+      // Move all markers out of the cluster group (and rescue layer)
+      // into a single plain layer.
+      const markers = [];
+      self.jobClusterGroup.eachLayer(m => markers.push(m));
+      self.jobClusterGroup.removeLayers(markers);
+      self.map.removeLayer(self.jobClusterGroup);
+      self.rescueJobLayer.eachLayer(m => markers.push(m));
+      self.rescueJobLayer.clearLayers();
+      markers.forEach(m => self.unclusteredJobLayer.addLayer(m));
+      self.unclusteredJobLayer.addTo(self.map);
+    }
+
     self._syncPulseRings();
   };
 
@@ -620,6 +669,14 @@ export function MapVM(Lmap, root) {
       // Markers on the standalone rescue layer (not in the cluster group)
       // are always individually visible – skip cluster logic for them.
       if (self.rescueJobLayer.hasLayer(marker)) {
+        if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
+          self.jobPulseLayer.addLayer(marker._pulseRing);
+        }
+        return;
+      }
+
+      // When clustering is disabled, all markers are individually visible.
+      if (!self.clusteringEnabled || self.unclusteredJobLayer.hasLayer(marker)) {
         if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
           self.jobPulseLayer.addLayer(marker._pulseRing);
         }

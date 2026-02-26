@@ -86,6 +86,7 @@ export function ConfigVM(root, deps) {
     self.teamTaskStatusFilter = ko.observableArray([]);
 
     // Map clustering
+    self.clusterEnabled = ko.observable(true);
     self.clusterRescueJobs = ko.observable(true);
 
     // pinned rows
@@ -162,6 +163,7 @@ export function ConfigVM(root, deps) {
         pinnedTeamIds: ko.toJS(self.pinnedTeamIds),
         pinnedIncidentIds: ko.toJS(self.pinnedIncidentIds),
         paneOrder: self.paneOrder().map(p => p.id),
+        clusterEnabled: !!self.clusterEnabled(),
         clusterRescueJobs: !!self.clusterRescueJobs(),
     });
 
@@ -433,6 +435,9 @@ export function ConfigVM(root, deps) {
             self.rebuildPaneOrderFromIds(); // defaults
         }
 
+        if (typeof cfg.clusterEnabled === 'boolean') {
+            self.clusterEnabled(cfg.clusterEnabled);
+        }
         if (typeof cfg.clusterRescueJobs === 'boolean') {
             self.clusterRescueJobs(cfg.clusterRescueJobs);
         }
@@ -531,6 +536,7 @@ export function ConfigVM(root, deps) {
     self.afterConfigLoad = () => {
         deps.fetchAllSectors(self.incidentFilters().map(i => i.id));
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
+        root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
     }
 
 
@@ -547,6 +553,11 @@ export function ConfigVM(root, deps) {
 
     self.paneOrder.subscribe(() => {
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
+    })
+
+    self.clusterEnabled.subscribe((v) => {
+        root.mapVM?.applyClusterEnabled?.(!!v);
+        self.save();
     })
 
     self.clusterRescueJobs.subscribe((v) => {
