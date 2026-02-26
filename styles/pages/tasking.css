@@ -1060,6 +1060,25 @@ tr.job:hover {
   margin-right: 1px;
 }
 
+/* Unacknowledged ("New") indicator – pulsing ring around cluster badge */
+.job-cluster-count.has-new {
+  box-shadow: 0 0 0 3px rgba(247, 147, 29, 0.8),
+              0 1px 6px rgba(0, 0, 0, 0.4);
+  animation: cluster-pulse-new 1.4s ease-out infinite;
+}
+
+/* When both rescue and new, keep the red border from has-rescue and add the pulse */
+.job-cluster-count.has-rescue.has-new {
+  box-shadow: 0 0 0 3px rgba(247, 147, 29, 0.8),
+              0 1px 6px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes cluster-pulse-new {
+  0%   { box-shadow: 0 0 0 2px rgba(247, 147, 29, 0.9), 0 1px 6px rgba(0,0,0,0.4); }
+  50%  { box-shadow: 0 0 0 5px rgba(247, 147, 29, 0.35), 0 1px 6px rgba(0,0,0,0.4); }
+  100% { box-shadow: 0 0 0 2px rgba(247, 147, 29, 0.9), 0 1px 6px rgba(0,0,0,0.4); }
+}
+
 /* Override markercluster defaults on our pane */
 .leaflet-cluster-anim .leaflet-marker-icon,
 .leaflet-cluster-anim .leaflet-marker-shadow {
@@ -1088,10 +1107,10 @@ tr.job:hover {
   position: absolute;
   inset: 0; /* fills its icon box exactly */
   border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8);
+  box-shadow: 0 0 0 2px rgba(247, 147, 29, 0.9);
   transform-origin: 50% 50%;
   animation: pulse-ring 1.4s ease-out infinite;
-  background: conic-gradient(red 257deg);
+  background: conic-gradient(#f7931d 257deg);
   mask: radial-gradient(circle at center, transparent 10px, white 20px);
 }
 

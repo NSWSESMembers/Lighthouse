@@ -57,13 +57,25 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         if (m._styleKey !== key) { m.setIcon(makeShapeIcon(style)); m._styleKey = key; }
         if (!m._popupBound) { m.setPopupContent(node); wireKoForPopup(ko, m, job, vm, popupVM); }
 
-        // keep the "New" ring in correct state
+        // keep the "New" ring and _isNew flag in correct state
         upsertPulseRing(pulseLayer, job, m);
+        const wasNew = m._isNew;
+        m._isNew = (job.statusName?.() || '').toLowerCase() === 'new';
+        if (wasNew !== m._isNew && vm.mapVM.clusteringEnabled) {
+            vm.mapVM.jobClusterGroup.refreshClusters(m);
+        }
 
         // ensure we have a status subscription exactly once
         if (!m._pulseSubs || m._pulseSubs.length === 0) {
             (m._pulseSubs ||= []).push(
-                job.statusName.subscribe(() => upsertPulseRing(pulseLayer, job, m))
+                job.statusName.subscribe(() => {
+                    upsertPulseRing(pulseLayer, job, m);
+                    const prev = m._isNew;
+                    m._isNew = (job.statusName?.() || '').toLowerCase() === 'new';
+                    if (prev !== m._isNew && vm.mapVM.clusteringEnabled) {
+                        vm.mapVM.jobClusterGroup.refreshClusters(m);
+                    }
+                })
             );
         }
 
@@ -75,13 +87,22 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
 
     marker._styleKey = JSON.stringify(style);
     marker._isRescue = isRescue;
+    marker._isNew = (job.statusName?.() || '').toLowerCase() === 'new';
     marker.addTo(targetLayer);
     markers.set(id, marker);
     job.marker = marker;
 
     upsertPulseRing(pulseLayer, job, marker);
     (marker._pulseSubs ||= []).push(
-        job.statusName.subscribe(() => upsertPulseRing(pulseLayer, job, marker))
+        job.statusName.subscribe(() => {
+            upsertPulseRing(pulseLayer, job, marker);
+            const wasNew = marker._isNew;
+            marker._isNew = (job.statusName?.() || '').toLowerCase() === 'new';
+            // If the flag changed, refresh ancestor cluster icons
+            if (wasNew !== marker._isNew && vm.mapVM.clusteringEnabled) {
+                vm.mapVM.jobClusterGroup.refreshClusters(marker);
+            }
+        })
     );
 
 

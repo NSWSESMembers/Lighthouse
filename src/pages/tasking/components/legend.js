@@ -51,6 +51,8 @@ export const LegendControl = L.Control.extend({
       <div class="fw-semibold small mb-1">Overlays</div>
       <div class="d-flex flex-wrap gap-2 small legend-ring ">
         <div><div class="pulse-ring-icon"></div><svg  class="pulse-ring" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="2"/></svg> Unacknowledged incident</div>
+        <div><span class="job-cluster-count has-new" style="display:inline-block;width:20px;height:20px;line-height:16px;font-size:10px;vertical-align:middle;">3</span> Cluster contains unacknowledged</div>
+        <div><span class="job-cluster-count has-rescue" style="display:inline-block;width:20px;height:20px;line-height:16px;font-size:10px;vertical-align:middle;"><span class="job-cluster-rescue-bang" style="font-size:11px;">!</span>2</span> Cluster contains rescue</div>
       </div>
     </div>
     <div class="legend-section">

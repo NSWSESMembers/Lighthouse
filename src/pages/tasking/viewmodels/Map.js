@@ -43,12 +43,15 @@ export function MapVM(Lmap, root) {
       const children = cluster.getAllChildMarkers();
       const count = children.length;
       const hasRescue = children.some(m => m._isRescue);
-      const inner = hasRescue
-        ? '<span class="job-cluster-rescue-bang">!</span>' + count
-        : '' + count;
+      const hasNew = children.some(m => m._isNew);
+      const badges = (hasRescue ? '<span class="job-cluster-rescue-bang">!</span>' : '')
+        + count;
+      const cls = 'job-cluster-count'
+        + (hasRescue ? ' has-rescue' : '')
+        + (hasNew ? ' has-new' : '');
       return L.divIcon({
         className: 'job-cluster-icon',
-        html: '<div class="job-cluster-count' + (hasRescue ? ' has-rescue' : '') + '">' + inner + '</div>',
+        html: '<div class="' + cls + '">' + badges + '</div>',
         iconSize: [32, 32],
         iconAnchor: [16, 16]
       });

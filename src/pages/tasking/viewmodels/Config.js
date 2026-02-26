@@ -87,7 +87,7 @@ export function ConfigVM(root, deps) {
 
     // Map clustering
     self.clusterEnabled = ko.observable(true);
-    self.clusterRadius = ko.observable(25);   // maxClusterRadius in px (10–80)
+    self.clusterRadius = ko.observable(15);   // maxClusterRadius in px (10–80)
     self.clusterRescueJobs = ko.observable(true);
 
     // pinned rows
