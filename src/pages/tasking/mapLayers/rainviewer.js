@@ -61,7 +61,9 @@ export function registerRainRadarLayer(vm, map) {
       tileLayers[frameIdx].setOpacity(0);
     }
     frameIdx = idx;
-    tileLayers[frameIdx].setOpacity(0.6);
+    if (tileLayers[frameIdx]) {
+      tileLayers[frameIdx].setOpacity(0.6);
+    }
 
     // update control UI
     if (control) {

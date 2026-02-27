@@ -60,7 +60,16 @@ import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
-import { registerBOMRainfallLayer, registerBOMRadarLayer, registerBOMAllFloodLevelsLayer, registerBOMSatTrueColorLayer, registerBOMThunderstormTrackingLayer } from "./mapLayers/weather.js";
+import { 
+    registerBOMRainfallLayer, 
+    registerBOMRadarLayer, 
+    registerBOMAllFloodLevelsLayer, 
+    registerBOMSatTrueColorLayer, 
+    registerBOMThunderstormTrackingLayer, 
+    registerBOMWindLayer, 
+    registerBOMMSLPLayer, 
+    registerBOMLightningLayer } from "./mapLayers/weather.js";
+
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
 import { installModalHotkeys } from './components/modalHotKeys.js';
@@ -2195,6 +2204,10 @@ function VM() {
     registerBOMAllFloodLevelsLayer(self, sourceUrl);
     registerBOMSatTrueColorLayer(self, sourceUrl);
     registerBOMThunderstormTrackingLayer(self, sourceUrl);
+    registerBOMWindLayer(self, sourceUrl);
+    registerBOMMSLPLayer(self, sourceUrl);
+    registerBOMLightningLayer(self, sourceUrl);
+    
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
         options: { position: "topleft" },
