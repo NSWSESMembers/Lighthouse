@@ -42,25 +42,32 @@ export function MapVM(Lmap, root) {
     iconCreateFunction: function (cluster) {
       const children = cluster.getAllChildMarkers();
       const count = children.length;
-      //const hasRescue = children.some(m => m._isRescue);
+      const hasRescue = children.some(m => m._isRescue);
       const hasNew = children.some(m => m._isNew);
 
       // Size tier based on child count
       const tier = count >= 20 ? 'lg' : count >= 6 ? 'md' : 'sm';
       const cls = 'job-cluster-count cluster-' + tier
-        //+ (hasRescue ? ' has-rescue' : '')
+        + (hasRescue ? ' has-rescue' : '')
         + (hasNew ? ' has-new' : '');
 
-      // --- Build segmented SVG donut ring ---
-      // Badge is a rounded-square; its diagonal corners extend further
-      // than a circle of the same half-width.  outerR must cover those
-      // corners: extent ≈ (half - borderRadius) * √2 + borderRadius.
-      //   sm 28px br6 → 17.3   md 32px br7 → 19.7   lg 38px br8 → 23.6
-      const innerR = tier === 'lg' ? 19 : tier === 'md' ? 16 : 14;
-      const outerR = tier === 'lg' ? 24 : tier === 'md' ? 20 : 18;
-      const ringW = outerR - innerR;
+      // --- Hexagonal ring dimensions ---
+      // outerR = circumradius of outer hex, innerR = inner hex
+      const outerR = tier === 'lg' ? 24 : tier === 'md' ? 21 : 18;
+      const innerR = tier === 'lg' ? 19 : tier === 'md' ? 17 : 14;
       const size = outerR * 2;
       const cx = size / 2, cy = size / 2;
+
+      // Helper: hex vertex at angle offset (flat-top: first vertex at 0°)
+      var hexPt = function(cxx, cyy, r, i) {
+        var a = Math.PI / 3 * i - Math.PI / 6; // flat-top hex
+        return [cxx + r * Math.cos(a), cyy + r * Math.sin(a)];
+      };
+      var hexPoints = function(cxx, cyy, r) {
+        var pts = [];
+        for (var i = 0; i < 6; i++) pts.push(hexPt(cxx, cyy, r, i));
+        return pts;
+      };
 
       // tally colours
       const colorCounts = new Map();
@@ -71,47 +78,118 @@ export function MapVM(Lmap, root) {
 
       let ringPaths = '';
       if (colorCounts.size === 1) {
-        // single colour – simple circle
+        // single colour – full outer hex
         const col = colorCounts.keys().next().value;
-        ringPaths = '<circle cx="' + cx + '" cy="' + cy + '" r="' + ((outerR + innerR) / 2)
-          + '" fill="none" stroke="' + col + '" stroke-width="' + ringW + '"/>';
+        var op = hexPoints(cx, cy, outerR).map(function(p){ return p[0]+','+p[1]; }).join(' ');
+        ringPaths = '<polygon points="' + op + '" fill="' + col + '"/>';
       } else {
-        // multiple colours – arcs
-        let angle = -Math.PI / 2; // start at top
-        const gap = 0.03;         // small gap between segments (radians)
-        for (const [col, n] of colorCounts) {
-          const sweep = (n / count) * 2 * Math.PI - gap;
-          if (sweep <= 0) continue;
-          const a1 = angle + gap / 2;
-          const a2 = a1 + sweep;
-          const large = sweep > Math.PI ? 1 : 0;
-          // outer arc
-          const ox1 = cx + outerR * Math.cos(a1);
-          const oy1 = cy + outerR * Math.sin(a1);
-          const ox2 = cx + outerR * Math.cos(a2);
-          const oy2 = cy + outerR * Math.sin(a2);
-          // inner arc (reverse)
-          const ix1 = cx + innerR * Math.cos(a2);
-          const iy1 = cy + innerR * Math.sin(a2);
-          const ix2 = cx + innerR * Math.cos(a1);
-          const iy2 = cy + innerR * Math.sin(a1);
-          ringPaths += '<path d="M' + ox1 + ',' + oy1
-            + ' A' + outerR + ',' + outerR + ' 0 ' + large + ' 1 ' + ox2 + ',' + oy2
-            + ' L' + ix1 + ',' + iy1
-            + ' A' + innerR + ',' + innerR + ' 0 ' + large + ' 0 ' + ix2 + ',' + iy2
-            + ' Z" fill="' + col + '"/>';
-          angle += (n / count) * 2 * Math.PI;
+        // multiple colours – walk outer hex perimeter, cut back along inner
+        // Total outer perimeter length
+        var outerPts = hexPoints(cx, cy, outerR);
+        var innerPts = hexPoints(cx, cy, innerR);
+        var segLen = Math.sqrt(Math.pow(outerPts[1][0]-outerPts[0][0],2) + Math.pow(outerPts[1][1]-outerPts[0][1],2));
+        var totalPerim = segLen * 6;
+
+        // Build perimeter as sequence of points with cumulative distance
+        var perimPts = [];  // [{x,y,d}]
+        var cumD = 0;
+        for (var si = 0; si < 6; si++) {
+          perimPts.push({ x: outerPts[si][0], y: outerPts[si][1], d: cumD });
+          cumD += segLen;
+        }
+        perimPts.push({ x: outerPts[0][0], y: outerPts[0][1], d: cumD }); // close
+
+        var innerPerimPts = [];
+        var cumD2 = 0;
+        var innerSegLen = Math.sqrt(Math.pow(innerPts[1][0]-innerPts[0][0],2) + Math.pow(innerPts[1][1]-innerPts[0][1],2));
+        for (var si2 = 0; si2 < 6; si2++) {
+          innerPerimPts.push({ x: innerPts[si2][0], y: innerPts[si2][1], d: cumD2 });
+          cumD2 += innerSegLen;
+        }
+        innerPerimPts.push({ x: innerPts[0][0], y: innerPts[0][1], d: cumD2 });
+        var totalInnerPerim = innerSegLen * 6;
+
+        var interpPerim = function(pts, total, frac) {
+          var target = frac * total;
+          for (var k = 0; k < pts.length - 1; k++) {
+            if (target >= pts[k].d && target <= pts[k+1].d) {
+              var seg = pts[k+1].d - pts[k].d;
+              var t = seg > 0 ? (target - pts[k].d) / seg : 0;
+              return { x: pts[k].x + (pts[k+1].x - pts[k].x) * t, y: pts[k].y + (pts[k+1].y - pts[k].y) * t };
+            }
+          }
+          return { x: pts[pts.length-1].x, y: pts[pts.length-1].y };
+        };
+
+        // Collect all outer & inner points within each segment's fraction range
+        var perimPointsBetween = function(pts, total, f1, f2) {
+          var result = [];
+          for (var k = 0; k < pts.length - 1; k++) {
+            var fk = pts[k].d / total;
+            if (fk > f1 && fk < f2) result.push(pts[k].x + ',' + pts[k].y);
+          }
+          return result;
+        };
+
+        var frac = 0;
+        for (var entry of colorCounts) {
+          var col = entry[0], n = entry[1];
+          var segFrac = n / count;
+          var f1 = frac;
+          var f2 = frac + segFrac;
+
+          // outer: start point, vertices in range, end point
+          var oStart = interpPerim(perimPts, totalPerim, f1);
+          var oEnd   = interpPerim(perimPts, totalPerim, f2);
+          var oMid   = perimPointsBetween(perimPts, totalPerim, f1, f2);
+
+          // inner: same fractions, reversed
+          var iStart = interpPerim(innerPerimPts, totalInnerPerim, f2);
+          var iEnd   = interpPerim(innerPerimPts, totalInnerPerim, f1);
+          var iMid   = perimPointsBetween(innerPerimPts, totalInnerPerim, f1, f2).reverse();
+
+          var pts2 = [oStart.x+','+oStart.y]
+            .concat(oMid)
+            .concat([oEnd.x+','+oEnd.y])
+            .concat([iStart.x+','+iStart.y])
+            .concat(iMid)
+            .concat([iEnd.x+','+iEnd.y]);
+          ringPaths += '<polygon points="' + pts2.join(' ') + '" fill="' + col + '"/>';
+          frac = f2;
         }
       }
 
-      const ringSvg = '<svg class="cluster-ring" xmlns="http://www.w3.org/2000/svg"'
+      // Always draw inner hex fill (badge background) in SVG so it
+      // perfectly matches the ring geometry.
+      var innerHexPts = hexPoints(cx, cy, innerR).map(function(p){ return p[0]+','+p[1]; }).join(' ');
+      ringPaths += '<polygon points="' + innerHexPts + '" fill="rgba(50,50,50,0.88)"/>';
+
+      // Count text rendered in SVG directly so it always paints on top
+      var textColor = '#fff'//hasRescue ? '#dc3545' : '#fff';
+      var fontSize = tier === 'lg' ? 15 : tier === 'md' ? 14 : 13;
+      ringPaths += '<text x="' + cx + '" y="' + cy + '" text-anchor="middle" dominant-baseline="central"'
+        + ' fill="' + textColor + '" font-size="' + fontSize + '" font-weight="700" font-family="system-ui,sans-serif">'
+        + count + '</text>';
+
+      const ringSvg = '<svg class="cluster-ring ' + cls + '" xmlns="http://www.w3.org/2000/svg"'
         + ' width="' + size + '" height="' + size + '"'
         + ' viewBox="0 0 ' + size + ' ' + size + '">'
         + ringPaths + '</svg>';
 
+      // Pulse ring: an SVG hex outline that scales+fades
+      var pulseSvg = '';
+      if (hasNew) {
+        var pulsePts = hexPoints(cx, cy, outerR).map(function(p){ return p[0]+','+p[1]; }).join(' ');
+        pulseSvg = '<svg class="cluster-pulse-hex" xmlns="http://www.w3.org/2000/svg"'
+          + ' width="' + size + '" height="' + size + '"'
+          + ' viewBox="0 0 ' + size + ' ' + size + '">'
+          + '<polygon points="' + pulsePts + '" fill="none" stroke="rgba(247,147,29,0.9)" stroke-width="2"/>'
+          + '</svg>';
+      }
+
       return L.divIcon({
         className: 'job-cluster-icon',
-        html: '<div class="cluster-wrap">' + ringSvg + '<div class="' + cls + '">' + count + '</div></div>',
+        html: '<div class="cluster-wrap">' + ringSvg + pulseSvg + '</div>',
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2]
       });
