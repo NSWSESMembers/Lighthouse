@@ -930,12 +930,25 @@ function VM() {
 
 
     const configDeps = {
-        entitiesSearch: (q) => new Promise((resolve) => {
-            BeaconClient.entities.search(q, apiHost, params.userId, token, (data) => resolve(data.Results || []));
-        }),
-        entitiesChildren: (parentId) => new Promise((resolve) => {
-            BeaconClient.entities.children(parentId, apiHost, params.userId, token, (data) => resolve(data || []));
-        }),
+        entitiesSearch: async (q) => {
+            const t = await getToken();
+            return new Promise((resolve) => {
+                BeaconClient.entities.search(q, apiHost, params.userId, t, (data) => resolve(data.Results || []));
+            });
+        },
+        entitiesChildren: async (parentId) => {
+            const t = await getToken();
+            return new Promise((resolve) => {
+                BeaconClient.entities.children(parentId, apiHost, params.userId, t, (data) => resolve(data || []));
+            });
+        },
+        entity: async (id) => {
+            const t = await getToken();
+            console.log("Fetching entity for config:", id, t);
+            return new Promise((resolve) => {
+                BeaconClient.entities.fetch(id, apiHost, params.userId, t, (data) => resolve(data));
+            });
+        },
         fetchAllSectors: (hqs) => self.fetchAllSectors(hqs),
     };
 
