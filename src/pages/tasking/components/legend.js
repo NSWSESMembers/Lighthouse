@@ -50,10 +50,39 @@ export const LegendControl = L.Control.extend({
     <div>
       <div class="fw-semibold small mb-1">Overlays</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:4px;" class="small legend-ring">
-        <div style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #f7931d;animation:pulse-ring 1.4s ease-out infinite;"></span> Unacknowledged incident</div>
-        <div style="display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;"><polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="#FFA500" stroke="#FFA500" stroke-width="2"/><polygon points="24.1,9 27.5,18 24.1,27 11.9,27 8.5,18 11.9,9" fill="#4F92FF"/><polygon points="18,9 24,18 18,27 12,18" fill="rgba(50,50,50,0.88)"/><text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="700" font-family="system-ui,sans-serif">5</text></svg> Priority segmented ring</div>
-        <div style="display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;"><polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="#6b7280" stroke="rgba(247,147,29,0.9)" stroke-width="2"/><polygon points="24.1,9 27.5,18 24.1,27 11.9,27 8.5,18 11.9,9" fill="rgba(50,50,50,0.88)"/><text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="700" font-family="system-ui,sans-serif">3</text></svg> Contains unacknowledged</div>
-        <div style="display:flex;align-items:center;gap:4px;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;"><polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="none" stroke="#dc3545" stroke-width="2"/><polygon points="24.1,9 27.5,18 24.1,27 11.9,27 8.5,18 11.9,9" fill="rgba(50,50,50,0.88)"/><text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#dc3545" font-size="13" font-weight="700" font-family="system-ui,sans-serif">2</text></svg> Contains rescue</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #f7931d;animation:pulse-ring 1.4s ease-out infinite;"></span>
+          <span>Unacknowledged Incident</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;">
+            <polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="#6b7280" stroke="#888" stroke-width="2"/>
+            <polygon points="24.1,9 27.5,18 24.1,27 11.9,27 8.5,18 11.9,9" fill="#6b7280"/>
+            <text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="700" font-family="system-ui,sans-serif">7</text>
+          </svg>
+          <span>Cluster of 7 Incidents</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;">
+            <!-- Flat-top hexagon, half border green, half red -->
+            <polygon points="18,4 32,11 32,25 18,32 4,25 4,11" fill="#6b7280"/>
+            <polyline points="18,4 32,11 32,25 18,32" fill="none" stroke="#28a745" stroke-width="3"/>
+            <polyline points="18,32 4,25 4,11 18,4" fill="none" stroke="#dc3545" stroke-width="3"/>
+            <polygon points="18,12 24,18 18,24 12,18" fill="#6b7280"/>
+            <text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="700" font-family="system-ui,sans-serif">5</text>
+          </svg>
+          <span>Cluster Of Mixed Priorities</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;">
+            <polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="#6b7280" stroke="rgba(247,147,29,0.9)" stroke-width="2"/>
+            <polygon points="24.1,9 27.5,18 24.1,27 11.9,27 8.5,18 11.9,9" fill="#6b7280"/>
+            <text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="700" font-family="system-ui,sans-serif">3</text>
+            <polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="none" stroke="#f7931d" stroke-width="2" stroke-dasharray="4 2"/>
+          </svg>
+          <span>Cluster Contains Unacked Incidents</span>
+        </div>
+      </div>
       </div>
     </div>
     <div class="legend-section">
