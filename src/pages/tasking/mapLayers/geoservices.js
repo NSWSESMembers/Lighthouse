@@ -276,7 +276,7 @@ function colorByUnitCode(code) {
 export function registerSESUnitLocationsLayer(vm) {
   vm.mapVM.registerPollingLayer("sesUnitLocations", {
     label: "SES Unit Locations",
-    menuGroup: "Lighthouse Geoservices",
+    menuGroup: "NSW SES Geoservices",
     refreshMs: 0, // No auto-refresh, only redraw on filter change
     visibleByDefault: localStorage.getItem(`ov.unit-locations`) || false,
     fetchFn: async () => {

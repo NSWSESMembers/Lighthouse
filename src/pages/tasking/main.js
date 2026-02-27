@@ -60,7 +60,7 @@ import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
-import { registerBOMRainfallLayer, registerBOMRadarLayer, registerBOMAllFloodLevelsLayer } from "./mapLayers/weather.js";
+import { registerBOMRainfallLayer, registerBOMRadarLayer, registerBOMAllFloodLevelsLayer, registerBOMSatTrueColorLayer, registerBOMThunderstormTrackingLayer } from "./mapLayers/weather.js";
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
 import { installModalHotkeys } from './components/modalHotKeys.js';
@@ -163,6 +163,7 @@ async function getToken() {
 
 const params = getSearchParameters();
 const apiHost = params.host
+const sourceUrl = params.source
 
 var ko;
 var myViewModel;
@@ -2189,10 +2190,11 @@ function VM() {
     registerEPAContaminationSitesLayer(self);
     registerBOMLandWarningsLayer(self);
     registerRainRadarLayer(self, map);
-    registerBOMRainfallLayer(self, map);
-    registerBOMRadarLayer(self, map);
-    registerBOMAllFloodLevelsLayer(self, map);
-
+    registerBOMRainfallLayer(self, sourceUrl);
+    registerBOMRadarLayer(self, sourceUrl);
+    registerBOMAllFloodLevelsLayer(self, sourceUrl);
+    registerBOMSatTrueColorLayer(self, sourceUrl);
+    registerBOMThunderstormTrackingLayer(self, sourceUrl);
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
         options: { position: "topleft" },

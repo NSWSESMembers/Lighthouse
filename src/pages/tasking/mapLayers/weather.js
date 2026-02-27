@@ -1,8 +1,8 @@
 /**
  * Register BOM All WMS layer using provided URL
  */
-export function registerBOMAllFloodLevelsLayer(vm) {
-  const allUrl = "https://beacon.ses.nsw.gov.au/MappingLayers/RequestBomLayer";
+export function registerBOMAllFloodLevelsLayer(vm, sourceUrl) {
+  const allUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomAll", {
     label: "BOM Flood Levels",
     menuGroup: "Bureau of Meteorology",
@@ -31,11 +31,11 @@ import L from "leaflet";
 /**
  * Register BOM Rainfall WMS layer from Beacon Prod
  */
-export function registerBOMRainfallLayer(vm) {
-  const rainfallUrl = "https://beacon.ses.nsw.gov.au/MappingLayers/RequestBomLayer";
+export function registerBOMRainfallLayer(vm, sourceUrl) {
+  const rainfallUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomRainfall", {
     label: "BOM Rainfall (9am)",
-    menuGroup: "Weather",
+    menuGroup: "Bureau of Meteorology",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomRainfall`) || false,
     fetchFn: async () => {
@@ -61,11 +61,11 @@ export function registerBOMRainfallLayer(vm) {
 /**
  * Register BOM Radar WMS layer from Beacon Prod
  */
-export function registerBOMRadarLayer(vm) {
-  const radarUrl = "https://beacon.ses.nsw.gov.au/MappingLayers/RequestBomLayer";
+export function registerBOMRadarLayer(vm, sourceUrl) {
+  const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
   vm.mapVM.registerPollingLayer("bomRadar", {
     label: "BOM Rain Radar Still",
-    menuGroup: "Weather",
+    menuGroup: "Bureau of Meteorology",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomRadar`) || false,
     fetchFn: async () => {
@@ -74,6 +74,66 @@ export function registerBOMRadarLayer(vm) {
     drawFn: (layerGroup, _data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
         layers: "IDR00010",
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        // Default bounding box for radar, but map will handle view
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+
+/**
+ * Register BOM Zehr Himawari WMS layer from Beacon Prod
+ */
+export function registerBOMSatTrueColorLayer(vm, sourceUrl) {
+  const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomSatTrueColor", {
+    label: "BOM Satellite Composite True Colour",
+    menuGroup: "Bureau of Meteorology",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomSatTrueColor`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(radarUrl, {
+        layers: "IDE00435",
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        // Default bounding box for radar, but map will handle view
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+
+/**
+ * Register BOM Thunderstorm Tracking from Beacon Prod
+ */
+export function registerBOMThunderstormTrackingLayer(vm, sourceUrl) {
+  const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomThunderstormTracking", {
+    label: "BOM Thunderstorm Tracking",
+    menuGroup: "Bureau of Meteorology",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomThunderstormTracking`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(radarUrl, {
+        layers: "IDR00011",
         styles: "default",
         format: "image/png",
         transparent: true,

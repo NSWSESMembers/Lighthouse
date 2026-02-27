@@ -198,7 +198,7 @@ export function registerRainRadarLayer(vm, map) {
   /* ── layer registration ────────────────────────────────────── */
   vm.mapVM.registerPollingLayer("rainRadar", {
     label: "RainViewer Animated Rainfall Radar",
-    menuGroup: "Weather",
+    menuGroup: "RainViewer",
     refreshMs: 0,
     visibleByDefault: localStorage.getItem(`ov.rainRadar`) || false,
     fetchFn: async () => {
