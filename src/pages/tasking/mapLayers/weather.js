@@ -1,244 +1,88 @@
-import L from "leaflet";
-
-
-
-/* ══════════════════════════════════════════════════════════════
- *  RainViewer Radar Overlay  (animated, past ~2 h)
- *  API docs: https://www.rainviewer.com/api/weather-maps-api.html
- * ══════════════════════════════════════════════════════════════ */
-
-const RAINVIEWER_API = "https://api.rainviewer.com/public/weather-maps.json";
-const FRAME_INTERVAL_MS = 500;   // default playback speed
-const DATA_REFRESH_MS   = 300000; // re-fetch frame list every 5 min
-
 /**
- * Register an animated rainfall radar overlay powered by the RainViewer API.
- * Loops through the past ~2 hours of composite radar frames with on-map
- * playback controls (play / pause / step / scrub).
+ * Register BOM All WMS layer using provided URL
  */
-export function registerRainRadarLayer(vm, map) {
-  /* ── state ─────────────────────────────────────────────────── */
-  let frames       = [];       // [{ time, path }]
-  let host         = null;
-  let tileLayers   = [];       // parallel to `frames`
-  let frameIdx     = -1;
-  let playing      = false;
-  let playTimer    = null;
-  let dataTimer    = null;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let activeGroup  = null;
-  let control      = null;
-  let speed        = FRAME_INTERVAL_MS;
-
-  /* ── helpers ───────────────────────────────────────────────── */
-  function buildTileLayer(framePath) {
-    return L.tileLayer(
-      `${host}${framePath}/512/{z}/{x}/{y}/2/1_1.png`,
-      {
-        pane: "pane-lowest-plus",
-        tileSize: 512,
-        zoomOffset: -1,
-        maxNativeZoom: 7,
-        maxZoom: 18,
-        opacity: 0,  // start invisible; showFrame will reveal the active one
-        attribution:
-          '<a href="https://www.rainviewer.com" target="_blank">RainViewer</a>',
-      }
-    );
-  }
-
-  function fmtTime(unix) {
-    const d = new Date(unix * 1000);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-
-  /* ── frame display ─────────────────────────────────────────── */
-  function showFrame(idx) {
-    if (idx < 0 || idx >= tileLayers.length) return;
-
-    // hide previous
-    if (frameIdx >= 0 && frameIdx < tileLayers.length) {
-      tileLayers[frameIdx].setOpacity(0);
-    }
-    frameIdx = idx;
-    tileLayers[frameIdx].setOpacity(0.6);
-
-    // update control UI
-    if (control) {
-      const ts = control._container.querySelector(".rv-timestamp");
-      const slider = control._container.querySelector(".rv-slider");
-      if (ts) ts.textContent = fmtTime(frames[frameIdx].time);
-      if (slider) slider.value = frameIdx;
-    }
-  }
-
-  function stepForward() {
-    showFrame((frameIdx + 1) % tileLayers.length);
-  }
-
-  function stepBack() {
-    showFrame((frameIdx - 1 + tileLayers.length) % tileLayers.length);
-  }
-
-  function play() {
-    if (playing) return;
-    playing = true;
-    updatePlayBtn();
-    playTimer = setInterval(stepForward, speed);
-  }
-
-  function pause() {
-    playing = false;
-    updatePlayBtn();
-    if (playTimer) { clearInterval(playTimer); playTimer = null; }
-  }
-
-  function togglePlay() { playing ? pause() : play(); }
-
-  function updatePlayBtn() {
-    if (!control) return;
-    const btn = control._container.querySelector(".rv-play");
-    if (btn) btn.textContent = playing ? "⏸" : "▶";
-  }
-
-  /* ── data loading ──────────────────────────────────────────── */
-  async function loadFrames(layerGroup) {
-    try {
-      const res = await fetch(RAINVIEWER_API);
-      if (!res.ok) throw new Error(`RainViewer API ${res.status}`);
-      const json = await res.json();
-      const past = json.radar?.past;
-      if (!past || past.length === 0) return;
-
-      const newHost = json.host;
-      const pathsMatch =
-        host === newHost &&
-        frames.length === past.length &&
-        frames.every((f, i) => f.path === past[i].path);
-
-      if (pathsMatch) return; // nothing changed
-
-      // tear down old tile layers
-      tileLayers.forEach((tl) => {
-        if (layerGroup.hasLayer(tl)) layerGroup.removeLayer(tl);
-      });
-
-      host = newHost;
-      frames = past;
-      tileLayers = frames.map((f) => {
-        const tl = buildTileLayer(f.path);
-        layerGroup.addLayer(tl);
-        return tl;
-      });
-
-      // update slider range
-      if (control) {
-        const slider = control._container.querySelector(".rv-slider");
-        if (slider) { slider.max = frames.length - 1; slider.value = frames.length - 1; }
-      }
-
-      // show latest frame
-      frameIdx = -1;
-      showFrame(frames.length - 1);
-    } catch (err) {
-      console.warn("[RainViewer Radar] Failed to load frames:", err);
-    }
-  }
-
-  /* ── Radar playback bar (bottom-center of map) ─────────────── */
-  class RadarControl {
-    constructor() { this._container = null; this._map = null; }
-
-    addTo(m) {
-      this._map = m;
-      const c = document.createElement("div");
-      c.className = "rv-control";
-      L.DomEvent.disableClickPropagation(c);
-      L.DomEvent.disableScrollPropagation(c);
-
-      c.innerHTML = `
-        <button class="rv-step-back" title="Previous frame">⏮</button>
-        <button class="rv-play" title="Play / Pause">▶</button>
-        <button class="rv-step-fwd" title="Next frame">⏭</button>
-        <input class="rv-slider" type="range" min="0" max="0" value="0" title="Scrub through frames" />
-        <span class="rv-timestamp">--:--</span>
-        <select class="rv-speed" title="Playback speed">
-          <option value="1000">0.5×</option>
-          <option value="500" selected>1×</option>
-          <option value="250">2×</option>
-          <option value="125">4×</option>
-        </select>`;
-
-      c.querySelector(".rv-play").addEventListener("click", togglePlay);
-      c.querySelector(".rv-step-back").addEventListener("click", () => { pause(); stepBack(); });
-      c.querySelector(".rv-step-fwd").addEventListener("click", () => { pause(); stepForward(); });
-      c.querySelector(".rv-slider").addEventListener("input", (e) => {
-        pause();
-        showFrame(parseInt(e.target.value, 10));
-      });
-      c.querySelector(".rv-speed").addEventListener("change", (e) => {
-        speed = parseInt(e.target.value, 10);
-        if (playing) { pause(); play(); }
-      });
-
-      m.getContainer().appendChild(c);
-      this._container = c;
-      return this;
-    }
-
-    remove() {
-      if (this._container && this._container.parentNode) {
-        this._container.parentNode.removeChild(this._container);
-      }
-      this._container = null;
-      this._map = null;
-    }
-  }
-
-  /* ── layer registration ────────────────────────────────────── */
-  vm.mapVM.registerPollingLayer("rainRadar", {
-    label: "Rainfall Radar - Animated",
-    menuGroup: "Weather",
-    refreshMs: 0,
-    visibleByDefault: localStorage.getItem(`ov.rainRadar`) || false,
+export function registerBOMAllFloodLevelsLayer(vm) {
+  const allUrl = "https://beacon.ses.nsw.gov.au/MappingLayers/RequestBomLayer";
+  vm.mapVM.registerPollingLayer("bomAll", {
+    label: "BOM Flood Levels",
+    menuGroup: "Bureau of Meteorology",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomAllFlood`) || false,
     fetchFn: async () => {
       return {};
     },
-    drawFn: (layerGroup, data) => {
-      if (!data) return;
-
-      // Clean up any previous cycle (toggle off → on)
-      pause();
-      if (dataTimer) { clearInterval(dataTimer); dataTimer = null; }
-      if (control) { control.remove(); control = null; }
-      tileLayers = [];
-      frames = [];
-      frameIdx = -1;
-      activeGroup = layerGroup;
-
-      // Add playback control to the map
-      control = new RadarControl();
-      control.addTo(map);
-
-      // Clean up control + timers when the layerGroup is removed from the map
-      layerGroup.on("remove", cleanup);
-
-      // Initial load + periodic refresh of frame list
-      loadFrames(layerGroup);
-      dataTimer = setInterval(() => loadFrames(layerGroup), DATA_REFRESH_MS);
-
-      // Auto-play
-      play();
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(allUrl, {
+        layers: "IDN62011_all",
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        // Default bounding box for all, but map will handle view
+      });
+      layerGroup.addLayer(wmsLayer);
     },
   });
+}
+import L from "leaflet";
 
-  function cleanup() {
-    pause();
-    if (dataTimer) { clearInterval(dataTimer); dataTimer = null; }
-    if (control) { control.remove(); control = null; }
-    tileLayers = [];
-    frames = [];
-    frameIdx = -1;
-    activeGroup = null;
-  }
+/**
+ * Register BOM Rainfall WMS layer from Beacon Prod
+ */
+export function registerBOMRainfallLayer(vm) {
+  const rainfallUrl = "https://beacon.ses.nsw.gov.au/MappingLayers/RequestBomLayer";
+  vm.mapVM.registerPollingLayer("bomRainfall", {
+    label: "BOM Rainfall (9am)",
+    menuGroup: "Weather",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomRainfall`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(rainfallUrl, {
+        layers: "IDZ20010_rainfall_9am",
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        // Default NSW bounding box, but map will handle view
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+
+/**
+ * Register BOM Radar WMS layer from Beacon Prod
+ */
+export function registerBOMRadarLayer(vm) {
+  const radarUrl = "https://beacon.ses.nsw.gov.au/MappingLayers/RequestBomLayer";
+  vm.mapVM.registerPollingLayer("bomRadar", {
+    label: "BOM Rain Radar Still",
+    menuGroup: "Weather",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomRadar`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(radarUrl, {
+        layers: "IDR00010",
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        // Default bounding box for radar, but map will handle view
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
 }

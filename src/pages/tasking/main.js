@@ -59,8 +59,8 @@ import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
-import { registerRainRadarLayer } from "./mapLayers/weather.js";
-
+import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
+import { registerBOMRainfallLayer, registerBOMRadarLayer, registerBOMAllFloodLevelsLayer } from "./mapLayers/weather.js";
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
 import { installModalHotkeys } from './components/modalHotKeys.js';
@@ -2189,6 +2189,9 @@ function VM() {
     registerEPAContaminationSitesLayer(self);
     registerBOMLandWarningsLayer(self);
     registerRainRadarLayer(self, map);
+    registerBOMRainfallLayer(self, map);
+    registerBOMRadarLayer(self, map);
+    registerBOMAllFloodLevelsLayer(self, map);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
