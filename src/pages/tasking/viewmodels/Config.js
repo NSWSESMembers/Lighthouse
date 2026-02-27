@@ -373,6 +373,19 @@ export function ConfigVM(root, deps) {
             cfg.pinnedTeamIds = [];
             cfg.pinnedIncidentIds = [];
 
+            // Extract HQ ID from URL if present
+            const search = window.location?.search || '';
+            const hqMatch = search.match(/hq=(\d+)/);
+            if (hqMatch) {
+                const hqId = hqMatch[1];
+                deps.entity(hqId).then(result => {
+                    if (result) {
+                        const normEntity = norm({ id: result.Id, name: result.Name, entityType: result.EntityTypeId });
+                        self.incidentFilters([normEntity]);
+                        self.teamFilters([normEntity]);
+                    }
+                });
+            }
         }
         console.log('Loaded config:', cfg);
         // scalar settings
