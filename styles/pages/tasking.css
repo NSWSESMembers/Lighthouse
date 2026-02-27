@@ -6,6 +6,7 @@
 @import url('leaflet/dist/leaflet.css');
 @import url('leaflet.polylinemeasure/Leaflet.PolylineMeasure.css');
 @import url('leaflet-geosearch/dist/geosearch.css');
+@import url('leaflet.markercluster/dist/MarkerCluster.css');
 
 
 html {
@@ -1020,6 +1021,70 @@ tr.job:hover {
   image-rendering: crisp-edges;
 }
 
+/* ─── JOB CLUSTER ICON ─── */
+.job-cluster-icon {
+  background: transparent;
+  border: none;
+}
+
+/* Inner wrapper – provides the positioning context for the
+   SVG ring and centred badge without interfering with
+   Leaflet's position:absolute on .leaflet-marker-icon */
+.cluster-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.15s ease;
+}
+
+.cluster-wrap:hover {
+  transform: scale(1.12);
+}
+
+/* Cluster ring SVG – fills the icon area */
+.cluster-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+  cursor: pointer;
+}
+
+/* SVG hex-outline pulse ring */
+.cluster-pulse-hex {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  transform-origin: 50% 50%;
+  animation: cluster-pulse-new 1.4s ease-out infinite;
+}
+
+@keyframes cluster-pulse-new {
+  0%   { transform: scale(0.8); opacity: 0.9; }
+  80%  { transform: scale(1.5); opacity: 0.12; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+/* Override markercluster defaults on our pane */
+.leaflet-cluster-anim .leaflet-marker-icon,
+.leaflet-cluster-anim .leaflet-marker-shadow {
+  transition: transform 0.25s ease-out, opacity 0.25s ease-in;
+}
+
+/* Spiderfy legs */
+.leaflet-cluster-spider-leg {
+  stroke: rgba(100, 100, 100, 0.5);
+  stroke-width: 1.5;
+}
+
 /* PULSE RING (separate follower marker using L.divIcon) */
 .pulse-ring-icon {
   pointer-events: none; /* clicks go to the base marker */
@@ -1036,10 +1101,10 @@ tr.job:hover {
   position: absolute;
   inset: 0; /* fills its icon box exactly */
   border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8);
+  box-shadow: 0 0 0 2px rgba(247, 147, 29, 0.9);
   transform-origin: 50% 50%;
   animation: pulse-ring 1.4s ease-out infinite;
-  background: conic-gradient(red 257deg);
+  background: conic-gradient(#f7931d 257deg);
   mask: radial-gradient(circle at center, transparent 10px, white 20px);
 }
 
@@ -1056,10 +1121,6 @@ tr.job:hover {
     transform: scale(1.2);
     opacity: 0;
   }
-}
-
-.legend-ring > div > .pulse-ring {
-  position: relative !important;
 }
 
 .no-drag {

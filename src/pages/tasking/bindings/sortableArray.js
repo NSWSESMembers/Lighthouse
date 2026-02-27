@@ -17,8 +17,21 @@ export function installSortableArrayBindings() {
       // allow dragging from handle only if provided
       const getHandle = () => (handleSel ? (el.querySelector(handleSel) || el) : el);
 
-      // mark draggable
-      el.setAttribute("draggable", "true");
+      // Track whether the pointer started on the drag handle.
+      // In dragstart, e.target is always the draggable element (the <li>),
+      // not the child the user clicked, so we must track it via pointerdown.
+      let _pointerOnHandle = !handleSel;
+
+      if (handleSel) {
+        el.setAttribute("draggable", "false");
+        el.addEventListener("pointerdown", (e) => {
+          const h = getHandle();
+          _pointerOnHandle = !!(h && (h === e.target || h.contains(e.target)));
+          el.setAttribute("draggable", String(_pointerOnHandle));
+        });
+      } else {
+        el.setAttribute("draggable", "true");
+      }
 
       // KSB-safe: item is from bindingContext.$data
       const getIndex = () => {
@@ -28,9 +41,7 @@ export function installSortableArrayBindings() {
       };
 
       el.addEventListener("dragstart", (e) => {
-        const h = getHandle();
-        // if handle selector is used, only allow drag when starting on/within handle
-        if (handleSel && e.target && !h.contains(e.target)) {
+        if (handleSel && !_pointerOnHandle) {
           e.preventDefault();
           return;
         }
