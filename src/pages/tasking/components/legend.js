@@ -26,7 +26,7 @@ export const LegendControl = L.Control.extend({
     </div>
 
     <div class="mb-2">
-      <div class="fw-semibold small mb-1">Priority → Fill</div>
+      <div class="fw-semibold small mb-1 mt-2">Priority → Fill</div>
       <div class="d-flex flex-wrap gap-2 small">
         <div><span class="legend-box" style="background:#FFA500"></span> Priority</div>
         <div><span class="legend-box" style="background:#4F92FF"></span> Immediate</div>
@@ -36,7 +36,7 @@ export const LegendControl = L.Control.extend({
     </div>
 
     <div>
-      <div class="fw-semibold small mb-1">FR: Category → Fill</div>
+      <div class="fw-semibold small mb-1 mt-2">FR: Category → Fill</div>
       <div class="d-flex flex-wrap gap-2 small">
         <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#7F1D1D" stroke-width="2"/></svg> Cat 1</div>
         <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#DC2626" stroke-width="2"/></svg> Cat 2</div>
@@ -48,7 +48,7 @@ export const LegendControl = L.Control.extend({
 
 
     <div>
-      <div class="fw-semibold small mb-1">Overlays</div>
+      <div class="fw-semibold small mb-1 mt-2">Overlays</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:4px;" class="small legend-ring">
         <div style="display:flex;align-items:center;gap:4px;">
           <span style="display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #f7931d;animation:pulse-ring 1.4s ease-out infinite;"></span>
@@ -84,10 +84,9 @@ export const LegendControl = L.Control.extend({
         </div>
       </div>
       </div>
-    </div>
-    <div class="legend-section">
-    <br>
-  <div class="fw-semibold small mb-1">Assets</div>
+
+
+  <div class="fw-semibold small mb-1 mt-2">Assets</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:2px;">
 
     <div style="display:flex;align-items:center;margin:2px 0;">
