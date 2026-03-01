@@ -68,7 +68,21 @@ import {
     registerBOMThunderstormTrackingLayer, 
     registerBOMWindLayer, 
     registerBOMMSLPLayer, 
-    registerBOMLightningLayer } from "./mapLayers/weather.js";
+    registerBOMLightningLayer,
+    registerBOMLightning24hLayer,
+    registerBOMTsunamiLayer,
+    registerBOMTropicalCycloneLayer,
+    registerBOMFireDangerRatingLayer,
+    registerBOMHeatwaveLayer,
+    registerBOMHazardousSurfLayer,
+    registerBOMCoastalHazardLayer,
+    registerBOMRoadWeatherLayer,
+    registerBOMSurfaceGustLayer,
+    registerBOMSurfaceTempLayer,
+    registerBOMFireBehaviourIndexLayer,
+    registerBOMHazardousWindLayer,
+    registerBOMFloodWarningBoundariesLayer,
+    registerBOMFireWeatherDistrictsLayer } from "./mapLayers/weather.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
@@ -2228,8 +2242,8 @@ function VM() {
     registerPowerBoundariesGridLayer(self, map);
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
-    registerBOMLandWarningsLayer(self);
     registerRainRadarLayer(self, map);
+    registerBOMLandWarningsLayer(self);
     registerBOMRainfallLayer(self, sourceUrl);
     registerBOMRadarLayer(self, sourceUrl);
     registerBOMAllFloodLevelsLayer(self, sourceUrl);
@@ -2238,6 +2252,20 @@ function VM() {
     registerBOMWindLayer(self, sourceUrl);
     registerBOMMSLPLayer(self, sourceUrl);
     registerBOMLightningLayer(self, sourceUrl);
+    registerBOMLightning24hLayer(self, sourceUrl);
+    registerBOMTsunamiLayer(self, sourceUrl);
+    registerBOMTropicalCycloneLayer(self, sourceUrl);
+    registerBOMFireDangerRatingLayer(self, sourceUrl);
+    registerBOMHeatwaveLayer(self, sourceUrl);
+    registerBOMHazardousSurfLayer(self, sourceUrl);
+    registerBOMCoastalHazardLayer(self, sourceUrl);
+    registerBOMRoadWeatherLayer(self, sourceUrl);
+    registerBOMSurfaceGustLayer(self, sourceUrl);
+    registerBOMSurfaceTempLayer(self, sourceUrl);
+    registerBOMFireBehaviourIndexLayer(self, sourceUrl);
+    registerBOMHazardousWindLayer(self, sourceUrl);
+    registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
+    registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
     
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
