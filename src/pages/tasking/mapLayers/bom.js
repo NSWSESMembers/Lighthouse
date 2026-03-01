@@ -57,7 +57,7 @@ function severityLabel(code) {
 export function registerBOMLandWarningsLayer(vm) {
   vm.mapVM.registerPollingLayer("bomLandWarnings", {
     label: "BOM Land Warnings",
-    menuGroup: "Bureau of Meteorology",
+    menuGroup: "BOM Warnings",
     refreshMs: 300000, // 5 min – warnings update frequently
     visibleByDefault: localStorage.getItem(`ov.bomLandWarnings`) || false,
     fetchFn: async () => {
