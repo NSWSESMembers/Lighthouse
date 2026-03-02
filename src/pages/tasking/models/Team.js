@@ -7,6 +7,11 @@ import { openURLInBeacon } from '../utils/chromeRunTime.js';
 
 import { Enum } from '../utils/enum.js';
 
+// Shared across all Team instances — single localStorage key
+const _capKey = 'lh_showCapabilities';
+const _showCapabilities = ko.observable(localStorage.getItem(_capKey) !== 'false');
+_showCapabilities.subscribe(v => localStorage.setItem(_capKey, v ? 'true' : 'false'));
+
 export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
 
@@ -37,6 +42,10 @@ export function Team(data = {}, deps = {}) {
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
+
+    // capabilities visibility (shared singleton)
+    self.showCapabilities = _showCapabilities;
+    self.toggleCapabilities = function () { _showCapabilities(!_showCapabilities()); };
 
     // pinning
     self.isPinned = ko.pureComputed(() => {

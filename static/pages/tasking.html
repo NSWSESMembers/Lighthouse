@@ -290,11 +290,12 @@
                                                                 <!-- LEFT: team members + capabilities -->
                                                                 <fieldset>
                                                                     <div
-                                                                        class="d-flex justify-content-between align-items-center mb-2">
-                                                                        <legend class="job-details-legend">Team Members
+                                                                        class="d-flex justify-content-between align-items-center flex-nowrap mb-2">
+                                                                        <legend class="job-details-legend text-nowrap me-2">Team Members
                                                                             (<span
                                                                                 data-bind="text: membersSorted().length"></span>)
                                                                         </legend>
+                                                                        <button type="button" class="btn btn-xs btn-outline-secondary" title="Toggle capabilities" data-bind="click: t.toggleCapabilities, clickBubble: false, css: { active: t.showCapabilities }"><i class="fa fa-tags"></i></button>
                                                                     </div>
                                                                     <ul class="list-unstyled team-members-list mb-0"
                                                                         data-bind="foreach: { data: membersSorted, as: 'm' }">
@@ -307,17 +308,15 @@
                                                                                         data-bind="visible: m.TeamLeader === true">TL</span>
                                                                                 </div>
 
-                                                                                <!-- optional role/position if present -->
-                                                                                <!-- <div class="small text-muted"
-                                                                            data-bind="text: m.Role"></div> -->
-
                                                                                 <!-- capabilities tags -->
+                                                                                <!-- ko if: t.showCapabilities -->
                                                                                 <div class="team-member-tags mt-1"
                                                                                     data-bind="foreach: m.Person.PersonCapabilityTags">
                                                                                     <span
                                                                                         class="badge rounded-pill bg-info text-dark me-1 mb-1"
                                                                                         data-bind="text: Name"></span>
                                                                                 </div>
+                                                                                <!-- /ko -->
                                                                             </div>
                                                                         </li>
                                                                     </ul>
