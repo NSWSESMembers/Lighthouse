@@ -290,11 +290,12 @@
                                                                 <!-- LEFT: team members + capabilities -->
                                                                 <fieldset>
                                                                     <div
-                                                                        class="d-flex justify-content-between align-items-center mb-2">
-                                                                        <legend class="job-details-legend">Team Members
+                                                                        class="d-flex justify-content-between align-items-center flex-nowrap mb-2">
+                                                                        <legend class="job-details-legend text-nowrap me-2">Team Members
                                                                             (<span
                                                                                 data-bind="text: membersSorted().length"></span>)
                                                                         </legend>
+                                                                        <button type="button" class="btn btn-xs btn-outline-secondary" title="Toggle capabilities" data-bind="click: t.toggleCapabilities, clickBubble: false, css: { active: t.showCapabilities }"><i class="fa fa-tags"></i></button>
                                                                     </div>
                                                                     <ul class="list-unstyled team-members-list mb-0"
                                                                         data-bind="foreach: { data: membersSorted, as: 'm' }">
@@ -307,17 +308,15 @@
                                                                                         data-bind="visible: m.TeamLeader === true">TL</span>
                                                                                 </div>
 
-                                                                                <!-- optional role/position if present -->
-                                                                                <!-- <div class="small text-muted"
-                                                                            data-bind="text: m.Role"></div> -->
-
                                                                                 <!-- capabilities tags -->
+                                                                                <!-- ko if: t.showCapabilities -->
                                                                                 <div class="team-member-tags mt-1"
                                                                                     data-bind="foreach: m.Person.PersonCapabilityTags">
                                                                                     <span
                                                                                         class="badge rounded-pill bg-info text-dark me-1 mb-1"
                                                                                         data-bind="text: Name"></span>
                                                                                 </div>
+                                                                                <!-- /ko -->
                                                                             </div>
                                                                         </li>
                                                                     </ul>
@@ -374,14 +373,30 @@
                                                                         Taskings
                                                                     </legend>
                                                                     <!-- /ko -->
-                                                                    <div class="btn-group btn-group-sm" role="group"
-                                                                        aria-label="Team actions">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-secondary"
-                                                                            title="Refresh taskings"
-                                                                            data-bind="click: t.fetchTasking, clickBubble: false">
-                                                                            <i class="fa fa-sync"></i>
-                                                                        </button>
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <!-- ko ifnot: t.reorderMode -->
+                                                                        <div class="btn-group btn-group-sm" role="group"
+                                                                            aria-label="Team actions">
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-secondary"
+                                                                                title="Refresh taskings"
+                                                                                data-bind="click: t.fetchTasking, clickBubble: false">
+                                                                                <i class="fa fa-sync"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-secondary"
+                                                                                title="Reorder taskings"
+                                                                                data-bind="click: t.enterReorderMode, clickBubble: false, enable: t.filteredTaskings().length > 1">
+                                                                                <i class="fa fa-sort"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                        <!-- /ko -->
+                                                                        <!-- ko if: t.reorderMode -->
+                                                                        <div class="btn-group btn-group-sm flex-nowrap" role="group">
+                                                                            <button type="button" class="btn btn-sm btn-outline-success text-nowrap" title="Save order" data-bind="click: t.saveReorder, clickBubble: false, disable: t.reorderSaving"><i class="fa fa-check"></i> Save</button>
+                                                                            <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" title="Cancel reorder" data-bind="click: t.cancelReorderMode, clickBubble: false, disable: t.reorderSaving"><i class="fa fa-times"></i> Cancel</button>
+                                                                        </div>
+                                                                        <!-- /ko -->
                                                                     </div>
                                                                 </div>
 
@@ -391,6 +406,15 @@
                                                                     <table
                                                                         class="table table-sm table-hover align-middle mb-0">
                                                                         <thead class="table-light">
+                                                                            <!-- ko if: t.reorderMode -->
+                                                                            <tr>
+                                                                                <th style="width:15%;">#</th>
+                                                                                <th style="width:15%;">Type</th>
+                                                                                <th>Address</th>
+                                                                                <th style="width:80px;">Order</th>
+                                                                            </tr>
+                                                                            <!-- /ko -->
+                                                                            <!-- ko ifnot: t.reorderMode -->
                                                                             <tr>
                                                                                 <th style="width:15%;">#</th>
                                                                                 <th style="width:15%;">Type</th>
@@ -398,9 +422,10 @@
                                                                                 <th style="width:10%;">Status</th>
                                                                                 <th style="width:20%;">Actions</th>
                                                                             </tr>
+                                                                            <!-- /ko -->
                                                                         </thead>
                                                                         <tbody
-                                                                            data-bind="foreach: { data: filteredTaskings, as: 'ts' }">
+                                                                            data-bind="foreach: { data: t.displayedTaskings, as: 'ts' }">
                                                                             <tr>
                                                                                 <td
                                                                                     data-bind="text: ts.job.identifier, css: ts.job.rowColour()">
@@ -411,6 +436,21 @@
                                                                                 <td
                                                                                     data-bind="text: ts.prettyAddress, css: ts.job.rowColour()">
                                                                                 </td>
+                                                                                <!-- ko if: t.reorderMode -->
+                                                                                <td data-bind="css: ts.job.rowColour()">
+                                                                                    <div class="btn-group btn-group-sm" role="group">
+                                                                                        <button type="button" class="btn btn-outline-secondary" title="Move up"
+                                                                                            data-bind="click: t.moveTaskingUp, clickBubble: false">
+                                                                                            <i class="fa fa-arrow-up"></i>
+                                                                                        </button>
+                                                                                        <button type="button" class="btn btn-outline-secondary" title="Move down"
+                                                                                            data-bind="click: t.moveTaskingDown, clickBubble: false">
+                                                                                            <i class="fa fa-arrow-down"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <!-- /ko -->
+                                                                                <!-- ko ifnot: t.reorderMode -->
                                                                                 <td data-bind="css: ts.job.rowColour()">
                                                                                     <div class="dropdown"
                                                                                         id="team-tasking-status-dropdown">
@@ -619,6 +659,7 @@
                                                                                         </button>
                                                                                     </div>
                                                                                 </td>
+                                                                                <!-- /ko -->
                                                                             </tr>
                                                                         </tbody>
                                                                     </table>

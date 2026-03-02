@@ -2,7 +2,7 @@ var L = require('leaflet');
 var ko = require('knockout');
 
 import { buildJobPopupKO } from '../components/job_popup.js';
-import { makeShapeIcon, styleForJob } from '../components/job_icon.js';
+import { makeShapeIcon, styleForJob, buildPulseRingSvg } from '../components/job_icon.js';
 
 
 import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } from '../utils/popup_dom_utils.js';
@@ -31,7 +31,7 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
 
     var popup = L.popup({
         minWidth: 380,
-        maxWidth: 380,
+        maxWidth: 760,
         minHeight: 300,
         autoPan: true,
         autoPanPadding: [16, 16]
@@ -172,11 +172,14 @@ function upsertPulseRing(layerGroup, job, marker) {
         const ringSize = [Math.round(baseSize[0] * k), Math.round(baseSize[1] * k)];
         const ringAnchor = [Math.round(baseAnchor[0] * k), Math.round(baseAnchor[1] * k)];
 
+        const shape = styleForJob(job).shape || 'circle';
+        const pulseSvg = buildPulseRingSvg(shape, ringSize[0], ringSize[1]);
+
         const ring = L.marker(marker.getLatLng(), {
             pane: 'pane-tippy-top',
             icon: L.divIcon({
                 className: 'pulse-ring-icon',
-                html: '<div class="pulse-ring"></div>',
+                html: pulseSvg,
                 iconSize: ringSize,
                 iconAnchor: ringAnchor
             }),
@@ -222,6 +225,26 @@ function wireKoForPopup(ko, marker, job, vm, popupVM) {
         job.onPopupOpen && job.onPopupOpen();
         popupVM.updatePopup?.();
         deferPopupUpdate(e.popup);
+
+        // Auto-widen: if the popup overflows the viewport, switch to 2-col
+        requestAnimationFrame(() => {
+            const wrapper = e.popup.getElement();
+            if (!wrapper) return;
+            const jp = wrapper.querySelector('.job-popup');
+            if (!jp) return;
+            // reset first so we measure single-col height
+            jp.classList.remove('job-popup--wide');
+            e.popup.update();
+            requestAnimationFrame(() => {
+                const rect = wrapper.getBoundingClientRect();
+                const overflows = rect.bottom > window.innerHeight - 8
+                               || rect.top < 8;
+                if (overflows) {
+                    jp.classList.add('job-popup--wide');
+                    e.popup.update();
+                }
+            });
+        });
     });
     marker.on('popupclose', e => {
         const el = e.popup.getContent();

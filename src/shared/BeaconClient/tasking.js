@@ -86,3 +86,25 @@ export function untaskTeam(host, taskingID, payload, token, callback) {
     },
   });
 }
+
+
+export function sequence(sequence, host, token, callback) {
+  $.ajax({
+    type: 'PUT',
+    url: host + '/Api/v1/Tasking/Sequences',
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    data: JSON.stringify(sequence),
+    cache: false,
+    dataType: 'json',
+    contentType: 'application/json; charset=utf-8',
+    complete: function (response) {
+      if (response.status === 200) {
+        callback(true);
+      } else {
+        callback(false);
+      }
+    }
+  });
+}
