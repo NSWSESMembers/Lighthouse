@@ -1108,6 +1108,17 @@ tr.job:hover {
   mask: radial-gradient(circle at center, transparent 10px, white 20px);
 }
 
+/* SVG shape-aware pulse ring (matches marker shape) */
+.pulse-ring-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  animation: pulse-ring 1.4s ease-out infinite;
+  overflow: visible;
+}
+
 @keyframes pulse-ring {
   0% {
     transform: scale(0.6);
@@ -1284,14 +1295,6 @@ overflow: hidden;
 .layers-drawer .ld-toggle:focus {
   outline: 2px solid #66afe9;
 }
-.layers-drawer .ld-panel {
-  background: #fff;
-  padding: 6px;
-  width: 220px;
-  max-height: 280px;
-  overflow: auto;
-  border-top: 1px solid #ccc;
-}
 .layers-drawer .ld-section + .ld-section {
   margin-top: 8px;
 }
@@ -1318,7 +1321,21 @@ overflow: hidden;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   min-width: 120px;
+  max-width: 80vw;
   font-size: 13px;
+}
+
+.legend-body {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  max-height: calc(100vh - 120px);
+  gap: 0 20px;
+}
+
+.legend-body > div {
+  min-width: 190px;
+  max-width: 300px;
 }
 
 .legend-container i {
@@ -2066,18 +2083,84 @@ overflow: hidden;
   align-items: center;
 }
 
+.layers-drawer {
+  position: relative;
+}
+
 .layers-drawer .ld-panel {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 6px;
   background: #fff;
   padding: 8px;
-  width: 280px;
-  max-height: 50%;
-  overflow: auto;
-  border-top: 1px solid #ccc;
+  width: 760px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid #ccc;
   border-radius: 0.5rem;
+  z-index: 1000;
+}
+
+/* ── Basemap dropdown row (full width above grid) ── */
+.ld-basemap-row {
+  margin-bottom: 8px;
+}
+.ld-basemap-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+.ld-basemap-menu {
+  font-size: 12px;
+  max-height: 260px;
+  overflow-y: auto;
+  width: 100%;
+}
+.ld-basemap-menu .dropdown-item img {
+  flex-shrink: 0;
+}
+
+/* ── Three-column group grid ── */
+.ld-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px 10px;
+  align-items: start;
+}
+.ld-grid-cell {
+  min-width: 0;
+}
+
+/* Group header (static label) */
+.ld-group-header {
+  display: block;
+  width: 100%;
+  padding: 4px 6px;
+  background: #f0f1f3;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #555;
+  letter-spacing: 0.03em;
+  margin-bottom: 3px;
+}
+
+.ld-group-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Layer list inside a group */
+.ld-group-body {
+  padding: 0;
 }
 
 .layers-drawer .ld-overlay-btn {
-  font-size: 12px;
+  font-size: 11px;
+  padding: 3px 6px;
 }
 
 /* ── Radar playback bar (bottom-center) ── */

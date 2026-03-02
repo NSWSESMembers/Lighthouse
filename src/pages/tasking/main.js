@@ -2232,17 +2232,18 @@ function VM() {
 
     // --- Polling layers ---
     registerTransportCamerasLayer(self, map, getToken, apiHost, params);
+            registerHazardWatchWarningsLayer(self, apiHost);
+
     registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
     registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
+
     registerSESZonesGridLayer(self);
     registerSESUnitsZonesHybridGridLayer(self, map);
-    registerHazardWatchWarningsLayer(self, apiHost);
     registerSESUnitLocationsLayer(self);
     renderFRAOSLayer(self, map, getToken, apiHost, params);
     registerPowerBoundariesGridLayer(self, map);
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
-    registerRainRadarLayer(self, map);
     registerBOMLandWarningsLayer(self);
     registerBOMRainfallLayer(self, sourceUrl);
     registerBOMRadarLayer(self, sourceUrl);
@@ -2266,7 +2267,8 @@ function VM() {
     registerBOMHazardousWindLayer(self, sourceUrl);
     registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
     registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
-    
+        registerRainRadarLayer(self, map);
+
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
         options: { position: "topleft" },
@@ -2282,46 +2284,35 @@ function VM() {
             const c = L.DomUtil.create("div", "layers-drawer");
 
             // stop wheel -> no map zoom when scrolling the panel
-            c.addEventListener(
-                "wheel",
-                (e) => {
-                    e.stopPropagation();
-                },
-                { passive: false }
-            );
+            c.addEventListener("wheel", (e) => { e.stopPropagation(); }, { passive: false });
 
-            // Bootstrap-flavoured shell
             c.innerHTML = `
       <div class="leaflet-bar">
-        <button class="btn btn-light btn-sm shadow-sm" style="border: 10px;"
+        <button class="btn btn-light btn-sm shadow-sm ld-toggle-btn" style="border: 10px;"
                 title="Layers"
                 aria-expanded="${this._open ? "true" : "false"}">
           <i class="fas fa-layer-group"></i>
         </button>
       </div>
-
       <div class="ld-panel ${this._open ? "" : "d-none"} shadow-sm rounded-3">
-        <div class="accordion accordion-flush" id="ld-main-accordion">
-          <div class="accordion-item ld-basemap-accordion-item">
-            <h2 class="accordion-header" id="ld-basemap-header">
-              <button class="accordion-button layermenu-accordion collapsed py-2 px-2"
-                      type="button"
-                      aria-expanded="false"
-                      aria-controls="ld-basemap-collapse">
-                <span class="text-muted text-uppercase fw-semibold small">Basemap</span>
-              </button>
-            </h2>
-            <div id="ld-basemap-collapse"
-                 class="accordion-collapse collapse"
-                 aria-labelledby="ld-basemap-header">
-              <div class="accordion-body p-2 ld-basemap-body"></div>
-            </div>
+        <!-- Basemap dropdown (spans full width) -->
+        <div class="ld-basemap-row">
+          <div class="dropdown w-100">
+            <button class="btn btn-sm btn-outline-secondary w-100 text-start d-flex align-items-center ld-basemap-btn"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-map me-2"></i>
+              <span class="ld-basemap-label">Basemap</span>
+              <i class="fas fa-caret-down ms-auto"></i>
+            </button>
+            <ul class="dropdown-menu ld-basemap-menu shadow"></ul>
           </div>
         </div>
+        <!-- Two-column grid of groups -->
+        <div class="ld-grid"></div>
       </div>
     `;
 
-            // --- Basemap buttons (single-select) ---
+            // --- Basemap dropdown ---
             const basemapNames = [
                 { name: "Esri Topographic", key: "Topographic" },
                 { name: "Esri Streets", key: "Streets" },
@@ -2332,7 +2323,6 @@ function VM() {
                 { name: "SIX Maps Imagery", key: "nsw-imagery" }
             ];
 
-            // Thumbnail URLs for each basemap (static map tile previews at z=10 Sydney)
             const basemapThumbs = {
                 "Topographic":  "https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/16/39312/60258",
                 "Streets":      "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/16/39312/60258",
@@ -2343,146 +2333,62 @@ function VM() {
                 "nsw-imagery":  "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/16/39312/60258",
             };
 
-            // Basemap accordion: remember open/closed state
-            const basemapAccBtn = c.querySelector("#ld-basemap-header .accordion-button");
-            const basemapCollapseEl = c.querySelector("#ld-basemap-collapse");
-            const basemapBody = c.querySelector(".ld-basemap-body");
-            const basemapOpen = localStorage.getItem("layers.ovgrp.basemap") === "1";
+            const basemapLabel = c.querySelector(".ld-basemap-label");
+            const basemapMenu = c.querySelector(".ld-basemap-menu");
 
-            if (basemapOpen) {
-                basemapCollapseEl.classList.add("show");
-                basemapAccBtn.classList.remove("collapsed");
-                basemapAccBtn.setAttribute("aria-expanded", "true");
-            }
-
-            const basemapCollapse = new bootstrap.Collapse(basemapCollapseEl, { toggle: false });
-            basemapAccBtn.addEventListener("click", () => basemapCollapse.toggle());
-
-            basemapCollapseEl.addEventListener("shown.bs.collapse", () => {
-                localStorage.setItem("layers.ovgrp.basemap", "1");
-                basemapAccBtn.classList.remove("collapsed");
-                basemapAccBtn.setAttribute("aria-expanded", "true");
-            });
-            basemapCollapseEl.addEventListener("hidden.bs.collapse", () => {
-                localStorage.setItem("layers.ovgrp.basemap", "0");
-                basemapAccBtn.classList.add("collapsed");
-                basemapAccBtn.setAttribute("aria-expanded", "false");
-            });
-
-            // Build the thumbnail grid inside the accordion body
-            const grid = document.createElement("div");
-            grid.className = "ld-bases-grid";
-            basemapBody.appendChild(grid);
+            const currentBaseName = basemapNames.find(b => b.key === this._baseKey)?.name || "Basemap";
+            basemapLabel.textContent = currentBaseName;
 
             basemapNames.forEach(({ name, key }) => {
-                const tile = document.createElement("div");
-                tile.className = "ld-base-tile" + (key === this._baseKey ? " active" : "");
-                tile.dataset.baseKey = key;
-                tile.title = name;
-
+                const li = document.createElement("li");
                 const thumb = basemapThumbs[key] || basemapThumbs["Topographic"];
-                tile.innerHTML = `
-                    <div class="ld-base-thumb" style="background-image:url('${thumb}')"></div>
-                    <span class="ld-base-name">${name.replace(/^Esri /, "").replace(/^SIX Maps /, "SIX ")}</span>
-                `;
-
-                tile.addEventListener("click", () => {
+                li.innerHTML = `<button type="button" class="dropdown-item d-flex align-items-center gap-2 ${key === this._baseKey ? "active" : ""}">
+                    <img src="${thumb}" width="28" height="28" style="border-radius:3px;object-fit:cover;" alt="" />
+                    <span>${name}</span>
+                </button>`;
+                const btn = li.querySelector("button");
+                btn.addEventListener("click", () => {
                     if (key === this._baseKey) return;
-
                     this._setBasemap(key, map);
                     this._baseKey = key;
                     localStorage.setItem("map.base", key);
-
-                    // update active tile
-                    grid.querySelectorAll(".ld-base-tile").forEach((t) => t.classList.remove("active"));
-                    tile.classList.add("active");
+                    basemapLabel.textContent = name;
+                    basemapMenu.querySelectorAll(".dropdown-item").forEach(d => d.classList.remove("active"));
+                    btn.classList.add("active");
                 });
-
-                grid.appendChild(tile);
+                basemapMenu.appendChild(li);
             });
 
-            // apply initial basemap
             this._setBasemap(this._baseKey, map);
 
-            // --- Overlays as toggle buttons (multi-select) ---
+            // --- Overlays: group by def.group ---
             const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
-
-            // Group by def.group (parent menu layer)
             const groups = new Map();
             overlayDefs.forEach((def) => {
-                const g = def.group || ""; // '' = ungrouped
+                const g = def.group || "";
                 if (!groups.has(g)) groups.set(g, []);
                 groups.get(g).push(def);
             });
 
-            // Append overlay groups as accordion items into the main accordion
-            const acc = c.querySelector("#ld-main-accordion");
-
-            // Helpers
-            const safeId = (s) =>
-                String(s || "")
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/(^-|-$)/g, "") || "other";
-
             const groupTitle = (k) => (k && String(k).trim() ? k : "Other");
 
-            // Build one accordion item per group (sub section)
-            let idx = 0;
+            // --- Build two-column grid of always-visible groups ---
+            const grid = c.querySelector(".ld-grid");
+
             groups.forEach((defs, groupKey) => {
-                idx += 1;
+                const cell = document.createElement("div");
+                cell.className = "ld-grid-cell";
 
-                const gid = safeId(groupKey);
-                const storeKey = `layers.ovgrp.${gid}`;
-                const open = localStorage.getItem(storeKey) === "1"; // default closed
+                // Group header (static label)
+                const header = document.createElement("div");
+                header.className = "ld-group-header";
+                header.innerHTML = `<span class="ld-group-name">${groupTitle(groupKey)}</span>`;
 
-                const item = document.createElement("div");
-                item.className = "accordion-item";
+                // Layer list (always visible)
+                const body = document.createElement("div");
+                body.className = "ld-group-body";
 
-                const headerId = `ld-ov-h-${gid}-${idx}`;
-                const collapseId = `ld-ov-c-${gid}-${idx}`;
-
-                item.innerHTML = `
-      <h2 class="accordion-header" id="${headerId}">
-        <button class="accordion-button layermenu-accordion ${open ? "" : "collapsed"} py-2 px-2"
-                type="button"
-                aria-expanded="${open ? "true" : "false"}"
-                aria-controls="${collapseId}">
-          <span class="text-muted text-uppercase fw-semibold small">${groupTitle(groupKey)}</span>
-        </button>
-      </h2>
-      <div id="${collapseId}"
-     class="accordion-collapse collapse ${open ? "show" : ""}"
-     aria-labelledby="${headerId}"
-     data-bs-parent="#ld-main-accordion">
-        <div class="accordion-body p-2"></div>
-      </div>
-    `;
-
-                acc.appendChild(item);
-
-                const btn = item.querySelector(".accordion-button");
-                const body = item.querySelector(".accordion-body");
-                const collapseEl = item.querySelector(".accordion-collapse");
-
-                // Bootstrap Collapse instance with accordion behaviour (only one open at a time)
-                const collapse = new bootstrap.Collapse(collapseEl, { toggle: false, parent: acc });
-
-                btn.addEventListener("click", () => collapse.toggle());
-
-                collapseEl.addEventListener("shown.bs.collapse", () => {
-                    localStorage.setItem(storeKey, "1");
-                    btn.classList.remove("collapsed");
-                    btn.setAttribute("aria-expanded", "true");
-                });
-
-                collapseEl.addEventListener("hidden.bs.collapse", () => {
-                    localStorage.setItem(storeKey, "0");
-                    btn.classList.add("collapsed");
-                    btn.setAttribute("aria-expanded", "false");
-                });
-
-                // Render overlay buttons inside this group's accordion body
+                // Build layer toggle buttons
                 defs.forEach(({ key, label, layer, visibleByDefault }) => {
                     const stored = localStorage.getItem(`ov.${key}`);
                     const saved = (stored === null)
@@ -2498,63 +2404,75 @@ function VM() {
                         (saved ? "btn-outline-secondary active" : "btn-outline-secondary");
                     obtn.dataset.key = key;
                     obtn.innerHTML = `
-          <span class="me-2">${label}</span>
-          <span class="ms-auto">
-            <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
-          </span>
-        `;
+                        <span class="me-2">${label}</span>
+                        <span class="ms-auto">
+                            <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
+                        </span>`;
 
                     obtn.addEventListener("click", () => {
                         const icon = obtn.querySelector("i");
                         const isOn = obtn.classList.contains("active");
-
                         if (isOn) {
                             map.removeLayer(layer);
                             localStorage.setItem(`ov.${key}`, "0");
                             obtn.classList.remove("active");
-                            if (icon) {
-                                icon.classList.remove("fa-toggle-on");
-                                icon.classList.add("fa-toggle-off");
-                            }
+                            if (icon) { icon.classList.remove("fa-toggle-on"); icon.classList.add("fa-toggle-off"); }
                         } else {
                             map.addLayer(layer);
                             localStorage.setItem(`ov.${key}`, "1");
                             obtn.classList.add("active");
-                            if (icon) {
-                                icon.classList.remove("fa-toggle-off");
-                                icon.classList.add("fa-toggle-on");
-                            }
+                            if (icon) { icon.classList.remove("fa-toggle-off"); icon.classList.add("fa-toggle-on"); }
                         }
                     });
 
-
                     body.appendChild(obtn);
                 });
+
+                cell.appendChild(header);
+                cell.appendChild(body);
+                grid.appendChild(cell);
             });
 
-
-            const btn = c.querySelector(".btn");
+            // --- Toggle button ---
+            const toggleBtn = c.querySelector(".ld-toggle-btn");
             const panel = c.querySelector(".ld-panel");
-            L.DomEvent.on(btn, "click", (ev) => {
+
+            const fitPanel = () => {
+                requestAnimationFrame(() => {
+                    const rect = panel.getBoundingClientRect();
+                    const avail = window.innerHeight - rect.top - 20; // 20px bottom margin
+                    panel.style.maxHeight = Math.max(avail, 160) + "px";
+                });
+            };
+
+            L.DomEvent.on(toggleBtn, "click", (ev) => {
                 L.DomEvent.stop(ev);
                 const hidden = panel.classList.toggle("d-none");
-                btn.setAttribute("aria-expanded", (!hidden).toString());
-                btn.parentElement.classList.toggle("no-border", !hidden);
+                toggleBtn.setAttribute("aria-expanded", (!hidden).toString());
+                toggleBtn.parentElement.classList.toggle("no-border", !hidden);
                 localStorage.setItem("layers.open", hidden ? "0" : "1");
+                if (!hidden) fitPanel();
             });
 
-            // prevent clicks/scrolls from falling through to map
-            L.DomEvent.disableClickPropagation(c);
+            // Re-fit when window resizes
+            window.addEventListener("resize", () => {
+                if (!panel.classList.contains("d-none")) fitPanel();
+            });
 
-            // tuck the drawer under the zoom control
-            setTimeout(() => {
-                const position = map._controlCorners.topleft.querySelector(
-                    ".leaflet-control-geosearch"
-                );
-                if (position && c.parentElement === map._controlCorners.topleft) {
-                    position.insertAdjacentElement("afterend", c);
+            // Initial fit if panel starts open
+            if (this._open) setTimeout(fitPanel, 50);
+
+            // Close panel when map is clicked
+            map.on("click", () => {
+                if (!panel.classList.contains("d-none")) {
+                    panel.classList.add("d-none");
+                    toggleBtn.setAttribute("aria-expanded", "false");
+                    toggleBtn.parentElement.classList.remove("no-border");
+                    localStorage.setItem("layers.open", "0");
                 }
-            }, 0);
+            });
+
+            L.DomEvent.disableClickPropagation(c);
 
             this._container = c;
             return c;
@@ -2664,13 +2582,25 @@ function VM() {
     layersDrawer.addTo(map);
 
     setTimeout(() => {
-        // force ordering: place directly under zoom buttons
-        const zoom = document.querySelector('.leaflet-control-zoom');
-        const toggle = document.querySelector('.sidebar-toggle');
-        if (zoom && toggle) {
-            zoom.parentNode.insertBefore(toggle, zoom.nextSibling);
+        // force ordering: zoom → hide → layers → measure → geosearch
+        const corner = map._controlCorners.topleft;
+        const zoom     = corner.querySelector('.leaflet-control-zoom');
+        const layers   = corner.querySelector('.layers-drawer');
+        const measure  = document.getElementById('polyline-measure-control');
+        const measureCtl = measure ? measure.closest('.leaflet-control') : null;
+        const geosearch = corner.querySelector('.leaflet-control-geosearch');
+        const hide     = corner.querySelector('.sidebar-toggle');
+
+        // Insert in reverse order after zoom so the last insert ends up first
+        const order = [geosearch, measureCtl, layers, hide];
+        if (zoom) {
+            order.forEach(el => {
+                if (el && el.parentElement === corner) {
+                    zoom.parentElement.insertBefore(el, zoom.nextSibling);
+                }
+            });
         }
-    }, 0);
+    }, 100);
 
 
 
