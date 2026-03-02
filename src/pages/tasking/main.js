@@ -966,6 +966,7 @@ function VM() {
             isTeamPinned: (id) => self.isTeamPinned(id),
             toggleTeamPinned: (id) => self.toggleTeamPinned(id),
             currentlyOpenMapPopup: self.mapVM?.openPopup,
+            saveTaskingSequence: (sequences) => self.saveTaskingSequence(sequences),
         };
 
         team = new Team(teamJson, deps);
@@ -1696,6 +1697,26 @@ function VM() {
             if (cb) cb(r);
         })
     }
+
+    self.saveTaskingSequence = async function (sequences) {
+        const t = await getToken();
+        return new Promise((resolve, reject) => {
+            BeaconClient.tasking.sequence(
+                { Sequences: sequences },
+                apiHost,
+                t,
+                function (data) {
+                    if (data) {
+                        showAlert('Tasking order saved.', 'success', 3000);
+                        resolve(data);
+                    } else {
+                        showAlert('Failed to save tasking order.', 'danger', 5000);
+                        reject(new Error('Failed to save tasking order'));
+                    }
+                }
+            );
+        });
+    };
 
     //update spotlight index on team/job filter changes
     self.filteredTeamsAgainstConfig.subscribe(() => { self.spotlightSearchVM.rebuildIndex?.() }, null, "arrayChange");
