@@ -2101,6 +2101,18 @@ overflow: hidden;
   z-index: 1000;
 }
 
+/* ── Search row ── */
+.ld-search-row {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 6px 8px;
+}
+.ld-search-input {
+  font-size: 12px;
+}
+.ld-search-input::placeholder {
+  color: #999;
+}
+
 /* ── Basemap dropdown row (full width above grid) ── */
 .ld-basemap-row {
   margin-bottom: 8px;

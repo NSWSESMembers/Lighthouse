@@ -326,20 +326,18 @@ function VM() {
     self.incidentsVisible.subscribe(v => {
         localStorage.setItem('map.incidentsVisible', v ? 'true' : 'false');
         
-        // Remove both layers first
-        if (map.hasLayer(self.mapVM.jobClusterGroup)) {
-            map.removeLayer(self.mapVM.jobClusterGroup);
-        }
-        if (map.hasLayer(self.mapVM.unclusteredJobLayer)) {
-            map.removeLayer(self.mapVM.unclusteredJobLayer);
-        }
-        
-        // Add back the appropriate layer if visible
         if (v) {
+            // Show incidents – add the appropriate layer
             const targetLayer = self.mapVM.clusteringEnabled 
                 ? self.mapVM.jobClusterGroup 
                 : self.mapVM.unclusteredJobLayer;
-            targetLayer.addTo(map);
+            if (!map.hasLayer(targetLayer)) {
+                targetLayer.addTo(map);
+            }
+        } else {
+            // Hide incidents – remove both possible layers
+            map.removeLayer(self.mapVM.jobClusterGroup);
+            map.removeLayer(self.mapVM.unclusteredJobLayer);
         }
     });
 
@@ -1763,6 +1761,10 @@ function VM() {
 
     // automatically refresh markers when jobs change
     self.filteredJobs.subscribe((changes) => {
+        // Bail early if incidents are not visible – no need to attach markers
+        if (!self.incidentsVisible()) {
+            return;
+        }
         changes.forEach(ch => {
             if (ch.status === 'added') {
                 addOrUpdateJobMarker(ko, map, self, ch.value);
@@ -2338,6 +2340,10 @@ function VM() {
         </button>
       </div>
       <div class="ld-panel ${this._open ? "" : "d-none"} shadow-sm rounded-3">
+        <!-- Search box -->
+        <div class="ld-search-row p-2">
+          <input type="text" class="form-control form-control-sm ld-search-input" placeholder="Search layers..." />
+        </div>
         <!-- Basemap dropdown (spans full width) -->
         <div class="ld-basemap-row">
           <div class="dropdown w-100">
@@ -2438,6 +2444,7 @@ function VM() {
                     const isIncidentsOn = self.incidentsVisible();
                     incidentsBtn.className = "btn btn-sm w-100 text-start d-flex align-items-center justify-content-between mb-1 ld-overlay-btn " +
                         (isIncidentsOn ? "btn-outline-secondary active" : "btn-outline-secondary");
+                    incidentsBtn.dataset.label = "Incidents";
                     incidentsBtn.innerHTML = `
                         <span class="me-2">Incidents</span>
                         <span class="ms-auto">
@@ -2477,6 +2484,7 @@ function VM() {
                         "btn btn-sm w-100 text-start d-flex align-items-center justify-content-between mb-1 ld-overlay-btn " +
                         (saved ? "btn-outline-secondary active" : "btn-outline-secondary");
                     obtn.dataset.key = key;
+                    obtn.dataset.label = label;
                     obtn.innerHTML = `
                         <span class="me-2">${label}</span>
                         <span class="ms-auto">
@@ -2507,6 +2515,39 @@ function VM() {
                 grid.appendChild(cell);
             });
 
+            // --- Search filter ---
+            const searchInput = c.querySelector(".ld-search-input");
+            const searchFilter = (query) => {
+                const q = query.toLowerCase().trim();
+                const cells = grid.querySelectorAll(".ld-grid-cell");
+                
+                cells.forEach(cell => {
+                    const buttons = cell.querySelectorAll(".ld-overlay-btn");
+                    let anyVisible = false;
+                    
+                    buttons.forEach(btn => {
+                        let shouldShow = !q; // Show all if no query
+                        
+                        if (q) {
+                            // Extract label from the span.me-2 text content
+                            const labelSpan = btn.querySelector("span.me-2");
+                            const label = labelSpan ? labelSpan.textContent.trim().toLowerCase() : "";
+                            shouldShow = label.includes(q);
+                        }
+                        
+                        btn.style.setProperty("display", shouldShow ? "" : "none", "important");
+                        if (shouldShow) anyVisible = true;
+                    });
+                    
+                    // Show cell only if at least one button is visible
+                    cell.style.setProperty("display", anyVisible ? "" : "none", "important");
+                });
+            };
+            
+            searchInput.addEventListener("input", (e) => {
+                searchFilter(e.target.value);
+            });
+
             // --- Toggle button ---
             const toggleBtn = c.querySelector(".ld-toggle-btn");
             const panel = c.querySelector(".ld-panel");
@@ -2525,7 +2566,12 @@ function VM() {
                 toggleBtn.setAttribute("aria-expanded", (!hidden).toString());
                 toggleBtn.parentElement.classList.toggle("no-border", !hidden);
                 localStorage.setItem("layers.open", hidden ? "0" : "1");
-                if (!hidden) fitPanel();
+                if (!hidden) {
+                    // Clear search when opening
+                    searchInput.value = "";
+                    searchFilter("");
+                    fitPanel();
+                }
             });
 
             // Re-fit when window resizes
