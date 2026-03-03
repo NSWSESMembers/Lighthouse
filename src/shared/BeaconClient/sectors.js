@@ -24,7 +24,7 @@ export function search(unit, host, userId = 'notPassed', token, callback, progre
 
   var lastDisplayedVal = 0;
   getJsonPaginated(
-    url, token, 0, 100,
+    url, token, 0, 300,
     function (count, total) {
       if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
         lastDisplayedVal = count;
