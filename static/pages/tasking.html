@@ -410,7 +410,8 @@
                                                                             <tr>
                                                                                 <th style="width:15%;">#</th>
                                                                                 <th style="width:15%;">Type</th>
-                                                                                <th>Address</th>
+                                                                                <th style="width:35%;">Address</th>
+                                                                                <th style="width:15%;">Status</th>
                                                                                 <th style="width:80px;">Order</th>
                                                                             </tr>
                                                                             <!-- /ko -->
@@ -418,8 +419,8 @@
                                                                             <tr>
                                                                                 <th style="width:15%;">#</th>
                                                                                 <th style="width:15%;">Type</th>
-                                                                                <th style="width:45%;">Address</th>
-                                                                                <th style="width:10%;">Status</th>
+                                                                                <th style="width:35%;">Address</th>
+                                                                                <th style="width:15%;">Status</th>
                                                                                 <th style="width:20%;">Actions</th>
                                                                             </tr>
                                                                             <!-- /ko -->
@@ -436,21 +437,7 @@
                                                                                 <td
                                                                                     data-bind="text: ts.prettyAddress, css: ts.job.rowColour()">
                                                                                 </td>
-                                                                                <!-- ko if: t.reorderMode -->
-                                                                                <td data-bind="css: ts.job.rowColour()">
-                                                                                    <div class="btn-group btn-group-sm" role="group">
-                                                                                        <button type="button" class="btn btn-outline-secondary" title="Move up"
-                                                                                            data-bind="click: t.moveTaskingUp, clickBubble: false">
-                                                                                            <i class="fa fa-arrow-up"></i>
-                                                                                        </button>
-                                                                                        <button type="button" class="btn btn-outline-secondary" title="Move down"
-                                                                                            data-bind="click: t.moveTaskingDown, clickBubble: false">
-                                                                                            <i class="fa fa-arrow-down"></i>
-                                                                                        </button>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <!-- /ko -->
-                                                                                <!-- ko ifnot: t.reorderMode -->
+                                                                                <!-- Status column - always visible -->
                                                                                 <td data-bind="css: ts.job.rowColour()">
                                                                                     <div class="dropdown"
                                                                                         id="team-tasking-status-dropdown">
@@ -625,6 +612,21 @@
                                                                                         </div>
                                                                                     </div>
                                                                                 </td>
+                                                                                <!-- ko if: t.reorderMode -->
+                                                                                <td data-bind="css: ts.job.rowColour()">
+                                                                                    <div class="btn-group btn-group-sm" role="group">
+                                                                                        <button type="button" class="btn btn-outline-secondary" title="Move up"
+                                                                                            data-bind="click: t.moveTaskingUp, clickBubble: false">
+                                                                                            <i class="fa fa-arrow-up"></i>
+                                                                                        </button>
+                                                                                        <button type="button" class="btn btn-outline-secondary" title="Move down"
+                                                                                            data-bind="click: t.moveTaskingDown, clickBubble: false">
+                                                                                            <i class="fa fa-arrow-down"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <!-- /ko -->
+                                                                                <!-- ko ifnot: t.reorderMode -->
                                                                                 <td data-bind="css: ts.job.rowColour()">
                                                                                     <div class="btn-group btn-group-sm"
                                                                                         role="group"

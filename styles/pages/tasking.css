@@ -1587,9 +1587,7 @@ overflow: hidden;
 .job-card .fa.fa-solid {
   transition: transform 140ms ease;
 }
-.job-card--expanded .fa.fa-solid.fa-plus {
-  /* if you switch to a single chevron icon, rotate it here */
-}
+
 
 /* Wider dropdown specifically for the Jobs filter menu */
 #jobMenu + .dropdown-menu {
@@ -2454,6 +2452,7 @@ input[type='search']::-ms-clear {
 .spotlight-secondary {
   display: -webkit-box;
   -webkit-line-clamp: 2;      /* 1 or 2 */
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
