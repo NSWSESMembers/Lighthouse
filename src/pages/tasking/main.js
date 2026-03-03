@@ -1071,6 +1071,17 @@ function VM() {
     self.attachJobTimelineModal = function (job) {
         const modalEl = document.getElementById('jobTimelineModal');
         const modal = new bootstrap.Modal(modalEl);
+
+        if (modalEl && !modalEl.__timelineRefreshBound) {
+            modalEl.addEventListener('shown.bs.modal', () => {
+                self.jobTimelineVM.startAutoRefresh?.();
+            });
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                self.jobTimelineVM.stopAutoRefresh?.();
+            });
+            modalEl.__timelineRefreshBound = true;
+        }
+
         self.jobTimelineVM.openForJob(job);
         modal.show();
     }
@@ -1585,32 +1596,90 @@ function VM() {
         try { self._spotlightModal?.hide(); } catch { /* empty */ }
     };
 
+    // --- Initial load state management ---
     self.initialFitDone = false;
     let initialFetchesPending = 3; // teams, jobs, assets
+    let userHasInteracted = false; // Track if user manually panned/zoomed
+
+    // Create loading overlay element
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'mapLoadingOverlay';
+    loadingOverlay.innerHTML = '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-light mt-2">Loading data...please wait. or don\'t</p>';
+    loadingOverlay.style.cssText = 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; font-weight: 500;';
+    map.getContainer().appendChild(loadingOverlay);
+
+    // Track user map interactions (only real user input, not internal operations)
+    const markUserInteracted = () => { userHasInteracted = true; };
+    map.on('click', markUserInteracted);
+    map.on('mousedown', markUserInteracted);
+    map.on('touchstart', markUserInteracted);
+    map.on('wheel', markUserInteracted);
 
     function debounce(fn, ms) {
         let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
     }
 
-    const tryInitialFit = debounce(() => {
-        if (self.initialFitDone || initialFetchesPending > 0) return;
+    let initialFitRetries = 0;
+    const MAX_INITIAL_FIT_RETRIES = 4; // give up after ~1.25s to avoid infinite retry loops in bad states
 
-        // Gather every current marker into one feature group
+    const tryInitialFit = debounce(() => {
+        if (self.initialFitDone || initialFetchesPending > 0 || userHasInteracted) return;
+        console.log("Attempting initial map fit...");
+        // Prefer map layers if already attached
         const fg = L.featureGroup();
 
         // vehicle (assets)
-        self.mapVM.assetLayer.eachLayer(l => fg.addLayer(l));
+        if (self.mapVM.assetLayer && map.hasLayer(self.mapVM.assetLayer)) {
+            self.mapVM.assetLayer.eachLayer(l => fg.addLayer(l));
+        }
 
-        // all job marker layer groups
-        for (const { layerGroup } of self.mapVM.jobMarkerGroups.values()) {
-            layerGroup.eachLayer(l => fg.addLayer(l));
+        // Job layers - use whichever is currently visible
+        if (self.mapVM.jobClusterGroup && map.hasLayer(self.mapVM.jobClusterGroup)) {
+            self.mapVM.jobClusterGroup.eachLayer(l => fg.addLayer(l));
+        } else if (self.mapVM.unclusteredJobLayer && map.hasLayer(self.mapVM.unclusteredJobLayer)) {
+            self.mapVM.unclusteredJobLayer.eachLayer(l => fg.addLayer(l));
         }
 
         const layers = fg.getLayers();
-        if (!layers.length) return;
 
-        // Fit with a little padding, once
-        map.fitBounds(fg.getBounds().pad(0.12), { maxZoom: 15 });
+        let bounds = null;
+
+        if (layers.length > 0) {
+            bounds = fg.getBounds();
+        } else {
+            // Fallback: compute bounds from data (covers cases where markers have not attached yet)
+            const latLngs = [];
+
+            (self.filteredJobs?.() || []).forEach((j) => {
+                const lat = j?.address?.latitude?.();
+                const lng = j?.address?.longitude?.();
+                if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    latLngs.push([lat, lng]);
+                }
+            });
+
+            (self.filteredTrackableAssets?.() || []).forEach((a) => {
+                const lat = a?.latitude?.();
+                const lng = a?.longitude?.();
+                if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    latLngs.push([lat, lng]);
+                }
+            });
+
+            if (latLngs.length > 0) {
+                bounds = L.latLngBounds(latLngs);
+            }
+        }
+
+        if (!bounds || !bounds.isValid()) {
+            if (initialFitRetries < MAX_INITIAL_FIT_RETRIES) {
+                initialFitRetries += 1;
+                setTimeout(() => tryInitialFit(), 250);
+            }
+            return;
+        }
+
+        map.fitBounds(bounds.pad(0.12), { maxZoom: 15 });
         self.initialFitDone = true;
     }, 150);
 
@@ -1621,6 +1690,11 @@ function VM() {
             initialFetchesPending -= 1;
             // Give subscriptions time to attach markers, then attempt fit
             tryInitialFit();
+        }
+        
+        // Once all fetches are done, hide the loading overlay
+        if (initialFetchesPending === 0 && loadingOverlay) {
+            loadingOverlay.style.display = 'none';
         }
     };
 

@@ -29,22 +29,14 @@ export function Asset(data = {}, deps = {}) {
     });
 
     // Force updates for computed observables using fmtRelative every 30 seconds
-    // Prefer shared VM ticker to avoid one interval per asset.
     self._relativeUpdateTick = ko.observable(0);
     const sharedRelativeTick = (typeof deps.relativeUpdateTick === "function")
         ? deps.relativeUpdateTick
         : null;
 
-    if (!sharedRelativeTick) {
-        setInterval(() => {
-            self._relativeUpdateTick(self._relativeUpdateTick() + 1);
-        }, 1000 * 30);
-    }
-
     // Patch computeds to depend on _relativeUpdateTick
     self.lastSeenJustAgoText = ko.pureComputed(() => {
-        if (sharedRelativeTick) sharedRelativeTick(); // shared dependency
-        else self._relativeUpdateTick(); // fallback dependency
+        sharedRelativeTick(); // shared dependency
         const v = safeStr(self.lastSeen?.());
         if (!v) return "";
         const d = new Date(v);
@@ -53,8 +45,7 @@ export function Asset(data = {}, deps = {}) {
     });
 
     self.lastSeenText = ko.pureComputed(() => {
-        if (sharedRelativeTick) sharedRelativeTick(); // shared dependency
-        else self._relativeUpdateTick(); // fallback dependency
+        sharedRelativeTick(); // shared dependency
         const v = safeStr(self.lastSeen?.());
         if (!v) return "";
         const d = new Date(v);
@@ -63,8 +54,7 @@ export function Asset(data = {}, deps = {}) {
     });
 
     self.talkgroupLastUpdatedText = ko.pureComputed(() => {
-        if (sharedRelativeTick) sharedRelativeTick(); // shared dependency
-        else self._relativeUpdateTick(); // fallback dependency
+        sharedRelativeTick(); // shared dependency
         const v = safeStr(self.talkgroupLastUpdated?.());
         if (!v) return "";
         const d = new Date(v);
