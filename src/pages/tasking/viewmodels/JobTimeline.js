@@ -20,6 +20,8 @@ export function JobTimeline(parentVm) {
     self.jobIdentifier = ko.observable();
 
     self.selectedTags = ko.observableArray([]);
+    self._refreshTimer = null;
+    self._refreshInFlight = false;
 
     // lane view mode: "both" | "history" | "ops"
     self.laneViewMode = ko.observable("both");
@@ -313,7 +315,10 @@ export function JobTimeline(parentVm) {
                 bucket = {
                     key,
                     label: minute.format("DD/MM/YYYY HH:mm"),
-                    rel: minute.fromNow(),
+                    rel: ko.pureComputed(() => {
+                        parentVm.relativeUpdateTick30s();
+                        return minute.fromNow();
+                    }),
                     tPlus: tPlus,
                     ops: [],
                     history: []
@@ -351,30 +356,62 @@ export function JobTimeline(parentVm) {
             return b.ops.length > 0 || b.history.length > 0;
         });
 
+        // Update each bucket's rel to use the most recent entry's timestamp instead of rounded minute
+        buckets.forEach(bucket => {
+            let latestTime = null;
+            
+            // Find the latest timestamp among all entries in this bucket
+            bucket.history.forEach(h => {
+                const t = h.timeStampRaw?.() || h.timeLoggedRaw?.();
+                if (t) {
+                    const m = parseDate(t);
+                    if (m && (!latestTime || m.isAfter(latestTime))) {
+                        latestTime = m;
+                    }
+                }
+            });
+            
+            bucket.ops.forEach(o => {
+                const t = o.timeLogged?.() || o.createdOn?.();
+                if (t) {
+                    const m = parseDate(t);
+                    if (m && (!latestTime || m.isAfter(latestTime))) {
+                        latestTime = m;
+                    }
+                }
+            });
+            
+            // Replace rel with computed using the actual latest time
+            if (latestTime) {
+                bucket.rel = ko.pureComputed(() => {
+                    parentVm.relativeUpdateTick30s();
+                    return latestTime.fromNow();
+                });
+            }
+        });
+
         // newest minute first
         buckets.sort(function (a, b) { return b.key - a.key; });
         return buckets;
     });
 
-    self.openForJob = async (job) => {
-        self.laneViewMode("both"); //this is just better. force people to like it
-        self.jobIdentifier(job.identifier() || "");
-        self.job(job);
+    self.refreshCurrentJob = async ({ silent = false } = {}) => {
+        const job = self.job();
+        if (!job || typeof job.id !== "function") return;
+        if (self._refreshInFlight) return;
 
-        if (self.job() && self.job().receivedAt) {
-            self.jobCreated = moment(self.job().jobReceived());
+        self._refreshInFlight = true;
+        if (!silent) {
+            self.loading(true);
         }
 
-
-        self.historyEntries([]);
-        self.opsLogEntries([]);
-        self.loading(true);
+        const deps = { relativeUpdateTick: parentVm.relativeUpdateTick30s };
 
         const historyResults = new Promise((resolve, reject) => {
             parentVm.fetchHistoryForJob(
                 job.id(),
                 function (res) {
-                    self.historyEntries((res || []).map((e) => new HistoryEntry(e)));
+                    self.historyEntries((res || []).map((e) => new HistoryEntry(e, deps)));
                     resolve(res);
                 },
                 reject
@@ -385,7 +422,7 @@ export function JobTimeline(parentVm) {
             parentVm.fetchOpsLogForJob(
                 job.id(),
                 function (res) {
-                    self.opsLogEntries((res || []).map((e) => new OpsLogEntry(e)));
+                    self.opsLogEntries((res || []).map((e) => new OpsLogEntry(e, deps)));
                     resolve(res);
                 },
                 reject
@@ -397,8 +434,39 @@ export function JobTimeline(parentVm) {
         } catch (e) {
             console.error("Error loading job history or ops log:", e);
         } finally {
-            self.loading(false);
+            if (!silent) {
+                self.loading(false);
+            }
+            self._refreshInFlight = false;
         }
+    };
+
+    self.startAutoRefresh = function () {
+        self.stopAutoRefresh();
+        self._refreshTimer = setInterval(() => {
+            self.refreshCurrentJob({ silent: true });
+        }, 1000 * 30);
+    };
+
+    self.stopAutoRefresh = function () {
+        if (self._refreshTimer) {
+            clearInterval(self._refreshTimer);
+            self._refreshTimer = null;
+        }
+    };
+
+    self.openForJob = async (job) => {
+        self.laneViewMode("both"); //this is just better. force people to like it
+        self.jobIdentifier(job.identifier() || "");
+        self.job(job);
+
+        if (self.job() && self.job().receivedAt) {
+            self.jobCreated = moment(self.job().jobReceived());
+        }
+
+        self.historyEntries([]);
+        self.opsLogEntries([]);
+        await self.refreshCurrentJob();
     };
 }
 

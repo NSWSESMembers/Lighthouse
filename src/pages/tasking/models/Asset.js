@@ -2,7 +2,7 @@
 import ko from "knockout";
 import { fmtRelative, safeStr } from "../utils/common.js";
 
-export function Asset(data = {}) {
+export function Asset(data = {}, deps = {}) {
     const self = this;
     self.id = ko.observable(data.properties.id ?? null);
     self.name = ko.observable(data.properties.name ?? "");
@@ -30,14 +30,13 @@ export function Asset(data = {}) {
 
     // Force updates for computed observables using fmtRelative every 30 seconds
     self._relativeUpdateTick = ko.observable(0);
-
-    setInterval(() => {
-        self._relativeUpdateTick(self._relativeUpdateTick() + 1);
-    }, 1000 * 30);
+    const sharedRelativeTick = (typeof deps.relativeUpdateTick === "function")
+        ? deps.relativeUpdateTick
+        : null;
 
     // Patch computeds to depend on _relativeUpdateTick
     self.lastSeenJustAgoText = ko.pureComputed(() => {
-        self._relativeUpdateTick(); // dependency
+        sharedRelativeTick(); // shared dependency
         const v = safeStr(self.lastSeen?.());
         if (!v) return "";
         const d = new Date(v);
@@ -46,7 +45,7 @@ export function Asset(data = {}) {
     });
 
     self.lastSeenText = ko.pureComputed(() => {
-        self._relativeUpdateTick(); // dependency
+        sharedRelativeTick(); // shared dependency
         const v = safeStr(self.lastSeen?.());
         if (!v) return "";
         const d = new Date(v);
@@ -55,7 +54,7 @@ export function Asset(data = {}) {
     });
 
     self.talkgroupLastUpdatedText = ko.pureComputed(() => {
-        self._relativeUpdateTick(); // dependency
+        sharedRelativeTick(); // shared dependency
         const v = safeStr(self.talkgroupLastUpdated?.());
         if (!v) return "";
         const d = new Date(v);

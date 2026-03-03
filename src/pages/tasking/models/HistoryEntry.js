@@ -4,7 +4,7 @@
 import ko from "knockout";
 import moment from "moment";
 
-export function HistoryEntry(data = {}) {
+export function HistoryEntry(data = {}, deps = {}) {
   const self = this;
 
   // --- core fields ---
@@ -27,12 +27,14 @@ export function HistoryEntry(data = {}) {
 
     // "time ago" label
   self.timeStampAgo = ko.pureComputed(() => {
+    if (deps.relativeUpdateTick) deps.relativeUpdateTick();
     const v = self.timeStampRaw();
     return v ? moment(v).fromNow() : "";
   });
 
   // "time ago" label
   self.timeLoggedAgo = ko.pureComputed(() => {
+    if (deps.relativeUpdateTick) deps.relativeUpdateTick();
     const v = self.timeLoggedRaw();
     return v ? moment(v).fromNow() : "";
   });

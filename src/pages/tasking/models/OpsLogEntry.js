@@ -5,7 +5,7 @@ import moment from "moment";
 import { Entity } from "./Entity.js";
 import { Tag } from "./Tag.js";
 
-export function OpsLogEntry(data = {}) {
+export function OpsLogEntry(data = {}, deps = {}) {
   const self = this;
 
   // --- core ids/links ---
@@ -63,8 +63,12 @@ export function OpsLogEntry(data = {}) {
   self.actionReminder = ko.observable(data.ActionReminder ?? null);
 
   // --- quality-of-life computed values ---
-  const _tick = ko.observable(Date.now());
-  setInterval(() => _tick(Date.now()), 60000); // refresh “ago” labels every 60s
+  // Use shared 30s ticker if provided, otherwise use local 60s timer
+  const _tick = deps.relativeUpdateTick || (() => {
+    const localTick = ko.observable(Date.now());
+    setInterval(() => localTick(Date.now()), 60000);
+    return localTick;
+  })();
 
   self.timeLoggedFormatted = ko.pureComputed(() => {
     const v = self.timeLogged();
