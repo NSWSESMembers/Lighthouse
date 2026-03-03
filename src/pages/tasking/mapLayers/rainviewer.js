@@ -54,7 +54,7 @@ export function registerRainRadarLayer(vm, map) {
 
   /* ── frame display ─────────────────────────────────────────── */
   function showFrame(idx) {
-    if (idx < 0 || idx >= tileLayers.length) return;
+    if (!Number.isInteger(idx) || tileLayers.length === 0 || idx < 0 || idx >= tileLayers.length) return;
 
     // hide previous
     if (frameIdx >= 0 && frameIdx < tileLayers.length) {
@@ -69,16 +69,19 @@ export function registerRainRadarLayer(vm, map) {
     if (control) {
       const ts = control._container.querySelector(".rv-timestamp");
       const slider = control._container.querySelector(".rv-slider");
-      if (ts) ts.textContent = fmtTime(frames[frameIdx].time);
+      const frame = frames[frameIdx];
+      if (ts) ts.textContent = frame?.time ? fmtTime(frame.time) : "--:--";
       if (slider) slider.value = frameIdx;
     }
   }
 
   function stepForward() {
+    if (tileLayers.length === 0) return;
     showFrame((frameIdx + 1) % tileLayers.length);
   }
 
   function stepBack() {
+    if (tileLayers.length === 0) return;
     showFrame((frameIdx - 1 + tileLayers.length) % tileLayers.length);
   }
 
