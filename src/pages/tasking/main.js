@@ -321,6 +321,28 @@ function VM() {
     self.jobsLoading = ko.observable(true);
     self.tagsLoading = ko.observable(true);
 
+    // Incidents visibility toggle
+    self.incidentsVisible = ko.observable(localStorage.getItem('map.incidentsVisible') !== 'false');
+    self.incidentsVisible.subscribe(v => {
+        localStorage.setItem('map.incidentsVisible', v ? 'true' : 'false');
+        
+        // Remove both layers first
+        if (map.hasLayer(self.mapVM.jobClusterGroup)) {
+            map.removeLayer(self.mapVM.jobClusterGroup);
+        }
+        if (map.hasLayer(self.mapVM.unclusteredJobLayer)) {
+            map.removeLayer(self.mapVM.unclusteredJobLayer);
+        }
+        
+        // Add back the appropriate layer if visible
+        if (v) {
+            const targetLayer = self.mapVM.clusteringEnabled 
+                ? self.mapVM.jobClusterGroup 
+                : self.mapVM.unclusteredJobLayer;
+            targetLayer.addTo(map);
+        }
+    });
+
     self.pageIsLoading = ko.pureComputed(() => {
         return self.tokenLoading() || self.tagsLoading();
     });
@@ -2408,6 +2430,37 @@ function VM() {
                 // Layer list (always visible)
                 const body = document.createElement("div");
                 body.className = "ld-group-body";
+
+                // If this is the Visibility group, add Incidents toggle first
+                if (groupKey === 'Visibility') {
+                    const incidentsBtn = document.createElement("button");
+                    incidentsBtn.type = "button";
+                    const isIncidentsOn = self.incidentsVisible();
+                    incidentsBtn.className = "btn btn-sm w-100 text-start d-flex align-items-center justify-content-between mb-1 ld-overlay-btn " +
+                        (isIncidentsOn ? "btn-outline-secondary active" : "btn-outline-secondary");
+                    incidentsBtn.innerHTML = `
+                        <span class="me-2">Incidents</span>
+                        <span class="ms-auto">
+                            <i class="fas ${isIncidentsOn ? "fa-toggle-on" : "fa-toggle-off"}"></i>
+                        </span>`;
+
+                    incidentsBtn.addEventListener("click", () => {
+                        const icon = incidentsBtn.querySelector("i");
+                        const currentState = self.incidentsVisible();
+                        const newState = !currentState;
+                        self.incidentsVisible(newState);
+                        
+                        if (newState) {
+                            incidentsBtn.classList.add("active");
+                            if (icon) { icon.classList.remove("fa-toggle-off"); icon.classList.add("fa-toggle-on"); }
+                        } else {
+                            incidentsBtn.classList.remove("active");
+                            if (icon) { icon.classList.remove("fa-toggle-on"); icon.classList.add("fa-toggle-off"); }
+                        }
+                    });
+
+                    body.appendChild(incidentsBtn);
+                }
 
                 // Build layer toggle buttons
                 defs.forEach(({ key, label, layer, visibleByDefault }) => {

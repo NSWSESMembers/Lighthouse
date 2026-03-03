@@ -165,7 +165,7 @@ export function MapVM(Lmap, root) {
       ringPaths += '<polygon points="' + innerHexPts + '" fill="rgba(50,50,50,0.88)"/>';
 
       // Count text rendered in SVG directly so it always paints on top
-      var textColor = '#fff'//hasRescue ? '#dc3545' : '#fff';
+      var textColor = hasRescue ? '#dc3545' : '#fff';
       var fontSize = tier === 'lg' ? 15 : tier === 'md' ? 14 : 13;
       ringPaths += '<text x="' + cx + '" y="' + cy + '" text-anchor="middle" dominant-baseline="central"'
         + ' fill="' + textColor + '" font-size="' + fontSize + '" font-weight="700" font-family="system-ui,sans-serif">'
@@ -195,7 +195,10 @@ export function MapVM(Lmap, root) {
       });
     }
   });
-  self.jobClusterGroup.addTo(self.map);
+  // Only add to map if incidents are visible (checked in main.js VM initialization)
+  if (localStorage.getItem('map.incidentsVisible') !== 'false') {
+    self.jobClusterGroup.addTo(self.map);
+  }
 
   // ── Fix: prevent spider collapse when clicking a spiderfied marker ──
   // When a spiderfied child marker is clicked, Leaflet's event propagation
@@ -315,6 +318,8 @@ export function MapVM(Lmap, root) {
     if (enabled === self.clusteringEnabled) return;
     self.clusteringEnabled = enabled;
 
+    const incidentsVisible = localStorage.getItem('map.incidentsVisible') !== 'false';
+
     if (enabled) {
       // Move all markers from the plain layer back into the cluster group
       // (rescue markers go back to rescueJobLayer or clusterGroup per the
@@ -327,7 +332,7 @@ export function MapVM(Lmap, root) {
       self.rescueJobLayer.eachLayer(m => markers.push(m));
       self.rescueJobLayer.clearLayers();
       self.jobClusterGroup.addLayers(markers);
-      if (!self.map.hasLayer(self.jobClusterGroup)) {
+      if (incidentsVisible && !self.map.hasLayer(self.jobClusterGroup)) {
         self.jobClusterGroup.addTo(self.map);
       }
       // Now re-sort rescue markers per the rescue clustering setting
@@ -343,7 +348,9 @@ export function MapVM(Lmap, root) {
       self.rescueJobLayer.eachLayer(m => markers.push(m));
       self.rescueJobLayer.clearLayers();
       markers.forEach(m => self.unclusteredJobLayer.addLayer(m));
-      self.unclusteredJobLayer.addTo(self.map);
+      if (incidentsVisible) {
+        self.unclusteredJobLayer.addTo(self.map);
+      }
     }
 
     self._syncPulseRings();
@@ -482,9 +489,9 @@ export function MapVM(Lmap, root) {
     if (self.assetLayer) {
       defs.push({
         key: 'matched-assets',
-        label: 'Matched against Teams',
+        label: 'Assets Matched against Teams',
         layer: self.assetLayer,
-        group: 'Assets',
+        group: 'Visibility',
         visibleByDefault: true,
       });
     }
@@ -494,9 +501,9 @@ export function MapVM(Lmap, root) {
     if (self.unmatchedAssetLayer) {
       defs.push({
         key: 'unmatched-assets',
-        label: 'Unmatched against Teams',
+        label: 'Assets Unmatched against Teams',
         layer: self.unmatchedAssetLayer,
-        group: 'Assets',
+        group: 'Visibility',
         visibleByDefault: false,
       });
     }
