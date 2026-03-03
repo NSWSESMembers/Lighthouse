@@ -359,6 +359,12 @@ function VM() {
     self.trackableAssets = ko.observableArray([]);
     self.sectors = ko.observableArray([]);
 
+    // Shared 30s ticker used by assets for relative-time labels
+    self.relativeUpdateTick30s = ko.observable(0);
+    setInterval(() => {
+        self.relativeUpdateTick30s(self.relativeUpdateTick30s() + 1);
+    }, 1000 * 30);
+
     self.allTags = ko.observableArray([]);
 
     ///opslog short cuts
@@ -615,8 +621,8 @@ function VM() {
 
     self.filteredJobsAgainstConfig = ko.pureComputed(() => {
 
-        const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
-        const sectorFilter = self.config.sectorFilters().map(s => s.id);
+        const hqIds = new Set((self.config.incidentFilters() || []).map(f => String(f.id)));
+        const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
 
         // If sector filtering is active, only include jobs in those sectors
 
@@ -624,7 +630,13 @@ function VM() {
         const term = self.jobSearch().toLowerCase();
 
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
-        const incidentTypeAllowedById = self.config.allowedIncidentTypeIds(); // allow-list
+        const allowedStatusSet = new Set(allowedStatus || []);
+        const incidentTypeAllowedById = self.config.allowedIncidentTypeIds(); // allow-list (Set in ConfigVM)
+        const incidentTypeIterable =
+            incidentTypeAllowedById && typeof incidentTypeAllowedById[Symbol.iterator] === "function"
+                ? incidentTypeAllowedById
+                : [];
+        const incidentTypeSet = new Set(Array.from(incidentTypeIterable, id => String(id)));
 
         var start = new Date();
         var end = new Date();
@@ -641,10 +653,10 @@ function VM() {
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
-
-
-            const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
-            const sectorMatch = sectorFilter.length === 0 || (jb.sector() && sectorFilter.includes(jb.sector().id()));
+            const jobHqId = String(jb.entityAssignedTo.id());
+            const sectorId = String(jb.sector().id());
+            const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
+            const sectorMatch = sectorIds.size === 0 || sectorIds.has(sectorId);
             //must match sector filter
 
             //if no sector and config says to exclude, filter out
@@ -655,12 +667,12 @@ function VM() {
             if (jb.sector().id() && !sectorMatch) return false;
 
             // If allow-list non-empty, only show jobs whose status is in it
-            if (allowedStatus.length > 0 && !allowedStatus.includes(statusName)) {
+            if (allowedStatusSet.size > 0 && !allowedStatusSet.has(statusName)) {
                 return false;
             }
 
             // If incident type filter non-empty, only show jobs whose type is in it
-            if (incidentTypeAllowedById.length > 0 && !incidentTypeAllowedById.includes(jb.typeId())) {
+            if (incidentTypeSet.size > 0 && !incidentTypeSet.has(String(jb.typeId()))) {
                 return false;
             }
 
@@ -680,17 +692,18 @@ function VM() {
                 jb.id().toString().toLowerCase().includes(term) ||
                 jb.address.prettyAddress().toLowerCase().includes(term));
         });
-    }).extend({ trackArrayChanges: true, rateLimit: 50 });
+    }).extend({ rateLimit: { timeout: 50, method: 'notifyWhenChangesStop' } });
 
     self.filteredJobs = ko.pureComputed(() => {
 
         const pinnedOnlyIncidents = self.showPinnedIncidentsOnly();
         const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
+        const pinnedIncidentSet = new Set((pinnedIncidentIds || []).map(id => String(id)));
 
         return ko.utils.arrayFilter(this.filteredJobsAgainstConfig(), jb => {
 
             // pinned-only filter
-            if (pinnedOnlyIncidents && !pinnedIncidentIds.includes(String(jb.id()))) {
+            if (pinnedOnlyIncidents && !pinnedIncidentSet.has(String(jb.id()))) {
                 return false;
             }
             return true;
@@ -706,6 +719,8 @@ function VM() {
     self.filteredTeamsAgainstConfig = ko.pureComputed(() => {
 
         const allowed = self.config.teamStatusFilter(); // allow-list
+        const allowedSet = new Set(allowed || []);
+        const hqFilterIds = new Set((self.config.teamFilters() || []).map(f => String(f.id)));
 
         var start = new Date();
         var end = new Date();
@@ -721,15 +736,14 @@ function VM() {
 
         return ko.utils.arrayFilter(self.teams(), tm => {
             const status = tm.teamStatusType()?.Name;
-
-
-            const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
+            const teamHqId = String(tm.assignedTo().id());
+            const hqMatch = hqFilterIds.size === 0 || hqFilterIds.has(teamHqId);
             if (status == null) {
                 return false;
             }
 
             // If allow-list non-empty, only show teams whose status is in it
-            if (allowed.length > 0 && !allowed.includes(status)) {
+            if (allowedSet.size > 0 && !allowedSet.has(status)) {
                 return false;
             }
 
@@ -750,11 +764,12 @@ function VM() {
     self.filteredTeams = ko.pureComputed(() => {
         const pinnedOnlyTeams = self.showPinnedTeamsOnly();
         const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
+        const pinnedTeamSet = new Set((pinnedTeamIds || []).map(id => String(id)));
 
         return ko.utils.arrayFilter(self.filteredTeamsAgainstConfig(), tm => {
 
             // pinned-only filter
-            if (pinnedOnlyTeams && !pinnedTeamIds.includes(String(tm.id()))) {
+            if (pinnedOnlyTeams && !pinnedTeamSet.has(String(tm.id()))) {
                 return false;
             }
 
@@ -1268,7 +1283,7 @@ function VM() {
             asset.updateFromJson(assetJson);
             return asset;
         } else { //new asset - create, store, attach to teams
-            asset = new Asset(assetJson);
+            asset = new Asset(assetJson, { relativeUpdateTick: self.relativeUpdateTick30s });
             self.trackableAssets.push(asset);
             self.assetsById.set(asset.id(), asset);
         }
@@ -1742,6 +1757,74 @@ function VM() {
     self.filteredTeamsAgainstConfig.subscribe(() => { self.spotlightSearchVM.rebuildIndex?.() }, null, "arrayChange");
     self.filteredJobsAgainstConfig.subscribe(() => { self.spotlightSearchVM.rebuildIndex?.() }, null, "arrayChange");
 
+    // --- Marker batching (reduces layout/reflow thrash on burst updates) ---
+    const getItemId = (item) => {
+        if (!item) return null;
+        if (typeof item.id === "function") return item.id();
+        return item.id ?? null;
+    };
+
+    function createMarkerBatcher({ addFn, removeFn }) {
+        const pendingAdds = new Map();
+        const pendingRemoves = new Map();
+        let rafHandle = null;
+
+        const flush = () => {
+            rafHandle = null;
+
+            pendingRemoves.forEach((item) => removeFn(item));
+            pendingAdds.forEach((item) => addFn(item));
+
+            pendingRemoves.clear();
+            pendingAdds.clear();
+        };
+
+        const ensureFlush = () => {
+            if (rafHandle == null) {
+                rafHandle = requestAnimationFrame(flush);
+            }
+        };
+
+        const scheduleAdd = (item) => {
+            const id = getItemId(item);
+            if (id == null) {
+                addFn(item);
+                return;
+            }
+            pendingRemoves.delete(id);
+            pendingAdds.set(id, item);
+            ensureFlush();
+        };
+
+        const scheduleRemove = (item) => {
+            const id = getItemId(item);
+            if (id == null) {
+                removeFn(item);
+                return;
+            }
+            pendingAdds.delete(id);
+            pendingRemoves.set(id, item);
+            ensureFlush();
+        };
+
+        return { scheduleAdd, scheduleRemove };
+    }
+
+    const jobMarkerBatcher = createMarkerBatcher({
+        addFn: (job) => addOrUpdateJobMarker(ko, map, self, job),
+        removeFn: (job) => removeJobMarker(self, job),
+    });
+
+    const matchedAssetMarkerBatcher = createMarkerBatcher({
+        addFn: (asset) => attachAssetMarker(ko, map, self, asset),
+        removeFn: (asset) => detachAssetMarker(ko, map, self, asset),
+    });
+
+    const unmatchedAssetMarkerBatcher = createMarkerBatcher({
+        addFn: (asset) => attachUnmatchedAssetMarker(ko, map, self, asset),
+        removeFn: (asset) => detachUnmatchedAssetMarker(ko, map, self, asset),
+    });
+
     //fetch tasking if a team is added
     self.filteredTeams.subscribe((changes) => {
         changes.forEach(ch => {
@@ -1767,14 +1850,14 @@ function VM() {
         }
         changes.forEach(ch => {
             if (ch.status === 'added') {
-                addOrUpdateJobMarker(ko, map, self, ch.value);
+                jobMarkerBatcher.scheduleAdd(ch.value);
                 ch.value.isFilteredIn(true);
                 ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
                 if (ch.value.expanded() || ch.value.popUpIsOpen()) {
                     showAlert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.", "warning", 4000);
                 }
-                removeJobMarker(self, ch.value);
+                jobMarkerBatcher.scheduleRemove(ch.value);
 
                 ch.value.isFilteredIn(false);
             }
@@ -1791,11 +1874,11 @@ function VM() {
         changes.forEach(ch => {
             const a = ch.value;
             if (ch.status === 'added') {
-                attachAssetMarker(ko, map, self, a);
+                matchedAssetMarkerBatcher.scheduleAdd(a);
             } else if (ch.status === 'deleted') {
                 //console.log("Detaching marker for asset no longer filtered in:", a.id());
                 // keep the asset in registry, but remove map marker + subs
-                detachAssetMarker(ko, map, self, a);
+                matchedAssetMarkerBatcher.scheduleRemove(a);
             }
         });
     }, null, "arrayChange");
@@ -1808,9 +1891,9 @@ function VM() {
         changes.forEach(ch => {
             const a = ch.value;
             if (ch.status === 'added') {
-                attachUnmatchedAssetMarker(ko, map, self, a);
+                unmatchedAssetMarkerBatcher.scheduleAdd(a);
             } else if (ch.status === 'deleted') {
-                detachUnmatchedAssetMarker(ko, map, self, a);
+                unmatchedAssetMarkerBatcher.scheduleRemove(a);
             }
         });
     }, null, "arrayChange");
@@ -1820,7 +1903,7 @@ function VM() {
         if (ev.layer !== self.mapVM.assetLayer) return;
         const assets = self.filteredTrackableAssets?.() || [];
         assets.forEach(a => {
-            attachAssetMarker(ko, map, self, a);
+            matchedAssetMarkerBatcher.scheduleAdd(a);
         });
     });
 
@@ -1828,7 +1911,7 @@ function VM() {
         if (ev.layer !== self.mapVM.assetLayer) return;
         const assets = self.filteredTrackableAssets?.() || [];
         assets.forEach(a => {
-            detachAssetMarker(ko, map, self, a);
+            matchedAssetMarkerBatcher.scheduleRemove(a);
         });
     });
 
@@ -1837,7 +1920,7 @@ function VM() {
         if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
         const assets = self.unmatchedTrackableAssets?.() || [];
         assets.forEach(a => {
-            attachUnmatchedAssetMarker(ko, map, self, a);
+            unmatchedAssetMarkerBatcher.scheduleAdd(a);
         });
     });
 
@@ -1845,7 +1928,7 @@ function VM() {
         if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
         const assets = self.unmatchedTrackableAssets?.() || [];
         assets.forEach(a => {
-            detachUnmatchedAssetMarker(ko, map, self, a);
+            unmatchedAssetMarkerBatcher.scheduleRemove(a);
         });
     });
 
