@@ -34,3 +34,26 @@ recipients.forEach((recipient, index) => {
     },
   });
 }
+
+export function getMessageById(id, host, userId = 'notPassed', token, callback, errorCallback) {
+  $.ajax({
+    type: 'GET',
+    url: host + '/Api/v1/Messages/' + id + '?LighthouseFunction=GetMessageById&userId=' + userId,
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        if (typeof callback === 'function') {
+          callback(response.responseJSON);
+        }
+      } else {
+        if (typeof errorCallback === 'function') {
+          errorCallback(response);
+        }
+      }
+    }
+  });
+}

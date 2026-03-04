@@ -926,9 +926,14 @@ function VM() {
                 self.untaskTeam(tasking, payload, cb)
             },
 
-            fetchUnacknowledgedJobNotifications: (job) => {
-                self.fetchUnacknowledgedJobNotifications(job);
+            fetchUnacknowledgedJobNotifications: (job) => self.fetchUnacknowledgedJobNotifications(job),
+            acknowledgeUnacceptedNotification: async (notificationId) => {
+                const tk = await getToken();
+                return BeaconClient.notifications.acknowledge(notificationId, apiHost, params.userId, tk);
             },
+            relativeUpdateTick: self.relativeUpdateTick30s,
+            notifySuccess: (message) => showAlert(message, 'success', 3000),
+            notifyError: (message) => showAlert(message, 'danger', 5000),
             drawJobTargetRing: (job) => {
                 self.drawJobTargetRing(job);
             },
@@ -1784,11 +1789,8 @@ function VM() {
 
     self.fetchUnacknowledgedJobNotifications = async function (job) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.notifications.unaccepted(job.id(), apiHost, params.userId, t, function (data) {
-            job.unacceptedNotifications(data);
-        }, function (err) {
-            console.error("Failed to fetch unacknowledged job notifications:", err);
-            showAlert('Failed to fetch unacknowledged job notifications. Your session may have expired', 'danger', 5000);
+        return new Promise((resolve, reject) => {
+            BeaconClient.notifications.unaccepted(job.id(), apiHost, params.userId, t, resolve, reject);
         });
     }
 

@@ -252,7 +252,11 @@ function buildDefaultRules(vm) {
       count: unackedNotifications.length,
       onClick: (id) => {
         const found = jobs.find(j => jobKey(j) === id);
-        found?.focusAndExpandInList();
+        if (found) {
+          found.focusAndExpandInList();
+          // Also open the timeline modal to show the notifications
+          found.attachAndFillTimelineModal?.();
+        }
       }
     },
     {
