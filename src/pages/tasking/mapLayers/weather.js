@@ -142,7 +142,8 @@ export function registerBOMThunderstormTrackingLayer(vm, sourceUrl) {
         bgcolor: "0xFFFFFF",
         version: "1.3.0",
         crs: L.CRS.EPSG4326,
-        attribution: "Bureau of Meteorology"
+        attribution: "Bureau of Meteorology",
+        opacity: 0.7
       });
       layerGroup.addLayer(wmsLayer);
     },
