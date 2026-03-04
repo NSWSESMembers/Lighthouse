@@ -5,6 +5,7 @@ import { Entity } from "./Entity.js";
 import { Address } from "./Address.js";
 import { Tag } from "./Tag.js";
 import { Sector } from "./Sector.js";
+import { UnacceptedNotification } from "./UnacceptedNotification.js";
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 import { jobsToUI } from "../utils/jobTypesToUI.js";
 
@@ -23,6 +24,10 @@ export function Job(data = {}, deps = {}) {
         flyToJob = (_job) => {/* noop */ },
         attachAndFillTimelineModal = (_job) => { /* noop */ },
         fetchUnacknowledgedJobNotifications = async (_job) => ([]),
+        acknowledgeUnacceptedNotification = async (_notificationId) => ({}),
+        relativeUpdateTick = null,
+        notifySuccess = (_message) => undefined,
+        notifyError = (_message) => undefined,
         drawJobTargetRing = (_job) => { /* noop */ },
         fetchUnresolvedActionsLog = async (_job) => { /* noop */ },
         fetchSuppliersForJob = async (_jobId) => ([]),
@@ -94,6 +99,11 @@ export function Job(data = {}, deps = {}) {
     self.opsLogEntries = ko.observableArray([]);
 
     self.unacceptedNotifications = ko.observableArray([]);
+
+    self.hasUnacceptedNotifications = ko.pureComputed(() => {
+        console.log("Checking for unaccepted notifications, count:", Array.isArray(self.unacceptedNotifications()) && self.unacceptedNotifications().length > 0);
+        return Array.isArray(self.unacceptedNotifications()) && self.unacceptedNotifications().length > 0;
+    });
 
     self.instantTask = new InstantTaskViewModel({ job: self, map: map, filteredTeams: filteredTeams });
 
@@ -289,13 +299,41 @@ export function Job(data = {}, deps = {}) {
         self.instantTask.popupActive(isOpen || self.expanded());
     });
 
+    self.refreshUnacceptedNotifications = async function () {
+        if (!self.icemsIncidentIdentifier()) return;
+
+        try {
+            const data = await fetchUnacknowledgedJobNotifications(self);
+
+            const notificationDeps = {
+                acknowledgeNotification: async (notificationId) => {
+                    return await acknowledgeUnacceptedNotification(notificationId);
+                },
+                relativeUpdateTick,
+                onAcknowledged: (notificationVm) => {
+                    self.unacceptedNotifications.remove((n) => String(n?.id?.()) === String(notificationVm?.id?.()));
+                    notifySuccess('Notification acknowledged.');
+                },
+                onAcknowledgeError: () => {
+                    notifyError('Failed to acknowledge notification.');
+                }
+            };
+
+            const models = (data || []).map(n => new UnacceptedNotification(n, notificationDeps));
+            self.unacceptedNotifications(models);
+        } catch (err) {
+            console.error("Failed to fetch unacknowledged notifications:", err);
+            notifyError('Failed to fetch unacknowledged notifications.');
+        }
+    };
+
 
     // ---- UNACCEPTED NOTIFICATIONS POLLING ----
     const unacceptedNotificationsInterval = makeFilteredInterval(() => {
         // extra guard: only if ICEMS id exists
         if (!self.icemsIncidentIdentifier()) return;
         console.log("Polling unaccepted notifications for job", self.id());
-        fetchUnacknowledgedJobNotifications(self);
+        self.refreshUnacceptedNotifications();
     }, 30000, { runImmediately: true });
 
     self.startUnacceptedNotificationsPolling = function () {
@@ -362,14 +400,14 @@ export function Job(data = {}, deps = {}) {
     }
 
 
-    self.incompleteTaskingsOnly = ko.computed(() =>
+    self.incompleteTaskingsOnly = ko.pureComputed(() =>
         self.taskings().filter(t => {
             const status = t.currentStatus();
             return status !== "Complete" && status !== "CalledOff";
         })
     );
 
-    self.sortedTaskings = ko.computed(() =>
+    self.sortedTaskings = ko.pureComputed(() =>
         self.taskings().slice().sort((a, b) =>
             new Date(a.currentStatusTime) - new Date(b.currentStatusTime)
         )

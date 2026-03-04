@@ -6,7 +6,7 @@ export function buildJobPopupKO() {
          class="fw-bold text-center"
          style="color:white;background: black">
          <span class="no-drag" data-bind="text: identifier"></span>
-         <em class="fa fa-fw fa-share-alt" data-bind="visible: icemsIncidentIdentifier, attr:{ title: icemsIncidentIdentifier }"></em>
+         <em class="fa fa-fw fa-share-alt" data-bind="visible: icemsIncidentIdentifier, attr:{ title: icemsIncidentIdentifier }, css: { 'text-danger': hasUnacceptedNotifications() }"></em>
          </div>
     <div id="jobType"
          class="fw-bold text-center"
@@ -20,6 +20,17 @@ export function buildJobPopupKO() {
          data-bind="style: { backgroundColor: bannerBGColour}">
       <span id="priAndCat" data-bind="text: priorityName +' '+categoriesName"></span>
     </div>
+    <!-- Unacknowledged Notifications Warning -->
+    <!-- ko if: hasUnacceptedNotifications() -->
+            <div class="alert alert-danger d-flex align-items-center justify-content-center py-1 px-2 mb-1 mt-1 text-center"
+              data-bind="click: $root.displayTimelineForJob, clickBubble: false"
+              role="button"
+              title="Open timeline"
+              style="cursor: pointer; font-size: 0.875rem;">
+      <i class="fa fa-bell me-2"></i>
+      <span class="fw-semibold">Unacknowledged ICEMS notifications</span>
+    </div>
+    <!-- /ko -->
     <!-- New line to show tag.Name if actionRequiredTags has length -->
     <div id="actionRequiredTags" class="text-center d-flex flex-wrap mt-1" data-bind="visible: actionRequiredTags().length > 0, foreach: actionRequiredTagsDeduplicated">
         <span data-bind="class: returnTagClass" style="cursor: default; width: 100%;">

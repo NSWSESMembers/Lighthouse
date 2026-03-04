@@ -1010,7 +1010,7 @@
                                                     <span class="visually-hidden">Images</span>
                                                 </button>
                                                 <em class="fa fa-fw fa-share-alt" style="width: 1em;"
-                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
+                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }, css: { 'text-danger': j.hasUnacceptedNotifications() }"></em>
                                             </div>
 
                                             <!-- 3. Received -->
@@ -1096,6 +1096,18 @@
                                                 <div class="card-body job-details-form">
                                                     <div class="row g-3">
                                                         <div class="col-md-8">
+                                                            <!-- Unacknowledged Notifications Warning -->
+                                                            <!-- ko if: j.hasUnacceptedNotifications() -->
+                                                            <div class="alert alert-danger d-flex align-items-center justify-content-center text-center py-2 mb-2"
+                                                                data-bind="click: $root.attachJobTimelineModal, clickBubble: false"
+                                                                role="button"
+                                                                title="Open timeline"
+                                                                style="cursor: pointer;">
+                                                                <i class="fa fa-bell me-2"></i>
+                                                                <span class="fw-semibold">This incident has unacknowledged ICEMS notifications</span>
+                                                            </div>
+                                                            <!-- /ko -->
+
                                                             <!-- New line to show tag.Name if actionRequiredTags has length -->
                                                             <div id="actionRequiredTags"
                                                                 class="text-center d-flex flex-wrap justify-content-center mt-1"
@@ -2742,6 +2754,40 @@
 
                     <hr />
                     <!-- /ko -->
+
+                    <!-- Unaccepted Notifications Section -->
+                    <!-- ko with: job -->
+                    <!-- ko if: unacceptedNotifications && unacceptedNotifications().length > 0 -->
+                    <div class="mb-3">
+                        <h6 class="text-danger fw-bold mb-2">
+                            <i class="fa fa-bell me-2"></i>Unacknowledged ICEMS Notifications
+                        </h6>
+                        <div data-bind="foreach: unacceptedNotifications">
+                            <div class="alert alert-warning d-flex align-items-start gap-2 mb-2 py-2 px-3">
+                                <div class="flex-grow-1">
+                                    <div class="small fw-semibold" data-bind="text: notificationType"></div>
+                                    <div class="small mb-1" data-bind="text: text"></div>
+                                    <div class="small text-muted">
+                                        <span data-bind="text: createdOnFormatted"></span>
+                                        <span class="mx-1">•</span>
+                                        <span data-bind="text: createdOnAgo"></span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-warning"
+                                    data-bind="click: acknowledge, disable: isAcknowledging, visible: !acknowledged()">
+                                    <span data-bind="visible: !isAcknowledging()">Acknowledge</span>
+                                    <span data-bind="visible: isAcknowledging()">
+                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                        <span>Acknowledging...</span>
+                                    </span>
+                                </button>
+                                <span class="badge bg-success" data-bind="visible: acknowledged()">Acknowledged</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                    <!-- /ko -->
+
                     <!-- Loading indicator -->
                     <div data-bind="visible: loading" class="text-center my-3">
                         <div class="spinner-border" role="status"></div>
