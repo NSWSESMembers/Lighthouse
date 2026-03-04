@@ -8,6 +8,8 @@ export function UnacceptedNotification(data = {}, deps = {}) {
 
   const { 
     acknowledgeNotification = async () => { /* shut up linter its not empty */ },
+    fetchMessageById = async () => { /* shut up linter its not empty */ },
+    acknowledgeIumMessage = async () => { /* shut up linter its not empty */ },
     relativeUpdateTick = null,
     onAcknowledged = () => { /* shut up linter its not empty */},
     onAcknowledgeError = () => { /* shut up linter its not empty */ }
@@ -56,13 +58,28 @@ export function UnacceptedNotification(data = {}, deps = {}) {
   // --- actions ---
   self.isAcknowledging = ko.observable(false);
 
+  self.isIumMessage = () => {
+    const typeId = self.notificationTypeId();
+    const hasRefId = self.externalRefId();
+    return hasRefId && (typeId === 13 || typeId === 14); // 13=IUMReceived, 14=UrgentIUMReceived
+  };
+
   self.acknowledge = async function () {
     if (self.isAcknowledging()) return;
     self.isAcknowledging(true);
     try {
+      // Always acknowledge the notification first
       await acknowledgeNotification(self.id());
+      
+      // If it's an IUM message, also acknowledge via IUM endpoint
+      if (self.isIumMessage()) {
+        const messageData = await fetchMessageById(self.externalRefId());
+        await acknowledgeIumMessage(self.id(), messageData);
+      }
+      
       self.acknowledged(new Date());
       onAcknowledged(self);
+
     } catch (e) {
       console.error("Failed to acknowledge notification:", e);
       onAcknowledgeError(e, self);
