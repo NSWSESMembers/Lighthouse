@@ -352,17 +352,14 @@ export function Job(data = {}, deps = {}) {
         unacceptedNotificationsInterval.stop();
     };
 
-    // Restart / stop polling when identifiers or filters change
-    self.icemsIncidentIdentifier.subscribe((id) => {
-        if (id && self.isFilteredIn()) {
-            self.startUnacceptedNotificationsPolling();
-        } else {
-            self.stopUnacceptedNotificationsPolling();
-        }
+    // Computed that combines both conditions to avoid duplicate polling subscriptions
+    self.shouldPollUnacceptedNotifications = ko.pureComputed(() => {
+        return self.icemsIncidentIdentifier() && self.isFilteredIn();
     });
 
-    self.isFilteredIn.subscribe((flag) => {
-        if (flag && self.icemsIncidentIdentifier()) {
+    // Single subscription to the combined condition prevents duplicate start calls
+    self.shouldPollUnacceptedNotifications.subscribe((shouldPoll) => {
+        if (shouldPoll) {
             self.startUnacceptedNotificationsPolling();
         } else {
             self.stopUnacceptedNotificationsPolling();
