@@ -73,6 +73,7 @@ export function ConfigVM(root, deps) {
     self.fetchPeriod = ko.observable(7).extend({ min: 0, max: 31, digit: true });
     self.fetchForward = ko.observable(0).extend({ min: 0, max: 31, digit: true });
     self.showAdvanced = ko.observable(false);
+    self.darkMode = ko.observable(false);
 
     //blown away on load
     self.teamStatusFilter = ko.observableArray([]);
@@ -94,6 +95,14 @@ export function ConfigVM(root, deps) {
     self.pinnedTeamIds = ko.observableArray([]);
     self.pinnedIncidentIds = ko.observableArray([]);
 
+    // Dark mode helper (defined early so it can be called in afterConfigLoad)
+    self._applyDarkMode = () => {
+        if (self.darkMode()) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    };
 
 
     self.openLoadBox = function () {
@@ -150,6 +159,7 @@ export function ConfigVM(root, deps) {
         fetchPeriod: Number(self.fetchPeriod()),
         fetchForward: Number(self.fetchForward()),
         showAdvanced: !!self.showAdvanced(),
+        darkMode: !!self.darkMode(),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
             incidents: ko.toJS(self.incidentFilters)
@@ -409,6 +419,9 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.showAdvanced === 'boolean') {
             self.showAdvanced(cfg.showAdvanced);
         }
+        if (typeof cfg.darkMode === 'boolean') {
+            self.darkMode(cfg.darkMode);
+        }
         if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
             self.includeIncidentsWithoutSector(cfg.includeIncidentsWithoutSector);
         }
@@ -556,6 +569,12 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
         root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
         root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
+        // Apply dark mode
+        self._applyDarkMode();
+        // Apply dark mode basemap if enabled
+        if (self.darkMode() && root.mapVM?.changeBasemap) {
+            root.mapVM.changeBasemap("DarkGray");
+        }
     }
 
 
@@ -589,6 +608,18 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyRescueClusterSetting?.(!!v);
         self.save();
     })
+
+    self.darkMode.subscribe((isDark) => {
+        self._applyDarkMode();
+        
+        // Switch basemap when dark mode changes
+        if (root.mapVM?.changeBasemap) {
+            const targetBasemap = isDark ? "DarkGray" : "Topographic";
+            root.mapVM.changeBasemap(targetBasemap);
+        }
+        
+        self.save();
+    });
 
     /** Wipe all Lighthouse localStorage keys and reload the page. */
     self.restoreDefaults = () => {

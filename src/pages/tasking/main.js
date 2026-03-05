@@ -119,6 +119,7 @@ import 'leaflet.polylinemeasure';
 
 //css order reasons... load this last
 import '../../../styles/pages/tasking.css';
+import '../../../styles/pages/darkmode.css';
 
 
 let token = '';
@@ -2873,6 +2874,7 @@ function VM() {
 
     const layersDrawer = new LayersDrawer();
     layersDrawer.addTo(map);
+    self.mapVM.layersDrawer = layersDrawer;
 
     setTimeout(() => {
         // force ordering: zoom → hide → layers → measure → geosearch
