@@ -11,6 +11,37 @@ const RAINVIEWER_API = "https://api.rainviewer.com/public/weather-maps.json";
 const FRAME_INTERVAL_MS = 500;   // default playback speed
 const DATA_REFRESH_MS   = 300000; // re-fetch frame list every 5 min
 
+// Universal Blue color scale (dBZ values to hex colors) - from RainViewer API
+// Key thresholds from meteorological standards:
+// <10 dBZ: Overcast/No Precipitation, 10: Drizzle, 20: Light Rain, 30: Moderate Rain,
+// 40: Shower, 50: Small hail possible, 55: Hail possible, 60+: Hail likely
+const COLOR_SCALE = [
+  { dBZ: -10, color: "#63615914", label: "Overcast" },
+  { dBZ: -5, color: "#6c685d24", label: "Overcast" },
+  { dBZ: 0, color: "#827b6949", label: "Overcast" },
+  { dBZ: 5, color: "#92887164", label: "Overcast" },
+  { dBZ: 10, color: "#d2c48ba0", label: "Drizzle" },
+  { dBZ: 13, color: "#d8ddeeff", label: "Drizzle" },
+  { dBZ: 16, color: "#51c5e8ff", label: "Light Rain" },
+  { dBZ: 19, color: "#00a3e0ff", label: "Light Rain" },
+  { dBZ: 20, color: "#00a3e0ff", label: "Light Rain" },
+  { dBZ: 25, color: "#0088bfff", label: "Moderate Rain" },
+  { dBZ: 30, color: "#005588ff", label: "Moderate Rain" },
+  { dBZ: 35, color: "#ffee00ff", label: "Shower" },
+  { dBZ: 40, color: "#ffaa00ff", label: "Shower" },
+  { dBZ: 45, color: "#ff6600ff", label: "Shower" },
+  { dBZ: 50, color: "#c10000ff", label: "Small Hail Possible" },
+  { dBZ: 52, color: "#d6000dff", label: "Small Hail Possible" },
+  { dBZ: 54, color: "#d70013ff", label: "Hail Possible" },
+  { dBZ: 55, color: "#ff4fffff", label: "Hail Possible" },
+  { dBZ: 57, color: "#ff5fffff", label: "Hail Possible" },
+  { dBZ: 59, color: "#ff6fffff", label: "Hail Likely" },
+  { dBZ: 60, color: "#ff62ffff", label: "Hail Likely" },
+  { dBZ: 63, color: "#ff58ffff", label: "Hail Likely" },
+  { dBZ: 66, color: "#f5e7fbff", label: "Hail Likely" },
+  { dBZ: 70, color: "#ffffffff", label: "Hail Likely" },
+];
+
 /**
  * Register an animated rainfall radar overlay powered by the RainViewer API.
  * Loops through the past ~2 hours of composite radar frames with on-map
@@ -61,8 +92,18 @@ export function registerRainRadarLayer(vm, map) {
       tileLayers[frameIdx].setOpacity(0);
     }
     frameIdx = idx;
+    
+    // Get current opacity from control, default to 0.6
+    let opacity = 0.6;
+    if (control && control._container) {
+      const opacitySlider = control._container.querySelector(".rv-opacity");
+      if (opacitySlider) {
+        opacity = parseInt(opacitySlider.value, 10) / 100;
+      }
+    }
+    
     if (tileLayers[frameIdx]) {
-      tileLayers[frameIdx].setOpacity(0.6);
+      tileLayers[frameIdx].setOpacity(opacity);
     }
 
     // update control UI
@@ -150,29 +191,99 @@ export function registerRainRadarLayer(vm, map) {
     }
   }
 
-  /* ── Radar playback bar (bottom-center of map) ─────────────── */
+  /* ── Radar playback bar (bottom-center of map) with legend ──────── */
   class RadarControl {
-    constructor() { this._container = null; this._map = null; }
+    constructor() { this._container = null; this._map = null; this._legendContainer = null; }
 
     addTo(m) {
       this._map = m;
+      const wrapper = document.createElement("div");
+      wrapper.className = "rv-wrapper";
+
+      // Legend above the controls
+      const legendDiv = document.createElement("div");
+      legendDiv.className = "rv-legend-container";
+      legendDiv.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border-radius: 4px 4px 0 0; border-bottom: 1px solid #eee; box-shadow: 0 -1px 3px rgba(0,0,0,.15);">
+          <span style="font-size: 10px; font-weight: 600; color: #666;">Rainfall Intensity (dBZ)</span>
+          <div class="rv-legend-bar" style="display: flex; height: 16px; border: 1px solid rgba(0,0,0,0.2); border-radius: 2px; overflow: visible; width: 100%; max-width: 320px; position: relative;"></div>
+        </div>`;
+      
+      const legendBar = legendDiv.querySelector(".rv-legend-bar");
+      COLOR_SCALE.forEach((item) => {
+        const swatch = document.createElement("div");
+        swatch.style.flex = "1";
+        swatch.style.backgroundColor = item.color;
+        swatch.style.cursor = "help";
+        swatch.style.pointerEvents = "auto";
+        swatch.style.position = "relative";
+        
+        // Fast custom tooltip
+        const tooltip = document.createElement("div");
+        tooltip.style.position = "absolute";
+        tooltip.style.bottom = "100%";
+        tooltip.style.left = "50%";
+        tooltip.style.transform = "translateX(-50%)";
+        tooltip.style.marginBottom = "6px";
+        tooltip.style.padding = "6px 8px";
+        tooltip.style.backgroundColor = "#333";
+        tooltip.style.color = "#fff";
+        tooltip.style.fontSize = "11px";
+        tooltip.style.fontWeight = "500";
+        tooltip.style.whiteSpace = "nowrap";
+        tooltip.style.borderRadius = "3px";
+        tooltip.style.pointerEvents = "none";
+        tooltip.style.zIndex = "1001";
+        tooltip.style.opacity = "0";
+        tooltip.style.transition = "opacity 0.1s ease";
+        tooltip.textContent = `${item.dBZ} dBZ: ${item.label}`;
+        swatch.appendChild(tooltip);
+        
+        swatch.addEventListener("mouseenter", () => {
+          tooltip.style.opacity = "1";
+        });
+        swatch.addEventListener("mouseleave", () => {
+          tooltip.style.opacity = "0";
+        });
+        
+        legendBar.appendChild(swatch);
+      });
+      
+      this._legendContainer = legendDiv;
+      wrapper.appendChild(legendDiv);
+
+      // Control bar below legend
       const c = document.createElement("div");
       c.className = "rv-control";
       L.DomEvent.disableClickPropagation(c);
       L.DomEvent.disableScrollPropagation(c);
 
       c.innerHTML = `
-        <button class="rv-step-back" title="Previous frame">⏮</button>
-        <button class="rv-play" title="Play / Pause">▶</button>
-        <button class="rv-step-fwd" title="Next frame">⏭</button>
-        <input class="rv-slider" type="range" min="0" max="0" value="0" title="Scrub through frames" />
-        <span class="rv-timestamp">--:--</span>
-        <select class="rv-speed" title="Playback speed">
-          <option value="1000">0.5×</option>
-          <option value="500" selected>1×</option>
-          <option value="250">2×</option>
-          <option value="125">4×</option>
-        </select>`;
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; gap: 2px; align-items: center;">
+            <button class="rv-step-back" title="Previous frame">⏮</button>
+            <button class="rv-play" title="Play / Pause">▶</button>
+            <button class="rv-step-fwd" title="Next frame">⏭</button>
+          </div>
+          
+          <input class="rv-slider" type="range" min="0" max="0" value="0" title="Scrub through frames" style="width: 140px;" />
+          <span class="rv-timestamp" style="font-size: 12px; min-width: 45px; font-weight: 500;">--:--</span>
+          
+          <select class="rv-speed" title="Playback speed" style="min-width: 58px;">
+            <option value="1000">0.5×</option>
+            <option value="500" selected>1×</option>
+            <option value="250">2×</option>
+            <option value="125">4×</option>
+          </select>
+          
+          <div style="border-left: 1px solid #ddd; height: 20px;"></div>
+          
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-size: 11px; font-weight: 500; margin: 0; white-space: nowrap;">Opacity:</label>
+            <input class="rv-opacity" type="range" min="0" max="100" value="60" title="Radar layer opacity" style="width: 70px;" />
+            <span class="rv-opacity-val" style="font-size: 11px; min-width: 25px;">60%</span>
+          </div>
+        </div>`;
 
       c.querySelector(".rv-play").addEventListener("click", togglePlay);
       c.querySelector(".rv-step-back").addEventListener("click", () => { pause(); stepBack(); });
@@ -186,16 +297,28 @@ export function registerRainRadarLayer(vm, map) {
         if (playing) { pause(); play(); }
       });
 
-      m.getContainer().appendChild(c);
+      // Opacity control
+      c.querySelector(".rv-opacity").addEventListener("input", (e) => {
+        const opacityVal = parseInt(e.target.value, 10) / 100;
+        c.querySelector(".rv-opacity-val").textContent = e.target.value + "%";
+        if (frameIdx >= 0 && frameIdx < tileLayers.length && tileLayers[frameIdx]) {
+          tileLayers[frameIdx].setOpacity(opacityVal);
+        }
+      });
+
+      wrapper.appendChild(c);
+      m.getContainer().appendChild(wrapper);
       this._container = c;
       return this;
     }
 
     remove() {
-      if (this._container && this._container.parentNode) {
-        this._container.parentNode.removeChild(this._container);
+      const wrapper = this._container?.parentNode;
+      if (wrapper && wrapper.parentNode) {
+        wrapper.parentNode.removeChild(wrapper);
       }
       this._container = null;
+      this._legendContainer = null;
       this._map = null;
     }
   }
