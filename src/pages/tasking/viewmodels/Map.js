@@ -24,6 +24,9 @@ export function MapVM(Lmap, root) {
   // markercluster collapsing a spider during the animation).
   self._flyingToBounds = false;
 
+  // Layers drawer control (for basemap switching)
+  self.layersDrawer = null;
+
   // layers
   self.assetLayer = L.layerGroup();             // not added by default – layers drawer handles visibility
   self.unmatchedAssetLayer = L.layerGroup();   // not added by default
@@ -374,6 +377,46 @@ export function MapVM(Lmap, root) {
       panePlus.style.zIndex = String(z + 1);
 
     });
+  };
+
+  self.changeBasemap = function (basemapKey) {
+    if (!self.layersDrawer || !self.layersDrawer._setBasemap) return;
+    self.layersDrawer._setBasemap(basemapKey, self.map);
+    self.layersDrawer._baseKey = basemapKey;
+    localStorage.setItem("map.base", basemapKey);
+
+    // Basemap definitions
+    const basemapNames = [
+      { name: "Esri Topographic", key: "Topographic" },
+      { name: "Esri Streets", key: "Streets" },
+      { name: "Esri Imagery", key: "Imagery" },
+      { name: "Esri Dark", key: "DarkGray" },
+      { name: "Spatial NSW", key: "nsw-vector" },
+      { name: "SIX Maps Base Map", key: "nsw-base" },
+      { name: "SIX Maps Imagery", key: "nsw-imagery" }
+    ];
+
+    // Update the UI label if the drawer is rendered
+    const label = document.querySelector(".ld-basemap-label");
+    if (label) {
+      const basemapName = basemapNames.find(b => b.key === basemapKey)?.name || "Basemap";
+      label.textContent = basemapName;
+    }
+
+    // Update active state in dropdown menu
+    const menu = document.querySelector(".ld-basemap-menu");
+    if (menu) {
+      menu.querySelectorAll(".dropdown-item").forEach(item => {
+        item.classList.remove("active");
+      });
+      // Find and activate the matching button
+      const buttons = menu.querySelectorAll(".dropdown-item");
+      basemapNames.forEach(({ key }, index) => {
+        if (key === basemapKey && buttons[index]) {
+          buttons[index].classList.add("active");
+        }
+      });
+    }
   };
 
 
