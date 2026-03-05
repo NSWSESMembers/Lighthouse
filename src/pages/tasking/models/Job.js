@@ -101,7 +101,6 @@ export function Job(data = {}, deps = {}) {
     self.unacceptedNotifications = ko.observableArray([]);
 
     self.hasUnacceptedNotifications = ko.pureComputed(() => {
-        console.log("Checking for unaccepted notifications, count:", Array.isArray(self.unacceptedNotifications()) && self.unacceptedNotifications().length > 0);
         return Array.isArray(self.unacceptedNotifications()) && self.unacceptedNotifications().length > 0;
     });
 
