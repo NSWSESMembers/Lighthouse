@@ -308,6 +308,12 @@ export function Job(data = {}, deps = {}) {
                 acknowledgeNotification: async (notificationId) => {
                     return await acknowledgeUnacceptedNotification(notificationId);
                 },
+                fetchMessageById: async (messageId) => {
+                    return await deps.fetchMessageById(messageId);
+                },
+                acknowledgeIumMessage: async (notificationId, messageData) => {
+                    return await deps.acknowledgeIumMessage(notificationId, messageData);
+                },
                 relativeUpdateTick,
                 onAcknowledged: (notificationVm) => {
                     self.unacceptedNotifications.remove((n) => String(n?.id?.()) === String(notificationVm?.id?.()));
@@ -318,7 +324,10 @@ export function Job(data = {}, deps = {}) {
                 }
             };
 
-            const models = (data || []).map(n => new UnacceptedNotification(n, notificationDeps));
+            // Filter to ensure notifications belong to this job
+            const models = (data || [])
+                .filter(n => String(n?.JobId) === String(self.id()))
+                .map(n => new UnacceptedNotification(n, notificationDeps));
             self.unacceptedNotifications(models);
         } catch (err) {
             console.error("Failed to fetch unacknowledged notifications:", err);

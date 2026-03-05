@@ -931,6 +931,18 @@ function VM() {
                 const tk = await getToken();
                 return BeaconClient.notifications.acknowledge(notificationId, apiHost, params.userId, tk);
             },
+            fetchMessageById: async (messageId) => {
+                const tk = await getToken();
+                return new Promise((resolve, reject) => {
+                    BeaconClient.icems.getMessageById(messageId, apiHost, params.userId, tk, resolve, reject);
+                });
+            },
+            acknowledgeIumMessage: async (notificationId, messageData) => {
+                const tk = await getToken();
+                return new Promise((resolve, reject) => {
+                    BeaconClient.icems.acknowledgeIum(notificationId, messageData, apiHost, params.userId, tk, resolve, reject);
+                });
+            },
             relativeUpdateTick: self.relativeUpdateTick30s,
             notifySuccess: (message) => showAlert(message, 'success', 3000),
             notifyError: (message) => showAlert(message, 'danger', 5000),
