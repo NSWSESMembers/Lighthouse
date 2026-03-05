@@ -73,6 +73,7 @@ export function ConfigVM(root, deps) {
     self.fetchPeriod = ko.observable(7).extend({ min: 0, max: 31, digit: true });
     self.fetchForward = ko.observable(0).extend({ min: 0, max: 31, digit: true });
     self.showAdvanced = ko.observable(false);
+    self.darkMode = ko.observable(false);
 
     //blown away on load
     self.teamStatusFilter = ko.observableArray([]);
@@ -85,10 +86,23 @@ export function ConfigVM(root, deps) {
 
     self.teamTaskStatusFilter = ko.observableArray([]);
 
+    // Map clustering
+    self.clusterEnabled = ko.observable(true);
+    self.clusterRadius = ko.observable(60);   // maxClusterRadius in px (10–80)
+    self.clusterRescueJobs = ko.observable(true);
+
     // pinned rows
     self.pinnedTeamIds = ko.observableArray([]);
     self.pinnedIncidentIds = ko.observableArray([]);
 
+    // Dark mode helper (defined early so it can be called in afterConfigLoad)
+    self._applyDarkMode = () => {
+        if (self.darkMode()) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    };
 
 
     self.openLoadBox = function () {
@@ -145,6 +159,7 @@ export function ConfigVM(root, deps) {
         fetchPeriod: Number(self.fetchPeriod()),
         fetchForward: Number(self.fetchForward()),
         showAdvanced: !!self.showAdvanced(),
+        darkMode: !!self.darkMode(),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
             incidents: ko.toJS(self.incidentFilters)
@@ -159,6 +174,9 @@ export function ConfigVM(root, deps) {
         pinnedTeamIds: ko.toJS(self.pinnedTeamIds),
         pinnedIncidentIds: ko.toJS(self.pinnedIncidentIds),
         paneOrder: self.paneOrder().map(p => p.id),
+        clusterEnabled: !!self.clusterEnabled(),
+        clusterRadius: Number(self.clusterRadius()) || 60,
+        clusterRescueJobs: !!self.clusterRescueJobs(),
     });
 
     // Helpers
@@ -373,6 +391,19 @@ export function ConfigVM(root, deps) {
             cfg.pinnedTeamIds = [];
             cfg.pinnedIncidentIds = [];
 
+            // Extract HQ ID from URL if present
+            const search = window.location?.search || '';
+            const hqMatch = search.match(/hq=(\d+)/);
+            if (hqMatch) {
+                const hqId = hqMatch[1];
+                deps.entity(hqId).then(result => {
+                    if (result) {
+                        const normEntity = norm({ id: result.Id, name: result.Name, entityType: result.EntityTypeId });
+                        self.incidentFilters([normEntity]);
+                        self.teamFilters([normEntity]);
+                    }
+                });
+            }
         }
         console.log('Loaded config:', cfg);
         // scalar settings
@@ -387,6 +418,9 @@ export function ConfigVM(root, deps) {
         }
         if (typeof cfg.showAdvanced === 'boolean') {
             self.showAdvanced(cfg.showAdvanced);
+        }
+        if (typeof cfg.darkMode === 'boolean') {
+            self.darkMode(cfg.darkMode);
         }
         if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
             self.includeIncidentsWithoutSector(cfg.includeIncidentsWithoutSector);
@@ -427,6 +461,16 @@ export function ConfigVM(root, deps) {
             self.rebuildPaneOrderFromIds(cfg.paneOrder);
         } else {
             self.rebuildPaneOrderFromIds(); // defaults
+        }
+
+        if (typeof cfg.clusterEnabled === 'boolean') {
+            self.clusterEnabled(cfg.clusterEnabled);
+        }
+        if (typeof cfg.clusterRadius === 'number' && cfg.clusterRadius >= 10 && cfg.clusterRadius <= 80) {
+            self.clusterRadius(cfg.clusterRadius);
+        }
+        if (typeof cfg.clusterRescueJobs === 'boolean') {
+            self.clusterRescueJobs(cfg.clusterRescueJobs);
         }
 
 
@@ -523,6 +567,14 @@ export function ConfigVM(root, deps) {
     self.afterConfigLoad = () => {
         deps.fetchAllSectors(self.incidentFilters().map(i => i.id));
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
+        root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
+        root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
+        // Apply dark mode
+        self._applyDarkMode();
+        // Apply dark mode basemap if enabled
+        if (self.darkMode() && root.mapVM?.changeBasemap) {
+            root.mapVM.changeBasemap("DarkGray");
+        }
     }
 
 
@@ -540,5 +592,49 @@ export function ConfigVM(root, deps) {
     self.paneOrder.subscribe(() => {
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
     })
+
+    self.clusterRadius.subscribe((v) => {
+        const r = Math.max(10, Math.min(80, Number(v) || 60));
+        root.mapVM?.applyClusterRadius?.(r);
+        self.save();
+    })
+
+    self.clusterEnabled.subscribe((v) => {
+        root.mapVM?.applyClusterEnabled?.(!!v);
+        self.save();
+    })
+
+    self.clusterRescueJobs.subscribe((v) => {
+        root.mapVM?.applyRescueClusterSetting?.(!!v);
+        self.save();
+    })
+
+    self.darkMode.subscribe((isDark) => {
+        self._applyDarkMode();
+        
+        // Switch basemap when dark mode changes
+        if (root.mapVM?.changeBasemap) {
+            const targetBasemap = isDark ? "DarkGray" : "Topographic";
+            root.mapVM.changeBasemap(targetBasemap);
+        }
+        
+        self.save();
+    });
+
+    /** Wipe all Lighthouse localStorage keys and reload the page. */
+    self.restoreDefaults = () => {
+        if (!confirm(
+            'This will reset ALL settings (filters, layout, map layers, starred items, etc.) to their defaults and reload the page.\n\nContinue?'
+        )) return;
+
+        // Remove every key in localStorage (covers all lh-*, ov.*, layers.*, map.*, etc.)
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            keys.push(localStorage.key(i));
+        }
+        keys.forEach(k => localStorage.removeItem(k));
+
+        location.reload();
+    };
 
 }

@@ -21,8 +21,10 @@ const injectScripts = glob.sync('./src/injectscripts/**/*.js')
     return acc;
   }, {});
 
-const pagesScripts = glob.sync('./src/pages/**/*.js')
-  .reduce((acc, path) => {
+const pagesScripts = [
+  ...glob.sync('./src/pages/*.js'),
+  './src/pages/tasking/main.js',
+].reduce((acc, path) => {
     const entry = path.replace(/src\/pages\/(.*)\.js/, 'pages/$1');
     acc[entry] = path;
     return acc;
@@ -75,6 +77,23 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.js'],
+    alias: {
+      // Force webpack to consume the unbundled lib/ sources of leaflet-geosearch
+      // instead of the pre-bundled dist/geosearch.module.js.  The pre-bundle
+      // inlines @googlemaps/js-api-loader code (containing the remote URL
+      // "https://maps.googleapis.com/maps/api/js") which violates MV3 CSP.
+      // Using lib/ lets tree-shaking drop unused providers and lets the
+      // NormalModuleReplacementPlugin below intercept the separate
+      // @googlemaps/js-api-loader import.
+      'leaflet-geosearch/dist/geosearch.css': path.resolve(
+        __dirname,
+        'node_modules/leaflet-geosearch/dist/geosearch.css'
+      ),
+      'leaflet-geosearch$': path.resolve(
+        __dirname,
+        'node_modules/leaflet-geosearch/lib'
+      ),
+    },
   },
   output: {
     filename: '[name].js',

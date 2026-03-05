@@ -290,11 +290,12 @@
                                                                 <!-- LEFT: team members + capabilities -->
                                                                 <fieldset>
                                                                     <div
-                                                                        class="d-flex justify-content-between align-items-center mb-2">
-                                                                        <legend class="job-details-legend">Team Members
+                                                                        class="d-flex justify-content-between align-items-center flex-nowrap mb-2">
+                                                                        <legend class="job-details-legend text-nowrap me-2">Team Members
                                                                             (<span
                                                                                 data-bind="text: membersSorted().length"></span>)
                                                                         </legend>
+                                                                        <button type="button" class="btn btn-xs btn-outline-secondary" title="Toggle capabilities" data-bind="click: t.toggleCapabilities, clickBubble: false, css: { active: t.showCapabilities }"><i class="fa fa-tags"></i></button>
                                                                     </div>
                                                                     <ul class="list-unstyled team-members-list mb-0"
                                                                         data-bind="foreach: { data: membersSorted, as: 'm' }">
@@ -307,17 +308,15 @@
                                                                                         data-bind="visible: m.TeamLeader === true">TL</span>
                                                                                 </div>
 
-                                                                                <!-- optional role/position if present -->
-                                                                                <!-- <div class="small text-muted"
-                                                                            data-bind="text: m.Role"></div> -->
-
                                                                                 <!-- capabilities tags -->
+                                                                                <!-- ko if: t.showCapabilities -->
                                                                                 <div class="team-member-tags mt-1"
                                                                                     data-bind="foreach: m.Person.PersonCapabilityTags">
                                                                                     <span
                                                                                         class="badge rounded-pill bg-info text-dark me-1 mb-1"
                                                                                         data-bind="text: Name"></span>
                                                                                 </div>
+                                                                                <!-- /ko -->
                                                                             </div>
                                                                         </li>
                                                                     </ul>
@@ -374,14 +373,30 @@
                                                                         Taskings
                                                                     </legend>
                                                                     <!-- /ko -->
-                                                                    <div class="btn-group btn-group-sm" role="group"
-                                                                        aria-label="Team actions">
-                                                                        <button type="button"
-                                                                            class="btn btn-outline-secondary"
-                                                                            title="Refresh taskings"
-                                                                            data-bind="click: t.fetchTasking, clickBubble: false">
-                                                                            <i class="fa fa-sync"></i>
-                                                                        </button>
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <!-- ko ifnot: t.reorderMode -->
+                                                                        <div class="btn-group btn-group-sm" role="group"
+                                                                            aria-label="Team actions">
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-secondary"
+                                                                                title="Refresh taskings"
+                                                                                data-bind="click: t.fetchTasking, clickBubble: false">
+                                                                                <i class="fa fa-sync"></i>
+                                                                            </button>
+                                                                            <button type="button"
+                                                                                class="btn btn-outline-secondary"
+                                                                                title="Reorder taskings"
+                                                                                data-bind="click: t.enterReorderMode, clickBubble: false, enable: t.filteredTaskings().length > 1">
+                                                                                <i class="fa fa-sort"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                        <!-- /ko -->
+                                                                        <!-- ko if: t.reorderMode -->
+                                                                        <div class="btn-group btn-group-sm flex-nowrap" role="group">
+                                                                            <button type="button" class="btn btn-sm btn-outline-success text-nowrap" title="Save order" data-bind="click: t.saveReorder, clickBubble: false, disable: t.reorderSaving"><i class="fa fa-check"></i> Save</button>
+                                                                            <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" title="Cancel reorder" data-bind="click: t.cancelReorderMode, clickBubble: false, disable: t.reorderSaving"><i class="fa fa-times"></i> Cancel</button>
+                                                                        </div>
+                                                                        <!-- /ko -->
                                                                     </div>
                                                                 </div>
 
@@ -391,16 +406,27 @@
                                                                     <table
                                                                         class="table table-sm table-hover align-middle mb-0">
                                                                         <thead class="table-light">
+                                                                            <!-- ko if: t.reorderMode -->
                                                                             <tr>
                                                                                 <th style="width:15%;">#</th>
                                                                                 <th style="width:15%;">Type</th>
-                                                                                <th style="width:45%;">Address</th>
-                                                                                <th style="width:10%;">Status</th>
+                                                                                <th style="width:35%;">Address</th>
+                                                                                <th style="width:15%;">Status</th>
+                                                                                <th style="width:80px;">Order</th>
+                                                                            </tr>
+                                                                            <!-- /ko -->
+                                                                            <!-- ko ifnot: t.reorderMode -->
+                                                                            <tr>
+                                                                                <th style="width:15%;">#</th>
+                                                                                <th style="width:15%;">Type</th>
+                                                                                <th style="width:35%;">Address</th>
+                                                                                <th style="width:15%;">Status</th>
                                                                                 <th style="width:20%;">Actions</th>
                                                                             </tr>
+                                                                            <!-- /ko -->
                                                                         </thead>
                                                                         <tbody
-                                                                            data-bind="foreach: { data: filteredTaskings, as: 'ts' }">
+                                                                            data-bind="foreach: { data: t.displayedTaskings, as: 'ts' }">
                                                                             <tr>
                                                                                 <td
                                                                                     data-bind="text: ts.job.identifier, css: ts.job.rowColour()">
@@ -411,6 +437,7 @@
                                                                                 <td
                                                                                     data-bind="text: ts.prettyAddress, css: ts.job.rowColour()">
                                                                                 </td>
+                                                                                <!-- Status column - always visible -->
                                                                                 <td data-bind="css: ts.job.rowColour()">
                                                                                     <div class="dropdown"
                                                                                         id="team-tasking-status-dropdown">
@@ -585,6 +612,21 @@
                                                                                         </div>
                                                                                     </div>
                                                                                 </td>
+                                                                                <!-- ko if: t.reorderMode -->
+                                                                                <td data-bind="css: ts.job.rowColour()">
+                                                                                    <div class="btn-group btn-group-sm" role="group">
+                                                                                        <button type="button" class="btn btn-outline-secondary" title="Move up"
+                                                                                            data-bind="click: t.moveTaskingUp, clickBubble: false">
+                                                                                            <i class="fa fa-arrow-up"></i>
+                                                                                        </button>
+                                                                                        <button type="button" class="btn btn-outline-secondary" title="Move down"
+                                                                                            data-bind="click: t.moveTaskingDown, clickBubble: false">
+                                                                                            <i class="fa fa-arrow-down"></i>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <!-- /ko -->
+                                                                                <!-- ko ifnot: t.reorderMode -->
                                                                                 <td data-bind="css: ts.job.rowColour()">
                                                                                     <div class="btn-group btn-group-sm"
                                                                                         role="group"
@@ -619,6 +661,7 @@
                                                                                         </button>
                                                                                     </div>
                                                                                 </td>
+                                                                                <!-- /ko -->
                                                                             </tr>
                                                                         </tbody>
                                                                     </table>
@@ -682,7 +725,7 @@
                                     <button class="dropdown-item d-flex justify-content-between align-items-center"
                                         type="button" data-bs-toggle="collapse" data-bs-target="#jobStatusFilterMenu"
                                         aria-expanded="false" aria-controls="jobStatusFilterMenu">
-                                        Incident Filters
+                                        Incident Status Filters
                                         <span class="ms-2 fa fa-chevron-right small"></span>
                                     </button>
                                     <div class="collapse dropdown-collapse-body" id="jobStatusFilterMenu">
@@ -967,7 +1010,7 @@
                                                     <span class="visually-hidden">Images</span>
                                                 </button>
                                                 <em class="fa fa-fw fa-share-alt" style="width: 1em;"
-                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }"></em>
+                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }, css: { 'text-danger': j.hasUnacceptedNotifications() }"></em>
                                             </div>
 
                                             <!-- 3. Received -->
@@ -1053,6 +1096,18 @@
                                                 <div class="card-body job-details-form">
                                                     <div class="row g-3">
                                                         <div class="col-md-8">
+                                                            <!-- Unacknowledged Notifications Warning -->
+                                                            <!-- ko if: j.hasUnacceptedNotifications() -->
+                                                            <div class="alert alert-danger d-flex align-items-center justify-content-center text-center py-2 mb-2"
+                                                                data-bind="click: $root.attachJobTimelineModal, clickBubble: false"
+                                                                role="button"
+                                                                title="Open timeline"
+                                                                style="cursor: pointer;">
+                                                                <i class="fa fa-bell me-2"></i>
+                                                                <span class="fw-semibold">This incident has unacknowledged ICEMS notifications</span>
+                                                            </div>
+                                                            <!-- /ko -->
+
                                                             <!-- New line to show tag.Name if actionRequiredTags has length -->
                                                             <div id="actionRequiredTags"
                                                                 class="text-center d-flex flex-wrap justify-content-center mt-1"
@@ -1835,10 +1890,11 @@
                                     <!-- General -->
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingGeneral">
-                                            <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                                            <button class="accordion-button d-flex align-items-center gap-2 fw-semibold" type="button" data-bs-toggle="collapse"
                                                 data-bs-target="#collapseGeneral" aria-expanded="true"
                                                 aria-controls="collapseGeneral">
-                                                General
+                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-cogs"></i></span>
+                                                <span>General Settings</span>
                                             </button>
                                         </h2>
                                         <div id="collapseGeneral" class="accordion-collapse collapse show"
@@ -1887,6 +1943,19 @@
                                                         <div class="form-text">How many days into the future to fetch.
                                                         </div>
                                                     </div>
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label class="form-label">
+                                                            <i class="fa fa-moon me-1"></i>Dark Mode
+                                                        </label>
+                                                        <div class="form-check form-switch mt-2">
+                                                            <input class="form-check-input" type="checkbox" id="darkModeToggle"
+                                                                data-bind="checked: config.darkMode">
+                                                            <label class="form-check-label" for="darkModeToggle">
+                                                                Enable dark mode
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-text">Reduces eye strain in low light environments.</div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -1895,10 +1964,11 @@
                                     <!-- Incident Status -->
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingIncidentStatus">
-                                            <button class="accordion-button collapsed" type="button"
+                                            <button class="accordion-button gap-2 collapsed" type="button"
                                                 data-bs-toggle="collapse" data-bs-target="#collapseIncidentStatus"
                                                 aria-expanded="false" aria-controls="collapseIncidentStatus">
-                                                Incident Filters
+                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-filter"></i></span>
+                                                <span>Incident Filters</span>
                                             </button>
                                         </h2>
                                         <div id="collapseIncidentStatus" class="accordion-collapse collapse"
@@ -2156,10 +2226,11 @@
                                     <!-- Team Status & Tasking -->
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingTeamStatus">
-                                            <button class="accordion-button collapsed" type="button"
+                                            <button class="accordion-button gap-2 collapsed" type="button"
                                                 data-bs-toggle="collapse" data-bs-target="#collapseTeamStatus"
                                                 aria-expanded="false" aria-controls="collapseTeamStatus">
-                                                Team &amp; Tasking Filters
+                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-users"></i></span>
+                                                <span>Team &amp; Tasking Filters</span>
                                             </button>
                                         </h2>
                                         <div id="collapseTeamStatus" class="accordion-collapse collapse"
@@ -2278,10 +2349,12 @@
                                     <!-- Sectors -->
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingSectors">
-                                            <button class="accordion-button collapsed" type="button"
+                                            <button class="accordion-button gap-2 collapsed" type="button"
                                                 data-bs-toggle="collapse" data-bs-target="#collapseSectors"
                                                 aria-expanded="false" aria-controls="collapseSectors">
-                                                Sectors <span class="spinner-border spinner-border-sm text-muted mx-2"
+                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-th-large"></i></span>
+                                                <span>Sectors</span>
+                                                <span class="spinner-border spinner-border-sm text-muted mx-2"
                                                     role="status" data-bind="visible: sectorsLoading"></span>
                                             </button>
                                         </h2>
@@ -2340,10 +2413,11 @@
                                     <!-- Starred Teams & Incidents -->
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingPinned">
-                                            <button class="accordion-button collapsed" type="button"
+                                            <button class="accordion-button gap-2 collapsed" type="button"
                                                 data-bs-toggle="collapse" data-bs-target="#collapsePinned"
                                                 aria-expanded="false" aria-controls="collapsePinned">
-                                                Starred Teams &amp; Incidents
+                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-star"></i></span>
+                                                <span>Starred Teams &amp; Incidents</span>
                                             </button>
                                         </h2>
 
@@ -2411,10 +2485,11 @@
                                     <!-- Map Layers -->
                                     <div class="accordion-item">
                                         <h2 class="accordion-header" id="headingMapLayers">
-                                            <button class="accordion-button collapsed" type="button"
+                                            <button class="accordion-button gap-2 collapsed" type="button"
                                                 data-bs-toggle="collapse" data-bs-target="#collapseMapLayers"
                                                 aria-expanded="false" aria-controls="collapseMapLayers">
-                                                Map Layers
+                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-layer-group"></i></span>
+                                                <span>Map Layers</span>
                                             </button>
                                         </h2>
 
@@ -2422,21 +2497,88 @@
                                             aria-labelledby="headingMapLayers"
                                             data-bs-parent="#configOtherSettingsAccordion">
                                             <div class="accordion-body">
-                                                <div class="col-md-6">
-                                                    <fieldset class="mt-3">
-                                                        <label class="form-label d-block mb-2">Map Icon Layer Order (top
-                                                            → bottom):</label>
-                                                        <div class="border rounded p-2" id="jobStatusBox">
-                                                            <ul class="list-group"
-                                                                data-bind="foreach: { data: config.paneOrder, as: 'p' }">
-                                                                <li class="list-group-item d-flex align-items-center gap-2"
-                                                                    data-bind="sortableRow: { array: $root.config.paneOrder, handle: '.pane-drag-handle' }">
-                                                                    <i class="fa fa-grip-vertical text-muted"></i>
-                                                                    <span data-bind="text: p.name"></span>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </fieldset>
+                                                <div class="row g-3">
+
+                                                    <!-- Clustering options -->
+                                                    <div class="col-md-6">
+                                                        <fieldset>
+                                                            <legend class="form-label fw-semibold mb-2">
+                                                                <i class="fa fa-layer-group me-1"></i>Marker Clustering
+                                                            </legend>
+
+                                                            <div class="form-check form-switch mb-2">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    role="switch" id="clusterEnabledToggle"
+                                                                    data-bind="checked: config.clusterEnabled">
+                                                                <label class="form-check-label"
+                                                                    for="clusterEnabledToggle">
+                                                                    Enable marker clustering
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-text mb-3">
+                                                                Groups nearby incident markers into numbered
+                                                                clusters that expand on click.
+                                                            </div>
+
+                                                            <div data-bind="visible: config.clusterEnabled">
+                                                                <div class="ms-3 mb-3">
+                                                                    <label for="clusterRadiusRange" class="form-label mb-1">
+                                                                        Cluster radius:
+                                                                        <strong data-bind="text: config.clusterRadius() + 'px'"></strong>
+                                                                    </label>
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <small class="text-muted">Tight</small>
+                                                                        <input type="range" class="form-range flex-grow-1"
+                                                                            id="clusterRadiusRange" min="10" max="80"
+                                                                            step="5"
+                                                                            data-bind="value: config.clusterRadius, valueUpdate: 'input'">
+                                                                        <small class="text-muted">Aggressive</small>
+                                                                    </div>
+                                                                    <div class="form-text">
+                                                                        How close markers must be (in pixels) to be
+                                                                        grouped into a cluster. Lower values keep
+                                                                        markers separate; higher values merge more.
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="form-check form-switch ms-3">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="clusterRescueToggle"
+                                                                        data-bind="checked: config.clusterRescueJobs">
+                                                                    <label class="form-check-label"
+                                                                        for="clusterRescueToggle">
+                                                                        Include Rescue jobs in clustering
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-text ms-3">
+                                                                    When enabled, Rescue-priority jobs cluster with
+                                                                    other markers.
+                                                                </div>
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+
+                                                    <!-- Layer order -->
+                                                    <div class="col-md-6">
+                                                        <fieldset>
+                                                            <legend class="form-label fw-semibold mb-2">
+                                                                <i class="fa fa-sort me-1"></i>Map Icon Layer Order
+                                                                <small class="text-muted fw-normal">(top → bottom)</small>
+                                                            </legend>
+                                                            <div class="border rounded p-2">
+                                                                <ul class="list-group"
+                                                                    data-bind="foreach: { data: config.paneOrder, as: 'p' }">
+                                                                    <li class="list-group-item d-flex align-items-center gap-2 py-1"
+                                                                        data-bind="sortableRow: { array: $root.config.paneOrder, handle: '.pane-drag-handle' }">
+                                                                        <i class="fa fa-grip-vertical text-muted pane-drag-handle"
+                                                                            style="cursor:grab"></i>
+                                                                        <span data-bind="text: p.name"></span>
+                                                                    </li>
+                                                                </ul>
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+
                                                 </div>
                                             </div>
                                         </div>
@@ -2450,7 +2592,13 @@
 
                 </div>
 
-                <div class="modal-footer">
+                <div class="modal-footer d-flex justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-outline-danger"
+                            data-bind="click: config.restoreDefaults">
+                            <i class="fa fa-undo me-1"></i>Restore Defaults
+                        </button>
+                    </div>
                     <div class="d-flex flex-wrap gap-2 align-items-center">
 
                         <!-- Shared key -->
@@ -2501,14 +2649,14 @@
 
                         </div>
 
+                        <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
+                            data-bind="click: config.saveAndCloseAndLoad, disable: pageIsLoading">
+                            <span data-bind="visible: !pageIsLoading">Close</span>
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
+                                data-bind="visible: pageIsLoading"></span>
+                            <span data-bind="visible: pageIsLoading">Loading...</span>
+                        </button>
                     </div>
-                    <button id="saveConfig" type="button" class="btn btn-primary d-flex align-items-center"
-                        data-bind="click: config.saveAndCloseAndLoad, disable: pageIsLoading">
-                        <span data-bind="visible: !pageIsLoading">Close</span>
-                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"
-                            data-bind="visible: pageIsLoading"></span>
-                        <span data-bind="visible: pageIsLoading">Loading...</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -2619,6 +2767,40 @@
 
                     <hr />
                     <!-- /ko -->
+
+                    <!-- Unaccepted Notifications Section -->
+                    <!-- ko with: job -->
+                    <!-- ko if: unacceptedNotifications && unacceptedNotifications().length > 0 -->
+                    <div class="mb-3">
+                        <h6 class="text-danger fw-bold mb-2">
+                            <i class="fa fa-bell me-2"></i>Unacknowledged ICEMS Notifications
+                        </h6>
+                        <div data-bind="foreach: unacceptedNotifications">
+                            <div class="alert alert-warning d-flex align-items-start gap-2 mb-2 py-2 px-3">
+                                <div class="flex-grow-1">
+                                    <div class="small fw-semibold" data-bind="text: notificationType"></div>
+                                    <div class="small mb-1" data-bind="text: text"></div>
+                                    <div class="small text-muted">
+                                        <span data-bind="text: createdOnFormatted"></span>
+                                        <span class="mx-1">•</span>
+                                        <span data-bind="text: createdOnAgo"></span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-warning"
+                                    data-bind="click: acknowledge, disable: isAcknowledging, visible: !acknowledged()">
+                                    <span data-bind="visible: !isAcknowledging()">Acknowledge</span>
+                                    <span data-bind="visible: isAcknowledging()">
+                                        <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                        <span>Acknowledging...</span>
+                                    </span>
+                                </button>
+                                <span class="badge bg-success" data-bind="visible: acknowledged()">Acknowledged</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                    <!-- /ko -->
+
                     <!-- Loading indicator -->
                     <div data-bind="visible: loading" class="text-center my-3">
                         <div class="spinner-border" role="status"></div>

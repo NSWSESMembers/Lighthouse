@@ -19,7 +19,7 @@ let commitHash = require('child_process')
   
 module.exports = merge(common, {
   mode: 'production',
-  devtool: 'source-map',
+  devtool: false,
   optimization: {
     minimizer: [
       new TerserPlugin({

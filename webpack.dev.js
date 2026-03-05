@@ -17,7 +17,7 @@ let commitHash = require('child_process')
   
 module.exports = merge(common, {
   mode: 'development',
-  devtool: 'inline-source-map',
+  devtool: false,
   devServer: {
     static: './dist',
   },

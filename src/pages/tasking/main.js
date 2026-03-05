@@ -59,7 +59,30 @@ import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
-import { registerRainRadarLayer } from "./mapLayers/weather.js";
+import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
+import { 
+    registerBOMRainfallLayer, 
+    registerBOMRadarLayer, 
+    registerBOMAllFloodLevelsLayer, 
+    registerBOMSatTrueColorLayer, 
+    registerBOMThunderstormTrackingLayer, 
+    registerBOMWindLayer, 
+    registerBOMMSLPLayer, 
+    registerBOMLightningLayer,
+    registerBOMLightning24hLayer,
+    registerBOMTsunamiLayer,
+    registerBOMTropicalCycloneLayer,
+    registerBOMFireDangerRatingLayer,
+    registerBOMHeatwaveLayer,
+    registerBOMHazardousSurfLayer,
+    registerBOMCoastalHazardLayer,
+    registerBOMRoadWeatherLayer,
+    registerBOMSurfaceGustLayer,
+    registerBOMSurfaceTempLayer,
+    registerBOMFireBehaviourIndexLayer,
+    registerBOMHazardousWindLayer,
+    registerBOMFloodWarningBoundariesLayer,
+    registerBOMFireWeatherDistrictsLayer } from "./mapLayers/weather.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
@@ -81,7 +104,7 @@ var MiniMap = require('leaflet-minimap');
 
 var esriVector = require('esri-leaflet-vector');
 
-import { GeoSearchControl } from 'leaflet-geosearch';
+import GeoSearchControl from 'leaflet-geosearch/lib/SearchControl';
 import { AwsLambdaGeocoderProvider } from './utils/geocode.js';
 
 
@@ -96,6 +119,7 @@ import 'leaflet.polylinemeasure';
 
 //css order reasons... load this last
 import '../../../styles/pages/tasking.css';
+import '../../../styles/pages/darkmode.css';
 
 
 let token = '';
@@ -163,6 +187,7 @@ async function getToken() {
 
 const params = getSearchParameters();
 const apiHost = params.host
+const sourceUrl = params.source
 
 var ko;
 var myViewModel;
@@ -278,7 +303,7 @@ map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.
 var osm2 = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { minZoom: 0, maxZoom: 13 });
 new MiniMap(osm2, { toggleDisplay: true }).addTo(map);
 
-const legend = new LegendControl({ collapsed: false, persist: true });
+const legend = new LegendControl({ collapsed: true, persist: true });
 legend.addTo(map);
 
 ResizeDividers(map)
@@ -297,6 +322,26 @@ function VM() {
     self.jobsLoading = ko.observable(true);
     self.tagsLoading = ko.observable(true);
 
+    // Incidents visibility toggle
+    self.incidentsVisible = ko.observable(localStorage.getItem('map.incidentsVisible') !== 'false');
+    self.incidentsVisible.subscribe(v => {
+        localStorage.setItem('map.incidentsVisible', v ? 'true' : 'false');
+        
+        if (v) {
+            // Show incidents – add the appropriate layer
+            const targetLayer = self.mapVM.clusteringEnabled 
+                ? self.mapVM.jobClusterGroup 
+                : self.mapVM.unclusteredJobLayer;
+            if (!map.hasLayer(targetLayer)) {
+                targetLayer.addTo(map);
+            }
+        } else {
+            // Hide incidents – remove both possible layers
+            map.removeLayer(self.mapVM.jobClusterGroup);
+            map.removeLayer(self.mapVM.unclusteredJobLayer);
+        }
+    });
+
     self.pageIsLoading = ko.pureComputed(() => {
         return self.tokenLoading() || self.tagsLoading();
     });
@@ -314,6 +359,12 @@ function VM() {
     self.taskings = ko.observableArray();
     self.trackableAssets = ko.observableArray([]);
     self.sectors = ko.observableArray([]);
+
+    // Shared 30s ticker used by assets for relative-time labels
+    self.relativeUpdateTick30s = ko.observable(0);
+    setInterval(() => {
+        self.relativeUpdateTick30s(self.relativeUpdateTick30s() + 1);
+    }, 1000 * 30);
 
     self.allTags = ko.observableArray([]);
 
@@ -388,13 +439,15 @@ function VM() {
 
     self.countPinnedTeams = ko.pureComputed(() => {
         if (!self.config || !self.config.pinnedTeamIds) return 0;
-        return self.filteredTeams().filter(t => self.isTeamPinned(t.id())).length;
-    })
+        const pinnedIds = new Set((self.config.pinnedTeamIds() || []).map(id => normPinId(id)));
+        return self.filteredTeams().filter(t => pinnedIds.has(normPinId(t.id()))).length;
+    });
 
     self.countPinnedIncidents = ko.pureComputed(() => {
         if (!self.config || !self.config.pinnedIncidentIds) return 0;
-        return self.filteredJobs().filter(j => self.isIncidentPinned(j.id())).length;
-    })
+        const pinnedIds = new Set((self.config.pinnedIncidentIds() || []).map(id => normPinId(id)));
+        return self.filteredJobs().filter(j => pinnedIds.has(normPinId(j.id()))).length;
+    });
 
     self.toggleTeamPinned = (teamId) => {
         if (!self.config || !self.config.pinnedTeamIds) return false;
@@ -571,8 +624,8 @@ function VM() {
 
     self.filteredJobsAgainstConfig = ko.pureComputed(() => {
 
-        const hqsFilter = self.config.incidentFilters().map(f => ({ Id: f.id }));
-        const sectorFilter = self.config.sectorFilters().map(s => s.id);
+        const hqIds = new Set((self.config.incidentFilters() || []).map(f => String(f.id)));
+        const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
 
         // If sector filtering is active, only include jobs in those sectors
 
@@ -580,7 +633,13 @@ function VM() {
         const term = self.jobSearch().toLowerCase();
 
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
-        const incidentTypeAllowedById = self.config.allowedIncidentTypeIds(); // allow-list
+        const allowedStatusSet = new Set(allowedStatus || []);
+        const incidentTypeAllowedById = self.config.allowedIncidentTypeIds(); // allow-list (Set in ConfigVM)
+        const incidentTypeIterable =
+            incidentTypeAllowedById && typeof incidentTypeAllowedById[Symbol.iterator] === "function"
+                ? incidentTypeAllowedById
+                : [];
+        const incidentTypeSet = new Set(Array.from(incidentTypeIterable, id => String(id)));
 
         var start = new Date();
         var end = new Date();
@@ -597,10 +656,10 @@ function VM() {
 
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
-
-
-            const hqMatch = hqsFilter.length === 0 || hqsFilter.some(f => f.Id === jb.entityAssignedTo.id());
-            const sectorMatch = sectorFilter.length === 0 || (jb.sector() && sectorFilter.includes(jb.sector().id()));
+            const jobHqId = String(jb.entityAssignedTo.id());
+            const sectorId = String(jb.sector().id());
+            const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
+            const sectorMatch = sectorIds.size === 0 || sectorIds.has(sectorId);
             //must match sector filter
 
             //if no sector and config says to exclude, filter out
@@ -611,12 +670,12 @@ function VM() {
             if (jb.sector().id() && !sectorMatch) return false;
 
             // If allow-list non-empty, only show jobs whose status is in it
-            if (allowedStatus.length > 0 && !allowedStatus.includes(statusName)) {
+            if (allowedStatusSet.size > 0 && !allowedStatusSet.has(statusName)) {
                 return false;
             }
 
             // If incident type filter non-empty, only show jobs whose type is in it
-            if (incidentTypeAllowedById.length > 0 && !incidentTypeAllowedById.includes(jb.typeId())) {
+            if (incidentTypeSet.size > 0 && !incidentTypeSet.has(String(jb.typeId()))) {
                 return false;
             }
 
@@ -636,17 +695,18 @@ function VM() {
                 jb.id().toString().toLowerCase().includes(term) ||
                 jb.address.prettyAddress().toLowerCase().includes(term));
         });
-    }).extend({ trackArrayChanges: true, rateLimit: 50 });
+    }).extend({ rateLimit: { timeout: 50, method: 'notifyWhenChangesStop' } });
 
     self.filteredJobs = ko.pureComputed(() => {
 
         const pinnedOnlyIncidents = self.showPinnedIncidentsOnly();
         const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
+        const pinnedIncidentSet = new Set((pinnedIncidentIds || []).map(id => String(id)));
 
         return ko.utils.arrayFilter(this.filteredJobsAgainstConfig(), jb => {
 
             // pinned-only filter
-            if (pinnedOnlyIncidents && !pinnedIncidentIds.includes(String(jb.id()))) {
+            if (pinnedOnlyIncidents && !pinnedIncidentSet.has(String(jb.id()))) {
                 return false;
             }
             return true;
@@ -662,6 +722,8 @@ function VM() {
     self.filteredTeamsAgainstConfig = ko.pureComputed(() => {
 
         const allowed = self.config.teamStatusFilter(); // allow-list
+        const allowedSet = new Set(allowed || []);
+        const hqFilterIds = new Set((self.config.teamFilters() || []).map(f => String(f.id)));
 
         var start = new Date();
         var end = new Date();
@@ -677,15 +739,14 @@ function VM() {
 
         return ko.utils.arrayFilter(self.teams(), tm => {
             const status = tm.teamStatusType()?.Name;
-
-
-            const hqMatch = self.config.teamFilters().length === 0 || self.config.teamFilters().some((f) => f.id == tm.assignedTo().id());
+            const teamHqId = String(tm.assignedTo().id());
+            const hqMatch = hqFilterIds.size === 0 || hqFilterIds.has(teamHqId);
             if (status == null) {
                 return false;
             }
 
             // If allow-list non-empty, only show teams whose status is in it
-            if (allowed.length > 0 && !allowed.includes(status)) {
+            if (allowedSet.size > 0 && !allowedSet.has(status)) {
                 return false;
             }
 
@@ -706,11 +767,12 @@ function VM() {
     self.filteredTeams = ko.pureComputed(() => {
         const pinnedOnlyTeams = self.showPinnedTeamsOnly();
         const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
+        const pinnedTeamSet = new Set((pinnedTeamIds || []).map(id => String(id)));
 
         return ko.utils.arrayFilter(self.filteredTeamsAgainstConfig(), tm => {
 
             // pinned-only filter
-            if (pinnedOnlyTeams && !pinnedTeamIds.includes(String(tm.id()))) {
+            if (pinnedOnlyTeams && !pinnedTeamSet.has(String(tm.id()))) {
                 return false;
             }
 
@@ -815,8 +877,31 @@ function VM() {
                 const lat = job.address.latitude?.();
                 const lng = job.address.longitude?.();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
-                    map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
-                    job.marker?.openPopup?.();
+                    // If the popup is already open (i.e. this call originated
+                    // from the popupopen event chain rather than a deliberate
+                    // UI action), bail out.  flyTo can change the zoom level
+                    // which triggers markercluster reclustering — the marker
+                    // disappears and the popup is abruptly closed.
+                    if (job.marker?.isPopupOpen?.()) return;
+
+                    const m = job.marker;
+                    const cg = self.mapVM?.jobClusterGroup;
+
+                    // If the marker lives in the cluster group, use
+                    // zoomToShowLayer – it zooms/pans as needed, spiderfies
+                    // the parent cluster if the markers can't separate
+                    // further, and only then fires the callback so the
+                    // popup opens on the visible, individual marker.
+                    if (m && cg && cg.hasLayer(m)) {
+                        cg.zoomToShowLayer(m, () => {
+                            m.openPopup();
+                        });
+                    } else {
+                        // Marker is on a standalone layer (rescueJobLayer,
+                        // unclusteredJobLayer) or doesn't exist yet – simple flyTo.
+                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
+                        m?.openPopup?.();
+                    }
                 }
             },
 
@@ -844,9 +929,26 @@ function VM() {
                 self.untaskTeam(tasking, payload, cb)
             },
 
-            fetchUnacknowledgedJobNotifications: (job) => {
-                self.fetchUnacknowledgedJobNotifications(job);
+            fetchUnacknowledgedJobNotifications: (job) => self.fetchUnacknowledgedJobNotifications(job),
+            acknowledgeUnacceptedNotification: async (notificationId) => {
+                const tk = await getToken();
+                return BeaconClient.notifications.acknowledge(notificationId, apiHost, params.userId, tk);
             },
+            fetchMessageById: async (messageId) => {
+                const tk = await getToken();
+                return new Promise((resolve, reject) => {
+                    BeaconClient.icems.getMessageById(messageId, apiHost, params.userId, tk, resolve, reject);
+                });
+            },
+            acknowledgeIumMessage: async (notificationId, messageData) => {
+                const tk = await getToken();
+                return new Promise((resolve, reject) => {
+                    BeaconClient.icems.acknowledgeIum(notificationId, messageData, apiHost, params.userId, tk, resolve, reject);
+                });
+            },
+            relativeUpdateTick: self.relativeUpdateTick30s,
+            notifySuccess: (message) => showAlert(message, 'success', 3000),
+            notifyError: (message) => showAlert(message, 'danger', 5000),
             drawJobTargetRing: (job) => {
                 self.drawJobTargetRing(job);
             },
@@ -919,6 +1021,7 @@ function VM() {
             isTeamPinned: (id) => self.isTeamPinned(id),
             toggleTeamPinned: (id) => self.toggleTeamPinned(id),
             currentlyOpenMapPopup: self.mapVM?.openPopup,
+            saveTaskingSequence: (sequences) => self.saveTaskingSequence(sequences),
         };
 
         team = new Team(teamJson, deps);
@@ -930,12 +1033,25 @@ function VM() {
 
 
     const configDeps = {
-        entitiesSearch: (q) => new Promise((resolve) => {
-            BeaconClient.entities.search(q, apiHost, params.userId, token, (data) => resolve(data.Results || []));
-        }),
-        entitiesChildren: (parentId) => new Promise((resolve) => {
-            BeaconClient.entities.children(parentId, apiHost, params.userId, token, (data) => resolve(data || []));
-        }),
+        entitiesSearch: async (q) => {
+            const t = await getToken();
+            return new Promise((resolve) => {
+                BeaconClient.entities.search(q, apiHost, params.userId, t, (data) => resolve(data.Results || []));
+            });
+        },
+        entitiesChildren: async (parentId) => {
+            const t = await getToken();
+            return new Promise((resolve) => {
+                BeaconClient.entities.children(parentId, apiHost, params.userId, t, (data) => resolve(data || []));
+            });
+        },
+        entity: async (id) => {
+            const t = await getToken();
+            console.log("Fetching entity for config:", id, t);
+            return new Promise((resolve) => {
+                BeaconClient.entities.fetch(id, apiHost, params.userId, t, (data) => resolve(data));
+            });
+        },
         fetchAllSectors: (hqs) => self.fetchAllSectors(hqs),
     };
 
@@ -975,6 +1091,17 @@ function VM() {
     self.attachJobTimelineModal = function (job) {
         const modalEl = document.getElementById('jobTimelineModal');
         const modal = new bootstrap.Modal(modalEl);
+
+        if (modalEl && !modalEl.__timelineRefreshBound) {
+            modalEl.addEventListener('shown.bs.modal', () => {
+                self.jobTimelineVM.startAutoRefresh?.();
+            });
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                self.jobTimelineVM.stopAutoRefresh?.();
+            });
+            modalEl.__timelineRefreshBound = true;
+        }
+
         self.jobTimelineVM.openForJob(job);
         modal.show();
     }
@@ -1155,6 +1282,14 @@ function VM() {
         if (job) {
             //console.log("Updating existing job:", job.id());
             job.updateFromJson(jobJson);
+
+            // If the job is filtered-in but has no marker yet (e.g. it was
+            // originally created without GPS coordinates and now has them),
+            // create the marker now.
+            if (job.isFilteredIn() && !job.marker) {
+                addOrUpdateJobMarker(ko, map, self, job);
+            }
+
             return job;
         }
         job = new Job(jobJson, deps);
@@ -1179,7 +1314,7 @@ function VM() {
             asset.updateFromJson(assetJson);
             return asset;
         } else { //new asset - create, store, attach to teams
-            asset = new Asset(assetJson);
+            asset = new Asset(assetJson, { relativeUpdateTick: self.relativeUpdateTick30s });
             self.trackableAssets.push(asset);
             self.assetsById.set(asset.id(), asset);
         }
@@ -1481,32 +1616,90 @@ function VM() {
         try { self._spotlightModal?.hide(); } catch { /* empty */ }
     };
 
+    // --- Initial load state management ---
     self.initialFitDone = false;
     let initialFetchesPending = 3; // teams, jobs, assets
+    let userHasInteracted = false; // Track if user manually panned/zoomed
+
+    // Create loading overlay element
+    const loadingOverlay = document.createElement('div');
+    loadingOverlay.id = 'mapLoadingOverlay';
+    loadingOverlay.innerHTML = '<div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div><p class="text-light mt-2">Loading data...please wait. or don\'t</p>';
+    loadingOverlay.style.cssText = 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; font-weight: 500;';
+    map.getContainer().appendChild(loadingOverlay);
+
+    // Track user map interactions (only real user input, not internal operations)
+    const markUserInteracted = () => { userHasInteracted = true; };
+    map.on('click', markUserInteracted);
+    map.on('mousedown', markUserInteracted);
+    map.on('touchstart', markUserInteracted);
+    map.on('wheel', markUserInteracted);
 
     function debounce(fn, ms) {
         let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
     }
 
-    const tryInitialFit = debounce(() => {
-        if (self.initialFitDone || initialFetchesPending > 0) return;
+    let initialFitRetries = 0;
+    const MAX_INITIAL_FIT_RETRIES = 4; // give up after ~1.25s to avoid infinite retry loops in bad states
 
-        // Gather every current marker into one feature group
+    const tryInitialFit = debounce(() => {
+        if (self.initialFitDone || initialFetchesPending > 0 || userHasInteracted) return;
+        console.log("Attempting initial map fit...");
+        // Prefer map layers if already attached
         const fg = L.featureGroup();
 
         // vehicle (assets)
-        self.mapVM.assetLayer.eachLayer(l => fg.addLayer(l));
+        if (self.mapVM.assetLayer && map.hasLayer(self.mapVM.assetLayer)) {
+            self.mapVM.assetLayer.eachLayer(l => fg.addLayer(l));
+        }
 
-        // all job marker layer groups
-        for (const { layerGroup } of self.mapVM.jobMarkerGroups.values()) {
-            layerGroup.eachLayer(l => fg.addLayer(l));
+        // Job layers - use whichever is currently visible
+        if (self.mapVM.jobClusterGroup && map.hasLayer(self.mapVM.jobClusterGroup)) {
+            self.mapVM.jobClusterGroup.eachLayer(l => fg.addLayer(l));
+        } else if (self.mapVM.unclusteredJobLayer && map.hasLayer(self.mapVM.unclusteredJobLayer)) {
+            self.mapVM.unclusteredJobLayer.eachLayer(l => fg.addLayer(l));
         }
 
         const layers = fg.getLayers();
-        if (!layers.length) return;
 
-        // Fit with a little padding, once
-        map.fitBounds(fg.getBounds().pad(0.12), { maxZoom: 15 });
+        let bounds = null;
+
+        if (layers.length > 0) {
+            bounds = fg.getBounds();
+        } else {
+            // Fallback: compute bounds from data (covers cases where markers have not attached yet)
+            const latLngs = [];
+
+            (self.filteredJobs?.() || []).forEach((j) => {
+                const lat = j?.address?.latitude?.();
+                const lng = j?.address?.longitude?.();
+                if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    latLngs.push([lat, lng]);
+                }
+            });
+
+            (self.filteredTrackableAssets?.() || []).forEach((a) => {
+                const lat = a?.latitude?.();
+                const lng = a?.longitude?.();
+                if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    latLngs.push([lat, lng]);
+                }
+            });
+
+            if (latLngs.length > 0) {
+                bounds = L.latLngBounds(latLngs);
+            }
+        }
+
+        if (!bounds || !bounds.isValid()) {
+            if (initialFitRetries < MAX_INITIAL_FIT_RETRIES) {
+                initialFitRetries += 1;
+                setTimeout(() => tryInitialFit(), 250);
+            }
+            return;
+        }
+
+        map.fitBounds(bounds.pad(0.12), { maxZoom: 15 });
         self.initialFitDone = true;
     }, 150);
 
@@ -1517,6 +1710,11 @@ function VM() {
             initialFetchesPending -= 1;
             // Give subscriptions time to attach markers, then attempt fit
             tryInitialFit();
+        }
+        
+        // Once all fetches are done, hide the loading overlay
+        if (initialFetchesPending === 0 && loadingOverlay) {
+            loadingOverlay.style.display = 'none';
         }
     };
 
@@ -1606,11 +1804,8 @@ function VM() {
 
     self.fetchUnacknowledgedJobNotifications = async function (job) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.notifications.unaccepted(job.id(), apiHost, params.userId, t, function (data) {
-            job.unacceptedNotifications(data);
-        }, function (err) {
-            console.error("Failed to fetch unacknowledged job notifications:", err);
-            showAlert('Failed to fetch unacknowledged job notifications. Your session may have expired', 'danger', 5000);
+        return new Promise((resolve, reject) => {
+            BeaconClient.notifications.unaccepted(job.id(), apiHost, params.userId, t, resolve, reject);
         });
     }
 
@@ -1629,9 +1824,97 @@ function VM() {
         })
     }
 
+    self.saveTaskingSequence = async function (sequences) {
+        const t = await getToken();
+        return new Promise((resolve, reject) => {
+            BeaconClient.tasking.sequence(
+                { Sequences: sequences },
+                apiHost,
+                t,
+                function (data) {
+                    if (data) {
+                        showAlert('Tasking order saved.', 'success', 3000);
+                        resolve(data);
+                    } else {
+                        showAlert('Failed to save tasking order.', 'danger', 5000);
+                        reject(new Error('Failed to save tasking order'));
+                    }
+                }
+            );
+        });
+    };
+
     //update spotlight index on team/job filter changes
     self.filteredTeamsAgainstConfig.subscribe(() => { self.spotlightSearchVM.rebuildIndex?.() }, null, "arrayChange");
     self.filteredJobsAgainstConfig.subscribe(() => { self.spotlightSearchVM.rebuildIndex?.() }, null, "arrayChange");
+
+    // --- Marker batching (reduces layout/reflow thrash on burst updates) ---
+    const getItemId = (item) => {
+        if (!item) return null;
+        if (typeof item.id === "function") return item.id();
+        return item.id ?? null;
+    };
+
+    function createMarkerBatcher({ addFn, removeFn }) {
+        const pendingAdds = new Map();
+        const pendingRemoves = new Map();
+        let rafHandle = null;
+
+        const flush = () => {
+            rafHandle = null;
+
+            pendingRemoves.forEach((item) => removeFn(item));
+            pendingAdds.forEach((item) => addFn(item));
+
+            pendingRemoves.clear();
+            pendingAdds.clear();
+        };
+
+        const ensureFlush = () => {
+            if (rafHandle == null) {
+                rafHandle = requestAnimationFrame(flush);
+            }
+        };
+
+        const scheduleAdd = (item) => {
+            const id = getItemId(item);
+            if (id == null) {
+                addFn(item);
+                return;
+            }
+            pendingRemoves.delete(id);
+            pendingAdds.set(id, item);
+            ensureFlush();
+        };
+
+        const scheduleRemove = (item) => {
+            const id = getItemId(item);
+            if (id == null) {
+                removeFn(item);
+                return;
+            }
+            pendingAdds.delete(id);
+            pendingRemoves.set(id, item);
+            ensureFlush();
+        };
+
+        return { scheduleAdd, scheduleRemove };
+    }
+
+    const jobMarkerBatcher = createMarkerBatcher({
+        addFn: (job) => addOrUpdateJobMarker(ko, map, self, job),
+        removeFn: (job) => removeJobMarker(self, job),
+    });
+
+    const matchedAssetMarkerBatcher = createMarkerBatcher({
+        addFn: (asset) => attachAssetMarker(ko, map, self, asset),
+        removeFn: (asset) => detachAssetMarker(ko, map, self, asset),
+    });
+
+    const unmatchedAssetMarkerBatcher = createMarkerBatcher({
+        addFn: (asset) => attachUnmatchedAssetMarker(ko, map, self, asset),
+        removeFn: (asset) => detachUnmatchedAssetMarker(ko, map, self, asset),
+    });
 
     //fetch tasking if a team is added
     self.filteredTeams.subscribe((changes) => {
@@ -1652,16 +1935,20 @@ function VM() {
 
     // automatically refresh markers when jobs change
     self.filteredJobs.subscribe((changes) => {
+        // Bail early if incidents are not visible – no need to attach markers
+        if (!self.incidentsVisible()) {
+            return;
+        }
         changes.forEach(ch => {
             if (ch.status === 'added') {
-                addOrUpdateJobMarker(ko, map, self, ch.value);
+                jobMarkerBatcher.scheduleAdd(ch.value);
                 ch.value.isFilteredIn(true);
                 ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
                 if (ch.value.expanded() || ch.value.popUpIsOpen()) {
                     showAlert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.", "warning", 4000);
                 }
-                removeJobMarker(self, ch.value);
+                jobMarkerBatcher.scheduleRemove(ch.value);
 
                 ch.value.isFilteredIn(false);
             }
@@ -1678,11 +1965,11 @@ function VM() {
         changes.forEach(ch => {
             const a = ch.value;
             if (ch.status === 'added') {
-                attachAssetMarker(ko, map, self, a);
+                matchedAssetMarkerBatcher.scheduleAdd(a);
             } else if (ch.status === 'deleted') {
                 //console.log("Detaching marker for asset no longer filtered in:", a.id());
                 // keep the asset in registry, but remove map marker + subs
-                detachAssetMarker(ko, map, self, a);
+                matchedAssetMarkerBatcher.scheduleRemove(a);
             }
         });
     }, null, "arrayChange");
@@ -1695,9 +1982,9 @@ function VM() {
         changes.forEach(ch => {
             const a = ch.value;
             if (ch.status === 'added') {
-                attachUnmatchedAssetMarker(ko, map, self, a);
+                unmatchedAssetMarkerBatcher.scheduleAdd(a);
             } else if (ch.status === 'deleted') {
-                detachUnmatchedAssetMarker(ko, map, self, a);
+                unmatchedAssetMarkerBatcher.scheduleRemove(a);
             }
         });
     }, null, "arrayChange");
@@ -1707,7 +1994,7 @@ function VM() {
         if (ev.layer !== self.mapVM.assetLayer) return;
         const assets = self.filteredTrackableAssets?.() || [];
         assets.forEach(a => {
-            attachAssetMarker(ko, map, self, a);
+            matchedAssetMarkerBatcher.scheduleAdd(a);
         });
     });
 
@@ -1715,7 +2002,7 @@ function VM() {
         if (ev.layer !== self.mapVM.assetLayer) return;
         const assets = self.filteredTrackableAssets?.() || [];
         assets.forEach(a => {
-            detachAssetMarker(ko, map, self, a);
+            matchedAssetMarkerBatcher.scheduleRemove(a);
         });
     });
 
@@ -1724,7 +2011,7 @@ function VM() {
         if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
         const assets = self.unmatchedTrackableAssets?.() || [];
         assets.forEach(a => {
-            attachUnmatchedAssetMarker(ko, map, self, a);
+            unmatchedAssetMarkerBatcher.scheduleAdd(a);
         });
     });
 
@@ -1732,7 +2019,7 @@ function VM() {
         if (ev.layer !== self.mapVM.unmatchedAssetLayer) return;
         const assets = self.unmatchedTrackableAssets?.() || [];
         assets.forEach(a => {
-            detachUnmatchedAssetMarker(ko, map, self, a);
+            unmatchedAssetMarkerBatcher.scheduleRemove(a);
         });
     });
 
@@ -2164,18 +2451,42 @@ function VM() {
 
     // --- Polling layers ---
     registerTransportCamerasLayer(self, map, getToken, apiHost, params);
+            registerHazardWatchWarningsLayer(self, apiHost);
+
     registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
     registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
+
     registerSESZonesGridLayer(self);
     registerSESUnitsZonesHybridGridLayer(self, map);
-    registerHazardWatchWarningsLayer(self, apiHost);
     registerSESUnitLocationsLayer(self);
     renderFRAOSLayer(self, map, getToken, apiHost, params);
     registerPowerBoundariesGridLayer(self, map);
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
     registerBOMLandWarningsLayer(self);
-    registerRainRadarLayer(self, map);
+    registerBOMRainfallLayer(self, sourceUrl);
+    registerBOMRadarLayer(self, sourceUrl);
+    registerBOMAllFloodLevelsLayer(self, sourceUrl);
+    registerBOMSatTrueColorLayer(self, sourceUrl);
+    registerBOMThunderstormTrackingLayer(self, sourceUrl);
+    registerBOMWindLayer(self, sourceUrl);
+    registerBOMMSLPLayer(self, sourceUrl);
+    registerBOMLightningLayer(self, sourceUrl);
+    registerBOMLightning24hLayer(self, sourceUrl);
+    registerBOMTsunamiLayer(self, sourceUrl);
+    registerBOMTropicalCycloneLayer(self, sourceUrl);
+    registerBOMFireDangerRatingLayer(self, sourceUrl);
+    registerBOMHeatwaveLayer(self, sourceUrl);
+    registerBOMHazardousSurfLayer(self, sourceUrl);
+    registerBOMCoastalHazardLayer(self, sourceUrl);
+    registerBOMRoadWeatherLayer(self, sourceUrl);
+    registerBOMSurfaceGustLayer(self, sourceUrl);
+    registerBOMSurfaceTempLayer(self, sourceUrl);
+    registerBOMFireBehaviourIndexLayer(self, sourceUrl);
+    registerBOMHazardousWindLayer(self, sourceUrl);
+    registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
+    registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
+        registerRainRadarLayer(self, map);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
@@ -2189,171 +2500,150 @@ function VM() {
         },
 
         onAdd(map) {
-            const c = L.DomUtil.create("div", "layers-drawer leaflet-bar");
+            const c = L.DomUtil.create("div", "layers-drawer");
 
             // stop wheel -> no map zoom when scrolling the panel
-            c.addEventListener(
-                "wheel",
-                (e) => {
-                    e.stopPropagation();
-                },
-                { passive: false }
-            );
+            c.addEventListener("wheel", (e) => { e.stopPropagation(); }, { passive: false });
 
-            // Bootstrap-flavoured shell
             c.innerHTML = `
-      <button class="btn btn-light btn-sm shadow-sm" style="border: 10px;"
-              title="Layers"
-              aria-expanded="${this._open ? "true" : "false"}">
-        <i class="fas fa-layer-group"></i>
-      </button>
-
+      <div class="leaflet-bar">
+        <button class="btn btn-light btn-sm shadow-sm ld-toggle-btn" style="border: 10px;"
+                title="Layers"
+                aria-expanded="${this._open ? "true" : "false"}">
+          <i class="fas fa-layer-group"></i>
+        </button>
+      </div>
       <div class="ld-panel ${this._open ? "" : "d-none"} shadow-sm rounded-3">
-        <div class="ld-section mb-2">
-          <div class="d-flex align-items-center justify-content-between mb-1">
-            <span class="ld-title text-uppercase small text-muted">Basemap</span>
+        <!-- Search box -->
+        <div class="ld-search-row p-2">
+          <input type="text" class="form-control form-control-sm ld-search-input" placeholder="Search layers..." />
+        </div>
+        <!-- Basemap dropdown (spans full width) -->
+        <div class="ld-basemap-row">
+          <div class="dropdown w-100">
+            <button class="btn btn-sm btn-outline-secondary w-100 text-start d-flex align-items-center ld-basemap-btn"
+                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-map me-2"></i>
+              <span class="ld-basemap-label">Basemap</span>
+              <i class="fas fa-caret-down ms-auto"></i>
+            </button>
+            <ul class="dropdown-menu ld-basemap-menu shadow"></ul>
           </div>
-          <div class="btn-group btn-group-sm d-flex flex-wrap ld-bases"
-               role="group"
-               aria-label="Basemap selection"></div>
         </div>
-
-        <hr class="my-2">
-
-        <div class="ld-section">
-          <div class="ld-title text-uppercase small text-muted mb-1">Overlays</div>
-          <div class="ld-list ld-overlays"></div>
-        </div>
+        <!-- Two-column grid of groups -->
+        <div class="ld-grid"></div>
       </div>
     `;
 
-            // --- Basemap buttons (single-select) ---
+            // --- Basemap dropdown ---
             const basemapNames = [
                 { name: "Esri Topographic", key: "Topographic" },
                 { name: "Esri Streets", key: "Streets" },
                 { name: "Esri Imagery", key: "Imagery" },
                 { name: "Esri Dark", key: "DarkGray" },
-                { name: "SIX Maps Topographic", key: "nsw-vector" },
+                { name: "Spatial NSW", key: "nsw-vector" },
                 { name: "SIX Maps Base Map", key: "nsw-base" },
                 { name: "SIX Maps Imagery", key: "nsw-imagery" }
             ];
 
-            const basesEl = c.querySelector(".ld-bases");
+            const basemapThumbs = {
+                "Topographic":  "https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/16/39312/60258",
+                "Streets":      "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/16/39312/60258",
+                "Imagery":      "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/16/39312/60258",
+                "DarkGray":     "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/16/39312/60258",
+                "nsw-vector":   "https://static.lighthouse-extension.com/map/nsw_vector.png",
+                "nsw-base":     "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/16/39312/60258",
+                "nsw-imagery":  "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/16/39312/60258",
+            };
+
+            const basemapLabel = c.querySelector(".ld-basemap-label");
+            const basemapMenu = c.querySelector(".ld-basemap-menu");
+
+            const currentBaseName = basemapNames.find(b => b.key === this._baseKey)?.name || "Basemap";
+            basemapLabel.textContent = currentBaseName;
 
             basemapNames.forEach(({ name, key }) => {
-                const btn = document.createElement("button");
-                btn.type = "button";
-                btn.className =
-                    "btn btn-outline-secondary flex-grow-1 mb-1" +
-                    (key === this._baseKey ? " active btn-primary" : "");
-                btn.textContent = name;
-                btn.dataset.baseKey = key;
-
+                const li = document.createElement("li");
+                const thumb = basemapThumbs[key] || basemapThumbs["Topographic"];
+                li.innerHTML = `<button type="button" class="dropdown-item d-flex align-items-center gap-2 ${key === this._baseKey ? "active" : ""}">
+                    <img src="${thumb}" width="28" height="28" style="border-radius:3px;object-fit:cover;" alt="" />
+                    <span>${name}</span>
+                </button>`;
+                const btn = li.querySelector("button");
                 btn.addEventListener("click", () => {
                     if (key === this._baseKey) return;
-
                     this._setBasemap(key, map);
                     this._baseKey = key;
                     localStorage.setItem("map.base", key);
-
-                    // update active styles
-                    basesEl.querySelectorAll("button").forEach((b) => {
-                        b.classList.remove("active", "btn-primary");
-                        b.classList.add("btn-outline-secondary");
-                    });
-                    btn.classList.add("active", "btn-primary");
-                    btn.classList.remove("btn-outline-secondary");
+                    basemapLabel.textContent = name;
+                    basemapMenu.querySelectorAll(".dropdown-item").forEach(d => d.classList.remove("active"));
+                    btn.classList.add("active");
                 });
-
-                basesEl.appendChild(btn);
+                basemapMenu.appendChild(li);
             });
 
-            // apply initial basemap
             this._setBasemap(this._baseKey, map);
 
-            // --- Overlays as toggle buttons (multi-select) ---
-            const overlaysEl = c.querySelector(".ld-overlays");
+            // --- Overlays: group by def.group ---
             const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
-
-            // Group by def.group (parent menu layer)
             const groups = new Map();
             overlayDefs.forEach((def) => {
-                const g = def.group || ""; // '' = ungrouped
+                const g = def.group || "";
                 if (!groups.has(g)) groups.set(g, []);
                 groups.get(g).push(def);
             });
 
-            // Build Bootstrap accordion container
-            const acc = document.createElement("div");
-            acc.className = "accordion accordion-flush";
-            acc.id = "ld-overlays-accordion";
-            overlaysEl.appendChild(acc);
-
-            // Helpers
-            const safeId = (s) =>
-                String(s || "")
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]+/g, "-")
-                    .replace(/(^-|-$)/g, "") || "other";
-
             const groupTitle = (k) => (k && String(k).trim() ? k : "Other");
 
-            // Build one accordion item per group (sub section)
-            let idx = 0;
+            // --- Build two-column grid of always-visible groups ---
+            const grid = c.querySelector(".ld-grid");
+
             groups.forEach((defs, groupKey) => {
-                idx += 1;
+                const cell = document.createElement("div");
+                cell.className = "ld-grid-cell";
 
-                const gid = safeId(groupKey);
-                const storeKey = `layers.ovgrp.${gid}`;
-                const open = localStorage.getItem(storeKey) === "1"; // default closed
+                // Group header (static label)
+                const header = document.createElement("div");
+                header.className = "ld-group-header";
+                header.innerHTML = `<span class="ld-group-name">${groupTitle(groupKey)}</span>`;
 
-                const item = document.createElement("div");
-                item.className = "accordion-item";
+                // Layer list (always visible)
+                const body = document.createElement("div");
+                body.className = "ld-group-body";
 
-                const headerId = `ld-ov-h-${gid}-${idx}`;
-                const collapseId = `ld-ov-c-${gid}-${idx}`;
+                // If this is the Visibility group, add Incidents toggle first
+                if (groupKey === 'Visibility') {
+                    const incidentsBtn = document.createElement("button");
+                    incidentsBtn.type = "button";
+                    const isIncidentsOn = self.incidentsVisible();
+                    incidentsBtn.className = "btn btn-sm w-100 text-start d-flex align-items-center justify-content-between mb-1 ld-overlay-btn " +
+                        (isIncidentsOn ? "btn-outline-secondary active" : "btn-outline-secondary");
+                    incidentsBtn.dataset.label = "Incidents";
+                    incidentsBtn.innerHTML = `
+                        <span class="me-2">Incidents</span>
+                        <span class="ms-auto">
+                            <i class="fas ${isIncidentsOn ? "fa-toggle-on" : "fa-toggle-off"}"></i>
+                        </span>`;
 
-                item.innerHTML = `
-      <h2 class="accordion-header" id="${headerId}">
-        <button class="accordion-button layermenu-accordion ${open ? "" : "collapsed"} py-2 px-2"
-                type="button"
-                aria-expanded="${open ? "true" : "false"}"
-                aria-controls="${collapseId}">
-          <span class="text-muted text-uppercase fw-semibold small">${groupTitle(groupKey)}</span>
-        </button>
-      </h2>
-      <div id="${collapseId}"
-     class="accordion-collapse collapse ${open ? "show" : ""}"
-     aria-labelledby="${headerId}"
-     data-bs-parent="#ld-overlays-accordion">
-        <div class="accordion-body p-2"></div>
-      </div>
-    `;
+                    incidentsBtn.addEventListener("click", () => {
+                        const icon = incidentsBtn.querySelector("i");
+                        const currentState = self.incidentsVisible();
+                        const newState = !currentState;
+                        self.incidentsVisible(newState);
+                        
+                        if (newState) {
+                            incidentsBtn.classList.add("active");
+                            if (icon) { icon.classList.remove("fa-toggle-off"); icon.classList.add("fa-toggle-on"); }
+                        } else {
+                            incidentsBtn.classList.remove("active");
+                            if (icon) { icon.classList.remove("fa-toggle-on"); icon.classList.add("fa-toggle-off"); }
+                        }
+                    });
 
-                acc.appendChild(item);
+                    body.appendChild(incidentsBtn);
+                }
 
-                const btn = item.querySelector(".accordion-button");
-                const body = item.querySelector(".accordion-body");
-                const collapseEl = item.querySelector(".accordion-collapse");
-
-                // Bootstrap Collapse instance with accordion behaviour (only one open at a time)
-                const collapse = new bootstrap.Collapse(collapseEl, { toggle: false, parent: acc });
-
-                btn.addEventListener("click", () => collapse.toggle());
-
-                collapseEl.addEventListener("shown.bs.collapse", () => {
-                    localStorage.setItem(storeKey, "1");
-                    btn.classList.remove("collapsed");
-                    btn.setAttribute("aria-expanded", "true");
-                });
-
-                collapseEl.addEventListener("hidden.bs.collapse", () => {
-                    localStorage.setItem(storeKey, "0");
-                    btn.classList.add("collapsed");
-                    btn.setAttribute("aria-expanded", "false");
-                });
-
-                // Render overlay buttons inside this group's accordion body
+                // Build layer toggle buttons
                 defs.forEach(({ key, label, layer, visibleByDefault }) => {
                     const stored = localStorage.getItem(`ov.${key}`);
                     const saved = (stored === null)
@@ -2368,64 +2658,115 @@ function VM() {
                         "btn btn-sm w-100 text-start d-flex align-items-center justify-content-between mb-1 ld-overlay-btn " +
                         (saved ? "btn-outline-secondary active" : "btn-outline-secondary");
                     obtn.dataset.key = key;
+                    obtn.dataset.label = label;
                     obtn.innerHTML = `
-          <span class="me-2">${label}</span>
-          <span class="ms-auto">
-            <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
-          </span>
-        `;
+                        <span class="me-2">${label}</span>
+                        <span class="ms-auto">
+                            <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
+                        </span>`;
 
                     obtn.addEventListener("click", () => {
                         const icon = obtn.querySelector("i");
                         const isOn = obtn.classList.contains("active");
-
                         if (isOn) {
                             map.removeLayer(layer);
                             localStorage.setItem(`ov.${key}`, "0");
                             obtn.classList.remove("active");
-                            if (icon) {
-                                icon.classList.remove("fa-toggle-on");
-                                icon.classList.add("fa-toggle-off");
-                            }
+                            if (icon) { icon.classList.remove("fa-toggle-on"); icon.classList.add("fa-toggle-off"); }
                         } else {
                             map.addLayer(layer);
                             localStorage.setItem(`ov.${key}`, "1");
                             obtn.classList.add("active");
-                            if (icon) {
-                                icon.classList.remove("fa-toggle-off");
-                                icon.classList.add("fa-toggle-on");
-                            }
+                            if (icon) { icon.classList.remove("fa-toggle-off"); icon.classList.add("fa-toggle-on"); }
                         }
                     });
 
-
                     body.appendChild(obtn);
                 });
+
+                cell.appendChild(header);
+                cell.appendChild(body);
+                grid.appendChild(cell);
             });
 
+            // --- Search filter ---
+            const searchInput = c.querySelector(".ld-search-input");
+            const searchFilter = (query) => {
+                const q = query.toLowerCase().trim();
+                const cells = grid.querySelectorAll(".ld-grid-cell");
+                
+                cells.forEach(cell => {
+                    const buttons = cell.querySelectorAll(".ld-overlay-btn");
+                    let anyVisible = false;
+                    
+                    buttons.forEach(btn => {
+                        let shouldShow = !q; // Show all if no query
+                        
+                        if (q) {
+                            // Extract label from the span.me-2 text content
+                            const labelSpan = btn.querySelector("span.me-2");
+                            const label = labelSpan ? labelSpan.textContent.trim().toLowerCase() : "";
+                            shouldShow = label.includes(q);
+                        }
+                        
+                        btn.style.setProperty("display", shouldShow ? "" : "none", "important");
+                        if (shouldShow) anyVisible = true;
+                    });
+                    
+                    // Show cell only if at least one button is visible
+                    cell.style.setProperty("display", anyVisible ? "" : "none", "important");
+                });
+            };
+            
+            searchInput.addEventListener("input", (e) => {
+                searchFilter(e.target.value);
+            });
 
-            const btn = c.querySelector(".btn");
+            // --- Toggle button ---
+            const toggleBtn = c.querySelector(".ld-toggle-btn");
             const panel = c.querySelector(".ld-panel");
-            L.DomEvent.on(btn, "click", (ev) => {
+
+            const fitPanel = () => {
+                requestAnimationFrame(() => {
+                    const rect = panel.getBoundingClientRect();
+                    const avail = window.innerHeight - rect.top - 20; // 20px bottom margin
+                    panel.style.maxHeight = Math.max(avail, 160) + "px";
+                });
+            };
+
+            L.DomEvent.on(toggleBtn, "click", (ev) => {
                 L.DomEvent.stop(ev);
                 const hidden = panel.classList.toggle("d-none");
-                btn.setAttribute("aria-expanded", (!hidden).toString());
-                btn.parentElement.classList.toggle("no-border", !hidden);
+                toggleBtn.setAttribute("aria-expanded", (!hidden).toString());
+                toggleBtn.parentElement.classList.toggle("no-border", !hidden);
                 localStorage.setItem("layers.open", hidden ? "0" : "1");
+                if (!hidden) {
+                    // Clear search when opening
+                    searchInput.value = "";
+                    searchFilter("");
+                    fitPanel();
+                }
             });
 
-            // prevent clicks/scrolls from falling through to map
-            L.DomEvent.disableClickPropagation(c);
+            // Re-fit when window resizes
+            window.addEventListener("resize", () => {
+                if (!panel.classList.contains("d-none")) fitPanel();
+            });
 
-            // tuck the drawer under the zoom control
-            setTimeout(() => {
-                const position = map._controlCorners.topleft.querySelector(
-                    ".leaflet-control-geosearch"
-                );
-                if (position && c.parentElement === map._controlCorners.topleft) {
-                    position.insertAdjacentElement("afterend", c);
+            // Initial fit if panel starts open
+            if (this._open) setTimeout(fitPanel, 50);
+
+            // Close panel when map is clicked
+            map.on("click", () => {
+                if (!panel.classList.contains("d-none")) {
+                    panel.classList.add("d-none");
+                    toggleBtn.setAttribute("aria-expanded", "false");
+                    toggleBtn.parentElement.classList.remove("no-border");
+                    localStorage.setItem("layers.open", "0");
                 }
-            }, 0);
+            });
+
+            L.DomEvent.disableClickPropagation(c);
 
             this._container = c;
             return c;
@@ -2533,15 +2874,28 @@ function VM() {
 
     const layersDrawer = new LayersDrawer();
     layersDrawer.addTo(map);
+    self.mapVM.layersDrawer = layersDrawer;
 
     setTimeout(() => {
-        // force ordering: place directly under zoom buttons
-        const zoom = document.querySelector('.leaflet-control-zoom');
-        const toggle = document.querySelector('.sidebar-toggle');
-        if (zoom && toggle) {
-            zoom.parentNode.insertBefore(toggle, zoom.nextSibling);
+        // force ordering: zoom → hide → layers → measure → geosearch
+        const corner = map._controlCorners.topleft;
+        const zoom     = corner.querySelector('.leaflet-control-zoom');
+        const layers   = corner.querySelector('.layers-drawer');
+        const measure  = document.getElementById('polyline-measure-control');
+        const measureCtl = measure ? measure.closest('.leaflet-control') : null;
+        const geosearch = corner.querySelector('.leaflet-control-geosearch');
+        const hide     = corner.querySelector('.sidebar-toggle');
+
+        // Insert in reverse order after zoom so the last insert ends up first
+        const order = [geosearch, measureCtl, layers, hide];
+        if (zoom) {
+            order.forEach(el => {
+                if (el && el.parentElement === corner) {
+                    zoom.parentElement.insertBefore(el, zoom.nextSibling);
+                }
+            });
         }
-    }, 0);
+    }, 100);
 
 
 
@@ -2757,8 +3111,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 })
 
-// wait for full CSS + DOM
-window.addEventListener('load', function () {
+// show page once DOM + CSS are ready (don't wait for map tiles)
+document.addEventListener('DOMContentLoaded', function () {
     document.body.style.opacity = '1';
 });
 

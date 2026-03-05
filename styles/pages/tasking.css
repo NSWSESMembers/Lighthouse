@@ -6,6 +6,7 @@
 @import url('leaflet/dist/leaflet.css');
 @import url('leaflet.polylinemeasure/Leaflet.PolylineMeasure.css');
 @import url('leaflet-geosearch/dist/geosearch.css');
+@import url('leaflet.markercluster/dist/MarkerCluster.css');
 
 
 html {
@@ -1020,6 +1021,72 @@ tr.job:hover {
   image-rendering: crisp-edges;
 }
 
+/* ─── JOB CLUSTER ICON ─── */
+.job-cluster-icon {
+  background: transparent;
+  border: none;
+  pointer-events: auto;
+}
+
+/* Inner wrapper – provides the positioning context for the
+   SVG ring and centred badge without interfering with
+   Leaflet's position:absolute on .leaflet-marker-icon */
+.cluster-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.15s ease;
+  pointer-events: auto;
+}
+
+.cluster-wrap:hover {
+  transform: scale(1.12);
+}
+
+/* Cluster ring SVG – fills the icon area */
+.cluster-ring {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  overflow: visible;
+  cursor: pointer;
+}
+
+/* SVG hex-outline pulse ring */
+.cluster-pulse-hex {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 3;
+  transform-origin: 50% 50%;
+  animation: cluster-pulse-new 1.4s ease-out infinite;
+}
+
+@keyframes cluster-pulse-new {
+  0%   { transform: scale(0.8); opacity: 0.9; }
+  80%  { transform: scale(1.5); opacity: 0.12; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+
+/* Override markercluster defaults on our pane */
+.leaflet-cluster-anim .leaflet-marker-icon,
+.leaflet-cluster-anim .leaflet-marker-shadow {
+  transition: transform 0.25s ease-out, opacity 0.25s ease-in;
+}
+
+/* Spiderfy legs */
+.leaflet-cluster-spider-leg {
+  stroke: rgba(100, 100, 100, 0.5);
+  stroke-width: 1.5;
+}
+
 /* PULSE RING (separate follower marker using L.divIcon) */
 .pulse-ring-icon {
   pointer-events: none; /* clicks go to the base marker */
@@ -1036,11 +1103,22 @@ tr.job:hover {
   position: absolute;
   inset: 0; /* fills its icon box exactly */
   border-radius: 50%;
-  box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.8);
+  box-shadow: 0 0 0 2px rgba(247, 147, 29, 0.9);
   transform-origin: 50% 50%;
   animation: pulse-ring 1.4s ease-out infinite;
-  background: conic-gradient(red 257deg);
+  background: conic-gradient(#f7931d 257deg);
   mask: radial-gradient(circle at center, transparent 10px, white 20px);
+}
+
+/* SVG shape-aware pulse ring (matches marker shape) */
+.pulse-ring-shape {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  animation: pulse-ring 1.4s ease-out infinite;
+  overflow: visible;
 }
 
 @keyframes pulse-ring {
@@ -1056,10 +1134,6 @@ tr.job:hover {
     transform: scale(1.2);
     opacity: 0;
   }
-}
-
-.legend-ring > div > .pulse-ring {
-  position: relative !important;
 }
 
 .no-drag {
@@ -1223,14 +1297,6 @@ overflow: hidden;
 .layers-drawer .ld-toggle:focus {
   outline: 2px solid #66afe9;
 }
-.layers-drawer .ld-panel {
-  background: #fff;
-  padding: 6px;
-  width: 220px;
-  max-height: 280px;
-  overflow: auto;
-  border-top: 1px solid #ccc;
-}
 .layers-drawer .ld-section + .ld-section {
   margin-top: 8px;
 }
@@ -1257,7 +1323,21 @@ overflow: hidden;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   min-width: 120px;
+  max-width: 80vw;
   font-size: 13px;
+}
+
+.legend-body {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  max-height: calc(100vh - 120px);
+  gap: 0 20px;
+}
+
+.legend-body > div {
+  min-width: 190px;
+  max-width: 300px;
 }
 
 .legend-container i {
@@ -1509,9 +1589,7 @@ overflow: hidden;
 .job-card .fa.fa-solid {
   transition: transform 140ms ease;
 }
-.job-card--expanded .fa.fa-solid.fa-plus {
-  /* if you switch to a single chevron icon, rotate it here */
-}
+
 
 /* Wider dropdown specifically for the Jobs filter menu */
 #jobMenu + .dropdown-menu {
@@ -2005,18 +2083,224 @@ overflow: hidden;
   align-items: center;
 }
 
+.layers-drawer {
+  position: relative;
+}
+
 .layers-drawer .ld-panel {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 6px;
   background: #fff;
   padding: 8px;
-  width: 260px;
-  max-height: 50%;
-  overflow: auto;
-  border-top: 1px solid #ccc;
+  width: 760px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid #ccc;
   border-radius: 0.5rem;
+  z-index: 1000;
+}
+
+/* ── Search row ── */
+.ld-search-row {
+  border-bottom: 1px solid #e0e0e0;
+  padding: 6px 8px;
+}
+.ld-search-input {
+  font-size: 12px;
+}
+.ld-search-input::placeholder {
+  color: #999;
+}
+
+/* ── Basemap dropdown row (full width above grid) ── */
+.ld-basemap-row {
+  margin-bottom: 8px;
+}
+.ld-basemap-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+.ld-basemap-menu {
+  font-size: 12px;
+  max-height: 260px;
+  overflow-y: auto;
+  width: 100%;
+}
+.ld-basemap-menu .dropdown-item img {
+  flex-shrink: 0;
+}
+
+/* ── Three-column group grid ── */
+.ld-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px 10px;
+  align-items: start;
+}
+.ld-grid-cell {
+  min-width: 0;
+}
+
+/* Group header (static label) */
+.ld-group-header {
+  display: block;
+  width: 100%;
+  padding: 4px 6px;
+  background: #f0f1f3;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #555;
+  letter-spacing: 0.03em;
+  margin-bottom: 3px;
+}
+
+.ld-group-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Layer list inside a group */
+.ld-group-body {
+  padding: 0;
 }
 
 .layers-drawer .ld-overlay-btn {
+  font-size: 11px;
+  padding: 3px 6px;
+}
+
+/* ── Radar playback bar (bottom-center) ── */
+.rv-wrapper {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.rv-legend-container {
+  pointer-events: auto;
+}
+
+.rv-control {
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 0 0 4px 4px;
   font-size: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  user-select: none;
+  pointer-events: auto;
+}
+.rv-control button {
+  border: 1px solid #ddd;
+  background: #f9f9f9;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 6px;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+  min-width: 32px;
+}
+.rv-control button:hover {
+  background: #fff;
+  border-color: #999;
+}
+.rv-control button:active {
+  background: #f0f0f0;
+}
+.rv-control input[type="range"] {
+  cursor: pointer;
+  height: 4px;
+  border-radius: 2px;
+  outline: none;
+}
+.rv-control input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  border: 1px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
+.rv-control input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #4a90e2;
+  cursor: pointer;
+  border: 1px solid #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.3);
+}
+.rv-control select {
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 12px;
+  padding: 4px 6px;
+  cursor: pointer;
+  background: #f9f9f9;
+  font-family: system-ui, -apple-system, sans-serif;
+  min-width: 58px;
+}
+.rv-control select:hover {
+  border-color: #999;
+}
+
+/* ── Basemap accordion with thumbnail grid ── */
+
+.ld-bases-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.ld-base-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 3px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.ld-base-tile:hover {
+  border-color: #90caf9;
+}
+
+.ld-base-tile.active {
+  border-color: #1a73e8;
+}
+
+.ld-base-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  background-size: cover;
+  background-position: center;
+  background-color: #e0e0e0;
+}
+
+.ld-base-name {
+  font-size: 9px;
+  text-align: center;
+  margin-top: 2px;
+  line-height: 1.1;
+  color: #444;
+  max-width: 54px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* header layout: bar + small hide button */
@@ -2220,6 +2504,7 @@ input[type='search']::-ms-clear {
 .spotlight-secondary {
   display: -webkit-box;
   -webkit-line-clamp: 2;      /* 1 or 2 */
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

@@ -2,7 +2,7 @@ var L = require('leaflet');
 
 // Legend control (collapsible)
 export const LegendControl = L.Control.extend({
-  options: { position: "bottomleft", collapsed: false, persist: true },
+  options: { position: "bottomleft", collapsed: true, persist: true },
 
   onAdd() {
     const div = L.DomUtil.create("div", "legend-container leaflet-bar");
@@ -26,7 +26,7 @@ export const LegendControl = L.Control.extend({
     </div>
 
     <div class="mb-2">
-      <div class="fw-semibold small mb-1">Priority → Fill</div>
+      <div class="fw-semibold small mb-1 mt-2">Priority → Fill</div>
       <div class="d-flex flex-wrap gap-2 small">
         <div><span class="legend-box" style="background:#FFA500"></span> Priority</div>
         <div><span class="legend-box" style="background:#4F92FF"></span> Immediate</div>
@@ -36,7 +36,7 @@ export const LegendControl = L.Control.extend({
     </div>
 
     <div>
-      <div class="fw-semibold small mb-1">FR: Category → Fill</div>
+      <div class="fw-semibold small mb-1 mt-2">FR: Category → Fill</div>
       <div class="d-flex flex-wrap gap-2 small">
         <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#7F1D1D" stroke-width="2"/></svg> Cat 1</div>
         <div><svg width="16" height="16"><polygon points="8,2 14,6 12,14 4,14 2,6" stroke="#000" fill="#DC2626" stroke-width="2"/></svg> Cat 2</div>
@@ -48,14 +48,45 @@ export const LegendControl = L.Control.extend({
 
 
     <div>
-      <div class="fw-semibold small mb-1">Overlays</div>
-      <div class="d-flex flex-wrap gap-2 small legend-ring ">
-        <div><div class="pulse-ring-icon"></div><svg  class="pulse-ring" width="16" height="16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="2"/></svg> Unacknowledged incident</div>
+      <div class="fw-semibold small mb-1 mt-2">Overlays</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:4px;" class="small legend-ring">
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid #f7931d;animation:pulse-ring 1.4s ease-out infinite;"></span>
+          <span>Unacknowledged Incident</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;">
+            <polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="#6b7280" stroke="#888" stroke-width="2"/>
+            <polygon points="24.1,9 27.5,18 24.1,27 11.9,27 8.5,18 11.9,9" fill="#6b7280"/>
+            <text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="700" font-family="system-ui,sans-serif">7</text>
+          </svg>
+          <span>Cluster of 7 Incidents</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;">
+            <!-- Flat-top hexagon, half border green, half red -->
+            <polygon points="18,4 32,11 32,25 18,32 4,25 4,11" fill="#6b7280"/>
+            <polyline points="18,4 32,11 32,25 18,32" fill="none" stroke="#28a745" stroke-width="3"/>
+            <polyline points="18,32 4,25 4,11 18,4" fill="none" stroke="#dc3545" stroke-width="3"/>
+            <polygon points="18,12 24,18 18,24 12,18" fill="#6b7280"/>
+            <text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="700" font-family="system-ui,sans-serif">5</text>
+          </svg>
+          <span>Cluster Of Mixed Priorities</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;">
+            <polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="#6b7280" stroke="rgba(247,147,29,0.9)" stroke-width="2"/>
+            <polygon points="24.1,9 27.5,18 24.1,27 11.9,27 8.5,18 11.9,9" fill="#6b7280"/>
+            <text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="700" font-family="system-ui,sans-serif">3</text>
+            <polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="none" stroke="#f7931d" stroke-width="2" stroke-dasharray="4 2"/>
+          </svg>
+          <span>Cluster Contains Unacked Incidents</span>
+        </div>
       </div>
-    </div>
-    <div class="legend-section">
-    <br>
-  <div class="fw-semibold small mb-1">Assets</div>
+      </div>
+
+
+  <div class="fw-semibold small mb-1 mt-2">Assets</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:2px;">
 
     <div style="display:flex;align-items:center;margin:2px 0;">
@@ -146,12 +177,9 @@ export const LegendControl = L.Control.extend({
     this._body = div.querySelector(".legend-body");
     this._btn = div.querySelector(".toggle-legend");
 
-    // initial state
-    const collapsed =
-      this.options.persist &&
-      localStorage.getItem("legendCollapsed") === "1"
-        ? true
-        : !!this.options.collapsed;
+    // initial state: use stored preference if available, otherwise fall back to option default
+    const stored = this.options.persist ? localStorage.getItem("legendCollapsed") : null;
+    const collapsed = stored !== null ? stored === "1" : !!this.options.collapsed;
     this._setCollapsed(collapsed);
 
     // prevent map drag/zoom on click

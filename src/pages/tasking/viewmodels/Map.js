@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 var ko = require('knockout');
 var L = require('leaflet');
+import 'leaflet.markercluster';
 
 import { AssetPopupViewModel } from './AssetPopUp';
 import { JobPopupViewModel } from './JobPopUp';
@@ -17,10 +18,346 @@ export function MapVM(Lmap, root) {
   self.distanceMarker = null;
   self.crowFliesLine = null;
 
+  // Guard flag: true while a flyToBounds animation is in progress.
+  // popupclose handlers check this to avoid clearing routes/crow-flies
+  // when the close was merely a side-effect of the zoom change (e.g.
+  // markercluster collapsing a spider during the animation).
+  self._flyingToBounds = false;
+
+  // Layers drawer control (for basemap switching)
+  self.layersDrawer = null;
+
   // layers
   self.assetLayer = L.layerGroup();             // not added by default – layers drawer handles visibility
-  self.jobMarkerGroups = new Map();
   self.unmatchedAssetLayer = L.layerGroup();   // not added by default
+
+  // --- Job marker clustering ---
+  // Single cluster group for all job markers (replaces per-type layerGroups)
+  self.jobClusterGroup = L.markerClusterGroup({
+    maxClusterRadius: 60,           // default; overridden by Config.afterConfigLoad
+    showCoverageOnHover: true,
+    zoomToBoundsOnClick: true,
+    spiderfyOnMaxZoom: true,
+    spiderfyDistanceMultiplier: 1.8,
+    animate: true,
+    clusterPane: 'pane-tippy-top',
+    spiderLegPolylineOptions: { weight: 1.5, color: '#888', opacity: 0.5, interactive: false },
+    iconCreateFunction: function (cluster) {
+      const children = cluster.getAllChildMarkers();
+      const count = children.length;
+      const hasRescue = children.some(m => m._isRescue);
+      const hasNew = children.some(m => m._isNew);
+
+      // Size tier based on child count
+      const tier = count >= 20 ? 'lg' : count >= 6 ? 'md' : 'sm';
+      const cls = 'job-cluster-count cluster-' + tier
+        + (hasRescue ? ' has-rescue' : '')
+        + (hasNew ? ' has-new' : '');
+
+      // --- Hexagonal ring dimensions ---
+      // outerR = circumradius of outer hex, innerR = inner hex
+      const outerR = tier === 'lg' ? 24 : tier === 'md' ? 21 : 18;
+      const innerR = tier === 'lg' ? 19 : tier === 'md' ? 17 : 14;
+      const size = outerR * 2;
+      const cx = size / 2, cy = size / 2;
+
+      // Helper: hex vertex at angle offset (flat-top: first vertex at 0°)
+      var hexPt = function(cxx, cyy, r, i) {
+        var a = Math.PI / 3 * i - Math.PI / 6; // flat-top hex
+        return [cxx + r * Math.cos(a), cyy + r * Math.sin(a)];
+      };
+      var hexPoints = function(cxx, cyy, r) {
+        var pts = [];
+        for (var i = 0; i < 6; i++) pts.push(hexPt(cxx, cyy, r, i));
+        return pts;
+      };
+
+      // tally colours
+      const colorCounts = new Map();
+      for (const m of children) {
+        const c = m._priorityColor || '#6b7280';
+        colorCounts.set(c, (colorCounts.get(c) || 0) + 1);
+      }
+
+      let ringPaths = '';
+      if (colorCounts.size === 1) {
+        // single colour – full outer hex
+        const col = colorCounts.keys().next().value;
+        var op = hexPoints(cx, cy, outerR).map(function(p){ return p[0]+','+p[1]; }).join(' ');
+        ringPaths = '<polygon points="' + op + '" fill="' + col + '"/>';
+      } else {
+        // multiple colours – walk outer hex perimeter, cut back along inner
+        // Total outer perimeter length
+        var outerPts = hexPoints(cx, cy, outerR);
+        var innerPts = hexPoints(cx, cy, innerR);
+        var segLen = Math.sqrt(Math.pow(outerPts[1][0]-outerPts[0][0],2) + Math.pow(outerPts[1][1]-outerPts[0][1],2));
+        var totalPerim = segLen * 6;
+
+        // Build perimeter as sequence of points with cumulative distance
+        var perimPts = [];  // [{x,y,d}]
+        var cumD = 0;
+        for (var si = 0; si < 6; si++) {
+          perimPts.push({ x: outerPts[si][0], y: outerPts[si][1], d: cumD });
+          cumD += segLen;
+        }
+        perimPts.push({ x: outerPts[0][0], y: outerPts[0][1], d: cumD }); // close
+
+        var innerPerimPts = [];
+        var cumD2 = 0;
+        var innerSegLen = Math.sqrt(Math.pow(innerPts[1][0]-innerPts[0][0],2) + Math.pow(innerPts[1][1]-innerPts[0][1],2));
+        for (var si2 = 0; si2 < 6; si2++) {
+          innerPerimPts.push({ x: innerPts[si2][0], y: innerPts[si2][1], d: cumD2 });
+          cumD2 += innerSegLen;
+        }
+        innerPerimPts.push({ x: innerPts[0][0], y: innerPts[0][1], d: cumD2 });
+        var totalInnerPerim = innerSegLen * 6;
+
+        var interpPerim = function(pts, total, frac) {
+          var target = frac * total;
+          for (var k = 0; k < pts.length - 1; k++) {
+            if (target >= pts[k].d && target <= pts[k+1].d) {
+              var seg = pts[k+1].d - pts[k].d;
+              var t = seg > 0 ? (target - pts[k].d) / seg : 0;
+              return { x: pts[k].x + (pts[k+1].x - pts[k].x) * t, y: pts[k].y + (pts[k+1].y - pts[k].y) * t };
+            }
+          }
+          return { x: pts[pts.length-1].x, y: pts[pts.length-1].y };
+        };
+
+        // Collect all outer & inner points within each segment's fraction range
+        var perimPointsBetween = function(pts, total, f1, f2) {
+          var result = [];
+          for (var k = 0; k < pts.length - 1; k++) {
+            var fk = pts[k].d / total;
+            if (fk > f1 && fk < f2) result.push(pts[k].x + ',' + pts[k].y);
+          }
+          return result;
+        };
+
+        var frac = 0;
+        for (var entry of colorCounts) {
+          var col = entry[0], n = entry[1];
+          var segFrac = n / count;
+          var f1 = frac;
+          var f2 = frac + segFrac;
+
+          // outer: start point, vertices in range, end point
+          var oStart = interpPerim(perimPts, totalPerim, f1);
+          var oEnd   = interpPerim(perimPts, totalPerim, f2);
+          var oMid   = perimPointsBetween(perimPts, totalPerim, f1, f2);
+
+          // inner: same fractions, reversed
+          var iStart = interpPerim(innerPerimPts, totalInnerPerim, f2);
+          var iEnd   = interpPerim(innerPerimPts, totalInnerPerim, f1);
+          var iMid   = perimPointsBetween(innerPerimPts, totalInnerPerim, f1, f2).reverse();
+
+          var pts2 = [oStart.x+','+oStart.y]
+            .concat(oMid)
+            .concat([oEnd.x+','+oEnd.y])
+            .concat([iStart.x+','+iStart.y])
+            .concat(iMid)
+            .concat([iEnd.x+','+iEnd.y]);
+          ringPaths += '<polygon points="' + pts2.join(' ') + '" fill="' + col + '"/>';
+          frac = f2;
+        }
+      }
+
+      // Always draw inner hex fill (badge background) in SVG so it
+      // perfectly matches the ring geometry.
+      var innerHexPts = hexPoints(cx, cy, innerR).map(function(p){ return p[0]+','+p[1]; }).join(' ');
+      ringPaths += '<polygon points="' + innerHexPts + '" fill="rgba(50,50,50,0.88)"/>';
+
+      // Count text rendered in SVG directly so it always paints on top
+      var textColor = hasRescue ? '#dc3545' : '#fff';
+      var fontSize = tier === 'lg' ? 15 : tier === 'md' ? 14 : 13;
+      ringPaths += '<text x="' + cx + '" y="' + cy + '" text-anchor="middle" dominant-baseline="central"'
+        + ' fill="' + textColor + '" font-size="' + fontSize + '" font-weight="700" font-family="system-ui,sans-serif">'
+        + count + '</text>';
+
+      const ringSvg = '<svg class="cluster-ring ' + cls + '" xmlns="http://www.w3.org/2000/svg"'
+        + ' width="' + size + '" height="' + size + '"'
+        + ' viewBox="0 0 ' + size + ' ' + size + '">'
+        + ringPaths + '</svg>';
+
+      // Pulse ring: an SVG hex outline that scales+fades
+      var pulseSvg = '';
+      if (hasNew) {
+        var pulsePts = hexPoints(cx, cy, outerR).map(function(p){ return p[0]+','+p[1]; }).join(' ');
+        pulseSvg = '<svg class="cluster-pulse-hex" xmlns="http://www.w3.org/2000/svg"'
+          + ' width="' + size + '" height="' + size + '"'
+          + ' viewBox="0 0 ' + size + ' ' + size + '">'
+          + '<polygon points="' + pulsePts + '" fill="none" stroke="rgba(247,147,29,0.9)" stroke-width="2"/>'
+          + '</svg>';
+      }
+
+      return L.divIcon({
+        className: 'job-cluster-icon',
+        html: '<div class="cluster-wrap">' + ringSvg + pulseSvg + '</div>',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2]
+      });
+    }
+  });
+  // Only add to map if incidents are visible (checked in main.js VM initialization)
+  if (localStorage.getItem('map.incidentsVisible') !== 'false') {
+    self.jobClusterGroup.addTo(self.map);
+  }
+
+  // ── Fix: prevent spider collapse when clicking a spiderfied marker ──
+  // When a spiderfied child marker is clicked, Leaflet's event propagation
+  // carries the 'click' up through _featureGroup → clusterGroup → map
+  // BEFORE _fireDOMEvent can check _stopped.  This triggers _unspiderfyWrapper
+  // on the map, which collapses the spider and immediately closes the popup
+  // that just opened.  Fix: replace the default _unspiderfyWrapper with one
+  // that checks whether a popup from a spiderfied child is currently open.
+  (function () {
+    var cg = self.jobClusterGroup;
+    // Remove the default wrapper that markercluster registered in _spiderfierOnAdd
+    self.map.off('click', cg._unspiderfyWrapper, cg);
+    // Replace with guarded version
+    cg._unspiderfyWrapper = function () {
+      if (!cg._spiderfied) return;
+      // If a popup belonging to a spiderfied child is currently open on the
+      // map, don't collapse.  The popup's autoClose (via preclick) will close
+      // it on the next outside click, and THAT click will then collapse the
+      // spider normally.  We must check map.hasLayer() because map._popup is
+      // never cleared — it always references the last-opened popup.
+      var popup = self.map._popup;
+      if (popup && self.map.hasLayer(popup) && popup._source && popup._source._spiderLeg) {
+        return;   // popup is open on a spider child – leave the spider alone
+      }
+      cg._unspiderfy();
+    };
+    self.map.on('click', cg._unspiderfyWrapper, cg);
+  })();
+
+  // Plain layer for rescue markers when clustering is disabled for them
+  self.rescueJobLayer = L.layerGroup().addTo(self.map);
+
+  // Plain layer for ALL job markers when clustering is entirely disabled
+  self.unclusteredJobLayer = L.layerGroup();  // not added to map by default
+
+  // Track whether clustering is currently active
+  self.clusteringEnabled = true;
+
+  // Separate plain layer for pulse rings – not clustered
+  self.jobPulseLayer = L.layerGroup().addTo(self.map);
+
+  // id → marker lookup (flat, no per-type groups)
+  self.jobMarkerIndex = new Map();
+
+  // Legacy compat: jobMarkerGroups iterator for tryInitialFit etc.
+  // Now wraps both the cluster group and the rescue layer
+  self.jobMarkerGroups = {
+    values: function () {
+      return [
+        { layerGroup: self.clusteringEnabled ? self.jobClusterGroup : self.unclusteredJobLayer, markers: self.jobMarkerIndex },
+        { layerGroup: self.rescueJobLayer, markers: new Map() }
+      ][Symbol.iterator]();
+    }
+  };
+
+  /**
+   * Move rescue markers between the cluster group and the standalone
+   * rescue layer based on the clusterRescueJobs setting.
+   */
+  self.applyRescueClusterSetting = function (clusterThem) {
+    self.jobMarkerIndex.forEach((marker) => {
+      if (!marker._isRescue) return;
+      if (clusterThem) {
+        // move into cluster group
+        if (self.rescueJobLayer.hasLayer(marker)) {
+          self.rescueJobLayer.removeLayer(marker);
+          self.jobClusterGroup.addLayer(marker);
+        }
+      } else {
+        // move out of cluster group into plain layer
+        if (self.jobClusterGroup.hasLayer(marker)) {
+          self.jobClusterGroup.removeLayer(marker);
+          self.rescueJobLayer.addLayer(marker);
+        }
+      }
+    });
+    self._syncPulseRings();
+  };
+
+  /**
+   * Change the clustering aggressiveness by updating maxClusterRadius.
+   * markercluster doesn't support changing this dynamically, so we
+   * collect all markers, update the option, then re-add them which
+   * forces the internal grids to rebuild.
+   */
+  self.applyClusterRadius = function (radius) {
+    radius = Number(radius) || 60;
+    if (!self.clusteringEnabled) {
+      // Just store for when clustering is re-enabled
+      self.jobClusterGroup.options.maxClusterRadius = radius;
+      return;
+    }
+    if (self.jobClusterGroup.options.maxClusterRadius === radius) return;
+
+    // Collect current markers from the cluster group
+    const markers = [];
+    self.jobClusterGroup.eachLayer(m => markers.push(m));
+
+    // Update the option BEFORE clearLayers — clearLayers internally calls
+    // _generateInitialClusters which rebuilds the DistanceGrid structures
+    // using options.maxClusterRadius.  Setting after would leave stale grids.
+    self.jobClusterGroup.options.maxClusterRadius = radius;
+    self.jobClusterGroup.clearLayers();
+
+    // Re-add — clearLayers rebuilt grid structures with the new radius so
+    // addLayers will cluster correctly.
+    if (markers.length) self.jobClusterGroup.addLayers(markers);
+    self._syncPulseRings();
+  };
+
+  /**
+   * Enable or disable marker clustering entirely.
+   * When disabled, all markers are moved from jobClusterGroup to a plain
+   * layerGroup so they display individually without clustering behaviour.
+   */
+  self.applyClusterEnabled = function (enabled) {
+    if (enabled === self.clusteringEnabled) return;
+    self.clusteringEnabled = enabled;
+
+    const incidentsVisible = localStorage.getItem('map.incidentsVisible') !== 'false';
+
+    if (enabled) {
+      // Move all markers from the plain layer back into the cluster group
+      // (rescue markers go back to rescueJobLayer or clusterGroup per the
+      // clusterRescueJobs setting — we re-apply that afterwards).
+      self.map.removeLayer(self.unclusteredJobLayer);
+      const markers = [];
+      self.unclusteredJobLayer.eachLayer(m => markers.push(m));
+      self.unclusteredJobLayer.clearLayers();
+      // Also grab any rescue markers sitting on the rescue layer
+      self.rescueJobLayer.eachLayer(m => markers.push(m));
+      self.rescueJobLayer.clearLayers();
+      self.jobClusterGroup.addLayers(markers);
+      if (incidentsVisible && !self.map.hasLayer(self.jobClusterGroup)) {
+        self.jobClusterGroup.addTo(self.map);
+      }
+      // Now re-sort rescue markers per the rescue clustering setting
+      const clusterRescue = !!root.config?.clusterRescueJobs?.();
+      self.applyRescueClusterSetting(clusterRescue);
+    } else {
+      // Move all markers out of the cluster group (and rescue layer)
+      // into a single plain layer.
+      const markers = [];
+      self.jobClusterGroup.eachLayer(m => markers.push(m));
+      self.jobClusterGroup.removeLayers(markers);
+      self.map.removeLayer(self.jobClusterGroup);
+      self.rescueJobLayer.eachLayer(m => markers.push(m));
+      self.rescueJobLayer.clearLayers();
+      markers.forEach(m => self.unclusteredJobLayer.addLayer(m));
+      if (incidentsVisible) {
+        self.unclusteredJobLayer.addTo(self.map);
+      }
+    }
+
+    self._syncPulseRings();
+  };
 
   self.applyPaneOrder = function (paneOrderTopToBottom) {
     if (!Array.isArray(paneOrderTopToBottom) || paneOrderTopToBottom.length === 0) return;
@@ -40,6 +377,46 @@ export function MapVM(Lmap, root) {
       panePlus.style.zIndex = String(z + 1);
 
     });
+  };
+
+  self.changeBasemap = function (basemapKey) {
+    if (!self.layersDrawer || !self.layersDrawer._setBasemap) return;
+    self.layersDrawer._setBasemap(basemapKey, self.map);
+    self.layersDrawer._baseKey = basemapKey;
+    localStorage.setItem("map.base", basemapKey);
+
+    // Basemap definitions
+    const basemapNames = [
+      { name: "Esri Topographic", key: "Topographic" },
+      { name: "Esri Streets", key: "Streets" },
+      { name: "Esri Imagery", key: "Imagery" },
+      { name: "Esri Dark", key: "DarkGray" },
+      { name: "Spatial NSW", key: "nsw-vector" },
+      { name: "SIX Maps Base Map", key: "nsw-base" },
+      { name: "SIX Maps Imagery", key: "nsw-imagery" }
+    ];
+
+    // Update the UI label if the drawer is rendered
+    const label = document.querySelector(".ld-basemap-label");
+    if (label) {
+      const basemapName = basemapNames.find(b => b.key === basemapKey)?.name || "Basemap";
+      label.textContent = basemapName;
+    }
+
+    // Update active state in dropdown menu
+    const menu = document.querySelector(".ld-basemap-menu");
+    if (menu) {
+      menu.querySelectorAll(".dropdown-item").forEach(item => {
+        item.classList.remove("active");
+      });
+      // Find and activate the matching button
+      const buttons = menu.querySelectorAll(".dropdown-item");
+      basemapNames.forEach(({ key }, index) => {
+        if (key === basemapKey && buttons[index]) {
+          buttons[index].classList.add("active");
+        }
+      });
+    }
   };
 
 
@@ -155,9 +532,9 @@ export function MapVM(Lmap, root) {
     if (self.assetLayer) {
       defs.push({
         key: 'matched-assets',
-        label: 'Matched against Teams',
+        label: 'Assets Matched against Teams',
         layer: self.assetLayer,
-        group: 'Assets',
+        group: 'Visibility',
         visibleByDefault: true,
       });
     }
@@ -167,9 +544,9 @@ export function MapVM(Lmap, root) {
     if (self.unmatchedAssetLayer) {
       defs.push({
         key: 'unmatched-assets',
-        label: 'Unmatched against Teams',
+        label: 'Assets Unmatched against Teams',
         layer: self.unmatchedAssetLayer,
-        group: 'Assets',
+        group: 'Visibility',
         visibleByDefault: false,
       });
     }
@@ -453,14 +830,22 @@ export function MapVM(Lmap, root) {
     }
   };
 
-  // Clear rings whenever the map is clicked
+  // Clear overlays whenever the map is clicked
   self.map.on('click', () => {
     self.clearJobAssetBullseye();
+    self.clearCrowFliesLine();
+    self.clearRoutes();
   });
 
   const PopupStuff = {
     flyToBounds: (bounds, { opts }) => {
+      self._flyingToBounds = true;
       self.map.flyToBounds(bounds, opts);
+      self.map.once('moveend zoomend', () => {
+        // Small delay so the popupclose that fires synchronously during
+        // the same tick as the final moveend is still covered.
+        setTimeout(() => { self._flyingToBounds = false; }, 100);
+      });
     },
 
     clearRoutes: self.clearRoutes,
@@ -510,13 +895,49 @@ export function MapVM(Lmap, root) {
     self.clearJobAssetBullseye();
   };
 
-  self.ensureJobGroup = (typeName) => {
-    if (!self.jobMarkerGroups.has(typeName)) {
-      const group = L.layerGroup().addTo(self.map);
-      self.jobMarkerGroups.set(typeName, { layerGroup: group, markers: new Map() });
-    }
-    return self.jobMarkerGroups.get(typeName);
+  // Pulse ring visibility management for clustering
+  // When markers get clustered, hide their pulse rings.
+  // When unclustered or spiderfied, show them again.
+  self._syncPulseRings = function () {
+    self.jobMarkerIndex.forEach((marker) => {
+      if (!marker._pulseRing) return;
+
+      // Markers on the standalone rescue layer (not in the cluster group)
+      // are always individually visible – skip cluster logic for them.
+      if (self.rescueJobLayer.hasLayer(marker)) {
+        if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
+          self.jobPulseLayer.addLayer(marker._pulseRing);
+        }
+        return;
+      }
+
+      // When clustering is disabled, all markers are individually visible.
+      if (!self.clusteringEnabled || self.unclusteredJobLayer.hasLayer(marker)) {
+        if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
+          self.jobPulseLayer.addLayer(marker._pulseRing);
+        }
+        return;
+      }
+
+      const visibleParent = self.jobClusterGroup.getVisibleParent(marker);
+      if (visibleParent === marker) {
+        // Marker is individually visible – show pulse ring
+        if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
+          self.jobPulseLayer.addLayer(marker._pulseRing);
+        }
+      } else {
+        // Marker is inside a cluster – hide pulse ring
+        if (self.jobPulseLayer.hasLayer(marker._pulseRing)) {
+          self.jobPulseLayer.removeLayer(marker._pulseRing);
+        }
+      }
+    });
   };
+
+  self.jobClusterGroup.on('animationend', self._syncPulseRings);
+  self.jobClusterGroup.on('spiderfied', self._syncPulseRings);
+  self.jobClusterGroup.on('unspiderfied', self._syncPulseRings);
+  self.map.on('zoomend', self._syncPulseRings);
 
   self.map.on('layeradd', (ev) => {
     // find which polling layer this corresponds to

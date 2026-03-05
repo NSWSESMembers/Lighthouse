@@ -7,6 +7,11 @@ import { openURLInBeacon } from '../utils/chromeRunTime.js';
 
 import { Enum } from '../utils/enum.js';
 
+// Shared across all Team instances — single localStorage key
+const _capKey = 'lh_showCapabilities';
+const _showCapabilities = ko.observable(localStorage.getItem(_capKey) !== 'false');
+_showCapabilities.subscribe(v => localStorage.setItem(_capKey, v ? 'true' : 'false'));
+
 export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
 
@@ -33,9 +38,14 @@ export function Team(data = {}, deps = {}) {
         openSMSTeamModal = () => { },
         isTeamPinned = () => false,
         toggleTeamPinned = () => false,
+        saveTaskingSequence = () => Promise.resolve(),
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
+
+    // capabilities visibility (shared singleton)
+    self.showCapabilities = _showCapabilities;
+    self.toggleCapabilities = function () { _showCapabilities(!_showCapabilities()); };
 
     // pinning
     self.isPinned = ko.pureComputed(() => {
@@ -287,8 +297,73 @@ export function Team(data = {}, deps = {}) {
                 return true;
             }
             return false;
-        }).sort((a, b) => new Date(b.currentStatusTime()) - new Date(a.currentStatusTime()));
+        }).sort((a, b) => {
+            const seqA = a.sequence();
+            const seqB = b.sequence();
+            if (seqA !== seqB) return seqA - seqB;
+            return new Date(b.currentStatusTime()) - new Date(a.currentStatusTime());
+        });
     });
+
+    // ── Reorder mode ──
+    self.reorderMode = ko.observable(false);
+    self.reorderList = ko.observableArray([]);
+    self.reorderSaving = ko.observable(false);
+
+    self.displayedTaskings = ko.pureComputed(() =>
+        self.reorderMode() ? self.reorderList() : self.filteredTaskings()
+    );
+
+    self.enterReorderMode = function () {
+        // snapshot the current filtered taskings into a mutable array
+        self.reorderList(self.filteredTaskings().slice());
+        self.reorderMode(true);
+    };
+
+    self.cancelReorderMode = function () {
+        self.reorderMode(false);
+        self.reorderList([]);
+    };
+
+    self.moveTaskingUp = function (tasking) {
+        const arr = self.reorderList();
+        const idx = arr.indexOf(tasking);
+        if (idx <= 0) return;
+        arr.splice(idx, 1);
+        arr.splice(idx - 1, 0, tasking);
+        self.reorderList(arr);
+    };
+
+    self.moveTaskingDown = function (tasking) {
+        const arr = self.reorderList();
+        const idx = arr.indexOf(tasking);
+        if (idx < 0 || idx >= arr.length - 1) return;
+        arr.splice(idx, 1);
+        arr.splice(idx + 1, 0, tasking);
+        self.reorderList(arr);
+    };
+
+    self.saveReorder = async function () {
+        const sequences = self.reorderList().map((ts, i) => ({
+            taskingId: ts.id(),
+            sequence: i
+        }));
+        self.reorderSaving(true);
+        try {
+            await saveTaskingSequence(sequences);
+            // Update local sequence values to match new order
+            sequences.forEach(({ taskingId, sequence }) => {
+                const ts = self.taskings().find(t => t.id() === taskingId);
+                if (ts) ts.sequence(sequence);
+            });
+            self.reorderMode(false);
+            self.reorderList([]);
+        } catch (e) {
+            console.error("Failed to save tasking sequence:", e);
+        } finally {
+            self.reorderSaving(false);
+        }
+    };
 
     self.taskingRowColour = ko.pureComputed(() => {
         if (self.taskedJobCount() === 0) {

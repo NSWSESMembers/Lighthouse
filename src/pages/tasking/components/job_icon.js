@@ -144,6 +144,80 @@ export function styleForJob(job) {
     // tweak strokeWidth if you need stronger outlines
 }
 
+/**
+ * Build an SVG outline that matches the marker shape, used as the pulse-ring
+ * overlay.  `w`/`h` are the pixel dimensions of the ring's L.divIcon box.
+ */
+export function buildPulseRingSvg(shape, w, h) {
+    const cx = w / 2, cy = h / 2;
+    const sw = 2;
+    const r = Math.min(w, h) / 2 - sw;
+
+    let outline;
+    switch (shape) {
+        case "circle":
+            outline = `<circle cx="${cx}" cy="${cy}" r="${r}" />`;
+            break;
+        case "square": {
+            outline = `<rect x="${cx - r}" y="${cy - r}" width="${2 * r}" height="${2 * r}" rx="2" ry="2" />`;
+            break;
+        }
+        case "diamond":
+            outline = `<polygon points="${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}" />`;
+            break;
+        case "triangle": {
+            const th = r * Math.sqrt(3);
+            outline = `<polygon points="${cx},${cy - r} ${cx - th / 2},${cy + r / 2} ${cx + th / 2},${cy + r / 2}" />`;
+            break;
+        }
+        case "hex": {
+            const pts = [];
+            for (let i = 0; i < 6; i++) {
+                const a = (Math.PI / 3) * i - Math.PI / 6;
+                pts.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
+            }
+            outline = `<polygon points="${pts.join(" ")}" />`;
+            break;
+        }
+        case "star": {
+            const spikes = 5, step = Math.PI / spikes, pts = [];
+            for (let i = 0; i < 2 * spikes; i++) {
+                const len = i % 2 === 0 ? r : r / 2.5;
+                const a = i * step - Math.PI / 2;
+                pts.push(`${cx + Math.cos(a) * len},${cy + Math.sin(a) * len}`);
+            }
+            outline = `<polygon points="${pts.join(" ")}" />`;
+            break;
+        }
+        case "pentagon": {
+            const pts = [];
+            for (let i = 0; i < 5; i++) {
+                const a = (2 * Math.PI / 5) * i - Math.PI / 2;
+                pts.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
+            }
+            outline = `<polygon points="${pts.join(" ")}" />`;
+            break;
+        }
+        case "teardrop":
+            outline = `<path d="M ${cx} ${cy - r} C ${cx + r} ${cy - r / 3}, ${cx + r / 2} ${cy + r}, ${cx} ${cy + r} C ${cx - r / 2} ${cy + r}, ${cx - r} ${cy - r / 3}, ${cx} ${cy - r} Z" />`;
+            break;
+        case "cross": {
+            const s = r * 0.35;
+            outline = `<path d="M${cx - s},${cy - r} h${2 * s} v${r - s} h${r - s} v${2 * s} h${-(r - s)} v${r - s} h${-(2 * s)} v${-(r - s)} h${-(r - s)} v${-(2 * s)} h${r - s}Z" />`;
+            break;
+        }
+        default:
+            outline = `<circle cx="${cx}" cy="${cy}" r="${r}" />`;
+    }
+
+    return `<svg class="pulse-ring-shape" xmlns="http://www.w3.org/2000/svg"
+                width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+                <g fill="none" stroke="rgba(247,147,29,0.9)" stroke-width="${sw}">
+                    ${outline}
+                </g>
+            </svg>`;
+}
+
 
 
 

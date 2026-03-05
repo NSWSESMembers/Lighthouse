@@ -1,243 +1,644 @@
 import L from "leaflet";
 
-
-
-/* ══════════════════════════════════════════════════════════════
- *  RainViewer Radar Overlay  (animated, past ~2 h)
- *  API docs: https://www.rainviewer.com/api/weather-maps-api.html
- * ══════════════════════════════════════════════════════════════ */
-
-const RAINVIEWER_API = "https://api.rainviewer.com/public/weather-maps.json";
-const FRAME_INTERVAL_MS = 500;   // default playback speed
-const DATA_REFRESH_MS   = 300000; // re-fetch frame list every 5 min
-
 /**
- * Register an animated rainfall radar overlay powered by the RainViewer API.
- * Loops through the past ~2 hours of composite radar frames with on-map
- * playback controls (play / pause / step / scrub).
+ * Register BOM All WMS layer using provided URL
  */
-export function registerRainRadarLayer(vm, map) {
-  /* ── state ─────────────────────────────────────────────────── */
-  let frames       = [];       // [{ time, path }]
-  let host         = null;
-  let tileLayers   = [];       // parallel to `frames`
-  let frameIdx     = -1;
-  let playing      = false;
-  let playTimer    = null;
-  let dataTimer    = null;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  let activeGroup  = null;
-  let control      = null;
-  let speed        = FRAME_INTERVAL_MS;
-
-  /* ── helpers ───────────────────────────────────────────────── */
-  function buildTileLayer(framePath) {
-    return L.tileLayer(
-      `${host}${framePath}/512/{z}/{x}/{y}/2/1_1.png`,
-      {
-        pane: "pane-lowest-plus",
-        tileSize: 512,
-        zoomOffset: -1,
-        maxNativeZoom: 7,
-        maxZoom: 18,
-        opacity: 0,  // start invisible; showFrame will reveal the active one
-        attribution:
-          '<a href="https://www.rainviewer.com" target="_blank">RainViewer</a>',
-      }
-    );
-  }
-
-  function fmtTime(unix) {
-    const d = new Date(unix * 1000);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-
-  /* ── frame display ─────────────────────────────────────────── */
-  function showFrame(idx) {
-    if (idx < 0 || idx >= tileLayers.length) return;
-
-    // hide previous
-    if (frameIdx >= 0 && frameIdx < tileLayers.length) {
-      tileLayers[frameIdx].setOpacity(0);
-    }
-    frameIdx = idx;
-    tileLayers[frameIdx].setOpacity(0.6);
-
-    // update control UI
-    if (control) {
-      const ts = control._container.querySelector(".rv-timestamp");
-      const slider = control._container.querySelector(".rv-slider");
-      if (ts) ts.textContent = fmtTime(frames[frameIdx].time);
-      if (slider) slider.value = frameIdx;
-    }
-  }
-
-  function stepForward() {
-    showFrame((frameIdx + 1) % tileLayers.length);
-  }
-
-  function stepBack() {
-    showFrame((frameIdx - 1 + tileLayers.length) % tileLayers.length);
-  }
-
-  function play() {
-    if (playing) return;
-    playing = true;
-    updatePlayBtn();
-    playTimer = setInterval(stepForward, speed);
-  }
-
-  function pause() {
-    playing = false;
-    updatePlayBtn();
-    if (playTimer) { clearInterval(playTimer); playTimer = null; }
-  }
-
-  function togglePlay() { playing ? pause() : play(); }
-
-  function updatePlayBtn() {
-    if (!control) return;
-    const btn = control._container.querySelector(".rv-play");
-    if (btn) btn.textContent = playing ? "⏸" : "▶";
-  }
-
-  /* ── data loading ──────────────────────────────────────────── */
-  async function loadFrames(layerGroup) {
-    try {
-      const res = await fetch(RAINVIEWER_API);
-      if (!res.ok) throw new Error(`RainViewer API ${res.status}`);
-      const json = await res.json();
-      const past = json.radar?.past;
-      if (!past || past.length === 0) return;
-
-      const newHost = json.host;
-      const pathsMatch =
-        host === newHost &&
-        frames.length === past.length &&
-        frames.every((f, i) => f.path === past[i].path);
-
-      if (pathsMatch) return; // nothing changed
-
-      // tear down old tile layers
-      tileLayers.forEach((tl) => {
-        if (layerGroup.hasLayer(tl)) layerGroup.removeLayer(tl);
-      });
-
-      host = newHost;
-      frames = past;
-      tileLayers = frames.map((f) => {
-        const tl = buildTileLayer(f.path);
-        layerGroup.addLayer(tl);
-        return tl;
-      });
-
-      // update slider range
-      if (control) {
-        const slider = control._container.querySelector(".rv-slider");
-        if (slider) { slider.max = frames.length - 1; slider.value = frames.length - 1; }
-      }
-
-      // show latest frame
-      frameIdx = -1;
-      showFrame(frames.length - 1);
-    } catch (err) {
-      console.warn("[RainViewer Radar] Failed to load frames:", err);
-    }
-  }
-
-  /* ── Leaflet control for playback ──────────────────────────── */
-  const RadarControl = L.Control.extend({
-    options: { position: "bottomleft" },
-    onAdd() {
-      const c = L.DomUtil.create("div", "leaflet-bar rv-control");
-      L.DomEvent.disableClickPropagation(c);
-      L.DomEvent.disableScrollPropagation(c);
-
-      c.innerHTML = `
-        <div style="
-          display:flex; align-items:center; gap:6px;
-          background:#fff; padding:4px 8px; border-radius:4px;
-          font-size:12px; font-family:monospace; box-shadow:0 1px 4px rgba(0,0,0,.3);
-          user-select:none;
-        ">
-          <button class="rv-step-back" title="Previous frame"
-            style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px;">⏮</button>
-          <button class="rv-play" title="Play / Pause"
-            style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px;">▶</button>
-          <button class="rv-step-fwd" title="Next frame"
-            style="border:none;background:none;cursor:pointer;font-size:14px;padding:2px;">⏭</button>
-          <input class="rv-slider" type="range" min="0" max="0" value="0"
-            style="width:120px;cursor:pointer;" title="Scrub through frames" />
-          <span class="rv-timestamp" style="min-width:48px;text-align:center;">--:--</span>
-          <select class="rv-speed" title="Playback speed"
-            style="border:1px solid #ccc;border-radius:3px;font-size:11px;padding:1px 2px;cursor:pointer;">
-            <option value="1000">0.5×</option>
-            <option value="500" selected>1×</option>
-            <option value="250">2×</option>
-            <option value="125">4×</option>
-          </select>
-        </div>`;
-
-      c.querySelector(".rv-play").addEventListener("click", togglePlay);
-      c.querySelector(".rv-step-back").addEventListener("click", () => { pause(); stepBack(); });
-      c.querySelector(".rv-step-fwd").addEventListener("click", () => { pause(); stepForward(); });
-      c.querySelector(".rv-slider").addEventListener("input", (e) => {
-        pause();
-        showFrame(parseInt(e.target.value, 10));
-      });
-      c.querySelector(".rv-speed").addEventListener("change", (e) => {
-        speed = parseInt(e.target.value, 10);
-        if (playing) { pause(); play(); }
-      });
-
-      return c;
-    },
-  });
-
-  /* ── layer registration ────────────────────────────────────── */
-  vm.mapVM.registerPollingLayer("rainRadar", {
-    label: "Rainfall Radar - Animated",
-    menuGroup: "Weather",
-    refreshMs: 0,
-    visibleByDefault: localStorage.getItem(`ov.rainRadar`) || false,
+export function registerBOMAllFloodLevelsLayer(vm, sourceUrl) {
+  const allUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomAll", {
+    label: "BOM Flood Levels",
+    menuGroup: "BOM Observations",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomAllFlood`) || false,
     fetchFn: async () => {
       return {};
     },
-    drawFn: (layerGroup, data) => {
-      if (!data) return;
-
-      // Clean up any previous cycle (toggle off → on)
-      pause();
-      if (dataTimer) { clearInterval(dataTimer); dataTimer = null; }
-      if (control) { map.removeControl(control); control = null; }
-      tileLayers = [];
-      frames = [];
-      frameIdx = -1;
-      activeGroup = layerGroup;
-
-      // Add playback control to the map
-      control = new RadarControl();
-      map.addControl(control);
-
-      // Clean up control + timers when the layerGroup is removed from the map
-      layerGroup.on("remove", cleanup);
-
-      // Initial load + periodic refresh of frame list
-      loadFrames(layerGroup);
-      dataTimer = setInterval(() => loadFrames(layerGroup), DATA_REFRESH_MS);
-
-      // Auto-play
-      play();
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(allUrl, {
+        layers: "IDN62011_all",
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        attribution: "Bureau of Meteorology",
+      });
+      layerGroup.addLayer(wmsLayer);
     },
   });
+}
 
-  function cleanup() {
-    pause();
-    if (dataTimer) { clearInterval(dataTimer); dataTimer = null; }
-    if (control) { map.removeControl(control); control = null; }
-    tileLayers = [];
-    frames = [];
-    frameIdx = -1;
-    activeGroup = null;
-  }
+/**
+ * Register BOM Rainfall WMS layer from Beacon
+ */
+export function registerBOMRainfallLayer(vm, sourceUrl) {
+  const rainfallUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomRainfall", {
+    label: "BOM Rainfall (9am)",
+    menuGroup: "BOM Observations",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomRainfall`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(rainfallUrl, {
+        layers: "IDZ20010_rainfall_9am",
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        attribution: "Bureau of Meteorology",
+        // Default NSW bounding box, but map will handle view
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+
+/**
+ * Register BOM Radar WMS layer from Beacon
+ */
+export function registerBOMRadarLayer(vm, sourceUrl) {
+  const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomRadar", {
+    label: "BOM Rain Radar Still",
+    menuGroup: "BOM Radar & Satellite",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomRadar`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(radarUrl, {
+        layers: "IDR00010",
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        attribution: "Bureau of Meteorology",
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+
+/**
+ * Register BOM Zehr Himawari WMS layer from Beacon
+ */
+export function registerBOMSatTrueColorLayer(vm, sourceUrl) {
+  const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomSatTrueColor", {
+    label: "BOM Satellite Composite True Colour",
+    menuGroup: "BOM Radar & Satellite",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomSatTrueColor`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(radarUrl, {
+        layers: "IDE00435",
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        attribution: "Japan Meteorological Agency via Bureau of Meteorology"
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+
+/**
+ * Register BOM Thunderstorm Tracking from Beacon
+ */
+export function registerBOMThunderstormTrackingLayer(vm, sourceUrl) {
+  const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomThunderstormTracking", {
+    label: "BOM Thunderstorm Tracking",
+    menuGroup: "BOM Radar & Satellite",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomThunderstormTracking`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(radarUrl, {
+        layers: ["IDR00011","IDR00011_track"],
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        attribution: "Bureau of Meteorology",
+        opacity: 0.7
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+/**
+ * Register BOM Wind Layer from Beacon
+ */
+export function registerBOMWindLayer(vm, sourceUrl) {
+  const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomWind", {
+    label: "BOM Wind Barbs & Raster",
+    menuGroup: "BOM Forecasts",
+   
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomWind`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(radarUrl, {
+        layers: ["IDY25026_windpt","IDY25026_windrast"],
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        opacity: 0.5, // Adjust opacity for more transparency
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        attribution: "Bureau of Meteorology"
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+/**
+ * Register BOM MSLP from Beacon
+ */
+export function registerBOMMSLPLayer(vm, sourceUrl) {
+  const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomMSLP", {
+    label: "BOM MSLP Contours",
+    menuGroup: "BOM Forecasts",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomMSLP`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(radarUrl, {
+        layers: ["IDY25026_mslp"],
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        attribution: "Bureau of Meteorology"
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+
+/**
+ * Register BOM Lightning from Beacon
+ */
+export function registerBOMLightningLayer(vm, sourceUrl) {
+  const radarUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomLightning", {
+    label: "BOM Lightning Strikes (0-2 hrs ago) Cloud to Ground",
+    menuGroup: "BOM Radar & Satellite",
+    refreshMs: 600000, // 10 min
+    visibleByDefault: localStorage.getItem(`ov.bomLightning`) || false,
+    fetchFn: async () => {
+      return {};
+    },
+    drawFn: (layerGroup, _data) => {
+      const wmsLayer = L.tileLayer.wms(radarUrl, {
+        layers: ["IDZ20019_c2g_2h"],
+        styles: "default",
+        format: "image/png",
+        transparent: true,
+        bgcolor: "0xFFFFFF",
+        version: "1.3.0",
+        crs: L.CRS.EPSG4326,
+        attribution: "Bureau of Meteorology",
+      });
+      layerGroup.addLayer(wmsLayer);
+    },
+  });
+}
+
+
+/**
+ * Register BOM Lightning (2-24h) from Beacon
+ */
+export function registerBOMLightning24hLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomLightning24h", {
+    label: "BOM Lightning (2-24 hrs ago) Cloud to Ground",
+    menuGroup: "BOM Radar & Satellite",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomLightning24h`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDZ20019_c2g_2-24h",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Tsunami Warning from Beacon
+ */
+export function registerBOMTsunamiLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomTsunami", {
+    label: "BOM Tsunami Warning",
+    menuGroup: "BOM Warnings",
+    refreshMs: 300000, // 5 min – critical warning
+    visibleByDefault: localStorage.getItem(`ov.bomTsunami`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: ["IDZ20002", "IDZ20002_info"],
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Tropical Cyclone Tracking from Beacon
+ */
+export function registerBOMTropicalCycloneLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomTropicalCyclone", {
+    label: "BOM Tropical Cyclone Tracking",
+    menuGroup: "BOM Warnings",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomTropicalCyclone`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: [
+            "IDZ20009_trackarea",
+            "IDZ20009_threatarea",
+            "IDZ20009_windarea",
+            "IDZ20009_track",
+            "IDZ20009_fix",
+            "IDZ20009_name",
+          ],
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Fire Danger Rating (today) from Beacon
+ */
+export function registerBOMFireDangerRatingLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomFireDangerRating", {
+    label: "BOM Fire Danger Rating (Today)",
+    menuGroup: "BOM Forecasts",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomFireDangerRating`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDZ20022000",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          opacity: 0.6,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Heatwave Forecast (today +2 days) from Beacon
+ */
+export function registerBOMHeatwaveLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomHeatwave", {
+    label: "BOM Heatwave Forecast (Days +0 to +2)",
+    menuGroup: "BOM Forecasts",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomHeatwave`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDY10012_day0",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          opacity: 0.6,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Hazardous Surf Warning (today) from Beacon
+ */
+export function registerBOMHazardousSurfLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomHazardousSurf", {
+    label: "BOM Hazardous Surf Warning (Today)",
+    menuGroup: "BOM Warnings",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomHazardousSurf`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDZ20017000",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Coastal Hazard Warning from Beacon
+ */
+export function registerBOMCoastalHazardLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomCoastalHazard", {
+    label: "BOM Coastal Hazard Warning",
+    menuGroup: "BOM Warnings",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomCoastalHazard`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDZ20023",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Road Weather Alert from Beacon
+ */
+export function registerBOMRoadWeatherLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomRoadWeather", {
+    label: "BOM Road Weather Alert (Metro)",
+    menuGroup: "BOM Warnings",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomRoadWeather`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDZ20014",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Surface Obs – Wind Gust (km/h) from Beacon
+ */
+export function registerBOMSurfaceGustLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomSurfaceGust", {
+    label: "BOM Surface Obs Wind Gust (km/h)",
+    menuGroup: "BOM Observations",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomSurfaceGust`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDZ20010_gustkmh",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Surface Obs – Air Temperature (°C) from Beacon
+ */
+export function registerBOMSurfaceTempLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomSurfaceTemp", {
+    label: "BOM Surface Obs Air Temp (°C)",
+    menuGroup: "BOM Observations",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomSurfaceTemp`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDZ20010_air_temperature",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Fire Behaviour Index (AFDRS) from Beacon
+ */
+export function registerBOMFireBehaviourIndexLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomFireBehaviourIndex", {
+    label: "BOM Fire Behaviour Index (AFDRS)",
+    menuGroup: "BOM Forecasts",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomFireBehaviourIndex`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDZ10135",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          opacity: 0.6,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Hazardous Wind Onset (next 6h) from Beacon
+ */
+export function registerBOMHazardousWindLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomHazardousWind", {
+    label: "BOM Hazardous Wind Onset (6 hrs)",
+    menuGroup: "BOM Forecasts",
+    refreshMs: 600000,
+    visibleByDefault: localStorage.getItem(`ov.bomHazardousWind`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDZ71153",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          opacity: 0.6,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Flood Warning Boundaries from Beacon
+ */
+export function registerBOMFloodWarningBoundariesLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomFloodWarningBoundaries", {
+    label: "BOM Flood Warning Boundaries",
+    menuGroup: "BOM Observations",
+    refreshMs: 3600000, // 1 hr – reference data
+    visibleByDefault: localStorage.getItem(`ov.bomFloodWarningBoundaries`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: "IDM00017",
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
+}
+
+
+/**
+ * Register BOM Fire Weather Districts from Beacon
+ */
+export function registerBOMFireWeatherDistrictsLayer(vm, sourceUrl) {
+  const wmsUrl = `${sourceUrl}/MappingLayers/RequestBomLayer`;
+  vm.mapVM.registerPollingLayer("bomFireWeatherDistricts", {
+    label: "BOM Fire Weather Districts",
+    menuGroup: "BOM Observations",
+    refreshMs: 3600000, // 1 hr – reference data
+    visibleByDefault: localStorage.getItem(`ov.bomFireWeatherDistricts`) || false,
+    fetchFn: async () => ({}),
+    drawFn: (layerGroup, _data) => {
+      layerGroup.addLayer(
+        L.tileLayer.wms(wmsUrl, {
+          layers: ["IDM00007", "IDM00021"],
+          styles: "default",
+          format: "image/png",
+          transparent: true,
+          version: "1.3.0",
+          crs: L.CRS.EPSG4326,
+          attribution: "Bureau of Meteorology",
+        })
+      );
+    },
+  });
 }
