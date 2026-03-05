@@ -438,13 +438,15 @@ function VM() {
 
     self.countPinnedTeams = ko.pureComputed(() => {
         if (!self.config || !self.config.pinnedTeamIds) return 0;
-        return self.filteredTeams().filter(t => self.isTeamPinned(t.id())).length;
-    })
+        const pinnedIds = new Set((self.config.pinnedTeamIds() || []).map(id => normPinId(id)));
+        return self.filteredTeams().filter(t => pinnedIds.has(normPinId(t.id()))).length;
+    });
 
     self.countPinnedIncidents = ko.pureComputed(() => {
         if (!self.config || !self.config.pinnedIncidentIds) return 0;
-        return self.filteredJobs().filter(j => self.isIncidentPinned(j.id())).length;
-    })
+        const pinnedIds = new Set((self.config.pinnedIncidentIds() || []).map(id => normPinId(id)));
+        return self.filteredJobs().filter(j => pinnedIds.has(normPinId(j.id()))).length;
+    });
 
     self.toggleTeamPinned = (teamId) => {
         if (!self.config || !self.config.pinnedTeamIds) return false;
