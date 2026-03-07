@@ -127,8 +127,6 @@ export function registerBOMThunderstormTrackingLayer(vm, sourceUrl) {
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomThunderstormTracking`) || false,
     fetchFn: async () => {
-      // Force a unique tile URL each refresh so browser/proxy caches don't
-      // keep serving old thunderstorm tiles.
       return { cacheBuster: Date.now() };
     },
     drawFn: (layerGroup, data) => {
@@ -157,7 +155,6 @@ export function registerBOMWindLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomWind", {
     label: "BOM Wind Barbs & Raster",
     menuGroup: "BOM Forecasts",
-   
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomWind`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
