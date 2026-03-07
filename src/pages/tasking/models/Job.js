@@ -602,6 +602,7 @@ export function Job(data = {}, deps = {}) {
             this.address.locality(d.Address?.Locality ?? "");
             this.address.postCode(d.Address?.PostCode ?? "");
             this.address.prettyAddress(d.Address?.PrettyAddress ?? "");
+            this.address.additionalAddressInfo(d.Address?.AdditionalAddressInfo ?? "");
         }
 
         if (Array.isArray(d.Tags)) {

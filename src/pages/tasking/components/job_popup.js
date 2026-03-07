@@ -107,6 +107,9 @@ export function buildJobPopupKO() {
     </div>
     <!-- Address -->
     <div class="text-center fw-bold mt-2"><span class="no-drag" data-bind="text: (address.prettyAddress && address.prettyAddress()) || ''"></span></div>
+    <!-- ko if: address.additionalAddressInfo() -->
+    <div class="text-center text-muted mt-2><span class="no-drag" data-bind="text: (address.additionalAddressInfo()) || ''"></span></div>
+    <!-- /ko -->
 
     <div id="JobDetails" style="padding-top:10px;width:100%;margin:auto">
       <!-- SoS -->
