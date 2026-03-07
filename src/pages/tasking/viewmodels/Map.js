@@ -359,6 +359,58 @@ export function MapVM(Lmap, root) {
     self._syncPulseRings();
   };
 
+  /**
+   * Ensure markercluster internal distance grids are compatible with the
+   * map's current min/max zoom constraints.
+   *
+   * Some overlay layers can change map zoom levels (`zoomlevelschange`).
+   * markercluster keeps prebuilt grids keyed by zoom level; if map minZoom
+   * drops below those keys, `addLayer` can hit an undefined grid entry and
+   * throw in `_addLayer`.
+   */
+  self.ensureClusterGridCompatibility = function () {
+    const cg = self.jobClusterGroup;
+    if (!cg || !cg._map) return;
+
+    const minZoom = Math.floor(self.map.getMinZoom());
+    const expectedTopZoom = minZoom - 1;
+    const disableAt = cg.options?.disableClusteringAtZoom;
+    const expectedMaxZoom = Number.isFinite(disableAt)
+      ? (disableAt - 1)
+      : Math.ceil(self.map.getMaxZoom());
+
+    const grids = cg._gridClusters;
+    const unclustered = cg._gridUnclustered;
+    const gridsMissingForMinZoom = !grids || !unclustered || !grids[minZoom] || !unclustered[minZoom];
+    const maxZoomMismatch = !Number.isFinite(cg._maxZoom) || cg._maxZoom !== expectedMaxZoom;
+    const topZoomMismatch = !cg._topClusterLevel || !Number.isFinite(cg._topClusterLevel._zoom)
+      || cg._topClusterLevel._zoom !== expectedTopZoom;
+
+    const safeCurrentZoom = Number.isFinite(self.map.getZoom())
+      ? Math.round(self.map.getZoom())
+      : (expectedTopZoom + 1);
+
+    if (!gridsMissingForMinZoom && !maxZoomMismatch && !topZoomMismatch) {
+      const minClusterZoom = (cg._topClusterLevel?._zoom ?? expectedTopZoom) + 1;
+      if (!Number.isFinite(cg._zoom) || cg._zoom < minClusterZoom) {
+        cg._zoom = Math.max(safeCurrentZoom, minClusterZoom);
+      }
+      return;
+    }
+
+    const markers = [];
+    cg.eachLayer((m) => markers.push(m));
+
+    // clearLayers() on an attached cluster group rebuilds internal grids.
+    cg.clearLayers();
+    const minClusterZoom = (cg._topClusterLevel?._zoom ?? expectedTopZoom) + 1;
+    cg._zoom = Math.max(safeCurrentZoom, minClusterZoom);
+    if (markers.length) cg.addLayers(markers);
+  };
+
+  // Reconcile cluster grids whenever any layer changes map min/max zooms.
+  self.map.on('zoomlevelschange', self.ensureClusterGridCompatibility);
+
   self.applyPaneOrder = function (paneOrderTopToBottom) {
     if (!Array.isArray(paneOrderTopToBottom) || paneOrderTopToBottom.length === 0) return;
 
@@ -919,7 +971,17 @@ export function MapVM(Lmap, root) {
         return;
       }
 
-      const visibleParent = self.jobClusterGroup.getVisibleParent(marker);
+      let visibleParent;
+      try {
+        visibleParent = self.jobClusterGroup.getVisibleParent(marker);
+      } catch (err) {
+        // On error, hide the pulse ring to be safe
+        if (self.jobPulseLayer.hasLayer(marker._pulseRing)) {
+          self.jobPulseLayer.removeLayer(marker._pulseRing);
+        }
+        return;
+      }
+
       if (visibleParent === marker) {
         // Marker is individually visible – show pulse ring
         if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {

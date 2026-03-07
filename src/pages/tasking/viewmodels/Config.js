@@ -46,8 +46,8 @@ export function ConfigVM(root, deps) {
     self.paneDefs = [
         { id: 'pane-tippy-top', name: 'Incident markers' },
         { id: 'pane-top', name: 'Asset markers' },
-        { id: 'pane-middle', name: 'Map overlays icons' },
-        { id: 'pane-lowest', name: 'Map overlay polygons' }
+        { id: 'pane-middle', name: 'Map overlays icons & labels' },
+        { id: 'pane-lowest', name: 'Map overlay polygons & drawings' }
     ];
 
     // UI list (objects so bindings are property-only)

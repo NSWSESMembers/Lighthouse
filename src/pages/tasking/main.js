@@ -28,6 +28,7 @@ import IncidentImagesModalVM from "./viewmodels/IncidentImagesModalVM";
 import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
 import { SpotlightSearchVM } from "./components/spotlightSearch.js";
+import { registerAcronymTextBinding } from "./components/acronymText.js";
 
 
 import { Asset } from './models/Asset.js';
@@ -2946,8 +2947,6 @@ function VM() {
         });
     })();
 
-
-
 }
 
 window.addEventListener('resize', () => map.invalidateSize());
@@ -3003,6 +3002,7 @@ document.addEventListener('DOMContentLoaded', function () {
         installDragDropRowBindings();
         noBubbleFromDisabledButtonsBindings();
         installSortableArrayBindings();
+        registerAcronymTextBinding();
 
         ko.bindingProvider.instance = new ksb(options);
         window.ko = ko;

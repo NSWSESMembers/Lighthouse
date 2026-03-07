@@ -76,7 +76,7 @@ export function renderFRAOSLayer(vm, map, getToken, apiHost, params) {
     vm.mapVM.registerPollingLayer("fraos", {
         label: "Active FRAOs",
         menuGroup: "NSW SES Geoservices",
-        refreshMs: 0, // 0 refresh. they dont change. only redraw on filter change
+        refreshMs: 600000, // 10 min
         visibleByDefault: localStorage.getItem(`ov.fraos`) || false,
         fetchFn: async () => {
             const start = new Date();

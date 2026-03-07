@@ -150,7 +150,9 @@ export function registerRainRadarLayer(vm, map) {
   /* ── data loading ──────────────────────────────────────────── */
   async function loadFrames(layerGroup) {
     try {
-      const res = await fetch(RAINVIEWER_API);
+      const res = await fetch(`${RAINVIEWER_API}?_cb=${Date.now()}`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error(`RainViewer API ${res.status}`);
       const json = await res.json();
       const past = json.radar?.past;

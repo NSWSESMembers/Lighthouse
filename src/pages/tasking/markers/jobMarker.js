@@ -90,7 +90,12 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     marker._isRescue = isRescue;
     marker._isNew = (job.statusName?.() || '').toLowerCase() === 'new';
     marker._priorityColor = style.fill || '#6b7280';
-    marker.addTo(targetLayer);
+    if (targetLayer === vm.mapVM.jobClusterGroup) {
+        marker.addTo(targetLayer);
+        //vm.mapVM.safeAddToClusterGroup?.(marker);
+    } else {
+        marker.addTo(targetLayer);
+    }
     markers.set(id, marker);
     job.marker = marker;
 
