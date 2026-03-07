@@ -135,7 +135,7 @@ export function registerBOMThunderstormTrackingLayer(vm, sourceUrl) {
     },
     drawFn: (layerGroup, _data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
-        layers: ["IDR00011","IDR00011_track"],
+        layers: "IDR00011,IDR00011_track",
         styles: "default",
         format: "image/png",
         transparent: true,
