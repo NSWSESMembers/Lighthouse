@@ -125,7 +125,9 @@ function renderRules(container, rules) {
     if (typeof rule.onClick === 'function') {
       div.querySelectorAll('li[data-id]').forEach(li => {
         li.style.cursor = 'pointer';
-        li.addEventListener('click', () => rule.onClick(li.getAttribute('data-id')));
+            li.addEventListener('mouseenter', () => li.style.textDecoration = 'underline');
+            li.addEventListener('mouseleave', () => li.style.textDecoration = '');
+            li.addEventListener('click', () => rule.onClick(li.getAttribute('data-id')));
       });
     }
 
