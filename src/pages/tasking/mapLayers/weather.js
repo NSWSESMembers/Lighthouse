@@ -10,10 +10,8 @@ export function registerBOMAllFloodLevelsLayer(vm, sourceUrl) {
     menuGroup: "BOM Observations",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomAllFlood`) || false,
-    fetchFn: async () => {
-      return {};
-    },
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(allUrl, {
         layers: "IDN62011_all",
         styles: "default",
@@ -23,6 +21,7 @@ export function registerBOMAllFloodLevelsLayer(vm, sourceUrl) {
         version: "1.3.0",
         crs: L.CRS.EPSG4326,
         attribution: "Bureau of Meteorology",
+        _cb: data?.cacheBuster,
       });
       layerGroup.addLayer(wmsLayer);
     },
@@ -39,10 +38,8 @@ export function registerBOMRainfallLayer(vm, sourceUrl) {
     menuGroup: "BOM Observations",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomRainfall`) || false,
-    fetchFn: async () => {
-      return {};
-    },
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(rainfallUrl, {
         layers: "IDZ20010_rainfall_9am",
         styles: "default",
@@ -52,6 +49,7 @@ export function registerBOMRainfallLayer(vm, sourceUrl) {
         version: "1.3.0",
         crs: L.CRS.EPSG4326,
         attribution: "Bureau of Meteorology",
+        _cb: data?.cacheBuster,
         // Default NSW bounding box, but map will handle view
       });
       layerGroup.addLayer(wmsLayer);
@@ -70,10 +68,8 @@ export function registerBOMRadarLayer(vm, sourceUrl) {
     menuGroup: "BOM Radar & Satellite",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomRadar`) || false,
-    fetchFn: async () => {
-      return {};
-    },
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
         layers: "IDR00010",
         styles: "default",
@@ -83,6 +79,7 @@ export function registerBOMRadarLayer(vm, sourceUrl) {
         version: "1.3.0",
         crs: L.CRS.EPSG4326,
         attribution: "Bureau of Meteorology",
+        _cb: data?.cacheBuster,
       });
       layerGroup.addLayer(wmsLayer);
     },
@@ -100,10 +97,8 @@ export function registerBOMSatTrueColorLayer(vm, sourceUrl) {
     menuGroup: "BOM Radar & Satellite",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomSatTrueColor`) || false,
-    fetchFn: async () => {
-      return {};
-    },
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
         layers: "IDE00435",
         styles: "default",
@@ -112,7 +107,8 @@ export function registerBOMSatTrueColorLayer(vm, sourceUrl) {
         bgcolor: "0xFFFFFF",
         version: "1.3.0",
         crs: L.CRS.EPSG4326,
-        attribution: "Japan Meteorological Agency via Bureau of Meteorology"
+        attribution: "Japan Meteorological Agency via Bureau of Meteorology",
+        _cb: data?.cacheBuster,
       });
       layerGroup.addLayer(wmsLayer);
     },
@@ -131,9 +127,11 @@ export function registerBOMThunderstormTrackingLayer(vm, sourceUrl) {
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomThunderstormTracking`) || false,
     fetchFn: async () => {
-      return {};
+      // Force a unique tile URL each refresh so browser/proxy caches don't
+      // keep serving old thunderstorm tiles.
+      return { cacheBuster: Date.now() };
     },
-    drawFn: (layerGroup, _data) => {
+    drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
         layers: "IDR00011,IDR00011_track",
         styles: "default",
@@ -143,7 +141,8 @@ export function registerBOMThunderstormTrackingLayer(vm, sourceUrl) {
         version: "1.3.0",
         crs: L.CRS.EPSG4326,
         attribution: "Bureau of Meteorology",
-        opacity: 0.7
+        opacity: 0.7,
+        _cb: data?.cacheBuster
       });
       layerGroup.addLayer(wmsLayer);
     },
@@ -161,10 +160,8 @@ export function registerBOMWindLayer(vm, sourceUrl) {
    
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomWind`) || false,
-    fetchFn: async () => {
-      return {};
-    },
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
         layers: ["IDY25026_windpt","IDY25026_windrast"],
         styles: "default",
@@ -174,7 +171,8 @@ export function registerBOMWindLayer(vm, sourceUrl) {
         opacity: 0.5, // Adjust opacity for more transparency
         version: "1.3.0",
         crs: L.CRS.EPSG4326,
-        attribution: "Bureau of Meteorology"
+        attribution: "Bureau of Meteorology",
+        _cb: data?.cacheBuster,
       });
       layerGroup.addLayer(wmsLayer);
     },
@@ -191,10 +189,8 @@ export function registerBOMMSLPLayer(vm, sourceUrl) {
     menuGroup: "BOM Forecasts",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomMSLP`) || false,
-    fetchFn: async () => {
-      return {};
-    },
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
         layers: ["IDY25026_mslp"],
         styles: "default",
@@ -203,7 +199,8 @@ export function registerBOMMSLPLayer(vm, sourceUrl) {
         bgcolor: "0xFFFFFF",
         version: "1.3.0",
         crs: L.CRS.EPSG4326,
-        attribution: "Bureau of Meteorology"
+        attribution: "Bureau of Meteorology",
+        _cb: data?.cacheBuster,
       });
       layerGroup.addLayer(wmsLayer);
     },
@@ -221,10 +218,8 @@ export function registerBOMLightningLayer(vm, sourceUrl) {
     menuGroup: "BOM Radar & Satellite",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomLightning`) || false,
-    fetchFn: async () => {
-      return {};
-    },
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       const wmsLayer = L.tileLayer.wms(radarUrl, {
         layers: ["IDZ20019_c2g_2h"],
         styles: "default",
@@ -234,6 +229,7 @@ export function registerBOMLightningLayer(vm, sourceUrl) {
         version: "1.3.0",
         crs: L.CRS.EPSG4326,
         attribution: "Bureau of Meteorology",
+        _cb: data?.cacheBuster,
       });
       layerGroup.addLayer(wmsLayer);
     },
@@ -251,8 +247,8 @@ export function registerBOMLightning24hLayer(vm, sourceUrl) {
     menuGroup: "BOM Radar & Satellite",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomLightning24h`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDZ20019_c2g_2-24h",
@@ -262,6 +258,7 @@ export function registerBOMLightning24hLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -279,8 +276,8 @@ export function registerBOMTsunamiLayer(vm, sourceUrl) {
     menuGroup: "BOM Warnings",
     refreshMs: 300000, // 5 min – critical warning
     visibleByDefault: localStorage.getItem(`ov.bomTsunami`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: ["IDZ20002", "IDZ20002_info"],
@@ -290,6 +287,7 @@ export function registerBOMTsunamiLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -307,8 +305,8 @@ export function registerBOMTropicalCycloneLayer(vm, sourceUrl) {
     menuGroup: "BOM Warnings",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomTropicalCyclone`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: [
@@ -325,6 +323,7 @@ export function registerBOMTropicalCycloneLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -342,8 +341,8 @@ export function registerBOMFireDangerRatingLayer(vm, sourceUrl) {
     menuGroup: "BOM Forecasts",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomFireDangerRating`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDZ20022000",
@@ -354,6 +353,7 @@ export function registerBOMFireDangerRatingLayer(vm, sourceUrl) {
           crs: L.CRS.EPSG4326,
           opacity: 0.6,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -371,8 +371,8 @@ export function registerBOMHeatwaveLayer(vm, sourceUrl) {
     menuGroup: "BOM Forecasts",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomHeatwave`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDY10012_day0",
@@ -383,6 +383,7 @@ export function registerBOMHeatwaveLayer(vm, sourceUrl) {
           crs: L.CRS.EPSG4326,
           opacity: 0.6,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -400,8 +401,8 @@ export function registerBOMHazardousSurfLayer(vm, sourceUrl) {
     menuGroup: "BOM Warnings",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomHazardousSurf`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDZ20017000",
@@ -411,6 +412,7 @@ export function registerBOMHazardousSurfLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -428,8 +430,8 @@ export function registerBOMCoastalHazardLayer(vm, sourceUrl) {
     menuGroup: "BOM Warnings",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomCoastalHazard`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDZ20023",
@@ -439,6 +441,7 @@ export function registerBOMCoastalHazardLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -456,8 +459,8 @@ export function registerBOMRoadWeatherLayer(vm, sourceUrl) {
     menuGroup: "BOM Warnings",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomRoadWeather`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDZ20014",
@@ -467,6 +470,7 @@ export function registerBOMRoadWeatherLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -484,8 +488,8 @@ export function registerBOMSurfaceGustLayer(vm, sourceUrl) {
     menuGroup: "BOM Observations",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomSurfaceGust`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDZ20010_gustkmh",
@@ -495,6 +499,7 @@ export function registerBOMSurfaceGustLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -512,8 +517,8 @@ export function registerBOMSurfaceTempLayer(vm, sourceUrl) {
     menuGroup: "BOM Observations",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomSurfaceTemp`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDZ20010_air_temperature",
@@ -523,6 +528,7 @@ export function registerBOMSurfaceTempLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -540,8 +546,8 @@ export function registerBOMFireBehaviourIndexLayer(vm, sourceUrl) {
     menuGroup: "BOM Forecasts",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomFireBehaviourIndex`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDZ10135",
@@ -552,6 +558,7 @@ export function registerBOMFireBehaviourIndexLayer(vm, sourceUrl) {
           crs: L.CRS.EPSG4326,
           opacity: 0.6,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -569,8 +576,8 @@ export function registerBOMHazardousWindLayer(vm, sourceUrl) {
     menuGroup: "BOM Forecasts",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomHazardousWind`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDZ71153",
@@ -581,6 +588,7 @@ export function registerBOMHazardousWindLayer(vm, sourceUrl) {
           crs: L.CRS.EPSG4326,
           opacity: 0.6,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -598,8 +606,8 @@ export function registerBOMFloodWarningBoundariesLayer(vm, sourceUrl) {
     menuGroup: "BOM Observations",
     refreshMs: 3600000, // 1 hr – reference data
     visibleByDefault: localStorage.getItem(`ov.bomFloodWarningBoundaries`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: "IDM00017",
@@ -609,6 +617,7 @@ export function registerBOMFloodWarningBoundariesLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
@@ -626,8 +635,8 @@ export function registerBOMFireWeatherDistrictsLayer(vm, sourceUrl) {
     menuGroup: "BOM Observations",
     refreshMs: 3600000, // 1 hr – reference data
     visibleByDefault: localStorage.getItem(`ov.bomFireWeatherDistricts`) || false,
-    fetchFn: async () => ({}),
-    drawFn: (layerGroup, _data) => {
+    fetchFn: async () => ({ cacheBuster: Date.now() }),
+    drawFn: (layerGroup, data) => {
       layerGroup.addLayer(
         L.tileLayer.wms(wmsUrl, {
           layers: ["IDM00007", "IDM00021"],
@@ -637,6 +646,7 @@ export function registerBOMFireWeatherDistrictsLayer(vm, sourceUrl) {
           version: "1.3.0",
           crs: L.CRS.EPSG4326,
           attribution: "Bureau of Meteorology",
+          _cb: data?.cacheBuster,
         })
       );
     },
