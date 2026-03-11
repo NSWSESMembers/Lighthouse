@@ -59,6 +59,7 @@ import { renderFRAOSLayer } from "./mapLayers/frao.js";
 import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
+import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
 import { 
@@ -2464,6 +2465,7 @@ function VM() {
     registerPowerBoundariesGridLayer(self, map);
     registerWaterNSWBoundariesLayer(self);
     registerEPAContaminationSitesLayer(self);
+    registerNSWDeclaredDamsLayer(self);
     registerBOMLandWarningsLayer(self);
     registerBOMRainfallLayer(self, sourceUrl);
     registerBOMRadarLayer(self, sourceUrl);
