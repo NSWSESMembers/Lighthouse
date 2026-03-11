@@ -90,6 +90,7 @@ export function ConfigVM(root, deps) {
     self.clusterEnabled = ko.observable(true);
     self.clusterRadius = ko.observable(60);   // maxClusterRadius in px (10–80)
     self.clusterRescueJobs = ko.observable(true);
+    self.alertsCollapsibleRules = ko.observable(true);
 
     // pinned rows
     self.pinnedTeamIds = ko.observableArray([]);
@@ -177,6 +178,7 @@ export function ConfigVM(root, deps) {
         clusterEnabled: !!self.clusterEnabled(),
         clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
+        alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
     });
 
     // Helpers
@@ -472,6 +474,9 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.clusterRescueJobs === 'boolean') {
             self.clusterRescueJobs(cfg.clusterRescueJobs);
         }
+        if (typeof cfg.alertsCollapsibleRules === 'boolean') {
+            self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
+        }
 
 
         self.afterConfigLoad()
@@ -606,6 +611,10 @@ export function ConfigVM(root, deps) {
 
     self.clusterRescueJobs.subscribe((v) => {
         root.mapVM?.applyRescueClusterSetting?.(!!v);
+        self.save();
+    })
+
+    self.alertsCollapsibleRules.subscribe(() => {
         self.save();
     })
 
