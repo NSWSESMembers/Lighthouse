@@ -1,7 +1,7 @@
 import L from 'leaflet';
 import ko from 'knockout';
 
-const ruleState = new Map(); // key: rule.id -> { collapsed: boolean, lastCount: number }
+const ruleState = new Map(); // key: rule.id -> { collapsed: boolean, open: boolean, lastCount: number }
 
 /**
  * SVG hazard icon used in the header
@@ -37,7 +37,8 @@ function createLeafletControl(L) {
  * Render a list of active rules into the container. - RAW html no KO here yet
  * Each rule: { id, level, title, items:[{id,label}], count, onClick? }
  */
-function renderRules(container, rules) {
+function renderRules(container, rules, opts = {}) {
+  const allowCollapse = opts.allowCollapse !== false;
   container.style.display = rules.length ? '' : 'none';
   container.innerHTML = '';
 
@@ -45,13 +46,17 @@ function renderRules(container, rules) {
     // --- restore / update state for this rule ---
     let state = ruleState.get(rule.id);
     if (!state) {
-      state = { collapsed: false, lastCount: rule.count };
+      state = { collapsed: false, open: false, lastCount: rule.count };
     } else {
       // if the count changed while collapsed, auto-expand
       if (state.collapsed && rule.count !== state.lastCount) {
         state.collapsed = false;
       }
       state.lastCount = rule.count;
+    }
+    if (!allowCollapse) {
+      state.collapsed = false;
+      state.open = true;
     }
     ruleState.set(rule.id, state);
 
@@ -61,12 +66,15 @@ function renderRules(container, rules) {
     if (state.collapsed) {
       div.classList.add('alerts--collapsed');
       width = "24px"
-  }
+    }
+    if (!state.collapsed && state.open) {
+      div.classList.add('alerts--open');
+    }
 
     div.innerHTML = `
       <div class="alerts" style="width: ${width};">
         <div class="alerts__header">
-          <button type="button" class="alerts__btn" aria-expanded="${!state.collapsed}">
+          <button type="button" class="alerts__btn" aria-expanded="${!state.collapsed && !!state.open}">
             ${hazardSvg()}
             <span class="alerts__title">${rule.title}</span>
             <span class="alerts__count">${rule.count}</span>
@@ -83,43 +91,52 @@ function renderRules(container, rules) {
 
     const btn = div.querySelector('.alerts__btn');
     const hideBtn = div.querySelector('.alerts__hide-btn');
+    if (!allowCollapse) {
+      hideBtn.style.display = 'none';
+    }
 
     // main button: toggle open; if collapsed, un-collapse first
     btn.addEventListener('click', () => {
-      const st = ruleState.get(rule.id) || { collapsed: false, lastCount: rule.count };
+      const st = ruleState.get(rule.id) || { collapsed: false, open: false, lastCount: rule.count };
 
       if (st.collapsed) {
         st.collapsed = false;
+        st.open = true;
         ruleState.set(rule.id, st);
         div.classList.remove('alerts--collapsed');
-              div.querySelector('.alerts').style.width = '280px';
+        div.querySelector('.alerts').style.width = '280px';
 
       }
 
       const openNow = !div.classList.contains('alerts--open');
       div.classList.toggle('alerts--open', openNow);
       btn.setAttribute('aria-expanded', String(openNow));
+      st.open = openNow;
+      ruleState.set(rule.id, st);
     });
 
     // hide button: collapse down to icon
-    hideBtn.addEventListener('click', (ev) => {
-      ev.stopPropagation();
-      const st = ruleState.get(rule.id) || { collapsed: false, lastCount: rule.count };
-      st.collapsed = true;
-      st.lastCount = rule.count;
-      ruleState.set(rule.id, st);
+    if (allowCollapse) {
+      hideBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const st = ruleState.get(rule.id) || { collapsed: false, open: false, lastCount: rule.count };
+        st.collapsed = true;
+        st.open = false;
+        st.lastCount = rule.count;
+        ruleState.set(rule.id, st);
 
-      div.classList.remove('alerts--open');
-      btn.setAttribute('aria-expanded', 'false');
-      
-      div.querySelector('.alerts').animate(
-        [{ width: '280px' }, { width: '24px' }],
-        { duration: 300, easing: 'ease-in-out' }
-      ).onfinish = () => {
-        div.querySelector('.alerts').style.width = '24px';
-      };
-      div.classList.add('alerts--collapsed');
-    });
+        div.classList.remove('alerts--open');
+        btn.setAttribute('aria-expanded', 'false');
+
+        div.querySelector('.alerts').animate(
+          [{ width: '280px' }, { width: '24px' }],
+          { duration: 300, easing: 'ease-in-out' }
+        ).onfinish = () => {
+          div.querySelector('.alerts').style.width = '24px';
+        };
+        div.classList.add('alerts--collapsed');
+      });
+    }
 
     // optional item click handler (e.g. fly to job)
     if (typeof rule.onClick === 'function') {
@@ -319,7 +336,9 @@ export function installAlerts(map, vm) {
 
   ko.computed(() => {
     const rules = computeActiveRules();
-    renderRules(el, rules);
+    renderRules(el, rules, {
+      allowCollapse: !!vm?.config?.alertsCollapsibleRules?.(),
+    });
   });
 
   return { control, registerAlertRule }; // allow caller to register later if desired
