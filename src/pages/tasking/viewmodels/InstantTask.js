@@ -63,6 +63,7 @@ export class InstantTaskViewModel {
                     summaryLine,
                     distanceMeters: distance,
                     isSuggested: false,        // will be set below
+                    suggestionReason: '',       // will be set below
                     mouseInTeamInInstantTaskPopup: () => {
                         this.drawCrowsFliesToAssetPassedTeam(tm);
                     },
@@ -99,17 +100,21 @@ export class InstantTaskViewModel {
             };
 
             const priorityId = job.priorityId ? ko.unwrap(job.priorityId) : null;
-            const indices = suggestTeamIndices(enriched, priorityId, weights, 2);
+            const results = suggestTeamIndices(enriched, priorityId, weights, 2);
 
-            // Mark suggested teams, then move them to the top (best first)
+            // Mark suggested teams with reason, then move them to the top (best first)
             const suggested = [];
-            for (const idx of indices) {
-                if (idx >= 0 && idx < enriched.length) {
-                    enriched[idx].isSuggested = true;
+            for (const { index, reason } of results) {
+                if (index >= 0 && index < enriched.length) {
+                    enriched[index].isSuggested = true;
+                    enriched[index].suggestionReason = reason;
                 }
             }
             // Pull them out in reverse index order to avoid shifting
-            const sortedIdxDesc = [...indices].filter(i => i >= 0 && i < enriched.length).sort((a, b) => b - a);
+            const sortedIdxDesc = results
+                .map(r => r.index)
+                .filter(i => i >= 0 && i < enriched.length)
+                .sort((a, b) => b - a);
             for (const idx of sortedIdxDesc) {
                 suggested.unshift(enriched.splice(idx, 1)[0]);
             }
