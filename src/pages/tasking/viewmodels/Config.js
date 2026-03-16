@@ -96,6 +96,39 @@ export function ConfigVM(root, deps) {
     self.pinnedTeamIds = ko.observableArray([]);
     self.pinnedIncidentIds = ko.observableArray([]);
 
+    // ── Instant Task Suggestion Engine ──
+    self.suggestionEnabled = ko.observable(true);
+    self.rescueDistanceWeight = ko.observable(90);
+    self.rescueTaskingWeight = ko.observable(10);
+    self.normalDistanceWeight = ko.observable(50);
+    self.normalTaskingWeight = ko.observable(50);
+
+    // Keep rescue sliders summing to ~100 (optional visual aid)
+    self.rescueDistanceWeightDisplay = ko.pureComputed(() => {
+        const d = Number(self.rescueDistanceWeight()) || 0;
+        const t = Number(self.rescueTaskingWeight()) || 0;
+        const total = d + t || 1;
+        return Math.round(d / total * 100);
+    });
+    self.rescueTaskingWeightDisplay = ko.pureComputed(() => {
+        const d = Number(self.rescueDistanceWeight()) || 0;
+        const t = Number(self.rescueTaskingWeight()) || 0;
+        const total = d + t || 1;
+        return Math.round(t / total * 100);
+    });
+    self.normalDistanceWeightDisplay = ko.pureComputed(() => {
+        const d = Number(self.normalDistanceWeight()) || 0;
+        const t = Number(self.normalTaskingWeight()) || 0;
+        const total = d + t || 1;
+        return Math.round(d / total * 100);
+    });
+    self.normalTaskingWeightDisplay = ko.pureComputed(() => {
+        const d = Number(self.normalDistanceWeight()) || 0;
+        const t = Number(self.normalTaskingWeight()) || 0;
+        const total = d + t || 1;
+        return Math.round(t / total * 100);
+    });
+
     // Dark mode helper (defined early so it can be called in afterConfigLoad)
     self._applyDarkMode = () => {
         if (self.darkMode()) {
@@ -179,6 +212,11 @@ export function ConfigVM(root, deps) {
         clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
+        suggestionEnabled: !!self.suggestionEnabled(),
+        rescueDistanceWeight: Number(self.rescueDistanceWeight()) || 0,
+        rescueTaskingWeight: Number(self.rescueTaskingWeight()) || 0,
+        normalDistanceWeight: Number(self.normalDistanceWeight()) || 0,
+        normalTaskingWeight: Number(self.normalTaskingWeight()) || 0,
     });
 
     // Helpers
@@ -478,6 +516,23 @@ export function ConfigVM(root, deps) {
             self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
         }
 
+        // Instant Task Suggestion Engine weights
+        if (typeof cfg.suggestionEnabled === 'boolean') {
+            self.suggestionEnabled(cfg.suggestionEnabled);
+        }
+        if (typeof cfg.rescueDistanceWeight === 'number') {
+            self.rescueDistanceWeight(cfg.rescueDistanceWeight);
+        }
+        if (typeof cfg.rescueTaskingWeight === 'number') {
+            self.rescueTaskingWeight(cfg.rescueTaskingWeight);
+        }
+        if (typeof cfg.normalDistanceWeight === 'number') {
+            self.normalDistanceWeight(cfg.normalDistanceWeight);
+        }
+        if (typeof cfg.normalTaskingWeight === 'number') {
+            self.normalTaskingWeight(cfg.normalTaskingWeight);
+        }
+
 
         self.afterConfigLoad()
 
@@ -617,6 +672,13 @@ export function ConfigVM(root, deps) {
     self.alertsCollapsibleRules.subscribe(() => {
         self.save();
     })
+
+    // Auto-save suggestion engine settings
+    self.suggestionEnabled.subscribe(() => { self.save(); });
+    self.rescueDistanceWeight.subscribe(() => { self.save(); });
+    self.rescueTaskingWeight.subscribe(() => { self.save(); });
+    self.normalDistanceWeight.subscribe(() => { self.save(); });
+    self.normalTaskingWeight.subscribe(() => { self.save(); });
 
     self.darkMode.subscribe((isDark) => {
         self._applyDarkMode();

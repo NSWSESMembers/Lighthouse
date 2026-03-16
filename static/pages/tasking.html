@@ -1245,9 +1245,14 @@
                                                                                             class="dropdown-item text-start py-1"
                                                                                             data-bind="click: taskTeamToJobWithConfirm, 
                                                                                                        event: { mouseenter: mouseInTeamInInstantTaskPopup, mouseleave: mouseOutTeamInInstantTaskPopup }">
-                                                                                            <div>
-                                                                                                <strong
+                                                                                            <div class="d-flex align-items-center">
+                                                                                                <strong class="flex-grow-1"
                                                                                                     data-bind="text: team.callsign() || ''"></strong>
+                                                                                                <!-- ko if: isSuggested -->
+                                                                                                <span class="fast-tooltip ms-2 flex-shrink-0" data-bind="fastTooltip: suggestionReason">
+                                                                                                    <i class="fa fa-robot text-primary"></i>
+                                                                                                </span>
+                                                                                                <!-- /ko -->
                                                                                             </div>
                                                                                             <div class="small text-muted"
                                                                                                 data-bind="text: currentTaskingSummary()">
@@ -2610,6 +2615,149 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Instant Task Suggestions -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingSuggestions">
+                                            <button class="accordion-button gap-2 collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapseSuggestions"
+                                                aria-expanded="false" aria-controls="collapseSuggestions">
+                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-robot"></i></span>
+                                                <span>Instant Task Suggestions</span>
+                                            </button>
+                                        </h2>
+
+                                        <div id="collapseSuggestions" class="accordion-collapse collapse"
+                                            aria-labelledby="headingSuggestions"
+                                            data-bs-parent="#configOtherSettingsAccordion">
+                                            <div class="accordion-body">
+
+                                                <p class="small text-muted mb-3">
+                                                    When enabled, the instant-task dropdown will suggest a team using a
+                                                    rule-based engine. The suggested team appears at the top of the list with a
+                                                    <i class="fa fa-robot text-primary"></i> icon.
+                                                </p>
+
+                                                <!-- Master toggle -->
+                                                <div class="form-check form-switch mb-3">
+                                                    <input class="form-check-input" type="checkbox" role="switch"
+                                                        id="suggestionEnabledToggle"
+                                                        data-bind="checked: config.suggestionEnabled">
+                                                    <label class="form-check-label fw-semibold"
+                                                        for="suggestionEnabledToggle">
+                                                        Enable team suggestions
+                                                    </label>
+                                                </div>
+
+                                                <div data-bind="visible: config.suggestionEnabled">
+
+                                                    <!-- Rules explanation -->
+                                                    <div class="card mb-3">
+                                                        <div class="card-header py-1">
+                                                            <strong class="small">Rules</strong>
+                                                        </div>
+                                                        <div class="card-body py-2 small">
+                                                            <ul class="mb-0 ps-3">
+                                                                <li>
+                                                                    <strong>Rescue priority:</strong>
+                                                                    Prefer the <em>nearest team with zero active taskings</em>.
+                                                                    If all teams already have taskings, fall back to weighted scoring below.
+                                                                </li>
+                                                                <li class="mt-1">
+                                                                    <strong>All other priorities:</strong>
+                                                                    Score every team using a weighted combination of
+                                                                    distance and tasking count, then suggest the lowest-scored team.
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row g-4">
+
+                                                        <!-- Rescue weights -->
+                                                        <div class="col-md-6">
+                                                            <fieldset class="border rounded p-3">
+                                                                <legend class="form-label fw-semibold mb-2 float-none w-auto px-1">
+                                                                    <span class="badge bg-danger me-1">Rescue</span> Weights
+                                                                </legend>
+
+                                                                <label class="form-label mb-1">
+                                                                    Distance:
+                                                                    <strong data-bind="text: config.rescueDistanceWeightDisplay() + '%'"></strong>
+                                                                </label>
+                                                                <div class="d-flex align-items-center gap-2 mb-3">
+                                                                    <small class="text-muted">Low</small>
+                                                                    <input type="range" class="form-range flex-grow-1"
+                                                                        min="0" max="100" step="5"
+                                                                        data-bind="value: config.rescueDistanceWeight, valueUpdate: 'input'">
+                                                                    <small class="text-muted">High</small>
+                                                                </div>
+
+                                                                <label class="form-label mb-1">
+                                                                    Tasking count:
+                                                                    <strong data-bind="text: config.rescueTaskingWeightDisplay() + '%'"></strong>
+                                                                </label>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <small class="text-muted">Low</small>
+                                                                    <input type="range" class="form-range flex-grow-1"
+                                                                        min="0" max="100" step="5"
+                                                                        data-bind="value: config.rescueTaskingWeight, valueUpdate: 'input'">
+                                                                    <small class="text-muted">High</small>
+                                                                </div>
+
+                                                                <div class="form-text mt-2">
+                                                                    For Rescue jobs, idle teams (zero taskings) are always
+                                                                    preferred first. These weights apply when all teams have
+                                                                    at least one tasking.
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+
+                                                        <!-- Normal weights -->
+                                                        <div class="col-md-6">
+                                                            <fieldset class="border rounded p-3">
+                                                                <legend class="form-label fw-semibold mb-2 float-none w-auto px-1">
+                                                                    <span class="badge bg-primary me-1">Standard</span> Weights
+                                                                </legend>
+
+                                                                <label class="form-label mb-1">
+                                                                    Distance:
+                                                                    <strong data-bind="text: config.normalDistanceWeightDisplay() + '%'"></strong>
+                                                                </label>
+                                                                <div class="d-flex align-items-center gap-2 mb-3">
+                                                                    <small class="text-muted">Low</small>
+                                                                    <input type="range" class="form-range flex-grow-1"
+                                                                        min="0" max="100" step="5"
+                                                                        data-bind="value: config.normalDistanceWeight, valueUpdate: 'input'">
+                                                                    <small class="text-muted">High</small>
+                                                                </div>
+
+                                                                <label class="form-label mb-1">
+                                                                    Tasking count:
+                                                                    <strong data-bind="text: config.normalTaskingWeightDisplay() + '%'"></strong>
+                                                                </label>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <small class="text-muted">Low</small>
+                                                                    <input type="range" class="form-range flex-grow-1"
+                                                                        min="0" max="100" step="5"
+                                                                        data-bind="value: config.normalTaskingWeight, valueUpdate: 'input'">
+                                                                    <small class="text-muted">High</small>
+                                                                </div>
+
+                                                                <div class="form-text mt-2">
+                                                                    For non-rescue jobs (Immediate, Priority, General).
+                                                                    Balances proximity with how busy each team already is.
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+
+                                                    </div><!-- /row -->
+                                                </div><!-- /visible -->
+
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </div><!-- /accordion -->
 
 

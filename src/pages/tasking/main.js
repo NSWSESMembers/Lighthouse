@@ -48,6 +48,7 @@ import { installRowVisibilityBindings } from "./bindings/rowVisibility.js";
 import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
 import { installSortableArrayBindings } from "./bindings/sortableArray.js";
 import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
+import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
 import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
@@ -965,6 +966,7 @@ function VM() {
             },
             map: self.mapVM,
             filteredTeams: self.filteredTeams,
+            config: self.config,
             isIncidentPinned: (id) => self.isIncidentPinned(id),
             toggleIncidentPinned: (id) => self.toggleIncidentPinned(id),
         }

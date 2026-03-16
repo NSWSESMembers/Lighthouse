@@ -82,9 +82,14 @@ export function buildJobPopupKO() {
                    class="dropdown-item text-start py-1"
                    data-bind="click: taskTeamToJobWithConfirm, 
                               event: { mouseenter: mouseInTeamInInstantTaskPopup, mouseleave: mouseOutTeamInInstantTaskPopup }">
-                   <div>
-                       <strong
+                   <div class="d-flex align-items-center">
+                       <strong class="flex-grow-1"
                            data-bind="text: team.callsign() || ''"></strong>
+                       <!-- ko if: isSuggested -->
+                       <span class="fast-tooltip ms-2 flex-shrink-0" data-bind="fastTooltip: suggestionReason">
+                           <i class="fa fa-robot text-primary"></i>
+                       </span>
+                       <!-- /ko -->
                    </div>
                    <div class="small text-muted"
                        data-bind="text: currentTaskingSummary()">
