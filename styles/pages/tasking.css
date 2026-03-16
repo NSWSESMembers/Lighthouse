@@ -2000,6 +2000,23 @@ overflow: hidden;
   position: fixed !important;
 }
 
+/* Instant task suggestion highlight */
+.instant-task-suggested {
+  background-color: rgba(13, 110, 253, 0.08);
+  border-left: 3px solid #0d6efd;
+  padding-left: 9px !important;
+}
+.instant-task-suggested:hover {
+  background-color: rgba(13, 110, 253, 0.15);
+}
+.dark-mode .instant-task-suggested {
+  background-color: rgba(100, 160, 255, 0.12);
+  border-left-color: #6ea8fe;
+}
+.dark-mode .instant-task-suggested:hover {
+  background-color: rgba(100, 160, 255, 0.22);
+}
+
 /* Sector dropdown button */
 .sector-dropdown-btn {
   background: none;

@@ -34,6 +34,7 @@ export function Job(data = {}, deps = {}) {
         openJobStatusConfirmModal = (_job, _newStatus) => { /* noop */ },
         map = null,
         filteredTeams = ko.observableArray([]),
+        config = null,
         isIncidentPinned = () => false,
         toggleIncidentPinned = () => false,
     } = deps;
@@ -104,7 +105,7 @@ export function Job(data = {}, deps = {}) {
         return Array.isArray(self.unacceptedNotifications()) && self.unacceptedNotifications().length > 0;
     });
 
-    self.instantTask = new InstantTaskViewModel({ job: self, map: map, filteredTeams: filteredTeams });
+    self.instantTask = new InstantTaskViewModel({ job: self, map: map, filteredTeams: filteredTeams, config: config });
 
 
     //refs to other obs

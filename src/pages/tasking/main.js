@@ -965,6 +965,7 @@ function VM() {
             },
             map: self.mapVM,
             filteredTeams: self.filteredTeams,
+            config: self.config,
             isIncidentPinned: (id) => self.isIncidentPinned(id),
             toggleIncidentPinned: (id) => self.toggleIncidentPinned(id),
         }

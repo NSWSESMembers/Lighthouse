@@ -81,10 +81,14 @@ export function buildJobPopupKO() {
                <button type="button"
                    class="dropdown-item text-start py-1"
                    data-bind="click: taskTeamToJobWithConfirm, 
-                              event: { mouseenter: mouseInTeamInInstantTaskPopup, mouseleave: mouseOutTeamInInstantTaskPopup }">
-                   <div>
-                       <strong
+                              event: { mouseenter: mouseInTeamInInstantTaskPopup, mouseleave: mouseOutTeamInInstantTaskPopup },
+                              css: { 'instant-task-suggested': isSuggested }">
+                   <div class="d-flex align-items-center">
+                       <strong class="flex-grow-1"
                            data-bind="text: team.callsign() || ''"></strong>
+                       <!-- ko if: isSuggested -->
+                       <i class="fa fa-robot text-primary ms-2 flex-shrink-0" title="Suggested"></i>
+                       <!-- /ko -->
                    </div>
                    <div class="small text-muted"
                        data-bind="text: currentTaskingSummary()">
