@@ -103,6 +103,14 @@ export function ConfigVM(root, deps) {
     self.normalDistanceWeight = ko.observable(50);
     self.normalTaskingWeight = ko.observable(50);
 
+    /**
+     * When true, the suggestion engine fetches road travel times from
+     * Amazon Location Service to rank teams by actual driving time
+     * instead of crow-flies distance.
+     * @type {ko.Observable<boolean>}
+     */
+    self.suggestionUseRouting = ko.observable(false);
+
     // Keep rescue sliders summing to ~100 (optional visual aid)
     self.rescueDistanceWeightDisplay = ko.pureComputed(() => {
         const d = Number(self.rescueDistanceWeight()) || 0;
@@ -217,6 +225,7 @@ export function ConfigVM(root, deps) {
         rescueTaskingWeight: Number(self.rescueTaskingWeight()) || 0,
         normalDistanceWeight: Number(self.normalDistanceWeight()) || 0,
         normalTaskingWeight: Number(self.normalTaskingWeight()) || 0,
+        suggestionUseRouting: !!self.suggestionUseRouting(),
     });
 
     // Helpers
@@ -532,6 +541,9 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.normalTaskingWeight === 'number') {
             self.normalTaskingWeight(cfg.normalTaskingWeight);
         }
+        if (typeof cfg.suggestionUseRouting === 'boolean') {
+            self.suggestionUseRouting(cfg.suggestionUseRouting);
+        }
 
 
         self.afterConfigLoad()
@@ -679,6 +691,7 @@ export function ConfigVM(root, deps) {
     self.rescueTaskingWeight.subscribe(() => { self.save(); });
     self.normalDistanceWeight.subscribe(() => { self.save(); });
     self.normalTaskingWeight.subscribe(() => { self.save(); });
+    self.suggestionUseRouting.subscribe(() => { self.save(); });
 
     self.darkMode.subscribe((isDark) => {
         self._applyDarkMode();

@@ -49,6 +49,7 @@ import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
 import { installSortableArrayBindings } from "./bindings/sortableArray.js";
 import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
 import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
+import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
 import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
