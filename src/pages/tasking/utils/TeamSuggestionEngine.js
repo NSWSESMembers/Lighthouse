@@ -9,8 +9,9 @@
  *     If every team has at least one tasking, fall back to the nearest team.
  *
  *   ALL OTHER priorities →
- *     Score = (normalisedDistance × distanceWeight) + (normalisedTaskings × taskingWeight)
- *     Suggest the team with the lowest combined score.
+ *     Score = ((1 − normalisedDistance) × distanceWeight + (1 − normalisedTaskings) × taskingWeight) × 100
+ *     100 = best possible match, 0 = worst.  Suggest the team with the
+ *     highest combined score.
  *
  * The user can tweak the distance vs tasking weights per priority class
  * via the config modal.
@@ -151,13 +152,13 @@ function scoredIndices(items, distWeight, taskWeight, count, tag) {
     const tRange = tMax - tMin || 1;
 
     const scored = items.map(t => {
-        const normDist = (t.distanceMeters - dMin) / dRange;   // 0 = closest
-        const normTask = (t.taskingCount   - tMin) / tRange;   // 0 = fewest
-        const score    = normDist * dw + normTask * tw;
+        const normDist = 1 - (t.distanceMeters - dMin) / dRange;   // 1 = closest, 0 = farthest
+        const normTask = 1 - (t.taskingCount   - tMin) / tRange;   // 1 = fewest,  0 = most
+        const score    = (normDist * dw + normTask * tw) * 100;    // 0–100 scale
         return { _idx: t._idx, score, normDist, normTask, raw: t };
     });
 
-    scored.sort((a, b) => a.score - b.score);
+    scored.sort((a, b) => b.score - a.score);   // highest (best) first
 
     return scored.slice(0, count).map((s, rank) => {
         const parts = [];
@@ -168,7 +169,7 @@ function scoredIndices(items, distWeight, taskWeight, count, tag) {
         const distKm = (s.raw.distanceMeters / 1000).toFixed(1);
         return {
             index: s._idx,
-            reason: `${prefix} score ${s.score.toFixed(2)} (${weightDesc}) — ${distKm} km, ${s.raw.taskingCount} tasking(s) [${tag}]`,
+            reason: `${prefix} match ${s.score.toFixed(0)}% (${weightDesc}) — ${distKm} km, ${s.raw.taskingCount} tasking(s) [${tag}]`,
         };
     });
 }

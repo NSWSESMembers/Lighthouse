@@ -41,6 +41,7 @@ export function buildJobPopupKO() {
     <div class="text-center mt-2">
       <div class="dropdown d-inline-block">
         <button class="btn btn-small dropdown-toggle btn-outline-primary" type="button" id="assignTeamBtn"
+                title="Task Team"
                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-bind="disable: !canTaskJob()">
                                 <i class="fa fa-solid fa-user-plus"></i>
 
