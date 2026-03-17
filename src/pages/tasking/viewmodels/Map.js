@@ -685,6 +685,22 @@ export function MapVM(Lmap, root) {
     self.crowFliesLine.addTo(self.map);
   };
 
+  /**
+   * Draw a road-route polyline on the map (reuses the crowFliesLine slot
+   * so it is cleared by the same `clearCrowFliesLine` call).
+   *
+   * @param {number[][]} latLngs  Array of [lat, lng] pairs.
+   */
+  self.drawRoutePolyline = (latLngs) => {
+    self.clearCrowFliesLine();
+    if (!latLngs || latLngs.length < 2) return;
+    self.crowFliesLine = L.polyline(latLngs, {
+      weight: 4,
+      color: '#2196F3',
+      opacity: 0.85,
+    }).addTo(self.map);
+  };
+
   self.drawCrowsFliesToAssetPassedTeam = (team, job) => {
     self.clearCrowFliesLine();
     if (!team || !job) return;

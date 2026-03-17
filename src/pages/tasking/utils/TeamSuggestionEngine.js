@@ -13,6 +13,11 @@
  *     100 = best possible match, 0 = worst.  Suggest the team with the
  *     highest combined score.
  *
+ * When `travelTimeSeconds` is available on a team object (from Amazon
+ * Location Service routing), it is used as the proximity dimension instead
+ * of haversine distance.  This gives more accurate suggestions because road
+ * travel time accounts for road network topology and speed limits.
+ *
  * The user can tweak the distance vs tasking weights per priority class
  * via the config modal.
  */
@@ -40,7 +45,7 @@ const DEFAULT_WEIGHTS = {
  * { index, reason } objects for the top-N suggested teams (best first),
  * or [] if disabled/impossible.
  *
- * @param {{ distanceMeters: number|null, taskingCount: number }[]} teams
+ * @param {{ distanceMeters: number|null, travelTimeSeconds: number|null, taskingCount: number }[]} teams
  * @param {number|null} priorityId   Enum.JobPriorityType id (1 = Rescue)
  * @param {SuggestionWeights} weights
  * @param {number} [count=2]  how many suggestions to return
@@ -74,13 +79,13 @@ function rescueStrategyN(teams, w, count) {
     const idle = withDist.filter(t => t.taskingCount === 0);
 
     if (idle.length > 0) {
-        idle.sort((a, b) => a.distanceMeters - b.distanceMeters);
+        // Sort by travel time if available, otherwise by haversine distance
+        idle.sort((a, b) => proximityValue(a) - proximityValue(b));
         return idle.slice(0, count).map((t, rank) => {
-            const distKm = (t.distanceMeters / 1000).toFixed(1);
             const prefix = rank === 0 ? 'Nearest' : `#${rank + 1} nearest`;
             return {
                 index: t._idx,
-                reason: `${prefix} idle team — ${distKm} km, 0 taskings (rescue)`,
+                reason: `${prefix} idle team — ${fmtProximity(t)}, 0 taskings (rescue)`,
             };
         });
     }
@@ -94,13 +99,12 @@ function rescueStrategyN(teams, w, count) {
     }
 
     // Pure distance fallback
-    withDist.sort((a, b) => a.distanceMeters - b.distanceMeters);
+    withDist.sort((a, b) => proximityValue(a) - proximityValue(b));
     return withDist.slice(0, count).map((t, rank) => {
-        const distKm = (t.distanceMeters / 1000).toFixed(1);
         const prefix = rank === 0 ? 'Nearest' : `#${rank + 1} nearest`;
         return {
             index: t._idx,
-            reason: `${prefix} team — ${distKm} km, ${t.taskingCount} tasking(s) (rescue, all busy)`,
+            reason: `${prefix} team — ${fmtProximity(t)}, ${t.taskingCount} tasking(s) (rescue, all busy)`,
         };
     });
 }
@@ -139,22 +143,26 @@ function scoredIndices(items, distWeight, taskWeight, count, tag) {
     const dwPct = Math.round(dw * 100);
     const twPct = Math.round(tw * 100);
 
-    // min/max for normalisation
-    const distances = items.map(t => t.distanceMeters);
-    const taskings  = items.map(t => t.taskingCount);
+    // Use travel time as proximity dimension when available, fall back to distance
+    const proxValues = items.map(t => proximityValue(t));
+    const taskings   = items.map(t => t.taskingCount);
 
-    const dMin = Math.min(...distances);
-    const dMax = Math.max(...distances);
+    const dMin = Math.min(...proxValues);
+    const dMax = Math.max(...proxValues);
     const tMin = Math.min(...taskings);
     const tMax = Math.max(...taskings);
 
     const dRange = dMax - dMin || 1;   // avoid /0
     const tRange = tMax - tMin || 1;
 
-    const scored = items.map(t => {
-        const normDist = 1 - (t.distanceMeters - dMin) / dRange;   // 1 = closest, 0 = farthest
-        const normTask = 1 - (t.taskingCount   - tMin) / tRange;   // 1 = fewest,  0 = most
-        const score    = (normDist * dw + normTask * tw) * 100;    // 0–100 scale
+    // Are any teams using road-routing data?
+    const hasAnyRouting = items.some(t => t.travelTimeSeconds != null && Number.isFinite(t.travelTimeSeconds));
+    const proxLabel = hasAnyRouting ? 'travel' : 'dist';
+
+    const scored = items.map((t, i) => {
+        const normDist = 1 - (proxValues[i] - dMin) / dRange;  // 1 = closest/fastest, 0 = farthest/slowest
+        const normTask = 1 - (t.taskingCount - tMin) / tRange; // 1 = fewest, 0 = most
+        const score    = (normDist * dw + normTask * tw) * 100; // 0–100 scale
         return { _idx: t._idx, score, normDist, normTask, raw: t };
     });
 
@@ -162,14 +170,60 @@ function scoredIndices(items, distWeight, taskWeight, count, tag) {
 
     return scored.slice(0, count).map((s, rank) => {
         const parts = [];
-        if (dwPct > 0) parts.push(`dist ${dwPct}%`);
+        if (dwPct > 0) parts.push(`${proxLabel} ${dwPct}%`);
         if (twPct > 0) parts.push(`task ${twPct}%`);
         const weightDesc = parts.join(' / ');
         const prefix = rank === 0 ? 'Best' : `#${rank + 1}`;
-        const distKm = (s.raw.distanceMeters / 1000).toFixed(1);
         return {
             index: s._idx,
-            reason: `${prefix} match ${s.score.toFixed(0)}% (${weightDesc}) — ${distKm} km, ${s.raw.taskingCount} tasking(s) [${tag}]`,
+            reason: `${prefix} match ${s.score.toFixed(0)}% (${weightDesc}) — ${fmtProximity(s.raw)}, ${s.raw.taskingCount} tasking(s) [${tag}]`,
         };
     });
+}
+
+
+/* ------------------------------------------------------------------ */
+/*  Proximity helpers                                                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Returns a single numeric "proximity" value for sorting / normalisation.
+ *
+ * Prefers `travelTimeSeconds` (road routing) when available because it
+ * accounts for road topology and speed limits.  Falls back to haversine
+ * `distanceMeters`.  Lower value = closer/faster.
+ *
+ * @param {{ travelTimeSeconds?: number|null, distanceMeters: number }} t
+ * @returns {number}
+ */
+function proximityValue(t) {
+    if (t.travelTimeSeconds != null && Number.isFinite(t.travelTimeSeconds)) {
+        return t.travelTimeSeconds;
+    }
+    return t.distanceMeters;
+}
+
+/**
+ * Human-readable proximity string for reason tooltips.
+ * Shows travel time + road distance when routing data is available,
+ * otherwise just the haversine distance.
+ *
+ * @param {{ travelTimeSeconds?: number|null, distanceMeters: number }} t
+ * @returns {string}
+ */
+function fmtProximity(t) {
+    const distKm = (t.distanceMeters / 1000).toFixed(1);
+    if (t.travelTimeSeconds != null && Number.isFinite(t.travelTimeSeconds)) {
+        const totalMin = Math.round(t.travelTimeSeconds / 60);
+        let timeStr;
+        if (totalMin < 60) {
+            timeStr = `${totalMin} min`;
+        } else {
+            const hr = Math.floor(totalMin / 60);
+            const min = totalMin % 60;
+            timeStr = min > 0 ? `${hr} hr ${min} min` : `${hr} hr`;
+        }
+        return `${timeStr}, ${distKm} km road`;
+    }
+    return `${distKm} km`;
 }
