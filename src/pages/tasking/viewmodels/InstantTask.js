@@ -166,8 +166,8 @@ function backBearingDegrees(bearing) {
 function bearingToCardinal(bearing) {
     if (bearing == null || !Number.isFinite(bearing)) return null;
     const dirs = [
-        "North", "North-East", "East", "South-East",
-        "South", "South-West", "West", "North-West"
+        "↑", "↗", "→", "↘",
+        "↓", "↙", "←", "↖"
     ];
     const idx = Math.round(bearing / 45) % 8;
     return dirs[idx];
@@ -202,7 +202,7 @@ function bestDistanceAndBearing(team, job) {
 }
 
 const fmtBearing = b =>
-    b == null ? "-" : `${bearingToCardinal(b)} (${Math.round(b)}°)`;
+    b == null ? "-" : `${bearingToCardinal(b)} ${Math.round(b)}°`;
 
 const fmtDist = m =>
     m == null ? "-" : (m < 950 ? `${Math.round(m)} m` : `${(m / 1000).toFixed(1)} km`);
