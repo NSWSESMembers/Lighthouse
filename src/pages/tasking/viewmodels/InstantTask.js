@@ -180,12 +180,14 @@ export class InstantTaskViewModel {
                 const hasRoute = cached && cached.travelTimeSeconds != null;
 
                 // Build summary line — include travel time when available
+                const noJobLocation = jLat == null || jLon == null;
                 const summaryParts = [
                     taskingCount + ' tasking(s)',
                     hasRoute ? fmtTime(cached.travelTimeSeconds) : null,
                     hasRoute ? fmtDist(cached.distanceMeters) + ' road' : (distance != null ? fmtDist(distance) : null),
                     backBearing != null ? fmtBearing(backBearing) : null,
-                    distance == null && backBearing == null ? "Location unknown" : null,
+                    noJobLocation ? "No incident location" :
+                        (distance == null && backBearing == null ? "Team location unknown" : null),
                 ].filter(Boolean).join(' • ');
 
                 // For the suggestion engine: prefer road distance, fall back to haversine

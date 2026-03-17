@@ -200,7 +200,7 @@ function proximityValue(t) {
     if (t.travelTimeSeconds != null && Number.isFinite(t.travelTimeSeconds)) {
         return t.travelTimeSeconds;
     }
-    return t.distanceMeters;
+    return t.distanceMeters ?? Infinity;
 }
 
 /**
@@ -212,6 +212,9 @@ function proximityValue(t) {
  * @returns {string}
  */
 function fmtProximity(t) {
+    if (t.distanceMeters == null || !Number.isFinite(t.distanceMeters)) {
+        return 'distance unknown';
+    }
     const distKm = (t.distanceMeters / 1000).toFixed(1);
     if (t.travelTimeSeconds != null && Number.isFinite(t.travelTimeSeconds)) {
         const totalMin = Math.round(t.travelTimeSeconds / 60);

@@ -708,11 +708,13 @@ export function MapVM(Lmap, root) {
     let fromLat = null, fromLng = null;
     if (team.trackableAssets && team.trackableAssets().length > 0) {
       const a = team.trackableAssets()[0];
-      fromLat = +ko.unwrap(a.latitude);
-      fromLng = +ko.unwrap(a.longitude);
+      const aLat = ko.unwrap(a.latitude), aLng = ko.unwrap(a.longitude);
+      if (aLat != null && aLng != null) { fromLat = +aLat; fromLng = +aLng; }
     }
-    const toLat = +ko.unwrap(job.address.latitude);
-    const toLng = +ko.unwrap(job.address.longitude);
+    const rawToLat = ko.unwrap(job.address?.latitude);
+    const rawToLng = ko.unwrap(job.address?.longitude);
+    const toLat = rawToLat != null ? +rawToLat : NaN;
+    const toLng = rawToLng != null ? +rawToLng : NaN;
 
     if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
       Number.isFinite(toLat) && Number.isFinite(toLng))) return;
@@ -742,11 +744,13 @@ export function MapVM(Lmap, root) {
     let fromLat = null, fromLng = null;
     if (tasking.team.trackableAssets && tasking.team.trackableAssets().length > 0) {
       const a = asset || tasking.team.trackableAssets()[0];
-      fromLat = +ko.unwrap(a.latitude);
-      fromLng = +ko.unwrap(a.longitude);
+      const aLat = ko.unwrap(a.latitude), aLng = ko.unwrap(a.longitude);
+      if (aLat != null && aLng != null) { fromLat = +aLat; fromLng = +aLng; }
     }
-    const toLat = +ko.unwrap(tasking.job.address.latitude);
-    const toLng = +ko.unwrap(tasking.job.address.longitude);
+    const rawToLat = ko.unwrap(tasking.job.address?.latitude);
+    const rawToLng = ko.unwrap(tasking.job.address?.longitude);
+    const toLat = rawToLat != null ? +rawToLat : NaN;
+    const toLng = rawToLng != null ? +rawToLng : NaN;
 
     if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
       Number.isFinite(toLat) && Number.isFinite(toLng))) return;
