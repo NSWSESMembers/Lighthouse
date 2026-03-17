@@ -1996,6 +1996,11 @@ overflow: hidden;
   z-index: 3000 !important;
 }
 
+.job-taskteam-dropdown .dropdown-item {
+  white-space: normal;
+  word-break: break-word;
+}
+
 .job-taskteam-dropdown.show {
   position: fixed !important;
 }
