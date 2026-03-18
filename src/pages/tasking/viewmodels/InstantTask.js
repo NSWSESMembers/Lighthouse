@@ -384,7 +384,9 @@ function bestDistanceAndBearing(team, job) {
     const jLon = unwrapNum(job?.address?.longitude);
     if (jLat == null || jLon == null) return { distance: null, bearing: null, assetLat: null, assetLon: null };
 
-    const assets = ko.unwrap(team?.trackableAssets) || [];
+    // Use the team's default asset (user-chosen or first) for distance/bearing
+    const defAsset = team.defaultAsset ? team.defaultAsset() : null;
+    const assets = defAsset ? [defAsset] : (ko.unwrap(team?.trackableAssets) || []);
     let best = null;
     let bestBearing = null;
     let bestAssetLat = null;

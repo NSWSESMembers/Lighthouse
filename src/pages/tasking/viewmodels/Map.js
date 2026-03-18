@@ -704,10 +704,10 @@ export function MapVM(Lmap, root) {
   self.drawCrowsFliesToAssetPassedTeam = (team, job) => {
     self.clearCrowFliesLine();
     if (!team || !job) return;
-    // pick the team’s first asset coordinates
+    // pick the team’s default asset coordinates
     let fromLat = null, fromLng = null;
     if (team.trackableAssets && team.trackableAssets().length > 0) {
-      const a = team.trackableAssets()[0];
+      const a = team.defaultAsset ? team.defaultAsset() : team.trackableAssets()[0];
       const aLat = ko.unwrap(a.latitude), aLng = ko.unwrap(a.longitude);
       if (aLat != null && aLng != null) { fromLat = +aLat; fromLng = +aLng; }
     }
@@ -740,10 +740,10 @@ export function MapVM(Lmap, root) {
     self.clearCrowFliesLine();
     if (!tasking) return;
 
-    // pick the team’s first asset coordinates
+    // pick the team’s default asset coordinates
     let fromLat = null, fromLng = null;
     if (tasking.team.trackableAssets && tasking.team.trackableAssets().length > 0) {
-      const a = asset || tasking.team.trackableAssets()[0];
+      const a = asset || (tasking.team.defaultAsset ? tasking.team.defaultAsset() : tasking.team.trackableAssets()[0]);
       const aLat = ko.unwrap(a.latitude), aLng = ko.unwrap(a.longitude);
       if (aLat != null && aLng != null) { fromLat = +aLat; fromLng = +aLng; }
     }

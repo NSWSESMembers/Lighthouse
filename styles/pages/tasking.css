@@ -990,6 +990,18 @@ tr.job:hover {
   border-bottom: none;
 }
 
+/* Default-asset star toggle */
+.default-asset-btn {
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.default-asset-btn:hover {
+  opacity: 1;
+}
+
 /* Base Leaflet divIcon wrapper for your SVG markers */
 .leaflet-marker-icon.job-svg-marker {
   display: block; /* kill inline baseline spacing */

@@ -999,7 +999,9 @@ function VM() {
                     BeaconClient.team.getTasking(teamId, apiHost, params.userId, token, resolve, reject);
                 }),
             makeTeamLink: (id) => `${params.source}/Teams/${id}/Edit`,
-            flyToAsset: (asset) => {
+            
+            flyToAsset: (assetOrEntry) => {
+                const asset = assetOrEntry && assetOrEntry.asset ? assetOrEntry.asset : assetOrEntry;
                 const lat = asset.latitude(), lng = asset.longitude();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
                     map.flyTo([lat, lng], 14, { animate: true, duration: 0.10 });

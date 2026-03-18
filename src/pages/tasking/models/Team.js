@@ -12,6 +12,58 @@ const _capKey = 'lh_showCapabilities';
 const _showCapabilities = ko.observable(localStorage.getItem(_capKey) !== 'false');
 _showCapabilities.subscribe(v => localStorage.setItem(_capKey, v ? 'true' : 'false'));
 
+// ── Default-asset persistence (shared across all teams) ──
+// Stored as JSON `{ teamId: assetId, … }` in a single localStorage key.
+// An asset can only be the default for one team.
+const _defaultAssetKey = 'lh_defaultAssets';
+
+/** @returns {Object<string, string>} teamId→assetId map */
+function _loadDefaultAssetMap() {
+    try { return JSON.parse(localStorage.getItem(_defaultAssetKey)) || {}; }
+    catch { return {}; }
+}
+
+function _saveDefaultAssetMap(map) {
+    localStorage.setItem(_defaultAssetKey, JSON.stringify(map));
+}
+
+/**
+ * Bumped whenever any team's default-asset changes so that all
+ * `defaultAsset` computeds in every Team re-evaluate.
+ * @type {ko.Observable<number>}
+ */
+const _defaultAssetTick = ko.observable(0);
+
+/**
+ * Set the default asset for a team.  Enforces the constraint that an
+ * asset may only be default for one team — if the same asset was
+ * previously claimed by another team, that mapping is removed.
+ *
+ * @param {string} teamId
+ * @param {string|null} assetId  Pass `null` to clear.
+ */
+function _setDefaultAsset(teamId, assetId) {
+    const map = _loadDefaultAssetMap();
+
+    // Remove any existing mapping pointing to this asset (one-asset-one-team)
+    if (assetId != null) {
+        for (const [tid, aid] of Object.entries(map)) {
+            if (String(aid) === String(assetId)) {
+                delete map[tid];
+            }
+        }
+    }
+
+    if (assetId != null) {
+        map[String(teamId)] = String(assetId);
+    } else {
+        delete map[String(teamId)];
+    }
+
+    _saveDefaultAssetMap(map);
+    _defaultAssetTick(_defaultAssetTick() + 1);
+}
+
 export function Team(data = {}, deps = {}) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
 
@@ -90,6 +142,76 @@ export function Team(data = {}, deps = {}) {
     self.trackableAssetsWithMultipleTeams = ko.pureComputed(() => {
         return self.trackableAssets().filter(a => a.matchingTeamsInView().length > 1);
     });
+
+    /**
+     * The user-chosen default asset for this team, or falls back to the
+     * first trackable asset.  Returns `null` if no assets exist.
+     * @type {ko.PureComputed<Asset|null>}
+     */
+    self.defaultAsset = ko.pureComputed(() => {
+        _defaultAssetTick();                        // re-evaluate when any default changes
+        const assets = self.trackableAssets();
+        if (!assets || assets.length === 0) return null;
+        if (assets.length === 1) return assets[0];
+
+        const map = _loadDefaultAssetMap();
+        const chosenId = map[String(self.id())];
+        if (chosenId != null) {
+            const found = assets.find(a => String(ko.unwrap(a.id)) === String(chosenId));
+            if (found) return found;
+        }
+        return assets[0]; // fallback
+    });
+
+    /**
+     * Returns true if the given asset is the current default for this team.
+     * @param {Asset} asset
+     * @returns {boolean}
+     */
+    self.isDefaultAsset = function (asset) {
+        return self.defaultAsset() === asset;
+    };
+
+    /**
+     * Returns true if the given asset is NOT the current default for this team.
+     * Used in secure-binding templates where inline negation is unavailable.
+     * @param {Asset} asset
+     * @returns {boolean}
+     */
+    self.isNotDefaultAsset = function (asset) {
+        return self.defaultAsset() !== asset;
+    };
+
+    /**
+     * Computed array of wrapper objects for the template foreach that exposes
+     * per-asset `isDefault` / `isNotDefault` observables.  This avoids
+     * function-call-with-arguments in secure-binding data-bind expressions.
+     * @type {ko.PureComputed<Array<{asset: Asset, isDefault: boolean, isNotDefault: boolean}>>}
+     */
+    self.trackableAssetEntries = ko.pureComputed(() => {
+        const def = self.defaultAsset();
+        return self.trackableAssets().map(a => ({
+            asset: a,
+            isDefault: a === def,
+            isNotDefault: a !== def,
+        }));
+    });
+
+    /**
+     * Set (or toggle off) the default asset for this team.
+     * Accepts either an Asset or an entry wrapper `{asset}` from trackableAssetEntries.
+     * @param {Asset|{asset: Asset}} assetOrEntry
+     */
+    self.setDefaultAsset = function (assetOrEntry) {
+        const asset = assetOrEntry && assetOrEntry.asset ? assetOrEntry.asset : assetOrEntry;
+        const currentDefault = self.defaultAsset();
+        if (currentDefault === asset && self.trackableAssets().length > 1) {
+            // Clicking the current default clears it (reverts to [0] fallback)
+            _setDefaultAsset(String(self.id()), null);
+        } else {
+            _setDefaultAsset(String(self.id()), String(ko.unwrap(asset.id)));
+        }
+    };
 
     self.toggleAndExpand = function () {
         const wasExpanded = self.expanded();
