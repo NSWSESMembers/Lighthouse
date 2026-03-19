@@ -2,6 +2,7 @@
 import ko from "knockout";
 
 import { Entity } from "./Entity.js";
+import { Sector } from "./Sector.js";
 
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 
@@ -63,6 +64,7 @@ export function Team(data = {}, deps = {}) {
     self.callsign = ko.observable(data.Callsign ?? "");
     self.assignedTo = ko.observable(new Entity(data.AssignedTo || data.CreatedAt)); //safety code for beacon bug
     self.teamStatusType = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
+    self.sector = ko.observable(new Sector(data.Sector || {}));
     self.members = ko.observableArray(data.Members);
     self.taskedJobCount = ko.observable(data.TaskedJobCount || 0);
     self.teamLeader = ko.computed(function () {
@@ -486,6 +488,13 @@ export function Team(data = {}, deps = {}) {
         if (d.TeamStatusType !== undefined) this.teamStatusType(d.TeamStatusType);
         if (d.Members !== undefined) this.members(d.Members);
         if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) this.assignedTo(new Entity(d.AssignedTo || d.CreatedAt)); //safety for beacon bug
+        if (d.Sector !== undefined) {
+            if (d.Sector === null) {
+                this.sector(new Sector({}));
+            } else {
+                this.sector().updateFromJson(d.Sector);
+            }
+        }
         if (d.statusId !== undefined) this.updateStatusById(d.statusId);
         if (d.TeamStatusStartDate !== undefined) this.statusDate(new Date(d.TeamStatusStartDate));
     }

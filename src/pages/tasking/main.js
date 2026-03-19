@@ -661,17 +661,20 @@ function VM() {
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
             const jobHqId = String(jb.entityAssignedTo.id());
-            const sectorId = String(jb.sector().id());
             const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
-            const sectorMatch = sectorIds.size === 0 || sectorIds.has(sectorId);
-            //must match sector filter
 
-            //if no sector and config says to exclude, filter out
-            if (!jb.sector().id() && self.config.includeIncidentsWithoutSector() === false) {
-                return false;
+            // Sector filtering — only when scope includes incidents
+            if (self.config.applySectorsToIncidents() && sectorIds.size > 0) {
+                const sectorId = String(jb.sector().id());
+                const sectorMatch = sectorIds.has(sectorId);
+
+                //if no sector and config says to exclude, filter out
+                if (!jb.sector().id() && self.config.includeIncidentsWithoutSector() === false) {
+                    return false;
+                }
+
+                if (jb.sector().id() && !sectorMatch) return false;
             }
-
-            if (jb.sector().id() && !sectorMatch) return false;
 
             // If allow-list non-empty, only show jobs whose status is in it
             if (allowedStatusSet.size > 0 && !allowedStatusSet.has(statusName)) {
@@ -728,6 +731,8 @@ function VM() {
         const allowed = self.config.teamStatusFilter(); // allow-list
         const allowedSet = new Set(allowed || []);
         const hqFilterIds = new Set((self.config.teamFilters() || []).map(f => String(f.id)));
+        const applySectorsToTeams = self.config.applySectorsToTeams();
+        const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
 
         var start = new Date();
         var end = new Date();
@@ -757,6 +762,13 @@ function VM() {
             //must match HQ filter
             if (!hqMatch) {
                 return false;
+            }
+
+            // Sector filtering — only when scope includes teams
+            if (applySectorsToTeams && sectorIds.size > 0) {
+                const teamSectorId = String(tm.sector()?.id?.() || '');
+                if (teamSectorId && !sectorIds.has(teamSectorId)) return false;
+                if (!teamSectorId && self.config.includeIncidentsWithoutSector() === false) return false;
             }
 
             const statusDate = tm.statusDate();
