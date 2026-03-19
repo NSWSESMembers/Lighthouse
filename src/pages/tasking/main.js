@@ -817,19 +817,28 @@ function VM() {
         self.sectorsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.sectors.search(hqs, apiHost, params.userId, t, (res) => {
+            // Clear stale sectors from previous HQ selection
+            self.sectorsById.clear();
+            self.sectors.removeAll();
+
+            const returnedIds = new Set();
             (res?.Results || []).forEach(
                 (sectorJson) => {
-                    let sector = self.sectorsById.get(sectorJson.Id);
-                    if (sector) {
-                        sector.updateFromJson(sectorJson);
-                    } else {
-                        // new sector
-                        sector = new Sector(sectorJson);
-                        self.sectorsById.set(sector.id(), sector);
-                        self.sectors.push(sector);
-                    }
+                    returnedIds.add(String(sectorJson.Id));
+                    let sector = new Sector(sectorJson);
+                    self.sectorsById.set(sector.id(), sector);
+                    self.sectors.push(sector);
                 }
             );
+
+            // Remove any active sector filters that no longer exist
+            const staleFilters = (self.config.sectorFilters() || []).filter(
+                sf => !returnedIds.has(String(sf.id))
+            );
+            if (staleFilters.length > 0) {
+                self.config.sectorFilters.removeAll(staleFilters);
+            }
+
             self.sectorsLoading(false);
         }, (count, total) => {
             if (count != -1 && total != -1) {
