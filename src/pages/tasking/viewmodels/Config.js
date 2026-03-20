@@ -321,12 +321,13 @@ export function ConfigVM(root, deps) {
     self.addTeamAndIncident = (item, ev) => {
 
         //force add to both if doesnt exist, dont remove if it does
+        const n = norm(item);
 
-        const teamExists = self.teamFilters().some(x => x.id === norm(item).id);
-        if (!teamExists) self.teamFilters.push(item);
+        const teamExists = self.teamFilters().some(x => x.id === n.id);
+        if (!teamExists) self.teamFilters.push(n);
 
-        const incidentExists = self.incidentFilters().some(x => x.id === norm(item).id);
-        if (!incidentExists) self.incidentFilters.push(item);
+        const incidentExists = self.incidentFilters().some(x => x.id === n.id);
+        if (!incidentExists) self.incidentFilters.push(n);
 
         self.dropdownOpen(true);
         self.inputHasFocus(true);
