@@ -7,7 +7,7 @@ import { openURLInBeacon } from '../utils/chromeRunTime.js';
 
 import { Enum } from '../utils/enum.js';
 
-import { loadSharedMapping, pushSharedDefault, fetchSharedDefaults } from '../utils/defaultAssetSync.js';
+import { loadSharedMapping, saveSharedMapping, pushSharedDefault, fetchSharedDefaults } from '../utils/defaultAssetSync.js';
 
 // Shared across all Team instances — single localStorage key
 const _capKey = 'lh_showCapabilities';
@@ -15,19 +15,8 @@ const _showCapabilities = ko.observable(localStorage.getItem(_capKey) !== 'false
 _showCapabilities.subscribe(v => localStorage.setItem(_capKey, v ? 'true' : 'false'));
 
 // ── Default-asset persistence (shared across all teams) ──
-// Stored as JSON `{ teamId: assetId, … }` in a single localStorage key.
+// Uses the shared mapping (lh_sharedDefaultAssets) backed by Lambda/S3.
 // An asset can only be the default for one team.
-const _defaultAssetKey = 'lh_defaultAssets';
-
-/** @returns {Object<string, string>} teamId→assetId map */
-function _loadDefaultAssetMap() {
-    try { return JSON.parse(localStorage.getItem(_defaultAssetKey)) || {}; }
-    catch { return {}; }
-}
-
-function _saveDefaultAssetMap(map) {
-    localStorage.setItem(_defaultAssetKey, JSON.stringify(map));
-}
 
 /**
  * Bumped whenever any team's default-asset changes so that all
@@ -61,7 +50,7 @@ let _apiUrl = null;
 export function setDefaultAssetApiUrl(url) { _apiUrl = url; }
 
 function _setDefaultAsset(teamId, assetId) {
-    const map = _loadDefaultAssetMap();
+    const map = loadSharedMapping();
 
     // Remove any existing mapping pointing to this asset (one-asset-one-team)
     if (assetId != null) {
@@ -78,10 +67,10 @@ function _setDefaultAsset(teamId, assetId) {
         delete map[String(teamId)];
     }
 
-    _saveDefaultAssetMap(map);
+    saveSharedMapping(map);
     _defaultAssetTick(_defaultAssetTick() + 1);
 
-    // Push to shared Lambda / S3 backend (fire-and-forget)
+    // Push to Lambda / S3 backend so other browsers pick it up (fire-and-forget)
     if (_apiUrl) {
         pushSharedDefault(_apiUrl, teamId, assetId);
     }
@@ -192,17 +181,11 @@ export function Team(data = {}, deps = {}) {
         if (!assets || assets.length === 0) return null;
         if (assets.length === 1) return assets[0];
 
-        // 1) Check local (per-browser) override first
-        const localMap = _loadDefaultAssetMap();
-        const localId = localMap[String(self.id())];
-        if (localId != null) {
-            const found = assets.find(a => String(ko.unwrap(a.id)) === String(localId));
-            if (found) return found;
-        }
+        const teamId = String(self.id());
 
-        // 2) Fall back to shared (Lambda/S3-backed) mapping
+        // Check shared (Lambda/S3-backed) mapping
         const sharedMap = loadSharedMapping();
-        const sharedId = sharedMap[String(self.id())];
+        const sharedId = sharedMap[teamId];
         if (sharedId != null) {
             const found = assets.find(a => String(ko.unwrap(a.id)) === String(sharedId));
             if (found) return found;

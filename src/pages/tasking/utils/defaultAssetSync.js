@@ -35,7 +35,7 @@ export function loadSharedMapping() {
  * Persist a mapping into localStorage.
  * @param {Object<string, string>} mapping
  */
-function saveSharedMapping(mapping) {
+export function saveSharedMapping(mapping) {
     localStorage.setItem(LS_KEY, JSON.stringify(mapping));
     localStorage.setItem(LS_TS_KEY, String(Date.now()));
 }
