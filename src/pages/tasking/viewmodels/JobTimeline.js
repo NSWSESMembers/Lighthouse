@@ -181,7 +181,6 @@ export function JobTimeline(parentVm) {
 
     // toggle when a button is clicked
     self.toggleTagFilter = function (tagItem) {
-        console.log("Toggling tag filter:", tagItem);
         if (!tagItem || !tagItem.isSelected) return;
         tagItem.isSelected(!tagItem.isSelected());
     };

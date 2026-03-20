@@ -383,7 +383,6 @@ export function ConfigVM(root, deps) {
 
     self.save = () => {
         const cfg = buildConfig();
-        console.log('Saving config:', cfg);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
 
     };
@@ -454,7 +453,6 @@ export function ConfigVM(root, deps) {
                 });
             }
         }
-        console.log('Loaded config:', cfg);
         // scalar settings
         if (typeof cfg.refreshInterval === 'number') {
             self.refreshInterval(cfg.refreshInterval);

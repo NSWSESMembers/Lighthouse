@@ -220,7 +220,6 @@ export class InstantTaskViewModel {
                         this.removeCrowsFlies();
                     },
                     taskTeamToJobWithConfirm: (d, e) => {
-                        console.log(e);
                         const dropdown = e.target.closest('.dropdown-menu');
                         if (dropdown) {
                             dropdown.classList.remove('show');

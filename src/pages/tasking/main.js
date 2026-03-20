@@ -229,7 +229,6 @@ installMapContextMenu({
     geocodeMaxResults: 10,
     onGeocodeResultClicked: (r) => {
         // TODO: replace with real action
-        console.log("TODO: handle reverse-geocode pick", r);
     },
 });
 
@@ -818,7 +817,6 @@ function VM() {
 
     // --- Fetch sectors for current filters
     self.fetchAllSectors = async function (hqs) {
-        console.log("Fetching sectors for HQs:", hqs);
         self.sectorsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.sectors.search(hqs, apiHost, params.userId, t, (res) => {
@@ -1026,7 +1024,6 @@ function VM() {
             teamTaskStatusFilter: () => self.config.teamTaskStatusFilter(),
 
             openSMSTeamModal: (team, tasking) => {
-                console.log("Opening SMS modal for team:", team, " tasking:", tasking);
                 self.attachSendSMSModal([], team, tasking);
             },
 
@@ -1059,7 +1056,6 @@ function VM() {
         },
         entity: async (id) => {
             const t = await getToken();
-            console.log("Fetching entity for config:", id, t);
             return new Promise((resolve) => {
                 BeaconClient.entities.fetch(id, apiHost, params.userId, t, (data) => resolve(data));
             });
@@ -1163,7 +1159,6 @@ function VM() {
         // If team provided, use its members as recipients
         if (team) {
             msgRecipients = team.members().map(t => {
-                console.log("Mapping team member for SMS:", t);
                 return {
                     id: t.Person.Id,
                     name: t.Person.FirstName + ' ' + t.Person.LastName,
@@ -1176,7 +1171,6 @@ function VM() {
 
         // if a task was provided, use its job info to prefill
         if (tasking) {
-            console.log("Opening SMS modal for tasking:", tasking);
             taskId = tasking.job.id();
             headerLabel = `Send SMS - Incident: ${tasking.job.identifier()}`;
             initialText = `Re: Inc ${tasking.job.identifier()} at ${tasking.job.address.prettyAddress()}: `;
@@ -1184,7 +1178,6 @@ function VM() {
 
         // if a job was provided, use its info to prefill and assume its a new tasking
         if (job) {
-            console.log("Opening SMS modal for job:", job);
             headerLabel = `Send SMS - Incident: ${job.identifier()}`;
             initialText = [
                 job.priorityName(),
@@ -1845,7 +1838,6 @@ function VM() {
     self.assignJobToTeam = async function (teamVm, jobVm, cb) {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, t, function (r) {
-            console.log(r)
             if (r && r.length > 0) {
                 showAlert(`Incident ${jobVm.identifier()} assigned to team ${teamVm.callsign()}.`, 'success', 3000);
             } else {

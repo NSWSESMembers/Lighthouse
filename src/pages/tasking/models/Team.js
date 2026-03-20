@@ -622,7 +622,6 @@ export function Team(data = {}, deps = {}) {
     };
 
     self.flyToAsset = function (asset) {
-        console.log("Team.flyToAsset", asset);
         flyToAsset(asset);
     }
 
