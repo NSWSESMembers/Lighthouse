@@ -7,6 +7,8 @@ import { openURLInBeacon } from '../utils/chromeRunTime.js';
 
 import { Enum } from '../utils/enum.js';
 
+import { loadSharedMapping, pushSharedDefault, fetchSharedDefaults } from '../utils/defaultAssetSync.js';
+
 // Shared across all Team instances — single localStorage key
 const _capKey = 'lh_showCapabilities';
 const _showCapabilities = ko.observable(localStorage.getItem(_capKey) !== 'false');
@@ -30,9 +32,15 @@ function _saveDefaultAssetMap(map) {
 /**
  * Bumped whenever any team's default-asset changes so that all
  * `defaultAsset` computeds in every Team re-evaluate.
+ * Can also be bumped externally after a shared-defaults fetch.
  * @type {ko.Observable<number>}
  */
 const _defaultAssetTick = ko.observable(0);
+
+/** Allow main.js to force re-evaluation after a shared-defaults fetch. */
+export function bumpDefaultAssetTick() {
+    _defaultAssetTick(_defaultAssetTick() + 1);
+}
 
 /**
  * Set the default asset for a team.  Enforces the constraint that an
@@ -42,6 +50,16 @@ const _defaultAssetTick = ko.observable(0);
  * @param {string} teamId
  * @param {string|null} assetId  Pass `null` to clear.
  */
+/**
+ * The Beacon API URL, set once via `setDefaultAssetApiUrl()` so that
+ * shared pushes are namespaced correctly.
+ * @type {string|null}
+ */
+let _apiUrl = null;
+
+/** Called once from main.js after params are resolved. */
+export function setDefaultAssetApiUrl(url) { _apiUrl = url; }
+
 function _setDefaultAsset(teamId, assetId) {
     const map = _loadDefaultAssetMap();
 
@@ -62,6 +80,11 @@ function _setDefaultAsset(teamId, assetId) {
 
     _saveDefaultAssetMap(map);
     _defaultAssetTick(_defaultAssetTick() + 1);
+
+    // Push to shared Lambda / S3 backend (fire-and-forget)
+    if (_apiUrl) {
+        pushSharedDefault(_apiUrl, teamId, assetId);
+    }
 }
 
 export function Team(data = {}, deps = {}) {
@@ -139,6 +162,21 @@ export function Team(data = {}, deps = {}) {
 
     self.trackableAssets = ko.observableArray([]);
 
+    // When this team first gets multiple assets, fetch its shared default
+    // mapping so the correct asset is selected without waiting for the
+    // next refresh cycle.
+    let _hadMultipleAssets = false;
+    self.trackableAssets.subscribe(assets => {
+        if (assets.length > 1 && !_hadMultipleAssets && _apiUrl) {
+            _hadMultipleAssets = true;
+            fetchSharedDefaults(_apiUrl, [String(self.id())])
+                .then(() => _defaultAssetTick(_defaultAssetTick() + 1))
+                .catch(() => { /* im not empty i promise */ });
+        } else if (assets.length <= 1) {
+            _hadMultipleAssets = false;
+        }
+    });
+
     self.trackableAssetsWithMultipleTeams = ko.pureComputed(() => {
         return self.trackableAssets().filter(a => a.matchingTeamsInView().length > 1);
     });
@@ -154,12 +192,22 @@ export function Team(data = {}, deps = {}) {
         if (!assets || assets.length === 0) return null;
         if (assets.length === 1) return assets[0];
 
-        const map = _loadDefaultAssetMap();
-        const chosenId = map[String(self.id())];
-        if (chosenId != null) {
-            const found = assets.find(a => String(ko.unwrap(a.id)) === String(chosenId));
+        // 1) Check local (per-browser) override first
+        const localMap = _loadDefaultAssetMap();
+        const localId = localMap[String(self.id())];
+        if (localId != null) {
+            const found = assets.find(a => String(ko.unwrap(a.id)) === String(localId));
             if (found) return found;
         }
+
+        // 2) Fall back to shared (Lambda/S3-backed) mapping
+        const sharedMap = loadSharedMapping();
+        const sharedId = sharedMap[String(self.id())];
+        if (sharedId != null) {
+            const found = assets.find(a => String(ko.unwrap(a.id)) === String(sharedId));
+            if (found) return found;
+        }
+
         return assets[0]; // fallback
     });
 
@@ -242,6 +290,13 @@ export function Team(data = {}, deps = {}) {
     self.refreshDataAndTasking = function () {
         self.fetchTasking();
         self.refreshData();
+
+        // If this team has multiple assets, refresh shared default mapping
+        if (_apiUrl && (self.trackableAssets?.() || []).length > 1) {
+            fetchSharedDefaults(_apiUrl, [String(self.id())])
+                .then(() => _defaultAssetTick(_defaultAssetTick() + 1))
+                .catch(() => {/* im not empty i promise */});
+        }
     }
 
     self.focusAndExpandInList = function () {

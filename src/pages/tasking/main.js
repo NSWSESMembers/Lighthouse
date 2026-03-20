@@ -33,12 +33,14 @@ import { registerAcronymTextBinding } from "./components/acronymText.js";
 
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
-import { Team } from './models/Team.js';
+import { Team, bumpDefaultAssetTick, setDefaultAssetApiUrl } from './models/Team.js';
 import { Job } from './models/Job.js';
 import { Sector } from './models/Sector.js';
 import { Tag } from "./models/Tag.js";
 
 import { Enum } from './utils/enum.js';
+
+import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
 
@@ -192,6 +194,9 @@ async function getToken() {
 const params = getSearchParameters();
 const apiHost = params.host
 const sourceUrl = params.source
+
+// Tell Team model which API URL to use for shared default-asset pushes
+setDefaultAssetApiUrl(sourceUrl);
 
 var ko;
 var myViewModel;
@@ -1549,6 +1554,27 @@ function VM() {
         (self.teams?.() || []).forEach(team => self._refreshTeamTrackableAssets(team));
     };
 
+    // ── Shared default-asset mapping fetch ──
+    // Called after asset↔team matching completes.  Makes a single
+    // Lambda request for all teams that have >1 trackable asset, then
+    // bumps the tick so every Team.defaultAsset() computed re-evaluates.
+    self._fetchSharedDefaultAssets = function () {
+        const multiAssetTeamIds = (self.filteredTeams?.() || [])
+            .filter(t => (t.trackableAssets?.() || []).length > 1)
+            .map(t => String(t.id()));
+
+        if (multiAssetTeamIds.length === 0) return;
+
+        fetchSharedDefaults(sourceUrl, multiAssetTeamIds)
+            .then(() => {
+                // Force all Team.defaultAsset() computeds to re-evaluate
+                bumpDefaultAssetTick();
+            })
+            .catch(err => {
+                console.warn('[main] shared default-asset fetch failed:', err);
+            });
+    };
+
     // Tasking registry/upsert (NEW magical 2.0 way of doing it)
     self.upsertTaskingFromPayload = function (taskingJson, { teamContext = null } = {}) {
         if (!taskingJson || taskingJson.Id == null) return null;
@@ -2249,6 +2275,11 @@ function VM() {
                 });
                 //Update Asset/Team mappings only once after all changes
                 self._attachAssetsToMatchingTeams();
+
+                // Fetch shared default-asset mappings (runs after matching
+                // so we know which teams have multiple assets)
+                self._fetchSharedDefaultAssets();
+
                 myViewModel._markInitialFetchDone();
                 assetDataRefreshInterlock = false;
             }, function (err) {
