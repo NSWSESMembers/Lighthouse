@@ -996,7 +996,7 @@ tr.job:hover {
   border: 1px solid #ccc;
   border-radius: 4px;
   padding: 2px 6px;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   color: inherit;
   transition: background-color 0.15s;
