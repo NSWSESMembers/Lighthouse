@@ -97,19 +97,17 @@ export async function fetchSharedDefaults(apiUrl, teamIds) {
  * Push a single team's default-asset mapping to the Lambda backend.
  * Also updates localStorage immediately.
  *
- * @param {string}      apiUrl   The Beacon source URL (namespace).
- * @param {string}      teamId
- * @param {string|null} assetId  Pass null to clear.
+ * @param {string} apiUrl   The Beacon source URL (namespace).
+ * @param {string} teamId
+ * @param {string} assetId
  * @returns {Promise<void>}
  */
 export async function pushSharedDefault(apiUrl, teamId, assetId) {
+    if (!assetId) return; // nothing to push
+
     // Optimistic local update
     const cached = loadSharedMapping();
-    if (assetId != null) {
-        cached[String(teamId)] = String(assetId);
-    } else {
-        delete cached[String(teamId)];
-    }
+    cached[String(teamId)] = String(assetId);
     saveSharedMapping(cached);
 
     // Fire-and-forget remote write
@@ -120,7 +118,7 @@ export async function pushSharedDefault(apiUrl, teamId, assetId) {
             body: JSON.stringify({
                 apiUrl,
                 teamId: String(teamId),
-                assetId: assetId != null ? String(assetId) : null,
+                assetId: String(assetId),
             }),
         });
     } catch (err) {
