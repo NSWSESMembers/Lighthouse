@@ -227,7 +227,7 @@ installMapContextMenu({
     geocodeMarkerIcon: defaultSvgIcon,
     geocodeRedMarkerIcon: defaultRedSvgIcon,
     geocodeMaxResults: 10,
-    onGeocodeResultClicked: (r) => {
+    onGeocodeResultClicked: (_r) => {
         // TODO: replace with real action
     },
 });
@@ -776,7 +776,7 @@ function VM() {
         const pinnedOnlyTeams = self.showPinnedTeamsOnly();
         const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
         const pinnedTeamSet = new Set((pinnedTeamIds || []).map(id => String(id)));
-
+        console.log("Filtering teams... pinnedOnly:", pinnedOnlyTeams, "pinnedTeamIds:", pinnedTeamIds, "filteredTeamsAgainstConfig count:", self.filteredTeamsAgainstConfig().length);
         return ko.utils.arrayFilter(self.filteredTeamsAgainstConfig(), tm => {
 
             // pinned-only filter
@@ -789,6 +789,7 @@ function VM() {
                 return true;
             }
 
+
         })
 
 
@@ -800,7 +801,18 @@ function VM() {
         // No assets? Return nothing
         if (!self.trackableAssets) return [];
         // for each filtered team, get their trackable assets and flatten to single array
-        return self.filteredTeams().flatMap(t => t.trackableAssets() || []);
+        // Deduplicate: the same asset can be matched to multiple teams, so flatMap
+        // may include duplicates. Without dedup, toggling pinned-only causes KO's
+        // trackArrayChanges to emit a 'deleted' change for the duplicate entry even
+        // though the asset is still present (retained from the pinned team), which
+        // removes the marker with no corresponding 'added' to restore it.
+        const seen = new Set();
+        return self.filteredTeams().flatMap(t => t.trackableAssets() || []).filter(a => {
+            const id = a.id?.();
+            if (id == null || seen.has(id)) return false;
+            seen.add(id);
+            return true;
+        });
 
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
@@ -1990,8 +2002,10 @@ function VM() {
         changes.forEach(ch => {
             const a = ch.value;
             if (ch.status === 'added') {
+                console.log("Attaching marker for asset filtered in:", a.name());
                 matchedAssetMarkerBatcher.scheduleAdd(a);
             } else if (ch.status === 'deleted') {
+                console.log("Asset filtered out:", a.name());
                 //console.log("Detaching marker for asset no longer filtered in:", a.id());
                 // keep the asset in registry, but remove map marker + subs
                 matchedAssetMarkerBatcher.scheduleRemove(a);
