@@ -40,6 +40,8 @@ export function ConfigVM(root, deps) {
     //Sectors
     self.sectorFilters = ko.observableArray([]);   // [{id, name}]
     self.includeIncidentsWithoutSector = ko.observable(true);
+    self.applySectorsToIncidents = ko.observable(true);
+    self.applySectorsToTeams = ko.observable(false);
 
     //Map layer order
 
@@ -95,6 +97,47 @@ export function ConfigVM(root, deps) {
     // pinned rows
     self.pinnedTeamIds = ko.observableArray([]);
     self.pinnedIncidentIds = ko.observableArray([]);
+
+    // ── Instant Task Suggestion Engine ──
+    self.suggestionEnabled = ko.observable(true);
+    self.rescueDistanceWeight = ko.observable(90);
+    self.rescueTaskingWeight = ko.observable(10);
+    self.normalDistanceWeight = ko.observable(50);
+    self.normalTaskingWeight = ko.observable(50);
+
+    /**
+     * When true, the suggestion engine fetches road travel times from
+     * Amazon Location Service to rank teams by actual driving time
+     * instead of crow-flies distance.
+     * @type {ko.Observable<boolean>}
+     */
+    self.suggestionUseRouting = ko.observable(false);
+
+    // Keep rescue sliders summing to ~100 (optional visual aid)
+    self.rescueDistanceWeightDisplay = ko.pureComputed(() => {
+        const d = Number(self.rescueDistanceWeight()) || 0;
+        const t = Number(self.rescueTaskingWeight()) || 0;
+        const total = d + t || 1;
+        return Math.round(d / total * 100);
+    });
+    self.rescueTaskingWeightDisplay = ko.pureComputed(() => {
+        const d = Number(self.rescueDistanceWeight()) || 0;
+        const t = Number(self.rescueTaskingWeight()) || 0;
+        const total = d + t || 1;
+        return Math.round(t / total * 100);
+    });
+    self.normalDistanceWeightDisplay = ko.pureComputed(() => {
+        const d = Number(self.normalDistanceWeight()) || 0;
+        const t = Number(self.normalTaskingWeight()) || 0;
+        const total = d + t || 1;
+        return Math.round(d / total * 100);
+    });
+    self.normalTaskingWeightDisplay = ko.pureComputed(() => {
+        const d = Number(self.normalDistanceWeight()) || 0;
+        const t = Number(self.normalTaskingWeight()) || 0;
+        const total = d + t || 1;
+        return Math.round(t / total * 100);
+    });
 
     // Dark mode helper (defined early so it can be called in afterConfigLoad)
     self._applyDarkMode = () => {
@@ -172,6 +215,8 @@ export function ConfigVM(root, deps) {
         teamTaskStatusFilter: ko.toJS(self.teamTaskStatusFilter),
         sectorFilters: ko.toJS(self.sectorFilters),
         includeIncidentsWithoutSector: !!self.includeIncidentsWithoutSector(),
+        applySectorsToIncidents: !!self.applySectorsToIncidents(),
+        applySectorsToTeams: !!self.applySectorsToTeams(),
         pinnedTeamIds: ko.toJS(self.pinnedTeamIds),
         pinnedIncidentIds: ko.toJS(self.pinnedIncidentIds),
         paneOrder: self.paneOrder().map(p => p.id),
@@ -179,6 +224,12 @@ export function ConfigVM(root, deps) {
         clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
+        suggestionEnabled: !!self.suggestionEnabled(),
+        rescueDistanceWeight: Number(self.rescueDistanceWeight()) || 0,
+        rescueTaskingWeight: Number(self.rescueTaskingWeight()) || 0,
+        normalDistanceWeight: Number(self.normalDistanceWeight()) || 0,
+        normalTaskingWeight: Number(self.normalTaskingWeight()) || 0,
+        suggestionUseRouting: !!self.suggestionUseRouting(),
     });
 
     // Helpers
@@ -336,7 +387,6 @@ export function ConfigVM(root, deps) {
 
     self.save = () => {
         const cfg = buildConfig();
-        console.log('Saving config:', cfg);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
 
     };
@@ -390,6 +440,8 @@ export function ConfigVM(root, deps) {
             cfg.teamTaskStatusFilter = self.teamTaskStatusFilterDefaults;
             cfg.sectorFilters = [];
             cfg.includeIncidentsWithoutSector = true;
+            cfg.applySectorsToIncidents = true;
+            cfg.applySectorsToTeams = false;
             cfg.pinnedTeamIds = [];
             cfg.pinnedIncidentIds = [];
 
@@ -407,7 +459,6 @@ export function ConfigVM(root, deps) {
                 });
             }
         }
-        console.log('Loaded config:', cfg);
         // scalar settings
         if (typeof cfg.refreshInterval === 'number') {
             self.refreshInterval(cfg.refreshInterval);
@@ -426,6 +477,12 @@ export function ConfigVM(root, deps) {
         }
         if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
             self.includeIncidentsWithoutSector(cfg.includeIncidentsWithoutSector);
+        }
+        if (typeof cfg.applySectorsToIncidents === 'boolean') {
+            self.applySectorsToIncidents(cfg.applySectorsToIncidents);
+        }
+        if (typeof cfg.applySectorsToTeams === 'boolean') {
+            self.applySectorsToTeams(cfg.applySectorsToTeams);
         }
 
         // filters
@@ -476,6 +533,26 @@ export function ConfigVM(root, deps) {
         }
         if (typeof cfg.alertsCollapsibleRules === 'boolean') {
             self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
+        }
+
+        // Instant Task Suggestion Engine weights
+        if (typeof cfg.suggestionEnabled === 'boolean') {
+            self.suggestionEnabled(cfg.suggestionEnabled);
+        }
+        if (typeof cfg.rescueDistanceWeight === 'number') {
+            self.rescueDistanceWeight(cfg.rescueDistanceWeight);
+        }
+        if (typeof cfg.rescueTaskingWeight === 'number') {
+            self.rescueTaskingWeight(cfg.rescueTaskingWeight);
+        }
+        if (typeof cfg.normalDistanceWeight === 'number') {
+            self.normalDistanceWeight(cfg.normalDistanceWeight);
+        }
+        if (typeof cfg.normalTaskingWeight === 'number') {
+            self.normalTaskingWeight(cfg.normalTaskingWeight);
+        }
+        if (typeof cfg.suggestionUseRouting === 'boolean') {
+            self.suggestionUseRouting(cfg.suggestionUseRouting);
         }
 
 
@@ -569,8 +646,33 @@ export function ConfigVM(root, deps) {
         self.loadShared(id);
     };
 
+    /**
+     * Collect the HQ IDs relevant for sector lookup based on which
+     * scope toggles are active (incidents, teams, or both).
+     * @returns {Array<string>}
+     */
+    self._sectorHqIds = () => {
+        const ids = new Set();
+        if (self.applySectorsToIncidents()) {
+            (self.incidentFilters() || []).forEach(f => ids.add(f.id));
+        }
+        if (self.applySectorsToTeams()) {
+            (self.teamFilters() || []).forEach(f => ids.add(f.id));
+        }
+        return [...ids];
+    };
+
+    /** Trigger a sector refresh using the current scope-aware HQ list. */
+    self._refreshSectors = () => {
+        if (self._suppressSectorRefresh) return;
+        if (!self.applySectorsToIncidents() && !self.applySectorsToTeams()) return;
+        const ids = self._sectorHqIds();
+        if (ids.length === 0) return;          // no HQs selected — nothing to search
+        deps.fetchAllSectors(ids);
+    };
+
     self.afterConfigLoad = () => {
-        deps.fetchAllSectors(self.incidentFilters().map(i => i.id));
+        self._refreshSectors();
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
         root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
         root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
@@ -583,12 +685,21 @@ export function ConfigVM(root, deps) {
     }
 
 
-    // run once on construction
+    // run once on construction — suppress sector refresh until afterConfigLoad
+    self._suppressSectorRefresh = true;
     self.loadFromStorage()
+    self._suppressSectorRefresh = false;
 
     self.incidentFilters.subscribe(() => {
-        deps.fetchAllSectors(self.incidentFilters().map(i => i.id));
+        self._refreshSectors();
     }, null, "arrayChange");
+
+    self.teamFilters.subscribe(() => {
+        self._refreshSectors();
+    }, null, "arrayChange");
+
+    self.applySectorsToIncidents.subscribe(() => self._refreshSectors());
+    self.applySectorsToTeams.subscribe(() => self._refreshSectors());
 
     self.includeIncidentsWithoutSector.subscribe(() => {
         root.fetchAllJobsData();
@@ -617,6 +728,14 @@ export function ConfigVM(root, deps) {
     self.alertsCollapsibleRules.subscribe(() => {
         self.save();
     })
+
+    // Auto-save suggestion engine settings
+    self.suggestionEnabled.subscribe(() => { self.save(); });
+    self.rescueDistanceWeight.subscribe(() => { self.save(); });
+    self.rescueTaskingWeight.subscribe(() => { self.save(); });
+    self.normalDistanceWeight.subscribe(() => { self.save(); });
+    self.normalTaskingWeight.subscribe(() => { self.save(); });
+    self.suggestionUseRouting.subscribe(() => { self.save(); });
 
     self.darkMode.subscribe((isDark) => {
         self._applyDarkMode();

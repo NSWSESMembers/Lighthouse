@@ -685,18 +685,36 @@ export function MapVM(Lmap, root) {
     self.crowFliesLine.addTo(self.map);
   };
 
+  /**
+   * Draw a road-route polyline on the map (reuses the crowFliesLine slot
+   * so it is cleared by the same `clearCrowFliesLine` call).
+   *
+   * @param {number[][]} latLngs  Array of [lat, lng] pairs.
+   */
+  self.drawRoutePolyline = (latLngs) => {
+    self.clearCrowFliesLine();
+    if (!latLngs || latLngs.length < 2) return;
+    self.crowFliesLine = L.polyline(latLngs, {
+      weight: 4,
+      color: '#2196F3',
+      opacity: 0.85,
+    }).addTo(self.map);
+  };
+
   self.drawCrowsFliesToAssetPassedTeam = (team, job) => {
     self.clearCrowFliesLine();
     if (!team || !job) return;
-    // pick the team’s first asset coordinates
+    // pick the team’s default asset coordinates
     let fromLat = null, fromLng = null;
     if (team.trackableAssets && team.trackableAssets().length > 0) {
-      const a = team.trackableAssets()[0];
-      fromLat = +ko.unwrap(a.latitude);
-      fromLng = +ko.unwrap(a.longitude);
+      const a = team.defaultAsset ? team.defaultAsset() : team.trackableAssets()[0];
+      const aLat = ko.unwrap(a.latitude), aLng = ko.unwrap(a.longitude);
+      if (aLat != null && aLng != null) { fromLat = +aLat; fromLng = +aLng; }
     }
-    const toLat = +ko.unwrap(job.address.latitude);
-    const toLng = +ko.unwrap(job.address.longitude);
+    const rawToLat = ko.unwrap(job.address?.latitude);
+    const rawToLng = ko.unwrap(job.address?.longitude);
+    const toLat = rawToLat != null ? +rawToLat : NaN;
+    const toLng = rawToLng != null ? +rawToLng : NaN;
 
     if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
       Number.isFinite(toLat) && Number.isFinite(toLng))) return;
@@ -722,15 +740,17 @@ export function MapVM(Lmap, root) {
     self.clearCrowFliesLine();
     if (!tasking) return;
 
-    // pick the team’s first asset coordinates
+    // pick the team’s default asset coordinates
     let fromLat = null, fromLng = null;
     if (tasking.team.trackableAssets && tasking.team.trackableAssets().length > 0) {
-      const a = asset || tasking.team.trackableAssets()[0];
-      fromLat = +ko.unwrap(a.latitude);
-      fromLng = +ko.unwrap(a.longitude);
+      const a = asset || (tasking.team.defaultAsset ? tasking.team.defaultAsset() : tasking.team.trackableAssets()[0]);
+      const aLat = ko.unwrap(a.latitude), aLng = ko.unwrap(a.longitude);
+      if (aLat != null && aLng != null) { fromLat = +aLat; fromLng = +aLng; }
     }
-    const toLat = +ko.unwrap(tasking.job.address.latitude);
-    const toLng = +ko.unwrap(tasking.job.address.longitude);
+    const rawToLat = ko.unwrap(tasking.job.address?.latitude);
+    const rawToLng = ko.unwrap(tasking.job.address?.longitude);
+    const toLat = rawToLat != null ? +rawToLat : NaN;
+    const toLng = rawToLng != null ? +rawToLng : NaN;
 
     if (!(Number.isFinite(fromLat) && Number.isFinite(fromLng) &&
       Number.isFinite(toLat) && Number.isFinite(toLng))) return;

@@ -335,13 +335,25 @@
                                                                         </legend>
                                                                     </div>
                                                                     <ul class="list-unstyled team-asset-list mb-0"
-                                                                        data-bind="foreach: { data: trackableAssets, as: 'as' }">
+                                                                        data-bind="foreach: { data: trackableAssetEntries, as: 'entry' }">
                                                                         <li class="team-asset-row mb-1">
                                                                             <div class="d-flex flex-column">
                                                                                 <div class="d-flex align-items-center">
-                                                                                    <button class="fw-semibold w-100"
-                                                                                        data-bind="click: $parent.flyToAsset"><span
-                                                                                            data-bind="text: as.name + ' (' + as.resourceType + ')'"
+                                                                                    <!-- ko if: $parent.trackableAssets().length > 1 -->
+                                                                                    <button class="btn btn-link btn-sm p-0 me-1 default-asset-btn"
+                                                                                        title="Set as default asset for this team"
+                                                                                        data-bind="click: $parent.setDefaultAsset, clickBubble: false">
+                                                                                        <!-- ko if: entry.isDefault -->
+                                                                                        <i class="fa fa-star text-warning"></i>
+                                                                                        <!-- /ko -->
+                                                                                        <!-- ko ifnot: entry.isDefault -->
+                                                                                        <i class="fa fa-star text-muted" style="opacity:0.25"></i>
+                                                                                        <!-- /ko -->
+                                                                                    </button>
+                                                                                    <!-- /ko -->
+                                                                                    <button class="fw-semibold w-100 asset-flyto-btn"
+                                                                                        data-bind="click: $parent.flyToAsset, clickBubble: false"><span
+                                                                                            data-bind="text: entry.asset.name + ' (' + entry.asset.resourceType + ')'"
                                                                                             class="me-1"></span><i
                                                                                             class="fa fa-crosshairs"></i></button>
                                                                                 </div>
@@ -894,35 +906,6 @@
                                         </div>
                                     </div>
                                 </li>
-                                <!-- SECTOR FILTERS (collapsible section) -->
-                                <li>
-                                    <button class="dropdown-item d-flex justify-content-between align-items-center"
-                                        type="button" data-bs-toggle="collapse" data-bs-target="#sectorFilterMenu"
-                                        aria-expanded="false" aria-controls="sectorFilterMenu">
-                                        Sector Filters
-                                        <span class="ms-2 fa fa-chevron-right small"></span>
-                                    </button>
-                                    <div class="collapse dropdown-collapse-body" id="sectorFilterMenu">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="overrideNoSector"
-                                                data-bind="checked: config.includeIncidentsWithoutSector">
-                                            <label class="form-check-label" for="overrideNoSector">
-                                                Incidents without a sector
-                                            </label>
-                                        </div>
-                                        <div class="dropdown-three-col" data-bind="foreach: sectors">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" data-bind="
-                                       sectorFilterAndFetch: { id: id(), name: name() },
-                                       attr: { id: 'sectorFilter_' + id() }
-                                   ">
-                                                <label class="form-check-label"
-                                                    data-bind="text: name, attr: { for: 'sectorFilter_' + id() }">
-                                                </label>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
                             </ul>
                         </div>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2" data-bind="
@@ -1213,12 +1196,14 @@
                                                             <div class="card job-actions-card">
                                                                 <div class="d-grid gap-2 job-actions-stack">
                                                                     <div class="btn-group btn-group-sm d-flex"
-                                                                        role="group">
+                                                                        role="group"
+                                                                        data-bind="bsDropdownOpen: j.instantTask.dropdownOpen">
 
                                                                         <button
                                                                             class="btn btn-primary btn-sm flex-fill w-50"
                                                                             type="button" data-bs-toggle="dropdown"
                                                                             data-bs-auto-close="outside"
+                                                                            title="Task team"
                                                                             data-bind="attr: { id: 'tmAssignTeamBtn-' + j.id }, disable: !j.canTaskJob()">
                                                                             <i class="fa fa-solid fa-user-plus"></i>
                                                                             Task Team
@@ -1245,9 +1230,14 @@
                                                                                             class="dropdown-item text-start py-1"
                                                                                             data-bind="click: taskTeamToJobWithConfirm, 
                                                                                                        event: { mouseenter: mouseInTeamInInstantTaskPopup, mouseleave: mouseOutTeamInInstantTaskPopup }">
-                                                                                            <div>
-                                                                                                <strong
+                                                                                            <div class="d-flex align-items-center">
+                                                                                                <strong class="flex-grow-1"
                                                                                                     data-bind="text: team.callsign() || ''"></strong>
+                                                                                                <!-- ko if: isSuggested -->
+                                                                                                <span class="fast-tooltip ms-2 flex-shrink-0" data-bind="fastTooltip: suggestionReason">
+                                                                                                    <i class="fa fa-robot text-primary"></i>
+                                                                                                </span>
+                                                                                                <!-- /ko -->
                                                                                             </div>
                                                                                             <div class="small text-muted"
                                                                                                 data-bind="text: currentTaskingSummary()">
@@ -1255,6 +1245,12 @@
                                                                                             <div class="small text-muted"
                                                                                                 data-bind="text: summaryLine">
                                                                                             </div>
+                                                                                            <!-- ko if: routeLoading -->
+                                                                                            <div class="small text-muted fst-italic">
+                                                                                                <span class="spinner-border spinner-border-sm" style="width: 0.7em; height: 0.7em;" role="status"></span>
+                                                                                                Calculating travel time…
+                                                                                            </div>
+                                                                                            <!-- /ko -->
                                                                                         </button>
                                                                                         <!-- /ko -->
                                                                                         <!-- /ko -->
@@ -2392,18 +2388,37 @@
                                             <div class="accordion-body">
 
                                                 <div class="mb-3">
-                                                    <label class="form-label d-block mb-1">Overrides:</label>
-                                                    <div class="form-check">
+                                                    <label class="form-label d-block mb-1 fw-semibold">Apply sector filters to:</label>
+                                                    <div class="form-check form-check-inline">
                                                         <input class="form-check-input" type="checkbox"
-                                                            id="overrideNoSector"
-                                                            data-bind="checked: config.includeIncidentsWithoutSector">
-                                                        <label class="form-check-label" for="overrideNoSector">
-                                                            Show incidents without a sector
+                                                            id="cfgSectorScopeIncidents"
+                                                            data-bind="checked: config.applySectorsToIncidents">
+                                                        <label class="form-check-label" for="cfgSectorScopeIncidents">
+                                                            Incidents
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="cfgSectorScopeTeams"
+                                                            data-bind="checked: config.applySectorsToTeams">
+                                                        <label class="form-check-label" for="cfgSectorScopeTeams">
+                                                            Teams
                                                         </label>
                                                     </div>
                                                 </div>
-                                                <label class="form-label d-block mb-2">Show Incidents From
-                                                    Sectors:</label>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label d-block mb-1">Overrides:</label>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            id="cfgOverrideNoSector"
+                                                            data-bind="checked: config.includeIncidentsWithoutSector">
+                                                        <label class="form-check-label" for="cfgOverrideNoSector">
+                                                            Include items without a sector
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                                <label class="form-label d-block mb-2">Filter by Sectors:</label>
 
                                                 <div class="mb-2 d-flex flex-wrap gap-2">
                                                     <button type="button" class="btn btn-sm btn-outline-secondary"
@@ -2610,6 +2625,172 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Instant Task Suggestions -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingSuggestions">
+                                            <button class="accordion-button gap-2 collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapseSuggestions"
+                                                aria-expanded="false" aria-controls="collapseSuggestions">
+                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-robot"></i></span>
+                                                <span>Instant Task Suggestions</span>
+                                            </button>
+                                        </h2>
+
+                                        <div id="collapseSuggestions" class="accordion-collapse collapse"
+                                            aria-labelledby="headingSuggestions"
+                                            data-bs-parent="#configOtherSettingsAccordion">
+                                            <div class="accordion-body">
+
+                                                <p class="small text-muted mb-3">
+                                                    When enabled, the instant-task dropdown will suggest a team using a
+                                                    rule-based engine. The suggested team appears at the top of the list with a
+                                                    <i class="fa fa-robot text-primary"></i> icon.
+                                                </p>
+
+                                                <!-- Master toggle -->
+                                                <div class="form-check form-switch mb-3">
+                                                    <input class="form-check-input" type="checkbox" role="switch"
+                                                        id="suggestionEnabledToggle"
+                                                        data-bind="checked: config.suggestionEnabled">
+                                                    <label class="form-check-label fw-semibold"
+                                                        for="suggestionEnabledToggle">
+                                                        Enable team suggestions
+                                                    </label>
+                                                </div>
+
+                                                <div data-bind="visible: config.suggestionEnabled">
+
+                                                    <!-- Road routing toggle -->
+                                                    <div class="form-check form-switch mb-3">
+                                                        <input class="form-check-input" type="checkbox" role="switch"
+                                                            id="suggestionUseRoutingToggle"
+                                                            data-bind="checked: config.suggestionUseRouting">
+                                                        <label class="form-check-label"
+                                                            for="suggestionUseRoutingToggle">
+                                                            <i class="fa fa-road me-1"></i>
+                                                            Use road travel times
+                                                        </label>
+                                                        <div class="form-text">
+                                                            When enabled, suggestions use Lighthouse road routing for
+                                                            actual driving times instead of crow-flies distance.
+                                                            The dropdown loads instantly with haversine distances,
+                                                            then updates when travel times arrive.
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Rules explanation -->
+                                                    <div class="card mb-3">
+                                                        <div class="card-header py-1">
+                                                            <strong class="small">Rules</strong>
+                                                        </div>
+                                                        <div class="card-body py-2 small">
+                                                            <ul class="mb-0 ps-3">
+                                                                <li>
+                                                                    <strong>Rescue priority:</strong>
+                                                                    Prefer the <em>nearest team with zero active taskings</em>.
+                                                                    If all teams already have taskings, fall back to weighted scoring below.
+                                                                </li>
+                                                                <li class="mt-1">
+                                                                    <strong>All other priorities:</strong>
+                                                                    Score every team using a weighted combination of
+                                                                    distance and tasking count, then suggest the highest-scored team.
+                                                                </li>
+                                                                <li class="mt-1">
+                                                                    <strong>Road routing:</strong>
+                                                                    When enabled, travel times from Lighthouse Location Service
+                                                                    replace crow-flies distance for more accurate ranking.
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row g-4">
+
+                                                        <!-- Rescue weights -->
+                                                        <div class="col-md-6">
+                                                            <fieldset class="border rounded p-3">
+                                                                <legend class="form-label fw-semibold mb-2 float-none w-auto px-1">
+                                                                    <span class="badge bg-danger me-1">Rescue</span> Weights
+                                                                </legend>
+
+                                                                <label class="form-label mb-1">
+                                                                    Distance:
+                                                                    <strong data-bind="text: config.rescueDistanceWeightDisplay() + '%'"></strong>
+                                                                </label>
+                                                                <div class="d-flex align-items-center gap-2 mb-3">
+                                                                    <small class="text-muted">Low</small>
+                                                                    <input type="range" class="form-range flex-grow-1"
+                                                                        min="0" max="100" step="5"
+                                                                        data-bind="value: config.rescueDistanceWeight, valueUpdate: 'input'">
+                                                                    <small class="text-muted">High</small>
+                                                                </div>
+
+                                                                <label class="form-label mb-1">
+                                                                    Tasking count:
+                                                                    <strong data-bind="text: config.rescueTaskingWeightDisplay() + '%'"></strong>
+                                                                </label>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <small class="text-muted">Low</small>
+                                                                    <input type="range" class="form-range flex-grow-1"
+                                                                        min="0" max="100" step="5"
+                                                                        data-bind="value: config.rescueTaskingWeight, valueUpdate: 'input'">
+                                                                    <small class="text-muted">High</small>
+                                                                </div>
+
+                                                                <div class="form-text mt-2">
+                                                                    For Rescue jobs, idle teams (zero taskings) are always
+                                                                    preferred first. These weights apply when all teams have
+                                                                    at least one tasking.
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+
+                                                        <!-- Normal weights -->
+                                                        <div class="col-md-6">
+                                                            <fieldset class="border rounded p-3">
+                                                                <legend class="form-label fw-semibold mb-2 float-none w-auto px-1">
+                                                                    <span class="badge bg-primary me-1">Standard</span> Weights
+                                                                </legend>
+
+                                                                <label class="form-label mb-1">
+                                                                    Distance:
+                                                                    <strong data-bind="text: config.normalDistanceWeightDisplay() + '%'"></strong>
+                                                                </label>
+                                                                <div class="d-flex align-items-center gap-2 mb-3">
+                                                                    <small class="text-muted">Low</small>
+                                                                    <input type="range" class="form-range flex-grow-1"
+                                                                        min="0" max="100" step="5"
+                                                                        data-bind="value: config.normalDistanceWeight, valueUpdate: 'input'">
+                                                                    <small class="text-muted">High</small>
+                                                                </div>
+
+                                                                <label class="form-label mb-1">
+                                                                    Tasking count:
+                                                                    <strong data-bind="text: config.normalTaskingWeightDisplay() + '%'"></strong>
+                                                                </label>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <small class="text-muted">Low</small>
+                                                                    <input type="range" class="form-range flex-grow-1"
+                                                                        min="0" max="100" step="5"
+                                                                        data-bind="value: config.normalTaskingWeight, valueUpdate: 'input'">
+                                                                    <small class="text-muted">High</small>
+                                                                </div>
+
+                                                                <div class="form-text mt-2">
+                                                                    For non-rescue jobs (Immediate, Priority, General).
+                                                                    Balances proximity with how busy each team already is.
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+
+                                                    </div><!-- /row -->
+                                                </div><!-- /visible -->
+
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </div><!-- /accordion -->
 
 
@@ -3133,7 +3314,7 @@
                     <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
                         <span data-bind="text: errorMessage"></span>
                     </div>
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
+                    <textarea class="modal-textarea-full" id="RadioLogTextInput" rows="8" maxlength="4000"
                         data-bind="textInput: text"></textarea>
                 </div>
 
@@ -3207,10 +3388,10 @@
                         </span>
                     </div>
                     <h6>Subject</h6>
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="1" maxlength="50"
+                    <textarea class="modal-textarea-full" id="OpsLogSubjectInput" rows="1" maxlength="50"
                         data-bind="value: subject"></textarea>
                     <h6>Text</h6>
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
+                    <textarea class="modal-textarea-full" id="OpsLogTextInput" rows="8" maxlength="4000"
                         data-bind="value: text"></textarea>
 
                 </div>

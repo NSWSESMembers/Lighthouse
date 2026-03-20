@@ -33,12 +33,14 @@ import { registerAcronymTextBinding } from "./components/acronymText.js";
 
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
-import { Team } from './models/Team.js';
+import { Team, bumpDefaultAssetTick, setDefaultAssetApiUrl } from './models/Team.js';
 import { Job } from './models/Job.js';
 import { Sector } from './models/Sector.js';
 import { Tag } from "./models/Tag.js";
 
 import { Enum } from './utils/enum.js';
+
+import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
 
@@ -48,6 +50,8 @@ import { installRowVisibilityBindings } from "./bindings/rowVisibility.js";
 import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
 import { installSortableArrayBindings } from "./bindings/sortableArray.js";
 import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
+import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
+import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
 import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
@@ -191,6 +195,9 @@ const params = getSearchParameters();
 const apiHost = params.host
 const sourceUrl = params.source
 
+// Tell Team model which API URL to use for shared default-asset pushes
+setDefaultAssetApiUrl(sourceUrl);
+
 var ko;
 var myViewModel;
 
@@ -220,9 +227,8 @@ installMapContextMenu({
     geocodeMarkerIcon: defaultSvgIcon,
     geocodeRedMarkerIcon: defaultRedSvgIcon,
     geocodeMaxResults: 10,
-    onGeocodeResultClicked: (r) => {
+    onGeocodeResultClicked: (_r) => {
         // TODO: replace with real action
-        console.log("TODO: handle reverse-geocode pick", r);
     },
 });
 
@@ -659,17 +665,20 @@ function VM() {
         return ko.utils.arrayFilter(this.jobs(), jb => {
             const statusName = jb.statusName();
             const jobHqId = String(jb.entityAssignedTo.id());
-            const sectorId = String(jb.sector().id());
             const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
-            const sectorMatch = sectorIds.size === 0 || sectorIds.has(sectorId);
-            //must match sector filter
 
-            //if no sector and config says to exclude, filter out
-            if (!jb.sector().id() && self.config.includeIncidentsWithoutSector() === false) {
-                return false;
+            // Sector filtering — only when scope includes incidents
+            if (self.config.applySectorsToIncidents() && sectorIds.size > 0) {
+                const sectorId = String(jb.sector().id());
+                const sectorMatch = sectorIds.has(sectorId);
+
+                //if no sector and config says to exclude, filter out
+                if (!jb.sector().id() && self.config.includeIncidentsWithoutSector() === false) {
+                    return false;
+                }
+
+                if (jb.sector().id() && !sectorMatch) return false;
             }
-
-            if (jb.sector().id() && !sectorMatch) return false;
 
             // If allow-list non-empty, only show jobs whose status is in it
             if (allowedStatusSet.size > 0 && !allowedStatusSet.has(statusName)) {
@@ -726,6 +735,8 @@ function VM() {
         const allowed = self.config.teamStatusFilter(); // allow-list
         const allowedSet = new Set(allowed || []);
         const hqFilterIds = new Set((self.config.teamFilters() || []).map(f => String(f.id)));
+        const applySectorsToTeams = self.config.applySectorsToTeams();
+        const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
 
         var start = new Date();
         var end = new Date();
@@ -757,6 +768,13 @@ function VM() {
                 return false;
             }
 
+            // Sector filtering — only when scope includes teams
+            if (applySectorsToTeams && sectorIds.size > 0) {
+                const teamSectorId = String(tm.sector()?.id?.() || '');
+                if (teamSectorId && !sectorIds.has(teamSectorId)) return false;
+                if (!teamSectorId && self.config.includeIncidentsWithoutSector() === false) return false;
+            }
+
             const statusDate = tm.statusDate();
             if (statusDate < start || statusDate > end) {
                 return false;
@@ -770,7 +788,7 @@ function VM() {
         const pinnedOnlyTeams = self.showPinnedTeamsOnly();
         const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
         const pinnedTeamSet = new Set((pinnedTeamIds || []).map(id => String(id)));
-
+        console.log("Filtering teams... pinnedOnly:", pinnedOnlyTeams, "pinnedTeamIds:", pinnedTeamIds, "filteredTeamsAgainstConfig count:", self.filteredTeamsAgainstConfig().length);
         return ko.utils.arrayFilter(self.filteredTeamsAgainstConfig(), tm => {
 
             // pinned-only filter
@@ -783,6 +801,7 @@ function VM() {
                 return true;
             }
 
+
         })
 
 
@@ -794,7 +813,18 @@ function VM() {
         // No assets? Return nothing
         if (!self.trackableAssets) return [];
         // for each filtered team, get their trackable assets and flatten to single array
-        return self.filteredTeams().flatMap(t => t.trackableAssets() || []);
+        // Deduplicate: the same asset can be matched to multiple teams, so flatMap
+        // may include duplicates. Without dedup, toggling pinned-only causes KO's
+        // trackArrayChanges to emit a 'deleted' change for the duplicate entry even
+        // though the asset is still present (retained from the pinned team), which
+        // removes the marker with no corresponding 'added' to restore it.
+        const seen = new Set();
+        return self.filteredTeams().flatMap(t => t.trackableAssets() || []).filter(a => {
+            const id = a.id?.();
+            if (id == null || seen.has(id)) return false;
+            seen.add(id);
+            return true;
+        });
 
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
@@ -811,23 +841,31 @@ function VM() {
 
     // --- Fetch sectors for current filters
     self.fetchAllSectors = async function (hqs) {
-        console.log("Fetching sectors for HQs:", hqs);
         self.sectorsLoading(true);
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.sectors.search(hqs, apiHost, params.userId, t, (res) => {
+            // Clear stale sectors from previous HQ selection
+            self.sectorsById.clear();
+            self.sectors.removeAll();
+
+            const returnedIds = new Set();
             (res?.Results || []).forEach(
                 (sectorJson) => {
-                    let sector = self.sectorsById.get(sectorJson.Id);
-                    if (sector) {
-                        sector.updateFromJson(sectorJson);
-                    } else {
-                        // new sector
-                        sector = new Sector(sectorJson);
-                        self.sectorsById.set(sector.id(), sector);
-                        self.sectors.push(sector);
-                    }
+                    returnedIds.add(String(sectorJson.Id));
+                    let sector = new Sector(sectorJson);
+                    self.sectorsById.set(sector.id(), sector);
+                    self.sectors.push(sector);
                 }
             );
+
+            // Remove any active sector filters that no longer exist
+            const staleFilters = (self.config.sectorFilters() || []).filter(
+                sf => !returnedIds.has(String(sf.id))
+            );
+            if (staleFilters.length > 0) {
+                self.config.sectorFilters.removeAll(staleFilters);
+            }
+
             self.sectorsLoading(false);
         }, (count, total) => {
             if (count != -1 && total != -1) {
@@ -965,6 +1003,7 @@ function VM() {
             },
             map: self.mapVM,
             filteredTeams: self.filteredTeams,
+            config: self.config,
             isIncidentPinned: (id) => self.isIncidentPinned(id),
             toggleIncidentPinned: (id) => self.toggleIncidentPinned(id),
         }
@@ -996,7 +1035,9 @@ function VM() {
                     BeaconClient.team.getTasking(teamId, apiHost, params.userId, token, resolve, reject);
                 }),
             makeTeamLink: (id) => `${params.source}/Teams/${id}/Edit`,
-            flyToAsset: (asset) => {
+            
+            flyToAsset: (assetOrEntry) => {
+                const asset = assetOrEntry && assetOrEntry.asset ? assetOrEntry.asset : assetOrEntry;
                 const lat = asset.latitude(), lng = asset.longitude();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
                     map.flyTo([lat, lng], 14, { animate: true, duration: 0.10 });
@@ -1016,7 +1057,6 @@ function VM() {
             teamTaskStatusFilter: () => self.config.teamTaskStatusFilter(),
 
             openSMSTeamModal: (team, tasking) => {
-                console.log("Opening SMS modal for team:", team, " tasking:", tasking);
                 self.attachSendSMSModal([], team, tasking);
             },
 
@@ -1049,7 +1089,6 @@ function VM() {
         },
         entity: async (id) => {
             const t = await getToken();
-            console.log("Fetching entity for config:", id, t);
             return new Promise((resolve) => {
                 BeaconClient.entities.fetch(id, apiHost, params.userId, t, (data) => resolve(data));
             });
@@ -1153,7 +1192,6 @@ function VM() {
         // If team provided, use its members as recipients
         if (team) {
             msgRecipients = team.members().map(t => {
-                console.log("Mapping team member for SMS:", t);
                 return {
                     id: t.Person.Id,
                     name: t.Person.FirstName + ' ' + t.Person.LastName,
@@ -1166,7 +1204,6 @@ function VM() {
 
         // if a task was provided, use its job info to prefill
         if (tasking) {
-            console.log("Opening SMS modal for tasking:", tasking);
             taskId = tasking.job.id();
             headerLabel = `Send SMS - Incident: ${tasking.job.identifier()}`;
             initialText = `Re: Inc ${tasking.job.identifier()} at ${tasking.job.address.prettyAddress()}: `;
@@ -1174,7 +1211,6 @@ function VM() {
 
         // if a job was provided, use its info to prefill and assume its a new tasking
         if (job) {
-            console.log("Opening SMS modal for job:", job);
             headerLabel = `Send SMS - Incident: ${job.identifier()}`;
             initialText = [
                 job.priorityName(),
@@ -1544,6 +1580,27 @@ function VM() {
         (self.teams?.() || []).forEach(team => self._refreshTeamTrackableAssets(team));
     };
 
+    // ── Shared default-asset mapping fetch ──
+    // Called after asset↔team matching completes.  Makes a single
+    // Lambda request for all teams that have >1 trackable asset, then
+    // bumps the tick so every Team.defaultAsset() computed re-evaluates.
+    self._fetchSharedDefaultAssets = function () {
+        const multiAssetTeamIds = (self.filteredTeams?.() || [])
+            .filter(t => (t.trackableAssets?.() || []).length > 1)
+            .map(t => String(t.id()));
+
+        if (multiAssetTeamIds.length === 0) return;
+
+        fetchSharedDefaults(sourceUrl, multiAssetTeamIds)
+            .then(() => {
+                // Force all Team.defaultAsset() computeds to re-evaluate
+                bumpDefaultAssetTick();
+            })
+            .catch(err => {
+                console.warn('[main] shared default-asset fetch failed:', err);
+            });
+    };
+
     // Tasking registry/upsert (NEW magical 2.0 way of doing it)
     self.upsertTaskingFromPayload = function (taskingJson, { teamContext = null } = {}) {
         if (!taskingJson || taskingJson.Id == null) return null;
@@ -1814,7 +1871,6 @@ function VM() {
     self.assignJobToTeam = async function (teamVm, jobVm, cb) {
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, t, function (r) {
-            console.log(r)
             if (r && r.length > 0) {
                 showAlert(`Incident ${jobVm.identifier()} assigned to team ${teamVm.callsign()}.`, 'success', 3000);
             } else {
@@ -1967,8 +2023,10 @@ function VM() {
         changes.forEach(ch => {
             const a = ch.value;
             if (ch.status === 'added') {
+                console.log("Attaching marker for asset filtered in:", a.name());
                 matchedAssetMarkerBatcher.scheduleAdd(a);
             } else if (ch.status === 'deleted') {
+                console.log("Asset filtered out:", a.name());
                 //console.log("Detaching marker for asset no longer filtered in:", a.id());
                 // keep the asset in registry, but remove map marker + subs
                 matchedAssetMarkerBatcher.scheduleRemove(a);
@@ -2244,6 +2302,11 @@ function VM() {
                 });
                 //Update Asset/Team mappings only once after all changes
                 self._attachAssetsToMatchingTeams();
+
+                // Fetch shared default-asset mappings (runs after matching
+                // so we know which teams have multiple assets)
+                self._fetchSharedDefaultAssets();
+
                 myViewModel._markInitialFetchDone();
                 assetDataRefreshInterlock = false;
             }, function (err) {

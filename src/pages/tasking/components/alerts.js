@@ -40,18 +40,23 @@ function createLeafletControl(L) {
 function renderRules(container, rules, opts = {}) {
   const allowCollapse = opts.allowCollapse !== false;
   container.style.display = rules.length ? '' : 'none';
-  container.innerHTML = '';
+
+  // Build a set of active rule IDs so we can remove stale DOM elements
+  const activeIds = new Set(rules.map(r => r.id));
+
+  // Remove DOM elements for rules that are no longer active
+  container.querySelectorAll('[data-rule-id]').forEach(el => {
+    if (!activeIds.has(el.getAttribute('data-rule-id'))) {
+      el.remove();
+    }
+  });
 
   for (const rule of rules) {
-    // --- restore / update state for this rule ---
+    // --- restore / initialise state for this rule ---
     let state = ruleState.get(rule.id);
     if (!state) {
       state = { collapsed: false, open: false, lastCount: rule.count };
     } else {
-      // if the count changed while collapsed, auto-expand
-      if (state.collapsed && rule.count !== state.lastCount) {
-        state.collapsed = false;
-      }
       state.lastCount = rule.count;
     }
     if (!allowCollapse) {
@@ -60,7 +65,33 @@ function renderRules(container, rules, opts = {}) {
     }
     ruleState.set(rule.id, state);
 
-    const div = document.createElement('div');
+    // --- check if a DOM element already exists for this rule ---
+    let div = container.querySelector(`[data-rule-id="${rule.id}"]`);
+
+    if (div) {
+      // --- IN-PLACE UPDATE: only patch count + items, preserve all user state ---
+      const countEl = div.querySelector('.alerts__count');
+      if (countEl) countEl.textContent = rule.count;
+
+      const ul = div.querySelector('.alerts__list');
+      if (ul) {
+        ul.innerHTML = rule.items.map(it => `<li data-id="${it.id}">${it.label}</li>`).join('');
+        // Re-attach item click handlers
+        if (typeof rule.onClick === 'function') {
+          ul.querySelectorAll('li[data-id]').forEach(li => {
+            li.style.cursor = 'pointer';
+            li.addEventListener('mouseenter', () => li.style.textDecoration = 'underline');
+            li.addEventListener('mouseleave', () => li.style.textDecoration = '');
+            li.addEventListener('click', () => rule.onClick(li.getAttribute('data-id')));
+          });
+        }
+      }
+      continue; // skip full creation — DOM element (incl classes) stays as-is
+    }
+
+    // --- FIRST-TIME CREATION for this rule ---
+    div = document.createElement('div');
+    div.setAttribute('data-rule-id', rule.id);
     var width = '280px'
     div.className = `leaflet-control alerts alerts--${rule.level}`;
     if (state.collapsed) {

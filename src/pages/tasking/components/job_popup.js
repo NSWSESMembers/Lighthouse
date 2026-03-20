@@ -39,8 +39,9 @@ export function buildJobPopupKO() {
       </div>
 <!-- Assign to Team Dropdown -->
     <div class="text-center mt-2">
-      <div class="dropdown d-inline-block">
+      <div class="dropdown d-inline-block" data-bind="bsDropdownOpen: $root.job.instantTask.dropdownOpen">
         <button class="btn btn-small dropdown-toggle btn-outline-primary" type="button" id="assignTeamBtn"
+                title="Task Team"
                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-bind="disable: !canTaskJob()">
                                 <i class="fa fa-solid fa-user-plus"></i>
 
@@ -82,9 +83,14 @@ export function buildJobPopupKO() {
                    class="dropdown-item text-start py-1"
                    data-bind="click: taskTeamToJobWithConfirm, 
                               event: { mouseenter: mouseInTeamInInstantTaskPopup, mouseleave: mouseOutTeamInInstantTaskPopup }">
-                   <div>
-                       <strong
+                   <div class="d-flex align-items-center">
+                       <strong class="flex-grow-1"
                            data-bind="text: team.callsign() || ''"></strong>
+                       <!-- ko if: isSuggested -->
+                       <span class="fast-tooltip ms-2 flex-shrink-0" data-bind="fastTooltip: suggestionReason">
+                           <i class="fa fa-robot text-primary"></i>
+                       </span>
+                       <!-- /ko -->
                    </div>
                    <div class="small text-muted"
                        data-bind="text: currentTaskingSummary()">
@@ -92,6 +98,12 @@ export function buildJobPopupKO() {
                    <div class="small text-muted"
                        data-bind="text: summaryLine">
                    </div>
+                   <!-- ko if: routeLoading -->
+                   <div class="small text-muted fst-italic">
+                       <span class="spinner-border spinner-border-sm" style="width: 0.7em; height: 0.7em;" role="status"></span>
+                       Calculating travel time…
+                   </div>
+                   <!-- /ko -->
                </button>
                <!-- /ko -->
                <!-- /ko -->

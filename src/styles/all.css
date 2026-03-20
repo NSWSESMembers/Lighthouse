@@ -3,8 +3,6 @@
   background-color: #3CF !important;
   border-color: black !important;
 }
-.tag-lighthouse > .tag-text:before {
-}
 .tag-lighthouse > .tag-text:after {
 	content:"";
 }

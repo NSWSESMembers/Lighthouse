@@ -765,6 +765,16 @@ body.dark-mode .team-asset-row {
   color: #e0e0e0;
 }
 
+body.dark-mode .team-asset-row button.asset-flyto-btn {
+  background: transparent;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+body.dark-mode .team-asset-row button.asset-flyto-btn:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
 /* Job popup taskings table */
 body.dark-mode .job-popup,
 body.dark-mode .job-popup #JobDetails,

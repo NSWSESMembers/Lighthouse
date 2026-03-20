@@ -990,6 +990,33 @@ tr.job:hover {
   border-bottom: none;
 }
 
+/* Matched-asset flyTo button */
+.team-asset-row button.asset-flyto-btn {
+  background: transparent;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 2px 6px;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  transition: background-color 0.15s;
+}
+.team-asset-row button.asset-flyto-btn:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Default-asset star toggle */
+.default-asset-btn {
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.default-asset-btn:hover {
+  opacity: 1;
+}
+
 /* Base Leaflet divIcon wrapper for your SVG markers */
 .leaflet-marker-icon.job-svg-marker {
   display: block; /* kill inline baseline spacing */
@@ -1996,8 +2023,57 @@ overflow: hidden;
   z-index: 3000 !important;
 }
 
+.job-taskteam-dropdown .dropdown-item {
+  white-space: normal;
+  word-break: break-word;
+}
+
 .job-taskteam-dropdown.show {
   position: fixed !important;
+}
+
+/* Instant task suggestion highlight */
+.instant-task-suggested {
+  background-color: rgba(13, 110, 253, 0.08);
+  border-left: 3px solid #0d6efd;
+  padding-left: 9px !important;
+}
+.instant-task-suggested:hover {
+  background-color: rgba(13, 110, 253, 0.15);
+}
+.dark-mode .instant-task-suggested {
+  background-color: rgba(100, 160, 255, 0.12);
+  border-left-color: #6ea8fe;
+}
+.dark-mode .instant-task-suggested:hover {
+  background-color: rgba(100, 160, 255, 0.22);
+}
+
+/* Fast tooltip (no native delay) — positioned fixed via JS to escape overflow clipping */
+.fast-tooltip {
+  display: inline-flex;
+  cursor: default;
+}
+.fast-tooltip-bubble {
+  position: fixed;
+  padding: 5px 8px;
+  background: #333;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+.fast-tooltip-bubble.show {
+  opacity: 1;
+}
+.dark-mode .fast-tooltip-bubble {
+  background: #555;
 }
 
 /* Sector dropdown button */

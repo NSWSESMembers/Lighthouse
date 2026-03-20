@@ -147,7 +147,7 @@ export function Tasking(data = {}) {
         if (!t) return null;
         const assets = t.trackableAssets && t.trackableAssets();
         if (assets && assets.length > 0) {
-            const a = assets[0];
+            const a = t.defaultAsset ? t.defaultAsset() : assets[0];
             const lat = +ko.unwrap(a.latitude), lng = +ko.unwrap(a.longitude);
             if (Number.isFinite(lat) && Number.isFinite(lng)) return L.latLng(lat, lng);
         }
