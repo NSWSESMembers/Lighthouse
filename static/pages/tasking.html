@@ -335,13 +335,25 @@
                                                                         </legend>
                                                                     </div>
                                                                     <ul class="list-unstyled team-asset-list mb-0"
-                                                                        data-bind="foreach: { data: trackableAssets, as: 'as' }">
+                                                                        data-bind="foreach: { data: trackableAssetEntries, as: 'entry' }">
                                                                         <li class="team-asset-row mb-1">
                                                                             <div class="d-flex flex-column">
                                                                                 <div class="d-flex align-items-center">
-                                                                                    <button class="fw-semibold w-100"
-                                                                                        data-bind="click: $parent.flyToAsset"><span
-                                                                                            data-bind="text: as.name + ' (' + as.resourceType + ')'"
+                                                                                    <!-- ko if: $parent.trackableAssets().length > 1 -->
+                                                                                    <button class="btn btn-link btn-sm p-0 me-1 default-asset-btn"
+                                                                                        title="Set as default asset for this team"
+                                                                                        data-bind="click: $parent.setDefaultAsset, clickBubble: false">
+                                                                                        <!-- ko if: entry.isDefault -->
+                                                                                        <i class="fa fa-star text-warning"></i>
+                                                                                        <!-- /ko -->
+                                                                                        <!-- ko ifnot: entry.isDefault -->
+                                                                                        <i class="fa fa-star text-muted" style="opacity:0.25"></i>
+                                                                                        <!-- /ko -->
+                                                                                    </button>
+                                                                                    <!-- /ko -->
+                                                                                    <button class="fw-semibold w-100 asset-flyto-btn"
+                                                                                        data-bind="click: $parent.flyToAsset, clickBubble: false"><span
+                                                                                            data-bind="text: entry.asset.name + ' (' + entry.asset.resourceType + ')'"
                                                                                             class="me-1"></span><i
                                                                                             class="fa fa-crosshairs"></i></button>
                                                                                 </div>
@@ -3302,7 +3314,7 @@
                     <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
                         <span data-bind="text: errorMessage"></span>
                     </div>
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
+                    <textarea class="modal-textarea-full" id="RadioLogTextInput" rows="8" maxlength="4000"
                         data-bind="textInput: text"></textarea>
                 </div>
 
@@ -3376,10 +3388,10 @@
                         </span>
                     </div>
                     <h6>Subject</h6>
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="1" maxlength="50"
+                    <textarea class="modal-textarea-full" id="OpsLogSubjectInput" rows="1" maxlength="50"
                         data-bind="value: subject"></textarea>
                     <h6>Text</h6>
-                    <textarea class="modal-textarea-full" id="RadioLogInput" rows="8" maxlength="4000"
+                    <textarea class="modal-textarea-full" id="OpsLogTextInput" rows="8" maxlength="4000"
                         data-bind="value: text"></textarea>
 
                 </div>

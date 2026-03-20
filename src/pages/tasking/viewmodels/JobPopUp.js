@@ -116,7 +116,7 @@ export class JobPopupViewModel {
             // Auto-update route when the team's first asset or job location moves
             const team = tasking.team;
             if (team && team.trackableAssets && team.trackableAssets().length > 0) {
-                const a = team.trackableAssets()[0];
+                const a = team.defaultAsset ? team.defaultAsset() : team.trackableAssets()[0];
                 this._routeSubs.push(a.latitude.subscribe(() => {
                     if (!this.api.isRouteActive(routeControl)) return;
                     const s = tasking.getTeamLatLng(); const d = tasking.getJobLatLng();

@@ -201,7 +201,6 @@ function RunForestRun(mp) {
             unit = [];
             console.log("passed array of units");
             var hqsGiven = params.hq.split(",");
-            console.log(hqsGiven);
             hqsGiven.forEach(function(d) {
               BeaconClient.unit.getName(d, apiHost, params.userId, token, function(result, error) {
                 if (typeof error == 'undefined') {
@@ -811,9 +810,6 @@ function prepareCharts(jobs, start, end, firstRun) {
     let clusterChartFilters = clusterChart.filters();
     let zoneChartFilters = zoneChart.filters();
     let sectorChartFilters = sectorChart.filters();
-
-    console.log(completionBellChart)
-
 
     //remove the filters
     statusChart.filter(null)
