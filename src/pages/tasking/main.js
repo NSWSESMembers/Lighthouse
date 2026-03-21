@@ -1991,7 +1991,7 @@ function VM() {
     self.filteredTeams.subscribe((changes) => {
         changes.forEach(ch => {
             if (ch.status === 'added') {
-                console.log("Team visibly filtered in, fetching tasking:", ch.value.callsign());
+                console.log("Team visibly filtered in: ", ch.value.callsign());
                 ch.value.isFilteredIn(true);
             } else if (ch.status === 'deleted') {
                 if (ch.value.expanded() || ch.value.popUpIsOpen()) {

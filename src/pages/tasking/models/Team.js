@@ -252,7 +252,17 @@ export function Team(data = {}, deps = {}) {
 
         // If we just collapsed, no scroll
         if (wasExpanded) return;
-        self.refreshDataAndTasking();
+
+        // The expanded subscriber already calls fetchTasking(), so only
+        // refresh team data and shared-default mapping here.
+        self.refreshData();
+
+        if (_apiUrl && (self.trackableAssets?.() || []).length > 1) {
+            fetchSharedDefaults(_apiUrl, [String(self.id())])
+                .then(() => _defaultAssetTick(_defaultAssetTick() + 1))
+                .catch(() => {/* im not empty i promise */});
+        }
+
         scrollToThisInTable();
 
     };
