@@ -328,3 +328,24 @@ export function acknowledge(jobId, host, userId = 'notPassed', token, callback) 
     },
   });
 }
+
+export function complete(jobId, text, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'POST',
+    url: host + `/Api/v1/Jobs/${jobId}/Complete?LighthouseFunction=JobComplete&userId=` + userId,
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    data: `Text=${encodeURIComponent(text)}`,
+    cache: false,
+    dataType: 'json',
+    contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        callback(true);
+        } else {
+          callback(false);
+        }
+    },
+  });
+}
