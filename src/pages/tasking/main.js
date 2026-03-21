@@ -1879,8 +1879,10 @@ function VM() {
             } else {
                 showAlert(`Failed to assign incident ${jobVm.identifier()} to team ${teamVm.callsign()}.`, 'danger', 5000);
             }
-            jobVm.fetchTasking();
-            teamVm.fetchTasking();
+            console.log(teamVm, jobVm);
+            jobVm.fetchTasking({ force: true });
+            teamVm.fetchTasking({ force: true });
+            teamVm.refreshData(); // ensure team data is fresh 
             if (cb) cb(r);
         })
     }
@@ -2214,7 +2216,11 @@ function VM() {
 
     self.updateTeamStatus = function (tasking, status, payload, cb) {
         BeaconClient.tasking.updateTeamStatus(apiHost, tasking.id(), status, payload, token, function (data) {
-            tasking.job.fetchTasking();
+            tasking.job.fetchTasking({ force: true });
+            if (tasking.team?.isFilteredIn?.()) {
+                tasking.team.fetchTasking({ force: true });
+                tasking.team.refreshData();
+            }
             cb(data || []);
         }, function (err) {
             console.error("Failed to update team status:", err);
@@ -2225,7 +2231,11 @@ function VM() {
 
     self.callOffTeam = function (tasking, payload, cb) {
         BeaconClient.tasking.callOffTeam(apiHost, tasking.id(), payload, token, function (data) {
-            tasking.job.fetchTasking();
+            tasking.job.fetchTasking({ force: true });
+            if (tasking.team?.isFilteredIn?.()) {
+                tasking.team.fetchTasking({ force: true });
+                tasking.team.refreshData();
+            }
             cb(data || []);
         }, function (err) {
             console.error("Failed to call off team:", err);
@@ -2237,7 +2247,11 @@ function VM() {
     self.untaskTeam = function (tasking, payload, cb) {
         const form = BeaconClient.toFormUrlEncoded(payload);
         BeaconClient.tasking.untaskTeam(apiHost, tasking.id(), form, token, function (data) {
-            tasking.job.fetchTasking();
+            tasking.job.fetchTasking({ force: true });
+            if (tasking.team?.isFilteredIn?.()) {
+                tasking.team.fetchTasking({ force: true });
+                tasking.team.refreshData();
+            }
             cb(data);
         }, function (err) {
             console.error("Failed to Untask Team:", err);

@@ -531,14 +531,15 @@ export function Team(data = {}, deps = {}) {
 
     self._lastFetchTaskingTime = 0;
 
-    self.fetchTasking = function () {
+    self.fetchTasking = function (opts = {}) {
         if (!getTeamTasking || !upsertTasking) return;
+        const force = opts.force === true;
         const now = Date.now();
         // Gate against both direct fetches AND bulk/batch updates
         const lastFetch = self._lastFetchTaskingTime || 0;
         const lastData = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
         const lastRefresh = Math.max(lastFetch, lastData);
-        if (now - lastRefresh < 10000) {
+        if (!force && now - lastRefresh < 10000) {
             console.log(`[Team ${self.id.peek()}] fetchTasking throttled — last refreshed ${now - lastRefresh}ms ago`);
             self.taskingLoading(false); // clear loading state since data is already fresh
             return;
