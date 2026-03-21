@@ -2453,7 +2453,7 @@ function VM() {
             statusFilterToView,
             incidentTypeFilterToView,
             sectorToView,
-            `Unsectorised=${self.config.includeIncidentsWithoutSector()}`,
+            self.config.applySectorsToIncidents() ? `Unsectorised=${self.config.includeIncidentsWithoutSector()}` : '',
             `ViewModelType=6`,
         ].filter(param => param && param.trim() !== '');
 
