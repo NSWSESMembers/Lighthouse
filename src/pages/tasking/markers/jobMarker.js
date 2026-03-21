@@ -80,6 +80,14 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
             );
         }
 
+        // ensure we have a priority subscription exactly once
+        if (!m._prioritySub) {
+            m._prioritySub = job.jobPriorityType.subscribe(() => {
+                syncMarkerStyle(m, job, vm, pulseLayer);
+            });
+            (m._subs ||= []).push(m._prioritySub);
+        }
+
         job.marker = m;
         return m;
     }
@@ -92,7 +100,6 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     marker._priorityColor = style.fill || '#6b7280';
     if (targetLayer === vm.mapVM.jobClusterGroup) {
         marker.addTo(targetLayer);
-        //vm.mapVM.safeAddToClusterGroup?.(marker);
     } else {
         marker.addTo(targetLayer);
     }
@@ -116,10 +123,16 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     const popupVM = vm.mapVM.makeJobPopupVM(job);
     wireKoForPopup(ko, marker, job, vm, popupVM);
 
+    // live priority updates — restyle icon when priority changes
+    marker._prioritySub = job.jobPriorityType.subscribe(() => {
+        syncMarkerStyle(marker, job, vm, pulseLayer);
+    });
+
     // live position updates from KO observables
     marker._subs = [
         job.address.latitude.subscribe(() => safeMove(marker, job)),
         job.address.longitude.subscribe(() => safeMove(marker, job)),
+        marker._prioritySub,
     ];
 
     // Sync pulse ring visibility after adding
@@ -209,6 +222,58 @@ function upsertPulseRing(layerGroup, job, marker) {
 }
 
 // --- internals ---
+
+/**
+ * Re-evaluate a marker's icon style after a priority (or category) change.
+ * Updates icon, _priorityColor, _isRescue and handles rescue-layer
+ * reassignment + cluster refresh as needed.
+ */
+function syncMarkerStyle(marker, job, vm, pulseLayer) {
+    const newStyle = styleForJob(job);
+    const newKey = JSON.stringify(newStyle);
+
+    // Update icon if the visual style actually changed
+    if (marker._styleKey !== newKey) {
+        marker.setIcon(makeShapeIcon(newStyle));
+        marker._styleKey = newKey;
+    }
+    marker._priorityColor = newStyle.fill || '#6b7280';
+
+    // Check whether rescue status flipped
+    const wasRescue = marker._isRescue;
+    const isRescue = (job.priorityName?.() || '').toLowerCase() === 'rescue';
+    marker._isRescue = isRescue;
+
+    if (wasRescue !== isRescue) {
+        const clusterRescue = !!vm.config?.clusterRescueJobs?.();
+        const clusteringOn = vm.mapVM.clusteringEnabled;
+
+        if (clusteringOn) {
+            if (isRescue && !clusterRescue) {
+                // Was normal, now rescue and rescues are unclustered
+                if (vm.mapVM.jobClusterGroup.hasLayer(marker)) {
+                    vm.mapVM.jobClusterGroup.removeLayer(marker);
+                    vm.mapVM.rescueJobLayer.addLayer(marker);
+                }
+            } else if (!isRescue || clusterRescue) {
+                // Was rescue (unclustered), now normal — put back into cluster group
+                if (vm.mapVM.rescueJobLayer.hasLayer(marker)) {
+                    vm.mapVM.rescueJobLayer.removeLayer(marker);
+                    vm.mapVM.jobClusterGroup.addLayer(marker);
+                }
+            }
+        }
+    }
+
+    // Refresh the pulse ring shape (it depends on style.shape)
+    upsertPulseRing(pulseLayer, job, marker);
+    vm.mapVM._syncPulseRings?.();
+
+    // Refresh ancestor cluster icons so the hex ring redraws with the new colour
+    if (vm.mapVM.clusteringEnabled && vm.mapVM.jobClusterGroup.hasLayer(marker)) {
+        vm.mapVM.jobClusterGroup.refreshClusters(marker);
+    }
+}
 
 function safeMove(marker, job) {
     // Skip if the marker is currently spiderfied — moving it would break the
