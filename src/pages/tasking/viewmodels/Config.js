@@ -74,7 +74,12 @@ export function ConfigVM(root, deps) {
     self.refreshInterval = ko.observable(60);
     // Guard for reckless refresh interval changes
     let lastRefreshInterval = self.refreshInterval();
+    let suppressRecklessModal = false;
     self.refreshInterval.subscribe(function(newVal) {
+        if (suppressRecklessModal) {
+            lastRefreshInterval = newVal;
+            return;
+        }
         // Only trigger if the value is being changed to something different
         if (Number(newVal) !== Number(lastRefreshInterval)) {
             showRecklessModal({
@@ -83,7 +88,9 @@ export function ConfigVM(root, deps) {
                 },
                 onCancel: () => {
                     // Revert to previous value
+                    suppressRecklessModal = true;
                     self.refreshInterval(lastRefreshInterval);
+                    suppressRecklessModal = false;
                 }
             });
         }
@@ -502,6 +509,7 @@ export function ConfigVM(root, deps) {
 
 
     self.loadFromStorage = () => {
+        suppressRecklessModal = true;
         const saved = localStorage.getItem(STORAGE_KEY);
         let cfg;
         try {
@@ -545,6 +553,7 @@ export function ConfigVM(root, deps) {
         // scalar settings
         if (typeof cfg.refreshInterval === 'number') {
             self.refreshInterval(cfg.refreshInterval);
+            lastRefreshInterval = cfg.refreshInterval;
         }
         if (typeof cfg.fetchPeriod === 'number') {
             self.fetchPeriod(cfg.fetchPeriod);
@@ -640,7 +649,7 @@ export function ConfigVM(root, deps) {
 
 
         self.afterConfigLoad()
-
+        suppressRecklessModal = false;
     };
 
     self.share = async () => {
