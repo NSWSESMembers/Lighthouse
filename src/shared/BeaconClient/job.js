@@ -336,7 +336,7 @@ export function complete(jobId, text, host, userId = 'notPassed', token, callbac
     beforeSend: function (n) {
       n.setRequestHeader('Authorization', 'Bearer ' + token);
     },
-    data: `Text=${encodeURIComponent(text)}`,
+    data: `Text=${encodeURIComponent(text)}&Date=${encodeURIComponent(new Date().toISOString())}`,
     cache: false,
     dataType: 'json',
     contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
