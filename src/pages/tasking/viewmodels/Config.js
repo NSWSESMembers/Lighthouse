@@ -40,7 +40,7 @@ export function ConfigVM(root, deps) {
     //Sectors
     self.sectorFilters = ko.observableArray([]);   // [{id, name}]
     self.includeIncidentsWithoutSector = ko.observable(true);
-    self.applySectorsToIncidents = ko.observable(true);
+    self.applySectorsToIncidents = ko.observable(false);
     self.applySectorsToTeams = ko.observable(false);
 
     //Map layer order
@@ -72,6 +72,95 @@ export function ConfigVM(root, deps) {
 
     // Other settings
     self.refreshInterval = ko.observable(60);
+    // Guard for reckless refresh interval changes
+    let lastRefreshInterval = self.refreshInterval();
+    let suppressRecklessModal = false;
+    self.refreshInterval.subscribe(function(newVal) {
+        if (suppressRecklessModal) {
+            lastRefreshInterval = newVal;
+            return;
+        }
+        // Only trigger if the value is being changed to something different
+        if (Number(newVal) !== Number(lastRefreshInterval)) {
+            showRecklessModal({
+                onConfirm: () => {
+                    lastRefreshInterval = newVal;
+                },
+                onCancel: () => {
+                    // Revert to previous value
+                    suppressRecklessModal = true;
+                    self.refreshInterval(lastRefreshInterval);
+                    suppressRecklessModal = false;
+                }
+            });
+        }
+    });
+
+    // Modal logic for reckless confirmation
+    function showRecklessModal({ onConfirm, onCancel }) {
+        // Create modal HTML if not present
+        let modal = document.getElementById('recklessModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'recklessModal';
+            modal.className = 'modal fade';
+            modal.tabIndex = -1;
+            modal.innerHTML = `
+                <div class="modal-dialog modal-dialog-centered">
+                  <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                      <h5 class="modal-title">Are you sure?</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <p>Changing the refresh interval can have unintended consequences. To proceed, type <b>reckless</b> below and press Confirm.</p>
+                      <input id="recklessInput" type="text" class="form-control" placeholder="Type 'reckless' to confirm">
+                      <div id="recklessError" class="text-danger mt-2" style="display:none;">You must type 'reckless' to confirm.</div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="recklessCancel">Cancel</button>
+                      <button type="button" class="btn btn-danger" id="recklessConfirm">Confirm</button>
+                    </div>
+                  </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+        bsModal.show();
+
+        // Reset input and error
+        const input = modal.querySelector('#recklessInput');
+        const error = modal.querySelector('#recklessError');
+        input.value = '';
+        error.style.display = 'none';
+        input.focus();
+
+        // Remove previous listeners
+        const confirmBtn = modal.querySelector('#recklessConfirm');
+        const cancelBtn = modal.querySelector('#recklessCancel');
+        confirmBtn.onclick = null;
+        cancelBtn.onclick = null;
+
+        confirmBtn.onclick = function() {
+            if (input.value.trim().toLowerCase() === 'reckless') {
+                bsModal.hide();
+                onConfirm && onConfirm();
+            } else {
+                error.style.display = '';
+                input.focus();
+            }
+        };
+        cancelBtn.onclick = function() {
+            bsModal.hide();
+            onCancel && onCancel();
+        };
+        // Also handle modal close (X button)
+        modal.querySelector('.btn-close').onclick = function() {
+            bsModal.hide();
+            onCancel && onCancel();
+        };
+    }
     self.fetchPeriod = ko.observable(7).extend({ min: 0, max: 31, digit: true });
     self.fetchForward = ko.observable(0).extend({ min: 0, max: 31, digit: true });
     self.showAdvanced = ko.observable(false);
@@ -321,12 +410,13 @@ export function ConfigVM(root, deps) {
     self.addTeamAndIncident = (item, ev) => {
 
         //force add to both if doesnt exist, dont remove if it does
+        const n = norm(item);
 
-        const teamExists = self.teamFilters().some(x => x.id === norm(item).id);
-        if (!teamExists) self.teamFilters.push(item);
+        const teamExists = self.teamFilters().some(x => x.id === n.id);
+        if (!teamExists) self.teamFilters.push(n);
 
-        const incidentExists = self.incidentFilters().some(x => x.id === norm(item).id);
-        if (!incidentExists) self.incidentFilters.push(item);
+        const incidentExists = self.incidentFilters().some(x => x.id === n.id);
+        if (!incidentExists) self.incidentFilters.push(n);
 
         self.dropdownOpen(true);
         self.inputHasFocus(true);
@@ -419,6 +509,7 @@ export function ConfigVM(root, deps) {
 
 
     self.loadFromStorage = () => {
+        suppressRecklessModal = true;
         const saved = localStorage.getItem(STORAGE_KEY);
         let cfg;
         try {
@@ -440,7 +531,7 @@ export function ConfigVM(root, deps) {
             cfg.teamTaskStatusFilter = self.teamTaskStatusFilterDefaults;
             cfg.sectorFilters = [];
             cfg.includeIncidentsWithoutSector = true;
-            cfg.applySectorsToIncidents = true;
+            cfg.applySectorsToIncidents = false;
             cfg.applySectorsToTeams = false;
             cfg.pinnedTeamIds = [];
             cfg.pinnedIncidentIds = [];
@@ -462,6 +553,7 @@ export function ConfigVM(root, deps) {
         // scalar settings
         if (typeof cfg.refreshInterval === 'number') {
             self.refreshInterval(cfg.refreshInterval);
+            lastRefreshInterval = cfg.refreshInterval;
         }
         if (typeof cfg.fetchPeriod === 'number') {
             self.fetchPeriod(cfg.fetchPeriod);
@@ -557,7 +649,7 @@ export function ConfigVM(root, deps) {
 
 
         self.afterConfigLoad()
-
+        suppressRecklessModal = false;
     };
 
     self.share = async () => {
@@ -653,19 +745,14 @@ export function ConfigVM(root, deps) {
      */
     self._sectorHqIds = () => {
         const ids = new Set();
-        if (self.applySectorsToIncidents()) {
-            (self.incidentFilters() || []).forEach(f => ids.add(f.id));
-        }
-        if (self.applySectorsToTeams()) {
-            (self.teamFilters() || []).forEach(f => ids.add(f.id));
-        }
+        (self.incidentFilters() || []).forEach(f => ids.add(f.id));
+        (self.teamFilters() || []).forEach(f => ids.add(f.id));
         return [...ids];
     };
 
     /** Trigger a sector refresh using the current scope-aware HQ list. */
     self._refreshSectors = () => {
         if (self._suppressSectorRefresh) return;
-        if (!self.applySectorsToIncidents() && !self.applySectorsToTeams()) return;
         const ids = self._sectorHqIds();
         if (ids.length === 0) return;          // no HQs selected — nothing to search
         deps.fetchAllSectors(ids);
@@ -689,6 +776,7 @@ export function ConfigVM(root, deps) {
     self._suppressSectorRefresh = true;
     self.loadFromStorage()
     self._suppressSectorRefresh = false;
+    self._refreshSectors();
 
     self.incidentFilters.subscribe(() => {
         self._refreshSectors();

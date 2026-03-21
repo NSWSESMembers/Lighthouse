@@ -252,7 +252,17 @@ export function Team(data = {}, deps = {}) {
 
         // If we just collapsed, no scroll
         if (wasExpanded) return;
-        self.refreshDataAndTasking();
+
+        // The expanded subscriber already calls fetchTasking(), so only
+        // refresh team data and shared-default mapping here.
+        self.refreshData();
+
+        if (_apiUrl && (self.trackableAssets?.() || []).length > 1) {
+            fetchSharedDefaults(_apiUrl, [String(self.id())])
+                .then(() => _defaultAssetTick(_defaultAssetTick() + 1))
+                .catch(() => {/* im not empty i promise */});
+        }
+
         scrollToThisInTable();
 
     };
@@ -345,54 +355,6 @@ export function Team(data = {}, deps = {}) {
         if (self.rowHasFocus()) return;
         self.collapse();
     };
-
-
-    // ---- Tasking REFRESH CHECK ----
-    // ---- Because the tasking doesnt come down in the team search ----
-    const dataRefreshInterval = makeFilteredInterval(async () => {
-        const now = Date.now();
-        const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
-        // only refresh if we haven't had an update in > 1 minute
-        if (now - last > 60000) {
-            self.fetchTasking();
-        }
-    }, 30000, { runImmediately: false });
-
-    self.startDataRefreshCheck = function () {
-        dataRefreshInterval.start();
-    };
-
-    self.stopDataRefreshCheck = function () {
-        dataRefreshInterval.stop();
-    };
-
-
-    // interval that only runs while team is filtered in
-    function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
-        let handle = null;
-
-        const tick = () => {
-            // global guard: only run if still filtered in
-            if (!self.isFilteredIn()) return;
-            fn();
-        };
-
-        const start = () => {
-            if (!self.isFilteredIn()) return; // don't start if already filtered out
-            if (handle) clearInterval(handle);
-            if (runImmediately) tick();
-            handle = setInterval(tick, intervalMs);
-        };
-
-        const stop = () => {
-            if (handle) {
-                clearInterval(handle);
-                handle = null;
-            }
-        };
-
-        return { start, stop };
-    }
 
     self.trackableAndIsFiltered = ko.pureComputed(() => {
         return self.isFilteredIn() && self.trackableAssets().length > 0;
@@ -555,7 +517,7 @@ export function Team(data = {}, deps = {}) {
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
     self.expanded.subscribe(function (isExpanded) {
-        if (isExpanded && !self.taskingLoading()) {
+        if (isExpanded) {
             self.fetchTasking();
         }
     });
@@ -567,8 +529,22 @@ export function Team(data = {}, deps = {}) {
         }
     }
 
-    self.fetchTasking = function () {
+    self._lastFetchTaskingTime = 0;
+
+    self.fetchTasking = function (opts = {}) {
         if (!getTeamTasking || !upsertTasking) return;
+        const force = opts.force === true;
+        const now = Date.now();
+        // Gate against both direct fetches AND bulk/batch updates
+        const lastFetch = self._lastFetchTaskingTime || 0;
+        const lastData = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
+        const lastRefresh = Math.max(lastFetch, lastData);
+        if (!force && now - lastRefresh < 10000) {
+            console.log(`[Team ${self.id.peek()}] fetchTasking throttled — last refreshed ${now - lastRefresh}ms ago`);
+            self.taskingLoading(false); // clear loading state since data is already fresh
+            return;
+        }
+        self._lastFetchTaskingTime = now;
         self.taskingLoading(true);
         getTeamTasking(self.id.peek())
             .then(tasking => {
@@ -641,20 +617,38 @@ export function Team(data = {}, deps = {}) {
     }
 
     Team.prototype.updateFromJson = function (d = {}) {
-        if (d.Id !== undefined) this.id(d.Id);
-        if (d.TaskedJobCount !== undefined) this.taskedJobCount(d.TaskedJobCount);
-        if (d.Callsign !== undefined) this.callsign(d.Callsign);
-        if (d.TeamStatusType !== undefined) this.teamStatusType(d.TeamStatusType);
-        if (d.Members !== undefined) this.members(d.Members);
-        if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) this.assignedTo(new Entity(d.AssignedTo || d.CreatedAt)); //safety for beacon bug
+        if (d.Id !== undefined && d.Id !== this.id()) this.id(d.Id);
+        if (d.TaskedJobCount !== undefined && d.TaskedJobCount !== this.taskedJobCount()) this.taskedJobCount(d.TaskedJobCount);
+        if (d.Callsign !== undefined && d.Callsign !== this.callsign()) this.callsign(d.Callsign);
+        if (d.TeamStatusType !== undefined) {
+            const cur = this.teamStatusType();
+            if (!cur || cur.Id !== d.TeamStatusType?.Id) this.teamStatusType(d.TeamStatusType);
+        }
+        if (d.Members !== undefined) {
+            // Members is an array of objects — compare by length + leader/person ids
+            const prev = this.members() || [];
+            const next = d.Members || [];
+            const changed = prev.length !== next.length ||
+                next.some((m, i) => m.Person?.Id !== prev[i]?.Person?.Id || m.TeamLeader !== prev[i]?.TeamLeader);
+            if (changed) this.members(next);
+        }
+        if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) {
+            const cur = this.assignedTo();
+            const src = d.AssignedTo || d.CreatedAt;
+            if (!cur || cur.id?.() !== src?.Id) this.assignedTo(new Entity(src));
+        }
         if (d.Sector !== undefined) {
             if (d.Sector === null) {
-                this.sector(new Sector({}));
+                if (this.sector().id?.()) this.sector(new Sector({}));
             } else {
                 this.sector().updateFromJson(d.Sector);
             }
         }
         if (d.statusId !== undefined) this.updateStatusById(d.statusId);
-        if (d.TeamStatusStartDate !== undefined) this.statusDate(new Date(d.TeamStatusStartDate));
+        if (d.TeamStatusStartDate !== undefined) {
+            const newDate = new Date(d.TeamStatusStartDate);
+            const cur = this.statusDate();
+            if (!cur || cur.getTime() !== newDate.getTime()) this.statusDate(newDate);
+        }
     }
 }

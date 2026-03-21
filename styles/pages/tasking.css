@@ -996,7 +996,7 @@ tr.job:hover {
   border: 1px solid #ccc;
   border-radius: 4px;
   padding: 2px 6px;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   color: inherit;
   transition: background-color 0.15s;
@@ -2003,11 +2003,13 @@ overflow: hidden;
   z-index: 3000 !important;
 }
 
-#sectorDropdown {
+.sectorDropdown {
   z-index: 3000 !important;
+  max-height: calc(10 * 2em + 1rem);
+  overflow-y: auto;
 }
 
-#sectorDropdown.show {
+.sectorDropdown.show {
   position: fixed !important;
 }
 
@@ -2583,4 +2585,17 @@ input[type='search']::-ms-clear {
   line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Neutral focus ring for all form controls */
+.form-control:focus,
+.form-select:focus,
+input[type="search"]:focus {
+  border-color: #999;
+  box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.1);
+}
+
+/* Prevent focus shadow from bleeding over adjacent input-group buttons */
+.input-group .form-control:focus {
+  box-shadow: none;
 }

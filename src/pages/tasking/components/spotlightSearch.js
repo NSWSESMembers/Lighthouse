@@ -137,6 +137,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     const self = this;
 
     self.query = ko.observable("");
+    self.clearQuery = () => self.query('');
     self.activeIndex = ko.observable(0);
     self.results = ko.observableArray([]);
 

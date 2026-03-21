@@ -143,21 +143,19 @@ export function get(id, viewModelType = 1, host, userId = 'notPassed', token, ca
 }
 
 
-export function getTasking(id, host, userId = 'notPassed', token, callback) {
-  $.ajax({
-    type: 'GET',
-    url: host + "/Api/v1/Tasking/Search?LighthouseFunction=GetJobTaskingFromBeacon&userId=" + userId + "&JobIds%5B%5D=" + id,
-    beforeSend: function (n) {
-      n.setRequestHeader("Authorization", "Bearer " + token)
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(response.responseJSON);
-      }
+export function getTasking(ids, host, userId = 'notPassed', token, callback) {
+  // Support single id or array of ids
+  const idArr = Array.isArray(ids) ? ids : [ids];
+  const fnName = Array.isArray(ids) ? 'GetBulkJobTaskingFromBeacon' : 'GetJobTaskingFromBeacon';
+  const jobIdsParam = idArr.map(jid => "JobIds%5B%5D=" + encodeURIComponent(jid)).join("&");
+  const url = host + "/Api/v1/Tasking/Search?LighthouseFunction=" + fnName + "&userId=" + userId + "&" + jobIdsParam;
+  getJsonPaginated(
+    url, token, 0, 100,
+    function () { /* progress – not needed */ },
+    function (results) {
+      callback({ Results: results });
     }
-  });
+  );
 }
 
 export function searchwithFilter(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, viewmodel, statusTypes = [], jobType = [], onPage) {
@@ -319,6 +317,27 @@ export function acknowledge(jobId, host, userId = 'notPassed', token, callback) 
     cache: false,
     dataType: 'json',
     contentType: 'application/json; charset=utf-8',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        callback(true);
+        } else {
+          callback(false);
+        }
+    },
+  });
+}
+
+export function complete(jobId, text, host, userId = 'notPassed', token, callback) {
+  $.ajax({
+    type: 'POST',
+    url: host + `/Api/v1/Jobs/${jobId}/Complete?LighthouseFunction=JobComplete&userId=` + userId,
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    data: `Text=${encodeURIComponent(text)}&Date=${encodeURIComponent(new Date().toISOString())}`,
+    cache: false,
+    dataType: 'json',
+    contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
     complete: function (response, textStatus) {
       if (textStatus == 'success') {
         callback(true);

@@ -90,6 +90,8 @@ export class InstantTaskViewModel {
 
     popupTeamFilter = ko.observable('');
 
+    clearPopupTeamFilter = () => { this.popupTeamFilter(''); };
+
 
 
     drawCrowsFliesToAssetPassedTeam = (team) => {
