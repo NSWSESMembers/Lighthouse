@@ -5,6 +5,7 @@ import ko from "knockout";
 export function TrackableAssetsModalVM(mainVM) {
     const self = this;
     self.searchQuery = ko.observable('');
+    self.clearSearchQuery = () => self.searchQuery('');
     self.talkgroups = ko.observableArray([]);
     self.selectedTalkgroup = ko.observable();
     self.isOpen = ko.observable(false);

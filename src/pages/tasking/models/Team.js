@@ -252,7 +252,17 @@ export function Team(data = {}, deps = {}) {
 
         // If we just collapsed, no scroll
         if (wasExpanded) return;
-        self.refreshDataAndTasking();
+
+        // The expanded subscriber already calls fetchTasking(), so only
+        // refresh team data and shared-default mapping here.
+        self.refreshData();
+
+        if (_apiUrl && (self.trackableAssets?.() || []).length > 1) {
+            fetchSharedDefaults(_apiUrl, [String(self.id())])
+                .then(() => _defaultAssetTick(_defaultAssetTick() + 1))
+                .catch(() => {/* im not empty i promise */});
+        }
+
         scrollToThisInTable();
 
     };
@@ -345,54 +355,6 @@ export function Team(data = {}, deps = {}) {
         if (self.rowHasFocus()) return;
         self.collapse();
     };
-
-
-    // ---- Tasking REFRESH CHECK ----
-    // ---- Because the tasking doesnt come down in the team search ----
-    const dataRefreshInterval = makeFilteredInterval(async () => {
-        const now = Date.now();
-        const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
-        // only refresh if we haven't had an update in > 1 minute
-        if (now - last > 60000) {
-            self.fetchTasking();
-        }
-    }, 30000, { runImmediately: false });
-
-    self.startDataRefreshCheck = function () {
-        dataRefreshInterval.start();
-    };
-
-    self.stopDataRefreshCheck = function () {
-        dataRefreshInterval.stop();
-    };
-
-
-    // interval that only runs while team is filtered in
-    function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
-        let handle = null;
-
-        const tick = () => {
-            // global guard: only run if still filtered in
-            if (!self.isFilteredIn()) return;
-            fn();
-        };
-
-        const start = () => {
-            if (!self.isFilteredIn()) return; // don't start if already filtered out
-            if (handle) clearInterval(handle);
-            if (runImmediately) tick();
-            handle = setInterval(tick, intervalMs);
-        };
-
-        const stop = () => {
-            if (handle) {
-                clearInterval(handle);
-                handle = null;
-            }
-        };
-
-        return { start, stop };
-    }
 
     self.trackableAndIsFiltered = ko.pureComputed(() => {
         return self.isFilteredIn() && self.trackableAssets().length > 0;
@@ -555,7 +517,7 @@ export function Team(data = {}, deps = {}) {
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
     self.expanded.subscribe(function (isExpanded) {
-        if (isExpanded && !self.taskingLoading()) {
+        if (isExpanded) {
             self.fetchTasking();
         }
     });
@@ -567,8 +529,16 @@ export function Team(data = {}, deps = {}) {
         }
     }
 
+    self._lastFetchTaskingTime = 0;
+
     self.fetchTasking = function () {
         if (!getTeamTasking || !upsertTasking) return;
+        const now = Date.now();
+        if (now - self._lastFetchTaskingTime < 10000) {
+            console.log(`[Team ${self.id.peek()}] fetchTasking throttled — last called ${now - self._lastFetchTaskingTime}ms ago`);
+            return;
+        }
+        self._lastFetchTaskingTime = now;
         self.taskingLoading(true);
         getTeamTasking(self.id.peek())
             .then(tasking => {
