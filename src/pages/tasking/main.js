@@ -2259,7 +2259,7 @@ function VM() {
                     BeaconClient.job.acknowledge(jobId, apiHost, params.userId, t, handleResult);
                     break;
                 case 'Complete':
-                    BeaconClient.job.setStatusClosed(jobId, text, apiHost, params.userId, t, handleResult);
+                    BeaconClient.job.complete(jobId, text, apiHost, params.userId, t, handleResult);
                     break;
                 case 'Reject':
                     BeaconClient.job.reject(jobId, text, apiHost, params.userId, t, handleResult);
