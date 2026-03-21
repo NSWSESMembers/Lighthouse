@@ -525,100 +525,111 @@ export function Job(data = {}, deps = {}) {
 
 
     Job.prototype.updateFromJson = function (d = {}) {
-
         this.startDataRefreshCheck(); // restart timer
+
+        // Helper to only update observable if changed
+        function updateObs(obs, val) {
+            if (ko.isObservable(obs)) {
+                if (obs() !== val) obs(val);
+            }
+        }
 
         // sector might be undefined or null. they mean different things
         if (d.Sector !== undefined) { //sector present in payload
-            if (d.Sector === null) { //theres no sector assigned
-                this.sector(new Sector({}));
+            if (d.Sector === null) {
+                if (JSON.stringify(this.sector()) !== JSON.stringify(new Sector({}))) {
+                    this.sector(new Sector({}));
+                }
             } else {
                 this.sector().updateFromJson(d.Sector);
             }
         }
         // scalars
-        if (d.Identifier !== undefined) this.identifier(d.Identifier);
-        if (d.Type !== undefined) this.type(d.Type);
+        if (d.Identifier !== undefined) updateObs(this.identifier, d.Identifier);
+        if (d.Type !== undefined) updateObs(this.type, d.Type);
 
-        if (d.CallerFirstName !== undefined) this.callerFirstName(d.CallerFirstName || "");
-        if (d.CallerLastName !== undefined) this.callerLastName(d.CallerLastName || "");
-        if (d.CallerPhoneNumber !== undefined) this.callerPhoneNumber(d.CallerPhoneNumber || "");
-        if (d.ContactFirstName !== undefined) this.contactFirstName(d.ContactFirstName || "");
-        if (d.ContactLastName !== undefined) this.contactLastName(d.ContactLastName || "");
-        if (d.ContactPhoneNumber !== undefined) this.contactPhoneNumber(d.ContactPhoneNumber || "");
+        if (d.CallerFirstName !== undefined) updateObs(this.callerFirstName, d.CallerFirstName || "");
+        if (d.CallerLastName !== undefined) updateObs(this.callerLastName, d.CallerLastName || "");
+        if (d.CallerPhoneNumber !== undefined) updateObs(this.callerPhoneNumber, d.CallerPhoneNumber || "");
+        if (d.ContactFirstName !== undefined) updateObs(this.contactFirstName, d.ContactFirstName || "");
+        if (d.ContactLastName !== undefined) updateObs(this.contactLastName, d.ContactLastName || "");
+        if (d.ContactPhoneNumber !== undefined) updateObs(this.contactPhoneNumber, d.ContactPhoneNumber || "");
 
-        if (d.PermissionToEnterPremises !== undefined) this.permissionToEnterPremises(!!d.PermissionToEnterPremises);
-        if (d.HowToEnterPremises !== undefined) this.howToEnterPremises(d.HowToEnterPremises ?? null);
-        if (d.JobReceived !== undefined) this.jobReceived(d.JobReceived || null);
-        if (d.LGA !== undefined) this.lga(d.LGA || "");
-        if (d.TaskingCategory !== undefined) this.taskingCategory(d.TaskingCategory ?? 0);
-        if (d.SituationOnScene !== undefined) this.situationOnScene(d.SituationOnScene || "");
-        if (d.EventId !== undefined) this.eventId(d.EventId ?? null);
-        if (d.PrintCount !== undefined) this.printCount(d.PrintCount ?? 0);
-        if (d.InFrao !== undefined) this.inFrao(!!d.InFrao);
-        if (d.ImageCount !== undefined) this.imageCount(d.ImageCount ?? 0);
+        if (d.PermissionToEnterPremises !== undefined) updateObs(this.permissionToEnterPremises, !!d.PermissionToEnterPremises);
+        if (d.HowToEnterPremises !== undefined) updateObs(this.howToEnterPremises, d.HowToEnterPremises ?? null);
+        if (d.JobReceived !== undefined) updateObs(this.jobReceived, d.JobReceived || null);
+        if (d.LGA !== undefined) updateObs(this.lga, d.LGA || "");
+        if (d.TaskingCategory !== undefined) updateObs(this.taskingCategory, d.TaskingCategory ?? 0);
+        if (d.SituationOnScene !== undefined) updateObs(this.situationOnScene, d.SituationOnScene || "");
+        if (d.EventId !== undefined) updateObs(this.eventId, d.EventId ?? null);
+        if (d.PrintCount !== undefined) updateObs(this.printCount, d.PrintCount ?? 0);
+        if (d.InFrao !== undefined) updateObs(this.inFrao, !!d.InFrao);
+        if (d.ImageCount !== undefined) updateObs(this.imageCount, d.ImageCount ?? 0);
 
-        if (d.ICEMSIncidentIdentifier !== undefined) this.icemsIncidentIdentifier(d.ICEMSIncidentIdentifier || null);
+        if (d.ICEMSIncidentIdentifier !== undefined) updateObs(this.icemsIncidentIdentifier, d.ICEMSIncidentIdentifier || null);
 
         // structured
-        if (d.JobPriorityType !== undefined) this.jobPriorityType(d.JobPriorityType || null);
-        if (d.JobStatusType !== undefined) this.jobStatusType(d.JobStatusType || null);
-        if (d.JobType !== undefined) this.jobType(d.JobType || null);
-
-
+        if (d.JobPriorityType !== undefined) updateObs(this.jobPriorityType, d.JobPriorityType || null);
+        if (d.JobStatusType !== undefined) updateObs(this.jobStatusType, d.JobStatusType || null);
+        if (d.JobType !== undefined) updateObs(this.jobType, d.JobType || null);
 
         if (d.EntityAssignedTo !== undefined) {
             const ea = d.EntityAssignedTo;
-
-            this.entityAssignedTo.id(ea?.Id ?? null);
-            this.entityAssignedTo.code(ea?.Code ?? "");
-            this.entityAssignedTo.name(ea?.Name ?? "");
-            this.entityAssignedTo.latitude(ea?.Latitude ?? null);
-            this.entityAssignedTo.longitude(ea?.Longitude ?? null);
+            updateObs(this.entityAssignedTo.id, ea?.Id ?? null);
+            updateObs(this.entityAssignedTo.code, ea?.Code ?? "");
+            updateObs(this.entityAssignedTo.name, ea?.Name ?? "");
+            updateObs(this.entityAssignedTo.latitude, ea?.Latitude ?? null);
+            updateObs(this.entityAssignedTo.longitude, ea?.Longitude ?? null);
 
             // Correct handling of ParentEntity
             if (ea.ParentEntity !== null) {
                 const existingParent = this.entityAssignedTo.parentEntity();
                 if (existingParent) {
-                    // update existing parent entity observables
-                    existingParent.id(ea.ParentEntity.Id ?? null);
-                    existingParent.code(ea.ParentEntity.Code ?? "");
-                    existingParent.name(ea.ParentEntity.Name ?? "");
+                    updateObs(existingParent.id, ea.ParentEntity.Id ?? null);
+                    updateObs(existingParent.code, ea.ParentEntity.Code ?? "");
+                    updateObs(existingParent.name, ea.ParentEntity.Name ?? "");
                 } else {
-                    // or create a new one if none exists yet
                     this.entityAssignedTo.parentEntity(new Entity(ea.ParentEntity));
                 }
             } else {
-                // if API can legitimately send "no parent", clear it
                 this.entityAssignedTo.parentEntity(null);
             }
         }
 
         if (d.Address !== undefined) {
-            this.address.gnafId(d.Address?.GnafId ?? null);
-            this.address.latitude(d.Address?.Latitude ?? null);
-            this.address.longitude(d.Address?.Longitude ?? null);
-            this.address.streetNumber(d.Address?.StreetNumber ?? "");
-            this.address.street(d.Address?.Street ?? "");
-            this.address.locality(d.Address?.Locality ?? "");
-            this.address.postCode(d.Address?.PostCode ?? "");
-            this.address.prettyAddress(d.Address?.PrettyAddress ?? "");
-            this.address.additionalAddressInfo(d.Address?.AdditionalAddressInfo ?? null);
+            updateObs(this.address.gnafId, d.Address?.GnafId ?? null);
+            updateObs(this.address.latitude, d.Address?.Latitude ?? null);
+            updateObs(this.address.longitude, d.Address?.Longitude ?? null);
+            updateObs(this.address.streetNumber, d.Address?.StreetNumber ?? "");
+            updateObs(this.address.street, d.Address?.Street ?? "");
+            updateObs(this.address.locality, d.Address?.Locality ?? "");
+            updateObs(this.address.postCode, d.Address?.PostCode ?? "");
+            updateObs(this.address.prettyAddress, d.Address?.PrettyAddress ?? "");
+            updateObs(this.address.additionalAddressInfo, d.Address?.AdditionalAddressInfo ?? null);
         }
 
         if (Array.isArray(d.Tags)) {
-            this.tags(d.Tags.map(t => new Tag(t)));
+            // Only update if changed (shallow compare by length and first element)
+            const newTags = d.Tags.map(t => new Tag(t));
+            const curTags = this.tags();
+            if (curTags.length !== newTags.length || (curTags[0]?.id?.() !== newTags[0]?.id?.())) {
+                this.tags(newTags);
+            }
         }
         if (Array.isArray(d.ActionRequiredTags)) {
-            this.actionRequiredTags(
-                d.ActionRequiredTags
-                    .filter(t => t.TagGroupId === 27)
-                    .map(t => new Tag(t))
-            );
+            const newTags = d.ActionRequiredTags.filter(t => t.TagGroupId === 27).map(t => new Tag(t));
+            const curTags = this.actionRequiredTags();
+            if (curTags.length !== newTags.length || (curTags[0]?.id?.() !== newTags[0]?.id?.())) {
+                this.actionRequiredTags(newTags);
+            }
         }
         //ditch pscu categories
         if (Array.isArray(d.Categories)) {
-            this.categories(d.Categories.filter(c => (c?.Id ?? 0) >= 9));
+            const newCats = d.Categories.filter(c => (c?.Id ?? 0) >= 9);
+            const curCats = this.categories();
+            if (curCats.length !== newCats.length || (curCats[0]?.Id !== newCats[0]?.Id)) {
+                this.categories(newCats);
+            }
         }
     };
 
