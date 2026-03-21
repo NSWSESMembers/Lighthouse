@@ -258,38 +258,16 @@ export function Job(data = {}, deps = {}) {
 
     self.lastTaskingDataUpdate = new Date();
 
-
-    // ---- Tasking REFRESH CHECK ----
-    // ---- Because the tasking doesnt come down in the job search ----
-    const dataRefreshInterval = makeFilteredInterval(async () => {
-        const now = Date.now();
-        const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
-        // only refresh if we haven't had an update in > 2 minutes
-        if (now - last > 120000) {
-            self.fetchTasking();
-        }
-    }, 30000, { runImmediately: false });
-
-    self.startDataRefreshCheck = function () {
-        dataRefreshInterval.start();
-    };
-
-    self.stopDataRefreshCheck = function () {
-        dataRefreshInterval.stop();
-    };
+    // Minimum cooldown (ms) between single-job tasking fetches.
+    // Bulk/batch refreshes update lastTaskingDataUpdate directly,
+    // so this gate also prevents a single fetch right after a batch.
+    const SINGLE_FETCH_COOLDOWN_MS = 10_000;
 
     self.drawJobTargetRing = function () {
         drawJobTargetRing(self);
     };
 
-    // Start/stop with filter state
-    self.isFilteredIn.subscribe((flag) => {
-        if (flag) {
-            self.startDataRefreshCheck();
-        } else {
-            self.stopDataRefreshCheck();
-        }
-    });
+    // (Periodic tasking refresh is now handled in bulk by main.js)
 
     self.expanded.subscribe((isExpanded) => {
         self.instantTask.popupActive(isExpanded || self.popUpIsOpen());
@@ -526,8 +504,6 @@ export function Job(data = {}, deps = {}) {
 
     Job.prototype.updateFromJson = function (d = {}) {
 
-        this.startDataRefreshCheck(); // restart timer
-
         // sector might be undefined or null. they mean different things
         if (d.Sector !== undefined) { //sector present in payload
             if (d.Sector === null) { //theres no sector assigned
@@ -655,7 +631,7 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.toggleAndExpand = function () {
-        console.log("Toggling and expanding job", self.id());
+        console.log("Toggling job", self.id());
         self.toggleAndLoad();
         scrollToThisInTable();
     }
@@ -737,12 +713,20 @@ export function Job(data = {}, deps = {}) {
         self.refreshData();
     }
 
-    self.fetchTasking = function () {
+    self.fetchTasking = function (opts = {}) {
+        const force = opts.force === true;
+        if (!force) {
+            const now = Date.now();
+            const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
+            if (now - last < SINGLE_FETCH_COOLDOWN_MS) {
+                console.log("Skipping tasking fetch for job", self.id(), "due to cooldown");
+                return; // recently refreshed (single or batch), skip
+            }
+        }
         self.taskingLoading(true);
         fetchJobTasking(self.id(), () => {
             self.taskingLoading(false);
         });
-
     };
 
     self.refreshData = async function () {

@@ -2005,6 +2005,39 @@ function VM() {
     }, null, "arrayChange");
 
 
+    // --- Debounced initial-load batch for newly filtered-in jobs ---
+    let _pendingInitialTaskingJobs = [];
+    let _pendingInitialTaskingTimer = null;
+
+    function scheduleInitialTaskingFetch(job) {
+        _pendingInitialTaskingJobs.push(job);
+        if (_pendingInitialTaskingTimer) clearTimeout(_pendingInitialTaskingTimer);
+        _pendingInitialTaskingTimer = setTimeout(async () => {
+            const jobs = _pendingInitialTaskingJobs.splice(0);
+            _pendingInitialTaskingTimer = null;
+            if (jobs.length === 0) return;
+
+            const jobIds = jobs.map(j => j.id());
+            console.log(`[batch-tasking] Initial fetch for ${jobIds.length} newly filtered-in jobs`);
+            jobs.forEach(j => j.taskingLoading(true));
+
+            try {
+                const t = await getToken();
+                BeaconClient.job.getTasking(jobIds, apiHost, params.userId, t, (res) => {
+                    (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload(t));
+                    const touchedTime = new Date();
+                    jobs.forEach(j => {
+                        j.lastTaskingDataUpdate = touchedTime;
+                        j.taskingLoading(false);
+                    });
+                });
+            } catch (err) {
+                console.error('[batch-tasking] Initial fetch failed:', err);
+                jobs.forEach(j => j.taskingLoading(false));
+            }
+        }, 250); // 250ms debounce to collect burst of additions
+    }
+
     // automatically refresh markers when jobs change
     self.filteredJobs.subscribe((changes) => {
         // Bail early if incidents are not visible – no need to attach markers
@@ -2015,7 +2048,7 @@ function VM() {
             if (ch.status === 'added') {
                 jobMarkerBatcher.scheduleAdd(ch.value);
                 ch.value.isFilteredIn(true);
-                ch.value.fetchTasking();
+                scheduleInitialTaskingFetch(ch.value);
             } else if (ch.status === 'deleted') {
                 if (ch.value.expanded() || ch.value.popUpIsOpen()) {
                     showAlert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.", "warning", 4000);
@@ -2259,6 +2292,55 @@ function VM() {
         });
     }
 
+    // ---- BATCH TASKING REFRESH ----
+    // Collects all filtered-in jobs whose tasking data is stale
+    // (older than the configured refresh interval) and fetches
+    // them in a single API call.
+
+    self.fetchBatchJobTasking = async function () {
+        const staleMs = Number(self.config.refreshInterval() || 60) * 1000;
+        const now = Date.now();
+        const staleJobs = self.filteredJobs().filter(job => {
+            const last = job.lastTaskingDataUpdate?.getTime?.() ?? 0;
+            return (now - last) > staleMs;
+        });
+
+        if (staleJobs.length === 0) return;
+
+        const jobIds = staleJobs.map(j => j.id());
+        console.log(`[batch-tasking] Refreshing tasking for ${jobIds.length} stale jobs`);
+
+        staleJobs.forEach(j => j.taskingLoading(true));
+
+        try {
+            const t = await getToken();
+            BeaconClient.job.getTasking(jobIds, apiHost, params.userId, t, (res) => {
+                (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload(t));
+
+                // Mark all requested jobs as refreshed (even if they had no taskings)
+                const touchedTime = new Date();
+                staleJobs.forEach(j => {
+                    j.lastTaskingDataUpdate = touchedTime;
+                    j.taskingLoading(false);
+                });
+            });
+        } catch (err) {
+            console.error('[batch-tasking] Failed:', err);
+            staleJobs.forEach(j => j.taskingLoading(false));
+        }
+    };
+
+    let batchTaskingTimer = null;
+
+    function startBatchTaskingTimer() {
+        if (batchTaskingTimer) clearInterval(batchTaskingTimer);
+        const interval = Number(self.config.refreshInterval() || 60) * 1000;
+        batchTaskingTimer = setInterval(() => {
+            self.fetchBatchJobTasking();
+        }, interval);
+        console.log('[batch-tasking] Timer started:', interval, 'ms');
+    }
+
     self.setJobStatus = async function (jobId, statusName, text, cb) {
         console.log("Setting job status:", jobId, " to ", statusName, " with text:", text);
         const t = await getToken();
@@ -2479,10 +2561,11 @@ function VM() {
 
 
 
-    // re-arm timer when refreshInterval changes
+    // re-arm timers when refreshInterval changes
     self.config.refreshInterval.subscribe(() => {
-        console.log("refreshInterval changed → restarting timer");
+        console.log("refreshInterval changed → restarting timers");
         startJobsTeamsTimer();
+        startBatchTaskingTimer();
     });
 
 
@@ -2525,7 +2608,8 @@ function VM() {
         self.fetchAllTrackableAssets();
 
         startJobsTeamsTimer();
-        startAssetDataRefreshTimer()
+        startAssetDataRefreshTimer();
+        startBatchTaskingTimer();
     }
 
     // --- Polling layers ---

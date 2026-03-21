@@ -534,8 +534,13 @@ export function Team(data = {}, deps = {}) {
     self.fetchTasking = function () {
         if (!getTeamTasking || !upsertTasking) return;
         const now = Date.now();
-        if (now - self._lastFetchTaskingTime < 10000) {
-            console.log(`[Team ${self.id.peek()}] fetchTasking throttled — last called ${now - self._lastFetchTaskingTime}ms ago`);
+        // Gate against both direct fetches AND bulk/batch updates
+        const lastFetch = self._lastFetchTaskingTime || 0;
+        const lastData = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
+        const lastRefresh = Math.max(lastFetch, lastData);
+        if (now - lastRefresh < 10000) {
+            console.log(`[Team ${self.id.peek()}] fetchTasking throttled — last refreshed ${now - lastRefresh}ms ago`);
+            self.taskingLoading(false); // clear loading state since data is already fresh
             return;
         }
         self._lastFetchTaskingTime = now;
@@ -611,20 +616,38 @@ export function Team(data = {}, deps = {}) {
     }
 
     Team.prototype.updateFromJson = function (d = {}) {
-        if (d.Id !== undefined) this.id(d.Id);
-        if (d.TaskedJobCount !== undefined) this.taskedJobCount(d.TaskedJobCount);
-        if (d.Callsign !== undefined) this.callsign(d.Callsign);
-        if (d.TeamStatusType !== undefined) this.teamStatusType(d.TeamStatusType);
-        if (d.Members !== undefined) this.members(d.Members);
-        if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) this.assignedTo(new Entity(d.AssignedTo || d.CreatedAt)); //safety for beacon bug
+        if (d.Id !== undefined && d.Id !== this.id()) this.id(d.Id);
+        if (d.TaskedJobCount !== undefined && d.TaskedJobCount !== this.taskedJobCount()) this.taskedJobCount(d.TaskedJobCount);
+        if (d.Callsign !== undefined && d.Callsign !== this.callsign()) this.callsign(d.Callsign);
+        if (d.TeamStatusType !== undefined) {
+            const cur = this.teamStatusType();
+            if (!cur || cur.Id !== d.TeamStatusType?.Id) this.teamStatusType(d.TeamStatusType);
+        }
+        if (d.Members !== undefined) {
+            // Members is an array of objects — compare by length + leader/person ids
+            const prev = this.members() || [];
+            const next = d.Members || [];
+            const changed = prev.length !== next.length ||
+                next.some((m, i) => m.Person?.Id !== prev[i]?.Person?.Id || m.TeamLeader !== prev[i]?.TeamLeader);
+            if (changed) this.members(next);
+        }
+        if (d.AssignedTo !== undefined && d.CreatedAt !== undefined) {
+            const cur = this.assignedTo();
+            const src = d.AssignedTo || d.CreatedAt;
+            if (!cur || cur.id?.() !== src?.Id) this.assignedTo(new Entity(src));
+        }
         if (d.Sector !== undefined) {
             if (d.Sector === null) {
-                this.sector(new Sector({}));
+                if (this.sector().id?.()) this.sector(new Sector({}));
             } else {
                 this.sector().updateFromJson(d.Sector);
             }
         }
         if (d.statusId !== undefined) this.updateStatusById(d.statusId);
-        if (d.TeamStatusStartDate !== undefined) this.statusDate(new Date(d.TeamStatusStartDate));
+        if (d.TeamStatusStartDate !== undefined) {
+            const newDate = new Date(d.TeamStatusStartDate);
+            const cur = this.statusDate();
+            if (!cur || cur.getTime() !== newDate.getTime()) this.statusDate(newDate);
+        }
     }
 }
