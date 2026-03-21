@@ -387,7 +387,7 @@ export function Job(data = {}, deps = {}) {
     self.incompleteTaskingsOnly = ko.pureComputed(() =>
         self.taskings().filter(t => {
             const status = t.currentStatus();
-            return status !== "Complete" && status !== "CalledOff";
+            return status !== "Complete" && status !== "CalledOff" && status !== "Untasked";
         })
     );
 
