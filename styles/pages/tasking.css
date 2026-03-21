@@ -2003,11 +2003,13 @@ overflow: hidden;
   z-index: 3000 !important;
 }
 
-#sectorDropdown {
+.sectorDropdown {
   z-index: 3000 !important;
+  max-height: calc(10 * 2em + 1rem);
+  overflow-y: auto;
 }
 
-#sectorDropdown.show {
+.sectorDropdown.show {
   position: fixed !important;
 }
 
