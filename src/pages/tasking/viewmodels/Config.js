@@ -40,7 +40,7 @@ export function ConfigVM(root, deps) {
     //Sectors
     self.sectorFilters = ko.observableArray([]);   // [{id, name}]
     self.includeIncidentsWithoutSector = ko.observable(true);
-    self.applySectorsToIncidents = ko.observable(true);
+    self.applySectorsToIncidents = ko.observable(false);
     self.applySectorsToTeams = ko.observable(false);
 
     //Map layer order
@@ -531,7 +531,7 @@ export function ConfigVM(root, deps) {
             cfg.teamTaskStatusFilter = self.teamTaskStatusFilterDefaults;
             cfg.sectorFilters = [];
             cfg.includeIncidentsWithoutSector = true;
-            cfg.applySectorsToIncidents = true;
+            cfg.applySectorsToIncidents = false;
             cfg.applySectorsToTeams = false;
             cfg.pinnedTeamIds = [];
             cfg.pinnedIncidentIds = [];
@@ -745,19 +745,14 @@ export function ConfigVM(root, deps) {
      */
     self._sectorHqIds = () => {
         const ids = new Set();
-        if (self.applySectorsToIncidents()) {
-            (self.incidentFilters() || []).forEach(f => ids.add(f.id));
-        }
-        if (self.applySectorsToTeams()) {
-            (self.teamFilters() || []).forEach(f => ids.add(f.id));
-        }
+        (self.incidentFilters() || []).forEach(f => ids.add(f.id));
+        (self.teamFilters() || []).forEach(f => ids.add(f.id));
         return [...ids];
     };
 
     /** Trigger a sector refresh using the current scope-aware HQ list. */
     self._refreshSectors = () => {
         if (self._suppressSectorRefresh) return;
-        if (!self.applySectorsToIncidents() && !self.applySectorsToTeams()) return;
         const ids = self._sectorHqIds();
         if (ids.length === 0) return;          // no HQs selected — nothing to search
         deps.fetchAllSectors(ids);
@@ -781,6 +776,7 @@ export function ConfigVM(root, deps) {
     self._suppressSectorRefresh = true;
     self.loadFromStorage()
     self._suppressSectorRefresh = false;
+    self._refreshSectors();
 
     self.incidentFilters.subscribe(() => {
         self._refreshSectors();
