@@ -630,6 +630,7 @@ function VM() {
 
     //Job filtering/searching
     self.jobSearch = ko.observable('');
+    self.clearJobSearch = () => self.jobSearch('');
 
     self.filteredJobsAgainstConfig = ko.pureComputed(() => {
 
@@ -728,6 +729,7 @@ function VM() {
 
     // Team filtering/searching
     self.teamSearch = ko.observable('');
+    self.clearTeamSearch = () => self.teamSearch('');
 
 
     //just filtered against config not against UI searching

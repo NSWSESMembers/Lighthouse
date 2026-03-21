@@ -27,6 +27,8 @@
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
                             <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: teamSearch, valueUpdate: 'input'">
+                            <button class="btn btn-outline-secondary py-0 px-1" type="button" title="Clear"
+                                data-bind="click: clearTeamSearch, visible: teamSearch">&times;</button>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
                             title="Toggle pinned-only teams"
@@ -715,6 +717,8 @@
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
                             <input type="search" id="jobSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: jobSearch, valueUpdate: 'input'">
+                            <button class="btn btn-outline-secondary py-0 px-1" type="button" title="Clear"
+                                data-bind="click: clearJobSearch, visible: jobSearch">&times;</button>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
                             title="Toggle pinned-only incidents"

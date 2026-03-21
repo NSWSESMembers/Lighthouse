@@ -153,9 +153,13 @@ body.dark-mode input[type="text"]:focus,
 body.dark-mode input[type="number"]:focus,
 body.dark-mode input[type="search"]:focus {
   background-color: #3a3a3a;
-  border-color: #0d6efd;
+  border-color: #888;
   color: #e0e0e0;
-  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .input-group .form-control:focus {
+  box-shadow: none;
 }
 
 body.dark-mode .form-check-input {

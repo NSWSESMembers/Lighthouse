@@ -2584,3 +2584,16 @@ input[type='search']::-ms-clear {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Neutral focus ring for all form controls */
+.form-control:focus,
+.form-select:focus,
+input[type="search"]:focus {
+  border-color: #999;
+  box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.1);
+}
+
+/* Prevent focus shadow from bleeding over adjacent input-group buttons */
+.input-group .form-control:focus {
+  box-shadow: none;
+}
