@@ -66,14 +66,14 @@ import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } f
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
-import { 
-    registerBOMRainfallLayer, 
-    registerBOMRadarLayer, 
-    registerBOMAllFloodLevelsLayer, 
-    registerBOMSatTrueColorLayer, 
-    registerBOMThunderstormTrackingLayer, 
-    registerBOMWindLayer, 
-    registerBOMMSLPLayer, 
+import {
+    registerBOMRainfallLayer,
+    registerBOMRadarLayer,
+    registerBOMAllFloodLevelsLayer,
+    registerBOMSatTrueColorLayer,
+    registerBOMThunderstormTrackingLayer,
+    registerBOMWindLayer,
+    registerBOMMSLPLayer,
     registerBOMLightningLayer,
     registerBOMLightning24hLayer,
     registerBOMTsunamiLayer,
@@ -88,7 +88,8 @@ import {
     registerBOMFireBehaviourIndexLayer,
     registerBOMHazardousWindLayer,
     registerBOMFloodWarningBoundariesLayer,
-    registerBOMFireWeatherDistrictsLayer } from "./mapLayers/weather.js";
+    registerBOMFireWeatherDistrictsLayer
+} from "./mapLayers/weather.js";
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
@@ -334,11 +335,11 @@ function VM() {
     self.incidentsVisible = ko.observable(localStorage.getItem('map.incidentsVisible') !== 'false');
     self.incidentsVisible.subscribe(v => {
         localStorage.setItem('map.incidentsVisible', v ? 'true' : 'false');
-        
+
         if (v) {
             // Show incidents – add the appropriate layer
-            const targetLayer = self.mapVM.clusteringEnabled 
-                ? self.mapVM.jobClusterGroup 
+            const targetLayer = self.mapVM.clusteringEnabled
+                ? self.mapVM.jobClusterGroup
                 : self.mapVM.unclusteredJobLayer;
             if (!map.hasLayer(targetLayer)) {
                 targetLayer.addTo(map);
@@ -869,7 +870,7 @@ function VM() {
             self.sectorsLoading(false);
         }, (count, total) => {
             if (count != -1 && total != -1) {
-            console.log(`Fetched ${count} / ${total} sectors...`);
+                console.log(`Fetched ${count} / ${total} sectors...`);
             } else {
                 console.log("Sector fetching errored out or returned unknown total count.");
                 showAlert('Failed to fetching sectors. Your session may have expired', 'danger', 5000);
@@ -1002,7 +1003,7 @@ function VM() {
                 self.attachJobStatusConfirmModal(job, newStatus);
             },
             map: self.mapVM,
-            filteredTeams: self.filteredTeams,
+            filteredTeams: self.filteredTeamsAgainstConfig,
             config: self.config,
             isIncidentPinned: (id) => self.isIncidentPinned(id),
             toggleIncidentPinned: (id) => self.toggleIncidentPinned(id),
@@ -1035,7 +1036,7 @@ function VM() {
                     BeaconClient.team.getTasking(teamId, apiHost, params.userId, token, resolve, reject);
                 }),
             makeTeamLink: (id) => `${params.source}/Teams/${id}/Edit`,
-            
+
             flyToAsset: (assetOrEntry) => {
                 const asset = assetOrEntry && assetOrEntry.asset ? assetOrEntry.asset : assetOrEntry;
                 const lat = asset.latitude(), lng = asset.longitude();
@@ -1480,9 +1481,9 @@ function VM() {
 
             // Sort so that Portable resourceType comes last (least preferable)
             candidates.sort((a, b) => {
-            const aPortable = (ko.unwrap(a.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
-            const bPortable = (ko.unwrap(b.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
-            return aPortable - bPortable;
+                const aPortable = (ko.unwrap(a.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
+                const bPortable = (ko.unwrap(b.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
+                return aPortable - bPortable;
             });
 
             const best = candidates[0];
@@ -1660,8 +1661,8 @@ function VM() {
 
 
         // focus input after show
-       document.getElementById("spotlightSearchInput")?.focus();
-        
+        document.getElementById("spotlightSearchInput")?.focus();
+
 
         installModalHotkeys({
             modalEl: el,
@@ -1770,7 +1771,7 @@ function VM() {
             // Give subscriptions time to attach markers, then attempt fit
             tryInitialFit();
         }
-        
+
         // Once all fetches are done, hide the loading overlay
         if (initialFetchesPending === 0 && loadingOverlay) {
             loadingOverlay.style.display = 'none';
@@ -1974,13 +1975,24 @@ function VM() {
         removeFn: (asset) => detachUnmatchedAssetMarker(ko, map, self, asset),
     });
 
+    self.filteredTeamsAgainstConfig.subscribe((changes) => {
+        changes.forEach(ch => {
+            if (ch.status === 'added') {
+                // Only fetch tasking for genuinely new teams (never loaded before)
+                if (!ch.value.taskings().length && ch.value.taskingLoading()) {
+                    console.log("New team filtered in, fetching tasking:", ch.value.callsign());
+                    ch.value.fetchTasking();
+                }
+            }
+        });
+    })
+
     //fetch tasking if a team is added
     self.filteredTeams.subscribe((changes) => {
         changes.forEach(ch => {
             if (ch.status === 'added') {
-                console.log("Team filtered in, fetching tasking:", ch.value.callsign());
+                console.log("Team visibly filtered in, fetching tasking:", ch.value.callsign());
                 ch.value.isFilteredIn(true);
-                ch.value.fetchTasking();
             } else if (ch.status === 'deleted') {
                 if (ch.value.expanded() || ch.value.popUpIsOpen()) {
                     showAlert("The team you were viewing has been refreshed and filtered out based on the current filters", "warning", 4000);
@@ -2516,7 +2528,7 @@ function VM() {
 
     // --- Polling layers ---
     registerTransportCamerasLayer(self, map, getToken, apiHost, params);
-            registerHazardWatchWarningsLayer(self, apiHost);
+    registerHazardWatchWarningsLayer(self, apiHost);
 
     registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
     registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
@@ -2552,7 +2564,7 @@ function VM() {
     registerBOMHazardousWindLayer(self, sourceUrl);
     registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
     registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
-        registerRainRadarLayer(self, map);
+    registerRainRadarLayer(self, map);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
@@ -2613,13 +2625,13 @@ function VM() {
             ];
 
             const basemapThumbs = {
-                "Topographic":  "https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/16/39312/60258",
-                "Streets":      "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/16/39312/60258",
-                "Imagery":      "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/16/39312/60258",
-                "DarkGray":     "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/16/39312/60258",
-                "nsw-vector":   "https://static.lighthouse-extension.com/map/nsw_vector.png",
-                "nsw-base":     "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/16/39312/60258",
-                "nsw-imagery":  "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/16/39312/60258",
+                "Topographic": "https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/16/39312/60258",
+                "Streets": "https://services.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/16/39312/60258",
+                "Imagery": "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/16/39312/60258",
+                "DarkGray": "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/16/39312/60258",
+                "nsw-vector": "https://static.lighthouse-extension.com/map/nsw_vector.png",
+                "nsw-base": "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/16/39312/60258",
+                "nsw-imagery": "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/16/39312/60258",
             };
 
             const basemapLabel = c.querySelector(".ld-basemap-label");
@@ -2696,7 +2708,7 @@ function VM() {
                         const currentState = self.incidentsVisible();
                         const newState = !currentState;
                         self.incidentsVisible(newState);
-                        
+
                         if (newState) {
                             incidentsBtn.classList.add("active");
                             if (icon) { icon.classList.remove("fa-toggle-off"); icon.classList.add("fa-toggle-on"); }
@@ -2760,30 +2772,30 @@ function VM() {
             const searchFilter = (query) => {
                 const q = query.toLowerCase().trim();
                 const cells = grid.querySelectorAll(".ld-grid-cell");
-                
+
                 cells.forEach(cell => {
                     const buttons = cell.querySelectorAll(".ld-overlay-btn");
                     let anyVisible = false;
-                    
+
                     buttons.forEach(btn => {
                         let shouldShow = !q; // Show all if no query
-                        
+
                         if (q) {
                             // Extract label from the span.me-2 text content
                             const labelSpan = btn.querySelector("span.me-2");
                             const label = labelSpan ? labelSpan.textContent.trim().toLowerCase() : "";
                             shouldShow = label.includes(q);
                         }
-                        
+
                         btn.style.setProperty("display", shouldShow ? "" : "none", "important");
                         if (shouldShow) anyVisible = true;
                     });
-                    
+
                     // Show cell only if at least one button is visible
                     cell.style.setProperty("display", anyVisible ? "" : "none", "important");
                 });
             };
-            
+
             searchInput.addEventListener("input", (e) => {
                 searchFilter(e.target.value);
             });
@@ -2945,12 +2957,12 @@ function VM() {
     setTimeout(() => {
         // force ordering: zoom → hide → layers → measure → geosearch
         const corner = map._controlCorners.topleft;
-        const zoom     = corner.querySelector('.leaflet-control-zoom');
-        const layers   = corner.querySelector('.layers-drawer');
-        const measure  = document.getElementById('polyline-measure-control');
+        const zoom = corner.querySelector('.leaflet-control-zoom');
+        const layers = corner.querySelector('.layers-drawer');
+        const measure = document.getElementById('polyline-measure-control');
         const measureCtl = measure ? measure.closest('.leaflet-control') : null;
         const geosearch = corner.querySelector('.leaflet-control-geosearch');
-        const hide     = corner.querySelector('.sidebar-toggle');
+        const hide = corner.querySelector('.sidebar-toggle');
 
         // Insert in reverse order after zoom so the last insert ends up first
         const order = [geosearch, measureCtl, layers, hide];
@@ -2972,7 +2984,7 @@ function VM() {
         return new Promise((resolve, reject) => {
             fetchHqDetailsSummary(hqName, apiHost, t, (hqDetails) => {
                 if (hqDetails) {
-                    resolve(hqDetails); // Resolve the promise with the result
+                    resolve(hqDetails); // Resolve the promise with the resultte
                 } else {
                     console.warn("No HQ details found for name:", hqName);
                     reject(new Error("No HQ details found"));

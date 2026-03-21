@@ -1213,10 +1213,14 @@
                                                                                 data-bind="attr: { id: 'tmAssignTeamMenu-' + j.id, 'aria-labelledby': 'tmAssignTeamBtn-' + j.id }"
                                                                                 style="min-width: 260px;">
                                                                                 <li class="mb-2">
-                                                                                    <input type="text"
-                                                                                        class="form-control form-control-sm"
-                                                                                        placeholder="Filter teams…"
-                                                                                        data-bind="textInput: j.instantTask.popupTeamFilter, valueUpdate: 'afterkeydown'">
+                                                                                    <div class="input-group input-group-sm">
+                                                                                        <input type="text"
+                                                                                            class="form-control form-control-sm"
+                                                                                            placeholder="Filter teams…"
+                                                                                            data-bind="textInput: j.instantTask.popupTeamFilter, valueUpdate: 'afterkeydown'">
+                                                                                        <button class="btn btn-outline-secondary" type="button" title="Clear"
+                                                                                            data-bind="click: j.instantTask.clearPopupTeamFilter, visible: j.instantTask.popupTeamFilter">&times;</button>
+                                                                                    </div>
                                                                                 </li>
                                                                                 <li>
                                                                                     <hr class="dropdown-divider">
@@ -3423,9 +3427,13 @@
                     </div>
                     <!-- Search box -->
                     <div class="mb-3">
-                        <input type="search" class="form-control"
-                            placeholder="Search by callsign, unit or PSN radio ID..."
-                            data-bind="value: searchQuery, valueUpdate: 'input'">
+                        <div class="input-group">
+                            <input type="search" class="form-control"
+                                placeholder="Search by callsign, unit or PSN radio ID..."
+                                data-bind="value: searchQuery, valueUpdate: 'input'">
+                            <button class="btn btn-outline-secondary" type="button" title="Clear"
+                                data-bind="click: clearSearchQuery, visible: searchQuery">&times;</button>
+                        </div>
                     </div>
                     <!-- Talkgroup filter -->
                     <div class="mb-3">
@@ -3568,12 +3576,16 @@
             <div class="modal-content" data-bind="with: spotlightSearchVM">
                 <div class="modal-body p-2">
 
-                    <input id="spotlightSearchInput" type="search" class="form-control form-control-lg"
-                        placeholder="Search teams, incidents, or enter a command" autocomplete="off" data-bind="
-            value: query,
-            valueUpdate: 'afterkeydown',
-            event: { keydown: onInputKeyDown }
-          " />
+                    <div class="input-group input-group-lg">
+                        <input id="spotlightSearchInput" type="search" class="form-control form-control-lg"
+                            placeholder="Search teams, incidents, or enter a command" autocomplete="off" data-bind="
+                value: query,
+                valueUpdate: 'afterkeydown',
+                event: { keydown: onInputKeyDown }
+              " />
+                        <button class="btn btn-outline-secondary" type="button" title="Clear"
+                            data-bind="click: clearQuery, visible: query">&times;</button>
+                    </div>
                     <!-- after the input, before the results list -->
                     <div class="mt-2 d-flex flex-wrap gap-2 align-items-center" data-bind="visible: isCommandMode">
 
