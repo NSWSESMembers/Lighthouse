@@ -23,6 +23,29 @@ export function getMessageById(id, host, userId = 'notPassed', token, callback, 
   });
 }
 
+export function getIncident(incidentIdentifier, host, userId = 'notPassed', token, callback, errorCallback) {
+  $.ajax({
+    type: 'GET',
+    url: host + '/Api/v1/Icems/incidents/' + encodeURIComponent(incidentIdentifier) + '?LighthouseFunction=GetIcemsIncident&userId=' + userId,
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + token);
+    },
+    cache: false,
+    dataType: 'json',
+    complete: function (response, textStatus) {
+      if (textStatus == 'success') {
+        if (typeof callback === 'function') {
+          callback(response.responseJSON);
+        }
+      } else {
+        if (typeof errorCallback === 'function') {
+          errorCallback(response);
+        }
+      }
+    }
+  });
+}
+
 export function acknowledgeIum(id, vm, host, userId = 'notPassed', token, callback, errorCallback) {
   $.ajax({
     type: 'POST',

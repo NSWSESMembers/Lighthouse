@@ -1407,6 +1407,49 @@
                                                             </fieldset>
                                                         </div>
 
+                                                        <!-- ICEMS Details (only for ICEMS incidents) -->
+                                                        <!-- ko if: j.icemsIncidentIdentifier() -->
+                                                        <div class="col-12">
+                                                            <fieldset>
+                                                                <legend class="job-details-legend">
+                                                                    ICEMS Details
+                                                                </legend>
+
+                                                                <!-- Incident Identifier -->
+                                                                <div class="row align-items-start mb-2">
+                                                                    <label class="col-sm-3 col-lg-2 text-sm-end lmt-25 fw-semibold">
+                                                                        Incident ID:
+                                                                    </label>
+                                                                    <div class="col-sm-9 col-lg-10">
+                                                                        <p class="form-control-plaintext job-details-value mb-0"
+                                                                           data-bind="text: j.icemsIncidentIdentifier"></p>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Agencies Involved badges -->
+                                                                <div class="row align-items-start">
+                                                                    <label class="col-sm-3 col-lg-2 text-sm-end lmt-25 fw-semibold">
+                                                                        Agencies:
+                                                                    </label>
+                                                                    <div class="col-sm-9 col-lg-10">
+                                                                        <!-- ko if: j.icemsAgencies().length === 0 -->
+                                                                        <span class="text-muted small fst-italic">Loading…</span>
+                                                                        <!-- /ko -->
+                                                                        <div class="d-flex flex-wrap gap-2"
+                                                                             data-bind="foreach: j.icemsAgencies">
+                                                                            <span class="badge d-inline-flex align-items-center gap-1 px-2 py-1"
+                                                                                  data-bind="css: badgeClass, attr: { title: statusLabel }">
+                                                                                <i data-bind="css: iconClass"></i>
+                                                                                <span data-bind="text: name"></span>
+                                                                                <small class="opacity-75" data-bind="text: '(' + statusLabel + ')'"></small>
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+                                                        <!-- /ko -->
+
                                                         <!-- FULL-WIDTH: Taskings -->
                                                         <div class="col-12"
                                                             data-bind="visible: j.sortedTaskings().length > 0">

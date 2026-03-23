@@ -37,6 +37,7 @@ export function Job(data = {}, deps = {}) {
         config = null,
         isIncidentPinned = () => false,
         toggleIncidentPinned = () => false,
+        fetchIcemsIncident = async (_icemsId) => (null),
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
@@ -103,6 +104,79 @@ export function Job(data = {}, deps = {}) {
 
     self.hasUnacceptedNotifications = ko.pureComputed(() => {
         return Array.isArray(self.unacceptedNotifications()) && self.unacceptedNotifications().length > 0;
+    });
+
+    // ---- ICEMS agencies involved ----
+    self._icemsAgenciesRaw = ko.observableArray([]);
+
+    function _findEnumDescription(enumObj, id) {
+        for (const key in enumObj) {
+            if (enumObj[key].Id === id) return enumObj[key];
+        }
+        return { Description: 'Unknown' };
+    }
+
+    function _agencyDisplayName(agency) {
+        if (agency.ResourceStatusId && agency.AgencyStatusId !== Enum.IncidentAgenciesInvolvedStatus.Closed.Id) {
+            return _findEnumDescription(Enum.ResourceStatus, agency.ResourceStatusId).Description;
+        }
+        return _findEnumDescription(Enum.IncidentAgenciesInvolvedStatus, agency.AgencyStatusId).Description;
+    }
+
+
+    function _resourceBadgeClass(resourceStatusId) {
+        switch (resourceStatusId) {
+            case 1: return 'bg-primary';         // En Route
+            case 2: return 'bg-secondary';       // Left Scene
+            case 3: return 'bg-light text-dark'; // No Status Available
+            case 4: return 'bg-success';         // On Scene
+            case 5: return 'bg-info text-dark';  // Will Attend
+            case 6: return 'bg-danger';          // Will Not Attend
+            default: return 'bg-light text-dark';
+        }
+    }
+
+    function _agencyBadgeClass(agency) {
+        // Use ResourceStatus if present and not Closed, else AgencyStatus
+        if (agency.ResourceStatusId && agency.AgencyStatusId !== Enum.IncidentAgenciesInvolvedStatus.Closed.Id) {
+            return _resourceBadgeClass(agency.ResourceStatusId);
+        }
+        // fallback to agency status coloring
+        switch (agency.AgencyStatusId) {
+            case 1: return 'bg-warning text-dark';   // Requested
+            case 2: return 'bg-info text-dark';      // Acknowledged
+            case 3: return 'bg-success';             // Responded
+            case 4: return 'bg-secondary';           // Closed
+            case 5: return 'bg-danger';              // Timeout
+            case 6: return 'bg-warning text-dark';   // SentRSQ
+            case 7: return 'bg-success';             // RespondedRSQ
+            case 8: return 'bg-danger';              // TimeoutRSQ
+            case 9: return 'bg-warning text-dark';   // SentIUM
+            case 10: return 'bg-success';            // RespondedIUM
+            case 11: return 'bg-danger';             // TimeoutIUM
+            default: return 'bg-light text-dark';
+        }
+    }
+
+    function _agencyIcon(agencyName) {
+        switch ((agencyName || '').toUpperCase()) {
+            case 'NSWPF':  return 'fas fa-piggy-bank';        // Police
+            case 'NSWSES': return 'fas fa-carrot';             // SES
+            case 'ASNSW':  return 'fas fa-ambulance';          // Ambulance
+            case 'FRNSW':  return 'fas fa-fire-extinguisher';  // Fire & Rescue
+            case 'NSWRFS': return 'fas fa-fire-alt';           // Rural Fire Service
+            default:       return 'fas fa-building';           // Fallback
+        }
+    }
+
+    /** Pre-decorated agencies array for KSB-safe template binding */
+    self.icemsAgencies = ko.pureComputed(() => {
+        return self._icemsAgenciesRaw().map(a => ({
+            name:        a.Name,
+            statusLabel: _agencyDisplayName(a),
+            badgeClass:  _agencyBadgeClass(a),
+            iconClass:   _agencyIcon(a.Name),
+        }));
     });
 
     self.instantTask = new InstantTaskViewModel({ job: self, map: map, filteredTeams: filteredTeams, config: config });
@@ -331,12 +405,40 @@ export function Job(data = {}, deps = {}) {
         unacceptedNotificationsInterval.stop();
     };
 
-    // Computed that combines both conditions to avoid duplicate polling subscriptions
+    // ---- ICEMS INCIDENT POLLING (agencies involved) ----
+    self.refreshIcemsIncident = async function () {
+        const icemsId = self.icemsIncidentIdentifier();
+        if (!icemsId) return;
+
+        try {
+            const data = await fetchIcemsIncident(icemsId);
+            if (data && Array.isArray(data.AgenciesInvolved)) {
+                self._icemsAgenciesRaw(data.AgenciesInvolved);
+            }
+        } catch (err) {
+            console.error("Failed to fetch ICEMS incident:", err);
+        }
+    };
+
+    const icemsIncidentInterval = makeFilteredInterval(() => {
+        if (!self.icemsIncidentIdentifier()) return;
+        self.refreshIcemsIncident();
+    }, 30000, { runImmediately: true });
+
+    self.startIcemsIncidentPolling = function () {
+        icemsIncidentInterval.start();
+    };
+
+    self.stopIcemsIncidentPolling = function () {
+        icemsIncidentInterval.stop();
+    };
+
+
+    // Unaccepted notifications polling: filtered in + ICEMS id (original logic)
     self.shouldPollUnacceptedNotifications = ko.pureComputed(() => {
         return self.icemsIncidentIdentifier() && self.isFilteredIn();
     });
 
-    // Single subscription to the combined condition prevents duplicate start calls
     self.shouldPollUnacceptedNotifications.subscribe((shouldPoll) => {
         if (shouldPoll) {
             self.startUnacceptedNotificationsPolling();
@@ -345,10 +447,24 @@ export function Job(data = {}, deps = {}) {
         }
     });
 
+    // ICEMS agency polling: filtered in + expanded + ICEMS id (new logic)
+    self.shouldPollIcemsIncident = ko.pureComputed(() => {
+        return self.icemsIncidentIdentifier() && self.isFilteredIn() && self.expanded();
+    });
+
+    self.shouldPollIcemsIncident.subscribe((shouldPoll) => {
+        if (shouldPoll) {
+            self.startIcemsIncidentPolling();
+        } else {
+            self.stopIcemsIncidentPolling();
+        }
+    });
+
     self.toggleAndLoad = function () {
         if (!self.expanded()) {
             self.fetchTasking();
             self.refreshData();
+            self.refreshIcemsIncident();
         }
         self.expanded(!self.expanded())
     };
@@ -711,6 +827,7 @@ export function Job(data = {}, deps = {}) {
     self.refreshDataAndTasking = function () {
         self.fetchTasking();
         self.refreshData();
+        self.refreshIcemsIncident();
     }
 
     self.fetchTasking = function (opts = {}) {
