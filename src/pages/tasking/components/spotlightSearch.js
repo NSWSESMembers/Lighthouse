@@ -130,11 +130,6 @@ function highlightMatch(text, tokens) {
     let html = _escapeHtml(text);
     for (const tok of tokens) {
         if (!tok) continue;
-        const pattern = /^\d+$/.test(tok)
-            ? _escapeRx(tok)
-            : '\\b' + _escapeRx(tok);
-        // Match the token length worth of characters starting at the boundary
-        const rx = new RegExp('(' + pattern + '[^ ]*?' + ')', 'ig');
         // Simpler: just bold the token itself wherever it appears at a word boundary
         const rx2 = new RegExp('(' + (/^\d+$/.test(tok) ? _escapeRx(tok) : '\\b' + _escapeRx(tok)) + ')', 'ig');
         html = html.replace(rx2, '<strong>$1</strong>');
