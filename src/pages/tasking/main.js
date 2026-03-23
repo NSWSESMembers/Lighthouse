@@ -1201,6 +1201,12 @@ function VM() {
             config: self.config,
             isIncidentPinned: (id) => self.isIncidentPinned(id),
             toggleIncidentPinned: (id) => self.toggleIncidentPinned(id),
+            fetchIcemsIncident: async (icemsId) => {
+                const tk = await getToken();
+                return new Promise((resolve, reject) => {
+                    BeaconClient.icems.getIncident(icemsId, apiHost, params.userId, tk, resolve, reject);
+                });
+            },
         }
     }
     // Team registry/upsert - called from tasking OR team fetch so values might be missing
