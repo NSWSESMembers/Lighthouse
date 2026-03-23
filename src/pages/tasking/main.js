@@ -654,7 +654,6 @@ function VM() {
             add(jb.id(), 'Identifier');
             add(jb.address.prettyAddress(), 'Address');
             add(jb.lga(), 'LGA');
-            add(jb.tagsCsv(), 'Tags');
             add(jb.entityAssignedTo?.code(), 'HQ');
             add(jb.situationOnScene(), 'Situation');
             add(jb.contactFirstName() + ' ' + jb.contactLastName(), 'Contact');
