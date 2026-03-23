@@ -630,7 +630,159 @@ function VM() {
 
     //Job filtering/searching
     self.jobSearch = ko.observable('');
-    self.clearJobSearch = () => self.jobSearch('');
+    self.clearJobSearch = () => { self.jobSearch(''); self.jobSearchSuggestions([]); };
+
+    // --- Autosuggest for job search ---
+    self.jobSearchSuggestions = ko.observableArray([]);
+    self.jobSearchActiveIndex = ko.observable(-1);
+    self.jobSearchShowSuggestions = ko.observable(false);
+
+    // Build suggestion pool once, recompute when filtered jobs change
+    self._jobSuggestionPool = ko.pureComputed(() => {
+        const seen = new Set();
+        const pool = []; // { label, category }
+        const add = (val, category) => {
+            if (!val) return;
+            const v = String(val).trim();
+            if (!v || seen.has(v.toLowerCase())) return;
+            seen.add(v.toLowerCase());
+            pool.push({ label: v, category });
+        };
+
+        (self.filteredJobsAgainstConfig() || []).forEach(jb => {
+            add(jb.identifierTrimmed(), 'Identifier');
+            add(jb.id(), 'Identifier');
+            add(jb.address.prettyAddress(), 'Address');
+            add(jb.lga(), 'LGA');
+            add(jb.tagsCsv(), 'Tags');
+            add(jb.entityAssignedTo?.code(), 'HQ');
+            add(jb.situationOnScene(), 'Situation');
+            add(jb.contactFirstName() + ' ' + jb.contactLastName(), 'Contact');
+            add(jb.icemsIncidentIdentifier(), 'ICEMS');
+        });
+        return pool;
+    }).extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } });
+
+    // React to typing — produce up to 8 suggestions
+    self.jobSearch.subscribe(val => {
+        const raw = (val || '').toLowerCase().trim();
+        if (!raw) {
+            self.jobSearchSuggestions([]);
+            self.jobSearchShowSuggestions(false);
+            return;
+        }
+
+        // Match last token for suggestions (supports multi-word queries)
+        const tokens = raw.split(/\s+/);
+        const lastToken = tokens[tokens.length - 1];
+        if (!lastToken) { self.jobSearchSuggestions([]); return; }
+
+        const escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rx = /^\d+$/.test(lastToken)
+            ? null // numeric — use includes
+            : new RegExp('\\b' + escapeRx(lastToken), 'i');
+
+        // Helper: escape HTML entities so label text is safe for innerHTML
+        const escHtml = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+        // Build a regex that finds the matched portion for bolding
+        const highlightRx = rx
+            ? new RegExp('(' + escapeRx(lastToken) + ')', 'i')
+            : new RegExp('(' + escapeRx(lastToken) + ')', 'ig');
+
+        const matches = [];
+        const pool = self._jobSuggestionPool();
+        for (let i = 0; i < pool.length && matches.length < 8; i++) {
+            const item = pool[i];
+            const hit = rx
+                ? rx.test(item.label)
+                : item.label.toLowerCase().includes(lastToken);
+            if (hit) {
+                // Wrap matched portion in <strong>
+                const hl = escHtml(item.label).replace(highlightRx, '<strong>$1</strong>');
+                matches.push({ label: item.label, highlightedLabel: hl, category: item.category });
+            }
+        }
+        self.jobSearchSuggestions([
+            // First item echoes the current search text so the user can click to dismiss
+            { label: raw, highlightedLabel: '<i class="fa fa-search me-1"></i>' + escHtml(raw), category: 'Search', isExact: true },
+            ...matches
+        ]);
+        self.jobSearchActiveIndex(-1);
+        self.jobSearchShowSuggestions(true);
+    });
+
+    // Pick a suggestion — replace the last token with the selected label
+    self.pickJobSuggestion = function (suggestion) {
+        if (suggestion.isExact) {
+            // "Search" row — just dismiss the dropdown, keep current text
+            self.jobSearchShowSuggestions(false);
+            document.getElementById('jobSearch')?.focus();
+            return;
+        }
+        const current = self.jobSearch().trim();
+        const tokens = current.split(/\s+/);
+        tokens[tokens.length - 1] = suggestion.label;
+        self.jobSearch(tokens.join(' '));
+        self.jobSearchShowSuggestions(false);
+        document.getElementById('jobSearch')?.focus();
+    };
+
+    // Keyboard navigation for suggestions
+    self.jobSearchKeyDown = function (_, e) {
+        const suggestions = self.jobSearchSuggestions();
+        if (!suggestions.length || !self.jobSearchShowSuggestions()) return true;
+
+        if (e.key === 'ArrowDown') {
+            self.jobSearchActiveIndex(Math.min(self.jobSearchActiveIndex() + 1, suggestions.length - 1));
+            e.preventDefault();
+            return false;
+        }
+        if (e.key === 'ArrowUp') {
+            self.jobSearchActiveIndex(Math.max(self.jobSearchActiveIndex() - 1, -1));
+            e.preventDefault();
+            return false;
+        }
+        if (e.key === 'Enter' && self.jobSearchActiveIndex() >= 0) {
+            self.pickJobSuggestion(suggestions[self.jobSearchActiveIndex()]);
+            e.preventDefault();
+            return false;
+        }
+        if (e.key === 'Escape') {
+            self.jobSearchShowSuggestions(false);
+            return false;
+        }
+        return true;
+    };
+
+    // Position the fixed dropdown beneath the search input
+    self._positionJobSuggestions = function () {
+        const input = document.getElementById('jobSearch');
+        const list = document.querySelector('.job-search-suggestions');
+        if (!input || !list) return;
+        const rect = input.closest('.input-group')?.getBoundingClientRect() || input.getBoundingClientRect();
+        list.style.top = rect.bottom + 'px';
+        list.style.left = rect.left + 'px';
+        list.style.width = rect.width + 'px';
+    };
+
+    // Reposition whenever suggestions are shown
+    self.jobSearchShowSuggestions.subscribe(v => {
+        if (v) requestAnimationFrame(() => self._positionJobSuggestions());
+    });
+
+    // Close suggestions on blur (with slight delay for click to register)
+    self.jobSearchBlur = function () {
+        setTimeout(() => self.jobSearchShowSuggestions(false), 200);
+    };
+
+    self.jobSearchFocus = function () {
+        if (self.jobSearchSuggestions().length > 0) {
+            self.jobSearchShowSuggestions(true);
+        }
+    };
+
+    // --- End autosuggest ---
 
     self.filteredJobsAgainstConfig = ko.pureComputed(() => {
 
@@ -638,9 +790,6 @@ function VM() {
         const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
 
         // If sector filtering is active, only include jobs in those sectors
-
-
-        const term = self.jobSearch().toLowerCase();
 
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
         const allowedStatusSet = new Set(allowedStatus || []);
@@ -702,13 +851,9 @@ function VM() {
             //must match HQ filter
             if (!hqMatch) return false;
 
-            // Apply text search
-            return (!term ||
-                jb.identifier().toLowerCase().includes(term) ||
-                jb.id().toString().toLowerCase().includes(term) ||
-                jb.address.prettyAddress().toLowerCase().includes(term));
+            return true;
         });
-    }).extend({ rateLimit: { timeout: 50, method: 'notifyWhenChangesStop' } });
+    }).extend({ trackArrayChanges: true, rateLimit: { timeout: 50, method: 'notifyWhenChangesStop' } });
 
     self.filteredJobs = ko.pureComputed(() => {
 
@@ -716,12 +861,59 @@ function VM() {
         const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
         const pinnedIncidentSet = new Set((pinnedIncidentIds || []).map(id => String(id)));
 
+        const rawTerm = self.jobSearch().toLowerCase().trim();
+        // Split into individual tokens so "rescue parra" matches a job
+        // whose combined fields contain both "rescue" AND "parra".
+        const terms = rawTerm ? rawTerm.split(/\s+/) : [];
+
+        // Pre-build word-boundary regexes once per search change.
+        // Each token is matched at the START of a word (\b prefix) so
+        // "tree" matches "tree", "trees", "tree-down" but NOT "street".
+        // Tokens that look like plain numbers (e.g. job IDs) stay as
+        // simple includes() since word boundaries around digits can be
+        // surprising (e.g. "123" inside "J-00123" should still match).
+        const escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const termMatchers = terms.map(t => {
+            if (/^\d+$/.test(t)) {
+                // Numeric token — plain substring is more intuitive
+                return (blob) => blob.includes(t);
+            }
+            const rx = new RegExp('\\b' + escapeRx(t), 'i');
+            return (blob) => rx.test(blob);
+        });
+
         return ko.utils.arrayFilter(this.filteredJobsAgainstConfig(), jb => {
 
             // pinned-only filter
             if (pinnedOnlyIncidents && !pinnedIncidentSet.has(String(jb.id()))) {
                 return false;
             }
+
+            // text search — every token must appear in at least one field
+            if (termMatchers.length > 0) {
+                // Build a searchable blob once per job (avoids repeated toLowerCase calls per term)
+                const parts = [
+                    jb.identifier(),
+                    jb.id()?.toString(),
+                    jb.situationOnScene(),
+                    jb.address.prettyAddress(),
+                    jb.tagsCsv(),
+                    jb.lga(),
+                    jb.contactFirstName(),
+                    jb.contactLastName(),
+                    jb.callerFirstName(),
+                    jb.callerLastName(),
+                    jb.incidentContactNumber(),
+                    jb.entityAssignedTo?.code(),
+                    jb.icemsIncidentIdentifier(),
+                ];
+                const blob = parts.filter(Boolean).join(' ').toLowerCase();
+
+                for (const match of termMatchers) {
+                    if (!match(blob)) return false;
+                }
+            }
+
             return true;
         })
 
@@ -800,6 +992,7 @@ function VM() {
             }
 
             const term = self.teamSearch().toLowerCase();
+
             if (tm.callsign().toLowerCase().includes(term)) {
                 return true;
             }
@@ -1159,6 +1352,10 @@ function VM() {
         self.CreateRadioLogModalVM.openForTasking(tasking);
         modal.show();
 
+        modalEl.addEventListener('shown.bs.modal', function () {
+            document.getElementById('RadioLogTextInput')?.focus();
+        }, { once: true });
+
         installModalHotkeys({
             modalEl,
             onSave: () => self.CreateRadioLogModalVM.submit?.(),
@@ -1176,6 +1373,10 @@ function VM() {
 
         self.CreateRadioLogModalVM.openFromTeamPlusIncident(jobId, teamCallsign);
         modal.show();
+
+        modalEl.addEventListener('shown.bs.modal', function () {
+            document.getElementById('RadioLogTextInput')?.focus();
+        }, { once: true });
 
         installModalHotkeys({
             modalEl,
@@ -1240,6 +1441,10 @@ function VM() {
         self.SendSMSModalVM.openWithRecipients(msgRecipients, { taskId: taskId, headerLabel: headerLabel, initialText: initialText });
         modal.show();
 
+        modalEl.addEventListener('shown.bs.modal', function () {
+            document.getElementById('SMSMessageInput')?.focus();
+        }, { once: true });
+
         installModalHotkeys({
             modalEl,
             onSave: () => self.SendSMSModalVM.submit?.(),
@@ -1260,6 +1465,10 @@ function VM() {
         vm.openForTeam(team);
         modal.show();
 
+        modalEl.addEventListener('shown.bs.modal', function () {
+            document.getElementById('RadioLogTextInput')?.focus();
+        }, { once: true });
+
         installModalHotkeys({
             modalEl,
             onSave: () => self.CreateRadioLogModalVM.submit?.(),
@@ -1279,6 +1488,10 @@ function VM() {
 
         vm.openForNewJobLog(job);
         modal.show();
+
+        modalEl.addEventListener('shown.bs.modal', function () {
+            document.getElementById('OpsLogTextInput')?.focus();
+        }, { once: true });
 
         installModalHotkeys({
             modalEl,
@@ -1879,8 +2092,10 @@ function VM() {
             } else {
                 showAlert(`Failed to assign incident ${jobVm.identifier()} to team ${teamVm.callsign()}.`, 'danger', 5000);
             }
-            jobVm.fetchTasking();
-            teamVm.fetchTasking();
+            console.log(teamVm, jobVm);
+            jobVm.fetchTasking({ force: true });
+            teamVm.fetchTasking({ force: true });
+            teamVm.refreshData(); // ensure team data is fresh 
             if (cb) cb(r);
         })
     }
@@ -2005,28 +2220,68 @@ function VM() {
     }, null, "arrayChange");
 
 
+    // --- Debounced initial-load batch for newly filtered-in jobs ---
+    let _pendingInitialTaskingJobs = [];
+    let _pendingInitialTaskingTimer = null;
+
+    function scheduleInitialTaskingFetch(job) {
+        _pendingInitialTaskingJobs.push(job);
+        if (_pendingInitialTaskingTimer) clearTimeout(_pendingInitialTaskingTimer);
+        _pendingInitialTaskingTimer = setTimeout(async () => {
+            const jobs = _pendingInitialTaskingJobs.splice(0);
+            _pendingInitialTaskingTimer = null;
+            if (jobs.length === 0) return;
+
+            const jobIds = jobs.map(j => j.id());
+            console.log(`[batch-tasking] Initial fetch for ${jobIds.length} newly filtered-in jobs`);
+            jobs.forEach(j => j.taskingLoading(true));
+
+            try {
+                const t = await getToken();
+                BeaconClient.job.getTasking(jobIds, apiHost, params.userId, t, (res) => {
+                    (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload(t));
+                    const touchedTime = new Date();
+                    jobs.forEach(j => {
+                        j.lastTaskingDataUpdate = touchedTime;
+                        j.taskingLoading(false);
+                    });
+                });
+            } catch (err) {
+                console.error('[batch-tasking] Initial fetch failed:', err);
+                jobs.forEach(j => j.taskingLoading(false));
+            }
+        }, 250); // 250ms debounce to collect burst of additions
+    }
+
     // automatically refresh markers when jobs change
-    self.filteredJobs.subscribe((changes) => {
+    self.filteredJobsAgainstConfig.subscribe((changes) => {
         // Bail early if incidents are not visible – no need to attach markers
         if (!self.incidentsVisible()) {
             return;
         }
         changes.forEach(ch => {
             if (ch.status === 'added') {
-                jobMarkerBatcher.scheduleAdd(ch.value);
-                ch.value.isFilteredIn(true);
-                ch.value.fetchTasking();
+                scheduleInitialTaskingFetch(ch.value);
             } else if (ch.status === 'deleted') {
                 if (ch.value.expanded() || ch.value.popUpIsOpen()) {
                     showAlert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.", "warning", 4000);
                 }
-                jobMarkerBatcher.scheduleRemove(ch.value);
-
-                ch.value.isFilteredIn(false);
             }
         });
     }, null, 'arrayChange');
 
+    //filtered by UI or Staring
+    self.filteredJobs.subscribe((changes) => {
+        changes.forEach(ch => {
+            if (ch.status === 'added') {
+                jobMarkerBatcher.scheduleAdd(ch.value);
+                ch.value.isFilteredIn(true);
+            } else if (ch.status === 'deleted') {
+                jobMarkerBatcher.scheduleRemove(ch.value);
+                ch.value.isFilteredIn(false);
+            }
+        });
+    }, null, 'arrayChange');
 
     // Maintain markers only for currently filtered assets
     self.filteredTrackableAssets.subscribe((changes) => {
@@ -2181,7 +2436,11 @@ function VM() {
 
     self.updateTeamStatus = function (tasking, status, payload, cb) {
         BeaconClient.tasking.updateTeamStatus(apiHost, tasking.id(), status, payload, token, function (data) {
-            tasking.job.fetchTasking();
+            tasking.job.fetchTasking({ force: true });
+            if (tasking.team?.isFilteredIn?.()) {
+                tasking.team.fetchTasking({ force: true });
+                tasking.team.refreshData();
+            }
             cb(data || []);
         }, function (err) {
             console.error("Failed to update team status:", err);
@@ -2192,7 +2451,11 @@ function VM() {
 
     self.callOffTeam = function (tasking, payload, cb) {
         BeaconClient.tasking.callOffTeam(apiHost, tasking.id(), payload, token, function (data) {
-            tasking.job.fetchTasking();
+            tasking.job.fetchTasking({ force: true });
+            if (tasking.team?.isFilteredIn?.()) {
+                tasking.team.fetchTasking({ force: true });
+                tasking.team.refreshData();
+            }
             cb(data || []);
         }, function (err) {
             console.error("Failed to call off team:", err);
@@ -2204,7 +2467,11 @@ function VM() {
     self.untaskTeam = function (tasking, payload, cb) {
         const form = BeaconClient.toFormUrlEncoded(payload);
         BeaconClient.tasking.untaskTeam(apiHost, tasking.id(), form, token, function (data) {
-            tasking.job.fetchTasking();
+            tasking.job.fetchTasking({ force: true });
+            if (tasking.team?.isFilteredIn?.()) {
+                tasking.team.fetchTasking({ force: true });
+                tasking.team.refreshData();
+            }
             cb(data);
         }, function (err) {
             console.error("Failed to Untask Team:", err);
@@ -2257,6 +2524,55 @@ function VM() {
             console.error("Failed to fetch job tasking:", err);
             cb(false);
         });
+    }
+
+    // ---- BATCH TASKING REFRESH ----
+    // Collects all filtered-in jobs whose tasking data is stale
+    // (older than the configured refresh interval) and fetches
+    // them in a single API call.
+
+    self.fetchBatchJobTasking = async function () {
+        const staleMs = Number(self.config.refreshInterval() || 60) * 1000;
+        const now = Date.now();
+        const staleJobs = self.filteredJobs().filter(job => {
+            const last = job.lastTaskingDataUpdate?.getTime?.() ?? 0;
+            return (now - last) > staleMs;
+        });
+
+        if (staleJobs.length === 0) return;
+
+        const jobIds = staleJobs.map(j => j.id());
+        console.log(`[batch-tasking] Refreshing tasking for ${jobIds.length} stale jobs`);
+
+        staleJobs.forEach(j => j.taskingLoading(true));
+
+        try {
+            const t = await getToken();
+            BeaconClient.job.getTasking(jobIds, apiHost, params.userId, t, (res) => {
+                (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload(t));
+
+                // Mark all requested jobs as refreshed (even if they had no taskings)
+                const touchedTime = new Date();
+                staleJobs.forEach(j => {
+                    j.lastTaskingDataUpdate = touchedTime;
+                    j.taskingLoading(false);
+                });
+            });
+        } catch (err) {
+            console.error('[batch-tasking] Failed:', err);
+            staleJobs.forEach(j => j.taskingLoading(false));
+        }
+    };
+
+    let batchTaskingTimer = null;
+
+    function startBatchTaskingTimer() {
+        if (batchTaskingTimer) clearInterval(batchTaskingTimer);
+        const interval = Number(self.config.refreshInterval() || 60) * 1000;
+        batchTaskingTimer = setInterval(() => {
+            self.fetchBatchJobTasking();
+        }, interval);
+        console.log('[batch-tasking] Timer started:', interval, 'ms');
     }
 
     self.setJobStatus = async function (jobId, statusName, text, cb) {
@@ -2357,7 +2673,7 @@ function VM() {
             statusFilterToView,
             incidentTypeFilterToView,
             sectorToView,
-            `Unsectorised=${self.config.includeIncidentsWithoutSector()}`,
+            self.config.applySectorsToIncidents() ? `Unsectorised=${self.config.includeIncidentsWithoutSector()}` : '',
             `ViewModelType=6`,
         ].filter(param => param && param.trim() !== '');
 
@@ -2479,10 +2795,11 @@ function VM() {
 
 
 
-    // re-arm timer when refreshInterval changes
+    // re-arm timers when refreshInterval changes
     self.config.refreshInterval.subscribe(() => {
-        console.log("refreshInterval changed → restarting timer");
+        console.log("refreshInterval changed → restarting timers");
         startJobsTeamsTimer();
+        startBatchTaskingTimer();
     });
 
 
@@ -2525,7 +2842,8 @@ function VM() {
         self.fetchAllTrackableAssets();
 
         startJobsTeamsTimer();
-        startAssetDataRefreshTimer()
+        startAssetDataRefreshTimer();
+        startBatchTaskingTimer();
     }
 
     // --- Polling layers ---
@@ -2949,6 +3267,52 @@ function VM() {
         }
     });
 
+    // --- Zoom-to-fit button (sits directly below the zoom control)
+    const ZoomToFit = L.Control.extend({
+        options: { position: "topleft" },
+
+        onAdd(_map) {
+            const container = L.DomUtil.create("div", "leaflet-control leaflet-bar zoom-to-fit");
+            container.innerHTML = `
+                <a role="button" title="Zoom to fit all features" href="#"
+                   style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;font-size:14px;cursor:pointer;">
+                    <i class="fas fa-expand"></i>
+                </a>
+            `;
+
+            const link = container.querySelector("a");
+            L.DomEvent.on(link, "click", (ev) => {
+                L.DomEvent.stop(ev);
+
+                const fg = L.featureGroup();
+
+                // Collect asset markers
+                if (self.mapVM.assetLayer && _map.hasLayer(self.mapVM.assetLayer)) {
+                    self.mapVM.assetLayer.eachLayer(l => fg.addLayer(l));
+                }
+
+                // Collect job markers (clustered or unclustered)
+                if (self.mapVM.jobClusterGroup && _map.hasLayer(self.mapVM.jobClusterGroup)) {
+                    self.mapVM.jobClusterGroup.eachLayer(l => fg.addLayer(l));
+                } else if (self.mapVM.unclusteredJobLayer && _map.hasLayer(self.mapVM.unclusteredJobLayer)) {
+                    self.mapVM.unclusteredJobLayer.eachLayer(l => fg.addLayer(l));
+                }
+
+                const bounds = fg.getLayers().length > 0 ? fg.getBounds() : null;
+
+                if (bounds && bounds.isValid()) {
+                    _map.fitBounds(bounds.pad(0.12), { maxZoom: 15 });
+                }
+            });
+
+            L.DomEvent.disableClickPropagation(container);
+            return container;
+        }
+    });
+
+    const zoomToFit = new ZoomToFit();
+    zoomToFit.addTo(map);
+
     const sidebarToggle = new SidebarToggle();
     sidebarToggle.addTo(map);
 
@@ -2966,8 +3330,10 @@ function VM() {
         const geosearch = corner.querySelector('.leaflet-control-geosearch');
         const hide = corner.querySelector('.sidebar-toggle');
 
+        const fit = corner.querySelector('.zoom-to-fit');
+
         // Insert in reverse order after zoom so the last insert ends up first
-        const order = [geosearch, measureCtl, layers, hide];
+        const order = [geosearch, measureCtl, layers, hide, fit];
         if (zoom) {
             order.forEach(el => {
                 if (el && el.parentElement === corner) {

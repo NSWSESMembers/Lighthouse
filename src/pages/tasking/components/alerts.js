@@ -240,7 +240,32 @@ function buildDefaultRules(vm) {
     id: jobKey(j),
     label: jobKey(j) + ' — ' + j.type() + ' — ' + (j.address?.prettyAddress?.() || '')
   });
+  // --- teams with multiple Enroute/Offsite/Onsite taskings ---
+  const allTeams = (vm.filteredTeamsAgainstConfig && vm.filteredTeamsAgainstConfig()) || [];
+  const multiEnrouteOffsiteTeams = allTeams.filter(team => {
+    const active = (team.filteredTaskings ? team.filteredTaskings() : team.taskings());
+    const enrouteOrOffsite = active.filter(t => {
+      const st = t.currentStatus();
+      return st === 'Enroute' || st === 'Offsite' || st === 'Onsite';
+    });
+    return enrouteOrOffsite.length > 1;
+  });
 
+  const asTeamItem = (team) => {
+    const active = (team.filteredTaskings ? team.filteredTaskings() : team.taskings());
+    const matching = active.filter(t => {
+      const st = t.currentStatus();
+      return st === 'Enroute' || st === 'Offsite' || st === 'Onsite';
+    });
+    const breakdown = matching.map(t => {
+      const jobId = t.job?.id?.() ?? '?';
+      return `${jobId} (${t.currentStatus()})`;
+    }).join(', ');
+    return {
+      id: String(team.id()),
+      label: `${team.callsign()} — ${matching.length} active: ${breakdown}`
+    };
+  };
   // --- single summary rule for “alerts hidden because incident isn’t pinned” ---
   let hiddenCount = 0;
   if (pinnedOnlyIncidents) {
@@ -331,6 +356,18 @@ function buildDefaultRules(vm) {
       onClick: (id) => {
         const found = jobs.find(j => jobKey(j) === id);
         found?.focusAndExpandInList();
+      }
+    },
+    {
+      id: 'multi-enroute-offsite-teams',
+      level: 'warning',
+      title: 'Teams with multiple Enroute/Offsite/Onsite taskings',
+      active: multiEnrouteOffsiteTeams.length > 0,
+      items: multiEnrouteOffsiteTeams.slice(0, 10).map(asTeamItem),
+      count: multiEnrouteOffsiteTeams.length,
+      onClick: (id) => {
+        const found = allTeams.find(t => String(t.id()) === id);
+        found?.focusAndExpandInList?.();
       }
     }
   ];

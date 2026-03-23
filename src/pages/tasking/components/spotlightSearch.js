@@ -71,9 +71,12 @@ function buildJobSearchText(j) {
     );
 }
 
-function decorateResults(items) {
+function decorateResults(items, tokens) {
+    const toks = (tokens || []).map(t => t.toLowerCase()).filter(Boolean);
     return items.map((r) => ({
         ...r,
+        primaryHtml: highlightMatch(r.primary || '', toks),
+        secondaryHtml: highlightMatch(r.secondary || '', toks),
         isActive: ko.observable(false),
     }));
 }
@@ -92,12 +95,51 @@ function parseTokens(input) {
     return tokens;
 }
 
+const _escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const _escapeHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/**
+ * Word-boundary aware matching.
+ * Alpha tokens use \b prefix so "tree" won't match inside "street".
+ * Numeric tokens use plain indexOf (so "123" still finds "J-00123").
+ */
 function scoreMatch(haystackLower, needleLower) {
     if (!needleLower) return 0;
-    const idx = haystackLower.indexOf(needleLower);
-    if (idx === -1) return null;
-    // startsWith > includes, then earlier index
+
+    if (/^\d+$/.test(needleLower)) {
+        // Numeric token — plain substring
+        const idx = haystackLower.indexOf(needleLower);
+        if (idx === -1) return null;
+        return (idx === 0 ? 1000 : 0) - idx;
+    }
+
+    // Word-boundary match
+    const rx = new RegExp('\\b' + _escapeRx(needleLower), 'i');
+    const m = rx.exec(haystackLower);
+    if (!m) return null;
+    const idx = m.index;
     return (idx === 0 ? 1000 : 0) - idx;
+}
+
+/**
+ * Wrap matched portions of `text` in <strong> tags for display.
+ * `tokens` is an array of raw search tokens (lowercase).
+ */
+function highlightMatch(text, tokens) {
+    if (!text || !tokens || !tokens.length) return _escapeHtml(text || '');
+    let html = _escapeHtml(text);
+    for (const tok of tokens) {
+        if (!tok) continue;
+        const pattern = /^\d+$/.test(tok)
+            ? _escapeRx(tok)
+            : '\\b' + _escapeRx(tok);
+        // Match the token length worth of characters starting at the boundary
+        const rx = new RegExp('(' + pattern + '[^ ]*?' + ')', 'ig');
+        // Simpler: just bold the token itself wherever it appears at a word boundary
+        const rx2 = new RegExp('(' + (/^\d+$/.test(tok) ? _escapeRx(tok) : '\\b' + _escapeRx(tok)) + ')', 'ig');
+        html = html.replace(rx2, '<strong>$1</strong>');
+    }
+    return html;
 }
 
 function uniqById(items, getId) {
@@ -135,6 +177,13 @@ function getTaskedTeamsForJob(jobVm) {
 
 export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     const self = this;
+
+    // Local shadow of decorateResults that auto-extracts highlight tokens from current query
+    const _decorateResults = (items, explicitTokens) => {
+        const raw = (self.query?.() || '').trim();
+        const tokens = explicitTokens || parseTokens(raw);
+        return decorateResults(items, tokens);
+    };
 
     self.query = ko.observable("");
     self.clearQuery = () => self.query('');
@@ -211,7 +260,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         }
     }
 
-    function setActiveByIndex(idx) {
+    function setActiveByIndex(idx, { scroll = false } = {}) {
         const arr = self.results();
         const n = arr.length;
         if (!n) {
@@ -226,9 +275,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             arr[i].isActive(i === clamped);
         }
 
-        scrollActiveIntoView(clamped);
-
-
+        if (scroll) scrollActiveIntoView(clamped);
     }
 
     self.isActiveIndex = function (indexFn) {
@@ -378,7 +425,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             });
 
             const { teamMatches } = topMatchesForToken("");
-            return decorateResults(
+            return _decorateResults(
                 teamMatches.slice(0, 15).map(({ item: t }) => ({
                     kind: "Team",
                     ref: t.ref,
@@ -407,7 +454,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 });
 
                 const { jobMatches } = topMatchesForToken("");
-                return decorateResults(
+                return _decorateResults(
                     jobMatches.slice(0, 15).map(({ item: j }) => ({
                         kind: "Incident",
                         ref: j.ref,
@@ -429,7 +476,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 });
 
                 const { teamMatches } = topMatchesForToken("");
-                return decorateResults(
+                return _decorateResults(
                     teamMatches.slice(0, 15).map(({ item: t }) => ({
                         kind: "Team",
                         ref: t.ref,
@@ -468,7 +515,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 applyText: `task ${quoteIfNeeded(j.identifier)} `
             }));
 
-            return decorateResults(teamRows.concat(jobRows));
+            return _decorateResults(teamRows.concat(jobRows));
         }
 
         // Two args supplied: resolve both orders.
@@ -492,7 +539,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 applyText: null
             }];
 
-            return decorateResults(execRow);
+            return _decorateResults(execRow);
         }
 
         if (order2Ok && !order1Ok) {
@@ -507,7 +554,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 applyText: null
             }];
 
-            return decorateResults(execRow);
+            return _decorateResults(execRow);
         }
 
         if (order1Ok && order2Ok) {
@@ -536,7 +583,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 applyText: null
             }];
 
-            return decorateResults(rows);
+            return _decorateResults(rows);
         }
 
         // Not resolvable yet: show suggestions based on what's missing.
@@ -562,7 +609,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 applyText: `task ${quoteIfNeeded((A.uniqueTeam || A.teamMatches[0]?.item?.ref)?.callsign || "")} ${quoteIfNeeded(j.identifier)}`.trim()
             }));
 
-            return decorateResults(rows);
+            return _decorateResults(rows);
         }
 
         if (aLooksJob) {
@@ -583,7 +630,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 applyText: `task ${quoteIfNeeded((A.uniqueJob || A.jobMatches[0]?.item?.ref)?.identifier || "")} ${quoteIfNeeded(t.callsign)}`.trim()
             }));
 
-            return decorateResults(rows);
+            return _decorateResults(rows);
         }
 
         setCommandState({
@@ -612,7 +659,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             applyText: `task ${quoteIfNeeded(j.identifier)} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
         }));
 
-        return decorateResults(teamRows.concat(jobRows));
+        return _decorateResults(teamRows.concat(jobRows));
     }
 
     function commandResultsForLog(raw) {
@@ -633,7 +680,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             });
 
             const { jobMatches } = topMatchesForToken("");
-            return decorateResults(
+            return _decorateResults(
                 jobMatches.slice(0, 15).map(({ item: j }) => ({
                     kind: "Incident",
                     ref: j.ref,
@@ -657,7 +704,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 job: A.uniqueJob
             });
 
-            return decorateResults([{
+            return _decorateResults([{
                 kind: "Execute",
                 ref: { cmd: "log", job: A.uniqueJob },
                 primary: `Ops Log — ${safeStr(A.uniqueJob.identifier)}`,
@@ -676,7 +723,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             job: null
         });
 
-        return decorateResults(
+        return _decorateResults(
             A.jobMatches.slice(0, 15).map(({ item: j }) => ({
                 kind: "Incident",
                 ref: j.ref,
@@ -711,7 +758,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             });
 
             const { teamMatches } = topMatchesForToken("");
-            return decorateResults(
+            return _decorateResults(
                 teamMatches.slice(0, 15).map(({ item: t }) => ({
                     kind: "Team",
                     ref: t.ref,
@@ -759,7 +806,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                     applyText: `radio ${quoteIfNeeded(team.callsign)} ${quoteIfNeeded(j.identifier)}`
                 }));
 
-                return decorateResults(rows);
+                return _decorateResults(rows);
             }
 
             if (aIsJob) {
@@ -790,7 +837,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                     applyText: `radio ${quoteIfNeeded(job.identifier)} ${quoteIfNeeded(t.callsign)}`
                 }));
 
-                return decorateResults(rows);
+                return _decorateResults(rows);
             }
 
             // ambiguous first token -> show both lists (no special ordering yet)
@@ -822,7 +869,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
             }));
 
-            return decorateResults(teamRows.concat(jobRows));
+            return _decorateResults(teamRows.concat(jobRows));
         }
 
         // two args -> resolve either order like task, but execute radio when both unique
@@ -840,7 +887,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 job
             });
 
-            return decorateResults([{
+            return _decorateResults([{
                 kind: "Execute",
                 ref: { cmd: "radio", team, job },
                 primary: `Radio Log — ${safeStr(team.callsign)} / ${safeStr(job.identifier)}`,
@@ -867,7 +914,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             const rest = [];
             for (const { item: j } of jobMatches) (preferred.has(safeId(j.ref)) ? pref : rest).push(j);
 
-            return decorateResults(
+            return _decorateResults(
                 pref.concat(rest).slice(0, 20).map((j) => ({
                     kind: "Incident",
                     ref: j.ref,
@@ -895,7 +942,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             const rest = [];
             for (const { item: t } of teamMatches) (preferred.has(safeId(t.ref)) ? pref : rest).push(t);
 
-            return decorateResults(
+            return _decorateResults(
                 pref.concat(rest).slice(0, 20).map((t) => ({
                     kind: "Team",
                     ref: t.ref,
@@ -934,15 +981,12 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             applyText: `radio ${quoteIfNeeded(j.identifier)} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
         }));
 
-        return decorateResults(teamRows.concat(jobRows));
+        return _decorateResults(teamRows.concat(jobRows));
     }
 
 
 
     function runSearch() {
-        const prev = self.results()[self.activeIndex()];
-        const prevId = prev?.ref ? safeId(prev.ref) : null;
-
         const raw = (self.query() || "");
 
         // Autocomplete for partial command keywords
@@ -963,7 +1007,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                     });
                 }
             }
-            autocompleteResults = decorateResults(suggestions);
+            autocompleteResults = _decorateResults(suggestions);
         }
 
         const cmdResults =
@@ -974,23 +1018,24 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         if (cmdResults) {
             // Prepend autocomplete suggestions if present
             self.results(autocompleteResults.concat(cmdResults));
-
-            const idx = prevId
-                ? cmdResults.findIndex(r => safeId(r.ref) === prevId)
-                : -1;
-
-            setActiveByIndex(idx >= 0 ? idx : 0);
+            setActiveByIndex(0);
             return;
         }
 
         resetCommandState();
 
         const scored = [];
+        const searchTokens = parseTokens(q);
 
         const consider = (x) => {
-            const idx = x.searchText.indexOf(q);
-            if (idx === -1) return;
-            scored.push({ ...x, score: (idx === 0 ? 1000 : 0) - idx });
+            // Every token must match (AND logic), using word-boundary for alpha tokens
+            let totalScore = 0;
+            for (const tok of searchTokens) {
+                const s = scoreMatch(x.searchText, tok.toLowerCase());
+                if (s === null) return; // token not found → skip
+                totalScore += s;
+            }
+            scored.push({ ...x, score: totalScore });
         };
 
         jobIndex.forEach(consider);
@@ -998,12 +1043,12 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
         scored.sort((a, b) => b.score - a.score);
 
-        const decorated = decorateResults(scored.slice(0, 20));
+        const decorated = _decorateResults(scored.slice(0, 20), searchTokens);
         let finalResults = autocompleteResults.concat(decorated);
 
         // Add "no results" message if empty
         if (finalResults.length === 0 && q) {
-            finalResults = decorateResults([{
+            finalResults = _decorateResults([{
                 kind: "No Results",
                 ref: null,
                 primary: "No results found",
@@ -1015,11 +1060,11 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
         self.results(finalResults);
 
-        const idx = prevId
-            ? decorated.findIndex(r => safeId(r.ref) === prevId)
-            : -1;
+        // Reset scroll to top so the list doesn't jump around while typing
+        const container = document.querySelector('#spotlightResults');
+        if (container) container.scrollTop = 0;
 
-        setActiveByIndex(idx >= 0 ? idx : 0);
+        setActiveByIndex(0);
     }
 
 
@@ -1110,12 +1155,12 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
         if (key === "ArrowDown") {
             e.preventDefault();
-            setActiveByIndex(self.activeIndex() + 1);
+            setActiveByIndex(self.activeIndex() + 1, { scroll: true });
             return true;
         }
         if (key === "ArrowUp") {
             e.preventDefault();
-            setActiveByIndex(self.activeIndex() - 1);
+            setActiveByIndex(self.activeIndex() - 1, { scroll: true });
             return true;
         }
         if (key === "Enter") {
@@ -1159,10 +1204,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
     // called by root when new data arrives
     self.rebuildIndex = () => {
-        const prev = self.results()[self.activeIndex()];
-        const prevId = prev?.ref ? safeId(prev.ref) : null;
-
         rebuildIndex();
-        runSearch(prevId);
+        runSearch();
     };
 }

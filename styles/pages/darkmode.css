@@ -825,14 +825,26 @@ body.dark-mode .veh-pop__taskings-list-frame {
   color: #e0e0e0 !important;
 }
 
+body.dark-mode .veh-pop__team-title .badge.bg-light {
+  background-color: #444 !important;
+  color: #e0e0e0 !important;
+  border-color: #666 !important;
+}
+
 body.dark-mode .veh-pop__tasking-item,
 body.dark-mode .veh-pop__tasking-item--no-job {
+  background-color: #383838 !important;
   border-bottom: 1px dashed #555 !important;
   color: #e0e0e0 !important;
 }
 
+body.dark-mode .veh-pop__tasking-item .text-muted,
+body.dark-mode .veh-pop__tasking-item--no-job .text-muted {
+  color: #b0b0b0 !important;
+}
+
 body.dark-mode .veh-pop__tasking-item:hover {
-  background-color: #373737 !important;
+  background-color: #434343 !important;
 }
 
 body.dark-mode .veh-pop__coords,
