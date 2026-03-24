@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
-import ko from "knockout";
+import ko, { observable } from "knockout";
 import moment from "moment";
 import { Entity } from "./Entity.js";
 import { Address } from "./Address.js";
@@ -96,6 +96,7 @@ export function Job(data = {}, deps = {}) {
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
     self.taskingLoading = ko.observable(false);
+    self.dataLoading = ko.observable(false);
     self.contactCalled = ko.observable((data.ContactCalled !== undefined) ? data.ContactCalled : false);
     self.opsLogEntriesLoading = ko.observable(false);
     self.opsLogEntries = ko.observableArray([]);
@@ -330,6 +331,7 @@ export function Job(data = {}, deps = {}) {
         }
     });
 
+    self.lastDataUpdate = observable(new Date());
     self.lastTaskingDataUpdate = new Date();
 
     // Minimum cooldown (ms) between single-job tasking fetches.
@@ -349,6 +351,13 @@ export function Job(data = {}, deps = {}) {
 
     self.popUpIsOpen.subscribe((isOpen) => {
         self.instantTask.popupActive(isOpen || self.expanded());
+    });
+
+    // --- Last Refreshed Display ---
+    // Computed for display: "Refreshed X ago"
+    self.lastRefreshedAgo = ko.pureComputed(() => {
+        if (deps.relativeUpdateTick) deps.relativeUpdateTick();
+        return moment(self.lastDataUpdate()).fromNow();
     });
 
     self.refreshUnacceptedNotifications = async function () {
@@ -619,6 +628,7 @@ export function Job(data = {}, deps = {}) {
 
 
     Job.prototype.updateFromJson = function (d = {}) {
+        this.lastDataUpdate(new Date());
 
         // sector might be undefined or null. they mean different things
         if (d.Sector !== undefined) { //sector present in payload
@@ -847,10 +857,12 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.refreshData = async function () {
-        self.taskingLoading(true);
+        self.dataLoading(true);
         fetchUnresolvedActionsLog(self);
         fetchJobById(self.id(), () => {
-            self.taskingLoading(false);
+            //update the timestamp via the json parse function somewhere in here
+            //dont do it here
+            self.dataLoading(false);
         });
         fetchSuppliersForJob(self.id()).then(suppliers => {
             self.suppliers(suppliers);

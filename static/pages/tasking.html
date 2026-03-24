@@ -1155,7 +1155,7 @@
                                                                 <!-- Assigned HQ -->
                                                                 <div class="row align-items-start">
                                                                     <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
-                                                                        Assigned HQ:
+                                                                        HQ:
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
                                                                         <p class="form-control-plaintext job-details-value"
@@ -1167,7 +1167,7 @@
                                                                 <!-- Assigned Zone -->
                                                                 <div class="row align-items-start">
                                                                     <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
-                                                                        Assigned Zone:
+                                                                        Zone:
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
                                                                         <p class="form-control-plaintext job-details-value"
@@ -1179,7 +1179,7 @@
                                                                 <!-- Assigned Sector -->
                                                                 <div class="row align-items-start">
                                                                     <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
-                                                                        Assigned Sector:
+                                                                        Sector:
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
                                                                         <div class="dropdown">
@@ -1301,12 +1301,22 @@
                                                                         </button>
                                                                     </div>
                                                                     <button type="button"
-                                                                        class="btn btn-outline-secondary btn-sm"
+                                                                        class="btn btn-outline-dark btn-sm"
                                                                         title="Open in Beacon"
                                                                         data-bind="click: j.openBeaconJobDetails, clickBubble: false">
                                                                         <i class="fas fa-external-link-alt"></i>
                                                                         Open in Beacon
                                                                     </button>
+                                                                    <!-- ko if: j.dataLoading() -->
+                                                                    <div class="text-center" style="font-size: 0.85em; color: #888; margin-top: 0.25em;">
+                                                                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                        <span class="visually-hidden">Loading...</span>
+                                                                    </div>
+                                                                    <!-- /ko -->
+                                                                    <!-- ko ifnot: j.dataLoading() -->
+                                                                    <div class="text-center" style="font-size: 0.85em; color: #888; margin-top: 0.25em;" data-bind="text: 'Refreshed ' + j.lastRefreshedAgo(), visible: j.lastRefreshedAgo">
+                                                                    </div>
+                                                                    <!-- /ko -->
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1335,7 +1345,7 @@
                                                                 <!-- Additional Address Info -->
                                                                 <div class="row align-items-start">
                                                                     <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
-                                                                        Additional Address Info:
+                                                                        Extra Info:
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
                                                                         <p class="form-control-plaintext job-details-value"
