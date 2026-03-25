@@ -633,94 +633,100 @@ export function Job(data = {}, deps = {}) {
         // sector might be undefined or null. they mean different things
         if (d.Sector !== undefined) { //sector present in payload
             if (d.Sector === null) { //theres no sector assigned
-                this.sector(new Sector({}));
+                if (JSON.stringify(this.sector()) !== JSON.stringify(new Sector({}))) {
+                    this.sector(new Sector({}));
+                }
             } else {
                 this.sector().updateFromJson(d.Sector);
             }
         }
         // scalars
-        if (d.Identifier !== undefined) this.identifier(d.Identifier);
-        if (d.Type !== undefined) this.type(d.Type);
+        const setIfChanged = (obs, val) => { if (obs() !== val) obs(val); };
+        if (d.Identifier !== undefined) setIfChanged(this.identifier, d.Identifier);
+        if (d.Type !== undefined) setIfChanged(this.type, d.Type);
 
-        if (d.CallerFirstName !== undefined) this.callerFirstName(d.CallerFirstName || "");
-        if (d.CallerLastName !== undefined) this.callerLastName(d.CallerLastName || "");
-        if (d.CallerPhoneNumber !== undefined) this.callerPhoneNumber(d.CallerPhoneNumber || "");
-        if (d.ContactFirstName !== undefined) this.contactFirstName(d.ContactFirstName || "");
-        if (d.ContactLastName !== undefined) this.contactLastName(d.ContactLastName || "");
-        if (d.ContactPhoneNumber !== undefined) this.contactPhoneNumber(d.ContactPhoneNumber || "");
+        if (d.CallerFirstName !== undefined) setIfChanged(this.callerFirstName, d.CallerFirstName || "");
+        if (d.CallerLastName !== undefined) setIfChanged(this.callerLastName, d.CallerLastName || "");
+        if (d.CallerPhoneNumber !== undefined) setIfChanged(this.callerPhoneNumber, d.CallerPhoneNumber || "");
+        if (d.ContactFirstName !== undefined) setIfChanged(this.contactFirstName, d.ContactFirstName || "");
+        if (d.ContactLastName !== undefined) setIfChanged(this.contactLastName, d.ContactLastName || "");
+        if (d.ContactPhoneNumber !== undefined) setIfChanged(this.contactPhoneNumber, d.ContactPhoneNumber || "");
 
-        if (d.PermissionToEnterPremises !== undefined) this.permissionToEnterPremises(!!d.PermissionToEnterPremises);
-        if (d.HowToEnterPremises !== undefined) this.howToEnterPremises(d.HowToEnterPremises ?? null);
-        if (d.JobReceived !== undefined) this.jobReceived(d.JobReceived || null);
-        if (d.LGA !== undefined) this.lga(d.LGA || "");
-        if (d.TaskingCategory !== undefined) this.taskingCategory(d.TaskingCategory ?? 0);
-        if (d.SituationOnScene !== undefined) this.situationOnScene(d.SituationOnScene || "");
-        if (d.EventId !== undefined) this.eventId(d.EventId ?? null);
-        if (d.PrintCount !== undefined) this.printCount(d.PrintCount ?? 0);
-        if (d.InFrao !== undefined) this.inFrao(!!d.InFrao);
-        if (d.ImageCount !== undefined) this.imageCount(d.ImageCount ?? 0);
+        if (d.PermissionToEnterPremises !== undefined) setIfChanged(this.permissionToEnterPremises, !!d.PermissionToEnterPremises);
+        if (d.HowToEnterPremises !== undefined) setIfChanged(this.howToEnterPremises, d.HowToEnterPremises ?? null);
+        if (d.JobReceived !== undefined) setIfChanged(this.jobReceived, d.JobReceived || null);
+        if (d.LGA !== undefined) setIfChanged(this.lga, d.LGA || "");
+        if (d.TaskingCategory !== undefined) setIfChanged(this.taskingCategory, d.TaskingCategory ?? 0);
+        if (d.SituationOnScene !== undefined) setIfChanged(this.situationOnScene, d.SituationOnScene || "");
+        if (d.EventId !== undefined) setIfChanged(this.eventId, d.EventId ?? null);
+        if (d.PrintCount !== undefined) setIfChanged(this.printCount, d.PrintCount ?? 0);
+        if (d.InFrao !== undefined) setIfChanged(this.inFrao, !!d.InFrao);
+        if (d.ImageCount !== undefined) setIfChanged(this.imageCount, d.ImageCount ?? 0);
 
-        if (d.ICEMSIncidentIdentifier !== undefined) this.icemsIncidentIdentifier(d.ICEMSIncidentIdentifier || null);
+        if (d.ICEMSIncidentIdentifier !== undefined) setIfChanged(this.icemsIncidentIdentifier, d.ICEMSIncidentIdentifier || null);
 
         // structured
-        if (d.JobPriorityType !== undefined) this.jobPriorityType(d.JobPriorityType || null);
-        if (d.JobStatusType !== undefined) this.jobStatusType(d.JobStatusType || null);
-        if (d.JobType !== undefined) this.jobType(d.JobType || null);
-
-
+        if (d.JobPriorityType !== undefined) setIfChanged(this.jobPriorityType, d.JobPriorityType || null);
+        if (d.JobStatusType !== undefined) setIfChanged(this.jobStatusType, d.JobStatusType || null);
+        if (d.JobType !== undefined) setIfChanged(this.jobType, d.JobType || null);
 
         if (d.EntityAssignedTo !== undefined) {
             const ea = d.EntityAssignedTo;
-
-            this.entityAssignedTo.id(ea?.Id ?? null);
-            this.entityAssignedTo.code(ea?.Code ?? "");
-            this.entityAssignedTo.name(ea?.Name ?? "");
-            this.entityAssignedTo.latitude(ea?.Latitude ?? null);
-            this.entityAssignedTo.longitude(ea?.Longitude ?? null);
+            setIfChanged(this.entityAssignedTo.id, ea?.Id ?? null);
+            setIfChanged(this.entityAssignedTo.code, ea?.Code ?? "");
+            setIfChanged(this.entityAssignedTo.name, ea?.Name ?? "");
+            setIfChanged(this.entityAssignedTo.latitude, ea?.Latitude ?? null);
+            setIfChanged(this.entityAssignedTo.longitude, ea?.Longitude ?? null);
 
             // Correct handling of ParentEntity
             if (ea.ParentEntity !== null) {
                 const existingParent = this.entityAssignedTo.parentEntity();
                 if (existingParent) {
-                    // update existing parent entity observables
-                    existingParent.id(ea.ParentEntity.Id ?? null);
-                    existingParent.code(ea.ParentEntity.Code ?? "");
-                    existingParent.name(ea.ParentEntity.Name ?? "");
+                    setIfChanged(existingParent.id, ea.ParentEntity.Id ?? null);
+                    setIfChanged(existingParent.code, ea.ParentEntity.Code ?? "");
+                    setIfChanged(existingParent.name, ea.ParentEntity.Name ?? "");
                 } else {
-                    // or create a new one if none exists yet
                     this.entityAssignedTo.parentEntity(new Entity(ea.ParentEntity));
                 }
             } else {
-                // if API can legitimately send "no parent", clear it
-                this.entityAssignedTo.parentEntity(null);
+                if (this.entityAssignedTo.parentEntity() !== null) {
+                    this.entityAssignedTo.parentEntity(null);
+                }
             }
         }
 
         if (d.Address !== undefined) {
-            this.address.gnafId(d.Address?.GnafId ?? null);
-            this.address.latitude(d.Address?.Latitude ?? null);
-            this.address.longitude(d.Address?.Longitude ?? null);
-            this.address.streetNumber(d.Address?.StreetNumber ?? "");
-            this.address.street(d.Address?.Street ?? "");
-            this.address.locality(d.Address?.Locality ?? "");
-            this.address.postCode(d.Address?.PostCode ?? "");
-            this.address.prettyAddress(d.Address?.PrettyAddress ?? "");
-            this.address.additionalAddressInfo(d.Address?.AdditionalAddressInfo ?? null);
+            setIfChanged(this.address.gnafId, d.Address?.GnafId ?? null);
+            setIfChanged(this.address.latitude, d.Address?.Latitude ?? null);
+            setIfChanged(this.address.longitude, d.Address?.Longitude ?? null);
+            setIfChanged(this.address.streetNumber, d.Address?.StreetNumber ?? "");
+            setIfChanged(this.address.street, d.Address?.Street ?? "");
+            setIfChanged(this.address.locality, d.Address?.Locality ?? "");
+            setIfChanged(this.address.postCode, d.Address?.PostCode ?? "");
+            setIfChanged(this.address.prettyAddress, d.Address?.PrettyAddress ?? "");
+            setIfChanged(this.address.additionalAddressInfo, d.Address?.AdditionalAddressInfo ?? null);
         }
 
         if (Array.isArray(d.Tags)) {
-            this.tags(d.Tags.map(t => new Tag(t)));
+            const newTags = d.Tags.map(t => new Tag(t));
+            if (JSON.stringify(this.tags()) !== JSON.stringify(newTags)) {
+                this.tags(newTags);
+            }
         }
         if (Array.isArray(d.ActionRequiredTags)) {
-            this.actionRequiredTags(
-                d.ActionRequiredTags
-                    .filter(t => t.TagGroupId === 27)
-                    .map(t => new Tag(t))
-            );
+            const newActionTags = d.ActionRequiredTags
+                .filter(t => t.TagGroupId === 27)
+                .map(t => new Tag(t));
+            if (JSON.stringify(this.actionRequiredTags()) !== JSON.stringify(newActionTags)) {
+                this.actionRequiredTags(newActionTags);
+            }
         }
         //ditch pscu categories
         if (Array.isArray(d.Categories)) {
-            this.categories(d.Categories.filter(c => (c?.Id ?? 0) >= 9));
+            const newCats = d.Categories.filter(c => (c?.Id ?? 0) >= 9);
+            if (JSON.stringify(this.categories()) !== JSON.stringify(newCats)) {
+                this.categories(newCats);
+            }
         }
     };
 
