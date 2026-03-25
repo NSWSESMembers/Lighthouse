@@ -5,6 +5,10 @@ export function CreateRadioLogModalVM(parentVM) {
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const self = this;
 
+  // Submitting state for UI feedback
+  self.submitting = ko.observable(false);
+
+
   self.entityId = ko.observable(null);
   self.jobId = ko.observable(null);
   self.eventId = ko.observable(null);
@@ -150,18 +154,17 @@ export function CreateRadioLogModalVM(parentVM) {
     if (!validate()) {
       return;
     }
+    self.submitting(true);
     const payload = self.toPayload();
-
     parentVM.createOpsLogEntry(payload, function (result) {
-
       if (!result) {
         console.error("Ops Log submit failed");
         return;
       }
-
       if (self.modalInstance) {
         self.modalInstance.hide();
       }
+      self.submitting(false);
     });
   };
 

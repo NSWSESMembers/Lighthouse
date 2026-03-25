@@ -321,8 +321,8 @@ ResizeDividers(map)
 esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(map);
 
 function VM() {
-    const self = this;
 
+    const self = this;
 
     self.mapVM = new MapVM(map, self);
 
@@ -1505,6 +1505,48 @@ function VM() {
             allowInInputs: true // text-heavy modal
         });
     };
+
+
+        
+    self.openBlankOpsLogModal = function() {
+        const modalEl = document.getElementById('CreateOpsLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.CreateOpsLogModalVM;
+
+        vm.modalInstance = modal;
+
+        vm.openForNewJobLog({}); // pass empty object for blank log
+        modal.show();
+
+        modalEl.addEventListener('shown.bs.modal', function () {
+            document.getElementById('OpsLogTextInput')?.focus();
+        }, { once: true });
+    };
+
+    self.openBlankRadioOpsLogModal = function() {
+        const modalEl = document.getElementById('CreateOpsLogModal');
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.CreateOpsLogModalVM;
+
+        vm.modalInstance = modal;
+
+        vm.openForRadioLog({}); // blank radio log with Radio tag auto-selected
+        modal.show();
+
+        modalEl.addEventListener('shown.bs.modal', function () {
+            document.getElementById('OpsLogTextInput')?.focus();
+        }, { once: true });
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => vm.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true
+        });
+    };
+
 
     self.openTrackableAssetsModal = function (data, event) {
         // If called from a dropdown menu, close the dropdown
