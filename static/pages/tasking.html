@@ -37,11 +37,17 @@
                         </button>
                             <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Ops Log"
                                 data-bind="click: openBlankOpsLogModal">
-                                <i class="fa fa-book me-1"></i><i class="fa fa-plus small"></i>
+                                <span class="position-relative d-inline-block" style="left: -4px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
+                                    <i class="fa fa-book"></i>
+                                    <i class="fa fa-plus position-absolute" style="top:-1px; left:19px; font-size:0.7em;"></i>
+                                </span>
                             </button>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Radio Log"
                             data-bind="click: openBlankRadioOpsLogModal">
-                            <i class="fa fa-microphone me-1"></i><i class="fa fa-plus small"></i>
+                            <span class="position-relative d-inline-block" style="left: -3px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
+                                <i class="fa fa-microphone"></i>
+                                <i class="fa fa-plus position-absolute" style="top:-1px; left:18px; font-size:0.7em;"></i>
+                            </span>
                         </button>                    
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
@@ -253,7 +259,10 @@
                                                     <button type="button" class="btn btn-outline-secondary"
                                                         title="Radio Log"
                                                         data-bind="click: t.openRadioLogModal, clickBubble: false">
-                                                        <i class="fa fa-solid fa-microphone"></i>
+                                                        <span class="position-relative d-inline-block" style="left: -3px;width:1.5em; height:1em; line-height:1;" aria-hidden="true">
+                                                            <i class="fa fa-microphone"></i>
+                                                            <i class="fa fa-plus position-absolute" style="top:-1px; left:18px; font-size:0.7em;"></i>
+                                                        </span>
                                                     </button>
                                                     <button type="button" class="btn btn-outline-secondary"
                                                         title="Message"
@@ -657,8 +666,10 @@
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Radio Log"
                                                                                             data-bind="click: ts.openRadioLogModal, clickBubble: false">
-                                                                                            <i
-                                                                                                class="fa fa-microphone"></i>
+                                                                                            <span class="position-relative d-inline-block" style="left: -3px;width:1.5em; height:1em; line-height:1;" aria-hidden="true">
+                                                                                                <i class="fa fa-microphone"></i>
+                                                                                                <i class="fa fa-plus position-absolute" style="top:-1px; left:18px; font-size:0.7em;"></i>
+                                                                                            </span>
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
@@ -748,11 +759,17 @@
                         </button>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Ops Log"
                             data-bind="click: openBlankOpsLogModal">
-                            <i class="fa fa-book me-1"></i><i class="fa fa-plus small"></i>
+                                <span class="position-relative d-inline-block" style="left: -4px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
+                                    <i class="fa fa-book"></i>
+                                    <i class="fa fa-plus position-absolute" style="top:-1px; left:19px; font-size:0.7em;"></i>
+                                </span>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Radio Log"
                             data-bind="click: openBlankRadioOpsLogModal">
-                            <i class="fa fa-microphone me-1"></i><i class="fa fa-plus small"></i>
+                            <span class="position-relative d-inline-block" style="left: -2px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
+                                <i class="fa fa-microphone"></i>
+                                <i class="fa fa-plus position-absolute" style="top:-1px; left:18px; font-size:0.7em;"></i>
+                            </span>
                         </button>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
@@ -1141,7 +1158,7 @@
                                                         <!-- ROW 1: Incident Details + Actions -->
 
                                                         <!-- Incident Details -->
-                                                        <div class="col-md-8">
+                                                        <div class="col-md-7">
                                                             <fieldset>
                                                                 <legend class="job-details-legend">Incident Details
                                                                 </legend>
@@ -1149,7 +1166,7 @@
                                                                 <!-- Response Required / Priority -->
                                                                 <div class="row align-items-start">
                                                                     <label class="col-sm-4 col-lg-3 text-sm-end lmt-25">
-                                                                        Response:
+                                                                        Prioirity:
                                                                     </label>
                                                                     <div class="col-sm-8 col-lg-9">
                                                                         <p class="form-control-plaintext job-details-value"
@@ -1224,7 +1241,7 @@
                                                         </div>
 
                                                         <!-- Actions -->
-                                                        <div class="col-md-4">
+                                                        <div class="col-md-5">
                                                             <div class="card job-actions-card">
                                                                 <div class="d-grid gap-2 job-actions-stack">
                                                                     <div class="btn-group btn-group-sm d-flex"
@@ -1309,12 +1326,15 @@
                                                                     <div class="btn-group btn-group-sm" role="group">
                                                                         <button class="btn btn-outline-dark btn-sm w-50"
                                                                             data-bind="click: j.attachAndFillTimelineModal">
-                                                                            <i class="fas fa-book"></i> Time Line
+                                                                            <i class="fas fa-list"></i> Time Line
                                                                         </button>
 
                                                                         <button class="btn btn-outline-dark btn-sm w-50"
                                                                             data-bind="click: j.openNewOpsLogModal">
-                                                                            <i class="fa fa-list"></i> New Ops Log
+                                                                            <span class="position-relative d-inline-block me-1" style="width:1.5em; height:1em; line-height:1;" aria-hidden="true">
+                                                                                <i class="fa fa-book"></i>
+                                                                                <i class="fa fa-plus position-absolute" style="top:-1px; left:18px; font-size:0.7em;"></i>
+                                                                            </span> New Ops Log
                                                                         </button>
                                                                     </div>
                                                                     <button type="button"
@@ -1341,7 +1361,7 @@
                                                         <!-- ROW 2: Incident Location + Caller Details -->
 
                                                         <!-- Incident Location -->
-                                                        <div class="col-md-8">
+                                                        <div class="col-md-7">
                                                             <fieldset>
                                                                 <legend class="job-details-legend">Incident Location
                                                                 </legend>
@@ -1397,7 +1417,7 @@
                                                         </div>
 
                                                         <!-- Caller Details -->
-                                                        <div class="col-md-4">
+                                                        <div class="col-md-5">
                                                             <fieldset>
                                                                 <legend class="job-details-legend">Contact Details
                                                                 </legend>
@@ -1692,8 +1712,10 @@
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Radio Log"
                                                                                             data-bind="click: ts.openRadioLogModal, clickBubble: false">
-                                                                                            <i
-                                                                                                class="fa fa-microphone"></i>
+                                                                                            <span class="position-relative d-inline-block" style="left: -3px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
+                                                                                                <i class="fa fa-microphone"></i>
+                                                                                                <i class="fa fa-plus position-absolute" style="top:-1px; left:18px; font-size:0.7em;"></i>
+                                                                                            </span>
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"

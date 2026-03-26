@@ -32,6 +32,10 @@ export class JobPopupViewModel {
         this.job.attachAndFillTimelineModal(this.job);
     }
 
+    openNewOpsLogModal = () => {
+        this.job.openNewOpsLogModal(this.job);
+    }
+
     fitBoundsWithTasking = (tasking) => {
         const bounds = L.latLngBounds([
             tasking.getTeamLatLng(),

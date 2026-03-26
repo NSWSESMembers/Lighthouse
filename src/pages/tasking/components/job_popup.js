@@ -49,7 +49,15 @@ export function buildJobPopupKO() {
         <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Job Timeline"
                       data-bind="click: $root.displayTimelineForJob, clickBubble: false">
-                      <i class="fas fa-book"></i>
+                      <i class="fas fa-list"></i>
+        </button>
+        <button type="button" class="btn btn-small btn-outline-secondary"
+                      title="Job Timeline"
+                      data-bind="click: $root.openNewOpsLogModal, clickBubble: false">
+                <span class="position-relative d-inline-block" style="left: -3px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
+                  <i class="fa fa-book"></i>
+                  <i class="fa fa-plus position-absolute" style="top:-4px; left:21px; font-size:0.7em;"></i>
+                </span>
         </button>
         <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Open In Beacon"
