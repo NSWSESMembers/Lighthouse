@@ -195,8 +195,10 @@ export function CreateOpsLogModalVM(parentVM) {
 
     self.jobIdInput("");
     self.jobIdInputHasFocus(false);
+    self.jobActiveIndex(-1);
     self.teamInput("");
     self.teamInputHasFocus(false);
+    self.teamActiveIndex(-1);
   };
 
   function uiTag(tag) {
@@ -225,6 +227,7 @@ export function CreateOpsLogModalVM(parentVM) {
   // Job and Team Autocomplete
   self.jobIdInput = ko.observable("");
   self.jobIdInputHasFocus = ko.observable(false);
+  self.jobActiveIndex = ko.observable(-1);
   self.jobIdSuggestions = ko.pureComputed(() => {
     const input = self.jobIdInput().toLowerCase();
     if (!input) return [];
@@ -241,16 +244,67 @@ export function CreateOpsLogModalVM(parentVM) {
   });
   self.showJobDropdown = ko.pureComputed(() => self.jobIdInputHasFocus() && self.jobIdSuggestions().length > 0);
   self.pickJobSuggestion = function(suggestion, event) {
-    if (event && event.preventDefault) event.preventDefault();
+    if (event) {
+      event.preventDefault();
+      if (event.stopPropagation) event.stopPropagation();
+    }
     if (suggestion && suggestion.job) {
       self.jobIdInput(suggestion.label);
       self.jobId(suggestion.job.id());
     }
     self.jobIdInputHasFocus(false);
+    self.jobActiveIndex(-1);
+  };
+  self.onJobItemMouseEnter = function(item) {
+    const index = self.jobIdSuggestions().indexOf(item);
+    if (index >= 0) {
+      self.jobActiveIndex(index);
+    }
+  };
+  self.onJobInputKeydown = function(_, event) {
+    const suggestions = self.jobIdSuggestions();
+    if (!suggestions.length || !self.showJobDropdown()) return true;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex = self.jobActiveIndex() < 0
+        ? 0
+        : Math.min(self.jobActiveIndex() + 1, suggestions.length - 1);
+      self.jobActiveIndex(nextIndex);
+      return false;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const prevIndex = self.jobActiveIndex() < 0
+        ? suggestions.length - 1
+        : Math.max(self.jobActiveIndex() - 1, 0);
+      self.jobActiveIndex(prevIndex);
+      return false;
+    }
+
+    if (event.key === "Enter") {
+      if (self.jobActiveIndex() >= 0 && self.jobActiveIndex() < suggestions.length) {
+        event.preventDefault();
+        self.pickJobSuggestion(suggestions[self.jobActiveIndex()], event);
+        return false;
+      }
+      return true;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      self.jobIdInputHasFocus(false);
+      self.jobActiveIndex(-1);
+      return false;
+    }
+
+    return true;
   };
 
   self.teamInput = ko.observable("");
   self.teamInputHasFocus = ko.observable(false);
+  self.teamActiveIndex = ko.observable(-1);
   self.teamSuggestions = ko.pureComputed(() => {
     const input = self.teamInput().toLowerCase();
     if (!input) return [];
@@ -261,11 +315,89 @@ export function CreateOpsLogModalVM(parentVM) {
   });
   self.showTeamDropdown = ko.pureComputed(() => self.teamInputHasFocus() && self.teamSuggestions().length > 0);
   self.pickTeamSuggestion = function(suggestion, event) {
-    if (event && event.preventDefault) event.preventDefault();
+    if (event) {
+      event.preventDefault();
+      if (event.stopPropagation) event.stopPropagation();
+    }
     if (suggestion && suggestion.asset) {
       self.teamInput(suggestion.label);
       self.subject(`${suggestion.label} - ${self.subject()}`);
     }
     self.teamInputHasFocus(false);
+    self.teamActiveIndex(-1);
   };
+  self.onTeamItemMouseEnter = function(item) {
+    const index = self.teamSuggestions().indexOf(item);
+    if (index >= 0) {
+      self.teamActiveIndex(index);
+    }
+  };
+  self.onTeamInputKeydown = function(_, event) {
+    const suggestions = self.teamSuggestions();
+    if (!suggestions.length || !self.showTeamDropdown()) return true;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      const nextIndex = self.teamActiveIndex() < 0
+        ? 0
+        : Math.min(self.teamActiveIndex() + 1, suggestions.length - 1);
+      self.teamActiveIndex(nextIndex);
+      return false;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      const prevIndex = self.teamActiveIndex() < 0
+        ? suggestions.length - 1
+        : Math.max(self.teamActiveIndex() - 1, 0);
+      self.teamActiveIndex(prevIndex);
+      return false;
+    }
+
+    if (event.key === "Enter") {
+      if (self.teamActiveIndex() >= 0 && self.teamActiveIndex() < suggestions.length) {
+        event.preventDefault();
+        self.pickTeamSuggestion(suggestions[self.teamActiveIndex()], event);
+        return false;
+      }
+      return true;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      self.teamInputHasFocus(false);
+      self.teamActiveIndex(-1);
+      return false;
+    }
+
+    return true;
+  };
+
+  // Helper to scroll dropdown item into view
+  self._scrollDropdownItemIntoView = function(dropdownType, itemIndex) {
+    if (itemIndex < 0) return;
+    // Use requestAnimationFrame to ensure DOM is updated
+    requestAnimationFrame(() => {
+      const dropdown = document.querySelector(`ul[data-ops-log-dropdown="${dropdownType}"]`);
+      if (!dropdown) return;
+      const buttons = dropdown.querySelectorAll('button.dropdown-item');
+      if (buttons[itemIndex]) {
+        buttons[itemIndex].scrollIntoView({ behavior: 'auto', block: 'nearest' });
+      }
+    });
+  };
+
+  // Subscribe to job index changes to scroll into view
+  self.jobActiveIndex.subscribe((newIndex) => {
+    if (self.showJobDropdown()) {
+      self._scrollDropdownItemIntoView('job', newIndex);
+    }
+  });
+
+  // Subscribe to team index changes to scroll into view
+  self.teamActiveIndex.subscribe((newIndex) => {
+    if (self.showTeamDropdown()) {
+      self._scrollDropdownItemIntoView('team', newIndex);
+    }
+  });
 }

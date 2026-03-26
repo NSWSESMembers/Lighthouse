@@ -3516,15 +3516,15 @@
                             <div class="position-relative">
                                 <input type="text" class="form-control form-control-sm"
                                     placeholder="Search by incident ID…" autocomplete="off"
-                                    data-bind="value: jobIdInput, valueUpdate: 'input', hasFocus: jobIdInputHasFocus">
+                                    data-bind="value: jobIdInput, valueUpdate: 'input', hasFocus: jobIdInputHasFocus, event: { keydown: onJobInputKeydown }">
                                 <!-- ko if: showJobDropdown -->
                                 <ul class="dropdown-menu show w-100 shadow-sm" style="max-height:200px;overflow-y:auto"
-                                    data-bind="foreach: jobIdSuggestions">
+                                    data-ops-log-dropdown="job" data-bind="foreach: jobIdSuggestions">
                                     <li>
-                                        <button type="button" class="dropdown-item"
-                                            data-bind="event: { mousedown: $parent.pickJobSuggestion }">
-                                            <span class="fw-semibold" data-bind="text: id"></span>
-                                            <span class="text-muted ms-1 small" data-bind="text: detail"></span>
+                                        <button type="button" class="dropdown-item text-start"
+                                            data-bind="css: { active: $parent.jobActiveIndex() === $index() }, event: { mousedown: $parent.pickJobSuggestion, mouseenter: $parent.onJobItemMouseEnter }" style="white-space: normal; padding: 0.5rem;">
+                                            <div class="fw-semibold" data-bind="text: id"></div>
+                                            <div class="text-muted small" data-bind="text: detail"></div>
                                         </button>
                                     </li>
                                 </ul>
@@ -3536,13 +3536,13 @@
                             <div class="position-relative">
                                 <input type="text" class="form-control form-control-sm"
                                     placeholder="Search by team callsign…" autocomplete="off"
-                                    data-bind="value: teamInput, valueUpdate: 'input', hasFocus: teamInputHasFocus">
+                                    data-bind="value: teamInput, valueUpdate: 'input', hasFocus: teamInputHasFocus, event: { keydown: onTeamInputKeydown }">
                                 <!-- ko if: showTeamDropdown -->
                                 <ul class="dropdown-menu show w-100 shadow-sm" style="max-height:200px;overflow-y:auto"
-                                    data-bind="foreach: teamSuggestions">
+                                    data-ops-log-dropdown="team" data-bind="foreach: teamSuggestions">
                                     <li>
                                         <button type="button" class="dropdown-item"
-                                            data-bind="event: { mousedown: $parent.pickTeamSuggestion }">
+                                            data-bind="css: { active: $parent.teamActiveIndex() === $index() }, event: { mousedown: $parent.pickTeamSuggestion, mouseenter: $parent.onTeamItemMouseEnter }">
                                             <span data-bind="text: label"></span>
                                         </button>
                                     </li>
