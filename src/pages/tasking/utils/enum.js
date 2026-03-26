@@ -768,5 +768,147 @@ export const Enum = {
         "GroupId": null,
         "Colour": null
     }
+},
+IncidentAgenciesInvolvedStatus:
+{
+    "Requested": {
+        "Id": 1,
+        "Name": "Requested",
+        "Description": "Requested",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Acknowledged": {
+        "Id": 2,
+        "Name": "Acknowledged",
+        "Description": "Acknowledged",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Responded": {
+        "Id": 3,
+        "Name": "Responded",
+        "Description": "Responded",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Closed": {
+        "Id": 4,
+        "Name": "Closed",
+        "Description": "Closed",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "Timeout": {
+        "Id": 5,
+        "Name": "Timeout",
+        "Description": "Timeout",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "SentRSQ": {
+        "Id": 6,
+        "Name": "SentRSQ",
+        "Description": "SentRSQ",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "RespondedRSQ": {
+        "Id": 7,
+        "Name": "RespondedRSQ",
+        "Description": "RespondedRSU",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "TimeoutRSQ": {
+        "Id": 8,
+        "Name": "TimeoutRSQ",
+        "Description": "TimeoutRSQ",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "SentIUM": {
+        "Id": 9,
+        "Name": "SentIUM",
+        "Description": "SentIUM",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "RespondedIUM": {
+        "Id": 10,
+        "Name": "RespondedIUM",
+        "Description": "RespondedIUA",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "TimeoutIUM": {
+        "Id": 11,
+        "Name": "TimeoutIUM",
+        "Description": "TimeoutIUM",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    }
+},
+ResourceStatus:
+{
+    "EnRoute": {
+        "Id": 1,
+        "Name": "EnRoute",
+        "Description": "En Route",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "LeftScene": {
+        "Id": 2,
+        "Name": "LeftScene",
+        "Description": "Left Scene",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "NoStatusAvailable": {
+        "Id": 3,
+        "Name": "NoStatusAvailable",
+        "Description": "No Status Available",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "OnScene": {
+        "Id": 4,
+        "Name": "OnScene",
+        "Description": "On Scene",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "WillAttend": {
+        "Id": 5,
+        "Name": "WillAttend",
+        "Description": "Will Attend",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    },
+    "WillNotAttend": {
+        "Id": 6,
+        "Name": "WillNotAttend",
+        "Description": "Will Not Attend",
+        "ParentId": null,
+        "GroupId": null,
+        "Colour": null
+    }
 }
 }

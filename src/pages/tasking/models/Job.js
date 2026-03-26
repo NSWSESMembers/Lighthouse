@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
-import ko from "knockout";
+import ko, { observable } from "knockout";
 import moment from "moment";
 import { Entity } from "./Entity.js";
 import { Address } from "./Address.js";
@@ -37,6 +37,7 @@ export function Job(data = {}, deps = {}) {
         config = null,
         isIncidentPinned = () => false,
         toggleIncidentPinned = () => false,
+        fetchIcemsIncident = async (_icemsId) => (null),
     } = deps;
 
     self.isFilteredIn = ko.observable(false);
@@ -95,6 +96,7 @@ export function Job(data = {}, deps = {}) {
     self.expand = () => self.expanded(true);
     self.collapse = () => self.expanded(false);
     self.taskingLoading = ko.observable(false);
+    self.dataLoading = ko.observable(false);
     self.contactCalled = ko.observable((data.ContactCalled !== undefined) ? data.ContactCalled : false);
     self.opsLogEntriesLoading = ko.observable(false);
     self.opsLogEntries = ko.observableArray([]);
@@ -103,6 +105,79 @@ export function Job(data = {}, deps = {}) {
 
     self.hasUnacceptedNotifications = ko.pureComputed(() => {
         return Array.isArray(self.unacceptedNotifications()) && self.unacceptedNotifications().length > 0;
+    });
+
+    // ---- ICEMS agencies involved ----
+    self._icemsAgenciesRaw = ko.observableArray([]);
+
+    function _findEnumDescription(enumObj, id) {
+        for (const key in enumObj) {
+            if (enumObj[key].Id === id) return enumObj[key];
+        }
+        return { Description: 'Unknown' };
+    }
+
+    function _agencyDisplayName(agency) {
+        if (agency.ResourceStatusId && agency.AgencyStatusId !== Enum.IncidentAgenciesInvolvedStatus.Closed.Id) {
+            return _findEnumDescription(Enum.ResourceStatus, agency.ResourceStatusId).Description;
+        }
+        return _findEnumDescription(Enum.IncidentAgenciesInvolvedStatus, agency.AgencyStatusId).Description;
+    }
+
+
+    function _resourceBadgeClass(resourceStatusId) {
+        switch (resourceStatusId) {
+            case 1: return 'bg-primary';         // En Route
+            case 2: return 'bg-secondary';       // Left Scene
+            case 3: return 'bg-light text-dark'; // No Status Available
+            case 4: return 'bg-success';         // On Scene
+            case 5: return 'bg-info text-dark';  // Will Attend
+            case 6: return 'bg-danger';          // Will Not Attend
+            default: return 'bg-light text-dark';
+        }
+    }
+
+    function _agencyBadgeClass(agency) {
+        // Use ResourceStatus if present and not Closed, else AgencyStatus
+        if (agency.ResourceStatusId && agency.AgencyStatusId !== Enum.IncidentAgenciesInvolvedStatus.Closed.Id) {
+            return _resourceBadgeClass(agency.ResourceStatusId);
+        }
+        // fallback to agency status coloring
+        switch (agency.AgencyStatusId) {
+            case 1: return 'bg-warning text-dark';   // Requested
+            case 2: return 'bg-info text-dark';      // Acknowledged
+            case 3: return 'bg-success';             // Responded
+            case 4: return 'bg-secondary';           // Closed
+            case 5: return 'bg-danger';              // Timeout
+            case 6: return 'bg-warning text-dark';   // SentRSQ
+            case 7: return 'bg-success';             // RespondedRSQ
+            case 8: return 'bg-danger';              // TimeoutRSQ
+            case 9: return 'bg-warning text-dark';   // SentIUM
+            case 10: return 'bg-success';            // RespondedIUM
+            case 11: return 'bg-danger';             // TimeoutIUM
+            default: return 'bg-light text-dark';
+        }
+    }
+
+    function _agencyIcon(agencyName) {
+        switch ((agencyName || '').toUpperCase()) {
+            case 'NSWPF':  return 'fas fa-piggy-bank';        // Police
+            case 'NSWSES': return 'fas fa-carrot';             // SES
+            case 'ASNSW':  return 'fas fa-ambulance';          // Ambulance
+            case 'FRNSW':  return 'fas fa-fire-extinguisher';  // Fire & Rescue
+            case 'NSWRFS': return 'fas fa-fire-alt';           // Rural Fire Service
+            default:       return 'fas fa-building';           // Fallback
+        }
+    }
+
+    /** Pre-decorated agencies array for KSB-safe template binding */
+    self.icemsAgencies = ko.pureComputed(() => {
+        return self._icemsAgenciesRaw().map(a => ({
+            name:        a.Name,
+            statusLabel: _agencyDisplayName(a),
+            badgeClass:  _agencyBadgeClass(a),
+            iconClass:   _agencyIcon(a.Name),
+        }));
     });
 
     self.instantTask = new InstantTaskViewModel({ job: self, map: map, filteredTeams: filteredTeams, config: config });
@@ -256,6 +331,7 @@ export function Job(data = {}, deps = {}) {
         }
     });
 
+    self.lastDataUpdate = observable(new Date());
     self.lastTaskingDataUpdate = new Date();
 
     // Minimum cooldown (ms) between single-job tasking fetches.
@@ -275,6 +351,13 @@ export function Job(data = {}, deps = {}) {
 
     self.popUpIsOpen.subscribe((isOpen) => {
         self.instantTask.popupActive(isOpen || self.expanded());
+    });
+
+    // --- Last Refreshed Display ---
+    // Computed for display: "Refreshed X ago"
+    self.lastRefreshedAgo = ko.pureComputed(() => {
+        if (deps.relativeUpdateTick) deps.relativeUpdateTick();
+        return moment(self.lastDataUpdate()).fromNow();
     });
 
     self.refreshUnacceptedNotifications = async function () {
@@ -331,12 +414,40 @@ export function Job(data = {}, deps = {}) {
         unacceptedNotificationsInterval.stop();
     };
 
-    // Computed that combines both conditions to avoid duplicate polling subscriptions
+    // ---- ICEMS INCIDENT POLLING (agencies involved) ----
+    self.refreshIcemsIncident = async function () {
+        const icemsId = self.icemsIncidentIdentifier();
+        if (!icemsId) return;
+
+        try {
+            const data = await fetchIcemsIncident(icemsId);
+            if (data && Array.isArray(data.AgenciesInvolved)) {
+                self._icemsAgenciesRaw(data.AgenciesInvolved);
+            }
+        } catch (err) {
+            console.error("Failed to fetch ICEMS incident:", err);
+        }
+    };
+
+    const icemsIncidentInterval = makeFilteredInterval(() => {
+        if (!self.icemsIncidentIdentifier()) return;
+        self.refreshIcemsIncident();
+    }, 30000, { runImmediately: true });
+
+    self.startIcemsIncidentPolling = function () {
+        icemsIncidentInterval.start();
+    };
+
+    self.stopIcemsIncidentPolling = function () {
+        icemsIncidentInterval.stop();
+    };
+
+
+    // Unaccepted notifications polling: filtered in + ICEMS id (original logic)
     self.shouldPollUnacceptedNotifications = ko.pureComputed(() => {
         return self.icemsIncidentIdentifier() && self.isFilteredIn();
     });
 
-    // Single subscription to the combined condition prevents duplicate start calls
     self.shouldPollUnacceptedNotifications.subscribe((shouldPoll) => {
         if (shouldPoll) {
             self.startUnacceptedNotificationsPolling();
@@ -345,10 +456,24 @@ export function Job(data = {}, deps = {}) {
         }
     });
 
+    // ICEMS agency polling: filtered in + expanded + ICEMS id (new logic)
+    self.shouldPollIcemsIncident = ko.pureComputed(() => {
+        return self.icemsIncidentIdentifier() && self.isFilteredIn() && self.expanded();
+    });
+
+    self.shouldPollIcemsIncident.subscribe((shouldPoll) => {
+        if (shouldPoll) {
+            self.startIcemsIncidentPolling();
+        } else {
+            self.stopIcemsIncidentPolling();
+        }
+    });
+
     self.toggleAndLoad = function () {
         if (!self.expanded()) {
             self.fetchTasking();
             self.refreshData();
+            self.refreshIcemsIncident();
         }
         self.expanded(!self.expanded())
     };
@@ -503,98 +628,105 @@ export function Job(data = {}, deps = {}) {
 
 
     Job.prototype.updateFromJson = function (d = {}) {
+        this.lastDataUpdate(new Date());
 
         // sector might be undefined or null. they mean different things
         if (d.Sector !== undefined) { //sector present in payload
             if (d.Sector === null) { //theres no sector assigned
-                this.sector(new Sector({}));
+                if (JSON.stringify(this.sector()) !== JSON.stringify(new Sector({}))) {
+                    this.sector(new Sector({}));
+                }
             } else {
                 this.sector().updateFromJson(d.Sector);
             }
         }
         // scalars
-        if (d.Identifier !== undefined) this.identifier(d.Identifier);
-        if (d.Type !== undefined) this.type(d.Type);
+        const setIfChanged = (obs, val) => { if (obs() !== val) obs(val); };
+        if (d.Identifier !== undefined) setIfChanged(this.identifier, d.Identifier);
+        if (d.Type !== undefined) setIfChanged(this.type, d.Type);
 
-        if (d.CallerFirstName !== undefined) this.callerFirstName(d.CallerFirstName || "");
-        if (d.CallerLastName !== undefined) this.callerLastName(d.CallerLastName || "");
-        if (d.CallerPhoneNumber !== undefined) this.callerPhoneNumber(d.CallerPhoneNumber || "");
-        if (d.ContactFirstName !== undefined) this.contactFirstName(d.ContactFirstName || "");
-        if (d.ContactLastName !== undefined) this.contactLastName(d.ContactLastName || "");
-        if (d.ContactPhoneNumber !== undefined) this.contactPhoneNumber(d.ContactPhoneNumber || "");
+        if (d.CallerFirstName !== undefined) setIfChanged(this.callerFirstName, d.CallerFirstName || "");
+        if (d.CallerLastName !== undefined) setIfChanged(this.callerLastName, d.CallerLastName || "");
+        if (d.CallerPhoneNumber !== undefined) setIfChanged(this.callerPhoneNumber, d.CallerPhoneNumber || "");
+        if (d.ContactFirstName !== undefined) setIfChanged(this.contactFirstName, d.ContactFirstName || "");
+        if (d.ContactLastName !== undefined) setIfChanged(this.contactLastName, d.ContactLastName || "");
+        if (d.ContactPhoneNumber !== undefined) setIfChanged(this.contactPhoneNumber, d.ContactPhoneNumber || "");
 
-        if (d.PermissionToEnterPremises !== undefined) this.permissionToEnterPremises(!!d.PermissionToEnterPremises);
-        if (d.HowToEnterPremises !== undefined) this.howToEnterPremises(d.HowToEnterPremises ?? null);
-        if (d.JobReceived !== undefined) this.jobReceived(d.JobReceived || null);
-        if (d.LGA !== undefined) this.lga(d.LGA || "");
-        if (d.TaskingCategory !== undefined) this.taskingCategory(d.TaskingCategory ?? 0);
-        if (d.SituationOnScene !== undefined) this.situationOnScene(d.SituationOnScene || "");
-        if (d.EventId !== undefined) this.eventId(d.EventId ?? null);
-        if (d.PrintCount !== undefined) this.printCount(d.PrintCount ?? 0);
-        if (d.InFrao !== undefined) this.inFrao(!!d.InFrao);
-        if (d.ImageCount !== undefined) this.imageCount(d.ImageCount ?? 0);
+        if (d.PermissionToEnterPremises !== undefined) setIfChanged(this.permissionToEnterPremises, !!d.PermissionToEnterPremises);
+        if (d.HowToEnterPremises !== undefined) setIfChanged(this.howToEnterPremises, d.HowToEnterPremises ?? null);
+        if (d.JobReceived !== undefined) setIfChanged(this.jobReceived, d.JobReceived || null);
+        if (d.LGA !== undefined) setIfChanged(this.lga, d.LGA || "");
+        if (d.TaskingCategory !== undefined) setIfChanged(this.taskingCategory, d.TaskingCategory ?? 0);
+        if (d.SituationOnScene !== undefined) setIfChanged(this.situationOnScene, d.SituationOnScene || "");
+        if (d.EventId !== undefined) setIfChanged(this.eventId, d.EventId ?? null);
+        if (d.PrintCount !== undefined) setIfChanged(this.printCount, d.PrintCount ?? 0);
+        if (d.InFrao !== undefined) setIfChanged(this.inFrao, !!d.InFrao);
+        if (d.ImageCount !== undefined) setIfChanged(this.imageCount, d.ImageCount ?? 0);
 
-        if (d.ICEMSIncidentIdentifier !== undefined) this.icemsIncidentIdentifier(d.ICEMSIncidentIdentifier || null);
+        if (d.ICEMSIncidentIdentifier !== undefined) setIfChanged(this.icemsIncidentIdentifier, d.ICEMSIncidentIdentifier || null);
 
         // structured
-        if (d.JobPriorityType !== undefined) this.jobPriorityType(d.JobPriorityType || null);
-        if (d.JobStatusType !== undefined) this.jobStatusType(d.JobStatusType || null);
-        if (d.JobType !== undefined) this.jobType(d.JobType || null);
-
-
+        if (d.JobPriorityType !== undefined) setIfChanged(this.jobPriorityType, d.JobPriorityType || null);
+        if (d.JobStatusType !== undefined) setIfChanged(this.jobStatusType, d.JobStatusType || null);
+        if (d.JobType !== undefined) setIfChanged(this.jobType, d.JobType || null);
 
         if (d.EntityAssignedTo !== undefined) {
             const ea = d.EntityAssignedTo;
-
-            this.entityAssignedTo.id(ea?.Id ?? null);
-            this.entityAssignedTo.code(ea?.Code ?? "");
-            this.entityAssignedTo.name(ea?.Name ?? "");
-            this.entityAssignedTo.latitude(ea?.Latitude ?? null);
-            this.entityAssignedTo.longitude(ea?.Longitude ?? null);
+            setIfChanged(this.entityAssignedTo.id, ea?.Id ?? null);
+            setIfChanged(this.entityAssignedTo.code, ea?.Code ?? "");
+            setIfChanged(this.entityAssignedTo.name, ea?.Name ?? "");
+            setIfChanged(this.entityAssignedTo.latitude, ea?.Latitude ?? null);
+            setIfChanged(this.entityAssignedTo.longitude, ea?.Longitude ?? null);
 
             // Correct handling of ParentEntity
             if (ea.ParentEntity !== null) {
                 const existingParent = this.entityAssignedTo.parentEntity();
                 if (existingParent) {
-                    // update existing parent entity observables
-                    existingParent.id(ea.ParentEntity.Id ?? null);
-                    existingParent.code(ea.ParentEntity.Code ?? "");
-                    existingParent.name(ea.ParentEntity.Name ?? "");
+                    setIfChanged(existingParent.id, ea.ParentEntity.Id ?? null);
+                    setIfChanged(existingParent.code, ea.ParentEntity.Code ?? "");
+                    setIfChanged(existingParent.name, ea.ParentEntity.Name ?? "");
                 } else {
-                    // or create a new one if none exists yet
                     this.entityAssignedTo.parentEntity(new Entity(ea.ParentEntity));
                 }
             } else {
-                // if API can legitimately send "no parent", clear it
-                this.entityAssignedTo.parentEntity(null);
+                if (this.entityAssignedTo.parentEntity() !== null) {
+                    this.entityAssignedTo.parentEntity(null);
+                }
             }
         }
 
         if (d.Address !== undefined) {
-            this.address.gnafId(d.Address?.GnafId ?? null);
-            this.address.latitude(d.Address?.Latitude ?? null);
-            this.address.longitude(d.Address?.Longitude ?? null);
-            this.address.streetNumber(d.Address?.StreetNumber ?? "");
-            this.address.street(d.Address?.Street ?? "");
-            this.address.locality(d.Address?.Locality ?? "");
-            this.address.postCode(d.Address?.PostCode ?? "");
-            this.address.prettyAddress(d.Address?.PrettyAddress ?? "");
-            this.address.additionalAddressInfo(d.Address?.AdditionalAddressInfo ?? null);
+            setIfChanged(this.address.gnafId, d.Address?.GnafId ?? null);
+            setIfChanged(this.address.latitude, d.Address?.Latitude ?? null);
+            setIfChanged(this.address.longitude, d.Address?.Longitude ?? null);
+            setIfChanged(this.address.streetNumber, d.Address?.StreetNumber ?? "");
+            setIfChanged(this.address.street, d.Address?.Street ?? "");
+            setIfChanged(this.address.locality, d.Address?.Locality ?? "");
+            setIfChanged(this.address.postCode, d.Address?.PostCode ?? "");
+            setIfChanged(this.address.prettyAddress, d.Address?.PrettyAddress ?? "");
+            setIfChanged(this.address.additionalAddressInfo, d.Address?.AdditionalAddressInfo ?? null);
         }
 
         if (Array.isArray(d.Tags)) {
-            this.tags(d.Tags.map(t => new Tag(t)));
+            const newTags = d.Tags.map(t => new Tag(t));
+            if (JSON.stringify(this.tags()) !== JSON.stringify(newTags)) {
+                this.tags(newTags);
+            }
         }
         if (Array.isArray(d.ActionRequiredTags)) {
-            this.actionRequiredTags(
-                d.ActionRequiredTags
-                    .filter(t => t.TagGroupId === 27)
-                    .map(t => new Tag(t))
-            );
+            const newActionTags = d.ActionRequiredTags
+                .filter(t => t.TagGroupId === 27)
+                .map(t => new Tag(t));
+            if (JSON.stringify(this.actionRequiredTags()) !== JSON.stringify(newActionTags)) {
+                this.actionRequiredTags(newActionTags);
+            }
         }
         //ditch pscu categories
         if (Array.isArray(d.Categories)) {
-            this.categories(d.Categories.filter(c => (c?.Id ?? 0) >= 9));
+            const newCats = d.Categories.filter(c => (c?.Id ?? 0) >= 9);
+            if (JSON.stringify(this.categories()) !== JSON.stringify(newCats)) {
+                this.categories(newCats);
+            }
         }
     };
 
@@ -711,6 +843,7 @@ export function Job(data = {}, deps = {}) {
     self.refreshDataAndTasking = function () {
         self.fetchTasking();
         self.refreshData();
+        self.refreshIcemsIncident();
     }
 
     self.fetchTasking = function (opts = {}) {
@@ -730,10 +863,12 @@ export function Job(data = {}, deps = {}) {
     };
 
     self.refreshData = async function () {
-        self.taskingLoading(true);
+        self.dataLoading(true);
         fetchUnresolvedActionsLog(self);
         fetchJobById(self.id(), () => {
-            self.taskingLoading(false);
+            //update the timestamp via the json parse function somewhere in here
+            //dont do it here
+            self.dataLoading(false);
         });
         fetchSuppliersForJob(self.id()).then(suppliers => {
             self.suppliers(suppliers);
