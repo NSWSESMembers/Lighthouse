@@ -975,6 +975,23 @@ tr.job:hover {
   font-size: 0.7rem;
 }
 
+.team-members-header {
+  min-width: 0;
+}
+
+.team-members-header .job-details-legend {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-bottom: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-members-header .btn {
+  flex: 0 0 auto;
+}
+
 .team-asset-list {
   max-height: 220px;
   overflow-y: auto;

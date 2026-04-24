@@ -309,7 +309,7 @@
                                                                 <!-- LEFT: team members + capabilities -->
                                                                 <fieldset>
                                                                     <div
-                                                                        class="d-flex justify-content-between align-items-center flex-nowrap mb-2">
+                                                                        class="team-members-header d-flex justify-content-between align-items-center mb-2">
                                                                         <legend class="job-details-legend text-nowrap me-2">Team Members
                                                                             (<span
                                                                                 data-bind="text: membersSorted().length"></span>)
@@ -332,8 +332,8 @@
                                                                                 <div class="team-member-tags mt-1"
                                                                                     data-bind="foreach: m.Person.PersonCapabilityTags">
                                                                                     <span
-                                                                                        class="badge rounded-pill bg-info text-dark me-1 mb-1"
-                                                                                        data-bind="text: Name"></span>
+                                                                                        class="badge rounded-pill bg-info text-dark me-1 mb-1 fast-tooltip"
+                                                                                        data-bind="text: Name, fastTooltip: Description"></span>
                                                                                 </div>
                                                                                 <!-- /ko -->
                                                                             </div>
