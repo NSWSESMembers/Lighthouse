@@ -2001,9 +2001,7 @@
                     <!-- CONFIG -->
                     <!-- CONFIG -->
                     <div class="card config-card mt-3">
-                        <div class="card-header py-2">
-                            <strong>Other Settings</strong>
-                        </div>
+
                         <div class="card-body">
                             <form id="configForm">
                                 <div class="accordion" id="configOtherSettingsAccordion">
@@ -2091,6 +2089,46 @@
                                                         <div class="form-text">Alerts will start collapsed.</div>
                                                     </div>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Panel Layout -->
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="headingPanelLayout">
+                                            <button class="accordion-button gap-2 collapsed" type="button"
+                                                data-bs-toggle="collapse" data-bs-target="#collapsePanelLayout"
+                                                aria-expanded="false" aria-controls="collapsePanelLayout">
+                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-columns"></i></span>
+                                                <span>Panel Layout</span>
+                                            </button>
+                                        </h2>
+                                        <div id="collapsePanelLayout" class="accordion-collapse collapse"
+                                            aria-labelledby="headingPanelLayout"
+                                            data-bs-parent="#configOtherSettingsAccordion">
+                                            <div class="accordion-body">
+                                                <label class="form-label">
+                                                    <i class="fa fa-columns me-1"></i>Section Layout Preset
+                                                </label>
+                                                <div class="layout-preset-grid"
+                                                    data-bind="foreach: { data: config.layoutPresetDefs, as: 'preset' }">
+                                                    <label class="layout-preset-card"
+                                                        data-bind="css: { 'is-active': $root.config.layoutPreset() === preset.id }">
+                                                        <input class="form-check-input layout-preset-radio"
+                                                            type="radio" name="layoutPreset"
+                                                            data-bind="checked: $root.config.layoutPreset, checkedValue: preset.id">
+                                                        <div class="layout-preset-preview"
+                                                            data-bind="css: preset.previewClass">
+                                                            <div class="preview-block preview-block--teams">Teams</div>
+                                                            <div class="preview-block preview-block--tasking">Tasking</div>
+                                                            <div class="preview-block preview-block--map">Map</div>
+                                                        </div>
+                                                        <div class="layout-preset-name" data-bind="text: preset.name"></div>
+                                                        <div class="layout-preset-description small text-muted"
+                                                            data-bind="text: preset.description"></div>
+                                                    </label>
+                                                </div>
+                                                <div class="form-text">Pick a layout to instantly preview and apply section placement.</div>
                                             </div>
                                         </div>
                                     </div>

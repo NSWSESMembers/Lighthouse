@@ -13,6 +13,33 @@ const FUNCTION_URL = "https://lambda.lighthouse-extension.com/lad/share";
 export function ConfigVM(root, deps) {
     const self = this;
 
+    const LAYOUT_PRESETS = [
+        'map-right-teams-top',
+        'map-right-tasking-top',
+        'map-left-teams-top',
+        'map-left-tasking-top',
+        'map-right-teams-only',
+        'map-right-tasking-only',
+        'map-left-teams-only',
+        'map-left-tasking-only',
+        'map-only'
+    ];
+    const DEFAULT_LAYOUT_PRESET = 'map-right-teams-top';
+    const normalizeLayoutPreset = (value) => {
+        const key = String(value || '').trim();
+        return LAYOUT_PRESETS.includes(key) ? key : DEFAULT_LAYOUT_PRESET;
+    };
+    const applyLayoutPresetClass = (preset) => {
+        const appEl = document.querySelector('.app');
+        if (!appEl) return;
+
+        LAYOUT_PRESETS.forEach(layout => appEl.classList.remove(`layout-${layout}`));
+        appEl.classList.add(`layout-${preset}`);
+
+        localStorage.setItem('lh.layoutPreset', preset);
+        window.dispatchEvent(new CustomEvent('lh:layoutPresetChanged', { detail: { preset } }));
+    };
+
     // UI state
     self.query = ko.observable('');
     self.results = ko.observableArray([]);
@@ -166,6 +193,64 @@ export function ConfigVM(root, deps) {
     self.showAdvanced = ko.observable(false);
     self.darkMode = ko.observable(false);
 
+    self.layoutPresetDefs = [
+        {
+            id: 'map-right-teams-top',
+            name: 'Map Right · Teams Top',
+            description: 'Teams above tasking in the sidebar, map on the right.',
+            previewClass: 'preset-map-right-teams-top'
+        },
+        {
+            id: 'map-right-tasking-top',
+            name: 'Map Right · Tasking Top',
+            description: 'Tasking above teams in the sidebar, map on the right.',
+            previewClass: 'preset-map-right-tasking-top'
+        },
+        {
+            id: 'map-left-teams-top',
+            name: 'Map Left · Teams Top',
+            description: 'Map on the left with teams above tasking on the right.',
+            previewClass: 'preset-map-left-teams-top'
+        },
+        {
+            id: 'map-left-tasking-top',
+            name: 'Map Left · Tasking Top',
+            description: 'Map on the left with tasking above teams on the right.',
+            previewClass: 'preset-map-left-tasking-top'
+        },
+        {
+            id: 'map-right-teams-only',
+            name: 'Map Right · Teams Only',
+            description: 'Hide tasking pane, keep teams + map.',
+            previewClass: 'preset-map-right-teams-only'
+        },
+        {
+            id: 'map-right-tasking-only',
+            name: 'Map Right · Tasking Only',
+            description: 'Hide teams pane, keep tasking + map.',
+            previewClass: 'preset-map-right-tasking-only'
+        },
+        {
+            id: 'map-left-teams-only',
+            name: 'Map Left · Teams Only',
+            description: 'Map left with teams-only pane on the right.',
+            previewClass: 'preset-map-left-teams-only'
+        },
+        {
+            id: 'map-left-tasking-only',
+            name: 'Map Left · Tasking Only',
+            description: 'Map left with tasking-only pane on the right.',
+            previewClass: 'preset-map-left-tasking-only'
+        },
+        {
+            id: 'map-only',
+            name: 'Map Only',
+            description: 'Hide both sidebar panes and use the full map view.',
+            previewClass: 'preset-map-only'
+        }
+    ];
+    self.layoutPreset = ko.observable(DEFAULT_LAYOUT_PRESET);
+
     //blown away on load
     self.teamStatusFilter = ko.observableArray([]);
 
@@ -293,6 +378,7 @@ export function ConfigVM(root, deps) {
         fetchForward: Number(self.fetchForward()),
         showAdvanced: !!self.showAdvanced(),
         darkMode: !!self.darkMode(),
+        layoutPreset: normalizeLayoutPreset(self.layoutPreset()),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
             incidents: ko.toJS(self.incidentFilters)
@@ -567,6 +653,7 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.darkMode === 'boolean') {
             self.darkMode(cfg.darkMode);
         }
+        self.layoutPreset(normalizeLayoutPreset(cfg.layoutPreset || localStorage.getItem('lh.layoutPreset')));
         if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
             self.includeIncidentsWithoutSector(cfg.includeIncidentsWithoutSector);
         }
@@ -763,6 +850,7 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
         root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
         root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
+        applyLayoutPresetClass(normalizeLayoutPreset(self.layoutPreset()));
         // Apply dark mode
         self._applyDarkMode();
         // Apply dark mode basemap if enabled
@@ -834,6 +922,16 @@ export function ConfigVM(root, deps) {
             root.mapVM.changeBasemap(targetBasemap);
         }
         
+        self.save();
+    });
+
+    self.layoutPreset.subscribe((preset) => {
+        const normalized = normalizeLayoutPreset(preset);
+        if (normalized !== preset) {
+            self.layoutPreset(normalized);
+            return;
+        }
+        applyLayoutPresetClass(normalized);
         self.save();
     });
 

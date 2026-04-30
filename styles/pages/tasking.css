@@ -260,6 +260,32 @@ td.chev[draggable='true'] * {
   width: 100vw;
 }
 
+.app.layout-map-left-teams-top .sidebar,
+.app.layout-map-left-tasking-top .sidebar,
+.app.layout-map-left-teams-only .sidebar,
+.app.layout-map-left-tasking-only .sidebar {
+  order: 3;
+}
+
+.app.layout-map-left-teams-top .vsplit,
+.app.layout-map-left-tasking-top .vsplit,
+.app.layout-map-left-teams-only .vsplit,
+.app.layout-map-left-tasking-only .vsplit {
+  order: 2;
+}
+
+.app.layout-map-left-teams-top .map-wrap,
+.app.layout-map-left-tasking-top .map-wrap,
+.app.layout-map-left-teams-only .map-wrap,
+.app.layout-map-left-tasking-only .map-wrap {
+  order: 1;
+}
+
+.app.layout-map-only .sidebar,
+.app.layout-map-only .vsplit {
+  display: none !important;
+}
+
 .sidebar {
   width: var(--sidebar-w, 420px);
   display: flex;
@@ -320,6 +346,199 @@ body.sidebar-collapsed .vsplit {
   flex-grow: 1;
   flex-shrink: 1;
   flex-basis: 60%;
+}
+
+.app.layout-map-right-tasking-top #paneBottom,
+.app.layout-map-left-tasking-top #paneBottom {
+  order: 1;
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: auto;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.app.layout-map-right-tasking-top #hsplit,
+.app.layout-map-left-tasking-top #hsplit {
+  order: 2;
+}
+
+.app.layout-map-right-tasking-top #paneTop,
+.app.layout-map-left-tasking-top #paneTop {
+  order: 3;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 60%;
+  border-bottom: 0;
+}
+
+.app.layout-map-right-teams-only #paneBottom,
+.app.layout-map-left-teams-only #paneBottom,
+.app.layout-map-right-teams-only #hsplit,
+.app.layout-map-left-teams-only #hsplit {
+  display: none !important;
+}
+
+.app.layout-map-right-teams-only #paneTop,
+.app.layout-map-left-teams-only #paneTop {
+  order: 1;
+  flex: 1 1 auto;
+  height: auto;
+  border-bottom: 0;
+}
+
+.app.layout-map-right-tasking-only #paneTop,
+.app.layout-map-left-tasking-only #paneTop,
+.app.layout-map-right-tasking-only #hsplit,
+.app.layout-map-left-tasking-only #hsplit {
+  display: none !important;
+}
+
+.app.layout-map-right-tasking-only #paneBottom,
+.app.layout-map-left-tasking-only #paneBottom {
+  order: 1;
+  flex: 1 1 auto;
+  height: auto;
+  border-bottom: 0;
+}
+
+.layout-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+}
+
+.layout-preset-card {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  background: var(--bs-body-bg);
+  cursor: pointer;
+}
+
+.layout-preset-card.is-active {
+  border-color: var(--bs-primary);
+  box-shadow: inset 0 0 0 1px var(--bs-primary);
+}
+
+.layout-preset-radio {
+  align-self: flex-start;
+  margin: 0;
+}
+
+.layout-preset-name {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.layout-preset-description {
+  line-height: 1.25;
+}
+
+.layout-preset-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 3px;
+  height: 62px;
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: 0.4rem;
+  padding: 3px;
+  background: var(--bs-secondary-bg);
+}
+
+.layout-preset-preview .preview-block {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--bs-emphasis-color);
+  background: var(--bs-body-bg);
+}
+
+.layout-preset-preview .preview-block--teams {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.layout-preset-preview .preview-block--tasking {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.layout-preset-preview .preview-block--map {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.layout-preset-preview.preset-map-right-tasking-top .preview-block--teams,
+.layout-preset-preview.preset-map-left-tasking-top .preview-block--teams {
+  grid-row: 2;
+}
+
+.layout-preset-preview.preset-map-right-tasking-top .preview-block--tasking,
+.layout-preset-preview.preset-map-left-tasking-top .preview-block--tasking {
+  grid-row: 1;
+}
+
+.layout-preset-preview.preset-map-left-teams-top .preview-block--teams,
+.layout-preset-preview.preset-map-left-tasking-top .preview-block--teams,
+.layout-preset-preview.preset-map-left-teams-only .preview-block--teams,
+.layout-preset-preview.preset-map-left-tasking-only .preview-block--teams,
+.layout-preset-preview.preset-map-left-teams-top .preview-block--tasking,
+.layout-preset-preview.preset-map-left-tasking-top .preview-block--tasking,
+.layout-preset-preview.preset-map-left-teams-only .preview-block--tasking,
+.layout-preset-preview.preset-map-left-tasking-only .preview-block--tasking {
+  grid-column: 2;
+}
+
+.layout-preset-preview.preset-map-left-teams-top .preview-block--map,
+.layout-preset-preview.preset-map-left-tasking-top .preview-block--map,
+.layout-preset-preview.preset-map-left-teams-only .preview-block--map,
+.layout-preset-preview.preset-map-left-tasking-only .preview-block--map {
+  grid-column: 1;
+}
+
+.layout-preset-preview.preset-map-right-teams-only .preview-block--tasking,
+.layout-preset-preview.preset-map-left-teams-only .preview-block--tasking {
+  display: none;
+}
+
+.layout-preset-preview.preset-map-right-teams-only .preview-block--teams,
+.layout-preset-preview.preset-map-left-teams-only .preview-block--teams {
+  grid-row: 1 / span 2;
+}
+
+.layout-preset-preview.preset-map-right-tasking-only .preview-block--teams,
+.layout-preset-preview.preset-map-left-tasking-only .preview-block--teams {
+  display: none;
+}
+
+.layout-preset-preview.preset-map-right-tasking-only .preview-block--tasking,
+.layout-preset-preview.preset-map-left-tasking-only .preview-block--tasking {
+  grid-row: 1 / span 2;
+}
+
+.layout-preset-preview.preset-map-only {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+
+.layout-preset-preview.preset-map-only .preview-block--teams,
+.layout-preset-preview.preset-map-only .preview-block--tasking {
+  display: none;
+}
+
+.layout-preset-preview.preset-map-only .preview-block--map {
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .team-table-container,
