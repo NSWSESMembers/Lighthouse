@@ -103,13 +103,13 @@ function applyLR(clientX) {
   localStorage.setItem(layoutStorageKey('mapWidthPx'), String(Math.max(0, Math.floor(mapW))));
 }
 
-function startLR() { resizingLR = true; vsplitEl.classList.add('resizing'); document.body.style.cursor = 'col-resize'; }
+function startLR() { resizingLR = true; vsplitEl.classList.add('resizing'); document.body.classList.add('sidebar-resizing'); document.body.style.cursor = 'col-resize'; }
 function moveLR(x) {
   if (!resizingLR) return;
   if (rafLR) return;
   rafLR = requestAnimationFrame(() => { rafLR = 0; applyLR(x); invalidateMap(); });
 }
-function endLR() { if (!resizingLR) return; resizingLR = false; vsplitEl.classList.remove('resizing'); document.body.style.cursor=''; invalidateMap(); }
+function endLR() { if (!resizingLR) return; resizingLR = false; vsplitEl.classList.remove('resizing'); document.body.classList.remove('sidebar-resizing'); document.body.style.cursor=''; invalidateMap(); }
 
 if (vsplitEl) {
   vsplitEl.addEventListener('mousedown', e => { e.preventDefault(); startLR(); });

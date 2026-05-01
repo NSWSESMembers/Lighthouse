@@ -311,6 +311,11 @@ td.chev[draggable='true'] * {
   transition: width 0.3s ease, min-width 0.3s ease;
 }
 
+body.sidebar-resizing .sidebar,
+body.sidebar-resizing .vsplit {
+  transition: none !important;
+}
+
 /* Full sidebar collapse driven by a body class */
 body.sidebar-collapsed .sidebar {
   width: 0 !important;
