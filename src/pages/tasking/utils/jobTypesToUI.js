@@ -11,7 +11,9 @@ export function jobsToUI(job) {
         result.fillcolor = priorityStroke[p?.Name] || "#6b7280ff"; // default gray
     }
 
-    result.shape = jobTypeParentCategoryShape[jobTypeParentCategoryKey(job)] || jobTypeParentCategoryShape.default; //shape is from the parent
+    result.shape = jobTypeShape[type]
+        || jobTypeParentCategoryShape[jobTypeParentCategoryKey(job)]
+        || jobTypeParentCategoryShape.default;
 
     result.strokecolor = "#000000"; // default stroke color
 
@@ -33,6 +35,11 @@ const floodCatStroke = {
     "Category3": "#EA580C", // Trapped - rising
     "Category4": "#EAB308", // Trapped - stable
     "Category5": "#16A34A", // Animal rescue
+};
+
+// Concrete job type overrides take precedence over parent-category shapes.
+const jobTypeShape = {
+    "FR": "pentagon",
 };
 
 const jobTypeParentCategoryShape = {
