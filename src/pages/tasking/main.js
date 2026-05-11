@@ -309,8 +309,46 @@ map.createPane('pane-tippy-top'); map.getPane('pane-tippy-top').style.zIndex = 7
 map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.zIndex = 701;
 
 
-var osm2 = new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { minZoom: 0, maxZoom: 13 });
-new MiniMap(osm2, { toggleDisplay: true }).addTo(map);
+function buildBasemapLayer(key) {
+    // --- NSW VECTOR BASEMAP (Topographic style) ---
+    if (key === "nsw-vector") {
+        return esriVector.vectorTileLayer(
+            "https://portal.spatial.nsw.gov.au/vectortileservices/rest/services/Hosted/NSW_BaseMap_VectorTile/VectorTileServer",
+            {
+                attribution: "© NSW Spatial Services"
+            }
+        );
+    }
+
+    // --- NSW RASTER BASEMAPS (tile MapServer) ---
+    if (key === "nsw-base") {
+        return L.tileLayer(
+            "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
+            {
+                maxZoom: 20,
+                attribution: "© NSW Spatial Services"
+            }
+        );
+    }
+
+    if (key === "nsw-imagery") {
+        return L.tileLayer(
+            "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
+            {
+                maxZoom: 20,
+                attribution: "© NSW Spatial Services"
+            }
+        );
+    }
+
+    // --- EXISTING ESRI BASEMAPS ---
+    return esri.basemapLayer(key, { ignoreDeprecationWarning: true });
+}
+
+
+const minimapInitialKey = localStorage.getItem("map.base") || "Topographic";
+var minimapLayer = buildBasemapLayer(minimapInitialKey) || buildBasemapLayer("Topographic");
+const miniMapControl = new MiniMap(minimapLayer, { toggleDisplay: true }).addTo(map);
 
 const legend = new LegendControl({ collapsed: true, persist: true });
 legend.addTo(map);
@@ -3226,43 +3264,15 @@ function VM() {
                 this._currentBase = null;
             }
 
-            // --- NSW VECTOR BASEMAP (Topographic style) ---
-            if (key === "nsw-vector") {
-                // Uses the NSW_BaseMap_VectorTile VectorTileServer
-                this._currentBase = esriVector.vectorTileLayer(
-                    "https://portal.spatial.nsw.gov.au/vectortileservices/rest/services/Hosted/NSW_BaseMap_VectorTile/VectorTileServer",
-                    {
-                        attribution: "© NSW Spatial Services"
-                    }
-                );
-            }
-
-            // --- NSW RASTER BASEMAPS (tile MapServer) ---
-            else if (key === "nsw-base") {
-                this._currentBase = L.tileLayer(
-                    "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
-                    {
-                        maxZoom: 20,
-                        attribution: "© NSW Spatial Services"
-                    }
-                );
-            } else if (key === "nsw-imagery") {
-                this._currentBase = L.tileLayer(
-                    "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
-                    {
-                        maxZoom: 20,
-                        attribution: "© NSW Spatial Services"
-                    }
-                );
-            }
-
-            // --- EXISTING ESRI BASEMAPS ---
-            else {
-                this._currentBase = esri.basemapLayer(key, { ignoreDeprecationWarning: true });
-            }
+            this._currentBase = buildBasemapLayer(key);
 
             if (this._currentBase) {
                 this._currentBase.addTo(map);
+            }
+
+            const nextMiniMapLayer = buildBasemapLayer(key);
+            if (nextMiniMapLayer) {
+                miniMapControl.changeLayer(nextMiniMapLayer);
             }
         }
 
@@ -3314,6 +3324,34 @@ function VM() {
         }
     });
 
+    // --- Settings button (visible in map-only mode to open config modal)
+    const MapSettingsControl = L.Control.extend({
+        options: { position: "topleft" },
+
+        onAdd(_map) {
+            const container = L.DomUtil.create("div", "leaflet-control map-settings-control leaflet-bar");
+            container.innerHTML = `
+                <button type="button" class="btn btn-light btn-sm shadow-sm" title="Open page config"
+                    style="width:30px;height:30px;padding:0;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-cog"></i>
+                </button>
+            `;
+
+            const btn = container.querySelector(".btn");
+            L.DomEvent.on(btn, "click", (ev) => {
+                L.DomEvent.stop(ev);
+                const modalEl = document.getElementById('configModal');
+                if (modalEl) {
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                }
+            });
+
+            L.DomEvent.disableClickPropagation(container);
+            return container;
+        }
+    });
+
     // --- Zoom-to-fit button (sits directly below the zoom control)
     const ZoomToFit = L.Control.extend({
         options: { position: "topleft" },
@@ -3362,6 +3400,9 @@ function VM() {
 
     const sidebarToggle = new SidebarToggle();
     sidebarToggle.addTo(map);
+
+    const mapSettingsControl = new MapSettingsControl();
+    mapSettingsControl.addTo(map);
 
     const layersDrawer = new LayersDrawer();
     layersDrawer.addTo(map);
