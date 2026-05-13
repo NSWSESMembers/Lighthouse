@@ -715,8 +715,8 @@ function VM() {
         if (!lastToken) { self.jobSearchSuggestions([]); return; }
 
         const escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const rx = /^\d+$/.test(lastToken)
-            ? null // numeric — use includes
+        const rx = (/^\d+$/.test(lastToken) || /[^a-z0-9]/i.test(lastToken))
+            ? null // numeric or contains non-alphanumeric (e.g. "14-7570") — use includes
             : new RegExp('\\b' + escapeRx(lastToken), 'i');
 
         // Helper: escape HTML entities so label text is safe for innerHTML
@@ -911,8 +911,9 @@ function VM() {
         // surprising (e.g. "123" inside "J-00123" should still match).
         const escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const termMatchers = terms.map(t => {
-            if (/^\d+$/.test(t)) {
-                // Numeric token — plain substring is more intuitive
+            if (/^\d+$/.test(t) || /[^a-z0-9]/i.test(t)) {
+                // Numeric token or token containing non-alphanumeric chars (e.g. "14-7570")
+                // — plain substring is more intuitive and avoids \b boundary failures
                 return (blob) => blob.includes(t);
             }
             const rx = new RegExp('\\b' + escapeRx(t), 'i');
