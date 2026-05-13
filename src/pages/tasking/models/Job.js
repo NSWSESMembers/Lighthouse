@@ -198,8 +198,15 @@ export function Job(data = {}, deps = {}) {
     self.statusNameAndCount = ko.pureComputed(() => {
         const statusName = self.statusName();
         if (statusName === "Active" || statusName === "Tasked") {
-            const taskingCount = self.taskings().length;
-            return `${statusName} (${taskingCount})`;
+            const activeOnly = deps.config?.taskingCountActiveOnly?.();
+            const taskings = self.taskings();
+            const count = activeOnly
+                ? taskings.filter(t => {
+                    const s = t.currentStatus?.();
+                    return s === "Tasked" || s === "Enroute" || s === "Onsite";
+                  }).length
+                : taskings.length;
+            return `${statusName} (${count})`;
         }
         return statusName;
     });
