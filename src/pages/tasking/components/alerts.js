@@ -31,11 +31,14 @@ function createLeafletControl(L) {
 
 /**
  * Render a list of active rules into the container. - RAW html no KO here yet
- * Each rule: { id, level, title, items:[{id,label}], count, onClick? }
- */
-/**
- * Render a list of active rules into the container. - RAW html no KO here yet
- * Each rule: { id, level, title, items:[{id,label}], count, onClick? }
+ * Each rule: { id, level, title, items:[{id,label}], count, onClick?, prominent? }
+ *
+ * prominent (boolean, optional) — when true the alert box draws extra attention:
+ *   • opaque (rather than translucent) background for the level colour
+ *   • 2 px solid border instead of 1 px semi-transparent
+ *   • repeating pulse-glow box-shadow animation
+ *   • enlarged hazard icon with a continuous ping ring
+ *   • count wrapped in a solid filled badge
  */
 function renderRules(container, rules, opts = {}) {
   const allowCollapse = opts.allowCollapse !== false;
@@ -72,6 +75,8 @@ function renderRules(container, rules, opts = {}) {
       // --- IN-PLACE UPDATE: only patch count + items, preserve all user state ---
       const countEl = div.querySelector('.alerts__count');
       if (countEl) countEl.textContent = rule.count;
+      // keep prominent class in sync
+      div.classList.toggle('alerts--prominent', !!rule.prominent);
 
       const ul = div.querySelector('.alerts__list');
       if (ul) {
@@ -94,9 +99,12 @@ function renderRules(container, rules, opts = {}) {
     div.setAttribute('data-rule-id', rule.id);
     var width = '280px'
     div.className = `leaflet-control alerts alerts--${rule.level}`;
+    if (rule.prominent) {
+      div.classList.add('alerts--prominent');
+    }
     if (state.collapsed) {
       div.classList.add('alerts--collapsed');
-      width = "24px"
+      width = "30px"
     }
     if (!state.collapsed && state.open) {
       div.classList.add('alerts--open');
@@ -160,10 +168,10 @@ function renderRules(container, rules, opts = {}) {
         btn.setAttribute('aria-expanded', 'false');
 
         div.querySelector('.alerts').animate(
-          [{ width: '280px' }, { width: '24px' }],
+          [{ width: '280px' }, { width: '30px' }],
           { duration: 300, easing: 'ease-in-out' }
         ).onfinish = () => {
-          div.querySelector('.alerts').style.width = '24px';
+          div.querySelector('.alerts').style.width = '30px';
         };
         div.classList.add('alerts--collapsed');
       });
@@ -298,6 +306,7 @@ function buildDefaultRules(vm) {
       id: 'new-jobs',
       level: 'warning',
       title: 'Unacknowledged incidents',
+      prominent: true,
       active: newJobs.length > 0,
       items: newJobs.slice(0, 10).map(asItem),
       count: newJobs.length,
