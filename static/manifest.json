@@ -40,7 +40,8 @@
     "https://nula.waternsw.com.au/*",
     "https://services1.arcgis.com/*",
     "https://api.rainviewer.com/*",
-    "https://portal.spatial.nsw.gov.au/*"
+    "https://portal.spatial.nsw.gov.au/*",
+    "https://corescope.nswmesh.au/*"
   ],
   "permissions": [
     "storage",

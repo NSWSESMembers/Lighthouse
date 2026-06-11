@@ -90,6 +90,7 @@ import {
     registerBOMFloodWarningBoundariesLayer,
     registerBOMFireWeatherDistrictsLayer
 } from "./mapLayers/weather.js";
+import { registerNswMeshNodesLayer } from "./mapLayers/civilian.js"
 
 import { fetchHqDetailsSummary } from './utils/hqSummary.js';
 
@@ -2971,6 +2972,7 @@ function VM() {
     registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
     registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
     registerRainRadarLayer(self, map);
+    registerNswMeshNodesLayer(self)
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
