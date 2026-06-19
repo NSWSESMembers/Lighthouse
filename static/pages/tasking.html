@@ -3610,6 +3610,125 @@
                 </div>
 
                 <div class="modal-footer">
+
+<!-- ko if: tasking() -->
+<div class="d-flex align-items-center gap-2 me-auto" data-bind="with: tasking()">
+    <button class="team-status-button" data-bind="text: currentStatus, css: tagColorFromStatus()"></button>
+    <span class="fw-semibold">update to </span>
+    <div class="dropdown" id="radio-log-tasking-status-dropdown">
+        <button
+            class="team-status-button dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+            data-bs-auto-close="outside"
+            data-bind="text: currentStatus,
+                       css: tagColorFromStatus(),
+                       click: onStatusDropdownToggleClick">
+        </button>
+        <div class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
+            <!-- ko if: statusPageVisible -->
+            <div>
+                <!-- ko if: cannotUpdateStatus -->
+                <p>You cannot change statuses.</p>
+                <!-- /ko -->
+                <!-- ko foreach: statusOptions -->
+                <li>
+                    <button
+                        type="button"
+                        class="dropdown-item"
+                        data-bind="text: label,
+                                   enable: enabled,
+                                   click: $parent.onStatusOptionClick,
+                                   clickBubble: false">
+                    </button>
+                </li>
+                <!-- /ko -->
+            </div>
+            <!-- /ko -->
+
+            <!-- ko if: detailsPageVisible -->
+            <div>
+                <!-- Time override toggle -->
+                <!-- ko if: needsTimeSet -->
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="radioLogTimeOverrideChk"
+                        data-bind="checked: timeOverrideEnabled">
+                    <label class="form-check-label" for="radioLogTimeOverrideChk">
+                        Override set time for this status
+                    </label>
+                </div>
+                <!-- /ko -->
+
+                <!-- Time -->
+                <!-- ko if: needsTimeSet && timeOverrideEnabled -->
+                <div class="row align-items-center mb-3">
+                    <label class="col-3 col-form-label">Time</label>
+                    <div class="col-9">
+                        <input type="datetime-local" class="form-control" data-bind="value: time">
+                    </div>
+                </div>
+                <!-- /ko -->
+
+                <!-- ETA -->
+                <!-- ko if: needsETA -->
+                <div class="row mb-3">
+                    <label class="col-3 col-form-label">ETA</label>
+                    <div class="col-9">
+                        <input type="datetime-local" class="form-control mb-2" data-bind="value: eta">
+                        <div class="d-flex flex-wrap gap-2">
+                            <!-- ko foreach: etaQuickButtons -->
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                data-bind="text: label, click: $parent.onEtaQuickButtonClick, clickbubble: false">
+                            </button>
+                            <!-- /ko -->
+                        </div>
+                    </div>
+                </div>
+                <!-- /ko -->
+
+                <!-- ETC -->
+                <!-- ko if: needsETC -->
+                <div class="row mb-3">
+                    <label class="col-3 col-form-label">ETC</label>
+                    <div class="col-9">
+                        <input type="datetime-local" class="form-control mb-2" data-bind="value: etc">
+                        <div class="d-flex flex-wrap gap-2">
+                            <!-- ko foreach: etcQuickButtons -->
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                data-bind="text: label, click: $parent.onEtcQuickButtonClick, clickbubble: false">
+                            </button>
+                            <!-- /ko -->
+                        </div>
+                    </div>
+                </div>
+                <!-- /ko -->
+
+                <!-- Reason -->
+                <!-- ko if: needsReason -->
+                <div class="row mb-3">
+                    <label class="col-3 col-form-label">Reason</label>
+                    <div class="col-9">
+                        <textarea class="form-control" rows="2" data-bind="value: callOffReason"></textarea>
+                    </div>
+                </div>
+                <!-- /ko -->
+
+                <!-- Submit & Back -->
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bind="click: goBackFromDetails">
+                        Back
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" data-bind="click: closeStatusDropdown">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+            <!-- /ko -->
+        </div>
+    </div>
+</div>
+<!-- /ko -->
+
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary d-flex align-items-center gap-2"
                         data-bind="click: submit, disable: submitting">

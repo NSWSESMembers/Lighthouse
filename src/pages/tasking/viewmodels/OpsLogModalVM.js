@@ -10,6 +10,8 @@ export function CreateOpsLogModalVM(parentVM) {
 
   self.entityId = ko.observable(null);
   self.jobId = ko.observable(null);
+  self.teamId = ko.observable(null);
+  self.tasking = ko.observable(null);
   self.eventId = ko.observable(null);
   self.talkgroupId = ko.observable(null);
   self.talkgroupRequestId = ko.observable(null);
@@ -80,20 +82,24 @@ export function CreateOpsLogModalVM(parentVM) {
   }
 
   // Open for a new radio log — auto-selects the "Radio" contact method tag
-  self.openForRadioLog = async (job) => {
+  self.openForRadioLog_Tasking = async (tasking) => {
     self.resetFields();
-    if (job && typeof job.id === 'function') {
-      self.jobId(job.id() || "");
-      self.jobIdInput(job.identifier ? job.identifier() : '');
-      self.headerLabel(`New Radio Log for ${job.identifier() || ""}`);
+    self.tasking(tasking || null);
+    if (tasking && tasking.job && typeof tasking.job.id === 'function' && typeof tasking.team.id === 'function') {
+      self.jobId(tasking.job.id() || "");
+      self.jobIdInput(tasking.job.identifier ? tasking.job.identifier() : '');
+      self.teamInput(tasking.team.callsign ? tasking.team.callsign() : '' );
+      self.subject(tasking.team.callsign ? tasking.team.callsign() : '' );
+      self.headerLabel(`New Radio Log for ${tasking.team.callsign() || ""} on ${tasking.job.identifier() || ""} `);
     } else {
       self.jobId("");
       self.jobIdInput("");
+      self.teamInput("");
+      self.subject("");
       self.headerLabel("New Radio Log");
     }
     self.initTags();
 
-    // Auto-select the "Radio" tag in Contact Methods (group 3)
     self.uiTags().forEach(t => {
       if (t.tagGroupId() === 3 && t.name && t.name().toLowerCase().includes('radio')) {
         t.selected(true);
@@ -170,6 +176,8 @@ export function CreateOpsLogModalVM(parentVM) {
   self.resetFields = function () {
     self.entityId(null);
     self.jobId(null);
+    self.teamId(null);
+    self.tasking(null);
     self.eventId(null);
     self.talkgroupId(null);
     self.talkgroupRequestId(null);
@@ -321,6 +329,7 @@ export function CreateOpsLogModalVM(parentVM) {
     }
     if (suggestion && suggestion.asset) {
       self.teamInput(suggestion.label);
+      //self.teamId(suggestion.team.id());
       self.subject(`${suggestion.label} - ${self.subject()}`);
     }
     self.teamInputHasFocus(false);

@@ -1388,25 +1388,26 @@ function VM() {
     }
 
     self.attachJobRadioLogModal = function (tasking) {
-        const modalEl = document.getElementById('RadioLogModal');
+        const modalEl = document.getElementById('CreateOpsLogModal');
         const modal = new bootstrap.Modal(modalEl);
 
-        self.CreateRadioLogModalVM.modalInstance = modal;
+        const vm = self.CreateOpsLogModalVM;
 
-        self.CreateRadioLogModalVM.openForTasking(tasking);
+        vm.modalInstance = modal;
+
+        vm.openForRadioLog_Tasking(tasking);
         modal.show();
 
         modalEl.addEventListener('shown.bs.modal', function () {
-            document.getElementById('RadioLogTextInput')?.focus();
+            document.getElementById('OpsLogTextInput')?.focus();
         }, { once: true });
 
         installModalHotkeys({
             modalEl,
-            onSave: () => self.CreateRadioLogModalVM.submit?.(),
+            onSave: () => vm.submit?.(),
             onClose: () => modal.hide(),
             allowInInputs: true // text-heavy modal
         });
-
     };
 
     self.attachJobRadioLogModalByTeamAndIncident = function (jobId, teamCallsign) {
