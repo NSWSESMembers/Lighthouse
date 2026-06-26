@@ -267,6 +267,7 @@ export function ConfigVM(root, deps) {
     self.clusterRadius = ko.observable(60);   // maxClusterRadius in px (10–80)
     self.clusterRescueJobs = ko.observable(true);
     self.alertsCollapsibleRules = ko.observable(true);
+    self.taskingCountActiveOnly = ko.observable(false);
 
     // pinned rows
     self.pinnedTeamIds = ko.observableArray([]);
@@ -399,6 +400,7 @@ export function ConfigVM(root, deps) {
         clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
+        taskingCountActiveOnly: !!self.taskingCountActiveOnly(),
         suggestionEnabled: !!self.suggestionEnabled(),
         rescueDistanceWeight: Number(self.rescueDistanceWeight()) || 0,
         rescueTaskingWeight: Number(self.rescueTaskingWeight()) || 0,
@@ -713,6 +715,9 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.alertsCollapsibleRules === 'boolean') {
             self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
         }
+        if (typeof cfg.taskingCountActiveOnly === 'boolean') {
+            self.taskingCountActiveOnly(cfg.taskingCountActiveOnly);
+        }
 
         // Instant Task Suggestion Engine weights
         if (typeof cfg.suggestionEnabled === 'boolean') {
@@ -902,6 +907,10 @@ export function ConfigVM(root, deps) {
     })
 
     self.alertsCollapsibleRules.subscribe(() => {
+        self.save();
+    })
+
+    self.taskingCountActiveOnly.subscribe(() => {
         self.save();
     })
 

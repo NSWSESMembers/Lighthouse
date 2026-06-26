@@ -644,6 +644,12 @@ body.dark-mode .leaflet-control.alerts.alerts--info {
   border: 1px solid rgba(95, 157, 255, 0.88) !important;
 }
 
+/* Prominent modifier — dark mode */
+body.dark-mode .alerts--warning.alerts--prominent  { background: rgba(160,110,0,0.95)   !important; border: 2px solid #ffc107 !important; }
+body.dark-mode .alerts--danger.alerts--prominent   { background: rgba(140,20,30,0.95)   !important; border: 2px solid #dc3545 !important; }
+body.dark-mode .alerts--caution.alerts--prominent  { background: rgba(8,66,152,0.95)    !important; border: 2px solid #4d9aff !important; }
+body.dark-mode .alerts--info.alerts--prominent     { background: rgba(22,58,109,0.95)   !important; border: 2px solid #5f9dff !important; }
+
 /* Custom map layers drawer */
 body.dark-mode .layers-drawer .ld-toggle-btn {
   background: #2d2d2d !important;

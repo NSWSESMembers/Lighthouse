@@ -1531,6 +1531,81 @@ overflow: hidden;
   }
 }
 
+/* ── Prominent modifier ──────────────────────────────────────────────────── *
+ * Add  prominent: true  to any rule to make the alert visually urgent.
+ * Combines: opaque background, heavier border, repeating pulse-glow,
+ *           enlarged icon, and a highlighted count badge.
+ * -------------------------------------------------------------------------- */
+.alerts--prominent {
+  border-width: 2px;
+  border-style: solid;
+  animation:
+    alerts-prominent-pulse 2s ease-in-out infinite,
+    alerts-prominent-bounce 1.2s cubic-bezier(0.36, 0.07, 0.19, 0.97) infinite;
+}
+/* Stop bouncing once the panel is open — keep the pulse-glow */
+.alerts--prominent.alerts--open {
+  animation: alerts-prominent-pulse 2s ease-in-out infinite;
+}
+.alerts--prominent .alerts__icon {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+}
+.alerts--prominent .alerts__icon::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  opacity: 0;
+  animation: alerts-ping-loop 2s ease-out infinite;
+}
+.alerts--prominent .alerts__count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+/* Per-level badge colours — explicit so they never rely on currentColor */
+.alerts--warning.alerts--prominent  .alerts__count { background: #7a4800; color: #fff; }
+.alerts--danger.alerts--prominent   .alerts__count { background: #6b0d17; color: #fff; }
+.alerts--caution.alerts--prominent  .alerts__count { background: #052c65; color: #fff; }
+.alerts--info.alerts--prominent     .alerts__count { background: #053d22; color: #fff; }
+/* Override the count text colour so it reads white over the solid badge */
+.alerts--prominent .alerts__count {
+  filter: none;
+}
+/* Make the badge background use the level accent colour */
+.alerts--warning.alerts--prominent  { background: rgba(255,193,7,0.92);  border-color: #e6a800; }
+.alerts--danger.alerts--prominent   { background: rgba(220,53,69,0.92);   border-color: #b02a37; }
+.alerts--caution.alerts--prominent  { background: rgba(13,110,253,0.88);  border-color: #0a58ca; color: #fff; }
+.alerts--info.alerts--prominent     { background: rgba(25,135,84,0.88);   border-color: #0f6848; color: #fff; }
+
+/* Force text legibility for levels that go dark-background */
+.alerts--caution.alerts--prominent .alerts__panel,
+.alerts--info.alerts--prominent    .alerts__panel { color: #fff; border-top-color: rgba(255,255,255,0.4); }
+
+@keyframes alerts-prominent-pulse {
+  0%,100% { box-shadow: 0 0  6px 0 currentColor; }
+  50%      { box-shadow: 0 0 18px 4px currentColor; }
+}
+@keyframes alerts-prominent-bounce {
+  0%,100% { transform: translateY(0);    }
+  10%      { transform: translateY(-8px); }
+  20%      { transform: translateY(0);    }
+  30%      { transform: translateY(-5px); }
+  40%      { transform: translateY(0);    }
+  50%      { transform: translateY(-2px); }
+  60%,99%  { transform: translateY(0);    }
+}
+
+@keyframes alerts-ping-loop {
+  0%   { transform: scale(0.8); opacity: 0.8; }
+  70%  { transform: scale(1.8); opacity: 0.2; }
+  100% { transform: scale(2.4); opacity: 0;   }
+}
+
 /* Subtle ping from the hazard icon once */
 .alerts__btn .alerts__icon {
   position: relative;
@@ -2672,8 +2747,13 @@ overflow: hidden;
 }
 
 .leaflet-control.alerts.alerts--collapsed .alerts__btn {
-  padding: 4px;
+  padding: 0;
   min-width: auto;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #SendSMSModal .sms-recipient-list {
