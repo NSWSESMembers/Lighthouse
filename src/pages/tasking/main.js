@@ -597,6 +597,13 @@ function VM() {
                 ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), b)
                 : ko.unwrap(b[key]);
 
+            // Type column displays `typeShort + categoriesNameNumberDash` (e.g. FR-1),
+            // so sort using the same rendered token.
+            if (key === 'type') {
+                av = `${ko.unwrap(a.typeShort) || ''}${ko.unwrap(a.categoriesNameNumberDash) || ''}`;
+                bv = `${ko.unwrap(b.typeShort) || ''}${ko.unwrap(b.categoriesNameNumberDash) || ''}`;
+            }
+
             // --- custom status order ---
             if (key === 'statusName') {
                 var ar = JOB_STATUS_RANK[av] ?? Number.MAX_SAFE_INTEGER;
