@@ -42,6 +42,8 @@ function createLeafletControl(L) {
  */
 function renderRules(container, rules, opts = {}) {
   const allowCollapse = opts.allowCollapse !== false;
+  const expandedWidth = '280px';
+  const collapsedWidth = '30px';
   container.style.display = rules.length ? '' : 'none';
 
   // Build a set of active rule IDs so we can remove stale DOM elements
@@ -73,6 +75,34 @@ function renderRules(container, rules, opts = {}) {
 
     if (div) {
       // --- IN-PLACE UPDATE: only patch count + items, preserve all user state ---
+      const levelClasses = ['alerts--warning', 'alerts--danger', 'alerts--caution', 'alerts--info'];
+      div.classList.remove(...levelClasses);
+      div.classList.add(`alerts--${rule.level}`);
+
+      // Re-sync persisted collapsed/open state so transitions do not leave stale classes.
+      if (!allowCollapse) {
+        state.collapsed = false;
+        state.open = true;
+        ruleState.set(rule.id, state);
+      }
+
+      const isCollapsed = !!state.collapsed && allowCollapse;
+      const isOpen = !isCollapsed && !!state.open;
+      div.classList.toggle('alerts--collapsed', isCollapsed);
+      div.classList.toggle('alerts--open', isOpen);
+
+      const body = div.querySelector('.alerts');
+      if (body) body.style.width = isCollapsed ? collapsedWidth : expandedWidth;
+
+      const btn = div.querySelector('.alerts__btn');
+      if (btn) btn.setAttribute('aria-expanded', String(isOpen));
+
+      const hideBtn = div.querySelector('.alerts__hide-btn');
+      if (hideBtn) hideBtn.style.display = allowCollapse ? '' : 'none';
+
+      const titleEl = div.querySelector('.alerts__title');
+      if (titleEl) titleEl.textContent = rule.title;
+
       const countEl = div.querySelector('.alerts__count');
       if (countEl) countEl.textContent = rule.count;
       // keep prominent class in sync
@@ -97,14 +127,14 @@ function renderRules(container, rules, opts = {}) {
     // --- FIRST-TIME CREATION for this rule ---
     div = document.createElement('div');
     div.setAttribute('data-rule-id', rule.id);
-    var width = '280px'
+    let width = expandedWidth;
     div.className = `leaflet-control alerts alerts--${rule.level}`;
     if (rule.prominent) {
       div.classList.add('alerts--prominent');
     }
     if (state.collapsed) {
       div.classList.add('alerts--collapsed');
-      width = "30px"
+      width = collapsedWidth;
     }
     if (!state.collapsed && state.open) {
       div.classList.add('alerts--open');
@@ -143,7 +173,7 @@ function renderRules(container, rules, opts = {}) {
         st.open = true;
         ruleState.set(rule.id, st);
         div.classList.remove('alerts--collapsed');
-        div.querySelector('.alerts').style.width = '280px';
+        div.querySelector('.alerts').style.width = expandedWidth;
 
       }
 
@@ -168,10 +198,10 @@ function renderRules(container, rules, opts = {}) {
         btn.setAttribute('aria-expanded', 'false');
 
         div.querySelector('.alerts').animate(
-          [{ width: '280px' }, { width: '30px' }],
+          [{ width: expandedWidth }, { width: collapsedWidth }],
           { duration: 300, easing: 'ease-in-out' }
         ).onfinish = () => {
-          div.querySelector('.alerts').style.width = '30px';
+          div.querySelector('.alerts').style.width = collapsedWidth;
         };
         div.classList.add('alerts--collapsed');
       });
