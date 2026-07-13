@@ -1715,8 +1715,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          152.9206357664432,
-          -29.644097450581743
+          152.7732783,
+          -29.5838051
         ]
       },
       "properties": {
@@ -1725,8 +1725,8 @@
         "SES_LEVEL": "Unit",
         "REGCODE": "CNR",
         "UNIT_CODE": "COP",
-        "POINT_X": 152.77327,
-        "POINT_Y": -29.58380,
+        "POINT_X": 152.7732783,
+        "POINT_Y": -29.5838051,
         "ZoneCode": "NHZ",
         "C_Code": "CVC",
         "STArea__": 0.8536048,
