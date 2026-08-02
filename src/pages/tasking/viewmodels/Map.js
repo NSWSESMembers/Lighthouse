@@ -618,6 +618,9 @@ export function MapVM(Lmap, root) {
     return defs;
   };
 
+  // --- Collaborative map layers ---
+  self.collabLayers = ko.observableArray([]); // layer summaries for the current org, from listLayers()
+
   // helpers
   self.setOpen = (kind, ref) => self.openPopup({ kind, id: ref.id?.(), ref });
   self.clearOpen = () => self.openPopup(null);

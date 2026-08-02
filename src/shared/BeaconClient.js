@@ -21,11 +21,12 @@ import * as messages from './BeaconClient/messages.js';
 import * as suppliers from './BeaconClient/suppliers.js';
 import * as images from './BeaconClient/images.js';
 import * as icems from './BeaconClient/icems.js';
+import * as people from './BeaconClient/people.js';
 
-export { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers, images, icems };
+export { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers, images, icems, people };
 
 // re-export functions
-export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers, images, icems, toFormUrlEncoded };
+export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers, images, icems, people, toFormUrlEncoded };
 export function toFormUrlEncoded(obj) {
     const params = [];
     for (const key in obj) {

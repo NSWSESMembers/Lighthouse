@@ -66,6 +66,7 @@ import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } f
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
+import { registerCollabLayers, getVisibleCollabLayers, startAddMarkerFlow } from "./mapLayers/collabLayer.js";
 import {
     registerBOMRainfallLayer,
     registerBOMRadarLayer,
@@ -196,6 +197,13 @@ const params = getSearchParameters();
 const apiHost = params.host
 const sourceUrl = params.source
 
+// Collaborative map layer markers are attributed to the Beacon Person
+// record (params.personId), not the login/account id (params.userId) --
+// these are separate id systems in Beacon's data model (see
+// BeaconClient/people.js), so userId must never be used as a stand-in
+// here even if personId happens to be missing.
+const markerActorId = params.personId;
+
 // Tell Team model which API URL to use for shared default-asset pushes
 setDefaultAssetApiUrl(sourceUrl);
 
@@ -231,6 +239,12 @@ installMapContextMenu({
     onGeocodeResultClicked: (_r) => {
         // TODO: replace with real action
     },
+    // myViewModel isn't constructed yet at this point in the file (see the
+    // existing `var myViewModel;` module-level pattern below) -- these
+    // callbacks only run later, on an actual right-click, by which point
+    // it's fully populated.
+    canAddMarker: () => getVisibleCollabLayers(myViewModel).length > 0,
+    onAddMarker: (latlng) => startAddMarkerFlow(myViewModel, sourceUrl, markerActorId, latlng),
 });
 
 
@@ -399,6 +413,34 @@ function VM() {
     self.taskingsById = new Map();
     self.assetsById = new Map();
     self.sectorsById = new Map();
+    self.personNamesById = new Map(); // personId -> Promise<string>, caches + dedupes concurrent lookups
+
+    /**
+     * Resolve a Beacon person ID to their display name, caching the result
+     * (and de-duping concurrent lookups for the same id, since the cache
+     * stores the in-flight Promise itself). Falls back to the raw id string
+     * if the lookup fails.
+     */
+    self.resolvePersonName = function (personId) {
+        const idStr = String(personId);
+        if (self.personNamesById.has(idStr)) return self.personNamesById.get(idStr);
+
+        const pending = (async () => {
+            try {
+                const tk = await getToken();
+                const person = await new Promise((resolve, reject) => {
+                    BeaconClient.people.getSimplePerson(idStr, apiHost, params.userId, tk, resolve, reject);
+                });
+                return person?.FullName || idStr;
+            } catch (err) {
+                console.warn('Failed to resolve person name for', idStr, err);
+                return idStr;
+            }
+        })();
+
+        self.personNamesById.set(idStr, pending);
+        return pending;
+    };
 
     // Global collections
     self.teams = ko.observableArray();
@@ -1341,6 +1383,8 @@ function VM() {
             });
         },
         fetchAllSectors: (hqs) => self.fetchAllSectors(hqs),
+        apiUrl: sourceUrl,
+        userId: params.userId,
     };
 
     self.config = new ConfigVM(self, configDeps);
@@ -2978,6 +3022,7 @@ function VM() {
     registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
     registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
     registerRainRadarLayer(self, map);
+    registerCollabLayers(self, sourceUrl, markerActorId);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
@@ -2992,6 +3037,8 @@ function VM() {
 
         onAdd(map) {
             const c = L.DomUtil.create("div", "layers-drawer");
+            this._container = c;
+            this._map = map;
 
             // stop wheel -> no map zoom when scrolling the panel
             c.addEventListener("wheel", (e) => { e.stopPropagation(); }, { passive: false });
@@ -3075,6 +3122,103 @@ function VM() {
 
             this._setBasemap(this._baseKey, map);
 
+            this._renderOverlays();
+
+            // --- Search filter ---
+            const searchInput = c.querySelector(".ld-search-input");
+            this._searchFilter = (query) => {
+                const q = query.toLowerCase().trim();
+                const grid = c.querySelector(".ld-grid");
+                const cells = grid.querySelectorAll(".ld-grid-cell");
+
+                cells.forEach(cell => {
+                    const buttons = cell.querySelectorAll(".ld-overlay-btn");
+                    let anyVisible = false;
+
+                    buttons.forEach(btn => {
+                        let shouldShow = !q; // Show all if no query
+
+                        if (q) {
+                            // Extract label from the span.me-2 text content
+                            const labelSpan = btn.querySelector("span.me-2");
+                            const label = labelSpan ? labelSpan.textContent.trim().toLowerCase() : "";
+                            shouldShow = label.includes(q);
+                        }
+
+                        btn.style.setProperty("display", shouldShow ? "" : "none", "important");
+                        if (shouldShow) anyVisible = true;
+                    });
+
+                    // Show cell only if at least one button is visible
+                    cell.style.setProperty("display", anyVisible ? "" : "none", "important");
+                });
+            };
+
+            searchInput.addEventListener("input", (e) => {
+                this._searchFilter(e.target.value);
+            });
+
+            // --- Toggle button ---
+            const toggleBtn = c.querySelector(".ld-toggle-btn");
+            const panel = c.querySelector(".ld-panel");
+
+            const fitPanel = () => {
+                requestAnimationFrame(() => {
+                    const rect = panel.getBoundingClientRect();
+                    const avail = window.innerHeight - rect.top - 20; // 20px bottom margin
+                    panel.style.maxHeight = Math.max(avail, 160) + "px";
+                });
+            };
+            this._fitPanel = fitPanel;
+
+            L.DomEvent.on(toggleBtn, "click", (ev) => {
+                L.DomEvent.stop(ev);
+                const hidden = panel.classList.toggle("d-none");
+                toggleBtn.setAttribute("aria-expanded", (!hidden).toString());
+                toggleBtn.parentElement.classList.toggle("no-border", !hidden);
+                localStorage.setItem("layers.open", hidden ? "0" : "1");
+                if (!hidden) {
+                    // Clear search when opening
+                    searchInput.value = "";
+                    this._searchFilter("");
+                    fitPanel();
+                }
+            });
+
+            // Re-fit when window resizes
+            window.addEventListener("resize", () => {
+                if (!panel.classList.contains("d-none")) fitPanel();
+            });
+
+            // Initial fit if panel starts open
+            if (this._open) setTimeout(fitPanel, 50);
+
+            // Close panel when map is clicked
+            map.on("click", () => {
+                if (!panel.classList.contains("d-none")) {
+                    panel.classList.add("d-none");
+                    toggleBtn.setAttribute("aria-expanded", "false");
+                    toggleBtn.parentElement.classList.remove("no-border");
+                    localStorage.setItem("layers.open", "0");
+                }
+            });
+
+            L.DomEvent.disableClickPropagation(c);
+
+            return c;
+        },
+
+        /** Rebuild the overlay grid (e.g. after a new collaborative layer is created). */
+        refresh() {
+            if (!this._container) return;
+            this._renderOverlays();
+            this._searchFilter?.("");
+        },
+
+        _renderOverlays() {
+            const map = this._map;
+            const c = this._container;
+
             // --- Overlays: group by def.group ---
             const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
             const groups = new Map();
@@ -3088,6 +3232,7 @@ function VM() {
 
             // --- Build two-column grid of always-visible groups ---
             const grid = c.querySelector(".ld-grid");
+            grid.innerHTML = "";
 
             groups.forEach((defs, groupKey) => {
                 const cell = document.createElement("div");
@@ -3179,88 +3324,6 @@ function VM() {
                 cell.appendChild(body);
                 grid.appendChild(cell);
             });
-
-            // --- Search filter ---
-            const searchInput = c.querySelector(".ld-search-input");
-            const searchFilter = (query) => {
-                const q = query.toLowerCase().trim();
-                const cells = grid.querySelectorAll(".ld-grid-cell");
-
-                cells.forEach(cell => {
-                    const buttons = cell.querySelectorAll(".ld-overlay-btn");
-                    let anyVisible = false;
-
-                    buttons.forEach(btn => {
-                        let shouldShow = !q; // Show all if no query
-
-                        if (q) {
-                            // Extract label from the span.me-2 text content
-                            const labelSpan = btn.querySelector("span.me-2");
-                            const label = labelSpan ? labelSpan.textContent.trim().toLowerCase() : "";
-                            shouldShow = label.includes(q);
-                        }
-
-                        btn.style.setProperty("display", shouldShow ? "" : "none", "important");
-                        if (shouldShow) anyVisible = true;
-                    });
-
-                    // Show cell only if at least one button is visible
-                    cell.style.setProperty("display", anyVisible ? "" : "none", "important");
-                });
-            };
-
-            searchInput.addEventListener("input", (e) => {
-                searchFilter(e.target.value);
-            });
-
-            // --- Toggle button ---
-            const toggleBtn = c.querySelector(".ld-toggle-btn");
-            const panel = c.querySelector(".ld-panel");
-
-            const fitPanel = () => {
-                requestAnimationFrame(() => {
-                    const rect = panel.getBoundingClientRect();
-                    const avail = window.innerHeight - rect.top - 20; // 20px bottom margin
-                    panel.style.maxHeight = Math.max(avail, 160) + "px";
-                });
-            };
-
-            L.DomEvent.on(toggleBtn, "click", (ev) => {
-                L.DomEvent.stop(ev);
-                const hidden = panel.classList.toggle("d-none");
-                toggleBtn.setAttribute("aria-expanded", (!hidden).toString());
-                toggleBtn.parentElement.classList.toggle("no-border", !hidden);
-                localStorage.setItem("layers.open", hidden ? "0" : "1");
-                if (!hidden) {
-                    // Clear search when opening
-                    searchInput.value = "";
-                    searchFilter("");
-                    fitPanel();
-                }
-            });
-
-            // Re-fit when window resizes
-            window.addEventListener("resize", () => {
-                if (!panel.classList.contains("d-none")) fitPanel();
-            });
-
-            // Initial fit if panel starts open
-            if (this._open) setTimeout(fitPanel, 50);
-
-            // Close panel when map is clicked
-            map.on("click", () => {
-                if (!panel.classList.contains("d-none")) {
-                    panel.classList.add("d-none");
-                    toggleBtn.setAttribute("aria-expanded", "false");
-                    toggleBtn.parentElement.classList.remove("no-border");
-                    localStorage.setItem("layers.open", "0");
-                }
-            });
-
-            L.DomEvent.disableClickPropagation(c);
-
-            this._container = c;
-            return c;
         },
 
 

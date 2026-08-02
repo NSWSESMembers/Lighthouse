@@ -2701,6 +2701,10 @@
                                             aria-labelledby="headingMapLayers"
                                             data-bs-parent="#configOtherSettingsAccordion">
                                             <div class="accordion-body">
+
+                                                <h6 class="fw-semibold mb-2">
+                                                    <i class="fa fa-sliders me-1"></i>Display Settings
+                                                </h6>
                                                 <div class="row g-3">
 
                                                     <!-- Clustering options -->
@@ -2784,6 +2788,66 @@
                                                     </div>
 
                                                 </div>
+
+                                                <hr class="my-4">
+
+                                                <h6 class="fw-semibold mb-2">
+                                                    <i class="fa fa-users me-1"></i>Collaborative Layers
+                                                </h6>
+                                                <p class="small text-muted mb-3">
+                                                    Shared marker layers that everyone in your organisation can see and
+                                                    edit together. Enable View to show a layer on the map — once
+                                                    visible, right-click anywhere on the map to drop a marker on it.
+                                                    Layers unused for 120 days stop appearing here, but their data
+                                                    isn't deleted.
+                                                </p>
+
+                                                <div class="input-group input-group-sm mb-3">
+                                                    <input type="text" class="form-control" placeholder="New layer name"
+                                                        data-bind="value: config.newLayerName, valueUpdate: 'input',
+                                                            event: { keydown: config.handleNewLayerNameKeydown }">
+                                                    <button class="btn btn-outline-primary" type="button"
+                                                        data-bind="click: config.createCollabLayer,
+                                                            enable: config.newLayerName().trim().length > 0 && !config.creatingCollabLayer()">
+                                                        <i class="fa fa-plus me-1"></i>New layer
+                                                    </button>
+                                                </div>
+                                                <div class="text-danger small mb-2"
+                                                    data-bind="visible: config.collabLayerError, text: config.collabLayerError"></div>
+
+                                                <div class="input-group input-group-sm mb-2"
+                                                    data-bind="visible: config.collabLayerRows().length > 5">
+                                                    <span class="input-group-text"><i class="fa fa-search"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Filter layers by name"
+                                                        data-bind="value: config.collabLayerSearch, valueUpdate: 'input'">
+                                                </div>
+
+                                                <div class="collab-layer-list-scroll">
+                                                    <ul class="list-group" data-bind="foreach: { data: config.filteredCollabLayerRows, as: 'row' }">
+                                                        <li class="list-group-item d-flex align-items-center gap-2 py-2">
+                                                            <div class="flex-grow-1 collab-layer-row-info">
+                                                                <div class="collab-layer-row-name" data-bind="text: row.name, attr: { title: row.name }"></div>
+                                                                <div class="form-text">
+                                                                    <span data-bind="text: row.markerCount"></span> markers ·
+                                                                    used <span data-bind="text: row.lastUsedLabel"></span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="form-check form-switch mb-0" title="View">
+                                                                <input class="form-check-input" type="checkbox" role="switch"
+                                                                    data-bind="checked: row.viewEnabled">
+                                                                <label class="form-check-label small">View</label>
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div class="form-text mt-2" data-bind="visible: config.collabLayerRows().length === 0">
+                                                    No collaborative layers yet — create one above.
+                                                </div>
+                                                <div class="form-text mt-2"
+                                                    data-bind="visible: config.collabLayerRows().length > 0 && config.filteredCollabLayerRows().length === 0">
+                                                    No layers match "<span data-bind="text: config.collabLayerSearch"></span>".
+                                                </div>
+
                                             </div>
                                         </div>
                                     </div>
@@ -3861,6 +3925,9 @@
     <!-- MAP CONTEXT MENU (floating) -->
     <div id="mapContextMenu" class="dropdown-menu shadow"
         style="position:fixed; display:none; z-index:5000; min-width: 220px;">
+        <button type="button" class="dropdown-item d-none" id="ctxAddCollabMarker">
+            <i class="fa fa-map-marker-alt me-2"></i>Add marker to shared layer
+        </button>
         <button type="button" class="dropdown-item" id="ctxSearchHere">
             <i class="fa fa-search me-2"></i>Address Search
         </button>
