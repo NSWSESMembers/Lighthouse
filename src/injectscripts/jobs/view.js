@@ -663,8 +663,9 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
                 }
 
                 const router = new AmazonLocationRouter({
-                  serviceUrl: "https://lambda.lighthouse-extension.com/lad/route",
+                  serviceUrl: "https://lambda.lighthouse-extension.com/lad_v2/route",
                   travelMode: "Car",
+                  headers: { Authorization: "Bearer " + user.accessToken },
                 });
 
                 var routingControl = L.Routing.control({

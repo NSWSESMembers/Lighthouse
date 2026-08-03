@@ -33,7 +33,7 @@ import { registerAcronymTextBinding } from "./components/acronymText.js";
 
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
-import { Team, bumpDefaultAssetTick, setDefaultAssetApiUrl } from './models/Team.js';
+import { Team, bumpDefaultAssetTick, setDefaultAssetApiUrl, setDefaultAssetTokenGetter } from './models/Team.js';
 import { Job } from './models/Job.js';
 import { Sector } from './models/Sector.js';
 import { Tag } from "./models/Tag.js";
@@ -206,6 +206,7 @@ const markerActorId = params.personId;
 
 // Tell Team model which API URL to use for shared default-asset pushes
 setDefaultAssetApiUrl(sourceUrl);
+setDefaultAssetTokenGetter(() => getToken());
 
 var ko;
 var myViewModel;
@@ -232,10 +233,11 @@ const map = L.map('map', {
 
 installMapContextMenu({
     map,
-    geocodeEndpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
+    geocodeEndpoint: 'https://lambda.lighthouse-extension.com/lad_v2/geocode',
     geocodeMarkerIcon: defaultSvgIcon,
     geocodeRedMarkerIcon: defaultRedSvgIcon,
     geocodeMaxResults: 10,
+    getToken,
     onGeocodeResultClicked: (_r) => {
         // TODO: replace with real action
     },
@@ -244,7 +246,7 @@ installMapContextMenu({
     // callbacks only run later, on an actual right-click, by which point
     // it's fully populated.
     canAddMarker: () => getVisibleCollabLayers(myViewModel).length > 0,
-    onAddMarker: (latlng) => startAddMarkerFlow(myViewModel, sourceUrl, markerActorId, latlng),
+    onAddMarker: (latlng) => startAddMarkerFlow(myViewModel, sourceUrl, markerActorId, latlng, getToken),
 });
 
 
@@ -270,7 +272,8 @@ const polylineMeasure = L.control.polylineMeasure({
 polylineMeasure.addTo(map);
 
 const geocoder = new AwsLambdaGeocoderProvider({
-    endpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
+    endpoint: 'https://lambda.lighthouse-extension.com/lad_v2/geocode',
+    getToken,
 });
 
 const searchControl = new GeoSearchControl({
@@ -375,6 +378,11 @@ esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(map);
 function VM() {
 
     const self = this;
+
+    // Exposed so nested viewmodels/utils that already hold a reference to
+    // the root VM (e.g. MapVM's `root` param) can get the current Beacon
+    // token without threading a new constructor param through every layer.
+    self.getToken = getToken;
 
     self.mapVM = new MapVM(map, self);
 
@@ -1383,6 +1391,7 @@ function VM() {
             });
         },
         fetchAllSectors: (hqs) => self.fetchAllSectors(hqs),
+        getToken: () => getToken(),
         apiUrl: sourceUrl,
         userId: params.userId,
     };
@@ -1944,7 +1953,8 @@ function VM() {
 
         if (multiAssetTeamIds.length === 0) return;
 
-        fetchSharedDefaults(sourceUrl, multiAssetTeamIds)
+        getToken()
+            .then(token => fetchSharedDefaults(sourceUrl, multiAssetTeamIds, token))
             .then(() => {
                 // Force all Team.defaultAsset() computeds to re-evaluate
                 bumpDefaultAssetTick();
@@ -3022,7 +3032,7 @@ function VM() {
     registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
     registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
     registerRainRadarLayer(self, map);
-    registerCollabLayers(self, sourceUrl, markerActorId);
+    registerCollabLayers(self, sourceUrl, markerActorId, getToken);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({

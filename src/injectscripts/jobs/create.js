@@ -241,6 +241,7 @@ $(document).ready(function () {
                   report: accreditations,
                   lat: vm.latitude.peek(),
                   lng: vm.longitude.peek(),
+                  token: user.accessToken,
                 },
                 '*',
               );
@@ -253,6 +254,7 @@ $(document).ready(function () {
                 report: accreditations,
                 lat: vm.latitude.peek(),
                 lng: vm.longitude.peek(),
+                token: user.accessToken,
               },
               '*',
             );
@@ -266,6 +268,7 @@ $(document).ready(function () {
               report: null,
               lat: vm.latitude.peek(),
               lng: vm.longitude.peek(),
+              token: user.accessToken,
             },
             '*',
           );
@@ -287,6 +290,7 @@ $(document).ready(function () {
                   report: accreditations,
                   lat: vm.latitude.peek(),
                   lng: vm.longitude.peek(),
+                  token: user.accessToken,
                 },
                 '*',
               );
@@ -299,6 +303,7 @@ $(document).ready(function () {
                 report: accreditations,
                 lat: vm.latitude.peek(),
                 lng: vm.longitude.peek(),
+                token: user.accessToken,
               },
               '*',
             );
@@ -312,6 +317,7 @@ $(document).ready(function () {
               report: null,
               lat: vm.latitude.peek(),
               lng: vm.longitude.peek(),
+              token: user.accessToken,
             },
             '*',
           );
@@ -334,6 +340,7 @@ $(document).ready(function () {
                   report: accreditations,
                   lat: vm.latitude.peek(),
                   lng: vm.longitude.peek(),
+                  token: user.accessToken,
                 },
                 '*',
               );
@@ -346,6 +353,7 @@ $(document).ready(function () {
                 report: accreditations,
                 lat: vm.latitude.peek(),
                 lng: vm.longitude.peek(),
+                token: user.accessToken,
               },
               '*',
             );
@@ -359,6 +367,7 @@ $(document).ready(function () {
               report: null,
               lat: vm.latitude.peek(),
               lng: vm.longitude.peek(),
+              token: user.accessToken,
             },
             '*',
           );
@@ -442,6 +451,7 @@ $(document).ready(function () {
                   report: accreditations,
                   lat: newAddress.latitude,
                   lng: newAddress.longitude,
+                  token: user.accessToken,
                 },
                 '*',
               );
@@ -454,6 +464,7 @@ $(document).ready(function () {
                 report: accreditations,
                 lat: newAddress.latitude,
                 lng: newAddress.longitude,
+                token: user.accessToken,
               },
               '*',
             );
@@ -466,6 +477,7 @@ $(document).ready(function () {
               report: null,
               lat: newAddress.latitude,
               lng: newAddress.longitude,
+              token: user.accessToken,
             },
             '*',
           );

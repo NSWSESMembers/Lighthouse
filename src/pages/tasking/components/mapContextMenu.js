@@ -36,12 +36,13 @@ const createJobUrl = (result) => {
 
 export function installMapContextMenu({
     map,
-    geocodeEndpoint = 'https://lambda.lighthouse-extension.com/lad/geocode',
+    geocodeEndpoint = 'https://lambda.lighthouse-extension.com/lad_v2/geocode',
     geocodeMarkerIcon = null,            // pass your defaultSvgIcon if you want
     geocodeRedMarkerIcon = null,         // pass your defaultRedSvgIcon if you want
     geocodeMaxResults = 10,
     canAddMarker = null,                 // () => boolean -- show/hide the "Add marker" item
     onAddMarker = null,                  // (latlng) => void -- invoked when it's clicked
+    getToken = null,                     // () => Promise<string> -- Beacon access token
 }) {
     const ctxMenu = document.getElementById("mapContextMenu");
     const btnSearch = document.getElementById("ctxSearchHere");
@@ -143,7 +144,11 @@ export function installMapContextMenu({
             url.searchParams.set('lat', String(lastLatLng.lat));
             url.searchParams.set('lon', String(lastLatLng.lng));
 
-            const res = await fetch(url.toString(), { method: 'GET' });
+            const token = getToken ? await getToken() : null;
+            const res = await fetch(url.toString(), {
+                method: 'GET',
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             json = await res.json();
         } catch (e) {

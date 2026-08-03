@@ -1,0 +1,13 @@
+{
+  "name": "lighthouse-map-layers-lambda",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Lambda backend for the Lighthouse tasking map's collaborative map layers feature (list/create layers, read/write markers) backed by S3.",
+  "main": "index.js",
+  "scripts": {
+    "package": "npm ci --omit=dev && rm -rf dist && mkdir -p dist && zip -r dist/function.zip index.js lib handlers node_modules package.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.658.0"
+  }
+}

@@ -913,6 +913,8 @@ export function MapVM(Lmap, root) {
   });
 
   const PopupStuff = {
+    getToken: () => root.getToken(),
+
     flyToBounds: (bounds, { opts }) => {
       self._flyingToBounds = true;
       self.map.flyToBounds(bounds, opts);
