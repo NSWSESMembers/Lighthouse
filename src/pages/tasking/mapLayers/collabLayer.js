@@ -40,15 +40,15 @@ function visibleCollabLayers(vm) {
  * getOverlayDefsForControl — no separate "enabled set" is needed since
  * polling is a no-op while the layer isn't visible.
  */
-function registerLayerPolling(vm, apiUrl, layer, actorId) {
+function registerLayerPolling(vm, apiUrl, layer, actorId, getToken) {
     const key = layerKeyFor(layer.id);
     vm.mapVM.registerPollingLayer(key, {
         label: layer.name,
         menuGroup: "Collaborative Layers",
         refreshMs: REFRESH_MS,
         visibleByDefault: false,
-        fetchFn: () => fetchLayerMarkers(apiUrl, layer.id),
-        drawFn: (layerGroup, data) => drawCollabMarkers(vm, layerGroup, data, apiUrl, layer.id, key, actorId),
+        fetchFn: async () => fetchLayerMarkers(apiUrl, layer.id, await getToken()),
+        drawFn: (layerGroup, data) => drawCollabMarkers(vm, layerGroup, data, apiUrl, layer.id, key, actorId, getToken),
     });
 }
 
@@ -57,10 +57,10 @@ function registerLayerPolling(vm, apiUrl, layer, actorId) {
  * MapVM for the config modal to bind to, and register/refresh polling
  * layers for any layer not already registered.
  */
-export async function refreshCollabLayerList(vm, apiUrl, actorId) {
-    const layers = await listLayers(apiUrl);
+export async function refreshCollabLayerList(vm, apiUrl, actorId, getToken) {
+    const layers = await listLayers(apiUrl, await getToken());
     vm.mapVM.collabLayers(layers);
-    layers.forEach((layer) => registerLayerPolling(vm, apiUrl, layer, actorId));
+    layers.forEach((layer) => registerLayerPolling(vm, apiUrl, layer, actorId, getToken));
     vm.mapVM.layersDrawer?.refresh?.();
     return layers;
 }
@@ -72,30 +72,30 @@ export async function refreshCollabLayerList(vm, apiUrl, actorId) {
  * components/mapContextMenu.js + startAddMarkerFlow/getVisibleCollabLayers
  * above) rather than a second contextmenu listener here.
  */
-export async function registerCollabLayers(vm, apiUrl, actorId) {
-    await refreshCollabLayerList(vm, apiUrl, actorId);
+export async function registerCollabLayers(vm, apiUrl, actorId, getToken) {
+    await refreshCollabLayerList(vm, apiUrl, actorId, getToken);
 }
 
 /** Create a new named layer, register its polling layer immediately, and refresh the drawer. */
-export async function createCollabLayer(vm, apiUrl, name, actorId) {
-    const layer = await createLayer(apiUrl, name, actorId);
+export async function createCollabLayer(vm, apiUrl, name, actorId, getToken) {
+    const layer = await createLayer(apiUrl, name, actorId, await getToken());
     if (!layer) return null;
     const list = vm.mapVM.collabLayers();
     vm.mapVM.collabLayers([...list, layer]);
-    registerLayerPolling(vm, apiUrl, layer, actorId);
+    registerLayerPolling(vm, apiUrl, layer, actorId, getToken);
     vm.mapVM.layersDrawer?.refresh?.();
     return layer;
 }
 
 // ── Drawing ──────────────────────────────────────────────────────────
 
-function drawCollabMarkers(vm, layerGroup, data, apiUrl, layerId, key, actorId) {
+function drawCollabMarkers(vm, layerGroup, data, apiUrl, layerId, key, actorId, getToken) {
     const markers = (data?.markers || []).filter((m) => !m.deleted);
     markers.forEach((marker) => {
         const icon = buildMarkerBadgeIcon({ icon: marker.icon, fill: marker.fill || DEFAULT_FILL });
 
         const leafletMarker = L.marker([marker.lat, marker.lng], { icon });
-        leafletMarker.bindPopup(() => buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId), {
+        leafletMarker.bindPopup(() => buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken), {
             minWidth: 240,
             maxWidth: 280,
         });
@@ -106,7 +106,7 @@ function drawCollabMarkers(vm, layerGroup, data, apiUrl, layerId, key, actorId) 
 // Any marker on a visible layer can be edited/deleted -- protection against
 // accidental changes comes from requiring an explicit Edit/Delete button
 // click (and a confirm step for delete), not from a separate "edit mode".
-function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId) {
+function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken) {
     const el = document.createElement("div");
     el.className = "collab-marker-popup";
 
@@ -137,7 +137,7 @@ function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId) {
 
     editBtn.addEventListener("click", () => {
         vm.mapVM.map.closePopup();
-        openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, L.latLng(marker.lat, marker.lng));
+        openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, L.latLng(marker.lat, marker.lng), getToken);
     });
 
     deleteBtn.addEventListener("click", () => {
@@ -149,7 +149,7 @@ function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId) {
         actionsBox.classList.remove("d-none");
     });
     confirmDeleteBtn.addEventListener("click", async () => {
-        await deleteMarker(apiUrl, layerId, marker.id, actorId);
+        await deleteMarker(apiUrl, layerId, marker.id, actorId, await getToken());
         vm.mapVM.refreshPollingLayer(key);
     });
 
@@ -200,7 +200,7 @@ function buildColorSwatchesHtml(selectedFill) {
  * popup's own content -- so opening/closing either one never changes the
  * popup's size or makes it reposition itself.
  */
-function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng) {
+function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getToken) {
     let icon = marker?.icon || DEFAULT_MARKER_ICON_KEY;
     let fill = marker?.fill || DEFAULT_FILL;
 
@@ -295,7 +295,7 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng) {
             description,
         };
         vm.mapVM.map.closePopup(popup);
-        await upsertMarker(apiUrl, layerId, payload, actorId);
+        await upsertMarker(apiUrl, layerId, payload, actorId, await getToken());
         vm.mapVM.refreshPollingLayer(key);
     });
 }
@@ -372,7 +372,7 @@ function closeContextMenu() {
     }
 }
 
-function showLayerPickerMenu(vm, apiUrl, actorId, layers, containerPoint, latlng) {
+function showLayerPickerMenu(vm, apiUrl, actorId, layers, containerPoint, latlng, getToken) {
     closeContextMenu();
 
     const map = vm.mapVM.map;
@@ -403,7 +403,7 @@ function showLayerPickerMenu(vm, apiUrl, actorId, layers, containerPoint, latlng
         item.title = layer.name;
         item.addEventListener("click", () => {
             closeContextMenu();
-            openMarkerForm(vm, apiUrl, layer.id, layerKeyFor(layer.id), actorId, null, latlng);
+            openMarkerForm(vm, apiUrl, layer.id, layerKeyFor(layer.id), actorId, null, latlng, getToken);
         });
         itemsBox.appendChild(item);
     });
@@ -435,17 +435,17 @@ export function getVisibleCollabLayers(vm) {
  * than one, shows a small picker so the user chooses which layer receives
  * the new marker.
  */
-export function startAddMarkerFlow(vm, apiUrl, actorId, latlng) {
+export function startAddMarkerFlow(vm, apiUrl, actorId, latlng, getToken) {
     closeContextMenu();
 
     const visible = visibleCollabLayers(vm);
     if (visible.length === 0) return;
 
     if (visible.length === 1) {
-        openMarkerForm(vm, apiUrl, visible[0].id, layerKeyFor(visible[0].id), actorId, null, latlng);
+        openMarkerForm(vm, apiUrl, visible[0].id, layerKeyFor(visible[0].id), actorId, null, latlng, getToken);
         return;
     }
 
     const containerPoint = vm.mapVM.map.latLngToContainerPoint(latlng);
-    showLayerPickerMenu(vm, apiUrl, actorId, visible, containerPoint, latlng);
+    showLayerPickerMenu(vm, apiUrl, actorId, visible, containerPoint, latlng, getToken);
 }

@@ -32,6 +32,9 @@ window.addEventListener("message", function(event) {
       $('#nearest-lhq-text').text('Searching...')
       $('#nearest-rescue-lhq-text').text('Searching...')
       $('#nearest-rescue-drive-lhq-text').text('Searching...')
+      // Sent by injectscripts/jobs/create.js, which runs in the page's own
+      // JS context and already has `user.accessToken` available directly.
+      const token = event.data.token;
       $.getJSON(chrome.runtime.getURL("resources/SES_HQs.geojson"), function (data) {
         let distances = []
         let rescueDistances = []
@@ -143,9 +146,12 @@ window.addEventListener("message", function(event) {
 
                 let promise = new Promise((resolve, reject) => {
                   $.ajax({
-                    url: "https://lambda.lighthouse-extension.com/lad/route",
+                    url: "https://lambda.lighthouse-extension.com/lad_v2/route",
                     method: "POST",
                     contentType: "application/json",
+                    beforeSend: function (n) {
+                      if (token) n.setRequestHeader('Authorization', 'Bearer ' + token);
+                    },
                     data: body,
                     dataType: "json",
                     success: function(data) {

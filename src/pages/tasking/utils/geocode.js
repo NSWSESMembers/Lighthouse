@@ -1,8 +1,9 @@
 // AwsLambdaGeocoderProvider.js
 export class AwsLambdaGeocoderProvider {
-  constructor({ endpoint, fetchOptions } = {}) {
+  constructor({ endpoint, fetchOptions, getToken } = {}) {
     this.endpoint = endpoint.replace(/\/$/, '');
     this.fetchOptions = fetchOptions; // optional: headers, credentials, etc.
+    this.getToken = getToken; // optional: () => Promise<string> -- Beacon access token
   }
 
   // leaflet-geosearch calls: provider.search({ query: string })
@@ -12,9 +13,17 @@ export class AwsLambdaGeocoderProvider {
     const url = new URL(this.endpoint);
     url.searchParams.set('q', query.trim());
 
+    // Computed fresh per call (not baked into fetchOptions at construction)
+    // since this provider instance is long-lived and the token can expire.
+    const token = this.getToken ? await this.getToken() : null;
+
     const res = await fetch(url.toString(), {
       method: 'GET',
       ...this.fetchOptions,
+      headers: {
+        ...this.fetchOptions?.headers,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
 
     if (!res.ok) {

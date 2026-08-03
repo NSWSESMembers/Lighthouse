@@ -50,6 +50,12 @@ let _apiUrl = null;
 /** Called once from main.js after params are resolved. */
 export function setDefaultAssetApiUrl(url) { _apiUrl = url; }
 
+/** Async getter for the current Beacon access token, e.g. `() => getToken()`. */
+let _getToken = null;
+
+/** Called once from main.js after params are resolved. */
+export function setDefaultAssetTokenGetter(getTokenFn) { _getToken = getTokenFn; }
+
 function _setDefaultAsset(teamId, assetId) {
     const map = loadSharedMapping();
 
@@ -72,8 +78,8 @@ function _setDefaultAsset(teamId, assetId) {
     _defaultAssetTick(_defaultAssetTick() + 1);
 
     // Push to Lambda / S3 backend so other browsers pick it up (fire-and-forget)
-    if (_apiUrl) {
-        pushSharedDefault(_apiUrl, teamId, assetId);
+    if (_apiUrl && _getToken) {
+        Promise.resolve(_getToken()).then((token) => pushSharedDefault(_apiUrl, teamId, assetId, token));
     }
 }
 
@@ -160,7 +166,8 @@ export function Team(data = {}, deps = {}) {
     self.trackableAssets.subscribe(assets => {
         if (assets.length > 1 && !_hadMultipleAssets && _apiUrl) {
             _hadMultipleAssets = true;
-            fetchSharedDefaults(_apiUrl, [String(self.id())])
+            Promise.resolve(_getToken?.())
+                .then(token => fetchSharedDefaults(_apiUrl, [String(self.id())], token))
                 .then(() => _defaultAssetTick(_defaultAssetTick() + 1))
                 .catch(() => { /* im not empty i promise */ });
         } else if (assets.length <= 1) {
@@ -258,7 +265,8 @@ export function Team(data = {}, deps = {}) {
         self.refreshData();
 
         if (_apiUrl && (self.trackableAssets?.() || []).length > 1) {
-            fetchSharedDefaults(_apiUrl, [String(self.id())])
+            Promise.resolve(_getToken?.())
+                .then(token => fetchSharedDefaults(_apiUrl, [String(self.id())], token))
                 .then(() => _defaultAssetTick(_defaultAssetTick() + 1))
                 .catch(() => {/* im not empty i promise */});
         }
@@ -288,7 +296,8 @@ export function Team(data = {}, deps = {}) {
 
         // If this team has multiple assets, refresh shared default mapping
         if (_apiUrl && (self.trackableAssets?.() || []).length > 1) {
-            fetchSharedDefaults(_apiUrl, [String(self.id())])
+            Promise.resolve(_getToken?.())
+                .then(token => fetchSharedDefaults(_apiUrl, [String(self.id())], token))
                 .then(() => _defaultAssetTick(_defaultAssetTick() + 1))
                 .catch(() => {/* im not empty i promise */});
         }

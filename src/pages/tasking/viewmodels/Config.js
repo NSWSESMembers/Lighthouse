@@ -7,12 +7,17 @@ import { createCollabLayer } from '../mapLayers/collabLayer.js';
 
 
 
-const FUNCTION_URL = "https://lambda.lighthouse-extension.com/lad/share";
+const FUNCTION_URL = "https://lambda.lighthouse-extension.com/lad_v2/share";
 
 
 
 export function ConfigVM(root, deps) {
     const self = this;
+
+    // Exposed publicly so code holding a ConfigVM reference (e.g.
+    // InstantTaskViewModel's `config`) can get the current Beacon token
+    // without its own deps plumbing.
+    self.getToken = deps.getToken;
 
     const LAYOUT_PRESETS = [
         'map-right-teams-top',
@@ -264,7 +269,7 @@ export function ConfigVM(root, deps) {
         self.collabLayerError('');
         self.creatingCollabLayer(true);
         try {
-            const layer = await createCollabLayer(root, deps.apiUrl, name, deps.userId);
+            const layer = await createCollabLayer(root, deps.apiUrl, name, deps.userId, deps.getToken);
             if (!layer) throw new Error('Create failed');
             self.newLayerName('');
         } catch (err) {
@@ -845,10 +850,11 @@ export function ConfigVM(root, deps) {
 
         try {
             const savedConfig = buildConfig();
+            const token = await deps.getToken();
 
             const res = await fetch(FUNCTION_URL, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify({ config: savedConfig })
             });
 
@@ -882,10 +888,11 @@ export function ConfigVM(root, deps) {
         try {
             // Adjust to match your handler: expects ?id=...
             const url = `${FUNCTION_URL}?id=${encodeURIComponent(id)}`;
+            const token = await deps.getToken();
 
             const res = await fetch(url, {
                 method: "GET",
-                headers: { "Accept": "application/json" }
+                headers: { "Accept": "application/json", "Authorization": `Bearer ${token}` }
             });
 
             if (!res.ok) {

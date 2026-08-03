@@ -11,7 +11,7 @@
  * before firing the remote write.
  */
 
-const LAMBDA_BASE = 'https://lambda.lighthouse-extension.com/lad/map-layers';
+const LAMBDA_BASE = 'https://lambda.lighthouse-extension.com/lad_v2/map-layers';
 
 const LS_INDEX_KEY = 'lh_collabLayers_index'; // cached layer list for the current org
 const layerCacheKey = (layerId) => `lh_collabLayer_${layerId}`;
@@ -57,14 +57,15 @@ function saveCachedLayer(layerId, layer) {
  * List collaborative layers for an org (layers unused for 120+ days are
  * excluded server-side, not deleted).
  * @param {string} apiUrl
+ * @param {string} token  Beacon access token (Authorization: Bearer).
  * @returns {Promise<Array<Object>>}
  */
-export async function listLayers(apiUrl) {
+export async function listLayers(apiUrl, token) {
     if (!apiUrl) return loadCachedLayerIndex();
 
     try {
         const url = `${LAMBDA_BASE}?apiUrl=${encodeURIComponent(apiUrl)}`;
-        const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' } });
+        const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } });
         if (!res.ok) {
             console.warn('[collabLayerSync] list failed:', res.status);
             return loadCachedLayerIndex();
@@ -83,16 +84,17 @@ export async function listLayers(apiUrl) {
  * @param {string} apiUrl
  * @param {string} name
  * @param {string} actorId
+ * @param {string} token  Beacon access token (Authorization: Bearer).
  * @returns {Promise<Object|null>} the created layer summary, or null on failure
  */
-export async function createLayer(apiUrl, name, actorId) {
+export async function createLayer(apiUrl, name, actorId, token) {
     const trimmed = (name || '').trim();
     if (!apiUrl || !trimmed) return null;
 
     try {
         const res = await fetch(LAMBDA_BASE, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ apiUrl, name: trimmed, createdBy: String(actorId) }),
         });
         if (!res.ok) {
@@ -119,14 +121,15 @@ export async function createLayer(apiUrl, name, actorId) {
  * layer won't age out of listLayers()).
  * @param {string} apiUrl
  * @param {string} layerId
+ * @param {string} token  Beacon access token (Authorization: Bearer).
  * @returns {Promise<Object|null>} the layer, including its markers array
  */
-export async function fetchLayerMarkers(apiUrl, layerId) {
+export async function fetchLayerMarkers(apiUrl, layerId, token) {
     if (!apiUrl || !layerId) return loadCachedLayer(layerId);
 
     try {
         const url = `${LAMBDA_BASE}/${encodeURIComponent(layerId)}?apiUrl=${encodeURIComponent(apiUrl)}`;
-        const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' } });
+        const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } });
         if (!res.ok) {
             console.warn('[collabLayerSync] fetchLayerMarkers failed:', res.status);
             return loadCachedLayer(layerId);
@@ -147,9 +150,10 @@ export async function fetchLayerMarkers(apiUrl, layerId) {
  * @param {string} layerId
  * @param {{id?: string, lat: number, lng: number, shape: string, fill: string, stroke: string, description: string}} marker
  * @param {string} actorId
+ * @param {string} token  Beacon access token (Authorization: Bearer).
  * @returns {Promise<Object|null>} the saved marker (with server-assigned id/timestamps), or null on failure
  */
-export async function upsertMarker(apiUrl, layerId, marker, actorId) {
+export async function upsertMarker(apiUrl, layerId, marker, actorId, token) {
     if (!apiUrl || !layerId || !marker) return null;
 
     // Optimistic local update
@@ -176,7 +180,7 @@ export async function upsertMarker(apiUrl, layerId, marker, actorId) {
     try {
         const res = await fetch(`${LAMBDA_BASE}/${encodeURIComponent(layerId)}/features`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ apiUrl, marker, actorId: String(actorId) }),
         });
         if (!res.ok) {
@@ -205,9 +209,10 @@ export async function upsertMarker(apiUrl, layerId, marker, actorId) {
  * @param {string} layerId
  * @param {string} markerId
  * @param {string} actorId
+ * @param {string} token  Beacon access token (Authorization: Bearer).
  * @returns {Promise<void>}
  */
-export async function deleteMarker(apiUrl, layerId, markerId, actorId) {
+export async function deleteMarker(apiUrl, layerId, markerId, actorId, token) {
     if (!apiUrl || !layerId || !markerId) return;
 
     // Optimistic local update
@@ -220,7 +225,7 @@ export async function deleteMarker(apiUrl, layerId, markerId, actorId) {
     try {
         const url = `${LAMBDA_BASE}/${encodeURIComponent(layerId)}/features/${encodeURIComponent(markerId)}` +
             `?apiUrl=${encodeURIComponent(apiUrl)}&actorId=${encodeURIComponent(actorId)}`;
-        await fetch(url, { method: 'DELETE' });
+        await fetch(url, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
     } catch (err) {
         console.warn('[collabLayerSync] deleteMarker error:', err);
     }
