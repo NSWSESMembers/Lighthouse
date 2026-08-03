@@ -3,6 +3,7 @@ import ko from 'knockout';
 
 import * as bootstrap from 'bootstrap5'; // Modal, Tooltip, etc.
 import { Enum } from '../utils/enum.js';
+import { createCollabLayer } from '../mapLayers/collabLayer.js';
 
 
 
@@ -188,6 +189,100 @@ export function ConfigVM(root, deps) {
             onCancel && onCancel();
         };
     }
+    // ── Collaborative map layers ──
+    self.collabLayers = root.mapVM?.collabLayers || ko.observableArray([]);
+    self.newLayerName = ko.observable('');
+    self.creatingCollabLayer = ko.observable(false);
+    self.collabLayerError = ko.observable('');
+    self.collabLayerSearch = ko.observable(''); // filters the (possibly long) layer list below
+
+    function relativeTime(iso) {
+        if (!iso) return 'never';
+        const ms = Date.now() - new Date(iso).getTime();
+        if (!Number.isFinite(ms) || ms < 0) return 'just now';
+        const mins = Math.round(ms / 60000);
+        if (mins < 1) return 'just now';
+        if (mins < 60) return `${mins}m ago`;
+        const hrs = Math.round(mins / 60);
+        if (hrs < 24) return `${hrs}h ago`;
+        return `${Math.round(hrs / 24)}d ago`;
+    }
+
+    // Applies the actual show/hide side-effect when a row's View switch
+    // changes. `row.key` is the unprefixed registry key used by
+    // mapVM.onlineLayers; `row.drawerKey` is the 'online-'-prefixed key the
+    // layers drawer uses for its `ov.<key>` localStorage visibility flag
+    // (see getOverlayDefsForControl in Map.js) — both must be kept in sync.
+    // Any user can add/edit/delete markers on a visible layer directly on
+    // the map (right-click to add, popup buttons to edit/delete) — there's
+    // no separate "edit mode" toggle here, just View.
+    self._applyCollabLayerView = (row, enabled) => {
+        const layerObj = root.mapVM.onlineLayers.get(row.key)?.layerGroup;
+        if (!layerObj) return;
+        if (enabled) {
+            root.mapVM.map.addLayer(layerObj);
+            localStorage.setItem(`ov.${row.drawerKey}`, '1');
+        } else {
+            root.mapVM.map.removeLayer(layerObj);
+            localStorage.setItem(`ov.${row.drawerKey}`, '0');
+        }
+        root.mapVM.layersDrawer?.refresh?.();
+    };
+
+    // Sorted alphabetically so a long list stays scannable; filtered by
+    // collabLayerSearch below for the same reason.
+    self.collabLayerRows = ko.pureComputed(() => self.collabLayers()
+        .slice()
+        .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+        .map(layer => {
+            const key = `collab-${layer.id}`;
+            const drawerKey = `online-${key}`;
+            const row = {
+                layer,
+                key,
+                drawerKey,
+                name: layer.name,
+                markerCount: layer.markerCount || 0,
+                lastUsedLabel: relativeTime(layer.lastUsedAt),
+                viewEnabled: ko.observable(localStorage.getItem(`ov.${drawerKey}`) === '1'),
+            };
+            row.viewEnabled.subscribe((v) => self._applyCollabLayerView(row, v));
+            return row;
+        }));
+
+    self.filteredCollabLayerRows = ko.pureComputed(() => {
+        const q = self.collabLayerSearch().trim().toLowerCase();
+        const rows = self.collabLayerRows();
+        if (!q) return rows;
+        return rows.filter(row => row.name.toLowerCase().includes(q));
+    });
+
+    self.createCollabLayer = async () => {
+        const name = self.newLayerName().trim();
+        if (!name || !deps.apiUrl) return;
+
+        self.collabLayerError('');
+        self.creatingCollabLayer(true);
+        try {
+            const layer = await createCollabLayer(root, deps.apiUrl, name, deps.userId);
+            if (!layer) throw new Error('Create failed');
+            self.newLayerName('');
+        } catch (err) {
+            console.error('Error creating collaborative layer:', err);
+            self.collabLayerError('Failed to create layer. Try again later.');
+        } finally {
+            self.creatingCollabLayer(false);
+        }
+    };
+
+    // Named method (rather than an inline function in the data-bind attribute)
+    // because knockout-secure-binding's restricted grammar doesn't support
+    // control-flow statements like `if` inside inline function literals.
+    self.handleNewLayerNameKeydown = (data, event) => {
+        if (event.key === 'Enter') self.createCollabLayer();
+        return true;
+    };
+
     self.fetchPeriod = ko.observable(7).extend({ min: 0, max: 31, digit: true });
     self.fetchForward = ko.observable(0).extend({ min: 0, max: 31, digit: true });
     self.showAdvanced = ko.observable(false);

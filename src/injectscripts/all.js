@@ -51,6 +51,8 @@ whenWeAreReady(function () {
   var vars =
     '?userId=' +
     user.Id +
+    '&personId=' +
+    user.personId +
     '&host=' +
     urls.Base +
     '&source=' +

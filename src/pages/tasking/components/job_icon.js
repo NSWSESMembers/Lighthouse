@@ -2,7 +2,7 @@ import {jobsToUI} from "../utils/jobTypesToUI.js";
 
 // --- SVG factory (shape+style → L.divIcon) ---
 import L from "leaflet";
-export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2 }) {
+function shapeInnerSvg({ shape, fill, stroke, radius = 7, strokeWidth = 2 }) {
     const d = radius * 2;
     const cx = radius, cy = radius;
 
@@ -118,6 +118,12 @@ export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2
                           fill="${fill}" stroke="${stroke}" stroke-width="${strokeWidth}" />`;
     }
 
+    return inner;
+}
+
+export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2 }) {
+    const d = radius * 2;
+    const inner = shapeInnerSvg({ shape, fill, stroke, radius, strokeWidth });
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">
               ${inner}
             </svg>`;

@@ -40,10 +40,13 @@ export function installMapContextMenu({
     geocodeMarkerIcon = null,            // pass your defaultSvgIcon if you want
     geocodeRedMarkerIcon = null,         // pass your defaultRedSvgIcon if you want
     geocodeMaxResults = 10,
+    canAddMarker = null,                 // () => boolean -- show/hide the "Add marker" item
+    onAddMarker = null,                  // (latlng) => void -- invoked when it's clicked
 }) {
     const ctxMenu = document.getElementById("mapContextMenu");
     const btnSearch = document.getElementById("ctxSearchHere");
     const btnGeocode = document.getElementById("ctxGeocodeHere");
+    const btnAddMarker = document.getElementById("ctxAddCollabMarker");
 
     if (!map || !ctxMenu || !btnSearch || !btnGeocode) {
         console.warn("MapContextMenu: missing dependencies or DOM");
@@ -78,9 +81,19 @@ export function installMapContextMenu({
     map.on("contextmenu", (e) => {
         lastLatLng = e.latlng;
 
+        if (btnAddMarker) {
+            btnAddMarker.classList.toggle("d-none", !canAddMarker?.());
+        }
+
         const p = map.latLngToContainerPoint(e.latlng);
         const rect = map.getContainer().getBoundingClientRect();
         showMenuAt(rect.left + p.x, rect.top + p.y);
+    });
+
+    // ---- ADD MARKER (collaborative layers) ----
+    btnAddMarker?.addEventListener("click", () => {
+        hideMenu();
+        if (lastLatLng) onAddMarker?.(lastLatLng);
     });
 
 
