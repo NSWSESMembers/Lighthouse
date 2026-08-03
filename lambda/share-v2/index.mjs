@@ -33,8 +33,9 @@ export const handler = async (event) => {
       };
     }
 
+    let claims;
     try {
-      await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
+      claims = await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
     } catch (err) {
       return {
         statusCode: 401,
@@ -42,6 +43,7 @@ export const handler = async (event) => {
         body: JSON.stringify({ message: "Unauthorized", error: err?.message || String(err) })
       };
     }
+    console.log(JSON.stringify({ msg: "beacon_auth", fn: "share-v2", userId: claims.sub || claims.client_id || "unknown", method }));
 
     if (method === "POST" && !query.id) {
       return await handleCreateConfig(rawBody);

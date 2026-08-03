@@ -35,11 +35,13 @@ exports.handler = async (event) => {
     return json(404, { error: 'Not found', routeKey });
   }
 
+  let claims;
   try {
-    await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
+    claims = await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
   } catch (err) {
     return json(401, { error: 'Unauthorized', message: err?.message || String(err) });
   }
+  console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'map-layers-v2', userId: claims.sub || claims.client_id || 'unknown', route: routeKey }));
 
   try {
     return await handler(event);

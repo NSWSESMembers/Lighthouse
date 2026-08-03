@@ -26,11 +26,13 @@ export const handler = async (event) => {
     return { statusCode: 204, headers: corsHeaders, body: "" };
   }
 
+  let claims;
   try {
-    await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
+    claims = await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
   } catch (err) {
     return json(401, { error: "Unauthorized", message: err?.message || String(err) });
   }
+  console.log(JSON.stringify({ msg: "beacon_auth", fn: "geocode-v2", userId: claims.sub || claims.client_id || "unknown" }));
 
   const qsp = event?.queryStringParameters || {};
 
