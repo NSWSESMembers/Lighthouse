@@ -71,7 +71,10 @@ async function updateIndex(apiUrl, mutate, { retries = 3 } = {}) {
       return result;
     } catch (err) {
       const status = err.$metadata?.httpStatusCode;
-      if (status === 412 && attempt < retries) continue; // lost the race, retry
+      // S3's conditional-write feature (IfMatch/IfNoneMatch on PutObject)
+      // reports a lost race as 409 ConditionalRequestConflict, not the 412
+      // Precondition Failed other conditional S3 operations use.
+      if ((status === 409 || status === 412) && attempt < retries) continue; // lost the race, retry
       throw err;
     }
   }
