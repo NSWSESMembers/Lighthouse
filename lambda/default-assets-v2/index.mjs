@@ -98,11 +98,13 @@ export const handler = async (event) => {
         return respond(204, '');
     }
 
+    let claims;
     try {
-        await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
+        claims = await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
     } catch (err) {
         return respond(401, { error: 'Unauthorized', message: err?.message || String(err) });
     }
+    console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'default-assets-v2', userId: claims.sub || claims.client_id || 'unknown', method }));
 
     try {
         // ---------- GET: Bulk fetch for a list of team IDs ----------
