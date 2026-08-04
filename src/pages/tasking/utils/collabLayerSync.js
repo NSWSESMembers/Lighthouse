@@ -148,7 +148,9 @@ export async function fetchLayerMarkers(apiUrl, layerId, token) {
  * update to the cached layer before firing the remote write.
  * @param {string} apiUrl
  * @param {string} layerId
- * @param {{id?: string, lat: number, lng: number, shape: string, fill: string, stroke: string, description: string}} marker
+ * @param {{id?: string, lat: number, lng: number, icon: string, fill: string, opsLogId?: number}} marker
+ *   Title/description aren't stored here -- they live in the Ops Log entry
+ *   `opsLogId` points at (see mapLayers/collabLayer.js).
  * @param {string} actorId
  * @param {string} token  Beacon access token (Authorization: Bearer).
  * @returns {Promise<Object|null>} the saved marker (with server-assigned id/timestamps), or null on failure
@@ -228,5 +230,57 @@ export async function deleteMarker(apiUrl, layerId, markerId, actorId, token) {
         await fetch(url, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
     } catch (err) {
         console.warn('[collabLayerSync] deleteMarker error:', err);
+    }
+}
+
+/**
+ * Attach a comment -- an Ops Log entry id already created client-side --
+ * to a marker's comment thread. Applies an optimistic local update to the
+ * cached layer before firing the remote write.
+ * @param {string} apiUrl
+ * @param {string} layerId
+ * @param {string} markerId
+ * @param {number} opsLogId  Id of the comment's Ops Log entry.
+ * @param {string} actorId
+ * @param {string} token  Beacon access token (Authorization: Bearer).
+ * @returns {Promise<Object|null>} the updated marker, or null on failure
+ */
+export async function addMarkerComment(apiUrl, layerId, markerId, opsLogId, actorId, token) {
+    if (!apiUrl || !layerId || !markerId || opsLogId == null) return null;
+
+    // Optimistic local update
+    const cached = loadCachedLayer(layerId);
+    if (cached && Array.isArray(cached.markers)) {
+        const m = cached.markers.find((mk) => mk.id === markerId);
+        if (m) {
+            m.commentOpsLogIds = Array.isArray(m.commentOpsLogIds) ? [...m.commentOpsLogIds, opsLogId] : [opsLogId];
+            saveCachedLayer(layerId, cached);
+        }
+    }
+
+    try {
+        const url = `${LAMBDA_BASE}/${encodeURIComponent(layerId)}/features/${encodeURIComponent(markerId)}/comments`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ apiUrl, opsLogId, actorId: String(actorId) }),
+        });
+        if (!res.ok) {
+            throw new Error(`addMarkerComment failed with status ${res.status}`);
+        }
+        const saved = await res.json();
+
+        // Reconcile with server-confirmed state
+        const latest = loadCachedLayer(layerId) || cached;
+        if (latest && Array.isArray(latest.markers)) {
+            const i = latest.markers.findIndex((mk) => mk.id === markerId);
+            if (i >= 0) latest.markers[i] = saved;
+            saveCachedLayer(layerId, latest);
+        }
+
+        return saved;
+    } catch (err) {
+        console.warn('[collabLayerSync] addMarkerComment error:', err);
+        return null;
     }
 }

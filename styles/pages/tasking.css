@@ -2608,13 +2608,79 @@ overflow: hidden;
   font-size: 12px;
   min-width: 200px;
 }
+.collab-marker-title {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
 .collab-marker-desc {
   margin-bottom: 4px;
+  white-space: pre-wrap;
 }
 .collab-marker-meta {
   color: #888;
   font-size: 11px;
   margin-bottom: 6px;
+}
+.collab-marker-comments {
+  border-top: 1px solid #eee;
+  margin-bottom: 6px;
+}
+.collab-marker-comments:empty {
+  border-top: none;
+  margin-bottom: 0;
+}
+.collab-marker-comments-loading {
+  color: #888;
+  font-size: 11px;
+  padding: 6px 0 2px;
+}
+.collab-marker-comment {
+  padding: 6px 0 2px;
+  border-bottom: 1px solid #f2f2f2;
+}
+.collab-marker-comment:last-child {
+  border-bottom: none;
+}
+.collab-marker-comment-text {
+  white-space: pre-wrap;
+}
+.collab-marker-comment-meta {
+  color: #888;
+  font-size: 10.5px;
+  margin-top: 2px;
+}
+.collab-marker-comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.collab-marker-comment-form .collab-comment-input {
+  width: 100%;
+  font-size: 12px;
+}
+.collab-marker-comment-form .collab-add-comment-btn {
+  align-self: flex-end;
+  font-size: 10px;
+  padding: 1px 6px;
+  line-height: 1.4;
+}
+/* Aesthetic-only text limit indicator (description/comment textareas) --
+   never affects layout beyond its own line, so it can't destabilize the
+   popup's size the way growing/shrinking the textarea itself would. */
+.collab-char-counter {
+  text-align: right;
+  font-size: 10px;
+  color: #999;
+  margin-top: -2px;
+}
+.collab-char-counter-warn {
+  color: #c07a00;
+}
+.collab-char-counter-limit {
+  color: #c0392b;
+  font-weight: 600;
 }
 .collab-marker-actions,
 .collab-marker-confirm {
@@ -2808,10 +2874,31 @@ overflow: hidden;
   background: #eaf2fc;
   color: #2b6cb0;
 }
+.collab-title-input {
+  width: 100%;
+  margin-bottom: 6px;
+  font-size: 12px;
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
 .collab-desc-input {
   width: 100%;
   margin-bottom: 6px;
   font-size: 12px;
+}
+.collab-marker-audit-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  color: #888;
+  font-size: 10.5px;
+  line-height: 1.35;
+  margin-bottom: 8px;
+}
+.collab-marker-audit-notice .fa-info-circle {
+  margin-top: 1px;
+  flex-shrink: 0;
 }
 .collab-form-actions {
   display: flex;

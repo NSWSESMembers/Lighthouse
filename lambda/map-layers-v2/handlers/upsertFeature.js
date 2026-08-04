@@ -7,22 +7,25 @@ const { json, badRequest, notFound } = require('../lib/response');
 // Must stay in sync with the icon keys in
 // src/pages/tasking/components/collab_marker_icons.js (MARKER_ICON_GROUPS).
 const ICON_KEYS = new Set([
-  'fire', 'fire-extinguisher', 'water', 'house-damage', 'exclamation-triangle',
-  'skull-crossbones', 'biohazard', 'radiation', 'bolt', 'wind', 'smog',
-  'car-crash', 'tree', 'gas-pump', 'ban',
-  'ambulance', 'first-aid', 'hospital', 'user-md', 'user-injured', 'syringe',
-  'user', 'users', 'wheelchair', 'baby-carriage', 'paw',
-  'campground', 'home', 'warehouse', 'tint', 'shower',
-  'road', 'route', 'broadcast-tower', 'plug',
-  'truck', 'helicopter', 'ship', 'life-ring',
-  'map-marker-alt', 'flag', 'check-circle', 'question-circle',
+  'exclamation-triangle', 'fire-alt', 'cloud-showers-heavy', 'wind', 'snowflake', 'water', 'gas-pump',
+  'ambulance', 'car-side', 'truck-monster', 'shuttle-van', 'helicopter', 'ship', 'plane',
+  'users', 'dog',
+  'utensils', 'shopping-cart',
+  'eye', 'camera', 'comments',
+  'flag', 'thumbtack', 'times', 'minus-circle', 'question-circle',
 ]);
-const DEFAULT_ICON = 'map-marker-alt';
+const DEFAULT_ICON = 'thumbtack';
 const HEX_COLOR = /^#[0-9a-fA-F]{3,8}$/;
 
-// PUT /map-layers/{id}/features   body: { apiUrl, marker: {id?, lat, lng, icon, fill, description}, actorId }
+// PUT /map-layers/{id}/features   body: { apiUrl, marker: {id?, lat, lng, icon, fill, opsLogId}, actorId }
 // Missing/unknown marker.id creates a new marker; a known id overwrites it
 // (last-write-wins, same convention as the existing default-assets Lambda).
+//
+// The marker record itself only holds GPS position, style (icon/fill), and
+// pointers into the Operations Log -- opsLogId for the title/description
+// entry and commentOpsLogIds for the comment thread. The Ops Log is the
+// source of truth for all of that text; the client resolves the pointers
+// via BeaconClient.operationslog.get() when rendering a marker.
 module.exports = async function upsertFeature(event) {
   const layerId = event.pathParameters?.id;
   let body;
@@ -47,7 +50,15 @@ module.exports = async function upsertFeature(event) {
   const now = new Date().toISOString();
   const icon = ICON_KEYS.has(input.icon) ? input.icon : DEFAULT_ICON;
   const fill = HEX_COLOR.test(input.fill || '') ? input.fill : '#2b7bbb';
-  const description = String(input.description || '').slice(0, 2000);
+
+  // Id of the Operations Log entry logged (client-side) for this drop/edit,
+  // stamped onto the marker so the title/description can be looked up
+  // later via BeaconClient.operationslog.get(). A Beacon Ops Log entry
+  // can't be edited by anyone but its author, so editing a marker always
+  // creates a *new* entry client-side and points opsLogId at it rather
+  // than mutating the old one. Omitted/invalid values leave the marker's
+  // existing opsLogId (if any) untouched.
+  const opsLogId = Number.isFinite(Number(input.opsLogId)) && input.opsLogId !== '' ? Number(input.opsLogId) : undefined;
 
   const existingIdx = input.id ? layer.markers.findIndex((m) => m.id === input.id) : -1;
   let marker;
@@ -59,11 +70,11 @@ module.exports = async function upsertFeature(event) {
       lng: input.lng,
       icon,
       fill,
-      description,
       updatedBy: actorId,
       updatedAt: now,
       deleted: false,
     };
+    if (opsLogId !== undefined) marker.opsLogId = opsLogId;
     layer.markers[existingIdx] = marker;
   } else {
     marker = {
@@ -72,13 +83,14 @@ module.exports = async function upsertFeature(event) {
       lng: input.lng,
       icon,
       fill,
-      description,
+      commentOpsLogIds: [],
       createdBy: actorId,
       createdAt: now,
       updatedBy: actorId,
       updatedAt: now,
       deleted: false,
     };
+    if (opsLogId !== undefined) marker.opsLogId = opsLogId;
     layer.markers.push(marker);
   }
 

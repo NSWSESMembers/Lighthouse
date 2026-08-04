@@ -6,12 +6,27 @@ import {
     fetchLayerMarkers,
     upsertMarker,
     deleteMarker,
+    addMarkerComment,
 } from "../utils/collabLayerSync.js";
 
 const REFRESH_MS = 10000; // polling only fires while the layer is visible (registerPollingLayer's hasLayer gate)
 const DEFAULT_FILL = MARKER_COLOR_SWATCHES[5]; // blue -- also the first swatch highlighted as "active" for a new marker
 
+// Purely an aesthetic guardrail, not a backend one (the Lambda/Ops Log
+// don't enforce a length at all) -- keeps a description or comment from
+// growing into an unreadable wall of text that blows out the map popup's
+// bounded width. Enforced client-side only, via maxlength on the textareas.
+const TEXT_CHAR_LIMIT = 300;
+
 const layerKeyFor = (layerId) => `collab-${layerId}`;
+
+// Layer keys with an interactive popup (a marker's view popup, or the
+// create/edit form) currently open. The polling refresh's drawFn rebuilds
+// every marker on the layer from scratch each tick (layerGroup.clearLayers()
+// + redraw), which would otherwise silently close whatever popup the user
+// has open -- e.g. fading it out mid-keystroke while typing a comment or
+// editing a description. registerLayerPolling's skipIfBusy checks this.
+const busyLayerKeys = new Set();
 
 function timeAgo(iso) {
     if (!iso) return "";
@@ -23,6 +38,31 @@ function timeAgo(iso) {
     const hrs = Math.round(mins / 60);
     if (hrs < 24) return `${hrs}h ago`;
     return `${Math.round(hrs / 24)}d ago`;
+}
+
+const escHtml = (s) => String(s || "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+}[c]));
+
+/**
+ * Wires a live "n/limit" counter to a textarea's sibling `.collab-char-
+ * counter` element, colouring it up as the limit approaches/hits so the
+ * limit reads as guidance rather than a hard wall -- there's nothing on
+ * the backend enforcing it, `maxlength` on the textarea itself is what
+ * actually stops typing past it.
+ */
+function wireCharCounter(textareaEl, limit) {
+    const counterEl = textareaEl.parentElement.querySelector(".collab-char-counter");
+    if (!counterEl) return;
+
+    const update = () => {
+        const len = textareaEl.value.length;
+        counterEl.textContent = `${len}/${limit}`;
+        counterEl.classList.toggle("collab-char-counter-warn", len >= limit * 0.9 && len < limit);
+        counterEl.classList.toggle("collab-char-counter-limit", len >= limit);
+    };
+    textareaEl.addEventListener("input", update);
+    update();
 }
 
 /** Collaborative layers currently toggled visible on the map. */
@@ -49,6 +89,7 @@ function registerLayerPolling(vm, apiUrl, layer, actorId, getToken) {
         visibleByDefault: false,
         fetchFn: async () => fetchLayerMarkers(apiUrl, layer.id, await getToken()),
         drawFn: (layerGroup, data) => drawCollabMarkers(vm, layerGroup, data, apiUrl, layer.id, key, actorId, getToken),
+        skipIfBusy: () => busyLayerKeys.has(key),
     });
 }
 
@@ -60,7 +101,13 @@ function registerLayerPolling(vm, apiUrl, layer, actorId, getToken) {
 export async function refreshCollabLayerList(vm, apiUrl, actorId, getToken) {
     const layers = await listLayers(apiUrl, await getToken());
     vm.mapVM.collabLayers(layers);
-    layers.forEach((layer) => registerLayerPolling(vm, apiUrl, layer, actorId, getToken));
+    // Only register layers we haven't seen yet -- re-registering an already
+    // visible layer would hand it a brand new (empty) layerGroup that never
+    // gets added to the map, silently blanking it out until its View switch
+    // is toggled off and back on.
+    layers
+        .filter((layer) => !vm.mapVM.onlineLayers.has(layerKeyFor(layer.id)))
+        .forEach((layer) => registerLayerPolling(vm, apiUrl, layer, actorId, getToken));
     vm.mapVM.layersDrawer?.refresh?.();
     return layers;
 }
@@ -82,8 +129,14 @@ export async function createCollabLayer(vm, apiUrl, name, actorId, getToken) {
     if (!layer) return null;
     const list = vm.mapVM.collabLayers();
     vm.mapVM.collabLayers([...list, layer]);
+    const key = layerKeyFor(layer.id);
     registerLayerPolling(vm, apiUrl, layer, actorId, getToken);
+    // Auto-show layers the user just created -- matches the 'ov.<drawerKey>'
+    // flag both the layers drawer (main.js) and the Config modal's View
+    // switch (Config.js collabLayerRows) read to decide initial visibility.
+    localStorage.setItem(`ov.online-${key}`, '1');
     vm.mapVM.layersDrawer?.refresh?.();
+    vm.mapVM.refreshPollingLayer(key);
     return layer;
 }
 
@@ -95,10 +148,23 @@ function drawCollabMarkers(vm, layerGroup, data, apiUrl, layerId, key, actorId, 
         const icon = buildMarkerBadgeIcon({ icon: marker.icon, fill: marker.fill || DEFAULT_FILL });
 
         const leafletMarker = L.marker([marker.lat, marker.lng], { icon });
-        leafletMarker.bindPopup(() => buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken), {
-            minWidth: 240,
-            maxWidth: 280,
+
+        // Bind a concrete, already-built element rather than Leaflet's
+        // "content factory function" form of bindPopup -- that form gets
+        // re-invoked on every popup.update() call, not just on open, and
+        // loadMarkerContent() below calls update() after each async Ops
+        // Log fetch. A function-content popup would rebuild itself (and
+        // re-fetch, and re-update(), ...) in an unbounded loop. Fetching is
+        // instead deferred to the "popupopen" event so a marker's Ops Log
+        // entry is only pulled once the user actually clicks it.
+        const { el, state } = buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken, leafletMarker);
+        leafletMarker.bindPopup(el, { minWidth: 260, maxWidth: 320 });
+        leafletMarker.on("popupopen", () => {
+            busyLayerKeys.add(key);
+            loadMarkerContent(vm, marker, el, leafletMarker, state);
         });
+        leafletMarker.on("popupclose", () => busyLayerKeys.delete(key));
+
         layerGroup.addLayer(leafletMarker);
     });
 }
@@ -106,17 +172,24 @@ function drawCollabMarkers(vm, layerGroup, data, apiUrl, layerId, key, actorId, 
 // Any marker on a visible layer can be edited/deleted -- protection against
 // accidental changes comes from requiring an explicit Edit/Delete button
 // click (and a confirm step for delete), not from a separate "edit mode".
-function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken) {
+//
+// The marker record only carries GPS/style + Ops Log entry ids -- title,
+// description and comment text are all resolved live from the Ops Log
+// (source of truth), fetched lazily on "popupopen" (see drawCollabMarkers).
+function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken, leafletMarker) {
     const el = document.createElement("div");
     el.className = "collab-marker-popup";
 
-    const escHtml = (s) => String(s || "").replace(/[&<>"']/g, (c) => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-    }[c]));
-
     el.innerHTML = `
-        <div class="collab-marker-desc">${escHtml(marker.description) || "<em>No description</em>"}</div>
-        <div class="collab-marker-meta">Added by <span class="collab-marker-author">user ${escHtml(marker.createdBy)}</span>${marker.updatedAt ? ` · updated ${timeAgo(marker.updatedAt)}` : ""}</div>
+        <div class="collab-marker-title">Loading…</div>
+        <div class="collab-marker-desc"></div>
+        <div class="collab-marker-meta"></div>
+        <div class="collab-marker-comments"></div>
+        <div class="collab-marker-comment-form">
+            <textarea class="collab-comment-input" placeholder="Add a comment…" rows="2" maxlength="${TEXT_CHAR_LIMIT}"></textarea>
+            <div class="collab-char-counter"></div>
+            <button type="button" class="btn btn-sm btn-outline-primary collab-add-comment-btn">Comment</button>
+        </div>
         <div class="collab-marker-actions">
             <button type="button" class="btn btn-sm btn-outline-secondary collab-edit-marker-btn">Edit</button>
             <button type="button" class="btn btn-sm btn-outline-danger collab-delete-marker-btn">Delete</button>
@@ -134,10 +207,13 @@ function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken)
     const actionsBox = el.querySelector(".collab-marker-actions");
     const confirmDeleteBtn = el.querySelector(".collab-confirm-delete-btn");
     const cancelDeleteBtn = el.querySelector(".collab-cancel-delete-btn");
+    const commentInput = el.querySelector(".collab-comment-input");
+    const addCommentBtn = el.querySelector(".collab-add-comment-btn");
+    wireCharCounter(commentInput, TEXT_CHAR_LIMIT);
 
     editBtn.addEventListener("click", () => {
         vm.mapVM.map.closePopup();
-        openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, L.latLng(marker.lat, marker.lng), getToken);
+        openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, L.latLng(marker.lat, marker.lng), getToken, state.mainEntry);
     });
 
     deleteBtn.addEventListener("click", () => {
@@ -149,22 +225,185 @@ function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken)
         actionsBox.classList.remove("d-none");
     });
     confirmDeleteBtn.addEventListener("click", async () => {
+        // Whatever title/description the marker currently resolves to (or
+        // blank, if the Ops Log lookup above hasn't landed yet) becomes the
+        // deletion audit entry's content -- there's nothing left to stamp
+        // an opsLogId onto afterwards, so it only lives in the Ops Log.
+        const title = stripSubjectPrefix(state.mainEntry?.Subject);
+        const description = stripAuditFooter(state.mainEntry?.Text);
+        vm.mapVM.map.closePopup(); // clears busyLayerKeys (via "popupclose") before the refresh below
+        await logMarkerAudit(vm, "deleted", layerId, marker, title, description);
         await deleteMarker(apiUrl, layerId, marker.id, actorId, await getToken());
         vm.mapVM.refreshPollingLayer(key);
     });
 
-    // Resolve the raw user id shown above into a display name once it's
-    // available (cached/deduped by vm.resolvePersonName). The placeholder
-    // stays if the marker's own popup gets closed/rebuilt before this
-    // resolves -- updating a detached node is a harmless no-op.
-    if (marker.createdBy && vm.resolvePersonName) {
-        const authorEl = el.querySelector(".collab-marker-author");
-        vm.resolvePersonName(marker.createdBy).then((name) => {
-            if (authorEl && name) authorEl.textContent = name;
-        });
+    addCommentBtn.addEventListener("click", async () => {
+        const text = commentInput.value.trim();
+        if (!text) return;
+        addCommentBtn.disabled = true;
+        try {
+            const opsLogId = await logMarkerComment(vm, layerId, marker, text);
+            if (opsLogId == null) return;
+            await addMarkerComment(apiUrl, layerId, marker.id, opsLogId, actorId, await getToken());
+            marker.commentOpsLogIds = Array.isArray(marker.commentOpsLogIds) ? [...marker.commentOpsLogIds, opsLogId] : [opsLogId];
+            commentInput.value = "";
+            await renderComments(vm, el.querySelector(".collab-marker-comments"), marker, leafletMarker);
+        } finally {
+            addCommentBtn.disabled = false;
+        }
+    });
+
+    // Populated on "popupopen" (see drawCollabMarkers) via loadMarkerContent,
+    // which fetches the marker's title/description/comments from the Ops
+    // Log. `state.mainEntry` is stashed there so the Edit/Delete handlers
+    // above can read whatever title and description are currently showing.
+    const state = { mainEntry: null };
+
+    return { el, state };
+}
+
+function loadMarkerContent(vm, marker, el, leafletMarker, state) {
+    const titleEl = el.querySelector(".collab-marker-title");
+    const descEl = el.querySelector(".collab-marker-desc");
+    const metaEl = el.querySelector(".collab-marker-meta");
+
+    return fetchOpsLogEntry(vm, marker.opsLogId).then((entry) => {
+        state.mainEntry = entry;
+        if (entry) {
+            titleEl.textContent = stripSubjectPrefix(entry.Subject) || "Untitled marker";
+            descEl.textContent = stripAuditFooter(entry.Text);
+            const author = entry.CreatedBy?.FullName || (marker.createdBy ? `user ${marker.createdBy}` : "Unknown");
+            metaEl.textContent = `Added by ${author}${marker.updatedAt ? ` · updated ${timeAgo(marker.updatedAt)}` : ""}`;
+        } else {
+            titleEl.textContent = "Untitled marker";
+            descEl.innerHTML = "<em>Ops Log entry unavailable</em>";
+            metaEl.textContent = marker.createdBy ? `Added by user ${marker.createdBy}` : "";
+        }
+        leafletMarker.getPopup()?.update();
+        return renderComments(vm, el.querySelector(".collab-marker-comments"), marker, leafletMarker);
+    });
+}
+
+function renderComments(vm, commentsEl, marker, leafletMarker) {
+    const ids = Array.isArray(marker.commentOpsLogIds) ? marker.commentOpsLogIds : [];
+    if (!ids.length) {
+        commentsEl.innerHTML = "";
+        return Promise.resolve();
     }
 
-    return el;
+    commentsEl.innerHTML = `<div class="collab-marker-comments-loading">Loading comments…</div>`;
+    leafletMarker.getPopup()?.update();
+
+    return Promise.all(ids.map((id) => fetchOpsLogEntry(vm, id))).then((entries) => {
+        commentsEl.innerHTML = entries
+            .filter(Boolean)
+            .sort((a, b) => new Date(a.TimeLogged || 0) - new Date(b.TimeLogged || 0))
+            .map((c) => `
+                <div class="collab-marker-comment">
+                    <div class="collab-marker-comment-text">${escHtml(stripAuditFooter(c.Text))}</div>
+                    <div class="collab-marker-comment-meta">${escHtml(c.CreatedBy?.FullName || "Unknown")} · ${timeAgo(c.TimeLogged)}</div>
+                </div>
+            `).join("");
+        leafletMarker.getPopup()?.update();
+    });
+}
+
+// ── Ops Log audit trail ──────────────────────────────────────────────
+//
+// Every marker create/edit/delete/comment is logged to Beacon's Operations
+// Log, and the Ops Log is the source of truth for the marker's title,
+// description and comment thread -- the marker record itself only stores
+// GPS/style plus the entry ids (opsLogId, commentOpsLogIds), resolved back
+// via BeaconClient.operationslog.get() (loadMarkerContent/renderComments
+// above). A Beacon Ops Log entry can only be edited by its author, so
+// editing a marker always creates a *new* entry and re-points opsLogId at
+// it rather than mutating the old one -- comments work the same way, each
+// one just its own entry appended to commentOpsLogIds. Tag 4 is a
+// known-good TagIds value confirmed to work against the live API -- there
+// isn't a dedicated "map marker" tag to select instead.
+const MARKER_AUDIT_TAG_ID = 4;
+
+// Every entry this feature creates gets this prefix on its Subject, so it's
+// identifiable at a glance among an entity's other Ops Log entries in
+// Beacon itself.
+const AUDIT_SUBJECT_PREFIX = "Lighthouse LAD - ";
+
+// The full audit detail (coords/icon/colour/layer/action) is appended to
+// Text after this marker so it's captured in the Ops Log entry itself, but
+// the marker popup only ever shows what's *before* it -- just the user's
+// own title/description/comment, not the surrounding metadata. Deliberately
+// distinctive so it'll never collide with anything a user actually types.
+const AUDIT_FOOTER_MARKER = "\n\n————— Lighthouse LAD marker details —————\n";
+
+function buildMarkerAuditFooter(action, layerName, marker) {
+    const coords = `${marker.lat.toFixed(5)}, ${marker.lng.toFixed(5)}`;
+    return `${AUDIT_FOOTER_MARKER}Collaborative marker ${action} on layer "${layerName}" at ${coords}. Icon: ${marker.icon}, colour: ${marker.fill}.`;
+}
+
+/** Strips the audit-detail footer back off an Ops Log entry's Text for display. */
+function stripAuditFooter(text) {
+    const idx = (text || "").indexOf(AUDIT_FOOTER_MARKER);
+    return idx === -1 ? (text || "") : text.slice(0, idx);
+}
+
+/** Strips the "Lighthouse LAD - " prefix back off an Ops Log entry's Subject for display. */
+function stripSubjectPrefix(subject) {
+    return subject && subject.startsWith(AUDIT_SUBJECT_PREFIX) ? subject.slice(AUDIT_SUBJECT_PREFIX.length) : (subject || "");
+}
+
+function createOpsLogAuditEntry(vm, subject, text) {
+    if (typeof vm.createOpsLogEntry !== "function") return Promise.resolve(null);
+
+    const payload = {
+        Subject: `${AUDIT_SUBJECT_PREFIX}${subject}`,
+        Text: text,
+        Important: false,
+        Restricted: false,
+        ActionRequired: false,
+        TagIds: [MARKER_AUDIT_TAG_ID],
+        TimeLogged: new Date().toISOString(),
+    };
+
+    return new Promise((resolve) => {
+        vm.createOpsLogEntry(payload, (result) => resolve(result?.Id ?? null));
+    });
+}
+
+/**
+ * Log a marker create/edit/delete to the Operations Log and resolve with
+ * the new entry's id (or null if unavailable/failed) so it can be attached
+ * to the marker as its opsLogId.
+ *
+ * The Subject always leads with "Collaborative marker <action>" -- same as
+ * a comment's fixed "Collaborative marker comment" -- so what happened is
+ * clear at a glance in Beacon's Ops Log list without opening the entry;
+ * the user's own title (if any) is appended for extra context, but never
+ * stands in for it alone the way it used to.
+ */
+function logMarkerAudit(vm, action, layerId, marker, title, description) {
+    const layerName = vm.mapVM.collabLayers().find((l) => l.id === layerId)?.name || layerId;
+    const subject = `Collaborative marker ${action}${title ? ` - ${title}` : ""}`;
+    const text = `${description || ""}${buildMarkerAuditFooter(action, layerName, marker)}`;
+    return createOpsLogAuditEntry(vm, subject, text);
+}
+
+/**
+ * Log a comment on a marker to the Operations Log and resolve with the new
+ * entry's id (or null if unavailable/failed) so it can be appended to the
+ * marker's commentOpsLogIds.
+ */
+function logMarkerComment(vm, layerId, marker, commentText) {
+    const layerName = vm.mapVM.collabLayers().find((l) => l.id === layerId)?.name || layerId;
+    const text = `${commentText}${buildMarkerAuditFooter("commented on", layerName, marker)}`;
+    return createOpsLogAuditEntry(vm, "Collaborative marker comment", text);
+}
+
+/** Fetch a single Ops Log entry by id, resolving null if unavailable/failed. */
+function fetchOpsLogEntry(vm, entryId) {
+    if (entryId == null || typeof vm.getOpsLogEntry !== "function") return Promise.resolve(null);
+    return new Promise((resolve) => {
+        vm.getOpsLogEntry(entryId, (result) => resolve(result || null));
+    });
 }
 
 // ── Marker create/edit form (inline popup) ──────────────────────────
@@ -194,13 +433,19 @@ function buildColorSwatchesHtml(selectedFill) {
  * Open an inline popup form (create if `marker` is null, edit otherwise)
  * at the given latlng. Only an explicit Save click writes data.
  *
+ * `currentEntry` is the marker's currently-resolved Ops Log entry (from
+ * loadMarkerContent, via the popup's Edit button) so the title/description
+ * fields can be prefilled without a second fetch -- it's undefined for a
+ * brand new marker, or if the lookup hadn't landed yet when Edit was
+ * clicked, in which case the fields just start blank.
+ *
  * Icon and color are each picked from a small dropdown toggle button, with
  * a live preview badge showing the combined result. Both dropdowns render
  * as floating panels appended to the map container -- outside the Leaflet
  * popup's own content -- so opening/closing either one never changes the
  * popup's size or makes it reposition itself.
  */
-function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getToken) {
+function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getToken, currentEntry) {
     let icon = marker?.icon || DEFAULT_MARKER_ICON_KEY;
     let fill = marker?.fill || DEFAULT_FILL;
 
@@ -223,7 +468,10 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
                 <i class="fas fa-caret-down ms-auto"></i>
             </button>
         </div>
-        <textarea class="collab-desc-input" placeholder="Description" rows="2">${marker?.description || ""}</textarea>
+        <input type="text" class="collab-title-input" placeholder="Title" maxlength="200" value="${escHtml(stripSubjectPrefix(currentEntry?.Subject))}">
+        <textarea class="collab-desc-input" placeholder="Description" rows="2" maxlength="${TEXT_CHAR_LIMIT}">${escHtml(stripAuditFooter(currentEntry?.Text))}</textarea>
+        <div class="collab-char-counter"></div>
+        <div class="collab-marker-audit-notice"><i class="fas fa-info-circle"></i> All marker actions -- create, edit, delete, and comments -- create an Ops Log entries.</div>
         <div class="collab-form-actions">
             <button type="button" class="btn btn-sm btn-secondary collab-cancel-btn">Cancel</button>
             <button type="button" class="btn btn-sm btn-primary collab-save-btn">Save</button>
@@ -233,6 +481,8 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
     const previewEl = el.querySelector(".collab-style-preview");
     const iconToggle = el.querySelector(".collab-icon-toggle");
     const colorToggle = el.querySelector(".collab-color-toggle");
+
+    wireCharCounter(el.querySelector(".collab-desc-input"), TEXT_CHAR_LIMIT);
 
     const renderPreview = () => {
         previewEl.innerHTML = `<span class="collab-marker-badge"><i class="fas ${faClassForIconKey(icon)}"></i></span>`;
@@ -278,13 +528,21 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
         .setContent(el)
         .openOn(vm.mapVM.map);
 
-    popup.on("remove", closeFloatingDropdown);
+    // Keeps the layer's poll-driven redraw (registerLayerPolling's
+    // skipIfBusy) from clearing+rebuilding every marker -- and closing this
+    // form -- out from under whatever the user is mid-typing.
+    busyLayerKeys.add(key);
+    popup.on("remove", () => {
+        busyLayerKeys.delete(key);
+        closeFloatingDropdown();
+    });
 
     el.querySelector(".collab-cancel-btn").addEventListener("click", () => {
         vm.mapVM.map.closePopup(popup);
     });
 
     el.querySelector(".collab-save-btn").addEventListener("click", async () => {
+        const title = el.querySelector(".collab-title-input").value.trim();
         const description = el.querySelector(".collab-desc-input").value.trim();
         const payload = {
             id: marker?.id,
@@ -292,9 +550,12 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
             lng: latlng.lng,
             icon,
             fill,
-            description,
         };
         vm.mapVM.map.closePopup(popup);
+
+        const opsLogId = await logMarkerAudit(vm, marker ? "edited" : "created", layerId, payload, title, description);
+        if (opsLogId != null) payload.opsLogId = opsLogId;
+
         await upsertMarker(apiUrl, layerId, payload, actorId, await getToken());
         vm.mapVM.refreshPollingLayer(key);
     });

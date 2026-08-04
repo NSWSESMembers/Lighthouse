@@ -2791,9 +2791,15 @@
 
                                                 <hr class="my-4">
 
-                                                <h6 class="fw-semibold mb-2">
-                                                    <i class="fa fa-users me-1"></i>Collaborative Layers
-                                                </h6>
+                                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                                    <h6 class="fw-semibold mb-0">
+                                                        <i class="fa fa-users me-1"></i>Collaborative Layers
+                                                    </h6>
+                                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button" title="Refresh layer list"
+                                                        data-bind="click: config.refreshCollabLayers, disable: config.refreshingCollabLayers">
+                                                        <i class="fa fa-sync" data-bind="css: { 'fa-spin': config.refreshingCollabLayers }"></i>
+                                                    </button>
+                                                </div>
                                                 <p class="small text-muted mb-3">
                                                     Shared marker layers that everyone in your organisation can see and
                                                     edit together. Enable View to show a layer on the map — once

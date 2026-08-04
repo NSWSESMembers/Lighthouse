@@ -2581,6 +2581,17 @@ function VM() {
         });
     }
 
+    // Fetches a single Ops Log entry by id. Used by the collaborative map
+    // layers feature, which stores only an entry id on each marker and
+    // treats the Ops Log entry itself as the source of truth for the
+    // marker's title/description/comments (see mapLayers/collabLayer.js).
+    self.getOpsLogEntry = async function (entryId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.operationslog.get(entryId, apiHost, params.userId, t, function (data) {
+            cb(data);
+        });
+    }
+
     self.updateTeamStatus = function (tasking, status, payload, cb) {
         BeaconClient.tasking.updateTeamStatus(apiHost, tasking.id(), status, payload, token, function (data) {
             tasking.job.fetchTasking({ force: true });
