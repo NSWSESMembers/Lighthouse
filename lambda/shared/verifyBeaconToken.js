@@ -1,11 +1,14 @@
 'use strict';
 
-// SES's Beacon identity server (Duende/IdentityServer4). Configured via
-// deployment env vars, never derived from the token or request, so a
-// caller can't point verification at a JWKS they control.
-const TRUSTED_ISS = process.env.TRUSTED_ISS;
-const JWKS_URI = process.env.JWKS_URI;
-const EXPECTED_AUD = process.env.EXPECTED_AUD;
+// SES's Beacon identity server (Duende/IdentityServer4) runs one instance
+// per environment (prod, train, ...), each issuing tokens with a different
+// `iss` and its own signing keys at `<iss>/.well-known/jwks`. The allowed
+// issuers are configured via a deployment env var, never derived from the
+// token itself, so a caller can't point verification at a JWKS they control.
+const TRUSTED_ISS = (process.env.TRUSTED_ISS || '')
+  .split(',')
+  .map((iss) => iss.trim())
+  .filter(Boolean);
 const REQUIRED_SCOPE = 'beaconApi';
 
 // jose ships ESM-only; a CommonJS module has to load it via dynamic
@@ -17,12 +20,14 @@ function loadJose() {
   return josePromise;
 }
 
-let jwksPromise;
-function getJwks() {
-  if (!jwksPromise) {
-    jwksPromise = loadJose().then(({ createRemoteJWKSet }) => createRemoteJWKSet(new URL(JWKS_URI)));
+// One remote JWKS per trusted issuer, cached across warm invocations.
+const jwksByIssuer = new Map();
+async function getJwks(iss) {
+  if (!jwksByIssuer.has(iss)) {
+    const { createRemoteJWKSet } = await loadJose();
+    jwksByIssuer.set(iss, createRemoteJWKSet(new URL(`${iss}/.well-known/jwks`)));
   }
-  return jwksPromise;
+  return jwksByIssuer.get(iss);
 }
 
 /**
@@ -34,11 +39,27 @@ async function verifyBeaconToken(authorizationHeader) {
   const match = /^Bearer (.+)$/.exec(authorizationHeader || '');
   if (!match) throw new Error('Missing or malformed Authorization header');
 
-  const [{ jwtVerify }, jwks] = await Promise.all([loadJose(), getJwks()]);
+  const { jwtVerify, decodeJwt } = await loadJose();
+
+  // This iss is unverified until jwtVerify checks it below - it's only
+  // used to pick which allow-listed issuer's JWKS to fetch, never to
+  // build a URL from an untrusted value.
+  let unverifiedIss;
+  try {
+    unverifiedIss = decodeJwt(match[1]).iss;
+  } catch {
+    throw new Error('Malformed token');
+  }
+
+  if (!TRUSTED_ISS.includes(unverifiedIss)) {
+    throw new Error(`Untrusted token issuer: ${unverifiedIss}`);
+  }
+
+  const jwks = await getJwks(unverifiedIss);
 
   const { payload } = await jwtVerify(match[1], jwks, {
-    issuer: TRUSTED_ISS,
-    audience: EXPECTED_AUD,
+    issuer: unverifiedIss,
+    audience: `${unverifiedIss}/resources`,
     algorithms: ['RS256'],
   });
 
