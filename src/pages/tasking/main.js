@@ -169,12 +169,42 @@ const defaultRedSvgIcon = L.divIcon({
     popupAnchor: [0, -36],
 });
 
+// Beacon member id (the JWT's `sub` claim), decoded from the access token
+// purely for UI purposes -- deciding whether to show/hide the collaborative
+// map layers' Edit/Delete-marker, Add-marker and Delete-layer controls for
+// read-only/delete-restricted layers. This has to be `sub` specifically
+// (not params.personId or params.userId) because it's what
+// lambda/map-layers-v2's verifyBeaconToken.js hands the Lambda as the
+// caller's *verified* identity -- the Lambda is the one that actually
+// enforces these permissions from its own signature-checked copy of the
+// token; decoding it again here just lets the UI predict that outcome
+// instead of the user hitting a 403 after the fact. No verification happens
+// client-side -- an untrusted decode would be pointless as a security
+// control, which is exactly why enforcement lives server-side.
+let currentMemberId = null;
+
+function decodeJwtSub(jwt) {
+    try {
+        const payloadB64 = jwt.split('.')[1];
+        const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
+        return JSON.parse(json)?.sub || null;
+    } catch {
+        return null;
+    }
+}
+
+/** Sync getter for the current member id -- see currentMemberId above. */
+function getMemberId() {
+    return currentMemberId;
+}
+
 /**
  * Set the current token and wake any waiters.
  */
 function setToken(newToken, newTokenExp) {
     token = newToken;
     tokenExp = newTokenExp;
+    currentMemberId = decodeJwtSub(newToken);
 
     if (resolveTokenReady) {
         // First token arrival unblocks anyone awaiting getToken()
@@ -245,8 +275,8 @@ installMapContextMenu({
     // existing `var myViewModel;` module-level pattern below) -- these
     // callbacks only run later, on an actual right-click, by which point
     // it's fully populated.
-    canAddMarker: () => getVisibleCollabLayers(myViewModel).length > 0,
-    onAddMarker: (latlng) => startAddMarkerFlow(myViewModel, sourceUrl, markerActorId, latlng, getToken),
+    canAddMarker: () => getVisibleCollabLayers(myViewModel, getMemberId).length > 0,
+    onAddMarker: (latlng) => startAddMarkerFlow(myViewModel, sourceUrl, markerActorId, latlng, getToken, getMemberId),
 });
 
 
@@ -1394,6 +1424,15 @@ function VM() {
         getToken: () => getToken(),
         apiUrl: sourceUrl,
         userId: params.userId,
+        // Collaborative-layer actions (create/delete layer) are attributed
+        // (for display/audit only) using the same identity as every
+        // marker/comment op on that layer (markerActorId, i.e.
+        // params.personId), not params.userId.
+        actorId: markerActorId,
+        // Sync getter for the verified Beacon member id (JWT `sub`) -- see
+        // getMemberId above. Used by Config.js to decide whether the
+        // Delete-layer button is enabled for a given row.
+        getMemberId,
     };
 
     self.config = new ConfigVM(self, configDeps);
@@ -3043,7 +3082,7 @@ function VM() {
     registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
     registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
     registerRainRadarLayer(self, map);
-    registerCollabLayers(self, sourceUrl, markerActorId, getToken);
+    registerCollabLayers(self, sourceUrl, markerActorId, getToken, getMemberId);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({

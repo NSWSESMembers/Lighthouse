@@ -2,7 +2,7 @@
 
 const crypto = require('crypto');
 const { getLayerObject, putLayerObject, updateIndex } = require('../lib/s3Store');
-const { json, badRequest, notFound } = require('../lib/response');
+const { json, badRequest, notFound, forbidden } = require('../lib/response');
 
 // Must stay in sync with the icon keys in
 // src/pages/tasking/components/collab_marker_icons.js (MARKER_ICON_GROUPS).
@@ -26,7 +26,7 @@ const HEX_COLOR = /^#[0-9a-fA-F]{3,8}$/;
 // entry and commentOpsLogIds for the comment thread. The Ops Log is the
 // source of truth for all of that text; the client resolves the pointers
 // via BeaconClient.operationslog.get() when rendering a marker.
-module.exports = async function upsertFeature(event) {
+module.exports = async function upsertFeature(event, claims) {
   const layerId = event.pathParameters?.id;
   let body;
   try {
@@ -36,7 +36,11 @@ module.exports = async function upsertFeature(event) {
   }
 
   const apiUrl = body.apiUrl;
+  // actorId is client-supplied bookkeeping (stamped onto the marker as
+  // createdBy/updatedBy for display) -- never used for authorization, see
+  // memberId below.
   const actorId = String(body.actorId || '').slice(0, 100);
+  const memberId = String(claims?.sub || '');
   const input = body.marker || {};
 
   if (!apiUrl || !layerId) return badRequest('apiUrl and layer id are required');
@@ -46,6 +50,14 @@ module.exports = async function upsertFeature(event) {
 
   const layer = await getLayerObject(apiUrl, layerId);
   if (!layer) return notFound('Layer not found');
+
+  // On a read-only layer, only the layer's creator may create/edit markers
+  // -- everyone else is limited to commenting (see addMarkerComment.js).
+  // Authorized against the verified token's memberId, not the
+  // client-supplied actorId.
+  if (layer.readOnly && memberId !== layer.createdByMemberId) {
+    return forbidden('Only the layer creator can add or edit markers on this read-only layer');
+  }
 
   const now = new Date().toISOString();
   const icon = ICON_KEYS.has(input.icon) ? input.icon : DEFAULT_ICON;

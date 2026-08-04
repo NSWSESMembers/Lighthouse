@@ -3,7 +3,7 @@ import ko from 'knockout';
 
 import * as bootstrap from 'bootstrap5'; // Modal, Tooltip, etc.
 import { Enum } from '../utils/enum.js';
-import { createCollabLayer, refreshCollabLayerList } from '../mapLayers/collabLayer.js';
+import { createCollabLayer, refreshCollabLayerList, deleteCollabLayer } from '../mapLayers/collabLayer.js';
 
 
 
@@ -197,10 +197,19 @@ export function ConfigVM(root, deps) {
     // ── Collaborative map layers ──
     self.collabLayers = root.mapVM?.collabLayers || ko.observableArray([]);
     self.newLayerName = ko.observable('');
+    // Fixed for a layer's whole lifetime once created -- there's no later
+    // "edit layer settings" flow, by design (see mapLayers/collabLayer.js).
+    // Each backed by a radio pair in tasking.html, all following the same
+    // "Anyone can ___" / "Only I can/I've disabled ___" shape for a
+    // consistent mental model across the three permissions.
+    self.newLayerReadOnly = ko.observable(false); // marker permissions: "Anyone can add markers" / "Only I can add markers"
+    self.newLayerAllowDeleteByOthers = ko.observable(true); // delete permissions: "Anyone can delete this layer" / "Only I can delete this layer"
+    self.newLayerDisableComments = ko.observable(false); // comment permissions: "Anyone can comment" / "Comments are disabled"
     self.creatingCollabLayer = ko.observable(false);
     self.collabLayerError = ko.observable('');
     self.collabLayerSearch = ko.observable(''); // filters the (possibly long) layer list below
     self.refreshingCollabLayers = ko.observable(false);
+    self.deletingCollabLayerId = ko.observable(null); // id of the row currently mid-delete, if any
 
     function relativeTime(iso) {
         if (!iso) return 'never';
@@ -243,6 +252,8 @@ export function ConfigVM(root, deps) {
         .map(layer => {
             const key = `collab-${layer.id}`;
             const drawerKey = `online-${key}`;
+            const memberId = deps.getMemberId?.();
+            const isCreator = !!memberId && memberId === layer.createdByMemberId;
             const row = {
                 layer,
                 key,
@@ -251,8 +262,21 @@ export function ConfigVM(root, deps) {
                 markerCount: layer.markerCount || 0,
                 lastUsedLabel: relativeTime(layer.lastUsedAt),
                 viewEnabled: ko.observable(localStorage.getItem(`ov.${drawerKey}`) === '1'),
+                readOnly: !!layer.readOnly,
+                disableComments: !!layer.disableComments,
+                // allowDeleteByOthers defaults true server-side, so an
+                // absent/undefined value (older layers) reads as deletable.
+                canDelete: layer.allowDeleteByOthers !== false || isCreator,
+                confirmingDelete: ko.observable(false),
             };
+            // Precomputed here (rather than a ternary in the data-bind
+            // attribute) because knockout-secure-binding's expression
+            // grammar doesn't support the conditional (?:) operator.
+            row.deleteTitle = row.canDelete ? 'Delete layer' : 'Only the layer creator can delete this layer';
             row.viewEnabled.subscribe((v) => self._applyCollabLayerView(row, v));
+            row.requestDeleteLayer = () => row.confirmingDelete(true);
+            row.cancelDeleteLayer = () => row.confirmingDelete(false);
+            row.confirmDeleteLayer = () => self.deleteCollabLayer(row);
             return row;
         }));
 
@@ -270,9 +294,17 @@ export function ConfigVM(root, deps) {
         self.collabLayerError('');
         self.creatingCollabLayer(true);
         try {
-            const layer = await createCollabLayer(root, deps.apiUrl, name, deps.userId, deps.getToken);
+            const permissions = {
+                readOnly: self.newLayerReadOnly(),
+                allowDeleteByOthers: self.newLayerAllowDeleteByOthers(),
+                disableComments: self.newLayerDisableComments(),
+            };
+            const layer = await createCollabLayer(root, deps.apiUrl, name, deps.actorId, deps.getToken, permissions, deps.getMemberId);
             if (!layer) throw new Error('Create failed');
             self.newLayerName('');
+            self.newLayerReadOnly(false);
+            self.newLayerAllowDeleteByOthers(true);
+            self.newLayerDisableComments(false);
         } catch (err) {
             console.error('Error creating collaborative layer:', err);
             self.collabLayerError('Failed to create layer. Try again later.');
@@ -290,7 +322,7 @@ export function ConfigVM(root, deps) {
         self.collabLayerError('');
         self.refreshingCollabLayers(true);
         try {
-            await refreshCollabLayerList(root, deps.apiUrl, deps.userId, deps.getToken);
+            await refreshCollabLayerList(root, deps.apiUrl, deps.actorId, deps.getToken, deps.getMemberId);
         } catch (err) {
             console.error('Error refreshing collaborative layers:', err);
             self.collabLayerError('Failed to refresh layer list. Try again later.');
@@ -299,7 +331,27 @@ export function ConfigVM(root, deps) {
         }
     };
 
-    // Named method (rather than an inline function in the data-bind attribute)
+    // Actual delete, fired from row.confirmDeleteLayer above once the user
+    // has clicked through the row's inline confirm step (same two-step
+    // pattern as a marker's own delete confirm in collabLayer.js).
+    self.deleteCollabLayer = async (row) => {
+        if (!deps.apiUrl || self.deletingCollabLayerId()) return;
+
+        self.collabLayerError('');
+        self.deletingCollabLayerId(row.layer.id);
+        try {
+            const ok = await deleteCollabLayer(root, deps.apiUrl, row.layer.id, deps.actorId, deps.getToken);
+            if (!ok) throw new Error('Delete failed');
+        } catch (err) {
+            console.error('Error deleting collaborative layer:', err);
+            self.collabLayerError('Failed to delete layer. Try again later.');
+            row.confirmingDelete(false);
+        } finally {
+            self.deletingCollabLayerId(null);
+        }
+    };
+
+    // Named methods (rather than inline functions in data-bind attributes)
     // because knockout-secure-binding's restricted grammar doesn't support
     // control-flow statements like `if` inside inline function literals.
     self.handleNewLayerNameKeydown = (data, event) => {

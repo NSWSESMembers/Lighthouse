@@ -19,7 +19,8 @@ function json(statusCode, body) {
 }
 
 const badRequest = (message) => json(400, { error: message });
+const forbidden = (message) => json(403, { error: message });
 const notFound = (message) => json(404, { error: message });
 const serverError = (message) => json(500, { error: message || 'Internal server error' });
 
-module.exports = { json, badRequest, notFound, serverError, CORS_HEADERS };
+module.exports = { json, badRequest, forbidden, notFound, serverError, CORS_HEADERS };

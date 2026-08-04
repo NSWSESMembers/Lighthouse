@@ -85,9 +85,11 @@ export async function listLayers(apiUrl, token) {
  * @param {string} name
  * @param {string} actorId
  * @param {string} token  Beacon access token (Authorization: Bearer).
+ * @param {{readOnly?: boolean, allowDeleteByOthers?: boolean, disableComments?: boolean}} [permissions]
+ *   Fixed for the layer's lifetime -- there's no later "edit layer settings" flow.
  * @returns {Promise<Object|null>} the created layer summary, or null on failure
  */
-export async function createLayer(apiUrl, name, actorId, token) {
+export async function createLayer(apiUrl, name, actorId, token, permissions = {}) {
     const trimmed = (name || '').trim();
     if (!apiUrl || !trimmed) return null;
 
@@ -95,7 +97,14 @@ export async function createLayer(apiUrl, name, actorId, token) {
         const res = await fetch(LAMBDA_BASE, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ apiUrl, name: trimmed, createdBy: String(actorId) }),
+            body: JSON.stringify({
+                apiUrl,
+                name: trimmed,
+                createdBy: String(actorId),
+                readOnly: !!permissions.readOnly,
+                allowDeleteByOthers: permissions.allowDeleteByOthers !== false,
+                disableComments: !!permissions.disableComments,
+            }),
         });
         if (!res.ok) {
             throw new Error(`Create layer failed with status ${res.status}`);
@@ -111,6 +120,39 @@ export async function createLayer(apiUrl, name, actorId, token) {
     } catch (err) {
         console.warn('[collabLayerSync] createLayer error:', err);
         return null;
+    }
+}
+
+/**
+ * Delete (soft-delete) a collaborative layer. Optimistically removes it
+ * from the local cached index, then fires the remote write.
+ * @param {string} apiUrl
+ * @param {string} layerId
+ * @param {string} actorId
+ * @param {string} token  Beacon access token (Authorization: Bearer).
+ * @returns {Promise<boolean>} true on success
+ */
+export async function deleteLayer(apiUrl, layerId, actorId, token) {
+    if (!apiUrl || !layerId) return false;
+
+    const index = loadCachedLayerIndex();
+    saveCachedLayerIndex(index.filter((l) => l.id !== layerId));
+
+    try {
+        const url = `${LAMBDA_BASE}/${encodeURIComponent(layerId)}` +
+            `?apiUrl=${encodeURIComponent(apiUrl)}&actorId=${encodeURIComponent(actorId)}`;
+        const res = await fetch(url, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) {
+            throw new Error(`deleteLayer failed with status ${res.status}`);
+        }
+        localStorage.removeItem(layerCacheKey(layerId));
+        return true;
+    } catch (err) {
+        console.warn('[collabLayerSync] deleteLayer error:', err);
+        // Restore the optimistically-removed entry so a transient network
+        // failure doesn't silently hide a layer that's still on the server.
+        saveCachedLayerIndex(index);
+        return false;
     }
 }
 

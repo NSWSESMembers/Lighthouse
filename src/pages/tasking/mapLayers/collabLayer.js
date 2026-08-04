@@ -3,6 +3,7 @@ import { MARKER_ICON_GROUPS, DEFAULT_MARKER_ICON_KEY, MARKER_COLOR_SWATCHES, bui
 import {
     listLayers,
     createLayer,
+    deleteLayer,
     fetchLayerMarkers,
     upsertMarker,
     deleteMarker,
@@ -85,6 +86,30 @@ function visibleCollabLayers(vm) {
     });
 }
 
+// ── Permissions ──────────────────────────────────────────────────────
+//
+// A layer's readOnly / allowDeleteByOthers / disableComments flags are set
+// once at creation time (see Config.js's createCollabLayer form) and never
+// change afterward, so there's no staleness concern reading them straight
+// off whatever layer object is already in hand. The Lambda enforces all
+// three independently and authoritatively (see lambda/map-layers-v2) --
+// this client-side gating only decides what to show/hide so a user isn't
+// invited to attempt something that will just come back as a 403.
+//
+// `getMemberId` is a sync () => string|null, the current user's Beacon
+// member id decoded from their own access token (main.js) -- the same
+// identity the Lambda authorizes against via the token's verified `sub`
+// claim, which is why it's what's compared to a layer's
+// `createdByMemberId` rather than the actorId/personId used for
+// createdBy/updatedBy bookkeeping elsewhere in this feature.
+
+/** Whether the current user may create/edit/delete markers on `layer`. */
+function canWriteMarkers(layer, getMemberId) {
+    if (!layer?.readOnly) return true;
+    const memberId = getMemberId?.();
+    return !!memberId && memberId === layer.createdByMemberId;
+}
+
 /**
  * Register the polling Leaflet layer for a single collaborative layer.
  * Visibility is controlled entirely by the existing layers drawer /
@@ -92,7 +117,7 @@ function visibleCollabLayers(vm) {
  * getOverlayDefsForControl — no separate "enabled set" is needed since
  * polling is a no-op while the layer isn't visible.
  */
-function registerLayerPolling(vm, apiUrl, layer, actorId, getToken) {
+function registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId) {
     const key = layerKeyFor(layer.id);
     vm.mapVM.registerPollingLayer(key, {
         label: layer.name,
@@ -100,7 +125,7 @@ function registerLayerPolling(vm, apiUrl, layer, actorId, getToken) {
         refreshMs: REFRESH_MS,
         visibleByDefault: false,
         fetchFn: async () => fetchLayerMarkers(apiUrl, layer.id, await getToken()),
-        drawFn: (layerGroup, data) => drawCollabMarkers(vm, layerGroup, data, apiUrl, layer.id, key, actorId, getToken),
+        drawFn: (layerGroup, data) => drawCollabMarkers(vm, layerGroup, data, apiUrl, layer, key, actorId, getToken, getMemberId),
         skipIfBusy: () => busyLayerKeys.has(key),
     });
 }
@@ -110,7 +135,7 @@ function registerLayerPolling(vm, apiUrl, layer, actorId, getToken) {
  * MapVM for the config modal to bind to, and register/refresh polling
  * layers for any layer not already registered.
  */
-export async function refreshCollabLayerList(vm, apiUrl, actorId, getToken) {
+export async function refreshCollabLayerList(vm, apiUrl, actorId, getToken, getMemberId) {
     const layers = await listLayers(apiUrl, await getToken());
     vm.mapVM.collabLayers(layers);
     // Only register layers we haven't seen yet -- re-registering an already
@@ -119,7 +144,7 @@ export async function refreshCollabLayerList(vm, apiUrl, actorId, getToken) {
     // is toggled off and back on.
     layers
         .filter((layer) => !vm.mapVM.onlineLayers.has(layerKeyFor(layer.id)))
-        .forEach((layer) => registerLayerPolling(vm, apiUrl, layer, actorId, getToken));
+        .forEach((layer) => registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId));
     vm.mapVM.layersDrawer?.refresh?.();
     return layers;
 }
@@ -131,18 +156,18 @@ export async function refreshCollabLayerList(vm, apiUrl, actorId, getToken) {
  * components/mapContextMenu.js + startAddMarkerFlow/getVisibleCollabLayers
  * above) rather than a second contextmenu listener here.
  */
-export async function registerCollabLayers(vm, apiUrl, actorId, getToken) {
-    await refreshCollabLayerList(vm, apiUrl, actorId, getToken);
+export async function registerCollabLayers(vm, apiUrl, actorId, getToken, getMemberId) {
+    await refreshCollabLayerList(vm, apiUrl, actorId, getToken, getMemberId);
 }
 
 /** Create a new named layer, register its polling layer immediately, and refresh the drawer. */
-export async function createCollabLayer(vm, apiUrl, name, actorId, getToken) {
-    const layer = await createLayer(apiUrl, name, actorId, await getToken());
+export async function createCollabLayer(vm, apiUrl, name, actorId, getToken, permissions, getMemberId) {
+    const layer = await createLayer(apiUrl, name, actorId, await getToken(), permissions);
     if (!layer) return null;
     const list = vm.mapVM.collabLayers();
     vm.mapVM.collabLayers([...list, layer]);
     const key = layerKeyFor(layer.id);
-    registerLayerPolling(vm, apiUrl, layer, actorId, getToken);
+    registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId);
     // Auto-show layers the user just created -- matches the 'ov.<drawerKey>'
     // flag both the layers drawer (main.js) and the Config modal's View
     // switch (Config.js collabLayerRows) read to decide initial visibility.
@@ -152,9 +177,29 @@ export async function createCollabLayer(vm, apiUrl, name, actorId, getToken) {
     return layer;
 }
 
+/**
+ * Delete a collaborative layer: fires the remote (soft-)delete, then tears
+ * down its polling registration/map presence and drops it from the list
+ * the config modal binds to. No-op (returns false) if the delete itself
+ * failed, e.g. a 403 from a since-changed allowDeleteByOthers=false --
+ * Config.js's row stays in place in that case rather than disappearing
+ * client-side while still existing server-side.
+ */
+export async function deleteCollabLayer(vm, apiUrl, layerId, actorId, getToken) {
+    const ok = await deleteLayer(apiUrl, layerId, actorId, await getToken());
+    if (!ok) return false;
+
+    const key = layerKeyFor(layerId);
+    vm.mapVM.unregisterPollingLayer(key);
+    localStorage.removeItem(`ov.online-${key}`);
+    vm.mapVM.collabLayers(vm.mapVM.collabLayers().filter((l) => l.id !== layerId));
+    vm.mapVM.layersDrawer?.refresh?.();
+    return true;
+}
+
 // ── Drawing ──────────────────────────────────────────────────────────
 
-function drawCollabMarkers(vm, layerGroup, data, apiUrl, layerId, key, actorId, getToken) {
+function drawCollabMarkers(vm, layerGroup, data, apiUrl, layer, key, actorId, getToken, getMemberId) {
     const markers = (data?.markers || []).filter((m) => !m.deleted);
     markers.forEach((marker) => {
         const icon = buildMarkerBadgeIcon({ icon: marker.icon, fill: marker.fill || DEFAULT_FILL });
@@ -169,7 +214,7 @@ function drawCollabMarkers(vm, layerGroup, data, apiUrl, layerId, key, actorId, 
         // re-fetch, and re-update(), ...) in an unbounded loop. Fetching is
         // instead deferred to the "popupopen" event so a marker's Ops Log
         // entry is only pulled once the user actually clicks it.
-        const { el, state } = buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken, leafletMarker);
+        const { el, state } = buildMarkerPopupEl(vm, apiUrl, layer, key, marker, actorId, getToken, leafletMarker, getMemberId);
         leafletMarker.bindPopup(el, { minWidth: 260, maxWidth: 320 });
         leafletMarker.on("popupopen", () => {
             busyLayerKeys.add(key);
@@ -188,7 +233,11 @@ function drawCollabMarkers(vm, layerGroup, data, apiUrl, layerId, key, actorId, 
 // The marker record only carries GPS/style + Ops Log entry ids -- title,
 // description and comment text are all resolved live from the Ops Log
 // (source of truth), fetched lazily on "popupopen" (see drawCollabMarkers).
-function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken, leafletMarker) {
+function buildMarkerPopupEl(vm, apiUrl, layer, key, marker, actorId, getToken, leafletMarker, getMemberId) {
+    const layerId = layer.id;
+    const canWrite = canWriteMarkers(layer, getMemberId);
+    const canComment = !layer.disableComments;
+
     const el = document.createElement("div");
     el.className = "collab-marker-popup";
 
@@ -197,11 +246,14 @@ function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken,
         <div class="collab-marker-desc"></div>
         <div class="collab-marker-meta"></div>
         <div class="collab-marker-comments"></div>
+        ${canComment ? `
         <div class="collab-marker-comment-form">
             <textarea class="collab-comment-input" placeholder="Add a comment…" rows="2" maxlength="${TEXT_CHAR_LIMIT}"></textarea>
             <div class="collab-char-counter"></div>
             <button type="button" class="btn btn-sm btn-outline-primary collab-add-comment-btn">Comment</button>
         </div>
+        ` : `<div class="collab-marker-comments-disabled"><i class="fas fa-comment-slash"></i> Comments are disabled on this layer</div>`}
+        ${canWrite ? `
         <div class="collab-marker-actions">
             <button type="button" class="btn btn-sm btn-outline-secondary collab-edit-marker-btn">Edit</button>
             <button type="button" class="btn btn-sm btn-outline-danger collab-delete-marker-btn">Delete</button>
@@ -211,65 +263,71 @@ function buildMarkerPopupEl(vm, apiUrl, layerId, key, marker, actorId, getToken,
             <button type="button" class="btn btn-sm btn-danger collab-confirm-delete-btn">Confirm Delete</button>
             <button type="button" class="btn btn-sm btn-secondary collab-cancel-delete-btn">Cancel</button>
         </div>
+        ` : ""}
     `;
-
-    const editBtn = el.querySelector(".collab-edit-marker-btn");
-    const deleteBtn = el.querySelector(".collab-delete-marker-btn");
-    const confirmBox = el.querySelector(".collab-marker-confirm");
-    const actionsBox = el.querySelector(".collab-marker-actions");
-    const confirmDeleteBtn = el.querySelector(".collab-confirm-delete-btn");
-    const cancelDeleteBtn = el.querySelector(".collab-cancel-delete-btn");
-    const commentInput = el.querySelector(".collab-comment-input");
-    const addCommentBtn = el.querySelector(".collab-add-comment-btn");
-    wireCharCounter(commentInput, TEXT_CHAR_LIMIT);
-
-    editBtn.addEventListener("click", () => {
-        vm.mapVM.map.closePopup();
-        openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, L.latLng(marker.lat, marker.lng), getToken, state.mainEntry);
-    });
-
-    deleteBtn.addEventListener("click", () => {
-        actionsBox.classList.add("d-none");
-        confirmBox.classList.remove("d-none");
-    });
-    cancelDeleteBtn.addEventListener("click", () => {
-        confirmBox.classList.add("d-none");
-        actionsBox.classList.remove("d-none");
-    });
-    confirmDeleteBtn.addEventListener("click", async () => {
-        // Whatever title/description the marker currently resolves to (or
-        // blank, if the Ops Log lookup above hasn't landed yet) becomes the
-        // deletion audit entry's content -- there's nothing left to stamp
-        // an opsLogId onto afterwards, so it only lives in the Ops Log.
-        const title = stripSubjectPrefix(state.mainEntry?.Subject);
-        const description = stripAuditFooter(state.mainEntry?.Text);
-        vm.mapVM.map.closePopup(); // clears busyLayerKeys (via "popupclose") before the refresh below
-        await logMarkerAudit(vm, "deleted", layerId, marker, title, description);
-        await deleteMarker(apiUrl, layerId, marker.id, actorId, await getToken());
-        vm.mapVM.refreshPollingLayer(key);
-    });
-
-    addCommentBtn.addEventListener("click", async () => {
-        const text = commentInput.value.trim();
-        if (!text) return;
-        addCommentBtn.disabled = true;
-        try {
-            const opsLogId = await logMarkerComment(vm, layerId, marker, text);
-            if (opsLogId == null) return;
-            await addMarkerComment(apiUrl, layerId, marker.id, opsLogId, actorId, await getToken());
-            marker.commentOpsLogIds = Array.isArray(marker.commentOpsLogIds) ? [...marker.commentOpsLogIds, opsLogId] : [opsLogId];
-            commentInput.value = "";
-            await renderComments(vm, el.querySelector(".collab-marker-comments"), marker, leafletMarker);
-        } finally {
-            addCommentBtn.disabled = false;
-        }
-    });
 
     // Populated on "popupopen" (see drawCollabMarkers) via loadMarkerContent,
     // which fetches the marker's title/description/comments from the Ops
     // Log. `state.mainEntry` is stashed there so the Edit/Delete handlers
-    // above can read whatever title and description are currently showing.
+    // below can read whatever title and description are currently showing.
     const state = { mainEntry: null };
+
+    if (canComment) {
+        const commentInput = el.querySelector(".collab-comment-input");
+        const addCommentBtn = el.querySelector(".collab-add-comment-btn");
+        wireCharCounter(commentInput, TEXT_CHAR_LIMIT);
+
+        addCommentBtn.addEventListener("click", async () => {
+            const text = commentInput.value.trim();
+            if (!text) return;
+            addCommentBtn.disabled = true;
+            try {
+                const opsLogId = await logMarkerComment(vm, layerId, marker, text);
+                if (opsLogId == null) return;
+                await addMarkerComment(apiUrl, layerId, marker.id, opsLogId, actorId, await getToken());
+                marker.commentOpsLogIds = Array.isArray(marker.commentOpsLogIds) ? [...marker.commentOpsLogIds, opsLogId] : [opsLogId];
+                commentInput.value = "";
+                await renderComments(vm, el.querySelector(".collab-marker-comments"), marker, leafletMarker);
+            } finally {
+                addCommentBtn.disabled = false;
+            }
+        });
+    }
+
+    if (canWrite) {
+        const editBtn = el.querySelector(".collab-edit-marker-btn");
+        const deleteBtn = el.querySelector(".collab-delete-marker-btn");
+        const confirmBox = el.querySelector(".collab-marker-confirm");
+        const actionsBox = el.querySelector(".collab-marker-actions");
+        const confirmDeleteBtn = el.querySelector(".collab-confirm-delete-btn");
+        const cancelDeleteBtn = el.querySelector(".collab-cancel-delete-btn");
+
+        editBtn.addEventListener("click", () => {
+            vm.mapVM.map.closePopup();
+            openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, L.latLng(marker.lat, marker.lng), getToken, state.mainEntry);
+        });
+
+        deleteBtn.addEventListener("click", () => {
+            actionsBox.classList.add("d-none");
+            confirmBox.classList.remove("d-none");
+        });
+        cancelDeleteBtn.addEventListener("click", () => {
+            confirmBox.classList.add("d-none");
+            actionsBox.classList.remove("d-none");
+        });
+        confirmDeleteBtn.addEventListener("click", async () => {
+            // Whatever title/description the marker currently resolves to (or
+            // blank, if the Ops Log lookup above hasn't landed yet) becomes the
+            // deletion audit entry's content -- there's nothing left to stamp
+            // an opsLogId onto afterwards, so it only lives in the Ops Log.
+            const title = stripSubjectPrefix(state.mainEntry?.Subject);
+            const description = stripAuditFooter(state.mainEntry?.Text);
+            vm.mapVM.map.closePopup(); // clears busyLayerKeys (via "popupclose") before the refresh below
+            await logMarkerAudit(vm, "deleted", layerId, marker, title, description);
+            await deleteMarker(apiUrl, layerId, marker.id, actorId, await getToken());
+            vm.mapVM.refreshPollingLayer(key);
+        });
+    }
 
     return { el, state };
 }
@@ -716,22 +774,26 @@ function showLayerPickerMenu(vm, apiUrl, actorId, layers, containerPoint, latlng
     };
 }
 
-/** Whether the "Add marker" item in the map's right-click context menu should be shown. */
-export function getVisibleCollabLayers(vm) {
-    return visibleCollabLayers(vm);
+/**
+ * Visible collaborative layers the current user may add a marker to --
+ * excludes read-only layers they didn't create. Drives whether the "Add
+ * marker" item in the map's right-click context menu is shown at all.
+ */
+export function getVisibleCollabLayers(vm, getMemberId) {
+    return visibleCollabLayers(vm).filter((layer) => canWriteMarkers(layer, getMemberId));
 }
 
 /**
  * Entry point for the "Add marker to shared layer" item in the app's
  * existing right-click context menu (components/mapContextMenu.js). With
- * exactly one visible layer, opens the marker form immediately; with more
- * than one, shows a small picker so the user chooses which layer receives
- * the new marker.
+ * exactly one visible (writable) layer, opens the marker form immediately;
+ * with more than one, shows a small picker so the user chooses which layer
+ * receives the new marker.
  */
-export function startAddMarkerFlow(vm, apiUrl, actorId, latlng, getToken) {
+export function startAddMarkerFlow(vm, apiUrl, actorId, latlng, getToken, getMemberId) {
     closeContextMenu();
 
-    const visible = visibleCollabLayers(vm);
+    const visible = getVisibleCollabLayers(vm, getMemberId);
     if (visible.length === 0) return;
 
     if (visible.length === 1) {
