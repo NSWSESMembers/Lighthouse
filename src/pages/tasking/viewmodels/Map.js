@@ -560,6 +560,15 @@ export function MapVM(Lmap, root) {
   };
 
 
+  /** Tear down a polling overlay layer registered via registerPollingLayer -- stops its timer, removes it from the map, and drops it from the registry entirely (unlike toggling visibility, which just removes/re-adds the same layerGroup). */
+  self.unregisterPollingLayer = function (key) {
+    const entry = self.onlineLayers.get(key);
+    if (!entry) return;
+    if (entry.timerId) clearInterval(entry.timerId);
+    if (entry.layerGroup && self.map.hasLayer(entry.layerGroup)) self.map.removeLayer(entry.layerGroup);
+    self.onlineLayers.delete(key);
+  };
+
   self.refreshPollingLayer = function (key) {
     const entry = self.onlineLayers.get(key);
     if (!entry) return;

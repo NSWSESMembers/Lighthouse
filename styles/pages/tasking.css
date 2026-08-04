@@ -2602,6 +2602,36 @@ overflow: hidden;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* Collapsed by default (see tasking.html) so the three permission groups
+   below don't eat vertical space in the accordion body unless opened. */
+.collab-permissions-toggle {
+  font-size: 12px;
+}
+.collab-permissions-toggle .fa-chevron-right {
+  transition: transform 0.15s ease;
+}
+.collab-permissions-toggle[aria-expanded="true"] .fa-chevron-right {
+  transform: rotate(90deg);
+}
+.collab-new-layer-options {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 12px;
+  row-gap: 2px;
+}
+.collab-new-layer-options .form-check {
+  margin-right: 0; /* column-gap above replaces Bootstrap's inline margin */
+}
+.collab-layer-delete-confirm {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.collab-layer-delete-confirm .btn {
+  font-size: 11px;
+  padding: 1px 6px;
+  line-height: 1.4;
+}
 
 /* ── Collaborative marker popup (view/edit) ── */
 .collab-marker-popup {
@@ -2665,6 +2695,11 @@ overflow: hidden;
   font-size: 10px;
   padding: 1px 6px;
   line-height: 1.4;
+}
+.collab-marker-comments-disabled {
+  color: #888;
+  font-size: 11px;
+  margin-bottom: 6px;
 }
 /* Aesthetic-only text limit indicator (description/comment textareas) --
    never affects layout beyond its own line, so it can't destabilize the

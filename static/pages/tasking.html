@@ -2808,7 +2808,7 @@
                                                     isn't deleted.
                                                 </p>
 
-                                                <div class="input-group input-group-sm mb-3">
+                                                <div class="input-group input-group-sm mb-2">
                                                     <input type="text" class="form-control" placeholder="New layer name"
                                                         data-bind="value: config.newLayerName, valueUpdate: 'input',
                                                             event: { keydown: config.handleNewLayerNameKeydown }">
@@ -2817,6 +2817,54 @@
                                                             enable: config.newLayerName().trim().length > 0 && !config.creatingCollabLayer()">
                                                         <i class="fa fa-plus me-1"></i>New layer
                                                     </button>
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-link p-0 mb-2 collab-permissions-toggle"
+                                                    data-bs-toggle="collapse" data-bs-target="#collabNewLayerOptions"
+                                                    aria-expanded="false" aria-controls="collabNewLayerOptions">
+                                                    <i class="fa fa-chevron-right small me-1"></i>New layer permissions
+                                                </button>
+                                                <div class="collapse" id="collabNewLayerOptions">
+                                                    <div class="collab-new-layer-options mb-3">
+                                                    <div class="small text-muted mb-1 w-100">Marker permissions</div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Everyone can add, edit and delete markers (everyone can also comment, unless disabled below).">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerReadOnly" id="collabNewLayerReadOnlyOff"
+                                                            data-bind="checked: config.newLayerReadOnly, checkedValue: false">
+                                                        <label class="form-check-label small" for="collabNewLayerReadOnlyOff">Anyone can add markers</label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Others can view this layer and comment on markers, but only you can add, edit or delete markers.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerReadOnly" id="collabNewLayerReadOnlyOn"
+                                                            data-bind="checked: config.newLayerReadOnly, checkedValue: true">
+                                                        <label class="form-check-label small" for="collabNewLayerReadOnlyOn">Only I can add markers</label>
+                                                    </div>
+                                                    <div class="small text-muted mb-1 mt-1 w-100">Delete permissions</div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Any member of your organisation can delete this layer.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerAllowDelete" id="collabNewLayerAllowDeleteOn"
+                                                            data-bind="checked: config.newLayerAllowDeleteByOthers, checkedValue: true">
+                                                        <label class="form-check-label small" for="collabNewLayerAllowDeleteOn">Anyone can delete this layer</label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Only you will be able to delete this layer.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerAllowDelete" id="collabNewLayerAllowDeleteOff"
+                                                            data-bind="checked: config.newLayerAllowDeleteByOthers, checkedValue: false">
+                                                        <label class="form-check-label small" for="collabNewLayerAllowDeleteOff">Only I can delete this layer</label>
+                                                    </div>
+                                                    <div class="small text-muted mb-1 mt-1 w-100">Comment permissions</div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Anyone who can see this layer can comment on its markers.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerDisableComments" id="collabNewLayerDisableCommentsOff"
+                                                            data-bind="checked: config.newLayerDisableComments, checkedValue: false">
+                                                        <label class="form-check-label small" for="collabNewLayerDisableCommentsOff">Anyone can comment</label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Blocks comments on this layer's markers for everyone, including you.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerDisableComments" id="collabNewLayerDisableCommentsOn"
+                                                            data-bind="checked: config.newLayerDisableComments, checkedValue: true">
+                                                        <label class="form-check-label small" for="collabNewLayerDisableCommentsOn">Comments are disabled</label>
+                                                    </div>
+                                                    </div>
                                                 </div>
                                                 <div class="text-danger small mb-2"
                                                     data-bind="visible: config.collabLayerError, text: config.collabLayerError"></div>
@@ -2836,6 +2884,10 @@
                                                                 <div class="form-text">
                                                                     <span data-bind="text: row.markerCount"></span> markers ·
                                                                     used <span data-bind="text: row.lastUsedLabel"></span>
+                                                                    <i class="fas fa-lock ms-1" title="Only the creator can add markers"
+                                                                        data-bind="visible: row.readOnly"></i>
+                                                                    <i class="fas fa-comment-slash ms-1" title="Comments disabled"
+                                                                        data-bind="visible: row.disableComments"></i>
                                                                 </div>
                                                             </div>
                                                             <div class="form-check form-switch mb-0" title="View">
@@ -2843,6 +2895,19 @@
                                                                     data-bind="checked: row.viewEnabled">
                                                                 <label class="form-check-label small">View</label>
                                                             </div>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                                                data-bind="click: row.requestDeleteLayer, disable: !row.canDelete,
+                                                                    visible: !row.confirmingDelete(),
+                                                                    attr: { title: row.deleteTitle }">
+                                                                <i class="fa fa-trash"></i>
+                                                            </button>
+                                                            <span class="collab-layer-delete-confirm" data-bind="visible: row.confirmingDelete">
+                                                                <button type="button" class="btn btn-sm btn-danger"
+                                                                    data-bind="click: row.confirmDeleteLayer,
+                                                                        disable: $root.config.deletingCollabLayerId() === row.layer.id">Delete</button>
+                                                                <button type="button" class="btn btn-sm btn-secondary"
+                                                                    data-bind="click: row.cancelDeleteLayer">Cancel</button>
+                                                            </span>
                                                         </li>
                                                     </ul>
                                                 </div>

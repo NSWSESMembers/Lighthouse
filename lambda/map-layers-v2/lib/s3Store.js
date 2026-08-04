@@ -83,7 +83,9 @@ async function updateIndex(apiUrl, mutate, { retries = 3 } = {}) {
 
 async function getLayerObject(apiUrl, layerId) {
   const { data } = await getJson(layerKey(apiUrl, layerId));
-  if (!data || data.apiUrl !== apiUrl) return null; // not found, or belongs to a different org
+  // Not found, belongs to a different org, or soft-deleted (see deleteLayer
+  // handler) -- all treated identically as "not found" by every caller.
+  if (!data || data.apiUrl !== apiUrl || data.deleted) return null;
   return data;
 }
 

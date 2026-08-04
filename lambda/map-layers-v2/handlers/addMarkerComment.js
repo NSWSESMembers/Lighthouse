@@ -1,7 +1,7 @@
 'use strict';
 
 const { getLayerObject, putLayerObject, updateIndex } = require('../lib/s3Store');
-const { json, badRequest, notFound } = require('../lib/response');
+const { json, badRequest, notFound, forbidden } = require('../lib/response');
 
 // POST /map-layers/{id}/features/{markerId}/comments
 // body: { apiUrl, actorId, opsLogId }
@@ -34,6 +34,10 @@ module.exports = async function addMarkerComment(event) {
 
   const marker = layer.markers.find((m) => m.id === markerId);
   if (!marker) return notFound('Marker not found');
+
+  if (layer.disableComments) {
+    return forbidden('Comments are disabled on this layer');
+  }
 
   marker.commentOpsLogIds = Array.isArray(marker.commentOpsLogIds) ? marker.commentOpsLogIds : [];
   marker.commentOpsLogIds.push(opsLogId);
