@@ -18,6 +18,15 @@ const DEFAULT_FILL = MARKER_COLOR_SWATCHES[5]; // blue -- also the first swatch 
 // bounded width. Enforced client-side only, via maxlength on the textareas.
 const TEXT_CHAR_LIMIT = 300;
 
+// Unlike Text, Beacon's Ops Log Subject is capped at 50 chars *server-side*
+// -- this one's real. The old "Lighthouse LAD - Collaborative marker
+// <action> - " lead-in was 47-50 chars on its own, leaving zero room for an
+// actual title. "LAD" is short enough to still read as this feature's mark
+// at a glance among an entity's other Ops Log entries, without eating the
+// whole budget.
+const OPSLOG_SUBJECT_LIMIT = 50;
+const SUBJECT_PREFIX = "LAD";
+
 const layerKeyFor = (layerId) => `collab-${layerId}`;
 
 // Layer keys with an interactive popup (a marker's view popup, or the
@@ -45,23 +54,26 @@ const escHtml = (s) => String(s || "").replace(/[&<>"']/g, (c) => ({
 }[c]));
 
 /**
- * Wires a live "n/limit" counter to a textarea's sibling `.collab-char-
- * counter` element, colouring it up as the limit approaches/hits so the
- * limit reads as guidance rather than a hard wall -- there's nothing on
- * the backend enforcing it, `maxlength` on the textarea itself is what
- * actually stops typing past it.
+ * Wires a live "n/limit" counter to an input/textarea's sibling `.collab-
+ * char-counter` element (must immediately follow it in the markup),
+ * colouring it up as the limit approaches/hits so the limit reads as
+ * guidance rather than a hard wall -- for the description/comment fields
+ * there's nothing on the backend enforcing it and `maxlength` is what
+ * actually stops typing past it; for the title, `limit` is chosen so that
+ * title + Subject prefix never exceeds Beacon's real 50-char server-side
+ * cap (see markerTitleMaxLength).
  */
-function wireCharCounter(textareaEl, limit) {
-    const counterEl = textareaEl.parentElement.querySelector(".collab-char-counter");
-    if (!counterEl) return;
+function wireCharCounter(inputEl, limit) {
+    const counterEl = inputEl.nextElementSibling;
+    if (!counterEl || !counterEl.classList.contains("collab-char-counter")) return;
 
     const update = () => {
-        const len = textareaEl.value.length;
+        const len = inputEl.value.length;
         counterEl.textContent = `${len}/${limit}`;
         counterEl.classList.toggle("collab-char-counter-warn", len >= limit * 0.9 && len < limit);
         counterEl.classList.toggle("collab-char-counter-limit", len >= limit);
     };
-    textareaEl.addEventListener("input", update);
+    inputEl.addEventListener("input", update);
     update();
 }
 
@@ -323,11 +335,6 @@ function renderComments(vm, commentsEl, marker, leafletMarker) {
 // isn't a dedicated "map marker" tag to select instead.
 const MARKER_AUDIT_TAG_ID = 4;
 
-// Every entry this feature creates gets this prefix on its Subject, so it's
-// identifiable at a glance among an entity's other Ops Log entries in
-// Beacon itself.
-const AUDIT_SUBJECT_PREFIX = "Lighthouse LAD - ";
-
 // The full audit detail (coords/icon/colour/layer/action) is appended to
 // Text after this marker so it's captured in the Ops Log entry itself, but
 // the marker popup only ever shows what's *before* it -- just the user's
@@ -346,16 +353,33 @@ function stripAuditFooter(text) {
     return idx === -1 ? (text || "") : text.slice(0, idx);
 }
 
-/** Strips the "Lighthouse LAD - " prefix back off an Ops Log entry's Subject for display. */
+/** The fixed "LAD <action>" lead-in every titled Subject starts with. */
+function markerSubjectLead(action) {
+    return `${SUBJECT_PREFIX} ${action}`;
+}
+
+/**
+ * How many characters are left for the user's own title once the "LAD
+ * <action> - " lead-in is accounted for, so title + lead-in never exceeds
+ * Beacon's 50-char server-side Subject cap. Depends on `action` since
+ * "edited" is a character shorter than "created"/"deleted".
+ */
+function markerTitleMaxLength(action) {
+    return OPSLOG_SUBJECT_LIMIT - markerSubjectLead(action).length - " - ".length;
+}
+
+/** Strips the "LAD <action> - " lead-in back off an Ops Log entry's Subject for display. */
 function stripSubjectPrefix(subject) {
-    return subject && subject.startsWith(AUDIT_SUBJECT_PREFIX) ? subject.slice(AUDIT_SUBJECT_PREFIX.length) : (subject || "");
+    if (!subject || !subject.startsWith(`${SUBJECT_PREFIX} `)) return subject || "";
+    const sepIdx = subject.indexOf(" - ");
+    return sepIdx === -1 ? "" : subject.slice(sepIdx + 3);
 }
 
 function createOpsLogAuditEntry(vm, subject, text) {
     if (typeof vm.createOpsLogEntry !== "function") return Promise.resolve(null);
 
     const payload = {
-        Subject: `${AUDIT_SUBJECT_PREFIX}${subject}`,
+        Subject: subject,
         Text: text,
         Important: false,
         Restricted: false,
@@ -374,15 +398,16 @@ function createOpsLogAuditEntry(vm, subject, text) {
  * the new entry's id (or null if unavailable/failed) so it can be attached
  * to the marker as its opsLogId.
  *
- * The Subject always leads with "Collaborative marker <action>" -- same as
- * a comment's fixed "Collaborative marker comment" -- so what happened is
- * clear at a glance in Beacon's Ops Log list without opening the entry;
- * the user's own title (if any) is appended for extra context, but never
- * stands in for it alone the way it used to.
+ * The Subject always leads with "LAD <action>" -- same as a comment's fixed
+ * "LAD comment" -- so what happened is clear at a glance in Beacon's Ops
+ * Log list without opening the entry; the user's own title (if any) is
+ * appended for extra context, but never stands in for it alone the way it
+ * used to. Kept within markerTitleMaxLength by the title input's maxlength,
+ * so this never needs to truncate.
  */
 function logMarkerAudit(vm, action, layerId, marker, title, description) {
     const layerName = vm.mapVM.collabLayers().find((l) => l.id === layerId)?.name || layerId;
-    const subject = `Collaborative marker ${action}${title ? ` - ${title}` : ""}`;
+    const subject = title ? `${markerSubjectLead(action)} - ${title}` : markerSubjectLead(action);
     const text = `${description || ""}${buildMarkerAuditFooter(action, layerName, marker)}`;
     return createOpsLogAuditEntry(vm, subject, text);
 }
@@ -395,7 +420,7 @@ function logMarkerAudit(vm, action, layerId, marker, title, description) {
 function logMarkerComment(vm, layerId, marker, commentText) {
     const layerName = vm.mapVM.collabLayers().find((l) => l.id === layerId)?.name || layerId;
     const text = `${commentText}${buildMarkerAuditFooter("commented on", layerName, marker)}`;
-    return createOpsLogAuditEntry(vm, "Collaborative marker comment", text);
+    return createOpsLogAuditEntry(vm, `${SUBJECT_PREFIX} comment`, text);
 }
 
 /** Fetch a single Ops Log entry by id, resolving null if unavailable/failed. */
@@ -449,6 +474,11 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
     let icon = marker?.icon || DEFAULT_MARKER_ICON_KEY;
     let fill = marker?.fill || DEFAULT_FILL;
 
+    // Save always logs this same action (see the save handler below), so
+    // the title's maxlength can be pinned to it up front.
+    const action = marker ? "edited" : "created";
+    const titleMaxLength = markerTitleMaxLength(action);
+
     const el = document.createElement("div");
     el.className = "collab-marker-form";
     el.innerHTML = `
@@ -468,7 +498,8 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
                 <i class="fas fa-caret-down ms-auto"></i>
             </button>
         </div>
-        <input type="text" class="collab-title-input" placeholder="Title" maxlength="200" value="${escHtml(stripSubjectPrefix(currentEntry?.Subject))}">
+        <input type="text" class="collab-title-input" placeholder="Title" maxlength="${titleMaxLength}" value="${escHtml(stripSubjectPrefix(currentEntry?.Subject))}">
+        <div class="collab-char-counter"></div>
         <textarea class="collab-desc-input" placeholder="Description" rows="2" maxlength="${TEXT_CHAR_LIMIT}">${escHtml(stripAuditFooter(currentEntry?.Text))}</textarea>
         <div class="collab-char-counter"></div>
         <div class="collab-marker-audit-notice"><i class="fas fa-info-circle"></i> All marker actions -- create, edit, delete, and comments -- create an Ops Log entries.</div>
@@ -482,6 +513,7 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
     const iconToggle = el.querySelector(".collab-icon-toggle");
     const colorToggle = el.querySelector(".collab-color-toggle");
 
+    wireCharCounter(el.querySelector(".collab-title-input"), titleMaxLength);
     wireCharCounter(el.querySelector(".collab-desc-input"), TEXT_CHAR_LIMIT);
 
     const renderPreview = () => {
@@ -553,7 +585,7 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
         };
         vm.mapVM.map.closePopup(popup);
 
-        const opsLogId = await logMarkerAudit(vm, marker ? "edited" : "created", layerId, payload, title, description);
+        const opsLogId = await logMarkerAudit(vm, action, layerId, payload, title, description);
         if (opsLogId != null) payload.opsLogId = opsLogId;
 
         await upsertMarker(apiUrl, layerId, payload, actorId, await getToken());
