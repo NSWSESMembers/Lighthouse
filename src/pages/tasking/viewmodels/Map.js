@@ -514,6 +514,13 @@ export function MapVM(Lmap, root) {
       visibleByDefault: opts.visibleByDefault === true,
       fetchFn: opts.fetchFn,
       drawFn: opts.drawFn,
+      // Optional () => boolean. When it returns true, a poll tick is
+      // skipped entirely rather than fetch+redrawing -- for layers whose
+      // drawFn rebuilds every marker from scratch (clearLayers()), redrawing
+      // out from under an open popup would silently close it, e.g. while a
+      // user is mid-edit. See mapLayers/collabLayer.js for the only current
+      // user of this.
+      skipIfBusy: opts.skipIfBusy,
       timerId: null,
       menuGroup: opts.menuGroup || null,
     };
@@ -522,6 +529,7 @@ export function MapVM(Lmap, root) {
     // Only fetch/draw if the layer is actually on the map
     async function refreshIfVisible() {
       if (!self.map.hasLayer(layerGroup)) return;
+      if (entry.skipIfBusy?.()) return;
 
       try {
         const data = await entry.fetchFn();
@@ -559,6 +567,7 @@ export function MapVM(Lmap, root) {
     async function run() {
       // bail if layer is not currently visible on the map
       if (!self.map.hasLayer(entry.layerGroup)) return;
+      if (entry.skipIfBusy?.()) return;
 
       try {
         const data = await entry.fetchFn();

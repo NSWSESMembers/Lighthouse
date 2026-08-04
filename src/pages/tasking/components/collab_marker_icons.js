@@ -2,8 +2,9 @@ import L from 'leaflet';
 
 /**
  * Curated set of Font Awesome 5 Free icons relevant to emergency-service
- * field marking (hazards, medical, welfare, shelter, infrastructure,
- * vehicles/rescue, status). Grouped for a scannable picker UI.
+ * field marking (hazards/weather, vehicles/rescue, people/animals,
+ * resources/supplies, observation/comms, status). Grouped for a scannable
+ * picker UI.
  *
  * Every `fa` class here is confirmed present in the bundled
  * @fortawesome/fontawesome-free 5.15.4 solid set -- don't add an icon
@@ -11,80 +12,58 @@ import L from 'leaflet';
  */
 export const MARKER_ICON_GROUPS = [
     {
-        group: 'Hazards',
+        group: 'Hazards & Weather',
         icons: [
-            { key: 'fire', label: 'Fire', fa: 'fa-fire' },
-            { key: 'fire-extinguisher', label: 'Fire (controlled)', fa: 'fa-fire-extinguisher' },
-            { key: 'water', label: 'Flooding', fa: 'fa-water' },
-            { key: 'house-damage', label: 'Structural damage', fa: 'fa-house-damage' },
             { key: 'exclamation-triangle', label: 'Hazard', fa: 'fa-exclamation-triangle' },
-            { key: 'skull-crossbones', label: 'Danger / poison', fa: 'fa-skull-crossbones' },
-            { key: 'biohazard', label: 'Biohazard', fa: 'fa-biohazard' },
-            { key: 'radiation', label: 'Radiation', fa: 'fa-radiation' },
-            { key: 'bolt', label: 'Downed power line', fa: 'fa-bolt' },
-            { key: 'wind', label: 'Storm / wind damage', fa: 'fa-wind' },
-            { key: 'smog', label: 'Smoke / air hazard', fa: 'fa-smog' },
-            { key: 'car-crash', label: 'Vehicle accident', fa: 'fa-car-crash' },
-            { key: 'tree', label: 'Fallen tree', fa: 'fa-tree' },
+            { key: 'fire-alt', label: 'Fire', fa: 'fa-fire-alt' },
+            { key: 'cloud-showers-heavy', label: 'Heavy rain', fa: 'fa-cloud-showers-heavy' },
+            { key: 'wind', label: 'Storm / high wind', fa: 'fa-wind' },
+            { key: 'snowflake', label: 'Snow / ice', fa: 'fa-snowflake' },
+            { key: 'water', label: 'Flooding', fa: 'fa-water' },
             { key: 'gas-pump', label: 'Fuel / gas hazard', fa: 'fa-gas-pump' },
-            { key: 'ban', label: 'Road closed', fa: 'fa-ban' },
-        ],
-    },
-    {
-        group: 'Medical',
-        icons: [
-            { key: 'ambulance', label: 'Ambulance', fa: 'fa-ambulance' },
-            { key: 'first-aid', label: 'First aid', fa: 'fa-first-aid' },
-            { key: 'hospital', label: 'Hospital', fa: 'fa-hospital' },
-            { key: 'user-md', label: 'Medical personnel', fa: 'fa-user-md' },
-            { key: 'user-injured', label: 'Injured person', fa: 'fa-user-injured' },
-            { key: 'syringe', label: 'Medical supplies', fa: 'fa-syringe' },
-        ],
-    },
-    {
-        group: 'People',
-        icons: [
-            { key: 'user', label: 'Person', fa: 'fa-user' },
-            { key: 'users', label: 'Group of people', fa: 'fa-users' },
-            { key: 'wheelchair', label: 'Accessibility needs', fa: 'fa-wheelchair' },
-            { key: 'baby-carriage', label: 'Infant / child', fa: 'fa-baby-carriage' },
-            { key: 'paw', label: 'Animal / livestock', fa: 'fa-paw' },
-        ],
-    },
-    {
-        group: 'Shelter & Resources',
-        icons: [
-            { key: 'campground', label: 'Evacuation centre', fa: 'fa-campground' },
-            { key: 'home', label: 'Shelter / house', fa: 'fa-home' },
-            { key: 'warehouse', label: 'Supply depot', fa: 'fa-warehouse' },
-            { key: 'tint', label: 'Water supply', fa: 'fa-tint' },
-            { key: 'shower', label: 'Sanitation', fa: 'fa-shower' },
-        ],
-    },
-    {
-        group: 'Infrastructure',
-        icons: [
-            { key: 'road', label: 'Road / route', fa: 'fa-road' },
-            { key: 'route', label: 'Evacuation route', fa: 'fa-route' },
-            { key: 'broadcast-tower', label: 'Communications', fa: 'fa-broadcast-tower' },
-            { key: 'plug', label: 'Power / utility', fa: 'fa-plug' },
         ],
     },
     {
         group: 'Vehicles & Rescue',
         icons: [
-            { key: 'truck', label: 'Truck', fa: 'fa-truck' },
+            { key: 'ambulance', label: 'Ambulance', fa: 'fa-ambulance' },
+            { key: 'car-side', label: 'Car', fa: 'fa-car-side' },
+            { key: 'truck-monster', label: '4x4 / off-road truck', fa: 'fa-truck-monster' },
+            { key: 'shuttle-van', label: 'Shuttle van', fa: 'fa-shuttle-van' },
             { key: 'helicopter', label: 'Helicopter', fa: 'fa-helicopter' },
             { key: 'ship', label: 'Boat', fa: 'fa-ship' },
-            { key: 'life-ring', label: 'Rescue', fa: 'fa-life-ring' },
+            { key: 'plane', label: 'Aircraft', fa: 'fa-plane' },
         ],
     },
     {
-        group: 'Status',
+        group: 'People & Animals',
         icons: [
-            { key: 'map-marker-alt', label: 'General marker', fa: 'fa-map-marker-alt' },
+            { key: 'users', label: 'Group of people', fa: 'fa-users' },
+            { key: 'dog', label: 'Animal / pet', fa: 'fa-dog' },
+        ],
+    },
+    {
+        group: 'Resources & Supplies',
+        icons: [
+            { key: 'utensils', label: 'Food', fa: 'fa-utensils' },
+            { key: 'shopping-cart', label: 'Supplies', fa: 'fa-shopping-cart' },
+        ],
+    },
+    {
+        group: 'Observation & Comms',
+        icons: [
+            { key: 'eye', label: 'Observation point', fa: 'fa-eye' },
+            { key: 'camera', label: 'Photo evidence', fa: 'fa-camera' },
+            { key: 'comments', label: 'Discussion / comments', fa: 'fa-comments' },
+        ],
+    },
+    {
+        group: 'Status & Markers',
+        icons: [
             { key: 'flag', label: 'Checkpoint', fa: 'fa-flag' },
-            { key: 'check-circle', label: 'Cleared / complete', fa: 'fa-check-circle' },
+            { key: 'thumbtack', label: 'Pinned location', fa: 'fa-thumbtack' },
+            { key: 'times', label: 'Cancelled / closed', fa: 'fa-times' },
+            { key: 'minus-circle', label: 'Unavailable', fa: 'fa-minus-circle' },
             { key: 'question-circle', label: 'Unknown / needs check', fa: 'fa-question-circle' },
         ],
     },
@@ -96,7 +75,7 @@ export const MARKER_ICONS_BY_KEY = MARKER_ICON_GROUPS.reduce((acc, g) => {
     return acc;
 }, {});
 
-export const DEFAULT_MARKER_ICON_KEY = 'map-marker-alt';
+export const DEFAULT_MARKER_ICON_KEY = 'thumbtack';
 
 /**
  * Preset badge-color swatches for the marker form -- chosen to stay

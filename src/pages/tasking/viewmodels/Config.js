@@ -3,7 +3,7 @@ import ko from 'knockout';
 
 import * as bootstrap from 'bootstrap5'; // Modal, Tooltip, etc.
 import { Enum } from '../utils/enum.js';
-import { createCollabLayer } from '../mapLayers/collabLayer.js';
+import { createCollabLayer, refreshCollabLayerList } from '../mapLayers/collabLayer.js';
 
 
 
@@ -200,6 +200,7 @@ export function ConfigVM(root, deps) {
     self.creatingCollabLayer = ko.observable(false);
     self.collabLayerError = ko.observable('');
     self.collabLayerSearch = ko.observable(''); // filters the (possibly long) layer list below
+    self.refreshingCollabLayers = ko.observable(false);
 
     function relativeTime(iso) {
         if (!iso) return 'never';
@@ -277,6 +278,24 @@ export function ConfigVM(root, deps) {
             self.collabLayerError('Failed to create layer. Try again later.');
         } finally {
             self.creatingCollabLayer(false);
+        }
+    };
+
+    // Re-pulls the org's layer list from the server -- picks up layers
+    // created by other users since this page loaded (createCollabLayer
+    // above only accounts for layers *this* session created).
+    self.refreshCollabLayers = async () => {
+        if (!deps.apiUrl || self.refreshingCollabLayers()) return;
+
+        self.collabLayerError('');
+        self.refreshingCollabLayers(true);
+        try {
+            await refreshCollabLayerList(root, deps.apiUrl, deps.userId, deps.getToken);
+        } catch (err) {
+            console.error('Error refreshing collaborative layers:', err);
+            self.collabLayerError('Failed to refresh layer list. Try again later.');
+        } finally {
+            self.refreshingCollabLayers(false);
         }
     };
 
