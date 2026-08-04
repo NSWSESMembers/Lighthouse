@@ -80,8 +80,9 @@ export function ConfigVM(root, deps) {
 
     self.paneDefs = [
         { id: 'pane-tippy-top', name: 'Incident markers' },
+        { id: 'pane-collab', name: 'Collaborative layer markers' },
         { id: 'pane-top', name: 'Asset markers' },
-        { id: 'pane-middle', name: 'Map overlays icons & labels' },
+        { id: 'pane-middle', name: 'Map overlay markers & labels' },
         { id: 'pane-lowest', name: 'Map overlay polygons & drawings' }
     ];
 
@@ -95,9 +96,15 @@ export function ConfigVM(root, deps) {
             .filter(Boolean)
             .map(p => ({ id: p.id, name: p.name }));
 
-        // ensure all panes exist (append any missing)
-        self.paneDefs.forEach(p => {
-            if (!list.some(x => x.id === p.id)) list.push({ id: p.id, name: p.name });
+        // Ensure all panes exist. Panes missing from a saved order (e.g. one
+        // introduced after the config was last saved) are inserted at their
+        // default position relative to paneDefs, rather than always at the
+        // bottom, so a newly-added pane keeps its intended default stacking.
+        self.paneDefs.forEach((p, defIdx) => {
+            if (list.some(x => x.id === p.id)) return;
+            const nextKnownDef = self.paneDefs.slice(defIdx + 1).find(d => list.some(x => x.id === d.id));
+            const insertAt = nextKnownDef ? list.findIndex(x => x.id === nextKnownDef.id) : list.length;
+            list.splice(insertAt, 0, { id: p.id, name: p.name });
         });
 
         self.paneOrder(list);
