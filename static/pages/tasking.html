@@ -2711,7 +2711,7 @@
                                                     <div class="col-md-6">
                                                         <fieldset>
                                                             <legend class="form-label fw-semibold mb-2">
-                                                                <i class="fa fa-layer-group me-1"></i>Marker Clustering
+                                                                <i class="fa fa-layer-group me-1"></i>Incident Marker Clustering
                                                             </legend>
 
                                                             <div class="form-check form-switch mb-2">
@@ -2770,9 +2770,12 @@
                                                     <div class="col-md-6">
                                                         <fieldset>
                                                             <legend class="form-label fw-semibold mb-2">
-                                                                <i class="fa fa-sort me-1"></i>Map Icon Layer Order
+                                                                <i class="fa fa-sort me-1"></i>Marker Layer Order
                                                                 <small class="text-muted fw-normal">(top → bottom)</small>
                                                             </legend>
+                                                            <div class="form-text mb-3">
+                                                                Controls the draw order of marker layers on the map. Drag and drop to reorder.
+                                                            </div>
                                                             <div class="border rounded p-2">
                                                                 <ul class="list-group"
                                                                     data-bind="foreach: { data: config.paneOrder, as: 'p' }">

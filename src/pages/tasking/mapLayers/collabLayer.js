@@ -204,7 +204,7 @@ function drawCollabMarkers(vm, layerGroup, data, apiUrl, layer, key, actorId, ge
     markers.forEach((marker) => {
         const icon = buildMarkerBadgeIcon({ icon: marker.icon, fill: marker.fill || DEFAULT_FILL });
 
-        const leafletMarker = L.marker([marker.lat, marker.lng], { icon });
+        const leafletMarker = L.marker([marker.lat, marker.lng], { icon, pane: "pane-collab" });
 
         // Bind a concrete, already-built element rather than Leaflet's
         // "content factory function" form of bindPopup -- that form gets

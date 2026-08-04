@@ -352,6 +352,10 @@ map.createPane('pane-top'); map.getPane('pane-top').style.zIndex = 600;
 map.createPane('pane-top-plus'); map.getPane('pane-top-plus').style.zIndex = 601;
 
 
+map.createPane('pane-collab'); map.getPane('pane-collab').style.zIndex = 650;
+map.createPane('pane-collab-plus'); map.getPane('pane-collab-plus').style.zIndex = 651;
+
+
 map.createPane('pane-tippy-top'); map.getPane('pane-tippy-top').style.zIndex = 700;
 map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.zIndex = 701;
 
