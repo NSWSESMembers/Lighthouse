@@ -3683,6 +3683,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const configModalEl = document.getElementById('configModal');
         bootstrap.Modal.getOrCreateInstance(configModalEl).show();
 
+        // reveal the page now that bindings are applied and the modal is open,
+        // so we don't flash unbound placeholder content beforehand
+        document.body.style.opacity = '1';
+
         installModalHotkeys({
             modalEl: configModalEl,
             onSave: () => myViewModel.config.saveAndCloseAndLoad(),
@@ -3774,11 +3778,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 })
-
-// show page once DOM + CSS are ready (don't wait for map tiles)
-document.addEventListener('DOMContentLoaded', function () {
-    document.body.style.opacity = '1';
-});
 
 
 
