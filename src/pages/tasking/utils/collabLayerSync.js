@@ -51,6 +51,68 @@ function saveCachedLayer(layerId, layer) {
     localStorage.setItem(layerCacheKey(layerId), JSON.stringify(layer));
 }
 
+// ── Subscriptions ────────────────────────────────────────────────────
+//
+// Which collaborative layers a user tracks (shown in Config's "My layers"
+// list, and registered for polling/LayersDrawer) is a client-side
+// preference, not org data -- never sent to the Lambda. Kept independent
+// of HQ so a subscribed layer stays manageable (visible in the list,
+// unsubscribe-able) no matter which HQ the separate "Find a layer" search
+// is currently scoped to -- that's the whole point: unsubscribing from a
+// layer shouldn't require first knowing/re-selecting the HQ it came from.
+const LS_SUBSCRIPTIONS_KEY = 'lh_collabLayer_subscriptions';
+
+/** @returns {Set<string>} */
+export function getSubscribedLayerIds() {
+    try {
+        return new Set(JSON.parse(localStorage.getItem(LS_SUBSCRIPTIONS_KEY)) || []);
+    } catch {
+        return new Set();
+    }
+}
+
+function saveSubscribedLayerIds(ids) {
+    localStorage.setItem(LS_SUBSCRIPTIONS_KEY, JSON.stringify([...ids]));
+}
+
+export function isSubscribed(layerId) {
+    return getSubscribedLayerIds().has(String(layerId));
+}
+
+export function subscribeLayer(layerId) {
+    const ids = getSubscribedLayerIds();
+    ids.add(String(layerId));
+    saveSubscribedLayerIds(ids);
+}
+
+export function unsubscribeLayer(layerId) {
+    const ids = getSubscribedLayerIds();
+    ids.delete(String(layerId));
+    saveSubscribedLayerIds(ids);
+}
+
+/**
+ * One-time migration from the pre-subscriptions model, where every layer
+ * ever fetched got auto-registered and shown/hidden state was tracked
+ * purely by per-layer `ov.online-collab-<id>` flags (see collabLayer.js /
+ * Config.js). Guarded by LS_SUBSCRIPTIONS_KEY already existing (real
+ * subscriptions, even an empty set, always leaves that key set) so this
+ * only ever runs once per browser -- otherwise a layer someone explicitly
+ * unsubscribed from would keep reappearing as long as its old `ov.*` flag
+ * was still '1'.
+ */
+export function migrateLegacyVisibleLayersToSubscriptions() {
+    if (localStorage.getItem(LS_SUBSCRIPTIONS_KEY) !== null) return;
+
+    const ids = new Set();
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const match = key && key.match(/^ov\.online-collab-(.+)$/);
+        if (match && localStorage.getItem(key) === '1') ids.add(match[1]);
+    }
+    saveSubscribedLayerIds(ids);
+}
+
 // ── List / create layers ────────────────────────────────────────────
 
 /**
@@ -58,24 +120,37 @@ function saveCachedLayer(layerId, layer) {
  * excluded server-side, not deleted).
  * @param {string} apiUrl
  * @param {string} token  Beacon access token (Authorization: Bearer).
+ * @param {string} [hqId]  If given, restricts the list to layers attached
+ *   to this HQ server-side (see lambda listLayers.js) -- omit for "All HQs".
  * @returns {Promise<Array<Object>>}
  */
-export async function listLayers(apiUrl, token) {
-    if (!apiUrl) return loadCachedLayerIndex();
+export async function listLayers(apiUrl, token, hqId) {
+    // Only the unfiltered "All HQs" list is a complete enough picture of
+    // the org's layers to serve as the offline cache -- an HQ-scoped
+    // response would otherwise silently shrink it for every other HQ. So
+    // an HQ-scoped call reads/writes nothing but a client-side filter over
+    // that same full cache, both as its "no apiUrl yet" fallback below and
+    // on a failed fetch.
+    const cached = () => {
+        const all = loadCachedLayerIndex();
+        return hqId ? all.filter((l) => l.hqId === hqId) : all;
+    };
+
+    if (!apiUrl) return cached();
 
     try {
-        const url = `${LAMBDA_BASE}?apiUrl=${encodeURIComponent(apiUrl)}`;
+        const url = `${LAMBDA_BASE}?apiUrl=${encodeURIComponent(apiUrl)}${hqId ? `&hqId=${encodeURIComponent(hqId)}` : ''}`;
         const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json', Authorization: `Bearer ${token}` } });
         if (!res.ok) {
             console.warn('[collabLayerSync] list failed:', res.status);
-            return loadCachedLayerIndex();
+            return cached();
         }
         const { layers } = await res.json();
-        saveCachedLayerIndex(layers || []);
+        if (!hqId) saveCachedLayerIndex(layers || []);
         return layers || [];
     } catch (err) {
         console.warn('[collabLayerSync] list error:', err);
-        return loadCachedLayerIndex();
+        return cached();
     }
 }
 
@@ -85,13 +160,20 @@ export async function listLayers(apiUrl, token) {
  * @param {string} name
  * @param {string} actorId
  * @param {string} token  Beacon access token (Authorization: Bearer).
- * @param {{readOnly?: boolean, allowDeleteByOthers?: boolean, disableComments?: boolean}} [permissions]
- *   Fixed for the layer's lifetime -- there's no later "edit layer settings" flow.
+ * @param {{markerMode?: string, deleteMode?: string, commentMode?: string, moderators?: Array<{id: string, name: string}>, event?: {id: string, name: string}|null, hq: {id: string, name: string}}} permissions
+ *   Each mode is one of 'anyone' | 'creator' | 'moderators' (default 'anyone').
+ *   Modes are fixed for the layer's lifetime -- there's no later "edit layer
+ *   settings" flow for them -- but `moderators` itself can be changed later
+ *   by the creator via updateLayerModerators() below. `event`, if given, is
+ *   the optional Beacon event this layer is attached to -- also fixed at
+ *   creation, purely for display (see Config.js's layer list). `hq` is
+ *   required -- every layer must belong to an HQ (also fixed at creation);
+ *   the Lambda rejects the request if it's missing.
  * @returns {Promise<Object|null>} the created layer summary, or null on failure
  */
 export async function createLayer(apiUrl, name, actorId, token, permissions = {}) {
     const trimmed = (name || '').trim();
-    if (!apiUrl || !trimmed) return null;
+    if (!apiUrl || !trimmed || !permissions.hq?.id) return null;
 
     try {
         const res = await fetch(LAMBDA_BASE, {
@@ -101,9 +183,12 @@ export async function createLayer(apiUrl, name, actorId, token, permissions = {}
                 apiUrl,
                 name: trimmed,
                 createdBy: String(actorId),
-                readOnly: !!permissions.readOnly,
-                allowDeleteByOthers: permissions.allowDeleteByOthers !== false,
-                disableComments: !!permissions.disableComments,
+                markerMode: permissions.markerMode || 'anyone',
+                deleteMode: permissions.deleteMode || 'anyone',
+                commentMode: permissions.commentMode || 'anyone',
+                moderators: Array.isArray(permissions.moderators) ? permissions.moderators : [],
+                event: permissions.event || null,
+                hq: permissions.hq,
             }),
         });
         if (!res.ok) {
@@ -153,6 +238,51 @@ export async function deleteLayer(apiUrl, layerId, actorId, token) {
         // failure doesn't silently hide a layer that's still on the server.
         saveCachedLayerIndex(index);
         return false;
+    }
+}
+
+/**
+ * Replace a layer's moderator list. Only the layer's creator is authorized
+ * server-side (see lambda updateLayerModerators.js) -- calling this as
+ * anyone else fails with a 403 and the local cache is left untouched.
+ * @param {string} apiUrl
+ * @param {string} layerId
+ * @param {Array<{id: string, name: string}>} moderators
+ * @param {string} token  Beacon access token (Authorization: Bearer).
+ * @returns {Promise<Array<{id: string, name: string}>|null>} the saved moderator list, or null on failure
+ */
+export async function updateLayerModerators(apiUrl, layerId, moderators, token) {
+    if (!apiUrl || !layerId) return null;
+
+    try {
+        const res = await fetch(`${LAMBDA_BASE}/${encodeURIComponent(layerId)}/moderators`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ apiUrl, moderators: moderators || [] }),
+        });
+        if (!res.ok) {
+            throw new Error(`updateLayerModerators failed with status ${res.status}`);
+        }
+        const { moderators: saved } = await res.json();
+
+        // Reconcile the cached index entry (if present) so a page reload
+        // before the next refreshCollabLayerList() still shows the update.
+        const index = loadCachedLayerIndex();
+        const entry = index.find((l) => l.id === layerId);
+        if (entry) {
+            entry.moderators = saved;
+            saveCachedLayerIndex(index);
+        }
+        const cachedLayer = loadCachedLayer(layerId);
+        if (cachedLayer) {
+            cachedLayer.moderators = saved;
+            saveCachedLayer(layerId, cachedLayer);
+        }
+
+        return saved;
+    } catch (err) {
+        console.warn('[collabLayerSync] updateLayerModerators error:', err);
+        return null;
     }
 }
 

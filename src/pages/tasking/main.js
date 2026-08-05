@@ -1425,9 +1425,16 @@ function VM() {
             });
         },
         fetchAllSectors: (hqs) => self.fetchAllSectors(hqs),
+        searchMembers: (q) => self.searchMembers(q),
+        searchEvents: (q) => self.searchEvents(q),
         getToken: () => getToken(),
         apiUrl: sourceUrl,
         userId: params.userId,
+        // The Beacon entity id of the HQ this Lighthouse instance was
+        // launched for (?hq=<id> in the URL) -- every collaborative layer
+        // must be attached to an HQ (Config.js), and the layer list defaults
+        // to showing just this HQ's layers, both seeded from this id.
+        defaultHqId: params.hq || null,
         // Collaborative-layer actions (create/delete layer) are attributed
         // (for display/audit only) using the same identity as every
         // marker/comment op on that layer (markerActorId, i.e.
@@ -2241,6 +2248,35 @@ function VM() {
             BeaconClient.contacts.searchAll(query, apiHost, params.userId, t, function (data) {
                 resolve(data.Results || []);
             })
+        });
+    }
+
+    // Searches Beacon members by name or member number (Username) -- used
+    // by the collaborative-layer moderator picker (Config.js). Returns raw
+    // Users/Search result rows; Config.js maps each row's Username to the
+    // same member-id space as getMemberId()/createdByMemberId above.
+    self.searchMembers = async function (query) {
+        const t = await getToken();   // blocks here until token is ready
+        return new Promise((resolve) => {
+            BeaconClient.users.search(query, apiHost, params.userId, t, function (data) {
+                resolve(data?.Results || []);
+            }, function () {
+                resolve([]);
+            });
+        });
+    }
+
+    // Searches Beacon events by name or identifier -- used by the
+    // collaborative-layer "attach to event" picker (Config.js). Returns raw
+    // Events/Search result rows.
+    self.searchEvents = async function (query) {
+        const t = await getToken();   // blocks here until token is ready
+        return new Promise((resolve) => {
+            BeaconClient.events.search(query, apiHost, params.userId, t, function (data) {
+                resolve(data?.Results || []);
+            }, function () {
+                resolve([]);
+            });
         });
     }
 

@@ -4,10 +4,15 @@ import {
     listLayers,
     createLayer,
     deleteLayer,
+    updateLayerModerators,
     fetchLayerMarkers,
     upsertMarker,
     deleteMarker,
     addMarkerComment,
+    getSubscribedLayerIds,
+    subscribeLayer,
+    unsubscribeLayer,
+    migrateLegacyVisibleLayersToSubscriptions,
 } from "../utils/collabLayerSync.js";
 
 const REFRESH_MS = 10000; // polling only fires while the layer is visible (registerPollingLayer's hasLayer gate)
@@ -88,26 +93,62 @@ function visibleCollabLayers(vm) {
 
 // ── Permissions ──────────────────────────────────────────────────────
 //
-// A layer's readOnly / allowDeleteByOthers / disableComments flags are set
-// once at creation time (see Config.js's createCollabLayer form) and never
-// change afterward, so there's no staleness concern reading them straight
-// off whatever layer object is already in hand. The Lambda enforces all
-// three independently and authoritatively (see lambda/map-layers-v2) --
-// this client-side gating only decides what to show/hide so a user isn't
-// invited to attempt something that will just come back as a 403.
+// A layer's markerMode / deleteMode / commentMode are set once at creation
+// time (see Config.js's createCollabLayer form) and never change afterward,
+// so there's no staleness concern reading them straight off whatever layer
+// object is already in hand. `moderators` (who counts as a moderator under
+// the 'moderators' mode) *can* change later -- the creator can add/remove
+// moderators after creation (see Config.js's per-row "Manage moderators")
+// -- but it's still read straight off the layer object already in hand,
+// same as the modes; a stale moderator list here just means the UI is
+// briefly out of date until the next poll, not a security gap (the Lambda
+// enforces authoritatively, see lambda/map-layers-v2). This client-side
+// gating only decides what to show/hide so a user isn't invited to attempt
+// something that will just come back as a 403.
+//
+// Each mode is one of 'anyone' | 'creator' | 'moderators'. Layers created
+// before this feature only carry the old readOnly / allowDeleteByOthers /
+// disableComments booleans -- the effective*Mode() helpers below derive the
+// equivalent mode from those so old layers keep behaving as they did.
 //
 // `getMemberId` is a sync () => string|null, the current user's Beacon
 // member id decoded from their own access token (main.js) -- the same
 // identity the Lambda authorizes against via the token's verified `sub`
 // claim, which is why it's what's compared to a layer's
-// `createdByMemberId` rather than the actorId/personId used for
-// createdBy/updatedBy bookkeeping elsewhere in this feature.
+// `createdByMemberId`/`moderators` rather than the actorId/personId used
+// for createdBy/updatedBy bookkeeping elsewhere in this feature.
+
+function effectiveMarkerMode(layer) {
+    return layer.markerMode || (layer.readOnly ? 'creator' : 'anyone');
+}
+
+function effectiveCommentMode(layer) {
+    return layer.commentMode || (layer.disableComments ? 'creator' : 'anyone');
+}
+
+/** Is `memberId` the creator or a listed moderator of `layer`? */
+function isCreatorOrModerator(layer, memberId) {
+    if (!memberId) return false;
+    if (memberId === layer.createdByMemberId) return true;
+    return Array.isArray(layer.moderators) && layer.moderators.some((m) => m?.id === memberId);
+}
+
+function isAuthorizedForMode(mode, layer, getMemberId) {
+    if (mode === 'anyone') return true;
+    const memberId = getMemberId?.();
+    if (mode === 'creator') return !!memberId && memberId === layer.createdByMemberId;
+    if (mode === 'moderators') return isCreatorOrModerator(layer, memberId);
+    return false;
+}
 
 /** Whether the current user may create/edit/delete markers on `layer`. */
 function canWriteMarkers(layer, getMemberId) {
-    if (!layer?.readOnly) return true;
-    const memberId = getMemberId?.();
-    return !!memberId && memberId === layer.createdByMemberId;
+    return isAuthorizedForMode(effectiveMarkerMode(layer), layer, getMemberId);
+}
+
+/** Whether the current user may comment on `layer`'s markers. */
+function canCommentOnLayer(layer, getMemberId) {
+    return isAuthorizedForMode(effectiveCommentMode(layer), layer, getMemberId);
 }
 
 /**
@@ -131,12 +172,19 @@ function registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId)
 }
 
 /**
- * Fetch the list of collaborative layers for the org, store it on the
- * MapVM for the config modal to bind to, and register/refresh polling
- * layers for any layer not already registered.
+ * Fetch every layer for the org (unfiltered -- subscriptions can span any
+ * HQ, so there's no single hqId to scope this fetch to) and narrow it down
+ * client-side to the ones the user is subscribed to. This -- not any HQ
+ * filter -- is what populates vm.mapVM.collabLayers()/Config.js's "My
+ * layers" list, so a subscribed layer stays listed (and unsubscribe-able)
+ * regardless of whatever HQ the separate "Find a layer" search is scoped
+ * to. Registers/refreshes polling for any subscribed layer not already
+ * registered.
  */
-export async function refreshCollabLayerList(vm, apiUrl, actorId, getToken, getMemberId) {
-    const layers = await listLayers(apiUrl, await getToken());
+export async function refreshSubscribedLayers(vm, apiUrl, actorId, getToken, getMemberId) {
+    const subscribedIds = getSubscribedLayerIds();
+    const all = await listLayers(apiUrl, await getToken());
+    const layers = all.filter((layer) => subscribedIds.has(String(layer.id)));
     vm.mapVM.collabLayers(layers);
     // Only register layers we haven't seen yet -- re-registering an already
     // visible layer would hand it a brand new (empty) layerGroup that never
@@ -150,6 +198,17 @@ export async function refreshCollabLayerList(vm, apiUrl, actorId, getToken, getM
 }
 
 /**
+ * Fetch layers for a single HQ -- backs Config.js's "Find a layer" search
+ * (browsing to discover/subscribe to a layer), never touches
+ * vm.mapVM.collabLayers or registers anything. Thin pass-through kept here
+ * (rather than Config.js importing collabLayerSync.js's listLayers
+ * directly) so every org-layer fetch funnels through one module.
+ */
+export async function searchLayersForHq(apiUrl, getToken, hqId) {
+    return listLayers(apiUrl, await getToken(), hqId);
+}
+
+/**
  * Called once at startup (main.js), alongside the other register*Layer
  * calls. The right-click "Add marker" trigger itself is wired up
  * separately, into the app's existing map context menu (see
@@ -157,20 +216,27 @@ export async function refreshCollabLayerList(vm, apiUrl, actorId, getToken, getM
  * above) rather than a second contextmenu listener here.
  */
 export async function registerCollabLayers(vm, apiUrl, actorId, getToken, getMemberId) {
-    await refreshCollabLayerList(vm, apiUrl, actorId, getToken, getMemberId);
+    migrateLegacyVisibleLayersToSubscriptions();
+    await refreshSubscribedLayers(vm, apiUrl, actorId, getToken, getMemberId);
 }
 
-/** Create a new named layer, register its polling layer immediately, and refresh the drawer. */
+/**
+ * Create a new named layer, subscribe its creator to it, register its
+ * polling layer immediately, and refresh the drawer.
+ */
 export async function createCollabLayer(vm, apiUrl, name, actorId, getToken, permissions, getMemberId) {
     const layer = await createLayer(apiUrl, name, actorId, await getToken(), permissions);
     if (!layer) return null;
+    subscribeLayer(layer.id);
     const list = vm.mapVM.collabLayers();
     vm.mapVM.collabLayers([...list, layer]);
     const key = layerKeyFor(layer.id);
     registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId);
     // Auto-show layers the user just created -- matches the 'ov.<drawerKey>'
-    // flag both the layers drawer (main.js) and the Config modal's View
-    // switch (Config.js collabLayerRows) read to decide initial visibility.
+    // flag the layers drawer (main.js) reads to decide initial visibility.
+    // The one deliberate exception to "Config subscribes, LayersDrawer
+    // shows/hides": whoever just made a layer almost certainly wants to
+    // see it immediately, without a second trip to the Layers control.
     localStorage.setItem(`ov.online-${key}`, '1');
     vm.mapVM.layersDrawer?.refresh?.();
     vm.mapVM.refreshPollingLayer(key);
@@ -179,10 +245,10 @@ export async function createCollabLayer(vm, apiUrl, name, actorId, getToken, per
 
 /**
  * Delete a collaborative layer: fires the remote (soft-)delete, then tears
- * down its polling registration/map presence and drops it from the list
- * the config modal binds to. No-op (returns false) if the delete itself
- * failed, e.g. a 403 from a since-changed allowDeleteByOthers=false --
- * Config.js's row stays in place in that case rather than disappearing
+ * down its polling registration/map presence, drops the subscription, and
+ * drops it from the list the config modal binds to. No-op (returns false)
+ * if the delete itself failed, e.g. a 403 from a since-changed deleteMode
+ * -- Config.js's row stays in place in that case rather than disappearing
  * client-side while still existing server-side.
  */
 export async function deleteCollabLayer(vm, apiUrl, layerId, actorId, getToken) {
@@ -192,9 +258,60 @@ export async function deleteCollabLayer(vm, apiUrl, layerId, actorId, getToken) 
     const key = layerKeyFor(layerId);
     vm.mapVM.unregisterPollingLayer(key);
     localStorage.removeItem(`ov.online-${key}`);
+    unsubscribeLayer(layerId);
     vm.mapVM.collabLayers(vm.mapVM.collabLayers().filter((l) => l.id !== layerId));
     vm.mapVM.layersDrawer?.refresh?.();
     return true;
+}
+
+/**
+ * Subscribe to an already-existing layer (found via Config.js's "Find a
+ * layer" search) -- adds it to "My layers", registers it for
+ * polling/LayersDrawer, but leaves it hidden until explicitly shown via
+ * the Layers control (see createCollabLayer's comment for the one
+ * exception to that rule).
+ */
+export function subscribeToLayer(vm, apiUrl, layer, actorId, getToken, getMemberId) {
+    subscribeLayer(layer.id);
+    const list = vm.mapVM.collabLayers();
+    if (!list.some((l) => l.id === layer.id)) {
+        vm.mapVM.collabLayers([...list, layer]);
+    }
+    if (!vm.mapVM.onlineLayers.has(layerKeyFor(layer.id))) {
+        registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId);
+    }
+    vm.mapVM.layersDrawer?.refresh?.();
+}
+
+/**
+ * Unsubscribe from a layer: drops it from "My layers" and tears down its
+ * polling/map presence entirely (unlike hiding it, which leaves it
+ * registered -- see registerPollingLayer's doc comment). Local-only, no
+ * remote call -- subscriptions aren't org data (see collabLayerSync.js).
+ */
+export function unsubscribeFromLayer(vm, layerId) {
+    const key = layerKeyFor(layerId);
+    vm.mapVM.unregisterPollingLayer(key);
+    localStorage.removeItem(`ov.online-${key}`);
+    unsubscribeLayer(layerId);
+    vm.mapVM.collabLayers(vm.mapVM.collabLayers().filter((l) => l.id !== layerId));
+    vm.mapVM.layersDrawer?.refresh?.();
+}
+
+/**
+ * Replace a layer's moderator list (creator-only, enforced server-side --
+ * see lambda updateLayerModerators.js). Updates the in-memory layer object
+ * (shared by reference with vm.mapVM.collabLayers()'s entry, same as every
+ * other layer field) on success so Config.js's row immediately reflects the
+ * new list without waiting for the next poll/refresh.
+ */
+export async function updateCollabLayerModerators(vm, apiUrl, layerId, moderators, getToken) {
+    const saved = await updateLayerModerators(apiUrl, layerId, moderators, await getToken());
+    if (saved == null) return null;
+
+    const layer = vm.mapVM.collabLayers().find((l) => l.id === layerId);
+    if (layer) layer.moderators = saved;
+    return saved;
 }
 
 // ── Drawing ──────────────────────────────────────────────────────────
@@ -236,7 +353,11 @@ function drawCollabMarkers(vm, layerGroup, data, apiUrl, layer, key, actorId, ge
 function buildMarkerPopupEl(vm, apiUrl, layer, key, marker, actorId, getToken, leafletMarker, getMemberId) {
     const layerId = layer.id;
     const canWrite = canWriteMarkers(layer, getMemberId);
-    const canComment = !layer.disableComments;
+    const canComment = canCommentOnLayer(layer, getMemberId);
+    const commentMode = effectiveCommentMode(layer);
+    const commentsRestrictedMessage = commentMode === 'moderators'
+        ? "Only the layer creator and moderators can comment on this layer"
+        : "Only the layer creator can comment on this layer";
 
     const el = document.createElement("div");
     el.className = "collab-marker-popup";
@@ -252,7 +373,7 @@ function buildMarkerPopupEl(vm, apiUrl, layer, key, marker, actorId, getToken, l
             <div class="collab-char-counter"></div>
             <button type="button" class="btn btn-sm btn-outline-primary collab-add-comment-btn">Comment</button>
         </div>
-        ` : `<div class="collab-marker-comments-disabled"><i class="fas fa-comment-slash"></i> Comments are disabled on this layer</div>`}
+        ` : `<div class="collab-marker-comments-disabled"><i class="fas fa-comment-slash"></i> ${escHtml(commentsRestrictedMessage)}</div>`}
         ${canWrite ? `
         <div class="collab-marker-actions">
             <button type="button" class="btn btn-sm btn-outline-secondary collab-edit-marker-btn">Edit</button>
@@ -433,7 +554,15 @@ function stripSubjectPrefix(subject) {
     return sepIdx === -1 ? "" : subject.slice(sepIdx + 3);
 }
 
-function createOpsLogAuditEntry(vm, subject, text) {
+/**
+ * `eventId`, when the marker's layer has one attached (see Config.js's
+ * "attach to event" picker), is threaded through as the Ops Log entry's own
+ * EventId -- ties every marker/comment logged against that layer back to
+ * the same Beacon event, same as logging it by hand from that event's own
+ * Ops Log tab would. Omitted entirely (not sent as a blank field) for
+ * layers with no event attached, same as before this existed.
+ */
+function createOpsLogAuditEntry(vm, subject, text, eventId) {
     if (typeof vm.createOpsLogEntry !== "function") return Promise.resolve(null);
 
     const payload = {
@@ -445,6 +574,7 @@ function createOpsLogAuditEntry(vm, subject, text) {
         TagIds: [MARKER_AUDIT_TAG_ID],
         TimeLogged: new Date().toISOString(),
     };
+    if (eventId) payload.EventId = eventId;
 
     return new Promise((resolve) => {
         vm.createOpsLogEntry(payload, (result) => resolve(result?.Id ?? null));
@@ -464,10 +594,11 @@ function createOpsLogAuditEntry(vm, subject, text) {
  * so this never needs to truncate.
  */
 function logMarkerAudit(vm, action, layerId, marker, title, description) {
-    const layerName = vm.mapVM.collabLayers().find((l) => l.id === layerId)?.name || layerId;
+    const layer = vm.mapVM.collabLayers().find((l) => l.id === layerId);
+    const layerName = layer?.name || layerId;
     const subject = title ? `${markerSubjectLead(action)} - ${title}` : markerSubjectLead(action);
     const text = `${description || ""}${buildMarkerAuditFooter(action, layerName, marker)}`;
-    return createOpsLogAuditEntry(vm, subject, text);
+    return createOpsLogAuditEntry(vm, subject, text, layer?.eventId);
 }
 
 /**
@@ -476,9 +607,10 @@ function logMarkerAudit(vm, action, layerId, marker, title, description) {
  * marker's commentOpsLogIds.
  */
 function logMarkerComment(vm, layerId, marker, commentText) {
-    const layerName = vm.mapVM.collabLayers().find((l) => l.id === layerId)?.name || layerId;
+    const layer = vm.mapVM.collabLayers().find((l) => l.id === layerId);
+    const layerName = layer?.name || layerId;
     const text = `${commentText}${buildMarkerAuditFooter("commented on", layerName, marker)}`;
-    return createOpsLogAuditEntry(vm, `${SUBJECT_PREFIX} comment`, text);
+    return createOpsLogAuditEntry(vm, `${SUBJECT_PREFIX} comment`, text, layer?.eventId);
 }
 
 /** Fetch a single Ops Log entry by id, resolving null if unavailable/failed. */

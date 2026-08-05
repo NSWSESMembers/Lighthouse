@@ -3,6 +3,7 @@
 const crypto = require('crypto');
 const { getLayerObject, putLayerObject, updateIndex } = require('../lib/s3Store');
 const { json, badRequest, notFound, forbidden } = require('../lib/response');
+const { markerMode, isAuthorized } = require('../lib/permissions');
 
 // Must stay in sync with the icon keys in
 // src/pages/tasking/components/collab_marker_icons.js (MARKER_ICON_GROUPS).
@@ -51,12 +52,11 @@ module.exports = async function upsertFeature(event, claims) {
   const layer = await getLayerObject(apiUrl, layerId);
   if (!layer) return notFound('Layer not found');
 
-  // On a read-only layer, only the layer's creator may create/edit markers
-  // -- everyone else is limited to commenting (see addMarkerComment.js).
   // Authorized against the verified token's memberId, not the
-  // client-supplied actorId.
-  if (layer.readOnly && memberId !== layer.createdByMemberId) {
-    return forbidden('Only the layer creator can add or edit markers on this read-only layer');
+  // client-supplied actorId. See lib/permissions.js for the markerMode /
+  // isAuthorized rules (anyone / creator-only / creator+moderators).
+  if (!isAuthorized(markerMode(layer), layer, memberId)) {
+    return forbidden('You do not have permission to add or edit markers on this layer');
   }
 
   const now = new Date().toISOString();

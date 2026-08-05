@@ -2,6 +2,7 @@
 
 const { getLayerObject, putLayerObject, updateIndex } = require('../lib/s3Store');
 const { json, badRequest, notFound, forbidden } = require('../lib/response');
+const { markerMode, isAuthorized } = require('../lib/permissions');
 
 // DELETE /map-layers/{id}/features/{markerId}?apiUrl=...&actorId=...
 // Soft-deletes the marker (sets deleted: true) rather than removing it, so
@@ -26,11 +27,10 @@ module.exports = async function deleteFeature(event, claims) {
   const marker = layer.markers.find((m) => m.id === markerId);
   if (!marker) return notFound('Marker not found');
 
-  // Same rule as upsertFeature.js: a read-only layer restricts marker
-  // writes (including delete) to the layer's creator, authorized against
-  // the verified token's memberId.
-  if (layer.readOnly && memberId !== layer.createdByMemberId) {
-    return forbidden('Only the layer creator can delete markers on this read-only layer');
+  // Same rule as upsertFeature.js: markerMode gates marker deletes too,
+  // authorized against the verified token's memberId.
+  if (!isAuthorized(markerMode(layer), layer, memberId)) {
+    return forbidden('You do not have permission to delete markers on this layer');
   }
 
   const now = new Date().toISOString();
