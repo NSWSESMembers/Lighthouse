@@ -2,6 +2,7 @@
 
 const { getLayerObject, putLayerObject, updateIndex } = require('../lib/s3Store');
 const { json, badRequest, notFound, forbidden } = require('../lib/response');
+const { deleteMode, isAuthorized } = require('../lib/permissions');
 
 // DELETE /map-layers/{id}?apiUrl=...&actorId=...
 //
@@ -24,8 +25,8 @@ module.exports = async function deleteLayer(event, claims) {
   const layer = await getLayerObject(apiUrl, layerId);
   if (!layer) return notFound('Layer not found');
 
-  if (layer.allowDeleteByOthers === false && memberId !== layer.createdByMemberId) {
-    return forbidden('Only the layer creator can delete this layer');
+  if (!isAuthorized(deleteMode(layer), layer, memberId)) {
+    return forbidden('You do not have permission to delete this layer');
   }
 
   const now = new Date().toISOString();
