@@ -83,7 +83,12 @@ export function installMapContextMenu({
         lastLatLng = e.latlng;
 
         if (btnAddMarker) {
-            btnAddMarker.classList.toggle("d-none", !canAddMarker?.());
+            const canAdd = !!canAddMarker?.();
+            btnAddMarker.classList.toggle("disabled", !canAdd);
+            btnAddMarker.disabled = !canAdd;
+            btnAddMarker.title = canAdd
+                ? ""
+                : "Subscribe to a collaborative layer you can add markers to first";
         }
 
         const p = map.latLngToContainerPoint(e.latlng);

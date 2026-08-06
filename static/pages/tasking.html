@@ -3172,6 +3172,10 @@
                                                                  Unsubscribe above) so these administrative/destructive
                                                                  actions read as secondary and don't get confused with
                                                                  the primary Unsubscribe action. -->
+                                                            <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1" title="Manage permissions"
+                                                                data-bind="visible: row.canManagePermissions && !row.confirmingDelete(), click: row.openPermissionsModal">
+                                                                <i class="fa fa-lock"></i>
+                                                            </button>
                                                             <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1" title="Manage moderators"
                                                                 data-bind="visible: row.canManageModerators && !row.confirmingDelete(), click: row.toggleEditModerators">
                                                                 <i class="fa fa-user-shield"></i>
@@ -3495,6 +3499,83 @@
         </div>
     </div>
 
+
+    <!-- Collaborative layer permissions modal -- a standalone modal (rather
+         than an inline expanding panel within the layer row) so editing a
+         layer's permissions doesn't nest one scroll area inside another
+         (the row list's own .collab-layer-list-scroll). Bound to
+         config.permissionsModalRow, which Config.js sets to the row being
+         edited right before showing this modal, and clears back to null on
+         'hidden.bs.modal' (see openPermissionsModal) so state doesn't leak
+         into the next layer opened. -->
+    <div class="modal fade" id="collabPermissionsModal" tabindex="-1" aria-labelledby="collabPermissionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" data-bind="with: config.permissionsModalRow">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="collabPermissionsModalLabel">
+                        Permissions — <span data-bind="text: name"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="small text-muted mb-1 w-100">Marker permissions</div>
+                    <div class="form-check" title="Everyone can add, edit and delete markers (everyone can also comment, unless restricted below).">
+                        <input class="form-check-input" type="radio" name="collabPermMarkerMode" id="collabPermMarkerModeAnyone"
+                            data-bind="checked: editMarkerMode, checkedValue: 'anyone'">
+                        <label class="form-check-label small" for="collabPermMarkerModeAnyone">Anyone can add markers</label>
+                    </div>
+                    <div class="form-check" title="Others can view this layer and comment on markers, but only the creator can add, edit or delete markers.">
+                        <input class="form-check-input" type="radio" name="collabPermMarkerMode" id="collabPermMarkerModeCreator"
+                            data-bind="checked: editMarkerMode, checkedValue: 'creator'">
+                        <label class="form-check-label small" for="collabPermMarkerModeCreator">Only the creator can add markers</label>
+                    </div>
+                    <div class="form-check" title="Only the creator and moderators can add, edit or delete markers.">
+                        <input class="form-check-input" type="radio" name="collabPermMarkerMode" id="collabPermMarkerModeModerators"
+                            data-bind="checked: editMarkerMode, checkedValue: 'moderators'">
+                        <label class="form-check-label small" for="collabPermMarkerModeModerators">Moderators can add markers</label>
+                    </div>
+                    <div class="small text-muted mb-1 mt-3 w-100">Delete permissions</div>
+                    <div class="form-check" title="Any member of your organisation can delete this layer.">
+                        <input class="form-check-input" type="radio" name="collabPermDeleteMode" id="collabPermDeleteModeAnyone"
+                            data-bind="checked: editDeleteMode, checkedValue: 'anyone'">
+                        <label class="form-check-label small" for="collabPermDeleteModeAnyone">Anyone can delete this layer</label>
+                    </div>
+                    <div class="form-check" title="Only the creator can delete this layer.">
+                        <input class="form-check-input" type="radio" name="collabPermDeleteMode" id="collabPermDeleteModeCreator"
+                            data-bind="checked: editDeleteMode, checkedValue: 'creator'">
+                        <label class="form-check-label small" for="collabPermDeleteModeCreator">Only the creator can delete this layer</label>
+                    </div>
+                    <div class="form-check" title="Only the creator and moderators can delete this layer.">
+                        <input class="form-check-input" type="radio" name="collabPermDeleteMode" id="collabPermDeleteModeModerators"
+                            data-bind="checked: editDeleteMode, checkedValue: 'moderators'">
+                        <label class="form-check-label small" for="collabPermDeleteModeModerators">Moderators can delete this layer</label>
+                    </div>
+                    <div class="small text-muted mb-1 mt-3 w-100">Comment permissions</div>
+                    <div class="form-check" title="Anyone who can see this layer can comment on its markers.">
+                        <input class="form-check-input" type="radio" name="collabPermCommentMode" id="collabPermCommentModeAnyone"
+                            data-bind="checked: editCommentMode, checkedValue: 'anyone'">
+                        <label class="form-check-label small" for="collabPermCommentModeAnyone">Anyone can comment</label>
+                    </div>
+                    <div class="form-check" title="Only the creator can comment on this layer's markers.">
+                        <input class="form-check-input" type="radio" name="collabPermCommentMode" id="collabPermCommentModeCreator"
+                            data-bind="checked: editCommentMode, checkedValue: 'creator'">
+                        <label class="form-check-label small" for="collabPermCommentModeCreator">Only the creator can comment</label>
+                    </div>
+                    <div class="form-check" title="Only the creator and moderators can comment on this layer's markers.">
+                        <input class="form-check-input" type="radio" name="collabPermCommentMode" id="collabPermCommentModeModerators"
+                            data-bind="checked: editCommentMode, checkedValue: 'moderators'">
+                        <label class="form-check-label small" for="collabPermCommentModeModerators">Moderators can comment</label>
+                    </div>
+                    <div class="text-danger small mt-2" data-bind="visible: permissionsError, text: permissionsError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary"
+                        data-bind="click: savePermissions, disable: savingPermissions">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Ops Log Modal -->
     <div class="modal fade" id="opsLogModal" tabindex="-1" aria-labelledby="opsLogModalLabel" aria-hidden="true">
@@ -4324,7 +4405,7 @@
     <!-- MAP CONTEXT MENU (floating) -->
     <div id="mapContextMenu" class="dropdown-menu shadow"
         style="position:fixed; display:none; z-index:5000; min-width: 220px;">
-        <button type="button" class="dropdown-item d-none" id="ctxAddCollabMarker">
+        <button type="button" class="dropdown-item disabled" id="ctxAddCollabMarker" disabled>
             <i class="fa fa-map-marker-alt me-2"></i>Add marker to shared layer
         </button>
         <button type="button" class="dropdown-item" id="ctxSearchHere">

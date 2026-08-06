@@ -5,6 +5,7 @@ import {
     createLayer,
     deleteLayer,
     updateLayerModerators,
+    updateLayerPermissions,
     fetchLayerMarkers,
     upsertMarker,
     deleteMarker,
@@ -83,28 +84,21 @@ function wireCharCounter(inputEl, limit) {
     update();
 }
 
-/** Collaborative layers currently toggled visible on the map. */
-function visibleCollabLayers(vm) {
-    return (vm.mapVM.collabLayers() || []).filter((layer) => {
-        const entry = vm.mapVM.onlineLayers.get(layerKeyFor(layer.id));
-        return entry && vm.mapVM.map.hasLayer(entry.layerGroup);
-    });
-}
-
 // ── Permissions ──────────────────────────────────────────────────────
 //
-// A layer's markerMode / deleteMode / commentMode are set once at creation
-// time (see Config.js's createCollabLayer form) and never change afterward,
-// so there's no staleness concern reading them straight off whatever layer
-// object is already in hand. `moderators` (who counts as a moderator under
-// the 'moderators' mode) *can* change later -- the creator can add/remove
-// moderators after creation (see Config.js's per-row "Manage moderators")
-// -- but it's still read straight off the layer object already in hand,
-// same as the modes; a stale moderator list here just means the UI is
-// briefly out of date until the next poll, not a security gap (the Lambda
-// enforces authoritatively, see lambda/map-layers-v2). This client-side
-// gating only decides what to show/hide so a user isn't invited to attempt
-// something that will just come back as a 403.
+// A layer's markerMode / deleteMode / commentMode default to 'anyone' at
+// creation time (see Config.js's createCollabLayer form) but, like
+// `moderators`, can be changed later by the creator or a current moderator
+// (see Config.js's per-row "Manage permissions" and
+// updateCollabLayerPermissions below). Both are read straight off whatever
+// layer object is already in hand rather than re-fetched on every check --
+// registerLayerPolling's drawFn keeps that object's mode/moderator fields
+// synced from each poll response (syncLayerPermissionFields below), so a
+// stale read here just means the UI is briefly out of date until the next
+// poll tick, not a security gap (the Lambda enforces authoritatively, see
+// lambda/map-layers-v2). This client-side gating only decides what to
+// show/hide so a user isn't invited to attempt something that will just
+// come back as a 403.
 //
 // Each mode is one of 'anyone' | 'creator' | 'moderators'. Layers created
 // before this feature only carry the old readOnly / allowDeleteByOthers /
@@ -152,6 +146,38 @@ function canCommentOnLayer(layer, getMemberId) {
 }
 
 /**
+ * Copy the permission-relevant fields (markerMode/deleteMode/commentMode/
+ * moderators) from a freshly-fetched layer (`data`, the full layer response
+ * from fetchLayerMarkers/getLayer.js) onto the long-lived `layer` object a
+ * subscribed user's session is holding. This is what lets someone else's
+ * "Manage permissions" or "Manage moderators" change (see
+ * updateCollabLayerPermissions/updateCollabLayerModerators) show up for
+ * every other subscriber -- not just the person who made it -- within one
+ * polling interval: `layer` is the same object reference closed over by
+ * this layer's drawFn (below) and held in vm.mapVM.collabLayers(), so
+ * mutating it here is immediately visible to both the next popup render
+ * and Config.js's per-row permission/moderator display.
+ */
+function syncLayerPermissionFields(vm, layer, data) {
+    if (!data) return;
+    const changed = layer.markerMode !== data.markerMode
+        || layer.deleteMode !== data.deleteMode
+        || layer.commentMode !== data.commentMode
+        || JSON.stringify(layer.moderators) !== JSON.stringify(data.moderators);
+    if (!changed) return;
+
+    layer.markerMode = data.markerMode;
+    layer.deleteMode = data.deleteMode;
+    layer.commentMode = data.commentMode;
+    layer.moderators = data.moderators;
+    // Config.js's collabLayerRows is a pureComputed over collabLayers() --
+    // mutating a field on an object already inside that observableArray
+    // doesn't itself trigger a recompute, same as updateCollabLayerModerators
+    // requiring Config.js's saveRowModerators to call this explicitly.
+    vm.mapVM.collabLayers.valueHasMutated?.();
+}
+
+/**
  * Register the polling Leaflet layer for a single collaborative layer.
  * Visibility is controlled entirely by the existing layers drawer /
  * `ov.<key>` mechanism already built into registerPollingLayer +
@@ -160,13 +186,20 @@ function canCommentOnLayer(layer, getMemberId) {
  */
 function registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId) {
     const key = layerKeyFor(layer.id);
+    // No stored preference yet (brand new subscription) defaults to shown;
+    // an explicit prior '0'/'1' from the layers drawer toggle always wins,
+    // so a layer someone has deliberately hidden stays hidden across reloads.
+    const stored = localStorage.getItem(`ov.online-${key}`);
     vm.mapVM.registerPollingLayer(key, {
         label: layer.name,
         menuGroup: "Collaborative Layers",
         refreshMs: REFRESH_MS,
-        visibleByDefault: false,
+        visibleByDefault: stored === null ? true : stored === "1",
         fetchFn: async () => fetchLayerMarkers(apiUrl, layer.id, await getToken()),
-        drawFn: (layerGroup, data) => drawCollabMarkers(vm, layerGroup, data, apiUrl, layer, key, actorId, getToken, getMemberId),
+        drawFn: (layerGroup, data) => {
+            syncLayerPermissionFields(vm, layer, data);
+            drawCollabMarkers(vm, layerGroup, data, apiUrl, layer, key, actorId, getToken, getMemberId);
+        },
         skipIfBusy: () => busyLayerKeys.has(key),
     });
 }
@@ -212,7 +245,7 @@ export async function searchLayersForHq(apiUrl, getToken, hqId) {
  * Called once at startup (main.js), alongside the other register*Layer
  * calls. The right-click "Add marker" trigger itself is wired up
  * separately, into the app's existing map context menu (see
- * components/mapContextMenu.js + startAddMarkerFlow/getVisibleCollabLayers
+ * components/mapContextMenu.js + startAddMarkerFlow/getWritableCollabLayers
  * above) rather than a second contextmenu listener here.
  */
 export async function registerCollabLayers(vm, apiUrl, actorId, getToken, getMemberId) {
@@ -233,10 +266,9 @@ export async function createCollabLayer(vm, apiUrl, name, actorId, getToken, per
     const key = layerKeyFor(layer.id);
     registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId);
     // Auto-show layers the user just created -- matches the 'ov.<drawerKey>'
-    // flag the layers drawer (main.js) reads to decide initial visibility.
-    // The one deliberate exception to "Config subscribes, LayersDrawer
-    // shows/hides": whoever just made a layer almost certainly wants to
-    // see it immediately, without a second trip to the Layers control.
+    // flag the layers drawer (main.js) reads to decide initial visibility
+    // (see subscribeToLayer below, which does the same for an existing
+    // layer someone subscribes to).
     localStorage.setItem(`ov.online-${key}`, '1');
     vm.mapVM.layersDrawer?.refresh?.();
     vm.mapVM.refreshPollingLayer(key);
@@ -267,9 +299,9 @@ export async function deleteCollabLayer(vm, apiUrl, layerId, actorId, getToken) 
 /**
  * Subscribe to an already-existing layer (found via Config.js's "Find a
  * layer" search) -- adds it to "My layers", registers it for
- * polling/LayersDrawer, but leaves it hidden until explicitly shown via
- * the Layers control (see createCollabLayer's comment for the one
- * exception to that rule).
+ * polling/LayersDrawer, and shows it immediately (same as createCollabLayer
+ * -- whoever just subscribed almost certainly wants to see it right away,
+ * without a second trip to the Layers control).
  */
 export function subscribeToLayer(vm, apiUrl, layer, actorId, getToken, getMemberId) {
     subscribeLayer(layer.id);
@@ -277,10 +309,13 @@ export function subscribeToLayer(vm, apiUrl, layer, actorId, getToken, getMember
     if (!list.some((l) => l.id === layer.id)) {
         vm.mapVM.collabLayers([...list, layer]);
     }
-    if (!vm.mapVM.onlineLayers.has(layerKeyFor(layer.id))) {
+    const key = layerKeyFor(layer.id);
+    if (!vm.mapVM.onlineLayers.has(key)) {
         registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId);
     }
+    localStorage.setItem(`ov.online-${key}`, '1');
     vm.mapVM.layersDrawer?.refresh?.();
+    vm.mapVM.refreshPollingLayer(key);
 }
 
 /**
@@ -311,6 +346,31 @@ export async function updateCollabLayerModerators(vm, apiUrl, layerId, moderator
 
     const layer = vm.mapVM.collabLayers().find((l) => l.id === layerId);
     if (layer) layer.moderators = saved;
+    return saved;
+}
+
+/**
+ * Update a layer's markerMode/deleteMode/commentMode (creator-or-moderator
+ * only, enforced server-side -- see lambda updateLayerPermissions.js).
+ * Updates the in-memory layer object (shared by reference with
+ * vm.mapVM.collabLayers()'s entry, same as updateCollabLayerModerators
+ * above) on success so Config.js's row immediately reflects the new modes
+ * without waiting for the next poll/refresh -- and so this session's own
+ * marker popups (canWriteMarkers/canCommentOnLayer, read straight off this
+ * same object) pick up the change on their next open. Other sessions
+ * subscribed to this layer pick it up via syncLayerPermissionFields, once
+ * their own polling next ticks.
+ */
+export async function updateCollabLayerPermissions(vm, apiUrl, layerId, permissions, getToken) {
+    const saved = await updateLayerPermissions(apiUrl, layerId, permissions, await getToken());
+    if (saved == null) return null;
+
+    const layer = vm.mapVM.collabLayers().find((l) => l.id === layerId);
+    if (layer) {
+        layer.markerMode = saved.markerMode;
+        layer.deleteMode = saved.deleteMode;
+        layer.commentMode = saved.commentMode;
+    }
     return saved;
 }
 
@@ -841,10 +901,15 @@ function openFloatingDropdown(vm, anchorEl, className, populate) {
 
 // ── Right-click "add marker" ─────────────────────────────────────────
 //
-// Only available when at least one collaborative layer is currently
-// visible. With exactly one visible layer, right-click opens the marker
-// form immediately. With more than one visible, right-click shows a small
-// picker so the user chooses which layer receives the new marker.
+// Enabled whenever the user is subscribed to at least one collaborative
+// layer they can write markers to -- independent of whether that layer's
+// map overlay is currently toggled on, since most layers default to
+// hidden (registerLayerPolling's visibleByDefault: false) and requiring
+// visibility here would leave the item permanently disabled for anyone
+// who hasn't also flipped the layers-drawer checkbox. With exactly one
+// writable layer, right-click opens the marker form immediately. With
+// more than one, right-click shows a small picker so the user chooses
+// which layer receives the new marker.
 
 let openContextMenu = null; // cleanup for a currently-open picker menu, if any
 
@@ -907,32 +972,34 @@ function showLayerPickerMenu(vm, apiUrl, actorId, layers, containerPoint, latlng
 }
 
 /**
- * Visible collaborative layers the current user may add a marker to --
- * excludes read-only layers they didn't create. Drives whether the "Add
- * marker" item in the map's right-click context menu is shown at all.
+ * Subscribed collaborative layers the current user may add a marker to --
+ * excludes read-only layers they didn't create/moderate. Drives whether
+ * the "Add marker" item in the map's right-click context menu is enabled
+ * (it always shows, but is disabled when this comes back empty -- see
+ * components/mapContextMenu.js).
  */
-export function getVisibleCollabLayers(vm, getMemberId) {
-    return visibleCollabLayers(vm).filter((layer) => canWriteMarkers(layer, getMemberId));
+export function getWritableCollabLayers(vm, getMemberId) {
+    return (vm.mapVM.collabLayers() || []).filter((layer) => canWriteMarkers(layer, getMemberId));
 }
 
 /**
  * Entry point for the "Add marker to shared layer" item in the app's
  * existing right-click context menu (components/mapContextMenu.js). With
- * exactly one visible (writable) layer, opens the marker form immediately;
+ * exactly one writable subscribed layer, opens the marker form immediately;
  * with more than one, shows a small picker so the user chooses which layer
  * receives the new marker.
  */
 export function startAddMarkerFlow(vm, apiUrl, actorId, latlng, getToken, getMemberId) {
     closeContextMenu();
 
-    const visible = getVisibleCollabLayers(vm, getMemberId);
-    if (visible.length === 0) return;
+    const writable = getWritableCollabLayers(vm, getMemberId);
+    if (writable.length === 0) return;
 
-    if (visible.length === 1) {
-        openMarkerForm(vm, apiUrl, visible[0].id, layerKeyFor(visible[0].id), actorId, null, latlng, getToken);
+    if (writable.length === 1) {
+        openMarkerForm(vm, apiUrl, writable[0].id, layerKeyFor(writable[0].id), actorId, null, latlng, getToken);
         return;
     }
 
     const containerPoint = vm.mapVM.map.latLngToContainerPoint(latlng);
-    showLayerPickerMenu(vm, apiUrl, actorId, visible, containerPoint, latlng, getToken);
+    showLayerPickerMenu(vm, apiUrl, actorId, writable, containerPoint, latlng, getToken);
 }

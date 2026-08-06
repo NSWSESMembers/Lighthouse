@@ -4,7 +4,7 @@ import ko from 'knockout';
 import * as bootstrap from 'bootstrap5'; // Modal, Tooltip, etc.
 import { Enum } from '../utils/enum.js';
 import {
-    createCollabLayer, deleteCollabLayer, updateCollabLayerModerators,
+    createCollabLayer, deleteCollabLayer, updateCollabLayerModerators, updateCollabLayerPermissions,
     refreshSubscribedLayers, searchLayersForHq, subscribeToLayer, unsubscribeFromLayer,
 } from '../mapLayers/collabLayer.js';
 
@@ -532,18 +532,21 @@ export function ConfigVM(root, deps) {
     // (createCollabLayer) and server-side (createLayer.js).
     self.newLayerHqPicker = makeHqPicker(deps.entitiesSearch);
     // Optional Beacon event this layer relates to -- purely display
-    // metadata (like createdBy), fixed at creation same as the permission
-    // modes below, no later "attach/detach event" flow.
+    // metadata (like createdBy), fixed at creation with no later
+    // "attach/detach event" flow (unlike the permission modes below, which
+    // -- like the moderator list -- can be changed later).
     self.newLayerEventPicker = makeEventPicker(deps.searchEvents);
-    // Each mode is fixed for a layer's whole lifetime once created -- there's
-    // no later "edit permissions" flow, by design (see
-    // mapLayers/collabLayer.js). Each backed by a 3-way radio group in
+    // Each mode defaults to 'anyone' here at creation time, but -- like the
+    // moderator list -- can be changed later by the creator or a current
+    // moderator, via each row's own "Manage permissions" control in
+    // collabLayerRows below (see mapLayers/collabLayer.js's
+    // updateCollabLayerPermissions). Each backed by a 3-way radio group in
     // tasking.html: 'anyone' | 'creator' | 'moderators', all following the
     // same "Anyone can ___" / "Only I can ___" / "Moderators can ___" shape
     // for a consistent mental model across the three permissions. The
-    // moderator *list* itself is the one thing that's editable later (by
-    // the creator) -- see newLayerModeratorPicker below and each row's own
-    // moderatorPicker in collabLayerRows.
+    // moderator *list* itself is edited separately -- see
+    // newLayerModeratorPicker below and each row's own moderatorPicker in
+    // collabLayerRows.
     self.newLayerMarkerMode = ko.observable('anyone'); // who can add/edit/delete markers
     self.newLayerDeleteMode = ko.observable('anyone'); // who can delete the layer itself
     self.newLayerCommentMode = ko.observable('anyone'); // who can comment on markers
@@ -559,6 +562,37 @@ export function ConfigVM(root, deps) {
     self.collabLayerSearch = ko.observable(''); // filters "My layers" by name -- mainly useful once you've subscribed to a lot of them
     self.refreshingCollabLayers = ko.observable(false);
     self.deletingCollabLayerId = ko.observable(null); // id of the row currently mid-delete, if any
+
+    // The row currently being edited in the standalone #collabPermissionsModal
+    // (tasking.html), or null when it's closed. A single shared observable
+    // (rather than a per-row "editing" flag rendered inline) so editing
+    // permissions doesn't nest one scroll area inside another -- the row
+    // list this modal is opened from is itself a small scrolling box
+    // (.collab-layer-list-scroll), and an expanding-in-place panel there
+    // forced a scrollbar-within-a-scrollbar. `with: config.permissionsModalRow`
+    // in the modal's markup means its contents simply don't exist in the DOM
+    // while this is null.
+    self.permissionsModalRow = ko.observable(null);
+    self.openPermissionsModal = (row) => {
+        row.permissionsError('');
+        row.editMarkerMode(row.markerMode);
+        row.editDeleteMode(row.deleteMode);
+        row.editCommentMode(row.commentMode);
+        self.permissionsModalRow(row);
+        const modalEl = document.getElementById('collabPermissionsModal');
+        if (!modalEl) return;
+        // Attached lazily on first open (rather than at Config() construction
+        // time) since that's the first point this element is guaranteed to
+        // exist -- guarded so a second open doesn't stack a duplicate
+        // listener. Clears permissionsModalRow on every close, however it
+        // was triggered (Save, Cancel, the X button, backdrop click, Esc),
+        // so a row's draft state doesn't leak into the next layer opened.
+        if (!modalEl.dataset.permissionsListenerAttached) {
+            modalEl.dataset.permissionsListenerAttached = 'true';
+            modalEl.addEventListener('hidden.bs.modal', () => self.permissionsModalRow(null));
+        }
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    };
 
     // ── Find a layer (discover/subscribe) ──
     // Collapsed behind its own toggle by default, same reasoning as
@@ -656,6 +690,7 @@ export function ConfigVM(root, deps) {
                 markerCount: layer.markerCount || 0,
                 lastUsedLabel: relativeTime(layer.lastUsedAt),
                 markerMode,
+                deleteMode,
                 commentMode,
                 markerRestricted: markerMode !== 'anyone',
                 commentRestricted: commentMode !== 'anyone',
@@ -694,6 +729,21 @@ export function ConfigVM(root, deps) {
                 savingModerators: ko.observable(false),
                 moderatorsError: ko.observable(''),
                 moderatorPicker: canManageModerators ? makeModeratorPicker(deps.searchMembers, moderators) : null,
+                // Same authorization as moderator management -- creator or
+                // any current moderator (see lambda
+                // updateLayerPermissions.js) -- so this reuses
+                // canManageModerators rather than a second computed flag.
+                canManagePermissions: canManageModerators,
+                savingPermissions: ko.observable(false),
+                permissionsError: ko.observable(''),
+                // Separate observables (rather than binding the radios
+                // straight to row.markerMode/deleteMode/commentMode above)
+                // so opening the modal doesn't retroactively change what the
+                // row displays until Save is actually clicked -- same
+                // "draft, then commit" shape as moderatorPicker.
+                editMarkerMode: ko.observable(markerMode),
+                editDeleteMode: ko.observable(deleteMode),
+                editCommentMode: ko.observable(commentMode),
             };
             if (layer.createdBy && root.resolvePersonName) {
                 root.resolvePersonName(layer.createdBy).then(name => row.authorName(name));
@@ -716,6 +766,8 @@ export function ConfigVM(root, deps) {
                 row.editingModerators(false);
             };
             row.saveModerators = () => self.saveRowModerators(row);
+            row.openPermissionsModal = () => self.openPermissionsModal(row);
+            row.savePermissions = () => self.saveRowPermissions(row);
             return row;
         }));
 
@@ -767,6 +819,19 @@ export function ConfigVM(root, deps) {
         }
     };
     self.discoverHqPicker.selected.subscribe(() => self.runDiscoverSearch());
+
+    // Debounced re-poll on every name filter keystroke too (same 250ms
+    // shape as makeEventPicker/makeHqPicker above) -- discoverResults is a
+    // point-in-time snapshot, so without this, a layer someone else creates
+    // or renames mid-search stays invisible/stale until the HQ picker is
+    // touched again. discoverRows below still does the actual name
+    // narrowing client-side (the lambda has no name param), this just keeps
+    // the underlying snapshot fresh while the user types.
+    let discoverSearchTimer = null;
+    self.discoverSearch.subscribe(() => {
+        if (discoverSearchTimer) clearTimeout(discoverSearchTimer);
+        discoverSearchTimer = setTimeout(self.runDiscoverSearch, 250);
+    });
 
     self.discoverRows = ko.pureComputed(() => {
         const subscribedIds = new Set(self.collabLayers().map(l => l.id));
@@ -946,6 +1011,45 @@ export function ConfigVM(root, deps) {
             row.moderatorsError('Failed to save moderators. Try again later.');
         } finally {
             row.savingModerators(false);
+        }
+    };
+
+    // Saves a row's in-progress marker/delete/comment mode radios (edited in
+    // #collabPermissionsModal) as the layer's new permissions, fired from
+    // row.savePermissions above. Only rows the creator or a current
+    // moderator can manage ever get the "Manage permissions" control exposed
+    // (see collabLayerRows' canManagePermissions), so there's no separate
+    // authorization check needed here -- the Lambda enforces it
+    // authoritatively either way.
+    self.saveRowPermissions = async (row) => {
+        if (!deps.apiUrl || !row.canManagePermissions || row.savingPermissions()) return;
+
+        row.permissionsError('');
+        row.savingPermissions(true);
+        try {
+            const permissions = {
+                markerMode: row.editMarkerMode(),
+                deleteMode: row.editDeleteMode(),
+                commentMode: row.editCommentMode(),
+            };
+            const saved = await updateCollabLayerPermissions(root, deps.apiUrl, row.layer.id, permissions, deps.getToken);
+            if (saved == null) throw new Error('Update failed');
+            // updateCollabLayerPermissions mutates row.layer's mode fields
+            // in place (it's the same object reference held in
+            // self.collabLayers()) -- force collabLayerRows to recompute so
+            // this row (and its canDelete/lock badges) reflect the new
+            // modes immediately, same as a poll-driven refresh would.
+            self.collabLayers.valueHasMutated();
+            // Only close on success -- an error leaves the modal open (with
+            // permissionsError shown) so the user can see what went wrong
+            // and retry, rather than the failure vanishing along with the
+            // modal's content.
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('collabPermissionsModal')).hide();
+        } catch (err) {
+            console.error('Error updating layer permissions:', err);
+            row.permissionsError('Failed to save permissions. Try again later.');
+        } finally {
+            row.savingPermissions(false);
         }
     };
 

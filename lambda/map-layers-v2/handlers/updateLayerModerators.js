@@ -23,13 +23,13 @@ function sanitizeModerators(input) {
 
 // PUT /map-layers/{id}/moderators   body: { apiUrl, moderators: [{id, name}] }
 //
-// Unlike markerMode/deleteMode/commentMode (fixed at creation, see
-// createLayer.js), the moderator list itself can be updated later -- who
-// should moderate a layer changes over an incident's lifetime even when the
-// permission structure doesn't. The creator or any *current* moderator may
-// change it (isAuthorized('moderators', ...) -- same rule as the
-// marker/delete/comment 'moderators' mode: creator plus anyone already on
-// the list), so a stranger still can't silently add themselves. Replaces
+// The moderator list, like markerMode/deleteMode/commentMode (see
+// updateLayerPermissions.js), can be updated after creation -- who should
+// moderate a layer changes over an incident's lifetime, same as how open it
+// should be. The creator or any *current* moderator may change it
+// (isAuthorized('moderators', ...) -- same rule as the marker/delete/comment
+// 'moderators' mode: creator plus anyone already on the list), so a
+// stranger still can't silently add themselves. Replaces
 // the full list rather than diffing (simpler, and the client always sends
 // its complete current list -- see collabLayerSync.js's
 // updateLayerModerators). A moderator removing themselves (or every other

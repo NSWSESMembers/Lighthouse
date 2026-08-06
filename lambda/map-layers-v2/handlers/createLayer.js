@@ -51,13 +51,11 @@ function sanitizeHq(input) {
 // POST /map-layers
 // body: { apiUrl, name, createdBy, hq, markerMode?, deleteMode?, commentMode?, moderators?, event? }
 //
-// The permission modes and moderator list are fixed at creation time --
-// there's no "edit layer settings" flow for the modes themselves, so every
-// handler that reads them back off the stored layer/summary can treat them
-// as immutable for that layer's lifetime. The moderator list itself *is*
-// editable later by the creator (see updateLayerModerators.js) since who
-// should moderate a layer can change over an incident's lifetime even when
-// the permission structure doesn't.
+// The permission modes default to 'anyone' here at creation time, but --
+// like the moderator list -- can be changed later by the creator or a
+// current moderator (see updateLayerPermissions.js / updateLayerModerators.js)
+// since both who should moderate a layer and how open it should be can
+// change over an incident's lifetime.
 //
 // Each of markerMode/deleteMode/commentMode is one of 'anyone' | 'creator'
 // | 'moderators' (default 'anyone' if omitted/invalid):
@@ -78,8 +76,9 @@ function sanitizeHq(input) {
 //
 // `event` (optional): { id, name } of a Beacon event this layer relates to,
 // stored as eventId/eventName -- purely for display in the layer list
-// (Config.js), same "fixed at creation" rule as the permission modes above,
-// no later "attach/detach event" flow.
+// (Config.js), fixed at creation with no later "attach/detach event" flow
+// (unlike the permission modes above, which can be changed later -- see
+// updateLayerPermissions.js).
 //
 // "The creator" for all of the above means `createdByMemberId` --
 // `claims.sub`, the Beacon member id off the caller's own verified token --
