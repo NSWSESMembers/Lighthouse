@@ -10,6 +10,7 @@ const deleteFeature = require('./handlers/deleteFeature');
 const addMarkerComment = require('./handlers/addMarkerComment');
 const deleteLayer = require('./handlers/deleteLayer');
 const updateLayerModerators = require('./handlers/updateLayerModerators');
+const updateLayerPermissions = require('./handlers/updateLayerPermissions');
 
 // Single Lambda fronting all /lad_v2/map-layers routes via API Gateway HTTP
 // API (payload format 2.0) Lambda proxy integration. Routed by
@@ -24,6 +25,7 @@ const ROUTES = {
   'GET /lad_v2/map-layers/{id}': getLayer,
   'DELETE /lad_v2/map-layers/{id}': deleteLayer,
   'PUT /lad_v2/map-layers/{id}/moderators': updateLayerModerators,
+  'PUT /lad_v2/map-layers/{id}/permissions': updateLayerPermissions,
   'PUT /lad_v2/map-layers/{id}/features': upsertFeature,
   'DELETE /lad_v2/map-layers/{id}/features/{markerId}': deleteFeature,
   'POST /lad_v2/map-layers/{id}/features/{markerId}/comments': addMarkerComment,

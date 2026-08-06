@@ -66,7 +66,7 @@ import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } f
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
-import { registerCollabLayers, getVisibleCollabLayers, startAddMarkerFlow } from "./mapLayers/collabLayer.js";
+import { registerCollabLayers, getWritableCollabLayers, startAddMarkerFlow } from "./mapLayers/collabLayer.js";
 import {
     registerBOMRainfallLayer,
     registerBOMRadarLayer,
@@ -275,7 +275,7 @@ installMapContextMenu({
     // existing `var myViewModel;` module-level pattern below) -- these
     // callbacks only run later, on an actual right-click, by which point
     // it's fully populated.
-    canAddMarker: () => getVisibleCollabLayers(myViewModel, getMemberId).length > 0,
+    canAddMarker: () => getWritableCollabLayers(myViewModel, getMemberId).length > 0,
     onAddMarker: (latlng) => startAddMarkerFlow(myViewModel, sourceUrl, markerActorId, latlng, getToken, getMemberId),
 });
 

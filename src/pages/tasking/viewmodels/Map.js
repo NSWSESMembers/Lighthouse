@@ -630,6 +630,7 @@ export function MapVM(Lmap, root) {
           label: entry.label || k,
           layer: entry.layerGroup,
           group: entry.menuGroup || null,
+          visibleByDefault: entry.visibleByDefault,
         });
       }
     }

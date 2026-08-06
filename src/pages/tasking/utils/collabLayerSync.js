@@ -161,14 +161,14 @@ export async function listLayers(apiUrl, token, hqId) {
  * @param {string} actorId
  * @param {string} token  Beacon access token (Authorization: Bearer).
  * @param {{markerMode?: string, deleteMode?: string, commentMode?: string, moderators?: Array<{id: string, name: string}>, event?: {id: string, name: string}|null, hq: {id: string, name: string}}} permissions
- *   Each mode is one of 'anyone' | 'creator' | 'moderators' (default 'anyone').
- *   Modes are fixed for the layer's lifetime -- there's no later "edit layer
- *   settings" flow for them -- but `moderators` itself can be changed later
- *   by the creator via updateLayerModerators() below. `event`, if given, is
- *   the optional Beacon event this layer is attached to -- also fixed at
- *   creation, purely for display (see Config.js's layer list). `hq` is
- *   required -- every layer must belong to an HQ (also fixed at creation);
- *   the Lambda rejects the request if it's missing.
+ *   Each mode is one of 'anyone' | 'creator' | 'moderators' (default 'anyone')
+ *   at creation, but -- like `moderators` -- can be changed later by the
+ *   creator or a current moderator via updateLayerPermissions()/
+ *   updateLayerModerators() below. `event`, if given, is the optional
+ *   Beacon event this layer is attached to -- fixed at creation, purely for
+ *   display (see Config.js's layer list). `hq` is required -- every layer
+ *   must belong to an HQ (also fixed at creation); the Lambda rejects the
+ *   request if it's missing.
  * @returns {Promise<Object|null>} the created layer summary, or null on failure
  */
 export async function createLayer(apiUrl, name, actorId, token, permissions = {}) {
@@ -282,6 +282,58 @@ export async function updateLayerModerators(apiUrl, layerId, moderators, token) 
         return saved;
     } catch (err) {
         console.warn('[collabLayerSync] updateLayerModerators error:', err);
+        return null;
+    }
+}
+
+/**
+ * Update a layer's markerMode/deleteMode/commentMode. Only the creator or a
+ * current moderator is authorized server-side (see lambda
+ * updateLayerPermissions.js) -- calling this as anyone else fails with a
+ * 403 and the local cache is left untouched. Any mode omitted from
+ * `permissions` is left unchanged rather than reset to 'anyone'.
+ * @param {string} apiUrl
+ * @param {string} layerId
+ * @param {{markerMode?: string, deleteMode?: string, commentMode?: string}} permissions
+ * @param {string} token  Beacon access token (Authorization: Bearer).
+ * @returns {Promise<{markerMode: string, deleteMode: string, commentMode: string}|null>} the saved modes, or null on failure
+ */
+export async function updateLayerPermissions(apiUrl, layerId, permissions, token) {
+    if (!apiUrl || !layerId) return null;
+
+    try {
+        const res = await fetch(`${LAMBDA_BASE}/${encodeURIComponent(layerId)}/permissions`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({
+                apiUrl,
+                markerMode: permissions?.markerMode,
+                deleteMode: permissions?.deleteMode,
+                commentMode: permissions?.commentMode,
+            }),
+        });
+        if (!res.ok) {
+            throw new Error(`updateLayerPermissions failed with status ${res.status}`);
+        }
+        const saved = await res.json();
+
+        // Reconcile the cached index entry (if present) so a page reload
+        // before the next refreshCollabLayerList() still shows the update.
+        const index = loadCachedLayerIndex();
+        const entry = index.find((l) => l.id === layerId);
+        if (entry) {
+            Object.assign(entry, saved);
+            saveCachedLayerIndex(index);
+        }
+        const cachedLayer = loadCachedLayer(layerId);
+        if (cachedLayer) {
+            Object.assign(cachedLayer, saved);
+            saveCachedLayer(layerId, cachedLayer);
+        }
+
+        return saved;
+    } catch (err) {
+        console.warn('[collabLayerSync] updateLayerPermissions error:', err);
         return null;
     }
 }
