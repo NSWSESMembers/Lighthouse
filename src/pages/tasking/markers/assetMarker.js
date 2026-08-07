@@ -86,6 +86,7 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
       maxHeight: 360,
       autoPan: true,
       autoPanPadding: [16, 16],
+      pane: 'pane-popup-top',
     }).setContent(contentEl);
 
 
@@ -167,6 +168,7 @@ export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
       maxHeight: 360,
       autoPan: true,
       autoPanPadding: [16, 16],
+      pane: 'pane-popup-top',
     }).setContent(contentEl);
 
     m.bindPopup(popup);

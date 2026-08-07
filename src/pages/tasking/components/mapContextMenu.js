@@ -162,7 +162,7 @@ export function installMapContextMenu({
                 icon: geocodeRedMarkerIcon,
                 pane: 'pane-top-plus',
             })
-                .bindPopup('Reverse geocode failed')
+                .bindPopup('Reverse geocode failed', { pane: 'pane-popup-top' })
                 .addTo(geocodeClickedPointLayer);
             return;
         }
@@ -173,7 +173,7 @@ export function installMapContextMenu({
             icon: geocodeRedMarkerIcon,
             pane: 'pane-top-plus',
         })
-            .bindPopup(`Clicked location<br>${lastLatLng.lat.toFixed(6)}, ${lastLatLng.lng.toFixed(6)}`)
+            .bindPopup(`Clicked location<br>${lastLatLng.lat.toFixed(6)}, ${lastLatLng.lng.toFixed(6)}`, { pane: 'pane-popup-top' })
             .addTo(geocodeClickedPointLayer);
 
 
@@ -252,7 +252,7 @@ export function installMapContextMenu({
             if (shortLine) m.bindTooltip(shortLine, { direction: 'top', sticky: true });
 
             // full details on click
-            m.bindPopup(popupHtml);
+            m.bindPopup(popupHtml, { pane: 'pane-popup-top' });
 
             m.on('popupopen', () => {
                 const popup = m.getPopup();

@@ -42,7 +42,7 @@ export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params
             iconAnchor: [16, 16],
             popupAnchor: [0, -16],
           }),
-        }).bindPopup(details);
+        }).bindPopup(details, { pane: "pane-popup-top" });
 
         layerGroup.addLayer(marker);
       });
@@ -140,7 +140,7 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
             iconAnchor: [16, 16],
             popupAnchor: [0, -16],
           }),
-        }).bindPopup(details);
+        }).bindPopup(details, { pane: "pane-popup-top" });
 
         layerGroup.addLayer(marker);
       });

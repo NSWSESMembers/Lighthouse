@@ -80,7 +80,7 @@ export function registerNSWDeclaredDamsLayer(vm) {
             : "",
           damId !== "" ? `<br><strong>Dam ID:</strong> ${damId}` : "",
         ].join("");
-      });
+      }, { pane: "pane-popup-top" });
 
       layerGroup.addLayer(featureLayer);
     },

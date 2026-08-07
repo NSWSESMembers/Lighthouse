@@ -34,7 +34,8 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         maxWidth: 760,
         minHeight: 300,
         autoPan: true,
-        autoPanPadding: [16, 16]
+        autoPanPadding: [16, 16],
+        pane: 'pane-popup-top'
     }).setContent(contentEl);
 
 
