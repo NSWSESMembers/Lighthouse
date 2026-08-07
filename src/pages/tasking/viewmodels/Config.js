@@ -5,6 +5,7 @@ import * as bootstrap from 'bootstrap5'; // Modal, Tooltip, etc.
 import { Enum } from '../utils/enum.js';
 import {
     createCollabLayer, deleteCollabLayer, updateCollabLayerModerators, updateCollabLayerPermissions,
+    updateCollabLayerAttachment,
     refreshSubscribedLayers, searchLayersForHq, subscribeToLayer, unsubscribeFromLayer,
 } from '../mapLayers/collabLayer.js';
 
@@ -119,13 +120,14 @@ function makeModeratorPicker(searchMembers, initial = []) {
 
 /**
  * Single-select counterpart to makeModeratorPicker, backing a layer's
- * optional "attach to event" field (see createCollabLayer's `event`
- * param). Same search/debounce shape, but holds at most one picked
- * `{id, name, identifier}` rather than a list.
+ * "attach to event" field (see createCollabLayer's `event` param, and
+ * updateCollabLayerAttachment for changing it later). Same search/debounce
+ * shape, but holds at most one picked `{id, name, identifier}` rather than
+ * a list.
  */
-function makeEventPicker(searchEvents) {
+function makeEventPicker(searchEvents, initial = null) {
     const picker = {};
-    picker.selected = ko.observable(null);
+    picker.selected = ko.observable(initial ? { ...initial } : null);
     picker.searchQuery = ko.observable('');
     picker.searchResults = ko.observableArray([]);
     picker.dropdownOpen = ko.observable(false);
@@ -578,6 +580,8 @@ export function ConfigVM(root, deps) {
         row.editMarkerMode(row.markerMode);
         row.editDeleteMode(row.deleteMode);
         row.editCommentMode(row.commentMode);
+        row.hqEditPicker?.reset(row.hqId ? { id: row.hqId, name: row.hqName } : null);
+        row.eventEditPicker?.reset(row.eventId ? { id: row.eventId, name: row.eventName, identifier: row.eventIdentifier } : null);
         self.permissionsModalRow(row);
         const modalEl = document.getElementById('collabPermissionsModal');
         if (!modalEl) return;
@@ -703,7 +707,9 @@ export function ConfigVM(root, deps) {
                 // grammar doesn't support the conditional (?:) operator.
                 moderatorCountLabel: `${moderators.length} moderator${moderators.length === 1 ? '' : 's'}`,
                 moderatorNamesLabel: moderators.map(m => m.name).join(', '),
+                eventId: layer.eventId || null,
                 eventName: layer.eventName || null,
+                eventIdentifier: layer.eventIdentifier || null,
                 // Precomputed (rather than a ternary in the data-bind
                 // attribute) because knockout-secure-binding's expression
                 // grammar doesn't support the conditional (?:) operator.
@@ -744,6 +750,20 @@ export function ConfigVM(root, deps) {
                 editMarkerMode: ko.observable(markerMode),
                 editDeleteMode: ko.observable(deleteMode),
                 editCommentMode: ko.observable(commentMode),
+                // HQ/event reassignment shares the same modal and the same
+                // authorization as the permission modes above (see
+                // updateLayerAttachment.js) -- same "draft, then commit"
+                // pickers as newLayerHqPicker/newLayerEventPicker in the
+                // create-layer form above, just seeded from this layer's
+                // current attachment instead of starting empty.
+                hqEditPicker: canManageModerators
+                    ? makeHqPicker(deps.entitiesSearch, layer.hqId ? { id: layer.hqId, name: layer.hqName } : null)
+                    : null,
+                eventEditPicker: canManageModerators
+                    ? makeEventPicker(deps.searchEvents, layer.eventId
+                        ? { id: layer.eventId, name: layer.eventName, identifier: layer.eventIdentifier }
+                        : null)
+                    : null,
             };
             if (layer.createdBy && root.resolvePersonName) {
                 root.resolvePersonName(layer.createdBy).then(name => row.authorName(name));
@@ -1014,15 +1034,24 @@ export function ConfigVM(root, deps) {
         }
     };
 
-    // Saves a row's in-progress marker/delete/comment mode radios (edited in
-    // #collabPermissionsModal) as the layer's new permissions, fired from
+    // Saves a row's in-progress marker/delete/comment mode radios *and* its
+    // in-progress HQ/event pickers (all edited in #collabPermissionsModal)
+    // as the layer's new permissions and attachment, fired from
     // row.savePermissions above. Only rows the creator or a current
     // moderator can manage ever get the "Manage permissions" control exposed
     // (see collabLayerRows' canManagePermissions), so there's no separate
     // authorization check needed here -- the Lambda enforces it
-    // authoritatively either way.
+    // authoritatively either way. Two independent PUTs (permissions and
+    // attachment are separate Lambda routes/S3 fields) fired together so one
+    // Save click covers everything the modal edits; either can fail on its
+    // own, in which case the modal stays open with the error shown rather
+    // than silently discarding whichever half didn't make it.
     self.saveRowPermissions = async (row) => {
         if (!deps.apiUrl || !row.canManagePermissions || row.savingPermissions()) return;
+        if (row.hqEditPicker && !row.hqEditPicker.selected()) {
+            row.permissionsError('An HQ is required.');
+            return;
+        }
 
         row.permissionsError('');
         row.savingPermissions(true);
@@ -1032,13 +1061,19 @@ export function ConfigVM(root, deps) {
                 deleteMode: row.editDeleteMode(),
                 commentMode: row.editCommentMode(),
             };
-            const saved = await updateCollabLayerPermissions(root, deps.apiUrl, row.layer.id, permissions, deps.getToken);
-            if (saved == null) throw new Error('Update failed');
-            // updateCollabLayerPermissions mutates row.layer's mode fields
-            // in place (it's the same object reference held in
-            // self.collabLayers()) -- force collabLayerRows to recompute so
-            // this row (and its canDelete/lock badges) reflect the new
-            // modes immediately, same as a poll-driven refresh would.
+            const [savedPermissions, savedAttachment] = await Promise.all([
+                updateCollabLayerPermissions(root, deps.apiUrl, row.layer.id, permissions, deps.getToken),
+                updateCollabLayerAttachment(root, deps.apiUrl, row.layer.id, {
+                    hq: row.hqEditPicker.selected(),
+                    event: row.eventEditPicker.selected(),
+                }, deps.getToken),
+            ]);
+            if (savedPermissions == null || savedAttachment == null) throw new Error('Update failed');
+            // Both update calls mutate row.layer's fields in place (it's the
+            // same object reference held in self.collabLayers()) -- force
+            // collabLayerRows to recompute so this row (and its
+            // canDelete/lock badges, HQ/event labels) reflects the new
+            // values immediately, same as a poll-driven refresh would.
             self.collabLayers.valueHasMutated();
             // Only close on success -- an error leaves the modal open (with
             // permissionsError shown) so the user can see what went wrong
@@ -1047,7 +1082,7 @@ export function ConfigVM(root, deps) {
             bootstrap.Modal.getOrCreateInstance(document.getElementById('collabPermissionsModal')).hide();
         } catch (err) {
             console.error('Error updating layer permissions:', err);
-            row.permissionsError('Failed to save permissions. Try again later.');
+            row.permissionsError('Failed to save changes. Try again later.');
         } finally {
             row.savingPermissions(false);
         }

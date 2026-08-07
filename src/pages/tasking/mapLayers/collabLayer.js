@@ -6,6 +6,7 @@ import {
     deleteLayer,
     updateLayerModerators,
     updateLayerPermissions,
+    updateLayerAttachment,
     fetchLayerMarkers,
     upsertMarker,
     deleteMarker,
@@ -370,6 +371,29 @@ export async function updateCollabLayerPermissions(vm, apiUrl, layerId, permissi
         layer.markerMode = saved.markerMode;
         layer.deleteMode = saved.deleteMode;
         layer.commentMode = saved.commentMode;
+    }
+    return saved;
+}
+
+/**
+ * Update a layer's HQ and/or event attachment (creator-or-moderator only,
+ * enforced server-side -- see lambda updateLayerAttachment.js). Updates the
+ * in-memory layer object (shared by reference with vm.mapVM.collabLayers()'s
+ * entry, same as updateCollabLayerPermissions above) on success so
+ * Config.js's row immediately reflects the new HQ/event without waiting for
+ * the next poll/refresh.
+ */
+export async function updateCollabLayerAttachment(vm, apiUrl, layerId, attachment, getToken) {
+    const saved = await updateLayerAttachment(apiUrl, layerId, attachment, await getToken());
+    if (saved == null) return null;
+
+    const layer = vm.mapVM.collabLayers().find((l) => l.id === layerId);
+    if (layer) {
+        layer.hqId = saved.hqId;
+        layer.hqName = saved.hqName;
+        layer.eventId = saved.eventId;
+        layer.eventName = saved.eventName;
+        layer.eventIdentifier = saved.eventIdentifier;
     }
     return saved;
 }

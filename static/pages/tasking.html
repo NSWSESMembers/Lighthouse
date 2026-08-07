@@ -3172,7 +3172,7 @@
                                                                  Unsubscribe above) so these administrative/destructive
                                                                  actions read as secondary and don't get confused with
                                                                  the primary Unsubscribe action. -->
-                                                            <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1" title="Manage permissions"
+                                                            <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1" title="Manage permissions, HQ and event"
                                                                 data-bind="visible: row.canManagePermissions && !row.confirmingDelete(), click: row.openPermissionsModal">
                                                                 <i class="fa fa-lock"></i>
                                                             </button>
@@ -3513,11 +3513,100 @@
             <div class="modal-content" data-bind="with: config.permissionsModalRow">
                 <div class="modal-header">
                     <h5 class="modal-title" id="collabPermissionsModalLabel">
-                        Permissions — <span data-bind="text: name"></span>
+                        Layer settings — <span data-bind="text: name"></span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="collab-moderator-picker mb-2" data-bind="with: hqEditPicker">
+                        <div class="small text-muted mb-1">HQ (required)</div>
+                        <!-- ko if: !selected() -->
+                        <div class="input-group input-group-sm position-relative">
+                            <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
+                                value: searchQuery,
+                                valueUpdate: 'afterkeydown',
+                                hasFocus: hasFocus,
+                                event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                            <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                <!-- ko if: loading -->
+                                <li>
+                                    <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                        <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko ifnot: loading -->
+                                <!-- ko foreach: searchResults -->
+                                <li>
+                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                        data-bind="click: $parent.selectFromSearch">
+                                        <span class="text-truncate" data-bind="text: name"></span>
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 -->
+                                <li>
+                                    <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                        <!-- /ko -->
+                        <!-- ko if: selected -->
+                        <span class="badge bg-primary-subtle text-primary-emphasis collab-moderator-chip">
+                            <i class="fas fa-building"></i>
+                            <span data-bind="text: selected() && selected().name"></span>
+                            <button type="button" class="btn-close" title="Change HQ"
+                                data-bind="click: clearSelection"></button>
+                        </span>
+                        <!-- /ko -->
+                    </div>
+                    <div class="collab-moderator-picker mb-3 w-100" data-bind="with: eventEditPicker">
+                        <div class="small text-muted mb-1">Attach to event (optional)</div>
+                        <!-- ko if: !selected() -->
+                        <div class="input-group input-group-sm position-relative">
+                            <input type="text" class="form-control" placeholder="Search by name or identifier…" autocomplete="off" data-bind="
+                                value: searchQuery,
+                                valueUpdate: 'afterkeydown',
+                                hasFocus: hasFocus,
+                                event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                            <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                <!-- ko if: loading -->
+                                <li>
+                                    <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                        <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko ifnot: loading -->
+                                <!-- ko foreach: searchResults -->
+                                <li>
+                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                        data-bind="click: $parent.selectFromSearch">
+                                        <span class="text-truncate" data-bind="text: name"></span>
+                                        <span class="text-muted small ms-2 text-truncate" data-bind="text: identifier"></span>
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 -->
+                                <li>
+                                    <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                        <!-- /ko -->
+                        <!-- ko if: selected -->
+                        <span class="badge bg-info-subtle text-info-emphasis collab-moderator-chip">
+                            <i class="fas fa-calendar-day"></i>
+                            <span data-bind="text: selectedLabel"></span>
+                            <button type="button" class="btn-close" title="Remove event"
+                                data-bind="click: clearSelection"></button>
+                        </span>
+                        <!-- /ko -->
+                    </div>
                     <div class="small text-muted mb-1 w-100">Marker permissions</div>
                     <div class="form-check" title="Everyone can add, edit and delete markers (everyone can also comment, unless restricted below).">
                         <input class="form-check-input" type="radio" name="collabPermMarkerMode" id="collabPermMarkerModeAnyone"
@@ -3571,7 +3660,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary"
-                        data-bind="click: savePermissions, disable: savingPermissions">Save</button>
+                        data-bind="click: savePermissions, disable: savingPermissions() || !hqEditPicker.selected()">Save</button>
                 </div>
             </div>
         </div>

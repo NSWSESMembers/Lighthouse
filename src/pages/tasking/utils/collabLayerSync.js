@@ -338,6 +338,54 @@ export async function updateLayerPermissions(apiUrl, layerId, permissions, token
     }
 }
 
+/**
+ * Update a layer's HQ and/or event attachment. Only the creator or a
+ * current moderator is authorized server-side (see lambda
+ * updateLayerAttachment.js) -- calling this as anyone else fails with a
+ * 403 and the local cache is left untouched. `hq` is required, same as at
+ * creation; `event` given as null (or omitted) clears any existing event
+ * attachment.
+ * @param {string} apiUrl
+ * @param {string} layerId
+ * @param {{hq: {id: string, name: string}, event?: {id: string, name: string, identifier?: string}|null}} attachment
+ * @param {string} token  Beacon access token (Authorization: Bearer).
+ * @returns {Promise<{hqId: string, hqName: string, eventId: string|null, eventName: string|null, eventIdentifier: string|null}|null>} the saved attachment, or null on failure
+ */
+export async function updateLayerAttachment(apiUrl, layerId, attachment, token) {
+    if (!apiUrl || !layerId || !attachment?.hq?.id) return null;
+
+    try {
+        const res = await fetch(`${LAMBDA_BASE}/${encodeURIComponent(layerId)}/attachment`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ apiUrl, hq: attachment.hq, event: attachment.event || null }),
+        });
+        if (!res.ok) {
+            throw new Error(`updateLayerAttachment failed with status ${res.status}`);
+        }
+        const saved = await res.json();
+
+        // Reconcile the cached index entry (if present) so a page reload
+        // before the next refreshCollabLayerList() still shows the update.
+        const index = loadCachedLayerIndex();
+        const entry = index.find((l) => l.id === layerId);
+        if (entry) {
+            Object.assign(entry, saved);
+            saveCachedLayerIndex(index);
+        }
+        const cachedLayer = loadCachedLayer(layerId);
+        if (cachedLayer) {
+            Object.assign(cachedLayer, saved);
+            saveCachedLayer(layerId, cachedLayer);
+        }
+
+        return saved;
+    } catch (err) {
+        console.warn('[collabLayerSync] updateLayerAttachment error:', err);
+        return null;
+    }
+}
+
 // ── Layer markers ────────────────────────────────────────────────────
 
 /**
