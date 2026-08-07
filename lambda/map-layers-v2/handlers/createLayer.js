@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const { updateIndex, putLayerObject } = require('../lib/s3Store');
 const { json, badRequest } = require('../lib/response');
 const { normalizeMode } = require('../lib/permissions');
+const { sanitizeEvent, sanitizeHq } = require('../lib/attachment');
 
 const MAX_MODERATORS = 100;
 
@@ -20,32 +21,6 @@ function sanitizeModerators(input) {
     if (out.length >= MAX_MODERATORS) break;
   }
   return out;
-}
-
-/**
- * Sanitize the optional event attachment: { id, name } -> stored as
- * eventId/eventName, or both null if no event (or an incomplete one) was
- * given. eventId/eventName are pure display/bookkeeping (like createdBy) --
- * nothing in this feature authorizes against them.
- */
-function sanitizeEvent(input) {
-  const id = String(input?.id || '').trim().slice(0, 50);
-  if (!id) return { eventId: null, eventName: null, eventIdentifier: null };
-  const name = String(input?.name || id).trim().slice(0, 200);
-  const identifier = String(input?.identifier || '').trim().slice(0, 50) || null;
-  return { eventId: id, eventName: name, eventIdentifier: identifier };
-}
-
-/**
- * Sanitize the required HQ attachment: { id, name } -> { hqId, hqName }, or
- * both null if missing/incomplete (caller must then reject the request --
- * unlike sanitizeEvent, there's no valid "no HQ" case for a layer).
- */
-function sanitizeHq(input) {
-  const id = String(input?.id || '').trim().slice(0, 50);
-  if (!id) return { hqId: null, hqName: null };
-  const name = String(input?.name || id).trim().slice(0, 200);
-  return { hqId: id, hqName: name };
 }
 
 // POST /map-layers
@@ -69,16 +44,16 @@ function sanitizeHq(input) {
 // lib/permissions.js isAuthorized).
 //
 // `hq` (required): { id, name } of the Beacon HQ (entity) this layer
-// belongs to -- every layer must have one, stored as hqId/hqName. Also
-// fixed at creation, no later "reassign HQ" flow. Drives the layer list's
-// default HQ filter (Config.js) -- layers created before this field existed
-// simply have no hqId and so only ever show up under "All HQs".
+// belongs to -- every layer must have one, stored as hqId/hqName. Like the
+// permission modes above, can be changed later by the creator or a current
+// moderator (see updateLayerAttachment.js). Drives the layer list's default
+// HQ filter (Config.js) -- layers created before this field existed simply
+// have no hqId and so only ever show up under "All HQs".
 //
-// `event` (optional): { id, name } of a Beacon event this layer relates to,
-// stored as eventId/eventName -- purely for display in the layer list
-// (Config.js), fixed at creation with no later "attach/detach event" flow
-// (unlike the permission modes above, which can be changed later -- see
-// updateLayerPermissions.js).
+// `event` (optional): { id, name, identifier } of a Beacon event this layer
+// relates to, stored as eventId/eventName/eventIdentifier -- purely for
+// display in the layer list (Config.js), also changeable later via
+// updateLayerAttachment.js.
 //
 // "The creator" for all of the above means `createdByMemberId` --
 // `claims.sub`, the Beacon member id off the caller's own verified token --
