@@ -2672,6 +2672,8 @@ overflow: hidden;
 .collab-marker-popup {
   font-size: 12px;
   min-width: 200px;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .collab-marker-title {
   font-weight: 600;

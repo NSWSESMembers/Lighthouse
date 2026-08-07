@@ -175,7 +175,7 @@ export function registerHazardWatchWarningsLayer(vm, apiHost) {
                     const p = feature?.properties || {};
                     const html = popupHtml(p);
 
-                    layer.bindPopup(html, { maxWidth: 460 });
+                    layer.bindPopup(html, { maxWidth: 460, pane: "pane-popup-top" });
 
                     let center;
                     try {
@@ -197,7 +197,7 @@ export function registerHazardWatchWarningsLayer(vm, apiHost) {
                         interactive: true,
                     });
 
-                    marker.bindPopup(html, { maxWidth: 460 });
+                    marker.bindPopup(html, { maxWidth: 460, pane: "pane-popup-top" });
 
                     layerGroup.addLayer(marker);
 

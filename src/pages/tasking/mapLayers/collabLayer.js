@@ -392,7 +392,7 @@ function drawCollabMarkers(vm, layerGroup, data, apiUrl, layer, key, actorId, ge
         // instead deferred to the "popupopen" event so a marker's Ops Log
         // entry is only pulled once the user actually clicks it.
         const { el, state } = buildMarkerPopupEl(vm, apiUrl, layer, key, marker, actorId, getToken, leafletMarker, getMemberId);
-        leafletMarker.bindPopup(el, { minWidth: 260, maxWidth: 320 });
+        leafletMarker.bindPopup(el, { minWidth: 260, maxWidth: 320, pane: "pane-popup-top" });
         leafletMarker.on("popupopen", () => {
             busyLayerKeys.add(key);
             loadMarkerContent(vm, marker, el, leafletMarker, state);
@@ -805,7 +805,7 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
         });
     });
 
-    const popup = L.popup({ minWidth: 220, maxWidth: 260, closeOnClick: false, autoPanPadding: [16, 16] })
+    const popup = L.popup({ minWidth: 220, maxWidth: 260, closeOnClick: false, autoPanPadding: [16, 16], pane: "pane-popup-top" })
         .setLatLng(latlng)
         .setContent(el)
         .openOn(vm.mapVM.map);
@@ -983,7 +983,7 @@ export function getWritableCollabLayers(vm, getMemberId) {
 }
 
 /**
- * Entry point for the "Add marker to shared layer" item in the app's
+ * Entry point for the "Add marker to collaborative layer" item in the app's
  * existing right-click context menu (components/mapContextMenu.js). With
  * exactly one writable subscribed layer, opens the marker form immediately;
  * with more than one, shows a small picker so the user chooses which layer

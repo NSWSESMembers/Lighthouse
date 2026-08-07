@@ -359,6 +359,13 @@ map.createPane('pane-collab-plus'); map.getPane('pane-collab-plus').style.zIndex
 map.createPane('pane-tippy-top'); map.getPane('pane-tippy-top').style.zIndex = 700;
 map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.zIndex = 701;
 
+// Fixed above every reorderable marker pane (Config's paneOrder only ever
+// assigns 300-700, see Map.js applyPaneOrder) so popups -- which would
+// otherwise sit in Leaflet's default popupPane (also z-index 700, but
+// painted before these custom panes and so behind them on tie) -- always
+// render above every marker, including the topmost "Incident markers" pane.
+map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 750;
+
 
 function buildBasemapLayer(key) {
     // --- NSW VECTOR BASEMAP (Topographic style) ---
