@@ -582,6 +582,7 @@ export function ConfigVM(root, deps) {
         row.editCommentMode(row.commentMode);
         row.hqEditPicker?.reset(row.hqId ? { id: row.hqId, name: row.hqName } : null);
         row.eventEditPicker?.reset(row.eventId ? { id: row.eventId, name: row.eventName, identifier: row.eventIdentifier } : null);
+        row.moderatorPicker?.reset(row.moderators);
         self.permissionsModalRow(row);
         const modalEl = document.getElementById('collabPermissionsModal');
         if (!modalEl) return;
@@ -728,12 +729,11 @@ export function ConfigVM(root, deps) {
                 authorName: ko.observable(''),
                 // Creator or any current moderator can manage moderators
                 // (enforced server-side too, see updateLayerModerators.js)
-                // -- everyone else doesn't get the "Manage moderators"
-                // control at all.
+                // -- everyone else doesn't get the moderator picker in
+                // #collabPermissionsModal at all. Edited in that same modal
+                // as permissions/HQ/event (see saveRowPermissions), not its
+                // own separate inline panel.
                 canManageModerators,
-                editingModerators: ko.observable(false),
-                savingModerators: ko.observable(false),
-                moderatorsError: ko.observable(''),
                 moderatorPicker: canManageModerators ? makeModeratorPicker(deps.searchMembers, moderators) : null,
                 // Same authorization as moderator management -- creator or
                 // any current moderator (see lambda
@@ -776,16 +776,6 @@ export function ConfigVM(root, deps) {
             row.requestDeleteLayer = () => row.confirmingDelete(true);
             row.cancelDeleteLayer = () => row.confirmingDelete(false);
             row.confirmDeleteLayer = () => self.deleteCollabLayer(row);
-            row.toggleEditModerators = () => {
-                row.moderatorsError('');
-                row.moderatorPicker?.reset(row.moderators);
-                row.editingModerators(!row.editingModerators());
-            };
-            row.cancelEditModerators = () => {
-                row.moderatorPicker?.reset(row.moderators);
-                row.editingModerators(false);
-            };
-            row.saveModerators = () => self.saveRowModerators(row);
             row.openPermissionsModal = () => self.openPermissionsModal(row);
             row.savePermissions = () => self.saveRowPermissions(row);
             return row;
@@ -1005,47 +995,19 @@ export function ConfigVM(root, deps) {
         }
     };
 
-    // Saves a row's in-progress moderator picker as the layer's new
-    // moderator list, fired from row.saveModerators above. Only rows the
-    // creator or a current moderator can manage ever get a moderatorPicker
-    // (see collabLayerRows' canManageModerators), so there's no separate
-    // authorization check needed here -- the Lambda enforces it
-    // authoritatively either way.
-    self.saveRowModerators = async (row) => {
-        if (!deps.apiUrl || !row.moderatorPicker || row.savingModerators()) return;
-
-        row.moderatorsError('');
-        row.savingModerators(true);
-        try {
-            const moderators = row.moderatorPicker.moderators();
-            const saved = await updateCollabLayerModerators(root, deps.apiUrl, row.layer.id, moderators, deps.getToken);
-            if (saved == null) throw new Error('Update failed');
-            // updateCollabLayerModerators mutates row.layer.moderators in
-            // place (it's the same object reference held in
-            // self.collabLayers()) -- force collabLayerRows to recompute so
-            // this row (and its canDelete/moderator badges) reflect the new
-            // list immediately, same as a poll-driven refresh would.
-            self.collabLayers.valueHasMutated();
-        } catch (err) {
-            console.error('Error updating layer moderators:', err);
-            row.moderatorsError('Failed to save moderators. Try again later.');
-        } finally {
-            row.savingModerators(false);
-        }
-    };
-
-    // Saves a row's in-progress marker/delete/comment mode radios *and* its
-    // in-progress HQ/event pickers (all edited in #collabPermissionsModal)
-    // as the layer's new permissions and attachment, fired from
+    // Saves a row's in-progress marker/delete/comment mode radios, its
+    // in-progress HQ/event pickers, *and* its in-progress moderator picker
+    // (all edited together in #collabPermissionsModal) as the layer's new
+    // permissions, attachment and moderator list, fired from
     // row.savePermissions above. Only rows the creator or a current
     // moderator can manage ever get the "Manage permissions" control exposed
     // (see collabLayerRows' canManagePermissions), so there's no separate
     // authorization check needed here -- the Lambda enforces it
-    // authoritatively either way. Two independent PUTs (permissions and
-    // attachment are separate Lambda routes/S3 fields) fired together so one
-    // Save click covers everything the modal edits; either can fail on its
-    // own, in which case the modal stays open with the error shown rather
-    // than silently discarding whichever half didn't make it.
+    // authoritatively either way. Three independent PUTs (permissions,
+    // attachment and moderators are separate Lambda routes/S3 fields) fired
+    // together so one Save click covers everything the modal edits; any can
+    // fail on its own, in which case the modal stays open with the error
+    // shown rather than silently discarding whichever part didn't make it.
     self.saveRowPermissions = async (row) => {
         if (!deps.apiUrl || !row.canManagePermissions || row.savingPermissions()) return;
         if (row.hqEditPicker && !row.hqEditPicker.selected()) {
@@ -1061,19 +1023,21 @@ export function ConfigVM(root, deps) {
                 deleteMode: row.editDeleteMode(),
                 commentMode: row.editCommentMode(),
             };
-            const [savedPermissions, savedAttachment] = await Promise.all([
+            const [savedPermissions, savedAttachment, savedModerators] = await Promise.all([
                 updateCollabLayerPermissions(root, deps.apiUrl, row.layer.id, permissions, deps.getToken),
                 updateCollabLayerAttachment(root, deps.apiUrl, row.layer.id, {
                     hq: row.hqEditPicker.selected(),
                     event: row.eventEditPicker.selected(),
                 }, deps.getToken),
+                updateCollabLayerModerators(root, deps.apiUrl, row.layer.id, row.moderatorPicker.moderators(), deps.getToken),
             ]);
-            if (savedPermissions == null || savedAttachment == null) throw new Error('Update failed');
-            // Both update calls mutate row.layer's fields in place (it's the
-            // same object reference held in self.collabLayers()) -- force
-            // collabLayerRows to recompute so this row (and its
-            // canDelete/lock badges, HQ/event labels) reflects the new
-            // values immediately, same as a poll-driven refresh would.
+            if (savedPermissions == null || savedAttachment == null || savedModerators == null) throw new Error('Update failed');
+            // All three update calls mutate row.layer's fields in place
+            // (it's the same object reference held in
+            // self.collabLayers()) -- force collabLayerRows to recompute so
+            // this row (and its canDelete/lock badges, HQ/event labels and
+            // moderator badges) reflects the new values immediately, same
+            // as a poll-driven refresh would.
             self.collabLayers.valueHasMutated();
             // Only close on success -- an error leaves the modal open (with
             // permissionsError shown) so the user can see what went wrong
