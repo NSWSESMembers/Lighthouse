@@ -3172,13 +3172,9 @@
                                                                  Unsubscribe above) so these administrative/destructive
                                                                  actions read as secondary and don't get confused with
                                                                  the primary Unsubscribe action. -->
-                                                            <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1" title="Manage permissions, HQ and event"
+                                                            <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1" title="Manage permissions, HQ, event and moderators"
                                                                 data-bind="visible: row.canManagePermissions && !row.confirmingDelete(), click: row.openPermissionsModal">
-                                                                <i class="fa fa-lock"></i>
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1" title="Manage moderators"
-                                                                data-bind="visible: row.canManageModerators && !row.confirmingDelete(), click: row.toggleEditModerators">
-                                                                <i class="fa fa-user-shield"></i>
+                                                                <i class="fa fa-pencil-alt"></i>
                                                             </button>
                                                             <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1"
                                                                 data-bind="visible: !row.confirmingDelete(), click: row.requestDeleteLayer, disable: !row.canDelete, attr: { title: row.deleteTitle }">
@@ -3191,57 +3187,6 @@
                                                                 <button type="button" class="btn btn-sm btn-secondary"
                                                                     data-bind="click: row.cancelDeleteLayer">Cancel</button>
                                                             </span>
-                                                        </div>
-                                                        <div class="collab-moderator-picker collab-moderator-edit mt-2"
-                                                            data-bind="visible: row.editingModerators, with: row.moderatorPicker">
-                                                            <div class="input-group input-group-sm position-relative">
-                                                                <input type="text" class="form-control" placeholder="Search by name or member number…" autocomplete="off" data-bind="
-                                                                    value: searchQuery,
-                                                                    valueUpdate: 'afterkeydown',
-                                                                    hasFocus: hasFocus,
-                                                                    event: { blur: closeDropdown, keydown: onSearchKeydown }">
-                                                                <button class="btn btn-outline-secondary" type="button" title="Clear"
-                                                                    data-bind="click: clearSearch, enable: searchQuery">&times;</button>
-                                                                <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
-                                                                    <!-- ko if: loading -->
-                                                                    <li>
-                                                                        <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
-                                                                            <i class="fa fa-spinner fa-spin me-2"></i>Searching…
-                                                                        </div>
-                                                                    </li>
-                                                                    <!-- /ko -->
-                                                                    <!-- ko ifnot: loading -->
-                                                                    <!-- ko foreach: searchResults -->
-                                                                    <li>
-                                                                        <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
-                                                                            data-bind="click: $parent.addFromSearch">
-                                                                            <span class="text-truncate" data-bind="text: name"></span>
-                                                                            <span class="text-muted small ms-2 text-truncate" data-bind="text: detail"></span>
-                                                                        </div>
-                                                                    </li>
-                                                                    <!-- /ko -->
-                                                                    <!-- ko if: searchResults().length === 0 -->
-                                                                    <li>
-                                                                        <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
-                                                                    </li>
-                                                                    <!-- /ko -->
-                                                                    <!-- /ko -->
-                                                                </ul>
-                                                            </div>
-                                                            <div class="collab-moderator-chips mt-1" data-bind="visible: moderators().length > 0, foreach: moderators">
-                                                                <span class="badge bg-secondary collab-moderator-chip">
-                                                                    <span data-bind="text: name"></span>
-                                                                    <button type="button" class="btn-close btn-close-white" title="Remove"
-                                                                        data-bind="click: $parent.removeModerator"></button>
-                                                                </span>
-                                                            </div>
-                                                            <div class="text-danger small mt-1" data-bind="visible: $parent.moderatorsError, text: $parent.moderatorsError"></div>
-                                                            <div class="mt-2 d-flex gap-1">
-                                                                <button type="button" class="btn btn-sm btn-primary"
-                                                                    data-bind="click: $parent.saveModerators, disable: $parent.savingModerators">Save</button>
-                                                                <button type="button" class="btn btn-sm btn-secondary"
-                                                                    data-bind="click: $parent.cancelEditModerators">Cancel</button>
-                                                            </div>
                                                         </div>
                                                         </li>
                                                     </ul>
@@ -3606,6 +3551,50 @@
                                 data-bind="click: clearSelection"></button>
                         </span>
                         <!-- /ko -->
+                    </div>
+                    <div class="collab-moderator-picker mb-3" data-bind="with: moderatorPicker">
+                        <div class="small text-muted mb-1">Moderators</div>
+                        <div class="input-group input-group-sm position-relative">
+                            <input type="text" class="form-control" placeholder="Search by name or member number…" autocomplete="off" data-bind="
+                                value: searchQuery,
+                                valueUpdate: 'afterkeydown',
+                                hasFocus: hasFocus,
+                                event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                            <button class="btn btn-outline-secondary" type="button" title="Clear"
+                                data-bind="click: clearSearch, enable: searchQuery">&times;</button>
+                            <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                <!-- ko if: loading -->
+                                <li>
+                                    <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                        <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko ifnot: loading -->
+                                <!-- ko foreach: searchResults -->
+                                <li>
+                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                        data-bind="click: $parent.addFromSearch">
+                                        <span class="text-truncate" data-bind="text: name"></span>
+                                        <span class="text-muted small ms-2 text-truncate" data-bind="text: detail"></span>
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 -->
+                                <li>
+                                    <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                        <div class="collab-moderator-chips mt-1" data-bind="visible: moderators().length > 0, foreach: moderators">
+                            <span class="badge bg-secondary collab-moderator-chip">
+                                <span data-bind="text: name"></span>
+                                <button type="button" class="btn-close btn-close-white" title="Remove"
+                                    data-bind="click: $parent.removeModerator"></button>
+                            </span>
+                        </div>
                     </div>
                     <div class="small text-muted mb-1 w-100">Marker permissions</div>
                     <div class="form-check" title="Everyone can add, edit and delete markers (everyone can also comment, unless restricted below).">
