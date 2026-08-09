@@ -776,11 +776,11 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
         <div class="collab-char-counter"></div>
         <textarea class="collab-desc-input" placeholder="Description" rows="2" maxlength="${TEXT_CHAR_LIMIT}">${escHtml(stripAuditFooter(currentEntry?.Text))}</textarea>
         <div class="collab-char-counter"></div>
-        <div class="collab-marker-audit-notice"><i class="fas fa-info-circle"></i> All marker actions -- create, edit, delete, and comments -- create an Ops Log entries.</div>
         <div class="collab-form-actions">
             <button type="button" class="btn btn-sm btn-secondary collab-cancel-btn">Cancel</button>
             <button type="button" class="btn btn-sm btn-primary collab-save-btn">Save</button>
         </div>
+        <div class="collab-marker-audit-notice">Actions on this marker are logged to the Ops Log.</div>
     `;
 
     const previewEl = el.querySelector(".collab-style-preview");

@@ -565,6 +565,9 @@ export function ConfigVM(root, deps) {
         self.newLayerDeleteMode() === 'moderators' ||
         self.newLayerCommentMode() === 'moderators');
     self.creatingCollabLayer = ko.observable(false);
+    // Held true just long enough for the Create button to flash its
+    // success state before the form closes -- see createCollabLayer below.
+    self.collabLayerCreated = ko.observable(false);
     self.collabLayerError = ko.observable('');
     self.collabLayerSearch = ko.observable(''); // filters "My layers" by name -- mainly useful once you've subscribed to a lot of them
     self.refreshingCollabLayers = ko.observable(false);
@@ -952,11 +955,17 @@ export function ConfigVM(root, deps) {
             };
             const layer = await createCollabLayer(root, deps.apiUrl, name, deps.actorId, deps.getToken, permissions, deps.getMemberId);
             if (!layer) throw new Error('Create failed');
+            self.creatingCollabLayer(false);
+            // Hold the button in its success state briefly so the user
+            // actually sees it succeed, rather than the form vanishing the
+            // instant the request resolves.
+            self.collabLayerCreated(true);
+            await new Promise((resolve) => setTimeout(resolve, 900));
+            self.collabLayerCreated(false);
             resetNewLayerForm();
         } catch (err) {
             console.error('Error creating collaborative layer:', err);
             self.collabLayerError('Failed to create layer. Try again later.');
-        } finally {
             self.creatingCollabLayer(false);
         }
     };
