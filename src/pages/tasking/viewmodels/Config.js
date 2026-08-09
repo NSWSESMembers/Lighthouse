@@ -83,11 +83,16 @@ function makeModeratorPicker(searchMembers, initial = []) {
             // when a Disabled flag was set on training/test accounts).
             const cleaned = (rows || [])
                 .filter(r => r.Username)
-                .map(r => ({
-                    id: String(r.Username),
-                    name: [r.Firstname, r.Lastname].filter(Boolean).join(' ') || String(r.Username),
-                    detail: String(r.Username),
-                }));
+                .map(r => {
+                    const entity = r.Entity ? String(r.Entity).trim() : '';
+                    return {
+                        id: String(r.Username),
+                        name: [r.Firstname, r.Lastname].filter(Boolean).join(' ') || String(r.Username),
+                        // Unit name alongside the member number disambiguates
+                        // same-named members across different units.
+                        detail: entity ? `${entity} · ${r.Username}` : String(r.Username),
+                    };
+                });
             picker.searchResults(cleaned);
         } catch (err) {
             console.error('Member search failed:', err);
@@ -904,11 +909,11 @@ export function ConfigVM(root, deps) {
         unsubscribeFromLayer(root, row.layer.id);
     };
 
-    // Shared by a successful create and an explicit Cancel -- puts the form
-    // back to its just-opened state. HQ resets to the resolved default (not
-    // empty), since creating several layers in a row, or reopening the form
-    // later, is almost always for the same HQ; everything else resets to
-    // its "no customisation" default.
+    // Shared by a successful create and an explicit Cancel -- closes the
+    // form and puts it back to its just-opened state, ready for next time.
+    // HQ resets to the resolved default (not empty), since reopening the
+    // form later is almost always for the same HQ; everything else resets
+    // to its "no customisation" default.
     function resetNewLayerForm() {
         self.newLayerName('');
         self.newLayerMarkerMode('anyone');
@@ -917,12 +922,12 @@ export function ConfigVM(root, deps) {
         self.newLayerModeratorPicker.reset([]);
         self.newLayerEventPicker.reset(null);
         self.newLayerHqPicker.reset(self.defaultHq());
+        self.showCreateLayerForm(false);
     }
 
     self.cancelCreateLayer = () => {
         self.collabLayerError('');
         resetNewLayerForm();
-        self.showCreateLayerForm(false);
     };
 
     self.createCollabLayer = async () => {
