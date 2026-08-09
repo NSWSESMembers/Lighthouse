@@ -3035,13 +3035,23 @@
                                                 <div class="text-danger small mb-2"
                                                     data-bind="visible: config.collabLayerError, text: config.collabLayerError"></div>
                                                 <div class="d-flex gap-2">
-                                                    <button type="button" class="btn btn-sm btn-primary"
+                                                    <button type="button" class="btn btn-sm"
                                                         data-bind="click: config.createCollabLayer,
-                                                            enable: config.newLayerName().trim().length > 0 && !!config.newLayerHqPicker.selected() && !config.creatingCollabLayer()">
+                                                            css: { 'btn-primary': !config.collabLayerCreated(), 'btn-success': config.collabLayerCreated() },
+                                                            enable: config.newLayerName().trim().length > 0 && !!config.newLayerHqPicker.selected() && !config.creatingCollabLayer() && !config.collabLayerCreated()">
+                                                        <!-- ko if: config.collabLayerCreated -->
+                                                        <i class="fa fa-check me-1"></i>Created
+                                                        <!-- /ko -->
+                                                        <!-- ko if: config.creatingCollabLayer -->
+                                                        <i class="fa fa-spinner fa-spin me-1"></i>Creating…
+                                                        <!-- /ko -->
+                                                        <!-- ko if: !config.creatingCollabLayer() && !config.collabLayerCreated() -->
                                                         <i class="fa fa-plus me-1"></i>Create layer
+                                                        <!-- /ko -->
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                        data-bind="click: config.cancelCreateLayer">
+                                                        data-bind="click: config.cancelCreateLayer,
+                                                            enable: !config.creatingCollabLayer() && !config.collabLayerCreated()">
                                                         Cancel
                                                     </button>
                                                 </div>

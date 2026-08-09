@@ -2960,17 +2960,10 @@ overflow: hidden;
   font-size: 12px;
 }
 .collab-marker-audit-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  color: #888;
-  font-size: 10.5px;
-  line-height: 1.35;
-  margin-bottom: 8px;
-}
-.collab-marker-audit-notice .fa-info-circle {
-  margin-top: 1px;
-  flex-shrink: 0;
+  color: #9aa4ad;
+  font-size: 10px;
+  line-height: 1.3;
+  margin-top: 6px;
 }
 .collab-form-actions {
   display: flex;
