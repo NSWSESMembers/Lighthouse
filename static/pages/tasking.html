@@ -4012,6 +4012,7 @@
                                         data-bind="click: $parent.addRecipientFromSearch">
                                         <span class="text-truncate"
                                             data-bind="text: name + ' - ' + detail, attr: { title: description }"></span>
+                                        <span class="badge bg-secondary ms-2 text-truncate" data-bind="visible: location, text: location"></span>
                                     </div>
                                 </li>
                             </ul>
