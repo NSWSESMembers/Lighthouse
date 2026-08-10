@@ -5719,8 +5719,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          150.17824054029796,
-          -35.708913376383755
+          150.2024332,
+          -35.7654855
         ]
       },
       "properties": {
@@ -5729,8 +5729,8 @@
         "SES_LEVEL": "Unit",
         "REGCODE": "ISR",
         "UNIT_CODE": "BMB",
-        "POINT_X": 150.1782352,
-        "POINT_Y": -35.70892614,
+        "POINT_X": 150.2024332,
+        "POINT_Y": -35.7654855,
         "ZoneCode": "SEZ",
         "C_Code": "EUC",
         "STArea__": 0.79910844,
