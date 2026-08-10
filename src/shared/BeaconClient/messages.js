@@ -8,13 +8,23 @@ const data = {
   JobId: jobId
 };
 
-recipients.forEach((recipient, index) => {
+// Contact Groups (ContactTypeId 0) have no Detail/phone number of their own -
+// Beacon resolves their membership server-side and echoes it back as a
+// separate ContactGroups field, so they can't go through Recipients[i].
+const contactGroups = recipients.filter(recipient => recipient.ContactTypeId === 0);
+const individualContacts = recipients.filter(recipient => recipient.ContactTypeId !== 0);
+
+individualContacts.forEach((recipient, index) => {
   data[`Recipients[${index}][Recipient]`]      = recipient.Detail;
   data[`Recipients[${index}][Description]`]   = recipient.FirstName
     ? `${recipient.FirstName} ${recipient.LastName}`
     : recipient.Description;
   data[`Recipients[${index}][ContactId]`]     = recipient.Id;
   data[`Recipients[${index}][ContactTypeId]`] = recipient.ContactTypeId;
+});
+
+contactGroups.forEach((group, index) => {
+  data[`ContactGroups[${index}]`] = group.Id;
 });
 
   $.ajax({
