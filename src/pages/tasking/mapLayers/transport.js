@@ -152,7 +152,6 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
 function getTransportApiKeyOpsLog(apiHost, userId, token, cb) {
 
     var opsId = null;
-
     switch (apiHost) {
         case 'https://previewbeacon.ses.nsw.gov.au':
             opsId = '46273';
@@ -205,7 +204,7 @@ async function fetchTransportIncidentsAsync(apiHost, userId, token) {
 
     if (!transportApiKeyCache) {
         transportApiKeyCache = await new Promise((resolve) => {
-            getTransportApiKeyOpsLog('https://trainbeacon.ses.nsw.gov.au', apiHost, userId, token, function (key) {
+            getTransportApiKeyOpsLog(apiHost, userId, token, function (key) {
                 sessionStorage.setItem(sessionKey, key);
                 resolve(key);
             });
