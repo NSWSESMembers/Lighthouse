@@ -152,7 +152,6 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
 function getTransportApiKeyOpsLog(apiHost, userId, token, cb) {
 
     var opsId = null;
-  console.log("getTransportApiKeyOpsLog", apiHost, userId, token)
     switch (apiHost) {
         case 'https://previewbeacon.ses.nsw.gov.au':
             opsId = '46273';
