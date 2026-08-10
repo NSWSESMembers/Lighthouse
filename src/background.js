@@ -2,7 +2,7 @@
 // separate to all other pages.
 
 var tj = require('@tmcw/togeojson');
-var DOMParser = require('xmldom').DOMParser;
+var DOMParser = require('@xmldom/xmldom').DOMParser;
 
 // Check whether new version is installed
 // chrome.runtime.onInstalled.addListener(function(details){
