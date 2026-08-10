@@ -36,6 +36,7 @@
     "@babel/runtime": "^7.27.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@tmcw/togeojson": "^5.7.0",
+    "@xmldom/xmldom": "^0.9.10",
     "bootstrap": "^4.6.2",
     "bootstrap5": "npm:bootstrap@^5.3.8",
     "chroma-js": "^2.4.2",
@@ -64,8 +65,7 @@
     "moment": "^2.29.1",
     "nunjucks": "^3.2.4",
     "remove": "^0.1.5",
-    "stopwords": "0.0.5",
-    "xmldom": "^0.6.0"
+    "stopwords": "0.0.5"
   },
   "devDependencies": {
     "@babel/core": "^8.0.1",
@@ -96,5 +96,9 @@
     "webpack-extension-manifest-plugin": "^0.8.0",
     "webpack-merge": "^5.8.0",
     "zip-webpack-plugin": "^4.0.1"
+  },
+  "overrides": {
+    "d3-color": "^3.1.0",
+    "uuid": "^11.1.1"
   }
 }
