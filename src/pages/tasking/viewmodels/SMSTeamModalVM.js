@@ -63,7 +63,8 @@ export function SendSMSModalVM(parentVM) {
                 name: name,
                 isTeamLeader: isTL,
                 selected: ko.observable(true),
-                displayLabel: name
+                displayLabel: name,
+                loading: true
 
             })
         });
@@ -84,6 +85,9 @@ export function SendSMSModalVM(parentVM) {
                 recipient.loading(false);
             } catch (err) {
                 console.error("Failed to fetch contact numbers for recipient:", recipient.id, err);
+                recipient.displayLabel(`${recipient.name} (Failed to load SMS number)`);
+                recipient.selected(false);
+                recipient.loading(false);
             }
 
         });
@@ -239,7 +243,9 @@ export function SendSMSModalVM(parentVM) {
                     return {
                         id: r.Id,
                         name: r.Description,
-                        detail: detail
+                        detail: detail,
+                        location: r.Location || "",
+                        raw: r
                     };
                 });
             self.recipientSearchResults(cleanedRows);
@@ -273,7 +279,12 @@ export function SendSMSModalVM(parentVM) {
             isTeamLeader: false,
             selected: true,
             displayLabel: `${match.name} (${match.detail})`,
-            beaconContact: [match],
+            beaconContact: [{
+                Id: match.raw.Id,
+                Detail: match.raw.Detail,
+                ContactTypeId: match.raw.ContactTypeId,
+                Description: match.raw.Description
+            }],
             loading: false
         }));
 

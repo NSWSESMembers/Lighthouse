@@ -1576,6 +1576,7 @@ function VM() {
 
         // if a job was provided, use its info to prefill and assume its a new tasking
         if (job) {
+            taskId = job.id();
             headerLabel = `Send SMS - Incident: ${job.identifier()}`;
             initialText = [
                 job.priorityName(),
