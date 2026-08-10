@@ -7,5 +7,5 @@ this.isTeamLeader = data.isTeamLeader || false;
 this.selected = ko.observable(data.selected !== undefined ? data.selected : true);
 this.loading = ko.observable(data.loading || false);
 this.displayLabel = data.displayLabel && ko.observable(data.displayLabel);
-this.beaconContact = [];
+this.beaconContact = data.beaconContact || [];
 }

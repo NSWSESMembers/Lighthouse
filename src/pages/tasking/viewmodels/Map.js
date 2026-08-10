@@ -514,6 +514,13 @@ export function MapVM(Lmap, root) {
       visibleByDefault: opts.visibleByDefault === true,
       fetchFn: opts.fetchFn,
       drawFn: opts.drawFn,
+      // Optional () => boolean. When it returns true, a poll tick is
+      // skipped entirely rather than fetch+redrawing -- for layers whose
+      // drawFn rebuilds every marker from scratch (clearLayers()), redrawing
+      // out from under an open popup would silently close it, e.g. while a
+      // user is mid-edit. See mapLayers/collabLayer.js for the only current
+      // user of this.
+      skipIfBusy: opts.skipIfBusy,
       timerId: null,
       menuGroup: opts.menuGroup || null,
     };
@@ -522,6 +529,7 @@ export function MapVM(Lmap, root) {
     // Only fetch/draw if the layer is actually on the map
     async function refreshIfVisible() {
       if (!self.map.hasLayer(layerGroup)) return;
+      if (entry.skipIfBusy?.()) return;
 
       try {
         const data = await entry.fetchFn();
@@ -552,6 +560,15 @@ export function MapVM(Lmap, root) {
   };
 
 
+  /** Tear down a polling overlay layer registered via registerPollingLayer -- stops its timer, removes it from the map, and drops it from the registry entirely (unlike toggling visibility, which just removes/re-adds the same layerGroup). */
+  self.unregisterPollingLayer = function (key) {
+    const entry = self.onlineLayers.get(key);
+    if (!entry) return;
+    if (entry.timerId) clearInterval(entry.timerId);
+    if (entry.layerGroup && self.map.hasLayer(entry.layerGroup)) self.map.removeLayer(entry.layerGroup);
+    self.onlineLayers.delete(key);
+  };
+
   self.refreshPollingLayer = function (key) {
     const entry = self.onlineLayers.get(key);
     if (!entry) return;
@@ -559,6 +576,7 @@ export function MapVM(Lmap, root) {
     async function run() {
       // bail if layer is not currently visible on the map
       if (!self.map.hasLayer(entry.layerGroup)) return;
+      if (entry.skipIfBusy?.()) return;
 
       try {
         const data = await entry.fetchFn();
@@ -612,11 +630,15 @@ export function MapVM(Lmap, root) {
           label: entry.label || k,
           layer: entry.layerGroup,
           group: entry.menuGroup || null,
+          visibleByDefault: entry.visibleByDefault,
         });
       }
     }
     return defs;
   };
+
+  // --- Collaborative map layers ---
+  self.collabLayers = ko.observableArray([]); // layer summaries for the current org, from listLayers()
 
   // helpers
   self.setOpen = (kind, ref) => self.openPopup({ kind, id: ref.id?.(), ref });
@@ -910,6 +932,8 @@ export function MapVM(Lmap, root) {
   });
 
   const PopupStuff = {
+    getToken: () => root.getToken(),
+
     flyToBounds: (bounds, { opts }) => {
       self._flyingToBounds = true;
       self.map.flyToBounds(bounds, opts);

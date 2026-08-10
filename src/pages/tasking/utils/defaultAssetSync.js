@@ -13,7 +13,7 @@
  * doesn't pull the entire universe.
  */
 
-const LAMBDA_BASE = 'https://lambda.lighthouse-extension.com/lad/default-assets';
+const LAMBDA_BASE = 'https://lambda.lighthouse-extension.com/lad_v2/default-assets';
 const LS_KEY      = 'lh_sharedDefaultAssets';   // localStorage key for cached mapping
 const LS_TS_KEY   = 'lh_sharedDefaultAssets_ts'; // timestamp of last successful fetch
 
@@ -52,15 +52,16 @@ export function saveSharedMapping(mapping) {
  *
  * @param {string}   apiUrl    The Beacon source URL (namespace).
  * @param {string[]} teamIds   Array of team ID strings.
+ * @param {string}   token     Beacon access token (Authorization: Bearer).
  * @returns {Promise<Object<string, string>>}  teamId → assetId map
  */
-export async function fetchSharedDefaults(apiUrl, teamIds) {
+export async function fetchSharedDefaults(apiUrl, teamIds, token) {
     if (!teamIds || teamIds.length === 0) return loadSharedMapping();
 
     const url = `${LAMBDA_BASE}?apiUrl=${encodeURIComponent(apiUrl)}&teamIds=${teamIds.join(',')}`;
 
     try {
-        const res = await fetch(url, { method: 'GET' });
+        const res = await fetch(url, { method: 'GET', headers: { 'Authorization': `Bearer ${token}` } });
         if (!res.ok) {
             console.warn('[defaultAssetSync] GET failed:', res.status);
             return loadSharedMapping(); // fall back to cache
@@ -100,9 +101,10 @@ export async function fetchSharedDefaults(apiUrl, teamIds) {
  * @param {string} apiUrl   The Beacon source URL (namespace).
  * @param {string} teamId
  * @param {string} assetId
+ * @param {string} token    Beacon access token (Authorization: Bearer).
  * @returns {Promise<void>}
  */
-export async function pushSharedDefault(apiUrl, teamId, assetId) {
+export async function pushSharedDefault(apiUrl, teamId, assetId, token) {
     if (!assetId) return; // nothing to push
 
     // Optimistic local update
@@ -114,7 +116,7 @@ export async function pushSharedDefault(apiUrl, teamId, assetId) {
     try {
         await fetch(LAMBDA_BASE, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({
                 apiUrl,
                 teamId: String(teamId),

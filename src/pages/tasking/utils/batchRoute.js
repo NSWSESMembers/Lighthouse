@@ -12,7 +12,7 @@
  * @module batchRoute
  */
 
-const ROUTE_URL = "https://lambda.lighthouse-extension.com/lad/route";
+const ROUTE_URL = "https://lambda.lighthouse-extension.com/lad_v2/route";
 
 /**
  * @typedef {Object} RouteSummary
@@ -31,12 +31,14 @@ const ROUTE_URL = "https://lambda.lighthouse-extension.com/lad/route";
  * @param {number}  [opts.timeoutMs=10000]     Per-request timeout.
  * @param {AbortSignal} [opts.signal]          Optional abort signal to
  *   cancel all in-flight requests.
+ * @param {() => Promise<string>} [opts.getToken]  Beacon access token getter.
  * @returns {Promise<(RouteSummary|null)[]>}
  *   Array aligned with `pairs`.  Each entry is either a summary object or
  *   `null` if that individual route failed.
  */
 export async function batchRoute(pairs, opts = {}) {
-    const { travelMode = "Car", timeoutMs = 10000, signal } = opts;
+    const { travelMode = "Car", timeoutMs = 10000, signal, getToken } = opts;
+    const token = getToken ? await getToken() : null;
 
     const promises = pairs.map(({ fromLat, fromLng, toLat, toLng }) => {
         const controller = new AbortController();
@@ -57,7 +59,10 @@ export async function batchRoute(pairs, opts = {}) {
 
         return fetch(ROUTE_URL, {
             method: "POST",
-            headers: { "content-type": "application/json" },
+            headers: {
+                "content-type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
             body: JSON.stringify(payload),
             signal: controller.signal,
         })

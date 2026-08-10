@@ -85,7 +85,7 @@ export function registerBOMLandWarningsLayer(vm) {
           ${p.phase ? `<strong>Phase:</strong> ${p.phase}<br>` : ""}
           ${p.start_time_local ? `<strong>From:</strong> ${new Date(p.start_time_local).toLocaleString()}<br>` : ""}
           ${p.end_time_local ? `<strong>Until:</strong> ${new Date(p.end_time_local).toLocaleString()}` : ""}`;
-      });
+      }, { pane: "pane-popup-top" });
       layerGroup.addLayer(floodWarning);
 
       /* --- 1  Flood Watch -------------------------------------- */
@@ -107,7 +107,7 @@ export function registerBOMLandWarningsLayer(vm) {
           ${p.phase ? `<strong>Phase:</strong> ${p.phase}<br>` : ""}
           ${p.start_time_local ? `<strong>From:</strong> ${new Date(p.start_time_local).toLocaleString()}<br>` : ""}
           ${p.end_time_local ? `<strong>Until:</strong> ${new Date(p.end_time_local).toLocaleString()}` : ""}`;
-      });
+      }, { pane: "pane-popup-top" });
       layerGroup.addLayer(floodWatch);
 
       /* --- 2  Severe Weather Warning --------------------------- */
@@ -132,7 +132,7 @@ export function registerBOMLandWarningsLayer(vm) {
           ${p.warning ? `${p.warning}<br>` : ""}
           ${p.validfrom_utc ? `<strong>From:</strong> ${new Date(p.validfrom_utc).toLocaleString()}<br>` : ""}
           ${p.validto_utc ? `<strong>Until:</strong> ${new Date(p.validto_utc).toLocaleString()}` : ""}`;
-      });
+      }, { pane: "pane-popup-top" });
       layerGroup.addLayer(severeWeather);
 
       /* --- 3  Thunderstorm Warning ----------------------------- */
@@ -157,7 +157,7 @@ export function registerBOMLandWarningsLayer(vm) {
           ${p.phase ? `<strong>Phase:</strong> ${p.phase}<br>` : ""}
           ${p.start_time_local ? `<strong>From:</strong> ${new Date(p.start_time_local).toLocaleString()}<br>` : ""}
           ${p.end_time_local ? `<strong>Until:</strong> ${new Date(p.end_time_local).toLocaleString()}` : ""}`;
-      });
+      }, { pane: "pane-popup-top" });
       layerGroup.addLayer(thunderstorm);
 
       /* --- 4  Fire Weather Warnings ---------------------------- */
@@ -179,7 +179,7 @@ export function registerBOMLandWarningsLayer(vm) {
           ${p.day ? `<strong>Day:</strong> ${p.day}<br>` : ""}
           ${p.start_time_local ? `<strong>From:</strong> ${new Date(p.start_time_local).toLocaleString()}<br>` : ""}
           ${p.end_time_local ? `<strong>Until:</strong> ${new Date(p.end_time_local).toLocaleString()}` : ""}`;
-      });
+      }, { pane: "pane-popup-top" });
       layerGroup.addLayer(fireWeather);
     },
   });

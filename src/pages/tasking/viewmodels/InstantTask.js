@@ -310,7 +310,7 @@ export class InstantTaskViewModel {
         const controller = new AbortController();
         this._routeAbort = controller;
 
-        batchRoute(pairs, { signal: controller.signal })
+        batchRoute(pairs, { signal: controller.signal, getToken: this.config?.getToken })
             .then(results => {
                 if (controller.signal.aborted) return;
 

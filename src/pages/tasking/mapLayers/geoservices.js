@@ -298,7 +298,7 @@ export function registerSESUnitLocationsLayer(vm) {
               iconAnchor: [8, 16], // Anchor point of the icon
               popupAnchor: [0, -16] // Point from which the popup opens relative to the iconAnchor
             })
-          }).bindPopup(`<strong>Loading ${name}...</strong>`);
+          }).bindPopup(`<strong>Loading ${name}...</strong>`, { pane: "pane-popup-top" });
 
           marker.on('popupopen', async () => {
             try {

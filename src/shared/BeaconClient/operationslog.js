@@ -32,11 +32,11 @@ export function get(entryId, host, userId = 'notPassed', token, callback) {
     cache: false,
     dataType: 'json',
     complete: function(response, textStatus) {
+      if (typeof callback !== "function") return;
       if (textStatus == 'success') {
-        let results = response.responseJSON;
-        if (typeof callback === "function") {
-          callback(results);
-        }
+        callback(response.responseJSON);
+      } else {
+        callback(null);
       }
     }
   })

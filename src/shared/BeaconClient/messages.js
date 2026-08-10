@@ -10,7 +10,9 @@ const data = {
 
 recipients.forEach((recipient, index) => {
   data[`Recipients[${index}][Recipient]`]      = recipient.Detail;
-  data[`Recipients[${index}][Description]`]   = `${recipient.FirstName} ${recipient.LastName}`;
+  data[`Recipients[${index}][Description]`]   = recipient.FirstName
+    ? `${recipient.FirstName} ${recipient.LastName}`
+    : recipient.Description;
   data[`Recipients[${index}][ContactId]`]     = recipient.Id;
   data[`Recipients[${index}][ContactTypeId]`] = recipient.ContactTypeId;
 });

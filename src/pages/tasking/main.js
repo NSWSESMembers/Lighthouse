@@ -33,7 +33,7 @@ import { registerAcronymTextBinding } from "./components/acronymText.js";
 
 import { Asset } from './models/Asset.js';
 import { Tasking } from './models/Tasking.js';
-import { Team, bumpDefaultAssetTick, setDefaultAssetApiUrl } from './models/Team.js';
+import { Team, bumpDefaultAssetTick, setDefaultAssetApiUrl, setDefaultAssetTokenGetter } from './models/Team.js';
 import { Job } from './models/Job.js';
 import { Sector } from './models/Sector.js';
 import { Tag } from "./models/Tag.js";
@@ -66,6 +66,7 @@ import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } f
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
+import { registerCollabLayers, getWritableCollabLayers, startAddMarkerFlow } from "./mapLayers/collabLayer.js";
 import {
     registerBOMRainfallLayer,
     registerBOMRadarLayer,
@@ -168,12 +169,42 @@ const defaultRedSvgIcon = L.divIcon({
     popupAnchor: [0, -36],
 });
 
+// Beacon member id (the JWT's `sub` claim), decoded from the access token
+// purely for UI purposes -- deciding whether to show/hide the collaborative
+// map layers' Edit/Delete-marker, Add-marker and Delete-layer controls for
+// read-only/delete-restricted layers. This has to be `sub` specifically
+// (not params.personId or params.userId) because it's what
+// lambda/map-layers-v2's verifyBeaconToken.js hands the Lambda as the
+// caller's *verified* identity -- the Lambda is the one that actually
+// enforces these permissions from its own signature-checked copy of the
+// token; decoding it again here just lets the UI predict that outcome
+// instead of the user hitting a 403 after the fact. No verification happens
+// client-side -- an untrusted decode would be pointless as a security
+// control, which is exactly why enforcement lives server-side.
+let currentMemberId = null;
+
+function decodeJwtSub(jwt) {
+    try {
+        const payloadB64 = jwt.split('.')[1];
+        const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
+        return JSON.parse(json)?.sub || null;
+    } catch {
+        return null;
+    }
+}
+
+/** Sync getter for the current member id -- see currentMemberId above. */
+function getMemberId() {
+    return currentMemberId;
+}
+
 /**
  * Set the current token and wake any waiters.
  */
 function setToken(newToken, newTokenExp) {
     token = newToken;
     tokenExp = newTokenExp;
+    currentMemberId = decodeJwtSub(newToken);
 
     if (resolveTokenReady) {
         // First token arrival unblocks anyone awaiting getToken()
@@ -196,8 +227,16 @@ const params = getSearchParameters();
 const apiHost = params.host
 const sourceUrl = params.source
 
+// Collaborative map layer markers are attributed to the Beacon Person
+// record (params.personId), not the login/account id (params.userId) --
+// these are separate id systems in Beacon's data model (see
+// BeaconClient/people.js), so userId must never be used as a stand-in
+// here even if personId happens to be missing.
+const markerActorId = params.personId;
+
 // Tell Team model which API URL to use for shared default-asset pushes
 setDefaultAssetApiUrl(sourceUrl);
+setDefaultAssetTokenGetter(() => getToken());
 
 var ko;
 var myViewModel;
@@ -224,13 +263,20 @@ const map = L.map('map', {
 
 installMapContextMenu({
     map,
-    geocodeEndpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
+    geocodeEndpoint: 'https://lambda.lighthouse-extension.com/lad_v2/geocode',
     geocodeMarkerIcon: defaultSvgIcon,
     geocodeRedMarkerIcon: defaultRedSvgIcon,
     geocodeMaxResults: 10,
+    getToken,
     onGeocodeResultClicked: (_r) => {
         // TODO: replace with real action
     },
+    // myViewModel isn't constructed yet at this point in the file (see the
+    // existing `var myViewModel;` module-level pattern below) -- these
+    // callbacks only run later, on an actual right-click, by which point
+    // it's fully populated.
+    canAddMarker: () => getWritableCollabLayers(myViewModel, getMemberId).length > 0,
+    onAddMarker: (latlng) => startAddMarkerFlow(myViewModel, sourceUrl, markerActorId, latlng, getToken, getMemberId),
 });
 
 
@@ -256,7 +302,8 @@ const polylineMeasure = L.control.polylineMeasure({
 polylineMeasure.addTo(map);
 
 const geocoder = new AwsLambdaGeocoderProvider({
-    endpoint: 'https://lambda.lighthouse-extension.com/lad/geocode',
+    endpoint: 'https://lambda.lighthouse-extension.com/lad_v2/geocode',
+    getToken,
 });
 
 const searchControl = new GeoSearchControl({
@@ -305,8 +352,19 @@ map.createPane('pane-top'); map.getPane('pane-top').style.zIndex = 600;
 map.createPane('pane-top-plus'); map.getPane('pane-top-plus').style.zIndex = 601;
 
 
+map.createPane('pane-collab'); map.getPane('pane-collab').style.zIndex = 650;
+map.createPane('pane-collab-plus'); map.getPane('pane-collab-plus').style.zIndex = 651;
+
+
 map.createPane('pane-tippy-top'); map.getPane('pane-tippy-top').style.zIndex = 700;
 map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.zIndex = 701;
+
+// Fixed above every reorderable marker pane (Config's paneOrder only ever
+// assigns 300-700, see Map.js applyPaneOrder) so popups -- which would
+// otherwise sit in Leaflet's default popupPane (also z-index 700, but
+// painted before these custom panes and so behind them on tie) -- always
+// render above every marker, including the topmost "Incident markers" pane.
+map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 750;
 
 
 function buildBasemapLayer(key) {
@@ -362,6 +420,11 @@ function VM() {
 
     const self = this;
 
+    // Exposed so nested viewmodels/utils that already hold a reference to
+    // the root VM (e.g. MapVM's `root` param) can get the current Beacon
+    // token without threading a new constructor param through every layer.
+    self.getToken = getToken;
+
     self.mapVM = new MapVM(map, self);
 
     self.tokenLoading = ko.observable(true);
@@ -399,6 +462,34 @@ function VM() {
     self.taskingsById = new Map();
     self.assetsById = new Map();
     self.sectorsById = new Map();
+    self.personNamesById = new Map(); // personId -> Promise<string>, caches + dedupes concurrent lookups
+
+    /**
+     * Resolve a Beacon person ID to their display name, caching the result
+     * (and de-duping concurrent lookups for the same id, since the cache
+     * stores the in-flight Promise itself). Falls back to the raw id string
+     * if the lookup fails.
+     */
+    self.resolvePersonName = function (personId) {
+        const idStr = String(personId);
+        if (self.personNamesById.has(idStr)) return self.personNamesById.get(idStr);
+
+        const pending = (async () => {
+            try {
+                const tk = await getToken();
+                const person = await new Promise((resolve, reject) => {
+                    BeaconClient.people.getSimplePerson(idStr, apiHost, params.userId, tk, resolve, reject);
+                });
+                return person?.FullName || idStr;
+            } catch (err) {
+                console.warn('Failed to resolve person name for', idStr, err);
+                return idStr;
+            }
+        })();
+
+        self.personNamesById.set(idStr, pending);
+        return pending;
+    };
 
     // Global collections
     self.teams = ko.observableArray();
@@ -1341,6 +1432,25 @@ function VM() {
             });
         },
         fetchAllSectors: (hqs) => self.fetchAllSectors(hqs),
+        searchMembers: (q) => self.searchMembers(q),
+        searchEvents: (q) => self.searchEvents(q),
+        getToken: () => getToken(),
+        apiUrl: sourceUrl,
+        userId: params.userId,
+        // The Beacon entity id of the HQ this Lighthouse instance was
+        // launched for (?hq=<id> in the URL) -- every collaborative layer
+        // must be attached to an HQ (Config.js), and the layer list defaults
+        // to showing just this HQ's layers, both seeded from this id.
+        defaultHqId: params.hq || null,
+        // Collaborative-layer actions (create/delete layer) are attributed
+        // (for display/audit only) using the same identity as every
+        // marker/comment op on that layer (markerActorId, i.e.
+        // params.personId), not params.userId.
+        actorId: markerActorId,
+        // Sync getter for the verified Beacon member id (JWT `sub`) -- see
+        // getMemberId above. Used by Config.js to decide whether the
+        // Delete-layer button is enabled for a given row.
+        getMemberId,
     };
 
     self.config = new ConfigVM(self, configDeps);
@@ -1466,6 +1576,7 @@ function VM() {
 
         // if a job was provided, use its info to prefill and assume its a new tasking
         if (job) {
+            taskId = job.id();
             headerLabel = `Send SMS - Incident: ${job.identifier()}`;
             initialText = [
                 job.priorityName(),
@@ -1900,7 +2011,8 @@ function VM() {
 
         if (multiAssetTeamIds.length === 0) return;
 
-        fetchSharedDefaults(sourceUrl, multiAssetTeamIds)
+        getToken()
+            .then(token => fetchSharedDefaults(sourceUrl, multiAssetTeamIds, token))
             .then(() => {
                 // Force all Team.defaultAsset() computeds to re-evaluate
                 bumpDefaultAssetTick();
@@ -2144,6 +2256,35 @@ function VM() {
             BeaconClient.contacts.searchAll(query, apiHost, params.userId, t, function (data) {
                 resolve(data.Results || []);
             })
+        });
+    }
+
+    // Searches Beacon members by name or member number (Username) -- used
+    // by the collaborative-layer moderator picker (Config.js). Returns raw
+    // Users/Search result rows; Config.js maps each row's Username to the
+    // same member-id space as getMemberId()/createdByMemberId above.
+    self.searchMembers = async function (query) {
+        const t = await getToken();   // blocks here until token is ready
+        return new Promise((resolve) => {
+            BeaconClient.users.search(query, apiHost, params.userId, t, function (data) {
+                resolve(data?.Results || []);
+            }, function () {
+                resolve([]);
+            });
+        });
+    }
+
+    // Searches Beacon events by name or identifier -- used by the
+    // collaborative-layer "attach to event" picker (Config.js). Returns raw
+    // Events/Search result rows.
+    self.searchEvents = async function (query) {
+        const t = await getToken();   // blocks here until token is ready
+        return new Promise((resolve) => {
+            BeaconClient.events.search(query, apiHost, params.userId, t, function (data) {
+                resolve(data?.Results || []);
+            }, function () {
+                resolve([]);
+            });
         });
     }
 
@@ -2524,6 +2665,17 @@ function VM() {
             console.error("Failed to create ops log entry:", err);
             showAlert("Failed to create ops log entry.", "danger", 5000);
             cb(null);
+        });
+    }
+
+    // Fetches a single Ops Log entry by id. Used by the collaborative map
+    // layers feature, which stores only an entry id on each marker and
+    // treats the Ops Log entry itself as the source of truth for the
+    // marker's title/description/comments (see mapLayers/collabLayer.js).
+    self.getOpsLogEntry = async function (entryId, cb) {
+        const t = await getToken();   // blocks here until token is ready
+        BeaconClient.operationslog.get(entryId, apiHost, params.userId, t, function (data) {
+            cb(data);
         });
     }
 
@@ -2978,6 +3130,7 @@ function VM() {
     registerBOMFloodWarningBoundariesLayer(self, sourceUrl);
     registerBOMFireWeatherDistrictsLayer(self, sourceUrl);
     registerRainRadarLayer(self, map);
+    registerCollabLayers(self, sourceUrl, markerActorId, getToken, getMemberId);
 
     // --- Layers Drawer (under zoom)
     const LayersDrawer = L.Control.extend({
@@ -2992,6 +3145,8 @@ function VM() {
 
         onAdd(map) {
             const c = L.DomUtil.create("div", "layers-drawer");
+            this._container = c;
+            this._map = map;
 
             // stop wheel -> no map zoom when scrolling the panel
             c.addEventListener("wheel", (e) => { e.stopPropagation(); }, { passive: false });
@@ -3075,6 +3230,103 @@ function VM() {
 
             this._setBasemap(this._baseKey, map);
 
+            this._renderOverlays();
+
+            // --- Search filter ---
+            const searchInput = c.querySelector(".ld-search-input");
+            this._searchFilter = (query) => {
+                const q = query.toLowerCase().trim();
+                const grid = c.querySelector(".ld-grid");
+                const cells = grid.querySelectorAll(".ld-grid-cell");
+
+                cells.forEach(cell => {
+                    const buttons = cell.querySelectorAll(".ld-overlay-btn");
+                    let anyVisible = false;
+
+                    buttons.forEach(btn => {
+                        let shouldShow = !q; // Show all if no query
+
+                        if (q) {
+                            // Extract label from the span.me-2 text content
+                            const labelSpan = btn.querySelector("span.me-2");
+                            const label = labelSpan ? labelSpan.textContent.trim().toLowerCase() : "";
+                            shouldShow = label.includes(q);
+                        }
+
+                        btn.style.setProperty("display", shouldShow ? "" : "none", "important");
+                        if (shouldShow) anyVisible = true;
+                    });
+
+                    // Show cell only if at least one button is visible
+                    cell.style.setProperty("display", anyVisible ? "" : "none", "important");
+                });
+            };
+
+            searchInput.addEventListener("input", (e) => {
+                this._searchFilter(e.target.value);
+            });
+
+            // --- Toggle button ---
+            const toggleBtn = c.querySelector(".ld-toggle-btn");
+            const panel = c.querySelector(".ld-panel");
+
+            const fitPanel = () => {
+                requestAnimationFrame(() => {
+                    const rect = panel.getBoundingClientRect();
+                    const avail = window.innerHeight - rect.top - 20; // 20px bottom margin
+                    panel.style.maxHeight = Math.max(avail, 160) + "px";
+                });
+            };
+            this._fitPanel = fitPanel;
+
+            L.DomEvent.on(toggleBtn, "click", (ev) => {
+                L.DomEvent.stop(ev);
+                const hidden = panel.classList.toggle("d-none");
+                toggleBtn.setAttribute("aria-expanded", (!hidden).toString());
+                toggleBtn.parentElement.classList.toggle("no-border", !hidden);
+                localStorage.setItem("layers.open", hidden ? "0" : "1");
+                if (!hidden) {
+                    // Clear search when opening
+                    searchInput.value = "";
+                    this._searchFilter("");
+                    fitPanel();
+                }
+            });
+
+            // Re-fit when window resizes
+            window.addEventListener("resize", () => {
+                if (!panel.classList.contains("d-none")) fitPanel();
+            });
+
+            // Initial fit if panel starts open
+            if (this._open) setTimeout(fitPanel, 50);
+
+            // Close panel when map is clicked
+            map.on("click", () => {
+                if (!panel.classList.contains("d-none")) {
+                    panel.classList.add("d-none");
+                    toggleBtn.setAttribute("aria-expanded", "false");
+                    toggleBtn.parentElement.classList.remove("no-border");
+                    localStorage.setItem("layers.open", "0");
+                }
+            });
+
+            L.DomEvent.disableClickPropagation(c);
+
+            return c;
+        },
+
+        /** Rebuild the overlay grid (e.g. after a new collaborative layer is created). */
+        refresh() {
+            if (!this._container) return;
+            this._renderOverlays();
+            this._searchFilter?.("");
+        },
+
+        _renderOverlays() {
+            const map = this._map;
+            const c = this._container;
+
             // --- Overlays: group by def.group ---
             const overlayDefs = self.mapVM.getOverlayDefsForControl() || [];
             const groups = new Map();
@@ -3088,6 +3340,7 @@ function VM() {
 
             // --- Build two-column grid of always-visible groups ---
             const grid = c.querySelector(".ld-grid");
+            grid.innerHTML = "";
 
             groups.forEach((defs, groupKey) => {
                 const cell = document.createElement("div");
@@ -3179,88 +3432,6 @@ function VM() {
                 cell.appendChild(body);
                 grid.appendChild(cell);
             });
-
-            // --- Search filter ---
-            const searchInput = c.querySelector(".ld-search-input");
-            const searchFilter = (query) => {
-                const q = query.toLowerCase().trim();
-                const cells = grid.querySelectorAll(".ld-grid-cell");
-
-                cells.forEach(cell => {
-                    const buttons = cell.querySelectorAll(".ld-overlay-btn");
-                    let anyVisible = false;
-
-                    buttons.forEach(btn => {
-                        let shouldShow = !q; // Show all if no query
-
-                        if (q) {
-                            // Extract label from the span.me-2 text content
-                            const labelSpan = btn.querySelector("span.me-2");
-                            const label = labelSpan ? labelSpan.textContent.trim().toLowerCase() : "";
-                            shouldShow = label.includes(q);
-                        }
-
-                        btn.style.setProperty("display", shouldShow ? "" : "none", "important");
-                        if (shouldShow) anyVisible = true;
-                    });
-
-                    // Show cell only if at least one button is visible
-                    cell.style.setProperty("display", anyVisible ? "" : "none", "important");
-                });
-            };
-
-            searchInput.addEventListener("input", (e) => {
-                searchFilter(e.target.value);
-            });
-
-            // --- Toggle button ---
-            const toggleBtn = c.querySelector(".ld-toggle-btn");
-            const panel = c.querySelector(".ld-panel");
-
-            const fitPanel = () => {
-                requestAnimationFrame(() => {
-                    const rect = panel.getBoundingClientRect();
-                    const avail = window.innerHeight - rect.top - 20; // 20px bottom margin
-                    panel.style.maxHeight = Math.max(avail, 160) + "px";
-                });
-            };
-
-            L.DomEvent.on(toggleBtn, "click", (ev) => {
-                L.DomEvent.stop(ev);
-                const hidden = panel.classList.toggle("d-none");
-                toggleBtn.setAttribute("aria-expanded", (!hidden).toString());
-                toggleBtn.parentElement.classList.toggle("no-border", !hidden);
-                localStorage.setItem("layers.open", hidden ? "0" : "1");
-                if (!hidden) {
-                    // Clear search when opening
-                    searchInput.value = "";
-                    searchFilter("");
-                    fitPanel();
-                }
-            });
-
-            // Re-fit when window resizes
-            window.addEventListener("resize", () => {
-                if (!panel.classList.contains("d-none")) fitPanel();
-            });
-
-            // Initial fit if panel starts open
-            if (this._open) setTimeout(fitPanel, 50);
-
-            // Close panel when map is clicked
-            map.on("click", () => {
-                if (!panel.classList.contains("d-none")) {
-                    panel.classList.add("d-none");
-                    toggleBtn.setAttribute("aria-expanded", "false");
-                    toggleBtn.parentElement.classList.remove("no-border");
-                    localStorage.setItem("layers.open", "0");
-                }
-            });
-
-            L.DomEvent.disableClickPropagation(c);
-
-            this._container = c;
-            return c;
         },
 
 
@@ -3560,6 +3731,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const configModalEl = document.getElementById('configModal');
         bootstrap.Modal.getOrCreateInstance(configModalEl).show();
 
+        // reveal the page now that bindings are applied and the modal is open,
+        // so we don't flash unbound placeholder content beforehand
+        document.body.style.opacity = '1';
+
         installModalHotkeys({
             modalEl: configModalEl,
             onSave: () => myViewModel.config.saveAndCloseAndLoad(),
@@ -3651,11 +3826,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
 })
-
-// show page once DOM + CSS are ready (don't wait for map tiles)
-document.addEventListener('DOMContentLoaded', function () {
-    document.body.style.opacity = '1';
-});
 
 
 

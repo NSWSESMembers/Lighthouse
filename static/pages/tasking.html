@@ -2701,13 +2701,17 @@
                                             aria-labelledby="headingMapLayers"
                                             data-bs-parent="#configOtherSettingsAccordion">
                                             <div class="accordion-body">
+
+                                                <h6 class="fw-semibold mb-2">
+                                                    <i class="fa fa-sliders me-1"></i>Display Settings
+                                                </h6>
                                                 <div class="row g-3">
 
                                                     <!-- Clustering options -->
                                                     <div class="col-md-6">
                                                         <fieldset>
                                                             <legend class="form-label fw-semibold mb-2">
-                                                                <i class="fa fa-layer-group me-1"></i>Marker Clustering
+                                                                <i class="fa fa-layer-group me-1"></i>Incident Marker Clustering
                                                             </legend>
 
                                                             <div class="form-check form-switch mb-2">
@@ -2766,9 +2770,12 @@
                                                     <div class="col-md-6">
                                                         <fieldset>
                                                             <legend class="form-label fw-semibold mb-2">
-                                                                <i class="fa fa-sort me-1"></i>Map Icon Layer Order
+                                                                <i class="fa fa-sort me-1"></i>Marker Layer Order
                                                                 <small class="text-muted fw-normal">(top → bottom)</small>
                                                             </legend>
+                                                            <div class="form-text mb-3">
+                                                                Controls the draw order of marker layers on the map. Drag and drop to reorder.
+                                                            </div>
                                                             <div class="border rounded p-2">
                                                                 <ul class="list-group"
                                                                     data-bind="foreach: { data: config.paneOrder, as: 'p' }">
@@ -2784,6 +2791,424 @@
                                                     </div>
 
                                                 </div>
+
+                                                <hr class="my-4">
+
+                                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                                    <h6 class="fw-semibold mb-0">
+                                                        <i class="fa fa-users me-1"></i>Collaborative Layers
+                                                    </h6>
+                                                    <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button" title="Refresh layer list"
+                                                        data-bind="click: config.refreshCollabLayers, disable: config.refreshingCollabLayers">
+                                                        <i class="fa fa-sync" data-bind="css: { 'fa-spin': config.refreshingCollabLayers }"></i>
+                                                    </button>
+                                                </div>
+                                                <p class="small text-muted mb-3">
+                                                    Shared marker layers that everyone in your organisation can see and
+                                                    edit together. Create one, or find one below and subscribe to add
+                                                    it to your list. Use the <i class="fas fa-layer-group"></i> Layers
+                                                    button on the map to actually show/hide a layer you've subscribed
+                                                    to — once visible, right-click anywhere on the map to drop a
+                                                    marker on it. Layers unused for 120 days stop appearing in search,
+                                                    but their data isn't deleted.
+                                                </p>
+
+                                                <!-- ko if: !config.showCreateLayerForm() -->
+                                                <button type="button" class="btn btn-sm btn-outline-primary mb-3"
+                                                    data-bind="click: config.toggleCreateLayerForm">
+                                                    <i class="fa fa-plus me-1"></i>New layer
+                                                </button>
+                                                <!-- /ko -->
+                                                <!-- ko if: config.showCreateLayerForm -->
+                                                <div class="collab-create-layer-panel border rounded p-2 mb-3">
+                                                <div class="input-group input-group-sm mb-2">
+                                                    <input type="text" class="form-control" placeholder="New layer name"
+                                                        data-bind="value: config.newLayerName, valueUpdate: 'input',
+                                                            event: { keydown: config.handleNewLayerNameKeydown }">
+                                                </div>
+                                                <!-- Every layer must belong to an HQ, so this stays visible (not
+                                                     tucked into the collapsed options below) -- defaults to the HQ
+                                                     this page was launched for (?hq=), see Config.js's defaultHq. -->
+                                                <div class="collab-moderator-picker mb-2" data-bind="with: config.newLayerHqPicker">
+                                                    <div class="small text-muted mb-1">HQ (required)</div>
+                                                    <!-- ko if: !selected() -->
+                                                    <div class="input-group input-group-sm position-relative">
+                                                        <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
+                                                            value: searchQuery,
+                                                            valueUpdate: 'afterkeydown',
+                                                            hasFocus: hasFocus,
+                                                            event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                                                        <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                                            <!-- ko if: loading -->
+                                                            <li>
+                                                                <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                                                    <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                                                </div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- ko ifnot: loading -->
+                                                            <!-- ko foreach: searchResults -->
+                                                            <li>
+                                                                <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                                                    data-bind="click: $parent.selectFromSearch">
+                                                                    <span class="text-truncate" data-bind="text: name"></span>
+                                                                </div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- ko if: searchResults().length === 0 -->
+                                                            <li>
+                                                                <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- /ko -->
+                                                        </ul>
+                                                    </div>
+                                                    <!-- /ko -->
+                                                    <!-- ko if: selected -->
+                                                    <span class="badge bg-primary-subtle text-primary-emphasis collab-moderator-chip" style="cursor: pointer;"
+                                                        title="Click to change HQ" data-bind="click: clearSelection">
+                                                        <i class="fas fa-building"></i>
+                                                        <span data-bind="text: selected() && selected().name"></span>
+                                                        <button type="button" class="btn-close" title="Change HQ"
+                                                            data-bind="click: clearSelection"></button>
+                                                    </span>
+                                                    <!-- /ko -->
+                                                </div>
+                                                <button type="button" class="btn btn-sm btn-link p-0 mb-2 collab-permissions-toggle"
+                                                    data-bs-toggle="collapse" data-bs-target="#collabNewLayerOptions"
+                                                    aria-expanded="false" aria-controls="collabNewLayerOptions">
+                                                    <i class="fa fa-chevron-right small me-1"></i>Advanced options
+                                                </button>
+                                                <div class="collapse" id="collabNewLayerOptions">
+                                                    <div class="collab-new-layer-options mb-3">
+                                                    <div class="collab-moderator-picker mb-3 w-100" data-bind="with: config.newLayerEventPicker">
+                                                        <div class="small text-muted mb-1">Attach to event (optional)</div>
+                                                        <!-- ko if: !selected() -->
+                                                        <div class="input-group input-group-sm position-relative">
+                                                            <input type="text" class="form-control" placeholder="Search by name or identifier…" autocomplete="off" data-bind="
+                                                                value: searchQuery,
+                                                                valueUpdate: 'afterkeydown',
+                                                                hasFocus: hasFocus,
+                                                                event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                                                            <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                                                <!-- ko if: loading -->
+                                                                <li>
+                                                                    <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                                                        <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                                                    </div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- ko ifnot: loading -->
+                                                                <!-- ko foreach: searchResults -->
+                                                                <li>
+                                                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                                                        data-bind="click: $parent.selectFromSearch">
+                                                                        <span class="text-truncate" data-bind="text: name"></span>
+                                                                        <span class="text-muted small ms-2 text-truncate" data-bind="text: identifier"></span>
+                                                                    </div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- ko if: searchResults().length === 0 -->
+                                                                <li>
+                                                                    <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- /ko -->
+                                                            </ul>
+                                                        </div>
+                                                        <!-- /ko -->
+                                                        <!-- ko if: selected -->
+                                                        <span class="badge bg-info-subtle text-info-emphasis collab-moderator-chip" style="cursor: pointer;"
+                                                            title="Click to change event" data-bind="click: clearSelection">
+                                                            <i class="fas fa-calendar-day"></i>
+                                                            <span data-bind="text: selectedLabel"></span>
+                                                            <button type="button" class="btn-close" title="Remove event"
+                                                                data-bind="click: clearSelection"></button>
+                                                        </span>
+                                                        <!-- /ko -->
+                                                    </div>
+                                                    <div class="small text-muted mb-1 w-100">Marker permissions</div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Everyone can add, edit and delete markers (everyone can also comment, unless restricted below).">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerMarkerMode" id="collabNewLayerMarkerModeAnyone"
+                                                            data-bind="checked: config.newLayerMarkerMode, checkedValue: 'anyone'">
+                                                        <label class="form-check-label small" for="collabNewLayerMarkerModeAnyone">Anyone can add markers</label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Others can view this layer and comment on markers, but only you can add, edit or delete markers.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerMarkerMode" id="collabNewLayerMarkerModeCreator"
+                                                            data-bind="checked: config.newLayerMarkerMode, checkedValue: 'creator'">
+                                                        <label class="form-check-label small" for="collabNewLayerMarkerModeCreator">Only I can add markers</label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Only you and the moderators you choose below can add, edit or delete markers.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerMarkerMode" id="collabNewLayerMarkerModeModerators"
+                                                            data-bind="checked: config.newLayerMarkerMode, checkedValue: 'moderators'">
+                                                        <label class="form-check-label small" for="collabNewLayerMarkerModeModerators">Moderators can add markers</label>
+                                                    </div>
+                                                    <div class="small text-muted mb-1 mt-1 w-100">Delete permissions</div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Any member of your organisation can delete this layer.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerDeleteMode" id="collabNewLayerDeleteModeAnyone"
+                                                            data-bind="checked: config.newLayerDeleteMode, checkedValue: 'anyone'">
+                                                        <label class="form-check-label small" for="collabNewLayerDeleteModeAnyone">Anyone can delete this layer</label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Only you will be able to delete this layer.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerDeleteMode" id="collabNewLayerDeleteModeCreator"
+                                                            data-bind="checked: config.newLayerDeleteMode, checkedValue: 'creator'">
+                                                        <label class="form-check-label small" for="collabNewLayerDeleteModeCreator">Only I can delete this layer</label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Only you and the moderators you choose below can delete this layer.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerDeleteMode" id="collabNewLayerDeleteModeModerators"
+                                                            data-bind="checked: config.newLayerDeleteMode, checkedValue: 'moderators'">
+                                                        <label class="form-check-label small" for="collabNewLayerDeleteModeModerators">Moderators can delete this layer</label>
+                                                    </div>
+                                                    <div class="small text-muted mb-1 mt-1 w-100">Comment permissions</div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Anyone who can see this layer can comment on its markers.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerCommentMode" id="collabNewLayerCommentModeAnyone"
+                                                            data-bind="checked: config.newLayerCommentMode, checkedValue: 'anyone'">
+                                                        <label class="form-check-label small" for="collabNewLayerCommentModeAnyone">Anyone can comment</label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Only you will be able to comment on this layer's markers.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerCommentMode" id="collabNewLayerCommentModeCreator"
+                                                            data-bind="checked: config.newLayerCommentMode, checkedValue: 'creator'">
+                                                        <label class="form-check-label small" for="collabNewLayerCommentModeCreator">Only I can comment</label>
+                                                    </div>
+                                                    <div class="form-check form-check-inline"
+                                                        title="Only you and the moderators you choose below can comment on this layer's markers.">
+                                                        <input class="form-check-input" type="radio" name="collabNewLayerCommentMode" id="collabNewLayerCommentModeModerators"
+                                                            data-bind="checked: config.newLayerCommentMode, checkedValue: 'moderators'">
+                                                        <label class="form-check-label small" for="collabNewLayerCommentModeModerators">Moderators can comment</label>
+                                                    </div>
+
+                                                    <div class="collab-moderator-picker mt-2 w-100"
+                                                        data-bind="visible: config.showNewLayerModeratorPicker, with: config.newLayerModeratorPicker">
+                                                        <div class="small text-muted mb-1">Moderators</div>
+                                                        <div class="input-group input-group-sm position-relative">
+                                                            <input type="text" class="form-control" placeholder="Search by name or member number…" autocomplete="off" data-bind="
+                                                                value: searchQuery,
+                                                                valueUpdate: 'afterkeydown',
+                                                                hasFocus: hasFocus,
+                                                                event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                                                            <button class="btn btn-outline-secondary" type="button" title="Clear"
+                                                                data-bind="click: clearSearch, enable: searchQuery">&times;</button>
+                                                            <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                                                <!-- ko if: loading -->
+                                                                <li>
+                                                                    <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                                                        <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                                                    </div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- ko ifnot: loading -->
+                                                                <!-- ko foreach: searchResults -->
+                                                                <li>
+                                                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                                                        data-bind="click: $parent.addFromSearch">
+                                                                        <span class="text-truncate" data-bind="text: name"></span>
+                                                                        <span class="text-muted small ms-2 text-truncate" data-bind="text: detail"></span>
+                                                                    </div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- ko if: searchResults().length === 0 -->
+                                                                <li>
+                                                                    <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                                                </li>
+                                                                <!-- /ko -->
+                                                                <!-- /ko -->
+                                                            </ul>
+                                                        </div>
+                                                        <div class="collab-moderator-chips mt-1" data-bind="visible: moderators().length > 0, foreach: moderators">
+                                                            <span class="badge bg-secondary collab-moderator-chip">
+                                                                <span data-bind="text: name"></span>
+                                                                <button type="button" class="btn-close btn-close-white" title="Remove"
+                                                                    data-bind="click: $parent.removeModerator"></button>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    </div>
+                                                </div>
+                                                <div class="text-danger small mb-2"
+                                                    data-bind="visible: config.collabLayerError, text: config.collabLayerError"></div>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-sm"
+                                                        data-bind="click: config.createCollabLayer,
+                                                            css: { 'btn-primary': !config.collabLayerCreated(), 'btn-success': config.collabLayerCreated() },
+                                                            enable: config.newLayerName().trim().length > 0 && !!config.newLayerHqPicker.selected() && !config.creatingCollabLayer() && !config.collabLayerCreated()">
+                                                        <!-- ko if: config.collabLayerCreated -->
+                                                        <i class="fa fa-check me-1"></i>Created
+                                                        <!-- /ko -->
+                                                        <!-- ko if: config.creatingCollabLayer -->
+                                                        <i class="fa fa-spinner fa-spin me-1"></i>Creating…
+                                                        <!-- /ko -->
+                                                        <!-- ko if: !config.creatingCollabLayer() && !config.collabLayerCreated() -->
+                                                        <i class="fa fa-plus me-1"></i>Create layer
+                                                        <!-- /ko -->
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                        data-bind="click: config.cancelCreateLayer,
+                                                            enable: !config.creatingCollabLayer() && !config.collabLayerCreated()">
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                                </div>
+                                                <!-- /ko -->
+
+                                                <!-- ko if: !config.showDiscoverForm() -->
+                                                <button type="button" class="btn btn-sm btn-outline-secondary mb-3"
+                                                    data-bind="click: config.toggleDiscoverForm">
+                                                    <i class="fa fa-search me-1"></i>Find a layer
+                                                </button>
+                                                <!-- /ko -->
+                                                <!-- ko if: config.showDiscoverForm -->
+                                                <div class="collab-create-layer-panel border rounded p-2 mb-3">
+                                                <div class="collab-moderator-picker mb-2" data-bind="with: config.discoverHqPicker">
+                                                    <div class="small text-muted mb-1">Search HQ (optional — leave blank to search every HQ)</div>
+                                                    <!-- ko if: !selected() -->
+                                                    <div class="input-group input-group-sm position-relative">
+                                                        <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
+                                                            value: searchQuery,
+                                                            valueUpdate: 'afterkeydown',
+                                                            hasFocus: hasFocus,
+                                                            event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                                                        <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                                            <!-- ko if: loading -->
+                                                            <li>
+                                                                <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                                                    <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                                                </div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- ko ifnot: loading -->
+                                                            <!-- ko foreach: searchResults -->
+                                                            <li>
+                                                                <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                                                    data-bind="click: $parent.selectFromSearch">
+                                                                    <span class="text-truncate" data-bind="text: name"></span>
+                                                                </div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- ko if: searchResults().length === 0 -->
+                                                            <li>
+                                                                <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                                            </li>
+                                                            <!-- /ko -->
+                                                            <!-- /ko -->
+                                                        </ul>
+                                                    </div>
+                                                    <!-- /ko -->
+                                                    <!-- ko if: selected -->
+                                                    <span class="badge bg-primary-subtle text-primary-emphasis collab-moderator-chip" style="cursor: pointer;"
+                                                        title="Click to change HQ" data-bind="click: clearSelection">
+                                                        <i class="fas fa-building"></i>
+                                                        <span data-bind="text: selected() && selected().name"></span>
+                                                        <button type="button" class="btn-close" title="Change HQ"
+                                                            data-bind="click: clearSelection"></button>
+                                                    </span>
+                                                    <!-- /ko -->
+                                                </div>
+                                                <div class="input-group input-group-sm mb-2">
+                                                    <span class="input-group-text"><i class="fa fa-search"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Filter results by name"
+                                                        data-bind="value: config.discoverSearch, valueUpdate: 'input'">
+                                                </div>
+                                                <ul class="list-group" data-bind="foreach: { data: config.discoverRows, as: 'drow' }">
+                                                    <li class="list-group-item py-2 d-flex align-items-center gap-2">
+                                                        <div class="flex-grow-1 collab-layer-row-info">
+                                                            <div class="collab-layer-row-name" data-bind="text: drow.name, attr: { title: drow.name }"></div>
+                                                            <div class="small text-muted" data-bind="visible: drow.hqName">
+                                                                <i class="fas fa-building"></i> <span data-bind="text: drow.hqName"></span>
+                                                            </div>
+                                                            <div class="form-text">
+                                                                <span data-bind="visible: drow.authorName">by <span data-bind="text: drow.authorName"></span> ·</span>
+                                                                <span data-bind="text: drow.markerCount"></span> markers ·
+                                                                used <span data-bind="text: drow.lastUsedLabel"></span>
+                                                                <span class="badge bg-info-subtle text-info-emphasis ms-1"
+                                                                    data-bind="visible: drow.eventName, attr: { title: drow.eventLabel }">
+                                                                    <i class="fas fa-calendar-day"></i> <span data-bind="text: drow.eventLabel"></span>
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                                            data-bind="visible: !drow.alreadySubscribed, click: $root.config.subscribeToDiscoverRow, disable: drow.subscribing">
+                                                            <i class="fa fa-plus me-1"></i>Subscribe
+                                                        </button>
+                                                        <span class="badge bg-success-subtle text-success-emphasis" data-bind="visible: drow.alreadySubscribed">
+                                                            <i class="fa fa-check me-1"></i>Subscribed
+                                                        </span>
+                                                    </li>
+                                                </ul>
+                                                <div class="text-danger small mt-2" data-bind="visible: config.discoverError, text: config.discoverError"></div>
+                                                <div class="form-text mt-2" data-bind="visible: config.discoverEmptyMessage, text: config.discoverEmptyMessage"></div>
+                                                </div>
+                                                <!-- /ko -->
+
+                                                <div class="input-group input-group-sm mb-2"
+                                                    data-bind="visible: config.collabLayers().length > 5">
+                                                    <span class="input-group-text"><i class="fa fa-search"></i></span>
+                                                    <input type="text" class="form-control" placeholder="Filter my layers by name"
+                                                        data-bind="value: config.collabLayerSearch, valueUpdate: 'input'">
+                                                </div>
+
+                                                <div class="collab-layer-list-scroll">
+                                                    <ul class="list-group" data-bind="foreach: { data: config.filteredCollabLayerRows, as: 'row' }">
+                                                        <li class="list-group-item py-2">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <div class="flex-grow-1 collab-layer-row-info">
+                                                                <div class="collab-layer-row-name" data-bind="text: row.name, attr: { title: row.name }"></div>
+                                                                <div class="small text-muted" data-bind="visible: row.hqName">
+                                                                    <i class="fas fa-building"></i> <span data-bind="text: row.hqName"></span>
+                                                                </div>
+                                                                <div class="form-text">
+                                                                    <span data-bind="visible: row.authorName">by <span data-bind="text: row.authorName"></span> ·</span>
+                                                                    <span data-bind="text: row.markerCount"></span> markers ·
+                                                                    used <span data-bind="text: row.lastUsedLabel"></span>
+                                                                    <i class="fas fa-lock ms-1" data-bind="visible: row.markerRestricted, attr: { title: row.markerModeTitle }"></i>
+                                                                    <i class="fas fa-comment-slash ms-1" data-bind="visible: row.commentRestricted, attr: { title: row.commentModeTitle }"></i>
+                                                                    <span class="badge bg-secondary-subtle text-secondary-emphasis ms-1"
+                                                                        data-bind="visible: row.moderatorCount > 0, text: row.moderatorCountLabel, attr: { title: row.moderatorNamesLabel }"></span>
+                                                                    <span class="badge bg-info-subtle text-info-emphasis ms-1"
+                                                                        data-bind="visible: row.eventName, attr: { title: row.eventLabel }">
+                                                                        <i class="fas fa-calendar-day"></i> <span data-bind="text: row.eventLabel"></span>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" title="Unsubscribe -- removes it from your list, doesn't affect anyone else"
+                                                                data-bind="visible: !row.confirmingDelete(), click: row.unsubscribe">
+                                                                <i class="fa fa-bookmark me-1"></i>Unsubscribe
+                                                            </button>
+                                                            <!-- Deliberately small/muted (not bordered buttons like
+                                                                 Unsubscribe above) so these administrative/destructive
+                                                                 actions read as secondary and don't get confused with
+                                                                 the primary Unsubscribe action. -->
+                                                            <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1" title="Manage permissions, HQ, event and moderators"
+                                                                data-bind="visible: row.canManagePermissions && !row.confirmingDelete(), click: row.openPermissionsModal">
+                                                                <i class="fa fa-pencil-alt"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-link text-muted py-0 px-1"
+                                                                data-bind="visible: !row.confirmingDelete(), click: row.requestDeleteLayer, disable: !row.canDelete, attr: { title: row.deleteTitle }">
+                                                                <i class="fa fa-trash"></i>
+                                                            </button>
+                                                            <span class="collab-layer-delete-confirm" data-bind="visible: row.confirmingDelete">
+                                                                <button type="button" class="btn btn-sm btn-danger"
+                                                                    data-bind="click: row.confirmDeleteLayer,
+                                                                        disable: $root.config.deletingCollabLayerId() === row.layer.id">Delete</button>
+                                                                <button type="button" class="btn btn-sm btn-secondary"
+                                                                    data-bind="click: row.cancelDeleteLayer">Cancel</button>
+                                                            </span>
+                                                        </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                                <div class="form-text mt-2" data-bind="visible: config.noLayersMessage, text: config.noLayersMessage">
+                                                </div>
+                                                <div class="form-text mt-2" data-bind="visible: config.noSearchMatchMessage, text: config.noSearchMatchMessage">
+                                                </div>
+
                                             </div>
                                         </div>
                                     </div>
@@ -3032,6 +3457,218 @@
         </div>
     </div>
 
+
+    <!-- Collaborative layer permissions modal -- a standalone modal (rather
+         than an inline expanding panel within the layer row) so editing a
+         layer's permissions doesn't nest one scroll area inside another
+         (the row list's own .collab-layer-list-scroll). Bound to
+         config.permissionsModalRow, which Config.js sets to the row being
+         edited right before showing this modal, and clears back to null on
+         'hidden.bs.modal' (see openPermissionsModal) so state doesn't leak
+         into the next layer opened. -->
+    <div class="modal fade" id="collabPermissionsModal" tabindex="-1" aria-labelledby="collabPermissionsModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content" data-bind="with: config.permissionsModalRow">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="collabPermissionsModalLabel">
+                        Layer settings — <span data-bind="text: name"></span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="collab-moderator-picker mb-2" data-bind="with: hqEditPicker">
+                        <div class="small text-muted mb-1">HQ (required)</div>
+                        <!-- ko if: !selected() -->
+                        <div class="input-group input-group-sm position-relative">
+                            <input type="text" class="form-control" placeholder="Search by name…" autocomplete="off" data-bind="
+                                value: searchQuery,
+                                valueUpdate: 'afterkeydown',
+                                hasFocus: hasFocus,
+                                event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                            <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                <!-- ko if: loading -->
+                                <li>
+                                    <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                        <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko ifnot: loading -->
+                                <!-- ko foreach: searchResults -->
+                                <li>
+                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                        data-bind="click: $parent.selectFromSearch">
+                                        <span class="text-truncate" data-bind="text: name"></span>
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 -->
+                                <li>
+                                    <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                        <!-- /ko -->
+                        <!-- ko if: selected -->
+                        <span class="badge bg-primary-subtle text-primary-emphasis collab-moderator-chip" style="cursor: pointer;"
+                            title="Click to change HQ" data-bind="click: clearSelection">
+                            <i class="fas fa-building"></i>
+                            <span data-bind="text: selected() && selected().name"></span>
+                            <button type="button" class="btn-close" title="Change HQ"
+                                data-bind="click: clearSelection"></button>
+                        </span>
+                        <!-- /ko -->
+                    </div>
+                    <div class="collab-moderator-picker mb-3 w-100" data-bind="with: eventEditPicker">
+                        <div class="small text-muted mb-1">Attach to event (optional)</div>
+                        <!-- ko if: !selected() -->
+                        <div class="input-group input-group-sm position-relative">
+                            <input type="text" class="form-control" placeholder="Search by name or identifier…" autocomplete="off" data-bind="
+                                value: searchQuery,
+                                valueUpdate: 'afterkeydown',
+                                hasFocus: hasFocus,
+                                event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                            <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                <!-- ko if: loading -->
+                                <li>
+                                    <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                        <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko ifnot: loading -->
+                                <!-- ko foreach: searchResults -->
+                                <li>
+                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                        data-bind="click: $parent.selectFromSearch">
+                                        <span class="text-truncate" data-bind="text: name"></span>
+                                        <span class="text-muted small ms-2 text-truncate" data-bind="text: identifier"></span>
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 -->
+                                <li>
+                                    <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                        <!-- /ko -->
+                        <!-- ko if: selected -->
+                        <span class="badge bg-info-subtle text-info-emphasis collab-moderator-chip" style="cursor: pointer;"
+                            title="Click to change event" data-bind="click: clearSelection">
+                            <i class="fas fa-calendar-day"></i>
+                            <span data-bind="text: selectedLabel"></span>
+                            <button type="button" class="btn-close" title="Remove event"
+                                data-bind="click: clearSelection"></button>
+                        </span>
+                        <!-- /ko -->
+                    </div>
+                    <div class="collab-moderator-picker mb-3" data-bind="with: moderatorPicker">
+                        <div class="small text-muted mb-1">Moderators</div>
+                        <div class="input-group input-group-sm position-relative">
+                            <input type="text" class="form-control" placeholder="Search by name or member number…" autocomplete="off" data-bind="
+                                value: searchQuery,
+                                valueUpdate: 'afterkeydown',
+                                hasFocus: hasFocus,
+                                event: { blur: closeDropdown, keydown: onSearchKeydown }">
+                            <button class="btn btn-outline-secondary" type="button" title="Clear"
+                                data-bind="click: clearSearch, enable: searchQuery">&times;</button>
+                            <ul class="dropdown-menu w-100 show collab-moderator-dropdown" data-bind="visible: dropdownOpen">
+                                <!-- ko if: loading -->
+                                <li>
+                                    <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2" style="pointer-events:none;">
+                                        <i class="fa fa-spinner fa-spin me-2"></i>Searching…
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko ifnot: loading -->
+                                <!-- ko foreach: searchResults -->
+                                <li>
+                                    <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                        data-bind="click: $parent.addFromSearch">
+                                        <span class="text-truncate" data-bind="text: name"></span>
+                                        <span class="text-muted small ms-2 text-truncate" data-bind="text: detail"></span>
+                                    </div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- ko if: searchResults().length === 0 -->
+                                <li>
+                                    <div class="dropdown-item text-muted text-center py-2" style="pointer-events:none;">No results found.</div>
+                                </li>
+                                <!-- /ko -->
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                        <div class="collab-moderator-chips mt-1" data-bind="visible: moderators().length > 0, foreach: moderators">
+                            <span class="badge bg-secondary collab-moderator-chip">
+                                <span data-bind="text: name"></span>
+                                <button type="button" class="btn-close btn-close-white" title="Remove"
+                                    data-bind="click: $parent.removeModerator"></button>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="small text-muted mb-1 w-100">Marker permissions</div>
+                    <div class="form-check" title="Everyone can add, edit and delete markers (everyone can also comment, unless restricted below).">
+                        <input class="form-check-input" type="radio" name="collabPermMarkerMode" id="collabPermMarkerModeAnyone"
+                            data-bind="checked: editMarkerMode, checkedValue: 'anyone'">
+                        <label class="form-check-label small" for="collabPermMarkerModeAnyone">Anyone can add markers</label>
+                    </div>
+                    <div class="form-check" title="Others can view this layer and comment on markers, but only the creator can add, edit or delete markers.">
+                        <input class="form-check-input" type="radio" name="collabPermMarkerMode" id="collabPermMarkerModeCreator"
+                            data-bind="checked: editMarkerMode, checkedValue: 'creator'">
+                        <label class="form-check-label small" for="collabPermMarkerModeCreator">Only the creator can add markers</label>
+                    </div>
+                    <div class="form-check" title="Only the creator and moderators can add, edit or delete markers.">
+                        <input class="form-check-input" type="radio" name="collabPermMarkerMode" id="collabPermMarkerModeModerators"
+                            data-bind="checked: editMarkerMode, checkedValue: 'moderators'">
+                        <label class="form-check-label small" for="collabPermMarkerModeModerators">Moderators can add markers</label>
+                    </div>
+                    <div class="small text-muted mb-1 mt-3 w-100">Delete permissions</div>
+                    <div class="form-check" title="Any member of your organisation can delete this layer.">
+                        <input class="form-check-input" type="radio" name="collabPermDeleteMode" id="collabPermDeleteModeAnyone"
+                            data-bind="checked: editDeleteMode, checkedValue: 'anyone'">
+                        <label class="form-check-label small" for="collabPermDeleteModeAnyone">Anyone can delete this layer</label>
+                    </div>
+                    <div class="form-check" title="Only the creator can delete this layer.">
+                        <input class="form-check-input" type="radio" name="collabPermDeleteMode" id="collabPermDeleteModeCreator"
+                            data-bind="checked: editDeleteMode, checkedValue: 'creator'">
+                        <label class="form-check-label small" for="collabPermDeleteModeCreator">Only the creator can delete this layer</label>
+                    </div>
+                    <div class="form-check" title="Only the creator and moderators can delete this layer.">
+                        <input class="form-check-input" type="radio" name="collabPermDeleteMode" id="collabPermDeleteModeModerators"
+                            data-bind="checked: editDeleteMode, checkedValue: 'moderators'">
+                        <label class="form-check-label small" for="collabPermDeleteModeModerators">Moderators can delete this layer</label>
+                    </div>
+                    <div class="small text-muted mb-1 mt-3 w-100">Comment permissions</div>
+                    <div class="form-check" title="Anyone who can see this layer can comment on its markers.">
+                        <input class="form-check-input" type="radio" name="collabPermCommentMode" id="collabPermCommentModeAnyone"
+                            data-bind="checked: editCommentMode, checkedValue: 'anyone'">
+                        <label class="form-check-label small" for="collabPermCommentModeAnyone">Anyone can comment</label>
+                    </div>
+                    <div class="form-check" title="Only the creator can comment on this layer's markers.">
+                        <input class="form-check-input" type="radio" name="collabPermCommentMode" id="collabPermCommentModeCreator"
+                            data-bind="checked: editCommentMode, checkedValue: 'creator'">
+                        <label class="form-check-label small" for="collabPermCommentModeCreator">Only the creator can comment</label>
+                    </div>
+                    <div class="form-check" title="Only the creator and moderators can comment on this layer's markers.">
+                        <input class="form-check-input" type="radio" name="collabPermCommentMode" id="collabPermCommentModeModerators"
+                            data-bind="checked: editCommentMode, checkedValue: 'moderators'">
+                        <label class="form-check-label small" for="collabPermCommentModeModerators">Moderators can comment</label>
+                    </div>
+                    <div class="text-danger small mt-2" data-bind="visible: permissionsError, text: permissionsError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary"
+                        data-bind="click: savePermissions, disable: savingPermissions() || !hqEditPicker.selected()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Ops Log Modal -->
     <div class="modal fade" id="opsLogModal" tabindex="-1" aria-labelledby="opsLogModalLabel" aria-hidden="true">
@@ -3375,6 +4012,7 @@
                                         data-bind="click: $parent.addRecipientFromSearch">
                                         <span class="text-truncate"
                                             data-bind="text: name + ' - ' + detail, attr: { title: description }"></span>
+                                        <span class="badge bg-secondary ms-2 text-truncate" data-bind="visible: location, text: location"></span>
                                     </div>
                                 </li>
                             </ul>
@@ -3861,6 +4499,9 @@
     <!-- MAP CONTEXT MENU (floating) -->
     <div id="mapContextMenu" class="dropdown-menu shadow"
         style="position:fixed; display:none; z-index:5000; min-width: 220px;">
+        <button type="button" class="dropdown-item disabled" id="ctxAddCollabMarker" disabled>
+            <i class="fa fa-map-marker-alt me-2"></i>Add marker to collaborative layer
+        </button>
         <button type="button" class="dropdown-item" id="ctxSearchHere">
             <i class="fa fa-search me-2"></i>Address Search
         </button>
