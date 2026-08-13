@@ -25,7 +25,6 @@
 
 import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import crypto from 'crypto';
-import { verifyBeaconToken } from './verifyBeaconToken.mjs';
 
 // ── Config ──────────────────────────────────────────────────────────
 const BUCKET        = process.env.BUCKET_NAME   || 'lighthouse-default-assets';
@@ -98,13 +97,11 @@ export const handler = async (event) => {
         return respond(204, '');
     }
 
-    let claims;
-    try {
-        claims = await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
-    } catch (err) {
-        return respond(401, { error: 'Unauthorized', message: err?.message || String(err) });
-    }
-    console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'default-assets-v2', userId: claims.sub || claims.client_id || 'unknown', method }));
+    // Auth is enforced by the LH-BeaconAuthorizerV2 API Gateway authorizer
+    // before this handler is ever invoked; `sub` is the verified Beacon
+    // member id it passes through.
+    const userId = event.requestContext?.authorizer?.lambda?.sub || 'unknown';
+    console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'default-assets-v2', userId, method }));
 
     try {
         // ---------- GET: Bulk fetch for a list of team IDs ----------
