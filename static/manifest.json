@@ -121,7 +121,8 @@
     {
       "matches": [
         "https://*.ses.nsw.gov.au/Teams/Create",
-        "https://*.ses.nsw.gov.au/Teams/Create/"
+        "https://*.ses.nsw.gov.au/Teams/Create/",
+        "https://*.ses.nsw.gov.au/Teams/Create?*"
       ],
       "js": ["contentscripts/teams/create.js"]
     },
