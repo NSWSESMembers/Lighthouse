@@ -119,16 +119,45 @@ function initGemPopover($gem, options) {
 
   $gem.off('.lighthouseGem');
 
+  var hideTimer = null;
+  function cancelHide() {
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+  }
+  function scheduleHide() {
+    cancelHide();
+    hideTimer = setTimeout(function () {
+      if (!$gem.data('lighthouse-pinned')) {
+        $gem.popover('hide');
+      }
+    }, 200);
+  }
+
   $gem.on('mouseenter.lighthouseGem', function () {
+    cancelHide();
     $gem.popover('show');
   });
-  $gem.on('mouseleave.lighthouseGem', function () {
-    if (!$gem.data('lighthouse-pinned')) {
-      $gem.popover('hide');
+  // The popover panel itself is a separate element appended to <body>, not
+  // a child of the gem - moving the mouse from the gem into the panel is a
+  // real mouseleave on the gem, so without this the popover would vanish
+  // the instant the cursor crosses into it. Track hover on the panel too
+  // (bound once it actually exists, via shown.bs.popover) and use a short
+  // delay before hiding so crossing the gap between the two is forgiving.
+  $gem.on('shown.bs.popover.lighthouseGem', function () {
+    var popoverInstance = $gem.data('bs.popover');
+    var $tip = popoverInstance && (popoverInstance.$tip || (popoverInstance.tip && popoverInstance.tip()));
+    if ($tip && $tip.length) {
+      $tip.off('.lighthouseGem');
+      $tip.on('mouseenter.lighthouseGem', cancelHide);
+      $tip.on('mouseleave.lighthouseGem', scheduleHide);
     }
   });
+  $gem.on('mouseleave.lighthouseGem', scheduleHide);
   $gem.on('click.lighthouseGem', function (e) {
     e.stopPropagation();
+    cancelHide();
     var pinned = !$gem.data('lighthouse-pinned');
     $gem.data('lighthouse-pinned', pinned);
     $gem.popover(pinned ? 'show' : 'hide');
