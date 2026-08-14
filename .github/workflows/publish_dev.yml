@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Install modules
@@ -17,7 +17,7 @@ jobs:
       - name: Build package
         run: npm run dev
       - name: Chrome extension upload action
-        uses: mnao305/chrome-extension-upload@v4.0.1
+        uses: mnao305/chrome-extension-upload@v6.0.0
         with:
           file-path: build/*.zip
           extension-id: ${{ secrets.CHROMESTORE_DEV_ID }}
