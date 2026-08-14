@@ -11,3 +11,4 @@ Lighthouse.zip
 .DS_Store
 *.DS_Store
 package-lock.json
+lambda/myavailability-incident/
