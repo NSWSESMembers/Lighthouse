@@ -81,10 +81,10 @@ function getJobResponseSummary(jobId, cb) {
     cb(null, {
       closed: false,
       categories: {
-        ActivationAccepted: { Count: 1, Names: ['Fake Test Member'] },
-        Available: { Count: 2, Names: ['Fake Test Member', 'Fake Test Member 2'] },
-        Conditional: { Count: 1, Names: ['Fake Test Member'] },
-        Unavailable: { Count: 1, Names: ['Fake Test Member'] },
+        ActivationAccepted: { Count: 1, Names: [{ MemberId: -1, Name: 'Fake Test Member' }] },
+        Available: { Count: 2, Names: [{ MemberId: -2, Name: 'Fake Test Member' }, { MemberId: -3, Name: 'Fake Test Member 2' }] },
+        Conditional: { Count: 1, Names: [{ MemberId: -4, Name: 'Fake Test Member' }] },
+        Unavailable: { Count: 1, Names: [{ MemberId: -5, Name: 'Fake Test Member' }] },
         Unset: { Count: 5, Names: [] },
       },
     });
@@ -108,22 +108,77 @@ function getJobResponseSummary(jobId, cb) {
   });
 }
 
-// Bootstrap's hover-trigger popover only reacts to the *next* mouseenter -
-// if the popover is initialized while the cursor is already sitting over
-// the element (very likely here, since this runs right as the async data
-// load finishes and someone's been hovering to see what loads), nothing
-// shows until they move away and back. Show it immediately in that case.
+// Shows on hover (as a preview) and pins open on click so it stays visible
+// after the mouse leaves - click again, or click anywhere outside the gem
+// and its popover, to unpin/close it. Uses a manual trigger and drives
+// show/hide ourselves so click-to-pin and hover-preview don't fight each
+// other the way combining Bootstrap's built-in "hover click" triggers does.
 function initGemPopover($gem, options) {
-  $gem.popover(options);
+  $gem.data('lighthouse-pinned', false);
+  $gem.popover(_.extend({}, options, { trigger: 'manual' }));
+
+  $gem.off('.lighthouseGem');
+
+  $gem.on('mouseenter.lighthouseGem', function () {
+    $gem.popover('show');
+  });
+  $gem.on('mouseleave.lighthouseGem', function () {
+    if (!$gem.data('lighthouse-pinned')) {
+      $gem.popover('hide');
+    }
+  });
+  $gem.on('click.lighthouseGem', function (e) {
+    e.stopPropagation();
+    var pinned = !$gem.data('lighthouse-pinned');
+    $gem.data('lighthouse-pinned', pinned);
+    $gem.popover(pinned ? 'show' : 'hide');
+  });
+
+  // Popovers initialized while the cursor is already sitting over the gem
+  // (very likely right as the async data load finishes) miss the next
+  // mouseenter - show immediately in that case.
   if ($gem.is(':hover')) {
     $gem.popover('show');
   }
 }
 
+// Click anywhere outside a pinned gem/popover unpins and closes it.
+$(document).off('click.lighthouseGemsDismiss').on('click.lighthouseGemsDismiss', function (e) {
+  var $target = $(e.target);
+  if ($target.closest('.lighthouse-response-gem').length || $target.closest('.popover').length) {
+    return;
+  }
+  $('.lighthouse-response-gem').each(function () {
+    var $g = $(this);
+    if ($g.data('lighthouse-pinned')) {
+      $g.data('lighthouse-pinned', false);
+      $g.popover('hide');
+    }
+  });
+});
+
+// Delegated (popover content is only in the DOM while shown, so this can't
+// bind directly): opens /Teams/Create with the accepted members' ids, the
+// same lhquickrecipient-style pattern used for the SMS "message a team"
+// button above - teams/create.js's inject script picks the params back up.
+// Also passes the incident's own HQ (entityAssignedTo) so the new team
+// gets assigned to the HQ that owns the incident, not whatever HQ the
+// person creating the team happens to be logged in under.
+$(document).off('click.lighthouseCreateTeam').on('click.lighthouseCreateTeam', '.lighthouse-create-team-btn', function (e) {
+  e.stopPropagation();
+  var memberIds = $(this).data('member-ids');
+  var entityId = masterViewModel.entityAssignedTo.peek() ? masterViewModel.entityAssignedTo.peek().Id : null;
+  window.open(
+    '/Teams/Create?lhmembers=' + escape(JSON.stringify(memberIds)) + '&lhentityid=' + escape(entityId),
+    '_blank',
+  );
+});
+
 // Fills in the response-count gems (below the Incident Details header,
 // built by contentscripts/jobs/view.js) and wires up hover popovers
 // listing the names of the people in each category. Once the activation
-// is closed, gems show `-` instead of a count and skip the name list.
+// is closed, real counts/names still show - a lock icon on the row and a
+// note in each popover just indicate the activation is closed.
 function lighthouseResponseGems() {
   var gemSelectorsByCategory = {
     ActivationAccepted: '#lighthouse-gem-activationaccepted',
@@ -133,11 +188,18 @@ function lighthouseResponseGems() {
     Unset: '#lighthouse-gem-unset',
   };
 
-  $('#lighthouse-response-gems').addClass('is-loading');
+  var $gemsRow = $('#lighthouse-response-gems');
+  $gemsRow.addClass('is-loading');
 
   getJobResponseSummary(jobId, function (err, summary) {
-    $('#lighthouse-response-gems').removeClass('is-loading');
+    $gemsRow.removeClass('is-loading');
     if (err || !summary) return;
+
+    var isClosed = !!summary.closed;
+    $gemsRow.toggleClass('is-closed', isClosed);
+    if (isClosed && $gemsRow.find('.lighthouse-response-gems-closed-icon').length === 0) {
+      $gemsRow.prepend('<em class="fa fa-lock lighthouse-response-gems-closed-icon" title="Activation closed"></em>');
+    }
 
     _.each(gemSelectorsByCategory, function (selector, category) {
       var $gem = $(selector);
@@ -147,25 +209,14 @@ function lighthouseResponseGems() {
         category.replace(/([a-z])([A-Z])/g, '$1 $2');
       var data = (summary.categories && summary.categories[category]) || { Count: 0, Names: [] };
 
-      if (data.Count === null) {
-        $gem.text('-');
-        initGemPopover($gem, {
-          placement: 'bottom',
-          trigger: 'hover',
-          html: true,
-          title: title,
-          content: '<em>Activation closed</em>',
-          container: 'body',
-        });
-        return;
-      }
-
       $gem.text(data.Count);
 
       var MAX_NAMES_SHOWN = 20;
       var namesHtml = data.Names && data.Names.length
-        ? '<ul class="lighthouse-response-gem-names">' + _.map(data.Names.slice(0, MAX_NAMES_SHOWN), function (name) {
-            return '<li>' + _.escape(name) + '</li>';
+        ? '<ul class="lighthouse-response-gem-names">' + _.map(data.Names.slice(0, MAX_NAMES_SHOWN), function (person) {
+            // MemberId travels with each entry for future use (e.g. linking
+            // to a profile) but is deliberately not rendered here.
+            return '<li data-member-id="' + _.escape(person.MemberId) + '">' + _.escape(person.Name) + '</li>';
           }).join('') +
           (data.Names.length > MAX_NAMES_SHOWN
             ? '<li><em>+' + (data.Names.length - MAX_NAMES_SHOWN) + ' more</em></li>'
@@ -173,12 +224,26 @@ function lighthouseResponseGems() {
           '</ul>'
         : '<em>No responders</em>';
 
+      var closedNote = isClosed ? '<div class="lighthouse-response-gem-closed-note"><em>Activation closed</em></div>' : '';
+
+      // Quick path from "who's accepted" straight into a new team - only
+      // makes sense for the ActivationAccepted gem, only when there's
+      // someone to add, and only for users who could actually create a
+      // team in the first place.
+      var createTeamButtonHtml = '';
+      if (category === 'ActivationAccepted' && data.Names && data.Names.length && user.isInRole(Enum.Role.TeamManagement.Id)) {
+        var memberIds = _.map(data.Names, function (person) { return person.MemberId; });
+        createTeamButtonHtml = '<div class="lighthouse-create-team-btn-wrap">' +
+          '<button type="button" class="btn btn-xs btn-primary lighthouse-create-team-btn" data-member-ids="' +
+          _.escape(JSON.stringify(memberIds)) + '">Create Team</button></div>';
+      }
+
       initGemPopover($gem, {
         placement: 'bottom',
         trigger: 'hover',
         html: true,
         title: title,
-        content: namesHtml,
+        content: closedNote + namesHtml + createTeamButtonHtml,
         container: 'body',
       });
     });

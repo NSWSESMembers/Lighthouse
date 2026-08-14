@@ -162,11 +162,11 @@
   cursor: default;
 }
 
-.lighthouse-response-gem:first-child {
+.lighthouse-response-gem:first-of-type {
   border-radius: 4px 0 0 4px;
 }
 
-.lighthouse-response-gem:last-child {
+.lighthouse-response-gem:last-of-type {
   border-radius: 0 4px 4px 0;
 }
 
@@ -181,6 +181,16 @@
   50% {
     opacity: 0.35;
   }
+}
+
+.lighthouse-response-gems-closed-icon {
+  color: #555555;
+  font-size: 12px;
+  margin-right: 6px;
+}
+
+.lighthouse-response-gem-closed-note {
+  margin-bottom: 4px;
 }
 
 .lighthouse-response-gem-activationaccepted {
@@ -206,4 +216,11 @@
 .lighthouse-response-gem-names {
   margin: 0;
   padding-left: 18px;
+}
+
+.lighthouse-create-team-btn-wrap {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e5e5e5;
+  text-align: right;
 }
