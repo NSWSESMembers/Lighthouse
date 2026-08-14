@@ -391,6 +391,22 @@ let job_lighthouse_actions = (
   </div>
 )
 
+// Row of response-count "gems" shown below the Incident Details header.
+// Counts and hover names are populated by lighthouseResponseGems() in
+// injectscripts/jobs/view.js once the (not yet written) lad_v2/job-responses
+// Lambda function is available - see the TODO there for placeholder data.
+let job_response_gems = (
+  <div id="lighthouse-response-gems" class="lighthouse-response-gems">
+    <span id="lighthouse-gem-activationaccepted" class="lighthouse-response-gem lighthouse-response-gem-activationaccepted">-</span>
+    <span id="lighthouse-gem-available" class="lighthouse-response-gem lighthouse-response-gem-available">-</span>
+    <span id="lighthouse-gem-conditional" class="lighthouse-response-gem lighthouse-response-gem-conditional">-</span>
+    <span id="lighthouse-gem-unavailable" class="lighthouse-response-gem lighthouse-response-gem-unavailable">-</span>
+    <span id="lighthouse-gem-unset" class="lighthouse-response-gem lighthouse-response-gem-unset">-</span>
+  </div>
+);
+
+$('#jobID').closest('.widget-header').append(job_response_gems);
+
 $('div.widget.actions-box').after(job_lighthouse_actions)
 $('#map').parent().before(job_nearest_asset_widget)
 

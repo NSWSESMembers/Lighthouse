@@ -61,6 +61,134 @@ masterViewModel.teamsViewModel.taskedTeams.subscribe(function () {
   setTimeout(lighthouseTasking, 0);
 });
 
+// The myavailability/incident Lambda only has data for production Beacon
+// (apibeacon.ses.nsw.gov.au) - trainbeacon/devbeacon jobIds don't exist in
+// that database. Gate on urls.Base (the API root Beacon's own page is
+// talking to) so we never send a real request outside prod.
+function isProductionBeaconApi() {
+  return typeof urls !== 'undefined' && typeof urls.Base === 'string' &&
+    urls.Base.indexOf('apibeacon.ses.nsw.gov.au') !== -1;
+}
+
+// Assumes Beacon's jobId is the same value as `activationId` in the mams
+// database (View_ActivationRequest) - if gems come back empty/wrong for a
+// job you know has responses, that assumption is the first thing to check.
+function getJobResponseSummary(jobId, cb) {
+  if (!isProductionBeaconApi()) {
+    // Non-prod Beacon (trainbeacon/devbeacon/local) - don't call the real
+    // Lambda, just show obviously-fake placeholder data so the widget is
+    // still visible for UI testing.
+    cb(null, {
+      closed: false,
+      categories: {
+        ActivationAccepted: { Count: 1, Names: ['Fake Test Member'] },
+        Available: { Count: 2, Names: ['Fake Test Member', 'Fake Test Member 2'] },
+        Conditional: { Count: 1, Names: ['Fake Test Member'] },
+        Unavailable: { Count: 1, Names: ['Fake Test Member'] },
+        Unset: { Count: 5, Names: [] },
+      },
+    });
+    return;
+  }
+
+  $.ajax({
+    url: 'https://lambda.lighthouse-extension.com/myavailability/incident',
+    method: 'GET',
+    data: { activationId: jobId },
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+    },
+    dataType: 'json',
+    success: function (data) {
+      cb(null, data);
+    },
+    error: function (xhr, status, error) {
+      cb(error);
+    },
+  });
+}
+
+// Bootstrap's hover-trigger popover only reacts to the *next* mouseenter -
+// if the popover is initialized while the cursor is already sitting over
+// the element (very likely here, since this runs right as the async data
+// load finishes and someone's been hovering to see what loads), nothing
+// shows until they move away and back. Show it immediately in that case.
+function initGemPopover($gem, options) {
+  $gem.popover(options);
+  if ($gem.is(':hover')) {
+    $gem.popover('show');
+  }
+}
+
+// Fills in the response-count gems (below the Incident Details header,
+// built by contentscripts/jobs/view.js) and wires up hover popovers
+// listing the names of the people in each category. Once the activation
+// is closed, gems show `-` instead of a count and skip the name list.
+function lighthouseResponseGems() {
+  var gemSelectorsByCategory = {
+    ActivationAccepted: '#lighthouse-gem-activationaccepted',
+    Available: '#lighthouse-gem-available',
+    Conditional: '#lighthouse-gem-conditional',
+    Unavailable: '#lighthouse-gem-unavailable',
+    Unset: '#lighthouse-gem-unset',
+  };
+
+  $('#lighthouse-response-gems').addClass('is-loading');
+
+  getJobResponseSummary(jobId, function (err, summary) {
+    $('#lighthouse-response-gems').removeClass('is-loading');
+    if (err || !summary) return;
+
+    _.each(gemSelectorsByCategory, function (selector, category) {
+      var $gem = $(selector);
+      if ($gem.length === 0) return;
+
+      var title = '<img src="' + lighthouseUrl + 'icons/lh-black.png" style="width:14px;vertical-align:middle;margin-right:5px" />myAvailability: ' +
+        category.replace(/([a-z])([A-Z])/g, '$1 $2');
+      var data = (summary.categories && summary.categories[category]) || { Count: 0, Names: [] };
+
+      if (data.Count === null) {
+        $gem.text('-');
+        initGemPopover($gem, {
+          placement: 'bottom',
+          trigger: 'hover',
+          html: true,
+          title: title,
+          content: '<em>Activation closed</em>',
+          container: 'body',
+        });
+        return;
+      }
+
+      $gem.text(data.Count);
+
+      var MAX_NAMES_SHOWN = 20;
+      var namesHtml = data.Names && data.Names.length
+        ? '<ul class="lighthouse-response-gem-names">' + _.map(data.Names.slice(0, MAX_NAMES_SHOWN), function (name) {
+            return '<li>' + _.escape(name) + '</li>';
+          }).join('') +
+          (data.Names.length > MAX_NAMES_SHOWN
+            ? '<li><em>+' + (data.Names.length - MAX_NAMES_SHOWN) + ' more</em></li>'
+            : '') +
+          '</ul>'
+        : '<em>No responders</em>';
+
+      initGemPopover($gem, {
+        placement: 'bottom',
+        trigger: 'hover',
+        html: true,
+        title: title,
+        content: namesHtml,
+        container: 'body',
+      });
+    });
+  });
+}
+
+whenJobIsReady(function () {
+  lighthouseResponseGems();
+});
+
 function lighthouseETAFromNow() {
   var future = moment(masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.peek());
   var now = moment();
