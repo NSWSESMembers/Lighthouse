@@ -629,10 +629,10 @@ export const Enum = {
             "GroupId": null,
             "Colour": null
         },
-        "SearchTerrainTaskTypes": {
+        "SearchCategoryTaskTypes": {
             "Id": 50,
-            "Name": "SearchTerrainTaskTypes",
-            "Description": "Tasks - Search Terrain",
+            "Name": "SearchCategoryTaskTypes",
+            "Description": "Tasks - Search Category",
             "ParentId": null,
             "GroupId": null,
             "Colour": null
@@ -822,7 +822,7 @@ IncidentAgenciesInvolvedStatus:
     "RespondedRSQ": {
         "Id": 7,
         "Name": "RespondedRSQ",
-        "Description": "RespondedRSU",
+        "Description": "RespondedRSQ",
         "ParentId": null,
         "GroupId": null,
         "Colour": null

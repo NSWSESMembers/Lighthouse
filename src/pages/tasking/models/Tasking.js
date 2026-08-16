@@ -4,6 +4,7 @@ import moment from "moment";
 import L from "leaflet";
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 import { showAlert } from '../components/windowAlert.js';
+import { Enum } from "../utils/enum.js";
 
 
 
@@ -107,7 +108,15 @@ export function Tasking(data = {}) {
 
     // patch model with partial updates
     self.updateFrom = (patch = {}) => {
-        if (patch.CurrentStatus !== undefined) self.currentStatus(patch.CurrentStatus);
+        if (patch.CurrentStatus !== undefined) {
+            self.currentStatus(patch.CurrentStatus);
+        } else if (patch.CurrentStatusId !== undefined) {
+            // Some pushes (e.g. taskingUpdated) send only the id, not the
+            // status name -- resolve it from the static enum so isTasked()/
+            // isEnroute()/etc (which key off the string) don't go stale.
+            const resolved = Object.values(Enum.JobTeamStatusType).find(s => s.Id === patch.CurrentStatusId);
+            if (resolved) self.currentStatus(resolved.Name);
+        }
         if (patch.CurrentStatusTime !== undefined) self.currentStatusTime(patch.CurrentStatusTime);
         if (patch.CurrentStatusId !== undefined) self.currentStatusId(patch.CurrentStatusId);
         if (patch.EstimatedStatusEndTime !== undefined) self.estimatedStatusEndTime(patch.EstimatedStatusEndTime);

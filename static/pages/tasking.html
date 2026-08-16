@@ -7,6 +7,10 @@
 </head>
 
 <body style="opacity:0; transition: opacity .25s ease;">
+    <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected">
+        <span class="signalr-status-banner__icon">⚠</span>
+        <span data-bind="text: signalrStatusText"></span>
+    </div>
     <div id="alerts-container" class="position-fixed top-0 start-50 translate-middle-x mt-3"
         style="z-index:2000; width:600px; max-width:90%;"></div>
 
@@ -2077,6 +2081,19 @@
                                                     </div>
                                                     <div class="col-sm-6 col-md-3">
                                                         <label class="form-label">
+                                                            <i class="fa fa-bolt me-1"></i>Live Updates
+                                                        </label>
+                                                        <div class="form-check form-switch mt-2">
+                                                            <input class="form-check-input" type="checkbox" id="signalrEnabledToggle"
+                                                                data-bind="checked: config.signalrEnabled">
+                                                            <label class="form-check-label" for="signalrEnabledToggle">
+                                                                Enable SignalR live updates
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-text">Receive instant incident, team and tasking updates. If enabling or disabling, restart LAD after saving.</div>
+                                                    </div>                                                    
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label class="form-label">
                                                             <i class="fa fa-bell me-1"></i>Alerts Panel
                                                         </label>
                                                         <div class="form-check form-switch mt-2">
@@ -2090,16 +2107,16 @@
                                                     </div>
                                                     <div class="col-sm-6 col-md-3">
                                                         <label class="form-label">
-                                                            <i class="fa fa-hashtag me-1"></i>Tasking Count
+                                                            <i class="fa fa-hashtag me-1"></i>Incident Tasking Count
                                                         </label>
                                                         <div class="form-check form-switch mt-2">
                                                             <input class="form-check-input" type="checkbox" id="taskingCountActiveOnlyToggle"
                                                                 data-bind="checked: config.taskingCountActiveOnly">
                                                             <label class="form-check-label" for="taskingCountActiveOnlyToggle">
-                                                                Active taskings only
+                                                                Count Active taskings only
                                                             </label>
                                                         </div>
-                                                        <div class="form-text">Status badge counts only Tasked, Enroute &amp; Onsite taskings (excludes Complete, CalledOff, Untasked).</div>
+                                                        <div class="form-text">Tasking count counts only Tasked, Enroute &amp; Onsite taskings (excludes Complete, CalledOff, Untasked).</div>
                                                     </div>
                                                 </div>
                                             </div>

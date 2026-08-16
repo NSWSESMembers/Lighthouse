@@ -12,6 +12,7 @@ import { jobsToUI } from "../utils/jobTypesToUI.js";
 import { InstantTaskViewModel } from '../viewmodels/InstantTask.js';
 
 import { Enum } from "../utils/enum.js";
+import { getSingleFetchCooldownMs } from "../signalr/pushMode.js";
 
 export function Job(data = {}, deps = {}) {
     const self = this;
@@ -109,6 +110,18 @@ export function Job(data = {}, deps = {}) {
 
     // ---- ICEMS agencies involved ----
     self._icemsAgenciesRaw = ko.observableArray([]);
+
+    // Unlike _findEnumDescription below, returns undefined (not a placeholder)
+    // on no match -- callers use this to decide whether to overwrite an
+    // existing value at all, so a fake "Unknown" entry would be worse than
+    // just leaving the previous value in place.
+    function _resolveEnumById(enumObj, id) {
+        if (id == null) return undefined;
+        for (const key in enumObj) {
+            if (enumObj[key].Id === id) return enumObj[key];
+        }
+        return undefined;
+    }
 
     function _findEnumDescription(enumObj, id) {
         for (const key in enumObj) {
@@ -340,11 +353,12 @@ export function Job(data = {}, deps = {}) {
 
     self.lastDataUpdate = observable(new Date());
     self.lastTaskingDataUpdate = new Date();
+    self.lastIcemsUpdate = 0;
 
-    // Minimum cooldown (ms) between single-job tasking fetches.
-    // Bulk/batch refreshes update lastTaskingDataUpdate directly,
-    // so this gate also prevents a single fetch right after a batch.
-    const SINGLE_FETCH_COOLDOWN_MS = 10_000;
+    // Minimum cooldown (ms) between single-job tasking fetches. Bulk/batch
+    // refreshes update lastTaskingDataUpdate directly, so this gate also
+    // prevents a single fetch right after a batch. Tighter when SignalR
+    // push is disabled -- see pushMode.js.
 
     self.drawJobTargetRing = function () {
         drawJobTargetRing(self);
@@ -421,10 +435,26 @@ export function Job(data = {}, deps = {}) {
         unacceptedNotificationsInterval.stop();
     };
 
-    // ---- ICEMS INCIDENT POLLING (agencies involved) ----
-    self.refreshIcemsIncident = async function () {
+    self.resetUnacceptedNotificationsPolling = function () {
+        unacceptedNotificationsInterval.reset();
+    };
+
+    // ICEMS agency data: refreshed when the job is expanded (toggleAndLoad)
+    // and by push (rsuReceived/iuaReceived/isuReceived in main.js) -- no
+    // periodic poll. Push calls pass force:true (an authoritative "this
+    // changed" signal shouldn't get swallowed by a cooldown); the
+    // expand-triggered call doesn't, so re-expanding right after push
+    // already refreshed it is a no-op.
+    self.refreshIcemsIncident = async function (opts = {}) {
         const icemsId = self.icemsIncidentIdentifier();
         if (!icemsId) return;
+
+        const force = opts.force === true;
+        if (!force && Date.now() - self.lastIcemsUpdate < getSingleFetchCooldownMs()) {
+            console.log("Skipping ICEMS incident fetch for job", self.id(), "due to cooldown");
+            return;
+        }
+        self.lastIcemsUpdate = Date.now();
 
         try {
             const data = await fetchIcemsIncident(icemsId);
@@ -434,19 +464,6 @@ export function Job(data = {}, deps = {}) {
         } catch (err) {
             console.error("Failed to fetch ICEMS incident:", err);
         }
-    };
-
-    const icemsIncidentInterval = makeFilteredInterval(() => {
-        if (!self.icemsIncidentIdentifier()) return;
-        self.refreshIcemsIncident();
-    }, 30000, { runImmediately: true });
-
-    self.startIcemsIncidentPolling = function () {
-        icemsIncidentInterval.start();
-    };
-
-    self.stopIcemsIncidentPolling = function () {
-        icemsIncidentInterval.stop();
     };
 
 
@@ -460,19 +477,6 @@ export function Job(data = {}, deps = {}) {
             self.startUnacceptedNotificationsPolling();
         } else {
             self.stopUnacceptedNotificationsPolling();
-        }
-    });
-
-    // ICEMS agency polling: filtered in + expanded + ICEMS id (new logic)
-    self.shouldPollIcemsIncident = ko.pureComputed(() => {
-        return self.icemsIncidentIdentifier() && self.isFilteredIn() && self.expanded();
-    });
-
-    self.shouldPollIcemsIncident.subscribe((shouldPoll) => {
-        if (shouldPoll) {
-            self.startIcemsIncidentPolling();
-        } else {
-            self.stopIcemsIncidentPolling();
         }
     });
 
@@ -673,8 +677,23 @@ export function Job(data = {}, deps = {}) {
         if (d.ICEMSIncidentIdentifier !== undefined) setIfChanged(this.icemsIncidentIdentifier, d.ICEMSIncidentIdentifier || null);
 
         // structured
-        if (d.JobPriorityType !== undefined) setIfChanged(this.jobPriorityType, d.JobPriorityType || null);
-        if (d.JobStatusType !== undefined) setIfChanged(this.jobStatusType, d.JobStatusType || null);
+        if (d.JobPriorityType !== undefined) {
+            setIfChanged(this.jobPriorityType, d.JobPriorityType || null);
+        } else if (d.JobPriorityTypeId !== undefined) {
+            // Some pushes (e.g. jobUpdated) send only the id, not the full
+            // {Id,Name,Description} object -- resolve it from the static
+            // enum instead of leaving jobPriorityType()/priorityName() stale.
+            const resolved = _resolveEnumById(Enum.JobPriorityType, d.JobPriorityTypeId);
+            if (resolved) setIfChanged(this.jobPriorityType, resolved);
+        }
+
+        if (d.JobStatusType !== undefined) {
+            setIfChanged(this.jobStatusType, d.JobStatusType || null);
+        } else if (d.JobStatusTypeId !== undefined) {
+            const resolved = _resolveEnumById(Enum.JobStatusType, d.JobStatusTypeId);
+            if (resolved) setIfChanged(this.jobStatusType, resolved);
+        }
+
         if (d.JobType !== undefined) setIfChanged(this.jobType, d.JobType || null);
 
         if (d.EntityAssignedTo !== undefined) {
@@ -685,8 +704,17 @@ export function Job(data = {}, deps = {}) {
             setIfChanged(this.entityAssignedTo.latitude, ea?.Latitude ?? null);
             setIfChanged(this.entityAssignedTo.longitude, ea?.Longitude ?? null);
 
-            // Correct handling of ParentEntity
-            if (ea.ParentEntity !== null) {
+            // Correct handling of ParentEntity -- distinguish "absent from
+            // this (possibly partial) payload" from "explicitly null" (REST
+            // responses always include the key; a push-derived Entity like
+            // {Id, Code, Name} may simply not carry it at all).
+            if (ea.ParentEntity === undefined) {
+                // not part of this payload -- leave existing state as-is
+            } else if (ea.ParentEntity === null) {
+                if (this.entityAssignedTo.parentEntity() !== null) {
+                    this.entityAssignedTo.parentEntity(null);
+                }
+            } else {
                 const existingParent = this.entityAssignedTo.parentEntity();
                 if (existingParent) {
                     setIfChanged(existingParent.id, ea.ParentEntity.Id ?? null);
@@ -694,10 +722,6 @@ export function Job(data = {}, deps = {}) {
                     setIfChanged(existingParent.name, ea.ParentEntity.Name ?? "");
                 } else {
                     this.entityAssignedTo.parentEntity(new Entity(ea.ParentEntity));
-                }
-            } else {
-                if (this.entityAssignedTo.parentEntity() !== null) {
-                    this.entityAssignedTo.parentEntity(null);
                 }
             }
         }
@@ -847,10 +871,10 @@ export function Job(data = {}, deps = {}) {
         self.collapse();
     };
 
-    self.refreshDataAndTasking = function () {
-        self.fetchTasking();
-        self.refreshData();
-        self.refreshIcemsIncident();
+    self.refreshDataAndTasking = function (opts = {}) {
+        self.fetchTasking(opts);
+        self.refreshData(opts);
+        self.refreshIcemsIncident(opts);
     }
 
     self.fetchTasking = function (opts = {}) {
@@ -858,7 +882,7 @@ export function Job(data = {}, deps = {}) {
         if (!force) {
             const now = Date.now();
             const last = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
-            if (now - last < SINGLE_FETCH_COOLDOWN_MS) {
+            if (now - last < getSingleFetchCooldownMs()) {
                 console.log("Skipping tasking fetch for job", self.id(), "due to cooldown");
                 return; // recently refreshed (single or batch), skip
             }
@@ -869,7 +893,15 @@ export function Job(data = {}, deps = {}) {
         });
     };
 
-    self.refreshData = async function () {
+    self.refreshData = async function (opts = {}) {
+        const force = opts.force === true;
+        if (!force && Date.now() - self.lastDataUpdate().getTime() < getSingleFetchCooldownMs()) {
+            // lastDataUpdate is bumped by updateFromJson regardless of source
+            // (push or fetch), so this also skips a redundant expand/popup-
+            // open refetch right after a push already delivered fresh data.
+            console.log("Skipping job data fetch for job", self.id(), "due to cooldown");
+            return;
+        }
         self.dataLoading(true);
         fetchUnresolvedActionsLog(self);
         fetchJobById(self.id(), () => {
@@ -907,7 +939,19 @@ export function Job(data = {}, deps = {}) {
             }
         };
 
-        return { start, stop };
+        // Re-arms the interval for another full intervalMs from now, without
+        // firing immediately (unlike start()) -- for when something else
+        // (e.g. a push) already just did what this timer would have done,
+        // so the next scheduled tick shouldn't land moments later. Only has
+        // an effect if already polling; never starts a new poll.
+        const reset = () => {
+            if (!handle) return;
+            if (!self.isFilteredIn()) return;
+            clearInterval(handle);
+            handle = setInterval(tick, intervalMs);
+        };
+
+        return { start, stop, reset };
     }
 
 }

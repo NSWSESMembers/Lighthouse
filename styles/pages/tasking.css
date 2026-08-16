@@ -3421,3 +3421,36 @@ input[type="search"]:focus {
 .dark-mode .job-search-suggestions li.active {
   background: #3a3a3a;
 }
+
+/* SignalR connection status banner -- deliberately loud, since the whole
+   page's live data depends on this connection and a silent drop would just
+   look like nothing is happening. */
+.signalr-status-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 8px 12px;
+  background: #c0392b;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  animation: signalr-status-banner-pulse 1.6s ease-in-out infinite;
+}
+
+.signalr-status-banner__icon {
+  font-size: 16px;
+}
+
+@keyframes signalr-status-banner-pulse {
+  0%, 100% { background: #c0392b; }
+  50% { background: #e74c3c; }
+}

@@ -3,6 +3,9 @@ global.jQuery = $;
 
 import BeaconClient from '../../shared/BeaconClient.js';
 const BeaconToken = require('../lib/shared_token_code.js');
+import { startBeaconSignalRConnection, connectionStatus, getConnectionStatus } from './signalr/connection.js';
+import { setPushModeEnabled } from './signalr/pushMode.js';
+import { getSubject } from './signalr/subjects.js';
 
 require('../lib/shared_chrome_code.js'); // side-effect
 
@@ -919,12 +922,11 @@ function VM() {
 
     // --- End autosuggest ---
 
-    self.filteredJobsAgainstConfig = ko.pureComputed(() => {
-
+    // Extracted so it can be reused as a single-job admission check (e.g. for
+    // SignalR-pushed jobs) as well as the bulk array filter below.
+    self.jobMatchesConfigFilters = function (jb) {
         const hqIds = new Set((self.config.incidentFilters() || []).map(f => String(f.id)));
         const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
-
-        // If sector filtering is active, only include jobs in those sectors
 
         const allowedStatus = self.config.jobStatusFilter(); // allow-list
         const allowedStatusSet = new Set(allowedStatus || []);
@@ -945,49 +947,48 @@ function VM() {
 
         end.setDate(end.getDate() + self.config.fetchForward());
 
+        const statusName = jb.statusName();
+        const jobHqId = String(jb.entityAssignedTo.id());
+        const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
 
+        // Sector filtering — only when scope includes incidents
+        if (self.config.applySectorsToIncidents() && sectorIds.size > 0) {
+            const sectorId = String(jb.sector().id());
+            const sectorMatch = sectorIds.has(sectorId);
 
-
-        return ko.utils.arrayFilter(this.jobs(), jb => {
-            const statusName = jb.statusName();
-            const jobHqId = String(jb.entityAssignedTo.id());
-            const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
-
-            // Sector filtering — only when scope includes incidents
-            if (self.config.applySectorsToIncidents() && sectorIds.size > 0) {
-                const sectorId = String(jb.sector().id());
-                const sectorMatch = sectorIds.has(sectorId);
-
-                //if no sector and config says to exclude, filter out
-                if (!jb.sector().id() && self.config.includeIncidentsWithoutSector() === false) {
-                    return false;
-                }
-
-                if (jb.sector().id() && !sectorMatch) return false;
-            }
-
-            // If allow-list non-empty, only show jobs whose status is in it
-            if (allowedStatusSet.size > 0 && !allowedStatusSet.has(statusName)) {
+            //if no sector and config says to exclude, filter out
+            if (!jb.sector().id() && self.config.includeIncidentsWithoutSector() === false) {
                 return false;
             }
 
-            // If incident type filter non-empty, only show jobs whose type is in it
-            if (incidentTypeSet.size > 0 && !incidentTypeSet.has(String(jb.typeId()))) {
-                return false;
-            }
+            if (jb.sector().id() && !sectorMatch) return false;
+        }
 
-            //date matching
-            const jobDate = new Date(jb.jobReceived());
+        // If allow-list non-empty, only show jobs whose status is in it
+        if (allowedStatusSet.size > 0 && !allowedStatusSet.has(statusName)) {
+            return false;
+        }
 
-            if (jobDate < start || jobDate > end) {
-                return false;
-            }
+        // If incident type filter non-empty, only show jobs whose type is in it
+        if (incidentTypeSet.size > 0 && !incidentTypeSet.has(String(jb.typeId()))) {
+            return false;
+        }
 
-            //must match HQ filter
-            if (!hqMatch) return false;
+        //date matching
+        const jobDate = new Date(jb.jobReceived());
 
-            return true;
-        });
+        if (jobDate < start || jobDate > end) {
+            return false;
+        }
+
+        //must match HQ filter
+        if (!hqMatch) return false;
+
+        return true;
+    };
+
+    self.filteredJobsAgainstConfig = ko.pureComputed(() => {
+        return ko.utils.arrayFilter(this.jobs(), jb => self.jobMatchesConfigFilters(jb));
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 50, method: 'notifyWhenChangesStop' } });
 
     self.filteredJobs = ko.pureComputed(() => {
@@ -1060,9 +1061,9 @@ function VM() {
     self.clearTeamSearch = () => self.teamSearch('');
 
 
-    //just filtered against config not against UI searching
-    self.filteredTeamsAgainstConfig = ko.pureComputed(() => {
-
+    // Extracted so it can be reused as a single-team admission check (e.g. for
+    // SignalR-pushed teams) as well as the bulk array filter below.
+    self.teamMatchesConfigFilters = function (tm) {
         const allowed = self.config.teamStatusFilter(); // allow-list
         const allowedSet = new Set(allowed || []);
         const hqFilterIds = new Set((self.config.teamFilters() || []).map(f => String(f.id)));
@@ -1079,47 +1080,48 @@ function VM() {
 
         end.setDate(end.getDate() + self.config.fetchForward());
 
+        const status = tm.teamStatusType()?.Name;
+        const teamHqId = String(tm.assignedTo().id());
+        const hqMatch = hqFilterIds.size === 0 || hqFilterIds.has(teamHqId);
+        if (status == null) {
+            return false;
+        }
 
+        // If allow-list non-empty, only show teams whose status is in it
+        if (allowedSet.size > 0 && !allowedSet.has(status)) {
+            return false;
+        }
 
-        return ko.utils.arrayFilter(self.teams(), tm => {
-            const status = tm.teamStatusType()?.Name;
-            const teamHqId = String(tm.assignedTo().id());
-            const hqMatch = hqFilterIds.size === 0 || hqFilterIds.has(teamHqId);
-            if (status == null) {
-                return false;
-            }
+        //must match HQ filter
+        if (!hqMatch) {
+            return false;
+        }
 
-            // If allow-list non-empty, only show teams whose status is in it
-            if (allowedSet.size > 0 && !allowedSet.has(status)) {
-                return false;
-            }
+        // Sector filtering — only when scope includes teams
+        if (applySectorsToTeams && sectorIds.size > 0) {
+            const teamSectorId = String(tm.sector()?.id?.() || '');
+            if (teamSectorId && !sectorIds.has(teamSectorId)) return false;
+            if (!teamSectorId && self.config.includeIncidentsWithoutSector() === false) return false;
+        }
 
-            //must match HQ filter
-            if (!hqMatch) {
-                return false;
-            }
+        const statusDate = tm.statusDate();
+        if (statusDate < start || statusDate > end) {
+            return false;
+        }
 
-            // Sector filtering — only when scope includes teams
-            if (applySectorsToTeams && sectorIds.size > 0) {
-                const teamSectorId = String(tm.sector()?.id?.() || '');
-                if (teamSectorId && !sectorIds.has(teamSectorId)) return false;
-                if (!teamSectorId && self.config.includeIncidentsWithoutSector() === false) return false;
-            }
+        return true;
+    };
 
-            const statusDate = tm.statusDate();
-            if (statusDate < start || statusDate > end) {
-                return false;
-            }
-
-            return true;
-        });
+    //just filtered against config not against UI searching
+    self.filteredTeamsAgainstConfig = ko.pureComputed(() => {
+        return ko.utils.arrayFilter(self.teams(), tm => self.teamMatchesConfigFilters(tm));
     }).extend({ trackArrayChanges: true, rateLimit: 50 });
 
     self.filteredTeams = ko.pureComputed(() => {
         const pinnedOnlyTeams = self.showPinnedTeamsOnly();
         const pinnedTeamIds = (self.config && self.config.pinnedTeamIds) ? self.config.pinnedTeamIds() : [];
         const pinnedTeamSet = new Set((pinnedTeamIds || []).map(id => String(id)));
-        console.log("Filtering teams... pinnedOnly:", pinnedOnlyTeams, "pinnedTeamIds:", pinnedTeamIds, "filteredTeamsAgainstConfig count:", self.filteredTeamsAgainstConfig().length);
+        console.log("Filtering teams... filteredTeamsAgainstConfig count:", self.filteredTeamsAgainstConfig().length);
         return ko.utils.arrayFilter(self.filteredTeamsAgainstConfig(), tm => {
 
             // pinned-only filter
@@ -1454,6 +1456,15 @@ function VM() {
     };
 
     self.config = new ConfigVM(self, configDeps);
+
+    // Set as soon as config has loaded from storage, before any Job/Team
+    // gets constructed, so the single-fetch cooldown (Job.js/Team.js) is
+    // correct from the very first fetch. Kept reactive to the toggle too --
+    // cheap to do even though the SignalR connection itself only starts/
+    // stops based on this value at page load (see startBeaconSignalRConnection
+    // below), not fully live mid-session.
+    setPushModeEnabled(self.config.signalrEnabled());
+    self.config.signalrEnabled.subscribe((enabled) => setPushModeEnabled(enabled));
 
     self.sectorSelectorClick = function (sectorVm, event) {
         // Find the KO context for the clicked element
@@ -2023,11 +2034,11 @@ function VM() {
     };
 
     // Tasking registry/upsert (NEW magical 2.0 way of doing it)
-    self.upsertTaskingFromPayload = function (taskingJson, { teamContext = null } = {}) {
+    self.upsertTaskingFromPayload = function (taskingJson, { teamContext = null, jobContext = null } = {}) {
         if (!taskingJson || taskingJson.Id == null) return null;
 
         // Resolve shared refs
-        const jobRef = self.getOrCreateJob(taskingJson.Job);
+        const jobRef = jobContext || self.getOrCreateJob(taskingJson.Job);
 
         //flag the team creation/update as from tasking so its not updated with stale data
         //otherwise we might overwrite an active team with old stuff
@@ -2809,11 +2820,20 @@ function VM() {
         }
     };
 
+    // refreshInterval's default (180s) assumes SignalR push is covering
+    // freshness in between polls. With push disabled there's nothing else
+    // keeping data current, so fall back to the old 60s cadence regardless
+    // of what refreshInterval is set to.
+    function effectiveRefreshIntervalMs() {
+        if (self.config.signalrEnabled() === false) return 60_000;
+        return Number(self.config.refreshInterval() || 60) * 1000;
+    }
+
     let batchTaskingTimer = null;
 
     function startBatchTaskingTimer() {
         if (batchTaskingTimer) clearInterval(batchTaskingTimer);
-        const interval = Number(self.config.refreshInterval() || 60) * 1000;
+        const interval = effectiveRefreshIntervalMs();
         batchTaskingTimer = setInterval(() => {
             self.fetchBatchJobTasking();
         }, interval);
@@ -2909,6 +2929,13 @@ function VM() {
 
         myViewModel.jobsLoading(true);
 
+        // A push can land for one of these jobs while this request is in
+        // flight -- its data would already be fresher than what this
+        // response carries, so anything updated after this point gets
+        // skipped in the per-page merge below rather than clobbered back to
+        // this request's (now stale) snapshot.
+        const pollStartTime = Date.now();
+
         const t = await getToken();   // blocks here until token is ready
 
         const paramsArray = [
@@ -2949,6 +2976,11 @@ function VM() {
             //console.log("Progress: " + _val + " / " + _total)
         }, function (jobs) { //call back as they come in per page
             jobs.Results.forEach(function (t) {
+                const existing = myViewModel.jobsById.get(t.Id);
+                if (existing && existing.lastDataUpdate().getTime() > pollStartTime) {
+                    console.log("Skipping poll merge for job", t.Id, "-- fresher push data already applied");
+                    return;
+                }
                 myViewModel.getOrCreateJob(t);
             })
         })
@@ -2968,6 +3000,9 @@ function VM() {
         start.setMinutes(start.getMinutes() + 5); // slight overlap to catch late updates and drift
         end.setDate(end.getDate() + self.config.fetchForward());
         myViewModel.teamsLoading(true);
+        // See fetchAllJobsData -- protects against a push landing on one of
+        // these teams while this request is in flight.
+        const pollStartTime = Date.now();
         const t = await getToken();   // blocks here until token is ready
         BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, t, function (teams) {
             // teams.Results.forEach(function (t) {
@@ -3001,6 +3036,11 @@ function VM() {
             statusFilterToView, //status filter
             function (teams) { //per page
                 teams.Results.forEach(function (t) {
+                    const existing = myViewModel.teamsById.get(t.Id);
+                    if (existing && existing.lastDataUpdate.getTime() > pollStartTime) {
+                        console.log("Skipping poll merge for team", t.Id, "-- fresher push data already applied");
+                        return;
+                    }
                     myViewModel.getOrCreateTeam(t);
                 })
             }
@@ -3027,8 +3067,7 @@ function VM() {
         // clear old timer
         if (jobsTeamsTimer) clearInterval(jobsTeamsTimer);
 
-        // interval in seconds → ms
-        const interval = Number(self.config.refreshInterval() || 60) * 1000;
+        const interval = effectiveRefreshIntervalMs();
 
         jobsTeamsTimer = setInterval(() => {
             self.fetchAllJobsData();
@@ -3043,6 +3082,16 @@ function VM() {
     // re-arm timers when refreshInterval changes
     self.config.refreshInterval.subscribe(() => {
         console.log("refreshInterval changed → restarting timers");
+        startJobsTeamsTimer();
+        startBatchTaskingTimer();
+    });
+
+    // Same for the signalrEnabled toggle -- effectiveRefreshIntervalMs()
+    // depends on it too, and this takes effect immediately even though the
+    // SignalR connection itself only starts/stops based on this value at
+    // page load.
+    self.config.signalrEnabled.subscribe(() => {
+        console.log("signalrEnabled changed → restarting timers");
         startJobsTeamsTimer();
         startBatchTaskingTimer();
     });
@@ -3685,6 +3734,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     //get tokens
+    let signalrStarted = false;
     BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(
         apiHost,
         params.source,
@@ -3692,6 +3742,23 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log("Fetched Beacon token," + rToken);
             setToken(rToken, rExp);
             myViewModel?.tokenLoading(false);
+
+            if (!signalrStarted) {
+                signalrStarted = true;
+                if (myViewModel?.config?.signalrEnabled() === false) {
+                    console.log('[SignalR] disabled via config -- not connecting');
+                } else {
+                    const negotiateUrl = params.signalr;
+                    if (!negotiateUrl) {
+                        console.warn('[SignalR] no signalr param on the page URL -- skipping connection');
+                    } else {
+                        // Closure over the module-level `token` var (kept current by
+                        // setToken() on every renewal), so each reconnect/negotiate
+                        // re-authenticates with whatever token is live at that moment.
+                        window.__beaconSignalRConnection = startBeaconSignalRConnection(negotiateUrl, () => token);
+                    }
+                }
+            }
         }
     );
 
@@ -3720,6 +3787,193 @@ document.addEventListener('DOMContentLoaded', function () {
         window.ko = ko;
         ko.options.deferUpdates = true;
         myViewModel = new VM();
+
+        // Connection status, surfaced in the UI as a persistent banner (see
+        // tasking.html) -- SignalR is how the whole page gets live data, so
+        // any state other than 'connected' needs to be very obvious rather
+        // than fail silently.
+        myViewModel.signalrStatus = ko.observable(getConnectionStatus());
+        connectionStatus.subscribe((status) => myViewModel.signalrStatus(status));
+        // Deliberately disabled isn't "disconnected" -- only show the banner
+        // when the feature is meant to be running but isn't.
+        myViewModel.signalrDisconnected = ko.pureComputed(() =>
+            myViewModel.config.signalrEnabled() && myViewModel.signalrStatus() !== 'connected'
+        );
+        myViewModel.signalrStatusText = ko.pureComputed(() => {
+            switch (myViewModel.signalrStatus()) {
+                case 'connecting': return 'Connecting to live updates…';
+                case 'reconnecting': return 'Live updates disconnected — reconnecting…';
+                case 'disconnected': return 'Live updates disconnected — data may be out of date';
+                default: return '';
+            }
+        });
+
+        // Wire pushed SignalR events into the live view model. Polling stays
+        // running in parallel as a safety net -- if a payload shape guess is
+        // wrong or an event is missed, the next poll cycle self-heals it.
+        // jobCreated/jobUpdated aren't scoped by our HQ/status/sector/type/date
+        // filters the way polling's own query is, so a push can arrive for a
+        // job REST would never have fetched. Admit it, then evict it again if
+        // it's genuinely new and doesn't pass the same filter polling applies
+        // server-side -- but never evict a job we already had tracked, since
+        // an in-scope job simply changing to an out-of-filter state should
+        // stay tracked and just flip isFilteredIn (handled reactively).
+        // jobCreated/jobUpdated/jobRejected's actual payload is a Notification
+        // record -- Id is the notification's own id, the job's real id is
+        // JobId -- not a job view-model despite the "vm" parameter name in
+        // Beacon's own source. Remap to the fields Job.js understands before
+        // merging; passing the raw notification straight into getOrCreateJob
+        // would key it on the notification's id instead of the job's,
+        // silently creating a phantom job entry instead of updating the real
+        // one (confirmed live -- this is why status updates weren't landing).
+        const mapJobNotificationToJobJson = (n) => ({
+            Id: n.JobId,
+            Identifier: n.JobIdentifier,
+            ICEMSIncidentIdentifier: n.ICEMSIncidentIdentifier,
+            JobPriorityTypeId: n.JobPriorityTypeId,
+            JobStatusTypeId: n.JobStatusTypeId,
+            EntityAssignedTo: n.Entity,
+        });
+
+        const admitJobIfInFilter = (notification) => {
+            const jobJson = mapJobNotificationToJobJson(notification);
+            const alreadyTracked = myViewModel.jobsById.has(jobJson.Id);
+            const job = myViewModel.getOrCreateJob(jobJson);
+            if (!alreadyTracked && !myViewModel.jobMatchesConfigFilters(job)) {
+                myViewModel.jobsById.delete(job.id());
+                myViewModel.jobs.remove(job);
+                return null; // evicted -- out of filter, not tracked
+            }
+            return job;
+        };
+
+        // jobCreated is the one case where a full fetch is worth it: the
+        // notification carries enough (status/priority/entity) to check it
+        // against the current filters without hitting the network, but not
+        // enough to populate a real job (no Address/Sector/Tags/Categories).
+        // So admit-or-evict using just those fields first -- same as
+        // admitJobIfInFilter -- and only pay for a REST round-trip when it's
+        // both genuinely new AND actually in scope.
+        const admitJobCreatedIfInFilter = (notification) => {
+            const jobJson = mapJobNotificationToJobJson(notification);
+            const alreadyTracked = myViewModel.jobsById.has(jobJson.Id);
+            const job = myViewModel.getOrCreateJob(jobJson);
+            if (alreadyTracked) return; // duplicate/late delivery, already handled elsewhere
+
+            if (!myViewModel.jobMatchesConfigFilters(job)) {
+                myViewModel.jobsById.delete(job.id());
+                myViewModel.jobs.remove(job);
+                return;
+            }
+
+            // force: true -- lastDataUpdate was just set moments ago by the
+            // construction we did above, so the cooldown in refreshData()
+            // would otherwise block the very fetch we're deliberately doing
+            // here to backfill what this notification-derived job is missing.
+            job.refreshData({ force: true });
+        };
+
+        getSubject('jobCreated').subscribe(admitJobCreatedIfInFilter);
+        getSubject('jobUpdated').subscribe(admitJobIfInFilter);
+        getSubject('jobRejected').subscribe(admitJobIfInFilter);
+        // Same reasoning as admitJobIfInFilter -- team search is also
+        // HQ/status/sector/date filtered server-side by polling, so a pushed
+        // team could be out of scope. Only evict on first admission, never
+        // once a team's already tracked.
+        const admitTeamIfInFilter = (message) => {
+            const alreadyTracked = myViewModel.teamsById.has(message.Id);
+            const team = myViewModel.getOrCreateTeam(message);
+            if (!team) return;
+            if (!alreadyTracked && !myViewModel.teamMatchesConfigFilters(team)) {
+                myViewModel.teamsById.delete(team.id());
+                myViewModel.teams.remove(team);
+            }
+        };
+        getSubject('teamCreated').subscribe(admitTeamIfInFilter);
+        getSubject('teamUpdated').subscribe(admitTeamIfInFilter);
+        const upsertTaskingFromPush = (message) => {
+            const jobRef = myViewModel.jobsById.get(message.JobId);
+            const teamRef = myViewModel.teamsById.get(message.TeamId);
+
+            if (jobRef && teamRef) {
+                // Both sides are already tracked locally, so the push payload
+                // alone is enough -- upsertTaskingFromPayload patches an
+                // existing tasking (updateFrom, field-by-field) or constructs
+                // and links a new one, using the refs we already have instead
+                // of the nested {Job, Team} objects it normally expects (this
+                // flat payload doesn't carry those). No network round-trip.
+                myViewModel.upsertTaskingFromPayload(message, { jobContext: jobRef, teamContext: teamRef });
+
+                // Tasking status changes (Enroute/Onsite/etc) are closely
+                // tied to the team's own state, but this payload doesn't
+                // carry the team's own fields -- pull a fresh copy of the
+                // whole team. force: true -- SignalR telling us this
+                // specific thing changed is an authoritative signal, not a
+                // generic "might be stale" trigger like an expand-click or
+                // timer, so it shouldn't get swallowed by a cooldown that
+                // happened to be bumped by something unrelated moments ago.
+                teamRef.refreshData({ force: true });
+                return;
+            }
+
+            // Job or team itself isn't tracked locally -- nothing to link
+            // the tasking to, so fall back to their normal refresh path,
+            // forced for the same reason as above.
+            jobRef?.refreshDataAndTasking({ force: true });
+            teamRef?.refreshDataAndTasking({ force: true });
+        };
+
+        getSubject('taskingUpdated').subscribe(upsertTaskingFromPush);
+        // Beacon registers created/updated pairs for jobs and teams, but only
+        // taskingUpdated showed up in the handlers we've seen so far -- if
+        // there's a symmetric taskingCreated we're not aware of yet, this
+        // catches it too rather than silently missing new taskings. Harmless
+        // no-op if that name doesn't exist.
+        getSubject('taskingCreated').subscribe(upsertTaskingFromPush);
+
+        // Refresh the job timeline modal's ops log lane if it's open and
+        // showing the job this entry belongs to. jobTimelineVM.job() holds
+        // whatever job the modal was last opened for, which lingers after
+        // close, so also check the modal is actually visible right now
+        // before treating it as "open for that incident".
+        getSubject('opsLogUpdated').subscribe((message) => {
+            const timelineVm = myViewModel.jobTimelineVM;
+            const openJob = timelineVm?.job();
+            const modalVisible = document.getElementById('jobTimelineModal')?.classList.contains('show');
+            if (openJob && modalVisible && openJob.id() === message.JobId) {
+                timelineVm.refreshCurrentJob({ silent: true });
+            }
+        });
+
+        // ICEMS unaccepted-notifications refresh: refreshUnacceptedNotifications
+        // itself already no-ops for non-ICEMS jobs (guards on
+        // icemsIncidentIdentifier), and a full refetch correctly reflects
+        // either a new IUM arriving or an existing one being acknowledged
+        // (by us or someone else) without needing to distinguish which.
+        const refreshUnacceptedNotificationsFromPush = (message) => {
+            const job = myViewModel.jobsById.get(message.JobId);
+            job?.refreshUnacceptedNotifications();
+            // Push already did what the 30s poll would have -- re-arm it
+            // for another full 30s from now instead of letting it fire
+            // again moments later.
+            job?.resetUnacceptedNotificationsPolling();
+        };
+        getSubject('NotificationAcknowledged').subscribe(refreshUnacceptedNotificationsFromPush);
+        getSubject('IUMReceived').subscribe(refreshUnacceptedNotificationsFromPush);
+        getSubject('UrgentIUMReceived').subscribe(refreshUnacceptedNotificationsFromPush);
+
+        // ICEMS agency data: no periodic poll at all now, so apply every
+        // push regardless of expanded state -- otherwise a collapsed job's
+        // data goes stale and never catches up until its next expand.
+        // refreshIcemsIncident() itself already no-ops for non-ICEMS jobs.
+        // force: true -- an authoritative push shouldn't get swallowed by
+        // the same cooldown that gates the expand-triggered call.
+        const refreshIcemsIncidentFromPush = (message) => {
+            myViewModel.jobsById.get(message.JobId)?.refreshIcemsIncident({ force: true });
+        };
+        getSubject('rsuReceived').subscribe(refreshIcemsIncidentFromPush);
+        getSubject('iuaReceived').subscribe(refreshIcemsIncidentFromPush);
+        getSubject('isuReceived').subscribe(refreshIcemsIncidentFromPush);
 
         ko.applyBindings(myViewModel);
 
