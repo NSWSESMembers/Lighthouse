@@ -255,12 +255,12 @@ function lighthouseResponseGems() {
 
       var closedNote = isClosed ? '<div class="lighthouse-response-gem-closed-note"><em>Activation closed</em></div>' : '';
 
-      // Quick path from "who's accepted" straight into a new team - only
-      // makes sense for the ActivationAccepted gem, only when there's
-      // someone to add, and only for users who could actually create a
-      // team in the first place.
+      // Quick path from "who's accepted/available" straight into a new
+      // team - only makes sense for the ActivationAccepted and Available
+      // gems, only when there's someone to add, and only for users who
+      // could actually create a team in the first place.
       var createTeamButtonHtml = '';
-      if (category === 'ActivationAccepted' && data.Names && data.Names.length && user.isInRole(Enum.Role.TeamManagement.Id)) {
+      if ((category === 'ActivationAccepted' || category === 'Available') && data.Names && data.Names.length && user.isInRole(Enum.Role.TeamManagement.Id)) {
         var memberIds = _.map(data.Names, function (person) { return person.MemberId; });
         createTeamButtonHtml = '<div class="lighthouse-create-team-btn-wrap">' +
           '<button type="button" class="btn btn-xs btn-primary lighthouse-create-team-btn" data-member-ids="' +
