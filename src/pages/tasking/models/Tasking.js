@@ -90,7 +90,10 @@ export function Tasking(data = {}) {
     self.isComplete = ko.pureComputed(() => !!self.complete());
 
     // convenience proxies
-    self.teamCallsign = ko.pureComputed(() => self.team.callsign());
+    // self.team can be null -- a tasking may be upserted before its team
+    // reference resolves (e.g. a REST tasking record with no/partial Team
+    // data), so these must not assume it's set.
+    self.teamCallsign = ko.pureComputed(() => self.team ? self.team.callsign() : '');
     self.jobIdentifier = ko.pureComputed(() => self.job.identifier());
     self.jobTypeName = ko.pureComputed(() => self.job.typeName());
     self.jobPriority = ko.pureComputed(() => self.job.priorityName());
@@ -102,7 +105,7 @@ export function Tasking(data = {}) {
     self.hasJob = ko.pureComputed(() => !!self.job.isFilteredIn());
 
     //same same but different ^
-    self.hasTeam = ko.pureComputed(() => !!self.team.isFilteredIn());
+    self.hasTeam = ko.pureComputed(() => !!(self.team && self.team.isFilteredIn()));
 
 
 

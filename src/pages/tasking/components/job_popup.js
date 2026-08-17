@@ -159,7 +159,7 @@ export function buildJobPopupKO() {
             <tr data-bind="event: {
             mouseenter: $root.drawCrowsFliesToAssetFromTasking,
             mouseleave: $root.removeCrowsFlies
-            }, click: team.markerFocus,
+            }, click: team && team.markerFocus,
             clickBubble: false,
             css: { 'job-popup__tasking-row': hasTeam(), 'job-popup__tasking-row--no-job': !hasTeam() }">
               <td style="padding:4px 8px;border-bottom:1px solid #eee"
@@ -172,7 +172,7 @@ export function buildJobPopupKO() {
                 <div class="btn-group btn-group-sm" role="group" aria-label="Tasking actions">               
                   <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Route to Asset"
-                      data-bind="click: $root.drawRouteToAsset, disable: !team.trackableAndIsFiltered(), clickBubble: false">
+                      data-bind="click: $root.drawRouteToAsset, disable: !team || !team.trackableAndIsFiltered(), clickBubble: false">
                       <!-- ko if: !$root.routeLoading() -->
                       <i class="fa fa-solid fa-car"></i>
                       <!-- /ko -->
@@ -182,7 +182,7 @@ export function buildJobPopupKO() {
                   </button>
                   <button type="button" class="btn btn-small btn-outline-secondary"
                       title="Fit Bounds"
-                      data-bind="click: $root.fitBoundsWithTasking, disable: !team.trackableAndIsFiltered(), clickBubble: false">
+                      data-bind="click: $root.fitBoundsWithTasking, disable: !team || !team.trackableAndIsFiltered(), clickBubble: false">
                       <i class="fa fa-solid fa-object-group"></i>
                   </button>
                 </div>

@@ -57,7 +57,7 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         const key = JSON.stringify(style);
         if (m._styleKey !== key) { m.setIcon(makeShapeIcon(style)); m._styleKey = key; }
         m._priorityColor = style.fill || '#6b7280';
-        if (!m._popupBound) { m.setPopupContent(node); wireKoForPopup(ko, m, job, vm, popupVM); }
+        if (!m._popupBound) { m.setPopupContent(node); wireKoForPopup(ko, m, job, vm, vm.mapVM.makeJobPopupVM(job)); }
 
         // keep the "New" ring and _isNew flag in correct state
         upsertPulseRing(pulseLayer, job, m);
@@ -153,6 +153,11 @@ export function removeJobMarker(vm, jobOrId) {
 
     const m = markers.get(id);
     if (!m) return;
+
+    if (m._pendingUnbindTimer) {
+        clearTimeout(m._pendingUnbindTimer);
+        m._pendingUnbindTimer = null;
+    }
 
     // dispose KO subscriptions
     (m._subs || []).forEach(s => { try { s.dispose?.(); } catch { /* empty */ } });
@@ -291,6 +296,14 @@ function wireKoForPopup(ko, marker, job, vm, popupVM) {
     if (marker._koWired) return;
     marker.on('popupopen', e => {
         const el = e.popup.getContent();
+        // A reopen (e.g. a double-click toggling closed->open again) can
+        // land inside the 250ms deferred-unbind window below. If so, the
+        // pending unbind is now stale -- cancel it, or it'll fire later and
+        // ko.cleanNode/reset a popup that's live and visibly open again.
+        if (marker._pendingUnbindTimer) {
+            clearTimeout(marker._pendingUnbindTimer);
+            marker._pendingUnbindTimer = null;
+        }
         vm.mapVM.setOpen?.('job', job);
         bindKoToPopup(ko, popupVM, el);
         job.onPopupOpen && job.onPopupOpen();
@@ -319,8 +332,13 @@ function wireKoForPopup(ko, marker, job, vm, popupVM) {
     });
     marker.on('popupclose', e => {
         const el = e.popup.getContent();
-        // Defer unbinding to after the close animation completes
-        setTimeout(() => {
+        // Defer unbinding to after the close animation completes. Tracked
+        // on the marker so a fast reopen (see 'popupopen' above) can cancel
+        // it -- otherwise this fires after the reopen and tears down a
+        // popup that's live and visibly open again.
+        if (marker._pendingUnbindTimer) clearTimeout(marker._pendingUnbindTimer);
+        marker._pendingUnbindTimer = setTimeout(() => {
+            marker._pendingUnbindTimer = null;
             unbindKoFromPopup(ko, el);
         }, 250); // 250ms matches Leaflet's default fade animation
         job.onPopupClose && job.onPopupClose();

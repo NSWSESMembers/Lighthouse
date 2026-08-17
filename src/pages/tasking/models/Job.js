@@ -353,6 +353,12 @@ export function Job(data = {}, deps = {}) {
 
     self.lastDataUpdate = observable(new Date());
     self.lastTaskingDataUpdate = new Date();
+    // Separate from lastDataUpdate -- that's bumped by updateFromJson on
+    // every merge (push or fetch), which refreshData()'s cooldown can't use
+    // directly: a caller that merges push data and then calls refreshData()
+    // in the same tick would always see "just updated" and never actually
+    // fetch. This only tracks real REST fetches.
+    let _lastRefreshDataFetch = 0;
     self.lastIcemsUpdate = 0;
 
     // Minimum cooldown (ms) between single-job tasking fetches. Bulk/batch
@@ -895,13 +901,11 @@ export function Job(data = {}, deps = {}) {
 
     self.refreshData = async function (opts = {}) {
         const force = opts.force === true;
-        if (!force && Date.now() - self.lastDataUpdate().getTime() < getSingleFetchCooldownMs()) {
-            // lastDataUpdate is bumped by updateFromJson regardless of source
-            // (push or fetch), so this also skips a redundant expand/popup-
-            // open refetch right after a push already delivered fresh data.
+        if (!force && Date.now() - _lastRefreshDataFetch < getSingleFetchCooldownMs()) {
             console.log("Skipping job data fetch for job", self.id(), "due to cooldown");
             return;
         }
+        _lastRefreshDataFetch = Date.now();
         self.dataLoading(true);
         fetchUnresolvedActionsLog(self);
         fetchJobById(self.id(), () => {

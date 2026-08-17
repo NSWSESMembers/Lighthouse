@@ -53,6 +53,7 @@ import { installRowVisibilityBindings } from "./bindings/rowVisibility.js";
 import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
 import { installSortableArrayBindings } from "./bindings/sortableArray.js";
 import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
+import { installFlashOnChangeBinding } from "./bindings/flashOnChange.js";
 import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
 import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
 
@@ -3781,6 +3782,7 @@ document.addEventListener('DOMContentLoaded', function () {
         installDragDropRowBindings();
         noBubbleFromDisabledButtonsBindings();
         installSortableArrayBindings();
+        installFlashOnChangeBinding();
         registerAcronymTextBinding();
 
         ko.bindingProvider.instance = new ksb(options);
@@ -3866,15 +3868,31 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            // force: true -- lastDataUpdate was just set moments ago by the
-            // construction we did above, so the cooldown in refreshData()
-            // would otherwise block the very fetch we're deliberately doing
-            // here to backfill what this notification-derived job is missing.
+            // force: true -- a brand-new job's cooldown starts at 0 so this
+            // would pass unforced anyway, but forcing makes the intent
+            // explicit: this fetch must happen to backfill what this
+            // notification-derived job is missing (Address/Sector/Tags/...).
             job.refreshData({ force: true });
         };
 
         getSubject('jobCreated').subscribe(admitJobCreatedIfInFilter);
-        getSubject('jobUpdated').subscribe(admitJobIfInFilter);
+
+        // jobUpdated's notification payload is a fixed field set (status/
+        // priority/entity/identifier) regardless of what actually changed --
+        // it doesn't say whether the real change was e.g. the address or
+        // sector, which aren't in it at all. The merge above still applies
+        // immediately (fast status/priority display, and it's what the
+        // filter check needs), but pull a full copy too so nothing outside
+        // that fixed set goes silently stale. force: true -- same rule as
+        // every other push-triggered refresh: SignalR telling us this
+        // specific job changed is authoritative, not a generic maybe-stale
+        // trigger, so it shouldn't get swallowed by the cooldown that
+        // exists to dedupe redundant timer/click refreshes.
+        getSubject('jobUpdated').subscribe((notification) => {
+            const job = admitJobIfInFilter(notification);
+            job?.refreshData({ force: true });
+        });
+
         getSubject('jobRejected').subscribe(admitJobIfInFilter);
         // Same reasoning as admitJobIfInFilter -- team search is also
         // HQ/status/sector/date filtered server-side by polling, so a pushed
