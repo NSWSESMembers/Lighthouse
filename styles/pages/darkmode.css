@@ -461,6 +461,15 @@ body.dark-mode .row-rescue * {
   color: #e0e0e0 !important;
 }
 
+body.dark-mode .row-rescue-fr1 {
+  background-color: #7a2f22 !important;
+  color: #e0e0e0 !important;
+}
+
+body.dark-mode .row-rescue-fr1 * {
+  color: #e0e0e0 !important;
+}
+
 body.dark-mode .row-priority {
   background-color: #54483a !important;
   color: #e0e0e0 !important;
