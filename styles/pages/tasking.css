@@ -26,6 +26,10 @@ body {
   background-color: #f1bfbf !important;
 }
 
+.row-rescue-fr1 {
+  background-color: #e9a3a3 !important;
+}
+
 .row-priority {
   background-color: #fcf8e3 !important;
 }
@@ -44,6 +48,16 @@ body {
 }
 
 .row-rescue > div > button > .not-pinned {
+  font-size: 11px !important;
+  color: var(--bs-secondary-color) !important;
+}
+
+.row-rescue-fr1 > div > button > .is-pinned {
+  color: white !important;
+  --bs-text-opacity: 1 !important;
+}
+
+.row-rescue-fr1 > div > button > .not-pinned {
   font-size: 11px !important;
   color: var(--bs-secondary-color) !important;
 }
@@ -1126,8 +1140,15 @@ tr.job:hover {
 }
 
 .teams {
-  --team-cols: 30px /* chevron */ 30px /* pin */ 1.35fr /* callsign */ 0.5fr /* status */ 60px /* HQ */ 120px
-    /* task count */ 1fr /* leader */ 140px; /* actions (fixed) */
+  /* status/HQ/task count are short, roughly fixed-format content ("Stood
+     down", "On Alert"), so they get a minmax() floor+ceiling instead of
+     competing with callsign/leader for proportional space — and unlike a
+     bare px track, minmax() can still shrink at narrow pane widths instead
+     of forcing the row into horizontal scroll. chevron/pin/actions stay
+     true fixed widths since they hold buttons, not text. */
+  --team-cols: 30px /* chevron */ 30px /* pin */ 1.35fr /* callsign */ minmax(64px, 90px)
+    /* status */ minmax(40px, 60px) /* HQ */ minmax(80px, 120px) /* task count */ 1fr
+    /* leader */ 140px; /* actions (fixed) */
 }
 
 /* header */
@@ -1854,8 +1875,16 @@ overflow: hidden;
 
 /* one source of truth (jobs) */
 .jobs {
-  --job-cols: 30px /* chev */ 20px /* pin */ 0.38fr /* Id */ 0.5fr /* Received */ 0.3fr /* HQ */ 0.3fr /* Type */ 1.5fr
-    /* Situation */ 0.5fr /* Status */ 0.9fr; /* Address */
+  /* Id/Received/HQ/Type/Status are short, roughly fixed-format content, so they
+     get a minmax() floor+ceiling sized to fit that content (Received wraps
+     date/time onto two lines rather than needing full-line width) instead of
+     a rigid px width — a bare px track can't shrink, so at narrow pane widths
+     it was pushing Situation/Address off into horizontal scroll. minmax()
+     lets every column compress together first. */
+  --job-cols: 30px /* chev */ 20px /* pin */ minmax(50px, 80px) /* Id */
+    minmax(58px, 72px) /* Received (wraps 2 lines) */ minmax(36px, 64px) /* HQ */
+    minmax(50px, 80px) /* Type */ minmax(90px, 1.6fr) /* Situation */
+    minmax(64px, 90px) /* Status */ minmax(70px, 1fr); /* Address */
 }
 
 /* body */
@@ -1897,6 +1926,8 @@ overflow: hidden;
   padding-right: 5px;
   padding-left: 5px;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Allow wrapping for the “long” columns so you don't lose information */
@@ -1904,6 +1935,69 @@ overflow: hidden;
 .job-cell--address {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/* Cap wrapped text to a few lines with an ellipsis, instead of letting it
+   balloon the row height when text wraps onto many short/fragmented lines. */
+.job-cell--address .btn,
+.job-cell--situation {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.job-cell--situation {
+  -webkit-line-clamp: 3;
+  max-height: 4em;
+}
+
+.job-cell--address .btn {
+  -webkit-line-clamp: 5;
+  max-height: 6.5em;
+  text-align: center;
+}
+
+/* Time is more actionable at a glance than the date, so it goes on top;
+   two explicit lines rather than a wrapped string. */
+.job-cell--received {
+  text-align: center;
+}
+
+.job-cell--received .received-time {
+  font-weight: 600;
+}
+
+.job-cell--received .received-date {
+  font-size: 0.85em;
+  color: #6c757d;
+}
+
+/* Id text on top, its (optional) images/ICEMS icons on their own row below,
+   so a couple of small icons don't force the id text to truncate. */
+.job-cell--id {
+  text-align: center;
+}
+
+.job-id-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* .images-button is a Bootstrap <button> (border + line-height baked in) next
+   to a plain <em> icon — normalize both to the same box so neither sits
+   higher/lower than the other. */
+.job-id-icons > .images-button,
+.job-id-icons > em {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1em;
+  line-height: 1;
+  border: 0;
+  margin: 0;
 }
 
 .job-cell--chev {
@@ -3321,6 +3415,59 @@ input[type='search']::-ms-clear {
 }
 .pin-toggle.active {
   border-color: #ffc107;
+}
+
+/* ── Responsive toolbar (Teams / Incidents panes) ──
+   Panes sit in a resizable sidebar, so viewport-based media queries can't
+   react to the sidebar getting narrow — use container queries instead.
+   Scoped to the toolbar row (not .pane) so it doesn't hand the table's
+   overflow:auto region layout containment, which would break the other
+   position:fixed dropdown menus nested in the table rows that rely on an
+   unconstrained ancestor to escape that clipping. */
+.pane-toolbar {
+  container-type: inline-size;
+  container-name: toolbar-pane;
+}
+
+.toolbar-search {
+  flex: 3 1 240px;
+  min-width: 110px;
+  max-width: 420px;
+}
+
+/* The label pill has Bootstrap's .flex-grow-1 utility, which competes with
+   the search box (also flex-grow) for leftover row space. Weight the search
+   box's growth higher so it claims space first; once it hits max-width,
+   the pill absorbs whatever's left, so it still fills the row. */
+.toolbar-label {
+  flex-grow: 1 !important;
+  max-width: 55%;
+}
+
+.toolbar-overflow {
+  display: none;
+}
+
+/* Toolbar dropdowns (filter + overflow menus) sit right above the table's
+   sticky thead (z-index: 1050) and would otherwise render underneath it
+   wherever they overlap. */
+.pane-toolbar .dropdown-menu {
+  z-index: 1051;
+}
+
+@container toolbar-pane (max-width: 520px) {
+  .toolbar-collapsible {
+    display: none !important;
+  }
+  .toolbar-overflow {
+    display: inline-block;
+  }
+}
+
+@container toolbar-pane (max-width: 360px) {
+  .toolbar-label {
+    display: none !important;
+  }
 }
 
 /* hide popups + tooltips while hotkey held */

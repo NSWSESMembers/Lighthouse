@@ -18,16 +18,16 @@
         <aside class="sidebar"><!-- fixed-width column in tasking.css -->
             <div class="pane pane--top" id="paneTop">
                 <!-- TEAMS (top pane) -->
-                <div class="d-flex align-items-center justify-content-between px-2">
+                <div class="d-flex align-items-center justify-content-between px-2 pane-toolbar">
                     <div
-                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
+                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header toolbar-label">
                         <div class="flex-grow-1 d-flex justify-content-center">
                             <span>Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
                         </div>
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                        <div class="input-group input-group-sm" style="width:250px;">
+                        <div class="input-group input-group-sm toolbar-search">
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
                             <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: teamSearch, valueUpdate: 'input'">
@@ -39,20 +39,20 @@
                             data-bind="click: togglePinnedTeamsOnly, css: { active: showPinnedTeamsOnly }, disable: !countPinnedTeams()">
                             <i class="fa fa-star fa-center"></i>
                         </button>
-                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Ops Log"
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Ops Log"
                                 data-bind="click: openBlankOpsLogModal">
                                 <span class="position-relative d-inline-block" style="left: -4px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
                                     <i class="fa fa-book"></i>
                                     <i class="fa fa-plus position-absolute" style="top:-1px; left:19px; font-size:0.7em;"></i>
                                 </span>
                             </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Radio Log"
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Radio Log"
                             data-bind="click: openBlankRadioOpsLogModal">
                             <span class="position-relative d-inline-block" style="left: -3px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
                                 <i class="fa fa-microphone"></i>
                                 <i class="fa fa-plus position-absolute" style="top:-1px; left:18px; font-size:0.7em;"></i>
                             </span>
-                        </button>                    
+                        </button>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
                                 id="teamMenu" data-bs-toggle="dropdown" data-bs-auto-close="outside"
@@ -162,11 +162,29 @@
                             click: fetchAllTeamData,
                             disable: teamsLoading">
                             <i class="fa fa-sync" data-bind="css: { 'fa-spin': teamsLoading }"></i>
-                        </button>                        
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config"
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Page Config"
                             data-bs-toggle="modal" data-bs-target="#configModal">
                             <i class="fa fa-cog"></i>
                         </button>
+                        <div class="dropdown toolbar-overflow">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button"
+                                id="teamToolbarOverflow" data-bs-toggle="dropdown" aria-expanded="false"
+                                title="More actions">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="teamToolbarOverflow">
+                                <li><button class="dropdown-item" type="button"
+                                        data-bind="click: openBlankOpsLogModal"><i class="fa fa-book me-2"></i>Ops
+                                        Log</button></li>
+                                <li><button class="dropdown-item" type="button"
+                                        data-bind="click: openBlankRadioOpsLogModal"><i
+                                            class="fa fa-microphone me-2"></i>Radio Log</button></li>
+                                <li><button class="dropdown-item" type="button" data-bs-toggle="modal"
+                                        data-bs-target="#configModal"><i class="fa fa-cog me-2"></i>Page
+                                        Config</button></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="table-responsive team-table-container">
@@ -729,15 +747,15 @@
 
             <div class="pane pane--bottom" id="paneBottom">
                 <!-- JOBS (bottom pane) -->
-                <div class="d-flex align-items-center justify-content-between px-2">
+                <div class="d-flex align-items-center justify-content-between px-2 pane-toolbar">
                     <div
-                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
+                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header toolbar-label">
                         <div class="flex-grow-1 d-flex justify-content-center">
                             <span>Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <div class="position-relative" style="width:250px;">
+                        <div class="position-relative toolbar-search">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
                                 <input type="search" id="jobSearch" class="form-control form-control-sm py-0"
@@ -762,14 +780,14 @@
                             data-bind="click: togglePinnedIncidentsOnly, css: { active: showPinnedIncidentsOnly }, disable: !countPinnedIncidents()">
                             <i class="fa fa-star fa-center"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Ops Log"
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Ops Log"
                             data-bind="click: openBlankOpsLogModal">
                                 <span class="position-relative d-inline-block" style="left: -4px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
                                     <i class="fa fa-book"></i>
                                     <i class="fa fa-plus position-absolute" style="top:-1px; left:19px; font-size:0.7em;"></i>
                                 </span>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Radio Log"
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Radio Log"
                             data-bind="click: openBlankRadioOpsLogModal">
                             <span class="position-relative d-inline-block" style="left: -2px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
                                 <i class="fa fa-microphone"></i>
@@ -968,10 +986,28 @@
                             disable: jobsLoading">
                             <i class="fa fa-sync" data-bind="css: { 'fa-spin': jobsLoading }"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config"
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Page Config"
                             data-bs-toggle="modal" data-bs-target="#configModal">
                             <i class="fa fa-cog"></i>
                         </button>
+                        <div class="dropdown toolbar-overflow">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button"
+                                id="jobToolbarOverflow" data-bs-toggle="dropdown" aria-expanded="false"
+                                title="More actions">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jobToolbarOverflow">
+                                <li><button class="dropdown-item" type="button"
+                                        data-bind="click: openBlankOpsLogModal"><i class="fa fa-book me-2"></i>Ops
+                                        Log</button></li>
+                                <li><button class="dropdown-item" type="button"
+                                        data-bind="click: openBlankRadioOpsLogModal"><i
+                                            class="fa fa-microphone me-2"></i>Radio Log</button></li>
+                                <li><button class="dropdown-item" type="button" data-bs-toggle="modal"
+                                        data-bs-target="#configModal"><i class="fa fa-cog me-2"></i>Page
+                                        Config</button></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="table-responsive job-table-container">
@@ -987,9 +1023,9 @@
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">Id</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="sortable" data-sort-key="receivedAt" aria-sort="none"
+                                <th class="sortable" data-sort-key="receivedAt" aria-sort="none" title="Received"
                                     data-bind="event: { click: setJobSortFromElement }">
-                                    <span class="th-label">Received</span> <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Recv</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-sort-key="entityAssignedTo.code" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
@@ -1039,22 +1075,25 @@
 
                                             <!-- 2. Id -->
                                             <div class="job-cell job-cell--id">
-                                                <span data-bind="text: j.identifierTrimmed"></span>
-                                                <button type="button"
-                                                    class="btn btn-link p-0 text-decoration-none fa-center images-button"
-                                                    title="View incident images"
-                                                    data-bind="visible: j.imageCount() > 0, flashTextOnChange: j.imageCount, click: $root.openIncidentImages, clickBubble: false">
-                                                    <i class="far fa-image"></i>
-                                                    <span class="visually-hidden">Images</span>
-                                                </button>
-                                                <em class="fa fa-fw fa-share-alt" style="width: 1em;"
-                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }, css: { 'text-danger': j.hasUnacceptedNotifications() }, flashTextOnChange: j.hasUnacceptedNotifications"></em>
+                                                <div class="job-id-text" data-bind="text: j.identifierTrimmed"></div>
+                                                <div class="job-id-icons">
+                                                    <button type="button"
+                                                        class="btn btn-link p-0 text-decoration-none fa-center images-button"
+                                                        title="View incident images"
+                                                        data-bind="visible: j.imageCount() > 0, flashTextOnChange: j.imageCount, click: $root.openIncidentImages, clickBubble: false">
+                                                        <i class="far fa-image"></i>
+                                                        <span class="visually-hidden">Images</span>
+                                                    </button>
+                                                    <em class="fa fa-fw fa-share-alt" style="width: 1em;"
+                                                        data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }, css: { 'text-danger': j.hasUnacceptedNotifications() }, flashTextOnChange: j.hasUnacceptedNotifications"></em>
+                                                </div>
                                             </div>
 
                                             <!-- 3. Received -->
-                                            <div class="job-cell job-cell--received">
-                                                <span data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
-                                                    data-bs-toggle="tooltip"></span>
+                                            <div class="job-cell job-cell--received" data-bs-toggle="tooltip"
+                                                data-bind="attr:{ title: j.receivedAt }">
+                                                <div class="received-time" data-bind="text: j.receivedAtTimeShort"></div>
+                                                <div class="received-date" data-bind="text: j.receivedAtDateShort"></div>
                                             </div>
 
                                             <!-- 4. HQ -->
@@ -1356,8 +1395,12 @@
                                                                     </div>
                                                                     <!-- /ko -->
                                                                     <!-- ko ifnot: j.dataLoading() -->
-                                                                    <div class="text-center" style="font-size: 0.85em; color: #888; margin-top: 0.25em;" data-bind="text: 'Refreshed ' + j.lastRefreshedAgo(), visible: j.lastRefreshedAgo">
-                                                                    </div>
+                                                                    <button type="button" class="btn btn-link btn-sm p-0 w-100 text-center"
+                                                                        style="font-size: 0.85em; color: #888; margin-top: 0.25em; text-decoration: none;"
+                                                                        title="Refresh this incident's data"
+                                                                        data-bind="click: j.refreshAllData, clickBubble: false, visible: j.lastRefreshedAgo">
+                                                                        <i class="fa fa-sync-alt me-1"></i><span data-bind="text: 'Refreshed ' + j.lastRefreshedAgo()"></span>
+                                                                    </button>
                                                                     <!-- /ko -->
                                                                 </div>
                                                             </div>

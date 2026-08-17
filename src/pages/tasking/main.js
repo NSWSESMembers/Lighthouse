@@ -948,6 +948,14 @@ function VM() {
 
         end.setDate(end.getDate() + self.config.fetchForward());
 
+        // Same drift/clock-skew allowance as start, above -- without it, a
+        // job admitted via push the instant it's created (jobReceived from
+        // the notification's own CreatedOn, essentially "now") sits right
+        // on the end boundary, and a few hundred ms of processing lag or
+        // any client/server clock skew is enough to flip jobDate > end and
+        // evict it (confirmed live: fetchForward=0 gave zero tolerance).
+        end.setMinutes(end.getMinutes() + 5);
+
         const statusName = jb.statusName();
         const jobHqId = String(jb.entityAssignedTo.id());
         const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
@@ -970,8 +978,17 @@ function VM() {
             return false;
         }
 
-        // If incident type filter non-empty, only show jobs whose type is in it
-        if (incidentTypeSet.size > 0 && !incidentTypeSet.has(String(jb.typeId()))) {
+        // If incident type filter non-empty, only show jobs whose type is in
+        // it -- but only reject when we actually know the type. A job built
+        // straight from the jobCreated notification has no type information
+        // at all (unlike status/priority, there's no id to resolve either),
+        // so typeId() is "" until refreshData() backfills it; treating that
+        // as "known not to match" would evict every new job whenever any
+        // type filter is active. isFilteredIn corrects itself reactively
+        // once the real type lands, so being lenient here at admission time
+        // costs nothing beyond a job briefly sitting untracked-by-filter.
+        const typeId = jb.typeId();
+        if (incidentTypeSet.size > 0 && typeId && !incidentTypeSet.has(String(typeId))) {
             return false;
         }
 
@@ -2973,6 +2990,11 @@ function VM() {
 
             myViewModel._markInitialFetchDone();
             myViewModel.jobsLoading(false);
+            // Runs here (not alongside the fetchAllJobsData() call itself)
+            // so it sees this cycle's actual results -- fetchAllJobsData is
+            // async and its merges land in this callback, after the network
+            // round-trip, not synchronously when it's called.
+            self.fetchAllUnacceptedNotifications();
         }, function (_val, _total) {
             //console.log("Progress: " + _val + " / " + _total)
         }, function (jobs) { //call back as they come in per page
@@ -3060,6 +3082,16 @@ function VM() {
     };
 
 
+    // No batch API exists for unaccepted notifications (unlike tasking),
+    // so this is still one REST call per ICEMS job -- but triggered by the
+    // shared jobs/teams refresh cycle below instead of each job running its
+    // own independent 30s timer.
+    self.fetchAllUnacceptedNotifications = function () {
+        self.filteredJobs().forEach(job => {
+            if (job.icemsIncidentIdentifier()) job.refreshUnacceptedNotifications();
+        });
+    };
+
     // ---------------- REFRESH TIMER FOR JOBS + TEAMS -----------------
 
     let jobsTeamsTimer = null;
@@ -3071,7 +3103,7 @@ function VM() {
         const interval = effectiveRefreshIntervalMs();
 
         jobsTeamsTimer = setInterval(() => {
-            self.fetchAllJobsData();
+            self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
             self.fetchAllTeamData();
         }, interval);
 
@@ -3132,7 +3164,7 @@ function VM() {
     self.UserPressedSaveOnTheConfigModal = function () {
         //re-fetch data based on new config
         initialFetchesPending = 2; // teams, jobs
-        self.fetchAllJobsData();
+        self.fetchAllJobsData(); // triggers fetchAllUnacceptedNotifications itself, once its results land
         self.fetchAllTeamData();
         self.fetchAllTrackableAssets();
 
@@ -3837,9 +3869,26 @@ document.addEventListener('DOMContentLoaded', function () {
             EntityAssignedTo: n.Entity,
         });
 
+        // JobReceived isn't in any of these notifications at all -- without
+        // it, jobMatchesConfigFilters' date check always fails (new
+        // Date(null) is epoch, always outside the configured range), so a
+        // brand-new admission would get silently evicted instead of
+        // admitted. The notification's own CreatedOn is a reasonable proxy.
+        // Only applied when not already tracked -- otherwise this would
+        // clobber an existing job's real jobReceived with the
+        // notification's timestamp. Applies to jobUpdated/jobRejected too,
+        // not just jobCreated: a job evicted while "New" (outside the
+        // status filter) hits this same first-admission path again the
+        // moment a later jobUpdated brings its status back into scope.
+        const withJobReceivedFallback = (jobJson, notification, alreadyTracked) => {
+            if (!alreadyTracked) jobJson.JobReceived = notification.CreatedOn;
+            return jobJson;
+        };
+
         const admitJobIfInFilter = (notification) => {
             const jobJson = mapJobNotificationToJobJson(notification);
             const alreadyTracked = myViewModel.jobsById.has(jobJson.Id);
+            withJobReceivedFallback(jobJson, notification, alreadyTracked);
             const job = myViewModel.getOrCreateJob(jobJson);
             if (!alreadyTracked && !myViewModel.jobMatchesConfigFilters(job)) {
                 myViewModel.jobsById.delete(job.id());
@@ -3859,6 +3908,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const admitJobCreatedIfInFilter = (notification) => {
             const jobJson = mapJobNotificationToJobJson(notification);
             const alreadyTracked = myViewModel.jobsById.has(jobJson.Id);
+            withJobReceivedFallback(jobJson, notification, alreadyTracked);
             const job = myViewModel.getOrCreateJob(jobJson);
             if (alreadyTracked) return; // duplicate/late delivery, already handled elsewhere
 
@@ -3969,12 +4019,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // either a new IUM arriving or an existing one being acknowledged
         // (by us or someone else) without needing to distinguish which.
         const refreshUnacceptedNotificationsFromPush = (message) => {
-            const job = myViewModel.jobsById.get(message.JobId);
-            job?.refreshUnacceptedNotifications();
-            // Push already did what the 30s poll would have -- re-arm it
-            // for another full 30s from now instead of letting it fire
-            // again moments later.
-            job?.resetUnacceptedNotificationsPolling();
+            myViewModel.jobsById.get(message.JobId)?.refreshUnacceptedNotifications();
         };
         getSubject('NotificationAcknowledged').subscribe(refreshUnacceptedNotificationsFromPush);
         getSubject('IUMReceived').subscribe(refreshUnacceptedNotificationsFromPush);

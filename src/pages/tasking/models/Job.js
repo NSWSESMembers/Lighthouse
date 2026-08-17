@@ -72,8 +72,13 @@ export function Job(data = {}, deps = {}) {
     self.permissionToEnterPremises = ko.observable(!!data.PermissionToEnterPremises);
     self.howToEnterPremises = ko.observable(data.HowToEnterPremises ?? null);
     self.jobReceived = ko.observable(data.JobReceived ?? null);
-    self.jobPriorityType = ko.observable(data.JobPriorityType || null); // {Id,Name,Description}
-    self.jobStatusType = ko.observable(data.JobStatusType || null);     // {Id,Name,Description}
+    // Some sources (e.g. the jobCreated/jobUpdated push notification) only
+    // carry JobPriorityTypeId/JobStatusTypeId, not the full object -- same
+    // fallback updateFromJson uses below, so a job constructed straight
+    // from one of those isn't left with a blank status/priority (which
+    // would otherwise fail jobMatchesConfigFilters' status check).
+    self.jobPriorityType = ko.observable(data.JobPriorityType || _resolveEnumById(Enum.JobPriorityType, data.JobPriorityTypeId) || null); // {Id,Name,Description}
+    self.jobStatusType = ko.observable(data.JobStatusType || _resolveEnumById(Enum.JobStatusType, data.JobStatusTypeId) || null);     // {Id,Name,Description}
     self.jobType = ko.observable(data.JobType || null);                 // {Id,Name,...}
     self.entityAssignedTo = new Entity(data.EntityAssignedTo || {});
     self.lga = ko.observable(data.LGA ?? "");
@@ -316,6 +321,8 @@ export function Job(data = {}, deps = {}) {
     self.tagsCsv = ko.pureComputed(() => self.tags().map(t => t.name()).join(", "));
     self.receivedAt = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YYYY HH:mm:ss") : null));
     self.receivedAtShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY HH:mm:ss") : null));
+    self.receivedAtTimeShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("HH:mm:ss") : null));
+    self.receivedAtDateShort = ko.pureComputed(() => (self.jobReceived() ? moment(self.jobReceived()).format("DD/MM/YY") : null));
     self.latLongDisplay = ko.pureComputed(function () {
         var lat = self.address.latitude();
         var lng = self.address.longitude();
@@ -387,6 +394,9 @@ export function Job(data = {}, deps = {}) {
         return moment(self.lastDataUpdate()).fromNow();
     });
 
+    // No per-job timer -- refreshed as part of the shared jobs/teams refresh
+    // cycle (fetchAllUnacceptedNotifications in main.js) and by push
+    // (NotificationAcknowledged/IUMReceived/UrgentIUMReceived).
     self.refreshUnacceptedNotifications = async function () {
         if (!self.icemsIncidentIdentifier()) return;
 
@@ -425,26 +435,6 @@ export function Job(data = {}, deps = {}) {
     };
 
 
-    // ---- UNACCEPTED NOTIFICATIONS POLLING ----
-    const unacceptedNotificationsInterval = makeFilteredInterval(() => {
-        // extra guard: only if ICEMS id exists
-        if (!self.icemsIncidentIdentifier()) return;
-        console.log("Polling unaccepted notifications for job", self.id());
-        self.refreshUnacceptedNotifications();
-    }, 30000, { runImmediately: true });
-
-    self.startUnacceptedNotificationsPolling = function () {
-        unacceptedNotificationsInterval.start();
-    };
-
-    self.stopUnacceptedNotificationsPolling = function () {
-        unacceptedNotificationsInterval.stop();
-    };
-
-    self.resetUnacceptedNotificationsPolling = function () {
-        unacceptedNotificationsInterval.reset();
-    };
-
     // ICEMS agency data: refreshed when the job is expanded (toggleAndLoad)
     // and by push (rsuReceived/iuaReceived/isuReceived in main.js) -- no
     // periodic poll. Push calls pass force:true (an authoritative "this
@@ -472,19 +462,6 @@ export function Job(data = {}, deps = {}) {
         }
     };
 
-
-    // Unaccepted notifications polling: filtered in + ICEMS id (original logic)
-    self.shouldPollUnacceptedNotifications = ko.pureComputed(() => {
-        return self.icemsIncidentIdentifier() && self.isFilteredIn();
-    });
-
-    self.shouldPollUnacceptedNotifications.subscribe((shouldPoll) => {
-        if (shouldPoll) {
-            self.startUnacceptedNotificationsPolling();
-        } else {
-            self.stopUnacceptedNotificationsPolling();
-        }
-    });
 
     self.toggleAndLoad = function () {
         if (!self.expanded()) {
@@ -575,6 +552,9 @@ export function Job(data = {}, deps = {}) {
     });
 
     self.rowColour = ko.pureComputed(() => {
+        if (self.priorityName() === 'Rescue' && self.typeName() === 'FR' && self.categoriesName() === 'Category1') {
+            return 'row-rescue-fr1';
+        }
         switch (self.priorityName()) {
             case 'Rescue': return 'row-rescue';
             case 'Priority': return 'row-priority';
@@ -883,6 +863,18 @@ export function Job(data = {}, deps = {}) {
         self.refreshIcemsIncident(opts);
     }
 
+    // Manual "refresh this incident" trigger (see the refresh button next to
+    // "Refreshed X ago" in tasking.html) -- forced, since a deliberate click
+    // should never silently no-op because of a cooldown meant to dedupe
+    // background timer/push refreshes. Covers every piece of a job's data,
+    // including unaccepted notifications, which refreshDataAndTasking
+    // doesn't (that one's also used by paths that shouldn't imply "and
+    // check ICEMS notifications too").
+    self.refreshAllData = function () {
+        self.refreshDataAndTasking({ force: true });
+        self.refreshUnacceptedNotifications();
+    }
+
     self.fetchTasking = function (opts = {}) {
         const force = opts.force === true;
         if (!force) {
@@ -918,45 +910,6 @@ export function Job(data = {}, deps = {}) {
         });
     };
 
-
-    // interval that only runs while job is filtered in
-    function makeFilteredInterval(fn, intervalMs, { runImmediately = false } = {}) {
-        let handle = null;
-
-        const tick = () => {
-            // global guard: only run if still filtered in
-            if (!self.isFilteredIn()) return;
-            fn();
-        };
-
-        const start = () => {
-            if (!self.isFilteredIn()) return; // don't start if already filtered out
-            if (handle) clearInterval(handle);
-            if (runImmediately) tick();
-            handle = setInterval(tick, intervalMs);
-        };
-
-        const stop = () => {
-            if (handle) {
-                clearInterval(handle);
-                handle = null;
-            }
-        };
-
-        // Re-arms the interval for another full intervalMs from now, without
-        // firing immediately (unlike start()) -- for when something else
-        // (e.g. a push) already just did what this timer would have done,
-        // so the next scheduled tick shouldn't land moments later. Only has
-        // an effect if already polling; never starts a new poll.
-        const reset = () => {
-            if (!handle) return;
-            if (!self.isFilteredIn()) return;
-            clearInterval(handle);
-            handle = setInterval(tick, intervalMs);
-        };
-
-        return { start, stop, reset };
-    }
 
 }
 
