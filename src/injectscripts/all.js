@@ -57,6 +57,8 @@ whenWeAreReady(function () {
     urls.Base +
     '&source=' +
     location.origin +
+    '&signalr=' +
+    encodeURIComponent(urls.SignalR) +
     '&hq=' +
     user.currentHqId +
     '&start=' +

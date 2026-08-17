@@ -7,6 +7,10 @@
 </head>
 
 <body style="opacity:0; transition: opacity .25s ease;">
+    <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected">
+        <span class="signalr-status-banner__icon">⚠</span>
+        <span data-bind="text: signalrStatusText"></span>
+    </div>
     <div id="alerts-container" class="position-fixed top-0 start-50 translate-middle-x mt-3"
         style="z-index:2000; width:600px; max-width:90%;"></div>
 
@@ -238,17 +242,17 @@
                                             </div>
 
                                             <!-- 3. Status -->
-                                            <div class="team-cell" data-bind="text: t.statusName"></div>
+                                            <div class="team-cell" data-bind="text: t.statusName, flashTextOnChange: t.statusName"></div>
 
                                             <!-- 4. HQ -->
                                             <div class="team-cell" data-bind="text: t.assignedTo().code"></div>
 
                                             <!-- 5. Task Count -->
-                                            <div class="team-cell" data-bind="text: t.taskedJobCount() + ' Active'">
+                                            <div class="team-cell" data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount">
                                             </div>
 
                                             <!-- 6. Team Leader -->
-                                            <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader">
+                                            <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader, flashTextOnChange: t.teamLeader">
                                             </div>
 
                                             <!-- 7. Actions -->
@@ -479,6 +483,7 @@
                                                                                             data-bs-auto-close="outside"
                                                                                             data-bind="text: ts.currentStatus,
                                                                                                     css: ts.tagColorFromStatus(),
+                                                                                                    flashOnChange: ts.currentStatus,
                                                                                                     click: ts.onStatusDropdownToggleClick">
                                                                                         </button>
                                                                                         <div
@@ -1038,12 +1043,12 @@
                                                 <button type="button"
                                                     class="btn btn-link p-0 text-decoration-none fa-center images-button"
                                                     title="View incident images"
-                                                    data-bind="visible: j.imageCount() > 0, click: $root.openIncidentImages, clickBubble: false">
+                                                    data-bind="visible: j.imageCount() > 0, flashTextOnChange: j.imageCount, click: $root.openIncidentImages, clickBubble: false">
                                                     <i class="far fa-image"></i>
                                                     <span class="visually-hidden">Images</span>
                                                 </button>
                                                 <em class="fa fa-fw fa-share-alt" style="width: 1em;"
-                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }, css: { 'text-danger': j.hasUnacceptedNotifications() }"></em>
+                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }, css: { 'text-danger': j.hasUnacceptedNotifications() }, flashTextOnChange: j.hasUnacceptedNotifications"></em>
                                             </div>
 
                                             <!-- 3. Received -->
@@ -1054,17 +1059,17 @@
 
                                             <!-- 4. HQ -->
                                             <div class="job-cell job-cell--hq">
-                                                <span data-bind="text: j.entityAssignedTo.code"></span>
+                                                <span data-bind="text: j.entityAssignedTo.code, flashTextOnChange: j.entityAssignedTo.code"></span>
                                             </div>
 
                                             <!-- 5. Type -->
                                             <div class="job-cell job-cell--type">
-                                                <span data-bind="text: j.typeShort + j.categoriesNameNumberDash"></span>
+                                                <span data-bind="text: j.typeShort + j.categoriesNameNumberDash, flashTextOnChange: j.typeShort() + j.categoriesNameNumberDash()"></span>
                                             </div>
 
                                             <!-- 6. Situation -->
                                             <div class="job-cell job-cell--situation">
-                                                <span data-bind="text: j.situationOnScene"></span>
+                                                <span data-bind="text: j.situationOnScene, flashTextOnChange: j.situationOnScene"></span>
                                             </div>
 
                                             <!-- 7. Status -->
@@ -1074,7 +1079,7 @@
                                                     <button class="jobstatus-dropdown-btn" type="button"
                                                         data-bs-toggle="dropdown"
                                                         data-bind="click: j.onStatusNameClick">
-                                                        <span data-bind="text: j.statusNameAndCount"></span>
+                                                        <span data-bind="text: j.statusNameAndCount, flashOnChange: j.statusNameAndCount"></span>
                                                         <span class="caret"></span>
                                                     </button>
                                                     <ul class="dropdown-menu jobstatusDropdown">
@@ -1095,7 +1100,7 @@
                                                 <span>
                                                     <div class="d-grid gap-2">
                                                         <button class="btn btn-sm btn-outline-dark"
-                                                            data-bind="text: j.addressDisplayOrGPS, click: j.focusMap, clickBubble: false,  event: { mouseover: j.mouseEnterAddressButton, mouseleave: j.mouseLeaveAddressButton }"></button>
+                                                            data-bind="text: j.addressDisplayOrGPS, flashTextOnChange: j.addressDisplayOrGPS, click: j.focusMap, clickBubble: false,  event: { mouseover: j.mouseEnterAddressButton, mouseleave: j.mouseLeaveAddressButton }"></button>
                                                     </div>
                                                 </span>
                                             </div>
@@ -1537,6 +1542,7 @@
                                                                                             data-bs-auto-close="outside"
                                                                                             data-bind="text: ts.currentStatus,
                                                                                                     css: ts.tagColorFromStatus(),
+                                                                                                    flashOnChange: ts.currentStatus,
                                                                                                     click: ts.onStatusDropdownToggleClick">
                                                                                         </button>
                                                                                         <div
@@ -1719,14 +1725,14 @@
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
-                                                                                            data-bind="click: ts.sendSMS, clickBubble: false, disable: !ts.team.members().length"
+                                                                                            data-bind="click: ts.sendSMS, clickBubble: false, disable: !ts.team || !ts.team.members().length"
                                                                                             title="Message">
                                                                                             <i
                                                                                                 class="fa fa-envelope"></i>
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
-                                                                                            data-bind="click: ts.team.openBeaconEditTeam, clickBubble: false"
+                                                                                            data-bind="click: ts.team && ts.team.openBeaconEditTeam, clickBubble: false"
                                                                                             title="Open In Beacon">
                                                                                             <i
                                                                                                 class="fas fa-external-link-alt"></i>
@@ -1734,7 +1740,7 @@
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Zoom to"
-                                                                                            data-bind="click: ts.team.markerFocus, disable: !ts.team.trackableAndIsFiltered()">
+                                                                                            data-bind="click: ts.team && ts.team.markerFocus, disable: !ts.team || !ts.team.trackableAndIsFiltered()">
                                                                                             <i
                                                                                                 class="fa fa-crosshairs"></i>
                                                                                         </button>
@@ -2077,6 +2083,19 @@
                                                     </div>
                                                     <div class="col-sm-6 col-md-3">
                                                         <label class="form-label">
+                                                            <i class="fa fa-bolt me-1"></i>Live Updates
+                                                        </label>
+                                                        <div class="form-check form-switch mt-2">
+                                                            <input class="form-check-input" type="checkbox" id="signalrEnabledToggle"
+                                                                data-bind="checked: config.signalrEnabled">
+                                                            <label class="form-check-label" for="signalrEnabledToggle">
+                                                                Enable SignalR live updates
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-text">Receive instant incident, team and tasking updates. If enabling or disabling, restart LAD after saving.</div>
+                                                    </div>                                                    
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label class="form-label">
                                                             <i class="fa fa-bell me-1"></i>Alerts Panel
                                                         </label>
                                                         <div class="form-check form-switch mt-2">
@@ -2090,16 +2109,16 @@
                                                     </div>
                                                     <div class="col-sm-6 col-md-3">
                                                         <label class="form-label">
-                                                            <i class="fa fa-hashtag me-1"></i>Tasking Count
+                                                            <i class="fa fa-hashtag me-1"></i>Incident Tasking Count
                                                         </label>
                                                         <div class="form-check form-switch mt-2">
                                                             <input class="form-check-input" type="checkbox" id="taskingCountActiveOnlyToggle"
                                                                 data-bind="checked: config.taskingCountActiveOnly">
                                                             <label class="form-check-label" for="taskingCountActiveOnlyToggle">
-                                                                Active taskings only
+                                                                Count Active taskings only
                                                             </label>
                                                         </div>
-                                                        <div class="form-text">Status badge counts only Tasked, Enroute &amp; Onsite taskings (excludes Complete, CalledOff, Untasked).</div>
+                                                        <div class="form-text">Tasking count counts only Tasked, Enroute &amp; Onsite taskings (excludes Complete, CalledOff, Untasked).</div>
                                                     </div>
                                                 </div>
                                             </div>

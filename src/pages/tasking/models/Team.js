@@ -9,6 +9,7 @@ import { openURLInBeacon } from '../utils/chromeRunTime.js';
 import { Enum } from '../utils/enum.js';
 
 import { loadSharedMapping, saveSharedMapping, pushSharedDefault, fetchSharedDefaults } from '../utils/defaultAssetSync.js';
+import { getSingleFetchCooldownMs } from '../signalr/pushMode.js';
 
 // Shared across all Team instances — single localStorage key
 const _capKey = 'lh_showCapabilities';
@@ -93,6 +94,15 @@ export function Team(data = {}, deps = {}) {
 
     const self = this;
     self.lastTaskingDataUpdate = new Date();
+
+    // Cooldown between single-team on-demand fetches (refreshData/
+    // fetchTasking), whether triggered by expand/popup-open or by a push
+    // already having delivered fresh data -- tighter when SignalR push is
+    // disabled, see pushMode.js.
+    // Bumped by updateFromJson on every merge regardless of source (push or
+    // fetch) -- lets refreshData() skip a redundant expand/popup-open
+    // refetch right after a push already delivered fresh data.
+    self.lastDataUpdate = new Date();
 
     const {
         upsertTasking,
@@ -282,7 +292,12 @@ export function Team(data = {}, deps = {}) {
         self.rowHasFocus(false);
     }
 
-    self.refreshData = async function () {
+    self.refreshData = async function (opts = {}) {
+        const force = opts.force === true;
+        if (!force && Date.now() - self.lastDataUpdate.getTime() < getSingleFetchCooldownMs()) {
+            console.log(`[Team ${self.id.peek()}] refreshData throttled — last refreshed ${Date.now() - self.lastDataUpdate.getTime()}ms ago`);
+            return;
+        }
         self.taskingLoading(true);
         fetchTeamById(self.id(), () => {
             self.taskingLoading(false);
@@ -290,9 +305,9 @@ export function Team(data = {}, deps = {}) {
     };
 
 
-    self.refreshDataAndTasking = function () {
-        self.fetchTasking();
-        self.refreshData();
+    self.refreshDataAndTasking = function (opts = {}) {
+        self.fetchTasking(opts);
+        self.refreshData(opts);
 
         // If this team has multiple assets, refresh shared default mapping
         if (_apiUrl && (self.trackableAssets?.() || []).length > 1) {
@@ -532,7 +547,10 @@ export function Team(data = {}, deps = {}) {
     });
 
     self.updateStatusById = function (statusId) {
-        const status = Enum.TeamStatusType.some(s => s.Id === statusId);
+        // TeamStatusType is a plain object keyed by name, not an array --
+        // .some() would either throw or (if it somehow ran) return a
+        // boolean, not the matching entry.
+        const status = Object.values(Enum.TeamStatusType).find(s => s.Id === statusId);
         if (status) {
             self.teamStatusType(status);
         }
@@ -548,7 +566,7 @@ export function Team(data = {}, deps = {}) {
         const lastFetch = self._lastFetchTaskingTime || 0;
         const lastData = self.lastTaskingDataUpdate?.getTime?.() ?? 0;
         const lastRefresh = Math.max(lastFetch, lastData);
-        if (!force && now - lastRefresh < 10000) {
+        if (!force && now - lastRefresh < getSingleFetchCooldownMs()) {
             console.log(`[Team ${self.id.peek()}] fetchTasking throttled — last refreshed ${now - lastRefresh}ms ago`);
             self.taskingLoading(false); // clear loading state since data is already fresh
             return;
@@ -626,12 +644,22 @@ export function Team(data = {}, deps = {}) {
     }
 
     Team.prototype.updateFromJson = function (d = {}) {
+        this.lastDataUpdate = new Date();
         if (d.Id !== undefined && d.Id !== this.id()) this.id(d.Id);
         if (d.TaskedJobCount !== undefined && d.TaskedJobCount !== this.taskedJobCount()) this.taskedJobCount(d.TaskedJobCount);
         if (d.Callsign !== undefined && d.Callsign !== this.callsign()) this.callsign(d.Callsign);
         if (d.TeamStatusType !== undefined) {
+            let status = d.TeamStatusType;
+            if (status && status.Name === undefined && status.Id != null) {
+                // Some pushes (e.g. teamCreated/teamUpdated) send a reduced
+                // {Id} object rather than the full {Id,Name,Description} --
+                // resolve the full entry from the static enum instead of
+                // storing the partial object, which would leave
+                // teamStatusType().Name (and therefore status display) blank.
+                status = Object.values(Enum.TeamStatusType).find(s => s.Id === status.Id) || status;
+            }
             const cur = this.teamStatusType();
-            if (!cur || cur.Id !== d.TeamStatusType?.Id) this.teamStatusType(d.TeamStatusType);
+            if (!cur || cur.Id !== status?.Id) this.teamStatusType(status);
         }
         if (d.Members !== undefined) {
             // Members is an array of objects — compare by length + leader/person ids

@@ -2387,6 +2387,40 @@ overflow: hidden;
   background-color: rgba(100, 160, 255, 0.22);
 }
 
+/* Generic "value just changed" indicator, applied via the flashOnChange binding */
+.flash-on-change {
+  animation: flash-on-change 0.9s ease-out;
+}
+@keyframes flash-on-change {
+  0% { background-color: rgba(255, 193, 7, 0.55); }
+  100% { background-color: transparent; }
+}
+.dark-mode .flash-on-change {
+  animation: flash-on-change-dark 0.9s ease-out;
+}
+@keyframes flash-on-change-dark {
+  0% { background-color: rgba(255, 213, 79, 0.4); }
+  100% { background-color: transparent; }
+}
+
+/* Same "value just changed" signal, but for text/icons inside wide or full-width
+   containers -- pulses the glyphs themselves instead of filling a background box, so it
+   doesn't leave an oversized highlight behind short text in a wide cell */
+.flash-text-on-change {
+  animation: flash-text-on-change 0.9s ease-out;
+}
+@keyframes flash-text-on-change {
+  0% { color: #b45f06; text-shadow: 0 0 6px rgba(255, 193, 7, 0.75); }
+  100% { color: inherit; text-shadow: none; }
+}
+.dark-mode .flash-text-on-change {
+  animation: flash-text-on-change-dark 0.9s ease-out;
+}
+@keyframes flash-text-on-change-dark {
+  0% { color: #ffd54f; text-shadow: 0 0 6px rgba(255, 213, 79, 0.85); }
+  100% { color: inherit; text-shadow: none; }
+}
+
 /* Fast tooltip (no native delay) — positioned fixed via JS to escape overflow clipping */
 .fast-tooltip {
   display: inline-flex;
@@ -3420,4 +3454,37 @@ input[type="search"]:focus {
 .dark-mode .job-search-suggestions li:hover,
 .dark-mode .job-search-suggestions li.active {
   background: #3a3a3a;
+}
+
+/* SignalR connection status banner -- deliberately loud, since the whole
+   page's live data depends on this connection and a silent drop would just
+   look like nothing is happening. */
+.signalr-status-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  padding: 8px 12px;
+  background: #c0392b;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  animation: signalr-status-banner-pulse 1.6s ease-in-out infinite;
+}
+
+.signalr-status-banner__icon {
+  font-size: 16px;
+}
+
+@keyframes signalr-status-banner-pulse {
+  0%, 100% { background: #c0392b; }
+  50% { background: #e74c3c; }
 }

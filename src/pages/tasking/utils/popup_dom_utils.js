@@ -16,7 +16,16 @@ export function bindKoToPopup(ko, vm, el) {
 }
 export function unbindKoFromPopup(ko, el) {
   if (!el || !el.__ko_bound__) return;
-  ko.cleanNode(el);
+  try {
+    ko.cleanNode(el);
+  } catch (e) {
+    // A concurrent reactive update (e.g. tasking data landing right as the
+    // popup closes) can interrupt cleanNode's virtual-element tree walk.
+    // The innerHTML reset below discards the whole subtree regardless, so
+    // this is safe to ignore rather than let it surface as an uncaught
+    // error -- and skipping delete/reset below would leave __ko_bound__
+    // stuck true, silently breaking the next open.
+  }
   delete el.__ko_bound__;
   resetPopupNode(el);              // leave clean for next open
 }
