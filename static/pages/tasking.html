@@ -216,7 +216,7 @@
                                 <th class="not-sortable" scope="col">Actions</th>
                             </tr>
                         </thead>
-                        <tbody data-bind="foreach: { data: sortedTeams, as: 't' }">
+                        <tbody data-bind="fadeForeach: { data: sortedTeams, as: 't' }">
                             <tr class="team-row" data-bind="css:{expanded: t.expanded()},
                    droppableRow: { team: t, onDrop: $root.showConfirmTaskingModal },
                    attr:{'aria-expanded': t.expanded}, attr: { 'data-team-id': t.id }">
@@ -479,7 +479,7 @@
                                                                             <!-- /ko -->
                                                                         </thead>
                                                                         <tbody
-                                                                            data-bind="foreach: { data: t.displayedTaskings, as: 'ts' }">
+                                                                            data-bind="fadeForeach: { data: t.displayedTaskings, as: 'ts' }">
                                                                             <tr>
                                                                                 <td
                                                                                     data-bind="text: ts.job.identifier, css: ts.job.rowColour()">
@@ -1044,7 +1044,7 @@
                             </tr>
                         </thead>
 
-                        <tbody data-bind="foreach: { data: sortedJobs, as: 'j' }">
+                        <tbody data-bind="fadeForeach: { data: sortedJobs, as: 'j' }">
                             <tr class="job-row" data-bind="attr: { 'data-job-id': j.id }">
                                 <td colspan="9">
                                     <div class="job-card" data-bind="css: { 'job-card--expanded': j.expanded() }">
@@ -1549,14 +1549,12 @@
                                                         <div class="col-12"
                                                             data-bind="visible: j.sortedTaskings().length > 0">
                                                             <fieldset class="mb-0">
-                                                                <legend class="job-details-legend">Taskings</legend>
-
-                                                                <!-- ko if: j.taskingLoading -->
-                                                                <div class="small text-muted mb-2">
-                                                                    <i class="fa fa-spinner fa-spin me-1"></i>
-                                                                    Loading taskings…
-                                                                </div>
-                                                                <!-- /ko -->
+                                                                <legend class="job-details-legend">Taskings
+                                                                    <!-- ko if: j.taskingLoading -->
+                                                                    <i class="fa fa-spinner fa-spin ms-1 text-muted"
+                                                                        title="Loading taskings…"></i>
+                                                                    <!-- /ko -->
+                                                                </legend>
 
                                                                 <div class="table-responsive">
                                                                     <table
@@ -1570,7 +1568,7 @@
                                                                             </tr>
                                                                         </thead>
                                                                         <tbody
-                                                                            data-bind="foreach: { data: j.sortedTaskings, as: 'ts' }">
+                                                                            data-bind="fadeForeach: { data: j.sortedTaskings, as: 'ts' }">
                                                                             <tr
                                                                                 data-bind="css: { 'job-popup__tasking-row--no-job': !ts.job }">
                                                                                 <td data-bind="text: ts.teamCallsign">

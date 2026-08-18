@@ -59,12 +59,14 @@ export function startBeaconSignalRConnection(negotiateUrl, getAccessToken) {
     connection = new signalR.HubConnectionBuilder()
         .withUrl(negotiateUrl, { accessTokenFactory: getAccessToken })
         .withAutomaticReconnect(new InfiniteBackoffRetryPolicy())
-        .configureLogging(signalR.LogLevel.Information)
+        // Error (not Information) -- suppresses the library's own per-message
+        // chatter and "No client method with the name 'X' found" warnings for
+        // unregistered subjects, while still surfacing real connection errors.
+        .configureLogging(signalR.LogLevel.Error)
         .build();
 
     KNOWN_EVENTS.forEach((eventName) => {
         connection.on(eventName, (payload) => {
-            console.log('[SignalR]', eventName, payload);
             getSubject(eventName).next(payload);
         });
     });

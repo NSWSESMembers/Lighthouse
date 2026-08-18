@@ -299,9 +299,11 @@ export function Team(data = {}, deps = {}) {
             return;
         }
         self.taskingLoading(true);
-        fetchTeamById(self.id(), () => {
+        try {
+            await fetchTeamById(self.id());
+        } finally {
             self.taskingLoading(false);
-        });
+        }
     };
 
 
