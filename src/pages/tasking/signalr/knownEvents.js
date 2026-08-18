@@ -40,10 +40,10 @@
 // ever actually send. Registered anyway since an unmatched guess is a
 // harmless no-op.
 //
-// Any additional method the server sends that isn't listed here still
-// surfaces in the console as a "No client method with the name 'X' found"
-// warning (logging is enabled at Information level in connection.js) --
-// that's how further real names get discovered and added.
+// Any additional method the server sends that isn't listed here is a
+// silent no-op now that connection.js logs at Error level -- bump that
+// back down to Information temporarily to surface "No client method with
+// the name 'X' found" warnings if hunting for further real event names.
 export const KNOWN_EVENTS = [
     'jobCreated',
     'jobUpdated',

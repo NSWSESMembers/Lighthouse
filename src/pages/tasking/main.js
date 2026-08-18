@@ -54,6 +54,7 @@ import { installDragDropRowBindings } from "./bindings/dragDropRows.js";
 import { installSortableArrayBindings } from "./bindings/sortableArray.js";
 import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
 import { installFlashOnChangeBinding } from "./bindings/flashOnChange.js";
+import { installRowTransitionBindings } from "./bindings/rowTransitions.js";
 import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
 import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
 
@@ -3767,7 +3768,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     //get tokens
-    let signalrStarted = false;
     BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(
         apiHost,
         params.source,
@@ -3775,23 +3775,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log("Fetched Beacon token," + rToken);
             setToken(rToken, rExp);
             myViewModel?.tokenLoading(false);
-
-            if (!signalrStarted) {
-                signalrStarted = true;
-                if (myViewModel?.config?.signalrEnabled() === false) {
-                    console.log('[SignalR] disabled via config -- not connecting');
-                } else {
-                    const negotiateUrl = params.signalr;
-                    if (!negotiateUrl) {
-                        console.warn('[SignalR] no signalr param on the page URL -- skipping connection');
-                    } else {
-                        // Closure over the module-level `token` var (kept current by
-                        // setToken() on every renewal), so each reconnect/negotiate
-                        // re-authenticates with whatever token is live at that moment.
-                        window.__beaconSignalRConnection = startBeaconSignalRConnection(negotiateUrl, () => token);
-                    }
-                }
-            }
         }
     );
 
@@ -3815,6 +3798,7 @@ document.addEventListener('DOMContentLoaded', function () {
         noBubbleFromDisabledButtonsBindings();
         installSortableArrayBindings();
         installFlashOnChangeBinding();
+        installRowTransitionBindings();
         registerAcronymTextBinding();
 
         ko.bindingProvider.instance = new ksb(options);
@@ -4037,6 +4021,31 @@ document.addEventListener('DOMContentLoaded', function () {
         getSubject('rsuReceived').subscribe(refreshIcemsIncidentFromPush);
         getSubject('iuaReceived').subscribe(refreshIcemsIncidentFromPush);
         getSubject('isuReceived').subscribe(refreshIcemsIncidentFromPush);
+
+        // Start the connection now that every subject subscription above is
+        // registered (so nothing pushed right at connect time is silently
+        // dropped -- Subject has no replay) and myViewModel/config
+        // definitely exist (so signalrEnabled() reads the real saved value
+        // instead of racing construction and guessing "enabled" by
+        // default). getToken() resolves once, reliably, whenever the first
+        // token lands -- no separate "started" guard or hooking into the
+        // token-fetch callback needed.
+        (async () => {
+            if (!myViewModel.config.signalrEnabled()) {
+                console.log('[SignalR] disabled via config -- not connecting');
+                return;
+            }
+            const negotiateUrl = params.signalr;
+            if (!negotiateUrl) {
+                console.warn('[SignalR] no signalr param on the page URL -- skipping connection');
+                return;
+            }
+            await getToken();
+            // Closure over the module-level `token` var (kept current by
+            // setToken() on every renewal), so each reconnect/negotiate
+            // re-authenticates with whatever token is live at that moment.
+            window.__beaconSignalRConnection = startBeaconSignalRConnection(negotiateUrl, () => token);
+        })();
 
         ko.applyBindings(myViewModel);
 

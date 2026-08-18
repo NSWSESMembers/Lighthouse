@@ -3603,9 +3603,11 @@ input[type="search"]:focus {
   background: #3a3a3a;
 }
 
-/* SignalR connection status banner -- deliberately loud, since the whole
-   page's live data depends on this connection and a silent drop would just
-   look like nothing is happening. */
+/* SignalR connection status banner -- visible (the whole page's live data
+   depends on this connection, so a silent drop shouldn't look like nothing
+   is happening), but a calm/informational cautionary tone rather than a
+   critical-error one: most of what it reports is transient (initial
+   connect, a brief reconnect blip), not an emergency. */
 .signalr-status-banner {
   position: fixed;
   top: 0;
@@ -3616,22 +3618,17 @@ input[type="search"]:focus {
   align-items: center;
   justify-content: center;
   gap: 0.5em;
-  padding: 8px 12px;
-  background: #c0392b;
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
+  padding: 6px 12px;
+  background: #fff3cd;
+  color: #664d03;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+  font-size: 13px;
   letter-spacing: 0.02em;
   text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  animation: signalr-status-banner-pulse 1.6s ease-in-out infinite;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 
 .signalr-status-banner__icon {
-  font-size: 16px;
-}
-
-@keyframes signalr-status-banner-pulse {
-  0%, 100% { background: #c0392b; }
-  50% { background: #e74c3c; }
+  font-size: 15px;
 }
