@@ -79,6 +79,8 @@ $(document).ready(function () {
   if (!query) return;
   var qs = parse_query_string(query);
 
+  teamViewModel.setSelectedTeamType({ Id: 1 });
+
   if (typeof qs.lhmembers !== 'undefined') {
     var memberIds = JSON.parse(unescape(qs.lhmembers));
     $.each(memberIds, function (k, memberId) {
@@ -87,7 +89,21 @@ $(document).ready(function () {
   }
 
   if (typeof qs.lhentityid !== 'undefined' && qs.lhentityid !== 'null') {
-    setTeamEntityById(unescape(qs.lhentityid));
+    var desiredEntityId = unescape(qs.lhentityid);
+
+    // The Team Create page can default Assigned To on its own (e.g. to the
+    // creating user's home HQ) shortly after load - if we set ours first,
+    // its default overwrites us straight after. Wait for entityAssignedTo
+    // to actually get defined once, then apply ours right after and stop
+    // listening, so we always land last regardless of who's first.
+    if (teamViewModel.entityAssignedTo.peek()) {
+      setTeamEntityById(desiredEntityId);
+    } else {
+      var entityDefinedSub = teamViewModel.entityAssignedTo.subscribe(function () {
+        entityDefinedSub.dispose();
+        setTeamEntityById(desiredEntityId);
+      });
+    }
   }
 });
 
