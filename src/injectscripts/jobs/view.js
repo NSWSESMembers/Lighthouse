@@ -40,6 +40,12 @@ var assetMapRenderAtTime;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 var assetMapRenderTimer;
 
+// Cache of the most recent getJobResponseSummary() result, so the create-team
+// picker modal (opened well after the popover fetch, from either the
+// Available or ActivationAccepted "Create Team" button) can read both
+// categories' names without re-fetching.
+var lastResponseSummary = null;
+
 //if ops logs update
 masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
 
@@ -187,20 +193,40 @@ $(document).off('click.lighthouseGemsDismiss').on('click.lighthouseGemsDismiss',
 });
 
 // Delegated (popover content is only in the DOM while shown, so this can't
-// bind directly): opens /Teams/Create with the accepted members' ids, the
-// same lhquickrecipient-style pattern used for the SMS "message a team"
-// button above - teams/create.js's inject script picks the params back up.
-// Also passes the incident's own HQ (entityAssignedTo) so the new team
-// gets assigned to the HQ that owns the incident, not whatever HQ the
-// person creating the team happens to be logged in under.
+// bind directly): opens the create-team picker modal, pre-ticked for
+// whichever category's button was clicked, with the other category's list
+// available too but left unticked.
 $(document).off('click.lighthouseCreateTeam').on('click.lighthouseCreateTeam', '.lighthouse-create-team-btn', function (e) {
   e.stopPropagation();
-  var memberIds = $(this).data('member-ids');
-  var entityId = masterViewModel.entityAssignedTo.peek() ? masterViewModel.entityAssignedTo.peek().Id : null;
-  window.open(
-    '/Teams/Create?lhmembers=' + escape(JSON.stringify(memberIds)) + '&lhentityid=' + escape(entityId),
-    '_blank',
+  if (!lastResponseSummary || !lastResponseSummary.categories) return;
+
+  var clickedCategory = $(this).data('category');
+  var categories = lastResponseSummary.categories;
+
+  renderCreateTeamPickerList(
+    '#lighthouseCreateTeamPickerAccepted',
+    categories.ActivationAccepted && categories.ActivationAccepted.Names,
+    clickedCategory === 'ActivationAccepted',
   );
+  renderCreateTeamPickerList(
+    '#lighthouseCreateTeamPickerAvailable',
+    categories.Available && categories.Available.Names,
+    clickedCategory === 'Available',
+  );
+  renderCreateTeamPickerList(
+    '#lighthouseCreateTeamPickerConditional',
+    categories.Conditional && categories.Conditional.Names,
+    clickedCategory === 'Conditional',
+  );
+
+  // Close the popover the button lives in so it doesn't sit open behind the modal.
+  $('.lighthouse-response-gem').each(function () {
+    var $g = $(this);
+    $g.data('lighthouse-pinned', false);
+    $g.popover('hide');
+  });
+
+  $('#lighthouseCreateTeamPickerModal').modal();
 });
 
 // Fills in the response-count gems (below the Incident Details header,
@@ -223,6 +249,8 @@ function lighthouseResponseGems() {
   getJobResponseSummary(jobId, function (err, summary) {
     $gemsRow.removeClass('is-loading');
     if (err || !summary) return;
+
+    lastResponseSummary = summary;
 
     var isClosed = !!summary.closed;
     $gemsRow.toggleClass('is-closed', isClosed);
@@ -255,16 +283,17 @@ function lighthouseResponseGems() {
 
       var closedNote = isClosed ? '<div class="lighthouse-response-gem-closed-note"><em>Activation closed</em></div>' : '';
 
-      // Quick path from "who's accepted/available" straight into a new
-      // team - only makes sense for the ActivationAccepted and Available
-      // gems, only when there's someone to add, and only for users who
-      // could actually create a team in the first place.
+      // Quick path from "who's accepted/available/conditional" into a new
+      // team - only makes sense for those three gems, only when there's
+      // someone to add, and only for users who could actually create a
+      // team in the first place. Opens the picker modal (below) pre-ticked
+      // for whichever category's button was clicked, rather than
+      // navigating straight off with just that category's names.
       var createTeamButtonHtml = '';
-      if ((category === 'ActivationAccepted' || category === 'Available') && data.Names && data.Names.length && user.isInRole(Enum.Role.TeamManagement.Id)) {
-        var memberIds = _.map(data.Names, function (person) { return person.MemberId; });
+      if ((category === 'ActivationAccepted' || category === 'Available' || category === 'Conditional') && data.Names && data.Names.length && user.isInRole(Enum.Role.TeamManagement.Id)) {
         createTeamButtonHtml = '<div class="lighthouse-create-team-btn-wrap">' +
-          '<button type="button" class="btn btn-xs btn-primary lighthouse-create-team-btn" data-member-ids="' +
-          _.escape(JSON.stringify(memberIds)) + '">Create Team</button></div>';
+          '<button type="button" class="btn btn-xs btn-primary lighthouse-create-team-btn" data-category="' +
+          _.escape(category) + '">Create Team</button></div>';
       }
 
       initGemPopover($gem, {
@@ -282,6 +311,92 @@ function lighthouseResponseGems() {
 whenJobIsReady(function () {
   lighthouseResponseGems();
 });
+
+// Lets the user tick/untick individual people from the Available and
+// Accepted lists before committing to a team, rather than the old
+// behaviour of jumping straight to /Teams/Create with a single category's
+// names. Built once and appended to <body> below; the two <ul>s are filled
+// in each time it's opened (see the .lighthouse-create-team-btn handler
+// above and renderCreateTeamPickerList()).
+function buildCreateTeamPickerModal() {
+  return (
+    <div class="modal fade" id="lighthouseCreateTeamPickerModal" role="dialog" style="display: none;">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title"><img id="lighthouseCreateTeamPickerLogo" style="width:18px;vertical-align:middle;margin-right:6px" /> Create Team from MyAvailability Responses</h4>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-sm-4">
+                <h5>Accepted</h5>
+                <ul class="lighthouse-create-team-picker-list" id="lighthouseCreateTeamPickerAccepted"></ul>
+              </div>
+              <div class="col-sm-4">
+                <h5>Available</h5>
+                <ul class="lighthouse-create-team-picker-list" id="lighthouseCreateTeamPickerAvailable"></ul>
+              </div>
+              <div class="col-sm-4">
+                <h5>Conditional</h5>
+                <ul class="lighthouse-create-team-picker-list" id="lighthouseCreateTeamPickerConditional"></ul>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="lighthouseCreateTeamPickerSubmit">Prefill Team Creation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function renderCreateTeamPickerList(listSelector, people, checked) {
+  var $list = $(listSelector);
+  if (!people || !people.length) {
+    $list.html('<li><em>No responders</em></li>');
+    return;
+  }
+  $list.html(_.map(people, function (person) {
+    return '<li><label><input type="checkbox" class="lighthouse-create-team-picker-checkbox" data-member-id="' +
+      _.escape(person.MemberId) + '"' + (checked ? ' checked' : '') + '> ' +
+      _.escape(person.Name) + '</label></li>';
+  }).join(''));
+}
+
+var createTeamPickerModal = buildCreateTeamPickerModal();
+$('body').append(createTeamPickerModal);
+
+// This modal is built and appended at module load time, before lighthouseUrl
+// (set async via postMessage from the content script) is guaranteed to
+// exist yet - baking it straight into the JSX above like the gem popovers
+// do risked a ReferenceError. Fill the logo in once it's actually ready.
+whenLighthouseIsReady(function () {
+  $(createTeamPickerModal)
+    .find('#lighthouseCreateTeamPickerLogo')
+    .attr('src', lighthouseUrl + 'icons/lh-black.png');
+});
+
+// Same navigation the old direct button used - lhmembers/lhentityid picked
+// back up by teams/create.js's inject script - just built from whichever
+// checkboxes are ticked across both lists instead of one fixed category.
+$(createTeamPickerModal)
+  .find('#lighthouseCreateTeamPickerSubmit')
+  .click(function () {
+    var memberIds = _.map($('.lighthouse-create-team-picker-checkbox:checked'), function (el) {
+      return $(el).data('member-id');
+    });
+    if (!memberIds.length) return;
+
+    var entityId = masterViewModel.entityAssignedTo.peek() ? masterViewModel.entityAssignedTo.peek().Id : null;
+    window.open(
+      '/Teams/Create?lhmembers=' + escape(JSON.stringify(memberIds)) + '&lhentityid=' + escape(entityId),
+      '_blank',
+    );
+    $('#lighthouseCreateTeamPickerModal').modal('hide');
+  });
 
 function lighthouseETAFromNow() {
   var future = moment(masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.peek());

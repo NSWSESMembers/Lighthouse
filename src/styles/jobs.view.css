@@ -224,3 +224,20 @@
   border-top: 1px solid #e5e5e5;
   text-align: right;
 }
+
+.lighthouse-create-team-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.lighthouse-create-team-picker-list li {
+  padding: 3px 0;
+}
+
+.lighthouse-create-team-picker-list label {
+  font-weight: normal;
+  cursor: pointer;
+}
