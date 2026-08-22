@@ -40,6 +40,12 @@ var assetMapRenderAtTime;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 var assetMapRenderTimer;
 
+// Cache of the most recent getJobResponseSummary() result, so the create-team
+// picker modal (opened well after the popover fetch, from either the
+// Available or ActivationAccepted "Create Team" button) can read both
+// categories' names without re-fetching.
+var lastResponseSummary = null;
+
 //if ops logs update
 masterViewModel.notesViewModel.opsLogEntries.subscribe(lighthouseDictionary);
 
@@ -60,6 +66,337 @@ masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.subscribe(lighth
 masterViewModel.teamsViewModel.taskedTeams.subscribe(function () {
   setTimeout(lighthouseTasking, 0);
 });
+
+// The myavailability/incident Lambda only has data for production Beacon
+// (apibeacon.ses.nsw.gov.au) - trainbeacon/devbeacon jobIds don't exist in
+// that database. Gate on urls.Base (the API root Beacon's own page is
+// talking to) so we never send a real request outside prod.
+function isProductionBeaconApi() {
+  return typeof urls !== 'undefined' && typeof urls.Base === 'string' &&
+    urls.Base.indexOf('apibeacon.ses.nsw.gov.au') !== -1;
+}
+
+// Assumes Beacon's jobId is the same value as `activationId` in the mams
+// database (View_ActivationRequest) - if gems come back empty/wrong for a
+// job you know has responses, that assumption is the first thing to check.
+function getJobResponseSummary(jobId, cb) {
+  if (!isProductionBeaconApi()) {
+    // Non-prod Beacon (trainbeacon/devbeacon/local) - don't call the real
+    // Lambda, just show obviously-fake placeholder data so the widget is
+    // still visible for UI testing.
+    cb(null, {
+      closed: false,
+      categories: {
+        ActivationAccepted: { Count: 1, Names: [{ MemberId: -1, Name: 'Fake Test Member' }] },
+        Available: { Count: 2, Names: [{ MemberId: -2, Name: 'Fake Test Member' }, { MemberId: -3, Name: 'Fake Test Member 2' }] },
+        Conditional: { Count: 1, Names: [{ MemberId: -4, Name: 'Fake Test Member' }] },
+        Unavailable: { Count: 1, Names: [{ MemberId: -5, Name: 'Fake Test Member' }] },
+        Unset: { Count: 5, Names: [] },
+      },
+    });
+    return;
+  }
+
+  $.ajax({
+    url: 'https://lambda.lighthouse-extension.com/myavailability/incident',
+    method: 'GET',
+    data: { activationId: jobId },
+    beforeSend: function (n) {
+      n.setRequestHeader('Authorization', 'Bearer ' + user.accessToken);
+    },
+    dataType: 'json',
+    success: function (data) {
+      cb(null, data);
+    },
+    error: function (xhr, status, error) {
+      cb(error);
+    },
+  });
+}
+
+// Shows on hover (as a preview) and pins open on click so it stays visible
+// after the mouse leaves - click again, or click anywhere outside the gem
+// and its popover, to unpin/close it. Uses a manual trigger and drives
+// show/hide ourselves so click-to-pin and hover-preview don't fight each
+// other the way combining Bootstrap's built-in "hover click" triggers does.
+function initGemPopover($gem, options) {
+  $gem.data('lighthouse-pinned', false);
+  $gem.popover(_.extend({}, options, { trigger: 'manual' }));
+
+  $gem.off('.lighthouseGem');
+
+  var hideTimer = null;
+  function cancelHide() {
+    if (hideTimer) {
+      clearTimeout(hideTimer);
+      hideTimer = null;
+    }
+  }
+  function scheduleHide() {
+    cancelHide();
+    hideTimer = setTimeout(function () {
+      if (!$gem.data('lighthouse-pinned')) {
+        $gem.popover('hide');
+      }
+    }, 200);
+  }
+
+  $gem.on('mouseenter.lighthouseGem', function () {
+    cancelHide();
+    $gem.popover('show');
+  });
+  // The popover panel itself is a separate element appended to <body>, not
+  // a child of the gem - moving the mouse from the gem into the panel is a
+  // real mouseleave on the gem, so without this the popover would vanish
+  // the instant the cursor crosses into it. Track hover on the panel too
+  // (bound once it actually exists, via shown.bs.popover) and use a short
+  // delay before hiding so crossing the gap between the two is forgiving.
+  $gem.on('shown.bs.popover.lighthouseGem', function () {
+    var popoverInstance = $gem.data('bs.popover');
+    var $tip = popoverInstance && (popoverInstance.$tip || (popoverInstance.tip && popoverInstance.tip()));
+    if ($tip && $tip.length) {
+      $tip.off('.lighthouseGem');
+      $tip.on('mouseenter.lighthouseGem', cancelHide);
+      $tip.on('mouseleave.lighthouseGem', scheduleHide);
+    }
+  });
+  $gem.on('mouseleave.lighthouseGem', scheduleHide);
+  $gem.on('click.lighthouseGem', function (e) {
+    e.stopPropagation();
+    cancelHide();
+    var pinned = !$gem.data('lighthouse-pinned');
+    $gem.data('lighthouse-pinned', pinned);
+    $gem.popover(pinned ? 'show' : 'hide');
+  });
+
+  // Popovers initialized while the cursor is already sitting over the gem
+  // (very likely right as the async data load finishes) miss the next
+  // mouseenter - show immediately in that case.
+  if ($gem.is(':hover')) {
+    $gem.popover('show');
+  }
+}
+
+// Click anywhere outside a pinned gem/popover unpins and closes it.
+$(document).off('click.lighthouseGemsDismiss').on('click.lighthouseGemsDismiss', function (e) {
+  var $target = $(e.target);
+  if ($target.closest('.lighthouse-response-gem').length || $target.closest('.popover').length) {
+    return;
+  }
+  $('.lighthouse-response-gem').each(function () {
+    var $g = $(this);
+    if ($g.data('lighthouse-pinned')) {
+      $g.data('lighthouse-pinned', false);
+      $g.popover('hide');
+    }
+  });
+});
+
+// Delegated (popover content is only in the DOM while shown, so this can't
+// bind directly): opens the create-team picker modal, pre-ticked for
+// whichever category's button was clicked, with the other category's list
+// available too but left unticked.
+$(document).off('click.lighthouseCreateTeam').on('click.lighthouseCreateTeam', '.lighthouse-create-team-btn', function (e) {
+  e.stopPropagation();
+  if (!lastResponseSummary || !lastResponseSummary.categories) return;
+
+  var clickedCategory = $(this).data('category');
+  var categories = lastResponseSummary.categories;
+
+  renderCreateTeamPickerList(
+    '#lighthouseCreateTeamPickerAccepted',
+    categories.ActivationAccepted && categories.ActivationAccepted.Names,
+    clickedCategory === 'ActivationAccepted',
+  );
+  renderCreateTeamPickerList(
+    '#lighthouseCreateTeamPickerAvailable',
+    categories.Available && categories.Available.Names,
+    clickedCategory === 'Available',
+  );
+  renderCreateTeamPickerList(
+    '#lighthouseCreateTeamPickerConditional',
+    categories.Conditional && categories.Conditional.Names,
+    clickedCategory === 'Conditional',
+  );
+
+  // Close the popover the button lives in so it doesn't sit open behind the modal.
+  $('.lighthouse-response-gem').each(function () {
+    var $g = $(this);
+    $g.data('lighthouse-pinned', false);
+    $g.popover('hide');
+  });
+
+  $('#lighthouseCreateTeamPickerModal').modal();
+});
+
+// Fills in the response-count gems (below the Incident Details header,
+// built by contentscripts/jobs/view.js) and wires up hover popovers
+// listing the names of the people in each category. Once the activation
+// is closed, real counts/names still show - a lock icon on the row and a
+// note in each popover just indicate the activation is closed.
+function lighthouseResponseGems() {
+  var gemSelectorsByCategory = {
+    ActivationAccepted: '#lighthouse-gem-activationaccepted',
+    Available: '#lighthouse-gem-available',
+    Conditional: '#lighthouse-gem-conditional',
+    Unavailable: '#lighthouse-gem-unavailable',
+    Unset: '#lighthouse-gem-unset',
+  };
+
+  var $gemsRow = $('#lighthouse-response-gems');
+  $gemsRow.addClass('is-loading');
+
+  getJobResponseSummary(jobId, function (err, summary) {
+    $gemsRow.removeClass('is-loading');
+    if (err || !summary) return;
+
+    lastResponseSummary = summary;
+
+    var isClosed = !!summary.closed;
+    $gemsRow.toggleClass('is-closed', isClosed);
+    if (isClosed && $gemsRow.find('.lighthouse-response-gems-closed-icon').length === 0) {
+      $gemsRow.prepend('<em class="fa fa-lock lighthouse-response-gems-closed-icon" title="Activation closed"></em>');
+    }
+
+    _.each(gemSelectorsByCategory, function (selector, category) {
+      var $gem = $(selector);
+      if ($gem.length === 0) return;
+
+      var title = '<img src="' + lighthouseUrl + 'icons/lh-black.png" style="width:14px;vertical-align:middle;margin-right:5px" />myAvailability: ' +
+        category.replace(/([a-z])([A-Z])/g, '$1 $2');
+      var data = (summary.categories && summary.categories[category]) || { Count: 0, Names: [] };
+
+      $gem.text(data.Count);
+
+      var MAX_NAMES_SHOWN = 20;
+      var namesHtml = data.Names && data.Names.length
+        ? '<ul class="lighthouse-response-gem-names">' + _.map(data.Names.slice(0, MAX_NAMES_SHOWN), function (person) {
+            // MemberId travels with each entry for future use (e.g. linking
+            // to a profile) but is deliberately not rendered here.
+            return '<li data-member-id="' + _.escape(person.MemberId) + '">' + _.escape(person.Name) + '</li>';
+          }).join('') +
+          (data.Names.length > MAX_NAMES_SHOWN
+            ? '<li><em>+' + (data.Names.length - MAX_NAMES_SHOWN) + ' more</em></li>'
+            : '') +
+          '</ul>'
+        : '<em>No responders</em>';
+
+      var closedNote = isClosed ? '<div class="lighthouse-response-gem-closed-note"><em>Activation closed</em></div>' : '';
+
+      // Quick path from "who's accepted/available/conditional" into a new
+      // team - only makes sense for those three gems, only when there's
+      // someone to add, and only for users who could actually create a
+      // team in the first place. Opens the picker modal (below) pre-ticked
+      // for whichever category's button was clicked, rather than
+      // navigating straight off with just that category's names.
+      var createTeamButtonHtml = '';
+      if ((category === 'ActivationAccepted' || category === 'Available' || category === 'Conditional') && data.Names && data.Names.length && user.isInRole(Enum.Role.TeamManagement.Id)) {
+        createTeamButtonHtml = '<div class="lighthouse-create-team-btn-wrap">' +
+          '<button type="button" class="btn btn-xs btn-primary lighthouse-create-team-btn" data-category="' +
+          _.escape(category) + '">Create Team</button></div>';
+      }
+
+      initGemPopover($gem, {
+        placement: 'bottom',
+        trigger: 'hover',
+        html: true,
+        title: title,
+        content: closedNote + namesHtml + createTeamButtonHtml,
+        container: 'body',
+      });
+    });
+  });
+}
+
+whenJobIsReady(function () {
+  lighthouseResponseGems();
+});
+
+// Lets the user tick/untick individual people from the Available and
+// Accepted lists before committing to a team, rather than the old
+// behaviour of jumping straight to /Teams/Create with a single category's
+// names. Built once and appended to <body> below; the two <ul>s are filled
+// in each time it's opened (see the .lighthouse-create-team-btn handler
+// above and renderCreateTeamPickerList()).
+function buildCreateTeamPickerModal() {
+  return (
+    <div class="modal fade" id="lighthouseCreateTeamPickerModal" role="dialog" style="display: none;">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h4 class="modal-title"><img id="lighthouseCreateTeamPickerLogo" style="width:18px;vertical-align:middle;margin-right:6px" /> Create Team from MyAvailability Responses</h4>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-sm-4">
+                <h5>Accepted</h5>
+                <ul class="lighthouse-create-team-picker-list" id="lighthouseCreateTeamPickerAccepted"></ul>
+              </div>
+              <div class="col-sm-4">
+                <h5>Available</h5>
+                <ul class="lighthouse-create-team-picker-list" id="lighthouseCreateTeamPickerAvailable"></ul>
+              </div>
+              <div class="col-sm-4">
+                <h5>Conditional</h5>
+                <ul class="lighthouse-create-team-picker-list" id="lighthouseCreateTeamPickerConditional"></ul>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="lighthouseCreateTeamPickerSubmit">Prefill Team Creation</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function renderCreateTeamPickerList(listSelector, people, checked) {
+  var $list = $(listSelector);
+  if (!people || !people.length) {
+    $list.html('<li><em>No responders</em></li>');
+    return;
+  }
+  $list.html(_.map(people, function (person) {
+    return '<li><label><input type="checkbox" class="lighthouse-create-team-picker-checkbox" data-member-id="' +
+      _.escape(person.MemberId) + '"' + (checked ? ' checked' : '') + '> ' +
+      _.escape(person.Name) + '</label></li>';
+  }).join(''));
+}
+
+var createTeamPickerModal = buildCreateTeamPickerModal();
+$('body').append(createTeamPickerModal);
+
+// This modal is built and appended at module load time, before lighthouseUrl
+// (set async via postMessage from the content script) is guaranteed to
+// exist yet - baking it straight into the JSX above like the gem popovers
+// do risked a ReferenceError. Fill the logo in once it's actually ready.
+whenLighthouseIsReady(function () {
+  $(createTeamPickerModal)
+    .find('#lighthouseCreateTeamPickerLogo')
+    .attr('src', lighthouseUrl + 'icons/lh-black.png');
+});
+
+// Same navigation the old direct button used - lhmembers/lhentityid picked
+// back up by teams/create.js's inject script - just built from whichever
+// checkboxes are ticked across both lists instead of one fixed category.
+$(createTeamPickerModal)
+  .find('#lighthouseCreateTeamPickerSubmit')
+  .click(function () {
+    var memberIds = _.map($('.lighthouse-create-team-picker-checkbox:checked'), function (el) {
+      return $(el).data('member-id');
+    });
+    if (!memberIds.length) return;
+
+    var entityId = masterViewModel.entityAssignedTo.peek() ? masterViewModel.entityAssignedTo.peek().Id : null;
+    window.open(
+      '/Teams/Create?lhmembers=' + escape(JSON.stringify(memberIds)) + '&lhentityid=' + escape(entityId),
+      '_blank',
+    );
+    $('#lighthouseCreateTeamPickerModal').modal('hide');
+  });
 
 function lighthouseETAFromNow() {
   var future = moment(masterViewModel.teamsViewModel.jobTeamStatusEstimatedCompletion.peek());

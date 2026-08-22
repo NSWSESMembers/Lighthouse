@@ -17,6 +17,8 @@
     "64":"icons/lighthouse64_dev.png"
   },
   "host_permissions": [
+    "https://beacon-prod-comms.azurewebsites.net/*",
+    "https://beacon-train-comms.azurewebsites.net/*",
     "https://beacon.ses.nsw.gov.au/*",
     "https://trainbeacon.ses.nsw.gov.au/*",
     "https://previewbeacon.ses.nsw.gov.au/*",
@@ -121,7 +123,8 @@
     {
       "matches": [
         "https://*.ses.nsw.gov.au/Teams/Create",
-        "https://*.ses.nsw.gov.au/Teams/Create/"
+        "https://*.ses.nsw.gov.au/Teams/Create/",
+        "https://*.ses.nsw.gov.au/Teams/Create?*"
       ],
       "js": ["contentscripts/teams/create.js"]
     },

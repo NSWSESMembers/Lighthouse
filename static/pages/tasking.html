@@ -7,6 +7,10 @@
 </head>
 
 <body style="opacity:0; transition: opacity .25s ease;">
+    <div id="signalr-status-banner" class="signalr-status-banner" data-bind="visible: signalrDisconnected">
+        <span class="signalr-status-banner__icon">⚠</span>
+        <span data-bind="text: signalrStatusText"></span>
+    </div>
     <div id="alerts-container" class="position-fixed top-0 start-50 translate-middle-x mt-3"
         style="z-index:2000; width:600px; max-width:90%;"></div>
 
@@ -14,16 +18,16 @@
         <aside class="sidebar"><!-- fixed-width column in tasking.css -->
             <div class="pane pane--top" id="paneTop">
                 <!-- TEAMS (top pane) -->
-                <div class="d-flex align-items-center justify-content-between px-2">
+                <div class="d-flex align-items-center justify-content-between px-2 pane-toolbar">
                     <div
-                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
+                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header toolbar-label">
                         <div class="flex-grow-1 d-flex justify-content-center">
                             <span>Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
                         </div>
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                        <div class="input-group input-group-sm" style="width:250px;">
+                        <div class="input-group input-group-sm toolbar-search">
                             <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
                             <input type="search" id="teamSearch" class="form-control form-control-sm py-0"
                                 placeholder="Search" data-bind="value: teamSearch, valueUpdate: 'input'">
@@ -35,20 +39,20 @@
                             data-bind="click: togglePinnedTeamsOnly, css: { active: showPinnedTeamsOnly }, disable: !countPinnedTeams()">
                             <i class="fa fa-star fa-center"></i>
                         </button>
-                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Ops Log"
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Ops Log"
                                 data-bind="click: openBlankOpsLogModal">
                                 <span class="position-relative d-inline-block" style="left: -4px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
                                     <i class="fa fa-book"></i>
                                     <i class="fa fa-plus position-absolute" style="top:-1px; left:19px; font-size:0.7em;"></i>
                                 </span>
                             </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Radio Log"
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Radio Log"
                             data-bind="click: openBlankRadioOpsLogModal">
                             <span class="position-relative d-inline-block" style="left: -3px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
                                 <i class="fa fa-microphone"></i>
                                 <i class="fa fa-plus position-absolute" style="top:-1px; left:18px; font-size:0.7em;"></i>
                             </span>
-                        </button>                    
+                        </button>
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle py-0 px-2" type="button"
                                 id="teamMenu" data-bs-toggle="dropdown" data-bs-auto-close="outside"
@@ -158,11 +162,29 @@
                             click: fetchAllTeamData,
                             disable: teamsLoading">
                             <i class="fa fa-sync" data-bind="css: { 'fa-spin': teamsLoading }"></i>
-                        </button>                        
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config"
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Page Config"
                             data-bs-toggle="modal" data-bs-target="#configModal">
                             <i class="fa fa-cog"></i>
                         </button>
+                        <div class="dropdown toolbar-overflow">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button"
+                                id="teamToolbarOverflow" data-bs-toggle="dropdown" aria-expanded="false"
+                                title="More actions">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="teamToolbarOverflow">
+                                <li><button class="dropdown-item" type="button"
+                                        data-bind="click: openBlankOpsLogModal"><i class="fa fa-book me-2"></i>Ops
+                                        Log</button></li>
+                                <li><button class="dropdown-item" type="button"
+                                        data-bind="click: openBlankRadioOpsLogModal"><i
+                                            class="fa fa-microphone me-2"></i>Radio Log</button></li>
+                                <li><button class="dropdown-item" type="button" data-bs-toggle="modal"
+                                        data-bs-target="#configModal"><i class="fa fa-cog me-2"></i>Page
+                                        Config</button></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="table-responsive team-table-container">
@@ -194,7 +216,7 @@
                                 <th class="not-sortable" scope="col">Actions</th>
                             </tr>
                         </thead>
-                        <tbody data-bind="foreach: { data: sortedTeams, as: 't' }">
+                        <tbody data-bind="fadeForeach: { data: sortedTeams, as: 't' }">
                             <tr class="team-row" data-bind="css:{expanded: t.expanded()},
                    droppableRow: { team: t, onDrop: $root.showConfirmTaskingModal },
                    attr:{'aria-expanded': t.expanded}, attr: { 'data-team-id': t.id }">
@@ -238,17 +260,17 @@
                                             </div>
 
                                             <!-- 3. Status -->
-                                            <div class="team-cell" data-bind="text: t.statusName"></div>
+                                            <div class="team-cell" data-bind="text: t.statusName, flashTextOnChange: t.statusName"></div>
 
                                             <!-- 4. HQ -->
                                             <div class="team-cell" data-bind="text: t.assignedTo().code"></div>
 
                                             <!-- 5. Task Count -->
-                                            <div class="team-cell" data-bind="text: t.taskedJobCount() + ' Active'">
+                                            <div class="team-cell" data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount">
                                             </div>
 
                                             <!-- 6. Team Leader -->
-                                            <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader">
+                                            <div class="team-cell team-cell--leader" data-bind="text: t.teamLeader, flashTextOnChange: t.teamLeader">
                                             </div>
 
                                             <!-- 7. Actions -->
@@ -457,7 +479,7 @@
                                                                             <!-- /ko -->
                                                                         </thead>
                                                                         <tbody
-                                                                            data-bind="foreach: { data: t.displayedTaskings, as: 'ts' }">
+                                                                            data-bind="fadeForeach: { data: t.displayedTaskings, as: 'ts' }">
                                                                             <tr>
                                                                                 <td
                                                                                     data-bind="text: ts.job.identifier, css: ts.job.rowColour()">
@@ -479,6 +501,7 @@
                                                                                             data-bs-auto-close="outside"
                                                                                             data-bind="text: ts.currentStatus,
                                                                                                     css: ts.tagColorFromStatus(),
+                                                                                                    flashOnChange: ts.currentStatus,
                                                                                                     click: ts.onStatusDropdownToggleClick">
                                                                                         </button>
                                                                                         <div
@@ -724,15 +747,15 @@
 
             <div class="pane pane--bottom" id="paneBottom">
                 <!-- JOBS (bottom pane) -->
-                <div class="d-flex align-items-center justify-content-between px-2">
+                <div class="d-flex align-items-center justify-content-between px-2 pane-toolbar">
                     <div
-                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header">
+                        class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header toolbar-label">
                         <div class="flex-grow-1 d-flex justify-content-center">
                             <span>Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <div class="position-relative" style="width:250px;">
+                        <div class="position-relative toolbar-search">
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text py-0 px-1"><i class="fa fa-search"></i></span>
                                 <input type="search" id="jobSearch" class="form-control form-control-sm py-0"
@@ -757,14 +780,14 @@
                             data-bind="click: togglePinnedIncidentsOnly, css: { active: showPinnedIncidentsOnly }, disable: !countPinnedIncidents()">
                             <i class="fa fa-star fa-center"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Ops Log"
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Ops Log"
                             data-bind="click: openBlankOpsLogModal">
                                 <span class="position-relative d-inline-block" style="left: -4px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
                                     <i class="fa fa-book"></i>
                                     <i class="fa fa-plus position-absolute" style="top:-1px; left:19px; font-size:0.7em;"></i>
                                 </span>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Radio Log"
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Radio Log"
                             data-bind="click: openBlankRadioOpsLogModal">
                             <span class="position-relative d-inline-block" style="left: -2px; width:1.5em; height:1em; line-height:1;" aria-hidden="true">
                                 <i class="fa fa-microphone"></i>
@@ -963,10 +986,28 @@
                             disable: jobsLoading">
                             <i class="fa fa-sync" data-bind="css: { 'fa-spin': jobsLoading }"></i>
                         </button>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Page Config"
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Page Config"
                             data-bs-toggle="modal" data-bs-target="#configModal">
                             <i class="fa fa-cog"></i>
                         </button>
+                        <div class="dropdown toolbar-overflow">
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button"
+                                id="jobToolbarOverflow" data-bs-toggle="dropdown" aria-expanded="false"
+                                title="More actions">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="jobToolbarOverflow">
+                                <li><button class="dropdown-item" type="button"
+                                        data-bind="click: openBlankOpsLogModal"><i class="fa fa-book me-2"></i>Ops
+                                        Log</button></li>
+                                <li><button class="dropdown-item" type="button"
+                                        data-bind="click: openBlankRadioOpsLogModal"><i
+                                            class="fa fa-microphone me-2"></i>Radio Log</button></li>
+                                <li><button class="dropdown-item" type="button" data-bs-toggle="modal"
+                                        data-bs-target="#configModal"><i class="fa fa-cog me-2"></i>Page
+                                        Config</button></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 <div class="table-responsive job-table-container">
@@ -982,9 +1023,9 @@
                                     data-bind="event: { click: setJobSortFromElement }">
                                     <span class="th-label">Id</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
-                                <th class="sortable" data-sort-key="receivedAt" aria-sort="none"
+                                <th class="sortable" data-sort-key="receivedAt" aria-sort="none" title="Received"
                                     data-bind="event: { click: setJobSortFromElement }">
-                                    <span class="th-label">Received</span> <i class="fa sort-icon fa-sort"></i>
+                                    <span class="th-label">Recv</span> <i class="fa sort-icon fa-sort"></i>
                                 </th>
                                 <th class="sortable" data-sort-key="entityAssignedTo.code" aria-sort="none"
                                     data-bind="event: { click: setJobSortFromElement }">
@@ -1003,7 +1044,7 @@
                             </tr>
                         </thead>
 
-                        <tbody data-bind="foreach: { data: sortedJobs, as: 'j' }">
+                        <tbody data-bind="fadeForeach: { data: sortedJobs, as: 'j' }">
                             <tr class="job-row" data-bind="attr: { 'data-job-id': j.id }">
                                 <td colspan="9">
                                     <div class="job-card" data-bind="css: { 'job-card--expanded': j.expanded() }">
@@ -1034,37 +1075,40 @@
 
                                             <!-- 2. Id -->
                                             <div class="job-cell job-cell--id">
-                                                <span data-bind="text: j.identifierTrimmed"></span>
-                                                <button type="button"
-                                                    class="btn btn-link p-0 text-decoration-none fa-center images-button"
-                                                    title="View incident images"
-                                                    data-bind="visible: j.imageCount() > 0, click: $root.openIncidentImages, clickBubble: false">
-                                                    <i class="far fa-image"></i>
-                                                    <span class="visually-hidden">Images</span>
-                                                </button>
-                                                <em class="fa fa-fw fa-share-alt" style="width: 1em;"
-                                                    data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }, css: { 'text-danger': j.hasUnacceptedNotifications() }"></em>
+                                                <div class="job-id-text" data-bind="text: j.identifierTrimmed"></div>
+                                                <div class="job-id-icons">
+                                                    <button type="button"
+                                                        class="btn btn-link p-0 text-decoration-none fa-center images-button"
+                                                        title="View incident images"
+                                                        data-bind="visible: j.imageCount() > 0, flashTextOnChange: j.imageCount, click: $root.openIncidentImages, clickBubble: false">
+                                                        <i class="far fa-image"></i>
+                                                        <span class="visually-hidden">Images</span>
+                                                    </button>
+                                                    <em class="fa fa-fw fa-share-alt" style="width: 1em;"
+                                                        data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }, css: { 'text-danger': j.hasUnacceptedNotifications() }, flashTextOnChange: j.hasUnacceptedNotifications"></em>
+                                                </div>
                                             </div>
 
                                             <!-- 3. Received -->
-                                            <div class="job-cell job-cell--received">
-                                                <span data-bind="text: j.receivedAtShort, attr:{ title: j.receivedAt }"
-                                                    data-bs-toggle="tooltip"></span>
+                                            <div class="job-cell job-cell--received" data-bs-toggle="tooltip"
+                                                data-bind="attr:{ title: j.receivedAt }">
+                                                <div class="received-time" data-bind="text: j.receivedAtTimeShort"></div>
+                                                <div class="received-date" data-bind="text: j.receivedAtDateShort"></div>
                                             </div>
 
                                             <!-- 4. HQ -->
                                             <div class="job-cell job-cell--hq">
-                                                <span data-bind="text: j.entityAssignedTo.code"></span>
+                                                <span data-bind="text: j.entityAssignedTo.code, flashTextOnChange: j.entityAssignedTo.code"></span>
                                             </div>
 
                                             <!-- 5. Type -->
                                             <div class="job-cell job-cell--type">
-                                                <span data-bind="text: j.typeShort + j.categoriesNameNumberDash"></span>
+                                                <span data-bind="text: j.typeShort + j.categoriesNameNumberDash, flashTextOnChange: j.typeShort() + j.categoriesNameNumberDash()"></span>
                                             </div>
 
                                             <!-- 6. Situation -->
                                             <div class="job-cell job-cell--situation">
-                                                <span data-bind="text: j.situationOnScene"></span>
+                                                <span data-bind="text: j.situationOnScene, flashTextOnChange: j.situationOnScene"></span>
                                             </div>
 
                                             <!-- 7. Status -->
@@ -1074,7 +1118,7 @@
                                                     <button class="jobstatus-dropdown-btn" type="button"
                                                         data-bs-toggle="dropdown"
                                                         data-bind="click: j.onStatusNameClick">
-                                                        <span data-bind="text: j.statusNameAndCount"></span>
+                                                        <span data-bind="text: j.statusNameAndCount, flashOnChange: j.statusNameAndCount"></span>
                                                         <span class="caret"></span>
                                                     </button>
                                                     <ul class="dropdown-menu jobstatusDropdown">
@@ -1095,7 +1139,7 @@
                                                 <span>
                                                     <div class="d-grid gap-2">
                                                         <button class="btn btn-sm btn-outline-dark"
-                                                            data-bind="text: j.addressDisplayOrGPS, click: j.focusMap, clickBubble: false,  event: { mouseover: j.mouseEnterAddressButton, mouseleave: j.mouseLeaveAddressButton }"></button>
+                                                            data-bind="text: j.addressDisplayOrGPS, flashTextOnChange: j.addressDisplayOrGPS, click: j.focusMap, clickBubble: false,  event: { mouseover: j.mouseEnterAddressButton, mouseleave: j.mouseLeaveAddressButton }"></button>
                                                     </div>
                                                 </span>
                                             </div>
@@ -1351,8 +1395,12 @@
                                                                     </div>
                                                                     <!-- /ko -->
                                                                     <!-- ko ifnot: j.dataLoading() -->
-                                                                    <div class="text-center" style="font-size: 0.85em; color: #888; margin-top: 0.25em;" data-bind="text: 'Refreshed ' + j.lastRefreshedAgo(), visible: j.lastRefreshedAgo">
-                                                                    </div>
+                                                                    <button type="button" class="btn btn-link btn-sm p-0 w-100 text-center"
+                                                                        style="font-size: 0.85em; color: #888; margin-top: 0.25em; text-decoration: none;"
+                                                                        title="Refresh this incident's data"
+                                                                        data-bind="click: j.refreshAllData, clickBubble: false, visible: j.lastRefreshedAgo">
+                                                                        <i class="fa fa-sync-alt me-1"></i><span data-bind="text: 'Refreshed ' + j.lastRefreshedAgo()"></span>
+                                                                    </button>
                                                                     <!-- /ko -->
                                                                 </div>
                                                             </div>
@@ -1501,14 +1549,12 @@
                                                         <div class="col-12"
                                                             data-bind="visible: j.sortedTaskings().length > 0">
                                                             <fieldset class="mb-0">
-                                                                <legend class="job-details-legend">Taskings</legend>
-
-                                                                <!-- ko if: j.taskingLoading -->
-                                                                <div class="small text-muted mb-2">
-                                                                    <i class="fa fa-spinner fa-spin me-1"></i>
-                                                                    Loading taskings…
-                                                                </div>
-                                                                <!-- /ko -->
+                                                                <legend class="job-details-legend">Taskings
+                                                                    <!-- ko if: j.taskingLoading -->
+                                                                    <i class="fa fa-spinner fa-spin ms-1 text-muted"
+                                                                        title="Loading taskings…"></i>
+                                                                    <!-- /ko -->
+                                                                </legend>
 
                                                                 <div class="table-responsive">
                                                                     <table
@@ -1522,7 +1568,7 @@
                                                                             </tr>
                                                                         </thead>
                                                                         <tbody
-                                                                            data-bind="foreach: { data: j.sortedTaskings, as: 'ts' }">
+                                                                            data-bind="fadeForeach: { data: j.sortedTaskings, as: 'ts' }">
                                                                             <tr
                                                                                 data-bind="css: { 'job-popup__tasking-row--no-job': !ts.job }">
                                                                                 <td data-bind="text: ts.teamCallsign">
@@ -1537,6 +1583,7 @@
                                                                                             data-bs-auto-close="outside"
                                                                                             data-bind="text: ts.currentStatus,
                                                                                                     css: ts.tagColorFromStatus(),
+                                                                                                    flashOnChange: ts.currentStatus,
                                                                                                     click: ts.onStatusDropdownToggleClick">
                                                                                         </button>
                                                                                         <div
@@ -1719,14 +1766,14 @@
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
-                                                                                            data-bind="click: ts.sendSMS, clickBubble: false, disable: !ts.team.members().length"
+                                                                                            data-bind="click: ts.sendSMS, clickBubble: false, disable: !ts.team || !ts.team.members().length"
                                                                                             title="Message">
                                                                                             <i
                                                                                                 class="fa fa-envelope"></i>
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
-                                                                                            data-bind="click: ts.team.openBeaconEditTeam, clickBubble: false"
+                                                                                            data-bind="click: ts.team && ts.team.openBeaconEditTeam, clickBubble: false"
                                                                                             title="Open In Beacon">
                                                                                             <i
                                                                                                 class="fas fa-external-link-alt"></i>
@@ -1734,7 +1781,7 @@
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
                                                                                             title="Zoom to"
-                                                                                            data-bind="click: ts.team.markerFocus, disable: !ts.team.trackableAndIsFiltered()">
+                                                                                            data-bind="click: ts.team && ts.team.markerFocus, disable: !ts.team || !ts.team.trackableAndIsFiltered()">
                                                                                             <i
                                                                                                 class="fa fa-crosshairs"></i>
                                                                                         </button>
@@ -2077,6 +2124,19 @@
                                                     </div>
                                                     <div class="col-sm-6 col-md-3">
                                                         <label class="form-label">
+                                                            <i class="fa fa-bolt me-1"></i>Live Updates
+                                                        </label>
+                                                        <div class="form-check form-switch mt-2">
+                                                            <input class="form-check-input" type="checkbox" id="signalrEnabledToggle"
+                                                                data-bind="checked: config.signalrEnabled">
+                                                            <label class="form-check-label" for="signalrEnabledToggle">
+                                                                Enable SignalR live updates
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-text">Receive instant incident, team and tasking updates. If enabling or disabling, restart LAD after saving.</div>
+                                                    </div>                                                    
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label class="form-label">
                                                             <i class="fa fa-bell me-1"></i>Alerts Panel
                                                         </label>
                                                         <div class="form-check form-switch mt-2">
@@ -2090,16 +2150,16 @@
                                                     </div>
                                                     <div class="col-sm-6 col-md-3">
                                                         <label class="form-label">
-                                                            <i class="fa fa-hashtag me-1"></i>Tasking Count
+                                                            <i class="fa fa-hashtag me-1"></i>Incident Tasking Count
                                                         </label>
                                                         <div class="form-check form-switch mt-2">
                                                             <input class="form-check-input" type="checkbox" id="taskingCountActiveOnlyToggle"
                                                                 data-bind="checked: config.taskingCountActiveOnly">
                                                             <label class="form-check-label" for="taskingCountActiveOnlyToggle">
-                                                                Active taskings only
+                                                                Count Active taskings only
                                                             </label>
                                                         </div>
-                                                        <div class="form-text">Status badge counts only Tasked, Enroute &amp; Onsite taskings (excludes Complete, CalledOff, Untasked).</div>
+                                                        <div class="form-text">Tasking count counts only Tasked, Enroute &amp; Onsite taskings (excludes Complete, CalledOff, Untasked).</div>
                                                     </div>
                                                 </div>
                                             </div>

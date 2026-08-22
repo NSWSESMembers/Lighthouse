@@ -1,7 +1,6 @@
 'use strict';
 
 const { json, serverError } = require('./lib/response');
-const { verifyBeaconToken } = require('./verifyBeaconToken');
 const listLayers = require('./handlers/listLayers');
 const createLayer = require('./handlers/createLayer');
 const getLayer = require('./handlers/getLayer');
@@ -18,8 +17,8 @@ const updateLayerAttachment = require('./handlers/updateLayerAttachment');
 // event.routeKey, which API Gateway sets to "<METHOD> <route path>" for
 // whichever route matched (e.g. "GET /lad_v2/map-layers/{id}"). Every route
 // except OPTIONS requires a valid `Authorization: Bearer <Beacon token>`
-// header, verified against SES's identity server (see
-// ./verifyBeaconToken.js).
+// header — enforced by the LH-BeaconAuthorizerV2 API Gateway authorizer
+// before this Lambda is ever invoked (see lambda/authorizer-v2).
 const ROUTES = {
   'GET /lad_v2/map-layers': listLayers,
   'POST /lad_v2/map-layers': createLayer,
@@ -45,22 +44,18 @@ exports.handler = async (event) => {
     return json(404, { error: 'Not found', routeKey });
   }
 
-  let claims;
-  try {
-    claims = await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
-  } catch (err) {
-    return json(401, { error: 'Unauthorized', message: err?.message || String(err) });
-  }
-  console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'map-layers-v2', userId: claims.sub || claims.client_id || 'unknown', route: routeKey }));
+  // `sub` is the verified Beacon member id, passed through from the
+  // LH-BeaconAuthorizerV2 authorizer's context.
+  const userId = event.requestContext?.authorizer?.lambda?.sub || 'unknown';
+  console.log(JSON.stringify({ msg: 'beacon_auth', fn: 'map-layers-v2', userId, route: routeKey }));
 
   try {
-    // `claims` (the verified token payload) is passed through so
-    // permission-sensitive handlers (createLayer, upsertFeature,
-    // deleteFeature, deleteLayer) can authorize against claims.sub -- the
-    // Beacon member id, tamper-proof since it comes from a signature-
-    // verified JWT -- rather than any client-supplied actorId field, which
-    // a caller could set to whatever it wants.
-    return await handler(event, claims);
+    // `claims` is passed through so permission-sensitive handlers
+    // (createLayer, upsertFeature, deleteFeature, deleteLayer) can
+    // authorize against claims.sub -- tamper-proof since it comes from the
+    // gateway's signature-verified JWT -- rather than any client-supplied
+    // actorId field, which a caller could set to whatever it wants.
+    return await handler(event, { sub: userId });
   } catch (err) {
     console.error('map-layers-v2 handler error:', err, JSON.stringify({ routeKey }));
     return serverError();

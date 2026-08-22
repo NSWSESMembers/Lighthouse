@@ -409,7 +409,8 @@ export function ConfigVM(root, deps) {
     }
 
     // Other settings
-    self.refreshInterval = ko.observable(60);
+    self.signalrEnabled = ko.observable(true);
+    self.refreshInterval = ko.observable(180);
     // Guard for reckless refresh interval changes
     let lastRefreshInterval = self.refreshInterval();
     let suppressRecklessModal = false;
@@ -1260,7 +1261,11 @@ export function ConfigVM(root, deps) {
 
     // Build the current config payload (used by save + share)
     const buildConfig = () => ({
-        refreshInterval: Number(self.refreshInterval()),
+        // Renamed from refreshInterval so existing saved configs (which
+        // only have the old key) fall through to the new default instead
+        // of carrying forward the old 60s value.
+        refreshIntervalV2: Number(self.refreshInterval()),
+        signalrEnabled: !!self.signalrEnabled(),
         fetchPeriod: Number(self.fetchPeriod()),
         fetchForward: Number(self.fetchForward()),
         showAdvanced: !!self.showAdvanced(),
@@ -1495,7 +1500,8 @@ export function ConfigVM(root, deps) {
         if (!cfg) {
             cfg = {}
             console.log('Using defaults.');
-            cfg.refreshInterval = self.refreshInterval();
+            cfg.refreshIntervalV2 = self.refreshInterval();
+            cfg.signalrEnabled = self.signalrEnabled();
             cfg.fetchPeriod = self.fetchPeriod();
             cfg.fetchForward = self.fetchForward();
             cfg.showAdvanced = self.showAdvanced();
@@ -1525,9 +1531,17 @@ export function ConfigVM(root, deps) {
             }
         }
         // scalar settings
-        if (typeof cfg.refreshInterval === 'number') {
-            self.refreshInterval(cfg.refreshInterval);
-            lastRefreshInterval = cfg.refreshInterval;
+        // refreshIntervalV2 (renamed from refreshInterval) -- existing saved
+        // configs only have the old key, so this is undefined for them and
+        // self.refreshInterval just keeps its constructor default (180).
+        // Only someone who saves again under the new build will persist a
+        // value here, at which point it's their own deliberate choice again.
+        if (typeof cfg.refreshIntervalV2 === 'number') {
+            self.refreshInterval(cfg.refreshIntervalV2);
+            lastRefreshInterval = cfg.refreshIntervalV2;
+        }
+        if (typeof cfg.signalrEnabled === 'boolean') {
+            self.signalrEnabled(cfg.signalrEnabled);
         }
         if (typeof cfg.fetchPeriod === 'number') {
             self.fetchPeriod(cfg.fetchPeriod);

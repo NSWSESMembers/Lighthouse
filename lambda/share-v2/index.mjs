@@ -4,8 +4,6 @@ import {
   PutObjectCommand,
   GetObjectCommand
 } from "@aws-sdk/client-s3";
-import { verifyBeaconToken } from "./verifyBeaconToken.mjs";
-
 const s3 = new S3Client({});
 const BUCKET_NAME = process.env.BUCKET_NAME;
 const CONFIG_PREFIX = process.env.CONFIG_PREFIX || "";
@@ -33,17 +31,11 @@ export const handler = async (event) => {
       };
     }
 
-    let claims;
-    try {
-      claims = await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
-    } catch (err) {
-      return {
-        statusCode: 401,
-        headers: corsHeaders(),
-        body: JSON.stringify({ message: "Unauthorized", error: err?.message || String(err) })
-      };
-    }
-    console.log(JSON.stringify({ msg: "beacon_auth", fn: "share-v2", userId: claims.sub || claims.client_id || "unknown", method }));
+    // Auth is enforced by the LH-BeaconAuthorizerV2 API Gateway authorizer
+    // before this handler is ever invoked; `sub` is the verified Beacon
+    // member id it passes through.
+    const userId = event.requestContext?.authorizer?.lambda?.sub || "unknown";
+    console.log(JSON.stringify({ msg: "beacon_auth", fn: "share-v2", userId, method }));
 
     if (method === "POST" && !query.id) {
       return await handleCreateConfig(rawBody);

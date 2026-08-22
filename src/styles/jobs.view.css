@@ -139,3 +139,105 @@
 .nounderline {
   text-decoration: none !important
 }
+
+.lighthouse-response-gems {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  margin-left: auto;
+  margin-top: 4px;
+  padding: 3px;
+  background: rgb(238, 238, 238);
+}
+
+.lighthouse-response-gem {
+  flex: none;
+  min-width: 34px;
+  padding: 4px 10px;
+  text-align: center;
+  color: #fff;
+  font-weight: bold;
+  font-family: "latobold";
+  font-size: 13px;
+  cursor: default;
+}
+
+.lighthouse-response-gem:first-of-type {
+  border-radius: 4px 0 0 4px;
+}
+
+.lighthouse-response-gem:last-of-type {
+  border-radius: 0 4px 4px 0;
+}
+
+.lighthouse-response-gems.is-loading .lighthouse-response-gem {
+  animation: lighthouse-gem-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes lighthouse-gem-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.lighthouse-response-gems-closed-icon {
+  color: #555555;
+  font-size: 12px;
+  margin-right: 6px;
+}
+
+.lighthouse-response-gem-closed-note {
+  margin-bottom: 4px;
+}
+
+.lighthouse-response-gem-activationaccepted {
+  background: #337ab7;
+}
+
+.lighthouse-response-gem-available {
+  background: #5cb85c;
+}
+
+.lighthouse-response-gem-conditional {
+  background: #f0ad4e;
+}
+
+.lighthouse-response-gem-unavailable {
+  background: #d9534f;
+}
+
+.lighthouse-response-gem-unset {
+  background: #777777;
+}
+
+.lighthouse-response-gem-names {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.lighthouse-create-team-btn-wrap {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e5e5e5;
+  text-align: right;
+}
+
+.lighthouse-create-team-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.lighthouse-create-team-picker-list li {
+  padding: 3px 0;
+}
+
+.lighthouse-create-team-picker-list label {
+  font-weight: normal;
+  cursor: pointer;
+}

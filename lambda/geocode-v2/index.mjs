@@ -1,5 +1,4 @@
 import pkg from "@aws-sdk/client-geo-places";
-import { verifyBeaconToken } from "./verifyBeaconToken.mjs";
 
 const { GeoPlacesClient, GeocodeCommand, ReverseGeocodeCommand } = pkg;
 
@@ -26,13 +25,11 @@ export const handler = async (event) => {
     return { statusCode: 204, headers: corsHeaders, body: "" };
   }
 
-  let claims;
-  try {
-    claims = await verifyBeaconToken(event.headers?.authorization || event.headers?.Authorization);
-  } catch (err) {
-    return json(401, { error: "Unauthorized", message: err?.message || String(err) });
-  }
-  console.log(JSON.stringify({ msg: "beacon_auth", fn: "geocode-v2", userId: claims.sub || claims.client_id || "unknown" }));
+  // Auth is enforced by the LH-BeaconAuthorizerV2 API Gateway authorizer
+  // before this handler is ever invoked; `sub` is the verified Beacon
+  // member id it passes through.
+  const userId = event.requestContext?.authorizer?.lambda?.sub || "unknown";
+  console.log(JSON.stringify({ msg: "beacon_auth", fn: "geocode-v2", userId }));
 
   const qsp = event?.queryStringParameters || {};
 
