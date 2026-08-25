@@ -302,7 +302,7 @@ function whenLighthouseIsReady(cb) {
 }
 
 function initRecentActivationsFieldset() {
-  if (!isProductionBeaconApi()) return; // no mams data outside prod
+  var isProd = isProductionBeaconApi();
 
   var $existingFieldset = $('#teamMemberSearch').closest('fieldset');
   if (!$existingFieldset.length) return;
@@ -312,13 +312,16 @@ function initRecentActivationsFieldset() {
       '<legend>' +
         '<img id="lighthouseRecentActivationsLogo" style="width:14px;vertical-align:middle;margin-right:5px" />' +
         'Recent myAvailability Activation Requests' +
-        '<button type="button" class="btn btn-xs btn-default lighthouse-recent-activations-refresh">' +
+        '<button type="button" class="btn btn-xs btn-default lighthouse-recent-activations-refresh"' + (isProd ? '' : ' disabled') + '>' +
           '<span class="fa fa-refresh"></span> Refresh' +
         '</button>' +
       '</legend>' +
       '<div class="form-group"><div class="col-xs-12">' +
         '<div class="lighthouse-recent-activations-list">' +
-          '<div class="lighthouse-recent-activations-empty">Click Refresh to load recent activations for the assigned unit.</div>' +
+          '<div class="lighthouse-recent-activations-empty">' +
+            (isProd ? 'Click Refresh to load recent activations for the assigned unit.' :
+              'myAvailability activation requests are only available on production Beacon (this is train/dev).') +
+          '</div>' +
         '</div>' +
       '</div></div>' +
     '</fieldset>'
@@ -328,6 +331,8 @@ function initRecentActivationsFieldset() {
   whenLighthouseIsReady(function () {
     $fieldset.find('#lighthouseRecentActivationsLogo').attr('src', lighthouseUrl + 'icons/lh-black.png');
   });
+
+  if (!isProd) return; // placeholder only - no mams data outside prod
 
   var $list = $fieldset.find('.lighthouse-recent-activations-list');
 
