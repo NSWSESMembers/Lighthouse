@@ -279,7 +279,7 @@ function lighthouseResponseGems() {
             ? '<li><em>+' + (data.Names.length - MAX_NAMES_SHOWN) + ' more</em></li>'
             : '') +
           '</ul>'
-        : '<em>No responders</em>';
+        : '<em>No responses</em>';
 
       var closedNote = isClosed ? '<div class="lighthouse-response-gem-closed-note"><em>Activation closed</em></div>' : '';
 
@@ -356,7 +356,7 @@ function buildCreateTeamPickerModal() {
 function renderCreateTeamPickerList(listSelector, people, checked) {
   var $list = $(listSelector);
   if (!people || !people.length) {
-    $list.html('<li><em>No responders</em></li>');
+    $list.html('<li><em>No responses</em></li>');
     return;
   }
   $list.html(_.map(people, function (person) {

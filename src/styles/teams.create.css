@@ -1,0 +1,130 @@
+#lighthouseRecentActivationsFieldset .lighthouse-recent-activations-refresh {
+  float: right;
+  margin-top: -3px;
+}
+
+#lighthouseRecentActivationsFieldset .lighthouse-recent-activations-loading,
+#lighthouseRecentActivationsFieldset .lighthouse-recent-activations-empty,
+#lighthouseRecentActivationsFieldset .lighthouse-recent-activations-error {
+  color: #777777;
+  font-style: italic;
+  padding: 4px 0;
+}
+
+#lighthouseRecentActivationsFieldset .lighthouse-recent-activations-error {
+  color: #d9534f;
+}
+
+.lighthouse-recent-activation {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.lighthouse-recent-activation-header {
+  display: flex;
+  align-items: center;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.lighthouse-recent-activation-toggle-icon {
+  flex: none;
+  width: 16px;
+  color: #777777;
+}
+
+.lighthouse-recent-activation-title {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 10px;
+}
+
+.lighthouse-recent-activation-time {
+  flex: none;
+  color: #777777;
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.lighthouse-recent-activation-closed-icon {
+  flex: none;
+  color: #555555;
+  font-size: 12px;
+}
+
+.lighthouse-recent-activation-panel {
+  padding: 4px 0 10px 24px;
+}
+
+.lighthouse-activation-people-loading,
+.lighthouse-activation-people-error,
+.lighthouse-activation-people-empty {
+  color: #777777;
+  font-style: italic;
+}
+
+.lighthouse-activation-people-error {
+  color: #d9534f;
+}
+
+.lighthouse-activation-people-group {
+  margin-bottom: 8px;
+}
+
+.lighthouse-activation-people-group-label {
+  display: inline-block;
+  color: #fff;
+  font-weight: bold;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 3px;
+}
+
+.lighthouse-activation-people-activationaccepted {
+  background: #337ab7;
+}
+
+.lighthouse-activation-people-available {
+  background: #5cb85c;
+}
+
+.lighthouse-activation-people-conditional {
+  background: #f0ad4e;
+}
+
+.lighthouse-activation-people-names {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lighthouse-activation-person {
+  display: inline-block;
+  padding: 2px 8px;
+  margin: 2px 4px 2px 0;
+  border-radius: 4px;
+  background: #eeeeee;
+  cursor: pointer;
+}
+
+.lighthouse-activation-person:hover {
+  background: #dddddd;
+}
+
+.lighthouse-activation-person-adding {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.lighthouse-activation-person-added {
+  background: #dff0d8;
+  color: #3c763d;
+  cursor: default;
+}
+
+.lighthouse-activation-person-error {
+  background: #f2dede;
+  color: #a94442;
+}
