@@ -6,7 +6,7 @@ export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params
   vm.mapVM.registerPollingLayer("transport-cameras", {
     label: "Transport NSW Cameras",
     menuGroup: "Transport NSW",
-    refreshMs: 600000, // 10 mins poll. the cameras list doesnt change and the images auto-refresh
+    refreshMs: 3600000, // 1 hr poll. the cameras list doesnt change and the images auto-refresh
     visibleByDefault: localStorage.getItem(`ov.transport-cameras`) || false,
     fetchFn: async () => {
       const t = await getToken(); // blocks until token is ready
