@@ -10,7 +10,6 @@ export const LegendControl = L.Control.extend({
     // Status → pip rows. Hidden until config.showJobStatusOnMarkers is on
     // (Map.applyJobStatusOnMarkers toggles the .legend-status-block wrapper).
     const STATUS_PIPS = [
-      ["New", "#e4661d", ""],
       ["Active", "#159aab", "dot"],
       ["Tasked", "#6b52d6", "arrow"],
       ["Referred", "#566f86", "chevrons"],
@@ -83,7 +82,7 @@ export const LegendControl = L.Control.extend({
 
 
     <div class="legend-status-block d-none">
-      <div class="fw-semibold small mb-1 mt-2">Status → Pip <span class="text-muted fw-normal">(top-right dot)</span></div>
+      <div class="fw-semibold small mb-1 mt-2">Status → Pip <span class="text-muted fw-normal">(top-right dot; New = pulse ring)</span></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:2px;" class="small">
         ${statusPipRows}
       </div>

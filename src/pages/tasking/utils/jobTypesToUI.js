@@ -23,7 +23,7 @@ export function jobsToUI(job) {
 // Job status → pip colour. A lifecycle ramp kept clear of the priority hues
 // below, shown on markers only when config.showJobStatusOnMarkers is enabled.
 const statusPipMap = {
-    "New":       "#e4661d", // orange (matches the "new" pulse ring)
+    // New has no pip — the pulse ring already flags unacknowledged jobs.
     "Active":    "#159aab", // teal
     "Tasked":    "#6b52d6", // violet
     "Referred":  "#566f86", // slate
