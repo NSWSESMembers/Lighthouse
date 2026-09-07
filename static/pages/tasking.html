@@ -2124,33 +2124,59 @@
                                         <div class="cfg-data">
                                             <div class="cfg-data-fields">
                                                 <div class="cfg-field">
-                                                    <label for="refreshInterval">Refresh interval</label>
-                                                    <div class="ctl">
-                                                        <div class="input-group input-group-sm">
-                                                            <input id="refreshInterval" type="number" min="30" step="5"
-                                                                class="form-control" data-bind="value: config.refreshInterval">
+                                                    <label>Refresh interval</label>
+                                                    <div class="cfg-preset-row">
+                                                        <div class="cfg-seg" data-bind="foreach: { data: config.refreshPresets, as: 'p' }">
+                                                            <button type="button" class="cfg-seg-btn"
+                                                                data-bind="text: p.label,
+                                                                           css: { active: $root.config.refreshInterval() == p.value },
+                                                                           click: $root.config.pickRefreshPreset"></button>
+                                                        </div>
+                                                        <span class="cfg-preset-or">or</span>
+                                                        <div class="input-group input-group-sm cfg-preset-num">
+                                                            <input type="number" min="30" step="5" class="form-control"
+                                                                aria-label="Refresh interval (seconds)"
+                                                                data-bind="value: config.refreshInterval">
                                                             <span class="input-group-text">sec</span>
                                                         </div>
                                                     </div>
                                                     <div class="d">Full reload of every incident and team.</div>
                                                 </div>
                                                 <div class="cfg-field">
-                                                    <label for="fetchPeriod">Fetch window</label>
-                                                    <div class="ctl">
-                                                        <div class="input-group input-group-sm">
-                                                            <input id="fetchPeriod" type="number" min="0" max="31" step="1"
-                                                                class="form-control" aria-label="Fetch backwards (days)"
-                                                                data-bind="value: config.fetchPeriod">
-                                                            <span class="input-group-text">d&nbsp;back</span>
+                                                    <label>History &mdash; how far back</label>
+                                                    <div class="cfg-preset-row">
+                                                        <div class="cfg-chips" data-bind="foreach: { data: config.historyPresets, as: 'p' }">
+                                                            <button type="button" class="cfg-chip"
+                                                                data-bind="text: p.label,
+                                                                           css: { active: $root.config.fetchPeriod() == p.value },
+                                                                           click: $root.config.pickHistoryPreset"></button>
                                                         </div>
-                                                        <div class="input-group input-group-sm">
-                                                            <input id="fetchForward" type="number" min="0" step="1"
-                                                                class="form-control" aria-label="Fetch forward (days)"
-                                                                data-bind="value: config.fetchForward">
-                                                            <span class="input-group-text">d&nbsp;fwd</span>
+                                                        <span class="cfg-preset-or">or</span>
+                                                        <div class="input-group input-group-sm cfg-preset-num">
+                                                            <input type="number" min="0" max="31" step="1" class="form-control"
+                                                                aria-label="Days of history"
+                                                                data-bind="value: config.fetchPeriod">
+                                                            <span class="input-group-text">d</span>
                                                         </div>
                                                     </div>
-                                                    <div class="d">How much past history and lookahead to load.</div>
+                                                </div>
+                                                <div class="cfg-field">
+                                                    <label>Lookahead &mdash; how far forward</label>
+                                                    <div class="cfg-preset-row">
+                                                        <div class="cfg-chips" data-bind="foreach: { data: config.lookaheadPresets, as: 'p' }">
+                                                            <button type="button" class="cfg-chip"
+                                                                data-bind="text: p.label,
+                                                                           css: { active: $root.config.fetchForward() == p.value },
+                                                                           click: $root.config.pickLookaheadPreset"></button>
+                                                        </div>
+                                                        <span class="cfg-preset-or">or</span>
+                                                        <div class="input-group input-group-sm cfg-preset-num">
+                                                            <input type="number" min="0" max="31" step="1" class="form-control"
+                                                                aria-label="Days of lookahead"
+                                                                data-bind="value: config.fetchForward">
+                                                            <span class="input-group-text">d</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div class="cfg-field">
                                                     <label for="signalrEnabledToggle">Live updates</label>
@@ -2159,6 +2185,9 @@
                                                             <input class="form-check-input" type="checkbox" role="switch"
                                                                 id="signalrEnabledToggle" data-bind="checked: config.signalrEnabled">
                                                         </div>
+                                                        <span class="cfg-live-pill"
+                                                            data-bind="text: config.liveUpdatesLabel,
+                                                                       css: { on: config.signalrEnabled(), off: !config.signalrEnabled() }"></span>
                                                     </div>
                                                     <div class="d">Instant incident, team &amp; tasking changes via SignalR, between full refreshes.</div>
                                                 </div>

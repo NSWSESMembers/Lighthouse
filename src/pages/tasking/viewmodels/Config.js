@@ -1103,6 +1103,36 @@ export function ConfigVM(root, deps) {
         return `every ${Math.round(s / 60)} min`;
     });
     self.liveUpdatesLabel = ko.pureComputed(() => (self.signalrEnabled() ? 'On' : 'Off'));
+
+    // Data pane -- one-tap presets for the values these are actually set to.
+    // The number field beside each row stays as the escape hatch for odd
+    // values; an off-preset value simply leaves no preset highlighted.
+    self.refreshPresets = [
+        { value: 30, label: '30s' },
+        { value: 60, label: '1 min' },
+        { value: 120, label: '2 min' },
+        { value: 180, label: '3 min' },
+        { value: 300, label: '5 min' },
+        { value: 600, label: '10 min' }
+    ];
+    self.historyPresets = [
+        { value: 0, label: 'Today' },
+        { value: 1, label: '1 day' },
+        { value: 3, label: '3 days' },
+        { value: 7, label: '1 week' },
+        { value: 14, label: '2 weeks' },
+        { value: 31, label: '1 month' }
+    ];
+    self.lookaheadPresets = [
+        { value: 0, label: 'None' },
+        { value: 1, label: '1 day' },
+        { value: 3, label: '3 days' },
+        { value: 7, label: '1 week' }
+    ];
+    self.pickRefreshPreset = (p) => self.refreshInterval(p.value);
+    self.pickHistoryPreset = (p) => self.fetchPeriod(p.value);
+    self.pickLookaheadPreset = (p) => self.fetchForward(p.value);
+
     self.showAdvanced = ko.observable(false);
     self.darkMode = ko.observable(false);
 

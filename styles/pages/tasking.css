@@ -2246,61 +2246,145 @@ overflow: hidden;
   color: #6c757d;
 }
 
-/* Data pane: settings + live "loading now" readout */
+/* Data pane: preset controls + live "loading now" readout */
 .cfg-data {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 19rem;
+  grid-template-columns: minmax(0, 1fr) 17rem;
   gap: 2.25rem;
   align-items: start;
-  max-width: 760px;
+  max-width: 880px;
 }
 
 .cfg-data-fields {
   display: flex;
   flex-direction: column;
-  gap: 1.4rem;
+  gap: 1.5rem;
   padding-top: 0.25rem;
 }
 
 .cfg-field > label {
   display: block;
   font-weight: 600;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
 }
 
 .cfg-field .ctl {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-}
-
-.cfg-field .ctl .input-group {
-  width: auto;
-  flex: none;
-}
-
-.cfg-field .ctl .input-group .form-control {
-  width: 3.25rem;
-  flex: 0 0 auto;
-  text-align: right;
-}
-
-.cfg-field .ctl .form-switch {
-  min-height: auto;
-  margin: 0;
-  padding-left: 0;
-}
-
-.cfg-field .ctl .form-switch .form-check-input {
-  margin: 0;
-  cursor: pointer;
+  gap: 0.55rem;
 }
 
 .cfg-field .d {
   font-size: 0.8125rem;
   color: #6c757d;
-  margin-top: 0.35rem;
-  max-width: 34ch;
+  margin-top: 0.4rem;
+  max-width: 44ch;
+}
+
+/* preset row: segments / chips + numeric escape hatch */
+.cfg-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.6rem;
+}
+
+.cfg-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--bs-border-color, #ced4da);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.cfg-seg-btn {
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 0;
+  border-right: 1px solid var(--bs-border-color, #ced4da);
+  background: #fff;
+  color: #1b2430;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.cfg-seg-btn:last-child {
+  border-right: 0;
+}
+
+.cfg-seg-btn:hover {
+  background: #f1f3f5;
+}
+
+.cfg-seg-btn.active {
+  background: #0d6efd;
+  color: #fff;
+}
+
+.cfg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.cfg-chip {
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 1px solid #ced4da;
+  background: #fff;
+  color: #1b2430;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.cfg-chip:hover {
+  border-color: #8a929c;
+}
+
+.cfg-chip.active {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
+.cfg-preset-or {
+  font-size: 0.75rem;
+  color: #8a929c;
+}
+
+.cfg-preset-num {
+  width: auto !important;
+  flex: none;
+}
+
+.cfg-preset-num .form-control {
+  width: 3.5rem;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.cfg-live-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+}
+
+.cfg-live-pill.on {
+  background: #e4f1ea;
+  color: #2f8f5b;
+}
+
+.cfg-live-pill.off {
+  background: #eef0f2;
+  color: #6c757d;
 }
 
 .cfg-readout {
