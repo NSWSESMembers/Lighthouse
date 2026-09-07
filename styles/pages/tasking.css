@@ -2114,6 +2114,95 @@ overflow: hidden;
   margin-top: 2.5px !important;
 }
 
+/* === Config modal: left-rail sections === */
+.config-settings {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.config-rail {
+  position: sticky;
+  top: 0;
+  gap: 2px;
+  border-right: 1px solid #dee2e6;
+  padding-right: 0.75rem;
+}
+
+.config-rail .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  color: #495057;
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.9rem;
+}
+
+.config-rail .nav-link:hover {
+  background: #f1f3f5;
+  color: #212529;
+}
+
+.config-rail .nav-link.active {
+  background: #e7f1ff;
+  color: #0d6efd;
+  font-weight: 600;
+}
+
+.cfg-rail-ico,
+.cfg-sub-ico {
+  width: 1.1rem;
+  text-align: center;
+  flex: none;
+  opacity: 0.85;
+}
+
+.cfg-sub-ico {
+  margin-right: 0.5rem;
+}
+
+.config-panes {
+  min-height: 360px;
+}
+
+.cfg-subhead {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6c757d;
+  margin: 0 0 0.75rem;
+}
+
+.config-subaccordion .accordion-body {
+  padding-top: 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .config-settings {
+    grid-template-columns: 1fr;
+  }
+
+  .config-rail {
+    position: static;
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    border-right: 0;
+    border-bottom: 1px solid #dee2e6;
+    padding-right: 0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .config-rail .nav-link {
+    width: auto;
+  }
+}
+
 /* === Job History / Ops Log two-lane timeline === */
 
 .job-history-timeline {

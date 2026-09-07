@@ -2074,26 +2074,44 @@
                     <!-- CONFIG -->
                     <!-- CONFIG -->
                     <div class="card config-card mt-3">
-
                         <div class="card-body">
                             <form id="configForm">
-                                <div class="accordion" id="configOtherSettingsAccordion">
-
-                                    <!-- General -->
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingGeneral">
-                                            <button class="accordion-button d-flex align-items-center gap-2 fw-semibold" type="button" data-bs-toggle="collapse"
-                                                data-bs-target="#collapseGeneral" aria-expanded="true"
-                                                aria-controls="collapseGeneral">
-                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-cogs"></i></span>
-                                                <span>General Settings</span>
-                                            </button>
-                                        </h2>
-                                        <div id="collapseGeneral" class="accordion-collapse collapse show"
-                                            aria-labelledby="headingGeneral"
-                                            data-bs-parent="#configOtherSettingsAccordion">
-                                            <div class="accordion-body">
-                                                <div class="row g-3">
+                                <div class="config-settings">
+                                    <ul class="nav nav-pills config-rail flex-column" role="tablist" aria-orientation="vertical">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="cfgTab-data" data-bs-toggle="pill" data-bs-target="#cfgPane-data" type="button" role="tab" aria-controls="cfgPane-data" aria-selected="true">
+                                            <span class="cfg-rail-ico"><i class="fa fa-database"></i></span><span>Data</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="cfgTab-filters" data-bs-toggle="pill" data-bs-target="#cfgPane-filters" type="button" role="tab" aria-controls="cfgPane-filters" aria-selected="false">
+                                            <span class="cfg-rail-ico"><i class="fa fa-filter"></i></span><span>Filters</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="cfgTab-map" data-bs-toggle="pill" data-bs-target="#cfgPane-map" type="button" role="tab" aria-controls="cfgPane-map" aria-selected="false">
+                                            <span class="cfg-rail-ico"><i class="fa fa-layer-group"></i></span><span>Map</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="cfgTab-sidebar" data-bs-toggle="pill" data-bs-target="#cfgPane-sidebar" type="button" role="tab" aria-controls="cfgPane-sidebar" aria-selected="false">
+                                            <span class="cfg-rail-ico"><i class="fa fa-table-columns"></i></span><span>Sidebar</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="cfgTab-appearance" data-bs-toggle="pill" data-bs-target="#cfgPane-appearance" type="button" role="tab" aria-controls="cfgPane-appearance" aria-selected="false">
+                                            <span class="cfg-rail-ico"><i class="fa fa-sliders"></i></span><span>Appearance</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="cfgTab-suggest" data-bs-toggle="pill" data-bs-target="#cfgPane-suggest" type="button" role="tab" aria-controls="cfgPane-suggest" aria-selected="false">
+                                            <span class="cfg-rail-ico"><i class="fa fa-robot"></i></span><span>Instant Task Suggestions</span>
+                                        </button>
+                                    </li>
+                                    </ul>
+                                    <div class="tab-content config-panes">
+                                    <div class="tab-pane fade show active" id="cfgPane-data" role="tabpanel" aria-labelledby="cfgTab-data" tabindex="0">
+                                        <div class="row g-3">
                                                     <div class="col-sm-6 col-md-3">
                                                         <label for="refreshInterval" class="form-label">
                                                             <i class="fa fa-sync-alt me-1"></i>Refresh interval
@@ -2137,19 +2155,6 @@
                                                     </div>
                                                     <div class="col-sm-6 col-md-3">
                                                         <label class="form-label">
-                                                            <i class="fa fa-moon me-1"></i>Dark Mode
-                                                        </label>
-                                                        <div class="form-check form-switch mt-2">
-                                                            <input class="form-check-input" type="checkbox" id="darkModeToggle"
-                                                                data-bind="checked: config.darkMode">
-                                                            <label class="form-check-label" for="darkModeToggle">
-                                                                Enable dark mode
-                                                            </label>
-                                                        </div>
-                                                        <div class="form-text">Reduces eye strain in low light environments.</div>
-                                                    </div>
-                                                    <div class="col-sm-6 col-md-3">
-                                                        <label class="form-label">
                                                             <i class="fa fa-bolt me-1"></i>Live Updates
                                                         </label>
                                                         <div class="form-check form-switch mt-2">
@@ -2161,91 +2166,18 @@
                                                         </div>
                                                         <div class="form-text">Receive instant incident, team and tasking updates. If enabling or disabling, restart LAD after saving.</div>
                                                     </div>                                                    
-                                                    <div class="col-sm-6 col-md-3">
-                                                        <label class="form-label">
-                                                            <i class="fa fa-bell me-1"></i>Alerts Panel
-                                                        </label>
-                                                        <div class="form-check form-switch mt-2">
-                                                            <input class="form-check-input" type="checkbox" id="alertsCollapsibleRulesToggle"
-                                                                data-bind="checked: config.alertsCollapsibleRules">
-                                                            <label class="form-check-label" for="alertsCollapsibleRulesToggle">
-                                                                Auto collapse alert popups
-                                                            </label>
-                                                        </div>
-                                                        <div class="form-text">Alerts will start collapsed.</div>
-                                                    </div>
-                                                    <div class="col-sm-6 col-md-3">
-                                                        <label class="form-label">
-                                                            <i class="fa fa-hashtag me-1"></i>Incident Tasking Count
-                                                        </label>
-                                                        <div class="form-check form-switch mt-2">
-                                                            <input class="form-check-input" type="checkbox" id="taskingCountActiveOnlyToggle"
-                                                                data-bind="checked: config.taskingCountActiveOnly">
-                                                            <label class="form-check-label" for="taskingCountActiveOnlyToggle">
-                                                                Count Active taskings only
-                                                            </label>
-                                                        </div>
-                                                        <div class="form-text">Tasking count counts only Tasked, Enroute &amp; Onsite taskings (excludes Complete, CalledOff, Untasked).</div>
-                                                    </div>
-                                                </div>
-                                            </div>
                                         </div>
                                     </div>
-
-                                    <!-- Panel Layout -->
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingPanelLayout">
-                                            <button class="accordion-button gap-2 collapsed" type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#collapsePanelLayout"
-                                                aria-expanded="false" aria-controls="collapsePanelLayout">
-                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-columns"></i></span>
-                                                <span>Panel Layout</span>
-                                            </button>
-                                        </h2>
-                                        <div id="collapsePanelLayout" class="accordion-collapse collapse"
-                                            aria-labelledby="headingPanelLayout"
-                                            data-bs-parent="#configOtherSettingsAccordion">
-                                            <div class="accordion-body">
-                                                <label class="form-label">
-                                                    <i class="fa fa-columns me-1"></i>Section Layout Preset
-                                                </label>
-                                                <div class="layout-preset-grid"
-                                                    data-bind="foreach: { data: config.layoutPresetDefs, as: 'preset' }">
-                                                    <label class="layout-preset-card"
-                                                        data-bind="css: { 'is-active': $root.config.layoutPreset() === preset.id }">
-                                                        <input class="form-check-input layout-preset-radio"
-                                                            type="radio" name="layoutPreset"
-                                                            data-bind="checked: $root.config.layoutPreset, checkedValue: preset.id">
-                                                        <div class="layout-preset-preview"
-                                                            data-bind="css: preset.previewClass">
-                                                            <div class="preview-block preview-block--teams">Teams</div>
-                                                            <div class="preview-block preview-block--tasking">Tasking</div>
-                                                            <div class="preview-block preview-block--map">Map</div>
-                                                        </div>
-                                                        <div class="layout-preset-name" data-bind="text: preset.name"></div>
-                                                        <div class="layout-preset-description small text-muted"
-                                                            data-bind="text: preset.description"></div>
-                                                    </label>
-                                                </div>
-                                                <div class="form-text">Pick a layout to instantly preview and apply section placement.</div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Incident Status -->
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingIncidentStatus">
-                                            <button class="accordion-button gap-2 collapsed" type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#collapseIncidentStatus"
-                                                aria-expanded="false" aria-controls="collapseIncidentStatus">
-                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-filter"></i></span>
-                                                <span>Incident Filters</span>
-                                            </button>
-                                        </h2>
-                                        <div id="collapseIncidentStatus" class="accordion-collapse collapse"
-                                            aria-labelledby="headingIncidentStatus"
-                                            data-bs-parent="#configOtherSettingsAccordion">
-                                            <div class="accordion-body">
+                                    <div class="tab-pane fade" id="cfgPane-filters" role="tabpanel" aria-labelledby="cfgTab-filters" tabindex="0">
+                                        <div class="accordion config-subaccordion" id="cfgFiltersAcc">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-incidents" aria-expanded="true" aria-controls="cfgSub-incidents">
+                                                    <span class="cfg-sub-ico"><i class="fa fa-fire"></i></span><span>Incidents</span>
+                                                </button>
+                                            </h2>
+                                            <div id="cfgSub-incidents" class="accordion-collapse collapse show" data-bs-parent="#cfgFiltersAcc">
+                                                <div class="accordion-body">
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
                                                         <label class="form-label d-block mb-2">Show Incidents With
@@ -2490,24 +2422,17 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <!-- Team Status & Tasking -->
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingTeamStatus">
-                                            <button class="accordion-button gap-2 collapsed" type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#collapseTeamStatus"
-                                                aria-expanded="false" aria-controls="collapseTeamStatus">
-                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-users"></i></span>
-                                                <span>Team &amp; Tasking Filters</span>
-                                            </button>
-                                        </h2>
-                                        <div id="collapseTeamStatus" class="accordion-collapse collapse"
-                                            aria-labelledby="headingTeamStatus"
-                                            data-bs-parent="#configOtherSettingsAccordion">
-                                            <div class="accordion-body">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-teams" aria-expanded="false" aria-controls="cfgSub-teams">
+                                                    <span class="cfg-sub-ico"><i class="fa fa-users"></i></span><span>Teams</span>
+                                                </button>
+                                            </h2>
+                                            <div id="cfgSub-teams" class="accordion-collapse collapse" data-bs-parent="#cfgFiltersAcc">
+                                                <div class="accordion-body">
                                                 <div class="row g-3">
                                                     <div class="col-md-6 col-lg-4">
                                                         <label class="form-label d-block mb-2">Show Teams With
@@ -2644,26 +2569,17 @@
                                                         </div>
                                                     </div>
                                                 </div> <!-- /row -->
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                    <!-- Sectors -->
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingSectors">
-                                            <button class="accordion-button gap-2 collapsed" type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#collapseSectors"
-                                                aria-expanded="false" aria-controls="collapseSectors">
-                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-th-large"></i></span>
-                                                <span>Sectors</span>
-                                                <span class="spinner-border spinner-border-sm text-muted mx-2"
-                                                    role="status" data-bind="visible: sectorsLoading"></span>
-                                            </button>
-                                        </h2>
-                                        <div id="collapseSectors" class="accordion-collapse collapse"
-                                            aria-labelledby="headingSectors"
-                                            data-bs-parent="#configOtherSettingsAccordion">
-
-                                            <div class="accordion-body">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-sectors" aria-expanded="false" aria-controls="cfgSub-sectors">
+                                                    <span class="cfg-sub-ico"><i class="fa fa-th-large"></i></span><span>Sectors</span><span class="spinner-border spinner-border-sm text-muted mx-2" role="status" data-bind="visible: sectorsLoading"></span>
+                                                </button>
+                                            </h2>
+                                            <div id="cfgSub-sectors" class="accordion-collapse collapse" data-bs-parent="#cfgFiltersAcc">
+                                                <div class="accordion-body">
 
                                                 <div class="mb-3">
                                                     <label class="form-label d-block mb-1 fw-semibold">Apply sector filters to:</label>
@@ -2727,100 +2643,21 @@
                                                         No sectors loaded for current incident filters.
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Starred Teams & Incidents -->
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingPinned">
-                                            <button class="accordion-button gap-2 collapsed" type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#collapsePinned"
-                                                aria-expanded="false" aria-controls="collapsePinned">
-                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-star"></i></span>
-                                                <span>Starred Teams &amp; Incidents</span>
-                                            </button>
-                                        </h2>
-
-                                        <div id="collapsePinned" class="accordion-collapse collapse"
-                                            aria-labelledby="headingPinned"
-                                            data-bs-parent="#configOtherSettingsAccordion">
-                                            <div class="accordion-body">
-                                                <div
-                                                    class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-                                                    <div class="small text-muted">
-                                                        Starred teams: <span class="badge bg-primary"
-                                                            data-bind="text: config.pinnedTeamIds().length"></span>
-                                                        &nbsp;•&nbsp;
-                                                        Starred incidents: <span class="badge bg-success"
-                                                            data-bind="text: config.pinnedIncidentIds().length"></span>
-                                                    </div>
-
-                                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                                        data-bind="click: config.clearAllPinned, enable: (config.pinnedTeamIds().length + config.pinnedIncidentIds().length) > 0">
-                                                        Clear all Starred
-                                                    </button>
-                                                </div>
-
-                                                <div class="row g-2">
-                                                    <div class="col-12 col-md-6">
-                                                        <div class="border rounded p-2">
-                                                            <div
-                                                                class="d-flex align-items-center justify-content-between">
-                                                                <div class="fw-semibold small">Starred Teams</div>
-                                                                <div class="d-flex align-items-center gap-2">
-                                                                    <span class="badge bg-primary"
-                                                                        data-bind="text: config.pinnedTeamIds().length"></span>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-secondary"
-                                                                        data-bind="click: config.clearPinnedTeams, enable: config.pinnedTeamIds().length > 0">
-                                                                        Clear
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-12 col-md-6">
-                                                        <div class="border rounded p-2">
-                                                            <div
-                                                                class="d-flex align-items-center justify-content-between">
-                                                                <div class="fw-semibold small">Starred Incidents</div>
-                                                                <div class="d-flex align-items-center gap-2">
-                                                                    <span class="badge bg-success"
-                                                                        data-bind="text: config.pinnedIncidentIds().length"></span>
-                                                                    <button type="button"
-                                                                        class="btn btn-sm btn-outline-secondary"
-                                                                        data-bind="click: config.clearPinnedIncidents, enable: config.pinnedIncidentIds().length > 0">
-                                                                        Clear
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
+                                        </div>
                                     </div>
-                                    <!-- Map Layers -->
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingMapLayers">
-                                            <button class="accordion-button gap-2 collapsed" type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#collapseMapLayers"
-                                                aria-expanded="false" aria-controls="collapseMapLayers">
-                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-layer-group"></i></span>
-                                                <span>Map Layers</span>
-                                            </button>
-                                        </h2>
-
-                                        <div id="collapseMapLayers" class="accordion-collapse collapse"
-                                            aria-labelledby="headingMapLayers"
-                                            data-bs-parent="#configOtherSettingsAccordion">
-                                            <div class="accordion-body">
-
-                                                <h6 class="fw-semibold mb-2">
-                                                    <i class="fa fa-sliders me-1"></i>Display Settings
-                                                </h6>
+                                    <div class="tab-pane fade" id="cfgPane-map" role="tabpanel" aria-labelledby="cfgTab-map" tabindex="0">
+                                        <div class="accordion config-subaccordion" id="cfgMapAcc">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-markers" aria-expanded="true" aria-controls="cfgSub-markers">
+                                                    <span class="cfg-sub-ico"><i class="fa fa-map-marker-alt"></i></span><span>Incident markers</span>
+                                                </button>
+                                            </h2>
+                                            <div id="cfgSub-markers" class="accordion-collapse collapse show" data-bs-parent="#cfgMapAcc">
+                                                <div class="accordion-body">
                                                 <div class="row g-3">
 
                                                     <!-- Clustering options -->
@@ -2907,9 +2744,17 @@
                                                     </div>
 
                                                 </div>
-
-                                                <hr class="my-4">
-
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-collab" aria-expanded="false" aria-controls="cfgSub-collab">
+                                                    <span class="cfg-sub-ico"><i class="fa fa-users"></i></span><span>Collaborative layers</span>
+                                                </button>
+                                            </h2>
+                                            <div id="cfgSub-collab" class="accordion-collapse collapse" data-bs-parent="#cfgMapAcc">
+                                                <div class="accordion-body">
                                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                                     <h6 class="fw-semibold mb-0">
                                                         <i class="fa fa-users me-1"></i>Collaborative Layers
@@ -3325,25 +3170,135 @@
                                                 <div class="form-text mt-2" data-bind="visible: config.noSearchMatchMessage, text: config.noSearchMatchMessage">
                                                 </div>
 
+                                                </div>
                                             </div>
                                         </div>
+                                        </div>
                                     </div>
+                                    <div class="tab-pane fade" id="cfgPane-sidebar" role="tabpanel" aria-labelledby="cfgTab-sidebar" tabindex="0">
+                                                <label class="form-label">
+                                                    <i class="fa fa-columns me-1"></i>Section Layout Preset
+                                                </label>
+                                                <div class="layout-preset-grid"
+                                                    data-bind="foreach: { data: config.layoutPresetDefs, as: 'preset' }">
+                                                    <label class="layout-preset-card"
+                                                        data-bind="css: { 'is-active': $root.config.layoutPreset() === preset.id }">
+                                                        <input class="form-check-input layout-preset-radio"
+                                                            type="radio" name="layoutPreset"
+                                                            data-bind="checked: $root.config.layoutPreset, checkedValue: preset.id">
+                                                        <div class="layout-preset-preview"
+                                                            data-bind="css: preset.previewClass">
+                                                            <div class="preview-block preview-block--teams">Teams</div>
+                                                            <div class="preview-block preview-block--tasking">Tasking</div>
+                                                            <div class="preview-block preview-block--map">Map</div>
+                                                        </div>
+                                                        <div class="layout-preset-name" data-bind="text: preset.name"></div>
+                                                        <div class="layout-preset-description small text-muted"
+                                                            data-bind="text: preset.description"></div>
+                                                    </label>
+                                                </div>
+                                                <div class="form-text">Pick a layout to instantly preview and apply section placement.</div>
+                                        <hr class="my-4">
+                                        <h6 class="cfg-subhead"><i class="fa fa-star me-2"></i>Starred teams &amp; incidents</h6>
+                                                <div
+                                                    class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                                    <div class="small text-muted">
+                                                        Starred teams: <span class="badge bg-primary"
+                                                            data-bind="text: config.pinnedTeamIds().length"></span>
+                                                        &nbsp;•&nbsp;
+                                                        Starred incidents: <span class="badge bg-success"
+                                                            data-bind="text: config.pinnedIncidentIds().length"></span>
+                                                    </div>
 
-                                    <!-- Instant Task Suggestions -->
-                                    <div class="accordion-item">
-                                        <h2 class="accordion-header" id="headingSuggestions">
-                                            <button class="accordion-button gap-2 collapsed" type="button"
-                                                data-bs-toggle="collapse" data-bs-target="#collapseSuggestions"
-                                                aria-expanded="false" aria-controls="collapseSuggestions">
-                                                <span style="display:inline-block;width:24px;text-align:center;"><i class="fa fa-robot"></i></span>
-                                                <span>Instant Task Suggestions</span>
-                                            </button>
-                                        </h2>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                                        data-bind="click: config.clearAllPinned, enable: (config.pinnedTeamIds().length + config.pinnedIncidentIds().length) > 0">
+                                                        Clear all Starred
+                                                    </button>
+                                                </div>
 
-                                        <div id="collapseSuggestions" class="accordion-collapse collapse"
-                                            aria-labelledby="headingSuggestions"
-                                            data-bs-parent="#configOtherSettingsAccordion">
-                                            <div class="accordion-body">
+                                                <div class="row g-2">
+                                                    <div class="col-12 col-md-6">
+                                                        <div class="border rounded p-2">
+                                                            <div
+                                                                class="d-flex align-items-center justify-content-between">
+                                                                <div class="fw-semibold small">Starred Teams</div>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <span class="badge bg-primary"
+                                                                        data-bind="text: config.pinnedTeamIds().length"></span>
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-outline-secondary"
+                                                                        data-bind="click: config.clearPinnedTeams, enable: config.pinnedTeamIds().length > 0">
+                                                                        Clear
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-12 col-md-6">
+                                                        <div class="border rounded p-2">
+                                                            <div
+                                                                class="d-flex align-items-center justify-content-between">
+                                                                <div class="fw-semibold small">Starred Incidents</div>
+                                                                <div class="d-flex align-items-center gap-2">
+                                                                    <span class="badge bg-success"
+                                                                        data-bind="text: config.pinnedIncidentIds().length"></span>
+                                                                    <button type="button"
+                                                                        class="btn btn-sm btn-outline-secondary"
+                                                                        data-bind="click: config.clearPinnedIncidents, enable: config.pinnedIncidentIds().length > 0">
+                                                                        Clear
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="cfgPane-appearance" role="tabpanel" aria-labelledby="cfgTab-appearance" tabindex="0">
+                                        <div class="row g-3">
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label class="form-label">
+                                                            <i class="fa fa-moon me-1"></i>Dark Mode
+                                                        </label>
+                                                        <div class="form-check form-switch mt-2">
+                                                            <input class="form-check-input" type="checkbox" id="darkModeToggle"
+                                                                data-bind="checked: config.darkMode">
+                                                            <label class="form-check-label" for="darkModeToggle">
+                                                                Enable dark mode
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-text">Reduces eye strain in low light environments.</div>
+                                                    </div>
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label class="form-label">
+                                                            <i class="fa fa-bell me-1"></i>Alerts Panel
+                                                        </label>
+                                                        <div class="form-check form-switch mt-2">
+                                                            <input class="form-check-input" type="checkbox" id="alertsCollapsibleRulesToggle"
+                                                                data-bind="checked: config.alertsCollapsibleRules">
+                                                            <label class="form-check-label" for="alertsCollapsibleRulesToggle">
+                                                                Auto collapse alert popups
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-text">Alerts will start collapsed.</div>
+                                                    </div>
+                                                    <div class="col-sm-6 col-md-3">
+                                                        <label class="form-label">
+                                                            <i class="fa fa-hashtag me-1"></i>Incident Tasking Count
+                                                        </label>
+                                                        <div class="form-check form-switch mt-2">
+                                                            <input class="form-check-input" type="checkbox" id="taskingCountActiveOnlyToggle"
+                                                                data-bind="checked: config.taskingCountActiveOnly">
+                                                            <label class="form-check-label" for="taskingCountActiveOnlyToggle">
+                                                                Count Active taskings only
+                                                            </label>
+                                                        </div>
+                                                        <div class="form-text">Tasking count counts only Tasked, Enroute &amp; Onsite taskings (excludes Complete, CalledOff, Untasked).</div>
+                                                    </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="cfgPane-suggest" role="tabpanel" aria-labelledby="cfgTab-suggest" tabindex="0">
 
                                                 <p class="small text-muted mb-3">
                                                     When enabled, the instant-task dropdown will suggest a team using a
@@ -3490,13 +3445,9 @@
                                                     </div><!-- /row -->
                                                 </div><!-- /visible -->
 
-                                            </div>
-                                        </div>
                                     </div>
-
-                                </div><!-- /accordion -->
-
-
+                                    </div>
+                                </div>
                             </form>
                         </div>
                     </div>
