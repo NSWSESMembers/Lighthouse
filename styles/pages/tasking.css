@@ -1445,6 +1445,35 @@ tr.job:hover {
   }
 }
 
+/* STATUS RING — the Active "marching ring" (separate follower marker).
+   A dashed circle whose <g> rotates, which reads as marching ants and is
+   compositor-only (cheap) unlike animating stroke-dashoffset. */
+.status-ring-icon {
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  font-size: 0;
+}
+
+.status-ring-spin {
+  animation: status-ring-spin 9s linear infinite;
+}
+
+@keyframes status-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-ring-spin {
+    animation: none;
+  }
+}
+
 .no-drag {
   user-select: text !important;
   cursor: text !important;
@@ -1707,7 +1736,12 @@ overflow: hidden;
   border-radius: 8px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   min-width: 120px;
-  max-width: 80vw;
+  /* cap the spread (~3 narrow columns) so it can't sheet across the map;
+     anything past this scrolls inside the box */
+  max-width: min(88vw, 620px);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
   font-size: 13px;
 }
 
@@ -1715,13 +1749,19 @@ overflow: hidden;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
-  max-height: calc(100vh - 120px);
-  gap: 0 20px;
+  /* keep wrapped columns packed to the left rather than spread across */
+  align-content: flex-start;
+  /* Wrap into a new column (rightwards) before the stack climbs into the
+     zoom / tool buttons running down the left edge of the map. The 180px
+     floor stops it collapsing to slivers on very short windows. */
+  max-height: max(180px, calc(100vh - 300px));
+  max-height: max(180px, calc(100dvh - 300px));
+  gap: 0 18px;
 }
 
 .legend-body > div {
-  min-width: 190px;
-  max-width: 300px;
+  min-width: 165px;
+  max-width: 260px;
 }
 
 .legend-container i {

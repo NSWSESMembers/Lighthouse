@@ -2771,6 +2771,31 @@
                                                         </fieldset>
                                                     </div>
 
+                                                    <!-- Incident status on markers -->
+                                                    <div class="col-md-6">
+                                                        <fieldset>
+                                                            <legend class="form-label fw-semibold mb-2">
+                                                                <i class="fa fa-circle-info me-1"></i>Incident Status on Markers
+                                                            </legend>
+                                                            <div class="form-check form-switch mb-2">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    role="switch" id="jobStatusOnMarkersToggle"
+                                                                    data-bind="checked: config.showJobStatusOnMarkers">
+                                                                <label class="form-check-label"
+                                                                    for="jobStatusOnMarkersToggle">
+                                                                    Show job status on incident markers
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-text">
+                                                                Styles incident markers by job status: Active gets a
+                                                                magenta ring, Complete / Referred / Finalised are struck
+                                                                through, Cancelled / Rejected are crossed out, and jobs
+                                                                with an action-required tag get a red exclamation dot.
+                                                                See the map legend for the full key.
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+
                                                 </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-collab" role="tabpanel" aria-labelledby="cfgTab-collab" tabindex="0">

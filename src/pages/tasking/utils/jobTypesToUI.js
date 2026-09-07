@@ -20,6 +20,30 @@ export function jobsToUI(job) {
     return result;
 }
 
+// ── Status on markers (config.showJobStatusOnMarkers) ─────────────────────
+// New       → orange pulse ring (existing, unchanged)
+// Active    → magenta marching ring (drawn as a spinning dashed <g>)
+// Tasked    → nothing (a job someone is on shouldn't compete for attention)
+// Complete / Referred / Finalised → struck through  "/"
+// Cancelled / Rejected            → crossed out      "✕"
+// Any status with an action-required tag → red "!" pip, NE corner
+export const ACTIVE_RING_COLOUR = "#e5399b"; // magenta — clear of orange + priority fills
+
+const CLOSED_RESOLVED = new Set(["Complete", "Referred", "Finalised"]);
+const CLOSED_DEAD = new Set(["Cancelled", "Rejected"]);
+
+// "strike" (resolved) | "cross" (dead) | null
+export function statusClosedMark(statusName) {
+    if (CLOSED_RESOLVED.has(statusName)) return "strike";
+    if (CLOSED_DEAD.has(statusName)) return "cross";
+    return null;
+}
+
+// Does this status get the marching ring?
+export function statusHasRing(statusName) {
+    return statusName === "Active";
+}
+
 // Priority → stroke color
 const priorityStroke = {
     "Priority": "#FFA500",  // goldy yellow
