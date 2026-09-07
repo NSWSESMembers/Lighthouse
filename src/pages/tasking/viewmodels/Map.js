@@ -5,6 +5,7 @@ import 'leaflet.markercluster';
 
 import { AssetPopupViewModel } from './AssetPopUp';
 import { JobPopupViewModel } from './JobPopUp';
+import { restyleAllJobMarkers } from '../markers/jobMarker.js';
 
 export function MapVM(Lmap, root) {
   const self = this;
@@ -279,6 +280,19 @@ export function MapVM(Lmap, root) {
       }
     });
     self._syncPulseRings();
+  };
+
+  /**
+   * Re-render all job marker icons — called when the "show status on markers"
+   * config option is toggled.
+   */
+  self.applyJobStatusOnMarkers = function (on) {
+    // `on` is passed explicitly by Config (root.config isn't wired yet when
+    // this first runs from afterConfigLoad); fall back to reading it live.
+    const enabled = (on === undefined) ? !!root.config?.showJobStatusOnMarkers?.() : !!on;
+    document.querySelectorAll('.legend-status-block')
+      .forEach((el) => el.classList.toggle('d-none', !enabled));
+    restyleAllJobMarkers(root);
   };
 
   /**

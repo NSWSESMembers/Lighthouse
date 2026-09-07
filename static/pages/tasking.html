@@ -2850,6 +2850,30 @@
                                                         </fieldset>
                                                     </div>
 
+                                                    <!-- Incident status on markers -->
+                                                    <div class="col-md-6">
+                                                        <fieldset>
+                                                            <legend class="form-label fw-semibold mb-2">
+                                                                <i class="fa fa-circle-info me-1"></i>Incident Status on Markers
+                                                            </legend>
+                                                            <div class="form-check form-switch mb-2">
+                                                                <input class="form-check-input" type="checkbox"
+                                                                    role="switch" id="jobStatusOnMarkersToggle"
+                                                                    data-bind="checked: config.showJobStatusOnMarkers">
+                                                                <label class="form-check-label"
+                                                                    for="jobStatusOnMarkersToggle">
+                                                                    Show status pip on incident markers
+                                                                </label>
+                                                            </div>
+                                                            <div class="form-text">
+                                                                Adds a small coloured dot to the top-right of each
+                                                                incident marker showing its lifecycle status — New,
+                                                                Active, Tasked, Referred, Complete, Cancelled,
+                                                                Finalised or Rejected.
+                                                            </div>
+                                                        </fieldset>
+                                                    </div>
+
                                                 </div>
 
                                                 <hr class="my-4">

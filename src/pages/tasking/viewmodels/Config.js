@@ -1153,6 +1153,7 @@ export function ConfigVM(root, deps) {
     self.clusterEnabled = ko.observable(true);
     self.clusterRadius = ko.observable(60);   // maxClusterRadius in px (10–80)
     self.clusterRescueJobs = ko.observable(true);
+    self.showJobStatusOnMarkers = ko.observable(false);
     self.alertsCollapsibleRules = ko.observable(true);
     self.taskingCountActiveOnly = ko.observable(false);
 
@@ -1290,6 +1291,7 @@ export function ConfigVM(root, deps) {
         clusterEnabled: !!self.clusterEnabled(),
         clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
+        showJobStatusOnMarkers: !!self.showJobStatusOnMarkers(),
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
         taskingCountActiveOnly: !!self.taskingCountActiveOnly(),
         suggestionEnabled: !!self.suggestionEnabled(),
@@ -1612,6 +1614,9 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.clusterRescueJobs === 'boolean') {
             self.clusterRescueJobs(cfg.clusterRescueJobs);
         }
+        if (typeof cfg.showJobStatusOnMarkers === 'boolean') {
+            self.showJobStatusOnMarkers(cfg.showJobStatusOnMarkers);
+        }
         if (typeof cfg.alertsCollapsibleRules === 'boolean') {
             self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
         }
@@ -1757,6 +1762,7 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
         root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
         root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
+        root.mapVM?.applyJobStatusOnMarkers?.(!!self.showJobStatusOnMarkers());
         applyLayoutPresetClass(normalizeLayoutPreset(self.layoutPreset()));
         // Apply dark mode
         self._applyDarkMode();
@@ -1805,6 +1811,11 @@ export function ConfigVM(root, deps) {
 
     self.clusterRescueJobs.subscribe((v) => {
         root.mapVM?.applyRescueClusterSetting?.(!!v);
+        self.save();
+    })
+
+    self.showJobStatusOnMarkers.subscribe((v) => {
+        root.mapVM?.applyJobStatusOnMarkers?.(!!v);
         self.save();
     })
 

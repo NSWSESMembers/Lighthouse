@@ -1,4 +1,4 @@
-import {jobsToUI} from "../utils/jobTypesToUI.js";
+import {jobsToUI, statusPipColor, statusPipGlyph} from "../utils/jobTypesToUI.js";
 
 // --- SVG factory (shape+style → L.divIcon) ---
 import L from "leaflet";
@@ -121,33 +121,116 @@ function shapeInnerSvg({ shape, fill, stroke, radius = 7, strokeWidth = 2 }) {
     return inner;
 }
 
-export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2 }) {
+// White 1-glyph hint drawn inside the status pip, centred on (cx, cy) and
+// scaled to pip radius `r`. Returns "" for an unknown / absent key.
+function pipGlyphSvg(key, cx, cy, r) {
+    const g = r * 0.6;
+    const sw = Math.max(0.75, r * 0.28);
+    const n = (v) => v.toFixed(2);
+    const pt = (x, y) => `${n(cx + x)},${n(cy + y)}`;
+    const line = (x1, y1, x2, y2) =>
+        `<line x1="${n(cx + x1)}" y1="${n(cy + y1)}" x2="${n(cx + x2)}" y2="${n(cy + y2)}" />`;
+    const polyline = (...xy) => `<polyline points="${xy.map(([x, y]) => pt(x, y)).join(" ")}" />`;
+
+    if (key === "dot") {
+        return `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r * 0.46)}" fill="#ffffff" />`;
+    }
+
+    let body = "";
+    switch (key) {
+        case "check":
+            body = polyline([-g, g * 0.05], [-g * 0.2, g * 0.8], [g, -g * 0.7]);
+            break;
+        case "cross":
+            body = line(-g, -g, g, g) + line(g, -g, -g, g);
+            break;
+        case "arrow":
+            body = line(-g, 0, g, 0) + polyline([g * 0.2, -g * 0.6], [g, 0], [g * 0.2, g * 0.6]);
+            break;
+        case "chevrons":
+            body = polyline([-g * 0.7, -g * 0.75], [0, 0], [-g * 0.7, g * 0.75])
+                 + polyline([0, -g * 0.75], [g * 0.7, 0], [0, g * 0.75]);
+            break;
+        default:
+            return "";
+    }
+    return `<g fill="none" stroke="#ffffff" stroke-width="${n(sw)}"
+                stroke-linecap="round" stroke-linejoin="round">${body}</g>`;
+}
+
+export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2, pip = null, pipGlyph = null }) {
     const d = radius * 2;
     const inner = shapeInnerSvg({ shape, fill, stroke, radius, strokeWidth });
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">
+
+    if (!pip) {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">
               ${inner}
+            </svg>`;
+
+        return L.divIcon({
+            className: "job-svg-marker",
+            html: svg,
+            iconSize: [d, d],
+            iconAnchor: [radius, radius],
+            popupAnchor: [0, -radius],
+            shapeDiameter: d
+        });
+    }
+
+    // Status pip: a small coloured dot in the top-right corner, optionally
+    // carrying a 1-glyph hint. The SVG box is padded symmetrically so
+    // iconAnchor stays at the shape centre, and the pulse ring keys off
+    // `shapeDiameter` (below) rather than this padded box.
+    const pr = Math.max(3.4, radius * 0.62);   // pip radius
+    const halo = pr + 1;
+    const pad = Math.ceil(halo);
+    const box = d + pad * 2;
+    const pcx = pad + d - pr * 0.4;             // tucked into the NE corner
+    const pcy = pad + pr * 0.4;
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}">
+              <g transform="translate(${pad}, ${pad})">${inner}</g>
+              <circle cx="${pcx}" cy="${pcy}" r="${halo}" fill="#ffffff" />
+              <circle cx="${pcx}" cy="${pcy}" r="${pr}" fill="${pip}" stroke="rgba(0,0,0,0.35)" stroke-width="0.75" />
+              ${pipGlyph ? pipGlyphSvg(pipGlyph, pcx, pcy, pr) : ""}
             </svg>`;
 
     return L.divIcon({
         className: "job-svg-marker",
         html: svg,
-        iconSize: [d, d],
-        iconAnchor: [radius, radius],
-        popupAnchor: [0, -radius]
+        iconSize: [box, box],
+        iconAnchor: [radius + pad, radius + pad],
+        popupAnchor: [0, -radius],
+        shapeDiameter: d
     });
 };
 
 // Build icon style for a given job
-export function styleForJob(job) {
+export function styleForJob(job, { showStatus = false } = {}) {
 
     const style = jobsToUI(job)
 
     // // Emphasise Priority/Immediate with larger radius
     // const radius = (/^(Priority|Immediate)$/i.test(job.priorityName())) ? 8.5 : 7;
     const radius = 7
-    
-    return { shape: style.shape, fill: style.fillcolor, stroke: style.strokecolor, radius, strokeWidth: 2.25 };
+
+    const out = { shape: style.shape, fill: style.fillcolor, stroke: style.strokecolor, radius, strokeWidth: 2.25 };
     // tweak strokeWidth if you need stronger outlines
+
+    // Only attach `pip` when the config option is on AND the status is known,
+    // so the JSON.stringify(style) change-detection key is byte-identical to
+    // the old behaviour whenever status pips are disabled.
+    if (showStatus) {
+        const status = job.statusName?.();
+        const pip = statusPipColor(status);
+        if (pip) {
+            out.pip = pip;
+            const glyph = statusPipGlyph(status);
+            if (glyph) out.pipGlyph = glyph;
+        }
+    }
+
+    return out;
 }
 
 /**

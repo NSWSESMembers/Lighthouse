@@ -25,7 +25,8 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
             : vm.mapVM.jobClusterGroup;          // normal clustering
     const markers = vm.mapVM.jobMarkerIndex;
     const pulseLayer = vm.mapVM.jobPulseLayer;
-    const style = styleForJob(job);
+    const showStatus = !!vm.config?.showJobStatusOnMarkers?.();
+    const style = styleForJob(job, { showStatus });
     const html = buildJobPopupKO();
     const contentEl = makePopupNode(html, 'job-pop-root')
 
@@ -77,6 +78,8 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
                     if (prev !== m._isNew && vm.mapVM.clusteringEnabled) {
                         vm.mapVM.jobClusterGroup.refreshClusters(m);
                     }
+                    // keep the status pip colour in sync when the option is on
+                    if (vm.config?.showJobStatusOnMarkers?.()) syncMarkerStyle(m, job, vm, pulseLayer);
                 })
             );
         }
@@ -117,6 +120,8 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
             if (wasNew !== marker._isNew && vm.mapVM.clusteringEnabled) {
                 vm.mapVM.jobClusterGroup.refreshClusters(marker);
             }
+            // keep the status pip colour in sync when the option is on
+            if (vm.config?.showJobStatusOnMarkers?.()) syncMarkerStyle(marker, job, vm, pulseLayer);
         })
     );
 
@@ -184,17 +189,50 @@ export function removeJobMarker(vm, jobOrId) {
     if (job) job.marker = null;
 }
 
+/**
+ * Re-evaluate every existing job marker's icon — used when the
+ * `showJobStatusOnMarkers` config option is toggled, so the status pip is
+ * added to / removed from markers that are already on the map.
+ */
+export function restyleAllJobMarkers(vm) {
+    const showStatus = !!vm.config?.showJobStatusOnMarkers?.();
+    const pulseLayer = vm.mapVM?.jobPulseLayer;
+    vm.jobsById?.forEach((job) => {
+        const m = job.marker;
+        if (!m) return;
+        const newStyle = styleForJob(job, { showStatus });
+        const key = JSON.stringify(newStyle);
+        if (m._styleKey === key) return;
+
+        m.setIcon(makeShapeIcon(newStyle));
+        m._styleKey = key;
+        m._priorityColor = newStyle.fill || '#6b7280';
+
+        // The icon box size changed, so any existing pulse ring is now sized
+        // for the old geometry — rebuild it against the new icon.
+        if (m._pulseRing && pulseLayer) {
+            m._pulseRing._detach?.();
+            pulseLayer.removeLayer(m._pulseRing);
+            m._pulseRing = null;
+            upsertPulseRing(pulseLayer, job, m);
+        }
+    });
+    vm.mapVM?._syncPulseRings?.();
+}
+
 //complicated for some reason. has to support different icons sizes and anchors
 function upsertPulseRing(layerGroup, job, marker) {
     const isNew = (job.statusName?.() || '').toLowerCase() === 'new';
     const base = marker.options.icon?.options || {};
-    const baseSize = base.iconSize || [14, 14];
-    const baseAnchor = base.iconAnchor || [baseSize[0] / 2, baseSize[1] / 2];
+    const iconSize = base.iconSize || [14, 14];
+    // Ring is sized to the actual shape, not the (possibly pip-padded) icon box.
+    const shapeD = base.shapeDiameter || Math.min(iconSize[0], iconSize[1]);
+    const baseSize = [shapeD, shapeD];
 
     if (isNew && !marker._pulseRing) {
         const k = 3;
         const ringSize = [Math.round(baseSize[0] * k), Math.round(baseSize[1] * k)];
-        const ringAnchor = [Math.round(baseAnchor[0] * k), Math.round(baseAnchor[1] * k)];
+        const ringAnchor = [Math.round(ringSize[0] / 2), Math.round(ringSize[1] / 2)];
 
         const shape = styleForJob(job).shape || 'circle';
         const pulseSvg = buildPulseRingSvg(shape, ringSize[0], ringSize[1]);
@@ -235,7 +273,8 @@ function upsertPulseRing(layerGroup, job, marker) {
  * reassignment + cluster refresh as needed.
  */
 function syncMarkerStyle(marker, job, vm, pulseLayer) {
-    const newStyle = styleForJob(job);
+    const showStatus = !!vm.config?.showJobStatusOnMarkers?.();
+    const newStyle = styleForJob(job, { showStatus });
     const newKey = JSON.stringify(newStyle);
 
     // Update icon if the visual style actually changed

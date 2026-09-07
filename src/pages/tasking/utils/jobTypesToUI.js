@@ -20,6 +20,42 @@ export function jobsToUI(job) {
     return result;
 }
 
+// Job status → pip colour. A lifecycle ramp kept clear of the priority hues
+// below, shown on markers only when config.showJobStatusOnMarkers is enabled.
+const statusPipMap = {
+    "New":       "#e4661d", // orange (matches the "new" pulse ring)
+    "Active":    "#159aab", // teal
+    "Tasked":    "#6b52d6", // violet
+    "Referred":  "#566f86", // slate
+    "Complete":  "#2f8f5b", // green
+    "Cancelled": "#8b949b", // grey
+    "Finalised": "#5b636a", // dark grey
+    "Rejected":  "#cc4460", // rose
+};
+
+// Job status → optional 1-glyph hint drawn inside the pip. New has no glyph
+// (an empty pip reads as "untouched"); closed states share a glyph with their
+// resolved-ok / resolved-not sibling and are told apart by colour.
+const statusPipGlyphMap = {
+    "Active":    "dot",       // live / being worked
+    "Tasked":    "arrow",     // dispatched to a team
+    "Referred":  "chevrons",  // forwarded elsewhere
+    "Complete":  "check",
+    "Cancelled": "cross",
+    "Finalised": "check",
+    "Rejected":  "cross",
+};
+
+// Resolve a job's status name to its pip colour (null for unknown/blank).
+export function statusPipColor(statusName) {
+    return statusPipMap[statusName] || null;
+}
+
+// Resolve a job's status name to its pip glyph key (null for none).
+export function statusPipGlyph(statusName) {
+    return statusPipGlyphMap[statusName] || null;
+}
+
 // Priority → stroke color
 const priorityStroke = {
     "Priority": "#FFA500",  // goldy yellow
