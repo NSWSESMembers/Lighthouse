@@ -2090,17 +2090,22 @@
                                     </li>
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="cfgTab-map" data-bs-toggle="pill" data-bs-target="#cfgPane-map" type="button" role="tab" aria-controls="cfgPane-map" aria-selected="false">
-                                            <span class="cfg-rail-ico"><i class="fa fa-layer-group"></i></span><span>Map</span>
+                                            <span class="cfg-rail-ico"><i class="fa fa-map-marker-alt"></i></span><span>Map markers</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="cfgTab-collab" data-bs-toggle="pill" data-bs-target="#cfgPane-collab" type="button" role="tab" aria-controls="cfgPane-collab" aria-selected="false">
+                                            <span class="cfg-rail-ico"><i class="fa fa-layer-group"></i></span><span>Collaborative layers</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="cfgTab-sidebar" data-bs-toggle="pill" data-bs-target="#cfgPane-sidebar" type="button" role="tab" aria-controls="cfgPane-sidebar" aria-selected="false">
-                                            <span class="cfg-rail-ico"><i class="fa fa-table-columns"></i></span><span>Sidebar</span>
+                                            <span class="cfg-rail-ico"><i class="fa fa-columns"></i></span><span>Sidebar</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="cfgTab-appearance" data-bs-toggle="pill" data-bs-target="#cfgPane-appearance" type="button" role="tab" aria-controls="cfgPane-appearance" aria-selected="false">
-                                            <span class="cfg-rail-ico"><i class="fa fa-sliders"></i></span><span>Appearance</span>
+                                            <span class="cfg-rail-ico"><i class="fa fa-adjust"></i></span><span>Appearance</span>
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
@@ -2112,7 +2117,7 @@
                                     <div class="tab-content config-panes">
                                     <div class="tab-pane fade show active" id="cfgPane-data" role="tabpanel" aria-labelledby="cfgTab-data" tabindex="0">
                                         <div class="row g-3">
-                                                    <div class="col-sm-6 col-md-3">
+                                                    <div class="col-sm-6 col-md-6">
                                                         <label for="refreshInterval" class="form-label">
                                                             <i class="fa fa-sync-alt me-1"></i>Refresh interval
                                                             (seconds)
@@ -2126,7 +2131,7 @@
                                                         </div>
                                                         <div class="form-text">How often to fully refresh data.</div>
                                                     </div>
-                                                    <div class="col-sm-6 col-md-3">
+                                                    <div class="col-sm-6 col-md-6">
                                                         <label for="fetchPeriod" class="form-label">
                                                             <i class="fa fa-history me-1"></i>Fetch backwards (days)
                                                         </label>
@@ -2139,7 +2144,7 @@
                                                         </div>
                                                         <div class="form-text">How many days in the past to fetch.</div>
                                                     </div>
-                                                    <div class="col-sm-6 col-md-3">
+                                                    <div class="col-sm-6 col-md-6">
                                                         <label for="fetchForward" class="form-label">
                                                             <i class="fa fa-calendar-plus me-1"></i>Fetch forward (days)
                                                         </label>
@@ -2153,7 +2158,7 @@
                                                         <div class="form-text">How many days into the future to fetch.
                                                         </div>
                                                     </div>
-                                                    <div class="col-sm-6 col-md-3">
+                                                    <div class="col-sm-6 col-md-6">
                                                         <label class="form-label">
                                                             <i class="fa fa-bolt me-1"></i>Live Updates
                                                         </label>
@@ -2649,15 +2654,6 @@
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-map" role="tabpanel" aria-labelledby="cfgTab-map" tabindex="0">
-                                        <div class="accordion config-subaccordion" id="cfgMapAcc">
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header">
-                                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-markers" aria-expanded="true" aria-controls="cfgSub-markers">
-                                                    <span class="cfg-sub-ico"><i class="fa fa-map-marker-alt"></i></span><span>Incident markers</span>
-                                                </button>
-                                            </h2>
-                                            <div id="cfgSub-markers" class="accordion-collapse collapse show" data-bs-parent="#cfgMapAcc">
-                                                <div class="accordion-body">
                                                 <div class="row g-3">
 
                                                     <!-- Clustering options -->
@@ -2744,17 +2740,8 @@
                                                     </div>
 
                                                 </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header">
-                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-collab" aria-expanded="false" aria-controls="cfgSub-collab">
-                                                    <span class="cfg-sub-ico"><i class="fa fa-users"></i></span><span>Collaborative layers</span>
-                                                </button>
-                                            </h2>
-                                            <div id="cfgSub-collab" class="accordion-collapse collapse" data-bs-parent="#cfgMapAcc">
-                                                <div class="accordion-body">
+                                    </div>
+                                    <div class="tab-pane fade" id="cfgPane-collab" role="tabpanel" aria-labelledby="cfgTab-collab" tabindex="0">
                                                 <div class="d-flex align-items-center justify-content-between mb-2">
                                                     <h6 class="fw-semibold mb-0">
                                                         <i class="fa fa-users me-1"></i>Collaborative Layers
@@ -3170,10 +3157,6 @@
                                                 <div class="form-text mt-2" data-bind="visible: config.noSearchMatchMessage, text: config.noSearchMatchMessage">
                                                 </div>
 
-                                                </div>
-                                            </div>
-                                        </div>
-                                        </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-sidebar" role="tabpanel" aria-labelledby="cfgTab-sidebar" tabindex="0">
                                                 <label class="form-label">
