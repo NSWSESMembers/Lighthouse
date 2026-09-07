@@ -144,6 +144,7 @@ export function Team(data = {}, deps = {}) {
     self.callsign = ko.observable(data.Callsign ?? "");
     self.assignedTo = ko.observable(new Entity(data.AssignedTo || data.CreatedAt)); //safety code for beacon bug
     self.teamStatusType = ko.observable(data.TeamStatusType || null); // {Id,Name,Description}
+    self.teamType = ko.observable(data.TeamType || null); // {Id,Name} -- Field / Operations / Aviation
     self.sector = ko.observable(new Sector(data.Sector || {}));
     self.members = ko.observableArray(data.Members);
     self.taskedJobCount = ko.observable(data.TaskedJobCount || 0);
@@ -662,6 +663,15 @@ export function Team(data = {}, deps = {}) {
             }
             const cur = this.teamStatusType();
             if (!cur || cur.Id !== status?.Id) this.teamStatusType(status);
+        }
+        if (d.TeamType !== undefined) {
+            let type = d.TeamType;
+            if (type && type.Name === undefined && type.Id != null) {
+                // Reduced {Id} objects (some pushes) -- resolve the full entry.
+                type = Object.values(Enum.TeamType).find(t => t.Id === type.Id) || type;
+            }
+            const cur = this.teamType();
+            if (!cur || cur.Id !== type?.Id) this.teamType(type);
         }
         if (d.Members !== undefined) {
             // Members is an array of objects — compare by length + leader/person ids

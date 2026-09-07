@@ -1149,6 +1149,10 @@ export function ConfigVM(root, deps) {
 
     self.teamTaskStatusFilter = ko.observableArray([]);
 
+    // Team type allow-list (Field / Operations / Aviation). Empty = all types.
+    // blown away on load
+    self.teamTypeFilter = ko.observableArray([]);
+
     // Map clustering
     self.clusterEnabled = ko.observable(true);
     self.clusterRadius = ko.observable(60);   // maxClusterRadius in px (10–80)
@@ -1236,6 +1240,10 @@ export function ConfigVM(root, deps) {
         "Activated"
     ];
 
+    self.teamTypeFilterDefaults = [
+        "Field"
+    ];
+
     self.incidentTypeFilterDefaults = [
         "Tsunami",
         "Other",
@@ -1281,6 +1289,7 @@ export function ConfigVM(root, deps) {
         jobStatusFilter: ko.toJS(self.jobStatusFilter),
         incidentTypeFilter: ko.toJS(self.incidentTypeFilter),
         teamTaskStatusFilter: ko.toJS(self.teamTaskStatusFilter),
+        teamTypeFilter: ko.toJS(self.teamTypeFilter),
         sectorFilters: ko.toJS(self.sectorFilters),
         includeIncidentsWithoutSector: !!self.includeIncidentsWithoutSector(),
         applySectorsToIncidents: !!self.applySectorsToIncidents(),
@@ -1511,6 +1520,7 @@ export function ConfigVM(root, deps) {
             cfg.jobStatusFilter = self.jobStatusFilterDefaults;
             cfg.incidentTypeFilter = self.incidentTypeFilterDefaults;
             cfg.teamTaskStatusFilter = self.teamTaskStatusFilterDefaults;
+            cfg.teamTypeFilter = self.teamTypeFilterDefaults;
             cfg.sectorFilters = [];
             cfg.includeIncidentsWithoutSector = true;
             cfg.applySectorsToIncidents = false;
@@ -1587,6 +1597,13 @@ export function ConfigVM(root, deps) {
         }
         if (Array.isArray(cfg.teamTaskStatusFilter)) {
             self.teamTaskStatusFilter(cfg.teamTaskStatusFilter);
+        }
+        // Saved configs from before team-type filtering won't have this key --
+        // fall back to the default (Field only) rather than "all types".
+        if (Array.isArray(cfg.teamTypeFilter)) {
+            self.teamTypeFilter(cfg.teamTypeFilter);
+        } else {
+            self.teamTypeFilter(self.teamTypeFilterDefaults.slice());
         }
         if (Array.isArray(cfg.sectorFilters)) {
             self.sectorFilters(cfg.sectorFilters);
