@@ -2121,13 +2121,10 @@
                                     </ul>
                                     <div class="tab-content config-panes">
                                     <div class="tab-pane fade show active" id="cfgPane-data" role="tabpanel" aria-labelledby="cfgTab-data" tabindex="0">
-                                        <div class="cfg-rows">
-                                            <div class="cfg-row">
-                                                <div class="cfg-row-main">
-                                                    <label class="t" for="refreshInterval">Refresh interval</label>
-                                                    <div class="d">How often LAD fully refreshes all data.</div>
-                                                </div>
-                                                <div class="cfg-row-control">
+                                        <div class="cfg-card">
+                                            <div class="cfg-line">
+                                                <label for="refreshInterval">Refresh interval</label>
+                                                <div class="cfg-line-ctl">
                                                     <div class="input-group input-group-sm">
                                                         <input id="refreshInterval" type="number" min="30" step="5"
                                                             class="form-control" data-bind="value: config.refreshInterval">
@@ -2135,32 +2132,26 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="cfg-row">
-                                                <div class="cfg-row-main">
-                                                    <label class="t" for="fetchPeriod">Fetch window</label>
-                                                    <div class="d">How far back and forward to load incidents &amp; teams.</div>
-                                                </div>
-                                                <div class="cfg-row-control">
+                                            <div class="cfg-line">
+                                                <label for="fetchPeriod">Fetch window</label>
+                                                <div class="cfg-line-ctl">
                                                     <div class="input-group input-group-sm">
                                                         <input id="fetchPeriod" type="number" min="0" max="31" step="1"
                                                             class="form-control" aria-label="Fetch backwards (days)"
                                                             data-bind="value: config.fetchPeriod">
-                                                        <span class="input-group-text">d&nbsp;back</span>
+                                                        <span class="input-group-text">back</span>
                                                     </div>
                                                     <div class="input-group input-group-sm">
                                                         <input id="fetchForward" type="number" min="0" step="1"
                                                             class="form-control" aria-label="Fetch forward (days)"
                                                             data-bind="value: config.fetchForward">
-                                                        <span class="input-group-text">d&nbsp;fwd</span>
+                                                        <span class="input-group-text">fwd</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="cfg-row">
-                                                <div class="cfg-row-main">
-                                                    <label class="t" for="signalrEnabledToggle">Live updates</label>
-                                                    <div class="d">Instant incident, team &amp; tasking changes via SignalR. Restart LAD after changing.</div>
-                                                </div>
-                                                <div class="cfg-row-control">
+                                            <div class="cfg-line">
+                                                <label for="signalrEnabledToggle">Live updates</label>
+                                                <div class="cfg-line-ctl">
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input" type="checkbox" role="switch"
                                                             id="signalrEnabledToggle" data-bind="checked: config.signalrEnabled">
@@ -2168,6 +2159,10 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <p class="cfg-card-note">
+                                            &ldquo;Refresh interval&rdquo; is the full data-reload cycle. Between reloads,
+                                            live updates keep the board current via SignalR &mdash; restart LAD after toggling.
+                                        </p>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-filters" role="tabpanel" aria-labelledby="cfgTab-filters" tabindex="0">
                                         <div class="accordion config-subaccordion" id="cfgFiltersAcc">
@@ -3235,37 +3230,28 @@
                                                 </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-appearance" role="tabpanel" aria-labelledby="cfgTab-appearance" tabindex="0">
-                                        <div class="cfg-rows">
-                                            <div class="cfg-row">
-                                                <div class="cfg-row-main">
-                                                    <label class="t" for="darkModeToggle">Dark mode</label>
-                                                    <div class="d">Reduces eye strain in low light environments.</div>
-                                                </div>
-                                                <div class="cfg-row-control">
+                                        <div class="cfg-card">
+                                            <div class="cfg-line">
+                                                <label for="darkModeToggle">Dark mode</label>
+                                                <div class="cfg-line-ctl">
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input" type="checkbox" role="switch"
                                                             id="darkModeToggle" data-bind="checked: config.darkMode">
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="cfg-row">
-                                                <div class="cfg-row-main">
-                                                    <label class="t" for="alertsCollapsibleRulesToggle">Auto-collapse alert popups</label>
-                                                    <div class="d">New alerts start collapsed in the Alerts panel.</div>
-                                                </div>
-                                                <div class="cfg-row-control">
+                                            <div class="cfg-line">
+                                                <label for="alertsCollapsibleRulesToggle">Auto-collapse alert popups</label>
+                                                <div class="cfg-line-ctl">
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input" type="checkbox" role="switch"
                                                             id="alertsCollapsibleRulesToggle" data-bind="checked: config.alertsCollapsibleRules">
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="cfg-row">
-                                                <div class="cfg-row-main">
-                                                    <label class="t" for="taskingCountActiveOnlyToggle">Count active taskings only</label>
-                                                    <div class="d">Incident tasking count excludes Complete, CalledOff &amp; Untasked (counts only Tasked, Enroute &amp; Onsite).</div>
-                                                </div>
-                                                <div class="cfg-row-control">
+                                            <div class="cfg-line">
+                                                <label for="taskingCountActiveOnlyToggle">Count active taskings only</label>
+                                                <div class="cfg-line-ctl">
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input" type="checkbox" role="switch"
                                                             id="taskingCountActiveOnlyToggle" data-bind="checked: config.taskingCountActiveOnly">
@@ -3273,6 +3259,10 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <p class="cfg-card-note">
+                                            Dark mode reduces eye strain on overnight shifts. &ldquo;Count active taskings
+                                            only&rdquo; excludes Complete, CalledOff &amp; Untasked from the incident tasking count.
+                                        </p>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-suggest" role="tabpanel" aria-labelledby="cfgTab-suggest" tabindex="0">
 
