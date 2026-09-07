@@ -304,7 +304,7 @@ whenWeAreReady(function () {
   }
 
   //lighthouse menu for teams
-  if (location.pathname == '/Teams') {
+  if (location.pathname.toLowerCase() == '/teams') {
     let regionfilter;
     if (user.hq.EntityTypeId != 1) {
       //make region level more obvious
@@ -481,7 +481,7 @@ whenWeAreReady(function () {
   }
 
   //lighthouse menu for situation map
-  if (location.pathname == '/Jobs/SituationalAwareness') {
+  if (location.pathname.toLowerCase() == '/jobs/situationalawareness') {
     let regionfilter;
     if (user.currentHqTypeId != 1) {
       //make region level more obvious
@@ -604,7 +604,7 @@ whenWeAreReady(function () {
 
   //lighthouse menu for jobs
 
-  if (location.pathname === '/Jobs') {
+  if (location.pathname.toLowerCase() === '/jobs') {
     let regionfilter;
     if (user.hq.EntityTypeId != 1) {
       //make region level more obvious
