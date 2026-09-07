@@ -2121,48 +2121,60 @@
                                     </ul>
                                     <div class="tab-content config-panes">
                                     <div class="tab-pane fade show active" id="cfgPane-data" role="tabpanel" aria-labelledby="cfgTab-data" tabindex="0">
-                                        <div class="cfg-card">
-                                            <div class="cfg-line">
-                                                <label for="refreshInterval">Refresh interval</label>
-                                                <div class="cfg-line-ctl">
-                                                    <div class="input-group input-group-sm">
-                                                        <input id="refreshInterval" type="number" min="30" step="5"
-                                                            class="form-control" data-bind="value: config.refreshInterval">
-                                                        <span class="input-group-text">sec</span>
+                                        <div class="cfg-data">
+                                            <div class="cfg-data-fields">
+                                                <div class="cfg-field">
+                                                    <label for="refreshInterval">Refresh interval</label>
+                                                    <div class="ctl">
+                                                        <div class="input-group input-group-sm">
+                                                            <input id="refreshInterval" type="number" min="30" step="5"
+                                                                class="form-control" data-bind="value: config.refreshInterval">
+                                                            <span class="input-group-text">sec</span>
+                                                        </div>
                                                     </div>
+                                                    <div class="d">Full reload of every incident and team.</div>
+                                                </div>
+                                                <div class="cfg-field">
+                                                    <label for="fetchPeriod">Fetch window</label>
+                                                    <div class="ctl">
+                                                        <div class="input-group input-group-sm">
+                                                            <input id="fetchPeriod" type="number" min="0" max="31" step="1"
+                                                                class="form-control" aria-label="Fetch backwards (days)"
+                                                                data-bind="value: config.fetchPeriod">
+                                                            <span class="input-group-text">d&nbsp;back</span>
+                                                        </div>
+                                                        <div class="input-group input-group-sm">
+                                                            <input id="fetchForward" type="number" min="0" step="1"
+                                                                class="form-control" aria-label="Fetch forward (days)"
+                                                                data-bind="value: config.fetchForward">
+                                                            <span class="input-group-text">d&nbsp;fwd</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d">How much past history and lookahead to load.</div>
+                                                </div>
+                                                <div class="cfg-field">
+                                                    <label for="signalrEnabledToggle">Live updates</label>
+                                                    <div class="ctl">
+                                                        <div class="form-check form-switch">
+                                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                                id="signalrEnabledToggle" data-bind="checked: config.signalrEnabled">
+                                                        </div>
+                                                    </div>
+                                                    <div class="d">Instant incident, team &amp; tasking changes via SignalR, between full refreshes.</div>
                                                 </div>
                                             </div>
-                                            <div class="cfg-line">
-                                                <label for="fetchPeriod">Fetch window</label>
-                                                <div class="cfg-line-ctl">
-                                                    <div class="input-group input-group-sm">
-                                                        <input id="fetchPeriod" type="number" min="0" max="31" step="1"
-                                                            class="form-control" aria-label="Fetch backwards (days)"
-                                                            data-bind="value: config.fetchPeriod">
-                                                        <span class="input-group-text">back</span>
-                                                    </div>
-                                                    <div class="input-group input-group-sm">
-                                                        <input id="fetchForward" type="number" min="0" step="1"
-                                                            class="form-control" aria-label="Fetch forward (days)"
-                                                            data-bind="value: config.fetchForward">
-                                                        <span class="input-group-text">fwd</span>
-                                                    </div>
+
+                                            <div class="cfg-readout">
+                                                <div class="cfg-readout-h">Loading now</div>
+                                                <div class="cfg-readout-range" data-bind="text: config.fetchWindowRange"></div>
+                                                <div class="cfg-readout-sub"><span data-bind="text: config.fetchWindowDays"></span>-day window</div>
+                                                <div class="cfg-readout-rows">
+                                                    <div><span>Full refresh</span><span data-bind="text: config.refreshCadence"></span></div>
+                                                    <div><span>Live updates</span><span data-bind="text: config.liveUpdatesLabel"></span></div>
                                                 </div>
-                                            </div>
-                                            <div class="cfg-line">
-                                                <label for="signalrEnabledToggle">Live updates</label>
-                                                <div class="cfg-line-ctl">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" role="switch"
-                                                            id="signalrEnabledToggle" data-bind="checked: config.signalrEnabled">
-                                                    </div>
-                                                </div>
+                                                <div class="cfg-readout-note">Toggling live updates needs a LAD restart to take effect.</div>
                                             </div>
                                         </div>
-                                        <p class="cfg-card-note">
-                                            &ldquo;Refresh interval&rdquo; is the full data-reload cycle. Between reloads,
-                                            live updates keep the board current via SignalR &mdash; restart LAD after toggling.
-                                        </p>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-filters" role="tabpanel" aria-labelledby="cfgTab-filters" tabindex="0">
                                         <div class="accordion config-subaccordion" id="cfgFiltersAcc">

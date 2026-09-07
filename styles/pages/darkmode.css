@@ -1073,7 +1073,22 @@ body.dark-mode .cfg-line {
   border-color: #3d3d3d;
 }
 
-body.dark-mode .cfg-card-note {
+body.dark-mode .cfg-card-note,
+body.dark-mode .cfg-field .d {
+  color: #adb5bd;
+}
+
+body.dark-mode .cfg-readout {
+  background: #262626;
+  border-color: #444;
+}
+
+body.dark-mode .cfg-readout-h,
+body.dark-mode .cfg-readout-note {
+  color: #8b929c;
+}
+
+body.dark-mode .cfg-readout-sub {
   color: #adb5bd;
 }
 

@@ -1077,6 +1077,32 @@ export function ConfigVM(root, deps) {
 
     self.fetchPeriod = ko.observable(7).extend({ min: 0, max: 31, digit: true });
     self.fetchForward = ko.observable(0).extend({ min: 0, max: 31, digit: true });
+
+    // Human-readable summary of what the Data pane's knobs currently resolve
+    // to -- shown alongside the inputs so an operator can sanity-check the
+    // window they're actually loading.
+    const _fmtWindowDate = (d) => d.toLocaleDateString('en-AU', {
+        weekday: 'short', day: 'numeric', month: 'short'
+    });
+    self.fetchWindowRange = ko.pureComputed(() => {
+        const back = Math.max(0, Number(self.fetchPeriod()) || 0);
+        const fwd = Math.max(0, Number(self.fetchForward()) || 0);
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + fwd);
+        return `${_fmtWindowDate(start)} → ${_fmtWindowDate(end)}`;
+    });
+    self.fetchWindowDays = ko.pureComputed(() => {
+        const back = Math.max(0, Number(self.fetchPeriod()) || 0);
+        const fwd = Math.max(0, Number(self.fetchForward()) || 0);
+        return back + fwd + 1;
+    });
+    self.refreshCadence = ko.pureComputed(() => {
+        const s = Math.max(0, Number(self.refreshInterval()) || 0);
+        if (s < 90) return `every ${s} sec`;
+        return `every ${Math.round(s / 60)} min`;
+    });
+    self.liveUpdatesLabel = ko.pureComputed(() => (self.signalrEnabled() ? 'On' : 'Off'));
     self.showAdvanced = ko.observable(false);
     self.darkMode = ko.observable(false);
 
