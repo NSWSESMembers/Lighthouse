@@ -2118,16 +2118,21 @@ overflow: hidden;
 .config-settings {
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
-  gap: 1.25rem;
-  align-items: start;
+  gap: 0;
 }
 
 .config-rail {
   position: sticky;
   top: 0;
+  align-self: start;
   gap: 2px;
-  border-right: 1px solid #dee2e6;
-  padding-right: 0.75rem;
+  padding-right: 1rem;
+}
+
+.config-panes {
+  border-left: 1px solid #dee2e6;
+  padding-left: 1.25rem;
+  min-height: 340px;
 }
 
 .config-rail .nav-link {
@@ -2165,10 +2170,6 @@ overflow: hidden;
   margin-right: 0.5rem;
 }
 
-.config-panes {
-  min-height: 360px;
-}
-
 .cfg-subhead {
   font-size: 0.8rem;
   font-weight: 600;
@@ -2191,11 +2192,15 @@ overflow: hidden;
     position: static;
     flex-direction: row !important;
     flex-wrap: wrap;
-    border-right: 0;
-    border-bottom: 1px solid #dee2e6;
     padding-right: 0;
     padding-bottom: 0.5rem;
     margin-bottom: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .config-panes {
+    border-left: 0;
+    padding-left: 0;
   }
 
   .config-rail .nav-link {
