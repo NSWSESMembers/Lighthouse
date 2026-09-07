@@ -1064,6 +1064,15 @@ body.dark-mode .cfg-subhead {
   color: #adb5bd;
 }
 
+body.dark-mode .cfg-row,
+body.dark-mode .cfg-row:first-child {
+  border-color: #444;
+}
+
+body.dark-mode .cfg-row-main .d {
+  color: #adb5bd;
+}
+
 /* Collapse elements */
 body.dark-mode .collapse {
   background-color: #2d2d2d;

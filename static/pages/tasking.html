@@ -2121,61 +2121,52 @@
                                     </ul>
                                     <div class="tab-content config-panes">
                                     <div class="tab-pane fade show active" id="cfgPane-data" role="tabpanel" aria-labelledby="cfgTab-data" tabindex="0">
-                                        <div class="row g-3">
-                                                    <div class="col-sm-6 col-md-6">
-                                                        <label for="refreshInterval" class="form-label">
-                                                            <i class="fa fa-sync-alt me-1"></i>Refresh interval
-                                                            (seconds)
-                                                        </label>
-                                                        <div class="input-group">
-                                                            <span class="input-group-text"><i
-                                                                    class="fa fa-clock"></i></span>
-                                                            <input id="refreshInterval" type="number" min="30" step="5"
-                                                                class="form-control"
-                                                                data-bind="value: config.refreshInterval">
-                                                        </div>
-                                                        <div class="form-text">How often to fully refresh data.</div>
+                                        <div class="cfg-rows">
+                                            <div class="cfg-row">
+                                                <div class="cfg-row-main">
+                                                    <label class="t" for="refreshInterval">Refresh interval</label>
+                                                    <div class="d">How often LAD fully refreshes all data.</div>
+                                                </div>
+                                                <div class="cfg-row-control">
+                                                    <div class="input-group input-group-sm">
+                                                        <input id="refreshInterval" type="number" min="30" step="5"
+                                                            class="form-control" data-bind="value: config.refreshInterval">
+                                                        <span class="input-group-text">sec</span>
                                                     </div>
-                                                    <div class="col-sm-6 col-md-6">
-                                                        <label for="fetchPeriod" class="form-label">
-                                                            <i class="fa fa-history me-1"></i>Fetch backwards (days)
-                                                        </label>
-                                                        <div class="input-group">
-                                                            <span class="input-group-text"><i
-                                                                    class="fa fa-calendar-minus"></i></span>
-                                                            <input id="fetchPeriod" type="number" min="0" max="31"
-                                                                step="1" class="form-control"
-                                                                data-bind="value: config.fetchPeriod">
-                                                        </div>
-                                                        <div class="form-text">How many days in the past to fetch.</div>
+                                                </div>
+                                            </div>
+                                            <div class="cfg-row">
+                                                <div class="cfg-row-main">
+                                                    <label class="t" for="fetchPeriod">Fetch window</label>
+                                                    <div class="d">How far back and forward to load incidents &amp; teams.</div>
+                                                </div>
+                                                <div class="cfg-row-control">
+                                                    <div class="input-group input-group-sm">
+                                                        <input id="fetchPeriod" type="number" min="0" max="31" step="1"
+                                                            class="form-control" aria-label="Fetch backwards (days)"
+                                                            data-bind="value: config.fetchPeriod">
+                                                        <span class="input-group-text">d&nbsp;back</span>
                                                     </div>
-                                                    <div class="col-sm-6 col-md-6">
-                                                        <label for="fetchForward" class="form-label">
-                                                            <i class="fa fa-calendar-plus me-1"></i>Fetch forward (days)
-                                                        </label>
-                                                        <div class="input-group">
-                                                            <span class="input-group-text"><i
-                                                                    class="fa fa-calendar-plus"></i></span>
-                                                            <input id="fetchForward" type="number" min="0" step="1"
-                                                                class="form-control"
-                                                                data-bind="value: config.fetchForward">
-                                                        </div>
-                                                        <div class="form-text">How many days into the future to fetch.
-                                                        </div>
+                                                    <div class="input-group input-group-sm">
+                                                        <input id="fetchForward" type="number" min="0" step="1"
+                                                            class="form-control" aria-label="Fetch forward (days)"
+                                                            data-bind="value: config.fetchForward">
+                                                        <span class="input-group-text">d&nbsp;fwd</span>
                                                     </div>
-                                                    <div class="col-sm-6 col-md-6">
-                                                        <label class="form-label">
-                                                            <i class="fa fa-bolt me-1"></i>Live Updates
-                                                        </label>
-                                                        <div class="form-check form-switch mt-2">
-                                                            <input class="form-check-input" type="checkbox" id="signalrEnabledToggle"
-                                                                data-bind="checked: config.signalrEnabled">
-                                                            <label class="form-check-label" for="signalrEnabledToggle">
-                                                                Enable SignalR live updates
-                                                            </label>
-                                                        </div>
-                                                        <div class="form-text">Receive instant incident, team and tasking updates. If enabling or disabling, restart LAD after saving.</div>
-                                                    </div>                                                    
+                                                </div>
+                                            </div>
+                                            <div class="cfg-row">
+                                                <div class="cfg-row-main">
+                                                    <label class="t" for="signalrEnabledToggle">Live updates</label>
+                                                    <div class="d">Instant incident, team &amp; tasking changes via SignalR. Restart LAD after changing.</div>
+                                                </div>
+                                                <div class="cfg-row-control">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" role="switch"
+                                                            id="signalrEnabledToggle" data-bind="checked: config.signalrEnabled">
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-filters" role="tabpanel" aria-labelledby="cfgTab-filters" tabindex="0">
@@ -3244,46 +3235,43 @@
                                                 </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-appearance" role="tabpanel" aria-labelledby="cfgTab-appearance" tabindex="0">
-                                        <div class="row g-3">
-                                                    <div class="col-sm-6 col-md-4">
-                                                        <label class="form-label">
-                                                            <i class="fa fa-moon me-1"></i>Dark Mode
-                                                        </label>
-                                                        <div class="form-check form-switch mt-2">
-                                                            <input class="form-check-input" type="checkbox" id="darkModeToggle"
-                                                                data-bind="checked: config.darkMode">
-                                                            <label class="form-check-label" for="darkModeToggle">
-                                                                Enable dark mode
-                                                            </label>
-                                                        </div>
-                                                        <div class="form-text">Reduces eye strain in low light environments.</div>
+                                        <div class="cfg-rows">
+                                            <div class="cfg-row">
+                                                <div class="cfg-row-main">
+                                                    <label class="t" for="darkModeToggle">Dark mode</label>
+                                                    <div class="d">Reduces eye strain in low light environments.</div>
+                                                </div>
+                                                <div class="cfg-row-control">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" role="switch"
+                                                            id="darkModeToggle" data-bind="checked: config.darkMode">
                                                     </div>
-                                                    <div class="col-sm-6 col-md-4">
-                                                        <label class="form-label">
-                                                            <i class="fa fa-bell me-1"></i>Alerts Panel
-                                                        </label>
-                                                        <div class="form-check form-switch mt-2">
-                                                            <input class="form-check-input" type="checkbox" id="alertsCollapsibleRulesToggle"
-                                                                data-bind="checked: config.alertsCollapsibleRules">
-                                                            <label class="form-check-label" for="alertsCollapsibleRulesToggle">
-                                                                Auto collapse alert popups
-                                                            </label>
-                                                        </div>
-                                                        <div class="form-text">Alerts will start collapsed.</div>
+                                                </div>
+                                            </div>
+                                            <div class="cfg-row">
+                                                <div class="cfg-row-main">
+                                                    <label class="t" for="alertsCollapsibleRulesToggle">Auto-collapse alert popups</label>
+                                                    <div class="d">New alerts start collapsed in the Alerts panel.</div>
+                                                </div>
+                                                <div class="cfg-row-control">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" role="switch"
+                                                            id="alertsCollapsibleRulesToggle" data-bind="checked: config.alertsCollapsibleRules">
                                                     </div>
-                                                    <div class="col-sm-6 col-md-4">
-                                                        <label class="form-label">
-                                                            <i class="fa fa-hashtag me-1"></i>Incident Tasking Count
-                                                        </label>
-                                                        <div class="form-check form-switch mt-2">
-                                                            <input class="form-check-input" type="checkbox" id="taskingCountActiveOnlyToggle"
-                                                                data-bind="checked: config.taskingCountActiveOnly">
-                                                            <label class="form-check-label" for="taskingCountActiveOnlyToggle">
-                                                                Count Active taskings only
-                                                            </label>
-                                                        </div>
-                                                        <div class="form-text">Tasking count counts only Tasked, Enroute &amp; Onsite taskings (excludes Complete, CalledOff, Untasked).</div>
+                                                </div>
+                                            </div>
+                                            <div class="cfg-row">
+                                                <div class="cfg-row-main">
+                                                    <label class="t" for="taskingCountActiveOnlyToggle">Count active taskings only</label>
+                                                    <div class="d">Incident tasking count excludes Complete, CalledOff &amp; Untasked (counts only Tasked, Enroute &amp; Onsite).</div>
+                                                </div>
+                                                <div class="cfg-row-control">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" role="switch"
+                                                            id="taskingCountActiveOnlyToggle" data-bind="checked: config.taskingCountActiveOnly">
                                                     </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-suggest" role="tabpanel" aria-labelledby="cfgTab-suggest" tabindex="0">

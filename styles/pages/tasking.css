@@ -2183,6 +2183,72 @@ overflow: hidden;
   padding-top: 0.75rem;
 }
 
+/* Stacked settings rows (Data / Appearance panes) */
+.cfg-rows {
+  display: flex;
+  flex-direction: column;
+  max-width: 620px;
+}
+
+.cfg-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 0.85rem 0.1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.cfg-row:first-child {
+  border-top: 1px solid #e9ecef;
+}
+
+.cfg-row-main {
+  min-width: 0;
+}
+
+.cfg-row-main .t {
+  display: block;
+  font-weight: 600;
+  margin: 0;
+}
+
+.cfg-row-main .d {
+  font-size: 0.8125rem;
+  color: #6c757d;
+  margin-top: 0.15rem;
+}
+
+.cfg-row-control {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 0.1rem;
+}
+
+.cfg-row-control .input-group {
+  width: auto;
+  flex: none;
+}
+
+.cfg-row-control .input-group .form-control {
+  width: 4rem;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.cfg-row-control .form-switch {
+  min-height: auto;
+  margin: 0;
+  padding-left: 2.5em;
+}
+
+.cfg-row-control .form-switch .form-check-input {
+  margin-left: -2.5em;
+  cursor: pointer;
+}
+
 @media (max-width: 640px) {
   .config-settings {
     grid-template-columns: 1fr;
