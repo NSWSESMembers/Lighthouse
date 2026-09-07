@@ -61,7 +61,7 @@ export function get(id, viewModelType = 1, host, userId = 'notPassed', token, ca
 
 
 //make the call to beacon
-export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = [], onPage) {
+export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, statusTypes = [], onPage, typeIds = []) {
   console.debug("teamSearch called");
   let params = {};
   params['StatusStartDate'] = StartDate.toISOString();
@@ -70,6 +70,12 @@ export function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed',
   params['SortOrder'] = 'asc';
   params['StatusTypeId'] = statusTypes;
   params['IncludeDeleted'] = false;
+
+  // Beacon's Teams/Search filters on team type (Field / Operations / Aviation)
+  // when given TypeIds -- serialised traditionally as TypeIds=1&TypeIds=3.
+  if (Array.isArray(typeIds) && typeIds.length > 0) {
+    params['TypeIds'] = typeIds;
+  }
 
   if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) == false) {
