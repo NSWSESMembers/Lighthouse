@@ -2140,7 +2140,7 @@
                                                             <span class="input-group-text">sec</span>
                                                         </div>
                                                     </div>
-                                                    <div class="d">Full reload of every incident and team.</div>
+                                                    <div class="d">Automatically perform a full reload of every incident and team.</div>
                                                 </div>
                                                 <div class="cfg-field">
                                                     <label>History &mdash; how far back</label>
@@ -2189,7 +2189,7 @@
                                                             data-bind="text: config.liveUpdatesLabel,
                                                                        css: { on: config.signalrEnabled(), off: !config.signalrEnabled() }"></span>
                                                     </div>
-                                                    <div class="d">Instant incident, team &amp; tasking changes via SignalR, between full refreshes.</div>
+                                                    <div class="d">Instantly update incident, team &amp; tasking changes via SignalR, between full refreshes.</div>
                                                 </div>
                                             </div>
 
@@ -3271,39 +3271,47 @@
                                                 </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-appearance" role="tabpanel" aria-labelledby="cfgTab-appearance" tabindex="0">
-                                        <div class="cfg-card">
-                                            <div class="cfg-line">
+                                        <div class="cfg-data-fields cfg-fields-solo">
+                                            <div class="cfg-field">
                                                 <label for="darkModeToggle">Dark mode</label>
-                                                <div class="cfg-line-ctl">
+                                                <div class="ctl">
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input" type="checkbox" role="switch"
                                                             id="darkModeToggle" data-bind="checked: config.darkMode">
                                                     </div>
+                                                    <span class="cfg-live-pill"
+                                                        data-bind="text: config.darkModeLabel,
+                                                                   css: { on: config.darkMode(), off: !config.darkMode() }"></span>
                                                 </div>
+                                                <div class="d">Reduces eye strain on overnight LHQ shifts.</div>
                                             </div>
-                                            <div class="cfg-line">
+                                            <div class="cfg-field">
                                                 <label for="alertsCollapsibleRulesToggle">Auto-collapse alert popups</label>
-                                                <div class="cfg-line-ctl">
+                                                <div class="ctl">
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input" type="checkbox" role="switch"
                                                             id="alertsCollapsibleRulesToggle" data-bind="checked: config.alertsCollapsibleRules">
                                                     </div>
+                                                    <span class="cfg-live-pill"
+                                                        data-bind="text: config.alertsCollapseLabel,
+                                                                   css: { on: config.alertsCollapsibleRules(), off: !config.alertsCollapsibleRules() }"></span>
                                                 </div>
+                                                <div class="d">New alerts start collapsed in the Alerts panel.</div>
                                             </div>
-                                            <div class="cfg-line">
+                                            <div class="cfg-field">
                                                 <label for="taskingCountActiveOnlyToggle">Count active taskings only</label>
-                                                <div class="cfg-line-ctl">
+                                                <div class="ctl">
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input" type="checkbox" role="switch"
                                                             id="taskingCountActiveOnlyToggle" data-bind="checked: config.taskingCountActiveOnly">
                                                     </div>
+                                                    <span class="cfg-live-pill"
+                                                        data-bind="text: config.taskingCountLabel,
+                                                                   css: { on: config.taskingCountActiveOnly(), off: !config.taskingCountActiveOnly() }"></span>
                                                 </div>
+                                                <div class="d">Incident tasking count excludes Complete, CalledOff &amp; Untasked.</div>
                                             </div>
                                         </div>
-                                        <p class="cfg-card-note">
-                                            Dark mode reduces eye strain on overnight shifts. &ldquo;Count active taskings
-                                            only&rdquo; excludes Complete, CalledOff &amp; Untasked from the incident tasking count.
-                                        </p>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-suggest" role="tabpanel" aria-labelledby="cfgTab-suggest" tabindex="0">
 

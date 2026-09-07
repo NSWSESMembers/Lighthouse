@@ -2183,69 +2183,6 @@ overflow: hidden;
   padding-top: 0.75rem;
 }
 
-/* Compact settings card (Data / Appearance panes) */
-.cfg-card {
-  max-width: 400px;
-  padding: 0 1rem;
-  border: 1px solid #e3e6ea;
-  border-radius: 8px;
-  background: #fff;
-}
-
-.cfg-line {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  column-gap: 1rem;
-  padding: 0.72rem 0;
-  border-bottom: 1px solid #eef0f2;
-}
-
-.cfg-line:last-child {
-  border-bottom: 0;
-}
-
-.cfg-line > label {
-  font-weight: 500;
-  margin: 0;
-}
-
-.cfg-line-ctl {
-  justify-self: end;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.cfg-line-ctl .input-group {
-  width: auto;
-  flex: none;
-}
-
-.cfg-line-ctl .input-group .form-control {
-  width: 3.25rem;
-  flex: 0 0 auto;
-  text-align: right;
-}
-
-.cfg-line-ctl .form-switch {
-  min-height: auto;
-  margin: 0;
-  padding-left: 0;
-}
-
-.cfg-line-ctl .form-switch .form-check-input {
-  margin: 0;
-  cursor: pointer;
-}
-
-.cfg-card-note {
-  max-width: 42ch;
-  margin: 0.85rem 0 0;
-  font-size: 0.8125rem;
-  color: #6c757d;
-}
-
 /* Data pane: preset controls + live "loading now" readout */
 .cfg-data {
   display: grid;
@@ -2262,6 +2199,11 @@ overflow: hidden;
   padding-top: 0.25rem;
 }
 
+/* same field stack used standalone (Appearance pane) */
+.cfg-fields-solo {
+  max-width: 460px;
+}
+
 .cfg-field > label {
   display: block;
   font-weight: 600;
@@ -2272,6 +2214,19 @@ overflow: hidden;
   display: flex;
   align-items: center;
   gap: 0.55rem;
+}
+
+.cfg-field .ctl .form-switch {
+  display: flex;
+  align-items: center;
+  min-height: auto;
+  margin: 0;
+  padding-left: 0;
+}
+
+.cfg-field .ctl .form-switch .form-check-input {
+  margin: 0;
+  cursor: pointer;
 }
 
 .cfg-field .d {

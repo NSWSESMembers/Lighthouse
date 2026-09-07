@@ -1064,16 +1064,6 @@ body.dark-mode .cfg-subhead {
   color: #adb5bd;
 }
 
-body.dark-mode .cfg-card {
-  background: #2d2d2d;
-  border-color: #444;
-}
-
-body.dark-mode .cfg-line {
-  border-color: #3d3d3d;
-}
-
-body.dark-mode .cfg-card-note,
 body.dark-mode .cfg-field .d {
   color: #adb5bd;
 }

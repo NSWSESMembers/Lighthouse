@@ -1216,6 +1216,11 @@ export function ConfigVM(root, deps) {
     self.alertsCollapsibleRules = ko.observable(true);
     self.taskingCountActiveOnly = ko.observable(false);
 
+    // On/Off pill labels for the Appearance pane switches
+    self.darkModeLabel = ko.pureComputed(() => (self.darkMode() ? 'On' : 'Off'));
+    self.alertsCollapseLabel = ko.pureComputed(() => (self.alertsCollapsibleRules() ? 'On' : 'Off'));
+    self.taskingCountLabel = ko.pureComputed(() => (self.taskingCountActiveOnly() ? 'On' : 'Off'));
+
     // pinned rows
     self.pinnedTeamIds = ko.observableArray([]);
     self.pinnedIncidentIds = ko.observableArray([]);
