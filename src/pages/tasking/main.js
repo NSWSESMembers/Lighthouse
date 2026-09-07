@@ -1085,6 +1085,7 @@ function VM() {
     self.teamMatchesConfigFilters = function (tm) {
         const allowed = self.config.teamStatusFilter(); // allow-list
         const allowedSet = new Set(allowed || []);
+        const allowedTypeSet = new Set(self.config.teamTypeFilter() || []); // allow-list of team type names
         const hqFilterIds = new Set((self.config.teamFilters() || []).map(f => String(f.id)));
         const applySectorsToTeams = self.config.applySectorsToTeams();
         const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
@@ -1109,6 +1110,16 @@ function VM() {
         // If allow-list non-empty, only show teams whose status is in it
         if (allowedSet.size > 0 && !allowedSet.has(status)) {
             return false;
+        }
+
+        // Team type allow-list (Field / Operations / Aviation). Beacon already
+        // filters the fetch by TypeIds; this also drops wrong-type teams that
+        // arrive via SignalR pushes. Lenient when the type is unknown.
+        if (allowedTypeSet.size > 0) {
+            const typeName = tm.teamType()?.Name;
+            if (typeName && !allowedTypeSet.has(typeName)) {
+                return false;
+            }
         }
 
         //must match HQ filter
@@ -3018,6 +3029,13 @@ function VM() {
             const entry = Object.values(Enum.TeamStatusType).find(e => e.Description === desc);
             return entry ? entry.Id : undefined;
         }).filter(id => id !== undefined);
+
+        // Team type allow-list (Field / Operations / Aviation) -> Beacon TypeIds.
+        // Empty array means "all types" -- teamSearch omits the param entirely.
+        const typeFilterToView = myViewModel.config.teamTypeFilter().map(name => {
+            const entry = Object.values(Enum.TeamType).find(e => e.Name === name);
+            return entry ? entry.Id : undefined;
+        }).filter(id => id !== undefined);
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
@@ -3067,7 +3085,8 @@ function VM() {
                     }
                     myViewModel.getOrCreateTeam(t);
                 })
-            }
+            },
+            typeFilterToView //team type filter
         )
     }
 

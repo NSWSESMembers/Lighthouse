@@ -149,6 +149,32 @@
                                     </div>
                                 </li>
                                 <li>
+                                    <button class="dropdown-item d-flex justify-content-between align-items-center"
+                                        type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#teamTypeFilterMenu" aria-expanded="false"
+                                        aria-controls="teamTypeFilterMenu">
+                                        Team Type Filters
+                                        <span class="ms-2 fa fa-chevron-right small"></span>
+                                    </button>
+                                    <div class="collapse dropdown-collapse-body" id="teamTypeFilterMenu">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamTypeField"
+                                                data-bind="teamTypeFilterAndFetch: 'Field'">
+                                            <label class="form-check-label" for="tddTeamTypeField">Field</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamTypeOperations"
+                                                data-bind="teamTypeFilterAndFetch: 'Operations'">
+                                            <label class="form-check-label" for="tddTeamTypeOperations">Operations</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="tddTeamTypeAviation"
+                                                data-bind="teamTypeFilterAndFetch: 'Aviation'">
+                                            <label class="form-check-label" for="tddTeamTypeAviation">Aviation</label>
+                                        </div>
+                                    </div>
+                                </li>
+                                <li>
                                     <hr class="dropdown-divider">
                                 </li>
                                 <li>
@@ -2584,6 +2610,36 @@
                                                                     data-bind="teamTaskStatusFilter: 'CalledOff'">
                                                                 <label class="form-check-label"
                                                                     for="taskStatusCalledOff">CalledOff</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6 col-lg-4">
+                                                        <label class="form-label d-block mb-2">Show Teams Of
+                                                            Type:</label>
+                                                        <div class="border rounded p-2" id="teamTypeBox">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="teamTypeField"
+                                                                    value="Field"
+                                                                    data-bind="teamTypeFilter: 'Field'">
+                                                                <label class="form-check-label"
+                                                                    for="teamTypeField">Field</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="teamTypeOperations"
+                                                                    value="Operations"
+                                                                    data-bind="teamTypeFilter: 'Operations'">
+                                                                <label class="form-check-label"
+                                                                    for="teamTypeOperations">Operations</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="teamTypeAviation"
+                                                                    value="Aviation"
+                                                                    data-bind="teamTypeFilter: 'Aviation'">
+                                                                <label class="form-check-label"
+                                                                    for="teamTypeAviation">Aviation</label>
                                                             </div>
                                                         </div>
                                                     </div>
