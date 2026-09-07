@@ -7,37 +7,36 @@ export const LegendControl = L.Control.extend({
   onAdd() {
     const div = L.DomUtil.create("div", "legend-container leaflet-bar");
 
-    // Status → pip rows. Hidden until config.showJobStatusOnMarkers is on
-    // (Map.applyJobStatusOnMarkers toggles the .legend-status-block wrapper).
-    const STATUS_PIPS = [
-      ["Active", "#159aab", "dot"],
-      ["Tasked", "#6b52d6", "arrow"],
-      ["Referred", "#566f86", "chevrons"],
-      ["Complete", "#2f8f5b", "check"],
-      ["Cancelled", "#8b949b", "cross"],
-      ["Finalised", "#5b636a", "check"],
-      ["Rejected", "#cc4460", "cross"],
-    ];
-    const pipGlyphSvg = (key) => {
-      const s = 'fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"';
-      switch (key) {
-        case "dot": return '<circle cx="16.5" cy="5.5" r="2" fill="#fff"/>';
-        case "arrow": return `<g ${s}><line x1="14" y1="5.5" x2="19" y2="5.5"/><polyline points="17.4,3.9 19,5.5 17.4,7.1"/></g>`;
-        case "chevrons": return `<g ${s}><polyline points="14.6,3.8 16.3,5.5 14.6,7.2"/><polyline points="16.9,3.8 18.6,5.5 16.9,7.2"/></g>`;
-        case "check": return `<polyline points="14.4,5.7 15.8,7.1 18.7,4.1" ${s}/>`;
-        case "cross": return `<g ${s}><line x1="14.6" y1="3.6" x2="18.4" y2="7.4"/><line x1="18.4" y1="3.6" x2="14.6" y2="7.4"/></g>`;
-        default: return "";
-      }
+    // Status → marker treatment rows. Hidden until config.showJobStatusOnMarkers
+    // is on (Map.applyJobStatusOnMarkers toggles the .legend-status-block wrapper).
+    // A grey circle marker (r6 @ 9,11) with the treatment drawn over it.
+    const strikeSvg = (cross) => {
+      const cas = 'stroke="#fff" stroke-width="3.6" stroke-linecap="round"';
+      const ink = 'stroke="#12181e" stroke-width="2.2" stroke-linecap="round"';
+      const a = cross
+        ? '<line x1="3" y1="5" x2="15" y2="17"/><line x1="3" y1="17" x2="15" y2="5"/>'
+        : '<line x1="3" y1="17" x2="15" y2="5"/>';
+      return `<g ${cas}>${a}</g><g ${ink}>${a}</g>`;
     };
-    const statusPipRows = STATUS_PIPS.map(([label, col, g]) => `
-        <div style="display:flex;align-items:center;gap:4px;">
-          <svg width="22" height="22" viewBox="0 0 22 22" style="flex-shrink:0;overflow:visible;">
-            <circle cx="9" cy="10" r="6" fill="#9aa3ad" stroke="#000" stroke-width="2"/>
-            <circle cx="16.5" cy="5.5" r="4.4" fill="#fff"/>
-            <circle cx="16.5" cy="5.5" r="3.6" fill="${col}" stroke="rgba(0,0,0,0.35)" stroke-width="0.75"/>
-            ${pipGlyphSvg(g)}
-          </svg>
-          <span>${label}</span>
+    const dot = '<circle cx="9" cy="11" r="6" fill="#9aa3ad" stroke="#000" stroke-width="2"/>';
+    const STATUS_ROWS = [
+      { label: "New",
+        svg: `<circle cx="9" cy="11" r="8.4" fill="none" stroke="#f7931d" stroke-width="2.2"/>${dot}` },
+      { label: "Active",
+        svg: `<circle cx="9" cy="11" r="8.2" fill="none" stroke="#e5399b" stroke-width="2.2" stroke-dasharray="3.4 3" stroke-linecap="round"/>${dot}` },
+      { label: "Tasked", svg: dot },
+      { label: "Complete / Referred / Finalised", svg: `${dot}${strikeSvg(false)}` },
+      { label: "Cancelled / Rejected", svg: `${dot}${strikeSvg(true)}` },
+      { label: "Action required (any status)",
+        svg: `${dot}
+              <circle cx="16.4" cy="4.4" r="4.4" fill="#fff"/>
+              <circle cx="16.4" cy="4.4" r="3.5" fill="#e5484d"/>
+              <rect x="15.8" y="2.5" width="1.2" height="2.6" rx="0.6" fill="#fff"/><circle cx="16.4" cy="6.3" r="0.7" fill="#fff"/>` },
+    ];
+    const statusPipRows = STATUS_ROWS.map((r) => `
+        <div style="display:flex;align-items:center;gap:5px;">
+          <svg width="22" height="22" viewBox="0 0 22 22" style="flex-shrink:0;overflow:visible;">${r.svg}</svg>
+          <span>${r.label}</span>
         </div>`).join("");
 
     div.innerHTML = `
@@ -82,8 +81,8 @@ export const LegendControl = L.Control.extend({
 
 
     <div class="legend-status-block d-none">
-      <div class="fw-semibold small mb-1 mt-2">Status → Pip <span class="text-muted fw-normal">(top-right dot; New = pulse ring)</span></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:2px;" class="small">
+      <div class="fw-semibold small mb-1 mt-2">Job Status <span class="text-muted fw-normal">(Any type)</span></div>
+      <div style="display:grid;grid-template-columns:1fr;row-gap:3px;" class="small">
         ${statusPipRows}
       </div>
     </div>
@@ -116,10 +115,12 @@ export const LegendControl = L.Control.extend({
         </div>
         <div style="display:flex;align-items:center;gap:4px;">
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 36 36" style="flex-shrink:0;overflow:visible;">
-            <polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="#6b7280" stroke="rgba(247,147,29,0.9)" stroke-width="2"/>
+            <!-- Grey cluster badge with a solid pulsing orange hex outline,
+                 mirroring the real cluster-pulse-hex (Map.js iconCreateFunction). -->
+            <polygon points="18,0 36,10.5 36,25.5 18,36 0,25.5 0,10.5" fill="none" stroke="rgba(247,147,29,0.9)" stroke-width="2" style="transform-box:fill-box;transform-origin:center;animation:cluster-pulse-new 1.4s ease-out infinite;"/>
+            <polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="#6b7280" stroke="#888" stroke-width="2"/>
             <polygon points="24.1,9 27.5,18 24.1,27 11.9,27 8.5,18 11.9,9" fill="#6b7280"/>
             <text x="18" y="18" text-anchor="middle" dominant-baseline="central" fill="#fff" font-size="13" font-weight="700" font-family="system-ui,sans-serif">3</text>
-            <polygon points="18,3 33,11.5 33,24.5 18,33 3,24.5 3,11.5" fill="none" stroke="#f7931d" stroke-width="2" stroke-dasharray="4 2"/>
           </svg>
           <span>Cluster Contains Unacked Incidents</span>
         </div>

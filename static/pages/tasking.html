@@ -2862,14 +2862,16 @@
                                                                     data-bind="checked: config.showJobStatusOnMarkers">
                                                                 <label class="form-check-label"
                                                                     for="jobStatusOnMarkersToggle">
-                                                                    Show status pip on incident markers
+                                                                    Show job status on incident markers
                                                                 </label>
                                                             </div>
                                                             <div class="form-text">
-                                                                Adds a small coloured dot to the top-right of each
-                                                                incident marker showing its lifecycle status — New,
-                                                                Active, Tasked, Referred, Complete, Cancelled,
-                                                                Finalised or Rejected.
+                                                                Active jobs get a magenta marching ring so they catch
+                                                                the eye; Complete / Referred / Finalised are struck
+                                                                through, Cancelled / Rejected crossed out. A red
+                                                                &ldquo;!&rdquo; corner dot marks any job with an
+                                                                action-required tag. New keeps its orange pulse ring;
+                                                                Tasked is left unmarked.
                                                             </div>
                                                         </fieldset>
                                                     </div>

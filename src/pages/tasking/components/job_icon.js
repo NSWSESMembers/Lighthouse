@@ -1,4 +1,4 @@
-import {jobsToUI, statusPipColor, statusPipGlyph} from "../utils/jobTypesToUI.js";
+import {jobsToUI, statusClosedMark, ACTIVE_RING_COLOUR} from "../utils/jobTypesToUI.js";
 
 // --- SVG factory (shape+style → L.divIcon) ---
 import L from "leaflet";
@@ -121,48 +121,41 @@ function shapeInnerSvg({ shape, fill, stroke, radius = 7, strokeWidth = 2 }) {
     return inner;
 }
 
-// White 1-glyph hint drawn inside the status pip, centred on (cx, cy) and
-// scaled to pip radius `r`. Returns "" for an unknown / absent key.
-function pipGlyphSvg(key, cx, cy, r) {
-    const g = r * 0.6;
-    const sw = Math.max(0.75, r * 0.28);
-    const n = (v) => v.toFixed(2);
-    const pt = (x, y) => `${n(cx + x)},${n(cy + y)}`;
-    const line = (x1, y1, x2, y2) =>
-        `<line x1="${n(cx + x1)}" y1="${n(cy + y1)}" x2="${n(cx + x2)}" y2="${n(cy + y2)}" />`;
-    const polyline = (...xy) => `<polyline points="${xy.map(([x, y]) => pt(x, y)).join(" ")}" />`;
-
-    if (key === "dot") {
-        return `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r * 0.46)}" fill="#ffffff" />`;
-    }
-
-    let body = "";
-    switch (key) {
-        case "check":
-            body = polyline([-g, g * 0.05], [-g * 0.2, g * 0.8], [g, -g * 0.7]);
-            break;
-        case "cross":
-            body = line(-g, -g, g, g) + line(g, -g, -g, g);
-            break;
-        case "arrow":
-            body = line(-g, 0, g, 0) + polyline([g * 0.2, -g * 0.6], [g, 0], [g * 0.2, g * 0.6]);
-            break;
-        case "chevrons":
-            body = polyline([-g * 0.7, -g * 0.75], [0, 0], [-g * 0.7, g * 0.75])
-                 + polyline([0, -g * 0.75], [g * 0.7, 0], [0, g * 0.75]);
-            break;
-        default:
-            return "";
-    }
-    return `<g fill="none" stroke="#ffffff" stroke-width="${n(sw)}"
-                stroke-linecap="round" stroke-linejoin="round">${body}</g>`;
+// Diagonal strike ("/") or cross ("✕") overlaid on a closed job's marker.
+// Dark line with a thin white casing underneath so it reads on any fill.
+// Sits right across the shape — barely past its edge.
+function closedMarkSvg(kind, c, radius) {
+    const e = radius + 1;
+    const w = Math.max(1.3, radius * 0.22);
+    const seg = (x1, y1, x2, y2) =>
+        `<line x1="${(c + x1).toFixed(2)}" y1="${(c + y1).toFixed(2)}" x2="${(c + x2).toFixed(2)}" y2="${(c + y2).toFixed(2)}" />`;
+    const lines = kind === "cross"
+        ? seg(-e, -e, e, e) + seg(e, -e, -e, e)
+        : seg(-e, e, e, -e); // "/"
+    return `<g stroke="#ffffff" stroke-width="${(w + 1.1).toFixed(2)}" stroke-linecap="round">${lines}</g>` +
+           `<g stroke="#12181e" stroke-width="${w.toFixed(2)}" stroke-linecap="round">${lines}</g>`;
 }
 
-export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2, pip = null, pipGlyph = null }) {
+// Red "!" pip in the NE corner — a job carrying an action-required tag.
+function alertPipSvg(pad, d, radius) {
+    const pr = Math.max(3.4, radius * 0.6);
+    const halo = pr + 1.1;
+    const x = pad + d - pr * 0.35;
+    const y = pad + pr * 0.35;
+    const n = (v) => v.toFixed(2);
+    return `<circle cx="${n(x)}" cy="${n(y)}" r="${n(halo)}" fill="#ffffff" />` +
+           `<circle cx="${n(x)}" cy="${n(y)}" r="${n(pr)}" fill="#e5484d" stroke="rgba(0,0,0,0.3)" stroke-width="0.7" />` +
+           `<g fill="#ffffff">` +
+             `<rect x="${n(x - pr * 0.16)}" y="${n(y - pr * 0.55)}" width="${n(pr * 0.32)}" height="${n(pr * 0.72)}" rx="${n(pr * 0.16)}" />` +
+             `<circle cx="${n(x)}" cy="${n(y + pr * 0.52)}" r="${n(pr * 0.17)}" />` +
+           `</g>`;
+}
+
+export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2, closedMark = null, alert = false }) {
     const d = radius * 2;
     const inner = shapeInnerSvg({ shape, fill, stroke, radius, strokeWidth });
 
-    if (!pip) {
+    if (!closedMark && !alert) {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}" viewBox="0 0 ${d} ${d}">
               ${inner}
             </svg>`;
@@ -177,33 +170,43 @@ export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2
         });
     }
 
-    // Status pip: a small coloured dot in the top-right corner, optionally
-    // carrying a 1-glyph hint. The SVG box is padded symmetrically so
-    // iconAnchor stays at the shape centre, and the pulse ring keys off
-    // `shapeDiameter` (below) rather than this padded box.
-    const pr = Math.max(3.4, radius * 0.62);   // pip radius
-    const halo = pr + 1;
-    const pad = Math.ceil(halo);
+    // Padded symmetrically so iconAnchor stays at the shape centre; the pulse /
+    // status rings key off `shapeDiameter` rather than this padded box.
+    // ~radius*0.55 covers the "!" pip halo and the strike's small overhang.
+    const pad = Math.ceil(radius * 0.55);
     const box = d + pad * 2;
-    const pcx = pad + d - pr * 0.4;             // tucked into the NE corner
-    const pcy = pad + pr * 0.4;
+    const c = pad + radius;
 
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}">
-              <g transform="translate(${pad}, ${pad})">${inner}</g>
-              <circle cx="${pcx}" cy="${pcy}" r="${halo}" fill="#ffffff" />
-              <circle cx="${pcx}" cy="${pcy}" r="${pr}" fill="${pip}" stroke="rgba(0,0,0,0.35)" stroke-width="0.75" />
-              ${pipGlyph ? pipGlyphSvg(pipGlyph, pcx, pcy, pr) : ""}
-            </svg>`;
+    let overlay = `<g transform="translate(${pad}, ${pad})">${inner}</g>`;
+    if (closedMark) overlay += closedMarkSvg(closedMark, c, radius);
+    if (alert) overlay += alertPipSvg(pad, d, radius);
+
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}">${overlay}</svg>`;
 
     return L.divIcon({
         className: "job-svg-marker",
         html: svg,
         iconSize: [box, box],
-        iconAnchor: [radius + pad, radius + pad],
+        iconAnchor: [c, c],
         popupAnchor: [0, -radius],
         shapeDiameter: d
     });
 };
+
+/**
+ * SVG for the Active "marching ring" — a dashed circle in a spinning <g>.
+ * Rotation (compositor-only) reads as marching ants at this size and is far
+ * cheaper than animating stroke-dashoffset on every marker.
+ */
+export function buildStatusRingSvg(box, ringRadius, colour = ACTIVE_RING_COLOUR) {
+    const c = box / 2;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}">
+              <g class="status-ring-spin" style="transform-box:fill-box;transform-origin:center">
+                <circle cx="${c}" cy="${c}" r="${ringRadius}" fill="none" stroke="${colour}"
+                        stroke-width="2.75" stroke-linecap="round" stroke-dasharray="4 3.5" />
+              </g>
+            </svg>`;
+}
 
 // Build icon style for a given job
 export function styleForJob(job, { showStatus = false } = {}) {
@@ -217,17 +220,14 @@ export function styleForJob(job, { showStatus = false } = {}) {
     const out = { shape: style.shape, fill: style.fillcolor, stroke: style.strokecolor, radius, strokeWidth: 2.25 };
     // tweak strokeWidth if you need stronger outlines
 
-    // Only attach `pip` when the config option is on AND the status is known,
-    // so the JSON.stringify(style) change-detection key is byte-identical to
-    // the old behaviour whenever status pips are disabled.
+    // Only attach status keys when the option is on, so JSON.stringify(style)
+    // (the change-detection key) is byte-identical to the old behaviour when off.
+    // Note: the Active marching ring is a sibling layer, not part of this icon —
+    // see upsertStatusRing() in jobMarker.js.
     if (showStatus) {
-        const status = job.statusName?.();
-        const pip = statusPipColor(status);
-        if (pip) {
-            out.pip = pip;
-            const glyph = statusPipGlyph(status);
-            if (glyph) out.pipGlyph = glyph;
-        }
+        const mark = statusClosedMark(job.statusName?.());
+        if (mark) out.closedMark = mark;
+        if ((job.actionRequiredTags?.() || []).length > 0) out.alert = true;
     }
 
     return out;

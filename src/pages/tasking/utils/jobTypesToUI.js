@@ -20,40 +20,28 @@ export function jobsToUI(job) {
     return result;
 }
 
-// Job status → pip colour. A lifecycle ramp kept clear of the priority hues
-// below, shown on markers only when config.showJobStatusOnMarkers is enabled.
-const statusPipMap = {
-    // New has no pip — the pulse ring already flags unacknowledged jobs.
-    "Active":    "#159aab", // teal
-    "Tasked":    "#6b52d6", // violet
-    "Referred":  "#566f86", // slate
-    "Complete":  "#2f8f5b", // green
-    "Cancelled": "#8b949b", // grey
-    "Finalised": "#5b636a", // dark grey
-    "Rejected":  "#cc4460", // rose
-};
+// ── Status on markers (config.showJobStatusOnMarkers) ─────────────────────
+// New       → orange pulse ring (existing, unchanged)
+// Active    → magenta marching ring (drawn as a spinning dashed <g>)
+// Tasked    → nothing (a job someone is on shouldn't compete for attention)
+// Complete / Referred / Finalised → struck through  "/"
+// Cancelled / Rejected            → crossed out      "✕"
+// Any status with an action-required tag → red "!" pip, NE corner
+export const ACTIVE_RING_COLOUR = "#e5399b"; // magenta — clear of orange + priority fills
 
-// Job status → optional 1-glyph hint drawn inside the pip. New has no glyph
-// (an empty pip reads as "untouched"); closed states share a glyph with their
-// resolved-ok / resolved-not sibling and are told apart by colour.
-const statusPipGlyphMap = {
-    "Active":    "dot",       // live / being worked
-    "Tasked":    "arrow",     // dispatched to a team
-    "Referred":  "chevrons",  // forwarded elsewhere
-    "Complete":  "check",
-    "Cancelled": "cross",
-    "Finalised": "check",
-    "Rejected":  "cross",
-};
+const CLOSED_RESOLVED = new Set(["Complete", "Referred", "Finalised"]);
+const CLOSED_DEAD = new Set(["Cancelled", "Rejected"]);
 
-// Resolve a job's status name to its pip colour (null for unknown/blank).
-export function statusPipColor(statusName) {
-    return statusPipMap[statusName] || null;
+// "strike" (resolved) | "cross" (dead) | null
+export function statusClosedMark(statusName) {
+    if (CLOSED_RESOLVED.has(statusName)) return "strike";
+    if (CLOSED_DEAD.has(statusName)) return "cross";
+    return null;
 }
 
-// Resolve a job's status name to its pip glyph key (null for none).
-export function statusPipGlyph(statusName) {
-    return statusPipGlyphMap[statusName] || null;
+// Does this status get the marching ring?
+export function statusHasRing(statusName) {
+    return statusName === "Active";
 }
 
 // Priority → stroke color

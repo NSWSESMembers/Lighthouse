@@ -1445,6 +1445,35 @@ tr.job:hover {
   }
 }
 
+/* STATUS RING — the Active "marching ring" (separate follower marker).
+   A dashed circle whose <g> rotates, which reads as marching ants and is
+   compositor-only (cheap) unlike animating stroke-dashoffset. */
+.status-ring-icon {
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  font-size: 0;
+}
+
+.status-ring-spin {
+  animation: status-ring-spin 9s linear infinite;
+}
+
+@keyframes status-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-ring-spin {
+    animation: none;
+  }
+}
+
 .no-drag {
   user-select: text !important;
   cursor: text !important;
