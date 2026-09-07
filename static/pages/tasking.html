@@ -2124,7 +2124,7 @@
                                         <div class="cfg-data">
                                             <div class="cfg-data-fields">
                                                 <div class="cfg-field">
-                                                    <label>Refresh interval</label>
+                                                    <label>Full refresh</label>
                                                     <div class="cfg-preset-row">
                                                         <div class="cfg-seg" data-bind="foreach: { data: config.refreshPresets, as: 'p' }">
                                                             <button type="button" class="cfg-seg-btn"
@@ -2140,10 +2140,10 @@
                                                             <span class="input-group-text">sec</span>
                                                         </div>
                                                     </div>
-                                                    <div class="d">Automatically perform a full reload of every incident and team.</div>
+                                                    <div class="d" data-bind="text: config.fullRefreshHint"></div>
                                                 </div>
                                                 <div class="cfg-field">
-                                                    <label>History &mdash; how far back</label>
+                                                    <label>History &mdash; how far back to load</label>
                                                     <div class="cfg-preset-row">
                                                         <div class="cfg-chips" data-bind="foreach: { data: config.historyPresets, as: 'p' }">
                                                             <button type="button" class="cfg-chip"
@@ -2161,7 +2161,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="cfg-field">
-                                                    <label>Lookahead &mdash; how far forward</label>
+                                                    <label>Lookahead &mdash; how far forward to load</label>
                                                     <div class="cfg-preset-row">
                                                         <div class="cfg-chips" data-bind="foreach: { data: config.lookaheadPresets, as: 'p' }">
                                                             <button type="button" class="cfg-chip"
@@ -2189,7 +2189,7 @@
                                                             data-bind="text: config.liveUpdatesLabel,
                                                                        css: { on: config.signalrEnabled(), off: !config.signalrEnabled() }"></span>
                                                     </div>
-                                                    <div class="d">Instantly update incident, team &amp; tasking changes via SignalR, between full refreshes.</div>
+                                                    <div class="d">Beacon pushes every incident, team &amp; tasking change to the board as it happens &mdash; this is what keeps LAD current. Restart LAD after changing.</div>
                                                 </div>
                                             </div>
 
@@ -2198,10 +2198,10 @@
                                                 <div class="cfg-readout-range" data-bind="text: config.fetchWindowRange"></div>
                                                 <div class="cfg-readout-sub"><span data-bind="text: config.fetchWindowDays"></span>-day window</div>
                                                 <div class="cfg-readout-rows">
-                                                    <div><span>Full refresh</span><span data-bind="text: config.refreshCadence"></span></div>
                                                     <div><span>Live updates</span><span data-bind="text: config.liveUpdatesLabel"></span></div>
+                                                    <div><span>Full refresh</span><span data-bind="text: config.refreshCadence"></span></div>
                                                 </div>
-                                                <div class="cfg-readout-note">Toggling live updates needs a LAD restart to take effect.</div>
+                                                <div class="cfg-readout-note" data-bind="text: config.dataReadoutNote"></div>
                                             </div>
                                         </div>
                                     </div>
