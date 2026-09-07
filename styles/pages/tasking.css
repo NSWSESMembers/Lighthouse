@@ -2187,14 +2187,15 @@ overflow: hidden;
 .cfg-rows {
   display: flex;
   flex-direction: column;
-  max-width: 620px;
+  max-width: 540px;
 }
 
 .cfg-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: 13.5rem 1fr;
+  column-gap: 1.25rem;
+  row-gap: 0.15rem;
+  align-items: baseline;
   padding: 0.85rem 0.1rem;
   border-bottom: 1px solid #e9ecef;
 }
@@ -2204,27 +2205,30 @@ overflow: hidden;
 }
 
 .cfg-row-main {
-  min-width: 0;
+  display: contents;
 }
 
 .cfg-row-main .t {
-  display: block;
+  grid-column: 1;
+  grid-row: 1;
   font-weight: 600;
   margin: 0;
 }
 
 .cfg-row-main .d {
+  grid-column: 1 / -1;
+  grid-row: 2;
   font-size: 0.8125rem;
   color: #6c757d;
-  margin-top: 0.15rem;
 }
 
 .cfg-row-control {
-  flex: none;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: start;
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding-top: 0.1rem;
 }
 
 .cfg-row-control .input-group {
@@ -2241,11 +2245,11 @@ overflow: hidden;
 .cfg-row-control .form-switch {
   min-height: auto;
   margin: 0;
-  padding-left: 2.5em;
+  padding-left: 0;
 }
 
 .cfg-row-control .form-switch .form-check-input {
-  margin-left: -2.5em;
+  margin: 0;
   cursor: pointer;
 }
 
