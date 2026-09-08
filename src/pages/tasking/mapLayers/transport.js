@@ -149,7 +149,7 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
 }
 
 
-function getTransportApiKeyOpsLog(apiHost, userId, token, cb) {
+async function getTransportApiKeyOpsLog(apiHost, userId, token) {
 
     var opsId = null;
     switch (apiHost) {
@@ -166,10 +166,8 @@ function getTransportApiKeyOpsLog(apiHost, userId, token, cb) {
             opsId = '0';
     }
 
-    BeaconClient.operationslog.get(opsId, apiHost, userId, token, function (response) {
-        let key = response.Text;
-        cb(key)
-    })
+    const response = await BeaconClient.operationslog.get(opsId, apiHost, userId, token);
+    return response.Text;
 }
 
 
@@ -178,12 +176,8 @@ async function fetchTransportCamerasAsync(apiHost, userId, token) {
     let transportApiKeyCache = sessionStorage.getItem(sessionKey);
 
     if (!transportApiKeyCache) {
-        transportApiKeyCache = await new Promise((resolve) => {
-            getTransportApiKeyOpsLog(apiHost, userId, token, function (key) {
-                sessionStorage.setItem(sessionKey, key);
-                resolve(key);
-            });
-        });
+        transportApiKeyCache = await getTransportApiKeyOpsLog(apiHost, userId, token);
+        sessionStorage.setItem(sessionKey, transportApiKeyCache);
     }
 
     return new Promise((resolve, reject) => {
@@ -203,12 +197,8 @@ async function fetchTransportIncidentsAsync(apiHost, userId, token) {
     let transportApiKeyCache = sessionStorage.getItem(sessionKey);
 
     if (!transportApiKeyCache) {
-        transportApiKeyCache = await new Promise((resolve) => {
-            getTransportApiKeyOpsLog(apiHost, userId, token, function (key) {
-                sessionStorage.setItem(sessionKey, key);
-                resolve(key);
-            });
-        });
+        transportApiKeyCache = await getTransportApiKeyOpsLog(apiHost, userId, token);
+        sessionStorage.setItem(sessionKey, transportApiKeyCache);
     }
 
     return new Promise((resolve, reject) => {

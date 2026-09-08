@@ -859,7 +859,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
     );
     mapMarkers.push(jobMarker.addTo(assetMap));
 
-    BeaconClient.asset.filter([], urls.Base, user.Id, user.accessToken, function (response) {
+    BeaconClient.asset.filter([], urls.Base, user.Id, user.accessToken).then(function (response) {
       if (response.length) {
         var assetDistances = [];
         var furthestDistance; //need a way to know the furthest marker
@@ -1301,7 +1301,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
   console.log('Call to calculate distances from assets took ' + (t1 - t0) + ' milliseconds.');
   cb();
 }
-    }, function (error) {
+    }).catch(function (error) {
   $('#map-errors').html(error);
   $('#map-errors').css('visibility', 'unset');
 });
@@ -1580,7 +1580,7 @@ function assetLocationButtonFiltered(bypassUI) {
 
     $('#asset-map-filter-loading').css('visibility', 'unset');
 
-    BeaconClient.asset.filter([], urls.Base, user.Id, user.accessToken, function (res) {
+    BeaconClient.asset.filter([], urls.Base, user.Id, user.accessToken).then(function (res) {
       if (res.length) {
         let sorted = [];
 
@@ -1630,7 +1630,7 @@ function assetLocationButtonFiltered(bypassUI) {
         //     $("#assetFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
         // })
       }
-    }, function (error) {
+    }).catch(function (error) {
       alert(`Lighthouse error - ${error}`)
     });
 

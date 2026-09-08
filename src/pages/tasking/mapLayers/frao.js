@@ -7,20 +7,8 @@ const NSW_LGA_QUERY_URL =
 
 async function fetchFRAOSAsync(startDate, endDate, apiHost, userId, token) {
     console.log("Fetching FRAOS from Beacon");
-    return new Promise((res, rej) => {
-        BeaconClient.frao.search(startDate, endDate, apiHost, userId, token, function (response) {
-            if (response.error) {
-                console.error(`Fetch of fraos failed: ${response.error} http-code:${response.httpCode}`);
-                rej(response);
-            } else {
-                res({ ok: true, data: response });
-            }
-        }, function (_count, _total) {
-            //progress callback - we dont need this here
-        }, function (_pageResult) {
-            // on page callback - we dont need this here
-        });
-    });
+    const response = await BeaconClient.frao.search(startDate, endDate, apiHost, userId, token);
+    return { ok: true, data: response };
 }
 
 async function FRAOToUnionAsync(lgas) {

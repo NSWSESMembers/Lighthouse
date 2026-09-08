@@ -94,7 +94,9 @@ function HackTheMatrix(progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  BeaconClient.nitc.search(params, params.userId, token, start, end, function(nitcs) {
+  BeaconClient.nitc.search(params, params.userId, token, start, end, {
+    onProgress: function(val, total) { progressBar.setValue(val / total); },
+  }).then(function(nitcs) {
     let exports;
 
     if (document.getElementById("Activity").checked) {  // Activity list export
@@ -164,8 +166,10 @@ function HackTheMatrix(progressBar) {
 
     progressBar.close();
 
-  }, function(val,total){
-    progressBar.setValue(val/total);
+  }).catch(function(err) {
+    console.error('NITC export fetch failed', err);
+    alert('Failed to fetch non-incident tasks for export. Your session may have expired.');
+    progressBar.close();
   });
 }
 

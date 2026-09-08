@@ -494,9 +494,11 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             return;
         }
 
-        BeaconClient.team.getTeamGeoJson(this._hqs, this._base, this._startDate, this._endDate, 'ContentScriptMapManager', this._token, function(result) {
-            ContentScriptMapManager._passLayerDataToInject('ses-teams', result);
-        }.bind(this));
+        BeaconClient.team.getTeamGeoJson(this._hqs, this._base, this._startDate, this._endDate, 'ContentScriptMapManager', this._token)
+            .then((result) => {
+                ContentScriptMapManager._passLayerDataToInject('ses-teams', result);
+            })
+            .catch((error) => console.error('Failed to fetch SES teams layer', error));
     }
 
     /**
@@ -513,11 +515,11 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
                 window.postMessage({type: 'LH_ASSETFILTERMODALCALL'}, '*');
             } else {
                 let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || []
-                BeaconClient.asset.filter(loadIn, this._base, 'ContentScriptMapManager', this._token, function(result) {
-                    ContentScriptMapManager._passLayerDataToInject('ses-assets-filtered', result);
-                }.bind(this),function(error) {
-                    console.log(error) 
-                  });
+                BeaconClient.asset.filter(loadIn, this._base, 'ContentScriptMapManager', this._token)
+                    .then((result) => {
+                        ContentScriptMapManager._passLayerDataToInject('ses-assets-filtered', result);
+                    })
+                    .catch((error) => console.log(error));
             }
       }
     }

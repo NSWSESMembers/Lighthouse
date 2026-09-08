@@ -243,7 +243,9 @@ function HackTheMatrix(id, host, progressBar) {
     console.log(unit);
   }
 
-  BeaconClient.job.search(unit, host, start, end, params.userId, token, function(jobs) {
+  BeaconClient.job.search(unit, host, start, end, params.userId, token, {
+    onProgress: function(val, total) { progressBar.setValue(val / total); },
+  }).then(function(jobs) {
     //console.log(jobs);
     // $(jobs.Results).each(function(j,k){
     //   console.log(k)
@@ -351,7 +353,7 @@ function HackTheMatrix(id, host, progressBar) {
       const itemPos = position
       position++
       if (item.ICEMSIncidentIdentifier != null) {
-        BeaconClient.operationslog.search(item.Id, host, params.userId, token, function(logs) {
+        BeaconClient.operationslog.search(item.Id, host, params.userId, token).then(function(logs) {
           var numberOfIUM = 0
           logs.Results.forEach(function(r) {
             if (r.Subject && r.Subject.indexOf('Incident Update Message') != -1 && r.Subject.indexOf('Incident Update Message Acceptance') == -1) {
@@ -367,6 +369,9 @@ function HackTheMatrix(id, host, progressBar) {
             progressBar.close();
             $('#extra_progress').text("");
           }
+        }).catch(function(err) {
+          console.error('ICEMS transaction count failed', err);
+          if (position < queue) { poppy() } else { progressBar.close(); }
         })
       } else {
         if (position < queue) {
@@ -380,8 +385,10 @@ function HackTheMatrix(id, host, progressBar) {
       }
     }
 
-  }, function(val, total) {
-    progressBar.setValue(val / total);
+  }).catch(function(err) {
+    console.error('Job export fetch failed', err);
+    alert('Failed to fetch jobs for export. Your session may have expired.');
+    progressBar.close();
   });
 }
 

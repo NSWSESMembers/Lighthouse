@@ -281,30 +281,26 @@ function RunForestRun(mp) {
 
         if (typeof params.hq !== 'undefined') {
           if (params.hq.split(",").length == 1) { //one HQ was passed
-            BeaconClient.unit.getName(params.hq, apiHost, params.userId, token, function(result, error) {
-              if (typeof error == 'undefined') {
+            BeaconClient.unit.getName(params.hq, apiHost, params.userId, token)
+              .then(function(result) {
                 unit = result;
                 HackTheMatrix(unit, apiHost, params.userId, token, mp);
-              } else {
-                mp.fail(error)
-              }
-            });
+              })
+              .catch(function(error) { mp.fail(error); });
           } else {
             unit = [];
             console.log("passed array of units");
             var hqsGiven = params.hq.split(",");
             hqsGiven.forEach(function(d) {
-              BeaconClient.unit.getName(d, apiHost, params.userId, token, function(result, error) {
-                if (typeof error == 'undefined') {
+              BeaconClient.unit.getName(d, apiHost, params.userId, token)
+                .then(function(result) {
                   mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
                   unit.push(result);
                   if (unit.length == params.hq.split(",").length) {
                     HackTheMatrix(unit, apiHost, params.userId, token, mp);
                   }
-                } else {
-                  mp.fail(error)
-                }
-              });
+                })
+                .catch(function(error) { mp.fail(error); });
             });
           }
         } else { //no hq was sent, get them all
@@ -328,8 +324,8 @@ console.log(userId)
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  BeaconClient.job.summary(unit, host, start, end, userId, token,
-    function(summary) {
+  BeaconClient.job.summary(unit, host, start, end, userId, token)
+    .then(function(summary) {
       progressBar && progressBar.setValue(1);
 
       var completeJob = _.findWhere(summary.result, {
@@ -500,17 +496,12 @@ console.log(userId)
       apiLoadingInterlock = false
 
 
-    },
-    function(val, total) {
-      if (progressBar) { //if its a first load
-        if (val == -1 && total == -1) {
-          progressBar.fail();
-        } else {
-          progressBar.setValue(0.1 + ((val / total) - 0.1)) //start at 10%, dont top 100%
-        }
-      }
-    }
-  );
+    })
+    .catch(function(err) {
+      console.error('Job summary fetch failed', err);
+      apiLoadingInterlock = false;
+      if (progressBar) progressBar.fail();
+    });
 
 }
 

@@ -105,34 +105,21 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
         }
     }
 
-    function getIncidentImages(jobId, token) {
-        return new Promise((resolve) => {
-            BeaconClient.images.getIncidentImages(
-                jobId, apiHost, userId, token,
-                (list, err) => {
-                    if (err) {
-                        resolve(null);
-                    } else {
-                        resolve(list || []);
-                    }
-                }
-            );
-        });
+    async function getIncidentImages(jobId, token) {
+        try {
+            const list = await BeaconClient.images.getIncidentImages(jobId, apiHost, userId, token);
+            return list || [];
+        } catch (_e) {
+            return null;
+        }
     }
 
-    function getImageData(name, token) {
-        return new Promise((resolve, reject) => {
-            BeaconClient.images.getImageData(
-                vm.job().id(), name, apiHost, userId, token,
-                (data) => {
-                    if (data == null) {
-                        reject(new Error("No data returned"));
-                    } else {
-                        resolve(data);
-                    }
-                }
-            );
-        });
+    async function getImageData(name, token) {
+        const data = await BeaconClient.images.getImageData(vm.job().id(), name, apiHost, userId, token);
+        if (data == null) {
+            throw new Error("No data returned");
+        }
+        return data;
     }
 
     vm._loadThumb = async (im, token) => {
