@@ -890,8 +890,8 @@ tr.job:hover {
   margin-bottom: 0.75rem;
 }
 .selected-box {
-  min-height: 58px;
-  max-height: 120px;
+  min-height: 66px;
+  max-height: 220px;
   overflow: auto;
 }
 .pill {
@@ -913,7 +913,7 @@ tr.job:hover {
 }
 
 #searchDropdown.dropdown-menu {
-  max-height: 150px;
+  max-height: 280px;
   overflow: auto;
   position: absolute;
   top: 100%;
