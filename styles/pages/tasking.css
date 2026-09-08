@@ -396,8 +396,8 @@ body.sidebar-collapsed .vsplit {
      guess for this absolutely-positioned box, which can land far smaller
      than the content needs (near one-word-per-line). min-width floors it
      to something legible regardless; max-width still caps long content. */
-  min-width: 190px;
-  max-width: 240px;
+  min-width: 220px;
+  max-width: 280px;
   white-space: normal;
 }
 .job-tooltip__title {
