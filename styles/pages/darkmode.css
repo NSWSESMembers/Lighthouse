@@ -1040,6 +1040,82 @@ body.dark-mode .nav-link.active {
   border-color: #0d6efd;
 }
 
+/* Config modal left rail */
+body.dark-mode .config-panes,
+body.dark-mode .config-rail {
+  border-color: #444;
+}
+
+body.dark-mode .config-rail .nav-link {
+  color: #adb5bd;
+}
+
+body.dark-mode .config-rail .nav-link:hover {
+  background: #333;
+  color: #e0e0e0;
+}
+
+body.dark-mode .config-rail .nav-link.active {
+  background: #2b3a55;
+  color: #6ea8fe;
+}
+
+body.dark-mode .cfg-subhead {
+  color: #adb5bd;
+}
+
+body.dark-mode .cfg-field .d {
+  color: #adb5bd;
+}
+
+body.dark-mode .cfg-readout {
+  background: #262626;
+  border-color: #444;
+}
+
+body.dark-mode .cfg-readout-h,
+body.dark-mode .cfg-readout-note {
+  color: #8b929c;
+}
+
+body.dark-mode .cfg-readout-sub {
+  color: #adb5bd;
+}
+
+body.dark-mode .cfg-seg,
+body.dark-mode .cfg-seg-btn,
+body.dark-mode .cfg-chip {
+  border-color: #495057;
+}
+
+body.dark-mode .cfg-seg-btn,
+body.dark-mode .cfg-chip {
+  background: #2d2d2d;
+  color: #e0e0e0;
+}
+
+body.dark-mode .cfg-seg-btn:hover,
+body.dark-mode .cfg-chip:hover {
+  background: #3a3a3a;
+}
+
+body.dark-mode .cfg-seg-btn.active,
+body.dark-mode .cfg-chip.active {
+  background: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
+body.dark-mode .cfg-live-pill.on {
+  background: #1a2c22;
+  color: #4bbd83;
+}
+
+body.dark-mode .cfg-live-pill.off {
+  background: #333;
+  color: #adb5bd;
+}
+
 /* Collapse elements */
 body.dark-mode .collapse {
   background-color: #2d2d2d;

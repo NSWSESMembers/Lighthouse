@@ -411,7 +411,10 @@ export function ConfigVM(root, deps) {
     // Other settings
     self.signalrEnabled = ko.observable(true);
     self.refreshInterval = ko.observable(180);
-    // Guard for reckless refresh interval changes
+    // Guard for an aggressively short full-refresh interval. Slower is always
+    // safe, so only prompt when the new value drops below this many seconds --
+    // that's where every open copy of LAD starts hammering Beacon.
+    const REFRESH_GATE_SECONDS = 60;
     let lastRefreshInterval = self.refreshInterval();
     let suppressRecklessModal = false;
     self.refreshInterval.subscribe(function(newVal) {
@@ -419,9 +422,9 @@ export function ConfigVM(root, deps) {
             lastRefreshInterval = newVal;
             return;
         }
-        // Only trigger if the value is being changed to something different
-        if (Number(newVal) !== Number(lastRefreshInterval)) {
-            showRecklessModal({
+        const n = Number(newVal);
+        if (Number.isFinite(n) && n < REFRESH_GATE_SECONDS && n !== Number(lastRefreshInterval)) {
+            showShortRefreshModal(n, {
                 onConfirm: () => {
                     lastRefreshInterval = newVal;
                 },
@@ -432,60 +435,65 @@ export function ConfigVM(root, deps) {
                     suppressRecklessModal = false;
                 }
             });
+        } else {
+            lastRefreshInterval = newVal;
         }
     });
 
-    // Modal logic for reckless confirmation
-    function showRecklessModal({ onConfirm, onCancel }) {
-        // Create modal HTML if not present
-        let modal = document.getElementById('recklessModal');
+    // Confirm dialog for a very short full-refresh interval.
+    function showShortRefreshModal(seconds, { onConfirm, onCancel }) {
+        let modal = document.getElementById('shortRefreshModal');
         if (!modal) {
             modal = document.createElement('div');
-            modal.id = 'recklessModal';
+            modal.id = 'shortRefreshModal';
             modal.className = 'modal fade';
             modal.tabIndex = -1;
             modal.innerHTML = `
                 <div class="modal-dialog modal-dialog-centered">
                   <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                      <h5 class="modal-title">Are you sure?</h5>
+                    <div class="modal-header bg-warning text-dark">
+                      <h5 class="modal-title" id="shortRefreshTitle"></h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                      <p>Changing the refresh interval can have unintended consequences. To proceed, type <b>reckless</b> below and press Confirm.</p>
-                      <input id="recklessInput" type="text" class="form-control" placeholder="Type 'reckless' to confirm">
-                      <div id="recklessError" class="text-danger mt-2" style="display:none;">You must type 'reckless' to confirm.</div>
+                      <p>This will re-query <b>every</b> incident, team and tasking in your window from Beacon, on your machine, this often. Each sweep is a heavy set of calls and the board churns while it runs.</p>
+                      <p class="mb-3">Live updates already keep your board current between sweeps &mdash; you rarely need the full refresh this frequent.</p>
+                      <label class="form-label mb-1" for="shortRefreshInput">Type <b id="shortRefreshNum"></b> to confirm.</label>
+                      <input id="shortRefreshInput" type="text" class="form-control" autocomplete="off" inputmode="numeric">
+                      <div id="shortRefreshError" class="text-danger small mt-2" style="display:none;"></div>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="recklessCancel">Cancel</button>
-                      <button type="button" class="btn btn-danger" id="recklessConfirm">Confirm</button>
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="shortRefreshCancel">Keep previous</button>
+                      <button type="button" class="btn btn-warning" id="shortRefreshConfirm">Use this interval</button>
                     </div>
                   </div>
                 </div>
             `;
             document.body.appendChild(modal);
         }
+        modal.querySelector('#shortRefreshTitle').textContent = `Full refresh every ${seconds} seconds?`;
+        modal.querySelector('#shortRefreshNum').textContent = String(seconds);
+
         const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
         bsModal.show();
 
-        // Reset input and error
-        const input = modal.querySelector('#recklessInput');
-        const error = modal.querySelector('#recklessError');
+        const input = modal.querySelector('#shortRefreshInput');
+        const error = modal.querySelector('#shortRefreshError');
         input.value = '';
         error.style.display = 'none';
         input.focus();
 
-        // Remove previous listeners
-        const confirmBtn = modal.querySelector('#recklessConfirm');
-        const cancelBtn = modal.querySelector('#recklessCancel');
+        const confirmBtn = modal.querySelector('#shortRefreshConfirm');
+        const cancelBtn = modal.querySelector('#shortRefreshCancel');
         confirmBtn.onclick = null;
         cancelBtn.onclick = null;
 
         confirmBtn.onclick = function() {
-            if (input.value.trim().toLowerCase() === 'reckless') {
+            if (input.value.trim() === String(seconds)) {
                 bsModal.hide();
                 onConfirm && onConfirm();
             } else {
+                error.textContent = `Type ${seconds} to confirm.`;
                 error.style.display = '';
                 input.focus();
             }
@@ -494,7 +502,6 @@ export function ConfigVM(root, deps) {
             bsModal.hide();
             onCancel && onCancel();
         };
-        // Also handle modal close (X button)
         modal.querySelector('.btn-close').onclick = function() {
             bsModal.hide();
             onCancel && onCancel();
@@ -1077,6 +1084,73 @@ export function ConfigVM(root, deps) {
 
     self.fetchPeriod = ko.observable(7).extend({ min: 0, max: 31, digit: true });
     self.fetchForward = ko.observable(0).extend({ min: 0, max: 31, digit: true });
+
+    // Human-readable summary of what the Data pane's knobs currently resolve
+    // to -- shown alongside the inputs so an operator can sanity-check the
+    // window they're actually loading.
+    const _fmtWindowDate = (d) => d.toLocaleDateString('en-AU', {
+        weekday: 'short', day: 'numeric', month: 'short'
+    });
+    self.fetchWindowRange = ko.pureComputed(() => {
+        const back = Math.max(0, Number(self.fetchPeriod()) || 0);
+        const fwd = Math.max(0, Number(self.fetchForward()) || 0);
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + fwd);
+        return `${_fmtWindowDate(start)} → ${_fmtWindowDate(end)}`;
+    });
+    self.fetchWindowDays = ko.pureComputed(() => {
+        const back = Math.max(0, Number(self.fetchPeriod()) || 0);
+        const fwd = Math.max(0, Number(self.fetchForward()) || 0);
+        return back + fwd + 1;
+    });
+    self.refreshCadence = ko.pureComputed(() => {
+        const s = Math.max(0, Number(self.refreshInterval()) || 0);
+        if (s < 90) return `every ${s} sec`;
+        return `every ${Math.round(s / 60)} min`;
+    });
+    self.liveUpdatesLabel = ko.pureComputed(() => (self.signalrEnabled() ? 'On' : 'Off'));
+
+    // The full refresh means different things depending on whether live updates
+    // are carrying the load -- spell it out so nobody sets it wrong.
+    self.fullRefreshHint = ko.pureComputed(() => (self.signalrEnabled()
+        ? 'A full reload from Beacon. With live updates on it is only a backstop — every 3–5 min is plenty.'
+        : 'A full reload from Beacon. With live updates off this is the only thing refreshing the board — keep it short, 1–2 min.'
+    ));
+    self.dataReadoutNote = ko.pureComputed(() => (self.signalrEnabled()
+        ? 'Live updates keep the board current; the full refresh is a backstop.'
+        : 'No live updates — the board is only as fresh as the full refresh.'
+    ));
+
+    // Data pane -- one-tap presets for the values these are actually set to.
+    // The number field beside each row stays as the escape hatch for odd
+    // values; an off-preset value simply leaves no preset highlighted.
+    self.refreshPresets = [
+        { value: 30, label: '30s' },
+        { value: 60, label: '1 min' },
+        { value: 120, label: '2 min' },
+        { value: 180, label: '3 min' },
+        { value: 300, label: '5 min' },
+        { value: 600, label: '10 min' }
+    ];
+    self.historyPresets = [
+        { value: 0, label: 'Today' },
+        { value: 1, label: '1 day' },
+        { value: 3, label: '3 days' },
+        { value: 7, label: '1 week' },
+        { value: 14, label: '2 weeks' },
+        { value: 31, label: '1 month' }
+    ];
+    self.lookaheadPresets = [
+        { value: 0, label: 'None' },
+        { value: 1, label: '1 day' },
+        { value: 3, label: '3 days' },
+        { value: 7, label: '1 week' }
+    ];
+    self.pickRefreshPreset = (p) => self.refreshInterval(p.value);
+    self.pickHistoryPreset = (p) => self.fetchPeriod(p.value);
+    self.pickLookaheadPreset = (p) => self.fetchForward(p.value);
+
     self.showAdvanced = ko.observable(false);
     self.darkMode = ko.observable(false);
 
@@ -1159,6 +1233,11 @@ export function ConfigVM(root, deps) {
     self.clusterRescueJobs = ko.observable(true);
     self.alertsCollapsibleRules = ko.observable(true);
     self.taskingCountActiveOnly = ko.observable(false);
+
+    // On/Off pill labels for the Appearance pane switches
+    self.darkModeLabel = ko.pureComputed(() => (self.darkMode() ? 'On' : 'Off'));
+    self.alertsCollapseLabel = ko.pureComputed(() => (self.alertsCollapsibleRules() ? 'On' : 'Off'));
+    self.taskingCountLabel = ko.pureComputed(() => (self.taskingCountActiveOnly() ? 'On' : 'Off'));
 
     // pinned rows
     self.pinnedTeamIds = ko.observableArray([]);
