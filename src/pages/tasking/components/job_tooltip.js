@@ -25,9 +25,12 @@ export function buildJobTooltipHtml(job) {
     const status = job.statusName?.() || '';
     const addr = job.addressDisplayOrGPS?.() || '';
     const received = job.jobReceived?.() ? fmtRelative(new Date(job.jobReceived())) : '';
+    // Matches the popup's own footer (job_popup.js), which shows
+    // entityAssignedTo.name for the same field.
+    const unit = job.entityAssignedTo?.name?.() || job.entityAssignedTo?.code?.() || '';
 
     const titleBits = [id ? `#${id}` : null, priority || null, type || null].filter(Boolean).map(escapeHtml);
-    const metaBits = [status || null, received || null].filter(Boolean).map(escapeHtml);
+    const metaBits = [status || null, received || null, unit || null].filter(Boolean).map(escapeHtml);
 
     return `
         <div class="job-tooltip__title">${titleBits.join(' &middot; ')}</div>
