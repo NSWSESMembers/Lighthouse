@@ -1306,11 +1306,19 @@ function VM() {
                         cg.zoomToShowLayer(m, () => {
                             m.openPopup();
                         });
-                    } else {
+                    } else if (m) {
                         // Marker is on a standalone layer (rescueJobLayer,
-                        // unclusteredJobLayer) or doesn't exist yet – simple flyTo.
+                        // unclusteredJobLayer) – simple flyTo. Wait for it to
+                        // settle before opening the popup: opening it
+                        // immediately starts the popup's own autoPan
+                        // correction while the flyTo animation is still
+                        // moving the map, and the two visibly fight (a
+                        // camera move, then an abrupt extra snap).
+                        map.once('moveend', () => m.openPopup());
                         map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
-                        m?.openPopup?.();
+                    } else {
+                        // Doesn't exist yet -- nothing to open a popup on.
+                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
                     }
                 }
             },
@@ -1416,8 +1424,11 @@ function VM() {
                 const asset = assetOrEntry && assetOrEntry.asset ? assetOrEntry.asset : assetOrEntry;
                 const lat = asset.latitude(), lng = asset.longitude();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    // Wait for the flyTo to settle before opening the popup
+                    // -- see the matching comment in flyToJob above.
+                    const m = asset.marker;
+                    if (m) map.once('moveend', () => m.openPopup());
                     map.flyTo([lat, lng], 14, { animate: true, duration: 0.10 });
-                    asset.marker?.openPopup?.();
                 }
             },
 
