@@ -37,7 +37,7 @@
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/signalr": "^10.0.11",
     "@tmcw/togeojson": "^5.7.0",
-    "@xmldom/xmldom": "^0.9.10",
+    "@xmldom/xmldom": "^0.9.12",
     "bootstrap": "^4.6.2",
     "bootstrap5": "npm:bootstrap@^5.3.8",
     "chroma-js": "^2.4.2",
