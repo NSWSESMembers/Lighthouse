@@ -1315,10 +1315,10 @@ function VM() {
                         // moving the map, and the two visibly fight (a
                         // camera move, then an abrupt extra snap).
                         map.once('moveend', () => m.openPopup());
-                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
+                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
                     } else {
                         // Doesn't exist yet -- nothing to open a popup on.
-                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
+                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
                     }
                 }
             },
@@ -1428,7 +1428,7 @@ function VM() {
                     // -- see the matching comment in flyToJob above.
                     const m = asset.marker;
                     if (m) map.once('moveend', () => m.openPopup());
-                    map.flyTo([lat, lng], 14, { animate: true, duration: 0.10 });
+                    map.flyTo([lat, lng], 14, { animate: true, duration: 0.5 });
                 }
             },
 
