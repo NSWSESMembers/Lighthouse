@@ -1152,7 +1152,37 @@ export function ConfigVM(root, deps) {
     self.pickLookaheadPreset = (p) => self.fetchForward(p.value);
 
     self.showAdvanced = ko.observable(false);
-    self.darkMode = ko.observable(false);
+
+    // Theme: 'light' | 'dark' | 'auto'. 'auto' (the default) follows the
+    // OS/browser prefers-color-scheme and re-applies live when it changes.
+    self.darkModeMode = ko.observable('auto');
+    const _darkMq = (typeof window !== 'undefined' && window.matchMedia)
+        ? window.matchMedia('(prefers-color-scheme: dark)')
+        : null;
+    self.systemPrefersDark = ko.observable(!!(_darkMq && _darkMq.matches));
+    if (_darkMq) {
+        const _onSchemeChange = (e) => self.systemPrefersDark(!!e.matches);
+        if (_darkMq.addEventListener) _darkMq.addEventListener('change', _onSchemeChange);
+        else if (_darkMq.addListener) _darkMq.addListener(_onSchemeChange); // older Safari
+    }
+    // Effective boolean -- what the rest of the app reads. Reactive to both
+    // the chosen mode and (in 'auto') the live OS setting.
+    self.darkMode = ko.pureComputed(() => {
+        const m = self.darkModeMode();
+        return m === 'dark' || (m === 'auto' && self.systemPrefersDark());
+    });
+    self.themeModes = [
+        { value: 'light', label: 'Light' },
+        { value: 'dark', label: 'Dark' },
+        { value: 'auto', label: 'Auto' }
+    ];
+    self.pickThemeMode = (m) => self.darkModeMode(m.value);
+    self.themeHint = ko.pureComputed(() => {
+        if (self.darkModeMode() === 'auto') {
+            return `Follows your device's light / dark setting — currently ${self.darkMode() ? 'dark' : 'light'}.`;
+        }
+        return 'A low-glare dark colour scheme for the whole board and map.';
+    });
 
     self.layoutPresetDefs = [
         {
@@ -1236,7 +1266,6 @@ export function ConfigVM(root, deps) {
     self.taskingCountActiveOnly = ko.observable(false);
 
     // On/Off pill labels for the Appearance pane switches
-    self.darkModeLabel = ko.pureComputed(() => (self.darkMode() ? 'On' : 'Off'));
     self.alertsCollapseLabel = ko.pureComputed(() => (self.alertsCollapsibleRules() ? 'On' : 'Off'));
     self.taskingCountLabel = ko.pureComputed(() => (self.taskingCountActiveOnly() ? 'On' : 'Off'));
 
@@ -1287,11 +1316,7 @@ export function ConfigVM(root, deps) {
 
     // Dark mode helper (defined early so it can be called in afterConfigLoad)
     self._applyDarkMode = () => {
-        if (self.darkMode()) {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
+        document.body.classList.toggle('dark-mode', self.darkMode());
     };
 
 
@@ -1357,7 +1382,9 @@ export function ConfigVM(root, deps) {
         fetchPeriod: Number(self.fetchPeriod()),
         fetchForward: Number(self.fetchForward()),
         showAdvanced: !!self.showAdvanced(),
-        darkMode: !!self.darkMode(),
+        darkModeMode: self.darkModeMode(),
+        // kept so a config saved here still reads sensibly on an older build
+        darkMode: self.darkModeMode() === 'dark',
         layoutPreset: normalizeLayoutPreset(self.layoutPreset()),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
@@ -1643,8 +1670,13 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.showAdvanced === 'boolean') {
             self.showAdvanced(cfg.showAdvanced);
         }
-        if (typeof cfg.darkMode === 'boolean') {
-            self.darkMode(cfg.darkMode);
+        if (cfg.darkModeMode === 'light' || cfg.darkModeMode === 'dark' || cfg.darkModeMode === 'auto') {
+            self.darkModeMode(cfg.darkModeMode);
+        } else if (cfg.darkMode === true) {
+            // configs saved before the 3-way setting: an explicit `true` was a
+            // deliberate choice -> keep them on Dark. `false` was just the old
+            // default, so let it fall through to 'auto'.
+            self.darkModeMode('dark');
         }
         self.layoutPreset(normalizeLayoutPreset(cfg.layoutPreset || localStorage.getItem('lh.layoutPreset')));
         if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
@@ -1931,17 +1963,17 @@ export function ConfigVM(root, deps) {
     self.normalTaskingWeight.subscribe(() => { self.save(); });
     self.suggestionUseRouting.subscribe(() => { self.save(); });
 
+    // Effective theme changed -- a mode switch, or the OS setting flipping
+    // while in 'auto'. Repaint; don't persist (the OS isn't ours to save).
     self.darkMode.subscribe((isDark) => {
         self._applyDarkMode();
-        
-        // Switch basemap when dark mode changes
         if (root.mapVM?.changeBasemap) {
-            const targetBasemap = isDark ? "DarkGray" : "Topographic";
-            root.mapVM.changeBasemap(targetBasemap);
+            root.mapVM.changeBasemap(isDark ? "DarkGray" : "Topographic");
         }
-        
-        self.save();
     });
+
+    // The user picked Light / Dark / Auto -- persist that choice.
+    self.darkModeMode.subscribe(() => self.save());
 
     self.layoutPreset.subscribe((preset) => {
         const normalized = normalizeLayoutPreset(preset);
