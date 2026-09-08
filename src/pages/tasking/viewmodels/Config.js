@@ -1153,9 +1153,9 @@ export function ConfigVM(root, deps) {
 
     self.showAdvanced = ko.observable(false);
 
-    // Theme: 'light' | 'dark' | 'auto'. 'auto' follows the OS/browser
-    // prefers-color-scheme and re-applies live when the user changes it.
-    self.darkModeMode = ko.observable('light');
+    // Theme: 'light' | 'dark' | 'auto'. 'auto' (the default) follows the
+    // OS/browser prefers-color-scheme and re-applies live when it changes.
+    self.darkModeMode = ko.observable('auto');
     const _darkMq = (typeof window !== 'undefined' && window.matchMedia)
         ? window.matchMedia('(prefers-color-scheme: dark)')
         : null;
@@ -1672,9 +1672,11 @@ export function ConfigVM(root, deps) {
         }
         if (cfg.darkModeMode === 'light' || cfg.darkModeMode === 'dark' || cfg.darkModeMode === 'auto') {
             self.darkModeMode(cfg.darkModeMode);
-        } else if (typeof cfg.darkMode === 'boolean') {
-            // migrate configs saved before the 3-way theme setting
-            self.darkModeMode(cfg.darkMode ? 'dark' : 'light');
+        } else if (cfg.darkMode === true) {
+            // configs saved before the 3-way setting: an explicit `true` was a
+            // deliberate choice -> keep them on Dark. `false` was just the old
+            // default, so let it fall through to 'auto'.
+            self.darkModeMode('dark');
         }
         self.layoutPreset(normalizeLayoutPreset(cfg.layoutPreset || localStorage.getItem('lh.layoutPreset')));
         if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
