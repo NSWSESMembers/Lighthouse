@@ -6,6 +6,14 @@ const MIN_PADDING = 16;
 // Small breathing room beyond the edge of whatever control is docked there,
 // so a re-panned popup doesn't sit flush against it.
 const EXTRA_MARGIN = 8;
+// Cap how much of the map's own width/height the corner controls are
+// allowed to claim as padding, on each axis. Leaflet's autoPan can't
+// satisfy both the top and bottom (or left and right) padding at once if
+// together they leave no room for the popup -- it just snaps between
+// them, cutting the popup off. Keeping a comfortable share of the
+// viewport free of padding, no matter how much chrome piles into the
+// corners, keeps that always satisfiable.
+const MAX_PADDING_SHARE = 0.35;
 
 /**
  * Keeps popup auto-pan padding in sync with whatever Leaflet corner
@@ -60,10 +68,13 @@ export function initPopupAutoPan(map) {
             }
         });
 
-        topLeft.x = left;
-        topLeft.y = top;
-        bottomRight.x = right;
-        bottomRight.y = bottom;
+        const maxVertical = mapRect.height * MAX_PADDING_SHARE;
+        const maxHorizontal = mapRect.width * MAX_PADDING_SHARE;
+
+        topLeft.x = Math.min(left, maxHorizontal);
+        topLeft.y = Math.min(top, maxVertical);
+        bottomRight.x = Math.min(right, maxHorizontal);
+        bottomRight.y = Math.min(bottom, maxVertical);
     }
 
     recompute();
