@@ -1,5 +1,3 @@
-import { fmtRelative } from '../utils/common.js';
-
 function escapeHtml(s) {
     return String(s ?? '')
         .replace(/&/g, '&amp;')
@@ -24,10 +22,9 @@ export function buildJobTooltipHtml(job) {
     const type = (job.typeShort?.() || '') + (job.categoriesNameNumberDash?.() || '');
     const status = job.statusName?.() || '';
     const addr = job.addressDisplayOrGPS?.() || '';
-    const received = job.jobReceived?.() ? fmtRelative(new Date(job.jobReceived())) : '';
 
     const titleBits = [id ? `#${id}` : null, priority || null, type || null].filter(Boolean).map(escapeHtml);
-    const metaBits = [status || null, received || null].filter(Boolean).map(escapeHtml);
+    const metaBits = [status || null].filter(Boolean).map(escapeHtml);
 
     return `
         <div class="job-tooltip__title">${titleBits.join(' &middot; ')}</div>
