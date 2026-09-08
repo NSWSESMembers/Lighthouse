@@ -2,6 +2,7 @@
 //edit and create page.
 // background js fiddles with create page to expose same viewmodel as OutageDisplayType
 
+var recentActivations = require('../../lib/teamRecentActivations.js');
 
 //replace window title with team name if set
 vm.callsign.subscribe(function() {
@@ -10,6 +11,12 @@ if (typeof callsign !== 'undefined' && callsign !== null) {
   document.title = `${callsign} - Edit`;
 }
 })
+
+// ---- Recent Activations fieldset ----
+// Lets an editor expand a recent activation for the assigned-to unit and
+// click a name from its responses straight into the team. Shared with the
+// Team Create page - see lib/teamRecentActivations.js.
+recentActivations.initRecentActivationsFieldset(vm);
 
 //when team members change
 vm.members.subscribe(function() {
