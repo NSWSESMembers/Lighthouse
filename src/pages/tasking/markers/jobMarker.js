@@ -2,7 +2,8 @@ var L = require('leaflet');
 var ko = require('knockout');
 
 import { buildJobPopupKO } from '../components/job_popup.js';
-import { makeShapeIcon, styleForJob, buildPulseRingSvg } from '../components/job_icon.js';
+import { makeShapeIcon, styleForJob, buildPulseRingSvg, buildStatusRingSvg } from '../components/job_icon.js';
+import { statusHasRing } from '../utils/jobTypesToUI.js';
 
 
 import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } from '../utils/popup_dom_utils.js';
@@ -25,7 +26,8 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
             : vm.mapVM.jobClusterGroup;          // normal clustering
     const markers = vm.mapVM.jobMarkerIndex;
     const pulseLayer = vm.mapVM.jobPulseLayer;
-    const style = styleForJob(job);
+    const showStatus = !!vm.config?.showJobStatusOnMarkers?.();
+    const style = styleForJob(job, { showStatus });
     const html = buildJobPopupKO();
     const contentEl = makePopupNode(html, 'job-pop-root')
 
@@ -59,8 +61,9 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         m._priorityColor = style.fill || '#6b7280';
         if (!m._popupBound) { m.setPopupContent(node); wireKoForPopup(ko, m, job, vm, vm.mapVM.makeJobPopupVM(job)); }
 
-        // keep the "New" ring and _isNew flag in correct state
+        // keep the "New" pulse ring and the Active marching ring in correct state
         upsertPulseRing(pulseLayer, job, m);
+        if (showStatus) upsertStatusRing(vm.mapVM.jobStatusRingLayer, job, m);
         const wasNew = m._isNew;
         m._isNew = (job.statusName?.() || '').toLowerCase() === 'new';
         if (wasNew !== m._isNew && vm.mapVM.clusteringEnabled) {
@@ -77,6 +80,8 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
                     if (prev !== m._isNew && vm.mapVM.clusteringEnabled) {
                         vm.mapVM.jobClusterGroup.refreshClusters(m);
                     }
+                    // restyle icon (strike / X) + Active marching ring when the option is on
+                    if (vm.config?.showJobStatusOnMarkers?.()) syncMarkerStyle(m, job, vm, pulseLayer);
                 })
             );
         }
@@ -87,6 +92,14 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
                 syncMarkerStyle(m, job, vm, pulseLayer);
             });
             (m._subs ||= []).push(m._prioritySub);
+        }
+
+        // action-required tags → "!" pip on the icon
+        if (!m._alertSub && job.actionRequiredTags) {
+            m._alertSub = job.actionRequiredTags.subscribe(() => {
+                if (vm.config?.showJobStatusOnMarkers?.()) syncMarkerStyle(m, job, vm, pulseLayer);
+            });
+            (m._subs ||= []).push(m._alertSub);
         }
 
         job.marker = m;
@@ -108,6 +121,7 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     job.marker = marker;
 
     upsertPulseRing(pulseLayer, job, marker);
+    if (showStatus) upsertStatusRing(vm.mapVM.jobStatusRingLayer, job, marker);
     (marker._pulseSubs ||= []).push(
         job.statusName.subscribe(() => {
             upsertPulseRing(pulseLayer, job, marker);
@@ -117,6 +131,8 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
             if (wasNew !== marker._isNew && vm.mapVM.clusteringEnabled) {
                 vm.mapVM.jobClusterGroup.refreshClusters(marker);
             }
+            // restyle icon (strike / X) + Active marching ring when the option is on
+            if (vm.config?.showJobStatusOnMarkers?.()) syncMarkerStyle(marker, job, vm, pulseLayer);
         })
     );
 
@@ -129,14 +145,22 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         syncMarkerStyle(marker, job, vm, pulseLayer);
     });
 
+    // action-required tags → "!" pip on the icon
+    marker._alertSub = job.actionRequiredTags
+        ? job.actionRequiredTags.subscribe(() => {
+            if (vm.config?.showJobStatusOnMarkers?.()) syncMarkerStyle(marker, job, vm, pulseLayer);
+        })
+        : null;
+
     // live position updates from KO observables
     marker._subs = [
         job.address.latitude.subscribe(() => safeMove(marker, job)),
         job.address.longitude.subscribe(() => safeMove(marker, job)),
         marker._prioritySub,
-    ];
+        marker._alertSub,
+    ].filter(Boolean);
 
-    // Sync pulse ring visibility after adding
+    // Sync pulse / status ring visibility after adding
     vm.mapVM._syncPulseRings?.();
 
     return marker;
@@ -167,12 +191,20 @@ export function removeJobMarker(vm, jobOrId) {
     const popupEl = m.getPopup()?.getElement?.();
     if (popupEl && popupEl.__ko_bound__) { try { ko.cleanNode(popupEl); } catch { /* empty */ } delete popupEl.__ko_bound__; }
 
+    // statusName subscription drives both the pulse ring and the Active ring
+    (m._pulseSubs || []).forEach(s => { try { s.dispose?.(); } catch { /* empty */ } });
+    m._pulseSubs = [];
+
     if (m._pulseRing) {
         m._pulseRing._detach?.();
-        (m._pulseSubs || []).forEach(s => { try { s.dispose?.(); } catch { /* empty */ } });
-        m._pulseSubs = [];
         pulseLayer.removeLayer(m._pulseRing);
         m._pulseRing = null;
+    }
+
+    if (m._statusRing) {
+        m._statusRing._detach?.();
+        vm.mapVM.jobStatusRingLayer?.removeLayer(m._statusRing);
+        m._statusRing = null;
     }
 
     // Remove from whichever layer it's in
@@ -184,17 +216,58 @@ export function removeJobMarker(vm, jobOrId) {
     if (job) job.marker = null;
 }
 
+/**
+ * Re-evaluate every existing job marker — used when the `showJobStatusOnMarkers`
+ * config option is toggled, so the strike / X / "!" pip and the Active marching
+ * ring are added to / removed from markers already on the map.
+ */
+export function restyleAllJobMarkers(vm) {
+    const showStatus = !!vm.config?.showJobStatusOnMarkers?.();
+    const pulseLayer = vm.mapVM?.jobPulseLayer;
+    const statusRingLayer = vm.mapVM?.jobStatusRingLayer;
+    vm.jobsById?.forEach((job) => {
+        const m = job.marker;
+        if (!m) return;
+
+        const newStyle = styleForJob(job, { showStatus });
+        const key = JSON.stringify(newStyle);
+        if (m._styleKey !== key) {
+            m.setIcon(makeShapeIcon(newStyle));
+            m._styleKey = key;
+            m._priorityColor = newStyle.fill || '#6b7280';
+            // icon box may have resized — rebuild the pulse ring against it
+            if (m._pulseRing && pulseLayer) {
+                m._pulseRing._detach?.();
+                pulseLayer.removeLayer(m._pulseRing);
+                m._pulseRing = null;
+                upsertPulseRing(pulseLayer, job, m);
+            }
+        }
+
+        // Active marching ring: rebuild if on, tear down if the option is off
+        if (m._statusRing && statusRingLayer) {
+            m._statusRing._detach?.();
+            statusRingLayer.removeLayer(m._statusRing);
+            m._statusRing = null;
+        }
+        if (showStatus) upsertStatusRing(statusRingLayer, job, m);
+    });
+    vm.mapVM?._syncPulseRings?.();
+}
+
 //complicated for some reason. has to support different icons sizes and anchors
 function upsertPulseRing(layerGroup, job, marker) {
     const isNew = (job.statusName?.() || '').toLowerCase() === 'new';
     const base = marker.options.icon?.options || {};
-    const baseSize = base.iconSize || [14, 14];
-    const baseAnchor = base.iconAnchor || [baseSize[0] / 2, baseSize[1] / 2];
+    const iconSize = base.iconSize || [14, 14];
+    // Ring is sized to the actual shape, not the (possibly pip-padded) icon box.
+    const shapeD = base.shapeDiameter || Math.min(iconSize[0], iconSize[1]);
+    const baseSize = [shapeD, shapeD];
 
     if (isNew && !marker._pulseRing) {
         const k = 3;
         const ringSize = [Math.round(baseSize[0] * k), Math.round(baseSize[1] * k)];
-        const ringAnchor = [Math.round(baseAnchor[0] * k), Math.round(baseAnchor[1] * k)];
+        const ringAnchor = [Math.round(ringSize[0] / 2), Math.round(ringSize[1] / 2)];
 
         const shape = styleForJob(job).shape || 'circle';
         const pulseSvg = buildPulseRingSvg(shape, ringSize[0], ringSize[1]);
@@ -227,6 +300,63 @@ function upsertPulseRing(layerGroup, job, marker) {
     }
 }
 
+/**
+ * Active jobs get a magenta "marching ring" — a sibling non-interactive marker
+ * on jobStatusRingLayer, following the main marker, sized to the real shape.
+ * Same lifecycle model as the pulse ring.  Callers gate on the config option.
+ */
+function upsertStatusRing(layerGroup, job, marker) {
+    if (!layerGroup) return;
+    const want = statusHasRing(job.statusName?.());
+
+    if (want && !marker._statusRing) {
+        const base = marker.options.icon?.options || {};
+        const iconSize = base.iconSize || [14, 14];
+        const shapeD = base.shapeDiameter || Math.min(iconSize[0], iconSize[1]);
+        const ringR = shapeD / 2 + 4;                 // clear of the shape edge
+        const size = Math.ceil((ringR + 3) * 2);
+        const anchor = [Math.round(size / 2), Math.round(size / 2)];
+
+        const ring = L.marker(marker.getLatLng(), {
+            pane: 'pane-tippy-top',
+            icon: L.divIcon({
+                className: 'status-ring-icon',
+                html: buildStatusRingSvg(size, ringR),
+                iconSize: [size, size],
+                iconAnchor: anchor
+            }),
+            interactive: false,
+            keyboard: false
+        });
+
+        const follow = () => ring.setLatLng(marker.getLatLng());
+        marker.on('move', follow);
+        ring._detach = () => marker.off('move', follow);
+
+        // Sit behind the marker so the shape and the "!" pip always win their
+        // pixels — the ring is a background accent, not an overlay.
+        ring.setZIndexOffset((marker.options?.zIndexOffset || 0) - 100);
+        ring.addTo(layerGroup);
+        marker._statusRing = ring;
+    }
+
+    if (!want && marker._statusRing) {
+        marker._statusRing._detach?.();
+        layerGroup.removeLayer(marker._statusRing);
+        marker._statusRing = null;
+    }
+}
+
+/** Tear down and (if still wanted) rebuild the status ring against the current icon. */
+function rebuildStatusRing(layerGroup, job, marker) {
+    if (marker._statusRing && layerGroup) {
+        marker._statusRing._detach?.();
+        layerGroup.removeLayer(marker._statusRing);
+        marker._statusRing = null;
+    }
+    upsertStatusRing(layerGroup, job, marker);
+}
+
 // --- internals ---
 
 /**
@@ -235,7 +365,8 @@ function upsertPulseRing(layerGroup, job, marker) {
  * reassignment + cluster refresh as needed.
  */
 function syncMarkerStyle(marker, job, vm, pulseLayer) {
-    const newStyle = styleForJob(job);
+    const showStatus = !!vm.config?.showJobStatusOnMarkers?.();
+    const newStyle = styleForJob(job, { showStatus });
     const newKey = JSON.stringify(newStyle);
 
     // Update icon if the visual style actually changed
@@ -244,6 +375,15 @@ function syncMarkerStyle(marker, job, vm, pulseLayer) {
         marker._styleKey = newKey;
     }
     marker._priorityColor = newStyle.fill || '#6b7280';
+
+    // Active marching ring — rebuild against the (possibly resized) icon
+    if (showStatus) {
+        rebuildStatusRing(vm.mapVM.jobStatusRingLayer, job, marker);
+    } else if (marker._statusRing) {
+        marker._statusRing._detach?.();
+        vm.mapVM.jobStatusRingLayer?.removeLayer(marker._statusRing);
+        marker._statusRing = null;
+    }
 
     // Check whether rescue status flipped
     const wasRescue = marker._isRescue;
