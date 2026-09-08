@@ -890,8 +890,8 @@ tr.job:hover {
   margin-bottom: 0.75rem;
 }
 .selected-box {
-  min-height: 58px;
-  max-height: 120px;
+  min-height: 66px;
+  max-height: 220px;
   overflow: auto;
 }
 .pill {
@@ -913,7 +913,7 @@ tr.job:hover {
 }
 
 #searchDropdown.dropdown-menu {
-  max-height: 150px;
+  max-height: 280px;
   overflow: auto;
   position: absolute;
   top: 100%;
@@ -2159,20 +2159,23 @@ overflow: hidden;
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
   gap: 0;
+  /* Fixed working area so switching tabs never resizes the modal --
+     short panes get trailing space, tall panes scroll inside .config-panes. */
+  height: clamp(360px, 58vh, 620px);
 }
 
 .config-rail {
-  position: sticky;
-  top: 0;
-  align-self: start;
+  align-self: stretch;
+  overflow-y: auto;
   gap: 2px;
   padding-right: 1rem;
 }
 
 .config-panes {
+  height: 100%;
+  overflow-y: auto;
   border-left: 1px solid #dee2e6;
   padding-left: 1.25rem;
-  min-height: 340px;
 }
 
 .config-rail .nav-link {
@@ -2445,12 +2448,14 @@ overflow: hidden;
 @media (max-width: 640px) {
   .config-settings {
     grid-template-columns: 1fr;
+    /* rail stacks on top here -- let the modal body scroll normally */
+    height: auto;
   }
 
   .config-rail {
-    position: static;
     flex-direction: row !important;
     flex-wrap: wrap;
+    overflow: visible;
     padding-right: 0;
     padding-bottom: 0.5rem;
     margin-bottom: 0.75rem;
@@ -2458,6 +2463,8 @@ overflow: hidden;
   }
 
   .config-panes {
+    height: auto;
+    overflow: visible;
     border-left: 0;
     padding-left: 0;
   }
