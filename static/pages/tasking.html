@@ -3298,17 +3298,16 @@
                                     <div class="tab-pane fade" id="cfgPane-appearance" role="tabpanel" aria-labelledby="cfgTab-appearance" tabindex="0">
                                         <div class="cfg-data-fields cfg-fields-solo">
                                             <div class="cfg-field">
-                                                <label for="darkModeToggle">Dark mode</label>
-                                                <div class="ctl">
-                                                    <div class="form-check form-switch">
-                                                        <input class="form-check-input" type="checkbox" role="switch"
-                                                            id="darkModeToggle" data-bind="checked: config.darkMode">
+                                                <label>Theme</label>
+                                                <div class="cfg-preset-row">
+                                                    <div class="cfg-seg" data-bind="foreach: { data: config.themeModes, as: 'm' }">
+                                                        <button type="button" class="cfg-seg-btn"
+                                                            data-bind="text: m.label,
+                                                                       css: { active: $root.config.darkModeMode() === m.value },
+                                                                       click: $root.config.pickThemeMode"></button>
                                                     </div>
-                                                    <span class="cfg-live-pill"
-                                                        data-bind="text: config.darkModeLabel,
-                                                                   css: { on: config.darkMode(), off: !config.darkMode() }"></span>
                                                 </div>
-                                                <div class="d">Reduces eye strain on overnight LHQ shifts.</div>
+                                                <div class="d" data-bind="text: config.themeHint"></div>
                                             </div>
                                             <div class="cfg-field">
                                                 <label for="alertsCollapsibleRulesToggle">Auto-collapse alert popups</label>
