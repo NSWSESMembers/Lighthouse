@@ -1,26 +1,13 @@
-import $ from 'jquery';
+import { request } from './core/request.js';
 import { getName } from './unit.js';
 
-export function unitBoundary(unitId, host, userId = 'notPassed', token, callback) {
-    getName(unitId, host, userId, token, function (response) {
-        if (response && response.Code) {
-            $.ajax({
-                type: 'GET',
-                url: host + "/Api/v1/GeoServices/Unit/" + response.Code + "/Boundary/?LighthouseFunction=unitBoundary&userId=" + userId,
-                beforeSend: function (n) {
-                    n.setRequestHeader("Authorization", "Bearer " + token)
-                },
-                cache: false,
-                dataType: 'json',
-                complete: function (response, textStatus) {
-                    if (textStatus == 'success') {
-                        let results = response.responseJSON;
-                        if (typeof callback === "function") {
-                            callback(results);
-                        }
-                    }
-                }
-            })
-        }
-    })
+export async function unitBoundary(unitId, host, userId = 'notPassed', token) {
+  const unit = await getName(unitId, host, userId, token);
+  if (!unit || !unit.Code) {
+    return null;
+  }
+  return request(
+    host + '/Api/v1/GeoServices/Unit/' + unit.Code + '/Boundary/?LighthouseFunction=unitBoundary&userId=' + userId,
+    { token },
+  );
 }

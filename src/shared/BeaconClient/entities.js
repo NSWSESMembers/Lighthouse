@@ -1,82 +1,22 @@
-import $ from 'jquery';
+import { request } from './core/request.js';
 
-export function search(query, host, userId = 'notPassed', token, callback) {
-  console.log("entities.search called with:" + query + ", " + host);
-  $.ajax({
-    type: 'GET',
-    url: host + "/Api/v1/Entities/Search?EntityName=" + query + "&LighthouseFunction=SearchEntitiesn&userId=" + userId,
-    beforeSend: function(n) {
-      n.setRequestHeader("Authorization", "Bearer " + token)
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function(response, textStatus) {
-      if (textStatus == 'success') {
-        let results = response.responseJSON;
-        if (typeof callback === "function") {
-          console.log("entities.search call back");
-          callback(results);
-        }
-      } else {
-        if (typeof callback === "function") {
-          console.log("entities.search errored out");
-          callback('', textStatus);
-        }
-      }
-    }
-  })
+export function search(query, host, userId = 'notPassed', token) {
+  return request(
+    host + '/Api/v1/Entities/Search?EntityName=' + query + '&LighthouseFunction=SearchEntitiesn&userId=' + userId,
+    { token },
+  );
 }
 
-export function children(parent, host, userId = 'notPassed', token, callback) {
-  console.log("entities.children called with:" + parent + ", " + host);
-  $.ajax({
-    type: 'GET',
-    url: host + "/Api/v1/Entities/" + parent + "/Children/?LighthouseFunction=EntitiesChildren&userId=" + userId,
-    beforeSend: function(n) {
-      n.setRequestHeader("Authorization", "Bearer " + token)
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function(response, textStatus) {
-      if (textStatus == 'success') {
-        let results = response.responseJSON;
-        if (typeof callback === "function") {
-          console.log("entities.children call back");
-          callback(results);
-        }
-      } else {
-        if (typeof callback === "function") {
-          console.log("entities.children errored out");
-          callback('', textStatus);
-        }
-      }
-    }
-  })
+export function children(parent, host, userId = 'notPassed', token) {
+  return request(
+    host + '/Api/v1/Entities/' + parent + '/Children/?LighthouseFunction=EntitiesChildren&userId=' + userId,
+    { token },
+  );
 }
 
-export function fetch(id, host, userId = 'notPassed', token, callback) {
-  console.log("entities.fetch called with:" + id + ", " + host);
-  $.ajax({
-    type: 'GET',
-    url: host + "/Api/v1/Entities/" + id + "?LighthouseFunction=EntitiesFetch&userId=" + userId,
-    beforeSend: function(n) {
-      n.setRequestHeader("Authorization", "Bearer " + token)
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function(response, textStatus) {
-      if (textStatus == 'success') {
-        let results = response.responseJSON;
-        if (typeof callback === "function") {
-          console.log("entities.children call back");
-          callback(results);
-        }
-      } else {
-        if (typeof callback === "function") {
-          console.log("entities.children errored out");
-          callback('', textStatus);
-        }
-      }
-    }
-  })
+export function fetch(id, host, userId = 'notPassed', token) {
+  return request(
+    host + '/Api/v1/Entities/' + id + '?LighthouseFunction=EntitiesFetch&userId=' + userId,
+    { token },
+  );
 }

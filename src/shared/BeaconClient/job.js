@@ -1,349 +1,167 @@
-import $ from 'jquery';
-import { getJsonPaginated } from './json.js';
+import { request, requestPaginated } from './core/request.js';
 
-export function search(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, viewmodel) {
-
-  if (typeof viewmodel === 'undefined') //if they dont specify a viewmodel to load, pull the big one down.
-  {
-    viewmodel = "6";
-  }
-
-  var url = "";
-  console.log("Client.job.search() called with:" + StartDate + "," + EndDate + ", " + host);
+/**
+ * @param {object|Array|null} unit  a single entity ({Id}), an array of entities, or null for "all"
+ * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
+ * @returns {Promise<{Results: any[]}>}
+ */
+export async function search(unit, host, StartDate, EndDate, userId = 'notPassed', token, opts = {}) {
+  const viewmodel = '6';
+  let url;
 
   if (unit !== null || typeof unit === 'undefined') {
-    if (Array.isArray(unit) == false) {
-      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
+    if (Array.isArray(unit) === false) {
+      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + '&Hq=' + unit.Id + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
     } else {
-      var hqString = "";
-      unit.forEach(function (d) {
-        hqString = hqString + "&Hq=" + d.Id
+      let hqString = '';
+      unit.forEach((d) => {
+        hqString = hqString + '&Hq=' + d.Id;
       });
-      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
+      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + hqString + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
     }
   } else {
-    url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
-
+    url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
   }
 
-  var lastDisplayedVal = 0;
-  getJsonPaginated(
-    url, token, 0, 100,
-    function (count, total) {
-      if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
-        lastDisplayedVal = count;
-        progressCallBack(count, total);
-      }
-      if (count == -1 && total == -1) { //allow errors
-        progressCallBack(count, total);
-      }
-
-    },
-    function (results) { //call for the JSON, rebuild the array and return it when done.
-      console.log("GetJSONfromBeacon call back with: ");
-      var obj = {
-        "Results": results
-      }
-      callback(obj);
-    }
-  );
-
+  const results = await requestPaginated(url, { token, pageSize: 100, ...opts });
+  return { Results: results };
 }
 
-export function searchRaw(rawURL, host, userId = 'notPassed', token, callback, progressCallBack, onPage) {
-
-
-  var url = host + "/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=" + userId + "&" + rawURL;
-
-  var lastDisplayedVal = 0;
-  getJsonPaginated(
-    url, token, 0, 50,
-    function (count, total) {
-      if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
-        lastDisplayedVal = count;
-        progressCallBack(count, total);
-      }
-      if (count == -1 && total == -1) { //allow errors
-        progressCallBack(count, total);
-      }
-
-    },
-    function (results) { //call for the JSON, rebuild the array and return it when done.
-      console.log("GetJSONfromBeacon call back with: ");
-      var obj = {
-        "Results": results
-      }
-      callback(obj);
-    }, function (pageResult) {
-      if (typeof onPage === 'function') {
-        onPage(pageResult);
-      }
-    }
-  );
-
+/**
+ * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
+ * @returns {Promise<{Results: any[]}>}
+ */
+export async function searchRaw(rawURL, host, userId = 'notPassed', token, opts = {}) {
+  const url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&' + rawURL;
+  const results = await requestPaginated(url, { token, pageSize: 50, ...opts });
+  return { Results: results };
 }
 
-export function summary(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack) {
-  var url = "";
-  console.log("Client.job.summary() called with:" + StartDate + "," + EndDate + ", " + host);
-
+export function summary(unit, host, StartDate, EndDate, userId = 'notPassed', token) {
+  let url;
   if (unit !== null || typeof unit === 'undefined') {
-    if (Array.isArray(unit) == false) {
-      url = host + "/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&EntityIds=" + unit.Id;
+    if (Array.isArray(unit) === false) {
+      url = host + '/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + '&EntityIds=' + unit.Id;
     } else {
-      var hqString = "";
-      unit.forEach(function (d) {
-        hqString = hqString + "&EntityIds=" + d.Id;
+      let hqString = '';
+      unit.forEach((d) => {
+        hqString = hqString + '&EntityIds=' + d.Id;
       });
-      console.log(hqString)
-      url = host + "/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString;
+      url = host + '/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + hqString;
     }
   } else {
-    url = host + "/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString();
-
+    url = host + '/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString();
   }
 
-  $.ajax({
-    type: 'GET',
-    url: url,
-    beforeSend: function (n) {
-      n.setRequestHeader("Authorization", "Bearer " + token)
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(response.responseJSON);
-      } else {
-        console.log("Sending back a fail");
-        typeof progressCallBack === 'function' && progressCallBack(-1, -1);
-      }
-    }
-  });
+  return request(url, { token });
 }
 
-export function get(id, viewModelType = 1, host, userId = 'notPassed', token, callback) {
-  $.ajax({
-    type: 'GET',
-    url: host + "/Api/v1/Jobs/" + id + "?LighthouseFunction=GetJobfromBeacon&userId=" + userId + "&viewModelType=" + viewModelType,
-    beforeSend: function (n) {
-      n.setRequestHeader("Authorization", "Bearer " + token)
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        let results = response.responseJSON;
-        if (typeof callback === "function") {
-          callback(results);
-        }
-      }
-    }
-  })
+export function get(id, viewModelType = 1, host, userId = 'notPassed', token) {
+  return request(
+    host + '/Api/v1/Jobs/' + id + '?LighthouseFunction=GetJobfromBeacon&userId=' + userId + '&viewModelType=' + viewModelType,
+    { token },
+  );
 }
 
-
-export function getTasking(ids, host, userId = 'notPassed', token, callback) {
-  // Support single id or array of ids
+/**
+ * @param {string|number|Array} ids  a single job id or an array of job ids
+ * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
+ * @returns {Promise<{Results: any[]}>}
+ */
+export async function getTasking(ids, host, userId = 'notPassed', token, opts = {}) {
   const idArr = Array.isArray(ids) ? ids : [ids];
   const fnName = Array.isArray(ids) ? 'GetBulkJobTaskingFromBeacon' : 'GetJobTaskingFromBeacon';
-  const jobIdsParam = idArr.map(jid => "JobIds%5B%5D=" + encodeURIComponent(jid)).join("&");
-  const url = host + "/Api/v1/Tasking/Search?LighthouseFunction=" + fnName + "&userId=" + userId + "&" + jobIdsParam;
-  getJsonPaginated(
-    url, token, 0, 100,
-    function () { /* progress – not needed */ },
-    function (results) {
-      callback({ Results: results });
-    }
-  );
+  const jobIdsParam = idArr.map((jid) => 'JobIds%5B%5D=' + encodeURIComponent(jid)).join('&');
+  const url = host + '/Api/v1/Tasking/Search?LighthouseFunction=' + fnName + '&userId=' + userId + '&' + jobIdsParam;
+  const results = await requestPaginated(url, { token, pageSize: 100, ...opts });
+  return { Results: results };
 }
 
-export function searchwithFilter(unit, host, StartDate, EndDate, userId = 'notPassed', token, callback, progressCallBack, viewmodel, statusTypes = [], jobType = [], onPage) {
-
-  if (typeof viewmodel === 'undefined') //if they dont specify a viewmodel to load, pull the big one down.
-  {
-    viewmodel = "6";
+/**
+ * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
+ * @returns {Promise<{Results: any[]}>}
+ */
+export async function searchwithFilter(unit, host, StartDate, EndDate, userId = 'notPassed', token, viewmodel, statusTypes = [], jobType = [], opts = {}) {
+  if (typeof viewmodel === 'undefined') {
+    viewmodel = '6';
   }
 
-  var url = "";
-  console.log("Client.job.searchwithFilter() called with:" + StartDate + "," + EndDate + ", " + host);
+  let statusString = '';
+  statusTypes.forEach((s) => {
+    statusString = statusString + '&JobStatusTypeIds=' + s;
+  });
+  let jobString = '';
+  jobType.forEach((j) => {
+    jobString = jobString + '&JobTypeIds=' + j;
+  });
 
-  var statusString = ""
-  statusTypes.forEach(function (s) {
-    statusString = statusString + "&JobStatusTypeIds=" + s
-  })
-  var jobString = ""
-  jobType.forEach(function (j) {
-    jobString = jobString + "&JobTypeIds=" + j
-  })
-
+  let url;
   if (unit !== null || typeof unit === 'undefined') {
-    if (Array.isArray(unit) == false) {
-      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + "&Hq=" + unit.Id + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
+    if (Array.isArray(unit) === false) {
+      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + '&Hq=' + unit.Id + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
     } else {
-      var hqString = "";
-      unit.forEach(function (d) {
-        hqString = hqString + "&Hq=" + d.Id
+      let hqString = '';
+      unit.forEach((d) => {
+        hqString = hqString + '&Hq=' + d.Id;
       });
-
-      url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + hqString + statusString + jobString + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
+      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + hqString + statusString + jobString + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
     }
   } else {
-    url = host + "/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString() + statusString + jobString + "&ViewModelType=" + viewmodel + "&SortField=Id&SortOrder=desc";
+    url = host + '/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + statusString + jobString + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
   }
 
-  var lastDisplayedVal = 0;
-  getJsonPaginated(
-    url, token, 0, 50,
-    function (count, total) {
-      if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
-        lastDisplayedVal = count;
-        progressCallBack(count, total);
-      }
-      if (count == -1 && total == -1) { //allow errors
-        progressCallBack(count, total);
-      }
+  const results = await requestPaginated(url, { token, pageSize: 50, ...opts });
+  return { Results: results };
+}
 
-    },
-    function (results) { //call for the JSON, rebuild the array and return it when done.
-      console.log("GetJSONfromBeacon call back with: ");
-      var obj = {
-        "Results": results
-      }
-      callback(obj);
-    }, function (pageResult) {
-      if (typeof onPage === 'function') {
-        onPage(pageResult);
-      }
-    }
+export function getHistory(id, host, userId = 'notPassed', token) {
+  return request(
+    host + '/Api/v1/Jobs/' + id + '/History/?LighthouseFunction=getHistory&userId=' + userId,
+    { token },
   );
-
 }
 
-export function getHistory(id, host, userId = 'notPassed', token, callback) {
-  $.ajax({
-    type: 'GET',
-    url: host + "/Api/v1/Jobs/" + id + "/History/?LighthouseFunction=getHistory&userId=" + userId,
-    beforeSend: function (n) {
-      n.setRequestHeader("Authorization", "Bearer " + token)
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(response.responseJSON);
-      }
-    }
+async function jobAction(url, token, body) {
+  try {
+    await request(url, { method: 'POST', token, json: body, responseType: 'none' });
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+export function cancel(jobId, text, host, userId = 'notPassed', token) {
+  return jobAction(host + `/Api/v1/Jobs/${jobId}/Cancel?LighthouseFunction=JobCancel&userId=` + userId, token, {
+    Text: text,
+    Date: new Date().toISOString(),
   });
 }
 
+export function reopen(jobId, host, userId = 'notPassed', token) {
+  return jobAction(host + `/Api/v1/Jobs/${jobId}/Reopen?LighthouseFunction=JobReopen&userId=` + userId, token);
+}
 
-
-export function cancel(jobId, text, host, userId = 'notPassed', token, callback) {
-  $.ajax({
-    type: 'POST',
-    url: host + `/Api/v1/Jobs/${jobId}/Cancel?LighthouseFunction=JobCancel&userId=` + userId,
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: JSON.stringify({
-      Text: text,
-      Date: new Date().toISOString()
-    }),
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(true);
-        } else {
-          callback(false);
-        }
-    },
+export function reject(jobId, text, host, userId = 'notPassed', token) {
+  return jobAction(host + `/Api/v1/Jobs/${jobId}/Reject?LighthouseFunction=JobReject&userId=` + userId, token, {
+    Text: text,
+    Date: new Date().toISOString(),
   });
 }
 
-export function reopen(jobId, host, userId = 'notPassed', token, callback) {
-  $.ajax({
-    type: 'POST',
-    url: host + `/Api/v1/Jobs/${jobId}/Reopen?LighthouseFunction=JobReopen&userId=` + userId,
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(true);
-        } else {
-          callback(false);
-        }
-    },
-  });
+export function acknowledge(jobId, host, userId = 'notPassed', token) {
+  return jobAction(host + `/Api/v1/Jobs/${jobId}/Acknowledge?LighthouseFunction=JobAcknowledge&userId=` + userId, token);
 }
 
-export function reject(jobId, text, host, userId = 'notPassed', token, callback) {
-  $.ajax({
-    type: 'POST',
-    url: host + `/Api/v1/Jobs/${jobId}/Reject?LighthouseFunction=JobReject&userId=` + userId,
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: JSON.stringify({
-      Text: text,
-      Date: new Date().toISOString()
-    }),
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(true);
-        } else {
-          callback(false);
-        }
-    },
-  });
-}
-
-export function acknowledge(jobId, host, userId = 'notPassed', token, callback) {
-  $.ajax({
-    type: 'POST',
-    url: host + `/Api/v1/Jobs/${jobId}/Acknowledge?LighthouseFunction=JobAcknowledge&userId=` + userId,
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(true);
-        } else {
-          callback(false);
-        }
-    },
-  });
-}
-
-export function complete(jobId, text, host, userId = 'notPassed', token, callback) {
-  $.ajax({
-    type: 'POST',
-    url: host + `/Api/v1/Jobs/${jobId}/Complete?LighthouseFunction=JobComplete&userId=` + userId,
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: `Text=${encodeURIComponent(text)}&Date=${encodeURIComponent(new Date().toISOString())}`,
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(true);
-        } else {
-          callback(false);
-        }
-    },
-  });
+export async function complete(jobId, text, host, userId = 'notPassed', token) {
+  try {
+    await request(host + `/Api/v1/Jobs/${jobId}/Complete?LighthouseFunction=JobComplete&userId=` + userId, {
+      method: 'POST',
+      token,
+      form: `Text=${encodeURIComponent(text)}&Date=${encodeURIComponent(new Date().toISOString())}`,
+      responseType: 'none',
+    });
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
