@@ -8,6 +8,7 @@ import { statusHasRing } from '../utils/jobTypesToUI.js';
 
 import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } from '../utils/popup_dom_utils.js';
 import { popupPadding } from '../utils/popupAutoPan.js';
+import { buildJobTooltipHtml } from '../components/job_tooltip.js';
 
 
 export function addOrUpdateJobMarker(ko, map, vm, job) {
@@ -64,7 +65,9 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     const marker = L.marker([lat, lng], {
         pane: 'pane-tippy-top',
         icon: makeShapeIcon(style),
-        title: job.identifier?.()
+        // No native `title` here -- it would show the browser's own plain-
+        // text hover tooltip on top of (or racing) the richer one bound in
+        // wireJobTooltip() below, and the identifier already appears there.
     }).bindPopup(popup);
 
     if (markers.has(id)) {
@@ -159,6 +162,7 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
 
     const popupVM = vm.mapVM.makeJobPopupVM(job);
     wireKoForPopup(ko, marker, job, vm, popupVM);
+    wireJobTooltip(marker, job);
 
     // live priority updates — restyle icon when priority changes
     marker._prioritySub = job.jobPriorityType.subscribe(() => {
@@ -451,6 +455,38 @@ function safeMove(marker, job) {
 }
 
 
+
+/**
+ * A light, non-interactive hover tooltip -- a quick "what is this" glance,
+ * separate from the click-to-open popup and its autoPan machinery
+ * entirely. Leaflet tooltips never auto-pan the map (there's no such
+ * option on them), so this can't reintroduce any of the pan/snap issues
+ * the popup had -- it only ever shows/hides in place.
+ *
+ * Content is rebuilt fresh on every hover (bindTooltip's function form),
+ * so it can't go stale between opens the way a KO-bound popup can.
+ */
+function wireJobTooltip(marker, job) {
+    marker.bindTooltip(() => buildJobTooltipHtml(job), {
+        direction: 'top',
+        offset: [0, -12],
+        opacity: 0.96,
+        className: 'job-tooltip',
+        // Same pane as the popup -- guarantees the tooltip always renders
+        // above every marker/overlay layer, never Leaflet's default
+        // tooltip pane, which sits below some of this map's own panes.
+        pane: 'pane-popup-top',
+    });
+
+    // Don't show the hover tooltip while the popup for the same marker is
+    // already open -- redundant, and it can visually overlap the popup.
+    // Checking on 'tooltipopen' (rather than just closing it once when the
+    // popup opens) also covers the mouse leaving and coming back while the
+    // popup is still open, which would otherwise reopen the tooltip.
+    marker.on('tooltipopen', () => {
+        if (marker.isPopupOpen()) marker.closeTooltip();
+    });
+}
 
 function wireKoForPopup(ko, marker, job, vm, popupVM) {
     if (marker._koWired) return;

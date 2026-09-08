@@ -560,6 +560,24 @@ body.dark-mode .leaflet-popup-tip {
   background-color: #2d2d2d;
 }
 
+body.dark-mode .leaflet-tooltip.job-tooltip {
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+/* Only the "top" arrow exists -- wireJobTooltip() always opens this
+   tooltip with direction: 'top'. */
+body.dark-mode .leaflet-tooltip.job-tooltip.leaflet-tooltip-top:before {
+  border-top-color: #2d2d2d;
+}
+body.dark-mode .job-tooltip__addr {
+  color: #cfcfcf;
+}
+body.dark-mode .job-tooltip__meta {
+  color: #9a9a9a;
+}
+
 body.dark-mode .leaflet-control {
   background-color: transparent !important;
   border-color: transparent !important;
