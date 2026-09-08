@@ -16,6 +16,18 @@ const EXTRA_MARGIN = 8;
 const MAX_PADDING_SHARE = 0.35;
 
 /**
+ * Shared, mutable autoPan padding, kept in sync with whatever's docked in
+ * the map's corners (see initPopupAutoPan below). Exported so other code
+ * that needs to reason about how much of the map is actually free -- e.g.
+ * jobMarker's popup-widen decision -- reads the same numbers autoPan
+ * itself uses, instead of a separate, disagreeing guess.
+ */
+export const popupPadding = {
+    topLeft: L.point(MIN_PADDING, MIN_PADDING),
+    bottomRight: L.point(MIN_PADDING, MIN_PADDING),
+};
+
+/**
  * Keeps popup auto-pan padding in sync with whatever Leaflet corner
  * controls are actually on screen -- the alerts banner stack (topright),
  * zoom/measure/search tools (topleft), the legend (bottomleft),
@@ -25,20 +37,19 @@ const MAX_PADDING_SHARE = 0.35;
  * bounds; it has no idea those controls are floating on top of the map,
  * so a popup can be "in bounds" and still open underneath them.
  *
- * This works by installing a pair of shared, mutable L.Point instances as
- * the *default* autoPan padding for every L.Popup (via Popup.mergeOptions)
- * and keeping them updated from the real, live-measured size of each
- * corner. Leaflet re-reads these point objects (by reference) every time
- * it pans a popup into view, so individual bindPopup()/L.popup() call
- * sites don't need to know about any of this -- they just need to not set
- * their own autoPanPaddingTopLeft/BottomRight (or autoPanPadding, which
- * takes precedence if present).
+ * This works by installing `popupPadding`'s two points as the *default*
+ * autoPan padding for every L.Popup (via Popup.mergeOptions) and keeping
+ * them updated from the real, live-measured size of each corner. Leaflet
+ * re-reads these point objects (by reference) every time it pans a popup
+ * into view, so individual bindPopup()/L.popup() call sites don't need to
+ * know about any of this -- they just need to not set their own
+ * autoPanPaddingTopLeft/BottomRight (or autoPanPadding, which takes
+ * precedence if present).
  *
  * Call once, right after the map is created.
  */
 export function initPopupAutoPan(map) {
-    const topLeft = L.point(MIN_PADDING, MIN_PADDING);
-    const bottomRight = L.point(MIN_PADDING, MIN_PADDING);
+    const { topLeft, bottomRight } = popupPadding;
 
     L.Popup.mergeOptions({
         autoPan: true,

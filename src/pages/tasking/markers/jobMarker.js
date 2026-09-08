@@ -7,6 +7,7 @@ import { statusHasRing } from '../utils/jobTypesToUI.js';
 
 
 import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } from '../utils/popup_dom_utils.js';
+import { popupPadding } from '../utils/popupAutoPan.js';
 
 
 export function addOrUpdateJobMarker(ko, map, vm, job) {
@@ -458,24 +459,39 @@ function wireKoForPopup(ko, marker, job, vm, popupVM) {
         popupVM.updatePopup?.();
         deferPopupUpdate(e.popup);
 
-        // Auto-widen: if the popup overflows the viewport, switch to 2-col
+        // Auto-widen: if the popup is too tall to fit, switch to 2-col.
+        // Decide single-col vs wide *before* panning the map for this
+        // open, and pan (via the single e.popup.update() at the end) only
+        // once that's settled -- toggling the class and calling
+        // popup.update() for both a "reset" measurement and again after
+        // widening each re-runs Leaflet's pan-to-fit, and two pan passes
+        // with two different container sizes can visibly fight each
+        // other (the map appears to pan to fit, then snap to a different,
+        // worse position a moment later). Measuring via scrollHeight
+        // (which reflects the class change immediately, no repaint/pan
+        // needed to read it) avoids that entirely.
         requestAnimationFrame(() => {
             const wrapper = e.popup.getElement();
             if (!wrapper) return;
             const jp = wrapper.querySelector('.job-popup');
             if (!jp) return;
-            // reset first so we measure single-col height
+
             jp.classList.remove('job-popup--wide');
+            const singleColHeight = jp.scrollHeight;
+
+            // Available height is the map's own visible height minus
+            // whatever's docked in its corners -- the same room autoPan
+            // itself has to work with (utils/popupAutoPan.js), not the
+            // raw browser window, which knows nothing about that chrome.
+            const mapRect = e.popup._map?.getContainer()?.getBoundingClientRect();
+            const available = mapRect
+                ? mapRect.height - popupPadding.topLeft.y - popupPadding.bottomRight.y
+                : window.innerHeight - 16;
+
+            if (singleColHeight > available) {
+                jp.classList.add('job-popup--wide');
+            }
             e.popup.update();
-            requestAnimationFrame(() => {
-                const rect = wrapper.getBoundingClientRect();
-                const overflows = rect.bottom > window.innerHeight - 8
-                               || rect.top < 8;
-                if (overflows) {
-                    jp.classList.add('job-popup--wide');
-                    e.popup.update();
-                }
-            });
         });
     });
     marker.on('popupclose', e => {
