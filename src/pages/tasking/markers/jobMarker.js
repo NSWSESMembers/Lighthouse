@@ -43,9 +43,20 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         // Capping height (Leaflet adds internal scrolling automatically)
         // keeps it always satisfiable.
         maxHeight: 480,
-        // autoPan / autoPanPadding come from Popup.mergeOptions in
+        // Leaflet auto-pans synchronously the instant a popup opens --
+        // before 'popupopen' below ever runs, so before this popup's
+        // pristine, KO-unbound content (an empty team table) is replaced
+        // with the real thing. That first pan is against a tiny
+        // placeholder, then a frame later the real, much taller content
+        // is bound and panned for again -- two visible camera moves for
+        // one click. Starting with autoPan off and switching it on right
+        // before the one deliberate update() call in 'popupopen' (once
+        // real content and the wide/narrow decision have settled) makes
+        // sure autoPan only ever runs once, against final content.
+        // autoPanPadding comes from Popup.mergeOptions in
         // utils/popupAutoPan.js, which keeps padding in sync with the
         // map's corner controls (alerts banners, zoom tools, legend, ...).
+        autoPan: false,
         pane: 'pane-popup-top'
     }).setContent(contentEl);
 
@@ -491,11 +502,22 @@ function wireKoForPopup(ko, marker, job, vm, popupVM) {
             if (singleColHeight > available) {
                 jp.classList.add('job-popup--wide');
             }
+            // Real content is bound and the final single/wide layout is
+            // decided -- turn autoPan on now (it starts off, see the
+            // popup's own options above) so this is the one and only pan
+            // for this open.
+            e.popup.options.autoPan = true;
             e.popup.update();
         });
     });
     marker.on('popupclose', e => {
         const el = e.popup.getContent();
+        // Turn autoPan back off for the next open -- it's switched on
+        // above once real content settles, and content gets reset back to
+        // its pristine (unbound) state on every open via bindKoToPopup, so
+        // leaving autoPan on here would let the premature pan-against-
+        // pristine-content bug happen again on the very next open.
+        e.popup.options.autoPan = false;
         // Defer unbinding to after the close animation completes. Tracked
         // on the marker so a fast reopen (see 'popupopen' above) can cancel
         // it -- otherwise this fires after the reopen and tears down a

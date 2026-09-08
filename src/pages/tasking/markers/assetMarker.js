@@ -84,9 +84,17 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
       minWidth: 360,
       maxWidth: 360,
       maxHeight: 360,
-      // autoPan / autoPanPadding come from Popup.mergeOptions in
+      // Leaflet auto-pans synchronously the instant the popup opens --
+      // before its KO-unbound (pristine, near-empty) content is replaced
+      // with the real thing in bindPopupWithKO's openHandler. Starting
+      // with autoPan off and switching it on there, once real content is
+      // bound, means autoPan only ever runs once per open, against real
+      // content, instead of once against a placeholder and again a
+      // moment later against the real (usually much bigger) popup.
+      // autoPanPadding comes from Popup.mergeOptions in
       // utils/popupAutoPan.js, which keeps padding in sync with the map's
       // corner controls (alerts banners, zoom tools, legend, ...).
+      autoPan: false,
       pane: 'pane-popup-top',
     }).setContent(contentEl);
 
@@ -167,9 +175,8 @@ export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
       minWidth: 360,
       maxWidth: 360,
       maxHeight: 360,
-      // autoPan / autoPanPadding come from Popup.mergeOptions in
-      // utils/popupAutoPan.js, which keeps padding in sync with the map's
-      // corner controls (alerts banners, zoom tools, legend, ...).
+      // See the matching comment on the matched-asset popup above.
+      autoPan: false,
       pane: 'pane-popup-top',
     }).setContent(contentEl);
 
@@ -233,12 +240,21 @@ function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
       asset.matchingTeamsInView()?.length !== 0 && asset.matchingTeamsInView()[0].onPopupOpen();
     }
     popupVm.updatePopup?.();
+
+    // Real content is bound now -- turn autoPan on (it starts off, see
+    // the popup's own options) so the resulting pan is against the real
+    // content instead of the pristine placeholder Leaflet would
+    // otherwise have already panned for the instant the popup opened.
+    e.popup.options.autoPan = true;
     deferPopupUpdate(e.popup);
   };
 
   // Unbind after popup is fully closed for visual cleanliness
   const closeHandler = (e) => {
     const el = e.popup?.getContent();
+    // Turn autoPan back off for the next open -- see the popup's own
+    // options above for why.
+    if (e.popup) e.popup.options.autoPan = false;
     // Don't clear routes/crow-flies if the popup was closed as a
     // side-effect of a flyToBounds animation (e.g. spider collapse
     // from a zoom change after drawing a route).
