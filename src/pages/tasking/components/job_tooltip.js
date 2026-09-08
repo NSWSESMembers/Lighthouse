@@ -18,12 +18,11 @@ function escapeHtml(s) {
 export function buildJobTooltipHtml(job) {
     const id = job.identifierTrimmed?.() || job.identifier?.() || '';
     const priority = job.priorityName?.() || '';
-    const type = job.typeName?.() || '';
     const status = job.statusName?.() || '';
     const addr = job.addressDisplayOrGPS?.() || '';
     const received = job.jobReceived?.() ? fmtRelative(new Date(job.jobReceived())) : '';
 
-    const titleBits = [id ? `#${id}` : null, priority || null, type || null].filter(Boolean).map(escapeHtml);
+    const titleBits = [id ? `#${id}` : null, priority || null].filter(Boolean).map(escapeHtml);
     const metaBits = [status || null, received || null].filter(Boolean).map(escapeHtml);
 
     return `
