@@ -7,6 +7,8 @@ import { statusHasRing } from '../utils/jobTypesToUI.js';
 
 
 import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } from '../utils/popup_dom_utils.js';
+import { popupPadding } from '../utils/popupAutoPan.js';
+import { buildJobTooltipHtml } from '../components/job_tooltip.js';
 
 
 export function addOrUpdateJobMarker(ko, map, vm, job) {
@@ -35,8 +37,27 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         minWidth: 380,
         maxWidth: 760,
         minHeight: 300,
-        autoPan: true,
-        autoPanPadding: [16, 16],
+        // A job with many assigned teams can make this popup grow tall
+        // enough that it no longer fits between the top/bottom autoPan
+        // padding -- Leaflet's own pan-to-fit math can't satisfy both
+        // edges at once in that case and visibly snaps between them.
+        // Capping height (Leaflet adds internal scrolling automatically)
+        // keeps it always satisfiable.
+        maxHeight: 480,
+        // Leaflet auto-pans synchronously the instant a popup opens --
+        // before 'popupopen' below ever runs, so before this popup's
+        // pristine, KO-unbound content (an empty team table) is replaced
+        // with the real thing. That first pan is against a tiny
+        // placeholder, then a frame later the real, much taller content
+        // is bound and panned for again -- two visible camera moves for
+        // one click. Starting with autoPan off and switching it on right
+        // before the one deliberate update() call in 'popupopen' (once
+        // real content and the wide/narrow decision have settled) makes
+        // sure autoPan only ever runs once, against final content.
+        // autoPanPadding comes from Popup.mergeOptions in
+        // utils/popupAutoPan.js, which keeps padding in sync with the
+        // map's corner controls (alerts banners, zoom tools, legend, ...).
+        autoPan: false,
         pane: 'pane-popup-top'
     }).setContent(contentEl);
 
@@ -44,7 +65,9 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
     const marker = L.marker([lat, lng], {
         pane: 'pane-tippy-top',
         icon: makeShapeIcon(style),
-        title: job.identifier?.()
+        // No native `title` here -- it would show the browser's own plain-
+        // text hover tooltip on top of (or racing) the richer one bound in
+        // wireJobTooltip() below, and the identifier already appears there.
     }).bindPopup(popup);
 
     if (markers.has(id)) {
@@ -139,6 +162,7 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
 
     const popupVM = vm.mapVM.makeJobPopupVM(job);
     wireKoForPopup(ko, marker, job, vm, popupVM);
+    wireJobTooltip(marker, job);
 
     // live priority updates — restyle icon when priority changes
     marker._prioritySub = job.jobPriorityType.subscribe(() => {
@@ -432,6 +456,38 @@ function safeMove(marker, job) {
 
 
 
+/**
+ * A light, non-interactive hover tooltip -- a quick "what is this" glance,
+ * separate from the click-to-open popup and its autoPan machinery
+ * entirely. Leaflet tooltips never auto-pan the map (there's no such
+ * option on them), so this can't reintroduce any of the pan/snap issues
+ * the popup had -- it only ever shows/hides in place.
+ *
+ * Content is rebuilt fresh on every hover (bindTooltip's function form),
+ * so it can't go stale between opens the way a KO-bound popup can.
+ */
+function wireJobTooltip(marker, job) {
+    marker.bindTooltip(() => buildJobTooltipHtml(job), {
+        direction: 'top',
+        offset: [0, -12],
+        opacity: 0.96,
+        className: 'job-tooltip',
+        // Same pane as the popup -- guarantees the tooltip always renders
+        // above every marker/overlay layer, never Leaflet's default
+        // tooltip pane, which sits below some of this map's own panes.
+        pane: 'pane-popup-top',
+    });
+
+    // Don't show the hover tooltip while the popup for the same marker is
+    // already open -- redundant, and it can visually overlap the popup.
+    // Checking on 'tooltipopen' (rather than just closing it once when the
+    // popup opens) also covers the mouse leaving and coming back while the
+    // popup is still open, which would otherwise reopen the tooltip.
+    marker.on('tooltipopen', () => {
+        if (marker.isPopupOpen()) marker.closeTooltip();
+    });
+}
+
 function wireKoForPopup(ko, marker, job, vm, popupVM) {
     if (marker._koWired) return;
     marker.on('popupopen', e => {
@@ -450,28 +506,54 @@ function wireKoForPopup(ko, marker, job, vm, popupVM) {
         popupVM.updatePopup?.();
         deferPopupUpdate(e.popup);
 
-        // Auto-widen: if the popup overflows the viewport, switch to 2-col
+        // Auto-widen: if the popup is too tall to fit, switch to 2-col.
+        // Decide single-col vs wide *before* panning the map for this
+        // open, and pan (via the single e.popup.update() at the end) only
+        // once that's settled -- toggling the class and calling
+        // popup.update() for both a "reset" measurement and again after
+        // widening each re-runs Leaflet's pan-to-fit, and two pan passes
+        // with two different container sizes can visibly fight each
+        // other (the map appears to pan to fit, then snap to a different,
+        // worse position a moment later). Measuring via scrollHeight
+        // (which reflects the class change immediately, no repaint/pan
+        // needed to read it) avoids that entirely.
         requestAnimationFrame(() => {
             const wrapper = e.popup.getElement();
             if (!wrapper) return;
             const jp = wrapper.querySelector('.job-popup');
             if (!jp) return;
-            // reset first so we measure single-col height
+
             jp.classList.remove('job-popup--wide');
+            const singleColHeight = jp.scrollHeight;
+
+            // Available height is the map's own visible height minus
+            // whatever's docked in its corners -- the same room autoPan
+            // itself has to work with (utils/popupAutoPan.js), not the
+            // raw browser window, which knows nothing about that chrome.
+            const mapRect = e.popup._map?.getContainer()?.getBoundingClientRect();
+            const available = mapRect
+                ? mapRect.height - popupPadding.topLeft.y - popupPadding.bottomRight.y
+                : window.innerHeight - 16;
+
+            if (singleColHeight > available) {
+                jp.classList.add('job-popup--wide');
+            }
+            // Real content is bound and the final single/wide layout is
+            // decided -- turn autoPan on now (it starts off, see the
+            // popup's own options above) so this is the one and only pan
+            // for this open.
+            e.popup.options.autoPan = true;
             e.popup.update();
-            requestAnimationFrame(() => {
-                const rect = wrapper.getBoundingClientRect();
-                const overflows = rect.bottom > window.innerHeight - 8
-                               || rect.top < 8;
-                if (overflows) {
-                    jp.classList.add('job-popup--wide');
-                    e.popup.update();
-                }
-            });
         });
     });
     marker.on('popupclose', e => {
         const el = e.popup.getContent();
+        // Turn autoPan back off for the next open -- it's switched on
+        // above once real content settles, and content gets reset back to
+        // its pristine (unbound) state on every open via bindKoToPopup, so
+        // leaving autoPan on here would let the premature pan-against-
+        // pristine-content bug happen again on the very next open.
+        e.popup.options.autoPan = false;
         // Defer unbinding to after the close animation completes. Tracked
         // on the marker so a fast reopen (see 'popupopen' above) can cancel
         // it -- otherwise this fires after the reopen and tears down a
