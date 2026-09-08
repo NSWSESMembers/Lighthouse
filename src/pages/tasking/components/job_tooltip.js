@@ -18,7 +18,10 @@ function escapeHtml(s) {
 export function buildJobTooltipHtml(job) {
     const id = job.identifierTrimmed?.() || job.identifier?.() || '';
     const priority = job.priorityName?.() || '';
-    const type = job.typeName?.() || '';
+    // Matches the "type + category" combo used elsewhere (e.g. the SMS
+    // prefill in main.js) -- categoriesNameNumberDash already carries its
+    // own leading dash (e.g. "-1", "-Orange"), so no separator is added.
+    const type = (job.typeShort?.() || '') + (job.categoriesNameNumberDash?.() || '');
     const status = job.statusName?.() || '';
     const addr = job.addressDisplayOrGPS?.() || '';
     const received = job.jobReceived?.() ? fmtRelative(new Date(job.jobReceived())) : '';
