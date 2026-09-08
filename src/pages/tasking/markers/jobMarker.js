@@ -35,8 +35,9 @@ export function addOrUpdateJobMarker(ko, map, vm, job) {
         minWidth: 380,
         maxWidth: 760,
         minHeight: 300,
-        autoPan: true,
-        autoPanPadding: [16, 16],
+        // autoPan / autoPanPadding come from Popup.mergeOptions in
+        // utils/popupAutoPan.js, which keeps padding in sync with the
+        // map's corner controls (alerts banners, zoom tools, legend, ...).
         pane: 'pane-popup-top'
     }).setContent(contentEl);
 

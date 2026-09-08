@@ -84,8 +84,9 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
       minWidth: 360,
       maxWidth: 360,
       maxHeight: 360,
-      autoPan: true,
-      autoPanPadding: [16, 16],
+      // autoPan / autoPanPadding come from Popup.mergeOptions in
+      // utils/popupAutoPan.js, which keeps padding in sync with the map's
+      // corner controls (alerts banners, zoom tools, legend, ...).
       pane: 'pane-popup-top',
     }).setContent(contentEl);
 
@@ -166,8 +167,9 @@ export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
       minWidth: 360,
       maxWidth: 360,
       maxHeight: 360,
-      autoPan: true,
-      autoPanPadding: [16, 16],
+      // autoPan / autoPanPadding come from Popup.mergeOptions in
+      // utils/popupAutoPan.js, which keeps padding in sync with the map's
+      // corner controls (alerts banners, zoom tools, legend, ...).
       pane: 'pane-popup-top',
     }).setContent(contentEl);
 

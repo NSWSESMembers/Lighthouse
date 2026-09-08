@@ -13,6 +13,7 @@ require('../lib/shared_chrome_code.js'); // side-effect
 import { showAlert } from './components/windowAlert.js';
 
 import { ResizeDividers } from './resize.js';
+import { initPopupAutoPan } from './utils/popupAutoPan.js';
 import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { attachUnmatchedAssetMarker, detachUnmatchedAssetMarker } from './markers/assetMarker.js';
@@ -264,6 +265,11 @@ const map = L.map('map', {
     // Faster debounce time while zooming
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
+
+// Keep popup auto-pan padding aware of whatever's actually docked in the
+// map's corners (alerts banners, zoom/measure tools, legend, ...) so
+// popups can't open underneath that floating chrome.
+initPopupAutoPan(map);
 
 
 installMapContextMenu({
