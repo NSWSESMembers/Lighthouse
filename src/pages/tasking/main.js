@@ -4076,11 +4076,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Refresh the sector list whenever a per-incident "Assigned Sector"
         // dropdown opens. Delegated on document so it covers every job card
-        // without a per-element binding; Bootstrap's show.bs.dropdown fires
-        // on the .dropdown container and bubbles here.
+        // without a per-element binding. Bootstrap 5 fires show.bs.dropdown
+        // on the toggle *button*, which bubbles to document — walk up to the
+        // enclosing .dropdown and check it's a sector one.
         document.addEventListener('show.bs.dropdown', function (e) {
-            const el = e.target;
-            if (el && el.querySelector && el.querySelector('.sectorDropdown')) {
+            const scope = e.target && e.target.closest && e.target.closest('.dropdown');
+            if (scope && scope.querySelector('.sectorDropdown')) {
                 myViewModel.refreshSectorsForDropdown();
             }
         });
