@@ -525,6 +525,7 @@
                                                                                             type="button"
                                                                                             data-bs-toggle="dropdown"
                                                                                             data-bs-auto-close="outside"
+                                                                                            data-bs-boundary="viewport"
                                                                                             data-bind="text: ts.currentStatus,
                                                                                                     css: ts.tagColorFromStatus(),
                                                                                                     flashOnChange: ts.currentStatus,
@@ -1627,6 +1628,7 @@
                                                                                             type="button"
                                                                                             data-bs-toggle="dropdown"
                                                                                             data-bs-auto-close="outside"
+                                                                                            data-bs-boundary="viewport"
                                                                                             data-bind="text: ts.currentStatus,
                                                                                                     css: ts.tagColorFromStatus(),
                                                                                                     flashOnChange: ts.currentStatus,
@@ -1656,7 +1658,7 @@
                                                                                             <!-- /ko -->
 
                                                                                             <!-- ko if: detailsPageVisible -->
-                                                                                            <div>
+                                                                                            <div class="tasking-status-details-form">
 
                                                                                                 <!-- Time override toggle (only shown if system allows time setting) -->
                                                                                                 <!-- ko if: ts.needsTimeSet -->
