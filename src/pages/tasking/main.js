@@ -1266,6 +1266,14 @@ function VM() {
         try {
             await BeaconClient.sectors.unSetSector(job, beaconCtx(t));
             showAlert('Incident removed from sector successfully.', 'success', 3000);
+            // The job GET payload omits Sector entirely when none is
+            // assigned, so Job.updateFromJson can't distinguish "cleared"
+            // from "unchanged" and the stale sector sticks. Clear it
+            // locally, then let fetchJobById reconcile everything else.
+            const jobModel = self.jobsById.get(job);
+            if (jobModel && jobModel.sector().id()) {
+                jobModel.sector(new Sector({}));
+            }
             self.fetchJobById(job, null);
         } catch (err) {
             console.error(err);
