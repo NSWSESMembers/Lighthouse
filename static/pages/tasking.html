@@ -1294,12 +1294,32 @@
                                                                                 <span class="caret"></span>
                                                                             </button>
                                                                             <ul class="dropdown-menu sectorDropdown">
+                                                                                <!-- ko if: j.sector().id() -->
+                                                                                <li>
+                                                                                    <button type="button"
+                                                                                        class="dropdown-item text-danger"
+                                                                                        data-bind="click: $root.sectorUnassignClick">
+                                                                                        Unassign sector
+                                                                                    </button>
+                                                                                </li>
+                                                                                <li><hr class="dropdown-divider"></li>
+                                                                                <!-- /ko -->
                                                                                 <!-- ko foreach: $root.sectors -->
                                                                                 <li>
                                                                                     <button type="button"
                                                                                         class="dropdown-item"
                                                                                         data-bind=" text: name, css: { active: id() == j.sector().id() }, click: $root.sectorSelectorClick">
                                                                                     </button>
+                                                                                </li>
+                                                                                <!-- /ko -->
+                                                                                <!-- ko if: $root.sectorsLoading() -->
+                                                                                <li>
+                                                                                    <span class="dropdown-item-text text-muted small">Loading sectors…</span>
+                                                                                </li>
+                                                                                <!-- /ko -->
+                                                                                <!-- ko if: !$root.sectorsLoading() && !$root.sectors().length -->
+                                                                                <li>
+                                                                                    <span class="dropdown-item-text text-muted small">No sectors available</span>
                                                                                 </li>
                                                                                 <!-- /ko -->
                                                                             </ul>

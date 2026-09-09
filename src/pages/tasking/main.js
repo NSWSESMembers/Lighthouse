@@ -1532,6 +1532,35 @@ function VM() {
 
     };
 
+    // Explicit "unassign" action from the per-incident sector dropdown.
+    // sectorSelectorClick can only toggle a sector off if that sector is
+    // still in the fetched list; when the assigned sector belongs to an HQ
+    // that isn't in the current filters it won't be, so this gives a way
+    // out regardless.
+    self.sectorUnassignClick = function (_data, event) {
+        var ctx = ko.contextFor(event.currentTarget || event.target);
+        var jobCtx = ctx;
+        while (jobCtx && !jobCtx.j) {
+            jobCtx = jobCtx.$parentContext;
+        }
+        if (!jobCtx || !jobCtx.j) return;
+
+        var jobId = jobCtx.j.id();
+        if (!jobCtx.j.sector().id()) return;   // nothing assigned
+
+        self.unSetSectorForJob(jobId);
+        console.log("Unassigning sector from job", jobId);
+    };
+
+    // Refresh the sector list each time an "Assigned Sector" dropdown is
+    // opened, so sectors created since page load (or since the last HQ
+    // filter change) show up without a full reload.
+    self.refreshSectorsForDropdown = function () {
+        const ids = self.config._sectorHqIds();
+        if (!ids || ids.length === 0) return;   // no HQs selected — nothing to search
+        self.fetchAllSectors(ids);
+    };
+
     self.attachJobTimelineModal = function (job) {
         const modalEl = document.getElementById('jobTimelineModal');
         const modal = new bootstrap.Modal(modalEl);
@@ -4036,6 +4065,17 @@ document.addEventListener('DOMContentLoaded', function () {
         })();
 
         ko.applyBindings(myViewModel);
+
+        // Refresh the sector list whenever a per-incident "Assigned Sector"
+        // dropdown opens. Delegated on document so it covers every job card
+        // without a per-element binding; Bootstrap's show.bs.dropdown fires
+        // on the .dropdown container and bubbles here.
+        document.addEventListener('show.bs.dropdown', function (e) {
+            const el = e.target;
+            if (el && el.querySelector && el.querySelector('.sectorDropdown')) {
+                myViewModel.refreshSectorsForDropdown();
+            }
+        });
 
         // Alerts overlay
         installAlerts(map, myViewModel);
