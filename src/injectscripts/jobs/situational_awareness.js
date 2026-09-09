@@ -136,7 +136,7 @@ window.addEventListener("message", function(event) {
 
 
 
-          BeaconClient.asset.filter([],urls.Base, user.Id, user.accessToken).then(function(res) {
+          BeaconClient.asset.filter([], { host: urls.Base, userId: user.Id, token: user.accessToken }).then(function(res) {
     let sorted = res.map(function(i) {
       return i.name
     })

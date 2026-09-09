@@ -859,7 +859,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
     );
     mapMarkers.push(jobMarker.addTo(assetMap));
 
-    BeaconClient.asset.filter([], urls.Base, user.Id, user.accessToken).then(function (response) {
+    BeaconClient.asset.filter([], { host: urls.Base, userId: user.Id, token: user.accessToken }).then(function (response) {
       if (response.length) {
         var assetDistances = [];
         var furthestDistance; //need a way to know the furthest marker
@@ -1580,7 +1580,7 @@ function assetLocationButtonFiltered(bypassUI) {
 
     $('#asset-map-filter-loading').css('visibility', 'unset');
 
-    BeaconClient.asset.filter([], urls.Base, user.Id, user.accessToken).then(function (res) {
+    BeaconClient.asset.filter([], { host: urls.Base, userId: user.Id, token: user.accessToken }).then(function (res) {
       if (res.length) {
         let sorted = [];
 

@@ -494,7 +494,7 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             return;
         }
 
-        BeaconClient.team.getTeamGeoJson(this._hqs, this._base, this._startDate, this._endDate, 'ContentScriptMapManager', this._token)
+        BeaconClient.team.getTeamGeoJson(this._hqs, this._startDate, this._endDate, { host: this._base, userId: 'ContentScriptMapManager', token: this._token })
             .then((result) => {
                 ContentScriptMapManager._passLayerDataToInject('ses-teams', result);
             })
@@ -515,7 +515,7 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
                 window.postMessage({type: 'LH_ASSETFILTERMODALCALL'}, '*');
             } else {
                 let loadIn = JSON.parse(localStorage.getItem('LighthouseJobViewAssetFilter')) || []
-                BeaconClient.asset.filter(loadIn, this._base, 'ContentScriptMapManager', this._token)
+                BeaconClient.asset.filter(loadIn, { host: this._base, userId: 'ContentScriptMapManager', token: this._token })
                     .then((result) => {
                         ContentScriptMapManager._passLayerDataToInject('ses-assets-filtered', result);
                     })

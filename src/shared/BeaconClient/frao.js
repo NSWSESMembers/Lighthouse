@@ -3,18 +3,22 @@ import { requestPaginated } from './core/request.js';
 /**
  * Flood Rescue Area Operations search.
  *
- * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
- * @returns {Promise<{Results: any[]}>}
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          onProgress?: Function, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
  */
-export async function search(StartDate, EndDate, host, userId = 'notPassed', token, opts = {}) {
+export function search(startDate, endDate, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
+
   const params = new URLSearchParams({
-    StatusStartDate: StartDate.toISOString(),
-    StatusEndDate: EndDate.toISOString(),
+    StatusStartDate: startDate.toISOString(),
+    StatusEndDate: endDate.toISOString(),
     SortField: 'FRAONumber',
     SortOrder: 'desc',
   });
 
   const url = host + '/Api/v1/FloodRescueAreaOperations/Search?LighthouseFunction=GetJSONFRAO&userId=' + userId + '&' + params.toString();
-  const results = await requestPaginated(url, { token, pageSize: 50, ...opts });
-  return { Results: results };
+  return requestPaginated(url, { token, signal, pageSize: 50, onProgress, onPage });
 }

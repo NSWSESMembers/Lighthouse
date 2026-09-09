@@ -39,6 +39,22 @@ export function toFormUrlEncoded(obj) {
 }
 
 /**
+ * Normalise a Beacon collection payload (`{ Results, TotalItems }`) to the
+ * `{ results, totalItems }` shape every BeaconClient search returns. Tolerates
+ * a bare array or a null/empty body.
+ *
+ * @param {any} payload
+ * @returns {{results: any[], totalItems: number}}
+ */
+export function toCollection(payload) {
+  if (Array.isArray(payload)) {
+    return { results: payload, totalItems: payload.length };
+  }
+  const results = (payload && payload.Results) || [];
+  return { results, totalItems: (payload && payload.TotalItems) || results.length };
+}
+
+/**
  * Make a single request to the Beacon API.
  *
  * @param {string} url  fully-qualified request URL
@@ -122,36 +138,36 @@ export async function request(url, opts = {}) {
  * @param {number} [opts.pageLimit=0]  stop after this many pages (0 = until exhausted)
  * @param {number} [opts.pageSize=100]  rows requested per page
  * @param {(collected: number, total: number) => void} [opts.onProgress]
- * @param {(page: any) => void} [opts.onPage]  raw page payload as each arrives
+ * @param {(page: {results: any[], totalItems: number}) => void} [opts.onPage]  each page as it arrives
  * @param {AbortSignal} [opts.signal]
- * @returns {Promise<any[]>}  flattened `Results` across all pages
+ * @returns {Promise<{results: any[], totalItems: number}>}  all rows across every page
  */
 export async function requestPaginated(url, opts = {}) {
   const { token, pageLimit = 0, pageSize = 100, onProgress, onPage, signal } = opts;
   const separator = url.includes('?') ? '&' : '?';
-  const collected = [];
+  const results = [];
+  let totalItems = 0;
   let page = 1;
 
   for (;;) {
     const pageResult = await request(`${url}${separator}PageIndex=${page}&PageSize=${pageSize}`, { token, signal });
 
-    if (typeof onPage === 'function') {
-      onPage(pageResult);
-    }
-
     const rows = (pageResult && pageResult.Results) || [];
-    const total = (pageResult && pageResult.TotalItems) || 0;
-    collected.push(...rows);
+    totalItems = (pageResult && pageResult.TotalItems) || 0;
+    results.push(...rows);
 
+    if (typeof onPage === 'function') {
+      onPage({ results: rows, totalItems });
+    }
     if (typeof onProgress === 'function') {
-      onProgress(collected.length, total);
+      onProgress(results.length, totalItems);
     }
 
     if (rows.length === 0) break;
     if (pageLimit && page >= pageLimit) break;
-    if (collected.length >= total) break;
+    if (results.length >= totalItems) break;
     page++;
   }
 
-  return collected;
+  return { results, totalItems };
 }

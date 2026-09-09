@@ -6,7 +6,7 @@ import L from "leaflet";
 async function fetchUnitBoundariesAsync(units, apiHost, userId, token) {
   const results = await Promise.all(
     units.map(async (unit) => {
-      const response = await BeaconClient.geoservices.unitBoundary(unit.id, apiHost, userId, token);
+      const response = await BeaconClient.geoservices.unitBoundary(unit.id, { host: apiHost, userId, token });
       return { data: response && response[0], unit };
     })
   );

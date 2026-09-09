@@ -1,16 +1,32 @@
 import { request } from './core/request.js';
 
-export function getIncidentImages(id, host, userId = 'notPassed', token) {
+/**
+ * Thumbnail metadata for an incident's images.
+ *
+ * @param {string|number} incidentId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<object[]|null>}
+ */
+export function getIncidentImages(incidentId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
   return request(
-    host + '/Api/v1/Image/IncidentThumbnails/' + id + '?LighthouseFunction=getIncidentThumbnails&userId=' + userId,
-    { token },
+    host + '/Api/v1/Image/IncidentThumbnails/' + incidentId + '?LighthouseFunction=getIncidentThumbnails&userId=' + userId,
+    { token, signal },
   );
 }
 
-// Returns raw image data as a Blob.
-export function getImageData(jobId, imageId, host, userId = 'notPassed', token) {
+/**
+ * Raw image bytes.
+ *
+ * @param {string|number} jobId
+ * @param {string|number} imageId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<Blob>}
+ */
+export function getImageData(jobId, imageId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
   return request(
     host + '/Api/v1/Image/IncidentImage/' + jobId + '/' + imageId + '/?LighthouseFunction=getImageData&userId=' + userId,
-    { token, responseType: 'blob' },
+    { token, signal, responseType: 'blob' },
   );
 }

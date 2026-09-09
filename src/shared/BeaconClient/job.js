@@ -1,167 +1,185 @@
 import { request, requestPaginated } from './core/request.js';
 
 /**
+ * Job search over a date range.
+ *
  * @param {object|Array|null} unit  a single entity ({Id}), an array of entities, or null for "all"
- * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
- * @returns {Promise<{Results: any[]}>}
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          onProgress?: Function, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
  */
-export async function search(unit, host, StartDate, EndDate, userId = 'notPassed', token, opts = {}) {
-  const viewmodel = '6';
+export function search(unit, startDate, endDate, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
+  const viewModel = '6';
   let url;
 
   if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) === false) {
-      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + '&Hq=' + unit.Id + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
+      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&StartDate=' + startDate.toISOString() + '&EndDate=' + endDate.toISOString() + '&Hq=' + unit.Id + '&ViewModelType=' + viewModel + '&SortField=Id&SortOrder=desc';
     } else {
       let hqString = '';
       unit.forEach((d) => {
         hqString = hqString + '&Hq=' + d.Id;
       });
-      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + hqString + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
+      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&StartDate=' + startDate.toISOString() + '&EndDate=' + endDate.toISOString() + hqString + '&ViewModelType=' + viewModel + '&SortField=Id&SortOrder=desc';
     }
   } else {
-    url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
+    url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&StartDate=' + startDate.toISOString() + '&EndDate=' + endDate.toISOString() + '&ViewModelType=' + viewModel + '&SortField=Id&SortOrder=desc';
   }
 
-  const results = await requestPaginated(url, { token, pageSize: 100, ...opts });
-  return { Results: results };
+  return requestPaginated(url, { token, signal, pageSize: 100, onProgress, onPage });
 }
 
 /**
- * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
- * @returns {Promise<{Results: any[]}>}
+ * Job search from a raw pre-built query string.
+ *
+ * @param {string} rawQuery  everything after `Search?LighthouseFunction=...&userId=...&`
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          onProgress?: Function, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
  */
-export async function searchRaw(rawURL, host, userId = 'notPassed', token, opts = {}) {
-  const url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&' + rawURL;
-  const results = await requestPaginated(url, { token, pageSize: 50, ...opts });
-  return { Results: results };
+export function searchRaw(rawQuery, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
+  const url = host + '/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&' + rawQuery;
+  return requestPaginated(url, { token, signal, pageSize: 50, onProgress, onPage });
 }
 
-export function summary(unit, host, StartDate, EndDate, userId = 'notPassed', token) {
+/**
+ * Jobs summary report.
+ *
+ * @param {object|Array|null} unit
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<object>}
+ */
+export function summary(unit, startDate, endDate, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
   let url;
   if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) === false) {
-      url = host + '/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + '&EntityIds=' + unit.Id;
+      url = host + '/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=' + userId + '&StartDate=' + startDate.toISOString() + '&EndDate=' + endDate.toISOString() + '&EntityIds=' + unit.Id;
     } else {
       let hqString = '';
       unit.forEach((d) => {
         hqString = hqString + '&EntityIds=' + d.Id;
       });
-      url = host + '/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + hqString;
+      url = host + '/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=' + userId + '&StartDate=' + startDate.toISOString() + '&EndDate=' + endDate.toISOString() + hqString;
     }
   } else {
-    url = host + '/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString();
+    url = host + '/Api/v1/Reports/JobsSummary?LighthouseFunction=GetSummaryJSONfromBeacon&userId=' + userId + '&StartDate=' + startDate.toISOString() + '&EndDate=' + endDate.toISOString();
   }
-
-  return request(url, { token });
+  return request(url, { token, signal });
 }
 
-export function get(id, viewModelType = 1, host, userId = 'notPassed', token) {
+/**
+ * A single job.
+ *
+ * @param {string|number} id
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal, viewModelType?: number}} ctx
+ * @returns {Promise<object|null>}
+ */
+export function get(id, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, viewModelType = 1 } = ctx;
   return request(
     host + '/Api/v1/Jobs/' + id + '?LighthouseFunction=GetJobfromBeacon&userId=' + userId + '&viewModelType=' + viewModelType,
-    { token },
+    { token, signal },
   );
 }
 
 /**
- * @param {string|number|Array} ids  a single job id or an array of job ids
- * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
- * @returns {Promise<{Results: any[]}>}
+ * Tasking for one job id or a batch of them.
+ *
+ * @param {string|number|Array} ids
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          onProgress?: Function, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
  */
-export async function getTasking(ids, host, userId = 'notPassed', token, opts = {}) {
+export function getTasking(ids, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
   const idArr = Array.isArray(ids) ? ids : [ids];
   const fnName = Array.isArray(ids) ? 'GetBulkJobTaskingFromBeacon' : 'GetJobTaskingFromBeacon';
   const jobIdsParam = idArr.map((jid) => 'JobIds%5B%5D=' + encodeURIComponent(jid)).join('&');
   const url = host + '/Api/v1/Tasking/Search?LighthouseFunction=' + fnName + '&userId=' + userId + '&' + jobIdsParam;
-  const results = await requestPaginated(url, { token, pageSize: 100, ...opts });
-  return { Results: results };
+  return requestPaginated(url, { token, signal, pageSize: 100, onProgress, onPage });
 }
 
 /**
- * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
- * @returns {Promise<{Results: any[]}>}
+ * Job status history.
+ *
+ * @param {string|number} id
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<object[]|null>}
  */
-export async function searchwithFilter(unit, host, StartDate, EndDate, userId = 'notPassed', token, viewmodel, statusTypes = [], jobType = [], opts = {}) {
-  if (typeof viewmodel === 'undefined') {
-    viewmodel = '6';
-  }
-
-  let statusString = '';
-  statusTypes.forEach((s) => {
-    statusString = statusString + '&JobStatusTypeIds=' + s;
-  });
-  let jobString = '';
-  jobType.forEach((j) => {
-    jobString = jobString + '&JobTypeIds=' + j;
-  });
-
-  let url;
-  if (unit !== null || typeof unit === 'undefined') {
-    if (Array.isArray(unit) === false) {
-      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + '&Hq=' + unit.Id + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
-    } else {
-      let hqString = '';
-      unit.forEach((d) => {
-        hqString = hqString + '&Hq=' + d.Id;
-      });
-      url = host + '/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + hqString + statusString + jobString + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
-    }
-  } else {
-    url = host + '/Api/v1/Jobs/Search?LighthouseFunction=searchwithFilter&userId=' + userId + '&StartDate=' + StartDate.toISOString() + '&EndDate=' + EndDate.toISOString() + statusString + jobString + '&ViewModelType=' + viewmodel + '&SortField=Id&SortOrder=desc';
-  }
-
-  const results = await requestPaginated(url, { token, pageSize: 50, ...opts });
-  return { Results: results };
+export function getHistory(id, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return request(host + '/Api/v1/Jobs/' + id + '/History/?LighthouseFunction=getHistory&userId=' + userId, { token, signal });
 }
 
-export function getHistory(id, host, userId = 'notPassed', token) {
-  return request(
-    host + '/Api/v1/Jobs/' + id + '/History/?LighthouseFunction=getHistory&userId=' + userId,
-    { token },
-  );
+function jobAction(url, ctx, body) {
+  const { token, signal } = ctx;
+  return request(url, { method: 'POST', token, signal, json: body, responseType: 'none' });
 }
 
-async function jobAction(url, token, body) {
-  try {
-    await request(url, { method: 'POST', token, json: body, responseType: 'none' });
-    return true;
-  } catch (_) {
-    return false;
-  }
-}
-
-export function cancel(jobId, text, host, userId = 'notPassed', token) {
-  return jobAction(host + `/Api/v1/Jobs/${jobId}/Cancel?LighthouseFunction=JobCancel&userId=` + userId, token, {
+/**
+ * @param {string|number} jobId
+ * @param {string} text
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<void>}  resolves on success, rejects on failure
+ */
+export function cancel(jobId, text, ctx = {}) {
+  return jobAction(ctx.host + `/Api/v1/Jobs/${jobId}/Cancel?LighthouseFunction=JobCancel&userId=` + (ctx.userId ?? 'notPassed'), ctx, {
     Text: text,
     Date: new Date().toISOString(),
   });
 }
 
-export function reopen(jobId, host, userId = 'notPassed', token) {
-  return jobAction(host + `/Api/v1/Jobs/${jobId}/Reopen?LighthouseFunction=JobReopen&userId=` + userId, token);
+/**
+ * @param {string|number} jobId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<void>}
+ */
+export function reopen(jobId, ctx = {}) {
+  return jobAction(ctx.host + `/Api/v1/Jobs/${jobId}/Reopen?LighthouseFunction=JobReopen&userId=` + (ctx.userId ?? 'notPassed'), ctx);
 }
 
-export function reject(jobId, text, host, userId = 'notPassed', token) {
-  return jobAction(host + `/Api/v1/Jobs/${jobId}/Reject?LighthouseFunction=JobReject&userId=` + userId, token, {
+/**
+ * @param {string|number} jobId
+ * @param {string} text
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<void>}
+ */
+export function reject(jobId, text, ctx = {}) {
+  return jobAction(ctx.host + `/Api/v1/Jobs/${jobId}/Reject?LighthouseFunction=JobReject&userId=` + (ctx.userId ?? 'notPassed'), ctx, {
     Text: text,
     Date: new Date().toISOString(),
   });
 }
 
-export function acknowledge(jobId, host, userId = 'notPassed', token) {
-  return jobAction(host + `/Api/v1/Jobs/${jobId}/Acknowledge?LighthouseFunction=JobAcknowledge&userId=` + userId, token);
+/**
+ * @param {string|number} jobId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<void>}
+ */
+export function acknowledge(jobId, ctx = {}) {
+  return jobAction(ctx.host + `/Api/v1/Jobs/${jobId}/Acknowledge?LighthouseFunction=JobAcknowledge&userId=` + (ctx.userId ?? 'notPassed'), ctx);
 }
 
-export async function complete(jobId, text, host, userId = 'notPassed', token) {
-  try {
-    await request(host + `/Api/v1/Jobs/${jobId}/Complete?LighthouseFunction=JobComplete&userId=` + userId, {
-      method: 'POST',
-      token,
-      form: `Text=${encodeURIComponent(text)}&Date=${encodeURIComponent(new Date().toISOString())}`,
-      responseType: 'none',
-    });
-    return true;
-  } catch (_) {
-    return false;
-  }
+/**
+ * @param {string|number} jobId
+ * @param {string} text
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<void>}
+ */
+export function complete(jobId, text, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return request(host + `/Api/v1/Jobs/${jobId}/Complete?LighthouseFunction=JobComplete&userId=` + userId, {
+    method: 'POST',
+    token,
+    signal,
+    form: `Text=${encodeURIComponent(text)}&Date=${encodeURIComponent(new Date().toISOString())}`,
+    responseType: 'none',
+  });
 }

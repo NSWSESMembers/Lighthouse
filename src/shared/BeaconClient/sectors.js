@@ -1,11 +1,16 @@
-import { request, requestPaginated } from './core/request.js';
+import { requestPaginated, request } from './core/request.js';
 
 /**
+ * Active sectors for the given HQ(s).
+ *
  * @param {object|Array|null} unit  a single entity ({Id}), an array of entity ids, or null for "all"
- * @param {object} [opts]  { onProgress, onPage, signal } forwarded to requestPaginated
- * @returns {Promise<{Results: any[]}>}
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          onProgress?: Function, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
  */
-export async function search(unit, host, userId = 'notPassed', token, opts = {}) {
+export async function search(unit, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
+
   let url;
   if (unit !== null || typeof unit === 'undefined') {
     if (Array.isArray(unit) === false) {
@@ -21,22 +26,36 @@ export async function search(unit, host, userId = 'notPassed', token, opts = {})
     url = host + '/Api/v1/Sectors/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&Statusids=1&SortField=Id&SortOrder=desc';
   }
 
-  const results = await requestPaginated(url, { token, pageSize: 300, ...opts });
-  return { Results: results };
+  return requestPaginated(url, { token, signal, pageSize: 300, onProgress, onPage });
 }
 
-export function setSector(jobId, sectorId, host, userId, token) {
+/**
+ * @param {string|number} jobId
+ * @param {string|number} sectorId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}
+ */
+export function setSector(jobId, sectorId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
   return request(host + '/Api/v1/Sectors/' + sectorId + '/Jobs?LighthouseFunction=SetSectorForJob', {
     method: 'PUT',
     token,
+    signal,
     json: { IdsToAdd: [jobId], userId },
   });
 }
 
-export function unSetSector(jobId, host, userId, token) {
+/**
+ * @param {string|number} jobId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}
+ */
+export function unSetSector(jobId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
   return request(host + '/Api/v1/Sectors/RemoveJobFromSector/' + jobId + '?LighthouseFunction=unSetSectorForJob', {
     method: 'PUT',
     token,
+    signal,
     json: { userId },
   });
 }

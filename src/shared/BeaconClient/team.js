@@ -1,47 +1,67 @@
 import $ from 'jquery';
 import { request, requestPaginated } from './core/request.js';
 
-// Single-page result only.
-export async function getTasking(id, host, userId = 'notPassed', token) {
-  const results = await requestPaginated(
-    host + '/Api/v1/Tasking/Search?LighthouseFunction=GetTaskingfromBeacon&ViewModelType=1&userId=' + userId + '&TeamIds=' + id,
-    { token, pageSize: 100 },
-  );
-  return { Results: results };
-}
-
-// Single-page result only.
-export async function getHistory(id, host, userId = 'notPassed', token) {
-  const results = await requestPaginated(
-    host + '/Api/v1/Teams/' + id + '/History?LighthouseFunction=GetHistoryfromBeacon&userId=' + userId,
-    { token, pageLimit: 1, pageSize: 20 },
-  );
-  return { Results: results };
-}
-
-export function get(id, viewModelType = 1, host, userId = 'notPassed', token) {
-  return request(
-    host + '/Api/v1/Teams/' + id + '?LighthouseFunction=GetTeamfromBeacon&userId=' + userId + '&viewModelType=' + viewModelType,
-    { token },
+/**
+ * Tasking for a team. Single-page result only.
+ *
+ * @param {string|number} teamId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export function getTasking(teamId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return requestPaginated(
+    host + '/Api/v1/Tasking/Search?LighthouseFunction=GetTaskingfromBeacon&ViewModelType=1&userId=' + userId + '&TeamIds=' + teamId,
+    { token, signal, pageSize: 100 },
   );
 }
 
 /**
- * @param {object|Array|null} unit  a single entity ({Id}), an array of entities, or null for "all"
- * @param {object} [opts]
- * @param {number[]} [opts.statusTypes=[]]  StatusTypeId filter
- * @param {number[]} [opts.typeIds=[]]  team TypeIds filter (Field / Operations / Aviation)
- * @param {(collected: number, total: number) => void} [opts.onProgress]
- * @param {(page: any) => void} [opts.onPage]
- * @param {AbortSignal} [opts.signal]
- * @returns {Promise<{Results: any[]}>}
+ * Team history. Single-page result only (first 20).
+ *
+ * @param {string|number} teamId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
  */
-export async function teamSearch(unit, host, StartDate, EndDate, userId = 'notPassed', token, opts = {}) {
-  const { statusTypes = [], typeIds = [], onProgress, onPage, signal } = opts;
+export function getHistory(teamId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return requestPaginated(
+    host + '/Api/v1/Teams/' + teamId + '/History?LighthouseFunction=GetHistoryfromBeacon&userId=' + userId,
+    { token, signal, pageLimit: 1, pageSize: 20 },
+  );
+}
+
+/**
+ * A single team.
+ *
+ * @param {string|number} id
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal, viewModelType?: number}} ctx
+ * @returns {Promise<object|null>}
+ */
+export function get(id, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, viewModelType = 1 } = ctx;
+  return request(
+    host + '/Api/v1/Teams/' + id + '?LighthouseFunction=GetTeamfromBeacon&userId=' + userId + '&viewModelType=' + viewModelType,
+    { token, signal },
+  );
+}
+
+/**
+ * Team search over a status date range.
+ *
+ * @param {object|Array|null} unit  a single entity ({Id}), an array of entities, or null for "all"
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          statusTypes?: number[], typeIds?: number[], onProgress?: Function, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export function search(unit, startDate, endDate, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, statusTypes = [], typeIds = [], onProgress, onPage } = ctx;
 
   const params = {};
-  params['StatusStartDate'] = StartDate.toISOString();
-  params['StatusEndDate'] = EndDate.toISOString();
+  params['StatusStartDate'] = startDate.toISOString();
+  params['StatusEndDate'] = endDate.toISOString();
   params['SortField'] = 'callsign';
   params['SortOrder'] = 'asc';
   params['StatusTypeId'] = statusTypes;
@@ -70,33 +90,36 @@ export async function teamSearch(unit, host, StartDate, EndDate, userId = 'notPa
   }
 
   const url = host + '/Api/v1/Teams/Search?LighthouseFunction=GetJSONTeamsfromBeacon&userId=' + userId + '&' + $.param(params, true);
-  const results = await requestPaginated(url, { token, pageSize: 50, onProgress, onPage, signal });
-  return { Results: results };
+  return requestPaginated(url, { token, signal, pageSize: 50, onProgress, onPage });
 }
 
 /**
  * Team positions as GeoJson, derived from each team's most recent tasking update.
  *
- * @returns {Promise<{type: 'FeatureCollection', features: any[]}>}
+ * @param {Array} hqs
+ * @param {Date|null} startDate  tasking-range filter (null = "current", hides finalised)
+ * @param {Date|null} endDate
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<{type: 'FeatureCollection', features: object[]}>}
  */
-export async function getTeamGeoJson(hqs, host, startDate, endDate, userId = 'notPassed', token) {
+export async function getTeamGeoJson(hqs, startDate, endDate, ctx = {}) {
   const teamStartRange = new Date();
   teamStartRange.setFullYear(teamStartRange.getFullYear() - 1);
   const teamEndRange = new Date();
-  const statusTypes = [3]; // Only activated teams
 
-  const teams = await teamSearch(hqs, host, teamStartRange, teamEndRange, userId, token, {
-    statusTypes,
-    onProgress: (collected, total) => console.log('teamSearch progress', collected, total),
+  const teams = await search(hqs, teamStartRange, teamEndRange, {
+    ...ctx,
+    statusTypes: [3], // Only activated teams
+    onProgress: (collected, total) => console.log('team.search progress', collected, total),
   });
 
   const features = await Promise.all(
-    teams.Results.map(async (team) => {
-      const teamTasking = await getTasking(team.Id, host, userId, token);
+    teams.results.map(async (team) => {
+      const teamTasking = await getTasking(team.Id, ctx);
       let latestTasking = null;
       let latestTime = null;
 
-      teamTasking.Results.forEach((task) => {
+      teamTasking.results.forEach((task) => {
         const rawStatusTime = new Date(task.CurrentStatusTime);
         const taskTime = new Date(rawStatusTime.getTime());
 

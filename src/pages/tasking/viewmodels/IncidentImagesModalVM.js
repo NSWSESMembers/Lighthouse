@@ -107,7 +107,7 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
 
     async function getIncidentImages(jobId, token) {
         try {
-            const list = await BeaconClient.images.getIncidentImages(jobId, apiHost, userId, token);
+            const list = await BeaconClient.images.getIncidentImages(jobId, { host: apiHost, userId, token });
             return list || [];
         } catch (_e) {
             return null;
@@ -115,7 +115,7 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
     }
 
     async function getImageData(name, token) {
-        const data = await BeaconClient.images.getImageData(vm.job().id(), name, apiHost, userId, token);
+        const data = await BeaconClient.images.getImageData(vm.job().id(), name, { host: apiHost, userId, token });
         if (data == null) {
             throw new Error("No data returned");
         }

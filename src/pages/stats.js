@@ -188,7 +188,7 @@ function RunForestRun(mp) {
 
           if (params.hq.split(",").length == 1) { //if only one HQ
 
-            BeaconClient.unit.getName(params.hq, apiHost, params.userId, token)
+            BeaconClient.unit.getName(params.hq, { host: apiHost, userId: params.userId, token })
               .then(function(result) {
                 unit = result;
                 fetchFromBeacon(unit, apiHost, params.userId, token, fetchComplete, mp, firstrun);
@@ -200,7 +200,7 @@ function RunForestRun(mp) {
             console.log("passed array of units");
             var hqsGiven = params.hq.split(",");
             hqsGiven.forEach(function(d) {
-              BeaconClient.unit.getName(d, apiHost, params.userId, token)
+              BeaconClient.unit.getName(d, { host: apiHost, userId: params.userId, token })
                 .then(function(result) {
                   mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
                   unit.push(result);
@@ -233,7 +233,8 @@ function fetchFromBeacon(unit, host, userId, token, cb, progressBar, firstrun) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  BeaconClient.job.search(unit, host, start, end, userId, token, {
+  BeaconClient.job.search(unit, start, end, {
+    host, userId, token,
     onProgress: function(val, total) {
       if (progressBar) { //if its a first load
         progressBar.setValue(0.1 + ((val / total) - 0.1)) //start at 10%, dont top 100%
@@ -351,7 +352,7 @@ function prepareCharts(jobs, start, end, firstRun) {
 
   if (firstRun) //if its the first run expect everything to not exist, and draw it all
   {
-    facts = crossfilter(jobs.Results)
+    facts = crossfilter(jobs.results)
 
     var all = facts.groupAll();
 
@@ -850,7 +851,7 @@ function prepareCharts(jobs, start, end, firstRun) {
     sectorChart.filters([sectorChartFilters])
 
     //add the data back in
-    facts.add(jobs.Results)
+    facts.add(jobs.results)
   };
 
 }

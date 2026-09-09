@@ -578,7 +578,7 @@ export function Team(data = {}, deps = {}) {
         self.taskingLoading(true);
         getTeamTasking(self.id.peek())
             .then(tasking => {
-                (tasking?.Results || []).forEach(t =>
+                (tasking?.results || []).forEach(t =>
                     upsertTasking(t, { teamContext: self })
                 );
             })

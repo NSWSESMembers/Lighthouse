@@ -1,28 +1,56 @@
-import { request } from './core/request.js';
+import { request, toCollection } from './core/request.js';
 
-// Limited to 1000 entries; no paging support.
-export function search(Id, host, userId = 'notPassed', token) {
-  return request(
-    host + '/Api/v1/OperationsLog/search?LighthouseFunction=GetOperationsLogfromBeacon&userId=' + userId + '&JobIds%5B%5D=' + Id + '&PageIndex=1&PageSize=1000&SortOrder=desc&SortField=TimeLogged',
-    { token },
+/**
+ * Ops Log entries for a job. Limited to 1000 entries; no paging.
+ *
+ * @param {string|number} jobId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export async function search(jobId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return toCollection(
+    await request(
+      host + '/Api/v1/OperationsLog/search?LighthouseFunction=GetOperationsLogfromBeacon&userId=' + userId + '&JobIds%5B%5D=' + jobId + '&PageIndex=1&PageSize=1000&SortOrder=desc&SortField=TimeLogged',
+      { token, signal },
+    ),
   );
 }
 
-export function get(entryId, host, userId = 'notPassed', token) {
+/**
+ * A single Ops Log entry.
+ *
+ * @param {string|number} entryId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<object|null>}
+ */
+export function get(entryId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
   return request(
     host + '/Api/v1/OperationsLog/' + entryId + '?LighthouseFunction=GetOperationsLogEntryfromBeacon&userId=' + userId,
-    { token },
+    { token, signal },
   );
 }
 
 /**
  * @param {Record<string, unknown>|string} payload  form fields (or a pre-encoded string)
+ * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}  the created entry
  */
-export function create(host, payload, token) {
-  return request(host + '/Api/v1/OperationsLog', { method: 'POST', token, form: payload });
+export function create(payload, ctx = {}) {
+  const { host, token, signal } = ctx;
+  return request(host + '/Api/v1/OperationsLog', { method: 'POST', token, signal, form: payload });
 }
 
-export function unresolvedActionsLog(job, host, userId = 'notPassed', token) {
+/**
+ * Unresolved "action required" Ops Log entries for a job.
+ *
+ * @param {object} job  a Job view-model ({ id(), jobReceived() })
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export async function unresolvedActionsLog(job, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
   const queryParams = new URLSearchParams({
     DateFrom: new Date(job.jobReceived()).toISOString(),
     DateTo: new Date().toISOString(),
@@ -52,5 +80,5 @@ export function unresolvedActionsLog(job, host, userId = 'notPassed', token) {
     userId: userId,
   });
 
-  return request(`${host}/Api/v1/OperationsLog/search?${queryParams.toString()}`, { token });
+  return toCollection(await request(`${host}/Api/v1/OperationsLog/search?${queryParams.toString()}`, { token, signal }));
 }

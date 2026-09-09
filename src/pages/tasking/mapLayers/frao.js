@@ -7,7 +7,7 @@ const NSW_LGA_QUERY_URL =
 
 async function fetchFRAOSAsync(startDate, endDate, apiHost, userId, token) {
     console.log("Fetching FRAOS from Beacon");
-    const response = await BeaconClient.frao.search(startDate, endDate, apiHost, userId, token);
+    const response = await BeaconClient.frao.search(startDate, endDate, { host: apiHost, userId, token });
     return { ok: true, data: response };
 }
 
@@ -81,7 +81,7 @@ export function renderFRAOSLayer(vm, map, getToken, apiHost, params) {
             );
             if (!res.ok) throw new Error("frao fetch failed: " + res.status);
 
-            const activeFRAOs = res.data.Results.filter(frao => frao.EndTime === null);
+            const activeFRAOs = res.data.results.filter(frao => frao.EndTime === null);
 
             // Only return FRAO + list of LGAs, no polygons yet
             const fraosForDrawing = activeFRAOs.map(frao => ({

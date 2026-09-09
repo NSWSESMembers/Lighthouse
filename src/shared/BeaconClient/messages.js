@@ -1,6 +1,18 @@
 import { request, toFormUrlEncoded } from './core/request.js';
 
-export function send(recipients, jobId, messageText, isOperational, host, userId = 'notPassed', token) {
+/**
+ * Send a job SMS/message.
+ *
+ * @param {object[]} recipients  contact rows ({ Detail, FirstName, LastName, Id, ContactTypeId })
+ * @param {string|number} jobId
+ * @param {string} messageText
+ * @param {boolean} isOperational
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}  the created message, or null (Beacon intermittently 500s despite sending)
+ */
+export function send(recipients, jobId, messageText, isOperational, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+
   const data = {
     Operational: isOperational,
     MessageText: messageText,
@@ -26,18 +38,21 @@ export function send(recipients, jobId, messageText, isOperational, host, userId
     data[`ContactGroups[${index}]`] = group.Id;
   });
 
-  // Beacon intermittently 500s on this endpoint despite sending the message.
   return request(host + '/Api/v1/Messages?LighthouseFunction=SendJobMessage&userId=' + userId, {
     method: 'POST',
     token,
+    signal,
     form: toFormUrlEncoded(data),
     nullOnError: true,
   });
 }
 
-export function getMessageById(id, host, userId = 'notPassed', token) {
-  return request(
-    host + '/Api/v1/Messages/' + id + '?LighthouseFunction=GetMessageById&userId=' + userId,
-    { token },
-  );
+/**
+ * @param {string|number} id
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<object|null>}
+ */
+export function getMessageById(id, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return request(host + '/Api/v1/Messages/' + id + '?LighthouseFunction=GetMessageById&userId=' + userId, { token, signal });
 }

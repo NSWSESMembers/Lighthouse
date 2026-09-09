@@ -166,7 +166,7 @@ async function getTransportApiKeyOpsLog(apiHost, userId, token) {
             opsId = '0';
     }
 
-    const response = await BeaconClient.operationslog.get(opsId, apiHost, userId, token);
+    const response = await BeaconClient.operationslog.get(opsId, { host: apiHost, userId, token });
     return response.Text;
 }
 

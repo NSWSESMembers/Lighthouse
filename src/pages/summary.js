@@ -281,7 +281,7 @@ function RunForestRun(mp) {
 
         if (typeof params.hq !== 'undefined') {
           if (params.hq.split(",").length == 1) { //one HQ was passed
-            BeaconClient.unit.getName(params.hq, apiHost, params.userId, token)
+            BeaconClient.unit.getName(params.hq, { host: apiHost, userId: params.userId, token })
               .then(function(result) {
                 unit = result;
                 HackTheMatrix(unit, apiHost, params.userId, token, mp);
@@ -292,7 +292,7 @@ function RunForestRun(mp) {
             console.log("passed array of units");
             var hqsGiven = params.hq.split(",");
             hqsGiven.forEach(function(d) {
-              BeaconClient.unit.getName(d, apiHost, params.userId, token)
+              BeaconClient.unit.getName(d, { host: apiHost, userId: params.userId, token })
                 .then(function(result) {
                   mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
                   unit.push(result);
@@ -324,7 +324,7 @@ console.log(userId)
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  BeaconClient.job.summary(unit, host, start, end, userId, token)
+  BeaconClient.job.summary(unit, start, end, { host, userId, token })
     .then(function(summary) {
       progressBar && progressBar.setValue(1);
 

@@ -28,35 +28,35 @@ function writeCache(key, data) {
   }
 }
 
-async function fetchRadioAssets(host, userId, token) {
+async function fetchRadioAssets(host, userId, token, signal) {
   const key = cacheKey(host, 'LighthouseFetchedRadioAssets');
   const cached = readCache(key);
   if (cached) {
     return cached;
   }
   const params = new URLSearchParams({ resourceTypes: '', LighthouseFunction: 'fetchRadioAssets', userId });
-  const data = await request(host + '/Api/v1/ResourceLocations/Radio?' + params.toString(), { token });
+  const data = await request(host + '/Api/v1/ResourceLocations/Radio?' + params.toString(), { token, signal });
   const merged = Array.isArray(data) ? data.flat() : data;
   writeCache(key, merged);
   return merged;
 }
 
-async function fetchTeleAssets(host, userId, token) {
+async function fetchTeleAssets(host, userId, token, signal) {
   const key = cacheKey(host, 'LighthouseFetchedTeleAssets');
   const cached = readCache(key);
   if (cached) {
     return cached;
   }
   const params = new URLSearchParams({ LighthouseFunction: 'fetchTeleAssets', userId });
-  const data = await request(host + '/Api/v1/ResourceLocations/Telematics?' + params.toString(), { token });
+  const data = await request(host + '/Api/v1/ResourceLocations/Telematics?' + params.toString(), { token, signal });
   writeCache(key, data);
   return data;
 }
 
-async function returnAssetLocations(host, userId, token) {
+async function returnAssetLocations(host, userId, token, signal) {
   const [radio, tele] = await Promise.allSettled([
-    fetchRadioAssets(host, userId, token),
-    fetchTeleAssets(host, userId, token),
+    fetchRadioAssets(host, userId, token, signal),
+    fetchTeleAssets(host, userId, token, signal),
   ]);
 
   const response = [];
@@ -115,11 +115,15 @@ async function returnAssetLocations(host, userId, token) {
 }
 
 /**
- * @param {string[]} assetFilter  asset names to keep; empty array returns everything
- * @returns {Promise<any[]>}
+ * SES asset locations (radio + telematics, merged and normalised).
+ *
+ * @param {string[]} assetFilter  asset names to keep; empty/falsy returns everything
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<object[]>}
  */
-export async function filter(assetFilter, host, userId = 'notPassed', token) {
-  const response = await returnAssetLocations(host, userId, token);
+export async function filter(assetFilter, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  const response = await returnAssetLocations(host, userId, token, signal);
   if (!assetFilter || assetFilter.length === 0) {
     return response;
   }
