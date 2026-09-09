@@ -71,10 +71,20 @@ export function toCollection(payload) {
  *        rejecting on a non-2xx response. Only for the handful of Beacon POST
  *        endpoints that spuriously return 500 on an otherwise-successful write
  *        (tasking, job messages) where the caller re-syncs state anyway.
+ * @param {RequestCredentials} [opts.credentials='omit']  cookie handling. The
+ *        Beacon API authenticates on the `Authorization: Bearer` header only;
+ *        we never want cookies. Chrome attaches a host's cookies to `fetch`
+ *        from an extension context whose manifest grants that host, even under
+ *        the spec default `same-origin`, and a stale/foreign Beacon session
+ *        cookie riding along makes the API 401 the request despite a valid
+ *        bearer. `omit` matches how the old jQuery cross-origin XHR behaved.
  * @returns {Promise<any>}  parsed body (or Blob/text/null per responseType)
  */
 export async function request(url, opts = {}) {
-  const { method = 'GET', token, json, form, responseType = 'json', headers = {}, signal, nullOnError = false } = opts;
+  const {
+    method = 'GET', token, json, form, responseType = 'json', headers = {}, signal,
+    nullOnError = false, credentials = 'omit',
+  } = opts;
 
   const finalHeaders = { ...headers };
   if (token) {
@@ -90,7 +100,7 @@ export async function request(url, opts = {}) {
     body = JSON.stringify(json);
   }
 
-  const response = await fetch(url, { method, headers: finalHeaders, body, cache: 'no-store', signal });
+  const response = await fetch(url, { method, headers: finalHeaders, body, cache: 'no-store', credentials, signal });
 
   if (!response.ok) {
     let errorBody = null;
