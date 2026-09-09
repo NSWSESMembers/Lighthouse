@@ -3792,6 +3792,41 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // The team status dropdown swaps its short status list for a taller
+    // details/reason form once you pick an option. Popper places the menu
+    // when it opens and never learns that it later grew, so a menu that
+    // opened downward low on the screen used to spill off the bottom until
+    // the next open. Re-run Popper after the first paint (initial placement
+    // is occasionally computed before the menu is at full size) and again
+    // whenever the menu resizes, keeping it inside the viewport.
+    document.addEventListener('shown.bs.dropdown', (e) => {
+        const toggle = e.target;
+        if (!toggle.classList || !toggle.classList.contains('team-status-button')) return;
+
+        const scope = toggle.closest('.dropdown');
+        const menu = scope && scope.querySelector('.tasking-dropdown-menu');
+        const instance = bootstrap.Dropdown.getInstance(toggle);
+        if (!menu || !instance) return;
+
+        let pending = false;
+        const ro = new ResizeObserver(() => {
+            if (pending) return;
+            pending = true;
+            requestAnimationFrame(() => {
+                pending = false;
+                // closeStatusDropdown() just strips the .show class without a
+                // Bootstrap hide event, so bail out once the menu is detached.
+                if (!menu.isConnected || !toggle.isConnected) {
+                    ro.disconnect();
+                    return;
+                }
+                try { instance.update(); } catch (_) { /* popper already torn down */ }
+            });
+        });
+        ro.observe(menu);
+        toggle.addEventListener('hidden.bs.dropdown', () => ro.disconnect(), { once: true });
+    });
+
     //get tokens
     BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(
         apiHost,
