@@ -1633,7 +1633,7 @@
                                                                                                     click: ts.onStatusDropdownToggleClick">
                                                                                         </button>
                                                                                         <div
-                                                                                            class="dropdown-menu team-tasking-dropdown-menu team-tasking-dropdown-menu--wide tasking-dropdown-menu p-2 shadow">
+                                                                                            class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
                                                                                             <!-- ko if: ts.statusPageVisible -->
                                                                                             <div>
                                                                                                 <!-- ko if: ts.cannotUpdateStatus -->
@@ -1656,7 +1656,7 @@
                                                                                             <!-- /ko -->
 
                                                                                             <!-- ko if: detailsPageVisible -->
-                                                                                            <div>
+                                                                                            <div class="tasking-status-details-form">
 
                                                                                                 <!-- Time override toggle (only shown if system allows time setting) -->
                                                                                                 <!-- ko if: ts.needsTimeSet -->
