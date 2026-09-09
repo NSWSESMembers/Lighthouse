@@ -1266,6 +1266,14 @@ function VM() {
         try {
             await BeaconClient.sectors.unSetSector(job, beaconCtx(t));
             showAlert('Incident removed from sector successfully.', 'success', 3000);
+            // The job GET payload omits Sector entirely when none is
+            // assigned, so Job.updateFromJson can't distinguish "cleared"
+            // from "unchanged" and the stale sector sticks. Clear it
+            // locally, then let fetchJobById reconcile everything else.
+            const jobModel = self.jobsById.get(job);
+            if (jobModel && jobModel.sector().id()) {
+                jobModel.sector(new Sector({}));
+            }
             self.fetchJobById(job, null);
         } catch (err) {
             console.error(err);
@@ -1530,6 +1538,35 @@ function VM() {
 
         console.log("Assigning sector", sectorId, "to job", jobId);
 
+    };
+
+    // Explicit "unassign" action from the per-incident sector dropdown.
+    // sectorSelectorClick can only toggle a sector off if that sector is
+    // still in the fetched list; when the assigned sector belongs to an HQ
+    // that isn't in the current filters it won't be, so this gives a way
+    // out regardless.
+    self.sectorUnassignClick = function (_data, event) {
+        var ctx = ko.contextFor(event.currentTarget || event.target);
+        var jobCtx = ctx;
+        while (jobCtx && !jobCtx.j) {
+            jobCtx = jobCtx.$parentContext;
+        }
+        if (!jobCtx || !jobCtx.j) return;
+
+        var jobId = jobCtx.j.id();
+        if (!jobCtx.j.sector().id()) return;   // nothing assigned
+
+        self.unSetSectorForJob(jobId);
+        console.log("Unassigning sector from job", jobId);
+    };
+
+    // Refresh the sector list each time an "Assigned Sector" dropdown is
+    // opened, so sectors created since page load (or since the last HQ
+    // filter change) show up without a full reload.
+    self.refreshSectorsForDropdown = function () {
+        const ids = self.config._sectorHqIds();
+        if (!ids || ids.length === 0) return;   // no HQs selected — nothing to search
+        self.fetchAllSectors(ids);
     };
 
     self.attachJobTimelineModal = function (job) {
@@ -4036,6 +4073,18 @@ document.addEventListener('DOMContentLoaded', function () {
         })();
 
         ko.applyBindings(myViewModel);
+
+        // Refresh the sector list whenever a per-incident "Assigned Sector"
+        // dropdown opens. Delegated on document so it covers every job card
+        // without a per-element binding. Bootstrap 5 fires show.bs.dropdown
+        // on the toggle *button*, which bubbles to document — walk up to the
+        // enclosing .dropdown and check it's a sector one.
+        document.addEventListener('show.bs.dropdown', function (e) {
+            const scope = e.target && e.target.closest && e.target.closest('.dropdown');
+            if (scope && scope.querySelector('.sectorDropdown')) {
+                myViewModel.refreshSectorsForDropdown();
+            }
+        });
 
         // Alerts overlay
         installAlerts(map, myViewModel);
