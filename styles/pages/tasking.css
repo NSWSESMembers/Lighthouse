@@ -188,13 +188,14 @@ body.env-devbeacon .incidents-header {
 
 /* The team-tasking status dropdown doubles as a details/reason form on its
    second page; Bootstrap's 10rem min-width squashes the Call-off reason
-   label and textarea, so give it room to lay the form out. */
-.team-tasking-dropdown-menu {
+   label and textarea. Widen it only in the job popup (--wide) -- the teams
+   list is tight on horizontal space and keeps the default width. */
+.team-tasking-dropdown-menu--wide {
   min-width: 340px;
   max-width: min(420px, 90vw);
 }
 
-.team-tasking-dropdown-menu .col-form-label {
+.team-tasking-dropdown-menu--wide .col-form-label {
   white-space: nowrap;
 }
 
