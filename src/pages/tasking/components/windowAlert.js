@@ -15,12 +15,16 @@ export function showAlert(message, type = "primary", timeout = 4000) {
     $("#alerts-container").append(html);
 
     if (timeout > 0) {
-        setTimeout(() => {
-            const el = document.getElementById(id);
-            if (el) {
-                // Bootstrap 5 native JS API
-                Alert.getOrCreateInstance(el).close();
-            }
-        }, timeout);
+        setTimeout(() => closeAlert(id), timeout);
+    }
+
+    return id;
+}
+
+export function closeAlert(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        // Bootstrap 5 native JS API
+        Alert.getOrCreateInstance(el).close();
     }
 }
