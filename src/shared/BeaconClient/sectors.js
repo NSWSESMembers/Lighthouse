@@ -1,85 +1,61 @@
-import { getJsonPaginated } from './json.js';
-import $ from 'jquery';
+import { requestPaginated, request } from './core/request.js';
 
+/**
+ * Active sectors for the given HQ(s).
+ *
+ * @param {object|Array|null} unit  a single entity ({Id}), an array of entity ids, or null for "all"
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          onProgress?: Function, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export async function search(unit, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
 
-export function search(unit, host, userId = 'notPassed', token, callback, progressCallBack) {
-
-
-  var url = "";
-
+  let url;
   if (unit !== null || typeof unit === 'undefined') {
-    if (Array.isArray(unit) == false) {
-      url = host + "/Api/v1/Sectors/Search?LighthouseFunction=GetJSONfromBeacon&userId=" + userId + "&Statusids=1&EntityIds=" + unit.Id + "&SortField=Id&SortOrder=desc";
+    if (Array.isArray(unit) === false) {
+      url = host + '/Api/v1/Sectors/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&Statusids=1&EntityIds=' + unit.Id + '&SortField=Id&SortOrder=desc';
     } else {
-      var hqString = "";
-      unit.forEach(function (d) {
-        hqString = hqString + "&EntityIds=" + d
+      let hqString = '';
+      unit.forEach((d) => {
+        hqString = hqString + '&EntityIds=' + d;
       });
-      url = host + "/Api/v1/Sectors/Search?LighthouseFunction=GetJSONfromBeacon&userId=" + userId + hqString + "&Statusids=1&SortField=Id&SortOrder=desc";
+      url = host + '/Api/v1/Sectors/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + hqString + '&Statusids=1&SortField=Id&SortOrder=desc';
     }
   } else {
-    url = host + "/Api/v1/Sectors/Search?LighthouseFunction=GetJSONfromBeacon&userId=" + userId + "&Statusids=1&SortField=Id&SortOrder=desc";
-
+    url = host + '/Api/v1/Sectors/Search?LighthouseFunction=GetJSONfromBeacon&userId=' + userId + '&Statusids=1&SortField=Id&SortOrder=desc';
   }
 
-  var lastDisplayedVal = 0;
-  getJsonPaginated(
-    url, token, 0, 300,
-    function (count, total) {
-      if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
-        lastDisplayedVal = count;
-        progressCallBack(count, total);
-      }
-      if (count == -1 && total == -1) { //allow errors
-        progressCallBack(count, total);
-      }
-
-    },
-    function (results) { //call for the JSON, rebuild the array and return it when done.
-      console.log("GetJSONfromBeacon call back with: ");
-      var obj = {
-        "Results": results
-      }
-      callback(obj);
-    }
-  );
+  return requestPaginated(url, { token, signal, pageSize: 300, onProgress, onPage });
 }
 
-
-export function setSector(jobId, sectorId, host, userId, token, callback) {
-  $.ajax({
-    type: 'PUT',
-    url: host + '/Api/v1/Sectors/' + sectorId + '/Jobs?LighthouseFunction=SetSectorForJob',
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: JSON.stringify({ IdsToAdd: [jobId], userId: userId }),
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(true)
-        }
-    },
+/**
+ * @param {string|number} jobId
+ * @param {string|number} sectorId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}
+ */
+export function setSector(jobId, sectorId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return request(host + '/Api/v1/Sectors/' + sectorId + '/Jobs?LighthouseFunction=SetSectorForJob', {
+    method: 'PUT',
+    token,
+    signal,
+    json: { IdsToAdd: [jobId], userId },
   });
 }
 
-export function unSetSector(jobId, host, userId, token, callback) {
-  $.ajax({
-    type: 'PUT',
-    url: host + '/Api/v1/Sectors/RemoveJobFromSector/' + jobId + '?LighthouseFunction=unSetSectorForJob',
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: JSON.stringify({ userId: userId }),
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        callback(true)
-        }
-    },
+/**
+ * @param {string|number} jobId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}
+ */
+export function unSetSector(jobId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return request(host + '/Api/v1/Sectors/RemoveJobFromSector/' + jobId + '?LighthouseFunction=unSetSectorForJob', {
+    method: 'PUT',
+    token,
+    signal,
+    json: { userId },
   });
 }

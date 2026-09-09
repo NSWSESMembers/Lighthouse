@@ -1,5 +1,10 @@
 /*
   This file acts as our interface to the Beacon REST API.
+
+  Every module's transport goes through ./BeaconClient/core/request.js
+  (request / requestPaginated). All functions return Promises and reject with
+  a BeaconApiError on a non-2xx response, except the handful of tasking/message
+  writes that Beacon spuriously 500s (those resolve null -- see nullOnError).
 */
 
 import * as job from './BeaconClient/job.js';
@@ -24,25 +29,16 @@ import * as icems from './BeaconClient/icems.js';
 import * as people from './BeaconClient/people.js';
 import * as users from './BeaconClient/users.js';
 import * as events from './BeaconClient/events.js';
+import { request, requestPaginated, toFormUrlEncoded, BeaconApiError } from './BeaconClient/core/request.js';
 
-export { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers, images, icems, people, users, events };
+export {
+  job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices,
+  tags, sectors, frao, contacts, messages, suppliers, images, icems, people, users, events,
+  request, requestPaginated, toFormUrlEncoded, BeaconApiError,
+};
 
-// re-export functions
-export default { job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices, tags, sectors, frao, contacts, messages, suppliers, images, icems, people, users, events, toFormUrlEncoded };
-export function toFormUrlEncoded(obj) {
-    const params = [];
-    for (const key in obj) {
-        const value = obj[key];
-
-        if (Array.isArray(value)) {
-            value.forEach(v => params.push(
-                encodeURIComponent(key + "[]") + "=" + encodeURIComponent(v)
-            ));
-        } else {
-            params.push(
-                encodeURIComponent(key) + "=" + encodeURIComponent(value ?? "")
-            );
-        }
-    }
-    return params.join("&");
-}
+export default {
+  job, asset, nitc, operationslog, resources, team, unit, entities, tasking, notifications, geoservices,
+  tags, sectors, frao, contacts, messages, suppliers, images, icems, people, users, events,
+  request, requestPaginated, toFormUrlEncoded, BeaconApiError,
+};

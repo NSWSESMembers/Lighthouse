@@ -136,7 +136,7 @@ window.addEventListener("message", function(event) {
 
 
 
-          BeaconClient.asset.filter([],urls.Base, user.Id, user.accessToken,function(res) {
+          BeaconClient.asset.filter([], { host: urls.Base, userId: user.Id, token: user.accessToken }).then(function(res) {
     let sorted = res.map(function(i) {
       return i.name
     })
@@ -180,7 +180,7 @@ window.addEventListener("message", function(event) {
     // response.responseJSON.forEach(function(v){
     //     $("#assetFilterListSelected").append(`<option value=${v.properties.name}>${v.properties.name}</option>`);
     // })
-}, function(error) {
+}).catch(function(error) {
   alert(`Lighthouse error - ${error}`)
 })
       $('#LHAssetFilterModal').modal();

@@ -1,55 +1,44 @@
-import { getJsonPaginated } from './json.js';
+import { requestPaginated } from './core/request.js';
 
+/**
+ * Non-Incident Task Card search.
+ *
+ * @param {object} filters  { EntityIds?, NonIncidentTypeIds?, TagIds?, IncludeCompleted? }
+ *        (comma-separated id strings, as they arrive from the page URL)
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          onProgress?: Function, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export function search(filters, startDate, endDate, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
 
-export function search(params, userId = 'notPassed', token, StartDate, EndDate, callback, progressCallBack) {
+  let url = host + '/Api/v1/NonIncident/Search?LighthouseFunction=GetNITCJSONfromBeacon&userId=' + userId + '&StartDate=' + startDate.toISOString() + '&EndDate=' + endDate.toISOString();
 
-    var url = params.host + "/Api/v1/NonIncident/Search?LighthouseFunction=GetNITCJSONfromBeacon&userId=" + userId + "&StartDate=" + StartDate.toISOString() + "&EndDate=" + EndDate.toISOString();
-    var s = "";
-    if (typeof params.EntityIds !== "undefined") {
-        params.EntityIds.split(",").forEach(function(d){
-            s += "&EntityIds%5B%5D=" + d;
-        });
-        url += s;
-    }
-    if (typeof params.NonIncidentTypeIds !== "undefined") {
-        params.NonIncidentTypeIds.split(",").forEach(function(d){
-            s += "&NonIncidentTypeIds%5B%5D=" + d;
-        });
-        url += s;
-    }
-    if (typeof params.TagIds !== "undefined") {
-        params.TagIds.split(",").forEach(function(d){
-            s += "&TagIds%5B%5D=" + d;
-        });
-        url += s;
-    }
-    if (typeof params.IncludeCompleted !== "undefined") {
-        url += "&IncludeCompleted=" + params.IncludeCompleted;
-    }
-    url += "&ViewModelType=6&SortField=Start&SortOrder=desc";
+  let s = '';
+  if (typeof filters.EntityIds !== 'undefined') {
+    filters.EntityIds.split(',').forEach((d) => {
+      s += '&EntityIds%5B%5D=' + d;
+    });
+    url += s;
+  }
+  if (typeof filters.NonIncidentTypeIds !== 'undefined') {
+    filters.NonIncidentTypeIds.split(',').forEach((d) => {
+      s += '&NonIncidentTypeIds%5B%5D=' + d;
+    });
+    url += s;
+  }
+  if (typeof filters.TagIds !== 'undefined') {
+    filters.TagIds.split(',').forEach((d) => {
+      s += '&TagIds%5B%5D=' + d;
+    });
+    url += s;
+  }
+  if (typeof filters.IncludeCompleted !== 'undefined') {
+    url += '&IncludeCompleted=' + filters.IncludeCompleted;
+  }
+  url += '&ViewModelType=6&SortField=Start&SortOrder=desc';
 
-    console.log("GetJSONfromBeacon calling " + url);
-
-
-  var lastDisplayedVal = 0 ;
-  getJsonPaginated(
-    url, token, 0, 100,
-    function(count,total){
-      if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
-        lastDisplayedVal = count;
-        progressCallBack(count,total);
-      }
-      if (count == -1 && total == -1) { //allow errors
-        progressCallBack(count,total);
-      }
-
-    },
-    function(results) { //call for the JSON, rebuild the array and return it when done.
-      console.log("GetJSONfromBeacon call back with: ");
-      var obj = {
-        "Results": results
-      }
-      callback(obj);
-    }
-  );
+  return requestPaginated(url, { token, signal, pageSize: 100, onProgress, onPage });
 }

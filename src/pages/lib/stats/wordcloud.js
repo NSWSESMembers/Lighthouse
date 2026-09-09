@@ -30,7 +30,7 @@ function walkSituationOnSceneWords(jobs){ //take array and make word:frequency a
 
   var wordCount = {};
 
-  jobs.Results.forEach(function(d) {
+  jobs.results.forEach(function(d) {
 
     // strip stringified objects and punctuations from the string
     var words = d.SituationOnScene

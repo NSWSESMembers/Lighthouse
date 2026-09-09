@@ -1,201 +1,131 @@
-import $ from 'jquery';
 import moment from 'moment';
+import { request } from './core/request.js';
 
-export function filter(assetFilter, host, userId = 'notPassed', token, cb, err) {
-  console.debug('fetching SES Asset Locations with possible filter on result');
-  ReturnAssetLocations(host, userId, token, function (response) {
-    if (assetFilter.length == 0) {
-      //show everything
-      cb(response);
-    } else {
-      //filtered
-      var filteredResult = [];
-      response.forEach(function (v) {
-        if (assetFilter.includes(v.name)) {
-          filteredResult.push(v);
-        }
-      });
-      cb(filteredResult);
-    }
-  }, function (error) {
-    err(error)
-  });
-}
+const CACHE_SECONDS = 20;
 
-function ReturnAssetLocations(host, userId = 'notPassed', token, cb, err) {
-  console.log('ReturnAssetLocations');
-  Promise.allSettled([fetchRadioAssets(host, userId, token), fetchTeleAssets(host, userId, token)]).then(function (
-    res,
-  ) {
-    var response = [];
-    //PSN Responses
-    if (res[0].status === 'fulfilled') {
-      res[0].value.forEach(function (i) {
-        // PSN locations
-        if (isNaN(i.properties.name)) {
-          // hide numerical names that are not setup yet
-          i.type = 'psn';
-          i.lastSeen = i.properties.lastSeen;
-          i.name = `${i.properties.name} (PSN)`;
-          i.unitCode = i.properties.name.match(/([a-z]+)/i)
-            ? i.properties.name.match(/([a-z]+)/i)[1]
-            : i.properties.name;
-          i.vehCode = i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)
-            ? i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1]
-            : '';
-          i.markerLabel = i.properties.name;
-          if (i.unitCode && i.vehCode) {
-            i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
-          }
-          i.entity = i.properties.entity;
-          i.capability = i.properties.capability;
-          i.resourceType = i.properties.resourceType;
-          i.talkGroup = i.properties.talkgroup != null ? i.properties.talkgroup : 'Unknown';
-          i.talkGroupLastUpdated =
-            i.properties.talkgroupLastUpdated != null ? i.properties.talkgroupLastUpdated : 'Unknown';
-          i.licensePlate = i.properties.licensePlate;
-
-          response.push(i);
-        }
-      });
-    } else {
-      err("Error fetching PSN asset locations")
-    }
-    //Telematic Responses
-    if (res[1].status === 'fulfilled') {
-      res[1].value.features.forEach(function (i) {
-        if (isNaN(i.properties.displayName)) {
-          // hide numerical names that are not setup yet
-          //Telemetric Locations
-          i.type = 'telematics';
-          i.lastSeen = moment.unix(i.properties.timestamp).toISOString();
-          i.name = `${i.properties.displayName.match(/(^\w*)/g)} (Tele)`;
-          i.unitCode = i.properties.displayName.match(/([a-z]+)/i)
-            ? i.properties.displayName.match(/([a-z]+)/i)[1]
-            : i.properties.displayName;
-          i.vehCode = i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i)
-            ? i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i)[1]
-            : '';
-          i.markerLabel = i.properties.displayName;
-          if (i.unitCode && i.vehCode) {
-            i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
-          }
-          i.entity = 'N/A';
-          i.capability = i.properties.displayName.match(/^\w.* (.*)/g);
-          i.resourceType = i.properties.type;
-          i.talkGroup = 'N/A';
-          i.talkGroupLastUpdated = 'N/A';
-          i.licensePlate = 'N/A';
-          response.push(i);
-        }
-      });
-    } else {
-      err("Error fetching Telemetric asset locations")
-    }
-    cb && cb(response);
-  });
-}
-
-function fetchRadioAssets(host, userId = 'notPassed', token) {
+function cacheKey(host, suffix) {
   const source = host.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return new Promise((resolve, reject) => {
-    const cache = localStorage.getItem(`${source}-LighthouseFetchedRadioAssets`);
-    const secondsSinceEpoch = Math.round(Date.now() / 1000);
-    if (cache != null) {
-      const cacheJson = JSON.parse(cache);
-      if (secondsSinceEpoch - Math.round(new Date(cacheJson.timestamp * 1000) / 1000) > 20) {
-        // 20 second cache
-        fetchAllResources()
-      } else {
-        console.log('fetchRadioAssets served from cache');
-        resolve(cacheJson.data);
+  return `${source}-${suffix}`;
+}
+
+function readCache(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw == null) return null;
+    const parsed = JSON.parse(raw);
+    const ageSeconds = Math.round(Date.now() / 1000) - Math.round(new Date(parsed.timestamp * 1000) / 1000);
+    return ageSeconds > CACHE_SECONDS ? null : parsed.data;
+  } catch (_) {
+    return null;
+  }
+}
+
+function writeCache(key, data) {
+  try {
+    localStorage.setItem(key, JSON.stringify({ timestamp: Math.round(Date.now() / 1000), data }));
+  } catch (_) {
+    /* storage full / unavailable -- caching is best-effort */
+  }
+}
+
+async function fetchRadioAssets(host, userId, token, signal) {
+  const key = cacheKey(host, 'LighthouseFetchedRadioAssets');
+  const cached = readCache(key);
+  if (cached) {
+    return cached;
+  }
+  const params = new URLSearchParams({ resourceTypes: '', LighthouseFunction: 'fetchRadioAssets', userId });
+  const data = await request(host + '/Api/v1/ResourceLocations/Radio?' + params.toString(), { token, signal });
+  const merged = Array.isArray(data) ? data.flat() : data;
+  writeCache(key, merged);
+  return merged;
+}
+
+async function fetchTeleAssets(host, userId, token, signal) {
+  const key = cacheKey(host, 'LighthouseFetchedTeleAssets');
+  const cached = readCache(key);
+  if (cached) {
+    return cached;
+  }
+  const params = new URLSearchParams({ LighthouseFunction: 'fetchTeleAssets', userId });
+  const data = await request(host + '/Api/v1/ResourceLocations/Telematics?' + params.toString(), { token, signal });
+  writeCache(key, data);
+  return data;
+}
+
+async function returnAssetLocations(host, userId, token, signal) {
+  const [radio, tele] = await Promise.allSettled([
+    fetchRadioAssets(host, userId, token, signal),
+    fetchTeleAssets(host, userId, token, signal),
+  ]);
+
+  const response = [];
+
+  if (radio.status === 'fulfilled') {
+    radio.value.forEach((i) => {
+      if (isNaN(i.properties.name)) {
+        i.type = 'psn';
+        i.lastSeen = i.properties.lastSeen;
+        i.name = `${i.properties.name} (PSN)`;
+        i.unitCode = i.properties.name.match(/([a-z]+)/i) ? i.properties.name.match(/([a-z]+)/i)[1] : i.properties.name;
+        i.vehCode = i.properties.name.match(/[a-z]+(\d*[a-z]?)/i) ? i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1] : '';
+        i.markerLabel = i.properties.name;
+        if (i.unitCode && i.vehCode) {
+          i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
+        }
+        i.entity = i.properties.entity;
+        i.capability = i.properties.capability;
+        i.resourceType = i.properties.resourceType;
+        i.talkGroup = i.properties.talkgroup != null ? i.properties.talkgroup : 'Unknown';
+        i.talkGroupLastUpdated = i.properties.talkgroupLastUpdated != null ? i.properties.talkgroupLastUpdated : 'Unknown';
+        i.licensePlate = i.properties.licensePlate;
+        response.push(i);
       }
-    } else {
-      fetchAllResources()
-    }
-
-function fetchAllResources() {
-  const resourceTypes = [
-    ""
-  ];
-
-  const fetchPromises = resourceTypes.map(type => {
-    return $.ajax({
-      url: host + '/Api/v1/ResourceLocations/Radio',
-      data: {
-        resourceTypes: type,
-        LighthouseFunction: 'fetchRadioAssets',
-        userId: userId
-      },
-      beforeSend: function (n) {
-        n.setRequestHeader('Authorization', 'Bearer ' + token);
-      },
-      cache: false,
-      dataType: 'json',
-      type: 'GET'
-    }).then(data => (data));
-  });
-
-  Promise.all(fetchPromises)
-    .then(results => {
-            const mergedData = results.flat(); // joins all arrays into one
-      
-      localStorage.setItem(
-        `${source}-LighthouseFetchedRadioAssets`,
-        JSON.stringify({ timestamp: secondsSinceEpoch, data: mergedData })
-      );
-
-      console.log('All radio assets fetched and stored.');
-      resolve(mergedData);
-    })
-    .catch(error => {
-      console.error('Error fetching radio assets:', error);
-      reject(error);
     });
-}
-  });
-}
+  } else {
+    console.error('Error fetching PSN asset locations', radio.reason);
+  }
 
-function fetchTeleAssets(host, userId = 'notPassed', token) {
-  const source = host.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  return new Promise((resolve, reject) => {
-    const cache = localStorage.getItem(`${source}-LighthouseFetchedTeleAssets`);
-    const secondsSinceEpoch = Math.round(Date.now() / 1000);
-    if (cache != null) {
-      const cacheJson = JSON.parse(cache);
-      if (secondsSinceEpoch - Math.round(new Date(cacheJson.timestamp * 1000) / 1000) > 20) {
-        // 20 second cache
-        fetch();
-      } else {
-        console.log('fetchTeleAssets served from cache');
-        resolve(cacheJson.data);
+  if (tele.status === 'fulfilled') {
+    tele.value.features.forEach((i) => {
+      if (isNaN(i.properties.displayName)) {
+        i.type = 'telematics';
+        i.lastSeen = moment.unix(i.properties.timestamp).toISOString();
+        i.name = `${i.properties.displayName.match(/(^\w*)/g)} (Tele)`;
+        i.unitCode = i.properties.displayName.match(/([a-z]+)/i) ? i.properties.displayName.match(/([a-z]+)/i)[1] : i.properties.displayName;
+        i.vehCode = i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i) ? i.properties.displayName.match(/[a-z]+(\d*[a-z]?)/i)[1] : '';
+        i.markerLabel = i.properties.displayName;
+        if (i.unitCode && i.vehCode) {
+          i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
+        }
+        i.entity = 'N/A';
+        i.capability = i.properties.displayName.match(/^\w.* (.*)/g);
+        i.resourceType = i.properties.type;
+        i.talkGroup = 'N/A';
+        i.talkGroupLastUpdated = 'N/A';
+        i.licensePlate = 'N/A';
+        response.push(i);
       }
-    } else {
-      fetch();
-    }
+    });
+  } else {
+    console.error('Error fetching Telemetric asset locations', tele.reason);
+  }
 
-    function fetch() {
-      $.ajax({
-        url: host + '/Api/v1/ResourceLocations/Telematics',
-        beforeSend: function (n) {
-          n.setRequestHeader('Authorization', 'Bearer ' + token);
-        },
-        cache: false,
-        dataType: 'json',
-        data: { LighthouseFunction: 'fetchTeleAssets', userId: userId },
-        type: 'GET',
-        success: function (data) {
-          localStorage.setItem(
-            `${source}-LighthouseFetchedTeleAssets`,
-            JSON.stringify({ timestamp: secondsSinceEpoch, data: data }),
-          );
-          console.log('fetchTeleAssets served from server');
-          resolve(data);
-        },
-        error: function (error) {
-          reject(error);
-        },
-      });
-    }
-  });
+  return response;
+}
+
+/**
+ * SES asset locations (radio + telematics, merged and normalised).
+ *
+ * @param {string[]} assetFilter  asset names to keep; empty/falsy returns everything
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<object[]>}
+ */
+export async function filter(assetFilter, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  const response = await returnAssetLocations(host, userId, token, signal);
+  if (!assetFilter || assetFilter.length === 0) {
+    return response;
+  }
+  return response.filter((v) => assetFilter.includes(v.name));
 }

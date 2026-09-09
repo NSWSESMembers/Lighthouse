@@ -179,7 +179,7 @@ export function prepareData(jobs, unit, start, end, cb) {
     cb();
   }
 
-  processArray(jobs.Results, function() {
+  processArray(jobs.results, function() {
 
     var options = {
       weekday: "short",

@@ -187,7 +187,7 @@ var TeamHistory = function({
 
     function jobAddress(cb) {
 
-      BeaconClient.job.get(jobNumber[0].replace('-', ''), 1, params.host, params.userId, pageToken, function(data) {
+      BeaconClient.job.get(jobNumber[0].replace('-', ''), { host: params.host, userId: params.userId, token: pageToken }).then(function(data) {
         // Job Tags
         var tagArray = [];
         $.each(data.Tags, function(tagIdx, tagObj) {
@@ -228,6 +228,9 @@ var TeamHistory = function({
         </span></div>`;
         cb(details)
 
+      }).catch(function(err) {
+        console.error('Job lookup failed', err);
+        cb('');
       })
     }
 
@@ -357,11 +360,11 @@ var Team = function({
     //All this code only works because you cant change the order of the history
     //if history order ever changes the push/unshift logic will need to be smarter
 
-    BeaconClient.team.getHistory(this.id, params.host, params.userId, pageToken, (history) => {
+    BeaconClient.team.getHistory(this.id, { host: params.host, userId: params.userId, token: pageToken }).then((history) => {
 
       this.teamHistory().forEach((t, index) => {
         let found = false
-        $.each(history.Results, function() {
+        $.each(history.results, function() {
           if (`${this.Name}-${this.Description}-${this.TimeStamp}` == `${t.name}-${t.description}-${t.timeStamp}`) {
             found = true
           }
@@ -372,7 +375,7 @@ var Team = function({
       })
 
       //work backwards so that unshifting is possible
-      history.Results.reverse().forEach((historyItem) => {
+      history.results.reverse().forEach((historyItem) => {
 
         //if (!locationFound) {
           let jobNumber = historyItem.Name.match(/.*(Offsite|Onsite|Enroute|Complete) on job (\d{4}-\d{4})/)
@@ -428,11 +431,14 @@ var Team = function({
 
       if (locationFound) {
         let teamLocation = this.teamLocation
-        BeaconClient.job.get(locationFound.replace('-', ''), 1, params.host, params.userId, pageToken, function(job) {
+        BeaconClient.job.get(locationFound.replace('-', ''), { host: params.host, userId: params.userId, token: pageToken }).then(function(job) {
           teamLocation(`${locationMethod} ${locationFound} (${timeStampAgo})<br>${job.Address.PrettyAddress.replace(', NSW','')}`)
-        })
+        }).catch((err) => console.error('Team location job lookup failed', err))
       }
 
+    }).catch((err) => {
+      console.error('Team history fetch failed', err)
+      this.loadingHistory(false)
     })
   }
 
@@ -662,15 +668,13 @@ function RunForestRun(mp) {
 
         if (typeof params.hq != 'undefined') { //if not no hqs
           if (params.hq.split(",").length == 1) { //if only one HQ
-            BeaconClient.unit.getName(params.hq, apiHost, params.userId, token, function(result, error) {
-              if (typeof error == 'undefined') {
+            BeaconClient.unit.getName(params.hq, { host: apiHost, userId: params.userId, token })
+              .then(function(result) {
                 mp && mp.setText(`Loaded unit ${result.Code}`)
                 unit = result;
                 HackTheMatrix(unit, apiHost, params.source, params.userId, token, mp);
-              } else {
-                mp.fail(error)
-              }
-            });
+              })
+              .catch(function(error) { mp.fail(error); });
           } else {
             unit = [];
             console.log("passed array of units");
@@ -681,17 +685,15 @@ function RunForestRun(mp) {
             // HackTheMatrix(unit, apiHost, params.source, token, mp);
             mp && mp.setText(`Loading multiple unit details`)
             hqsGiven.forEach(function(d) {
-              BeaconClient.unit.getName(d, params.host, params.userId, token, function(result, error) {
-                mp && mp.setText(`Loaded unit ${result.Code}`)
-                if (typeof error == 'undefined') {
+              BeaconClient.unit.getName(d, { host: params.host, userId: params.userId, token })
+                .then(function(result) {
+                  mp && mp.setText(`Loaded unit ${result.Code}`)
                   unit.push(result);
                   if (unit.length == params.hq.split(",").length) {
                     HackTheMatrix(unit, apiHost, params.source, params.userId, token, mp);
                   }
-                } else {
-                  mp.fail(error)
-                }
-              });
+                })
+                .catch(function(error) { mp.fail(error); });
             });
           }
         } else { //no hq was sent, get them all
@@ -714,7 +716,10 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  BeaconClient.team.teamSearch(unit, host, start, end, userId, token, function(teams) {
+  BeaconClient.team.search(unit, start, end, {
+    host, userId, token,
+    statusTypes: [1, 2, 3, 4], // StatusTypeId=3 - Activated
+  }).then(function(teams) {
 
       let allTeamsPromises = []
 
@@ -731,7 +736,7 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
       //remove teams from the main array that are not longer returned from the api query
       myViewModel.teams().forEach(function(d, index) {
         let found = false
-        $.each(teams.Results, function() {
+        $.each(teams.results, function() {
           if (this.Id == d.id) {
             found = true
           }
@@ -741,7 +746,7 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
         }
       })
 
-      teams.Results.forEach(function(d) {
+      teams.results.forEach(function(d) {
 
         allTeamsPromises.push(new Promise(function(resolve) {
 
@@ -976,23 +981,15 @@ function HackTheMatrix(unit, host, source, userId, token, progressBar) {
         apiLoadingInterlock = false
         positionFooter();
       }
-    },
-    function(val, total) {
-      if (progressBar) { //if its a first load
-        if (val == -1 && total == -1) {
-          progressBar.fail();
-        } else {
-          //lets not do progress for now
-          //progressBar.setValue(0.5 + ((val / total) - 0.1)) //start at 10%, dont top 100%
-        }
+    }).catch(function(err) {
+      console.error('Team summary fetch failed', err);
+      if (progressBar) {
+        progressBar.fail();
       } else {
-        if (val == -1 && total == -1) {
-          alert('Error talking to beacon')
-        }
+        alert('Error talking to beacon');
       }
-    },
-    [1, 2, 3, 4] // StatusTypeId=3 - Activated
-  );
+      apiLoadingInterlock = false;
+    });
 }
 
 function activateToolTips() {

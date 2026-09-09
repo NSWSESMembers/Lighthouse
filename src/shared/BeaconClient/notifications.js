@@ -1,53 +1,30 @@
-import $ from 'jquery';
+import { request } from './core/request.js';
 
-export function unaccepted(jobId, host, userId = 'notPassed', token, callback, errorCallback) {
-  $.ajax({
-    type: 'GET',
-    url: host + "/Api/v1/Jobs/" + jobId + "/unacceptednotifications?LighthouseFunction=GetUnacceptedNotifications&userId=" + userId,
-    beforeSend: function(n) {
-      n.setRequestHeader("Authorization", "Bearer " + token)
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function(response, textStatus) {
-      if (textStatus == 'success') {
-        let results = response.responseJSON;
-        if (typeof callback === "function") {
-          callback(results);
-        }
-      } else {
-        if (typeof errorCallback === "function") {
-          errorCallback(response);
-        }
-      }
-    }
-  })
+/**
+ * Unaccepted notifications for a job. Beacon returns a bare array here.
+ *
+ * @param {string|number} jobId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<object[]>}
+ */
+export async function unaccepted(jobId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  const result = await request(
+    host + '/Api/v1/Jobs/' + jobId + '/unacceptednotifications?LighthouseFunction=GetUnacceptedNotifications&userId=' + userId,
+    { token, signal },
+  );
+  return result || [];
 }
 
-export function acknowledge(notificationId, host, userId = 'notPassed', token, callback, errorCallback) {
-  return new Promise((resolve, reject) => {
-    $.ajax({
-      type: 'POST',
-      url: host + "/Api/v1/Notifications/" + notificationId + "/acknowledge?LighthouseFunction=AcknowledgeNotification&userId=" + userId,
-      beforeSend: function(n) {
-        n.setRequestHeader("Authorization", "Bearer " + token)
-      },
-      cache: false,
-      dataType: 'json',
-      complete: function(response, textStatus) {
-        if (textStatus == 'success') {
-          const result = response.responseJSON;
-          if (typeof callback === "function") {
-            callback(result);
-          }
-          resolve(result);
-        } else {
-          if (typeof errorCallback === "function") {
-            errorCallback(response);
-          }
-          reject(response);
-        }
-      }
-    });
-  });
+/**
+ * @param {string|number} notificationId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}
+ */
+export function acknowledge(notificationId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return request(
+    host + '/Api/v1/Notifications/' + notificationId + '/acknowledge?LighthouseFunction=AcknowledgeNotification&userId=' + userId,
+    { method: 'POST', token, signal },
+  );
 }

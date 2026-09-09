@@ -1,43 +1,24 @@
-import { getJsonPaginated } from './json.js';
-import $ from 'jquery';
+import { requestPaginated } from './core/request.js';
 
+/**
+ * Flood Rescue Area Operations search.
+ *
+ * @param {Date} startDate
+ * @param {Date} endDate
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          onProgress?: Function, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export function search(startDate, endDate, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal, onProgress, onPage } = ctx;
 
-//make the call to beacon
-export function search(StartDate, EndDate, host, userId = 'notPassed', token, callback, progressCallBack, onPage) {
-  console.debug("FRAO Search called", StartDate, EndDate, host, userId);
-  let params = {};
-  params['StatusStartDate'] = StartDate.toISOString();
-  params['StatusEndDate'] = EndDate.toISOString();
-  params['SortField'] = 'FRAONumber';
-  params['SortOrder'] = 'desc';
+  const params = new URLSearchParams({
+    StatusStartDate: startDate.toISOString(),
+    StatusEndDate: endDate.toISOString(),
+    SortField: 'FRAONumber',
+    SortOrder: 'desc',
+  });
 
-
-
-  var url = host+"/Api/v1/FloodRescueAreaOperations/Search?LighthouseFunction=GetJSONFRAO&userId=" + userId + "&" + $.param(params, true);
-  var lastDisplayedVal = 0 ;
-  getJsonPaginated(
-    url, token, 0, 50,
-    function(count,total){
-      if (count > lastDisplayedVal) { //buffer the output to that the progress alway moves forwards (sync loads suck)
-        lastDisplayedVal = count;
-        progressCallBack(count,total);
-      }
-      if (count == -1 && total == -1) { //allow errors
-        progressCallBack(count,total);
-      }
-
-    },
-    function(results) { //call for the JSON, rebuild the array and return it when done.
-      console.debug("GetJSONfromBeacon call back");
-      var obj = {
-        "Results": results
-      };
-      callback(obj);
-    }, function (pageResult) {
-      if (typeof onPage === 'function') {
-        onPage(pageResult);
-      }
-    }
-  );
-
+  const url = host + '/Api/v1/FloodRescueAreaOperations/Search?LighthouseFunction=GetJSONFRAO&userId=' + userId + '&' + params.toString();
+  return requestPaginated(url, { token, signal, pageSize: 50, onProgress, onPage });
 }
