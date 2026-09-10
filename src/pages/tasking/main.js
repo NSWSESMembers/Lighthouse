@@ -4062,6 +4062,17 @@ document.addEventListener('DOMContentLoaded', function () {
             if (openJob && modalVisible && openJob.id() === message.JobId) {
                 timelineVm.refreshCurrentJob({ silent: true });
             }
+
+            // An ops log entry being added, edited or resolved is the only
+            // thing that changes a job's unresolved action-required tags, and
+            // nothing in the jobUpdated payload reflects it -- so this push is
+            // the sole live signal for the action-required badges/alerts on
+            // the job card, marker and popup. Re-pull the unresolved actions
+            // log for the affected job whenever it's tracked locally,
+            // regardless of expanded state (the fetch is cheap and the badges
+            // show while collapsed).
+            const job = myViewModel.jobsById.get(message.JobId);
+            if (job) myViewModel.fetchUnresolvedActionsLog(job);
         });
 
         // ICEMS unaccepted-notifications refresh: refreshUnacceptedNotifications
