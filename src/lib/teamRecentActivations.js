@@ -240,14 +240,17 @@ function initRecentActivationsFieldset(teamViewModel) {
       '<legend>' +
         '<img id="lighthouseRecentActivationsLogo" style="width:14px;vertical-align:middle;margin-right:5px" />' +
         'Recent myAvailability Activation Requests' +
-        '<button type="button" class="btn btn-xs btn-default lighthouse-recent-activations-refresh"' + (isProd ? '' : ' disabled') + '>' +
-          '<span class="fa fa-refresh"></span> Refresh' +
-        '</button>' +
       '</legend>' +
       '<div class="form-group"><div class="col-xs-12">' +
+        (isProd ?
+          '<div class="lighthouse-recent-activations-bar">' +
+            '<button type="button" class="btn btn-sm btn-primary lighthouse-recent-activations-refresh">' +
+              '<span class="fa fa-refresh"></span> <span class="lighthouse-recent-activations-refresh-label">Load activation requests</span>' +
+            '</button>' +
+          '</div>' : '') +
         '<div class="lighthouse-recent-activations-list">' +
           '<div class="lighthouse-recent-activations-empty">' +
-            (isProd ? 'Click Refresh to load recent activations for the assigned unit.' :
+            (isProd ? 'Load the recent myAvailability activation requests for the team’s assigned unit, then expand one to add its responders straight into the team.' :
               'myAvailability activation requests are only available on production Beacon (this is train/dev).') +
           '</div>' +
         '</div>' +
@@ -263,6 +266,19 @@ function initRecentActivationsFieldset(teamViewModel) {
   if (!isProd) return; // placeholder only - no mams data outside prod
 
   var $list = $fieldset.find('.lighthouse-recent-activations-list');
+  var $refreshBtn = $fieldset.find('.lighthouse-recent-activations-refresh');
+  var $refreshLabel = $refreshBtn.find('.lighthouse-recent-activations-refresh-label');
+
+  // Before the first load the button is a primary call-to-action sitting
+  // above the list ("Load activations"); after the first load it shrinks to
+  // a plain "Refresh" and tucks up next to the legend, out of the way.
+  function markLoaded() {
+    if ($refreshBtn.closest('legend').length) return;
+    $refreshBtn.removeClass('btn-primary btn-sm').addClass('btn-default btn-xs');
+    $refreshLabel.text('Refresh');
+    $fieldset.find('legend').append($refreshBtn);
+    $fieldset.find('.lighthouse-recent-activations-bar').remove();
+  }
 
   function loadForEntity(entity) {
     // Not every entityAssignedTo is an SES Unit (e.g. a Region or State HQ
@@ -297,8 +313,9 @@ function initRecentActivationsFieldset(teamViewModel) {
   // selected.
   var hasLoadedOnce = false;
 
-  $fieldset.find('.lighthouse-recent-activations-refresh').on('click', function () {
+  $refreshBtn.on('click', function () {
     hasLoadedOnce = true;
+    markLoaded();
     loadForEntity(teamViewModel.entityAssignedTo.peek());
   });
 
