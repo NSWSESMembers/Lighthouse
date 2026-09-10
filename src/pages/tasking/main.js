@@ -3,7 +3,7 @@ global.jQuery = $;
 
 import BeaconClient from '../../shared/BeaconClient.js';
 const BeaconToken = require('../lib/shared_token_code.js');
-import { startBeaconSignalRConnection, connectionStatus, getConnectionStatus } from './signalr/connection.js';
+import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, getConnectionStatus } from './signalr/connection.js';
 import { setPushModeEnabled } from './signalr/pushMode.js';
 import { getSubject } from './signalr/subjects.js';
 
@@ -47,6 +47,7 @@ import { Enum } from './utils/enum.js';
 import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
+import { initHqCoverageMap } from './components/hqCoverageMap.js';
 
 import { installSlideVisibleBinding } from "./bindings/slideVisible.js";
 import { installStatusFilterBindings } from "./bindings/statusFilters.js";
@@ -3154,9 +3155,8 @@ function VM() {
     });
 
     // Same for the signalrEnabled toggle -- effectiveRefreshIntervalMs()
-    // depends on it too, and this takes effect immediately even though the
-    // SignalR connection itself only starts/stops based on this value at
-    // page load.
+    // depends on it too. (The SignalR connection itself is started/stopped
+    // to match by a separate subscriber in the DOMContentLoaded handler.)
     self.config.signalrEnabled.subscribe(() => {
         console.log("signalrEnabled changed → restarting timers");
         startJobsTeamsTimer();
@@ -3872,10 +3872,17 @@ document.addEventListener('DOMContentLoaded', function () {
         // than fail silently.
         myViewModel.signalrStatus = ko.observable(getConnectionStatus());
         connectionStatus.subscribe((status) => myViewModel.signalrStatus(status));
-        // Deliberately disabled isn't "disconnected" -- only show the banner
-        // when the feature is meant to be running but isn't.
+        // True once we've actually kicked off a connection attempt (i.e. the
+        // config modal has been closed at least once with live updates on).
+        // Before that the connection isn't *meant* to be up yet, so a
+        // 'disconnected' status is expected, not a problem.
+        myViewModel.signalrConnectionAttempted = ko.observable(false);
+        // Deliberately disabled -- or not started yet -- isn't "disconnected":
+        // only show the banner when the feature is meant to be running but isn't.
         myViewModel.signalrDisconnected = ko.pureComputed(() =>
-            myViewModel.config.signalrEnabled() && myViewModel.signalrStatus() !== 'connected'
+            myViewModel.config.signalrEnabled()
+            && myViewModel.signalrConnectionAttempted()
+            && myViewModel.signalrStatus() !== 'connected'
         );
         myViewModel.signalrStatusText = ko.pureComputed(() => {
             switch (myViewModel.signalrStatus()) {
@@ -4082,17 +4089,19 @@ document.addEventListener('DOMContentLoaded', function () {
         getSubject('iuaReceived').subscribe(refreshIcemsIncidentFromPush);
         getSubject('isuReceived').subscribe(refreshIcemsIncidentFromPush);
 
-        // Start the connection now that every subject subscription above is
-        // registered (so nothing pushed right at connect time is silently
-        // dropped -- Subject has no replay) and myViewModel/config
-        // definitely exist (so signalrEnabled() reads the real saved value
-        // instead of racing construction and guessing "enabled" by
-        // default). getToken() resolves once, reliably, whenever the first
-        // token lands -- no separate "started" guard or hooking into the
-        // token-fetch callback needed.
-        (async () => {
+        // The SignalR connection is gated on the config modal: it starts only
+        // whenever the config modal closes -- never before. The modal opens
+        // on load (and on every later Config open) with the filters and the
+        // Live Updates toggle still editable; reconciling only on close means
+        // we negotiate against committed settings, and flipping the toggle
+        // back and forth mid-edit costs nothing until you close the window.
+        // By the time this runs, every subject subscription above is
+        // registered (so nothing pushed at connect time is silently dropped
+        // -- Subject has no replay) and myViewModel/config exist.
+        const reconcileSignalRToConfig = async () => {
             if (!myViewModel.config.signalrEnabled()) {
-                console.log('[SignalR] disabled via config -- not connecting');
+                myViewModel.signalrConnectionAttempted(false);
+                stopBeaconSignalRConnection();
                 return;
             }
             const negotiateUrl = params.signalr;
@@ -4101,11 +4110,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             await getToken();
+            if (!myViewModel.config.signalrEnabled()) return; // toggled off meanwhile
             // Closure over the module-level `token` var (kept current by
             // setToken() on every renewal), so each reconnect/negotiate
             // re-authenticates with whatever token is live at that moment.
+            // startBeaconSignalRConnection no-ops if already connected.
+            myViewModel.signalrConnectionAttempted(true);
             window.__beaconSignalRConnection = startBeaconSignalRConnection(negotiateUrl, () => token);
-        })();
+        };
 
         ko.applyBindings(myViewModel);
 
@@ -4127,6 +4139,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         //show config modal on load
         const configModalEl = document.getElementById('configModal');
+        // Start/stop the SignalR connection to match the Live Updates toggle
+        // every time the config modal closes -- see reconcileSignalRToConfig
+        // above. Fires on the initial on-load modal too, so nothing connects
+        // until the user dismisses it.
+        configModalEl.addEventListener('hidden.bs.modal', reconcileSignalRToConfig);
         bootstrap.Modal.getOrCreateInstance(configModalEl).show();
 
         // reveal the page now that bindings are applied and the modal is open,
@@ -4138,6 +4155,15 @@ document.addEventListener('DOMContentLoaded', function () {
             onSave: () => myViewModel.config.saveAndCloseAndLoad(),
             onClose: () => myViewModel.config.saveAndCloseAndLoad(),
             allowInInputs: true // text-heavy modal
+        });
+
+        // Compact NSW map in the config modal: shades every HQ that's in the
+        // "Only Show Incidents From" filter.
+        initHqCoverageMap({
+            config: myViewModel.config,
+            getToken,
+            apiHost,
+            userId: params.userId,
         });
 
         document.addEventListener("keydown", (e) => {

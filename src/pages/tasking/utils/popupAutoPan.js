@@ -6,14 +6,40 @@ const MIN_PADDING = 16;
 // Small breathing room beyond the edge of whatever control is docked there,
 // so a re-panned popup doesn't sit flush against it.
 const EXTRA_MARGIN = 8;
-// Cap how much of the map's own width/height the corner controls are
-// allowed to claim as padding, on each axis. Leaflet's autoPan can't
-// satisfy both the top and bottom (or left and right) padding at once if
-// together they leave no room for the popup -- it just snaps between
-// them, cutting the popup off. Keeping a comfortable share of the
-// viewport free of padding, no matter how much chrome piles into the
-// corners, keeps that always satisfiable.
+// Cap how much of the map's own width/height a single corner control is
+// allowed to claim as padding, on each axis -- a first-pass sanity bound
+// against one oversized control.
 const MAX_PADDING_SHARE = 0.35;
+
+// Leaflet's autoPan can only pan a popup fully into view when the two
+// opposite paddings plus the popup itself fit across the map -- i.e.
+// `paddingTopLeft + paddingBottomRight + popupSize <= mapSize` on that
+// axis. When the corner chrome (alerts banner, legend, the wide Esri
+// attribution line, ...) is big enough that they don't, Leaflet's
+// pan-to-fit math can't satisfy both edges and silently stops panning on
+// that axis: the popup opens clipped instead of pushed into view. On a
+// tall map the vertical padding almost always fits, so this shows up as
+// "vertical auto-pan works, horizontal doesn't" on a narrow map.
+//
+// To keep both axes satisfiable we reserve room for a popup of at least
+// this size and shrink the corner-derived padding (proportionally, never
+// below MIN_PADDING) to fit around it. A popup wider/taller than this
+// still degrades gracefully -- Leaflet pins it against the top-left
+// padding, clipping the far edge -- instead of not panning at all.
+const MIN_POPUP_WIDTH = 430;
+const MIN_POPUP_HEIGHT = 320;
+
+// Scale a pair of opposite paddings down so their sum leaves `reserve`
+// px free across `extent`, holding each at MIN_PADDING or above.
+function fitPadding(tl, br, extent, reserve) {
+    const budget = extent - reserve - 2 * MIN_PADDING;
+    const excess = (tl - MIN_PADDING) + (br - MIN_PADDING);
+    if (excess <= 0) return [tl, br];           // already at the floor
+    if (budget <= 0) return [MIN_PADDING, MIN_PADDING];
+    if (excess <= budget) return [tl, br];      // fits as-is
+    const k = budget / excess;
+    return [MIN_PADDING + (tl - MIN_PADDING) * k, MIN_PADDING + (br - MIN_PADDING) * k];
+}
 
 /**
  * Shared, mutable autoPan padding, kept in sync with whatever's docked in
@@ -82,10 +108,20 @@ export function initPopupAutoPan(map) {
         const maxVertical = mapRect.height * MAX_PADDING_SHARE;
         const maxHorizontal = mapRect.width * MAX_PADDING_SHARE;
 
-        topLeft.x = Math.min(left, maxHorizontal);
-        topLeft.y = Math.min(top, maxVertical);
-        bottomRight.x = Math.min(right, maxHorizontal);
-        bottomRight.y = Math.min(bottom, maxVertical);
+        left = Math.min(left, maxHorizontal);
+        right = Math.min(right, maxHorizontal);
+        top = Math.min(top, maxVertical);
+        bottom = Math.min(bottom, maxVertical);
+
+        // Keep opposite paddings + a popup fitting across each axis, so
+        // Leaflet's autoPan never stalls on that axis (see MIN_POPUP_* above).
+        [left, right] = fitPadding(left, right, mapRect.width, MIN_POPUP_WIDTH);
+        [top, bottom] = fitPadding(top, bottom, mapRect.height, MIN_POPUP_HEIGHT);
+
+        topLeft.x = left;
+        topLeft.y = top;
+        bottomRight.x = right;
+        bottomRight.y = bottom;
     }
 
     recompute();
