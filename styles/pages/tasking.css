@@ -935,12 +935,157 @@ tr.job:hover {
   margin-bottom: 0.75rem;
 }
 .selected-box {
-  min-height: 66px;
-  max-height: 220px;
-  overflow: auto;
+  min-height: 44px;
 }
 .pill {
   margin: 0.125rem;
+}
+
+/* Config modal, Data pane: the location filters (HQ search + selected
+   boxes) sit above the data-window controls, with a real NSW basemap
+   zoomed to the incident-filter HQs bleeding off the bottom-right corner
+   as a watermark. The map is non-interactive decoration. */
+#cfgPane-data {
+  position: relative;
+  min-height: 100%;
+}
+#cfgPane-data > .cfg-location,
+#cfgPane-data > .cfg-location-sep,
+#cfgPane-data > .cfg-data {
+  position: relative;
+  z-index: 1;
+}
+.cfg-location .form-label {
+  margin-bottom: 0.2rem;
+  font-size: 0.85rem;
+}
+.cfg-location > .row {
+  margin-top: 0.5rem;
+  margin-inline: 0;
+}
+.cfg-location-sep {
+  margin: 0.65rem 0;
+  border-color: var(--bs-border-color, #dee2e6);
+  opacity: 0.6;
+}
+
+/* Compact HQ pills + selected boxes so the Data pane fits with no scroll */
+.cfg-location .input-group > .form-control,
+.cfg-location .input-group > .btn {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  font-size: 0.85rem;
+}
+.cfg-location .card-header {
+  padding: 0.2rem 0.5rem;
+}
+.cfg-location .card-header .small {
+  font-size: 0.75rem;
+}
+.cfg-location .card-header .btn {
+  --bs-btn-padding-y: 0;
+  --bs-btn-padding-x: 0.4rem;
+  --bs-btn-font-size: 0.72rem;
+}
+/* No inner scrollbar: the box shows every pill and grows the pane (the
+   modal body is the only thing that scrolls). While collapsed it's capped
+   with a soft fade and the "Show all" button reveals the rest. */
+.cfg-location .selected-box {
+  min-height: 40px;
+  overflow: hidden;
+  padding: 0.3rem 0.4rem;
+}
+.cfg-location .selected-box.clipped {
+  max-height: 116px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+}
+.cfg-location .cfg-more-btn {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: 0;
+  background: none;
+  color: var(--bs-primary, #0d6efd);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0;
+}
+.cfg-location .cfg-more-btn:hover {
+  background: var(--bs-tertiary-bg, #f8f9fa);
+}
+.cfg-location .selected-box .pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.32rem;
+  margin: 0.09rem;
+  line-height: 1.3;
+}
+.cfg-location .selected-box .pill .btn-load-children {
+  font-size: 0.62rem;
+  padding: 0 1px;
+  margin-left: 0.1rem;
+}
+.cfg-location .selected-box .pill .btn-close {
+  margin-left: 0.28rem;
+  padding: 0;
+  transform: scale(0.62);
+}
+
+/* Data pane: the "Loading now" readout is gone, so the field stack keeps
+   its original single-column order and spacing across the full width. */
+#cfgPane-data .cfg-data {
+  display: block;
+  max-width: none;
+}
+
+.hq-coverage-watermark-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  /* follow the modal's rounded corner */
+  border-bottom-right-radius: var(--bs-modal-border-radius, 0.5rem);
+}
+.hq-coverage-watermark {
+  position: absolute;
+  right: -72px;
+  bottom: -72px;
+  width: 480px;
+  height: 400px;
+  max-width: 68%;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  /* very soft falloff from the bottom-right corner -- no hard edges */
+  --hq-fade: radial-gradient(150% 150% at 100% 100%,
+      #000 2%,
+      rgba(0, 0, 0, 0.6) 26%,
+      rgba(0, 0, 0, 0.9) 48%,
+      transparent 70%);
+  -webkit-mask-image: var(--hq-fade);
+  mask-image: var(--hq-fade);
+}
+.hq-coverage-watermark.is-visible {
+  opacity: 0.34;
+}
+.hq-coverage-watermark .leaflet-container {
+  background: transparent;
+  font: inherit;
+}
+/* Crossfade the shaded HQ boundaries when the filter changes rather than
+   letting them pop in/out (see hqCoverageMap.js swapBoundaries). */
+.hq-coverage-watermark path.hq-cov-poly {
+  transition: fill-opacity 0.45s ease, stroke-opacity 0.45s ease;
+}
+body.dark-mode .hq-coverage-watermark.is-visible {
+  opacity: 0.42;
+}
+@media (max-width: 991.98px) {
+  .hq-coverage-watermark-clip {
+    display: none;
+  }
 }
 
 .btn-load-children {
@@ -2204,9 +2349,11 @@ overflow: hidden;
   display: grid;
   grid-template-columns: 210px minmax(0, 1fr);
   gap: 0;
-  /* Fixed working area so switching tabs never resizes the modal --
-     short panes get trailing space, tall panes scroll inside .config-panes. */
-  height: clamp(360px, 58vh, 620px);
+  /* One forgiving working height, held across every rail tab so the modal
+     never resizes when you switch. Most panes fit inside it; only a pane
+     you deliberately grow (e.g. "Show all" on a long HQ list) scrolls, and
+     it scrolls inside .config-panes -- the pill boxes themselves don't. */
+  height: clamp(400px, 66vh, 660px);
 }
 
 .config-rail {
@@ -2219,8 +2366,12 @@ overflow: hidden;
 .config-panes {
   height: 100%;
   overflow-y: auto;
+  /* clip x so a Bootstrap .row's negative gutter margin can't add a stray
+     horizontal scrollbar against the one-sided padding. */
+  overflow-x: hidden;
   border-left: 1px solid #dee2e6;
   padding-left: 1.25rem;
+  padding-right: 0.25rem;
 }
 
 .config-rail .nav-link {

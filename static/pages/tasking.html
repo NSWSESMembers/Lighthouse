@@ -1947,153 +1947,6 @@
                 </div>
 
                 <div class="modal-body">
-                    <!-- TOP: search + two selected boxes NEXT TO the search -->
-                    <div class="row g-3 align-items-start top-band">
-                        <!-- Search area -->
-                        <div class="col-lg-12">
-                            <label class="form-label">Filter by Headquarters</label>
-                            <div class="input-group position-relative">
-                                <input id="locationSearch" type="search" class="form-control" placeholder="Search…"
-                                    autocomplete="off" data-bind="value: config.query, valueUpdate: 'afterkeydown', hasFocus: config.inputHasFocus,
-                                    event: { blur: config.closeDropdown }">
-                                <button id="clearSearch" class="btn btn-outline-secondary" type="button" title="Clear"
-                                    data-bind="click: config.clearSearch">&times;</button>
-
-                                <!-- Results "dropdown" rendered via KO -->
-                                <ul class="dropdown-menu w-100 show" id="searchDropdown" role="listbox"
-                                    data-bind="visible: config.dropdownOpen">
-
-                                    <!-- Loading state -->
-                                    <!-- ko if: config.searching -->
-                                    <li>
-                                        <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2"
-                                            style="pointer-events:none;">
-                                            <i class="fa fa-spinner fa-spin me-2"></i>
-                                            Searching…
-                                        </div>
-                                    </li>
-                                    <!-- /ko -->
-
-                                    <!-- Not loading -->
-                                    <!-- ko ifnot: config.searching -->
-                                    <!-- Results -->
-                                    <!-- ko if: config.results().length > 0 -->
-                                    <!-- ko foreach: config.results -->
-                                    <li>
-                                        <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
-                                            data-bind="click: $root.config.addTeamAndIncident">
-                                            <span class="text-truncate"
-                                                data-bind="text: name, attr: { title: name }"></span>
-                                            <div class="btn-group btn-group-sm ms-2">
-                                                <button type="button" class="btn btn-outline-primary"
-                                                    data-bind="click: $root.config.addTeam, clickBubble: false, css: { 'active': teamSelected() }">
-                                                    Teams
-                                                </button>
-                                                <button type="button" class="btn btn-outline-success"
-                                                    data-bind="click: $root.config.addIncident, clickBubble: false, css: { 'active': incidentSelected() }">
-                                                    Incidents
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </li>
-                                    <!-- /ko -->
-                                    <!-- /ko -->
-
-                                    <!-- No results -->
-                                    <!-- ko if: config.results().length === 0 -->
-                                    <li>
-                                        <div class="dropdown-item text-muted text-center py-2"
-                                            style="pointer-events:none;">
-                                            No results found.
-                                        </div>
-                                    </li>
-                                    <!-- /ko -->
-                                    <!-- /ko -->
-                                </ul>
-
-
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row g-3 align-items-start top-band"></div>
-                    <!-- Selected filters (two boxes) -->
-                    <div class="row g-3">
-                        <div class="col-6">
-                            <div class="card">
-                                <div class="card-header py-1 d-flex justify-content-between align-items-center">
-                                    <span class="small fw-semibold">Only Load Teams Attached To:</span>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-primary me-2"
-                                            data-bind="text: config.teamFilters().length"></span>
-                                        <button id="clearTeams" class="btn btn-sm btn-outline-secondary"
-                                            data-bind="click: config.clearTeams, enable: config.teamFilters().length">Clear</button>
-                                    </div>
-                                </div>
-                                <!-- Selected filters: TEAMS -->
-                                <div data-bind="if: config.teamFilters().length === 0">
-                                    <div class="card-body py-2 selected-box">
-                                        <span class="text-muted small">No Filters Applied - Teams from all units will be
-                                            fetched</span>
-                                    </div>
-                                </div>
-                                <div data-bind="if: config.teamFilters().length > 0">
-                                    <div class="card-body py-2 selected-box" data-bind="foreach: config.teamFilters">
-                                        <span
-                                            class="badge text-bg-primary pill d-inline-flex align-items-center me-1 mb-1">
-                                            <span class="me-1" data-bind="text: name"></span>
-                                            <!-- Only show sitemap if entityType == 2 -->
-                                            <button type="button" class="btn btn-xs btn-load-children"
-                                                title="Load Children"
-                                                data-bind="visible: entityType == 2, click: $root.config.loadChildrenForTeam">
-                                                <i class="fa fa-sitemap" aria-hidden="true"></i>
-                                            </button>
-                                            <button type="button" class="btn-close btn-close-white" aria-label="Remove"
-                                                data-bind="click: $root.config.removeTeam"></button>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="card">
-                                <div class="card-header py-1 d-flex justify-content-between align-items-center">
-                                    <span class="small fw-semibold">Only Show Incidents From: </span>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-success me-2"
-                                            data-bind="text: config.incidentFilters().length"></span>
-                                        <button id="clearIncidents" class="btn btn-sm btn-outline-secondary"
-                                            data-bind="click: config.clearIncidents, enable: config.incidentFilters().length">Clear</button>
-                                    </div>
-                                </div>
-                                <!-- Selected filters: INCIDENTS -->
-                                <div data-bind="if: config.incidentFilters().length === 0">
-                                    <div class="card-body py-2 selected-box">
-                                        <span class="text-muted small">No Filters Applied - Incidents from all units
-                                            will be fetched</span>
-                                    </div>
-                                </div>
-                                <div data-bind="if: config.incidentFilters().length > 0">
-                                    <div class="card-body py-2 selected-box"
-                                        data-bind="foreach: config.incidentFilters">
-                                        <span
-                                            class="badge text-bg-success pill d-inline-flex align-items-center me-1 mb-1">
-                                            <span class="me-1" data-bind="text: name"></span>
-                                            <button type="button" class="btn btn-xs btn-outline-light btn-load-children"
-                                                title="Load Children"
-                                                data-bind="visible: entityType == 2, click: $root.config.loadChildrenForIncident">
-                                                <i class="fa fa-sitemap" aria-hidden="true"></i>
-                                            </button>
-                                            <button type="button" class="btn-close btn-close-white" aria-label="Remove"
-                                                data-bind="click: $root.config.removeIncident"></button>
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <!-- CONFIG -->
                     <!-- CONFIG -->
                     <div class="card config-card mt-3">
                         <div class="card-body">
@@ -2143,6 +1996,147 @@
                                     </ul>
                                     <div class="tab-content config-panes">
                                     <div class="tab-pane fade show active" id="cfgPane-data" role="tabpanel" aria-labelledby="cfgTab-data" tabindex="0">
+                                        <!-- Decorative: real NSW basemap, zoomed to the incident-filter HQs,
+                                             bleeding off the bottom-right corner. Non-interactive. -->
+                                        <div class="hq-coverage-watermark-clip" aria-hidden="true">
+                                            <div id="hqCoverageWatermark" class="hq-coverage-watermark"></div>
+                                        </div>
+
+                                        <!-- Location filters: HQ search + the two selected-filter boxes -->
+                                        <div class="cfg-location">
+                                            <label class="form-label">Filter by Headquarters</label>
+                                            <div class="input-group position-relative">
+                                                <input id="locationSearch" type="search" class="form-control" placeholder="Search…"
+                                                    autocomplete="off" data-bind="value: config.query, valueUpdate: 'afterkeydown', hasFocus: config.inputHasFocus,
+                                                    event: { blur: config.closeDropdown }">
+                                                <button id="clearSearch" class="btn btn-outline-secondary" type="button" title="Clear"
+                                                    data-bind="click: config.clearSearch">&times;</button>
+
+                                                <ul class="dropdown-menu w-100 show" id="searchDropdown" role="listbox"
+                                                    data-bind="visible: config.dropdownOpen">
+                                                    <!-- ko if: config.searching -->
+                                                    <li>
+                                                        <div class="dropdown-item text-muted d-flex align-items-center px-2 py-2"
+                                                            style="pointer-events:none;">
+                                                            <i class="fa fa-spinner fa-spin me-2"></i>
+                                                            Searching…
+                                                        </div>
+                                                    </li>
+                                                    <!-- /ko -->
+                                                    <!-- ko ifnot: config.searching -->
+                                                    <!-- ko if: config.results().length > 0 -->
+                                                    <!-- ko foreach: config.results -->
+                                                    <li>
+                                                        <div class="dropdown-item d-flex justify-content-between align-items-center px-2 py-1"
+                                                            data-bind="click: $root.config.addTeamAndIncident">
+                                                            <span class="text-truncate"
+                                                                data-bind="text: name, attr: { title: name }"></span>
+                                                            <div class="btn-group btn-group-sm ms-2">
+                                                                <button type="button" class="btn btn-outline-primary"
+                                                                    data-bind="click: $root.config.addTeam, clickBubble: false, css: { 'active': teamSelected() }">
+                                                                    Teams
+                                                                </button>
+                                                                <button type="button" class="btn btn-outline-success"
+                                                                    data-bind="click: $root.config.addIncident, clickBubble: false, css: { 'active': incidentSelected() }">
+                                                                    Incidents
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </li>
+                                                    <!-- /ko -->
+                                                    <!-- /ko -->
+                                                    <!-- ko if: config.results().length === 0 -->
+                                                    <li>
+                                                        <div class="dropdown-item text-muted text-center py-2"
+                                                            style="pointer-events:none;">
+                                                            No results found.
+                                                        </div>
+                                                    </li>
+                                                    <!-- /ko -->
+                                                    <!-- /ko -->
+                                                </ul>
+                                            </div>
+
+                                            <div class="row g-3 mt-0">
+                                                <div class="col-6">
+                                                    <div class="card">
+                                                        <div class="card-header py-1 d-flex justify-content-between align-items-center">
+                                                            <span class="small fw-semibold">Only Load Teams Attached To:</span>
+                                                            <div class="d-flex align-items-center">
+                                                                <span class="badge bg-primary me-2"
+                                                                    data-bind="text: config.teamFilters().length"></span>
+                                                                <button id="clearTeams" class="btn btn-sm btn-outline-secondary"
+                                                                    data-bind="click: config.clearTeams, enable: config.teamFilters().length">Clear</button>
+                                                            </div>
+                                                        </div>
+                                                        <div data-bind="if: config.teamFilters().length === 0">
+                                                            <div class="card-body py-2 selected-box">
+                                                                <span class="text-muted small">No Filters Applied - Teams from all units will be
+                                                                    fetched</span>
+                                                            </div>
+                                                        </div>
+                                                        <div data-bind="if: config.teamFilters().length > 0">
+                                                            <div class="card-body py-2 selected-box"
+                                                                data-bind="foreach: config.teamFilters, css: { clipped: config.teamsBoxClipped() }">
+                                                                <span
+                                                                    class="badge text-bg-primary pill d-inline-flex align-items-center me-1 mb-1">
+                                                                    <span class="me-1" data-bind="text: name"></span>
+                                                                    <button type="button" class="btn btn-xs btn-load-children"
+                                                                        title="Load Children"
+                                                                        data-bind="visible: entityType == 2, click: $root.config.loadChildrenForTeam">
+                                                                        <i class="fa fa-sitemap" aria-hidden="true"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn-close btn-close-white" aria-label="Remove"
+                                                                        data-bind="click: $root.config.removeTeam"></button>
+                                                                </span>
+                                                            </div>
+                                                            <button type="button" class="btn cfg-more-btn"
+                                                                data-bind="visible: config.showTeamsMore, click: config.toggleTeamsExpanded, text: config.teamsMoreLabel"></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="card">
+                                                        <div class="card-header py-1 d-flex justify-content-between align-items-center">
+                                                            <span class="small fw-semibold">Only Show Incidents From: </span>
+                                                            <div class="d-flex align-items-center">
+                                                                <span class="badge bg-success me-2"
+                                                                    data-bind="text: config.incidentFilters().length"></span>
+                                                                <button id="clearIncidents" class="btn btn-sm btn-outline-secondary"
+                                                                    data-bind="click: config.clearIncidents, enable: config.incidentFilters().length">Clear</button>
+                                                            </div>
+                                                        </div>
+                                                        <div data-bind="if: config.incidentFilters().length === 0">
+                                                            <div class="card-body py-2 selected-box">
+                                                                <span class="text-muted small">No Filters Applied - Incidents from all units
+                                                                    will be fetched</span>
+                                                            </div>
+                                                        </div>
+                                                        <div data-bind="if: config.incidentFilters().length > 0">
+                                                            <div class="card-body py-2 selected-box"
+                                                                data-bind="foreach: config.incidentFilters, css: { clipped: config.incidentsBoxClipped() }">
+                                                                <span
+                                                                    class="badge text-bg-success pill d-inline-flex align-items-center me-1 mb-1">
+                                                                    <span class="me-1" data-bind="text: name"></span>
+                                                                    <button type="button" class="btn btn-xs btn-outline-light btn-load-children"
+                                                                        title="Load Children"
+                                                                        data-bind="visible: entityType == 2, click: $root.config.loadChildrenForIncident">
+                                                                        <i class="fa fa-sitemap" aria-hidden="true"></i>
+                                                                    </button>
+                                                                    <button type="button" class="btn-close btn-close-white" aria-label="Remove"
+                                                                        data-bind="click: $root.config.removeIncident"></button>
+                                                                </span>
+                                                            </div>
+                                                            <button type="button" class="btn cfg-more-btn"
+                                                                data-bind="visible: config.showIncidentsMore, click: config.toggleIncidentsExpanded, text: config.incidentsMoreLabel"></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <hr class="cfg-location-sep">
+
                                         <div class="cfg-data">
                                             <div class="cfg-data-fields">
                                                 <div class="cfg-field">
@@ -2211,19 +2205,8 @@
                                                             data-bind="text: config.liveUpdatesLabel,
                                                                        css: { on: config.signalrEnabled(), off: !config.signalrEnabled() }"></span>
                                                     </div>
-                                                    <div class="d">Beacon pushes every incident, team &amp; tasking change to the board as it happens &mdash; this is what keeps LAD current. Restart LAD after changing.</div>
+                                                    <div class="d">Beacon pushes live updates to LAD. Incident, team, and tasking changes appear in real-time.</div>
                                                 </div>
-                                            </div>
-
-                                            <div class="cfg-readout">
-                                                <div class="cfg-readout-h">Loading now</div>
-                                                <div class="cfg-readout-range" data-bind="text: config.fetchWindowRange"></div>
-                                                <div class="cfg-readout-sub"><span data-bind="text: config.fetchWindowDays"></span>-day window</div>
-                                                <div class="cfg-readout-rows">
-                                                    <div><span>Live updates</span><span data-bind="text: config.liveUpdatesLabel"></span></div>
-                                                    <div><span>Full refresh</span><span data-bind="text: config.refreshCadence"></span></div>
-                                                </div>
-                                                <div class="cfg-readout-note" data-bind="text: config.dataReadoutNote"></div>
                                             </div>
                                         </div>
                                     </div>

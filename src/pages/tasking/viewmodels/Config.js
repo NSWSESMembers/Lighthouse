@@ -362,6 +362,23 @@ export function ConfigVM(root, deps) {
     // Selected location filters
     self.teamFilters = ko.observableArray([]);     // [{id, name, entityType}]
     self.incidentFilters = ko.observableArray([]); // [{id, name, entityType}]
+
+    // Selected-filter boxes collapse past this many pills; a "…more" button
+    // toggles the expanded state.
+    self.locationPillCollapseAt = 9;
+    self.teamsExpanded = ko.observable(false);
+    self.incidentsExpanded = ko.observable(false);
+    self.toggleTeamsExpanded = () => self.teamsExpanded(!self.teamsExpanded());
+    self.toggleIncidentsExpanded = () => self.incidentsExpanded(!self.incidentsExpanded());
+    self.showTeamsMore = ko.pureComputed(() => self.teamFilters().length > self.locationPillCollapseAt);
+    self.showIncidentsMore = ko.pureComputed(() => self.incidentFilters().length > self.locationPillCollapseAt);
+    // Clip (fade + cap height, no inner scrollbar) only while collapsed.
+    self.teamsBoxClipped = ko.pureComputed(() => self.showTeamsMore() && !self.teamsExpanded());
+    self.incidentsBoxClipped = ko.pureComputed(() => self.showIncidentsMore() && !self.incidentsExpanded());
+    self.teamsMoreLabel = ko.pureComputed(() =>
+        self.teamsExpanded() ? 'Show fewer' : ('Show all ' + self.teamFilters().length));
+    self.incidentsMoreLabel = ko.pureComputed(() =>
+        self.incidentsExpanded() ? 'Show fewer' : ('Show all ' + self.incidentFilters().length));
     self.allowedIncidentTypeIds = ko.pureComputed(() =>
         new Set(self.incidentTypeFilter()
             .map(t => Enum.IncidentType[t]?.Id)
@@ -1443,8 +1460,8 @@ export function ConfigVM(root, deps) {
     };
     const removeById = (arr, id) => arr.remove(x => x.id === id);
 
-    self.clearTeams = () => self.teamFilters.removeAll();
-    self.clearIncidents = () => self.incidentFilters.removeAll();
+    self.clearTeams = () => { self.teamFilters.removeAll(); self.teamsExpanded(false); };
+    self.clearIncidents = () => { self.incidentFilters.removeAll(); self.incidentsExpanded(false); };
     self.clearSectors = () => self.sectorFilters.removeAll();
 
     // Search (debounced)
