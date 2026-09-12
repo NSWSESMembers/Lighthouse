@@ -82,6 +82,18 @@ function restoreSizes() {
 applyLayoutPresetClass(currentLayoutPreset);
 restoreSizes();
 
+// The one-shot `setTimeout(invalidateMap, 0)` calls above assume layout has
+// settled by the next tick, but async content (KO bindings, web fonts, the
+// config-modal Data pane, ...) can still resize the map container after
+// that -- leaving Leaflet's cached size wrong until something else happens
+// to call invalidateSize() again (e.g. the user drags a splitter). Watch
+// the map container itself so any real size change -- however it happens --
+// keeps Leaflet's cached size correct without relying on a guessed delay.
+if (typeof ResizeObserver !== 'undefined') {
+  const mapContainerRO = new ResizeObserver(invalidateMap);
+  mapContainerRO.observe(map.getContainer());
+}
+
 // ===== Left↔Right (vertical splitter) =====
 let resizingLR = false, rafLR = 0;
 
