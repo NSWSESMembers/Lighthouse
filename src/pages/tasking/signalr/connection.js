@@ -21,6 +21,11 @@ let connection = null;
 
 // 'connecting' | 'connected' | 'reconnecting' | 'disconnected'
 export const connectionStatus = new Subject();
+
+// Fires (with the event name) every time ANY known push lands, regardless of
+// type -- a single hook point for a UI "heartbeat" that just wants to know
+// the feed is alive, without subscribing to every individual subject.
+export const messageReceived = new Subject();
 let currentStatus = 'disconnected';
 function setStatus(status) {
     currentStatus = status;
@@ -80,6 +85,7 @@ export function startBeaconSignalRConnection(negotiateUrl, getAccessToken) {
     KNOWN_EVENTS.forEach((eventName) => {
         connection.on(eventName, (payload) => {
             getSubject(eventName).next(payload);
+            messageReceived.next(eventName);
         });
     });
 

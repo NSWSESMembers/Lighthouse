@@ -3,7 +3,7 @@ global.jQuery = $;
 
 import BeaconClient from '../../shared/BeaconClient.js';
 const BeaconToken = require('../lib/shared_token_code.js');
-import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, getConnectionStatus } from './signalr/connection.js';
+import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, getConnectionStatus, messageReceived } from './signalr/connection.js';
 import { setPushModeEnabled } from './signalr/pushMode.js';
 import { getSubject } from './signalr/subjects.js';
 
@@ -3891,6 +3891,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 case 'disconnected': return 'Live updates disconnected — data may be out of date';
                 default: return '';
             }
+        });
+
+        // Flash the existing per-pane reload buttons (fetchAllTeamData/
+        // fetchAllJobsData's fa-sync icon, already wired to flashOnChange
+        // elsewhere in the app) on a relevant SignalR push, rather than
+        // adding a new indicator -- a team-related push flashes the Teams
+        // toolbar's reload button, a job-related one flashes the Jobs
+        // toolbar's, mirroring exactly what a manual click there would
+        // refresh. taskingUpdated/taskingCreated touch both since a tasking
+        // links a job and a team.
+        const TEAM_PUSH_EVENTS = new Set(['teamCreated', 'teamUpdated', 'taskingUpdated', 'taskingCreated']);
+        const JOB_PUSH_EVENTS = new Set([
+            'jobCreated', 'jobUpdated', 'jobRejected', 'opsLogUpdated', 'taskingUpdated', 'taskingCreated',
+            'NotificationAcknowledged', 'IUMReceived', 'UrgentIUMReceived', 'rsuReceived', 'iuaReceived', 'isuReceived',
+        ]);
+        myViewModel.teamsLivePulse = ko.observable(0);
+        myViewModel.jobsLivePulse = ko.observable(0);
+        messageReceived.subscribe((eventName) => {
+            if (TEAM_PUSH_EVENTS.has(eventName)) myViewModel.teamsLivePulse(myViewModel.teamsLivePulse() + 1);
+            if (JOB_PUSH_EVENTS.has(eventName)) myViewModel.jobsLivePulse(myViewModel.jobsLivePulse() + 1);
         });
 
         // Wire pushed SignalR events into the live view model. Polling stays
