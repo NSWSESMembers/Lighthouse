@@ -184,9 +184,10 @@
                                     </button>
                             </ul>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" data-bind="
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh (also flashes on a live team update)" data-bind="
                             click: fetchAllTeamData,
-                            disable: teamsLoading">
+                            disable: teamsLoading,
+                            flashOnChange: teamsLivePulse">
                             <i class="fa fa-sync" data-bind="css: { 'fa-spin': teamsLoading }"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Page Config"
@@ -1008,9 +1009,10 @@
                                 </li>
                             </ul>
                         </div>
-                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" data-bind="
+                        <button class="btn btn-sm btn-outline-secondary py-0 px-2" title="Refresh (also flashes on a live job update)" data-bind="
                             click: fetchAllJobsData,
-                            disable: jobsLoading">
+                            disable: jobsLoading,
+                            flashOnChange: jobsLivePulse">
                             <i class="fa fa-sync" data-bind="css: { 'fa-spin': jobsLoading }"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Page Config"
