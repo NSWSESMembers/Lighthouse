@@ -74,6 +74,30 @@ export const popupPadding = {
  *
  * Call once, right after the map is created.
  */
+// A corner wrapper's own getBoundingClientRect() misses descendants that
+// escape its layout box -- e.g. the layers-drawer flyout, which is
+// `position: absolute; left: 100%` so opening it doesn't push the other
+// top-left controls down. Union in every descendant's rect too, so an
+// overlay like that still counts as occupying screen space even though it
+// never grows its ancestor's own box.
+function cornerRect(corner) {
+    const rect = corner.getBoundingClientRect();
+    let top = rect.top, left = rect.left, right = rect.right, bottom = rect.bottom;
+    let any = rect.width > 0 && rect.height > 0;
+
+    corner.querySelectorAll('*').forEach((child) => {
+        const r = child.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) return;
+        any = true;
+        top = Math.min(top, r.top);
+        left = Math.min(left, r.left);
+        right = Math.max(right, r.right);
+        bottom = Math.max(bottom, r.bottom);
+    });
+
+    return any ? { top, left, right, bottom } : null;
+}
+
 export function initPopupAutoPan(map) {
     const { topLeft, bottomRight } = popupPadding;
 
@@ -84,14 +108,15 @@ export function initPopupAutoPan(map) {
     });
 
     const container = map.getContainer();
+    const corners = container.querySelectorAll('.leaflet-top, .leaflet-bottom');
 
     function recompute() {
         const mapRect = container.getBoundingClientRect();
         let left = MIN_PADDING, top = MIN_PADDING, right = MIN_PADDING, bottom = MIN_PADDING;
 
-        container.querySelectorAll('.leaflet-top, .leaflet-bottom').forEach((corner) => {
-            const rect = corner.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) return; // nothing docked in this corner
+        corners.forEach((corner) => {
+            const rect = cornerRect(corner);
+            if (!rect) return; // nothing docked in this corner
 
             if (corner.classList.contains('leaflet-top')) {
                 top = Math.max(top, rect.bottom - mapRect.top + EXTRA_MARGIN);
@@ -132,8 +157,24 @@ export function initPopupAutoPan(map) {
     // polling.
     if (typeof ResizeObserver !== 'undefined') {
         const ro = new ResizeObserver(recompute);
-        container.querySelectorAll('.leaflet-top, .leaflet-bottom').forEach((corner) => ro.observe(corner));
+        corners.forEach((corner) => ro.observe(corner));
     }
+
+    // Some overlays (e.g. the layers-drawer flyout) toggle open/closed via
+    // a class like `d-none` on an absolutely-positioned descendant, which
+    // never changes the corner wrapper's own box size -- so the
+    // ResizeObserver above never fires for them. Watch for that directly,
+    // scoped to just the corner controls (not the whole map/marker layer).
+    if (typeof MutationObserver !== 'undefined') {
+        const mo = new MutationObserver(recompute);
+        corners.forEach((corner) => mo.observe(corner, {
+            attributes: true,
+            attributeFilter: ['class', 'style'],
+            subtree: true,
+            childList: true,
+        }));
+    }
+
     window.addEventListener('resize', recompute);
 
     return { topLeft, bottomRight, recompute };
