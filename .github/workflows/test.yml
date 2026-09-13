@@ -1,0 +1,16 @@
+name: Tests
+on:
+  pull_request:
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Install modules
+        run: npm install
+      - name: Test
+        run: npm test
