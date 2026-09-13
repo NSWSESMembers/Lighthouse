@@ -133,7 +133,12 @@ export function Tasking(data = {}) {
     };
 
     self.setJob = function (newJob) {
-        const prev = self.job;
+        // self.job starts life as the ko.observable above, but every real
+        // caller (main.js's _linkTaskingAndJob) replaces it with a plain Job
+        // object reference on first link ("set shared ref") -- read/write
+        // through that same plain-property convention rather than treating
+        // self.job as an observable, or the previous job's value is lost.
+        const prev = typeof self.job === 'function' ? self.job() : self.job;
         if (prev === newJob) return;
 
         // detach from previous job list
@@ -142,7 +147,7 @@ export function Tasking(data = {}) {
         }
 
         // set new ref
-        self.job(newJob || null);
+        self.job = newJob || null;
 
         // attach to new job list without recursion
         if (newJob && typeof newJob.taskings === 'function') {
