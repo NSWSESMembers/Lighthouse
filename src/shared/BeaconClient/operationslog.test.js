@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { request } from './core/request.js';
-import { search, get, create, unresolvedActionsLog } from './operationslog.js';
+import { search, get, create, resolve, unresolvedActionsLog } from './operationslog.js';
 
 vi.mock('./core/request.js', async () => {
   const actual = await vi.importActual('./core/request.js');
@@ -47,6 +47,27 @@ describe('create', () => {
     const [url, opts] = vi.mocked(request).mock.calls[0];
     expect(url).toBe('https://beacon.test/Api/v1/OperationsLog');
     expect(opts).toMatchObject({ method: 'POST', token: 'tok', form: { Text: 'note' } });
+  });
+});
+
+describe('resolve', () => {
+  it('PUTs a form body with the resolution text, defaulting the other fields', async () => {
+    await resolve(276535, 'test resolution', ctx);
+    const [url, opts] = vi.mocked(request).mock.calls[0];
+    expect(url).toBe('https://beacon.test/Api/v1/OperationsLog/276535/Resolve');
+    expect(opts).toMatchObject({
+      method: 'PUT',
+      token: 'tok',
+      form: { Id: 276535, Text: 'test resolution', FurtherActionRequired: false, ActionReminder: '' },
+    });
+  });
+
+  it('accepts a payload object and lets it override the defaults', async () => {
+    await resolve(276535, { Text: 'note', FurtherActionRequired: true }, ctx);
+    const [, opts] = vi.mocked(request).mock.calls[0];
+    expect(opts).toMatchObject({
+      form: { Id: 276535, Text: 'note', FurtherActionRequired: true, ActionReminder: '' },
+    });
   });
 });
 

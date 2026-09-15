@@ -43,6 +43,26 @@ export function create(payload, ctx = {}) {
 }
 
 /**
+ * Resolve an "action required" Ops Log entry.
+ *
+ * @param {string|number} entryId
+ * @param {Record<string, unknown>|string} resolution  resolution text, or a
+ *        payload of form fields (Text, FurtherActionRequired, ActionReminder)
+ * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}  the updated entry
+ */
+export function resolve(entryId, resolution, ctx = {}) {
+  const { host, token, signal } = ctx;
+  const fields = typeof resolution === 'string' ? { Text: resolution } : resolution;
+  return request(host + '/Api/v1/OperationsLog/' + entryId + '/Resolve', {
+    method: 'PUT',
+    token,
+    signal,
+    form: { Id: entryId, FurtherActionRequired: false, ActionReminder: '', ...fields },
+  });
+}
+
+/**
  * Unresolved "action required" Ops Log entries for a job.
  *
  * @param {object} job  a Job view-model ({ id(), jobReceived() })
