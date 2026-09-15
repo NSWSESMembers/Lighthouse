@@ -26,6 +26,7 @@ import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
 import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
+import { OpsLogResolveModalVM } from "./viewmodels/OpsLogResolveModalVM.js";
 import { TrackableAssetsModalVM } from "./viewmodels/TrackableAssetsModalVM.js";
 import IncidentImagesModalVM from "./viewmodels/IncidentImagesModalVM";
 
@@ -564,6 +565,27 @@ function VM() {
             allowInInputs: true
         });
     };
+    self.opsLogResolveVM = new OpsLogResolveModalVM(self);
+
+    self.attachOpsLogResolveModal = function (entry) {
+        if (!entry) return;
+        const modalEl = document.getElementById("OpsLogResolveModal");
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.opsLogResolveVM;
+        vm.modalInstance = modal;
+
+        vm.open(entry, self.jobTimelineVM.job());
+        modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => vm.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true
+        });
+    };
+
     self.jobTimelineVM = new JobTimeline(self);
 
     // --- TABLE SORTING MAGIC ---
@@ -2182,6 +2204,11 @@ function VM() {
             showAlert("Failed to create ops log entry.", "danger", 5000);
             cb(null);
         }
+    }
+
+    self.resolveOpsLogEntry = async function (entryId, resolution) {
+        const t = await getToken();   // blocks here until token is ready
+        return await BeaconClient.operationslog.resolve(entryId, resolution, beaconCtx(t));
     }
 
     // Fetches a single Ops Log entry by id. Used by the collaborative map

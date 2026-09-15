@@ -1217,9 +1217,10 @@
                                                             <!-- New line to show tag.Name if actionRequiredTags has length -->
                                                             <div id="actionRequiredTags"
                                                                 class="text-center d-flex flex-wrap justify-content-center mt-1"
-                                                                data-bind="visible: j.actionRequiredTags().length > 0, foreach: j.actionRequiredTagsDeduplicated">
+                                                                data-bind="visible: j.actionRequiredTags().length > 0, click: $root.attachJobTimelineModal, clickBubble: false, foreach: j.actionRequiredTagsDeduplicated"
+                                                                role="button" title="Open timeline" style="cursor: pointer;">
                                                                 <span data-bind="class: returnTagClass"
-                                                                    style="cursor: default; width: 95%; margin-left: 5px; text-align: center;">
+                                                                    style="cursor: pointer; width: 95%; margin-left: 5px; text-align: center;">
                                                                     <i data-bind="class: returnTagIcon"></i> <span
                                                                         data-bind="text: name"></span>
                                                                 </span>
@@ -3983,6 +3984,15 @@
                                                 <span
                                                     class="badge rounded-pill bg-warning-subtle text-warning-emphasis me-1"
                                                     data-bind="visible: important">Important</span>
+                                                <span
+                                                    class="badge rounded-pill bg-danger-subtle text-danger-emphasis me-1"
+                                                    data-bind="visible: actionRequired">Action Required</span>
+                                                <button type="button"
+                                                    class="badge bg-success border-0"
+                                                    style="cursor: pointer;"
+                                                    data-bind="visible: actionRequired, click: $root.attachOpsLogResolveModal">
+                                                    Resolve
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -4081,6 +4091,48 @@
                 </div>
 
 
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Ops Log Resolve Modal (must stay after Job Timeline Modal in the DOM: same z-index as
+         other .modal elements, so a later sibling paints on top when both are shown stacked) -->
+    <div class="modal fade" id="OpsLogResolveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content" data-bind="with: opsLogResolveVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title">
+                        Resolve action required — <span data-bind="text: entrySubject"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-2">
+                        <label class="form-label">Resolution:</label>
+                        <textarea class="form-control" rows="3"
+                            data-bind="textInput: text" placeholder="Enter resolution notes (required)"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"
+                        data-bind="disable: isSubmitting">
+                        Cancel
+                    </button>
+
+                    <button type="button" class="btn btn-primary"
+                        data-bind="click: submit, enable: canSubmit, disable: isSubmitting">
+                        <!-- ko if: isSubmitting -->
+                        <i class="fa fa-spinner fa-spin me-2"></i>Saving…
+                        <!-- /ko -->
+                        <!-- ko ifnot: isSubmitting -->
+                        Resolve
+                        <!-- /ko -->
+                    </button>
+                </div>
             </div>
         </div>
     </div>
