@@ -34,6 +34,7 @@ import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
 import { SpotlightSearchVM } from "./components/spotlightSearch.js";
 import { registerAcronymTextBinding } from "./components/acronymText.js";
+import { matchesHotkeyEvent } from "./utils/hotkeyMatch.js";
 
 
 import { Asset } from './models/Asset.js';
@@ -3649,14 +3650,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         document.addEventListener("keydown", (e) => {
-            // Cmd+K / Ctrl+K to open Spotlight Search
-            const isK = (e.key || "").toLowerCase() === "k";
-            if (!isK) return;
-
-            const isCmd = e.metaKey === true;
-            const isCtrl = e.ctrlKey === true;
-
-            if (!(isCmd || isCtrl)) return;
+            // Opens Spotlight Search on the configured hotkey (Cmd/Ctrl+K
+            // by default, or a custom combo from the Appearance config tab).
+            if (myViewModel.config.spotlightHotkeyCapturing()) return;
+            if (!matchesHotkeyEvent(myViewModel.config.spotlightHotkey(), e)) return;
 
             // don't stack if already open
             const open = document.getElementById("SpotlightSearchModal")?.classList.contains("show");
