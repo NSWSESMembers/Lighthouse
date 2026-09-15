@@ -16,24 +16,20 @@ export function search(filters, startDate, endDate, ctx = {}) {
 
   let url = host + '/Api/v1/NonIncident/Search?LighthouseFunction=GetNITCJSONfromBeacon&userId=' + userId + '&StartDate=' + startDate.toISOString() + '&EndDate=' + endDate.toISOString();
 
-  let s = '';
   if (typeof filters.EntityIds !== 'undefined') {
     filters.EntityIds.split(',').forEach((d) => {
-      s += '&EntityIds%5B%5D=' + d;
+      url += '&EntityIds%5B%5D=' + d;
     });
-    url += s;
   }
   if (typeof filters.NonIncidentTypeIds !== 'undefined') {
     filters.NonIncidentTypeIds.split(',').forEach((d) => {
-      s += '&NonIncidentTypeIds%5B%5D=' + d;
+      url += '&NonIncidentTypeIds%5B%5D=' + d;
     });
-    url += s;
   }
   if (typeof filters.TagIds !== 'undefined') {
     filters.TagIds.split(',').forEach((d) => {
-      s += '&TagIds%5B%5D=' + d;
+      url += '&TagIds%5B%5D=' + d;
     });
-    url += s;
   }
   if (typeof filters.IncludeCompleted !== 'undefined') {
     url += '&IncludeCompleted=' + filters.IncludeCompleted;

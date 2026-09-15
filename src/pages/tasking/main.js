@@ -45,6 +45,16 @@ import { Tag } from "./models/Tag.js";
 import { Enum } from './utils/enum.js';
 
 import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
+import { jobMatchesConfigFilters, teamMatchesConfigFilters, filterDescriptionsToEnumIds } from './utils/configFilters.js';
+import { computeMatchedAssetsForTeam } from './utils/assetTeamMatching.js';
+import { compareByKey, compareJobsByKey } from './utils/tableSort.js';
+import { buildJobSuggestionPool, buildJobSearchSuggestions, filterJobsBySearchTerm } from './utils/searchMatching.js';
+import { createMarkerBatcher } from './utils/markerBatcher.js';
+import { mapJobNotificationToJobJson, withJobReceivedFallback } from './utils/pushNotificationMapping.js';
+import { buildSmsRecipientsFromTeam, buildSmsPrefillFromTasking, buildSmsPrefillFromJob } from './utils/smsHelpers.js';
+import { decodeJwtSub } from './utils/jwt.js';
+import { debounce } from './utils/debounce.js';
+import { parseSearchParams } from './utils/urlParams.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
 import { initHqCoverageMap } from './components/hqCoverageMap.js';
@@ -190,15 +200,7 @@ const defaultRedSvgIcon = L.divIcon({
 // control, which is exactly why enforcement lives server-side.
 let currentMemberId = null;
 
-function decodeJwtSub(jwt) {
-    try {
-        const payloadB64 = jwt.split('.')[1];
-        const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
-        return JSON.parse(json)?.sub || null;
-    } catch {
-        return null;
-    }
-}
+// See utils/jwt.js for decodeJwtSub.
 
 /** Sync getter for the current member id -- see currentMemberId above. */
 function getMemberId() {
@@ -642,40 +644,10 @@ function VM() {
         teamLastInput = input;
         teamLastKey = key;
         teamLastAsc = asc;
-        teamLastOutput = input.slice().sort(function (a, b) {
-            // Support nested keys like "entityAssignedTo.code"
-            var av = key.includes('.')
-                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), a)
-                : ko.unwrap(a[key]);
-
-            var bv = key.includes('.')
-                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), b)
-                : ko.unwrap(b[key]);
-
-            var an = typeof av === 'number' || /^\d+(\.\d+)?$/.test(av);
-            var bn = typeof bv === 'number' || /^\d+(\.\d+)?$/.test(bv);
-            var cmp = (an && bn) ? (Number(av) - Number(bv))
-                : String(av || '').localeCompare(String(bv || ''), undefined, { numeric: true });
-            return asc ? cmp : -cmp;
-        });
+        // See utils/tableSort.js for the comparator itself.
+        teamLastOutput = input.slice().sort((a, b) => compareByKey(a, b, key, asc));
         return teamLastOutput;
     }).extend({ rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
-
-    const JOB_STATUS_ORDER = [
-        'New',
-        'Active',
-        'Tasked',
-        'Referred',
-        'Complete',
-        'Cancelled',
-        'Rejected',
-        'Finalised'
-    ];
-
-    const JOB_STATUS_RANK = JOB_STATUS_ORDER.reduce((m, s, i) => {
-        m[s] = i;
-        return m;
-    }, Object.create(null));
 
     let jobLastKey, jobLastAsc, jobLastInput, jobLastOutput;
 
@@ -692,39 +664,8 @@ function VM() {
         jobLastKey = key;
         jobLastAsc = asc;
 
-        jobLastOutput = input.slice().sort(function (a, b) {
-            // Support nested keys like "entityAssignedTo.code"
-            var av = key.includes('.')
-                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), a)
-                : ko.unwrap(a[key]);
-
-            var bv = key.includes('.')
-                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), b)
-                : ko.unwrap(b[key]);
-
-            // Type column displays `typeShort + categoriesNameNumberDash` (e.g. FR-1),
-            // so sort using the same rendered token.
-            if (key === 'type') {
-                av = `${ko.unwrap(a.typeShort) || ''}${ko.unwrap(a.categoriesNameNumberDash) || ''}`;
-                bv = `${ko.unwrap(b.typeShort) || ''}${ko.unwrap(b.categoriesNameNumberDash) || ''}`;
-            }
-
-            // --- custom status order ---
-            if (key === 'statusName') {
-                var ar = JOB_STATUS_RANK[av] ?? Number.MAX_SAFE_INTEGER;
-                var br = JOB_STATUS_RANK[bv] ?? Number.MAX_SAFE_INTEGER;
-                return asc ? (ar - br) : (br - ar);
-            }
-
-            // --- default behaviour ---
-            var an = typeof av === 'number' || /^\d+(\.\d+)?$/.test(av);
-            var bn = typeof bv === 'number' || /^\d+(\.\d+)?$/.test(bv);
-            var cmp = (an && bn)
-                ? (Number(av) - Number(bv))
-                : String(av || '').localeCompare(String(bv || ''), undefined, { numeric: true });
-
-            return asc ? cmp : -cmp;
-        });
+        // See utils/tableSort.js for the comparator itself.
+        jobLastOutput = input.slice().sort((a, b) => compareJobsByKey(a, b, key, asc));
         return jobLastOutput;
     });
 
@@ -788,75 +729,20 @@ function VM() {
     self.jobSearchShowSuggestions = ko.observable(false);
 
     // Build suggestion pool once, recompute when filtered jobs change
+    // See utils/searchMatching.js for the pool-building/matching logic.
     self._jobSuggestionPool = ko.pureComputed(() => {
-        const seen = new Set();
-        const pool = []; // { label, category }
-        const add = (val, category) => {
-            if (!val) return;
-            const v = String(val).trim();
-            if (!v || seen.has(v.toLowerCase())) return;
-            seen.add(v.toLowerCase());
-            pool.push({ label: v, category });
-        };
-
-        (self.filteredJobsAgainstConfig() || []).forEach(jb => {
-            add(jb.identifierTrimmed(), 'Identifier');
-            add(jb.id(), 'Identifier');
-            add(jb.address.prettyAddress(), 'Address');
-            add(jb.lga(), 'LGA');
-            add(jb.entityAssignedTo?.code(), 'HQ');
-            add(jb.situationOnScene(), 'Situation');
-            add(jb.contactFirstName() + ' ' + jb.contactLastName(), 'Contact');
-            add(jb.icemsIncidentIdentifier(), 'ICEMS');
-        });
-        return pool;
+        return buildJobSuggestionPool(self.filteredJobsAgainstConfig());
     }).extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } });
 
     // React to typing — produce up to 8 suggestions
     self.jobSearch.subscribe(val => {
-        const raw = (val || '').toLowerCase().trim();
-        if (!raw) {
-            self.jobSearchSuggestions([]);
+        const result = buildJobSearchSuggestions(self._jobSuggestionPool(), val);
+        self.jobSearchSuggestions(result.suggestions);
+        if (result.showSuggestions === false) {
             self.jobSearchShowSuggestions(false);
             return;
         }
-
-        // Match last token for suggestions (supports multi-word queries)
-        const tokens = raw.split(/\s+/);
-        const lastToken = tokens[tokens.length - 1];
-        if (!lastToken) { self.jobSearchSuggestions([]); return; }
-
-        const escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const rx = (/^\d+$/.test(lastToken) || /[^a-z0-9]/i.test(lastToken))
-            ? null // numeric or contains non-alphanumeric (e.g. "14-7570") — use includes
-            : new RegExp('\\b' + escapeRx(lastToken), 'i');
-
-        // Helper: escape HTML entities so label text is safe for innerHTML
-        const escHtml = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-        // Build a regex that finds the matched portion for bolding
-        const highlightRx = rx
-            ? new RegExp('(' + escapeRx(lastToken) + ')', 'i')
-            : new RegExp('(' + escapeRx(lastToken) + ')', 'ig');
-
-        const matches = [];
-        const pool = self._jobSuggestionPool();
-        for (let i = 0; i < pool.length && matches.length < 8; i++) {
-            const item = pool[i];
-            const hit = rx
-                ? rx.test(item.label)
-                : item.label.toLowerCase().includes(lastToken);
-            if (hit) {
-                // Wrap matched portion in <strong>
-                const hl = escHtml(item.label).replace(highlightRx, '<strong>$1</strong>');
-                matches.push({ label: item.label, highlightedLabel: hl, category: item.category });
-            }
-        }
-        self.jobSearchSuggestions([
-            // First item echoes the current search text so the user can click to dismiss
-            { label: raw, highlightedLabel: '<i class="fa fa-search me-1"></i>' + escHtml(raw), category: 'Search', isExact: true },
-            ...matches
-        ]);
+        if (!('showSuggestions' in result)) return; // no matchable last token -- leave showSuggestions/activeIndex untouched
         self.jobSearchActiveIndex(-1);
         self.jobSearchShowSuggestions(true);
     });
@@ -935,152 +821,32 @@ function VM() {
 
     // Extracted so it can be reused as a single-job admission check (e.g. for
     // SignalR-pushed jobs) as well as the bulk array filter below.
+    // See utils/configFilters.js for the actual admission logic.
     self.jobMatchesConfigFilters = function (jb) {
-        const hqIds = new Set((self.config.incidentFilters() || []).map(f => String(f.id)));
-        const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
-
-        const allowedStatus = self.config.jobStatusFilter(); // allow-list
-        const allowedStatusSet = new Set(allowedStatus || []);
-        const incidentTypeAllowedById = self.config.allowedIncidentTypeIds(); // allow-list (Set in ConfigVM)
-        const incidentTypeIterable =
-            incidentTypeAllowedById && typeof incidentTypeAllowedById[Symbol.iterator] === "function"
-                ? incidentTypeAllowedById
-                : [];
-        const incidentTypeSet = new Set(Array.from(incidentTypeIterable, id => String(id)));
-
-        var start = new Date();
-        var end = new Date();
-
-        start.setDate(end.getDate() - self.config.fetchPeriod());
-
-        // Add 5 minutes to the start time just to account for drift
-        start.setMinutes(start.getMinutes() + 5);
-
-        end.setDate(end.getDate() + self.config.fetchForward());
-
-        // Same drift/clock-skew allowance as start, above -- without it, a
-        // job admitted via push the instant it's created (jobReceived from
-        // the notification's own CreatedOn, essentially "now") sits right
-        // on the end boundary, and a few hundred ms of processing lag or
-        // any client/server clock skew is enough to flip jobDate > end and
-        // evict it (confirmed live: fetchForward=0 gave zero tolerance).
-        end.setMinutes(end.getMinutes() + 5);
-
-        const statusName = jb.statusName();
-        const jobHqId = String(jb.entityAssignedTo.id());
-        const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
-
-        // Sector filtering — only when scope includes incidents
-        if (self.config.applySectorsToIncidents() && sectorIds.size > 0) {
-            const sectorId = String(jb.sector().id());
-            const sectorMatch = sectorIds.has(sectorId);
-
-            //if no sector and config says to exclude, filter out
-            if (!jb.sector().id() && self.config.includeIncidentsWithoutSector() === false) {
-                return false;
-            }
-
-            if (jb.sector().id() && !sectorMatch) return false;
-        }
-
-        // If allow-list non-empty, only show jobs whose status is in it
-        if (allowedStatusSet.size > 0 && !allowedStatusSet.has(statusName)) {
-            return false;
-        }
-
-        // If incident type filter non-empty, only show jobs whose type is in
-        // it -- but only reject when we actually know the type. A job built
-        // straight from the jobCreated notification has no type information
-        // at all (unlike status/priority, there's no id to resolve either),
-        // so typeId() is "" until refreshData() backfills it; treating that
-        // as "known not to match" would evict every new job whenever any
-        // type filter is active. isFilteredIn corrects itself reactively
-        // once the real type lands, so being lenient here at admission time
-        // costs nothing beyond a job briefly sitting untracked-by-filter.
-        const typeId = jb.typeId();
-        if (incidentTypeSet.size > 0 && typeId && !incidentTypeSet.has(String(typeId))) {
-            return false;
-        }
-
-        //date matching
-        const jobDate = new Date(jb.jobReceived());
-
-        if (jobDate < start || jobDate > end) {
-            return false;
-        }
-
-        //must match HQ filter
-        if (!hqMatch) return false;
-
-        return true;
+        return jobMatchesConfigFilters(jb, self.config);
     };
 
     self.filteredJobsAgainstConfig = ko.pureComputed(() => {
         return ko.utils.arrayFilter(this.jobs(), jb => self.jobMatchesConfigFilters(jb));
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 50, method: 'notifyWhenChangesStop' } });
 
+    // See utils/searchMatching.js for the term-matching logic. The final
+    // admitted set is the same regardless of which of these two independent
+    // filters is applied first (it's an intersection either way).
     self.filteredJobs = ko.pureComputed(() => {
 
         const pinnedOnlyIncidents = self.showPinnedIncidentsOnly();
         const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
         const pinnedIncidentSet = new Set((pinnedIncidentIds || []).map(id => String(id)));
 
-        const rawTerm = self.jobSearch().toLowerCase().trim();
-        // Split into individual tokens so "rescue parra" matches a job
-        // whose combined fields contain both "rescue" AND "parra".
-        const terms = rawTerm ? rawTerm.split(/\s+/) : [];
+        const bySearchTerm = filterJobsBySearchTerm(this.filteredJobsAgainstConfig(), self.jobSearch());
 
-        // Pre-build word-boundary regexes once per search change.
-        // Each token is matched at the START of a word (\b prefix) so
-        // "tree" matches "tree", "trees", "tree-down" but NOT "street".
-        // Tokens that look like plain numbers (e.g. job IDs) stay as
-        // simple includes() since word boundaries around digits can be
-        // surprising (e.g. "123" inside "J-00123" should still match).
-        const escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const termMatchers = terms.map(t => {
-            if (/^\d+$/.test(t) || /[^a-z0-9]/i.test(t)) {
-                // Numeric token or token containing non-alphanumeric chars (e.g. "14-7570")
-                // — plain substring is more intuitive and avoids \b boundary failures
-                return (blob) => blob.includes(t);
-            }
-            const rx = new RegExp('\\b' + escapeRx(t), 'i');
-            return (blob) => rx.test(blob);
-        });
-
-        return ko.utils.arrayFilter(this.filteredJobsAgainstConfig(), jb => {
-
-            // pinned-only filter
+        return ko.utils.arrayFilter(bySearchTerm, jb => {
             if (pinnedOnlyIncidents && !pinnedIncidentSet.has(String(jb.id()))) {
                 return false;
             }
-
-            // text search — every token must appear in at least one field
-            if (termMatchers.length > 0) {
-                // Build a searchable blob once per job (avoids repeated toLowerCase calls per term)
-                const parts = [
-                    jb.identifier(),
-                    jb.id()?.toString(),
-                    jb.situationOnScene(),
-                    jb.address.prettyAddress(),
-                    jb.tagsCsv(),
-                    jb.lga(),
-                    jb.contactFirstName(),
-                    jb.contactLastName(),
-                    jb.callerFirstName(),
-                    jb.callerLastName(),
-                    jb.incidentContactNumber(),
-                    jb.entityAssignedTo?.code(),
-                    jb.icemsIncidentIdentifier(),
-                ];
-                const blob = parts.filter(Boolean).join(' ').toLowerCase();
-
-                for (const match of termMatchers) {
-                    if (!match(blob)) return false;
-                }
-            }
-
             return true;
-        })
+        });
 
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
@@ -1091,64 +857,9 @@ function VM() {
 
     // Extracted so it can be reused as a single-team admission check (e.g. for
     // SignalR-pushed teams) as well as the bulk array filter below.
+    // See utils/configFilters.js for the actual admission logic.
     self.teamMatchesConfigFilters = function (tm) {
-        const allowed = self.config.teamStatusFilter(); // allow-list
-        const allowedSet = new Set(allowed || []);
-        const allowedTypeSet = new Set(self.config.teamTypeFilter() || []); // allow-list of team type names
-        const hqFilterIds = new Set((self.config.teamFilters() || []).map(f => String(f.id)));
-        const applySectorsToTeams = self.config.applySectorsToTeams();
-        const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
-
-        var start = new Date();
-        var end = new Date();
-
-        start.setDate(end.getDate() - self.config.fetchPeriod());
-
-        // Add 5 minutes to the start time just to account for drift
-        start.setMinutes(start.getMinutes() + 5);
-
-        end.setDate(end.getDate() + self.config.fetchForward());
-
-        const status = tm.teamStatusType()?.Name;
-        const teamHqId = String(tm.assignedTo().id());
-        const hqMatch = hqFilterIds.size === 0 || hqFilterIds.has(teamHqId);
-        if (status == null) {
-            return false;
-        }
-
-        // If allow-list non-empty, only show teams whose status is in it
-        if (allowedSet.size > 0 && !allowedSet.has(status)) {
-            return false;
-        }
-
-        // Team type allow-list (Field / Operations / Aviation). Beacon already
-        // filters the fetch by TypeIds; this also drops wrong-type teams that
-        // arrive via SignalR pushes. Lenient when the type is unknown.
-        if (allowedTypeSet.size > 0) {
-            const typeName = tm.teamType()?.Name;
-            if (typeName && !allowedTypeSet.has(typeName)) {
-                return false;
-            }
-        }
-
-        //must match HQ filter
-        if (!hqMatch) {
-            return false;
-        }
-
-        // Sector filtering — only when scope includes teams
-        if (applySectorsToTeams && sectorIds.size > 0) {
-            const teamSectorId = String(tm.sector()?.id?.() || '');
-            if (teamSectorId && !sectorIds.has(teamSectorId)) return false;
-            if (!teamSectorId && self.config.includeIncidentsWithoutSector() === false) return false;
-        }
-
-        const statusDate = tm.statusDate();
-        if (statusDate < start || statusDate > end) {
-            return false;
-        }
-
-        return true;
+        return teamMatchesConfigFilters(tm, self.config);
     };
 
     //just filtered against config not against UI searching
@@ -1632,51 +1343,22 @@ function VM() {
 
     };
 
+    // See utils/smsHelpers.js for the recipient/prefill-text building.
     self.attachSendSMSModal = function (recipients, team = null, tasking = null, job = null) {
-        var msgRecipients = [];
+        var msgRecipients = team ? buildSmsRecipientsFromTeam(team) : recipients;
+
         var taskId = null;
         var headerLabel = "Send SMS";
         var initialText = "";
 
-        // If team provided, use its members as recipients
-        if (team) {
-            msgRecipients = team.members().map(t => {
-                return {
-                    id: t.Person.Id,
-                    name: t.Person.FirstName + ' ' + t.Person.LastName,
-                    isTeamLeader: t.TeamLeader,
-                }
-            });
-        } else {
-            msgRecipients = recipients
-        }
-
         // if a task was provided, use its job info to prefill
         if (tasking) {
-            taskId = tasking.job.id();
-            headerLabel = `Send SMS - Incident: ${tasking.job.identifier()}`;
-            initialText = `Re: Inc ${tasking.job.identifier()} at ${tasking.job.address.prettyAddress()}: `;
+            ({ taskId, headerLabel, initialText } = buildSmsPrefillFromTasking(tasking));
         }
 
         // if a job was provided, use its info to prefill and assume its a new tasking
         if (job) {
-            taskId = job.id();
-            headerLabel = `Send SMS - Incident: ${job.identifier()}`;
-            initialText = [
-                job.priorityName(),
-                job.typeShort() + job.categoriesNameNumberDash(),
-                job.entityAssignedTo?.code(),
-                job.identifier(),
-                job.contactFirstName(),
-                job.contactLastName(),
-                job.address?.prettyAddress(),
-                job.contactPhoneNumber(),
-                job.tagsCsv(),
-                job.situationOnScene()
-            ]
-                .filter(value => value) // Remove empty or undefined values
-                .join(' ');
-            initialText = initialText.toUpperCase();
+            ({ taskId, headerLabel, initialText } = buildSmsPrefillFromJob(job));
         }
 
         const modalEl = document.getElementById('SendSMSModal');
@@ -1865,183 +1547,14 @@ function VM() {
 
 
     // ---- Trackable asset matching (exact-first, fuzzy-second; token consumed once) ----
-
-    function _normAssetName(v) {
-        // asset names are like PAR56 / SES47 / SES47T (no spaces)
-        const s = (v == null) ? '' : String(v);
-        return s.toLowerCase().replace(/[^a-z0-9]/g, '');
-    }
-
-    function _splitTeamCallsignIntoParts(v) {
-        const s0 = (v == null) ? '' : String(v);
-
-        // Make separators explicit BEFORE stripping spaces
-        // e.g. "PAR56 + PAR18" => ["PAR56", "PAR18"]
-        // also handle "and"
-        const s1 = s0
-            .replace(/\bteam\b/ig, ' ')
-            .replace(/\s+\+\s+/g, '|')
-            .replace(/[+&/,;]+/g, '|')
-            .replace(/\s+\band\b\s+/ig, '|')
-            .replace(/\s+\bwith\b\s+/ig, '|');
-
-        return s1.split('|').map(p => p.trim()).filter(Boolean);
-    }
-
-    function _tokenVariantsFromPart(part) {
-        // produce a small set of candidate tokens from one callsign part
-        const raw = _normAssetName(part);
-        if (!raw) return [];
-
-        const out = new Set();
-
-        // 1) raw as-is (already no spaces / punctuation)
-        out.add(raw);
-
-        // 2) if looks like <letters><digits><many letters>, drop the trailing word
-        //    e.g. "par56truck" => "par56"
-        const mLongSuffix = raw.match(/^([a-z]+[0-9]+)[a-z]{2,}$/);
-        if (mLongSuffix) out.add(mLongSuffix[1]);
-
-        // 3) if contains <letters><digits><optional single letter>, keep that prefix too
-        //    e.g. "ses47talpha" => "ses47t"
-        const mCore = raw.match(/^([a-z]+[0-9]+[a-z]?)$/) || raw.match(/^([a-z]+[0-9]+[a-z]?)/);
-        if (mCore && mCore[1]) out.add(mCore[1]);
-
-        // prune empties
-        return [...out].map(x => x.trim()).filter(Boolean);
-    }
-
-    function _extractTeamTokens(team) {
-        const cs = team?.callsign?.();
-        if (!cs) return [];
-
-        const s = String(cs);
-
-        // 1) Primary: extract ALL occurrences of <letters><optional space><digits><optional letter>
-        //    Handles: "PAR18 PAR911", "PAR 56 Team", "PAR56 + PAR18", "SES47T"
-        const re = /[a-z]{2,6}\s*\d+[a-z]?/ig;
-        const seen = new Set();
-        const tokens = [];
-
-        for (const m of s.matchAll(re)) {
-            const tok = _normAssetName(m[0]); // strips spaces/punct => "par56"
-            if (!tok) continue;
-            seen.add(tok);
-            tokens.push(tok);
-        }
-
-        // If we found any, we're done (prevents weird whitespace-only splitting issues).
-        if (tokens.length) return tokens;
-
-        // 2) Fallback: previous behaviour (kept for edge cases)
-        const parts = _splitTeamCallsignIntoParts(s);
-        for (const p of parts) {
-            for (const t of _tokenVariantsFromPart(p)) {
-                if (!t || seen.has(t)) continue;
-                seen.add(t);
-                tokens.push(t);
-            }
-        }
-        return tokens;
-    }
-
-    function _scoreFuzzy(token, assetName) {
-        // Lower is better.
-        // Exact matches are handled before fuzzy, so no 0 here.
-        if (assetName.startsWith(token)) return 1;
-        if (assetName.includes(token)) return 2;
-        if (token.includes(assetName)) return 3;
-        return 99;
-    }
-
-    function _computeMatchedAssetsForTeam(team, allAssets) {
-        const tokens = _extractTeamTokens(team);
-        if (!tokens.length) return new Set();
-
-        // Map assetName -> list of assets (usually 1)
-        const byName = new Map();
-        for (const a of (allAssets || [])) {
-            const n = _normAssetName(a?.name?.());
-            if (!n) continue;
-            if (!byName.has(n)) byName.set(n, []);
-            byName.get(n).push(a);
-        }
-
-        const matchedAssetIds = new Set();
-        const matchedAssets = new Set();
-        const usedTokens = new Set();
-
-        // 1) EXACT first: token === assetName (one match per token)
-        //    If multiple exact matches exist, prefer non-Portable resourceType
-        for (const tok of tokens) {
-            const exactList = byName.get(tok);
-            if (!exactList || !exactList.length) continue;
-
-            // Filter to unmatched candidates
-            const candidates = exactList.filter(a => !matchedAssetIds.has(a.id()));
-            if (!candidates.length) continue;
-
-            // Sort so that Portable resourceType comes last (least preferable)
-            candidates.sort((a, b) => {
-                const aPortable = (ko.unwrap(a.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
-                const bPortable = (ko.unwrap(b.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
-                return aPortable - bPortable;
-            });
-
-            const best = candidates[0];
-            matchedAssetIds.add(best.id());
-            matchedAssets.add(best);
-            usedTokens.add(tok);
-        }
-
-        // 2) FUZZY second (token consumed once; asset matched once)
-        //    This is what prevents "SES59" matching "SES59T" when "SES59" exists:
-        //    the exact pass consumes "ses59" and matches SES59 before fuzzy runs.
-        for (const tok of tokens) {
-            if (usedTokens.has(tok)) continue;
-
-            let best = null;
-            let bestScore = 999;
-
-            for (const [assetName, list] of byName.entries()) {
-                const score = _scoreFuzzy(tok, assetName);
-                if (score >= 99) continue;
-
-                // prefer shortest assetName on ties (reduces suffix grabs like SES59T)
-                // and skip assets already matched
-                for (const a of list) {
-                    if (matchedAssetIds.has(a.id())) continue;
-
-                    const tieBreaker = best ? (assetName.length - _normAssetName(best.name()).length) : 0;
-                    const better =
-                        (score < bestScore) ||
-                        (score === bestScore && best && assetName.length < _normAssetName(best.name()).length) ||
-                        (score === bestScore && !best);
-
-                    if (better && tieBreaker <= 0) {
-                        best = a;
-                        bestScore = score;
-                    }
-                }
-            }
-
-            if (best) {
-                usedTokens.add(tok);
-                matchedAssetIds.add(best.id());
-                matchedAssets.add(best);
-            }
-        }
-
-        return matchedAssets;
-    }
+    // See utils/assetTeamMatching.js for the actual matching logic.
 
     // Replaces the old pairwise matcher
     self._assetMatchesTeam = function (_asset, _team) {
         // no longer used as the primary mechanism; keep for safety if anything external calls it
         // (fall back to the new computed set for correctness).
         try {
-            const matches = _computeMatchedAssetsForTeam(_team, self.trackableAssets?.() || []);
+            const matches = computeMatchedAssetsForTeam(_team, self.trackableAssets?.() || []);
             return [...matches].some(a => a?.id?.() === _asset?.id?.());
         } catch (_e) {
             return false;
@@ -2057,7 +1570,7 @@ function VM() {
         // Defer execution to avoid blocking UI thread
         setTimeout(() => {
             const all = self.trackableAssets?.() || [];
-            const desired = _computeMatchedAssetsForTeam(team, all); // Set<Asset>
+            const desired = computeMatchedAssetsForTeam(team, all); // Set<Asset>
 
             // Remove no-longer-matching
             (team.trackableAssets() || []).slice().forEach(a => {
@@ -2199,9 +1712,7 @@ function VM() {
     map.on('touchstart', markUserInteracted);
     map.on('wheel', markUserInteracted);
 
-    function debounce(fn, ms) {
-        let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-    }
+    // See utils/debounce.js for debounce.
 
     let initialFitRetries = 0;
     const MAX_INITIAL_FIT_RETRIES = 4; // give up after ~1.25s to avoid infinite retry loops in bad states
@@ -2413,57 +1924,7 @@ function VM() {
     self.filteredJobsAgainstConfig.subscribe(() => { self.spotlightSearchVM.rebuildIndex?.() }, null, "arrayChange");
 
     // --- Marker batching (reduces layout/reflow thrash on burst updates) ---
-    const getItemId = (item) => {
-        if (!item) return null;
-        if (typeof item.id === "function") return item.id();
-        return item.id ?? null;
-    };
-
-    function createMarkerBatcher({ addFn, removeFn }) {
-        const pendingAdds = new Map();
-        const pendingRemoves = new Map();
-        let rafHandle = null;
-
-        const flush = () => {
-            rafHandle = null;
-
-            pendingRemoves.forEach((item) => removeFn(item));
-            pendingAdds.forEach((item) => addFn(item));
-
-            pendingRemoves.clear();
-            pendingAdds.clear();
-        };
-
-        const ensureFlush = () => {
-            if (rafHandle == null) {
-                rafHandle = requestAnimationFrame(flush);
-            }
-        };
-
-        const scheduleAdd = (item) => {
-            const id = getItemId(item);
-            if (id == null) {
-                addFn(item);
-                return;
-            }
-            pendingRemoves.delete(id);
-            pendingAdds.set(id, item);
-            ensureFlush();
-        };
-
-        const scheduleRemove = (item) => {
-            const id = getItemId(item);
-            if (id == null) {
-                removeFn(item);
-                return;
-            }
-            pendingAdds.delete(id);
-            pendingRemoves.set(id, item);
-            ensureFlush();
-        };
-
-        return { scheduleAdd, scheduleRemove };
-    }
+    // See utils/markerBatcher.js for the batching logic.
 
     const jobMarkerBatcher = createMarkerBatcher({
         addFn: (job) => addOrUpdateJobMarker(ko, map, self, job),
@@ -3042,18 +2503,11 @@ function VM() {
     self.fetchAllTeamData = async function () {
         const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
 
-        const statusFilterToView = myViewModel.config.teamStatusFilter().map(desc => {
-            // Find the Enum.TeamStatusType entry whose Description matches desc
-            const entry = Object.values(Enum.TeamStatusType).find(e => e.Description === desc);
-            return entry ? entry.Id : undefined;
-        }).filter(id => id !== undefined);
+        const statusFilterToView = filterDescriptionsToEnumIds(myViewModel.config.teamStatusFilter(), Enum.TeamStatusType, 'Description');
 
         // Team type allow-list (Field / Operations / Aviation) -> Beacon TypeIds.
         // Empty array means "all types" -- teamSearch omits the param entirely.
-        const typeFilterToView = myViewModel.config.teamTypeFilter().map(name => {
-            const entry = Object.values(Enum.TeamType).find(e => e.Name === name);
-            return entry ? entry.Id : undefined;
-        }).filter(id => id !== undefined);
+        const typeFilterToView = filterDescriptionsToEnumIds(myViewModel.config.teamTypeFilter(), Enum.TeamType, 'Name');
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
@@ -3923,38 +3377,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // server-side -- but never evict a job we already had tracked, since
         // an in-scope job simply changing to an out-of-filter state should
         // stay tracked and just flip isFilteredIn (handled reactively).
-        // jobCreated/jobUpdated/jobRejected's actual payload is a Notification
-        // record -- Id is the notification's own id, the job's real id is
-        // JobId -- not a job view-model despite the "vm" parameter name in
-        // Beacon's own source. Remap to the fields Job.js understands before
-        // merging; passing the raw notification straight into getOrCreateJob
-        // would key it on the notification's id instead of the job's,
-        // silently creating a phantom job entry instead of updating the real
-        // one (confirmed live -- this is why status updates weren't landing).
-        const mapJobNotificationToJobJson = (n) => ({
-            Id: n.JobId,
-            Identifier: n.JobIdentifier,
-            ICEMSIncidentIdentifier: n.ICEMSIncidentIdentifier,
-            JobPriorityTypeId: n.JobPriorityTypeId,
-            JobStatusTypeId: n.JobStatusTypeId,
-            EntityAssignedTo: n.Entity,
-        });
-
-        // JobReceived isn't in any of these notifications at all -- without
-        // it, jobMatchesConfigFilters' date check always fails (new
-        // Date(null) is epoch, always outside the configured range), so a
-        // brand-new admission would get silently evicted instead of
-        // admitted. The notification's own CreatedOn is a reasonable proxy.
-        // Only applied when not already tracked -- otherwise this would
-        // clobber an existing job's real jobReceived with the
-        // notification's timestamp. Applies to jobUpdated/jobRejected too,
-        // not just jobCreated: a job evicted while "New" (outside the
-        // status filter) hits this same first-admission path again the
-        // moment a later jobUpdated brings its status back into scope.
-        const withJobReceivedFallback = (jobJson, notification, alreadyTracked) => {
-            if (!alreadyTracked) jobJson.JobReceived = notification.CreatedOn;
-            return jobJson;
-        };
+        // See utils/pushNotificationMapping.js for mapJobNotificationToJobJson
+        // and withJobReceivedFallback.
 
         const admitJobIfInFilter = (notification) => {
             const jobJson = mapJobNotificationToJobJson(notification);
@@ -4284,17 +3708,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
+// See utils/urlParams.js for parseSearchParams.
 function getSearchParameters() {
     var prmstr = window.location.search.substr(1);
-    return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
-}
-
-function transformToAssocArray(prmstr) {
-    var params = {};
-    var prmarr = prmstr.split("&");
-    for (var i = 0; i < prmarr.length; i++) {
-        var tmparr = prmarr[i].split("=");
-        params[tmparr[0]] = decodeURIComponent(tmparr[1]);
-    }
-    return params;
+    return prmstr != null && prmstr != "" ? parseSearchParams(prmstr) : {};
 }
