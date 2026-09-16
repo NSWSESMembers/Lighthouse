@@ -925,6 +925,178 @@ tr.job:hover {
   --bs-modal-width: 1200px;
 }
 
+/* Incident images modal -- the preview fills whatever vertical space is left in the
+   modal (rather than guessing a vh size), so the filename/toolbar never sit below the
+   fold. Every ancestor down to the image needs min-height:0 for the flex box to actually
+   shrink instead of overflowing (the default flex min-height is 'auto', i.e. content size).
+
+   Bootstrap's .modal-dialog-scrollable only caps .modal-content at max-height:100% -- it
+   doesn't force it there, so with little content the modal just shrinks to fit. That means
+   .modal-content's height is only "definite" once content is already taller than the
+   viewport, which is exactly the case that needs a definite height flowing down to size
+   the image -- a circular dependency the image resolves by falling back to intrinsic size
+   for the axis that lost the tug-of-war (max-width won via shrink-to-fit, max-height didn't).
+   Forcing the height (not just capping it) breaks that circularity everywhere downstream. */
+#incidentImagesModal .modal-content {
+  height: 100%;
+}
+
+/* No internal scrolling below the preview box itself -- the thumbnail rail and the
+   zoomed-image box each own their own scroll region instead. */
+#incidentImagesModal .modal-body {
+  overflow-y: hidden;
+}
+
+.incident-images-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.incident-images-row {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.incident-images-preview-col {
+  min-height: 0;
+}
+
+.incident-images-thumb-rail {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 2px;
+}
+
+.incident-images-thumb {
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.incident-images-thumb img {
+  transition: transform 0.15s ease;
+}
+
+.incident-images-thumb--active {
+  border-color: var(--bs-primary, #0d6efd) !important;
+  box-shadow: 0 0 0 2px var(--bs-primary, #0d6efd);
+}
+
+/* Non-scrolling positioning anchor for the nav arrows -- they live here, not inside
+   .incident-images-preview, so panning the zoomed image (which scrolls that inner box)
+   doesn't drag them around with it. This element owns the flex-item sizing (from the
+   column above); .incident-images-preview below just fills it at 100%/100%, which also
+   keeps it from being a content-size-sensitive flex item in its own right. */
+.incident-images-preview-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 300px;
+}
+
+.incident-images-preview {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* hidden (not auto) by default -- guarantees no scrollbar ever shows for the fitted
+     image, even if sub-pixel rounding leaves it a hair taller than the box. Zooming
+     switches this to auto so the (now unconstrained) image can be scrolled/panned. */
+  overflow: hidden;
+}
+
+/* Flexbox alignment (even flex-start) still runs the overflowing box through the flex
+   layout/stretch algorithm, which is where the vertical scroll kept breaking. Dropping to
+   plain display:block for the zoomed state sidesteps flex entirely: the button becomes an
+   ordinary block box that shrink-wraps its content (the natural-size image), and a block
+   box taller than its container overflows downward in totally standard, unambiguous,
+   always-scrollable fashion -- the same mechanism every plain "big image in a scrolling
+   div" on the web relies on. */
+.incident-images-preview--zoomed {
+  display: block;
+  overflow: auto;
+}
+
+/* The button is an empty, purely-positioned box: flex:1 1 auto + align-self:stretch give
+   it real dimensions straight from the flex algorithm (no percentage/content-size
+   dependency at all, since it has no content driving an intrinsic size once the image
+   is taken out of flow below). The image is then absolutely filled into it and object-fit
+   does the actual scale-to-fit -- this sidesteps every percentage-height circularity that
+   max-width/max-height-based sizing kept losing to. This only applies to the *fitted*
+   (non-zoomed) state -- flex/align-self have no effect once the container above switches
+   to display:block for zooming, so the zoomed override below governs sizing instead. */
+.incident-images-preview-btn {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  cursor: zoom-in;
+  position: relative;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 0;
+}
+
+.incident-images-preview-btn img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.15s ease;
+}
+
+.incident-images-preview-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* zoomed: plain block box (sized purely by its content, the natural-size image) instead
+   of a flex item -- see .incident-images-preview--zoomed above */
+.incident-images-preview-btn--zoomed {
+  display: block;
+  cursor: grab;
+}
+
+.incident-images-preview-btn--zoomed:active {
+  cursor: grabbing;
+}
+
+.incident-images-preview-btn--zoomed img {
+  position: static;
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+}
+
+.incident-images-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.85;
+}
+
+.incident-images-nav--prev {
+  left: 0.5rem;
+}
+
+.incident-images-nav--next {
+  right: 0.5rem;
+}
+
 .status-line {
   font-size: 0.875rem;
   opacity: 0.75;

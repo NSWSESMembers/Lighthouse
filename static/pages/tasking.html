@@ -4533,73 +4533,120 @@
 
     <!-- Images Modal  -->
     <div class="modal fade" id="incidentImagesModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content" data-bind="with: incidentImagesVM">
                 <div class="modal-header">
                     <h5 class="modal-title" data-bind="text: title"></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body incident-images-body">
                     <!-- ko if: loadingList -->
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <i class="fa fa-spinner fa-spin"></i>
                         <span>Loading images…</span>
                     </div>
                     <!-- /ko -->
-                </div>
 
-                <div class="alert alert-danger py-2" data-bind="visible: hasError">
-                    <span data-bind="text: errorText"></span>
-                </div>
+                    <div class="alert alert-danger py-2" data-bind="visible: hasError">
+                        <span data-bind="text: errorText"></span>
+                    </div>
 
-                <div class="row g-3">
-                    <!-- thumbs -->
-                    <div class="col-12 col-lg-4 d-flex flex-column align-items-center justify-content-center">
-                        <div class="text-muted" data-bind="visible: showNoImages">No images.</div>
+                    <div class="row g-3 incident-images-row">
+                        <!-- thumbs -->
+                        <div class="col-12 col-lg-4 d-flex flex-column align-items-center justify-content-center">
+                            <div class="text-muted" data-bind="visible: showNoImages">No images.</div>
 
-                        <div class="d-flex flex-wrap gap-2 justify-content-center ms-2" data-bind="foreach: images">
-                            <button type="button" class="btn p-0 border rounded overflow-hidden"
-                                style="width: 140px; height: 105px;" data-bind="click: $parent.selectImage">
+                            <div class="incident-images-thumb-rail d-flex flex-wrap gap-2 justify-content-center ms-2"
+                                data-bind="foreach: images">
+                                <button type="button" class="btn p-0 border rounded overflow-hidden incident-images-thumb"
+                                    style="width: 140px; height: 105px;"
+                                    data-bind="click: $parent.selectImage,
+                                        css: { 'incident-images-thumb--active': $parent.selectedImage() === $data },
+                                        attr: { title: imageName, 'aria-current': $parent.selectedImage() === $data }">
 
-                                <img alt="" style="width: 100%; height: 100%; object-fit: cover; display:block;"
-                                    data-bind="attr: { src: thumbUrl }, visible: thumbReady" />
+                                    <img style="width: 100%; height: 100%; object-fit: cover; display:block;"
+                                        data-bind="attr: { src: thumbUrl, alt: 'Incident photo ' + ($index() + 1) + ' of ' + $parent.images().length }, visible: thumbReady,
+                                            style: { transform: 'rotate(' + thumbRotation() + 'deg)' }" />
 
-                                <div class="d-flex align-items-center justify-content-center"
-                                    style="width: 100%; height: 100%;" data-bind="visible: loadingThumb">
-                                    <i class="fa fa-spinner fa-spin"></i>
+                                    <div class="d-flex align-items-center justify-content-center"
+                                        style="width: 100%; height: 100%;" data-bind="visible: loadingThumb">
+                                        <i class="fa fa-spinner fa-spin"></i>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- preview -->
+                        <div class="col-12 col-lg-8 d-flex flex-column incident-images-preview-col">
+                            <div class="incident-images-preview-wrap me-2">
+                                <div class="incident-images-preview border rounded p-2"
+                                    data-bind="css: { 'incident-images-preview--zoomed': isZoomed },
+                                        style: { width: lockedPreviewWidthPx, height: lockedPreviewHeightPx }">
+                                    <!-- ko if: loadingFull -->
+                                    <div class="incident-images-preview-status d-flex align-items-center gap-2" data-bind="visible: loadingFull">
+                                        <i class="fa fa-spinner fa-spin"></i>
+                                        <span>Loading full image…</span>
+                                    </div>
+                                    <!-- /ko -->
+                                    <button type="button" class="incident-images-preview-btn"
+                                        data-bind="click: toggleZoom, event: { mousedown: startPan }, attr: { title: zoomImageTitle },
+                                            css: { 'incident-images-preview-btn--zoomed': isZoomed }">
+                                        <img data-bind="attr: { src: selectedFullSrc, alt: selectedName }, visible: selectedFullReady,
+                                                style: { transform: 'rotate(' + selectedRotation() + 'deg)' }" />
+                                    </button>
+                                    <div class="incident-images-preview-status text-muted" data-bind="visible: showSelectHint">
+                                        Select an image.
+                                    </div>
                                 </div>
-                            </button>
-                        </div>
-                    </div>
 
-                    <!-- preview -->
-                    <div class="col-12 col-lg-8">
-                        <div class="border rounded p-2 d-flex align-items-center justify-content-center me-2"
-                            style="min-height: 60vh;">
-                            <!-- ko if: loadingFull -->
-                            <div class="d-flex align-items-center gap-2" data-bind="visible: loadingFull">
-                                <i class="fa fa-spinner fa-spin"></i>
-                                <span>Loading full image…</span>
+                                <!-- Nav arrows live in the non-scrolling wrapper (not inside .incident-images-preview
+                                     itself), so they stay anchored in place instead of scrolling away while panning
+                                     a zoomed image. -->
+                                <!-- ko if: hasMultipleImages -->
+                                <button type="button" class="btn btn-light incident-images-nav incident-images-nav--prev"
+                                    title="Previous image (Left arrow)" data-bind="click: selectPrev">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button type="button" class="btn btn-light incident-images-nav incident-images-nav--next"
+                                    title="Next image (Right arrow)" data-bind="click: selectNext">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                                <!-- /ko -->
                             </div>
-                            <!-- /ko -->
-                            <button type="button" style="background:none; border:none; box-shadow:none; padding:0;"
-                                data-bind="click: openImageInNewTab">
-                                <img alt="" style="max-width: 100%; max-height: 75vh; object-fit: contain;"
-                                    data-bind="attr: { src: selectedFullSrc }, visible: selectedFullReady" />
-                            </button>
-                            <div class="text-muted" data-bind="visible: showSelectHint">
-                                Select an image.
+
+                            <div class="small text-muted mt-2 flex-shrink-0" data-bind="visible: selectedNameReady">
+                                <span data-bind="text: selectedName"></span>
+                                <!-- ko if: hasMultipleImages -->
+                                <span class="text-muted" data-bind="text: '(' + selectedPosText() + ')'"></span>
+                                <!-- /ko -->
                             </div>
                         </div>
 
-                        <div class="small text-muted mt-2" data-bind="visible: selectedNameReady">
-                            <span data-bind="text: selectedName"></span>
-                        </div>
                     </div>
-
                 </div>
                 <div class="modal-footer">
+                    <div class="btn-group btn-group-sm me-auto" data-bind="visible: selectedFullReady">
+                        <button type="button" class="btn btn-outline-secondary" data-bind="click: toggleZoom, attr: { title: zoomButtonTitle }">
+                            <i class="fas" data-bind="css: { 'fa-search-plus': !isZoomed(), 'fa-search-minus': isZoomed() }"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" title="Rotate left"
+                            data-bind="click: rotateLeft">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" title="Rotate right"
+                            data-bind="click: rotateRight">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" title="Download"
+                            data-bind="click: downloadSelected">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" title="Open in new tab"
+                            data-bind="click: openImageInNewTab">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                    </div>
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
