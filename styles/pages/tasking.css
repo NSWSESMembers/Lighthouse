@@ -2581,6 +2581,22 @@ overflow: hidden;
   color: #6c757d;
 }
 
+.hotkey-capture-btn {
+  font-variant-numeric: tabular-nums;
+  min-width: 6rem;
+}
+
+.hotkey-capture-btn.listening {
+  border-color: #0d6efd;
+  color: #0d6efd;
+  animation: hotkey-listening-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes hotkey-listening-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.35); }
+  50% { box-shadow: 0 0 0 4px rgba(13, 110, 253, 0); }
+}
+
 .cfg-readout {
   background: #f8f9fa;
   border: 1px solid #e9ecef;

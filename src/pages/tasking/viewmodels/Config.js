@@ -8,6 +8,9 @@ import {
     updateCollabLayerAttachment,
     refreshSubscribedLayers, searchLayersForHq, subscribeToLayer, unsubscribeFromLayer,
 } from '../mapLayers/collabLayer.js';
+import {
+    isMacPlatform, isModifierKey, hasModifier, captureComboFromEvent, formatHotkeyCombo,
+} from '../utils/hotkeyMatch.js';
 
 
 
@@ -1201,6 +1204,51 @@ export function ConfigVM(root, deps) {
         return 'A low-glare dark colour scheme for the whole board and map.';
     });
 
+    // Command palette (Spotlight Search) hotkey. `null` means "use the
+    // built-in Cmd/Ctrl+K default" -- see utils/hotkeyMatch.js for the
+    // combo shape and matching/formatting logic shared with main.js.
+    const _isMac = isMacPlatform();
+    self.spotlightHotkey = ko.observable(null);
+    self.spotlightHotkeyCapturing = ko.observable(false);
+    self.spotlightHotkeyError = ko.observable(null);
+    self.spotlightHotkeyLabel = ko.pureComputed(() => formatHotkeyCombo(self.spotlightHotkey(), _isMac));
+    self.spotlightHotkeyButtonLabel = ko.pureComputed(() => (
+        self.spotlightHotkeyCapturing() ? 'Press a key combo…' : self.spotlightHotkeyLabel()
+    ));
+    self.startCaptureSpotlightHotkey = () => {
+        self.spotlightHotkeyError(null);
+        self.spotlightHotkeyCapturing(true);
+    };
+    self.cancelCaptureSpotlightHotkey = () => {
+        self.spotlightHotkeyCapturing(false);
+        self.spotlightHotkeyError(null);
+    };
+    self.resetSpotlightHotkey = () => {
+        self.spotlightHotkey(null);
+        self.spotlightHotkeyCapturing(false);
+        self.spotlightHotkeyError(null);
+        self.save();
+    };
+    self.onSpotlightHotkeyCapture = (_vm, e) => {
+        if (!self.spotlightHotkeyCapturing()) return true;
+        e.preventDefault();
+        if (e.key === 'Escape') {
+            self.cancelCaptureSpotlightHotkey();
+            return false;
+        }
+        if (isModifierKey(e.key)) return false;
+        const combo = captureComboFromEvent(e);
+        if (!hasModifier(combo)) {
+            self.spotlightHotkeyError('Include Ctrl, Cmd, or Alt so it doesn\'t clash with normal typing.');
+            return false;
+        }
+        self.spotlightHotkey(combo);
+        self.spotlightHotkeyCapturing(false);
+        self.spotlightHotkeyError(null);
+        self.save();
+        return false;
+    };
+
     self.layoutPresetDefs = [
         {
             id: 'map-right-teams-top',
@@ -1432,6 +1480,7 @@ export function ConfigVM(root, deps) {
         normalDistanceWeight: Number(self.normalDistanceWeight()) || 0,
         normalTaskingWeight: Number(self.normalTaskingWeight()) || 0,
         suggestionUseRouting: !!self.suggestionUseRouting(),
+        spotlightHotkey: self.spotlightHotkey() ? { ...self.spotlightHotkey() } : null,
     });
 
     // Helpers
@@ -1767,6 +1816,11 @@ export function ConfigVM(root, deps) {
         }
         if (typeof cfg.taskingCountActiveOnly === 'boolean') {
             self.taskingCountActiveOnly(cfg.taskingCountActiveOnly);
+        }
+        if (cfg.spotlightHotkey && typeof cfg.spotlightHotkey.key === 'string') {
+            self.spotlightHotkey({ ...cfg.spotlightHotkey });
+        } else {
+            self.spotlightHotkey(null);
         }
 
         // Instant Task Suggestion Engine weights

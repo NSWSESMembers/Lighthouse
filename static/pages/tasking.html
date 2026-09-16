@@ -3343,6 +3343,22 @@
                                                 </div>
                                                 <div class="d">Incident tasking count excludes Complete, CalledOff &amp; Untasked.</div>
                                             </div>
+                                            <div class="cfg-field">
+                                                <label for="spotlightHotkeyBtn">Command palette hotkey</label>
+                                                <div class="ctl">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm hotkey-capture-btn"
+                                                        id="spotlightHotkeyBtn"
+                                                        data-bind="text: config.spotlightHotkeyButtonLabel,
+                                                                   css: { listening: config.spotlightHotkeyCapturing },
+                                                                   click: config.startCaptureSpotlightHotkey,
+                                                                   event: { keydown: config.onSpotlightHotkeyCapture, blur: config.cancelCaptureSpotlightHotkey }"></button>
+                                                    <button type="button" class="btn btn-link btn-sm"
+                                                        data-bind="click: config.resetSpotlightHotkey">Reset</button>
+                                                </div>
+                                                <div class="text-danger small mt-1"
+                                                    data-bind="visible: config.spotlightHotkeyError, text: config.spotlightHotkeyError"></div>
+                                                <div class="d">Opens the command palette (search teams, incidents &amp; jobs) from anywhere on the page. Click, then press the new key combo.</div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-suggest" role="tabpanel" aria-labelledby="cfgTab-suggest" tabindex="0">
