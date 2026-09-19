@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Lighthouse - Radio Operations Console</title>
+</head>
+
+<body style="opacity:0; transition: opacity .25s ease;">
+  <!-- Beacon connection lost: a slim bar that stays while it lasts, and a full-page warning -->
+  <div class="radio-offline-bar" role="alert" data-bind="visible: beaconConnectionLost">
+    <i class="fas fa-plug"></i>
+    <span><strong>Not connected to Beacon.</strong> You can't log new entries or get alerts, and what's on screen may be out of date.</span>
+    <button type="button" class="btn btn-sm radio-offline-bar-btn" data-bind="click: retryConnectionNow">Retry now</button>
+    <button type="button" class="btn btn-sm radio-offline-bar-btn" data-bind="click: showConnectionDetails, visible: connectionDialogDismissed">Details</button>
+  </div>
+  <div class="radio-offline-backdrop" data-bind="visible: showConnectionDialog">
+    <div class="radio-offline-dialog" role="alertdialog" aria-modal="true" aria-labelledby="radioOfflineTitle" aria-describedby="radioOfflineBody">
+      <div class="radio-offline-icon"><i class="fas fa-plug"></i></div>
+      <h2 id="radioOfflineTitle">Not connected to Beacon</h2>
+      <div id="radioOfflineBody">
+        <p class="radio-offline-lead">The console can't reach Beacon right now.</p>
+        <ul>
+          <li><strong>You can't log new entries.</strong> Note radio traffic on paper, or in Beacon directly, until this clears.</li>
+          <li><strong>Alerts are paused.</strong> What's on screen may be out of date, so "overdue" might not be true.</li>
+          <li><strong>The log may be out of date.</strong> Don't rely on it until the connection is back.</li>
+        </ul>
+        <p class="radio-offline-detail">
+          <!-- ko foreach: connectionLostReasons -->
+          <span data-bind="text: $data"></span><br>
+          <!-- /ko -->
+          <span data-bind="visible: connectionLostSinceLabel">Since <span data-bind="text: connectionLostSinceLabel"></span>. </span>The console keeps trying, and this closes by itself when the connection is back.
+        </p>
+      </div>
+      <div class="radio-offline-actions">
+        <button type="button" class="btn btn-primary" data-bind="click: retryConnectionNow"><i class="fas fa-sync-alt"></i> Retry now</button>
+        <button type="button" class="btn btn-outline-secondary" data-bind="click: dismissConnectionDialog">Dismiss and view the log</button>
+      </div>
+    </div>
+  </div>
+  <!-- feature slots: optional features (src/pages/radio/features/) mount their markup here -->
+  <div class="radio-slot-page-top" data-radio-slot="page-top">
+    <!-- alert banners: an outstanding action coming due / going overdue, an overdue callsign check -->
+    <div class="radio-alert-stack" role="alert" aria-live="assertive" data-bind="visible: alerts().length > 0">
+      <!-- ko foreach: visibleAlerts -->
+      <div class="radio-alert" data-bind="css: 'radio-alert-' + severity">
+        <i class="fas fa-bell"></i>
+        <div class="radio-alert-body">
+          <div class="radio-alert-title" data-bind="text: title"></div>
+          <div class="radio-alert-text" data-bind="text: body"></div>
+        </div>
+        <button type="button" class="radio-alert-dismiss" data-bind="click: dismiss" aria-label="Acknowledge" title="Acknowledge (stops repeat alerts for this)"><i class="fas fa-check"></i></button>
+      </div>
+      <!-- /ko -->
+      <div class="radio-alert-more" data-bind="visible: hiddenAlertCount() > 0"><span data-bind="text: '+' + hiddenAlertCount() + ' more'"></span></div>
+      <button type="button" class="radio-alert-clear" data-bind="click: dismissAllAlerts">Acknowledge all</button>
+    </div>
+  </div>
+  <div class="radio-app">
+    <header class="radio-header">
+      <div class="radio-header-titlebar">
+        <h1><i class="fas fa-broadcast-tower"></i> Radio Operations Console</h1>
+      </div>
+      <div class="radio-status-bar" role="status" aria-live="polite">
+        <span class="radio-connection" data-bind="text: connectionLabel, css: { 'radio-connection-connected': connectionOk, 'radio-connection-bad': !connectionOk() }"></span>
+        <span class="radio-last-refresh">
+          Last refresh:
+          <abbr class="radio-abbr-time" data-bind="text: lastRefreshDisplay, attr: { title: lastRefreshTitle }"></abbr>
+        </span>
+        <span class="radio-stale-badge" data-bind="visible: listStale" title="The latest refresh failed. Showing the last data that loaded." role="img" aria-label="The latest refresh failed. Showing the last data that loaded."><i class="fas fa-exclamation-triangle"></i></span>
+        <button type="button" id="radioSettingsButton" class="radio-icon-btn radio-icon-btn-square" title="Settings" aria-label="Settings">
+          <i class="fas fa-cog"></i>
+        </button>
+        <button type="button" class="radio-icon-btn radio-icon-btn-square" data-bind="click: togglePause, attr: { title: pauseButtonLabel, 'aria-label': pauseButtonLabel }">
+          <!-- ko ifnot: paused -->
+          <i class="fas fa-pause"></i>
+          <!-- /ko -->
+          <!-- ko if: paused -->
+          <i class="fas fa-play"></i>
+          <!-- /ko -->
+          <!-- ko if: paused() && pendingCount() > 0 -->
+          <span class="radio-icon-btn-badge" data-bind="text: pendingCount"></span>
+          <!-- /ko -->
+        </button>
+        <button type="button" class="radio-icon-btn radio-icon-btn-square" data-bind="click: applyFilters, enable: !listLoading()" title="Refresh now" aria-label="Refresh now">
+          <i class="fas fa-sync-alt" data-bind="css: { 'fa-spin': listLoading }"></i>
+        </button>
+        <button type="button" class="btn btn-secondary" data-bind="click: jumpToLatest, visible: paused">Jump to latest</button>
+        <span class="radio-loading-indicator" data-bind="visible: listLoading"><i class="fas fa-spinner fa-spin"></i> Loading…</span>
+        <div class="radio-header-search">
+          <button type="button" class="radio-icon-btn radio-icon-btn-square" data-bind="click: toggleTextFilter" title="Search loaded entries" aria-label="Search loaded entries">
+            <i class="fas fa-search"></i>
+          </button>
+          <div class="radio-header-search-box" data-bind="css: { 'radio-header-search-open': showTextFilterInput }">
+            <input id="radioTextFilter" type="text" class="form-control" data-bind="textInput: textFilter, hasFocus: textFilterExpanded" placeholder="Search loaded entries by callsign or message&hellip;">
+          </div>
+          <span class="radio-text-filter-note" data-bind="visible: isTextFilterActive() && showTextFilterInput()">Filtering only what's already loaded below. This doesn't search Beacon again.</span>
+        </div>
+      </div>
+      <span class="radio-live-clock" data-bind="text: liveClockDisplay" aria-label="Current local time"></span>
+    </header>
+
+    <aside class="radio-left-column">
+      <section class="radio-entry-area" aria-label="New radio log entry">
+        <div class="radio-entry-title" data-bind="css: { 'radio-entry-title-disabled': beaconConnectionLost }">New Radio Log</div>
+        <fieldset class="radio-entry-body" data-bind="attr: { disabled: beaconConnectionLost }">
+          <div class="radio-entry-field">
+            <label for="radioCallsignInput">Callsign</label>
+            <input id="radioCallsignInput" type="text" autocomplete="off" class="form-control"
+              data-bind="textInput: callsignInput, event: { keydown: onCallsignKeydown, input: onCallsignInput, blur: onCallsignBlur }"
+              aria-describedby="radioCallsignSuggestions">
+            <ul id="radioCallsignSuggestions" class="radio-suggestions" data-bind="foreach: callsignSuggestions, visible: callsignSuggestions().length > 0">
+              <li data-bind="text: Callsign, click: $root.pickCallsignSuggestion, css: { 'radio-suggestion-active': $index() === $root.callsignSuggestionIndex() }"></li>
+            </ul>
+          </div>
+
+          <div class="radio-entry-field">
+            <label for="radioMessageInput">Message</label>
+            <textarea id="radioMessageInput" rows="3" class="form-control"
+              data-bind="textInput: messageInput, event: { keydown: onMessageKeydown }"></textarea>
+            <div data-radio-slot="entry-message-after"></div>
+          </div>
+
+          <div class="radio-entry-actions">
+            <button type="button" id="radioSubmitButton" class="btn btn-primary"
+              data-bind="click: submitAndRefocus, enable: canSubmit, text: submitButtonLabel"></button>
+            <span class="radio-shortcut-hint">Ctrl/Cmd+Enter also submits</span>
+          </div>
+
+          <!-- Action Required: shown just below Message (CSS order) but placed after Submit here so Tab still goes Callsign -> Message -> Submit -->
+          <div class="radio-entry-field radio-entry-action-required">
+            <label class="radio-checkbox-label"><input type="checkbox" data-bind="checked: entryActionRequired"> Action Required</label>
+
+            <!-- ko if: entryActionRequired -->
+            <label>Action Reminder</label>
+            <div class="radio-reminder-presets" data-bind="foreach: entryReminderPresets">
+              <button type="button" class="radio-preset-btn" data-bind="text: label, click: $root.pickReminderPreset, css: { 'radio-preset-selected': $root.entryReminderPreset() === key }"></button>
+            </div>
+            <!-- ko if: entryReminderPreset() === 'custom' -->
+            <input type="datetime-local" class="form-control radio-reminder-custom" data-bind="value: entryReminderCustomInput">
+            <!-- /ko -->
+            <!-- ko if: entryReminderTimeDisplay -->
+            <div class="radio-reminder-scheduled">Scheduled: <span data-bind="text: entryReminderTimeDisplay"></span></div>
+            <!-- /ko -->
+            <!-- /ko -->
+          </div>
+
+          <div class="radio-entry-feedback" role="alert" aria-live="assertive">
+            <div class="radio-submit-error" data-bind="visible: submitError, text: submitError"></div>
+            <div class="radio-submit-notice" data-bind="visible: submitNotInFilterNotice, text: submitNotInFilterNotice"></div>
+            <!-- ko if: tagLoadError -->
+            <div class="radio-submit-error">
+              <span data-bind="text: tagLoadError"></span>
+              <button type="button" class="btn btn-sm btn-outline-secondary radio-retry-btn" data-bind="click: retryLoadRadioTag">Retry</button>
+            </div>
+            <!-- /ko -->
+          </div>
+
+          <div class="radio-entry-context">
+            Logging to: <strong data-bind="text: loggingHqPicker.name() || 'Unknown HQ'"></strong>
+            <a href="#" class="radio-entry-context-change" data-bs-toggle="modal" data-bs-target="#radioSettingsModal">Change</a>
+          </div>
+
+          <div class="radio-entry-field radio-entry-optional">
+            <div class="radio-entry-field-header">
+              <label for="radioEntryJobInput">Incident (optional)</label>
+              <div class="radio-entry-field-header-actions">
+                <!-- ko if: entryJobLabel -->
+                <a href="#" class="radio-field-clear" data-bind="click: clearEntryJob">Clear</a>
+                <!-- /ko -->
+                <button type="button" class="radio-pin-toggle" data-bind="click: toggleEntryJobPinned, css: { 'radio-pin-active': entryJobPinned }"
+                  title="Keep this incident selected for the next entry">
+                  <i class="fas fa-thumbtack"></i>
+                </button>
+              </div>
+            </div>
+            <!-- ko ifnot: entryJobLabel -->
+            <input id="radioEntryJobInput" type="text" autocomplete="off" class="form-control" placeholder="Search by id or address&hellip;"
+              data-bind="textInput: entryJobInput, event: { keydown: onEntryJobKeydown, input: onEntryJobInput, blur: onEntryJobBlur }">
+            <ul class="radio-suggestions" data-bind="foreach: entryJobSuggestions, visible: entryJobSuggestions().length > 0">
+              <li data-bind="click: $root.pickEntryJobSuggestion, css: { 'radio-suggestion-active': $index() === $root.entryJobSuggestionIndex() }">
+                <strong data-bind="text: Identifier"></strong>
+                <!-- ko if: JobType -->
+                <span data-bind="text: JobType.Name"></span>
+                <!-- /ko -->
+                <!-- ko if: Address -->
+                <br><small data-bind="text: Address.PrettyAddress"></small>
+                <!-- /ko -->
+              </li>
+            </ul>
+            <!-- /ko -->
+            <!-- ko if: entryJobLabel -->
+            <div class="radio-entry-job-chosen">
+              <span data-bind="text: entryJobLabel"></span>
+            </div>
+            <!-- /ko -->
+          </div>
+
+          <div class="radio-entry-field radio-entry-optional">
+            <div class="radio-entry-field-header">
+              <label for="radioEntryTalkgroupInput">Talkgroup (optional)</label>
+              <div class="radio-entry-field-header-actions">
+                <!-- ko if: entryTalkgroupInput -->
+                <a href="#" class="radio-field-clear" data-bind="click: clearEntryTalkgroup">Clear</a>
+                <!-- /ko -->
+                <button type="button" class="radio-pin-toggle" data-bind="click: toggleEntryTalkgroupPinned, css: { 'radio-pin-active': entryTalkgroupPinned }"
+                  title="Keep this talkgroup selected for the next entry">
+                  <i class="fas fa-thumbtack"></i>
+                </button>
+              </div>
+            </div>
+            <input id="radioEntryTalkgroupInput" type="text" autocomplete="off" class="form-control" placeholder="e.g. SES OPS 1"
+              data-bind="textInput: entryTalkgroupInput, event: { keydown: onEntryTalkgroupKeydown, input: onEntryTalkgroupInput, blur: onEntryTalkgroupBlur }">
+            <ul class="radio-suggestions" data-bind="foreach: entryTalkgroupSuggestions, visible: entryTalkgroupSuggestions().length > 0">
+              <li data-bind="text: Name, click: $root.pickEntryTalkgroupSuggestion, css: { 'radio-suggestion-active': $index() === $root.entryTalkgroupSuggestionIndex() }"></li>
+            </ul>
+            <!-- ko if: entryTalkgroupId -->
+            <span class="radio-talkgroup-resolved"><i class="fas fa-check"></i> Matched</span>
+            <!-- /ko -->
+          </div>
+
+
+          <div class="radio-entry-field radio-entry-optional">
+            <label class="radio-checkbox-label"><input type="checkbox" data-bind="checked: entryRetrospective"> Logged earlier</label>
+            <!-- ko if: entryRetrospective -->
+            <input type="datetime-local" class="form-control radio-reminder-custom" aria-label="Time logged" data-bind="value: entryTimeLoggedInput">
+            <div class="radio-submit-error" data-bind="visible: entryTimeLoggedError, text: entryTimeLoggedError"></div>
+            <!-- /ko -->
+          </div>
+
+          <div class="radio-entry-field radio-entry-optional radio-entry-flags">
+            <label class="radio-checkbox-label"><input type="checkbox" data-bind="checked: entryImportant"> Important</label>
+            <label class="radio-checkbox-label"><input type="checkbox" data-bind="checked: entryRestricted"> Restricted</label>
+          </div>
+        </fieldset>
+      </section>
+
+      <div class="radio-slot-column" data-radio-slot="left-column-after-entry"></div>
+    </aside>
+
+    <main class="radio-middle-column">
+
+      <section class="radio-log-list" aria-label="Radio operations log">
+        <div class="radio-list-error" data-bind="visible: listError, text: listError"></div>
+
+        <table class="radio-log-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Logged</th>
+              <th>Callsign</th>
+              <th>Message</th>
+              <th>Created By</th>
+              <th>Incident / TG</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody data-bind="foreach: logRows">
+            <tr data-bind="css: { 'radio-row-important': entry.important, 'radio-row-outstanding': entry.actionRequired, 'radio-row-resolved': !entry.actionRequired() && entry.recentlyResolved() }">
+              <td class="radio-info-cell">
+                <!-- ko if: entry.actionRequired -->
+                <i class="fas fa-thumbtack radio-pin-icon" title="Action required"></i>
+                <!-- /ko -->
+                <i class="fas fa-circle-info radio-info-icon" data-bind="attr: { title: 'Ops Log #' + entry.id() }"></i>
+              </td>
+              <td>
+                <abbr class="radio-abbr-time radio-row-time-primary" data-bind="text: time.primary, attr: { title: time.title }"></abbr>
+              </td>
+              <td data-bind="acronymText: entry.subject"></td>
+              <td data-bind="acronymText: entry.text"></td>
+              <td data-bind="text: entry.createdBy.fullName"></td>
+              <td>
+                <!-- ko if: entry.jobId -->
+                <a target="_blank" data-bind="text: entry.jobLabel() || ('Job ' + entry.jobId()), attr: { href: $root.beaconSource + '/Jobs/' + entry.jobId() }"></a>
+                <!-- /ko -->
+                <!-- ko ifnot: entry.jobId -->
+                <span data-bind="text: entry.eventLabel() || ''"></span>
+                <!-- /ko -->
+                <!-- ko if: entry.talkgroupLabel -->
+                <span class="radio-row-tg" data-bind="text: entry.talkgroupLabel"></span>
+                <!-- /ko -->
+              </td>
+              <td class="radio-row-action-cell">
+                <!-- ko if: entry.actionRequired -->
+                <button type="button" class="radio-row-resolve-btn" data-bs-toggle="modal" data-bs-target="#radioResolveModal"
+                  data-bind="click: $root.openResolveModal">
+                  <i class="fas fa-thumbtack"></i> Resolve
+                </button>
+                <!-- /ko -->
+              </td>
+            </tr>
+          </tbody>
+          <tbody data-bind="visible: !listLoading() && filteredEntries().length === 0">
+            <tr class="radio-log-empty-row">
+              <td colspan="7" class="radio-log-empty">No entries match the current filters.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <button type="button" class="btn btn-secondary" data-bind="click: loadMore, visible: hasMore, enable: !listLoading()">Load more</button>
+      </section>
+    </main>
+
+    <aside class="radio-sidebar" aria-label="Outstanding actions and callsign checks">
+      <section class="radio-outstanding-actions" aria-label="Outstanding actions" data-bind="visible: hasOutstandingActions">
+        <h3>
+          <i class="fas fa-bell"></i> Outstanding actions
+          <span class="radio-outstanding-count" data-bind="text: outstandingActions().length"></span>
+          <button type="button" class="radio-icon-btn radio-outstanding-toggle" data-bind="click: toggleOutstandingActionsCollapsed"
+            aria-label="Toggle outstanding actions list" title="Show/hide outstanding actions">
+            <!-- ko if: outstandingActionsCollapsed -->
+            <i class="fas fa-chevron-down"></i>
+            <!-- /ko -->
+            <!-- ko ifnot: outstandingActionsCollapsed -->
+            <i class="fas fa-chevron-up"></i>
+            <!-- /ko -->
+          </button>
+        </h3>
+        <div class="radio-outstanding-warning radio-outstanding-paused" data-bind="visible: beaconConnectionLost">
+          <i class="fas fa-plug"></i> Alerts are paused because the console isn't connected to Beacon.
+        </div>
+        <div class="radio-outstanding-warning" data-bind="visible: !notificationPermissionAllowed()">
+          <i class="fas fa-bell-slash"></i> Browser notifications are off -- you won't be alerted when an action falls due.
+          <a href="#" data-bs-toggle="modal" data-bs-target="#radioSettingsModal">Turn on</a>
+        </div>
+        <!-- ko ifnot: outstandingActionsCollapsed -->
+        <ul class="radio-outstanding-list" data-bind="foreach: outstandingActions">
+          <li class="radio-outstanding-item" data-bind="css: { 'radio-outstanding-overdue': isOverdue, 'radio-outstanding-due-soon': isDueSoon }">
+            <div class="radio-outstanding-head">
+              <div class="radio-outstanding-who">
+                <strong data-bind="acronymText: entry.subject"></strong>
+                <!-- ko if: dueRelative -->
+                <span class="radio-outstanding-due">Due <abbr class="radio-abbr-time" data-bind="text: dueRelative, attr: { title: formattedReminder }"></abbr></span>
+                <!-- /ko -->
+              </div>
+              <div class="radio-outstanding-buttons">
+                <button type="button" class="btn radio-outstanding-ack-btn" data-bind="click: $root.acknowledgeAction, visible: canAcknowledge"
+                  title="Acknowledge: stops further alerts for this action. It stays outstanding until it is resolved.">Ack</button>
+                <button type="button" class="btn radio-outstanding-resolve-btn" data-bs-toggle="modal" data-bs-target="#radioResolveModal"
+                  data-bind="click: $root.openResolveModal"><i class="fas fa-thumbtack" aria-hidden="true"></i> Resolve</button>
+              </div>
+            </div>
+            <div class="radio-outstanding-text" data-bind="acronymText: entry.text, attr: { title: entry.text }"></div>
+          </li>
+        </ul>
+        <!-- /ko -->
+      </section>
+
+      <div class="radio-slot-column" data-radio-slot="sidebar-after-actions"></div>
+    </aside>
+  </div>
+
+  <!-- Resolve modal -- simulates Beacon's own "Resolve Action Required | Ops Log" dialog -->
+  <div class="modal fade" id="radioResolveModal" tabindex="-1" aria-labelledby="radioResolveModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header radio-resolve-modal-header">
+          <h5 class="modal-title" id="radioResolveModalLabel"><i class="fas fa-thumbtack"></i> Resolve Action Required | Ops Log</h5>
+          <button type="button" class="radio-modal-close" data-bs-dismiss="modal" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
+        </div>
+        <div class="modal-body">
+          <span class="radio-pill radio-pill-tag">Radio</span>
+          <div class="radio-resolve-subject" data-bind="acronymText: resolveModalEntrySubject"></div>
+          <div class="radio-resolve-text" data-bind="acronymText: resolveModalEntryText"></div>
+          <div class="radio-resolve-created" data-bind="text: 'Created on ' + resolveModalEntryCreatedLabel()"></div>
+
+          <hr>
+
+          <div class="radio-list-error" data-bind="visible: resolveModalError, text: resolveModalError"></div>
+
+          <label class="radio-checkbox-label"><input type="checkbox" data-bind="checked: resolveModalActionRequired"> Further Action Required</label>
+
+          <!-- ko if: resolveModalActionRequired -->
+          <div class="radio-entry-field radio-entry-optional">
+            <label>Reminder</label>
+            <div class="radio-reminder-presets" data-bind="foreach: resolveModalReminderPresets">
+              <button type="button" class="radio-preset-btn" data-bind="text: label, click: $root.pickResolveReminderPreset, css: { 'radio-preset-selected': $root.resolveModalReminderPreset() === key }"></button>
+            </div>
+            <!-- ko if: resolveModalReminderPreset() === 'custom' -->
+            <input type="datetime-local" class="form-control radio-reminder-custom" data-bind="value: resolveModalReminderCustomInput">
+            <!-- /ko -->
+            <!-- ko if: resolveModalReminderTimeDisplay -->
+            <div class="radio-reminder-scheduled">Scheduled: <span data-bind="text: resolveModalReminderTimeDisplay"></span></div>
+            <!-- /ko -->
+          </div>
+          <!-- /ko -->
+
+          <div class="radio-entry-field">
+            <label for="radioResolveTextInput">Resolution</label>
+            <textarea id="radioResolveTextInput" rows="5" class="form-control" placeholder="Description of resolution" data-bind="textInput: resolveModalResolutionText"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" data-bind="click: confirmResolve, enable: !resolveModalSubmitting()">
+            <!-- ko if: resolveModalSubmitting -->Resolving&hellip;<!-- /ko -->
+            <!-- ko ifnot: resolveModalSubmitting -->Resolve<!-- /ko -->
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="radioSettingsModal" tabindex="-1" aria-labelledby="radioSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header py-2 px-3">
+          <h5 class="modal-title" id="radioSettingsModalLabel">Radio Console - Configuration</h5>
+          <button type="button" class="radio-modal-close" data-bs-dismiss="modal" aria-label="Close"><i class="fas fa-times" aria-hidden="true"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="radio-config-settings">
+            <ul class="nav nav-pills radio-config-rail flex-column" role="tablist" aria-orientation="vertical">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="radioCfgTab-data" data-bs-toggle="pill" data-bs-target="#radioCfgPane-data" type="button" role="tab" aria-controls="radioCfgPane-data" aria-selected="true">
+                  <span class="radio-cfg-rail-ico"><i class="fas fa-database"></i></span><span>Data</span>
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="radioCfgTab-display" data-bs-toggle="pill" data-bs-target="#radioCfgPane-display" type="button" role="tab" aria-controls="radioCfgPane-display" aria-selected="false">
+                  <span class="radio-cfg-rail-ico"><i class="fas fa-adjust"></i></span><span>Appearance</span>
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="radioCfgTab-notifications" data-bs-toggle="pill" data-bs-target="#radioCfgPane-notifications" type="button" role="tab" aria-controls="radioCfgPane-notifications" aria-selected="false">
+                  <span class="radio-cfg-rail-ico"><i class="fas fa-bell"></i></span><span>Notifications</span>
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="radioCfgTab-features" data-bs-toggle="pill" data-bs-target="#radioCfgPane-features" type="button" role="tab" aria-controls="radioCfgPane-features" aria-selected="false">
+                  <span class="radio-cfg-rail-ico"><i class="fas fa-flask"></i></span><span>Experimental features</span>
+                </button>
+              </li>
+            </ul>
+            <div class="tab-content radio-config-panes">
+            <div class="tab-pane fade show active" id="radioCfgPane-data" role="tabpanel" aria-labelledby="radioCfgTab-data" tabindex="0">
+              <div class="radio-settings-section">
+                <h6>Filter HQ</h6>
+                <p class="radio-settings-note">Only show log entries for this HQ. Defaults to your primary HQ; changing it here is remembered next time you open the console.</p>
+                <div class="radio-hq-search">
+                  <input id="radioFilterHqInput" type="text" autocomplete="off" class="form-control" placeholder="Search unit/HQ by name&hellip;"
+                    data-bind="textInput: filterHqPicker.input, event: { keydown: filterHqPicker.onInputKeydown, input: filterHqPicker.onInput, blur: filterHqPicker.onBlur }">
+                  <button type="button" class="btn btn-secondary" data-bind="click: filterHqPicker.select">Select</button>
+                  <ul class="radio-suggestions" data-bind="foreach: filterHqPicker.suggestions, visible: filterHqPicker.suggestions().length > 0">
+                    <li data-bind="text: Name, click: $root.filterHqPicker.pickSuggestion, css: { 'radio-suggestion-active': $index() === $root.filterHqPicker.suggestionIndex() }"></li>
+                  </ul>
+                </div>
+                <div class="radio-hq-card">
+                  <div class="radio-hq-card-header">
+                    <span class="radio-hq-card-title">Selected HQ</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Clear (show all HQs)"
+                      data-bind="click: filterHqPicker.clear, enable: filterHqPicker.id">Clear</button>
+                  </div>
+                  <div class="radio-hq-card-body">
+                    <!-- ko if: filterHqPicker.id -->
+                    <span class="badge badge-primary radio-hq-chip" data-bind="text: filterHqPicker.name"></span>
+                    <!-- /ko -->
+                    <!-- ko ifnot: filterHqPicker.id -->
+                    <span class="text-muted small">No HQ selected, so all HQs are shown.</span>
+                    <!-- /ko -->
+                  </div>
+                </div>
+                <div class="text-danger small" data-bind="text: filterHqPicker.loadError, visible: filterHqPicker.loadError"></div>
+              </div>
+              <div class="radio-settings-section">
+                <h6>Logging HQ</h6>
+                <p class="radio-settings-note">The HQ every new radio log entry is submitted against. Defaults to your primary HQ; changing it here is remembered next time you open the console.</p>
+                <div class="radio-hq-search">
+                  <input id="radioLoggingHqInput" type="text" autocomplete="off" class="form-control" placeholder="Search unit/HQ by name&hellip;"
+                    data-bind="textInput: loggingHqPicker.input, event: { keydown: loggingHqPicker.onInputKeydown, input: loggingHqPicker.onInput, blur: loggingHqPicker.onBlur }">
+                  <button type="button" class="btn btn-secondary" data-bind="click: loggingHqPicker.select">Select</button>
+                  <ul class="radio-suggestions" data-bind="foreach: loggingHqPicker.suggestions, visible: loggingHqPicker.suggestions().length > 0">
+                    <li data-bind="text: Name, click: $root.loggingHqPicker.pickSuggestion, css: { 'radio-suggestion-active': $index() === $root.loggingHqPicker.suggestionIndex() }"></li>
+                  </ul>
+                </div>
+                <div class="radio-hq-card">
+                  <div class="radio-hq-card-header">
+                    <span class="radio-hq-card-title">Logging HQ</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Clear"
+                      data-bind="click: loggingHqPicker.clear, enable: loggingHqPicker.id">Clear</button>
+                  </div>
+                  <div class="radio-hq-card-body">
+                    <!-- ko if: loggingHqPicker.id -->
+                    <span class="badge badge-primary radio-hq-chip" data-bind="text: loggingHqPicker.name"></span>
+                    <!-- /ko -->
+                    <!-- ko ifnot: loggingHqPicker.id -->
+                    <span class="text-muted small">No logging HQ selected, so new entries will have no HQ attached.</span>
+                    <!-- /ko -->
+                  </div>
+                </div>
+                <div class="text-danger small" data-bind="text: loggingHqPicker.loadError, visible: loggingHqPicker.loadError"></div>
+              </div>
+              <div class="radio-settings-section">
+                <h6>Tag scope</h6>
+                <label class="radio-checkbox-label">
+                  <input type="checkbox" data-bind="checked: radioTagOnly">
+                  Radio-tagged entries only
+                </label>
+              </div>
+              <div class="radio-settings-section">
+                <h6>Time window</h6>
+                <div class="radio-settings-row">
+                  <div class="radio-filter-field">
+                    <label for="radioWindowStart">From</label>
+                    <input id="radioWindowStart" type="datetime-local" class="form-control" data-bind="value: windowStartInput">
+                  </div>
+                  <div class="radio-filter-field">
+                    <label for="radioWindowEnd">To (optional)</label>
+                    <input id="radioWindowEnd" type="datetime-local" class="form-control" data-bind="value: windowEndInput">
+                  </div>
+                </div>
+              </div>
+              <div class="radio-settings-section">
+                <h6>Additional filters</h6>
+                <div class="radio-settings-row">
+                  <div class="radio-filter-field">
+                    <label for="radioJobFilter">Incident/Job id</label>
+                    <input id="radioJobFilter" type="text" class="form-control" data-bind="textInput: jobIdFilter">
+                  </div>
+                  <div class="radio-filter-field">
+                    <label for="radioEventFilter">Event id</label>
+                    <input id="radioEventFilter" type="text" class="form-control" data-bind="textInput: eventIdFilter">
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="radioCfgPane-display" role="tabpanel" aria-labelledby="radioCfgTab-display" tabindex="0">
+              <div class="radio-settings-section">
+                <h6>Log timestamps</h6>
+                <div class="radio-cfg-seg" data-bind="foreach: timeDisplayModeOptions">
+                  <button type="button" class="radio-cfg-seg-btn" data-bind="text: label, click: $root.pickTimeDisplayMode, css: { active: $root.timeDisplayMode() === key }"></button>
+                </div>
+                <div class="radio-settings-hint">Absolute: 21:36 for today, 17/09 21:36 for earlier days (hover for the full date and seconds). Time ago: e.g. 5 minutes ago.</div>
+              </div>
+              <div class="radio-settings-section">
+                <h6>Theme</h6>
+                <div class="radio-cfg-seg" data-bind="foreach: themeModeOptions">
+                  <button type="button" class="radio-cfg-seg-btn" data-bind="text: label, click: $root.pickThemeMode, css: { active: $root.themeMode() === key }"></button>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="radioCfgPane-notifications" role="tabpanel" aria-labelledby="radioCfgTab-notifications" tabindex="0">
+              <div class="radio-settings-section">
+                <h6>Browser notifications</h6>
+                <p class="radio-settings-note">Notifications about outstanding actions (and any features that use them) need your browser's permission.</p>
+                <!-- ko if: notificationPermission() === 'granted' -->
+                <span class="text-success"><i class="fas fa-check"></i> Enabled</span>
+                <!-- /ko -->
+                <!-- ko if: notificationPermission() === 'denied' -->
+                <span class="text-danger">Notifications are blocked. Allow them for this extension in your browser's settings to turn them on.</span>
+                <!-- /ko -->
+                <!-- ko if: notificationPermission() === 'default' -->
+                <button type="button" class="btn btn-secondary" data-bind="click: requestNotificationPermission">Enable browser notifications</button>
+                <!-- /ko -->
+                <!-- ko if: notificationPermission() === 'unsupported' -->
+                <span class="text-muted">Not supported in this browser context.</span>
+                <!-- /ko -->
+                <div class="radio-notification-test">
+                  <button type="button" class="btn btn-outline-secondary btn-sm" data-bind="click: sendTestNotification">Send a test alert</button>
+                  <div class="radio-settings-hint" data-bind="text: notificationStatus, visible: notificationStatus"></div>
+                </div>
+              </div>
+              <div class="radio-settings-section">
+                <h6>Outstanding actions: show how soon before due</h6>
+                <div class="radio-cfg-seg" data-bind="foreach: dueSoonWindowOptions">
+                  <button type="button" class="radio-cfg-seg-btn" data-bind="text: label, click: $root.pickDueSoonWindow, css: { active: $root.dueSoonWindowMinutes() === minutes }"></button>
+                </div>
+                <div class="radio-settings-hint">Actions appear in the Outstanding actions panel this long before their reminder time, and count as "due soon" below.</div>
+              </div>
+              <div class="radio-settings-section">
+                <h6>How to alert me</h6>
+                <label class="radio-checkbox-label"><input type="checkbox" data-bind="checked: alertBanner"> Show a banner at the top of the page</label>
+                <label class="radio-checkbox-label"><input type="checkbox" data-bind="checked: alertSound"> Play a chime</label>
+                <div class="radio-settings-hint">Desktop notifications (above) are separate and need the browser's permission. The banner and chime work either way.</div>
+              </div>
+              <div class="radio-settings-section">
+                <h6>Notify me when an action</h6>
+                <label class="radio-checkbox-label"><input type="checkbox" data-bind="checked: notifyDueSoon"> Comes due soon (inside the window above)</label>
+                <label class="radio-checkbox-label"><input type="checkbox" data-bind="checked: notifyOverdue"> Becomes due (its reminder time passes)</label>
+              </div>
+              <div class="radio-settings-section">
+                <h6>Repeat overdue notifications if not actioned</h6>
+                <div class="radio-cfg-seg" data-bind="foreach: notifyRepeatOptions">
+                  <button type="button" class="radio-cfg-seg-btn" data-bind="text: label, click: $root.pickNotifyRepeat, css: { active: $root.notifyRepeatMinutes() === minutes }"></button>
+                </div>
+                <div class="radio-settings-hint">Repeats while an action is still overdue. Resolve the action, or click the notification / the card's Acknowledge button, to stop the repeats.</div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="radioCfgPane-features" role="tabpanel" aria-labelledby="radioCfgTab-features" tabindex="0">
+              <div class="radio-settings-section" data-bind="visible: features.list().length > 0">
+                <h6>Experimental features</h6>
+                <p class="radio-settings-note">New features on trial. Each one has its own section below: open it to switch the feature on or off (takes effect straight away) and to change its settings.</p>
+              </div>
+              <div class="radio-accordion-group" data-radio-slot="feature-accordion"></div>
+            </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bind="click: applyFilters" data-bs-dismiss="modal">Apply</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-radio-slot="body-end"></div>
+
+  <script src="radio/main.js" type="text/javascript"></script>
+</body>
+
+</html>

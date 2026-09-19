@@ -120,6 +120,13 @@ whenWeAreReady(function () {
     <li id="lhtaskingremoteregister">\
     <a href="">Register Tab For Remote Control</a>\
     </li>\
+    <li id="lhradiomenuitem">\
+    <a href="' +
+        lighthouseUrl +
+        'pages/radiocon.html' +
+        vars +
+        '" target="_blank">Radio Operations Console</a>\
+    </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
@@ -196,6 +203,13 @@ whenWeAreReady(function () {
     </li>\
     <li id="lhtaskingremoteregister">\
     <a href="">Register Tab For Remote Control</a>\
+    </li>\
+    <li id="lhradiomenuitem">\
+    <a href="' +
+        lighthouseUrl +
+        'pages/radiocon.html' +
+        vars +
+        '" target="_blank">Radio Operations Console</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
@@ -275,6 +289,10 @@ whenWeAreReady(function () {
 
   $('#lhtaskingremoteregister > a').mousedown(function () {
     registerTabForTaskingRemoteControl()
+  });
+
+  $('#lhradiomenuitem > a').mousedown(function () {
+    updateToken();
   });
 
   function updateTokenAndRegister() {

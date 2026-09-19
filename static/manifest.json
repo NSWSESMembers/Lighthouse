@@ -46,6 +46,7 @@
   ],
   "permissions": [
     "storage",
+    "notifications",
     "webNavigation",
     "scripting"
   ],
