@@ -1,0 +1,83 @@
+/* Quick messages (src/pages/radio/features/quick-messages.js) */
+.radio-quick-messages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.radio-quick-chip {
+  padding: 2px 10px;
+  font-size: 0.78rem;
+  color: var(--radio-fg);
+  background: var(--radio-bg);
+  border: 1px solid var(--radio-border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.radio-quick-chip:hover,
+.radio-quick-chip:focus-visible {
+  border-color: var(--radio-accent);
+  color: var(--radio-accent);
+}
+
+.radio-quick-editor-row {
+  display: grid;
+  grid-template-columns: 1fr 2fr auto;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px dashed var(--radio-border);
+}
+
+.radio-quick-editor-row .form-control {
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+}
+
+.radio-quick-editor-label {
+  grid-column: 1;
+}
+
+.radio-quick-editor-text {
+  grid-column: 2;
+}
+
+.radio-quick-editor-row .radio-checkbox-label {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* "Action required" with its reminder picker beside it (the picker only shows once ticked) */
+.radio-quick-editor-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.radio-quick-editor-row .radio-quick-editor-reminder {
+  width: auto;
+  height: 26px;
+  padding: 0 22px 0 8px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+}
+
+.radio-quick-editor-remove {
+  background: none;
+  border: 0;
+  color: var(--radio-muted);
+  cursor: pointer;
+  justify-self: end;
+  grid-column: 3;
+  grid-row: 1;
+}
+
+.radio-quick-editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
