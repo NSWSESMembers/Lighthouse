@@ -1,31 +1,361 @@
 {
-  "_note": "Pre-determined text an operator can merge into a sitrep section with the + button. Placeholder content for now -- edit or replace freely; keys are the section keys from lib/sitrepSections.js, each entry is { label, text }.",
+  "_note": "Pre-determined text an operator can merge into a SITREP section with the + button. Draft placeholder library for Beacon, informed by recurring themes in publicly available NSW SES operational updates, including warnings, weather and flood intelligence, incident statistics, community impacts, road access, isolation, resupply, multi-agency operations, resource deployment, operational priorities, prognosis and safety messaging. Operators must verify and edit all inserted text against current intelligence before publishing.",
   "situation": [
-    { "label": "Dummy: severe weather warning", "text": "A severe weather warning is current for the area. [Dummy text]" },
-    { "label": "Dummy: flood watch", "text": "A flood watch is in place for local waterways. [Dummy text]" }
+    {
+      "label": "Severe weather warning current",
+      "text": "A Severe Weather Warning is current for [forecast district/location] for [heavy rainfall/damaging winds/destructive winds/large hail/damaging surf]. Conditions remain dynamic and are being monitored."
+    },
+    {
+      "label": "Flood watch current",
+      "text": "A Flood Watch is current for [catchment/river system]. Forecast rainfall may produce river rises and [minor/moderate/major] flooding."
+    },
+    {
+      "label": "Flood warning current",
+      "text": "A [minor/moderate/major] Flood Warning is current for [river/location]. The river is [rising/steady/falling] and is expected to reach approximately [height] metres at [time/date]."
+    },
+    {
+      "label": "Warnings issued",
+      "text": "NSW SES has issued [number] warning(s) for communities in [locations], including [Advice/Watch and Act/Emergency Warning] messages relating to [hazard/action]."
+    },
+    {
+      "label": "Incident remains active",
+      "text": "The event remains active across [operational area]. NSW SES and partner agencies continue to respond to requests for assistance and monitor changing conditions."
+    },
+    {
+      "label": "Flash flooding risk",
+      "text": "Heavy rainfall may lead to flash flooding in [location], particularly across low-lying areas, roads, causeways and rapidly responding catchments."
+    },
+    {
+      "label": "Catchments saturated",
+      "text": "Catchments in the affected area are saturated. Further rainfall may result in rapid runoff, renewed river rises and additional access impacts."
+    },
+    {
+      "label": "Storm impacts occurring",
+      "text": "Storm activity is producing [fallen trees/roof damage/water ingress/downed powerlines] across [location]. The volume of requests for assistance is [increasing/stable/decreasing]."
+    },
+    {
+      "label": "Situation stable",
+      "text": "The situation is currently stable. No significant escalation has been identified, although forecast conditions and incoming intelligence may alter the risk profile."
+    },
+    {
+      "label": "Operational statistics",
+      "text": "During the reporting period, NSW SES recorded [number] calls, [number] incidents and [number] flood rescues. [Number] incidents remain outstanding."
+    },
+    {
+      "label": "Geographic focus",
+      "text": "The main areas of operational activity are [locations/zones], with the highest demand currently occurring in [location]."
+    },
+    {
+      "label": "Situation improving",
+      "text": "Weather conditions and incident demand are easing across [location]. Residual flooding, damaged infrastructure and outstanding tasks will continue to require monitoring."
+    }
   ],
   "impact": [
-    { "label": "Dummy: minor property damage", "text": "Minor property damage reported; no injuries. [Dummy text]" },
-    { "label": "Dummy: road closures", "text": "Several local roads closed due to flooding and fallen trees. [Dummy text]" }
+    {
+      "label": "Road closures and access",
+      "text": "Multiple local roads, bridges and causeways are closed or affected by [floodwater/debris/fallen trees/snow]. Access to [communities/facilities] is restricted."
+    },
+    {
+      "label": "Community isolation",
+      "text": "Residents and properties in [location] are isolated or at risk of isolation due to flood-affected roads and river crossings."
+    },
+    {
+      "label": "Extended isolation possible",
+      "text": "Some communities may experience isolation for approximately [duration]. Essential supply and welfare requirements are being assessed."
+    },
+    {
+      "label": "Property damage",
+      "text": "Damage has been reported to [homes/businesses/outbuildings/vehicles] from [wind/floodwater/fallen trees]. Impact assessment is continuing."
+    },
+    {
+      "label": "Water entering properties",
+      "text": "Water ingress has been reported at properties in [location]. Crews are undertaking temporary repairs, pumping and other priority tasks where safe and practicable."
+    },
+    {
+      "label": "Fallen trees and powerlines",
+      "text": "Fallen trees and downed powerlines are affecting roads, properties and local infrastructure. Relevant asset owners have been notified."
+    },
+    {
+      "label": "Critical infrastructure",
+      "text": "Potential or confirmed impacts to [power/water/telecommunications/health/transport] infrastructure are being assessed with the responsible agency or provider."
+    },
+    {
+      "label": "Evacuations",
+      "text": "Residents in [location] have been advised to [prepare to evacuate/evacuate now]. An evacuation centre is [open/planned/not required] at [location]."
+    },
+    {
+      "label": "Flood rescues",
+      "text": "Crews have completed [number] flood rescue(s), primarily involving [vehicles/persons/animals] affected by floodwater in [location]."
+    },
+    {
+      "label": "Agricultural impacts",
+      "text": "Impacts to primary producers include [isolated livestock/damaged fencing/crop inundation/disrupted access]. Requests are being coordinated with relevant support agencies."
+    },
+    {
+      "label": "Community disruption",
+      "text": "The event is disrupting local travel, schools, businesses and community services across [location]."
+    },
+    {
+      "label": "No significant impacts",
+      "text": "No significant impacts to life, property or critical infrastructure have been confirmed during this reporting period."
+    }
   ],
   "resources": [
-    { "label": "Dummy: local units deployed", "text": "Local units are deployed and supported by neighbouring units. [Dummy text]" },
-    { "label": "Dummy: agencies in attendance", "text": "NSW Police and FRNSW are in attendance and coordinating with SES. [Dummy text]" }
+    {
+      "label": "Local units deployed",
+      "text": "NSW SES units from [locations] are deployed to priority incidents and are being supported by neighbouring units as required."
+    },
+    {
+      "label": "Personnel deployed",
+      "text": "Approximately [number] NSW SES personnel are supporting operations across [location/zone/state]."
+    },
+    {
+      "label": "Multi-agency response",
+      "text": "NSW SES is coordinating with [NSW Police Force/Fire and Rescue NSW/NSW Rural Fire Service/Ambulance NSW/Transport for NSW/local council/other] in support of incident objectives."
+    },
+    {
+      "label": "Flood rescue capability",
+      "text": "Flood rescue teams, including [in-water operators/boats/high-clearance vehicles], are positioned in or moving to identified risk areas."
+    },
+    {
+      "label": "Aviation assets",
+      "text": "Aviation assets are [deployed/on standby/requested] for [reconnaissance/rescue/resupply/personnel movement] in [location]."
+    },
+    {
+      "label": "Specialist resources",
+      "text": "Specialist capability has been assigned for [storm damage/flood rescue/communications/logistics/intelligence/impact assessment]."
+    },
+    {
+      "label": "Additional resources requested",
+      "text": "Additional [personnel/vehicles/boats/aviation/logistics/communications] resources have been requested for the next operational period."
+    },
+    {
+      "label": "Resources adequate",
+      "text": "Current resources are assessed as adequate for planned operations. Demand and resource availability will continue to be reviewed."
+    },
+    {
+      "label": "Resource shortfall",
+      "text": "A potential shortfall exists in [capability/location/time period]. Mitigation includes [task reprioritisation/mutual aid/pre-positioning/additional request]."
+    },
+    {
+      "label": "Resupply capability",
+      "text": "Boat, high-clearance vehicle and/or aviation capability is available to support essential resupply to isolated communities, subject to conditions."
+    },
+    {
+      "label": "Incident management staffing",
+      "text": "Incident management arrangements are operating at [unit/zone/state] level, with functional roles staffed for the current operational period."
+    },
+    {
+      "label": "Relief and rotation",
+      "text": "Relief crews and shift rotations are being planned to maintain operational coverage and manage fatigue."
+    }
   ],
   "execution": [
-    { "label": "Dummy: prioritising life safety", "text": "Priority is life safety, followed by protection of property and critical infrastructure. [Dummy text]" },
-    { "label": "Dummy: community messaging", "text": "Community warnings and advice are being issued through the usual channels. [Dummy text]" }
+    {
+      "label": "Life safety priority",
+      "text": "Operational priorities are life safety, timely warnings, protection of property and critical infrastructure, and support to isolated communities."
+    },
+    {
+      "label": "Respond to priority incidents",
+      "text": "Crews are prioritising incidents involving immediate threats to life, flood rescue, evacuation, structural hazards and critical access routes."
+    },
+    {
+      "label": "Community warnings",
+      "text": "Warnings and public information are being issued and reviewed as intelligence changes. Messaging is being distributed through approved channels."
+    },
+    {
+      "label": "Evacuation operations",
+      "text": "Evacuation planning and support are underway for [location], including route assessment, transport arrangements and welfare coordination."
+    },
+    {
+      "label": "Damage assessment",
+      "text": "Rapid impact and damage assessments are being conducted in [location] to identify priority needs and inform recovery planning."
+    },
+    {
+      "label": "Storm damage operations",
+      "text": "Crews are undertaking temporary repairs, tree removal and access restoration, with tasks prioritised by risk and community consequence."
+    },
+    {
+      "label": "Flood rescue posture",
+      "text": "Flood rescue teams are pre-positioned at [location] and will maintain readiness during the forecast high-risk period."
+    },
+    {
+      "label": "Reconnaissance and intelligence",
+      "text": "Ground and/or aerial reconnaissance is being used to confirm impacts, access constraints, river behaviour and community needs."
+    },
+    {
+      "label": "Resupply isolated communities",
+      "text": "Essential food, water, medicines and other critical items are being coordinated for isolated residents in [location]."
+    },
+    {
+      "label": "Clear outstanding incidents",
+      "text": "Operations are focused on reducing the outstanding incident queue while retaining capacity for new priority requests."
+    },
+    {
+      "label": "Protect critical infrastructure",
+      "text": "Protective actions are being coordinated for [asset/location], including access, temporary works and liaison with the asset owner."
+    },
+    {
+      "label": "Next operational period",
+      "text": "Planning for the next operational period includes [resource rotation/pre-positioning/intelligence collection/community messaging/recovery transition]."
+    }
   ],
   "emergingIssues": [
-    { "label": "Dummy: media interest", "text": "Media interest is increasing; a spokesperson is being arranged. [Dummy text]" },
-    { "label": "Dummy: secondary hazards", "text": "Potential for secondary hazards as conditions change. [Dummy text]" }
+    {
+      "label": "Further severe weather",
+      "text": "Forecast [rainfall/wind/thunderstorm/surf/snow] may increase incident demand and create additional impacts during [time period]."
+    },
+    {
+      "label": "Renewed river rises",
+      "text": "Further rainfall over saturated catchments may cause renewed river rises and extend or worsen flooding in [location]."
+    },
+    {
+      "label": "Flash flooding escalation",
+      "text": "Short-duration intense rainfall may produce rapid flash flooding before formal river warnings can be issued."
+    },
+    {
+      "label": "Access deterioration",
+      "text": "Additional road closures may restrict crew access, evacuation routes, community movement and resupply operations."
+    },
+    {
+      "label": "Prolonged isolation",
+      "text": "Extended isolation may create increasing demand for food, medicines, fuel, animal welfare and other essential support."
+    },
+    {
+      "label": "Outstanding incident backlog",
+      "text": "A sustained volume of new incidents may delay completion of lower-priority tasks and increase the outstanding workload."
+    },
+    {
+      "label": "Resource fatigue",
+      "text": "Extended operations and travel requirements are increasing fatigue risk. Relief, rotation and accommodation arrangements require ongoing attention."
+    },
+    {
+      "label": "Resource competition",
+      "text": "Concurrent incidents across multiple locations may place pressure on specialist resources, aviation assets and incident management personnel."
+    },
+    {
+      "label": "Communications limitations",
+      "text": "Communications coverage or network congestion may affect field reporting and coordination in [location]."
+    },
+    {
+      "label": "Critical infrastructure risk",
+      "text": "Flooding or storm damage may affect [power/water/telecommunications/transport/health] infrastructure and create cascading community impacts."
+    },
+    {
+      "label": "Community complacency",
+      "text": "Repeated warnings or easing local conditions may reduce community responsiveness despite continuing flood, road and structural hazards."
+    },
+    {
+      "label": "Media and public information demand",
+      "text": "Media interest and community information demand are increasing. Coordinated, timely and consistent messaging will be required."
+    }
   ],
   "prognosis": [
-    { "label": "Dummy: conditions easing", "text": "Conditions are forecast to ease over the next 24 hours. [Dummy text]" },
-    { "label": "Dummy: further rain", "text": "Further rainfall is forecast and may extend response. [Dummy text]" }
+    {
+      "label": "Conditions easing",
+      "text": "Weather conditions are forecast to ease from [time/date]. Incident demand should gradually reduce, although residual hazards and cleanup tasks will continue."
+    },
+    {
+      "label": "Further rainfall forecast",
+      "text": "Further rainfall of approximately [range] mm is forecast over [period], with isolated higher totals possible. Additional flash flooding and river rises remain possible."
+    },
+    {
+      "label": "Flooding to persist",
+      "text": "Riverine flooding and access impacts are expected to persist for [duration] as water moves through the catchment."
+    },
+    {
+      "label": "Incident demand increasing",
+      "text": "Incident demand is expected to increase during [period] as forecast conditions affect [location]."
+    },
+    {
+      "label": "Incident demand stabilising",
+      "text": "Incident demand is expected to stabilise during the next operational period, subject to forecast conditions."
+    },
+    {
+      "label": "Escalation possible",
+      "text": "Escalation remains possible if forecast rainfall exceeds expectations, warnings are upgraded or critical access routes are lost."
+    },
+    {
+      "label": "Resource posture maintained",
+      "text": "The current resource posture should be maintained for at least [duration], with a review at [time/date]."
+    },
+    {
+      "label": "Resource drawdown",
+      "text": "A staged resource drawdown may commence from [time/date] if incident demand, weather and warning levels continue to reduce."
+    },
+    {
+      "label": "Extended operations",
+      "text": "Operations are likely to continue for [duration] due to [prolonged flooding/isolation/outstanding storm damage/cleanup requirements]."
+    },
+    {
+      "label": "Transition to recovery",
+      "text": "Transition to recovery is expected to commence in [location/timeframe], while response operations continue for residual risks and priority requests."
+    },
+    {
+      "label": "No significant change",
+      "text": "No significant change is expected during the next reporting period. Current objectives and resource levels remain appropriate."
+    },
+    {
+      "label": "Next review trigger",
+      "text": "The prognosis will be reviewed following [next forecast/warning update/river peak/operational briefing] or any significant change in conditions."
+    }
   ],
   "safety": [
-    { "label": "Dummy: standard hazards", "text": "Known hazards: floodwater, fallen trees, damaged powerlines. [Dummy text]" },
-    { "label": "Dummy: fatigue management", "text": "Fatigue management is being monitored for all responders. [Dummy text]" }
+    {
+      "label": "Do not enter floodwater",
+      "text": "Personnel and the public must not drive, walk or play in floodwater. Use an alternate route and comply with road closures and warning signage."
+    },
+    {
+      "label": "Rapid flash flooding",
+      "text": "Flash flooding can occur quickly and without warning. Monitor rainfall, identify escape routes and avoid low-lying roads, causeways, creeks and drains."
+    },
+    {
+      "label": "Floodwater contamination",
+      "text": "Floodwater may contain sewage, chemicals, debris, unstable surfaces and biological hazards. Apply appropriate PPE, hygiene and decontamination controls."
+    },
+    {
+      "label": "Fallen trees and branches",
+      "text": "Maintain exclusion zones around unstable trees, hanging branches and storm-damaged vegetation. Reassess hazards as wind and ground conditions change."
+    },
+    {
+      "label": "Downed powerlines",
+      "text": "Treat all fallen or damaged electrical infrastructure as energised. Maintain a safe distance and notify the electricity network operator."
+    },
+    {
+      "label": "Roadside operations",
+      "text": "Apply traffic management controls, high-visibility PPE, safe vehicle positioning and a dedicated lookout where crews are operating near traffic."
+    },
+    {
+      "label": "Swiftwater operations",
+      "text": "Only appropriately trained and equipped personnel are to operate in or near swiftwater. Use approved rescue systems and maintain downstream safety controls."
+    },
+    {
+      "label": "Boat operations",
+      "text": "Confirm vessel suitability, crew competency, communications, flotation equipment, navigation hazards and weather limitations before boat operations."
+    },
+    {
+      "label": "Fatigue management",
+      "text": "Supervisors are to monitor work hours, travel, rest breaks and fitness for task. Rotate crews and stand down personnel where fatigue may impair safety."
+    },
+    {
+      "label": "Heat, cold and hydration",
+      "text": "Monitor personnel for heat or cold stress. Provide suitable PPE, hydration, nutrition, shelter and scheduled rest breaks."
+    },
+    {
+      "label": "Slips, trips and manual handling",
+      "text": "Use appropriate lighting, footwear, team lifting and mechanical aids. Take care on wet, muddy, uneven or debris-covered surfaces."
+    },
+    {
+      "label": "Dynamic risk assessment",
+      "text": "Complete and continually review dynamic risk assessments. Pause or withdraw if conditions exceed capability, controls are ineffective or communications are lost."
+    },
+    {
+      "label": "Welfare and psychological safety",
+      "text": "Monitor personnel welfare following prolonged, high-risk or distressing tasks. Escalate welfare concerns and provide access to peer or professional support."
+    },
+    {
+      "label": "Hazard and near-miss reporting",
+      "text": "Report hazards, injuries, exposures and near misses promptly through established command and safety reporting channels."
+    }
   ]
 }
