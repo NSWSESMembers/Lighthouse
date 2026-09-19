@@ -1,16 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { request } from './core/request.js';
-import { search, get, create, resolve, unresolvedActionsLog } from './operationslog.js';
+import { request, requestPaginated } from './core/request.js';
+import { search, get, create, resolve, unresolvedActionsLog, searchLog } from './operationslog.js';
 
 vi.mock('./core/request.js', async () => {
   const actual = await vi.importActual('./core/request.js');
-  return { ...actual, request: vi.fn() };
+  return { ...actual, request: vi.fn(), requestPaginated: vi.fn() };
 });
 
 const ctx = { host: 'https://beacon.test', token: 'tok', userId: 'u1' };
 
 beforeEach(() => {
   vi.mocked(request).mockReset();
+  vi.mocked(requestPaginated).mockReset().mockResolvedValue({ results: [], totalItems: 0 });
 });
 
 describe('search', () => {
@@ -68,6 +69,56 @@ describe('resolve', () => {
     expect(opts).toMatchObject({
       form: { Id: 276535, Text: 'note', FurtherActionRequired: true, ActionReminder: '' },
     });
+  });
+});
+
+describe('searchLog', () => {
+  it('builds an HQ/date-scoped query and delegates pagination to requestPaginated', async () => {
+    vi.mocked(requestPaginated).mockResolvedValue({ results: [{ Id: 1 }, { Id: 2 }], totalItems: 2 });
+
+    const result = await searchLog(
+      {
+        entityIds: [5],
+        dateFrom: new Date('2026-01-01T00:00:00.000Z'),
+        dateTo: new Date('2026-01-02T00:00:00.000Z'),
+      },
+      { ...ctx, pageSize: 1 },
+    );
+
+    const [url, opts] = vi.mocked(requestPaginated).mock.calls[0];
+    expect(url).toContain('EntityIds%5B0%5D=5');
+    expect(url).toContain('DateFrom=2026-01-01T00%3A00%3A00.000Z');
+    expect(url).toContain('DateTo=2026-01-02T00%3A00%3A00.000Z');
+    expect(opts.pageSize).toBe(1);
+    expect(result).toEqual({ results: [{ Id: 1 }, { Id: 2 }], totalItems: 2 });
+  });
+
+  it('includes job/event filters when given', async () => {
+    await searchLog({ jobIds: ['job1'], eventIds: ['event1'] }, ctx);
+    const [url] = vi.mocked(requestPaginated).mock.calls[0];
+    expect(url).toContain('JobIds%5B0%5D=job1');
+    expect(url).toContain('EventIds%5B0%5D=event1');
+  });
+
+  it('includes a tag filter when given', async () => {
+    await searchLog({ tagIds: [6, 42] }, ctx);
+    const [url] = vi.mocked(requestPaginated).mock.calls[0];
+    expect(url).toContain('TagIds%5B0%5D=6');
+    expect(url).toContain('TagIds%5B1%5D=42');
+  });
+
+  it('passes pageLimit/onPage through to requestPaginated for incremental loading', async () => {
+    const onPage = vi.fn();
+    await searchLog({ entityIds: [5] }, { ...ctx, pageLimit: 1, onPage });
+    const [, opts] = vi.mocked(requestPaginated).mock.calls[0];
+    expect(opts.pageLimit).toBe(1);
+    expect(opts.onPage).toBe(onPage);
+  });
+
+  it('omits EntityIds entirely when no HQ/unit is selected -- an unscoped query, not one scoped to nothing', async () => {
+    await searchLog({ entityIds: [] }, ctx);
+    const [url] = vi.mocked(requestPaginated).mock.calls[0];
+    expect(url).not.toContain('EntityIds');
   });
 });
 
