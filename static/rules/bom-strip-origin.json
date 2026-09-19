@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [{ "header": "origin", "operation": "remove" }]
+    },
+    "condition": {
+      "urlFilter": "||www.bom.gov.au/fwo/IDZ00054.warnings_nsw.xml",
+      "resourceTypes": ["xmlhttprequest"]
+    }
+  }
+]

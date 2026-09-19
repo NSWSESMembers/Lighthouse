@@ -23,3 +23,26 @@ export async function search(query, ctx = {}) {
     ),
   );
 }
+
+/**
+ * The most recently created events, newest first (highest Id), optionally
+ * limited to those affecting the given entities/HQs. Beacon's Events page filters with
+ * `AffectedEntityIds[]` (plain `EntityIds` is accepted but silently ignored). If the filtered
+ * request is rejected, callers can fall back to the unfiltered one.
+ *
+ * @param {Array<string|number>} entityIds  empty for no HQ filter
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @param {{limit?: number}} [options]
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export async function recent(entityIds, ctx = {}, { limit = 5 } = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  const entityParams = (entityIds || []).map((id) => '&AffectedEntityIds%5B%5D=' + encodeURIComponent(id)).join('');
+  return toCollection(
+    await request(
+      host + '/Api/v1/Events/Search?ViewModelType=2&PageSize=' + limit + '&SortField=Id&SortOrder=desc' + entityParams +
+        '&LighthouseFunction=RecentEvents&userId=' + userId,
+      { token, signal },
+    ),
+  );
+}

@@ -17,17 +17,20 @@ export function getTasking(teamId, ctx = {}) {
 }
 
 /**
- * Team history. Single-page result only (first 20).
+ * Team history. Defaults to a single page of 20 (existing callers' behaviour);
+ * pass a higher/zero pageLimit to walk further back, e.g. for reconstructing
+ * activation/membership intervals over a reporting period.
  *
  * @param {string|number} teamId
- * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          pageLimit?: number, pageSize?: number, onPage?: Function}} ctx
  * @returns {Promise<{results: object[], totalItems: number}>}
  */
 export function getHistory(teamId, ctx = {}) {
-  const { host, userId = 'notPassed', token, signal } = ctx;
+  const { host, userId = 'notPassed', token, signal, pageLimit = 1, pageSize = 20, onPage } = ctx;
   return requestPaginated(
     host + '/Api/v1/Teams/' + teamId + '/History?LighthouseFunction=GetHistoryfromBeacon&userId=' + userId,
-    { token, signal, pageLimit: 1, pageSize: 20 },
+    { token, signal, pageLimit, pageSize, onPage },
   );
 }
 

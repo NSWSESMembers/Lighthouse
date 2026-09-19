@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Lighthouse - Sitrep Generator</title>
+</head>
+
+<body style="opacity:0; transition: opacity .25s ease;">
+  <div class="sitrep-app no-print">
+
+    <!-- LEFT: scope, period, header fields, narrative prompts -->
+    <div class="sitrep-form">
+      <div class="sitrep-title">
+        <h1><i class="fas fa-clipboard-list" aria-hidden="true"></i> Sitrep Generator</h1>
+      </div>
+
+      <section class="sitrep-card">
+        <h3><i class="fas fa-database" aria-hidden="true"></i> Beacon Data</h3>
+        <div class="sitrep-card-body">
+
+        <div class="sitrep-field sitrep-hq">
+          <label for="sitrepHqInput">Headquarters <a href="#" class="sitrep-clear" title="Remove all selected HQs" data-bind="click: clearUnits, visible: units().length">Clear</a></label>
+          <div class="sitrep-hq-search">
+            <input id="sitrepHqInput" type="text" autocomplete="off" class="form-control form-control-sm" placeholder="Search unit/HQ by name&hellip; (Enter to add)"
+              data-bind="textInput: hqPicker.input, event: { keydown: hqPicker.onInputKeydown, input: hqPicker.onInput, blur: hqPicker.onBlur }">
+            <button type="button" class="btn btn-sm btn-secondary" data-bind="click: hqPicker.select">Add</button>
+            <ul class="sitrep-suggestions" data-bind="foreach: hqPicker.suggestions, visible: hqPicker.suggestions().length > 0">
+              <li data-bind="text: Name, click: $root.hqPicker.pickSuggestion, css: { 'sitrep-suggestion-active': $index() === $root.hqPicker.suggestionIndex() }"></li>
+            </ul>
+          </div>
+          <div class="sitrep-chips">
+            <!-- ko foreach: units -->
+            <span class="sitrep-chip"><span data-bind="text: name"></span><a href="#" class="sitrep-chip-tree" title="Load child units" data-bind="visible: entityType == 2, click: $root.loadChildren"><i class="fa fa-sitemap" aria-hidden="true"></i></a><a href="#" class="sitrep-chip-remove" title="Remove" data-bind="click: $root.removeUnit">&times;</a></span>
+            <!-- /ko -->
+            <!-- ko ifnot: units().length -->
+            <span class="sitrep-muted">No HQ added yet.</span>
+            <!-- /ko -->
+          </div>
+          <div class="sitrep-error" data-bind="text: hqPicker.loadError, visible: hqPicker.loadError"></div>
+          <div class="sitrep-error" data-bind="text: unitLoadError, visible: unitLoadError"></div>
+        </div>
+
+        <div class="sitrep-row">
+          <div class="sitrep-field">
+            <label for="sitrepSector">Sector <span class="sitrep-optional">optional</span></label>
+            <select id="sitrepSector" class="form-control form-control-sm" data-bind="options: sectorOptions, optionsText: 'Name', optionsValue: 'Id', value: selectedSectorId, optionsCaption: 'All sectors'"></select>
+          </div>
+          <div class="sitrep-field sitrep-event-filter">
+            <label for="sitrepEventQuery">Event <span class="sitrep-optional">optional</span></label>
+            <div class="sitrep-inline">
+              <input id="sitrepEventQuery" type="text" class="form-control form-control-sm" placeholder="Search events&hellip;" data-bind="textInput: eventQuery, event: { keydown: onEventQueryKeydown, focus: onEventQueryFocus, blur: onEventQueryBlur }">
+              <button type="button" class="btn btn-sm btn-secondary" data-bind="click: searchEvents">Search</button>
+            </div>
+            <ul class="sitrep-suggestions" data-bind="visible: eventOptions().length > 0">
+              <li class="sitrep-suggestions-title"><span data-bind="text: eventOptionsTitle"></span></li>
+              <!-- ko foreach: eventOptions -->
+              <li data-bind="text: label, click: $root.pickEvent"></li>
+              <!-- /ko -->
+            </ul>
+            <div class="sitrep-selected-event" data-bind="visible: selectedEventLabel">
+              <strong data-bind="text: selectedEventLabel"></strong> <a href="#" data-bind="click: clearEvent">clear</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="sitrep-field">
+          <label>Reporting period</label>
+          <div class="sitrep-presets" data-bind="foreach: periodPresets">
+            <button type="button" class="sitrep-preset" data-bind="text: label, click: $root.pickPeriodPreset, css: { 'sitrep-preset-active': $root.activePeriodPreset() === key }"></button>
+          </div>
+          <div class="sitrep-period-inputs">
+            <input id="sitrepStart" type="datetime-local" class="form-control form-control-sm" aria-label="Start" data-bind="value: startInput">
+            <span class="sitrep-period-to">to</span>
+            <input id="sitrepEnd" type="datetime-local" class="form-control form-control-sm" aria-label="End" data-bind="value: endInput">
+          </div>
+          <div class="sitrep-error" data-bind="text: periodError, visible: periodError"></div>
+        </div>
+
+        <label class="sitrep-switch" title="Adds the current NSW/ACT Bureau of Meteorology warnings to the Situation section when you Get Data">
+          <input type="checkbox" role="switch" data-bind="checked: includeBomWarnings">
+          <span>Include BOM warnings <span class="sitrep-optional">current NSW/ACT, added to Situation</span></span>
+        </label>
+
+        <button type="button" class="btn sitrep-generate-full" data-bind="click: generate, enable: canGenerate, css: { 'sitrep-get-data-done': dataIsCurrent }, attr: { title: getDataTitle }">
+          <i class="fas fa-cloud-download-alt" aria-hidden="true" data-bind="visible: !loading()"></i><i class="fas fa-spinner fa-spin" data-bind="visible: loading"></i> Get Data
+        </button>
+        <div class="sitrep-status" data-bind="visible: loading"><i class="fas fa-spinner fa-spin"></i> <span data-bind="text: loadingStatus"></span></div>
+        <div class="sitrep-error" data-bind="text: error, visible: error"></div>
+        </div>
+      </section>
+
+      <section class="sitrep-card">
+        <h3>
+          <span><i class="fas fa-file-alt" aria-hidden="true"></i> Situation Report</span>
+          <button type="button" class="sitrep-card-action" title="Clear the header and every body section back to defaults" data-bind="click: resetSituationReport"><i class="fas fa-undo" aria-hidden="true"></i> Reset</button>
+        </h3>
+        <div class="sitrep-card-body">
+        <div class="sitrep-row sitrep-row-details">
+          <div class="sitrep-field">
+            <label for="sitrepEventNumber">Event #</label>
+            <input id="sitrepEventNumber" type="text" class="form-control form-control-sm" data-bind="textInput: eventNumber">
+          </div>
+          <div class="sitrep-field">
+            <label for="sitrepEventName">Event name</label>
+            <input id="sitrepEventName" type="text" class="form-control form-control-sm" data-bind="textInput: eventName">
+          </div>
+          <div class="sitrep-field">
+            <label for="sitrepLocation">Location</label>
+            <input id="sitrepLocation" type="text" class="form-control form-control-sm" data-bind="textInput: location">
+          </div>
+          <div class="sitrep-field">
+            <label for="sitrepNumber">Sitrep #</label>
+            <input id="sitrepNumber" type="number" min="1" step="1" class="form-control form-control-sm" data-bind="textInput: sitrepNumber">
+          </div>
+          <div class="sitrep-field">
+            <label for="sitrepTime">Sitrep date &amp; time</label>
+            <input id="sitrepTime" type="datetime-local" class="form-control form-control-sm" data-bind="value: sitrepTimeInput">
+          </div>
+        </div>
+        <hr class="sitrep-divider">
+        <!-- ko foreach: sections -->
+        <div class="sitrep-field">
+          <div class="sitrep-label-row" data-bind="event: { focusout: closeSnippetsSoon }">
+            <label data-bind="text: heading, attr: { for: 'sitrepSection-' + key }"></label>
+            <button type="button" class="sitrep-snippet-btn" title="Insert pre-determined content" aria-haspopup="true"
+              data-bind="visible: snippets.length, click: toggleSnippets, css: { 'sitrep-snippet-open': snippetsOpen }, attr: { 'aria-expanded': ariaExpanded }">
+              <i class="fas fa-plus" aria-hidden="true"></i> Insert <i class="fas fa-caret-down sitrep-snippet-caret" aria-hidden="true"></i>
+            </button>
+            <div class="sitrep-snippet-menu" role="menu" data-bind="visible: snippetsOpen, event: { keydown: onSnippetKeydown }">
+              <div class="sitrep-snippet-menu-title">Insert into <span data-bind="text: heading"></span></div>
+              <!-- ko foreach: snippets -->
+              <button type="button" class="sitrep-snippet-item" role="menuitem" data-bind="click: $parent.insertSnippet">
+                <span class="sitrep-snippet-item-label" data-bind="text: label"></span>
+                <span class="sitrep-snippet-item-text" data-bind="text: text"></span>
+              </button>
+              <!-- /ko -->
+            </div>
+          </div>
+          <textarea class="form-control form-control-sm sitrep-autogrow" rows="2" data-bind="textInput: text, autoGrow: text, attr: { id: 'sitrepSection-' + key }"></textarea>
+          <details class="sitrep-prompts">
+            <summary>Guidance</summary>
+            <ul data-bind="foreach: prompts"><li data-bind="text: $data"></li></ul>
+          </details>
+        </div>
+        <!-- /ko -->
+        </div>
+      </section>
+
+      <section class="sitrep-card">
+        <h3><i class="fas fa-user-check" aria-hidden="true"></i> Authorisation</h3>
+        <div class="sitrep-card-body">
+        <div class="sitrep-next">
+          <label class="sitrep-radio">
+            <input type="radio" name="sitrepNextReportOption" value="scheduled" data-bind="checked: nextReportOption"> Next sitrep at
+          </label>
+          <input type="datetime-local" class="form-control form-control-sm" aria-label="Next situation report time" data-bind="value: nextReportTimeInput, enable: nextReportOption() === 'scheduled'">
+          <div class="sitrep-quick" data-bind="foreach: nextReportQuickAdds">
+            <button type="button" class="btn btn-sm btn-outline-secondary" title="Set from the sitrep date &amp; time" data-bind="text: label, click: $root.addToNextReport"></button>
+          </div>
+        </div>
+        <label class="sitrep-radio sitrep-radio-none">
+          <input type="radio" name="sitrepNextReportOption" value="none" data-bind="checked: nextReportOption"> No further sitreps
+        </label>
+        <div class="sitrep-field">
+          <label for="sitrepPreparedByRole">Prepared by</label>
+          <div class="sitrep-row">
+            <input id="sitrepPreparedByRole" type="text" class="form-control form-control-sm" placeholder="Role, e.g. Situation Officer" aria-label="Prepared by role" data-bind="textInput: preparedByRole">
+            <input id="sitrepPreparedBy" type="text" class="form-control form-control-sm" placeholder="Name" aria-label="Prepared by name" data-bind="textInput: preparedBy">
+          </div>
+        </div>
+        <div class="sitrep-field">
+          <label for="sitrepApprovedByRole">Approved by</label>
+          <div class="sitrep-row">
+            <input id="sitrepApprovedByRole" type="text" class="form-control form-control-sm" placeholder="Role, e.g. Incident Controller" aria-label="Approved by role" data-bind="textInput: approvedByRole">
+            <input id="sitrepApprovedBy" type="text" class="form-control form-control-sm" placeholder="Name" aria-label="Approved by name" data-bind="textInput: approvedBy">
+          </div>
+        </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT: the working sitrep -- live from the fields until edited directly -->
+    <div class="sitrep-working">
+      <div class="sitrep-working-bar">
+        <h2>Working sitrep</h2>
+        <span class="sitrep-state" data-bind="css: { 'sitrep-state-edited': sitrepEdited }, text: sitrepStateLabel"></span>
+        <span class="sitrep-spacer"></span>
+        <span class="sitrep-copy-status" data-bind="text: copyStatus"></span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" title="Discard manual edits and follow the fields again" data-bind="click: resetSitrepText, visible: sitrepEdited">Reset to fields</button>
+        <button type="button" class="btn btn-sm btn-secondary" title="Add this sitrep to the Ops Log" data-bind="click: requestOpsLog, enable: canAddToOpsLog">+ Ops Log</button>
+        <button type="button" class="btn btn-sm btn-secondary" data-bind="click: requestCopy">Copy</button>
+        <button type="button" class="btn btn-sm btn-secondary" data-bind="click: requestPrint">Print</button>
+      </div>
+      <div class="sitrep-status-ok" data-bind="text: opsLogStatus, visible: opsLogStatus"></div>
+      <div class="sitrep-error" data-bind="text: opsLogError, visible: opsLogError"></div>
+      <textarea class="sitrep-editor" spellcheck="true" aria-label="Working sitrep text" data-bind="textInput: sitrepText"></textarea>
+      <div class="sitrep-completeness" data-bind="visible: dataStatusLabel">
+        <strong>Data Status</strong>
+        <span class="sitrep-pill-status" data-bind="text: dataStatusLabel, css: 'sitrep-pill-' + dataStatusLevel()"></span>
+        <ul data-bind="foreach: completenessItems">
+          <li>
+            <span data-bind="text: text"></span>
+            <ul class="sitrep-completeness-sub" data-bind="foreach: details, visible: details.length > 0"><li data-bind="text: $data"></li></ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- "may not be complete" warning before Copy / Print / + Ops Log -->
+  <div class="sitrep-modal-backdrop no-print" data-bind="visible: warningOpen">
+    <div class="sitrep-modal sitrep-modal-sm sitrep-modal-danger" role="alertdialog" aria-modal="true" aria-labelledby="sitrepWarningTitle" id="sitrepWarningDialog" tabindex="-1" data-bind="event: { keydown: onWarningKeydown }">
+      <div class="sitrep-modal-header"><span id="sitrepWarningTitle"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i> This sitrep might not be complete</span></div>
+      <div class="sitrep-modal-body">
+        <ul data-bind="foreach: warnings"><li data-bind="text: $data"></li></ul>
+      </div>
+      <div class="sitrep-modal-footer">
+        <button type="button" class="btn btn-sm sitrep-btn-go" data-bind="click: cancelWarning">Go back</button>
+        <button type="button" class="btn btn-sm sitrep-btn-danger" data-bind="click: continueAfterWarning">Continue anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- + Ops Log: mirrors LAD/tasking's "New Ops Log" popup, prefilled for a sitrep -->
+  <div class="sitrep-modal-backdrop no-print" data-bind="visible: opsLogOpen">
+    <div class="sitrep-modal" role="dialog" aria-modal="true" aria-labelledby="sitrepOpsLogTitle" id="sitrepOpsLogDialog" tabindex="-1" data-bind="event: { keydown: onOpsLogKeydown }">
+      <div class="sitrep-modal-header">
+        <span id="sitrepOpsLogTitle">New Ops Log for Situation Report</span>
+        <button type="button" class="sitrep-modal-close" aria-label="Close" data-bind="click: closeOpsLog">&times;</button>
+      </div>
+      <div class="sitrep-modal-body">
+        <div class="sitrep-error" data-bind="text: opsLogError, visible: opsLogError"></div>
+        <div class="sitrep-status" data-bind="visible: opsLogLoading"><i class="fas fa-spinner fa-spin"></i> Loading tags&hellip;</div>
+        <div class="sitrep-muted">Logging to <strong data-bind="text: opsLogHqName"></strong></div>
+
+        <!-- ko foreach: opsLogGroups -->
+        <details class="sitrep-tag-group">
+          <summary><span data-bind="text: title"></span> <span class="sitrep-tag-summary" data-bind="text: selectedSummary"></span></summary>
+          <div class="sitrep-tag-list" data-bind="foreach: tags">
+            <span class="sitrep-tag-pill" role="button" tabindex="0" data-bind="click: toggle, event: { keydown: onKeydown }, css: { 'sitrep-tag-selected': selected, 'sitrep-tag-action': isAction }">
+              <i data-bind="attr: { class: icon }"></i> <span data-bind="text: name"></span> <i class="far fa-times-circle" data-bind="visible: selected"></i>
+            </span>
+          </div>
+        </details>
+        <!-- /ko -->
+
+        <div class="sitrep-flags">
+          <label class="sitrep-checkbox" data-bind="visible: opsLogHasActionTag"><input type="checkbox" data-bind="checked: opsLogActionRequired"> Action required</label>
+          <label class="sitrep-checkbox"><input type="checkbox" data-bind="checked: opsLogImportant"> Important</label>
+          <label class="sitrep-checkbox"><input type="checkbox" data-bind="checked: opsLogRestricted"> Restricted</label>
+        </div>
+
+        <label class="sitrep-modal-label" for="sitrepOpsLogSubject">Subject</label>
+        <input id="sitrepOpsLogSubject" type="text" class="form-control form-control-sm" maxlength="50" data-bind="textInput: opsLogSubject">
+
+        <label class="sitrep-modal-label" for="sitrepOpsLogText">Text <span class="sitrep-optional" data-bind="text: opsLogTextCounter, css: { 'sitrep-over': opsLogTextTooLong }"></span></label>
+        <textarea id="sitrepOpsLogText" class="form-control form-control-sm sitrep-modal-textarea" rows="10" data-bind="textInput: opsLogText"></textarea>
+      </div>
+      <div class="sitrep-modal-footer">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bind="click: closeOpsLog">Cancel</button>
+        <button type="button" class="btn btn-sm btn-primary" data-bind="click: submitOpsLog, enable: canSubmitOpsLog">
+          <i class="fas fa-spinner fa-spin" data-bind="visible: opsLogSubmitting"></i> + Save Entry
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <pre class="sitrep-print" data-bind="text: sitrepText"></pre>
+
+  <script src="sitrep/main.js" type="text/javascript"></script>
+</body>
+
+</html>
