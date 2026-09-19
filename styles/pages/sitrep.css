@@ -1,0 +1,1031 @@
+@import url("include/common.css");
+
+/* Same look as the Radio Console / LAD: coloured title bars per section
+   (orange prod / green train / blue dev -- the Beacon environment), panels,
+   and light/dark following the system setting. */
+:root {
+  --sr-bg: #ffffff;
+  --sr-fg: #1a1a1a;
+  --sr-border: #d9dde3;
+  --sr-panel-bg: #f7f8fa;
+  --sr-accent: #0d6efd;
+  --sr-accent-fg: #ffffff;
+  --sr-danger: #c0392b;
+  --sr-ok: #198754;
+  --sr-muted: #6b6b6b;
+  --sr-warn-bg: #fff8e6;
+  --sr-warn-fg: #664d03;
+  --sr-title-bg: #f7931d;
+  --sr-title-fg: #ffffff;
+  --sr-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --sr-radius: 8px;
+}
+
+body.env-trainbeacon {
+  --sr-title-bg: #219f56;
+}
+
+body.env-devbeacon {
+  --sr-title-bg: #2d9ee0;
+}
+
+body.dark-mode {
+  --sr-bg: #1a1a1a;
+  --sr-fg: #e0e0e0;
+  --sr-border: #3a3a3a;
+  --sr-panel-bg: #242424;
+  --sr-accent: #5da3ff;
+  --sr-accent-fg: #0b1220;
+  --sr-danger: #ff6b6b;
+  --sr-ok: #6fd39a;
+  --sr-muted: #a0a0a0;
+  --sr-warn-bg: #3a2f12;
+  --sr-warn-fg: #e0b34d;
+  --sr-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--sr-bg);
+  color: var(--sr-fg);
+}
+
+body.watermark::before {
+  content: "DEVELOPMENT";
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  color: rgba(255, 0, 0, 0.4);
+  font-weight: bold;
+  font-size: 12px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* common.css sets a global left margin on labels for older pages */
+.sitrep-app label {
+  margin-left: 0;
+}
+
+.sitrep-app a {
+  color: var(--sr-accent);
+}
+
+/* ---- layout: form on the left, working sitrep on the right ---- */
+.sitrep-app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  height: 100vh;
+  font-size: 0.85rem;
+}
+
+.sitrep-form {
+  overflow-y: auto;
+  padding: 10px 14px 24px;
+  border-right: 1px solid var(--sr-border);
+}
+
+.sitrep-working {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 10px 14px;
+  background: var(--sr-panel-bg);
+}
+
+.sitrep-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sitrep-title h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.sitrep-title h1 i {
+  color: var(--sr-title-bg);
+}
+
+.sitrep-card h3 i {
+  margin-right: 4px;
+}
+
+.sitrep-card h3 {
+  display: flex;
+  align-items: center;
+}
+
+/* small action in a card's title bar (e.g. Reset) */
+.sitrep-card-action {
+  margin-left: auto; /* far right of the title bar */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sitrep-card-action i {
+  margin: 0;
+}
+
+.sitrep-card-action:hover,
+.sitrep-card-action:focus-visible {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.sitrep-divider {
+  border: 0;
+  border-top: 1px dashed var(--sr-border);
+  margin: 4px 0 10px;
+}
+
+/* label on the left, "+ snippets" on the far right */
+.sitrep-label-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.sitrep-label-row label {
+  margin: 0;
+}
+
+/* "+ Insert" control: a labelled split button whose menu hangs directly off it */
+.sitrep-snippet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--sr-bg);
+  color: var(--sr-accent);
+  border: 1px solid var(--sr-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sitrep-snippet-btn:hover,
+.sitrep-snippet-btn.sitrep-snippet-open {
+  border-color: var(--sr-accent);
+  background: var(--sr-accent);
+  color: var(--sr-accent-fg);
+}
+
+.sitrep-snippet-caret {
+  transition: transform 0.15s ease;
+}
+
+.sitrep-snippet-open .sitrep-snippet-caret {
+  transform: rotate(180deg);
+}
+
+.sitrep-snippet-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 2px);
+  right: 0;
+  width: min(380px, 100%);
+  max-height: 260px;
+  overflow-y: auto;
+  background: var(--sr-bg);
+  border: 1px solid var(--sr-accent);
+  border-radius: 6px;
+  box-shadow: var(--sr-shadow), 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.sitrep-snippet-menu-title {
+  position: sticky;
+  top: 0;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--sr-muted);
+  background: var(--sr-panel-bg);
+  border-bottom: 1px solid var(--sr-border);
+}
+
+.sitrep-snippet-item {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+  text-align: left;
+  background: transparent;
+  color: var(--sr-fg);
+  border: 0;
+  border-bottom: 1px solid var(--sr-border);
+  cursor: pointer;
+}
+
+.sitrep-snippet-item:last-child {
+  border-bottom: 0;
+}
+
+.sitrep-snippet-item:hover,
+.sitrep-snippet-item:focus-visible {
+  background: var(--sr-accent);
+  color: var(--sr-accent-fg);
+}
+
+.sitrep-snippet-item-label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+.sitrep-snippet-item-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+/* a textarea that grows with its content (see lib/autoGrowBinding.js) */
+.sitrep-form textarea.form-control-sm.sitrep-autogrow {
+  resize: none;
+  overflow: hidden;
+  min-height: 48px;
+}
+
+.sitrep-hint,
+.sitrep-muted,
+.sitrep-optional {
+  color: var(--sr-muted);
+  font-size: 0.75rem;
+  font-weight: normal;
+}
+
+.sitrep-doc-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 14px 0 8px;
+  padding-bottom: 3px;
+  border-bottom: 2px solid var(--sr-title-bg);
+}
+
+/* ---- section cards (title bar + body, as the radio console's entry area) ---- */
+.sitrep-card {
+  background: var(--sr-panel-bg);
+  border: 1px solid var(--sr-border);
+  border-radius: var(--sr-radius);
+  box-shadow: var(--sr-shadow);
+  margin-bottom: 10px;
+}
+
+.sitrep-card h3 {
+  background: var(--sr-title-bg);
+  color: var(--sr-title-fg);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: var(--sr-radius) var(--sr-radius) 0 0;
+}
+
+.sitrep-card h3 .sitrep-optional {
+  color: inherit;
+  opacity: 0.85;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.sitrep-card-body {
+  padding: 10px 12px 6px;
+}
+
+.sitrep-field {
+  position: relative;
+  margin-bottom: 8px;
+  min-width: 0;
+}
+
+.sitrep-field > label,
+.sitrep-radio {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin: 0 0 2px;
+}
+
+/* one metrics for every input, select and button so they line up in a row */
+.sitrep-form .form-control-sm,
+.sitrep-form select.form-control-sm {
+  box-sizing: border-box;
+  height: 28px;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  border-radius: 6px;
+  background: var(--sr-bg);
+  color: var(--sr-fg);
+  border: 1px solid var(--sr-border);
+}
+
+.sitrep-form select.form-control-sm {
+  padding-right: 24px; /* room for the native arrow */
+}
+
+.sitrep-form textarea.form-control-sm {
+  height: auto;
+  resize: vertical;
+}
+
+.sitrep-form .form-control-sm:focus,
+.sitrep-app button:focus-visible,
+.sitrep-app a:focus-visible,
+.sitrep-editor:focus-visible {
+  outline: 2px solid var(--sr-accent);
+  outline-offset: 1px;
+}
+
+.sitrep-form .btn-sm,
+.sitrep-working-bar .btn-sm {
+  height: 28px;
+  padding: 2px 10px;
+  line-height: 1.4;
+}
+
+.sitrep-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sitrep-row-period {
+  grid-template-columns: 1fr 1fr;
+}
+
+.sitrep-row-details {
+  grid-template-columns: 1fr 2fr 2fr;
+}
+
+.sitrep-generate-full {
+  display: block;
+  width: 100%;
+  height: 34px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #fff;
+  background: #198754;
+  border: 1px solid #198754;
+  transition: background-color 0.5s ease, border-color 0.5s ease;
+}
+
+.sitrep-generate-full:hover:not(:disabled),
+.sitrep-generate-full:focus-visible {
+  color: #fff;
+  background: #157347;
+  border-color: #157347;
+}
+
+/* data already fetched for these inputs -- still clickable, just quieter */
+.sitrep-generate-full.sitrep-get-data-done {
+  background: #6c757d;
+  border-color: #6c757d;
+}
+
+.sitrep-generate-full.sitrep-get-data-done:hover:not(:disabled) {
+  background: #5c636a;
+  border-color: #5c636a;
+}
+
+/* on/off switch */
+.sitrep-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sitrep-app .sitrep-switch input[type="checkbox"] {
+  display: inline-block;
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 18px;
+  margin: 0;
+  border-radius: 9px;
+  background: var(--sr-border);
+  border: 1px solid var(--sr-border);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sitrep-app .sitrep-switch input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.sitrep-app .sitrep-switch input[type="checkbox"]:checked {
+  background: #198754;
+  border-color: #198754;
+}
+
+.sitrep-app .sitrep-switch input[type="checkbox"]:checked::before {
+  transform: translateX(14px);
+}
+
+.sitrep-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.sitrep-preset {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--sr-bg);
+  color: var(--sr-fg);
+  border: 1px solid var(--sr-border);
+  border-radius: 11px;
+  cursor: pointer;
+}
+
+.sitrep-preset:hover {
+  border-color: var(--sr-accent);
+}
+
+.sitrep-preset-active {
+  background: var(--sr-accent);
+  border-color: var(--sr-accent);
+  color: var(--sr-accent-fg);
+}
+
+.sitrep-period-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+.sitrep-period-to {
+  font-size: 0.75rem;
+  color: var(--sr-muted);
+}
+
+.sitrep-inline,
+.sitrep-hq-search {
+  position: relative;
+  display: flex;
+  gap: 6px;
+}
+
+.sitrep-inline .form-control,
+.sitrep-hq-search .form-control {
+  flex: 1;
+  min-width: 0;
+}
+
+.sitrep-clear {
+  margin-left: 6px;
+  font-weight: normal;
+  font-size: 0.72rem;
+}
+
+.sitrep-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.sitrep-chip {
+  background: var(--sr-accent);
+  color: var(--sr-accent-fg);
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+}
+
+.sitrep-app .sitrep-chip a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sitrep-chip-tree {
+  margin-left: 6px;
+  opacity: 0.8;
+  font-size: 0.7rem;
+}
+
+.sitrep-chip-tree:hover {
+  opacity: 1;
+}
+
+.sitrep-chip-remove {
+  margin-left: 6px;
+  font-weight: bold;
+}
+
+.sitrep-suggestions {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  top: 100%;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  background: var(--sr-bg);
+  border: 1px solid var(--sr-border);
+  border-radius: 6px;
+  box-shadow: var(--sr-shadow);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.sitrep-suggestions li {
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.sitrep-suggestions li.sitrep-suggestions-title {
+  cursor: default;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--sr-muted);
+  background: var(--sr-panel-bg);
+  border-bottom: 1px solid var(--sr-border);
+}
+
+.sitrep-suggestions li:not(.sitrep-suggestions-title):hover,
+.sitrep-suggestion-active {
+  background: var(--sr-accent);
+  color: var(--sr-accent-fg);
+}
+
+.sitrep-selected-event {
+  margin-top: 2px;
+  font-size: 0.75rem;
+}
+
+.sitrep-error {
+  color: var(--sr-danger);
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+}
+
+.sitrep-status-ok {
+  color: var(--sr-ok);
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+}
+
+.sitrep-status {
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+}
+
+.sitrep-prompts {
+  margin-top: 1px;
+  font-size: 0.72rem;
+  color: var(--sr-muted);
+}
+
+.sitrep-prompts summary {
+  cursor: pointer;
+  width: fit-content;
+}
+
+.sitrep-prompts ul {
+  margin: 2px 0;
+  padding-left: 1.1rem;
+}
+
+.sitrep-next {
+  display: grid;
+  grid-template-columns: auto minmax(0, 200px) 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.sitrep-quick {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.sitrep-radio {
+  margin: 0;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
+.sitrep-radio-none {
+  margin-bottom: 8px;
+}
+
+/* ---- working sitrep ---- */
+.sitrep-working-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sitrep-working-bar h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.sitrep-spacer {
+  flex: 1;
+}
+
+.sitrep-state {
+  font-size: 0.7rem;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--sr-accent);
+  color: var(--sr-accent-fg);
+}
+
+.sitrep-state-edited {
+  background: var(--sr-warn-bg);
+  color: var(--sr-warn-fg);
+}
+
+.sitrep-copy-status {
+  color: var(--sr-ok);
+  font-size: 0.75rem;
+}
+
+.sitrep-editor {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  border: 1px solid var(--sr-border);
+  border-radius: 6px;
+  padding: 10px;
+  background: var(--sr-bg);
+  color: var(--sr-fg);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+/* Data Status: a note for the operator beside the sitrep, not part of it */
+.sitrep-completeness {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--sr-border);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--sr-muted);
+  max-height: 22vh;
+  overflow-y: auto;
+}
+
+.sitrep-completeness strong {
+  color: var(--sr-fg);
+  margin-right: 4px;
+}
+
+.sitrep-pill-status {
+  display: inline-block;
+  padding: 1px 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.sitrep-pill-green {
+  background: #198754;
+}
+
+.sitrep-pill-amber {
+  background: #e0a800;
+  color: #1a1a1a;
+}
+
+.sitrep-pill-red {
+  background: #c0392b;
+}
+
+.sitrep-completeness .sitrep-completeness-sub {
+  list-style: circle;
+  margin-top: 2px;
+}
+
+.sitrep-completeness ul {
+  margin: 2px 0 0;
+  padding-left: 1.1rem;
+}
+
+.sitrep-print {
+  display: none;
+}
+
+/* ---- modals (the warning and the Ops Log popup) ---- */
+.sitrep-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 6vh 12px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  overflow-y: auto;
+}
+
+.sitrep-modal {
+  overflow: hidden; /* header/footer follow the rounded corners exactly */
+  width: 100%;
+  max-width: 720px;
+  background: var(--sr-bg);
+  color: var(--sr-fg);
+  border: 1px solid var(--sr-border);
+  border-radius: var(--sr-radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  font-size: 0.85rem;
+}
+
+/* the "might not be complete" warning: red, like Beacon's action tags */
+.sitrep-modal-danger {
+  border-color: #ee0039;
+}
+
+.sitrep-modal-danger .sitrep-modal-header {
+  background: #ee0039;
+  color: #fff;
+}
+
+.sitrep-btn-danger,
+.sitrep-btn-go {
+  color: #fff;
+  border: 1px solid transparent;
+}
+
+.sitrep-btn-danger {
+  background: #ee0039;
+  border-color: #ee0039;
+}
+
+.sitrep-btn-danger:hover {
+  background: #c8002f;
+  color: #fff;
+}
+
+.sitrep-btn-go {
+  background: #198754;
+  border-color: #198754;
+}
+
+.sitrep-btn-go:hover {
+  background: #157347;
+  color: #fff;
+}
+
+.sitrep-modal-sm {
+  max-width: 460px;
+}
+
+.sitrep-modal:focus {
+  outline: none;
+}
+
+.sitrep-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--sr-title-bg);
+  color: var(--sr-title-fg);
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+.sitrep-modal-close {
+  background: none;
+  border: 0;
+  color: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sitrep-modal-body {
+  padding: 12px 14px;
+}
+
+.sitrep-modal-body ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.sitrep-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--sr-border);
+}
+
+.sitrep-modal-label {
+  display: block;
+  font-weight: 600;
+  margin: 10px 0 2px;
+  font-size: 0.8rem;
+}
+
+.sitrep-modal .form-control-sm {
+  width: 100%;
+  background: var(--sr-bg);
+  color: var(--sr-fg);
+  border: 1px solid var(--sr-border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 0.85rem;
+}
+
+.sitrep-modal-textarea {
+  resize: vertical;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.sitrep-over {
+  color: var(--sr-danger);
+  font-weight: 600;
+}
+
+.sitrep-tag-group {
+  margin-top: 8px;
+}
+
+.sitrep-tag-group summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.sitrep-tag-summary {
+  font-weight: 400;
+  color: var(--sr-muted);
+}
+
+.sitrep-tag-list {
+  padding: 4px 0 0;
+}
+
+/* same pills as LAD's Ops Log popup (tasking.css .tag-pill) */
+.sitrep-tag-pill {
+  display: inline-block;
+  padding: 2px 6px;
+  margin: 2px 4px 2px 0;
+  border-radius: 4px;
+  background: #b8a96a;
+  color: #fff;
+  border: 1px solid #b8a96a;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+.sitrep-tag-pill.sitrep-tag-selected {
+  background: #fff;
+  color: #b8a96a;
+}
+
+/* Action Items are red in Beacon */
+.sitrep-tag-pill.sitrep-tag-action {
+  background: #ee0039;
+  color: #fff;
+  border: 1px solid #ee0039;
+}
+
+.sitrep-tag-pill.sitrep-tag-action.sitrep-tag-selected {
+  background: #fff;
+  color: #ee0039;
+  border: 1px solid #ee0039;
+}
+
+.sitrep-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-top: 10px;
+}
+
+.sitrep-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: normal;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* Same checkbox as the radio console / LAD: rounded square, filled with a
+   white tick when ticked (common.css's Bootstrap 4 default looks different). */
+.sitrep-modal input[type="checkbox"] {
+  display: inline-block;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+  background-color: var(--sr-bg);
+  border: 1px solid var(--sr-border);
+  border-radius: 0.25em;
+  cursor: pointer;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.sitrep-modal input[type="checkbox"]:checked {
+  background-color: var(--sr-accent);
+  border-color: var(--sr-accent);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M5 10.5l3.2 3.2L15 7'/%3e%3c/svg%3e");
+  background-size: 75% 75%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.sitrep-modal input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--sr-accent);
+  outline-offset: 1px;
+}
+
+@media (max-width: 900px) {
+  .sitrep-app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    height: auto;
+  }
+
+  .sitrep-form {
+    overflow: visible;
+    border-right: 0;
+  }
+
+  .sitrep-editor {
+    height: 70vh;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .sitrep-print {
+    display: block;
+    color: #000;
+    white-space: pre-wrap;
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 11pt;
+  }
+}

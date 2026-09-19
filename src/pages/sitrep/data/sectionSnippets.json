@@ -1,0 +1,31 @@
+{
+  "_note": "Pre-determined text an operator can merge into a sitrep section with the + button. Placeholder content for now -- edit or replace freely; keys are the section keys from lib/sitrepSections.js, each entry is { label, text }.",
+  "situation": [
+    { "label": "Dummy: severe weather warning", "text": "A severe weather warning is current for the area. [Dummy text]" },
+    { "label": "Dummy: flood watch", "text": "A flood watch is in place for local waterways. [Dummy text]" }
+  ],
+  "impact": [
+    { "label": "Dummy: minor property damage", "text": "Minor property damage reported; no injuries. [Dummy text]" },
+    { "label": "Dummy: road closures", "text": "Several local roads closed due to flooding and fallen trees. [Dummy text]" }
+  ],
+  "resources": [
+    { "label": "Dummy: local units deployed", "text": "Local units are deployed and supported by neighbouring units. [Dummy text]" },
+    { "label": "Dummy: agencies in attendance", "text": "NSW Police and FRNSW are in attendance and coordinating with SES. [Dummy text]" }
+  ],
+  "execution": [
+    { "label": "Dummy: prioritising life safety", "text": "Priority is life safety, followed by protection of property and critical infrastructure. [Dummy text]" },
+    { "label": "Dummy: community messaging", "text": "Community warnings and advice are being issued through the usual channels. [Dummy text]" }
+  ],
+  "emergingIssues": [
+    { "label": "Dummy: media interest", "text": "Media interest is increasing; a spokesperson is being arranged. [Dummy text]" },
+    { "label": "Dummy: secondary hazards", "text": "Potential for secondary hazards as conditions change. [Dummy text]" }
+  ],
+  "prognosis": [
+    { "label": "Dummy: conditions easing", "text": "Conditions are forecast to ease over the next 24 hours. [Dummy text]" },
+    { "label": "Dummy: further rain", "text": "Further rainfall is forecast and may extend response. [Dummy text]" }
+  ],
+  "safety": [
+    { "label": "Dummy: standard hazards", "text": "Known hazards: floodwater, fallen trees, damaged powerlines. [Dummy text]" },
+    { "label": "Dummy: fatigue management", "text": "Fatigue management is being monitored for all responders. [Dummy text]" }
+  ]
+}

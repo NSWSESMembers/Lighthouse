@@ -131,6 +131,15 @@ whenWeAreReady(function () {
         unitName +
         ' Today)</a>\
     </li>\
+    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Reports\
+    </li>\
+    <li id="lhsitrepmenuitem">\
+    <a href="' +
+        lighthouseUrl +
+        'pages/sitrep.html' +
+        vars +
+        '" target="_blank">Sitrep Generator</a>\
+    </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
     <li id="lhstoragemenuitem">\
@@ -208,6 +217,15 @@ whenWeAreReady(function () {
         unitName +
         ' Today)</a>\
     </li>\
+    <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Reports\
+    </li>\
+    <li id="lhsitrepmenuitem">\
+    <a href="' +
+        lighthouseUrl +
+        'pages/sitrep.html' +
+        vars +
+        '" target="_blank">Sitrep Generator</a>\
+    </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
     <li id="lhstoragemenuitem">\
@@ -266,6 +284,10 @@ whenWeAreReady(function () {
   });
 
   $('#lhteammenuitem > a').mousedown(function () {
+    updateToken();
+  });
+
+  $('#lhsitrepmenuitem > a').mousedown(function () {
     updateToken();
   });
 

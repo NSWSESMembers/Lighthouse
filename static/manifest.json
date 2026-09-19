@@ -42,13 +42,24 @@
     "https://nula.waternsw.com.au/*",
     "https://services1.arcgis.com/*",
     "https://api.rainviewer.com/*",
-    "https://portal.spatial.nsw.gov.au/*"
+    "https://portal.spatial.nsw.gov.au/*",
+    "https://www.bom.gov.au/*"
   ],
   "permissions": [
     "storage",
     "webNavigation",
-    "scripting"
+    "scripting",
+    "declarativeNetRequest"
   ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "bom_strip_origin",
+        "enabled": true,
+        "path": "rules/bom-strip-origin.json"
+      }
+    ]
+  },
   "content_scripts": [
     {
       "matches": [
