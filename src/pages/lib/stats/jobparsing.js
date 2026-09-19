@@ -1,5 +1,6 @@
 var $ = require('jquery');
 var clusterCodes = require('../../../lib/clusters.js');
+import { classifyJobType, analyseJobHistory } from './jobClassification.js';
 
 global.jQuery = $;
 
@@ -12,8 +13,6 @@ export function prepareData(jobs, unit, start, end, cb) {
 
   function processJob(d) {
     return new Promise(resolve => {
-      var thisJobisComp = false;
-
       if (d.Event) {
         var words = d.Event.Identifier + " - " + d.Event.Name;
         eventIdAndDescription[words] = (eventIdAndDescription[words] || 0) + 1;
@@ -38,51 +37,7 @@ export function prepareData(jobs, unit, start, end, cb) {
       d.hazardTags = [];
       d.treeTags = [];
       d.propertyTags = [];
-      d.jobtype = "";
-      var jobtype = [];
-      var JobTypeDict = {
-        'Tree': ['Tree Down', 'Branch Down', 'Tree Threatening', 'Branch Threatening'],
-        'Damage': ['Roof Damage', 'Ceiling Damage', 'Door Damage', 'Wall Damage', 'Window Damage', 'Threat of Collapse'],
-        'Leak': ['Leaking Roof']
-      }
-
-      for (var key in JobTypeDict) { //for each key
-        var value = JobTypeDict[key]
-
-        $.each(value, function(d3) { //for each value
-          if (FindTag(value[d3])) {
-            jobtype.push(key)
-          }
-        })
-      }
-
-      jobtype = Array.from(new Set(jobtype)); // #=> ["foo", "bar"]
-
-
-      jobtype.sort();
-
-      d.jobtype = jobtype.join("+")
-
-
-      if (d.jobtype == "") {
-        d.jobtype = "N/A"
-      }
-
-      function FindTag(name) {
-        var found = false;
-        d.Tags.forEach(function(d2) {
-          if (d2.Name == name) {
-            found = true;
-          }
-        })
-
-        if (found == false) {
-          return false
-        } else {
-          return true
-        }
-
-      }
+      d.jobtype = classifyJobType(d);
 
       d.Tags.forEach(function(d2) {
         switch (d2.TagGroupId) {
@@ -116,49 +71,9 @@ export function prepareData(jobs, unit, start, end, cb) {
       }
 
       d.JobOpenFor = 0;
-      d.JobCompleted = new Date(0); //do it with a 1970 so that its a valid date. will filter out later
-      var jobstart = 0;
-      var jobend = 0;
-      for (var counter = 0; counter < (d.JobStatusTypeHistory.length); counter++) {
-        switch (d.JobStatusTypeHistory[counter].Type) {
-          case 1: // New
-            break;
-          case 2: // active
-            jobstart = (jobstart == 0 ? new Date(d.JobStatusTypeHistory[counter].Timelogged) : jobstart) //only count first
-            break;
-          case 3:
-            break;
-          case 4: //tasked
-            break;
-          case 6: //complete
-            jobend = (jobend == 0 ? new Date(d.JobStatusTypeHistory[counter].Timelogged) : jobend) //only count first
-            if (thisJobisComp == false) {
-              thisJobisComp = true;
-              d.JobCompleted = new Date(d.JobStatusTypeHistory[counter].Timelogged)
-            }
-            break;
-          case 7:
-            if (thisJobisComp == false) {
-              thisJobisComp = true;
-              d.JobCompleted = new Date(d.JobStatusTypeHistory[counter].Timelogged)
-            }
-            break;
-          case 8:
-            if (thisJobisComp == false) {
-              thisJobisComp = true;
-              d.JobCompleted = new Date(d.JobStatusTypeHistory[counter].Timelogged)
-            }
-            break;
-        }
-      }
-      if (jobstart != 0 && jobend != 0) {
-        d.JobDuration = jobend - jobstart
-        if (d.JobDuration < 0) {
-          d.JobDuration = 0
-        }
-      } else {
-        d.JobDuration = 0
-      }
+      var history = analyseJobHistory(d);
+      d.JobCompleted = history.completedAt || new Date(0); //a 1970 date so it is still a valid date; filtered out later
+      d.JobDuration = history.durationMs;
 
       clusterCodes.returnCluster(d.EntityAssignedTo.Name, function(cluster) { //sync call to get cluster name
         if (typeof cluster !== 'undefined') {
