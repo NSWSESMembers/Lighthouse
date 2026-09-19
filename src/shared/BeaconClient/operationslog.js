@@ -1,4 +1,4 @@
-import { request, toCollection } from './core/request.js';
+import { request, requestPaginated, toCollection } from './core/request.js';
 
 /**
  * Ops Log entries for a job. Limited to 1000 entries; no paging.
@@ -60,6 +60,48 @@ export function resolve(entryId, resolution, ctx = {}) {
     signal,
     form: { Id: entryId, FurtherActionRequired: false, ActionReminder: '', ...fields },
   });
+}
+
+/**
+ * Ops Log entries scoped to an HQ/unit and a time window, for the Radio
+ * Operations Console's live log view -- as opposed to `search()`, which is
+ * job-scoped only.
+ *
+ * `EntityIds[N]`, `DateFrom` and `DateTo` match the request Beacon's own Operations Log page sends.
+ * That page also sends ExcludeJobEntries / ExcludeIcemsEntries / UnresolvedActionsOnly (all false) and
+ * sorts by CreatedOn; we leave those at their defaults and sort by TimeLogged so back-dated entries land
+ * in the right place.
+ *
+ * @param {object} filters
+ * @param {Array<string|number>} [filters.entityIds]  HQ/unit scope
+ * @param {Date} [filters.dateFrom]
+ * @param {Date} [filters.dateTo]
+ * @param {Array<string|number>} [filters.jobIds]  incident/job association filter
+ * @param {Array<string|number>} [filters.eventIds]  event association filter
+ * @param {Array<string|number>} [filters.tagIds]  tag filter -- `TagIds[N]` is confirmed
+ *        against this same endpoint by the existing unresolvedActionsLog() below
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          pageSize?: number, pageLimit?: number, onPage?: Function}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export function searchLog(filters = {}, ctx = {}) {
+  const { entityIds = [], dateFrom, dateTo, jobIds = [], eventIds = [], tagIds = [] } = filters;
+  const { host, userId = 'notPassed', token, signal, pageSize = 100, pageLimit = 0, onPage } = ctx;
+
+  const params = new URLSearchParams();
+  entityIds.forEach((id, i) => params.set(`EntityIds[${i}]`, id));
+  jobIds.forEach((id, i) => params.set(`JobIds[${i}]`, id));
+  eventIds.forEach((id, i) => params.set(`EventIds[${i}]`, id));
+  tagIds.forEach((id, i) => params.set(`TagIds[${i}]`, id));
+  if (dateFrom) params.set('DateFrom', dateFrom.toISOString());
+  if (dateTo) params.set('DateTo', dateTo.toISOString());
+  params.set('SortField', 'TimeLogged');
+  params.set('SortOrder', 'desc');
+  params.set('LighthouseFunction', 'GetOperationsLogfromBeacon');
+  params.set('userId', userId);
+
+  const url = `${host}/Api/v1/OperationsLog/search?${params.toString()}`;
+  return requestPaginated(url, { token, signal, pageSize, pageLimit, onPage });
 }
 
 /**
