@@ -1,0 +1,62 @@
+/* Keyboard shortcuts help (src/pages/radio/features/shortcuts.js) */
+.radio-shortcuts-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10vh 12px 12px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.radio-shortcuts-panel {
+  width: min(460px, 100%);
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 16px 18px;
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+  border-radius: var(--radio-radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.radio-shortcuts-panel:focus {
+  outline: none;
+}
+
+.radio-shortcuts-panel h2 {
+  font-size: 1.05rem;
+  margin: 0 0 4px;
+}
+
+.radio-shortcuts-note {
+  color: var(--radio-muted);
+  font-size: 0.8rem;
+  margin: 0 0 10px;
+}
+
+.radio-shortcuts-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0;
+}
+
+.radio-shortcuts-list dt,
+.radio-shortcuts-list dd {
+  margin: 0;
+}
+
+.radio-shortcuts-list kbd,
+.radio-settings-section kbd {
+  display: inline-block;
+  padding: 1px 7px;
+  font-size: 0.8rem;
+  color: var(--radio-fg);
+  background: var(--radio-panel-bg);
+  border: 1px solid var(--radio-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+}

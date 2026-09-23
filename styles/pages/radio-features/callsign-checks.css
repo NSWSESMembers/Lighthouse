@@ -1,0 +1,337 @@
+/* Callsign checks panel, in the right-hand column above the log (src/pages/radio/features/callsign-checks.js) */
+.radio-callsign-checks {
+  background: var(--radio-panel-bg);
+  border: 1px solid var(--radio-border);
+  border-radius: var(--radio-radius);
+  box-shadow: var(--radio-shadow);
+  padding: 10px 14px;
+}
+
+.radio-checks-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.radio-callsign-checks h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.radio-checks-overdue-count {
+  background: var(--radio-danger);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.radio-checks-toggle {
+  margin-left: auto;
+}
+
+.radio-checks-interval-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.radio-checks-interval-label {
+  margin: 0;
+  color: var(--radio-muted);
+}
+
+.radio-callsign-checks .form-control {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 0.85rem;
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+}
+
+.radio-checks-interval {
+  width: auto;
+  padding-right: 22px;
+}
+
+/* "Watch a callsign" sits just above the list it adds to */
+.radio-checks-add {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* the input and the Watch button are exactly the same height */
+.radio-checks-add .form-control,
+.radio-checks-add .btn {
+  box-sizing: border-box;
+  height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 0.85rem;
+  line-height: 30px;
+}
+
+.radio-checks-add-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.radio-checks-listhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--radio-muted);
+}
+
+.radio-checks-clear {
+  border: 0;
+  background: none;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--radio-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.radio-checks-clear:hover {
+  color: var(--radio-fg);
+}
+
+.radio-checks-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  /* one column in the narrow sidebar; more if the panel is ever given more room */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: 6px;
+}
+
+/* line 1: callsign | status pill (always the same column and width) | remove.
+   line 2: "heard ..." | the overdue time, right-aligned under the pill */
+.radio-checks-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px auto;
+  grid-template-areas:
+    "cs pill x"
+    "detail over over";
+  align-items: center;
+  gap: 2px 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--radio-border);
+  border-left-width: 4px;
+  border-radius: 6px;
+  background: var(--radio-bg);
+  font-size: 0.85rem;
+  min-width: 0;
+}
+
+.radio-checks-ok {
+  border-left-color: var(--radio-resolved-border);
+}
+
+.radio-checks-due {
+  border-left-color: var(--radio-warn);
+  background: var(--radio-warn-bg);
+}
+
+.radio-checks-overdue,
+.radio-checks-none {
+  border-left-color: var(--radio-danger);
+  background: var(--radio-danger-bg);
+}
+
+.radio-checks-callsign {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-weight: 700;
+  color: var(--radio-fg);
+  cursor: pointer;
+  text-decoration: underline dotted;
+  white-space: nowrap;
+}
+
+.radio-checks-row .radio-checks-callsign { grid-area: cs; justify-self: start; }
+.radio-checks-row .radio-checks-pill { grid-area: pill; }
+.radio-checks-row .radio-checks-over { grid-area: over; }
+.radio-checks-row .radio-checks-remove { grid-area: x; }
+
+.radio-checks-detail {
+  grid-area: detail;
+  min-width: 0;
+  color: var(--radio-muted);
+  font-size: 0.78rem;
+}
+
+.radio-checks-pill {
+  min-width: 84px;
+  text-align: center;
+  border-radius: 10px;
+  padding: 0 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: var(--radio-border);
+  color: var(--radio-fg);
+}
+
+.radio-checks-ok .radio-checks-pill {
+  background: var(--radio-resolved-bg);
+  color: var(--radio-resolved-fg);
+}
+
+.radio-checks-due .radio-checks-pill {
+  background: var(--radio-warn);
+  color: #fff;
+}
+
+.radio-checks-overdue .radio-checks-pill,
+.radio-checks-none .radio-checks-pill {
+  background: var(--radio-danger);
+  color: #fff;
+}
+
+.radio-checks-over {
+  justify-self: end;
+  color: var(--radio-danger);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.radio-checks-remove {
+  background: none;
+  border: 0;
+  color: var(--radio-muted);
+  cursor: pointer;
+}
+
+.radio-checks-empty {
+  color: var(--radio-muted);
+  font-size: 0.8rem;
+  margin-top: 8px;
+}
+
+.radio-checks-recent {
+  margin-top: 8px;
+}
+
+.radio-checks-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.radio-checks-recent-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--radio-muted);
+  margin-bottom: 4px;
+}
+
+/* recently heard: small single-line pills (not bold), flowing inline */
+.radio-checks-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  font-size: 0.72rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--radio-fg);
+  background: var(--radio-bg);
+  border: 1px solid var(--radio-border);
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.radio-checks-chip:hover {
+  border-color: var(--radio-accent);
+}
+
+.radio-checks-chip i {
+  font-size: 0.6rem;
+}
+
+.radio-checks-chip small {
+  color: var(--radio-muted);
+  font-size: 0.66rem;
+}
+
+/* Settings: the list of "expect contact every" periods */
+.radio-period-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.radio-period-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 4px 1px 10px;
+  font-size: 0.85rem;
+  color: var(--radio-fg);
+  background: var(--radio-bg);
+  border: 1px solid var(--radio-border);
+  border-radius: 12px;
+}
+
+.radio-period-remove {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  font-size: 0.65rem;
+  color: var(--radio-muted);
+  background: none;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.radio-period-remove:hover {
+  color: var(--radio-danger);
+}
+
+.radio-period-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.radio-period-add .form-control {
+  width: auto;
+  height: 30px;
+  padding: 0 8px;
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+}
+
+.radio-period-add input.form-control {
+  width: 90px;
+}
