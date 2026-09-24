@@ -85,6 +85,7 @@ export function installStatusFilterBindings() {
     ko.bindingHandlers.jobStatusFilter = makeStatusFilterBinding("jobStatusFilter");
     ko.bindingHandlers.incidentTypeFilter = makeStatusFilterBinding("incidentTypeFilter");
     ko.bindingHandlers.teamTaskStatusFilter = makeStatusFilterBinding("teamTaskStatusFilter");
+    ko.bindingHandlers.teamTypeFilter = makeStatusFilterBinding("teamTypeFilter");
 
     // filters + fetch + save
     ko.bindingHandlers.teamStatusFilterAndFetch = makeStatusFilterBinding(
@@ -97,6 +98,14 @@ export function installStatusFilterBindings() {
 
     ko.bindingHandlers.teamTaskStatusFilterAndFetch = makeStatusFilterBinding(
         "teamTaskStatusFilter",
+        (vm, cfg) => {
+            cfg.save();
+            vm.fetchAllTeamData();
+        }
+    );
+
+    ko.bindingHandlers.teamTypeFilterAndFetch = makeStatusFilterBinding(
+        "teamTypeFilter",
         (vm, cfg) => {
             cfg.save();
             vm.fetchAllTeamData();

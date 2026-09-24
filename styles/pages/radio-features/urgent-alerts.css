@@ -1,0 +1,88 @@
+/* Urgent alerts (src/pages/radio/features/urgent-alerts.js) */
+.radio-urgent-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.radio-urgent-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  color: #fff;
+  background: #ee0039;
+  border: 1px solid #b00028;
+  border-radius: var(--radio-radius);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  animation: radio-urgent-in 0.25s ease-out;
+}
+
+.radio-urgent-alert > i {
+  margin-top: 3px;
+  font-size: 1.1rem;
+}
+
+.radio-urgent-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.radio-urgent-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.95;
+}
+
+.radio-urgent-text {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.radio-urgent-dismiss {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+}
+
+.radio-urgent-dismiss:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.radio-urgent-more,
+.radio-urgent-clear {
+  align-self: flex-end;
+  font-size: 0.78rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 0;
+  border-radius: 10px;
+  padding: 2px 10px;
+}
+
+.radio-urgent-clear {
+  cursor: pointer;
+}
+
+@keyframes radio-urgent-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radio-urgent-alert {
+    animation: none;
+  }
+}

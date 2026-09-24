@@ -188,31 +188,27 @@ function RunForestRun(mp) {
 
           if (params.hq.split(",").length == 1) { //if only one HQ
 
-            BeaconClient.unit.getName(params.hq, apiHost, params.userId, token, function(result, error) {
-              if (typeof error == 'undefined') {
+            BeaconClient.unit.getName(params.hq, { host: apiHost, userId: params.userId, token })
+              .then(function(result) {
                 unit = result;
                 fetchFromBeacon(unit, apiHost, params.userId, token, fetchComplete, mp, firstrun);
-              } else {
-                mp.fail(error)
-              }
-            });
+              })
+              .catch(function(error) { mp.fail(error); });
 
           } else { //if more than one HQ
             unit = [];
             console.log("passed array of units");
             var hqsGiven = params.hq.split(",");
             hqsGiven.forEach(function(d) {
-              BeaconClient.unit.getName(d, apiHost, params.userId, token, function(result, error) {
-                if (typeof error == 'undefined') {
+              BeaconClient.unit.getName(d, { host: apiHost, userId: params.userId, token })
+                .then(function(result) {
                   mp.setValue(((10 / params.hq.split(",").length) * unit.length) / 100) //use 10% for lhq loading
                   unit.push(result);
                   if (unit.length == params.hq.split(",").length) {
                     fetchFromBeacon(unit, apiHost, params.userId, token, fetchComplete, mp, firstrun);
                   }
-                } else {
-                  mp.fail(error)
-                }
-              });
+                })
+                .catch(function(error) { mp.fail(error); });
             });
           }
         } else { //no hq was sent, get them all
@@ -237,17 +233,21 @@ function fetchFromBeacon(unit, host, userId, token, cb, progressBar, firstrun) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  BeaconClient.job.search(unit, host, start, end, userId, token, function(data) {
-    cb && cb(data, progressBar, firstrun);
-  }, function(val, total) {
-    if (progressBar) { //if its a first load
-      if (val == -1 && total == -1) {
-        progressBar.fail();
-      } else {
+  BeaconClient.job.search(unit, start, end, {
+    host, userId, token,
+    onProgress: function(val, total) {
+      if (progressBar) { //if its a first load
         progressBar.setValue(0.1 + ((val / total) - 0.1)) //start at 10%, dont top 100%
       }
-    }
-  });
+    },
+  })
+    .then(function(data) {
+      cb && cb(data, progressBar, firstrun);
+    })
+    .catch(function(err) {
+      console.error('Job stats fetch failed', err);
+      if (progressBar) progressBar.fail();
+    });
 }
 
 // render the page using the data provided
@@ -352,7 +352,7 @@ function prepareCharts(jobs, start, end, firstRun) {
 
   if (firstRun) //if its the first run expect everything to not exist, and draw it all
   {
-    facts = crossfilter(jobs.Results)
+    facts = crossfilter(jobs.results)
 
     var all = facts.groupAll();
 
@@ -851,7 +851,7 @@ function prepareCharts(jobs, start, end, firstRun) {
     sectorChart.filters([sectorChartFilters])
 
     //add the data back in
-    facts.add(jobs.Results)
+    facts.add(jobs.results)
   };
 
 }

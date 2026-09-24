@@ -1,6 +1,6 @@
-// Whether SignalR push is enabled, per the config-level toggle. Read at
-// page load (see main.js) -- toggling it takes effect on next open, since
-// tearing down/rebuilding a live connection mid-session isn't wired up.
+// Whether SignalR push is enabled, per the config-level toggle. Kept in
+// sync with the config toggle at runtime (see main.js), which also starts
+// or stops the live connection to match.
 let enabled = true;
 
 export function setPushModeEnabled(value) {

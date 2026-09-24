@@ -1,110 +1,94 @@
-import $ from 'jquery';
+import { request } from './core/request.js';
 
-export function task(teamID, jobId, host, userId = 'notPassed', token, callback) {
+// The POST/PUT/DELETE tasking endpoints intermittently return 500 despite
+// applying the change; callers re-sync from SignalR, so a failed response is
+// swallowed (nullOnError -> resolve null) rather than thrown.
 
-  $.ajax({
-    type: 'POST',
-    url: host + '/Api/v1/Tasking',
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: JSON.stringify({
-      TeamIds: [teamID],
-      JobIds: [jobId],
-      LighthouseFunction: 'client.TaskTeam',
-      userId: userId,
-    }),
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        //work around for beacon bug returning error 500 for no reason
-        callback(response.responseJSON);
-        } else {
-          callback(null);
-        }
-    },
+/**
+ * Task a team to a job.
+ *
+ * @param {string|number} teamId
+ * @param {string|number} jobId
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}  response body, or null on failure
+ */
+export function task(teamId, jobId, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return request(host + '/Api/v1/Tasking', {
+    method: 'POST',
+    token,
+    signal,
+    json: { TeamIds: [teamId], JobIds: [jobId], LighthouseFunction: 'client.TaskTeam', userId },
+    nullOnError: true,
   });
 }
 
-export function updateTeamStatus(host, taskingID, status, payload, token, callback) {
-  $.ajax({
-    type: 'POST',
-    url: host + '/Api/v1/Tasking' + '/' + taskingID + '/' + status,
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: JSON.stringify(payload),
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        //work around for beacon bug returning error 500 for no reason
-        callback(response.responseJSON);
-        }
-    },
+/**
+ * @param {string|number} taskingId
+ * @param {string} status  status path segment (e.g. "OnRoute")
+ * @param {Record<string, unknown>} payload
+ * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}  response body, or null on failure
+ */
+export function updateTeamStatus(taskingId, status, payload, ctx = {}) {
+  const { host, token, signal } = ctx;
+  return request(host + '/Api/v1/Tasking/' + taskingId + '/' + status, {
+    method: 'POST',
+    token,
+    signal,
+    json: payload,
+    nullOnError: true,
   });
 }
 
-export function callOffTeam(host, taskingID, payload, token, callback) {
-  $.ajax({
-    type: 'PUT',
-    url: host + '/Api/v1/Tasking' + '/' + taskingID + '/Calloff',
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: JSON.stringify(payload),
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        //work around for beacon bug returning error 500 for no reason
-        callback(response.responseJSON);
-        }
-    },
+/**
+ * @param {string|number} taskingId
+ * @param {Record<string, unknown>} payload
+ * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}  response body, or null on failure
+ */
+export function callOffTeam(taskingId, payload, ctx = {}) {
+  const { host, token, signal } = ctx;
+  return request(host + '/Api/v1/Tasking/' + taskingId + '/Calloff', {
+    method: 'PUT',
+    token,
+    signal,
+    json: payload,
+    nullOnError: true,
   });
 }
 
-export function untaskTeam(host, taskingID, payload, token, callback) {
-  $.ajax({
-    type: 'DELETE',
-    url: host + '/Api/v1/Tasking' + '/' + taskingID,
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: payload,
-    cache: false,
-    contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        //work around for beacon bug returning error 500 for no reason
-        callback(response.responseJSON);
-        }
-    },
+/**
+ * @param {string|number} taskingId
+ * @param {Record<string, unknown>|string} payload  form fields (or a pre-encoded string)
+ * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<any>}  response body, or null on failure
+ */
+export function untaskTeam(taskingId, payload, ctx = {}) {
+  const { host, token, signal } = ctx;
+  return request(host + '/Api/v1/Tasking/' + taskingId, {
+    method: 'DELETE',
+    token,
+    signal,
+    form: payload,
+    nullOnError: true,
   });
 }
 
-
-export function sequence(sequence, host, token, callback) {
-  $.ajax({
-    type: 'PUT',
-    url: host + '/Api/v1/Tasking/Sequences',
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    data: JSON.stringify(sequence),
-    cache: false,
-    dataType: 'json',
-    contentType: 'application/json; charset=utf-8',
-    complete: function (response) {
-      if (response.status === 200) {
-        callback(true);
-      } else {
-        callback(false);
-      }
-    }
+/**
+ * Reorder taskings.
+ *
+ * @param {object} sequenceBody  { Sequences: [...] }
+ * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<void>}  resolves on success, rejects on failure
+ */
+export function sequence(sequenceBody, ctx = {}) {
+  const { host, token, signal } = ctx;
+  return request(host + '/Api/v1/Tasking/Sequences', {
+    method: 'PUT',
+    token,
+    signal,
+    json: sequenceBody,
+    responseType: 'none',
   });
 }

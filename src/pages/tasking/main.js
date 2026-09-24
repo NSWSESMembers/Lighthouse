@@ -3,7 +3,7 @@ global.jQuery = $;
 
 import BeaconClient from '../../shared/BeaconClient.js';
 const BeaconToken = require('../lib/shared_token_code.js');
-import { startBeaconSignalRConnection, connectionStatus, getConnectionStatus } from './signalr/connection.js';
+import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, getConnectionStatus, messageReceived } from './signalr/connection.js';
 import { setPushModeEnabled } from './signalr/pushMode.js';
 import { getSubject } from './signalr/subjects.js';
 
@@ -13,6 +13,7 @@ require('../lib/shared_chrome_code.js'); // side-effect
 import { showAlert } from './components/windowAlert.js';
 
 import { ResizeDividers } from './resize.js';
+import { initPopupAutoPan } from './utils/popupAutoPan.js';
 import { addOrUpdateJobMarker, removeJobMarker } from './markers/jobMarker.js';
 import { attachAssetMarker, detachAssetMarker } from './markers/assetMarker.js';
 import { attachUnmatchedAssetMarker, detachUnmatchedAssetMarker } from './markers/assetMarker.js';
@@ -25,6 +26,7 @@ import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
 import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
+import { OpsLogResolveModalVM } from "./viewmodels/OpsLogResolveModalVM.js";
 import { TrackableAssetsModalVM } from "./viewmodels/TrackableAssetsModalVM.js";
 import IncidentImagesModalVM from "./viewmodels/IncidentImagesModalVM";
 
@@ -32,6 +34,7 @@ import { installAlerts } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
 import { SpotlightSearchVM } from "./components/spotlightSearch.js";
 import { registerAcronymTextBinding } from "./components/acronymText.js";
+import { matchesHotkeyEvent } from "./utils/hotkeyMatch.js";
 
 
 import { Asset } from './models/Asset.js';
@@ -44,8 +47,19 @@ import { Tag } from "./models/Tag.js";
 import { Enum } from './utils/enum.js';
 
 import { fetchSharedDefaults } from './utils/defaultAssetSync.js';
+import { jobMatchesConfigFilters, teamMatchesConfigFilters, filterDescriptionsToEnumIds } from './utils/configFilters.js';
+import { computeMatchedAssetsForTeam } from './utils/assetTeamMatching.js';
+import { compareByKey, compareJobsByKey } from './utils/tableSort.js';
+import { buildJobSuggestionPool, buildJobSearchSuggestions, filterJobsBySearchTerm } from './utils/searchMatching.js';
+import { createMarkerBatcher } from './utils/markerBatcher.js';
+import { mapJobNotificationToJobJson, withJobReceivedFallback } from './utils/pushNotificationMapping.js';
+import { buildSmsRecipientsFromTeam, buildSmsPrefillFromTasking, buildSmsPrefillFromJob } from './utils/smsHelpers.js';
+import { decodeJwtSub } from './utils/jwt.js';
+import { debounce } from './utils/debounce.js';
+import { parseSearchParams } from './utils/urlParams.js';
 
 import { ConfigVM } from './viewmodels/Config.js';
+import { initHqCoverageMap } from './components/hqCoverageMap.js';
 
 import { installSlideVisibleBinding } from "./bindings/slideVisible.js";
 import { installStatusFilterBindings } from "./bindings/statusFilters.js";
@@ -188,15 +202,7 @@ const defaultRedSvgIcon = L.divIcon({
 // control, which is exactly why enforcement lives server-side.
 let currentMemberId = null;
 
-function decodeJwtSub(jwt) {
-    try {
-        const payloadB64 = jwt.split('.')[1];
-        const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
-        return JSON.parse(json)?.sub || null;
-    } catch {
-        return null;
-    }
-}
+// See utils/jwt.js for decodeJwtSub.
 
 /** Sync getter for the current member id -- see currentMemberId above. */
 function getMemberId() {
@@ -232,6 +238,10 @@ const params = getSearchParameters();
 const apiHost = params.host
 const sourceUrl = params.source
 
+// Every BeaconClient call takes a trailing context object; this builds it from
+// the page's host/userId plus a token (and any per-call extras like onProgress).
+const beaconCtx = (tkn, extra) => ({ host: apiHost, userId: params.userId, token: tkn, ...extra });
+
 // Collaborative map layer markers are attributed to the Beacon Person
 // record (params.personId), not the login/account id (params.userId) --
 // these are separate id systems in Beacon's data model (see
@@ -264,6 +274,11 @@ const map = L.map('map', {
     // Faster debounce time while zooming
     wheelDebounceTime: 50
 }).setView([-33.8688, 151.2093], 11);
+
+// Keep popup auto-pan padding aware of whatever's actually docked in the
+// map's corners (alerts banners, zoom/measure tools, legend, ...) so
+// popups can't open underneath that floating chrome.
+initPopupAutoPan(map);
 
 
 installMapContextMenu({
@@ -482,9 +497,7 @@ function VM() {
         const pending = (async () => {
             try {
                 const tk = await getToken();
-                const person = await new Promise((resolve, reject) => {
-                    BeaconClient.people.getSimplePerson(idStr, apiHost, params.userId, tk, resolve, reject);
-                });
+                const person = await BeaconClient.people.getSimplePerson(idStr, beaconCtx(tk));
                 return person?.FullName || idStr;
             } catch (err) {
                 console.warn('Failed to resolve person name for', idStr, err);
@@ -553,6 +566,27 @@ function VM() {
             allowInInputs: true
         });
     };
+    self.opsLogResolveVM = new OpsLogResolveModalVM(self);
+
+    self.attachOpsLogResolveModal = function (entry) {
+        if (!entry) return;
+        const modalEl = document.getElementById("OpsLogResolveModal");
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.opsLogResolveVM;
+        vm.modalInstance = modal;
+
+        vm.open(entry, self.jobTimelineVM.job());
+        modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => vm.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true
+        });
+    };
+
     self.jobTimelineVM = new JobTimeline(self);
 
     // --- TABLE SORTING MAGIC ---
@@ -633,40 +667,10 @@ function VM() {
         teamLastInput = input;
         teamLastKey = key;
         teamLastAsc = asc;
-        teamLastOutput = input.slice().sort(function (a, b) {
-            // Support nested keys like "entityAssignedTo.code"
-            var av = key.includes('.')
-                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), a)
-                : ko.unwrap(a[key]);
-
-            var bv = key.includes('.')
-                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), b)
-                : ko.unwrap(b[key]);
-
-            var an = typeof av === 'number' || /^\d+(\.\d+)?$/.test(av);
-            var bn = typeof bv === 'number' || /^\d+(\.\d+)?$/.test(bv);
-            var cmp = (an && bn) ? (Number(av) - Number(bv))
-                : String(av || '').localeCompare(String(bv || ''), undefined, { numeric: true });
-            return asc ? cmp : -cmp;
-        });
+        // See utils/tableSort.js for the comparator itself.
+        teamLastOutput = input.slice().sort((a, b) => compareByKey(a, b, key, asc));
         return teamLastOutput;
     }).extend({ rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
-
-    const JOB_STATUS_ORDER = [
-        'New',
-        'Active',
-        'Tasked',
-        'Referred',
-        'Complete',
-        'Cancelled',
-        'Rejected',
-        'Finalised'
-    ];
-
-    const JOB_STATUS_RANK = JOB_STATUS_ORDER.reduce((m, s, i) => {
-        m[s] = i;
-        return m;
-    }, Object.create(null));
 
     let jobLastKey, jobLastAsc, jobLastInput, jobLastOutput;
 
@@ -683,39 +687,8 @@ function VM() {
         jobLastKey = key;
         jobLastAsc = asc;
 
-        jobLastOutput = input.slice().sort(function (a, b) {
-            // Support nested keys like "entityAssignedTo.code"
-            var av = key.includes('.')
-                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), a)
-                : ko.unwrap(a[key]);
-
-            var bv = key.includes('.')
-                ? key.split('.').reduce((obj, k) => ko.unwrap(obj?.[k]), b)
-                : ko.unwrap(b[key]);
-
-            // Type column displays `typeShort + categoriesNameNumberDash` (e.g. FR-1),
-            // so sort using the same rendered token.
-            if (key === 'type') {
-                av = `${ko.unwrap(a.typeShort) || ''}${ko.unwrap(a.categoriesNameNumberDash) || ''}`;
-                bv = `${ko.unwrap(b.typeShort) || ''}${ko.unwrap(b.categoriesNameNumberDash) || ''}`;
-            }
-
-            // --- custom status order ---
-            if (key === 'statusName') {
-                var ar = JOB_STATUS_RANK[av] ?? Number.MAX_SAFE_INTEGER;
-                var br = JOB_STATUS_RANK[bv] ?? Number.MAX_SAFE_INTEGER;
-                return asc ? (ar - br) : (br - ar);
-            }
-
-            // --- default behaviour ---
-            var an = typeof av === 'number' || /^\d+(\.\d+)?$/.test(av);
-            var bn = typeof bv === 'number' || /^\d+(\.\d+)?$/.test(bv);
-            var cmp = (an && bn)
-                ? (Number(av) - Number(bv))
-                : String(av || '').localeCompare(String(bv || ''), undefined, { numeric: true });
-
-            return asc ? cmp : -cmp;
-        });
+        // See utils/tableSort.js for the comparator itself.
+        jobLastOutput = input.slice().sort((a, b) => compareJobsByKey(a, b, key, asc));
         return jobLastOutput;
     });
 
@@ -779,75 +752,20 @@ function VM() {
     self.jobSearchShowSuggestions = ko.observable(false);
 
     // Build suggestion pool once, recompute when filtered jobs change
+    // See utils/searchMatching.js for the pool-building/matching logic.
     self._jobSuggestionPool = ko.pureComputed(() => {
-        const seen = new Set();
-        const pool = []; // { label, category }
-        const add = (val, category) => {
-            if (!val) return;
-            const v = String(val).trim();
-            if (!v || seen.has(v.toLowerCase())) return;
-            seen.add(v.toLowerCase());
-            pool.push({ label: v, category });
-        };
-
-        (self.filteredJobsAgainstConfig() || []).forEach(jb => {
-            add(jb.identifierTrimmed(), 'Identifier');
-            add(jb.id(), 'Identifier');
-            add(jb.address.prettyAddress(), 'Address');
-            add(jb.lga(), 'LGA');
-            add(jb.entityAssignedTo?.code(), 'HQ');
-            add(jb.situationOnScene(), 'Situation');
-            add(jb.contactFirstName() + ' ' + jb.contactLastName(), 'Contact');
-            add(jb.icemsIncidentIdentifier(), 'ICEMS');
-        });
-        return pool;
+        return buildJobSuggestionPool(self.filteredJobsAgainstConfig());
     }).extend({ rateLimit: { timeout: 300, method: 'notifyWhenChangesStop' } });
 
     // React to typing — produce up to 8 suggestions
     self.jobSearch.subscribe(val => {
-        const raw = (val || '').toLowerCase().trim();
-        if (!raw) {
-            self.jobSearchSuggestions([]);
+        const result = buildJobSearchSuggestions(self._jobSuggestionPool(), val);
+        self.jobSearchSuggestions(result.suggestions);
+        if (result.showSuggestions === false) {
             self.jobSearchShowSuggestions(false);
             return;
         }
-
-        // Match last token for suggestions (supports multi-word queries)
-        const tokens = raw.split(/\s+/);
-        const lastToken = tokens[tokens.length - 1];
-        if (!lastToken) { self.jobSearchSuggestions([]); return; }
-
-        const escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const rx = (/^\d+$/.test(lastToken) || /[^a-z0-9]/i.test(lastToken))
-            ? null // numeric or contains non-alphanumeric (e.g. "14-7570") — use includes
-            : new RegExp('\\b' + escapeRx(lastToken), 'i');
-
-        // Helper: escape HTML entities so label text is safe for innerHTML
-        const escHtml = (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-        // Build a regex that finds the matched portion for bolding
-        const highlightRx = rx
-            ? new RegExp('(' + escapeRx(lastToken) + ')', 'i')
-            : new RegExp('(' + escapeRx(lastToken) + ')', 'ig');
-
-        const matches = [];
-        const pool = self._jobSuggestionPool();
-        for (let i = 0; i < pool.length && matches.length < 8; i++) {
-            const item = pool[i];
-            const hit = rx
-                ? rx.test(item.label)
-                : item.label.toLowerCase().includes(lastToken);
-            if (hit) {
-                // Wrap matched portion in <strong>
-                const hl = escHtml(item.label).replace(highlightRx, '<strong>$1</strong>');
-                matches.push({ label: item.label, highlightedLabel: hl, category: item.category });
-            }
-        }
-        self.jobSearchSuggestions([
-            // First item echoes the current search text so the user can click to dismiss
-            { label: raw, highlightedLabel: '<i class="fa fa-search me-1"></i>' + escHtml(raw), category: 'Search', isExact: true },
-            ...matches
-        ]);
+        if (!('showSuggestions' in result)) return; // no matchable last token -- leave showSuggestions/activeIndex untouched
         self.jobSearchActiveIndex(-1);
         self.jobSearchShowSuggestions(true);
     });
@@ -926,152 +844,32 @@ function VM() {
 
     // Extracted so it can be reused as a single-job admission check (e.g. for
     // SignalR-pushed jobs) as well as the bulk array filter below.
+    // See utils/configFilters.js for the actual admission logic.
     self.jobMatchesConfigFilters = function (jb) {
-        const hqIds = new Set((self.config.incidentFilters() || []).map(f => String(f.id)));
-        const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
-
-        const allowedStatus = self.config.jobStatusFilter(); // allow-list
-        const allowedStatusSet = new Set(allowedStatus || []);
-        const incidentTypeAllowedById = self.config.allowedIncidentTypeIds(); // allow-list (Set in ConfigVM)
-        const incidentTypeIterable =
-            incidentTypeAllowedById && typeof incidentTypeAllowedById[Symbol.iterator] === "function"
-                ? incidentTypeAllowedById
-                : [];
-        const incidentTypeSet = new Set(Array.from(incidentTypeIterable, id => String(id)));
-
-        var start = new Date();
-        var end = new Date();
-
-        start.setDate(end.getDate() - self.config.fetchPeriod());
-
-        // Add 5 minutes to the start time just to account for drift
-        start.setMinutes(start.getMinutes() + 5);
-
-        end.setDate(end.getDate() + self.config.fetchForward());
-
-        // Same drift/clock-skew allowance as start, above -- without it, a
-        // job admitted via push the instant it's created (jobReceived from
-        // the notification's own CreatedOn, essentially "now") sits right
-        // on the end boundary, and a few hundred ms of processing lag or
-        // any client/server clock skew is enough to flip jobDate > end and
-        // evict it (confirmed live: fetchForward=0 gave zero tolerance).
-        end.setMinutes(end.getMinutes() + 5);
-
-        const statusName = jb.statusName();
-        const jobHqId = String(jb.entityAssignedTo.id());
-        const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
-
-        // Sector filtering — only when scope includes incidents
-        if (self.config.applySectorsToIncidents() && sectorIds.size > 0) {
-            const sectorId = String(jb.sector().id());
-            const sectorMatch = sectorIds.has(sectorId);
-
-            //if no sector and config says to exclude, filter out
-            if (!jb.sector().id() && self.config.includeIncidentsWithoutSector() === false) {
-                return false;
-            }
-
-            if (jb.sector().id() && !sectorMatch) return false;
-        }
-
-        // If allow-list non-empty, only show jobs whose status is in it
-        if (allowedStatusSet.size > 0 && !allowedStatusSet.has(statusName)) {
-            return false;
-        }
-
-        // If incident type filter non-empty, only show jobs whose type is in
-        // it -- but only reject when we actually know the type. A job built
-        // straight from the jobCreated notification has no type information
-        // at all (unlike status/priority, there's no id to resolve either),
-        // so typeId() is "" until refreshData() backfills it; treating that
-        // as "known not to match" would evict every new job whenever any
-        // type filter is active. isFilteredIn corrects itself reactively
-        // once the real type lands, so being lenient here at admission time
-        // costs nothing beyond a job briefly sitting untracked-by-filter.
-        const typeId = jb.typeId();
-        if (incidentTypeSet.size > 0 && typeId && !incidentTypeSet.has(String(typeId))) {
-            return false;
-        }
-
-        //date matching
-        const jobDate = new Date(jb.jobReceived());
-
-        if (jobDate < start || jobDate > end) {
-            return false;
-        }
-
-        //must match HQ filter
-        if (!hqMatch) return false;
-
-        return true;
+        return jobMatchesConfigFilters(jb, self.config);
     };
 
     self.filteredJobsAgainstConfig = ko.pureComputed(() => {
         return ko.utils.arrayFilter(this.jobs(), jb => self.jobMatchesConfigFilters(jb));
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 50, method: 'notifyWhenChangesStop' } });
 
+    // See utils/searchMatching.js for the term-matching logic. The final
+    // admitted set is the same regardless of which of these two independent
+    // filters is applied first (it's an intersection either way).
     self.filteredJobs = ko.pureComputed(() => {
 
         const pinnedOnlyIncidents = self.showPinnedIncidentsOnly();
         const pinnedIncidentIds = (self.config && self.config.pinnedIncidentIds) ? self.config.pinnedIncidentIds() : [];
         const pinnedIncidentSet = new Set((pinnedIncidentIds || []).map(id => String(id)));
 
-        const rawTerm = self.jobSearch().toLowerCase().trim();
-        // Split into individual tokens so "rescue parra" matches a job
-        // whose combined fields contain both "rescue" AND "parra".
-        const terms = rawTerm ? rawTerm.split(/\s+/) : [];
+        const bySearchTerm = filterJobsBySearchTerm(this.filteredJobsAgainstConfig(), self.jobSearch());
 
-        // Pre-build word-boundary regexes once per search change.
-        // Each token is matched at the START of a word (\b prefix) so
-        // "tree" matches "tree", "trees", "tree-down" but NOT "street".
-        // Tokens that look like plain numbers (e.g. job IDs) stay as
-        // simple includes() since word boundaries around digits can be
-        // surprising (e.g. "123" inside "J-00123" should still match).
-        const escapeRx = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const termMatchers = terms.map(t => {
-            if (/^\d+$/.test(t) || /[^a-z0-9]/i.test(t)) {
-                // Numeric token or token containing non-alphanumeric chars (e.g. "14-7570")
-                // — plain substring is more intuitive and avoids \b boundary failures
-                return (blob) => blob.includes(t);
-            }
-            const rx = new RegExp('\\b' + escapeRx(t), 'i');
-            return (blob) => rx.test(blob);
-        });
-
-        return ko.utils.arrayFilter(this.filteredJobsAgainstConfig(), jb => {
-
-            // pinned-only filter
+        return ko.utils.arrayFilter(bySearchTerm, jb => {
             if (pinnedOnlyIncidents && !pinnedIncidentSet.has(String(jb.id()))) {
                 return false;
             }
-
-            // text search — every token must appear in at least one field
-            if (termMatchers.length > 0) {
-                // Build a searchable blob once per job (avoids repeated toLowerCase calls per term)
-                const parts = [
-                    jb.identifier(),
-                    jb.id()?.toString(),
-                    jb.situationOnScene(),
-                    jb.address.prettyAddress(),
-                    jb.tagsCsv(),
-                    jb.lga(),
-                    jb.contactFirstName(),
-                    jb.contactLastName(),
-                    jb.callerFirstName(),
-                    jb.callerLastName(),
-                    jb.incidentContactNumber(),
-                    jb.entityAssignedTo?.code(),
-                    jb.icemsIncidentIdentifier(),
-                ];
-                const blob = parts.filter(Boolean).join(' ').toLowerCase();
-
-                for (const match of termMatchers) {
-                    if (!match(blob)) return false;
-                }
-            }
-
             return true;
-        })
+        });
 
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
@@ -1082,53 +880,9 @@ function VM() {
 
     // Extracted so it can be reused as a single-team admission check (e.g. for
     // SignalR-pushed teams) as well as the bulk array filter below.
+    // See utils/configFilters.js for the actual admission logic.
     self.teamMatchesConfigFilters = function (tm) {
-        const allowed = self.config.teamStatusFilter(); // allow-list
-        const allowedSet = new Set(allowed || []);
-        const hqFilterIds = new Set((self.config.teamFilters() || []).map(f => String(f.id)));
-        const applySectorsToTeams = self.config.applySectorsToTeams();
-        const sectorIds = new Set((self.config.sectorFilters() || []).map(s => String(s.id)));
-
-        var start = new Date();
-        var end = new Date();
-
-        start.setDate(end.getDate() - self.config.fetchPeriod());
-
-        // Add 5 minutes to the start time just to account for drift
-        start.setMinutes(start.getMinutes() + 5);
-
-        end.setDate(end.getDate() + self.config.fetchForward());
-
-        const status = tm.teamStatusType()?.Name;
-        const teamHqId = String(tm.assignedTo().id());
-        const hqMatch = hqFilterIds.size === 0 || hqFilterIds.has(teamHqId);
-        if (status == null) {
-            return false;
-        }
-
-        // If allow-list non-empty, only show teams whose status is in it
-        if (allowedSet.size > 0 && !allowedSet.has(status)) {
-            return false;
-        }
-
-        //must match HQ filter
-        if (!hqMatch) {
-            return false;
-        }
-
-        // Sector filtering — only when scope includes teams
-        if (applySectorsToTeams && sectorIds.size > 0) {
-            const teamSectorId = String(tm.sector()?.id?.() || '');
-            if (teamSectorId && !sectorIds.has(teamSectorId)) return false;
-            if (!teamSectorId && self.config.includeIncidentsWithoutSector() === false) return false;
-        }
-
-        const statusDate = tm.statusDate();
-        if (statusDate < start || statusDate > end) {
-            return false;
-        }
-
-        return true;
+        return teamMatchesConfigFilters(tm, self.config);
     };
 
     //just filtered against config not against UI searching
@@ -1196,13 +950,17 @@ function VM() {
     self.fetchAllSectors = async function (hqs) {
         self.sectorsLoading(true);
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.sectors.search(hqs, apiHost, params.userId, t, (res) => {
+        try {
+            const res = await BeaconClient.sectors.search(hqs, beaconCtx(t, {
+                onProgress: (count, total) => console.log(`Fetched ${count} / ${total} sectors...`),
+            }));
+
             // Clear stale sectors from previous HQ selection
             self.sectorsById.clear();
             self.sectors.removeAll();
 
             const returnedIds = new Set();
-            (res?.Results || []).forEach(
+            (res?.results || []).forEach(
                 (sectorJson) => {
                     returnedIds.add(String(sectorJson.Id));
                     let sector = new Sector(sectorJson);
@@ -1218,40 +976,44 @@ function VM() {
             if (staleFilters.length > 0) {
                 self.config.sectorFilters.removeAll(staleFilters);
             }
-
+        } catch (err) {
+            console.log("Sector fetching errored out.", err);
+            showAlert('Failed to fetching sectors. Your session may have expired', 'danger', 5000);
+        } finally {
             self.sectorsLoading(false);
-        }, (count, total) => {
-            if (count != -1 && total != -1) {
-                console.log(`Fetched ${count} / ${total} sectors...`);
-            } else {
-                console.log("Sector fetching errored out or returned unknown total count.");
-                showAlert('Failed to fetching sectors. Your session may have expired', 'danger', 5000);
-            }
-        });
+        }
     }
 
     self.setSectorForJob = async function (job, sector) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.sectors.setSector(job, sector, apiHost, params.userId, t, (success) => {
-            if (success) {
-                showAlert('Incident assigned to sector successfully.', 'success', 3000);
-                self.fetchJobById(job, null);
-            } else {
-                showAlert('Failed to assign incident to sector.', 'danger', 5000);
-            }
-        });
+        try {
+            await BeaconClient.sectors.setSector(job, sector, beaconCtx(t));
+            showAlert('Incident assigned to sector successfully.', 'success', 3000);
+            self.fetchJobById(job, null);
+        } catch (err) {
+            console.error(err);
+            showAlert('Failed to assign incident to sector.', 'danger', 5000);
+        }
     }
 
     self.unSetSectorForJob = async function (job) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.sectors.unSetSector(job, apiHost, params.userId, t, (success) => {
-            if (success) {
-                showAlert('Incident removed from sector successfully.', 'success', 3000);
-                self.fetchJobById(job, null);
-            } else {
-                showAlert('Failed to remove incident from sector.', 'danger', 5000);
+        try {
+            await BeaconClient.sectors.unSetSector(job, beaconCtx(t));
+            showAlert('Incident removed from sector successfully.', 'success', 3000);
+            // The job GET payload omits Sector entirely when none is
+            // assigned, so Job.updateFromJson can't distinguish "cleared"
+            // from "unchanged" and the stale sector sticks. Clear it
+            // locally, then let fetchJobById reconcile everything else.
+            const jobModel = self.jobsById.get(job);
+            if (jobModel && jobModel.sector().id()) {
+                jobModel.sector(new Sector({}));
             }
-        });
+            self.fetchJobById(job, null);
+        } catch (err) {
+            console.error(err);
+            showAlert('Failed to remove incident from sector.', 'danger', 5000);
+        }
     }
 
     function makeJobDeps() {
@@ -1289,11 +1051,19 @@ function VM() {
                         cg.zoomToShowLayer(m, () => {
                             m.openPopup();
                         });
-                    } else {
+                    } else if (m) {
                         // Marker is on a standalone layer (rescueJobLayer,
-                        // unclusteredJobLayer) or doesn't exist yet – simple flyTo.
-                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.10 });
-                        m?.openPopup?.();
+                        // unclusteredJobLayer) – simple flyTo. Wait for it to
+                        // settle before opening the popup: opening it
+                        // immediately starts the popup's own autoPan
+                        // correction while the flyTo animation is still
+                        // moving the map, and the two visibly fight (a
+                        // camera move, then an abrupt extra snap).
+                        map.once('moveend', () => m.openPopup());
+                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
+                    } else {
+                        // Doesn't exist yet -- nothing to open a popup on.
+                        map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
                     }
                 }
             },
@@ -1325,19 +1095,15 @@ function VM() {
             fetchUnacknowledgedJobNotifications: (job) => self.fetchUnacknowledgedJobNotifications(job),
             acknowledgeUnacceptedNotification: async (notificationId) => {
                 const tk = await getToken();
-                return BeaconClient.notifications.acknowledge(notificationId, apiHost, params.userId, tk);
+                return BeaconClient.notifications.acknowledge(notificationId, beaconCtx(tk));
             },
             fetchMessageById: async (messageId) => {
                 const tk = await getToken();
-                return new Promise((resolve, reject) => {
-                    BeaconClient.icems.getMessageById(messageId, apiHost, params.userId, tk, resolve, reject);
-                });
+                return BeaconClient.icems.getMessageById(messageId, beaconCtx(tk));
             },
             acknowledgeIumMessage: async (notificationId, messageData) => {
                 const tk = await getToken();
-                return new Promise((resolve, reject) => {
-                    BeaconClient.icems.acknowledgeIum(notificationId, messageData, apiHost, params.userId, tk, resolve, reject);
-                });
+                return BeaconClient.icems.acknowledgeIum(notificationId, messageData, beaconCtx(tk));
             },
             relativeUpdateTick: self.relativeUpdateTick30s,
             notifySuccess: (message) => showAlert(message, 'success', 3000),
@@ -1361,9 +1127,7 @@ function VM() {
             toggleIncidentPinned: (id) => self.toggleIncidentPinned(id),
             fetchIcemsIncident: async (icemsId) => {
                 const tk = await getToken();
-                return new Promise((resolve, reject) => {
-                    BeaconClient.icems.getIncident(icemsId, apiHost, params.userId, tk, resolve, reject);
-                });
+                return BeaconClient.icems.getIncident(icemsId, beaconCtx(tk));
             },
         }
     }
@@ -1389,18 +1153,18 @@ function VM() {
         //new team
         const deps = {
             upsertTasking: (tj, opts) => self.upsertTaskingFromPayload(tj, opts),
-            getTeamTasking: (teamId) =>
-                new Promise((resolve, reject) => {
-                    BeaconClient.team.getTasking(teamId, apiHost, params.userId, token, resolve, reject);
-                }),
+            getTeamTasking: (teamId) => BeaconClient.team.getTasking(teamId, beaconCtx(token)),
             makeTeamLink: (id) => `${params.source}/Teams/${id}/Edit`,
 
             flyToAsset: (assetOrEntry) => {
                 const asset = assetOrEntry && assetOrEntry.asset ? assetOrEntry.asset : assetOrEntry;
                 const lat = asset.latitude(), lng = asset.longitude();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
-                    map.flyTo([lat, lng], 14, { animate: true, duration: 0.10 });
-                    asset.marker?.openPopup?.();
+                    // Wait for the flyTo to settle before opening the popup
+                    // -- see the matching comment in flyToJob above.
+                    const m = asset.marker;
+                    if (m) map.once('moveend', () => m.openPopup());
+                    map.flyTo([lat, lng], 14, { animate: true, duration: 0.5 });
                 }
             },
 
@@ -1436,21 +1200,16 @@ function VM() {
     const configDeps = {
         entitiesSearch: async (q) => {
             const t = await getToken();
-            return new Promise((resolve) => {
-                BeaconClient.entities.search(q, apiHost, params.userId, t, (data) => resolve(data.Results || []));
-            });
+            const data = await BeaconClient.entities.search(q, beaconCtx(t));
+            return data.results;
         },
         entitiesChildren: async (parentId) => {
             const t = await getToken();
-            return new Promise((resolve) => {
-                BeaconClient.entities.children(parentId, apiHost, params.userId, t, (data) => resolve(data || []));
-            });
+            return BeaconClient.entities.children(parentId, beaconCtx(t));
         },
         entity: async (id) => {
             const t = await getToken();
-            return new Promise((resolve) => {
-                BeaconClient.entities.fetch(id, apiHost, params.userId, t, (data) => resolve(data));
-            });
+            return BeaconClient.entities.get(id, beaconCtx(t));
         },
         fetchAllSectors: (hqs) => self.fetchAllSectors(hqs),
         searchMembers: (q) => self.searchMembers(q),
@@ -1516,6 +1275,35 @@ function VM() {
 
     };
 
+    // Explicit "unassign" action from the per-incident sector dropdown.
+    // sectorSelectorClick can only toggle a sector off if that sector is
+    // still in the fetched list; when the assigned sector belongs to an HQ
+    // that isn't in the current filters it won't be, so this gives a way
+    // out regardless.
+    self.sectorUnassignClick = function (_data, event) {
+        var ctx = ko.contextFor(event.currentTarget || event.target);
+        var jobCtx = ctx;
+        while (jobCtx && !jobCtx.j) {
+            jobCtx = jobCtx.$parentContext;
+        }
+        if (!jobCtx || !jobCtx.j) return;
+
+        var jobId = jobCtx.j.id();
+        if (!jobCtx.j.sector().id()) return;   // nothing assigned
+
+        self.unSetSectorForJob(jobId);
+        console.log("Unassigning sector from job", jobId);
+    };
+
+    // Refresh the sector list each time an "Assigned Sector" dropdown is
+    // opened, so sectors created since page load (or since the last HQ
+    // filter change) show up without a full reload.
+    self.refreshSectorsForDropdown = function () {
+        const ids = self.config._sectorHqIds();
+        if (!ids || ids.length === 0) return;   // no HQs selected — nothing to search
+        self.fetchAllSectors(ids);
+    };
+
     self.attachJobTimelineModal = function (job) {
         const modalEl = document.getElementById('jobTimelineModal');
         const modal = new bootstrap.Modal(modalEl);
@@ -1578,51 +1366,22 @@ function VM() {
 
     };
 
+    // See utils/smsHelpers.js for the recipient/prefill-text building.
     self.attachSendSMSModal = function (recipients, team = null, tasking = null, job = null) {
-        var msgRecipients = [];
+        var msgRecipients = team ? buildSmsRecipientsFromTeam(team) : recipients;
+
         var taskId = null;
         var headerLabel = "Send SMS";
         var initialText = "";
 
-        // If team provided, use its members as recipients
-        if (team) {
-            msgRecipients = team.members().map(t => {
-                return {
-                    id: t.Person.Id,
-                    name: t.Person.FirstName + ' ' + t.Person.LastName,
-                    isTeamLeader: t.TeamLeader,
-                }
-            });
-        } else {
-            msgRecipients = recipients
-        }
-
         // if a task was provided, use its job info to prefill
         if (tasking) {
-            taskId = tasking.job.id();
-            headerLabel = `Send SMS - Incident: ${tasking.job.identifier()}`;
-            initialText = `Re: Inc ${tasking.job.identifier()} at ${tasking.job.address.prettyAddress()}: `;
+            ({ taskId, headerLabel, initialText } = buildSmsPrefillFromTasking(tasking));
         }
 
         // if a job was provided, use its info to prefill and assume its a new tasking
         if (job) {
-            taskId = job.id();
-            headerLabel = `Send SMS - Incident: ${job.identifier()}`;
-            initialText = [
-                job.priorityName(),
-                job.typeShort() + job.categoriesNameNumberDash(),
-                job.entityAssignedTo?.code(),
-                job.identifier(),
-                job.contactFirstName(),
-                job.contactLastName(),
-                job.address?.prettyAddress(),
-                job.contactPhoneNumber(),
-                job.tagsCsv(),
-                job.situationOnScene()
-            ]
-                .filter(value => value) // Remove empty or undefined values
-                .join(' ');
-            initialText = initialText.toUpperCase();
+            ({ taskId, headerLabel, initialText } = buildSmsPrefillFromJob(job));
         }
 
         const modalEl = document.getElementById('SendSMSModal');
@@ -1811,183 +1570,14 @@ function VM() {
 
 
     // ---- Trackable asset matching (exact-first, fuzzy-second; token consumed once) ----
-
-    function _normAssetName(v) {
-        // asset names are like PAR56 / SES47 / SES47T (no spaces)
-        const s = (v == null) ? '' : String(v);
-        return s.toLowerCase().replace(/[^a-z0-9]/g, '');
-    }
-
-    function _splitTeamCallsignIntoParts(v) {
-        const s0 = (v == null) ? '' : String(v);
-
-        // Make separators explicit BEFORE stripping spaces
-        // e.g. "PAR56 + PAR18" => ["PAR56", "PAR18"]
-        // also handle "and"
-        const s1 = s0
-            .replace(/\bteam\b/ig, ' ')
-            .replace(/\s+\+\s+/g, '|')
-            .replace(/[+&/,;]+/g, '|')
-            .replace(/\s+\band\b\s+/ig, '|')
-            .replace(/\s+\bwith\b\s+/ig, '|');
-
-        return s1.split('|').map(p => p.trim()).filter(Boolean);
-    }
-
-    function _tokenVariantsFromPart(part) {
-        // produce a small set of candidate tokens from one callsign part
-        const raw = _normAssetName(part);
-        if (!raw) return [];
-
-        const out = new Set();
-
-        // 1) raw as-is (already no spaces / punctuation)
-        out.add(raw);
-
-        // 2) if looks like <letters><digits><many letters>, drop the trailing word
-        //    e.g. "par56truck" => "par56"
-        const mLongSuffix = raw.match(/^([a-z]+[0-9]+)[a-z]{2,}$/);
-        if (mLongSuffix) out.add(mLongSuffix[1]);
-
-        // 3) if contains <letters><digits><optional single letter>, keep that prefix too
-        //    e.g. "ses47talpha" => "ses47t"
-        const mCore = raw.match(/^([a-z]+[0-9]+[a-z]?)$/) || raw.match(/^([a-z]+[0-9]+[a-z]?)/);
-        if (mCore && mCore[1]) out.add(mCore[1]);
-
-        // prune empties
-        return [...out].map(x => x.trim()).filter(Boolean);
-    }
-
-    function _extractTeamTokens(team) {
-        const cs = team?.callsign?.();
-        if (!cs) return [];
-
-        const s = String(cs);
-
-        // 1) Primary: extract ALL occurrences of <letters><optional space><digits><optional letter>
-        //    Handles: "PAR18 PAR911", "PAR 56 Team", "PAR56 + PAR18", "SES47T"
-        const re = /[a-z]{2,6}\s*\d+[a-z]?/ig;
-        const seen = new Set();
-        const tokens = [];
-
-        for (const m of s.matchAll(re)) {
-            const tok = _normAssetName(m[0]); // strips spaces/punct => "par56"
-            if (!tok) continue;
-            seen.add(tok);
-            tokens.push(tok);
-        }
-
-        // If we found any, we're done (prevents weird whitespace-only splitting issues).
-        if (tokens.length) return tokens;
-
-        // 2) Fallback: previous behaviour (kept for edge cases)
-        const parts = _splitTeamCallsignIntoParts(s);
-        for (const p of parts) {
-            for (const t of _tokenVariantsFromPart(p)) {
-                if (!t || seen.has(t)) continue;
-                seen.add(t);
-                tokens.push(t);
-            }
-        }
-        return tokens;
-    }
-
-    function _scoreFuzzy(token, assetName) {
-        // Lower is better.
-        // Exact matches are handled before fuzzy, so no 0 here.
-        if (assetName.startsWith(token)) return 1;
-        if (assetName.includes(token)) return 2;
-        if (token.includes(assetName)) return 3;
-        return 99;
-    }
-
-    function _computeMatchedAssetsForTeam(team, allAssets) {
-        const tokens = _extractTeamTokens(team);
-        if (!tokens.length) return new Set();
-
-        // Map assetName -> list of assets (usually 1)
-        const byName = new Map();
-        for (const a of (allAssets || [])) {
-            const n = _normAssetName(a?.name?.());
-            if (!n) continue;
-            if (!byName.has(n)) byName.set(n, []);
-            byName.get(n).push(a);
-        }
-
-        const matchedAssetIds = new Set();
-        const matchedAssets = new Set();
-        const usedTokens = new Set();
-
-        // 1) EXACT first: token === assetName (one match per token)
-        //    If multiple exact matches exist, prefer non-Portable resourceType
-        for (const tok of tokens) {
-            const exactList = byName.get(tok);
-            if (!exactList || !exactList.length) continue;
-
-            // Filter to unmatched candidates
-            const candidates = exactList.filter(a => !matchedAssetIds.has(a.id()));
-            if (!candidates.length) continue;
-
-            // Sort so that Portable resourceType comes last (least preferable)
-            candidates.sort((a, b) => {
-                const aPortable = (ko.unwrap(a.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
-                const bPortable = (ko.unwrap(b.resourceType) || '').toLowerCase() === 'portable' ? 1 : 0;
-                return aPortable - bPortable;
-            });
-
-            const best = candidates[0];
-            matchedAssetIds.add(best.id());
-            matchedAssets.add(best);
-            usedTokens.add(tok);
-        }
-
-        // 2) FUZZY second (token consumed once; asset matched once)
-        //    This is what prevents "SES59" matching "SES59T" when "SES59" exists:
-        //    the exact pass consumes "ses59" and matches SES59 before fuzzy runs.
-        for (const tok of tokens) {
-            if (usedTokens.has(tok)) continue;
-
-            let best = null;
-            let bestScore = 999;
-
-            for (const [assetName, list] of byName.entries()) {
-                const score = _scoreFuzzy(tok, assetName);
-                if (score >= 99) continue;
-
-                // prefer shortest assetName on ties (reduces suffix grabs like SES59T)
-                // and skip assets already matched
-                for (const a of list) {
-                    if (matchedAssetIds.has(a.id())) continue;
-
-                    const tieBreaker = best ? (assetName.length - _normAssetName(best.name()).length) : 0;
-                    const better =
-                        (score < bestScore) ||
-                        (score === bestScore && best && assetName.length < _normAssetName(best.name()).length) ||
-                        (score === bestScore && !best);
-
-                    if (better && tieBreaker <= 0) {
-                        best = a;
-                        bestScore = score;
-                    }
-                }
-            }
-
-            if (best) {
-                usedTokens.add(tok);
-                matchedAssetIds.add(best.id());
-                matchedAssets.add(best);
-            }
-        }
-
-        return matchedAssets;
-    }
+    // See utils/assetTeamMatching.js for the actual matching logic.
 
     // Replaces the old pairwise matcher
     self._assetMatchesTeam = function (_asset, _team) {
         // no longer used as the primary mechanism; keep for safety if anything external calls it
         // (fall back to the new computed set for correctness).
         try {
-            const matches = _computeMatchedAssetsForTeam(_team, self.trackableAssets?.() || []);
+            const matches = computeMatchedAssetsForTeam(_team, self.trackableAssets?.() || []);
             return [...matches].some(a => a?.id?.() === _asset?.id?.());
         } catch (_e) {
             return false;
@@ -2003,7 +1593,7 @@ function VM() {
         // Defer execution to avoid blocking UI thread
         setTimeout(() => {
             const all = self.trackableAssets?.() || [];
-            const desired = _computeMatchedAssetsForTeam(team, all); // Set<Asset>
+            const desired = computeMatchedAssetsForTeam(team, all); // Set<Asset>
 
             // Remove no-longer-matching
             (team.trackableAssets() || []).slice().forEach(a => {
@@ -2145,9 +1735,7 @@ function VM() {
     map.on('touchstart', markUserInteracted);
     map.on('wheel', markUserInteracted);
 
-    function debounce(fn, ms) {
-        let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-    }
+    // See utils/debounce.js for debounce.
 
     let initialFitRetries = 0;
     const MAX_INITIAL_FIT_RETRIES = 4; // give up after ~1.25s to avoid infinite retry loops in bad states
@@ -2264,29 +1852,18 @@ function VM() {
 
     self.fetchSuppliersForJob = async function (id) {
         const t = await getToken();   // blocks here until token is ready
-        return new Promise((resolve) => {
-            BeaconClient.suppliers.get(id, apiHost, params.userId, t, function (data) {
-                resolve(data || []);
-            })
-        });
+        const data = await BeaconClient.suppliers.get(id, beaconCtx(t));
+        return data || [];
     }
 
     self.fetchContactNumbers = async function (id) {
         const t = await getToken();   // blocks here until token is ready
-        return new Promise((resolve) => {
-            BeaconClient.contacts.search(id, apiHost, params.userId, t, function (data) {
-                resolve(data.Results || []);
-            })
-        });
+        return (await BeaconClient.contacts.search(id, beaconCtx(t))).results;
     }
 
     self.searchContacts = async function (query) {
         const t = await getToken();   // blocks here until token is ready
-        return new Promise((resolve) => {
-            BeaconClient.contacts.searchAll(query, apiHost, params.userId, t, function (data) {
-                resolve(data.Results || []);
-            })
-        });
+        return (await BeaconClient.contacts.searchAll(query, beaconCtx(t))).results;
     }
 
     // Searches Beacon members by name or member number (Username) -- used
@@ -2295,13 +1872,11 @@ function VM() {
     // same member-id space as getMemberId()/createdByMemberId above.
     self.searchMembers = async function (query) {
         const t = await getToken();   // blocks here until token is ready
-        return new Promise((resolve) => {
-            BeaconClient.users.search(query, apiHost, params.userId, t, function (data) {
-                resolve(data?.Results || []);
-            }, function () {
-                resolve([]);
-            });
-        });
+        try {
+            return (await BeaconClient.users.search(query, beaconCtx(t))).results;
+        } catch (_) {
+            return [];
+        }
     }
 
     // Searches Beacon events by name or identifier -- used by the
@@ -2309,79 +1884,62 @@ function VM() {
     // Events/Search result rows.
     self.searchEvents = async function (query) {
         const t = await getToken();   // blocks here until token is ready
-        return new Promise((resolve) => {
-            BeaconClient.events.search(query, apiHost, params.userId, t, function (data) {
-                resolve(data?.Results || []);
-            }, function () {
-                resolve([]);
-            });
-        });
+        try {
+            return (await BeaconClient.events.search(query, beaconCtx(t))).results;
+        } catch (_) {
+            return [];
+        }
     }
 
     self.sendSMS = async function (recipients, jobId = '', message, isOperational) {
         const t = await getToken();   // blocks here until token is ready
-        return new Promise((resolve, reject) => {
-            BeaconClient.messages.send(recipients, jobId, message, isOperational, apiHost, params.userId, t, function (data) {
-                if (data) {
-                    resolve(data);
-                } else {
-                    reject(false);
-                }
-            })
-        });
+        const data = await BeaconClient.messages.send(recipients, jobId, message, isOperational, beaconCtx(t));
+        if (!data) {
+            throw new Error('Failed to send SMS');
+        }
+        return data;
     }
 
     self.fetchUnresolvedActionsLog = async function (job) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.operationslog.unresolvedActionsLog(job, apiHost, params.userId, t, function (data) {
-            job.updateFromJson({ ActionRequiredTags: data.Results.flatMap(entry => entry.Tags || []) });
-        }, function (err) {
+        try {
+            const data = await BeaconClient.operationslog.unresolvedActionsLog(job, beaconCtx(t));
+            job.updateFromJson({ ActionRequiredTags: data.results.flatMap(entry => entry.Tags || []) });
+        } catch (err) {
             console.error("Failed to fetch unresolved actions log entries for job:", err);
             showAlert('Failed to fetch unresolved actions log entries. Your session may have expired', 'danger', 5000);
-        });
+        }
     }
 
     self.fetchUnacknowledgedJobNotifications = async function (job) {
         const t = await getToken();   // blocks here until token is ready
-        return new Promise((resolve, reject) => {
-            BeaconClient.notifications.unaccepted(job.id(), apiHost, params.userId, t, resolve, reject);
-        });
+        return BeaconClient.notifications.unaccepted(job.id(), beaconCtx(t));
     }
 
     self.assignJobToTeam = async function (teamVm, jobVm, cb) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.tasking.task(teamVm.id(), jobVm.id(), apiHost, params.userId, t, function (r) {
-            if (r && r.length > 0) {
-                showAlert(`Incident ${jobVm.identifier()} assigned to team ${teamVm.callsign()}.`, 'success', 3000);
-            } else {
-                showAlert(`Failed to assign incident ${jobVm.identifier()} to team ${teamVm.callsign()}.`, 'danger', 5000);
-            }
-            console.log(teamVm, jobVm);
-            jobVm.fetchTasking({ force: true });
-            teamVm.fetchTasking({ force: true });
-            teamVm.refreshData(); // ensure team data is fresh 
-            if (cb) cb(r);
-        })
+        const r = await BeaconClient.tasking.task(teamVm.id(), jobVm.id(), beaconCtx(t));
+        if (r && r.length > 0) {
+            showAlert(`Incident ${jobVm.identifier()} assigned to team ${teamVm.callsign()}.`, 'success', 3000);
+        } else {
+            showAlert(`Failed to assign incident ${jobVm.identifier()} to team ${teamVm.callsign()}.`, 'danger', 5000);
+        }
+        jobVm.fetchTasking({ force: true });
+        teamVm.fetchTasking({ force: true });
+        teamVm.refreshData(); // ensure team data is fresh
+        if (cb) cb(r);
     }
 
     self.saveTaskingSequence = async function (sequences) {
         const t = await getToken();
-        return new Promise((resolve, reject) => {
-            BeaconClient.tasking.sequence(
-                { Sequences: sequences },
-                apiHost,
-                t,
-                function (data) {
-                    if (data) {
-                        showAlert('Tasking order saved.', 'success', 3000);
-                        resolve(data);
-                    } else {
-                        showAlert('Failed to save tasking order.', 'danger', 5000);
-                        reject(new Error('Failed to save tasking order'));
-                    }
-                }
-            );
-        });
+        try {
+            await BeaconClient.tasking.sequence({ Sequences: sequences }, beaconCtx(t));
+        } catch (err) {
+            showAlert('Failed to save tasking order.', 'danger', 5000);
+            throw err;
+        }
+        showAlert('Tasking order saved.', 'success', 3000);
+        return true;
     };
 
     //update spotlight index on team/job filter changes
@@ -2389,57 +1947,7 @@ function VM() {
     self.filteredJobsAgainstConfig.subscribe(() => { self.spotlightSearchVM.rebuildIndex?.() }, null, "arrayChange");
 
     // --- Marker batching (reduces layout/reflow thrash on burst updates) ---
-    const getItemId = (item) => {
-        if (!item) return null;
-        if (typeof item.id === "function") return item.id();
-        return item.id ?? null;
-    };
-
-    function createMarkerBatcher({ addFn, removeFn }) {
-        const pendingAdds = new Map();
-        const pendingRemoves = new Map();
-        let rafHandle = null;
-
-        const flush = () => {
-            rafHandle = null;
-
-            pendingRemoves.forEach((item) => removeFn(item));
-            pendingAdds.forEach((item) => addFn(item));
-
-            pendingRemoves.clear();
-            pendingAdds.clear();
-        };
-
-        const ensureFlush = () => {
-            if (rafHandle == null) {
-                rafHandle = requestAnimationFrame(flush);
-            }
-        };
-
-        const scheduleAdd = (item) => {
-            const id = getItemId(item);
-            if (id == null) {
-                addFn(item);
-                return;
-            }
-            pendingRemoves.delete(id);
-            pendingAdds.set(id, item);
-            ensureFlush();
-        };
-
-        const scheduleRemove = (item) => {
-            const id = getItemId(item);
-            if (id == null) {
-                removeFn(item);
-                return;
-            }
-            pendingAdds.delete(id);
-            pendingRemoves.set(id, item);
-            ensureFlush();
-        };
-
-        return { scheduleAdd, scheduleRemove };
-    }
+    // See utils/markerBatcher.js for the batching logic.
 
     const jobMarkerBatcher = createMarkerBatcher({
         addFn: (job) => addOrUpdateJobMarker(ko, map, self, job),
@@ -2502,13 +2010,12 @@ function VM() {
 
             try {
                 const t = await getToken();
-                BeaconClient.job.getTasking(jobIds, apiHost, params.userId, t, (res) => {
-                    (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload(t));
-                    const touchedTime = new Date();
-                    jobs.forEach(j => {
-                        j.lastTaskingDataUpdate = touchedTime;
-                        j.taskingLoading(false);
-                    });
+                const res = await BeaconClient.job.getTasking(jobIds, beaconCtx(t));
+                res.results.forEach(t => myViewModel.upsertTaskingFromPayload(t));
+                const touchedTime = new Date();
+                jobs.forEach(j => {
+                    j.lastTaskingDataUpdate = touchedTime;
+                    j.taskingLoading(false);
                 });
             } catch (err) {
                 console.error('[batch-tasking] Initial fetch failed:', err);
@@ -2666,36 +2173,43 @@ function VM() {
 
     self.fetchOpsLogForJob = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.operationslog.search(jobId, apiHost, params.userId, t, function (data) {
-            cb(data?.Results || []);
-        }, function (err) {
+        try {
+            const data = await BeaconClient.operationslog.search(jobId, beaconCtx(t));
+            cb(data.results);
+        } catch (err) {
             console.error("Failed to fetch ops log for job:", err);
             showAlert("Failed to fetch ops log. Your session may have expired", "danger", 5000);
             cb([]);
-        });
+        }
     }
 
     self.fetchHistoryForJob = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.job.getHistory(jobId, apiHost, params.userId, t, function (data) {
+        try {
+            const data = await BeaconClient.job.getHistory(jobId, beaconCtx(t));
             cb(data || []);
-        }, function (err) {
+        } catch (err) {
             console.error("Failed to fetch history for job:", err);
             showAlert("Failed to fetch job history. Your session may have expired", "danger", 5000);
             cb([]);
-        });
+        }
     }
 
     self.createOpsLogEntry = async function (payload, cb) {
-        const form = BeaconClient.toFormUrlEncoded(payload);
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.operationslog.create(apiHost, form, t, function (data) {
+        try {
+            const data = await BeaconClient.operationslog.create(payload, beaconCtx(t));
             cb(data);
-        }, function (err) {
+        } catch (err) {
             console.error("Failed to create ops log entry:", err);
             showAlert("Failed to create ops log entry.", "danger", 5000);
             cb(null);
-        });
+        }
+    }
+
+    self.resolveOpsLogEntry = async function (entryId, resolution) {
+        const t = await getToken();   // blocks here until token is ready
+        return await BeaconClient.operationslog.resolve(entryId, resolution, beaconCtx(t));
     }
 
     // Fetches a single Ops Log entry by id. Used by the collaborative map
@@ -2704,101 +2218,106 @@ function VM() {
     // marker's title/description/comments (see mapLayers/collabLayer.js).
     self.getOpsLogEntry = async function (entryId, cb) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.operationslog.get(entryId, apiHost, params.userId, t, function (data) {
-            cb(data);
-        });
+        try {
+            cb(await BeaconClient.operationslog.get(entryId, beaconCtx(t)));
+        } catch (err) {
+            console.error("Failed to fetch ops log entry:", err);
+            cb(null);
+        }
     }
 
     self.updateTeamStatus = function (tasking, status, payload, cb) {
-        BeaconClient.tasking.updateTeamStatus(apiHost, tasking.id(), status, payload, token, function (data) {
-            tasking.job.fetchTasking({ force: true });
-            if (tasking.team?.isFilteredIn?.()) {
-                tasking.team.fetchTasking({ force: true });
-                tasking.team.refreshData();
-            }
-            cb(data || []);
-        }, function (err) {
-            console.error("Failed to update team status:", err);
-            showAlert("Failed to update team status.", "danger", 5000);
-            cb([]);
-        });
+        BeaconClient.tasking.updateTeamStatus(tasking.id(), status, payload, beaconCtx(token))
+            .then((data) => {
+                tasking.job.fetchTasking({ force: true });
+                if (tasking.team?.isFilteredIn?.()) {
+                    tasking.team.fetchTasking({ force: true });
+                    tasking.team.refreshData();
+                }
+                cb(data || []);
+            })
+            .catch((err) => {
+                console.error("Failed to update team status:", err);
+                showAlert("Failed to update team status.", "danger", 5000);
+                cb([]);
+            });
     }
 
     self.callOffTeam = function (tasking, payload, cb) {
-        BeaconClient.tasking.callOffTeam(apiHost, tasking.id(), payload, token, function (data) {
-            tasking.job.fetchTasking({ force: true });
-            if (tasking.team?.isFilteredIn?.()) {
-                tasking.team.fetchTasking({ force: true });
-                tasking.team.refreshData();
-            }
-            cb(data || []);
-        }, function (err) {
-            console.error("Failed to call off team:", err);
-            showAlert("Failed to call off team.", "danger", 5000);
-            cb([]);
-        });
+        BeaconClient.tasking.callOffTeam(tasking.id(), payload, beaconCtx(token))
+            .then((data) => {
+                tasking.job.fetchTasking({ force: true });
+                if (tasking.team?.isFilteredIn?.()) {
+                    tasking.team.fetchTasking({ force: true });
+                    tasking.team.refreshData();
+                }
+                cb(data || []);
+            })
+            .catch((err) => {
+                console.error("Failed to call off team:", err);
+                showAlert("Failed to call off team.", "danger", 5000);
+                cb([]);
+            });
     }
 
     self.untaskTeam = function (tasking, payload, cb) {
-        const form = BeaconClient.toFormUrlEncoded(payload);
-        BeaconClient.tasking.untaskTeam(apiHost, tasking.id(), form, token, function (data) {
-            tasking.job.fetchTasking({ force: true });
-            if (tasking.team?.isFilteredIn?.()) {
-                tasking.team.fetchTasking({ force: true });
-                tasking.team.refreshData();
-            }
-            cb(data);
-        }, function (err) {
-            console.error("Failed to Untask Team:", err);
-            showAlert("Failed to Untask Team.", "danger", 5000);
-            cb(null);
-        });
+        BeaconClient.tasking.untaskTeam(tasking.id(), payload, beaconCtx(token))
+            .then((data) => {
+                tasking.job.fetchTasking({ force: true });
+                if (tasking.team?.isFilteredIn?.()) {
+                    tasking.team.fetchTasking({ force: true });
+                    tasking.team.refreshData();
+                }
+                cb(data);
+            })
+            .catch((err) => {
+                console.error("Failed to Untask Team:", err);
+                showAlert("Failed to Untask Team.", "danger", 5000);
+                cb(null);
+            });
     }
 
     self.fetchJobById = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.job.get(jobId, 1, apiHost, params.userId, t,
-            function (res) {
-                if (res) {
-                    self.getOrCreateJob(res);
-                    cb && cb(true);
-                } else {
-                    cb && cb(false);
-                }
-            },
-            function (_err) {
+        try {
+            const res = await BeaconClient.job.get(jobId, beaconCtx(t));
+            if (res) {
+                self.getOrCreateJob(res);
+                cb && cb(true);
+            } else {
                 cb && cb(false);
             }
-        )
+        } catch (_err) {
+            cb && cb(false);
+        }
     }
 
     self.fetchTeamById = async function (teamId, cb) {
         const t = await getToken();   // blocks here until token is ready
         console.log("Fetching team by ID:", teamId);
-        BeaconClient.team.get(teamId, 1, apiHost, params.userId, t,
-            function (res) {
-                if (res) {
-                    self.getOrCreateTeam(res);
-                    cb(true);
-                } else {
-                    cb(false);
-                }
-            },
-            function (_err) {
+        try {
+            const res = await BeaconClient.team.get(teamId, beaconCtx(t));
+            if (res) {
+                self.getOrCreateTeam(res);
+                cb(true);
+            } else {
                 cb(false);
             }
-        )
+        } catch (_err) {
+            cb(false);
+        }
     }
 
     self.fetchJobTasking = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.job.getTasking(jobId, apiHost, params.userId, t, (res) => {
-            (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload((t)));
+        try {
+            const res = await BeaconClient.job.getTasking(jobId, beaconCtx(t));
+            res.results.forEach(t => myViewModel.upsertTaskingFromPayload((t)));
             cb(true);
-        }, (err) => {
+        } catch (err) {
             console.error("Failed to fetch job tasking:", err);
             cb(false);
-        });
+        }
     }
 
     // ---- BATCH TASKING REFRESH ----
@@ -2823,15 +2342,14 @@ function VM() {
 
         try {
             const t = await getToken();
-            BeaconClient.job.getTasking(jobIds, apiHost, params.userId, t, (res) => {
-                (res?.Results || []).forEach(t => myViewModel.upsertTaskingFromPayload(t));
+            const res = await BeaconClient.job.getTasking(jobIds, beaconCtx(t));
+            res.results.forEach(t => myViewModel.upsertTaskingFromPayload(t));
 
-                // Mark all requested jobs as refreshed (even if they had no taskings)
-                const touchedTime = new Date();
-                staleJobs.forEach(j => {
-                    j.lastTaskingDataUpdate = touchedTime;
-                    j.taskingLoading(false);
-                });
+            // Mark all requested jobs as refreshed (even if they had no taskings)
+            const touchedTime = new Date();
+            staleJobs.forEach(j => {
+                j.lastTaskingDataUpdate = touchedTime;
+                j.taskingLoading(false);
             });
         } catch (err) {
             console.error('[batch-tasking] Failed:', err);
@@ -2862,38 +2380,35 @@ function VM() {
     self.setJobStatus = async function (jobId, statusName, text, cb) {
         console.log("Setting job status:", jobId, " to ", statusName, " with text:", text);
         const t = await getToken();
-        return new Promise((resolve, reject) => {
-            function handleResult(res) {
-                if (cb) cb(res);
-                if (res) resolve(res);
-                else reject(res);
-            }
-            switch (statusName) {
-                case 'Acknowledge':
-                    BeaconClient.job.acknowledge(jobId, apiHost, params.userId, t, handleResult);
-                    break;
-                case 'Complete':
-                    BeaconClient.job.complete(jobId, text, apiHost, params.userId, t, handleResult);
-                    break;
-                case 'Reject':
-                    BeaconClient.job.reject(jobId, text, apiHost, params.userId, t, handleResult);
-                    break;
-                case 'Cancel':
-                    BeaconClient.job.cancel(jobId, text, apiHost, params.userId, t, handleResult);
-                    break;
-                case 'Reopen':
-                    BeaconClient.job.reopen(jobId, apiHost, params.userId, t, handleResult);
-                    break;
-                default:
-                    reject(new Error('Unknown statusName'));
-            }
-        });
+        const ctx = beaconCtx(t);
+        switch (statusName) {
+            case 'Acknowledge':
+                await BeaconClient.job.acknowledge(jobId, ctx);
+                break;
+            case 'Complete':
+                await BeaconClient.job.complete(jobId, text, ctx);
+                break;
+            case 'Reject':
+                await BeaconClient.job.reject(jobId, text, ctx);
+                break;
+            case 'Cancel':
+                await BeaconClient.job.cancel(jobId, text, ctx);
+                break;
+            case 'Reopen':
+                await BeaconClient.job.reopen(jobId, ctx);
+                break;
+            default:
+                throw new Error('Unknown statusName');
+        }
+        if (cb) cb(true);
+        return true;
     }
 
     self.fetchAllTrackableAssets = async function () {
         if (!assetDataRefreshInterlock) {
             const t = await getToken();   // blocks here until token is ready
-            BeaconClient.asset.filter('', apiHost, params.userId, t, function (assets) {
+            try {
+                const assets = await BeaconClient.asset.filter('', beaconCtx(t));
                 assets.forEach(function (a) {
                     myViewModel.getOrCreateAsset(a);
                 })
@@ -2922,13 +2437,12 @@ function VM() {
                 self._fetchSharedDefaultAssets();
 
                 myViewModel._markInitialFetchDone();
-                assetDataRefreshInterlock = false;
-            }, function (err) {
+            } catch (err) {
                 console.error("Error fetching trackable assets:", err);
                 showAlert('Failed to fetch trackable assets. Your session may have expired', 'danger', 5000);
+            } finally {
                 assetDataRefreshInterlock = false;
             }
-            )
         }
     }
 
@@ -2970,11 +2484,23 @@ function VM() {
 
         const url = paramsArray.join('&');
 
-        BeaconClient.job.searchRaw(url, apiHost, params.userId, t, function (allJobs) {
-            console.log("Total jobs fetched:", allJobs.Results.length);
+        try {
+            const allJobs = await BeaconClient.job.searchRaw(url, beaconCtx(t, {
+                onPage: (page) => { // merge results as they come in per page
+                    page.results.forEach(function (t) {
+                        const existing = myViewModel.jobsById.get(t.Id);
+                        if (existing && existing.lastDataUpdate().getTime() > pollStartTime) {
+                            console.log("Skipping poll merge for job", t.Id, "-- fresher push data already applied");
+                            return;
+                        }
+                        myViewModel.getOrCreateJob(t);
+                    });
+                },
+            }));
+            console.log("Total jobs fetched:", allJobs.results.length);
 
             // Clean up jobs that no longer exist in the feed
-            const fetchedJobIds = new Set((allJobs.Results || []).map(j => j.Id));
+            const fetchedJobIds = new Set(allJobs.results.map(j => j.Id));
             const existingJobIds = new Set(self.jobs().map(j => j.id()));
 
             const jobsToQuery = [...existingJobIds].filter(id => !fetchedJobIds.has(id));
@@ -2993,31 +2519,23 @@ function VM() {
             myViewModel.jobsLoading(false);
             // Runs here (not alongside the fetchAllJobsData() call itself)
             // so it sees this cycle's actual results -- fetchAllJobsData is
-            // async and its merges land in this callback, after the network
-            // round-trip, not synchronously when it's called.
+            // async and its merges land after the network round-trip, not
+            // synchronously when it's called.
             self.fetchAllUnacceptedNotifications();
-        }, function (_val, _total) {
-            //console.log("Progress: " + _val + " / " + _total)
-        }, function (jobs) { //call back as they come in per page
-            jobs.Results.forEach(function (t) {
-                const existing = myViewModel.jobsById.get(t.Id);
-                if (existing && existing.lastDataUpdate().getTime() > pollStartTime) {
-                    console.log("Skipping poll merge for job", t.Id, "-- fresher push data already applied");
-                    return;
-                }
-                myViewModel.getOrCreateJob(t);
-            })
-        })
+        } catch (err) {
+            console.error("Failed to fetch jobs:", err);
+            myViewModel.jobsLoading(false);
+        }
     }
 
     self.fetchAllTeamData = async function () {
         const hqsFilter = this.config.teamFilters().map(f => ({ Id: f.id }));
 
-        const statusFilterToView = myViewModel.config.teamStatusFilter().map(desc => {
-            // Find the Enum.TeamStatusType entry whose Description matches desc
-            const entry = Object.values(Enum.TeamStatusType).find(e => e.Description === desc);
-            return entry ? entry.Id : undefined;
-        }).filter(id => id !== undefined);
+        const statusFilterToView = filterDescriptionsToEnumIds(myViewModel.config.teamStatusFilter(), Enum.TeamStatusType, 'Description');
+
+        // Team type allow-list (Field / Operations / Aviation) -> Beacon TypeIds.
+        // Empty array means "all types" -- teamSearch omits the param entirely.
+        const typeFilterToView = filterDescriptionsToEnumIds(myViewModel.config.teamTypeFilter(), Enum.TeamType, 'Name');
         var end = new Date();
         var start = new Date();
         start.setDate(end.getDate() - myViewModel.config.fetchPeriod());
@@ -3028,16 +2546,28 @@ function VM() {
         // these teams while this request is in flight.
         const pollStartTime = Date.now();
         const t = await getToken();   // blocks here until token is ready
-        BeaconClient.team.teamSearch(hqsFilter, apiHost, start, end, params.userId, t, function (teams) {
-            // teams.Results.forEach(function (t) {
-            //     myViewModel.getOrCreateTeam(t);
-            // })
-            console.log("Total teams fetched:", teams.Results.length);
+        try {
+            const teams = await BeaconClient.team.search(hqsFilter, start, end, beaconCtx(t, {
+                statusTypes: statusFilterToView,
+                typeIds: typeFilterToView,
+                onPage: (page) => {
+                    page.results.forEach(function (t) {
+                        const existing = myViewModel.teamsById.get(t.Id);
+                        if (existing && existing.lastDataUpdate.getTime() > pollStartTime) {
+                            console.log("Skipping poll merge for team", t.Id, "-- fresher push data already applied");
+                            return;
+                        }
+                        myViewModel.getOrCreateTeam(t);
+                    });
+                },
+            }));
+
+            console.log("Total teams fetched:", teams.results.length);
             myViewModel._markInitialFetchDone();
             myViewModel.teamsLoading(false);
 
             // Loop over all the teams in the results and compare them to self.teams
-            const fetchedTeamIds = new Set(teams.Results.map(t => t.Id));
+            const fetchedTeamIds = new Set(teams.results.map(t => t.Id));
             const existingTeamIds = new Set(self.teams().map(t => t.id()));
 
             // Find teams that exist in self.teams but not in the fetched results
@@ -3050,25 +2580,11 @@ function VM() {
                 if (!team.isFilteredIn()) return;
                 console.log("Refreshing team no longer in feed:", id, team.callsign());
                 team.refreshDataAndTasking(); // ensure latest data
-
             });
-
-
-        }, function () {
-            //console.log("Progress: " + val + " / " + total)
-        },
-            statusFilterToView, //status filter
-            function (teams) { //per page
-                teams.Results.forEach(function (t) {
-                    const existing = myViewModel.teamsById.get(t.Id);
-                    if (existing && existing.lastDataUpdate.getTime() > pollStartTime) {
-                        console.log("Skipping poll merge for team", t.Id, "-- fresher push data already applied");
-                        return;
-                    }
-                    myViewModel.getOrCreateTeam(t);
-                })
-            }
-        )
+        } catch (err) {
+            console.error("Failed to fetch teams:", err);
+            myViewModel.teamsLoading(false);
+        }
     }
 
     var assetDataRefreshInterlock = false
@@ -3121,9 +2637,8 @@ function VM() {
     });
 
     // Same for the signalrEnabled toggle -- effectiveRefreshIntervalMs()
-    // depends on it too, and this takes effect immediately even though the
-    // SignalR connection itself only starts/stops based on this value at
-    // page load.
+    // depends on it too. (The SignalR connection itself is started/stopped
+    // to match by a separate subscriber in the DOMContentLoaded handler.)
     self.config.signalrEnabled.subscribe(() => {
         console.log("signalrEnabled changed → restarting timers");
         startJobsTeamsTimer();
@@ -3136,20 +2651,12 @@ function VM() {
         const groupId = Enum.TagGroup[key]?.Id;
         if (groupId) {
             return getToken()
-                .then((t) => {
-                    return new Promise((resolve, reject) => {
-                        BeaconClient.tags.getGroup(groupId, apiHost, params.userId, t, (tags) => {
-                            tags = (tags || []).map(tagData => new Tag(tagData));
-                            self.allTags.push(...tags);
-                            resolve();
-                        }, (err) => {
-                            console.error(`Failed to fetch tags for group ${key}:`, err);
-                            reject(err);
-                        });
-                    });
+                .then((t) => BeaconClient.tags.getGroup(groupId, beaconCtx(t)))
+                .then((tags) => {
+                    self.allTags.push(...(tags || []).map(tagData => new Tag(tagData)));
                 })
                 .catch((err) => {
-                    console.error(`Error fetching token for group ${key}:`, err);
+                    console.error(`Failed to fetch tags for group ${key}:`, err);
                 });
         }
         return Promise.resolve();
@@ -3767,6 +3274,41 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // The team status dropdown swaps its short status list for a taller
+    // details/reason form once you pick an option. Popper places the menu
+    // when it opens and never learns that it later grew, so a menu that
+    // opened downward low on the screen used to spill off the bottom until
+    // the next open. Re-run Popper after the first paint (initial placement
+    // is occasionally computed before the menu is at full size) and again
+    // whenever the menu resizes, keeping it inside the viewport.
+    document.addEventListener('shown.bs.dropdown', (e) => {
+        const toggle = e.target;
+        if (!toggle.classList || !toggle.classList.contains('team-status-button')) return;
+
+        const scope = toggle.closest('.dropdown');
+        const menu = scope && scope.querySelector('.tasking-dropdown-menu');
+        const instance = bootstrap.Dropdown.getInstance(toggle);
+        if (!menu || !instance) return;
+
+        let pending = false;
+        const ro = new ResizeObserver(() => {
+            if (pending) return;
+            pending = true;
+            requestAnimationFrame(() => {
+                pending = false;
+                // closeStatusDropdown() just strips the .show class without a
+                // Bootstrap hide event, so bail out once the menu is detached.
+                if (!menu.isConnected || !toggle.isConnected) {
+                    ro.disconnect();
+                    return;
+                }
+                try { instance.update(); } catch (_) { /* popper already torn down */ }
+            });
+        });
+        ro.observe(menu);
+        toggle.addEventListener('hidden.bs.dropdown', () => ro.disconnect(), { once: true });
+    });
+
     //get tokens
     BeaconToken.fetchBeaconTokenAndKeepReturningValidTokens(
         apiHost,
@@ -3812,10 +3354,17 @@ document.addEventListener('DOMContentLoaded', function () {
         // than fail silently.
         myViewModel.signalrStatus = ko.observable(getConnectionStatus());
         connectionStatus.subscribe((status) => myViewModel.signalrStatus(status));
-        // Deliberately disabled isn't "disconnected" -- only show the banner
-        // when the feature is meant to be running but isn't.
+        // True once we've actually kicked off a connection attempt (i.e. the
+        // config modal has been closed at least once with live updates on).
+        // Before that the connection isn't *meant* to be up yet, so a
+        // 'disconnected' status is expected, not a problem.
+        myViewModel.signalrConnectionAttempted = ko.observable(false);
+        // Deliberately disabled -- or not started yet -- isn't "disconnected":
+        // only show the banner when the feature is meant to be running but isn't.
         myViewModel.signalrDisconnected = ko.pureComputed(() =>
-            myViewModel.config.signalrEnabled() && myViewModel.signalrStatus() !== 'connected'
+            myViewModel.config.signalrEnabled()
+            && myViewModel.signalrConnectionAttempted()
+            && myViewModel.signalrStatus() !== 'connected'
         );
         myViewModel.signalrStatusText = ko.pureComputed(() => {
             switch (myViewModel.signalrStatus()) {
@@ -3824,6 +3373,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 case 'disconnected': return 'Live updates disconnected — data may be out of date';
                 default: return '';
             }
+        });
+
+        // Flash the existing per-pane reload buttons (fetchAllTeamData/
+        // fetchAllJobsData's fa-sync icon, already wired to flashOnChange
+        // elsewhere in the app) on a relevant SignalR push, rather than
+        // adding a new indicator -- a team-related push flashes the Teams
+        // toolbar's reload button, a job-related one flashes the Jobs
+        // toolbar's, mirroring exactly what a manual click there would
+        // refresh. taskingUpdated/taskingCreated touch both since a tasking
+        // links a job and a team.
+        const TEAM_PUSH_EVENTS = new Set(['teamCreated', 'teamUpdated', 'taskingUpdated', 'taskingCreated']);
+        const JOB_PUSH_EVENTS = new Set([
+            'jobCreated', 'jobUpdated', 'jobRejected', 'opsLogUpdated', 'taskingUpdated', 'taskingCreated',
+            'NotificationAcknowledged', 'IUMReceived', 'UrgentIUMReceived', 'rsuReceived', 'iuaReceived', 'isuReceived',
+        ]);
+        myViewModel.teamsLivePulse = ko.observable(0);
+        myViewModel.jobsLivePulse = ko.observable(0);
+        messageReceived.subscribe((eventName) => {
+            if (TEAM_PUSH_EVENTS.has(eventName)) myViewModel.teamsLivePulse(myViewModel.teamsLivePulse() + 1);
+            if (JOB_PUSH_EVENTS.has(eventName)) myViewModel.jobsLivePulse(myViewModel.jobsLivePulse() + 1);
         });
 
         // Wire pushed SignalR events into the live view model. Polling stays
@@ -3836,38 +3405,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // server-side -- but never evict a job we already had tracked, since
         // an in-scope job simply changing to an out-of-filter state should
         // stay tracked and just flip isFilteredIn (handled reactively).
-        // jobCreated/jobUpdated/jobRejected's actual payload is a Notification
-        // record -- Id is the notification's own id, the job's real id is
-        // JobId -- not a job view-model despite the "vm" parameter name in
-        // Beacon's own source. Remap to the fields Job.js understands before
-        // merging; passing the raw notification straight into getOrCreateJob
-        // would key it on the notification's id instead of the job's,
-        // silently creating a phantom job entry instead of updating the real
-        // one (confirmed live -- this is why status updates weren't landing).
-        const mapJobNotificationToJobJson = (n) => ({
-            Id: n.JobId,
-            Identifier: n.JobIdentifier,
-            ICEMSIncidentIdentifier: n.ICEMSIncidentIdentifier,
-            JobPriorityTypeId: n.JobPriorityTypeId,
-            JobStatusTypeId: n.JobStatusTypeId,
-            EntityAssignedTo: n.Entity,
-        });
-
-        // JobReceived isn't in any of these notifications at all -- without
-        // it, jobMatchesConfigFilters' date check always fails (new
-        // Date(null) is epoch, always outside the configured range), so a
-        // brand-new admission would get silently evicted instead of
-        // admitted. The notification's own CreatedOn is a reasonable proxy.
-        // Only applied when not already tracked -- otherwise this would
-        // clobber an existing job's real jobReceived with the
-        // notification's timestamp. Applies to jobUpdated/jobRejected too,
-        // not just jobCreated: a job evicted while "New" (outside the
-        // status filter) hits this same first-admission path again the
-        // moment a later jobUpdated brings its status back into scope.
-        const withJobReceivedFallback = (jobJson, notification, alreadyTracked) => {
-            if (!alreadyTracked) jobJson.JobReceived = notification.CreatedOn;
-            return jobJson;
-        };
+        // See utils/pushNotificationMapping.js for mapJobNotificationToJobJson
+        // and withJobReceivedFallback.
 
         const admitJobIfInFilter = (notification) => {
             const jobJson = mapJobNotificationToJobJson(notification);
@@ -3995,6 +3534,17 @@ document.addEventListener('DOMContentLoaded', function () {
             if (openJob && modalVisible && openJob.id() === message.JobId) {
                 timelineVm.refreshCurrentJob({ silent: true });
             }
+
+            // An ops log entry being added, edited or resolved is the only
+            // thing that changes a job's unresolved action-required tags, and
+            // nothing in the jobUpdated payload reflects it -- so this push is
+            // the sole live signal for the action-required badges/alerts on
+            // the job card, marker and popup. Re-pull the unresolved actions
+            // log for the affected job whenever it's tracked locally,
+            // regardless of expanded state (the fetch is cheap and the badges
+            // show while collapsed).
+            const job = myViewModel.jobsById.get(message.JobId);
+            if (job) myViewModel.fetchUnresolvedActionsLog(job);
         });
 
         // ICEMS unaccepted-notifications refresh: refreshUnacceptedNotifications
@@ -4022,17 +3572,19 @@ document.addEventListener('DOMContentLoaded', function () {
         getSubject('iuaReceived').subscribe(refreshIcemsIncidentFromPush);
         getSubject('isuReceived').subscribe(refreshIcemsIncidentFromPush);
 
-        // Start the connection now that every subject subscription above is
-        // registered (so nothing pushed right at connect time is silently
-        // dropped -- Subject has no replay) and myViewModel/config
-        // definitely exist (so signalrEnabled() reads the real saved value
-        // instead of racing construction and guessing "enabled" by
-        // default). getToken() resolves once, reliably, whenever the first
-        // token lands -- no separate "started" guard or hooking into the
-        // token-fetch callback needed.
-        (async () => {
+        // The SignalR connection is gated on the config modal: it starts only
+        // whenever the config modal closes -- never before. The modal opens
+        // on load (and on every later Config open) with the filters and the
+        // Live Updates toggle still editable; reconciling only on close means
+        // we negotiate against committed settings, and flipping the toggle
+        // back and forth mid-edit costs nothing until you close the window.
+        // By the time this runs, every subject subscription above is
+        // registered (so nothing pushed at connect time is silently dropped
+        // -- Subject has no replay) and myViewModel/config exist.
+        const reconcileSignalRToConfig = async () => {
             if (!myViewModel.config.signalrEnabled()) {
-                console.log('[SignalR] disabled via config -- not connecting');
+                myViewModel.signalrConnectionAttempted(false);
+                stopBeaconSignalRConnection();
                 return;
             }
             const negotiateUrl = params.signalr;
@@ -4041,13 +3593,28 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
             await getToken();
+            if (!myViewModel.config.signalrEnabled()) return; // toggled off meanwhile
             // Closure over the module-level `token` var (kept current by
             // setToken() on every renewal), so each reconnect/negotiate
             // re-authenticates with whatever token is live at that moment.
+            // startBeaconSignalRConnection no-ops if already connected.
+            myViewModel.signalrConnectionAttempted(true);
             window.__beaconSignalRConnection = startBeaconSignalRConnection(negotiateUrl, () => token);
-        })();
+        };
 
         ko.applyBindings(myViewModel);
+
+        // Refresh the sector list whenever a per-incident "Assigned Sector"
+        // dropdown opens. Delegated on document so it covers every job card
+        // without a per-element binding. Bootstrap 5 fires show.bs.dropdown
+        // on the toggle *button*, which bubbles to document — walk up to the
+        // enclosing .dropdown and check it's a sector one.
+        document.addEventListener('show.bs.dropdown', function (e) {
+            const scope = e.target && e.target.closest && e.target.closest('.dropdown');
+            if (scope && scope.querySelector('.sectorDropdown')) {
+                myViewModel.refreshSectorsForDropdown();
+            }
+        });
 
         // Alerts overlay
         installAlerts(map, myViewModel);
@@ -4055,6 +3622,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         //show config modal on load
         const configModalEl = document.getElementById('configModal');
+        // Start/stop the SignalR connection to match the Live Updates toggle
+        // every time the config modal closes -- see reconcileSignalRToConfig
+        // above. Fires on the initial on-load modal too, so nothing connects
+        // until the user dismisses it.
+        configModalEl.addEventListener('hidden.bs.modal', reconcileSignalRToConfig);
         bootstrap.Modal.getOrCreateInstance(configModalEl).show();
 
         // reveal the page now that bindings are applied and the modal is open,
@@ -4068,15 +3640,20 @@ document.addEventListener('DOMContentLoaded', function () {
             allowInInputs: true // text-heavy modal
         });
 
+        // Compact NSW map in the config modal: shades every HQ that's in the
+        // "Only Show Incidents From" filter.
+        initHqCoverageMap({
+            config: myViewModel.config,
+            getToken,
+            apiHost,
+            userId: params.userId,
+        });
+
         document.addEventListener("keydown", (e) => {
-            // Cmd+K / Ctrl+K to open Spotlight Search
-            const isK = (e.key || "").toLowerCase() === "k";
-            if (!isK) return;
-
-            const isCmd = e.metaKey === true;
-            const isCtrl = e.ctrlKey === true;
-
-            if (!(isCmd || isCtrl)) return;
+            // Opens Spotlight Search on the configured hotkey (Cmd/Ctrl+K
+            // by default, or a custom combo from the Appearance config tab).
+            if (myViewModel.config.spotlightHotkeyCapturing()) return;
+            if (!matchesHotkeyEvent(myViewModel.config.spotlightHotkey(), e)) return;
 
             // don't stack if already open
             const open = document.getElementById("SpotlightSearchModal")?.classList.contains("show");
@@ -4155,17 +3732,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
+// See utils/urlParams.js for parseSearchParams.
 function getSearchParameters() {
     var prmstr = window.location.search.substr(1);
-    return prmstr != null && prmstr != "" ? transformToAssocArray(prmstr) : {};
-}
-
-function transformToAssocArray(prmstr) {
-    var params = {};
-    var prmarr = prmstr.split("&");
-    for (var i = 0; i < prmarr.length; i++) {
-        var tmparr = prmarr[i].split("=");
-        params[tmparr[0]] = decodeURIComponent(tmparr[1]);
-    }
-    return params;
+    return prmstr != null && prmstr != "" ? parseSearchParams(prmstr) : {};
 }

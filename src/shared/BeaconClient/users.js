@@ -1,4 +1,4 @@
-import $ from 'jquery';
+import { request, toCollection } from './core/request.js';
 
 /**
  * Builds the FirstName/LastName/Username/Email query params for a single
@@ -27,27 +27,19 @@ function buildSearchParams(query) {
     '&Email=' + encodeURIComponent(trimmed);
 }
 
-export function search(query, host, userId = 'notPassed', token, callback, errorCallback) {
-  $.ajax({
-    type: 'GET',
-    url: host + '/Api/v1/Users/Search?' + buildSearchParams(query) +
-      '&External=false&IsDeleted=false&PageIndex=1&PageSize=10' +
-      '&LighthouseFunction=SearchUsers&userId=' + userId,
-    beforeSend: function (n) {
-      n.setRequestHeader('Authorization', 'Bearer ' + token);
-    },
-    cache: false,
-    dataType: 'json',
-    complete: function (response, textStatus) {
-      if (textStatus == 'success') {
-        if (typeof callback === 'function') {
-          callback(response.responseJSON);
-        }
-      } else {
-        if (typeof errorCallback === 'function') {
-          errorCallback(response);
-        }
-      }
-    }
-  });
+/**
+ * @param {string} query
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export async function search(query, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  return toCollection(
+    await request(
+      host + '/Api/v1/Users/Search?' + buildSearchParams(query) +
+        '&External=false&IsDeleted=false&PageIndex=1&PageSize=10' +
+        '&LighthouseFunction=SearchUsers&userId=' + userId,
+      { token, signal },
+    ),
+  );
 }

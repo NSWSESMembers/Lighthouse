@@ -94,11 +94,14 @@ function HackTheMatrix(progressBar) {
   var start = new Date(decodeURIComponent(params.start));
   var end = new Date(decodeURIComponent(params.end));
 
-  BeaconClient.nitc.search(params, params.userId, token, start, end, function(nitcs) {
+  BeaconClient.nitc.search(params, start, end, {
+    host: params.host, userId: params.userId, token,
+    onProgress: function(val, total) { progressBar.setValue(val / total); },
+  }).then(function(nitcs) {
     let exports;
 
     if (document.getElementById("Activity").checked) {  // Activity list export
-        exports = nitcs.Results.map(function(d){
+        exports = nitcs.results.map(function(d){
             var rawSdate = new Date(d.StartDate);
             var rawEdate = new Date(d.EndDate);
             d.StartDateFixed = new Date(rawSdate.getTime() + ( rawSdate.getTimezoneOffset() * 60000 ));
@@ -128,7 +131,7 @@ function HackTheMatrix(progressBar) {
     } else {    // Member list export
         exports = [];
         var listOfActivities = [];
-        nitcs.Results.map(function(d) {
+        nitcs.results.map(function(d) {
             var activities = d.Tags.map(function(t){return t.Name});
             d.Participants.map(function(p) {
                 var i = 0;
@@ -164,8 +167,10 @@ function HackTheMatrix(progressBar) {
 
     progressBar.close();
 
-  }, function(val,total){
-    progressBar.setValue(val/total);
+  }).catch(function(err) {
+    console.error('NITC export fetch failed', err);
+    alert('Failed to fetch non-incident tasks for export. Your session may have expired.');
+    progressBar.close();
   });
 }
 

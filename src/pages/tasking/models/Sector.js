@@ -56,6 +56,16 @@ export function Sector(data) {
                 RegistrationNumber: ko.observable(data.CurrentStatus?.CreatedBy?.RegistrationNumber || null),
             },
         };
+
+        self.SectorType = {
+            Id: ko.observable(data.SectorType?.Id || null),
+            Name: ko.observable(data.SectorType?.Name || null),
+            Description: ko.observable(data.SectorType?.Description || null),
+        };
+
+        self.Latitude(data.Latitude || null);
+        self.Longitude(data.Longitude || null);
+        self.Boundary(data.Boundary || []);
     }
     self.SectorType = {
         Id: ko.observable(data.SectorType?.Id || null),
@@ -66,4 +76,4 @@ export function Sector(data) {
     self.Latitude(data.Latitude || null);
     self.Longitude(data.Longitude || null);
     self.Boundary(data.Boundary || []);
-}   
+}

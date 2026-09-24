@@ -8,6 +8,14 @@ import { Enum } from "../utils/enum.js";
 
 
 
+// Shared across every Tasking instance -- a single 5-minute interval for the
+// life of the module, rather than one per Tasking. Taskings are never pruned
+// from the registry (main.js taskingsById/taskings only grow), so a
+// per-instance timer would leak one live setInterval per tasking ever seen
+// for the whole session.
+const _tick = ko.observable(Date.now());
+setInterval(() => _tick(Date.now()), 300000);
+
 export function Tasking(data = {}) {
     const self = this;
 
@@ -47,11 +55,6 @@ export function Tasking(data = {}) {
 
     self.statusDropdownPage = ko.observable("details");
     self.newStatus = ko.observable(null);
-
-    //hacky way to make the time since tick up every 30 seconds
-    const _tick = ko.observable(Date.now());
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const _timer = setInterval(() => _tick(Date.now()), 300000);
 
     // status helpers
     self.statusSince = ko.pureComputed(() => (self.currentStatusTime() ? new Date(self.currentStatusTime()) : null));
@@ -130,7 +133,12 @@ export function Tasking(data = {}) {
     };
 
     self.setJob = function (newJob) {
-        const prev = self.job;
+        // self.job starts life as the ko.observable above, but every real
+        // caller (main.js's _linkTaskingAndJob) replaces it with a plain Job
+        // object reference on first link ("set shared ref") -- read/write
+        // through that same plain-property convention rather than treating
+        // self.job as an observable, or the previous job's value is lost.
+        const prev = typeof self.job === 'function' ? self.job() : self.job;
         if (prev === newJob) return;
 
         // detach from previous job list
@@ -139,7 +147,7 @@ export function Tasking(data = {}) {
         }
 
         // set new ref
-        self.job(newJob || null);
+        self.job = newJob || null;
 
         // attach to new job list without recursion
         if (newJob && typeof newJob.taskings === 'function') {

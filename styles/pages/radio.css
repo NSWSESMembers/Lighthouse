@@ -1,0 +1,1704 @@
+@import url("include/common.css");
+
+:root {
+  --radio-bg: #ffffff;
+  --radio-fg: #1a1a1a;
+  --radio-border: #d9dde3;
+  --radio-panel-bg: #f7f8fa;
+  --radio-accent: #0d6efd;
+  --radio-accent-fg: #ffffff;
+  --radio-danger: #c0392b;
+  --radio-danger-bg: #fdeceb;
+  --radio-danger-border: #c0392b;
+  --radio-warn: #b8860b;
+  --radio-warn-bg: #fff8e6;
+  --radio-warn-border: #f0c96b;
+  --radio-muted: #6b6b6b;
+  --radio-important-bg: #fdeceb;
+  --radio-important-border: #e0554a;
+  --radio-outstanding-bg: #eaf2ff;
+  --radio-outstanding-border: #4a86e8;
+  --radio-outstanding-fg: #1a56b0;
+  --radio-resolved-bg: #eaf7ec;
+  --radio-resolved-border: #4caf50;
+  --radio-resolved-fg: #1e7d29;
+  /* Same environment colour-coding as tasking.css's `body .modal-header`
+     rules -- orange (prod, the default) / green (train) / blue (dev), set
+     via body.env-trainbeacon/env-devbeacon (see radio/main.js). */
+  --radio-title-bg: #f7931d;
+  --radio-title-fg: #ffffff;
+  --radio-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --radio-radius: 8px;
+}
+
+body.env-trainbeacon {
+  --radio-title-bg: #219f56;
+}
+
+body.env-devbeacon {
+  --radio-title-bg: #2d9ee0;
+}
+
+body.dark-mode {
+  --radio-bg: #1a1a1a;
+  --radio-fg: #e0e0e0;
+  --radio-border: #3a3a3a;
+  --radio-panel-bg: #242424;
+  --radio-accent: #5da3ff;
+  --radio-accent-fg: #0b1220;
+  --radio-danger: #ff6b6b;
+  --radio-danger-bg: #3a1f1d;
+  --radio-danger-border: #ff6b6b;
+  --radio-warn: #e0b34d;
+  --radio-warn-bg: #3a2f12;
+  --radio-warn-border: #6b551f;
+  --radio-muted: #a0a0a0;
+  --radio-important-bg: #3a1f1d;
+  --radio-important-border: #e0554a;
+  --radio-outstanding-bg: #16233d;
+  --radio-outstanding-border: #4a86e8;
+  --radio-outstanding-fg: #9dc0ff;
+  --radio-resolved-bg: #17301b;
+  --radio-resolved-border: #4caf50;
+  --radio-resolved-fg: #8fd99a;
+  --radio-title-fg: #ffffff;
+  --radio-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* common.css (imported above) sets a global `label { margin-left: 20px; }`
+   for other, older pages -- overridden here rather than there, since this
+   page's labels sit at the start of their own fields/rows, not inline
+   after other content like those pages'. */
+.radio-app label,
+.modal label {
+  margin-left: 0;
+}
+
+body {
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+body.watermark::before {
+  content: "DEVELOPMENT";
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  color: rgba(255, 0, 0, 0.4);
+  font-weight: bold;
+  font-size: 12px;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Three columns across the full window: 20% new log | 60% log | 20% sidebar
+   (outstanding actions, callsign checks, notifications). The header spans all three. */
+.radio-app {
+  display: grid;
+  grid-template-columns: 20fr 60fr 20fr;
+  gap: 16px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Grid rather than the titlebar/status-bar simply stacking -- lets the
+   clock (a separate grid item, see radiocon.html) span both rows on the
+   right, so it scales to the header's full height instead of just sitting
+   inside the titlebar row. */
+.radio-header {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 20px;
+  /* Lets the clock's font-size below scale off this element's own rendered
+     width (cqi) rather than the raw viewport -- more accurate than vw units
+     since the header's actual available width already accounts for the
+     380px left column and the page's max-width/padding. */
+  container-type: inline-size;
+}
+
+.radio-header-titlebar {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.radio-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.radio-status-bar {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.radio-live-clock {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  font-family: 'SFMono-Regular', Menlo, Consolas, monospace;
+  /* Scales with the header's own width (see container-type above) so it
+     shrinks on a narrower window instead of overflowing or forcing the
+     title to wrap further -- 4.5rem at the ~1440px design width, down to
+     1.5rem on a narrow one. */
+  font-size: clamp(1.5rem, 5.2cqi, 4.5rem);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  color: var(--radio-fg);
+}
+
+.radio-abbr-time {
+  text-decoration: underline dotted;
+  text-decoration-color: var(--radio-muted);
+  cursor: help;
+}
+
+.radio-header h1 i {
+  color: var(--radio-accent);
+}
+
+.radio-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  color: var(--radio-muted);
+}
+
+.radio-connection {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.radio-connection-connected {
+  color: #2e7d32;
+}
+
+.radio-connection-bad {
+  color: var(--radio-danger);
+}
+
+.radio-stale-badge {
+  color: var(--radio-danger);
+  font-weight: bold;
+}
+
+.radio-icon-btn {
+  background: var(--radio-panel-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.radio-icon-btn:hover {
+  border-color: var(--radio-accent);
+}
+
+/* Icon-only variant (Settings, Pause/Resume, the search toggle) -- a fixed
+   square instead of icon-btn's icon+label padding, to save header space. */
+.radio-icon-btn-square {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.radio-icon-btn-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 8px;
+  background: var(--radio-accent);
+  color: var(--radio-accent-fg);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* Collapses to just the search icon; clicking it (see toggleTextFilter)
+   expands radio-header-search-box in place -- no longer pinned to the far
+   right of the status bar (that used margin-left: auto), so it now sits
+   with the other header controls instead of leaving a large empty gap. */
+.radio-header-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.radio-header-search-box {
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-width 0.15s ease, opacity 0.15s ease;
+}
+
+.radio-header-search-box.radio-header-search-open {
+  max-width: 320px;
+  opacity: 1;
+  margin-left: 8px;
+}
+
+.radio-header-search-box .form-control {
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+  border-radius: 6px;
+  width: 260px;
+  padding: 6px 10px;
+}
+
+/* out of the flow (under the input) so it never changes the height of the header row */
+.radio-text-filter-note {
+  position: absolute;
+  top: 100%;
+  left: 40px;
+  margin-top: 2px;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--radio-muted);
+}
+
+/* ---- left column: entry box + Beacon notifications ---- */
+/* feature slots (see src/pages/radio/features/index.js) */
+/* in-page alert banners: bottom-right, about a fifth of the window wide */
+.radio-slot-page-top {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  z-index: 1080;
+  width: clamp(260px, 20vw, 420px);
+  max-width: calc(100vw - 24px);
+  pointer-events: none; /* only the alerts inside take clicks */
+}
+
+.radio-slot-page-top > * {
+  pointer-events: auto;
+}
+
+/* Beacon connection lost: slim bar + full-page warning */
+.radio-offline-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -16px -16px 12px; /* flush with the page edges (body has 16px padding) */
+  padding: 8px 16px;
+  color: #fff;
+  background: #ee0039;
+  font-size: 0.9rem;
+}
+
+.radio-offline-bar span {
+  flex: 1;
+}
+
+.radio-offline-bar-btn {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.radio-offline-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000; /* above alerts (1080) and dialogs (1055) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(20, 0, 5, 0.78);
+}
+
+.radio-offline-dialog {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 34px 40px 30px;
+  color: var(--radio-fg);
+  background: var(--radio-bg);
+  border: 4px solid #ee0039;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+
+.radio-offline-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  margin-bottom: 10px;
+  font-size: 2.6rem;
+  color: #fff;
+  background: #ee0039;
+  border-radius: 50%;
+}
+
+.radio-offline-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ee0039;
+}
+
+.radio-offline-lead {
+  font-size: 1.15rem;
+  margin-bottom: 12px;
+}
+
+.radio-offline-dialog ul {
+  display: inline-block;
+  max-width: 100%;
+  margin: 0 0 14px;
+  padding-left: 1.2rem;
+  text-align: left;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.radio-offline-dialog li + li {
+  margin-top: 6px;
+}
+
+.radio-offline-detail {
+  color: var(--radio-muted);
+  font-size: 0.85rem;
+}
+
+.radio-offline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.radio-outstanding-paused {
+  color: #fff;
+  background: #ee0039;
+  border-color: #b00028;
+}
+
+/* alert banners (radiocon.html, page-top) */
+.radio-alert-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.radio-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  color: #fff;
+  border-radius: var(--radio-radius);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  animation: radio-alert-in 0.25s ease-out;
+}
+
+.radio-alert-overdue {
+  background: #ee0039;
+  border: 1px solid #b00028;
+}
+
+.radio-alert-due-soon {
+  background: #e0a800;
+  color: #1a1a1a;
+  border: 1px solid #b38600;
+}
+
+.radio-alert > i {
+  margin-top: 3px;
+  font-size: 1.05rem;
+}
+
+.radio-alert-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.radio-alert-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.radio-alert-text {
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.radio-alert-dismiss {
+  width: 28px;
+  height: 28px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.25);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.radio-alert-dismiss:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.radio-alert-more,
+.radio-alert-clear {
+  align-self: flex-end;
+  font-size: 0.78rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 0;
+  border-radius: 10px;
+  padding: 2px 10px;
+}
+
+.radio-alert-clear {
+  cursor: pointer;
+}
+
+@keyframes radio-alert-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radio-alert {
+    animation: none;
+  }
+}
+
+.radio-slot-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.radio-slot-column:empty {
+  display: none;
+}
+
+/* Experimental features: one accordion section per feature (like LAD's Configuration accordions) */
+.radio-accordion-group {
+  border: 1px solid var(--radio-border);
+  border-radius: var(--radio-radius);
+  overflow: hidden;
+}
+
+.radio-accordion {
+  border-bottom: 1px solid var(--radio-border);
+}
+
+.radio-accordion:last-child {
+  border-bottom: 0;
+}
+
+.radio-accordion > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--radio-fg);
+  background: var(--radio-bg);
+  user-select: none;
+}
+
+.radio-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.radio-accordion > summary::after {
+  content: "";
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-left: 0.25rem;
+  border-right: 2px solid var(--radio-muted);
+  border-bottom: 2px solid var(--radio-muted);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform 0.15s ease;
+}
+
+.radio-accordion[open] > summary {
+  background: var(--radio-outstanding-bg);
+  color: var(--radio-outstanding-fg);
+  font-weight: 600;
+}
+
+.radio-accordion[open] > summary::after {
+  transform: rotate(-135deg) translateY(-2px);
+}
+
+.radio-accordion > summary:hover {
+  background: var(--radio-panel-bg);
+}
+
+.radio-accordion[open] > summary:hover {
+  background: var(--radio-outstanding-bg);
+}
+
+.radio-accordion-ico {
+  width: 1.25rem;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.radio-accordion-title {
+  flex: 1;
+}
+
+.radio-accordion-state {
+  border-radius: 10px;
+  padding: 0 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--radio-resolved-fg);
+  background: var(--radio-resolved-bg);
+  border: 1px solid var(--radio-resolved-border);
+}
+
+.radio-accordion-state-off {
+  color: var(--radio-muted);
+  background: var(--radio-panel-bg);
+  border-color: var(--radio-border);
+}
+
+.radio-accordion-body {
+  padding: 0.85rem 1rem 0.5rem 2.75rem;
+  border-top: 1px solid var(--radio-border);
+}
+
+.radio-accordion-switch {
+  font-weight: 600;
+}
+
+/* the feature's own settings block repeats its name -- the accordion header already says it */
+.radio-accordion-body .radio-settings-section > h6 {
+  display: none;
+}
+
+.radio-accordion-body .radio-settings-section {
+  margin-bottom: 0.75rem;
+}
+
+
+
+.radio-left-column {
+  align-self: start;
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.radio-entry-area {
+  background: var(--radio-panel-bg);
+  border: 1px solid var(--radio-border);
+  border-radius: var(--radio-radius);
+  box-shadow: var(--radio-shadow);
+}
+
+/* `overflow: hidden` used to sit on .radio-entry-area itself, purely so
+   the title bar's flush background didn't poke square corners past the
+   container's own rounded ones -- but that also clipped the Talkgroup/
+   Incident suggestion dropdowns (position: absolute, RadioConsoleViewModel.js)
+   whenever they needed to extend past the container's bottom edge. Giving
+   the title bar its own matching top-corner radius gets the same look
+   without clipping anything below it. */
+.radio-entry-title {
+  background: var(--radio-title-bg);
+  color: var(--radio-title-fg);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  padding: 10px 18px;
+  border-radius: var(--radio-radius) var(--radio-radius) 0 0;
+}
+
+.radio-entry-body {
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  /* it is a <fieldset> (so it can be disabled in one go): drop the browser's fieldset chrome */
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.radio-entry-body:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* the form is switched off while the connection to Beacon is down: the header goes grey */
+.radio-entry-title-disabled {
+  background: #8a8f98;
+  color: #f1f2f4;
+}
+
+/* Callsign, Message and Action Required come first (order 0); Submit and everything after
+   it follow (order 1). In the page Action Required sits after Submit, so Tab still goes
+   Callsign -> Message -> Submit, while on screen it appears just below Message. */
+.radio-entry-body > .radio-entry-actions,
+.radio-entry-body > .radio-entry-feedback,
+.radio-entry-body > .radio-entry-context,
+.radio-entry-body > .radio-entry-optional {
+  order: 1;
+}
+
+.radio-entry-action-required {
+  margin-bottom: 10px;
+}
+
+.radio-entry-field {
+  margin-bottom: 14px;
+  position: relative;
+}
+
+.radio-entry-optional {
+  padding-top: 10px;
+  border-top: 1px dashed var(--radio-border);
+}
+
+.radio-entry-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.radio-entry-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.radio-entry-field-header label {
+  margin-bottom: 0;
+}
+
+.radio-entry-field-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.radio-field-clear {
+  font-size: 0.85rem;
+}
+
+/* "Pin" toggle next to Incident/Talkgroup -- keeps that field's value across
+   a successful submit instead of the usual clear-on-submit, for a run of
+   entries all about the same incident/talkgroup. Reuses the fa-thumbtack
+   "pin" language already used for Action Required elsewhere on this page
+   (the log table's pin icon, the Resolve button). */
+.radio-pin-toggle {
+  border: 1px solid var(--radio-border);
+  background: var(--radio-bg);
+  color: var(--radio-muted);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.radio-pin-toggle:hover {
+  color: var(--radio-fg);
+}
+
+.radio-pin-toggle.radio-pin-active {
+  background: var(--radio-accent);
+  border-color: var(--radio-accent);
+  color: var(--radio-accent-fg);
+}
+
+.radio-entry-field .form-control,
+.radio-filter-field .form-control {
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+  border-radius: 6px;
+  width: 100%;
+  padding: 6px 10px;
+}
+
+.radio-entry-field .form-control:focus,
+.radio-filter-field .form-control:focus,
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--radio-accent);
+  outline-offset: 1px;
+}
+
+.radio-suggestions {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  background: var(--radio-bg);
+  border: 1px solid var(--radio-border);
+  border-radius: 6px;
+  box-shadow: var(--radio-shadow);
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.radio-suggestions li {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.radio-suggestions li small {
+  color: var(--radio-muted);
+}
+
+.radio-suggestions li:hover,
+.radio-suggestion-active {
+  background: var(--radio-accent);
+  color: var(--radio-accent-fg);
+}
+
+.radio-suggestions li:hover small,
+.radio-suggestion-active small {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.radio-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.radio-entry-actions .btn-primary {
+  background: var(--radio-accent);
+  border-color: var(--radio-accent);
+  color: var(--radio-accent-fg);
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-weight: 600;
+}
+
+.radio-entry-actions .btn-primary:disabled {
+  opacity: 0.5;
+}
+
+.radio-shortcut-hint {
+  font-size: 0.8rem;
+  color: var(--radio-muted);
+}
+
+.radio-submit-error {
+  color: var(--radio-danger);
+  font-weight: bold;
+}
+
+.radio-retry-btn {
+  margin-left: 8px;
+  font-weight: normal;
+}
+
+.radio-submit-notice {
+  color: var(--radio-warn);
+}
+
+.radio-entry-context {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--radio-muted);
+}
+
+.radio-entry-context-change {
+  margin-left: 6px;
+  font-size: 0.8rem;
+}
+
+.radio-entry-job-chosen {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.radio-talkgroup-resolved {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--radio-resolved-fg);
+}
+
+.radio-entry-flags {
+  display: flex;
+  gap: 20px;
+}
+
+/* Independent pill chips (not a single joined segment like Settings'
+   .radio-cfg-seg) -- matches LAD/tasking.css's own .cfg-chip (its
+   "History -- how far back to load" row): fully-rounded, individually
+   bordered, wraps freely at any width. This control also sits in the
+   narrow entry-form sidebar and the resolve modal, where a joined segment
+   wraps onto a second row with mismatched column widths and a
+   half-rounded border -- independent pills don't have that problem. */
+.radio-reminder-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.radio-preset-btn {
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.radio-preset-btn:hover {
+  background: var(--radio-panel-bg);
+}
+
+.radio-preset-selected {
+  background: var(--radio-accent);
+  border-color: var(--radio-accent);
+  color: var(--radio-accent-fg);
+  font-weight: 600;
+}
+
+.radio-reminder-custom {
+  margin-bottom: 6px;
+  max-width: 260px;
+}
+
+.radio-reminder-scheduled {
+  font-size: 0.8rem;
+  color: var(--radio-muted);
+}
+
+/* ---- right column: outstanding actions + log table ---- */
+.radio-middle-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0; /* let the log table shrink/scroll rather than stretch the column */
+}
+
+/* Sidebar: stays in view while the log scrolls, scrolling itself if it grows taller than the window */
+.radio-sidebar {
+  align-self: start;
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+.radio-outstanding-actions {
+  background: var(--radio-panel-bg);
+  border: 1px solid var(--radio-border);
+  border-radius: var(--radio-radius);
+  box-shadow: var(--radio-shadow);
+  padding: 10px 14px;
+}
+
+.radio-outstanding-actions h3 {
+  font-size: 0.95rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.radio-outstanding-count {
+  background: var(--radio-danger);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 0 8px;
+}
+
+.radio-outstanding-toggle {
+  margin-left: auto;
+  padding: 3px 8px;
+}
+
+.radio-outstanding-warning {
+  margin-top: 8px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  color: var(--radio-warn);
+  background: var(--radio-warn-bg);
+  border: 1px solid var(--radio-warn-border);
+  border-radius: 6px;
+}
+
+.radio-notification-test {
+  margin-top: 10px;
+}
+
+.radio-outstanding-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Each outstanding action is a compact card like the callsign-check rows: a coloured left
+   edge by urgency tier (classifyReminderSeverity/RadioConsoleViewModel.js's
+   isOverdue/isDueSoon) -- amber once due soon, red once overdue. An entry that's neither
+   ('not-due') is filtered out of this list entirely by RadioConsoleViewModel.js, not just left
+   uncoloured -- Settings' "how soon before due" narrows/widens that filter. */
+.radio-outstanding-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px;
+  border: 1px solid var(--radio-border);
+  border-left-width: 4px;
+  border-radius: 6px;
+  background: var(--radio-bg);
+  font-size: 0.85rem;
+}
+
+.radio-outstanding-item + .radio-outstanding-item {
+  margin-top: 0;
+}
+
+.radio-outstanding-due-soon {
+  background: var(--radio-warn-bg);
+  border-color: var(--radio-warn-border);
+  border-left-color: var(--radio-warn);
+}
+
+.radio-outstanding-overdue {
+  background: var(--radio-danger-bg);
+  border-color: var(--radio-danger-border);
+  border-left-color: var(--radio-danger);
+}
+
+/* line 1: callsign + when it's due, buttons on the right; line 2: the message (two lines at most) */
+.radio-outstanding-head {
+  display: flex;
+  align-items: center;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.radio-outstanding-who {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.radio-outstanding-due {
+  font-size: 0.75rem;
+  color: var(--radio-muted);
+  white-space: nowrap;
+}
+
+.radio-outstanding-text {
+  font-size: 0.8rem;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.radio-outstanding-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+
+.radio-outstanding-buttons {
+  flex-wrap: nowrap;
+  margin-left: auto;
+}
+
+.radio-outstanding-buttons .btn {
+  padding: 0 8px;
+  font-size: 0.72rem;
+  line-height: 1.7;
+}
+
+/* Resolve: green with the pin, matching the Resolve Action Required dialog's header */
+.radio-outstanding-resolve-btn {
+  flex-shrink: 0;
+  color: #fff;
+  background: #1e8740;
+  border: 1px solid #1e8740;
+}
+
+.radio-outstanding-resolve-btn:hover,
+.radio-outstanding-resolve-btn:focus-visible {
+  color: #fff;
+  background: #186f34;
+  border-color: #186f34;
+}
+
+/* Acknowledge: a plain white button beside it */
+.radio-outstanding-ack-btn {
+  flex-shrink: 0;
+  color: #333;
+  background: #fff;
+  border: 1px solid var(--radio-border);
+}
+
+.radio-outstanding-ack-btn:hover,
+.radio-outstanding-ack-btn:focus-visible {
+  color: #111;
+  background: #f1f3f5;
+  border-color: #adb5bd;
+}
+
+/* ---- settings modal ---- */
+/* === Configuration: left-rail sections (same layout as LAD's Configuration) === */
+.radio-config-settings {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 0;
+  /* one working height across every tab so the dialog never resizes when you switch */
+  height: clamp(400px, 66vh, 660px);
+}
+
+.radio-config-rail {
+  align-self: stretch;
+  overflow-y: auto;
+  gap: 2px;
+  padding-right: 1rem;
+}
+
+.radio-config-panes {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-left: 1px solid var(--radio-border);
+  padding-left: 1.25rem;
+  padding-right: 0.25rem;
+}
+
+.radio-config-rail .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  color: var(--radio-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.radio-config-rail .nav-link:hover {
+  background: var(--radio-panel-bg);
+  color: var(--radio-fg);
+}
+
+.radio-config-rail .nav-link.active {
+  background: var(--radio-outstanding-bg);
+  color: var(--radio-accent);
+  font-weight: 600;
+}
+
+.radio-cfg-rail-ico {
+  width: 1.1rem;
+  text-align: center;
+  flex: none;
+  opacity: 0.85;
+}
+
+/* section headings inside a pane, like LAD's .cfg-subhead */
+.radio-config-panes .radio-settings-section h6 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--radio-muted);
+  margin: 0 0 0.75rem;
+}
+
+@media (max-width: 640px) {
+  .radio-config-settings {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .radio-config-rail {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    overflow: visible;
+    padding-right: 0;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--radio-border);
+  }
+
+  .radio-config-panes {
+    height: auto;
+    overflow: visible;
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .radio-config-rail .nav-link {
+    width: auto;
+  }
+}
+
+.radio-settings-section {
+  margin-bottom: 20px;
+}
+
+.radio-settings-section:last-child {
+  margin-bottom: 0;
+}
+
+.radio-settings-section h6 {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--radio-muted);
+  margin-bottom: 10px;
+}
+
+.radio-settings-note {
+  font-size: 0.8rem;
+  color: var(--radio-muted);
+  margin-bottom: 8px;
+}
+
+.radio-settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.radio-settings-row .radio-filter-field {
+  flex: 1 1 200px;
+}
+
+.radio-filter-field label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* HQ pickers (Filter HQ / Logging HQ in Settings) -- search box + floating
+   suggestion dropdown, matching LAD/tasking.css's own "Filter by
+   Headquarters" search (Config.js's config.query), followed by a bordered
+   card showing the current selection (LAD's own selected-filter boxes),
+   hand-rolled with this page's own tokens rather than Bootstrap classes for
+   the same reason as the checkbox styling above -- this page pulls in
+   Bootstrap 4 via common.css, whose .card/.badge look nothing like LAD's
+   Bootstrap 5 look. */
+.radio-hq-search {
+  position: relative;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.radio-hq-search .form-control {
+  flex: 1;
+}
+
+.radio-hq-card {
+  border: 1px solid var(--radio-border);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.radio-hq-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--radio-panel-bg);
+  border-bottom: 1px solid var(--radio-border);
+}
+
+.radio-hq-card-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.radio-hq-card-body {
+  padding: 8px 10px;
+}
+
+.radio-hq-chip {
+  background: var(--radio-accent) !important;
+  color: var(--radio-accent-fg);
+}
+
+.radio-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: normal;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+/* Settings' segmented pickers (Log timestamps / due-soon window / Theme) --
+   matches LAD/tasking.css's own .cfg-seg/.cfg-seg-btn Settings controls
+   (e.g. "Full refresh"): a single joined pill instead of separate radio
+   buttons, active segment filled with the accent colour. */
+.radio-cfg-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--radio-border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.radio-cfg-seg-btn {
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: 0;
+  border-right: 1px solid var(--radio-border);
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.radio-cfg-seg-btn:last-child {
+  border-right: 0;
+}
+
+.radio-cfg-seg-btn:hover {
+  background: var(--radio-panel-bg);
+}
+
+.radio-cfg-seg-btn.active {
+  background: var(--radio-accent);
+  color: var(--radio-accent-fg);
+}
+
+.radio-settings-hint {
+  font-size: 0.8125rem;
+  color: var(--radio-muted);
+  margin-top: 6px;
+  max-width: 44ch;
+}
+
+/* Matches LAD's (tasking.css/Bootstrap 5's) `.form-check-input` checkbox --
+   this page pulls in Bootstrap 4 via common.css (see its own @import),
+   whose default checkbox looks nothing like it, so this replicates BS5's
+   look (rounded square, filled + white check when ticked) by hand rather
+   than pulling in a second, conflicting Bootstrap CSS bundle. */
+.radio-app input[type="checkbox"],
+.modal input[type="checkbox"] {
+  /* common.css (imported via radio.css's own @import chain) sets a
+     blanket `label, input { display: inline; }` for other, older pages.
+     `width`/`height` have no effect on a non-replaced inline box, and
+     appearance: none turns a checkbox into exactly that -- without this
+     override, every rule below still computes correctly (as seen via
+     getComputedStyle) but never actually applies to layout, rendering as
+     a sliver rather than a square. */
+  display: inline-block;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1.1em;
+  height: 1.1em;
+  margin: 0;
+  background-color: var(--radio-bg);
+  border: 1px solid var(--radio-border);
+  border-radius: 0.25em;
+  cursor: pointer;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.radio-app input[type="checkbox"]:checked,
+.modal input[type="checkbox"]:checked {
+  background-color: var(--radio-accent);
+  border-color: var(--radio-accent);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M5 10.5l3.2 3.2L15 7'/%3e%3c/svg%3e");
+  background-size: 75% 75%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.radio-app input[type="checkbox"]:focus-visible,
+.modal input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--radio-accent);
+  outline-offset: 1px;
+}
+
+
+/* Bootstrap5's modal ships light-theme chrome by default; re-skin it with
+   our own theme tokens so it matches the rest of the page in dark mode
+   (mirrors tasking.css's own dark-mode modal handling). */
+.modal-content {
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+  border-radius: var(--radio-radius);
+}
+
+.modal-header {
+  background: var(--radio-title-bg);
+  color: var(--radio-title-fg);
+  border-color: var(--radio-title-bg);
+}
+
+.modal-header .modal-title {
+  color: var(--radio-title-fg);
+}
+
+.modal-footer {
+  border-color: var(--radio-border);
+}
+
+/* Modal close: an X (the Bootstrap .btn-close glyph rendered as a bare
+   dash here), in the title bar's own foreground colour. */
+.radio-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  color: var(--radio-title-fg);
+  border: 0;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  opacity: 0.85;
+  cursor: pointer;
+}
+
+.radio-modal-close:hover,
+.radio-modal-close:focus-visible {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ---- log list ---- */
+.radio-list-error {
+  color: var(--radio-danger);
+  margin-bottom: 8px;
+}
+
+.radio-log-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--radio-bg);
+  border: 1px solid var(--radio-border);
+  border-radius: var(--radio-radius);
+  overflow: hidden;
+  box-shadow: var(--radio-shadow);
+}
+
+.radio-log-table th,
+.radio-log-table td {
+  border-bottom: 1px solid var(--radio-border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+  font-size: 0.9rem;
+}
+
+.radio-log-table th {
+  background: var(--radio-panel-bg);
+  position: sticky;
+  top: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--radio-muted);
+}
+
+.radio-log-table tbody tr:hover {
+  background: var(--radio-panel-bg);
+}
+
+.radio-info-cell {
+  width: 28px;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+.radio-info-icon {
+  color: var(--radio-muted);
+  cursor: help;
+}
+
+.radio-pin-icon {
+  display: block;
+  color: var(--radio-danger);
+  margin-bottom: 3px;
+}
+
+/* Matches Beacon's own Ops Log listing's green "📌 resolve" button --
+   labelled, not icon-only, so its function is explicit at a glance
+   instead of relying on the operator to guess what a bare checkmark does. */
+.radio-row-action-cell {
+  white-space: nowrap;
+}
+
+.radio-row-resolve-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid var(--radio-resolved-border);
+  border-radius: 4px;
+  background: var(--radio-resolved-border);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.radio-row-resolve-btn:hover {
+  filter: brightness(0.9);
+}
+
+.radio-row-tg {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.75rem;
+  color: var(--radio-muted);
+}
+
+.radio-row-time-primary {
+  font-size: 0.9rem;
+}
+
+.radio-row-important {
+  background: var(--radio-important-bg);
+  border-left: 3px solid var(--radio-important-border);
+}
+
+.radio-row-important:hover {
+  background: var(--radio-important-bg) !important;
+}
+
+.radio-row-outstanding:not(.radio-row-important) {
+  background: var(--radio-outstanding-bg);
+}
+
+.radio-row-outstanding:not(.radio-row-important):hover {
+  background: var(--radio-outstanding-bg) !important;
+}
+
+.radio-row-resolved:not(.radio-row-important) {
+  background: var(--radio-resolved-bg);
+}
+
+.radio-row-resolved:not(.radio-row-important):hover {
+  background: var(--radio-resolved-bg) !important;
+}
+
+.radio-pill {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  width: fit-content;
+}
+
+/* Matches Beacon's own "Radio" Contact Method tag pill colour (see the
+   Radio tag toggle removed from the entry form -- this is a read-only
+   echo of the same colour, in the resolve modal only). */
+.radio-pill-tag {
+  background: #6e663c;
+  color: #ffffff;
+}
+
+/* ---- resolve modal (simulates Beacon's "Resolve Action Required | Ops
+   Log" dialog) ---- */
+.radio-resolve-modal-header {
+  background: #1e8740;
+  color: #ffffff;
+}
+
+.radio-resolve-subject {
+  font-style: italic;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.radio-resolve-text {
+  margin-top: 4px;
+}
+
+.radio-resolve-created {
+  font-style: italic;
+  color: var(--radio-muted);
+  text-align: right;
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+.radio-log-table td.radio-log-empty {
+  padding: 24px;
+  color: var(--radio-muted);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.radio-log-table tbody tr.radio-log-empty-row:hover {
+  background: var(--radio-bg);
+}
+
+/* generic button polish, applied wherever plain .btn-secondary buttons
+   (pause/resume, load more, apply filters, add unit, etc.) are used */
+.btn-secondary {
+  background: var(--radio-bg);
+  color: var(--radio-fg);
+  border: 1px solid var(--radio-border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  transition: border-color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--radio-accent);
+}
+
+/* Smaller displays: the new log stays on the left; the sidebar's sections move above the log table
+   and split 50/50 (outstanding actions | callsign checks), with the notifications panel across
+   the bottom of that block. Then, narrower still, everything stacks in one column. */
+@media (max-width: 1200px) {
+  .radio-app {
+    grid-template-columns: minmax(240px, 1fr) 2.2fr;
+    grid-template-areas:
+      "header header"
+      "left side"
+      "left main";
+    width: 100%;
+  }
+
+  .radio-header {
+    grid-area: header;
+  }
+
+  .radio-left-column {
+    grid-area: left;
+  }
+
+  .radio-middle-column {
+    grid-area: main;
+  }
+
+  .radio-sidebar {
+    grid-area: side;
+    position: static;
+    max-height: none;
+    overflow: visible;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 900px) {
+  .radio-app {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "left"
+      "side"
+      "main";
+  }
+
+  .radio-left-column {
+    position: static;
+  }
+
+  .radio-header-search-box.radio-header-search-open {
+    max-width: 100%;
+  }
+
+  .radio-header-search-box .form-control {
+    width: 100%;
+  }
+}
+
+/* phones: outstanding actions and callsign checks stack too */
+@media (max-width: 640px) {
+  .radio-sidebar {
+    grid-template-columns: 1fr;
+  }
+}

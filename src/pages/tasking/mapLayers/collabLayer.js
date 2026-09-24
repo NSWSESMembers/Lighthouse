@@ -829,7 +829,10 @@ function openMarkerForm(vm, apiUrl, layerId, key, actorId, marker, latlng, getTo
         });
     });
 
-    const popup = L.popup({ minWidth: 220, maxWidth: 260, closeOnClick: false, autoPanPadding: [16, 16], pane: "pane-popup-top" })
+    // autoPan / autoPanPadding come from Popup.mergeOptions in
+    // utils/popupAutoPan.js, which keeps padding in sync with the map's
+    // corner controls (alerts banners, zoom tools, legend, ...).
+    const popup = L.popup({ minWidth: 220, maxWidth: 260, closeOnClick: false, pane: "pane-popup-top" })
         .setLatLng(latlng)
         .setContent(el)
         .openOn(vm.mapVM.map);

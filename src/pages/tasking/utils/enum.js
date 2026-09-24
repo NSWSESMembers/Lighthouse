@@ -102,6 +102,33 @@ export const Enum = {
             "Colour": null
         }
     },
+    TeamType:
+    {
+        "Field": {
+            "Id": 1,
+            "Name": "Field",
+            "Description": "Field",
+            "ParentId": null,
+            "GroupId": null,
+            "Colour": null
+        },
+        "Operations": {
+            "Id": 2,
+            "Name": "Operations",
+            "Description": "Operations",
+            "ParentId": null,
+            "GroupId": null,
+            "Colour": null
+        },
+        "Aviation": {
+            "Id": 3,
+            "Name": "Aviation",
+            "Description": "Aviation",
+            "ParentId": null,
+            "GroupId": null,
+            "Colour": null
+        }
+    },
     JobStatusType:
     {
         "New": {

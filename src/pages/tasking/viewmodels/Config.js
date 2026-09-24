@@ -8,6 +8,9 @@ import {
     updateCollabLayerAttachment,
     refreshSubscribedLayers, searchLayersForHq, subscribeToLayer, unsubscribeFromLayer,
 } from '../mapLayers/collabLayer.js';
+import {
+    isMacPlatform, isModifierKey, hasModifier, captureComboFromEvent, formatHotkeyCombo,
+} from '../utils/hotkeyMatch.js';
 
 
 
@@ -362,6 +365,23 @@ export function ConfigVM(root, deps) {
     // Selected location filters
     self.teamFilters = ko.observableArray([]);     // [{id, name, entityType}]
     self.incidentFilters = ko.observableArray([]); // [{id, name, entityType}]
+
+    // Selected-filter boxes collapse past this many pills; a "…more" button
+    // toggles the expanded state.
+    self.locationPillCollapseAt = 9;
+    self.teamsExpanded = ko.observable(false);
+    self.incidentsExpanded = ko.observable(false);
+    self.toggleTeamsExpanded = () => self.teamsExpanded(!self.teamsExpanded());
+    self.toggleIncidentsExpanded = () => self.incidentsExpanded(!self.incidentsExpanded());
+    self.showTeamsMore = ko.pureComputed(() => self.teamFilters().length > self.locationPillCollapseAt);
+    self.showIncidentsMore = ko.pureComputed(() => self.incidentFilters().length > self.locationPillCollapseAt);
+    // Clip (fade + cap height, no inner scrollbar) only while collapsed.
+    self.teamsBoxClipped = ko.pureComputed(() => self.showTeamsMore() && !self.teamsExpanded());
+    self.incidentsBoxClipped = ko.pureComputed(() => self.showIncidentsMore() && !self.incidentsExpanded());
+    self.teamsMoreLabel = ko.pureComputed(() =>
+        self.teamsExpanded() ? 'Show fewer' : ('Show all ' + self.teamFilters().length));
+    self.incidentsMoreLabel = ko.pureComputed(() =>
+        self.incidentsExpanded() ? 'Show fewer' : ('Show all ' + self.incidentFilters().length));
     self.allowedIncidentTypeIds = ko.pureComputed(() =>
         new Set(self.incidentTypeFilter()
             .map(t => Enum.IncidentType[t]?.Id)
@@ -411,7 +431,10 @@ export function ConfigVM(root, deps) {
     // Other settings
     self.signalrEnabled = ko.observable(true);
     self.refreshInterval = ko.observable(180);
-    // Guard for reckless refresh interval changes
+    // Guard for an aggressively short full-refresh interval. Slower is always
+    // safe, so only prompt when the new value drops below this many seconds --
+    // that's where every open copy of LAD starts hammering Beacon.
+    const REFRESH_GATE_SECONDS = 60;
     let lastRefreshInterval = self.refreshInterval();
     let suppressRecklessModal = false;
     self.refreshInterval.subscribe(function(newVal) {
@@ -419,9 +442,9 @@ export function ConfigVM(root, deps) {
             lastRefreshInterval = newVal;
             return;
         }
-        // Only trigger if the value is being changed to something different
-        if (Number(newVal) !== Number(lastRefreshInterval)) {
-            showRecklessModal({
+        const n = Number(newVal);
+        if (Number.isFinite(n) && n < REFRESH_GATE_SECONDS && n !== Number(lastRefreshInterval)) {
+            showShortRefreshModal(n, {
                 onConfirm: () => {
                     lastRefreshInterval = newVal;
                 },
@@ -432,60 +455,65 @@ export function ConfigVM(root, deps) {
                     suppressRecklessModal = false;
                 }
             });
+        } else {
+            lastRefreshInterval = newVal;
         }
     });
 
-    // Modal logic for reckless confirmation
-    function showRecklessModal({ onConfirm, onCancel }) {
-        // Create modal HTML if not present
-        let modal = document.getElementById('recklessModal');
+    // Confirm dialog for a very short full-refresh interval.
+    function showShortRefreshModal(seconds, { onConfirm, onCancel }) {
+        let modal = document.getElementById('shortRefreshModal');
         if (!modal) {
             modal = document.createElement('div');
-            modal.id = 'recklessModal';
+            modal.id = 'shortRefreshModal';
             modal.className = 'modal fade';
             modal.tabIndex = -1;
             modal.innerHTML = `
                 <div class="modal-dialog modal-dialog-centered">
                   <div class="modal-content">
-                    <div class="modal-header bg-danger text-white">
-                      <h5 class="modal-title">Are you sure?</h5>
+                    <div class="modal-header bg-warning text-dark">
+                      <h5 class="modal-title" id="shortRefreshTitle"></h5>
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                      <p>Changing the refresh interval can have unintended consequences. To proceed, type <b>reckless</b> below and press Confirm.</p>
-                      <input id="recklessInput" type="text" class="form-control" placeholder="Type 'reckless' to confirm">
-                      <div id="recklessError" class="text-danger mt-2" style="display:none;">You must type 'reckless' to confirm.</div>
+                      <p>This will re-query <b>every</b> incident, team and tasking in your window from Beacon, on your machine, this often. Each sweep is a heavy set of calls and the board churns while it runs.</p>
+                      <p class="mb-3">Live updates already keep your board current between sweeps &mdash; you rarely need the full refresh this frequent.</p>
+                      <label class="form-label mb-1" for="shortRefreshInput">Type <b id="shortRefreshNum"></b> to confirm.</label>
+                      <input id="shortRefreshInput" type="text" class="form-control" autocomplete="off" inputmode="numeric">
+                      <div id="shortRefreshError" class="text-danger small mt-2" style="display:none;"></div>
                     </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="recklessCancel">Cancel</button>
-                      <button type="button" class="btn btn-danger" id="recklessConfirm">Confirm</button>
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="shortRefreshCancel">Keep previous</button>
+                      <button type="button" class="btn btn-warning" id="shortRefreshConfirm">Use this interval</button>
                     </div>
                   </div>
                 </div>
             `;
             document.body.appendChild(modal);
         }
+        modal.querySelector('#shortRefreshTitle').textContent = `Full refresh every ${seconds} seconds?`;
+        modal.querySelector('#shortRefreshNum').textContent = String(seconds);
+
         const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
         bsModal.show();
 
-        // Reset input and error
-        const input = modal.querySelector('#recklessInput');
-        const error = modal.querySelector('#recklessError');
+        const input = modal.querySelector('#shortRefreshInput');
+        const error = modal.querySelector('#shortRefreshError');
         input.value = '';
         error.style.display = 'none';
         input.focus();
 
-        // Remove previous listeners
-        const confirmBtn = modal.querySelector('#recklessConfirm');
-        const cancelBtn = modal.querySelector('#recklessCancel');
+        const confirmBtn = modal.querySelector('#shortRefreshConfirm');
+        const cancelBtn = modal.querySelector('#shortRefreshCancel');
         confirmBtn.onclick = null;
         cancelBtn.onclick = null;
 
         confirmBtn.onclick = function() {
-            if (input.value.trim().toLowerCase() === 'reckless') {
+            if (input.value.trim() === String(seconds)) {
                 bsModal.hide();
                 onConfirm && onConfirm();
             } else {
+                error.textContent = `Type ${seconds} to confirm.`;
                 error.style.display = '';
                 input.focus();
             }
@@ -494,7 +522,6 @@ export function ConfigVM(root, deps) {
             bsModal.hide();
             onCancel && onCancel();
         };
-        // Also handle modal close (X button)
         modal.querySelector('.btn-close').onclick = function() {
             bsModal.hide();
             onCancel && onCancel();
@@ -1077,8 +1104,150 @@ export function ConfigVM(root, deps) {
 
     self.fetchPeriod = ko.observable(7).extend({ min: 0, max: 31, digit: true });
     self.fetchForward = ko.observable(0).extend({ min: 0, max: 31, digit: true });
+
+    // Human-readable summary of what the Data pane's knobs currently resolve
+    // to -- shown alongside the inputs so an operator can sanity-check the
+    // window they're actually loading.
+    const _fmtWindowDate = (d) => d.toLocaleDateString('en-AU', {
+        weekday: 'short', day: 'numeric', month: 'short'
+    });
+    self.fetchWindowRange = ko.pureComputed(() => {
+        const back = Math.max(0, Number(self.fetchPeriod()) || 0);
+        const fwd = Math.max(0, Number(self.fetchForward()) || 0);
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
+        const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + fwd);
+        return `${_fmtWindowDate(start)} → ${_fmtWindowDate(end)}`;
+    });
+    self.fetchWindowDays = ko.pureComputed(() => {
+        const back = Math.max(0, Number(self.fetchPeriod()) || 0);
+        const fwd = Math.max(0, Number(self.fetchForward()) || 0);
+        return back + fwd + 1;
+    });
+    self.refreshCadence = ko.pureComputed(() => {
+        const s = Math.max(0, Number(self.refreshInterval()) || 0);
+        if (s < 90) return `every ${s} sec`;
+        return `every ${Math.round(s / 60)} min`;
+    });
+    self.liveUpdatesLabel = ko.pureComputed(() => (self.signalrEnabled() ? 'On' : 'Off'));
+
+    // The full refresh means different things depending on whether live updates
+    // are carrying the load -- spell it out so nobody sets it wrong.
+    self.fullRefreshHint = ko.pureComputed(() => (self.signalrEnabled()
+        ? 'A full reload from Beacon. With live updates on it is only a backstop — every 3–5 min is plenty.'
+        : 'A full reload from Beacon. With live updates off this is the only thing refreshing the board — keep it short, 1–2 min.'
+    ));
+    self.dataReadoutNote = ko.pureComputed(() => (self.signalrEnabled()
+        ? 'Live updates keep the board current; the full refresh is a backstop.'
+        : 'No live updates — the board is only as fresh as the full refresh.'
+    ));
+
+    // Data pane -- one-tap presets for the values these are actually set to.
+    // The number field beside each row stays as the escape hatch for odd
+    // values; an off-preset value simply leaves no preset highlighted.
+    self.refreshPresets = [
+        { value: 30, label: '30s' },
+        { value: 60, label: '1 min' },
+        { value: 120, label: '2 min' },
+        { value: 180, label: '3 min' },
+        { value: 300, label: '5 min' },
+        { value: 600, label: '10 min' }
+    ];
+    self.historyPresets = [
+        { value: 0, label: 'Today' },
+        { value: 1, label: '1 day' },
+        { value: 3, label: '3 days' },
+        { value: 7, label: '1 week' },
+        { value: 14, label: '2 weeks' },
+        { value: 31, label: '1 month' }
+    ];
+    self.lookaheadPresets = [
+        { value: 0, label: 'None' },
+        { value: 1, label: '1 day' },
+        { value: 3, label: '3 days' },
+        { value: 7, label: '1 week' }
+    ];
+    self.pickRefreshPreset = (p) => self.refreshInterval(p.value);
+    self.pickHistoryPreset = (p) => self.fetchPeriod(p.value);
+    self.pickLookaheadPreset = (p) => self.fetchForward(p.value);
+
     self.showAdvanced = ko.observable(false);
-    self.darkMode = ko.observable(false);
+
+    // Theme: 'light' | 'dark' | 'auto'. 'auto' (the default) follows the
+    // OS/browser prefers-color-scheme and re-applies live when it changes.
+    self.darkModeMode = ko.observable('auto');
+    const _darkMq = (typeof window !== 'undefined' && window.matchMedia)
+        ? window.matchMedia('(prefers-color-scheme: dark)')
+        : null;
+    self.systemPrefersDark = ko.observable(!!(_darkMq && _darkMq.matches));
+    if (_darkMq) {
+        const _onSchemeChange = (e) => self.systemPrefersDark(!!e.matches);
+        if (_darkMq.addEventListener) _darkMq.addEventListener('change', _onSchemeChange);
+        else if (_darkMq.addListener) _darkMq.addListener(_onSchemeChange); // older Safari
+    }
+    // Effective boolean -- what the rest of the app reads. Reactive to both
+    // the chosen mode and (in 'auto') the live OS setting.
+    self.darkMode = ko.pureComputed(() => {
+        const m = self.darkModeMode();
+        return m === 'dark' || (m === 'auto' && self.systemPrefersDark());
+    });
+    self.themeModes = [
+        { value: 'light', label: 'Light' },
+        { value: 'dark', label: 'Dark' },
+        { value: 'auto', label: 'Auto' }
+    ];
+    self.pickThemeMode = (m) => self.darkModeMode(m.value);
+    self.themeHint = ko.pureComputed(() => {
+        if (self.darkModeMode() === 'auto') {
+            return `Follows your device's light / dark setting — currently ${self.darkMode() ? 'dark' : 'light'}.`;
+        }
+        return 'A low-glare dark colour scheme for the whole board and map.';
+    });
+
+    // Command palette (Spotlight Search) hotkey. `null` means "use the
+    // built-in Cmd/Ctrl+K default" -- see utils/hotkeyMatch.js for the
+    // combo shape and matching/formatting logic shared with main.js.
+    const _isMac = isMacPlatform();
+    self.spotlightHotkey = ko.observable(null);
+    self.spotlightHotkeyCapturing = ko.observable(false);
+    self.spotlightHotkeyError = ko.observable(null);
+    self.spotlightHotkeyLabel = ko.pureComputed(() => formatHotkeyCombo(self.spotlightHotkey(), _isMac));
+    self.spotlightHotkeyButtonLabel = ko.pureComputed(() => (
+        self.spotlightHotkeyCapturing() ? 'Press a key combo…' : self.spotlightHotkeyLabel()
+    ));
+    self.startCaptureSpotlightHotkey = () => {
+        self.spotlightHotkeyError(null);
+        self.spotlightHotkeyCapturing(true);
+    };
+    self.cancelCaptureSpotlightHotkey = () => {
+        self.spotlightHotkeyCapturing(false);
+        self.spotlightHotkeyError(null);
+    };
+    self.resetSpotlightHotkey = () => {
+        self.spotlightHotkey(null);
+        self.spotlightHotkeyCapturing(false);
+        self.spotlightHotkeyError(null);
+        self.save();
+    };
+    self.onSpotlightHotkeyCapture = (_vm, e) => {
+        if (!self.spotlightHotkeyCapturing()) return true;
+        e.preventDefault();
+        if (e.key === 'Escape') {
+            self.cancelCaptureSpotlightHotkey();
+            return false;
+        }
+        if (isModifierKey(e.key)) return false;
+        const combo = captureComboFromEvent(e);
+        if (!hasModifier(combo)) {
+            self.spotlightHotkeyError('Include Ctrl, Cmd, or Alt so it doesn\'t clash with normal typing.');
+            return false;
+        }
+        self.spotlightHotkey(combo);
+        self.spotlightHotkeyCapturing(false);
+        self.spotlightHotkeyError(null);
+        self.save();
+        return false;
+    };
 
     self.layoutPresetDefs = [
         {
@@ -1149,12 +1318,21 @@ export function ConfigVM(root, deps) {
 
     self.teamTaskStatusFilter = ko.observableArray([]);
 
+    // Team type allow-list (Field / Operations / Aviation). Empty = all types.
+    // blown away on load
+    self.teamTypeFilter = ko.observableArray([]);
+
     // Map clustering
     self.clusterEnabled = ko.observable(true);
     self.clusterRadius = ko.observable(60);   // maxClusterRadius in px (10–80)
     self.clusterRescueJobs = ko.observable(true);
+    self.showJobStatusOnMarkers = ko.observable(true);
     self.alertsCollapsibleRules = ko.observable(true);
     self.taskingCountActiveOnly = ko.observable(false);
+
+    // On/Off pill labels for the Appearance pane switches
+    self.alertsCollapseLabel = ko.pureComputed(() => (self.alertsCollapsibleRules() ? 'On' : 'Off'));
+    self.taskingCountLabel = ko.pureComputed(() => (self.taskingCountActiveOnly() ? 'On' : 'Off'));
 
     // pinned rows
     self.pinnedTeamIds = ko.observableArray([]);
@@ -1203,11 +1381,7 @@ export function ConfigVM(root, deps) {
 
     // Dark mode helper (defined early so it can be called in afterConfigLoad)
     self._applyDarkMode = () => {
-        if (self.darkMode()) {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
+        document.body.classList.toggle('dark-mode', self.darkMode());
     };
 
 
@@ -1233,6 +1407,10 @@ export function ConfigVM(root, deps) {
 
     self.teamStatusFilterDefaults = [
         "Activated"
+    ];
+
+    self.teamTypeFilterDefaults = [
+        "Field"
     ];
 
     self.incidentTypeFilterDefaults = [
@@ -1269,7 +1447,9 @@ export function ConfigVM(root, deps) {
         fetchPeriod: Number(self.fetchPeriod()),
         fetchForward: Number(self.fetchForward()),
         showAdvanced: !!self.showAdvanced(),
-        darkMode: !!self.darkMode(),
+        darkModeMode: self.darkModeMode(),
+        // kept so a config saved here still reads sensibly on an older build
+        darkMode: self.darkModeMode() === 'dark',
         layoutPreset: normalizeLayoutPreset(self.layoutPreset()),
         locationFilters: {
             teams: ko.toJS(self.teamFilters),
@@ -1280,6 +1460,7 @@ export function ConfigVM(root, deps) {
         jobStatusFilter: ko.toJS(self.jobStatusFilter),
         incidentTypeFilter: ko.toJS(self.incidentTypeFilter),
         teamTaskStatusFilter: ko.toJS(self.teamTaskStatusFilter),
+        teamTypeFilter: ko.toJS(self.teamTypeFilter),
         sectorFilters: ko.toJS(self.sectorFilters),
         includeIncidentsWithoutSector: !!self.includeIncidentsWithoutSector(),
         applySectorsToIncidents: !!self.applySectorsToIncidents(),
@@ -1290,6 +1471,7 @@ export function ConfigVM(root, deps) {
         clusterEnabled: !!self.clusterEnabled(),
         clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
+        showJobStatusOnMarkers: !!self.showJobStatusOnMarkers(),
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
         taskingCountActiveOnly: !!self.taskingCountActiveOnly(),
         suggestionEnabled: !!self.suggestionEnabled(),
@@ -1298,6 +1480,7 @@ export function ConfigVM(root, deps) {
         normalDistanceWeight: Number(self.normalDistanceWeight()) || 0,
         normalTaskingWeight: Number(self.normalTaskingWeight()) || 0,
         suggestionUseRouting: !!self.suggestionUseRouting(),
+        spotlightHotkey: self.spotlightHotkey() ? { ...self.spotlightHotkey() } : null,
     });
 
     // Helpers
@@ -1326,8 +1509,8 @@ export function ConfigVM(root, deps) {
     };
     const removeById = (arr, id) => arr.remove(x => x.id === id);
 
-    self.clearTeams = () => self.teamFilters.removeAll();
-    self.clearIncidents = () => self.incidentFilters.removeAll();
+    self.clearTeams = () => { self.teamFilters.removeAll(); self.teamsExpanded(false); };
+    self.clearIncidents = () => { self.incidentFilters.removeAll(); self.incidentsExpanded(false); };
     self.clearSectors = () => self.sectorFilters.removeAll();
 
     // Search (debounced)
@@ -1509,6 +1692,7 @@ export function ConfigVM(root, deps) {
             cfg.jobStatusFilter = self.jobStatusFilterDefaults;
             cfg.incidentTypeFilter = self.incidentTypeFilterDefaults;
             cfg.teamTaskStatusFilter = self.teamTaskStatusFilterDefaults;
+            cfg.teamTypeFilter = self.teamTypeFilterDefaults;
             cfg.sectorFilters = [];
             cfg.includeIncidentsWithoutSector = true;
             cfg.applySectorsToIncidents = false;
@@ -1552,8 +1736,13 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.showAdvanced === 'boolean') {
             self.showAdvanced(cfg.showAdvanced);
         }
-        if (typeof cfg.darkMode === 'boolean') {
-            self.darkMode(cfg.darkMode);
+        if (cfg.darkModeMode === 'light' || cfg.darkModeMode === 'dark' || cfg.darkModeMode === 'auto') {
+            self.darkModeMode(cfg.darkModeMode);
+        } else if (cfg.darkMode === true) {
+            // configs saved before the 3-way setting: an explicit `true` was a
+            // deliberate choice -> keep them on Dark. `false` was just the old
+            // default, so let it fall through to 'auto'.
+            self.darkModeMode('dark');
         }
         self.layoutPreset(normalizeLayoutPreset(cfg.layoutPreset || localStorage.getItem('lh.layoutPreset')));
         if (typeof cfg.includeIncidentsWithoutSector === 'boolean') {
@@ -1586,6 +1775,13 @@ export function ConfigVM(root, deps) {
         if (Array.isArray(cfg.teamTaskStatusFilter)) {
             self.teamTaskStatusFilter(cfg.teamTaskStatusFilter);
         }
+        // Saved configs from before team-type filtering won't have this key --
+        // fall back to the default (Field only) rather than "all types".
+        if (Array.isArray(cfg.teamTypeFilter)) {
+            self.teamTypeFilter(cfg.teamTypeFilter);
+        } else {
+            self.teamTypeFilter(self.teamTypeFilterDefaults.slice());
+        }
         if (Array.isArray(cfg.sectorFilters)) {
             self.sectorFilters(cfg.sectorFilters);
         }
@@ -1612,11 +1808,19 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.clusterRescueJobs === 'boolean') {
             self.clusterRescueJobs(cfg.clusterRescueJobs);
         }
+        if (typeof cfg.showJobStatusOnMarkers === 'boolean') {
+            self.showJobStatusOnMarkers(cfg.showJobStatusOnMarkers);
+        }
         if (typeof cfg.alertsCollapsibleRules === 'boolean') {
             self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
         }
         if (typeof cfg.taskingCountActiveOnly === 'boolean') {
             self.taskingCountActiveOnly(cfg.taskingCountActiveOnly);
+        }
+        if (cfg.spotlightHotkey && typeof cfg.spotlightHotkey.key === 'string') {
+            self.spotlightHotkey({ ...cfg.spotlightHotkey });
+        } else {
+            self.spotlightHotkey(null);
         }
 
         // Instant Task Suggestion Engine weights
@@ -1757,6 +1961,7 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
         root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
         root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
+        root.mapVM?.applyJobStatusOnMarkers?.(!!self.showJobStatusOnMarkers());
         applyLayoutPresetClass(normalizeLayoutPreset(self.layoutPreset()));
         // Apply dark mode
         self._applyDarkMode();
@@ -1808,6 +2013,11 @@ export function ConfigVM(root, deps) {
         self.save();
     })
 
+    self.showJobStatusOnMarkers.subscribe((v) => {
+        root.mapVM?.applyJobStatusOnMarkers?.(!!v);
+        self.save();
+    })
+
     self.alertsCollapsibleRules.subscribe(() => {
         self.save();
     })
@@ -1824,17 +2034,17 @@ export function ConfigVM(root, deps) {
     self.normalTaskingWeight.subscribe(() => { self.save(); });
     self.suggestionUseRouting.subscribe(() => { self.save(); });
 
+    // Effective theme changed -- a mode switch, or the OS setting flipping
+    // while in 'auto'. Repaint; don't persist (the OS isn't ours to save).
     self.darkMode.subscribe((isDark) => {
         self._applyDarkMode();
-        
-        // Switch basemap when dark mode changes
         if (root.mapVM?.changeBasemap) {
-            const targetBasemap = isDark ? "DarkGray" : "Topographic";
-            root.mapVM.changeBasemap(targetBasemap);
+            root.mapVM.changeBasemap(isDark ? "DarkGray" : "Topographic");
         }
-        
-        self.save();
     });
+
+    // The user picked Light / Dark / Auto -- persist that choice.
+    self.darkModeMode.subscribe(() => self.save());
 
     self.layoutPreset.subscribe((preset) => {
         const normalized = normalizeLayoutPreset(preset);

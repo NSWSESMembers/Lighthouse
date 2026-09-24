@@ -120,6 +120,13 @@ whenWeAreReady(function () {
     <li id="lhtaskingremoteregister">\
     <a href="">Register Tab For Remote Control</a>\
     </li>\
+    <li id="lhradiomenuitem">\
+    <a href="' +
+        lighthouseUrl +
+        'pages/radiocon.html' +
+        vars +
+        '" target="_blank">Radio Operations Console</a>\
+    </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
     <li id="lhteammenuitem">\
@@ -196,6 +203,13 @@ whenWeAreReady(function () {
     </li>\
     <li id="lhtaskingremoteregister">\
     <a href="">Register Tab For Remote Control</a>\
+    </li>\
+    <li id="lhradiomenuitem">\
+    <a href="' +
+        lighthouseUrl +
+        'pages/radiocon.html' +
+        vars +
+        '" target="_blank">Radio Operations Console</a>\
     </li>\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">Teams\
     </li>\
@@ -277,6 +291,10 @@ whenWeAreReady(function () {
     registerTabForTaskingRemoteControl()
   });
 
+  $('#lhradiomenuitem > a').mousedown(function () {
+    updateToken();
+  });
+
   function updateTokenAndRegister() {
     updateToken()
     registerTabForTaskingRemoteControl()
@@ -304,7 +322,7 @@ whenWeAreReady(function () {
   }
 
   //lighthouse menu for teams
-  if (location.pathname == '/Teams') {
+  if (location.pathname.toLowerCase() == '/teams') {
     let regionfilter;
     if (user.hq.EntityTypeId != 1) {
       //make region level more obvious
@@ -481,7 +499,7 @@ whenWeAreReady(function () {
   }
 
   //lighthouse menu for situation map
-  if (location.pathname == '/Jobs/SituationalAwareness') {
+  if (location.pathname.toLowerCase() == '/jobs/situationalawareness') {
     let regionfilter;
     if (user.currentHqTypeId != 1) {
       //make region level more obvious
@@ -604,7 +622,7 @@ whenWeAreReady(function () {
 
   //lighthouse menu for jobs
 
-  if (location.pathname === '/Jobs') {
+  if (location.pathname.toLowerCase() === '/jobs') {
     let regionfilter;
     if (user.hq.EntityTypeId != 1) {
       //make region level more obvious

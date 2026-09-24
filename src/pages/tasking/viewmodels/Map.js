@@ -5,6 +5,7 @@ import 'leaflet.markercluster';
 
 import { AssetPopupViewModel } from './AssetPopUp';
 import { JobPopupViewModel } from './JobPopUp';
+import { restyleAllJobMarkers } from '../markers/jobMarker.js';
 
 export function MapVM(Lmap, root) {
   const self = this;
@@ -240,8 +241,11 @@ export function MapVM(Lmap, root) {
   // Track whether clustering is currently active
   self.clusteringEnabled = true;
 
-  // Separate plain layer for pulse rings – not clustered
+  // Separate plain layers for the pulse ring (New) and the marching ring
+  // (Active) – not clustered, follow their marker, visibility kept in sync
+  // by _syncPulseRings.
   self.jobPulseLayer = L.layerGroup().addTo(self.map);
+  self.jobStatusRingLayer = L.layerGroup().addTo(self.map);
 
   // id → marker lookup (flat, no per-type groups)
   self.jobMarkerIndex = new Map();
@@ -279,6 +283,19 @@ export function MapVM(Lmap, root) {
       }
     });
     self._syncPulseRings();
+  };
+
+  /**
+   * Re-render all job marker icons — called when the "show status on markers"
+   * config option is toggled.
+   */
+  self.applyJobStatusOnMarkers = function (on) {
+    // `on` is passed explicitly by Config (root.config isn't wired yet when
+    // this first runs from afterConfigLoad); fall back to reading it live.
+    const enabled = (on === undefined) ? !!root.config?.showJobStatusOnMarkers?.() : !!on;
+    document.querySelectorAll('.legend-status-block')
+      .forEach((el) => el.classList.toggle('d-none', !enabled));
+    restyleAllJobMarkers(root);
   };
 
   /**
@@ -991,52 +1008,36 @@ export function MapVM(Lmap, root) {
     self.clearJobAssetBullseye();
   };
 
-  // Pulse ring visibility management for clustering
-  // When markers get clustered, hide their pulse rings.
-  // When unclustered or spiderfied, show them again.
+  // Ring visibility management for clustering.  The pulse ring (New) and the
+  // marching ring (Active) are only shown while their marker is individually
+  // visible — hidden while it's inside a cluster, shown again on spiderfy /
+  // unclustered / zoom-in.  Both rings follow the same rule.
   self._syncPulseRings = function () {
+    const setVisible = (ring, layer, visible) => {
+      if (!ring) return;
+      const has = layer.hasLayer(ring);
+      if (visible && !has) layer.addLayer(ring);
+      else if (!visible && has) layer.removeLayer(ring);
+    };
+
     self.jobMarkerIndex.forEach((marker) => {
-      if (!marker._pulseRing) return;
+      if (!marker._pulseRing && !marker._statusRing) return;
 
-      // Markers on the standalone rescue layer (not in the cluster group)
-      // are always individually visible – skip cluster logic for them.
+      let visible;
       if (self.rescueJobLayer.hasLayer(marker)) {
-        if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
-          self.jobPulseLayer.addLayer(marker._pulseRing);
-        }
-        return;
-      }
-
-      // When clustering is disabled, all markers are individually visible.
-      if (!self.clusteringEnabled || self.unclusteredJobLayer.hasLayer(marker)) {
-        if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
-          self.jobPulseLayer.addLayer(marker._pulseRing);
-        }
-        return;
-      }
-
-      let visibleParent;
-      try {
-        visibleParent = self.jobClusterGroup.getVisibleParent(marker);
-      } catch (err) {
-        // On error, hide the pulse ring to be safe
-        if (self.jobPulseLayer.hasLayer(marker._pulseRing)) {
-          self.jobPulseLayer.removeLayer(marker._pulseRing);
-        }
-        return;
-      }
-
-      if (visibleParent === marker) {
-        // Marker is individually visible – show pulse ring
-        if (!self.jobPulseLayer.hasLayer(marker._pulseRing)) {
-          self.jobPulseLayer.addLayer(marker._pulseRing);
-        }
+        visible = true;
+      } else if (!self.clusteringEnabled || self.unclusteredJobLayer.hasLayer(marker)) {
+        visible = true;
       } else {
-        // Marker is inside a cluster – hide pulse ring
-        if (self.jobPulseLayer.hasLayer(marker._pulseRing)) {
-          self.jobPulseLayer.removeLayer(marker._pulseRing);
+        try {
+          visible = self.jobClusterGroup.getVisibleParent(marker) === marker;
+        } catch (err) {
+          visible = false; // on error, hide to be safe
         }
       }
+
+      setVisible(marker._pulseRing, self.jobPulseLayer, visible);
+      setVisible(marker._statusRing, self.jobStatusRingLayer, visible);
     });
   };
 

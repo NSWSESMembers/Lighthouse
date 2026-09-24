@@ -1,4 +1,8 @@
-#lighthouseRecentActivationsFieldset .lighthouse-recent-activations-refresh {
+#lighthouseRecentActivationsFieldset .lighthouse-recent-activations-bar {
+  margin-bottom: 8px;
+}
+
+#lighthouseRecentActivationsFieldset legend .lighthouse-recent-activations-refresh {
   float: right;
   margin-top: -3px;
 }

@@ -243,19 +243,22 @@ function HackTheMatrix(id, host, progressBar) {
     console.log(unit);
   }
 
-  BeaconClient.job.search(unit, host, start, end, params.userId, token, function(jobs) {
+  BeaconClient.job.search(unit, start, end, {
+    host, userId: params.userId, token,
+    onProgress: function(val, total) { progressBar.setValue(val / total); },
+  }).then(function(jobs) {
     //console.log(jobs);
-    // $(jobs.Results).each(function(j,k){
+    // $(jobs.results).each(function(j,k){
     //   console.log(k)
     //   console.log(k.Event)
     // })
 
     //really hacky handling for 0 jobs. below code maps so it handles no results just fine.
-    if (jobs.Results.length == 0) {
+    if (jobs.results.length == 0) {
       alert("No job results returned")
     }
 
-    var beacon_jobs = jobs.Results.map(function(d) {
+    var beacon_jobs = jobs.results.map(function(d) {
       var jobRow = [];
 
       _.each(selectedcolumns, function(key) {
@@ -332,7 +335,7 @@ function HackTheMatrix(id, host, progressBar) {
     if (selectedcolumns.indexOf('ICEMSIUMTransactions') != -1) {
       progressBar.setValue(0);
       $('#extra_progress').text("Counting ICEMS Transactions");
-      var queue = jobs.Results.length - 1
+      var queue = jobs.results.length - 1
       var position = 0
       poppy()
 
@@ -347,13 +350,13 @@ function HackTheMatrix(id, host, progressBar) {
     function poppy() {
       progressBar.setValue(position / queue);
       $('#extra_progress').text("Counting ICEMS Transactions..." + Math.floor(position / queue * 100) + "%");
-      const item = jobs.Results[position]
+      const item = jobs.results[position]
       const itemPos = position
       position++
       if (item.ICEMSIncidentIdentifier != null) {
-        BeaconClient.operationslog.search(item.Id, host, params.userId, token, function(logs) {
+        BeaconClient.operationslog.search(item.Id, { host, userId: params.userId, token }).then(function(logs) {
           var numberOfIUM = 0
-          logs.Results.forEach(function(r) {
+          logs.results.forEach(function(r) {
             if (r.Subject && r.Subject.indexOf('Incident Update Message') != -1 && r.Subject.indexOf('Incident Update Message Acceptance') == -1) {
               numberOfIUM++
             }
@@ -367,6 +370,9 @@ function HackTheMatrix(id, host, progressBar) {
             progressBar.close();
             $('#extra_progress').text("");
           }
+        }).catch(function(err) {
+          console.error('ICEMS transaction count failed', err);
+          if (position < queue) { poppy() } else { progressBar.close(); }
         })
       } else {
         if (position < queue) {
@@ -380,8 +386,10 @@ function HackTheMatrix(id, host, progressBar) {
       }
     }
 
-  }, function(val, total) {
-    progressBar.setValue(val / total);
+  }).catch(function(err) {
+    console.error('Job export fetch failed', err);
+    alert('Failed to fetch jobs for export. Your session may have expired.');
+    progressBar.close();
   });
 }
 
