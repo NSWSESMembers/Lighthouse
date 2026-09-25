@@ -2,6 +2,7 @@ name: Publish Prod to Chrome Store
 on:
   release:
     types: [published]
+  workflow_dispatch:
 jobs:
   lintandpublish:
     name: Publish Prod
