@@ -2431,6 +2431,7 @@ overflow: hidden;
    to a plain <em> icon — normalize both to the same box so neither sits
    higher/lower than the other. */
 .job-id-icons > .images-button,
+.job-id-icons > .action-required-button,
 .job-id-icons > em {
   display: inline-flex;
   align-items: center;
@@ -2439,6 +2440,17 @@ overflow: hidden;
   line-height: 1;
   border: 0;
   margin: 0;
+}
+
+.action-required-button {
+  gap: 2px;
+  color: #b45309;
+  font-size: 13px;
+}
+.action-required-count {
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .job-cell--chev {

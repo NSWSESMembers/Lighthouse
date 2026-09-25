@@ -588,6 +588,9 @@ body.dark-mode .job-tooltip__badge--warn {
   background: rgba(217, 119, 6, 0.25);
   color: #fbbf24;
 }
+body.dark-mode .action-required-button {
+  color: #fbbf24;
+}
 
 body.dark-mode .leaflet-control {
   background-color: transparent !important;
