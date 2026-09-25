@@ -577,6 +577,17 @@ body.dark-mode .job-tooltip__addr {
 body.dark-mode .job-tooltip__meta {
   color: #9a9a9a;
 }
+body.dark-mode .job-tooltip__sit {
+  color: #cfcfcf;
+}
+body.dark-mode .job-tooltip__badge {
+  background: rgba(255, 255, 255, 0.09);
+  color: #e0e0e0;
+}
+body.dark-mode .job-tooltip__badge--warn {
+  background: rgba(217, 119, 6, 0.25);
+  color: #fbbf24;
+}
 
 body.dark-mode .leaflet-control {
   background-color: transparent !important;
