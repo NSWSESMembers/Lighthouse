@@ -34,10 +34,10 @@ export function buildJobPopupKO() {
     <!-- /ko -->
     <!-- New line to show tag.Name if actionRequiredTags has length -->
     <div id="actionRequiredTags" class="text-center d-flex flex-wrap mt-1"
-         data-bind="visible: actionRequiredTags().length > 0, click: $root.displayTimelineForJob, clickBubble: false, foreach: actionRequiredTagsDeduplicated"
+         data-bind="visible: actionRequiredTags().length > 0, click: $root.displayTimelineForJob, clickBubble: false, foreach: actionRequiredTagsGrouped"
          role="button" title="Open timeline" style="cursor: pointer;">
-        <span data-bind="class: returnTagClass" style="cursor: pointer; width: 100%;">
-          <i data-bind="class: returnTagIcon"></i> <span data-bind="text: name"></span>
+        <span data-bind="class: tag.returnTagClass" style="cursor: pointer; width: 100%;">
+          <i data-bind="class: tag.returnTagIcon"></i> <span data-bind="text: label"></span>
         </span>
       </div>
 <!-- Assign to Team Dropdown -->
