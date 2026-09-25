@@ -1121,7 +1121,10 @@ tr.job:hover {
   position: relative;
   min-height: 100%;
 }
-#cfgPane-data > .cfg-location,
+#cfgPane-data > .cfg-location {
+  position: relative;
+  z-index: 2;
+}
 #cfgPane-data > .cfg-location-sep,
 #cfgPane-data > .cfg-data {
   position: relative;
