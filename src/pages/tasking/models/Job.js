@@ -304,16 +304,32 @@ export function Job(data = {}, deps = {}) {
     }
 
 
-    self.actionRequiredTagsDeduplicated = ko.pureComputed(() => {
-        const seen = new Set();
-        return self.actionRequiredTags().filter(tag => {
-            const name = tag.name().toLowerCase(); // Deduplicate by name (case-insensitive)
-            if (seen.has(name)) {
-                return false;
+    // One entry per distinct tag name (case-insensitive), each carrying how
+    // many raw actionRequiredTags share that name -- lets the pill list show
+    // "Callback ×2" inline instead of a separate count row/line above it.
+    self.actionRequiredTagsGrouped = ko.pureComputed(() => {
+        const groups = new Map();
+        const order = [];
+        self.actionRequiredTags().forEach(tag => {
+            const key = tag.name().toLowerCase();
+            if (!groups.has(key)) {
+                groups.set(key, { tag, count: 0 });
+                order.push(key);
             }
-            seen.add(name);
-            return true;
+            groups.get(key).count++;
         });
+        return order.map(key => {
+            const { tag, count } = groups.get(key);
+            return { tag, label: count > 1 ? `${tag.name()} ×${count}` : tag.name() };
+        });
+    });
+
+    // Counts raw actionRequiredTags, not the deduplicated list -- two
+    // identical-named tags are still two outstanding actions to resolve,
+    // even though the pill list below only ever shows one row for them.
+    self.actionRequiredCountLabel = ko.pureComputed(() => {
+        const count = self.actionRequiredTags().length;
+        return count === 1 ? "1 outstanding action" : `${count} outstanding actions`;
     });
 
     self.typeName = ko.pureComputed(() => (self.jobType() && self.jobType().Name) || self.type());

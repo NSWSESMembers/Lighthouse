@@ -1113,6 +1113,13 @@
                                                         <i class="far fa-image"></i>
                                                         <span class="visually-hidden">Images</span>
                                                     </button>
+                                                    <button type="button"
+                                                        class="btn btn-link p-0 text-decoration-none fa-center action-required-button"
+                                                        data-bind="visible: j.actionRequiredTags().length > 0, attr: { title: j.actionRequiredCountLabel }, flashTextOnChange: j.actionRequiredTags, click: $root.attachJobTimelineModal, clickBubble: false">
+                                                        <i class="fa fa-thumbtack"></i>
+                                                        <span class="action-required-count" data-bind="visible: j.actionRequiredTags().length > 1, text: j.actionRequiredTags().length"></span>
+                                                        <span class="visually-hidden" data-bind="text: j.actionRequiredCountLabel"></span>
+                                                    </button>
                                                     <em class="fa fa-fw fa-share-alt" style="width: 1em;"
                                                         data-bind="visible: j.icemsIncidentIdentifier, attr:{ title: j.icemsIncidentIdentifier }, css: { 'text-danger': j.hasUnacceptedNotifications() }, flashTextOnChange: j.hasUnacceptedNotifications"></em>
                                                 </div>
@@ -1217,12 +1224,12 @@
                                                             <!-- New line to show tag.Name if actionRequiredTags has length -->
                                                             <div id="actionRequiredTags"
                                                                 class="text-center d-flex flex-wrap justify-content-center mt-1"
-                                                                data-bind="visible: j.actionRequiredTags().length > 0, click: $root.attachJobTimelineModal, clickBubble: false, foreach: j.actionRequiredTagsDeduplicated"
+                                                                data-bind="visible: j.actionRequiredTags().length > 0, click: $root.attachJobTimelineModal, clickBubble: false, foreach: j.actionRequiredTagsGrouped"
                                                                 role="button" title="Open timeline" style="cursor: pointer;">
-                                                                <span data-bind="class: returnTagClass"
+                                                                <span data-bind="class: tag.returnTagClass"
                                                                     style="cursor: pointer; width: 95%; margin-left: 5px; text-align: center;">
-                                                                    <i data-bind="class: returnTagIcon"></i> <span
-                                                                        data-bind="text: name"></span>
+                                                                    <i data-bind="class: tag.returnTagIcon"></i> <span
+                                                                        data-bind="text: label"></span>
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -2523,6 +2530,36 @@
                                                         </div>
                                                     </div>
 
+                                                    <div class="col-md-6 col-lg-4">
+                                                        <label class="form-label d-block mb-2">Show Teams Of
+                                                            Type:</label>
+                                                        <div class="border rounded p-2" id="teamTypeBox">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="teamTypeField"
+                                                                    value="Field"
+                                                                    data-bind="teamTypeFilter: 'Field'">
+                                                                <label class="form-check-label"
+                                                                    for="teamTypeField">Field</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="teamTypeOperations"
+                                                                    value="Operations"
+                                                                    data-bind="teamTypeFilter: 'Operations'">
+                                                                <label class="form-check-label"
+                                                                    for="teamTypeOperations">Operations</label>
+                                                            </div>
+                                                            <div class="form-check">
+                                                                <input class="form-check-input team-status"
+                                                                    type="checkbox" id="teamTypeAviation"
+                                                                    value="Aviation"
+                                                                    data-bind="teamTypeFilter: 'Aviation'">
+                                                                <label class="form-check-label"
+                                                                    for="teamTypeAviation">Aviation</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <div class="col-md-6 col-lg-4">
                                                         <label class="form-label d-block mb-2">Show Teams Tasking With
                                                             Status:</label>

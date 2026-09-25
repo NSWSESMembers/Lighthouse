@@ -210,8 +210,8 @@ describe('isPinned / togglePinned', () => {
   });
 });
 
-describe('actionRequiredTagsDeduplicated', () => {
-  it('keeps only the first tag for each name, case-insensitively', () => {
+describe('actionRequiredTagsGrouped', () => {
+  it('groups by name (case-insensitively), suffixing a ×N count when duplicated', () => {
     const j = new Job({
       ActionRequiredTags: [
         { Id: 1, Name: 'Callback', TagGroupId: 27 },
@@ -219,8 +219,8 @@ describe('actionRequiredTagsDeduplicated', () => {
         { Id: 3, Name: 'Other', TagGroupId: 27 },
       ],
     });
-    const names = j.actionRequiredTagsDeduplicated().map((t) => t.name());
-    expect(names).toEqual(['Callback', 'Other']);
+    const labels = j.actionRequiredTagsGrouped().map((g) => g.label);
+    expect(labels).toEqual(['Callback ×2', 'Other']);
   });
 
   it('the constructor already filters to TagGroupId 27', () => {
@@ -231,6 +231,29 @@ describe('actionRequiredTagsDeduplicated', () => {
       ],
     });
     expect(j.actionRequiredTags().map((t) => t.name())).toEqual(['Keep']);
+  });
+});
+
+describe('actionRequiredCountLabel', () => {
+  it('counts raw tags, not the deduplicated/grouped list', () => {
+    const j = new Job({
+      ActionRequiredTags: [
+        { Id: 1, Name: 'Callback', TagGroupId: 27 },
+        { Id: 2, Name: 'callback', TagGroupId: 27 },
+      ],
+    });
+    expect(j.actionRequiredTagsGrouped().length).toBe(1);
+    expect(j.actionRequiredCountLabel()).toBe('2 outstanding actions');
+  });
+
+  it('singularises for exactly one outstanding action', () => {
+    const j = new Job({ ActionRequiredTags: [{ Id: 1, Name: 'Callback', TagGroupId: 27 }] });
+    expect(j.actionRequiredCountLabel()).toBe('1 outstanding action');
+  });
+
+  it('reads "0 outstanding actions" when there are none', () => {
+    const j = new Job({});
+    expect(j.actionRequiredCountLabel()).toBe('0 outstanding actions');
   });
 });
 
