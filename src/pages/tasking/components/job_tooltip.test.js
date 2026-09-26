@@ -36,14 +36,15 @@ describe('buildJobTooltipHtml', () => {
         expect(html).toContain('On Scene');
     });
 
-    it('does not surface an agency that has only been Requested/Acknowledged', () => {
+    it('still surfaces an agency that has only been Requested', () => {
         const job = makeJob();
         job._icemsAgenciesRaw.push({ Name: 'NSWPF', AgencyStatusId: 1 }); // Requested
         const html = buildJobTooltipHtml(job);
-        expect(html).not.toContain('job-tooltip__badges');
+        expect(html).toContain('job-tooltip__badges');
+        expect(html).toContain('NSWPF');
     });
 
-    it('picks the higher-ranked agency when several have responded', () => {
+    it('shows every agency, not just the most notable one', () => {
         const job = makeJob();
         job._icemsAgenciesRaw.push(
             { Name: 'ASNSW', ResourceStatusId: 1, AgencyStatusId: 3 }, // En Route
@@ -51,7 +52,7 @@ describe('buildJobTooltipHtml', () => {
         );
         const html = buildJobTooltipHtml(job);
         expect(html).toContain('NSWRFS');
-        expect(html).not.toContain('ASNSW');
+        expect(html).toContain('ASNSW');
     });
 
     it('shows an action-required tag badge, with a +N overflow for extras', () => {
