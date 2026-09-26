@@ -435,9 +435,9 @@ body.sidebar-collapsed .vsplit {
 }
 .job-tooltip__badges {
   display: flex;
-  gap: 5px;
+  flex-wrap: wrap;
+  gap: 4px 5px;
   margin-top: 5px;
-  overflow: hidden;
 }
 .job-tooltip__badge {
   display: inline-flex;
