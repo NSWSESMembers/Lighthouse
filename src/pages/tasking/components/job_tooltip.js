@@ -8,28 +8,25 @@ function escapeHtml(s) {
 }
 
 // Bootstrap badge classes already computed by Job.icemsAgencies() for the
-// full agency badges in the click-popup -- reused here just to decide which
-// dot colour (if any) to show, not to render a Bootstrap badge.
+// full agency badges in the click-popup -- reused here just to pick a dot
+// colour per agency, not to render a Bootstrap badge.
 const AGENCY_DOT_COLOR = {
-    'bg-success': '#16a34a', // On Scene / Responded
-    'bg-primary': '#2563eb', // En Route
+    'bg-success': '#16a34a',            // On Scene / Responded
+    'bg-primary': '#2563eb',            // En Route
+    'bg-info text-dark': '#0891b2',     // Acknowledged / Will Attend
+    'bg-warning text-dark': '#b45309',  // Requested / Sent
+    'bg-secondary': '#6b7280',          // Left Scene / Closed
+    'bg-danger': '#dc2626',             // Will Not Attend / Timeout
+    'bg-light text-dark': '#9ca3af',    // No status available
 };
 
-/**
- * Pick the single most notable agency to surface in the tooltip -- On Scene
- * beats En Route beats everything else (Requested/Acknowledged/Closed/
- * Timeout/Will Not Attend). Showing every agency, or agencies that haven't
- * actually turned up yet, would fire on nearly every multi-agency job and
- * stop meaning anything.
- */
-function bestAgencyBadge(job) {
-    const agencies = job.icemsAgencies?.() || [];
-    let best = null;
-    for (const a of agencies) {
-        const rank = a.badgeClass === 'bg-success' ? 2 : a.badgeClass === 'bg-primary' ? 1 : 0;
-        if (rank > 0 && (!best || rank > best.rank)) best = { ...a, rank };
-    }
-    return best;
+/** Every ICEMS agency involved, decorated with a dot colour for the tooltip. */
+function agencyBadges(job) {
+    return (job.icemsAgencies?.() || []).map(a => ({
+        name: a.name,
+        statusLabel: a.statusLabel,
+        dotColor: AGENCY_DOT_COLOR[a.badgeClass] || '#6b7280',
+    }));
 }
 
 /**
@@ -55,17 +52,12 @@ export function buildJobTooltipHtml(job) {
     const titleBits = [id ? `#${id}` : null, priority || null, type || null].filter(Boolean).map(escapeHtml);
     const metaBits = [status || null, unit || null].filter(Boolean).map(escapeHtml);
 
-    // Badges are deliberately opt-in per job -- each only appears when
-    // there's something worth flagging, so a quiet/new job's tooltip stays
-    // as small as today's rather than always reserving the row.
-    const badges = [];
-    const agency = bestAgencyBadge(job);
-    if (agency) {
-        const dotColor = AGENCY_DOT_COLOR[agency.badgeClass] || '#6b7280';
-        badges.push(
-            `<span class="job-tooltip__badge"><span class="job-tooltip__badge-dot" style="background:${dotColor}"></span>${escapeHtml(agency.name)} ${escapeHtml(agency.statusLabel)}</span>`
-        );
-    }
+    // Badges are deliberately opt-in per job -- the row only appears when
+    // there's something to show, so a quiet/new job's tooltip stays as
+    // small as today's rather than always reserving the row.
+    const badges = agencyBadges(job).map(a =>
+        `<span class="job-tooltip__badge" title="${escapeHtml(a.statusLabel)}"><span class="job-tooltip__badge-dot" style="background:${a.dotColor}"></span>${escapeHtml(a.name)}</span>`
+    );
     const actionTags = job.actionRequiredTags?.() || [];
     if (actionTags.length) {
         const first = actionTags[0].name?.() || '';
