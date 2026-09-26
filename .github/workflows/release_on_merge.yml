@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   release:
@@ -52,3 +53,8 @@ jobs:
             --target master \
             --title "$PR_TITLE" \
             --notes "$notes"
+
+      - name: Trigger Chrome Store publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run publish_prod.yml --ref master
