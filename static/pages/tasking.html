@@ -4033,19 +4033,22 @@
                                                             data-bind="text: name"></span>
                                                     </span>
                                                 </div>
-                                                <!-- flags; subtle, not layout-dominant -->
-                                                <span
-                                                    class="badge rounded-pill bg-warning-subtle text-warning-emphasis me-1"
-                                                    data-bind="visible: important">Important</span>
-                                                <span
-                                                    class="badge rounded-pill bg-danger-subtle text-danger-emphasis me-1"
-                                                    data-bind="visible: actionRequired">Action Required</span>
-                                                <button type="button"
-                                                    class="badge bg-success border-0"
-                                                    style="cursor: pointer;"
-                                                    data-bind="visible: actionRequired, click: $root.attachOpsLogResolveModal">
-                                                    Resolve
-                                                </button>
+                                                <!-- flags; subtle, not layout-dominant. Resolve action sits right-aligned on the same row -->
+                                                <div class="d-flex align-items-center flex-wrap gap-1 mt-1"
+                                                    data-bind="visible: important() || actionRequired()">
+                                                    <span
+                                                        class="badge rounded-pill bg-warning-subtle text-warning-emphasis"
+                                                        data-bind="visible: important">Important</span>
+                                                    <span
+                                                        class="badge rounded-pill bg-danger-subtle text-danger-emphasis"
+                                                        data-bind="visible: actionRequired">Action Required</span>
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-outline-success py-0 px-2 ms-auto text-nowrap"
+                                                        title="Mark this action as resolved"
+                                                        data-bind="visible: actionRequired, click: $root.attachOpsLogResolveModal">
+                                                        <i class="fa fa-check me-1"></i>Resolve
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
