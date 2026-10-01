@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { request, requestPaginated } from './core/request.js';
-import { search, get, create, resolve, unresolvedActionsLog, searchLog } from './operationslog.js';
+import { search, get, create, resolve, unresolvedActionsLog, unresolvedActionsForJobs, searchLog } from './operationslog.js';
 
 vi.mock('./core/request.js', async () => {
   const actual = await vi.importActual('./core/request.js');
@@ -133,5 +133,46 @@ describe('unresolvedActionsLog', () => {
     expect(url).toContain('JobIds%5B0%5D=job1');
     expect(url).toContain('UnresolvedActionsOnly=true');
     expect(result).toEqual({ results: [{ Id: 9 }], totalItems: 1 });
+  });
+});
+
+describe('unresolvedActionsForJobs', () => {
+  const dateFrom = new Date('2026-01-01T00:00:00.000Z');
+
+  it('makes no request for an empty job list', async () => {
+    const result = await unresolvedActionsForJobs([], dateFrom, ctx);
+    expect(requestPaginated).not.toHaveBeenCalled();
+    expect(result).toEqual({ results: [], totalItems: 0 });
+  });
+
+  it('queries unresolved action-required entries for every job in one request', async () => {
+    vi.mocked(requestPaginated).mockResolvedValue({ results: [{ Id: 1, JobId: 11 }], totalItems: 1 });
+    const result = await unresolvedActionsForJobs([11, 12], dateFrom, ctx);
+
+    expect(requestPaginated).toHaveBeenCalledTimes(1);
+    const [url, opts] = vi.mocked(requestPaginated).mock.calls[0];
+    expect(url).toMatch(/^https:\/\/beacon\.test\/Api\/v1\/OperationsLog\/search\?JobIds=11&JobIds=12&/);
+    expect(url).toContain('DateFrom=2026-01-01T00%3A00%3A00.000Z');
+    expect(url).toContain('UnresolvedActionsOnly=true');
+    expect(url).not.toContain('TagIds');
+    expect(opts).toMatchObject({ token: 'tok' });
+    expect(result).toEqual({ results: [{ Id: 1, JobId: 11 }], totalItems: 1 });
+  });
+
+  it('splits large job lists so each query string stays under the IIS 4096 limit', async () => {
+    vi.mocked(requestPaginated).mockImplementation(async (url) => ({
+      results: [...url.matchAll(/JobIds=(\d+)/g)].map((m) => ({ JobId: Number(m[1]) })),
+      totalItems: 0,
+    }));
+    const jobIds = Array.from({ length: 500 }, (_, i) => 10000000 + i);
+    const result = await unresolvedActionsForJobs(jobIds, dateFrom, ctx);
+
+    const urls = vi.mocked(requestPaginated).mock.calls.map(([url]) => url);
+    expect(urls.length).toBeGreaterThan(1);
+    urls.forEach((url) => {
+      const query = url.split('?')[1] + '&PageIndex=9999&PageSize=100';
+      expect(query.length).toBeLessThanOrEqual(4096);
+    });
+    expect(result.results.map((r) => r.JobId)).toEqual(jobIds);
   });
 });
