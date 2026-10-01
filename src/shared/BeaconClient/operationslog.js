@@ -79,7 +79,7 @@ export function resolve(entryId, resolution, ctx = {}) {
  * @param {Array<string|number>} [filters.jobIds]  incident/job association filter
  * @param {Array<string|number>} [filters.eventIds]  event association filter
  * @param {Array<string|number>} [filters.tagIds]  tag filter -- `TagIds[N]` is confirmed
- *        against this same endpoint by the existing unresolvedActionsLog() below
+ *        against this same endpoint (matches any of the given tags)
  * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
  *          pageSize?: number, pageLimit?: number, onPage?: Function}} ctx
  * @returns {Promise<{results: object[], totalItems: number}>}
@@ -104,6 +104,10 @@ export function searchLog(filters = {}, ctx = {}) {
   return requestPaginated(url, { token, signal, pageSize, pageLimit, onPage });
 }
 
+// Beacon's IIS front end rejects query strings over 4096 chars -- with a 404,
+// not a 413 -- so batched JobIds searches are split to stay under this.
+const MAX_QUERY_LENGTH = 3800;
+
 /**
  * Unresolved "action required" Ops Log entries for a job.
  *
@@ -120,20 +124,6 @@ export async function unresolvedActionsLog(job, ctx = {}) {
     ExcludeJobEntries: 'false',
     ExcludeIcemsEntries: 'true',
     UnresolvedActionsOnly: 'true',
-    'TagIds[0]': 286,
-    'TagIds[1]': 423,
-    'TagIds[2]': 285,
-    'TagIds[3]': 506,
-    'TagIds[4]': 288,
-    'TagIds[5]': 290,
-    'TagIds[6]': 289,
-    'TagIds[7]': 551,
-    'TagIds[8]': 291,
-    'TagIds[9]': 307,
-    'TagIds[10]': 292,
-    'TagIds[11]': 424,
-    'TagIds[12]': 422,
-    'TagIds[13]': 287,
     PageIndex: 1,
     PageSize: 100,
     SortField: 'TimeLogged',
@@ -143,4 +133,64 @@ export async function unresolvedActionsLog(job, ctx = {}) {
   });
 
   return toCollection(await request(`${host}/Api/v1/OperationsLog/search?${queryParams.toString()}`, { token, signal }));
+}
+
+/**
+ * Unresolved "action required" Ops Log entries for many jobs at once -- the
+ * batched form of unresolvedActionsLog(). Every entry carries its `JobId`, so
+ * callers group the results per job.
+ *
+ * No TagIds filter: UnresolvedActionsOnly alone returns every entry still
+ * flagged ActionRequired, and the Job model keeps only TagGroupId 27 tags.
+ *
+ * JobIds use the repeated-key form (`JobIds=1&JobIds=2`) rather than
+ * `JobIds[N]` to fit more jobs per request; the ids are split into as many
+ * requests as needed to keep each query string under MAX_QUERY_LENGTH (about
+ * 240 jobs per request), and every page of each is fetched.
+ *
+ * @param {Array<string|number>} jobIds
+ * @param {Date} dateFrom  must be on/before the oldest job's received time
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<{results: object[], totalItems: number}>}
+ */
+export async function unresolvedActionsForJobs(jobIds, dateFrom, ctx = {}) {
+  const { host, userId = 'notPassed', token, signal } = ctx;
+  if (!jobIds.length) return { results: [], totalItems: 0 };
+
+  const params = new URLSearchParams({
+    DateFrom: dateFrom.toISOString(),
+    DateTo: new Date().toISOString(),
+    ExcludeJobEntries: 'false',
+    ExcludeIcemsEntries: 'true',
+    UnresolvedActionsOnly: 'true',
+    SortField: 'TimeLogged',
+    SortOrder: 'desc',
+    LighthouseFunction: 'GetOperationsLogUnresolvedActions',
+    userId: userId,
+  });
+  // requestPaginated appends `&PageIndex=N&PageSize=100` to each request.
+  const fixedLength = params.toString().length + '&PageIndex=9999&PageSize=100'.length;
+
+  const batches = [];
+  let batch = [];
+  let length = fixedLength;
+  for (const id of jobIds) {
+    const part = `JobIds=${encodeURIComponent(id)}&`;
+    if (batch.length && length + part.length > MAX_QUERY_LENGTH) {
+      batches.push(batch);
+      batch = [];
+      length = fixedLength;
+    }
+    batch.push(part);
+    length += part.length;
+  }
+  batches.push(batch);
+
+  const pages = await Promise.all(
+    batches.map((parts) =>
+      requestPaginated(`${host}/Api/v1/OperationsLog/search?${parts.join('')}${params.toString()}`, { token, signal }),
+    ),
+  );
+  const results = pages.flatMap((p) => p.results);
+  return { results, totalItems: results.length };
 }
