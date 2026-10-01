@@ -383,6 +383,10 @@ export function Job(data = {}, deps = {}) {
     // fetch. This only tracks real REST fetches.
     let _lastRefreshDataFetch = 0;
     self.lastIcemsUpdate = 0;
+    // When actionRequiredTags was last merged (ms). Lets the batched
+    // unresolved-actions fetch skip jobs a per-job fetch updated while the
+    // batch was in flight.
+    self.lastActionTagsUpdate = 0;
 
     // Minimum cooldown (ms) between single-job tasking fetches. Bulk/batch
     // refreshes update lastTaskingDataUpdate directly, so this gate also
@@ -747,6 +751,7 @@ export function Job(data = {}, deps = {}) {
             }
         }
         if (Array.isArray(d.ActionRequiredTags)) {
+            this.lastActionTagsUpdate = Date.now();
             const newActionTags = d.ActionRequiredTags
                 .filter(t => t.TagGroupId === 27)
                 .map(t => new Tag(t));
