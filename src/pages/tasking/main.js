@@ -658,7 +658,7 @@ function VM() {
     self.sortedTeams = ko.pureComputed(function () { //heavy caching to reduce the slice/sort load
         const key = self.teamSortKey();
         const asc = self.teamSortAsc();
-        const input = self.filteredTeams();
+        const input = self.listedTeams();
 
         if (input === teamLastInput && key === teamLastKey && asc === teamLastAsc) {
             return teamLastOutput;
@@ -677,7 +677,7 @@ function VM() {
     self.sortedJobs = ko.pureComputed(function () {
         const key = self.jobSortKey()
         const asc = self.jobSortAsc();
-        const input = self.filteredJobs();
+        const input = self.listedJobs();
 
         if (input === jobLastInput && key === jobLastKey && asc === jobLastAsc) {
             return jobLastOutput;
@@ -873,6 +873,29 @@ function VM() {
 
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
+    // "In map view only" — narrows the incident LIST to jobs inside the
+    // current map viewport. Deliberately applied after filteredJobs (which
+    // drives the map markers) so panning never adds/removes markers.
+    self.showInViewIncidentsOnly = ko.observable(localStorage.getItem('tasking.incidentsInViewOnly') === 'true');
+    self.showInViewIncidentsOnly.subscribe(v => localStorage.setItem('tasking.incidentsInViewOnly', v ? 'true' : 'false'));
+    self.toggleInViewIncidentsOnly = () => { self.showInViewIncidentsOnly(!self.showInViewIncidentsOnly()); return true; };
+
+    self.mapBounds = ko.observable(null);
+    map.on('moveend', () => self.mapBounds(map.getBounds()));
+    map.whenReady(() => self.mapBounds(map.getBounds()));
+
+    self.listedJobs = ko.pureComputed(() => {
+        const jobs = self.filteredJobs();
+        if (!self.showInViewIncidentsOnly()) return jobs;
+        const bounds = self.mapBounds();
+        if (!bounds) return jobs;
+        return jobs.filter(jb => {
+            const lat = jb.address.latitude();
+            const lng = jb.address.longitude();
+            return lat != null && lng != null && bounds.contains([lat, lng]);
+        });
+    }).extend({ rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
+
     // Team filtering/searching
     self.teamSearch = ko.observable('');
     self.clearTeamSearch = () => self.teamSearch('');
@@ -914,6 +937,24 @@ function VM() {
 
     }).extend({ trackArrayChanges: true, rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
+    // "In map view only" for the team LIST — a team is in view when any of
+    // its tracked radio assets is inside the viewport. Applied after
+    // filteredTeams (which drives isFilteredIn / asset markers).
+    self.showInViewTeamsOnly = ko.observable(localStorage.getItem('tasking.teamsInViewOnly') === 'true');
+    self.showInViewTeamsOnly.subscribe(v => localStorage.setItem('tasking.teamsInViewOnly', v ? 'true' : 'false'));
+    self.toggleInViewTeamsOnly = () => { self.showInViewTeamsOnly(!self.showInViewTeamsOnly()); return true; };
+
+    self.listedTeams = ko.pureComputed(() => {
+        const teams = self.filteredTeams();
+        if (!self.showInViewTeamsOnly()) return teams;
+        const bounds = self.mapBounds();
+        if (!bounds) return teams;
+        return teams.filter(tm => (tm.trackableAssets() || []).some(a => {
+            const lat = a.latitude();
+            const lng = a.longitude();
+            return lat != null && lng != null && bounds.contains([lat, lng]);
+        }));
+    }).extend({ rateLimit: { timeout: 100, method: 'notifyWhenChangesStop' } });
 
     self.filteredTrackableAssets = ko.pureComputed(() => {
 
