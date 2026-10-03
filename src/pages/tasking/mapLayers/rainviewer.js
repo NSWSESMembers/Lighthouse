@@ -206,8 +206,8 @@ export function registerRainRadarLayer(vm, map) {
       const legendDiv = document.createElement("div");
       legendDiv.className = "rv-legend-container";
       legendDiv.innerHTML = `
-        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 12px; background: #fff; border-radius: 4px 4px 0 0; border-bottom: 1px solid #eee; box-shadow: 0 -1px 3px rgba(0,0,0,.15);">
-          <span style="font-size: 10px; font-weight: 600; color: #666;">Rainfall Intensity (dBZ)</span>
+        <div class="rv-legend-panel">
+          <span class="rv-legend-title">Rainfall Intensity (dBZ)</span>
           <div class="rv-legend-bar" style="display: flex; height: 16px; border: 1px solid rgba(0,0,0,0.2); border-radius: 2px; overflow: visible; width: 100%; max-width: 320px; position: relative;"></div>
         </div>`;
       
@@ -278,7 +278,7 @@ export function registerRainRadarLayer(vm, map) {
             <option value="125">4×</option>
           </select>
           
-          <div style="border-left: 1px solid #ddd; height: 20px;"></div>
+          <div class="rv-divider"></div>
           
           <div style="display: flex; align-items: center; gap: 4px;">
             <label style="font-size: 11px; font-weight: 500; margin: 0; white-space: nowrap;">Opacity:</label>
