@@ -22,7 +22,7 @@
                     <div
                         class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header toolbar-label">
                         <div class="flex-grow-1 d-flex justify-content-center">
-                            <span>Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
+                            <span>Teams (<!-- ko if: showInViewTeamsOnly --><span data-bind="text: listedTeams().length"></span>/<!-- /ko --><span data-bind="text: filteredTeams().length"></span>)</span>
                         </div>
                     </div>
 
@@ -38,6 +38,11 @@
                             title="Toggle pinned-only teams"
                             data-bind="click: togglePinnedTeamsOnly, css: { active: showPinnedTeamsOnly }, disable: !countPinnedTeams()">
                             <i class="fa fa-star fa-center"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
+                            title="Only list teams within the current map view"
+                            data-bind="click: toggleInViewTeamsOnly, css: { active: showInViewTeamsOnly }">
+                            <i class="fa fa-map fa-center"></i>
                         </button>
                             <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Ops Log"
                                 data-bind="click: openBlankOpsLogModal">
@@ -779,7 +784,7 @@
                     <div
                         class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header toolbar-label">
                         <div class="flex-grow-1 d-flex justify-content-center">
-                            <span>Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
+                            <span>Incidents (<!-- ko if: showInViewIncidentsOnly --><span data-bind="text: listedJobs().length"></span>/<!-- /ko --><span data-bind="text: filteredJobs().length"></span>)</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -807,6 +812,11 @@
                             title="Toggle pinned-only incidents"
                             data-bind="click: togglePinnedIncidentsOnly, css: { active: showPinnedIncidentsOnly }, disable: !countPinnedIncidents()">
                             <i class="fa fa-star fa-center"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
+                            title="Only list incidents within the current map view"
+                            data-bind="click: toggleInViewIncidentsOnly, css: { active: showInViewIncidentsOnly }">
+                            <i class="fa fa-map fa-center"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Ops Log"
                             data-bind="click: openBlankOpsLogModal">
