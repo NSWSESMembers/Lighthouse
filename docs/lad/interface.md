@@ -25,6 +25,7 @@ The Team and Incident registers share a common set of controls:
 ![Register control buttons](images/register-controls.png)
 
 - **Toggle Starred** — switches the register between all filtered incidents/teams and only [starred](common-functions.md#starring-incidents-and-teams) ones.
+- **Toggle In Map View** — lists only the incidents/teams inside the current Situation Map view. See [Listing Only What's in the Map View](common-functions.md#listing-only-whats-in-the-map-view).
 - **New Ops Log Entry** — opens the [New Ops Log](common-functions.md#new-ops-log) dialog. The entry is not automatically attached to an incident.
 - **New Radio Log Entry** — opens the [New Radio Log](common-functions.md#new-radio-log) dialog. The entry is not automatically attached to a team or incident.
 - **Filter Settings** — opens the filters relevant to that register (Teams or Incidents).
