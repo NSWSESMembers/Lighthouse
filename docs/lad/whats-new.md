@@ -14,4 +14,8 @@ Format:  ## YYYY-MM-DD  then one bullet per change, linking to the guide section
 
 ## 2026-10-06
 
-- The LAD user guide is now online at [lighthouse.ses.nsw.gov.au/guides/lad](https://lighthouse.ses.nsw.gov.au/guides/lad/), replacing the v1.5 PDF.
+- The LAD user guide is now online at [lighthouse.ses.nsw.gov.au/guides/lad](https://lighthouse.ses.nsw.gov.au/guides/lad/), based on the v1.6 Learner Guide. It covers:
+  - The new tabbed [Configuration](configuration.md) screen, including Live Updates, Layout presets, Appearance and road travel times for [Instant Task Suggestions](configuration.md#instant-task-suggestions).
+  - [Collaborative map layers](situation-map.md#collaborative-map-layer).
+  - [Incident status indicators on map markers](situation-map.md#incident-status-on-markers) and the incident hover popup.
+  - [Resolving action required notes](incident-register.md#action-required-tags--resolving-notes) from the Incident Timeline.

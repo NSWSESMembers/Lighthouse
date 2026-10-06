@@ -1,13 +1,13 @@
 ---
 title: Situation Map
-nav_order: 8
+nav_order: 9
 ---
 
 # Situation Map
 
-The Situation Map is on the right of the screen. It displays all filtered incidents and matched teams, giving you a visual picture to support tasking and decision making.
+The Situation Map is on the right of the screen (by default — see [Layout](configuration.md#layout)). It displays all filtered incidents and matched teams, giving you a visual picture to support tasking and decision making.
 
-The different kinds of map content — incidents, assets (radios), overlay icons and overlay polygons (areas) — are stacked in a set order, with higher layers drawn over lower ones. The order is set on the [Page Configuration](getting-started.md#team--incident-filters) screen. By default (top to bottom) it is: incident markers, asset markers, overlay icons, overlay polygons — so incident markers are always drawn on top.
+The different kinds of map content — incidents, collaborative layer markers, assets (radios), overlay icons and overlay polygons (areas) — are stacked in a set order, with higher layers drawn over lower ones. The order is set under [Marker Layer Order](configuration.md#marker-layer-order); by default incident markers are always drawn on top.
 
 ## Incident Clustering
 
@@ -16,9 +16,26 @@ Incidents can be clustered to make them easier to access and to deal with overla
 - **Incidents at the same address / GPS location** — stops incidents being missed when they're stacked on top of each other. The cluster shows how many incidents are at the location.
 - **Incidents close together** — as you zoom out, incidents within a set distance of each other are grouped to keep the map readable.
 
+![Incident cluster](images/marker-cluster.png)
+
 Clusters display as a hexagon. The number inside is the number of incidents in the cluster; a **red** number means at least one is a rescue incident.
 
 The border works like a pie chart of incident priorities, using the same colours as the [Legend](#legend). For example, a cluster of 20 incidents with a border that is half green, a quarter blue and a quarter yellow contains 10 general, 5 immediate and 5 priority incidents.
+
+Clustering settings are under [Incident Marker Clustering](configuration.md#incident-marker-clustering).
+
+## Incident Status on Markers
+
+When enabled under [Map Markers](configuration.md#incident-status-on-markers) (on by default), extra indicators are drawn on incident markers:
+
+| Indicator | Meaning |
+| --- | --- |
+| <img class="icon" src="images/marker-unacknowledged.png" alt="" height="28"> <img class="icon" src="images/marker-unacknowledged-cluster.png" alt="" height="28"> | **Unacknowledged** — a pulsing yellow circle. Also shown on a cluster that contains an unacknowledged incident. |
+| <img class="icon" src="images/marker-active.png" alt="" height="28"> | **Active** (not tasked) — a rotating purple dotted ring. |
+| — | **Tasked** — no extra indicator. |
+| <img class="icon" src="images/marker-complete.png" alt="" height="28"> | **Referred, Complete or Finalised** — a black diagonal line through the icon. |
+| <img class="icon" src="images/marker-cancelled.png" alt="" height="28"> | **Cancelled or Rejected** — a black cross through the icon. |
+| <img class="icon" src="images/marker-action-required.png" alt="" height="28"> | **Action Required** — a red exclamation mark when the incident has an outstanding action required tag, whatever its status. |
 
 ## Map Control
 
@@ -52,7 +69,7 @@ Measure distances between multiple points. Several separate measurements can be 
 
 ### Address Search
 
-Open Address Search by right-clicking the map and choosing **Address Search**, or with the search tool in the map controls.
+Open Address Search by right-clicking the map and choosing **Address Search**, or with the search tool <img class="icon" src="images/icon-map-search.png" alt="Search" height="20"> in the map controls.
 
 ![Address Search in the map context menu](images/map-context-address-search.png)
 
@@ -76,11 +93,11 @@ You can create an incident from a map location using reverse geocoding.
 
    ![Geocode result details](images/geocode-result.png)
 
-4. Click **Create Incident** to open Beacon's *Create New Incident* page in your remote tab with the address pre-filled, then create the incident as normal.
+4. Click **Create Incident** to open Beacon's *Create New Incident* page in your [remote tab](getting-started.md#remote-beacon-tab) with the address pre-filled, then create the incident as normal.
 
 ## Layers
 
-Layers control what is shown on the map. Open the Layers menu with the layer button in the top left of the map.
+Layers control what is shown on the map. Open the Layers menu with the layer button <img class="icon" src="images/icon-layers.png" alt="Layers" height="20"> in the top left of the map.
 
 ### Basemap
 
@@ -111,21 +128,45 @@ Most layers are described by their name. Those that need more explanation:
 - **Filtered Unit Boundaries** — a pink outline around your filtered headquarters.
 - **NSW SES Zone Boundaries** — SES zone boundaries.
 - **Unit/Zone Boundaries Hybrid** — SES zone and unit boundaries.
+- **SES Unit Locations** — the location of every SES unit headquarters.
 - **Active FRAOs** — active FRAO declarations, from the Beacon FRAO register.
 
-**HazardWatch (Hazards near me)**
+**HazardWatch**
 
-- **SES HazardWatch products** — flood, tsunami, severe weather, coastal erosion and snow warnings. Click a warning to see the published product details. Refer to the Public Information Manual for more on warnings.
-
-**Lighthouse Geoservices**
-
-- **SES Unit Locations** — the location of every SES unit headquarters.
+- **HazardWatch Active Warnings** — flood, tsunami, severe weather, coastal erosion and snow warnings. Click a warning to see the published product details. Refer to the Public Information Manual for more on warnings.
 
 ## Legend
 
-The legend is in the bottom left of the map and explains the icons shown. It can be hidden and re-opened at any time.
+The legend is in the bottom left of the map and explains the icons shown — incident shapes and priority colours, flood rescue categories, job status indicators, overlays and asset types. It can be hidden and re-opened at any time.
 
-![Map legend](images/legend.png)
+![Map legend](images/legend.jpg)
+
+## Collaborative Map Layer
+
+Collaborative map layers let users place markers on the map that other users can see. Create or subscribe to a layer under [Collaborative Layers](configuration.md#collaborative-layers) in the Configuration screen, then make it visible from the **Layers** menu.
+
+### Adding a Marker
+
+1. Right-click the map and choose **Add marker to collaborative layer**.
+
+   ![Add marker to collaborative layer in the map context menu](images/map-context-collab-marker.png)
+
+2. If you're subscribed to more than one layer, choose the layer to add the marker to.
+
+   ![Choose a layer](images/collab-choose-layer.png)
+
+3. Choose the marker icon and colour, enter a title and description, and click **Save**. Actions on markers are logged to the Ops Log.
+
+   ![New marker form](images/collab-new-marker.jpg)
+
+### Viewing and Changing a Marker
+
+Click a marker to open it and see its details and comments.
+
+- Use **Edit** or **Delete** to change or remove the marker.
+- To comment, type in the comment field and click **Comment**.
+
+![Collaborative marker popup](images/collab-marker-view.jpg)
 
 ## Incidents
 
@@ -148,15 +189,17 @@ Close the popup with the cross in its top right, or by clicking elsewhere on the
 
 ![Incident popup](images/incident-popup.jpg)
 
-### Incident Data Refresh for Popups
+### Hovering over an Incident
 
-Incident data is refreshed when you open an incident on the map. Because the full refresh only runs every 60 seconds by default, the latest data may show the incident no longer matches your filters — it is then removed from the map and you'll see an advisory message at the top of the screen.
+Hover over an incident marker to see a summary popup with the address, situation on scene and any outstanding action items.
 
-The most common case is an incident that has been completed (and your filters exclude completed incidents) but hasn't been refreshed yet. Clicking it fetches the new status, which removes it from the map so it can't be opened.
+![Incident hover popup](images/incident-hover.jpg)
 
 ### Incident Popup Actions
 
 **Incident details section**
+
+![Incident popup action buttons](images/incident-popup-actions.png)
 
 - **Task Team** — opens [Instant Task](common-functions.md#tasking-teams-instant-task).
 - **Incident Timeline** — opens the [Incident Timeline](incident-register.md#incident-timeline).
@@ -166,16 +209,12 @@ The most common case is an incident that has been completed (and your filters ex
 
 **Incident taskings section**
 
+![Incident popup taskings](images/incident-popup-taskings.png)
+
 - **Team row** — click to zoom to the team's location (if available).
 - **Team status** — click to change the tasking status, as in the [registers](team-register.md#tasking-status).
 - **Route to Asset** (left button) — shows a road route from the team's current location to the incident with an approximate ETA.
 - **Fit Bounds** (right button) — zooms in as far as possible while keeping both the team and incident in view.
-
-![Incident popup taskings](images/incident-popup-taskings.png)
-
-### Unacknowledged Incidents
-
-An incident in the *New* (unacknowledged) status emits a pulsing yellow circle. A cluster containing any unacknowledged incidents emits a pulsing yellow hexagon.
 
 ## Teams
 

@@ -5,7 +5,7 @@ nav_order: 1
 
 # Lighthouse Aided Dispatch (LAD)
 
-![LAD](images/lad-logo.png){: width="240"}
+<img src="images/lad-logo.png" alt="LAD" width="240">
 
 ## Purpose
 
@@ -23,6 +23,8 @@ LAD has been designed with three balanced guiding principles:
 
 Lighthouse should be automatically installed on all SES devices. If Lighthouse is installed, the **Lighthouse** navigation menu will be visible in Beacon.
 
+![Lighthouse menu in the Beacon navigation bar](images/beacon-menu-bar.png)
+
 If you are on a device that does not have Lighthouse installed, go to [lighthouse.ses.nsw.gov.au](https://lighthouse.ses.nsw.gov.au) and install either the latest version or the latest development version.
 
 - **Latest Version**
@@ -35,11 +37,12 @@ If you are on a device that does not have Lighthouse installed, go to [lighthous
 
 ## Contents
 
-1. [Getting Started](getting-started.md) — launching LAD, the remote Beacon tab, page configuration and radio tracking
-2. [Interface Overview](interface.md) — layout, register controls, alerts and the Trackable Assets Library
-3. [Common Functions](common-functions.md) — Spotlight, starring, radio logs, SMS, ops logs and Instant Task
-4. [Team Register](team-register.md)
-5. [Incident Register](incident-register.md)
-6. [ICEMS](icems.md)
-7. [Situation Map](situation-map.md)
-8. [What's New](whats-new.md)
+1. [Getting Started](getting-started.md) — launching LAD, the remote Beacon tab and radio tracking
+2. [Configuration](configuration.md) — data, filters, map markers, collaborative layers, layout, appearance and Instant Task suggestions
+3. [Interface Overview](interface.md) — layout, register controls, alerts and the Trackable Assets Library
+4. [Common Functions](common-functions.md) — Spotlight, starring, radio logs, SMS, ops logs and Instant Task
+5. [Team Register](team-register.md)
+6. [Incident Register](incident-register.md)
+7. [ICEMS](icems.md)
+8. [Situation Map](situation-map.md)
+9. [What's New](whats-new.md)

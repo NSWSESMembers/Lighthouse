@@ -1,6 +1,6 @@
 ---
 title: Team Register
-nav_order: 5
+nav_order: 6
 ---
 
 # Team Register
@@ -27,7 +27,7 @@ Each row's background colour shows the team's current tasking load, so you can q
 
 > **Note:** The task count includes taskings to incidents outside your LAD incident filters (e.g. local storm incidents when your filter is set to flood rescues only).
 
-If a team can't be matched to a radio asset, a car icon with a cross through it shows next to its callsign and the map focus button is disabled. See [Setting up a Team for Radio Tracking](getting-started.md#setting-up-a-team-for-radio-tracking).
+If a team can't be matched to a radio asset, a car icon with a cross through it <img class="icon" src="images/icon-unmatched-team.png" alt="Unmatched" height="24"> shows next to its callsign and the map focus button is disabled. See [Setting up a Team for Radio Tracking](getting-started.md#setting-up-a-team-for-radio-tracking).
 
 ## Expanded Team Details
 
@@ -49,18 +49,21 @@ Change the primary asset by clicking the star next to another asset. This is syn
 
 Show or hide member capabilities with the tags icon to the right of the **Team Members** heading. Hidden by default.
 
+![Member capability toggle](images/team-member-capability-toggle.png)
+
 ## Team Row Actions
 
 Each team row has four action buttons:
+
+![Team row action buttons](images/team-row-actions.png)
+
 
 - **Radio Log** — opens [New Radio Log](common-functions.md#new-radio-log) against the team.
 - **Message Team** — opens [Send SMS](common-functions.md#send-sms) with the team members as recipients. Greyed out if the team has no members.
 - **Open in Remote Tab** — opens the team's edit page in the Beacon remote tab, e.g. to change the team's name or members.
 - **Focus on map** — focuses the Situation Map on the team's radio location. Greyed out if no radios are matched.
-  - If multiple radios are matched, the button shows the count and toggles between them on each click.
-  - If one radio is matched to multiple teams, a yellow group icon is shown.
-
-<!-- TODO: screenshot of the team row action buttons -->
+  - If multiple radios are matched, the button shows the count <img class="icon" src="images/icon-multiple-radios.png" alt="2" height="16"> and toggles between them on each click.
+  - If one radio is matched to multiple teams, a yellow group icon <img class="icon" src="images/icon-shared-radio.png" alt="Shared radio" height="16"> is shown.
 
 ## Team Taskings
 
@@ -70,9 +73,14 @@ The Team Taskings section lists incidents tasked to the team that are within you
 
 Click **Refresh** to reload the team's tasking details.
 
+![Refresh button](images/team-taskings-refresh.png)
+
 ### Reordering Taskings
 
 1. Click the reorder button to enter reordering mode.
+
+   ![Reorder button](images/team-taskings-reorder.png)
+
 2. Use the up and down arrows next to each tasking to change the order.
 
    ![Reordering taskings](images/reorder-taskings.png)

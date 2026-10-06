@@ -1,6 +1,6 @@
 ---
 title: ICEMS
-nav_order: 7
+nav_order: 8
 ---
 
 # ICEMS
@@ -14,6 +14,8 @@ When there is an unacknowledged ICEMS notification, LAD flags it in several plac
 ### Alert
 
 An [alert](interface.md#alerts) is shown in the top right of the Situation Map whenever ICEMS notifications are present.
+
+![Unacknowledged ICEMS notifications alert](images/alert-icems-bar.png)
 
 ### Incident Register
 

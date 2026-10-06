@@ -1,6 +1,6 @@
 ---
 title: Incident Register
-nav_order: 6
+nav_order: 7
 ---
 
 # Incident Register
@@ -60,6 +60,8 @@ The expanded incident has five action buttons:
 
 Each team in the incident's taskings list has the same four actions as in the Team Register:
 
+![Incident tasking action buttons](images/incident-tasking-actions.png)
+
 - **Radio Log** (against the incident) — opens [New Radio Log](common-functions.md#new-radio-log), logged against the incident and including the team's callsign.
 - **Message Team** (against the incident) — opens [Send SMS](common-functions.md#send-sms) with the team members as recipients, associated with the incident.
 - **Open in Remote Tab** — opens the team in the Beacon remote tab.
@@ -84,6 +86,16 @@ The timeline is sorted newest (top) to oldest (bottom). Entries are colour-coded
 Filter the ops log entries by selecting tags at the top of the timeline. This is an **AND** filter — entries are only shown when they contain **all** selected tags.
 
 ICEMS functionality is covered in [ICEMS](icems.md).
+
+### Action Required Tags & Resolving Notes
+
+Notes with an outstanding *action required* tag show an **Action Required** label and a **Resolve** button.
+
+![Note with Action Required and Resolve](images/timeline-action-required.png)
+
+Click **Resolve**, enter the resolution notes (required) and click **Resolve** to resolve the note.
+
+![Resolve action required dialog](images/timeline-resolve-dialog.png)
 
 ## Incident Photos
 

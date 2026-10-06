@@ -1,6 +1,6 @@
 ---
 title: Common Functions
-nav_order: 4
+nav_order: 5
 ---
 
 # Common Functions
@@ -13,7 +13,7 @@ LAD has several dialogs, such as New Radio Log, New Ops Log and the Incident Tim
 | --- | --- |
 | <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Enter</kbd> | Submit the dialog |
 | <kbd>Esc</kbd> | Close the dialog |
-| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>K</kbd> | Open the Spotlight menu |
+| <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>K</kbd> | Open the Spotlight menu (can be changed under [Appearance](configuration.md#appearance)) |
 
 ## Spotlight Menu
 
@@ -79,9 +79,13 @@ Creates a radio log against a team on an incident. Works the same way as `task`:
 
 You can star incidents and teams in each register, then toggle the register between all filtered items (the default) and only starred items.
 
-Star or un-star an item by clicking the star button on its row; a starred item's star appears larger. Switch views with the **Toggle Starred** button described in [Register Controls](interface.md#register-controls).
+Star or un-star an item by clicking the star button on its row; a starred item's star appears larger.
 
-<!-- TODO: screenshot of starred vs un-starred rows -->
+![Starred incident row](images/starred-incident-row.png)
+
+![Starred team row](images/starred-team-row.png)
+
+Switch views with the **Toggle Starred** button described in [Register Controls](interface.md#register-controls). Clear starred items from the [Starred](configuration.md#starred-teams--incidents) configuration tab.
 
 ## New Radio Log
 
@@ -138,7 +142,7 @@ Each team shows:
 
 ### Instant Task Suggestions
 
-Teams marked with a blue robot icon are **Instant Task Suggestions**. LAD picks the most appropriate teams using the weightings set on the [Page Configuration](getting-started.md#team--incident-filters) screen, which differ for rescue and non-rescue incidents. For example, rescue incidents by default weight untasked teams above nearby teams, so a suggestion may be geographically further away.
+Teams marked with a blue robot icon <img class="icon" src="images/icon-suggestion-robot.png" alt="Suggestion" height="20"> are **Instant Task Suggestions**. LAD picks the most appropriate team using the rules and weightings set under [Instant Task Suggestions](configuration.md#instant-task-suggestions), which differ for rescue and non-rescue incidents. For example, rescue incidents prefer teams with no active taskings, so a suggestion may be geographically further away.
 
 ### Tasking the Team
 
