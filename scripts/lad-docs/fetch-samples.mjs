@@ -128,6 +128,56 @@ await step('radio', () => request(`${host}/Api/v1/ResourceLocations/Radio?resour
 await step('telematics', () => request(`${host}/Api/v1/ResourceLocations/Telematics?LighthouseFunction=fetchTeleAssets&userId=${ctx.userId}`, { token }));
 await step('tags-group-5', () => request(`${host}/Api/v1/Tags/Group/5?LighthouseFunction=TagsGroup&userId=${ctx.userId}`, { token }));
 
+// --- Feature-specific payloads -------------------------------------------
+// Action-required ops log entries, ICEMS agencies and incident photos only
+// exist on some jobs, so look through a wider pool (any HQ, 30 days) for one
+// that has each. Long strings (image data, thumbnails) are replaced with a
+// length placeholder before saving so no photo content lands on disk.
+const redactLong = (v) => {
+  if (typeof v === 'string') return v.length > 200 ? `<${v.length} chars>` : v;
+  if (Array.isArray(v)) return v.map(redactLong);
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, redactLong(x)]));
+  return v;
+};
+const poolFrom = new Date(end.getTime() - 30 * 86400 * 1000);
+const pool = await firstPage(
+  `${host}/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=${ctx.userId}` +
+  `&StartDate=${poolFrom.toISOString()}&EndDate=${end.toISOString()}&ViewModelType=6`, 100,
+).catch(() => null);
+const poolJobs = pool?.Results || [];
+console.log(`  job pool: ${poolJobs.length} jobs (any HQ, 30 days)`);
+
+await step('opslog-unresolved', async () => redactLong(await request(
+  `${host}/Api/v1/OperationsLog/search?` + new URLSearchParams({
+    DateFrom: poolFrom.toISOString(), DateTo: end.toISOString(),
+    ExcludeJobEntries: 'false', ExcludeIcemsEntries: 'true', UnresolvedActionsOnly: 'true',
+    PageIndex: 1, PageSize: SAMPLE_ROWS, SortField: 'TimeLogged', SortOrder: 'desc',
+    LighthouseFunction: 'GetOperationsLogUnresolvedActions', userId: ctx.userId,
+  }), { token })));
+
+const icemsJob = poolJobs.find((j) => j.ICEMSIncidentIdentifier);
+if (icemsJob) {
+  await step('icems-incident', async () => redactLong(await request(
+    `${host}/Api/v1/Icems/incidents/${encodeURIComponent(icemsJob.ICEMSIncidentIdentifier)}?LighthouseFunction=GetIcemsIncident&userId=${ctx.userId}`,
+    { token })));
+} else {
+  console.error('  icems-incident: no ICEMS job in the pool');
+}
+
+// ImageCount is only on the tasking view of a job, so ask for the pool's
+// taskings and pick a job that has photos.
+const poolTaskings = poolJobs.length
+  ? await job.getTasking(poolJobs.map((j) => j.Id), ctx).catch(() => ({ results: [] }))
+  : { results: [] };
+const photoJob = poolTaskings.results.map((t) => t.Job).find((j) => j?.ImageCount > 0);
+if (photoJob) {
+  await step('incident-thumbnails', async () => redactLong(await request(
+    `${host}/Api/v1/Image/IncidentThumbnails/${photoJob.Id}?LighthouseFunction=getIncidentThumbnails&userId=${ctx.userId}`,
+    { token })));
+} else {
+  console.error('  incident-thumbnails: no tasked job with photos in the pool');
+}
+
 // Trim big collections down to a few rows so the samples stay readable.
 for (const f of fs.existsSync(OUT) ? fs.readdirSync(OUT) : []) {
   const p = path.join(OUT, f);

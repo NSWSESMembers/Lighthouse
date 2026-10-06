@@ -76,10 +76,30 @@ const TAGS = {
   RoofLeak: { Id: 9136, Name: 'Roof Leak', TagGroupId: 6, Description: null },
 };
 
-// Ops-log action items (tag group 27) flagged on a job, keyed by job index.
-const ACTION_REQUIRED = {
-  6: [{ Id: 9270, Name: 'Callback Requested', TagGroupId: 27, Description: null }],
+// Ops-log tags. Group 27 (OpsLogActionItems) are the action-required ones;
+// names follow Beacon's vocabulary, ids are fake.
+const OPS_TAGS = {
+  FurtherAction: { Id: 9271, Name: 'Further Action Required', TagGroupId: 27, Description: null },
+  CallMade: { Id: 9272, Name: 'Call Made', TagGroupId: 27, Description: null },
+  PhoneCall: { Id: 9231, Name: 'Phone Call', TagGroupId: 3, Description: null },
 };
+
+// Ops log entries: [jobIndex, subject, text, tagKeys, hoursAgo, actionRequired]
+// Job 1 has the same action tag twice (shows as "x2"); job 6 is tasked, so
+// its action shows in the team's tasking list too.
+const OPS_LOG_SPECS = [
+  [1, 'Caller update', 'Caller advises water now reaching second bedroom.', ['PhoneCall', 'FurtherAction'], 0.5, true],
+  [1, 'Neighbour report', 'Neighbour reports tiles still lifting in the wind.', ['FurtherAction'], 0.35, true],
+  [6, 'Callback', 'Owner asked for a callback once a team is en route.', ['PhoneCall', 'CallMade'], 1.6, true],
+  [3, 'Welfare', 'Occupants relocated to front room, no injuries.', ['PhoneCall'], 1.2, false],
+];
+
+// Per-job extras, keyed by job index. Job 6 (2610-1207) shows every
+// indicator under its ID: photos, an outstanding action and the ICEMS icon.
+// The ICEMS id is a placeholder (no real ICEMS sample captured yet); it only
+// surfaces as the icon's tooltip.
+const PHOTO_COUNTS = { 6: 3 };
+const ICEMS_IDS = { 6: 'DEMO-ICEMS-0042' };
 
 const PEOPLE = [
   ['Alex', 'Nguyen'], ['Sam', 'Patel'], ['Jordan', 'Smith'], ['Casey', 'Brown'], ['Riley', 'Wilson'],
@@ -184,7 +204,7 @@ export function buildScenario(now = new Date()) {
       CreatedBy: OPERATOR,
       CallerFirstName: caller.FirstName,
       CallerLastName: caller.LastName,
-      ICEMSIncidentIdentifier: null,
+      ICEMSIncidentIdentifier: ICEMS_IDS[i] ?? null,
       ContactCalled: false,
       CallerPhoneNumber: fakePhone(i),
       ContactFirstName: null,
@@ -233,11 +253,49 @@ export function buildScenario(now = new Date()) {
     };
   });
 
+  // Ops log entries (OperationsLog/search shape).
+  const opsLog = OPS_LOG_SPECS.map(([ji, subject, text, tagKeys, hoursAgo, actionRequired], i) => {
+    const j = jobs[ji];
+    const at = t(hoursAgo);
+    return {
+      Id: 41000 + i,
+      JobLabel: j.Identifier,
+      JobId: j.Id,
+      EventLabel: j.Event.Identifier,
+      EventId: j.Event.Id,
+      Entity: { ...HQ },
+      Important: false,
+      Position: null,
+      Subject: subject,
+      Text: text,
+      Restricted: false,
+      ActionRequired: actionRequired,
+      ActionReminder: null,
+      ReadOnly: false,
+      TalkgroupId: null,
+      TalkgroupLabel: null,
+      TalkgroupRequestId: null,
+      TalkgroupRequestLabel: null,
+      TimeLogged: at,
+      Tags: tagKeys.map((k) => ({ ...OPS_TAGS[k], CreatedOn: '2015-01-01T00:00:00', CreatedBy: 1 })),
+      CreatedOn: at,
+      CreatedBy: OPERATOR,
+      ICEMSIncidentIdentifier: null,
+    };
+  });
+  // What Beacon reports as a job's outstanding action tags: the group-27
+  // tags on its unresolved action-required entries.
+  const actionTagsByJob = new Map();
+  opsLog.filter((e) => e.ActionRequired).forEach((e) => {
+    const tags = e.Tags.filter((g) => g.TagGroupId === 27).map(({ Id, Name, TagGroupId, Description }) => ({ Id, Name, TagGroupId, Description }));
+    actionTagsByJob.set(e.JobId, [...(actionTagsByJob.get(e.JobId) || []), ...tags]);
+  });
+
   // The slimmer job shape Beacon embeds inside a tasking.
   const taskingJob = (j) => ({
     Id: j.Id,
     Identifier: j.Identifier,
-    ICEMSIncidentIdentifier: null,
+    ICEMSIncidentIdentifier: j.ICEMSIncidentIdentifier,
     TypeId: j.JobType.Id,
     Type: j.Type,
     CallerName: `${j.CallerFirstName} ${j.CallerLastName}`,
@@ -258,10 +316,10 @@ export function buildScenario(now = new Date()) {
     SituationOnScene: j.SituationOnScene,
     EventId: j.Event.Id,
     PrintCount: 0,
-    ActionRequiredTags: ACTION_REQUIRED[j.Id - 70000] || [],
+    ActionRequiredTags: actionTagsByJob.get(j.Id) || [],
     Categories: [],
     InFrao: false,
-    ImageCount: 0,
+    ImageCount: PHOTO_COUNTS[j.Id - 70000] || 0,
   });
 
   let memberSeq = 0;
@@ -432,5 +490,5 @@ export function buildScenario(now = new Date()) {
     }));
   };
 
-  return { hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, timezone: TZ };
+  return { hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, timezone: TZ };
 }

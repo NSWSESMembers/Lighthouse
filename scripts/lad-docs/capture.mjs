@@ -52,6 +52,7 @@ async function zoomMapIn(page, steps) {
 function unionOf(page, selector, pad = 2) {
   return {
     async screenshot(opts) {
+      await page.locator(selector).first().scrollIntoViewIfNeeded();
       const boxes = (await Promise.all((await page.locator(selector).all()).map((l) => l.boundingBox()))).filter(Boolean);
       if (!boxes.length) throw new Error(`nothing matched ${selector}`);
       const x = Math.min(...boxes.map((b) => b.x)) - pad;
@@ -124,6 +125,37 @@ const SHOTS = {
       await settle(page, 800);
     },
     target: (page) => page.locator('#paneBottom .pane-toolbar'),
+  },
+
+  // The indicators under an incident ID: photos, outstanding actions and
+  // ICEMS. 70006 (2610-1207) has all three.
+  'incident-row-icons': {
+    run: closeConfigAndLoad,
+    target: (page) => page.locator('tr.job-row[data-job-id="70006"]'),
+  },
+  'icon-incident-photo': {
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, 'tr.job-row[data-job-id="70006"] .images-button:visible', 1),
+  },
+  'icon-icems': {
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, 'tr.job-row[data-job-id="70006"] em.fa-share-alt:visible', 1),
+  },
+
+  // Just the thumbtack + count, for inline use in the text.
+  'icon-action-pin': {
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, 'tr.job-row[data-job-id="70001"] .action-required-button:visible', 1),
+  },
+
+  // ...and the grouped "xN" pills on the expanded incident.
+  'incident-action-pills': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('tr.job-row[data-job-id="70001"] [data-bind*="toggleAndExpand"]').first().click();
+      await settle(page, 800);
+    },
+    target: (page) => unionOf(page, 'tr.job-row[data-job-id="70001"] #actionRequiredTags > span', 10),
   },
 
   spotlight: {
