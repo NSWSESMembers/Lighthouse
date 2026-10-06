@@ -15,6 +15,11 @@ website repo (`_layouts/lad.html`), not here.
 Edits merged to `master-dev` are not published until the next release, so the guide
 only describes features users actually have.
 
+Each sync also writes `_data/lad_guide.yml` on the website with the Lighthouse build
+(e.g. `2026.10.06 build 3352a9f`, the same format as the extension's `version_name` in
+chrome://extensions). The guide shows it as "Written for Lighthouse …", meaning the
+guide was last updated for that release.
+
 The workflow needs a `WEBSITE_SYNC_TOKEN` repo secret: a fine-grained PAT (or GitHub
 App token) with **Contents: read & write** on the website repo only. You can also
 run it manually from the Actions tab.

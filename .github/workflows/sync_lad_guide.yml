@@ -18,6 +18,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           path: lighthouse
+          fetch-depth: 0  # match publish_prod so the short hash is the same length
 
       - name: Checkout website
         uses: actions/checkout@v7
@@ -32,12 +33,24 @@ jobs:
           mkdir -p website/guides/lad
           rsync -a --delete lighthouse/docs/lad/ website/guides/lad/
 
+      # Same format as the extension's version_name in webpack.prod.js,
+      # so the guide footer matches what users see in chrome://extensions.
+      - name: Stamp Lighthouse version
+        run: |
+          short_sha=$(git -C lighthouse rev-parse --short HEAD)
+          build_date=$(TZ=Etc/GMT-10 date +%Y.%m.%d)
+          mkdir -p website/_data
+          cat > website/_data/lad_guide.yml <<EOF
+          version_name: "${build_date} build ${short_sha}"
+          commit: "$(git -C lighthouse rev-parse HEAD)"
+          EOF
+
       - name: Commit and push
         working-directory: website
         env:
           SRC_SHA: ${{ github.sha }}
         run: |
-          git add -A guides/lad
+          git add -A guides/lad _data/lad_guide.yml
           if git diff --cached --quiet; then
             echo "Guide already up to date"
             exit 0
