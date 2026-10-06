@@ -1,17 +1,17 @@
-name: Sync LAD Guide to Website
+name: Sync Docs to Website
 on:
   push:
     branches: [master]
-    paths: ['docs/lad/**']
+    paths: ['docs/lad/**', 'docs/whats-new/**']
   workflow_dispatch:
 
 concurrency:
-  group: sync-lad-guide
+  group: sync-website-docs
   cancel-in-progress: false
 
 jobs:
   sync:
-    name: Sync docs/lad to lighthouse.ses.nsw.gov.au/guides/lad
+    name: Sync docs to lighthouse.ses.nsw.gov.au
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Lighthouse
@@ -28,10 +28,11 @@ jobs:
           token: ${{ secrets.WEBSITE_SYNC_TOKEN }}
           path: website
 
-      - name: Copy guide
+      - name: Copy docs
         run: |
-          mkdir -p website/guides/lad
+          mkdir -p website/guides/lad website/whats-new
           rsync -a --delete lighthouse/docs/lad/ website/guides/lad/
+          rsync -a --delete lighthouse/docs/whats-new/ website/whats-new/
 
       # Same format as the extension's version_name in webpack.prod.js,
       # so the guide footer matches what users see in chrome://extensions.
@@ -50,12 +51,12 @@ jobs:
         env:
           SRC_SHA: ${{ github.sha }}
         run: |
-          git add -A guides/lad _data/lad_guide.yml
+          git add -A guides/lad whats-new _data/lad_guide.yml
           if git diff --cached --quiet; then
-            echo "Guide already up to date"
+            echo "Website docs already up to date"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Sync LAD guide from NSWSESMembers/Lighthouse@${SRC_SHA::7}"
+          git commit -m "Sync docs from NSWSESMembers/Lighthouse@${SRC_SHA::7}"
           git push

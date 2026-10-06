@@ -1,18 +1,22 @@
-# User guides
+# Website docs
 
-`docs/lad/` is the source for the LAD user guide published at
-<https://lighthouse.ses.nsw.gov.au/guides/lad/>.
+These folders are published to <https://lighthouse.ses.nsw.gov.au>:
+
+| Folder | Published at |
+| --- | --- |
+| `docs/lad/` | [/guides/lad/](https://lighthouse.ses.nsw.gov.au/guides/lad/), the LAD user guide |
+| `docs/whats-new/` | [/whats-new/](https://lighthouse.ses.nsw.gov.au/whats-new/), changes in each release (the home page shows the latest three) |
 
 ## How it gets published
 
-When a change to `docs/lad/` lands on `master`, the
-[Sync LAD Guide](../.github/workflows/sync_lad_guide.yml) workflow copies the folder
-into `guides/lad/` in
+When a change to either folder lands on `master`, the
+[Sync Docs to Website](../.github/workflows/sync_website_docs.yml) workflow copies it
+into
 [NSWSESMembers/lighthouse.ses.nsw.gov.au](https://github.com/NSWSESMembers/lighthouse.ses.nsw.gov.au).
-GitHub Pages then builds it with Jekyll. The page layout and sidebar live in the
-website repo (`_layouts/lad.html`), not here.
+GitHub Pages then builds it with Jekyll. The page layouts and styles live in the
+website repo (`_layouts/`, `assets/site.css`), not here.
 
-Edits merged to `master-dev` are not published until the next release, so the guide
+Edits merged to `master-dev` are not published until the next release, so the site
 only describes features users actually have.
 
 Each sync also writes `_data/lad_guide.yml` on the website with the Lighthouse build
@@ -24,12 +28,19 @@ The workflow needs a `WEBSITE_SYNC_TOKEN` repo secret: a fine-grained PAT (or Gi
 App token) with **Contents: read & write** on the website repo only. You can also
 run it manually from the Actions tab.
 
+## Updating What's New
+
+Add to [`whats-new/index.md`](whats-new/index.md) in the **same PR** as any
+user-facing change, LAD or otherwise. Add bullets under a heading at the top for the
+upcoming release (a short title, then an italic line with the date and release tag).
+The comment at the top of the file has the full format.
+
 ## Updating the guide
 
 Update the guide in the **same PR** as any user-facing LAD change:
 
 1. Edit the relevant page in `docs/lad/`, or add a new one.
-2. Add a dated bullet to [`whats-new.md`](lad/whats-new.md).
+2. Add a bullet to [What's New](whats-new/index.md), linking to the guide section.
 3. Put screenshots in `docs/lad/images/` and use kebab-case names
    (`team-expanded.png`). Crop them to the relevant part of the UI, and blur or
    avoid real phone numbers.
@@ -50,7 +61,8 @@ Update the guide in the **same PR** as any user-facing LAD change:
   GitHub, and Pages rewrites them to `.html`.
 - Mark a missing or outdated screenshot with `<!-- TODO: screenshot of ... -->` so
   it's easy to find with grep.
-- Don't add a `README.md` inside `docs/lad/`. Jekyll would publish it as a page.
+- Don't add a `README.md` inside `docs/lad/` or `docs/whats-new/`. Jekyll would
+  publish it as a page.
 
 ## Previewing locally
 
@@ -58,7 +70,8 @@ Check out the website repo next to this one, then:
 
 ```sh
 rsync -a --delete docs/lad/ ../lighthouse.ses.nsw.gov.au/guides/lad/
+rsync -a --delete docs/whats-new/ ../lighthouse.ses.nsw.gov.au/whats-new/
 cd ../lighthouse.ses.nsw.gov.au
 bundle exec jekyll serve   # needs the github-pages gem
-# → http://localhost:4000/guides/lad/
+# → http://localhost:4000/
 ```
