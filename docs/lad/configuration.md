@@ -171,7 +171,7 @@ View all [starred](common-functions.md#starring-incidents-and-teams) teams and i
 - **Theme** — Light, Dark, or Auto (follows your browser setting).
 - **Auto-collapse alert popups** — when enabled, all [alerts](interface.md#alerts) start collapsed when the page loads.
 - **Count active taskings only** — when enabled, *Complete*, *CalledOff* and *Untasked* statuses don't count towards a tasking count.
-- **Command palette hotkey** — the key combination that opens the [Spotlight menu](common-functions.md#spotlight-menu). Click the field and press the new combination, or click **Reset**.
+- **Spotlight hotkey** — the key combination that opens the [Spotlight menu](common-functions.md#spotlight-menu). Click the field and press the new combination, or click **Reset**.
 
 ## Instant Task Suggestions
 
