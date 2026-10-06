@@ -191,9 +191,27 @@ Close the popup with the cross in its top right, or by clicking elsewhere on the
 
 ### Hovering over an Incident
 
-Hover over an incident marker to see a summary popup with the address, situation on scene and any outstanding action items.
+Hover over an incident marker to see a quick summary without opening its popup:
 
-![Incident hover popup](images/incident-hover.jpg)
+- Incident ID, priority and type (including the flood rescue category, e.g. `FR-1`)
+- Address
+- Situation on scene
+- Status and assigned HQ
+- ICEMS agencies involved, each with a coloured dot for its status. Hover over an agency to see its status in words.
+- Outstanding *action required* tags: the first tag, plus how many more (e.g. *Call Made +1*)
+
+![Incident hover popup](images/incident-hover.png)
+
+| Dot colour | Agency status |
+| --- | --- |
+| Green | On scene / responded |
+| Blue | En route |
+| Teal | Acknowledged / will attend |
+| Amber | Requested / sent |
+| Grey | Left scene / closed |
+| Red | Will not attend / timed out |
+
+> **Note:** ICEMS agencies appear once LAD has loaded them for that incident, which happens when you expand the incident in the register or when Beacon pushes an ICEMS update.
 
 ### Incident Popup Actions
 

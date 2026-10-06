@@ -14,6 +14,8 @@ Format:  ## YYYY-MM-DD  then one bullet per change, linking to the guide section
 
 ## 2026-10-06
 
+- The incident hover popup on the map shows priority, type, status, assigned HQ, ICEMS agencies (with their status) and outstanding action tags. See [Hovering over an Incident](situation-map.md#hovering-over-an-incident).
+
 - With Live Updates on, each register's **Refresh Data** button flashes when Beacon pushes a change for it. See [Register Controls](interface.md#register-controls).
 
 - If there's no Beacon remote tab to open a page in, LAD now explains why and offers to open the page in a new window instead. See [Opening pages in the Remote Tab](getting-started.md#opening-pages-in-the-remote-tab).
