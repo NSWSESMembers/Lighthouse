@@ -190,6 +190,31 @@ const SHOTS = {
     target: (page) => page.locator('#incidentImagesModal .modal-content'),
   },
 
+  // Incident marker hover popup for 2610-1207: priority/type, address,
+  // situation, status + unit, ICEMS agency badges and the action badge.
+  // Agencies load when the incident is expanded, so expand it first, then
+  // focus the map on it and hover its marker.
+  'incident-hover': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      const row = page.locator('tr.job-row[data-job-id="70006"]');
+      await row.scrollIntoViewIfNeeded();
+      await row.locator('[data-bind*="toggleAndExpand"]').first().click();
+      await settle(page, 800);
+      await row.locator('[data-bind*="click: j.focusMap"]').first().click();
+      await settle(page, 1500);
+      // Focusing opens the incident's popup; its pointer sits just above the
+      // marker. Note that spot, close the popup, then hover the marker.
+      const tip = await page.locator('.leaflet-popup-tip-container').boundingBox();
+      await page.locator('.leaflet-popup-close-button').click();
+      await settle(page, 400);
+      await page.mouse.move(tip.x + tip.width / 2, tip.y + tip.height + 8);
+      await page.locator('.leaflet-tooltip.job-tooltip').waitFor();
+      await settle(page, 400);
+    },
+    target: (page) => unionOf(page, '.leaflet-tooltip.job-tooltip', 30),
+  },
+
   // "Open in Beacon" with no Beacon Remote tab registered: LAD explains why
   // and offers to open the page in a new window instead.
   'remote-tab-missing': {

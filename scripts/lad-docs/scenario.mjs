@@ -103,6 +103,21 @@ const OPS_LOG_SPECS = [
 const PHOTO_COUNTS = { 6: 3 };
 const ICEMS_IDS = { 6: 'DEMO-ICEMS-0042' };
 
+// ICEMS incident detail (Icems/incidents/{id}). NOTE: no real sample could be
+// captured (trainbeacon has no ICEMS), so this holds only the fields our code
+// reads -- AgenciesInvolved[].Name/AgencyStatusId/ResourceStatusId (see
+// Job.icemsAgencies) -- not Beacon's full structure. Status ids come from
+// utils/enum.js (IncidentAgenciesInvolvedStatus / ResourceStatus).
+const ICEMS_INCIDENTS = {
+  'DEMO-ICEMS-0042': {
+    AgenciesInvolved: [
+      { Name: 'NSWPF', AgencyStatusId: 3, ResourceStatusId: 4 },  // Responded, On Scene
+      { Name: 'ASNSW', AgencyStatusId: 3, ResourceStatusId: 1 },  // Responded, En Route
+      { Name: 'FRNSW', AgencyStatusId: 1, ResourceStatusId: null }, // Requested
+    ],
+  },
+};
+
 const PEOPLE = [
   ['Alex', 'Nguyen'], ['Sam', 'Patel'], ['Jordan', 'Smith'], ['Casey', 'Brown'], ['Riley', 'Wilson'],
   ['Morgan', 'Taylor'], ['Jamie', 'Lee'], ['Taylor', 'Martin'], ['Drew', 'White'], ['Quinn', 'Harris'],
@@ -495,5 +510,5 @@ export function buildScenario(now = new Date()) {
   // Image/IncidentThumbnails per job.
   const photos = new Map(Object.entries(PHOTO_COUNTS).map(([ji, n]) => [jobs[ji].Id, photoList(jobs[ji].Id, n)]));
 
-  return { hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, timezone: TZ };
+  return { hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents: ICEMS_INCIDENTS, timezone: TZ };
 }
