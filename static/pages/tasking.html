@@ -22,7 +22,7 @@
                     <div
                         class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header toolbar-label">
                         <div class="flex-grow-1 d-flex justify-content-center">
-                            <span>Teams (<span data-bind="text: filteredTeams().length"></span>)</span>
+                            <span>Teams (<!-- ko if: showInViewTeamsOnly --><span data-bind="text: listedTeams().length"></span>/<!-- /ko --><span data-bind="text: filteredTeams().length"></span>)</span>
                         </div>
                     </div>
 
@@ -38,6 +38,11 @@
                             title="Toggle pinned-only teams"
                             data-bind="click: togglePinnedTeamsOnly, css: { active: showPinnedTeamsOnly }, disable: !countPinnedTeams()">
                             <i class="fa fa-star fa-center"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
+                            title="Only list teams within the current map view"
+                            data-bind="click: toggleInViewTeamsOnly, css: { active: showInViewTeamsOnly }">
+                            <i class="fa fa-map fa-center"></i>
                         </button>
                             <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Ops Log"
                                 data-bind="click: openBlankOpsLogModal">
@@ -779,7 +784,7 @@
                     <div
                         class="d-flex align-items-center gap-2 flex-grow-1 small fw-semibold text-center text-muted incidents-header toolbar-label">
                         <div class="flex-grow-1 d-flex justify-content-center">
-                            <span>Incidents (<span data-bind="text: filteredJobs().length"></span>)</span>
+                            <span>Incidents (<!-- ko if: showInViewIncidentsOnly --><span data-bind="text: listedJobs().length"></span>/<!-- /ko --><span data-bind="text: filteredJobs().length"></span>)</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -807,6 +812,11 @@
                             title="Toggle pinned-only incidents"
                             data-bind="click: togglePinnedIncidentsOnly, css: { active: showPinnedIncidentsOnly }, disable: !countPinnedIncidents()">
                             <i class="fa fa-star fa-center"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-1 pin-toggle fa-center"
+                            title="Only list incidents within the current map view"
+                            data-bind="click: toggleInViewIncidentsOnly, css: { active: showInViewIncidentsOnly }">
+                            <i class="fa fa-map fa-center"></i>
                         </button>
                         <button class="btn btn-sm btn-outline-secondary py-0 px-2 toolbar-collapsible" title="Ops Log"
                             data-bind="click: openBlankOpsLogModal">
@@ -1926,7 +1936,7 @@
                     </button>
 
                     <button type="button" class="btn btn-primary"
-                        data-bind="click: submit, enable: canSubmit, disable: isSubmitting">
+                        data-bind="click: submit, enable: canSubmit">
                         <!-- ko if: isSubmitting -->
                         <i class="fa fa-spinner fa-spin me-2"></i>Saving…
                         <!-- /ko -->
@@ -2002,6 +2012,11 @@
                                         <button class="nav-link" id="cfgTab-suggest" data-bs-toggle="pill" data-bs-target="#cfgPane-suggest" type="button" role="tab" aria-controls="cfgPane-suggest" aria-selected="false">
                                             <span class="cfg-rail-ico"><i class="fa fa-robot"></i></span><span>Instant Task Suggestions</span>
                                         </button>
+                                    </li>
+                                    <li class="nav-item config-rail-guide" role="presentation">
+                                        <a class="nav-link" href="https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html" target="_blank" rel="noopener" title="Open the LAD user guide in a new tab">
+                                            <span class="cfg-rail-ico"><i class="fa fa-book"></i></span><span>User guide</span><i class="fa fa-external-link-alt ms-auto small opacity-50"></i>
+                                        </a>
                                     </li>
                                     </ul>
                                     <div class="tab-content config-panes">
@@ -4033,19 +4048,22 @@
                                                             data-bind="text: name"></span>
                                                     </span>
                                                 </div>
-                                                <!-- flags; subtle, not layout-dominant -->
-                                                <span
-                                                    class="badge rounded-pill bg-warning-subtle text-warning-emphasis me-1"
-                                                    data-bind="visible: important">Important</span>
-                                                <span
-                                                    class="badge rounded-pill bg-danger-subtle text-danger-emphasis me-1"
-                                                    data-bind="visible: actionRequired">Action Required</span>
-                                                <button type="button"
-                                                    class="badge bg-success border-0"
-                                                    style="cursor: pointer;"
-                                                    data-bind="visible: actionRequired, click: $root.attachOpsLogResolveModal">
-                                                    Resolve
-                                                </button>
+                                                <!-- flags; subtle, not layout-dominant. Resolve action sits right-aligned on the same row -->
+                                                <div class="d-flex align-items-center flex-wrap gap-1 mt-1"
+                                                    data-bind="visible: important() || actionRequired()">
+                                                    <span
+                                                        class="badge rounded-pill bg-warning-subtle text-warning-emphasis"
+                                                        data-bind="visible: important">Important</span>
+                                                    <span
+                                                        class="badge rounded-pill bg-danger-subtle text-danger-emphasis"
+                                                        data-bind="visible: actionRequired">Action Required</span>
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-outline-success py-0 px-2 ms-auto text-nowrap"
+                                                        title="Mark this action as resolved"
+                                                        data-bind="visible: actionRequired, click: $root.attachOpsLogResolveModal">
+                                                        <i class="fa fa-check me-1"></i>Resolve
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -4177,7 +4195,7 @@
                     </button>
 
                     <button type="button" class="btn btn-primary"
-                        data-bind="click: submit, enable: canSubmit, disable: isSubmitting">
+                        data-bind="click: submit, enable: canSubmit">
                         <!-- ko if: isSubmitting -->
                         <i class="fa fa-spinner fa-spin me-2"></i>Saving…
                         <!-- /ko -->

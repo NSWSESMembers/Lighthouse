@@ -1074,7 +1074,8 @@ body.dark-mode .nav-link.active {
 
 /* Config modal left rail */
 body.dark-mode .config-panes,
-body.dark-mode .config-rail {
+body.dark-mode .config-rail,
+body.dark-mode .config-rail .config-rail-guide {
   border-color: #444;
 }
 

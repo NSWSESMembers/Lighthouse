@@ -2620,6 +2620,13 @@ overflow: hidden;
   font-weight: 600;
 }
 
+/* Link to the online user guide, pinned to the bottom of the rail. */
+.config-rail .config-rail-guide {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
 .cfg-rail-ico,
 .cfg-sub-ico {
   width: 1.1rem;
@@ -2906,6 +2913,12 @@ overflow: hidden;
 
   .config-rail .nav-link {
     width: auto;
+  }
+
+  .config-rail .config-rail-guide {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
   }
 }
 
@@ -3957,6 +3970,7 @@ overflow: hidden;
 
 .rv-control {
   background: #fff;
+  color: #333;
   padding: 8px 12px;
   border-radius: 0 0 4px 4px;
   font-size: 12px;
@@ -4019,6 +4033,61 @@ overflow: hidden;
 }
 .rv-control select:hover {
   border-color: #999;
+}
+.rv-legend-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #fff;
+  border-radius: 4px 4px 0 0;
+  border-bottom: 1px solid #eee;
+  box-shadow: 0 -1px 3px rgba(0,0,0,.15);
+}
+.rv-legend-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #666;
+}
+.rv-divider {
+  border-left: 1px solid #ddd;
+  height: 20px;
+}
+
+.dark-mode .rv-legend-panel {
+  background: #2b2b2b;
+  border-bottom-color: #444;
+}
+.dark-mode .rv-legend-title {
+  color: #bbb;
+}
+.dark-mode .rv-control {
+  background: #2b2b2b;
+  color: #ddd;
+}
+.dark-mode .rv-control button,
+.dark-mode .rv-control select {
+  background: #3a3a3a;
+  border-color: #555;
+  color: #ddd;
+}
+.dark-mode .rv-control button:hover,
+.dark-mode .rv-control select:hover {
+  background: #444;
+  border-color: #777;
+}
+.dark-mode .rv-control button:active {
+  background: #333;
+}
+.dark-mode .rv-control input[type="range"]::-webkit-slider-thumb {
+  border-color: #2b2b2b;
+}
+.dark-mode .rv-control input[type="range"]::-moz-range-thumb {
+  border-color: #2b2b2b;
+}
+.dark-mode .rv-divider {
+  border-left-color: #555;
 }
 
 /* ── Basemap accordion with thumbnail grid ── */
