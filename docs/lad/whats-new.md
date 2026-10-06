@@ -14,6 +14,8 @@ Format:  ## YYYY-MM-DD  then one bullet per change, linking to the guide section
 
 ## 2026-10-06
 
+- Incidents with outstanding *action required* notes show a thumbtack (with a count) under the incident ID, and repeated action tags are grouped with a count, e.g. *Further Action Required ×2*. See [Incident Register](incident-register.md).
+
 - The Team and Incident registers have a **Toggle In Map View** button that lists only the teams or incidents inside the current map view. See [Listing Only What's in the Map View](common-functions.md#listing-only-whats-in-the-map-view).
 
 - The [Configuration](configuration.md) screen has a **User guide** link at the bottom of its tabs that opens this guide.

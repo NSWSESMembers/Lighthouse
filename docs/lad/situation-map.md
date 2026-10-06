@@ -177,7 +177,7 @@ The popup shows:
 - Incident ID
 - Type and status
 - Priority
-- Outstanding *Action Required* tags
+- Outstanding *Action Required* tags, grouped with a count when the same tag appears more than once (e.g. *Further Action Required ×2*). Click a tag to open the incident's timeline.
 - Address
 - Situation
 - Incident tags

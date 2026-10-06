@@ -7,7 +7,12 @@ nav_order: 7
 
 The Incident Register is in the bottom left of LAD. It lists all filtered incidents. Each row displays:
 
-- Incident ID
+- Incident ID, with up to three icons underneath:
+  - <img class="icon" src="images/icon-incident-photo.png" alt="Photos" height="20"> **Photos** — photos have been uploaded to the incident. Click to open the [photo library](#incident-photos).
+  - <img class="icon" src="images/icon-action-pin.png" alt="Outstanding actions" height="20"> **Outstanding actions** — the incident has outstanding *action required* tags. If there's more than one, the number beside the thumbtack shows how many. Click to open the [Incident Timeline](#incident-timeline).
+  - <img class="icon" src="images/icon-icems.png" alt="ICEMS" height="20"> **ICEMS** — the incident is linked to ICEMS; hover to see the ICEMS incident number. It turns red when there's an unacknowledged IUM. See [ICEMS](icems.md#unacknowledged-iums).
+
+  ![Incident row showing the photo, outstanding action and ICEMS icons](images/incident-row-icons.png)
 - Received date and time
 - Assigned HQ
 - Incident type
@@ -34,7 +39,9 @@ Each row's background colour shows the incident priority:
 Click anywhere on an incident row to expand it. The expanded view shows:
 
 - Incident tags
-- Outstanding *Action Required* tags — any outstanding notes with action tags
+- Outstanding *Action Required* tags — any outstanding notes with action tags. Tags with the same name are grouped with a count, e.g. *Further Action Required ×2*. Click a tag to open the [Incident Timeline](#incident-timeline), where you can [resolve](#action-required-tags--resolving-notes) the notes.
+
+  ![Grouped action required tag](images/incident-action-pills.png)
 - Incident details, including the assigned sector
   - Click the current sector to choose a different one from a dropdown.
 - Incident location details
