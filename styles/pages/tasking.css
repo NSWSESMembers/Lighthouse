@@ -2620,6 +2620,13 @@ overflow: hidden;
   font-weight: 600;
 }
 
+/* Link to the online user guide, pinned to the bottom of the rail. */
+.config-rail .config-rail-guide {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
 .cfg-rail-ico,
 .cfg-sub-ico {
   width: 1.1rem;
@@ -2906,6 +2913,12 @@ overflow: hidden;
 
   .config-rail .nav-link {
     width: auto;
+  }
+
+  .config-rail .config-rail-guide {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
   }
 }
 

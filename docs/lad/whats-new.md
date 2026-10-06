@@ -14,6 +14,8 @@ Format:  ## YYYY-MM-DD  then one bullet per change, linking to the guide section
 
 ## 2026-10-06
 
+- The [Configuration](configuration.md) screen has a **User guide** link at the bottom of its tabs that opens this guide.
+
 - The LAD user guide is now online at [lighthouse.ses.nsw.gov.au/guides/lad](https://lighthouse.ses.nsw.gov.au/guides/lad/), based on the v1.6 Learner Guide. It covers:
   - The new tabbed [Configuration](configuration.md) screen, including Live Updates, Layout presets, Appearance and road travel times for [Instant Task Suggestions](configuration.md#instant-task-suggestions).
   - [Collaborative map layers](situation-map.md#collaborative-map-layer).
