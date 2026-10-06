@@ -1,11 +1,11 @@
 ---
 title: Interface Overview
-nav_order: 3
+nav_order: 4
 ---
 
 # Interface Overview
 
-The LAD interface has two core components: the **side draw** and the **situation map**. The divider between them can be resized, and the side draw can be hidden completely for a full-screen map by clicking the **<<** button on the map.
+The LAD interface has two core components: the **side draw** and the **situation map**. The divider between them can be resized, and the side draw can be hidden completely for a full-screen map by clicking the **<<** button on the map. You can also choose a different arrangement under [Layout](configuration.md#layout).
 
 ![LAD interface overview](images/interface-overview.jpg)
 
@@ -22,41 +22,59 @@ The LAD interface has two core components: the **side draw** and the **situation
 
 The Team and Incident registers share a common set of controls:
 
+![Register control buttons](images/register-controls.png)
+
 - **Toggle Starred** — switches the register between all filtered incidents/teams and only [starred](common-functions.md#starring-incidents-and-teams) ones.
 - **New Ops Log Entry** — opens the [New Ops Log](common-functions.md#new-ops-log) dialog. The entry is not automatically attached to an incident.
 - **New Radio Log Entry** — opens the [New Radio Log](common-functions.md#new-radio-log) dialog. The entry is not automatically attached to a team or incident.
 - **Filter Settings** — opens the filters relevant to that register (Teams or Incidents).
   - The Team Register filter dropdown also opens the [Trackable Assets Library](#trackable-assets-library).
 - **Refresh Data** — refreshes the data for that register.
-- **Page Configuration** (right) — opens the [Page Configuration](getting-started.md#page-configuration--filters) screen.
+- **Page Configuration** (right) — opens the [Configuration](configuration.md) screen.
 
-Each register also has a **collapse all** button that collapses every team or incident in that register.
-
-<!-- TODO: screenshot of the register control buttons -->
+Each register also has a **collapse all** button <img class="icon" src="images/register-collapse-all.png" alt="Collapse all" height="20"> that collapses every team or incident in that register.
 
 ## Alerts
 
 Alerts display in the top right corner of LAD under certain conditions:
 
 - **Unacknowledged Incidents** — all filtered incidents in the *New* status.
+
+  ![Unacknowledged incidents alert](images/alert-unacknowledged-bar.png)
+
 - **Untasked Incidents** — all filtered incidents in the *Active* status that have no taskings.
+
+  ![Untasked incidents alert](images/alert-untasked-bar.png)
+
 - **Unacknowledged ICEMS** — all filtered incidents with an unacknowledged ICEMS message. See [ICEMS](icems.md).
+
+  ![Unacknowledged ICEMS notifications alert](images/alert-icems-bar.png)
+
 - **Incidents Pending Completion** — incidents where all teams have completed but the incident is still active. This flags incidents that can potentially be closed if no further action is required.
+
+  ![Incidents pending completion alert](images/alert-pending-completion-bar.png)
+
 - **Incidents missing geolocation** — incidents created without a geocoded (GPS) address. These are not displayed on the map.
 
-![Unacknowledged incidents alert](images/alert-unacknowledged.png)
+  ![Incidents missing geolocation alert](images/alert-missing-geolocation-bar.png)
 
 ### Managing Alerts
 
-Minimise an alert by clicking the cross on its right. It can be re-opened at any time, and minimising does not dismiss the underlying alerts. The alert automatically re-appears if another incident meets its condition, e.g. a new unacknowledged ICEMS message.
+Minimise an alert by clicking the cross on its right. Minimised alerts show as small icons and can be re-opened at any time — minimising does not dismiss the underlying alerts. An alert automatically re-appears if another incident meets its condition, e.g. a new unacknowledged ICEMS message.
+
+To have alerts start minimised, turn on **Auto-collapse alert popups** under [Appearance](configuration.md#appearance).
+
+![Minimised alerts](images/alerts-minimised.png)
 
 ### Selecting Alerts
 
 Click the incident text in an alert to select that incident in the Incident Register and focus the Situation Map on it.
 
+![Alert with an incident listed](images/alert-unacknowledged.png)
+
 ## Trackable Assets Library
 
-The Trackable Assets Library is opened from the filter dropdown in the Team Register. It lists all SES PSN radios and can be used to confirm radio details — most commonly, finding the programmed radio name (for [team tracking](getting-started.md#setting-up-a-team-for-radio-tracking)) by searching for the PSN ID.
+The Trackable Assets Library is opened from the filter dropdown in the Team Register. It lists all SES PSN radios seen in the last 14 days and can be used to confirm radio details — most commonly, finding the programmed radio name (for [team tracking](getting-started.md#setting-up-a-team-for-radio-tracking)) by searching for the PSN ID.
 
 Each radio entry displays:
 
