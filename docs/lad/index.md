@@ -19,6 +19,8 @@ LAD has been designed with three balanced guiding principles:
 
 > **Note:** This guide may contain images from different versions of Beacon (Production/Live Beacon and Train Beacon). All functions should work identically in any version of Beacon, but the data available to LAD depends on which version of Beacon LAD is opened from.
 
+> **Note:** Parts of this guide are AI generated and may contain hilarious errors. Screenshots showing "Demo City" use made-up data. If something here doesn't match what you see in LAD, trust LAD, and let us know on [GitHub](https://github.com/NSWSESMembers/Lighthouse/issues).
+
 ## Installing Lighthouse
 
 Lighthouse should be automatically installed on all SES devices. If Lighthouse is installed, the **Lighthouse** navigation menu will be visible in Beacon.
