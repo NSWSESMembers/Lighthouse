@@ -33,6 +33,16 @@ Buttons throughout LAD open the selected item in the full Beacon page, in the re
 
 When you click an *Open in remote tab* button, the incident or team opens in the remote tab you set previously.
 
+If LAD can't use a remote tab, it shows a warning explaining why, with an **Open this page in a new window** link so you can still get to the page. This happens when:
+
+- no remote tab has been registered,
+- the remote tab has since been closed, or
+- the tab LAD is open in is itself registered as the remote tab.
+
+![No remote tab warning with the open in a new window link](images/remote-tab-missing.png)
+
+The warning stays until you close it or click the link. To go back to opening pages in a remote tab, [set the remote tab](#setting-the-remote-tab) again.
+
 ## Setting up a Team for Radio Tracking
 
 LAD uses the Beacon **team name** to work out which radio to track. Where a callsign in a team name is an exact or close match to a PSN radio name, that radio is tracked against the team. Radio names can be looked up in the [Trackable Assets Library](interface.md#trackable-assets-library).
