@@ -14,6 +14,8 @@ Format:  ## YYYY-MM-DD  then one bullet per change, linking to the guide section
 
 ## 2026-10-06
 
+- The incident photo viewer can zoom to actual size and pan, rotate, download and open photos in a new tab, and supports the arrow keys. See [Incident Photos](incident-register.md#incident-photos).
+
 - Incidents with outstanding *action required* notes show a thumbtack (with a count) under the incident ID, and repeated action tags are grouped with a count, e.g. *Further Action Required ×2*. See [Incident Register](incident-register.md).
 
 - The Team and Incident registers have a **Toggle In Map View** button that lists only the teams or incidents inside the current map view. See [Listing Only What's in the Map View](common-functions.md#listing-only-whats-in-the-map-view).

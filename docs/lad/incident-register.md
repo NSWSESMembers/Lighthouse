@@ -106,10 +106,18 @@ Click **Resolve**, enter the resolution notes (required) and click **Resolve** t
 
 ## Incident Photos
 
-When photos have been uploaded to an incident, a photo icon appears under the incident ID in the register.
+When photos have been uploaded to an incident, a photo icon <img class="icon" src="images/icon-incident-photo.png" alt="Photos" height="20"> appears under the incident ID in the register. Click it to open the photo viewer for the incident.
 
-![Photo icon on an incident row](images/incident-photo-icon.png)
+![Incident photo viewer](images/incident-photos.png)
 
-Click the photo icon to open the photo library for the incident. Use the thumbnails on the left to move between photos.
+The viewer opens on the first photo, with thumbnails of all the incident's photos on the left and the selected photo on the right. The count under the photo shows which one you're on, e.g. *(1 of 3)*.
 
-![Incident photo library](images/incident-photos.jpg)
+- **Change photo** — click a thumbnail, use the arrows either side of the photo, or press <kbd>←</kbd> / <kbd>→</kbd>.
+- **Zoom** — click the photo, or the zoom button at the bottom left, to see it at actual size. While zoomed, drag the photo to pan around it. Click again to fit it back to the window.
+
+  ![Photo zoomed to actual size](images/incident-photos-zoomed.png)
+
+- **Rotate** — rotate the photo left or right, for photos taken sideways.
+- **Download** — save the photo to your computer.
+- **Open in new tab** — open the full-size photo in a new browser tab.
+
