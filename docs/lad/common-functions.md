@@ -87,6 +87,25 @@ Star or un-star an item by clicking the star button on its row; a starred item's
 
 Switch views with the **Toggle Starred** button described in [Register Controls](interface.md#register-controls). Clear starred items from the [Starred](configuration.md#starred-teams--incidents) configuration tab.
 
+## Listing Only What's in the Map View
+
+Each register can be narrowed to only the incidents or teams inside the current Situation Map view. This is useful when you're zoomed in on one area and want the registers to match what you can see on the map.
+
+Click the **Toggle In Map View** button (map icon, next to **Toggle Starred**) in the register's controls. While it's on, the button is highlighted and the register heading shows how many items are listed out of all filtered items, e.g. **Incidents (4/13)**.
+
+![Incident Register controls with In Map View turned on](images/in-view-toggle-active.png)
+
+The list updates as you pan and zoom the map.
+
+- An **incident** is in view when its address is inside the map view. Incidents without a geocoded location aren't listed while the toggle is on.
+- A **team** is in view when any of its [matched radio assets](team-register.md#matched-assets) is inside the map view. Teams without a matched asset aren't listed while the toggle is on.
+
+![Zoomed-in map with both registers listing only what's in view](images/in-view-only.png)
+
+> **Note:** This only changes the register lists. The map still shows every filtered incident and team, and [alerts](interface.md#alerts) still count everything that matches your filters.
+
+Each register's toggle is separate and works alongside **Toggle Starred** and the register search. LAD remembers the setting on this computer; **Restore Defaults** on the [Configuration](configuration.md) screen turns it off.
+
 ## New Radio Log
 
 Clicking a **Radio Log** button opens the New Radio Log dialog. The title shows the team's callsign, plus the incident ID if opened against an incident.
