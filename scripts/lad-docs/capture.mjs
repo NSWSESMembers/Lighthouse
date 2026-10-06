@@ -52,6 +52,7 @@ async function zoomMapIn(page, steps) {
 function unionOf(page, selector, pad = 2) {
   return {
     async screenshot(opts) {
+      await page.locator(selector).first().scrollIntoViewIfNeeded();
       const boxes = (await Promise.all((await page.locator(selector).all()).map((l) => l.boundingBox()))).filter(Boolean);
       if (!boxes.length) throw new Error(`nothing matched ${selector}`);
       const x = Math.min(...boxes.map((b) => b.x)) - pad;
@@ -61,6 +62,16 @@ function unionOf(page, selector, pad = 2) {
       return page.screenshot({ ...opts, clip: { x, y, width: right - x, height: bottom - y } });
     },
   };
+}
+
+/** Open the photo viewer for 2610-1207 and wait for the first photo and thumbnails. */
+async function openPhotos(page) {
+  await closeConfigAndLoad(page);
+  const row = page.locator('tr.job-row[data-job-id="70006"]');
+  await row.scrollIntoViewIfNeeded();
+  await row.locator('.images-button:visible').click();
+  await page.locator('#incidentImagesModal').waitFor({ state: 'visible' });
+  await settle(page, 1200);
 }
 
 const SHOTS = {
@@ -126,6 +137,76 @@ const SHOTS = {
     target: (page) => page.locator('#paneBottom .pane-toolbar'),
   },
 
+  // The indicators under an incident ID: photos, outstanding actions and
+  // ICEMS. 70006 (2610-1207) has all three.
+  'incident-row-icons': {
+    run: closeConfigAndLoad,
+    target: (page) => page.locator('tr.job-row[data-job-id="70006"]'),
+  },
+  'icon-incident-photo': {
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, 'tr.job-row[data-job-id="70006"] .images-button:visible', 1),
+  },
+  'icon-icems': {
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, 'tr.job-row[data-job-id="70006"] em.fa-share-alt:visible', 1),
+  },
+
+  // Just the thumbtack + count, for inline use in the text.
+  'icon-action-pin': {
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, 'tr.job-row[data-job-id="70001"] .action-required-button:visible', 1),
+  },
+
+  // ...and the grouped "xN" pills on the expanded incident.
+  'incident-action-pills': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('tr.job-row[data-job-id="70001"] [data-bind*="toggleAndExpand"]').first().click();
+      await settle(page, 800);
+    },
+    target: (page) => unionOf(page, 'tr.job-row[data-job-id="70001"] #actionRequiredTags > span', 10),
+  },
+
+  // Incident photo viewer (2610-1207 has three fake photos).
+  'incident-photos': {
+    run: openPhotos,
+    target: (page) => page.locator('#incidentImagesModal .modal-content'),
+  },
+  'incident-photos-zoomed': {
+    run: async (page) => {
+      await openPhotos(page);
+      await page.locator('#incidentImagesModal button[title="Zoom to actual size"]').click();
+      await settle(page, 600);
+      // Pan to the middle of the photo (what drag-to-pan does): scroll the
+      // zoomed preview box so the damaged roof is in view.
+      await page.evaluate(() => {
+        const box = [...document.querySelectorAll('#incidentImagesModal *')]
+          .find((el) => el.scrollWidth > el.clientWidth + 50 && el.scrollHeight > el.clientHeight + 50);
+        if (box) box.scrollTo((box.scrollWidth - box.clientWidth) / 2, (box.scrollHeight - box.clientHeight) * 0.35);
+      });
+      await settle(page, 400);
+    },
+    target: (page) => page.locator('#incidentImagesModal .modal-content'),
+  },
+
+  // "Open in Beacon" with no Beacon Remote tab registered: LAD explains why
+  // and offers to open the page in a new window instead.
+  'remote-tab-missing': {
+    launch: { remoteTab: 'missing' },
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      const row = page.locator('tr.job-row[data-job-id="70006"]');
+      await row.scrollIntoViewIfNeeded();
+      await row.locator('[data-bind*="toggleAndExpand"]').first().click();
+      await settle(page, 800);
+      await page.locator('tr.job-row[data-job-id="70006"] button:has-text("Open in Beacon")').first().click();
+      await page.locator('#alerts-container .alert').first().waitFor();
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('#alerts-container .alert').first(),
+  },
+
   spotlight: {
     run: async (page) => {
       await closeConfigAndLoad(page);
@@ -150,7 +231,7 @@ fs.mkdirSync(outDir, { recursive: true });
 let failed = 0;
 for (const name of names) {
   const shot = SHOTS[name];
-  const { browser, page } = await launchLad({ now: NOW, verbose });
+  const { browser, page } = await launchLad({ now: NOW, verbose, ...(shot.launch || {}) });
   try {
     await settle(page, 800);
     await shot.run(page);

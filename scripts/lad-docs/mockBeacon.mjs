@@ -10,6 +10,8 @@
   "[mock] unhandled" line instead of a silent blank.
 */
 
+import { sceneIndex } from './photos.mjs';
+
 export const BEACON_HOST = 'https://beacon.demo.test';
 export const LAMBDA_HOST = 'lambda.lighthouse-extension.com';
 
@@ -33,8 +35,8 @@ function idsParam(url, name) {
   return [...url.searchParams.getAll(`${name}[]`), ...url.searchParams.getAll(name)].map(Number);
 }
 
-export function createMockRouter(scenario, { log = () => {} } = {}) {
-  const { hq, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory } = scenario;
+export function createMockRouter(scenario, { log = () => {}, photoImages = null } = {}) {
+  const { hq, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos } = scenario;
   const byId = (rows, id) => rows.find((r) => r.Id === Number(id));
 
   function beacon(route, url) {
@@ -55,6 +57,10 @@ export function createMockRouter(scenario, { log = () => {} } = {}) {
     if ((m = p.match(/^\/Api\/v1\/Tags\/Group\/(\d+)$/))) return json(route, paged(url, tagGroups[m[1]] || []));
 
     if (p === '/Api/v1/Jobs/Search') return json(route, paged(url, jobs));
+    // No unacknowledged ICEMS notifications in the demo (Job.js expects an array).
+    if (/^\/Api\/v1\/Jobs\/\d+\/unacceptednotifications$/.test(p)) return json(route, []);
+    // ICEMS incident detail: no agencies yet (needs a real sample for structure).
+    if (/^\/Api\/v1\/Icems\/incidents\//.test(p)) return json(route, {});
     if ((m = p.match(/^\/Api\/v1\/Jobs\/(\d+)\/History$/))) return json(route, jobHistory(Number(m[1])));
     if ((m = p.match(/^\/Api\/v1\/Jobs\/(\d+)$/))) {
       const j = byId(jobs, m[1]);
@@ -69,10 +75,33 @@ export function createMockRouter(scenario, { log = () => {} } = {}) {
       return json(route, paged(url, rows));
     }
 
+    if (p === '/Api/v1/OperationsLog/search') {
+      // Bulk form sends JobIds=1&JobIds=2; single-job forms send JobIds[0]=1.
+      const jobIds = [...url.searchParams.entries()].filter(([k]) => /^JobIds(\[\d*\])?$/.test(k)).map(([, v]) => Number(v));
+      const unresolvedOnly = url.searchParams.get('UnresolvedActionsOnly') === 'true';
+      const rows = opsLog
+        .filter((e) => !jobIds.length || jobIds.includes(e.JobId))
+        .filter((e) => !unresolvedOnly || e.ActionRequired)
+        .sort((a, b) => b.TimeLogged.localeCompare(a.TimeLogged));
+      return json(route, paged(url, rows));
+    }
+
+    // Job suppliers: none in the demo (a bare array, which is what Job.js iterates).
+    if (/^\/Api\/v1\/Suppliers\/Job\/\d+$/.test(p)) return json(route, []);
+
     if (p === '/Api/v1/Teams/Search') return json(route, paged(url, teams));
     if ((m = p.match(/^\/Api\/v1\/Teams\/(\d+)$/))) {
       const t = byId(teams, m[1]);
       return t ? json(route, t) : json(route, { Message: 'Not found' }, 404);
+    }
+
+    // Incident photos: the list, then each thumbnail/full image by name.
+    if ((m = p.match(/^\/Api\/v1\/Image\/IncidentThumbnails\/(\d+)$/))) return json(route, photos.get(Number(m[1])) || []);
+    if ((m = p.match(/^\/Api\/v1\/Image\/IncidentImage\/\d+\/([^/]+)$/))) {
+      if (!photoImages) return route.fulfill({ status: 404, body: '' });
+      const name = decodeURIComponent(m[1]);
+      const set = name.endsWith('.thumb') ? photoImages.thumb : photoImages.full;
+      return route.fulfill({ status: 200, contentType: 'image/jpeg', body: set[sceneIndex(name)] });
     }
 
     if (p === '/Api/v1/ResourceLocations/Radio') return json(route, radio);

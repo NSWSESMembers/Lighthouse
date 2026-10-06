@@ -19,6 +19,10 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { buildScenario } from './scenario.mjs';
 import { createMockRouter, BEACON_HOST } from './mockBeacon.mjs';
+import { renderPhotos } from './photos.mjs';
+
+// Rendered once per process and reused across launches (capture.mjs relaunches per shot).
+let photoImagesCache = null;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DIST = path.join(ROOT, 'dist');
@@ -35,10 +39,12 @@ function fakeJwt(sub) {
  * @param {{width:number,height:number}} [opts.viewport]
  * @param {Date|string} [opts.now]  start the page's clock (and the scenario) at this instant
  * @param {object} [opts.config]  partial lh-taskingConfig to pre-seed (e.g. { darkMode: true })
+ * @param {'ok'|'missing'|'closed'} [opts.remoteTab='ok']  how the stubbed background answers
+ *        "open in Beacon" requests: success, no Remote tab registered, or the Remote tab closed
  * @param {boolean} [opts.verbose]  log mock traffic and page errors
  */
 export async function launchLad(opts = {}) {
-  const { headless = true, viewport = { width: 1600, height: 1000 }, config, verbose = false } = opts;
+  const { headless = true, viewport = { width: 1600, height: 1000 }, config, verbose = false, remoteTab = 'ok' } = opts;
   if (!fs.existsSync(path.join(DIST, 'pages/tasking.html'))) {
     throw new Error('dist/pages/tasking.html not found -- run `npm run dev` first');
   }
@@ -65,14 +71,20 @@ export async function launchLad(opts = {}) {
   }
 
   const operatorId = scenario.jobs[0].CreatedBy.Id;
-  await context.addInitScript(({ tokenKey, token, manifest, config }) => {
+  await context.addInitScript(({ tokenKey, token, manifest, config, remoteTab }) => {
     const store = { [tokenKey]: JSON.stringify({ token, expdate: '2099-01-01T00:00:00Z' }) };
     window.chrome = {
       runtime: {
         id: 'lighthouse-demo',
         getManifest: () => manifest,
-        // "Open in Beacon" etc. -- report success, nothing to open.
-        sendMessage: (_msg, cb) => cb && setTimeout(() => cb({ success: true, message: 'Demo mode: not opened' }), 0),
+        // "Open in Beacon" etc. Replies mirror src/background.js's
+        // tasking-openURL handler; nothing is actually opened.
+        sendMessage: (msg, cb) => {
+          let reply = { success: true, message: 'Demo mode: not opened' };
+          if (msg?.type === 'tasking-openURL' && remoteTab === 'missing') reply = { error: 'No remote tab registered' };
+          if (msg?.type === 'tasking-openURL' && remoteTab === 'closed') reply = { error: 'Failed to send tasking remote command', message: 'No tab with id: 123.' };
+          if (cb) setTimeout(() => cb(reply), 0);
+        },
         onMessage: { addListener() {}, removeListener() {} },
       },
       storage: {
@@ -91,9 +103,10 @@ export async function launchLad(opts = {}) {
       localStorage.setItem('lh-taskingConfig', JSON.stringify(config));
       localStorage.setItem('lh-taskingConfig.__seeded', '1');
     }
-  }, { tokenKey: `beaconAPIToken-${BEACON_HOST}`, token: fakeJwt(operatorId), manifest, config: config || null });
+  }, { tokenKey: `beaconAPIToken-${BEACON_HOST}`, token: fakeJwt(operatorId), manifest, config: config || null, remoteTab });
 
-  const mock = createMockRouter(scenario, { log });
+  photoImagesCache ??= await renderPhotos(context);
+  const mock = createMockRouter(scenario, { log, photoImages: photoImagesCache });
   await context.route('**/*', async (route) => {
     const url = new URL(route.request().url());
     if (url.origin === APP_ORIGIN) {
