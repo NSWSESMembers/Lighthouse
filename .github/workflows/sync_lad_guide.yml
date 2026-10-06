@@ -1,0 +1,48 @@
+name: Sync LAD Guide to Website
+on:
+  push:
+    branches: [master]
+    paths: ['docs/lad/**']
+  workflow_dispatch:
+
+concurrency:
+  group: sync-lad-guide
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync docs/lad to lighthouse.ses.nsw.gov.au/guides/lad
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Lighthouse
+        uses: actions/checkout@v7
+        with:
+          path: lighthouse
+
+      - name: Checkout website
+        uses: actions/checkout@v7
+        with:
+          repository: NSWSESMembers/lighthouse.ses.nsw.gov.au
+          ref: master
+          token: ${{ secrets.WEBSITE_SYNC_TOKEN }}
+          path: website
+
+      - name: Copy guide
+        run: |
+          mkdir -p website/guides/lad
+          rsync -a --delete lighthouse/docs/lad/ website/guides/lad/
+
+      - name: Commit and push
+        working-directory: website
+        env:
+          SRC_SHA: ${{ github.sha }}
+        run: |
+          git add -A guides/lad
+          if git diff --cached --quiet; then
+            echo "Guide already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Sync LAD guide from NSWSESMembers/Lighthouse@${SRC_SHA::7}"
+          git push
