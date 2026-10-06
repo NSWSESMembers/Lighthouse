@@ -55,7 +55,7 @@ Whether incidents or teams created in the future are synced into LAD. The defaul
 
 ### Live Updates
 
-When information is updated in Beacon, it is pushed directly into LAD, giving near real-time updates to incidents, teams and tasking statuses.
+When information is updated in Beacon, it is pushed directly into LAD, giving near real-time updates to incidents, teams and tasking statuses. Each register's **Refresh Data** button flashes when an update for it arrives (see [Register Controls](interface.md#register-controls)).
 
 > **Note:** When using Live Updates, keep the Full Refresh Interval between 3 and 5 minutes. The full refresh picks up anything Live Updates missed.
 

@@ -30,7 +30,7 @@ The Team and Incident registers share a common set of controls:
 - **New Radio Log Entry** — opens the [New Radio Log](common-functions.md#new-radio-log) dialog. The entry is not automatically attached to a team or incident.
 - **Filter Settings** — opens the filters relevant to that register (Teams or Incidents).
   - The Team Register filter dropdown also opens the [Trackable Assets Library](#trackable-assets-library).
-- **Refresh Data** — refreshes the data for that register.
+- **Refresh Data** — refreshes the data for that register. With [Live Updates](configuration.md#live-updates) on, it also flashes briefly whenever Beacon pushes a change for that register, so you can see updates arriving. Tasking changes flash both registers' buttons.
 - **Page Configuration** (right) — opens the [Configuration](configuration.md) screen.
 
 Each register also has a **collapse all** button <img class="icon" src="images/register-collapse-all.png" alt="Collapse all" height="20"> that collapses every team or incident in that register.
