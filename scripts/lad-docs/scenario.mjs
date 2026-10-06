@@ -12,6 +12,8 @@
   date-window filters always admit them.
 */
 
+import { photoList } from './photos.mjs';
+
 const TZ = 'Australia/Sydney';
 
 /** Beacon-style offset-free local timestamp, `hoursAgo` before `now`. */
@@ -490,5 +492,8 @@ export function buildScenario(now = new Date()) {
     }));
   };
 
-  return { hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, timezone: TZ };
+  // Image/IncidentThumbnails per job.
+  const photos = new Map(Object.entries(PHOTO_COUNTS).map(([ji, n]) => [jobs[ji].Id, photoList(jobs[ji].Id, n)]));
+
+  return { hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, timezone: TZ };
 }

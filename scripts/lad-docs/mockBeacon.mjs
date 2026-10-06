@@ -10,6 +10,8 @@
   "[mock] unhandled" line instead of a silent blank.
 */
 
+import { sceneIndex } from './photos.mjs';
+
 export const BEACON_HOST = 'https://beacon.demo.test';
 export const LAMBDA_HOST = 'lambda.lighthouse-extension.com';
 
@@ -33,8 +35,8 @@ function idsParam(url, name) {
   return [...url.searchParams.getAll(`${name}[]`), ...url.searchParams.getAll(name)].map(Number);
 }
 
-export function createMockRouter(scenario, { log = () => {} } = {}) {
-  const { hq, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog } = scenario;
+export function createMockRouter(scenario, { log = () => {}, photoImages = null } = {}) {
+  const { hq, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos } = scenario;
   const byId = (rows, id) => rows.find((r) => r.Id === Number(id));
 
   function beacon(route, url) {
@@ -91,6 +93,15 @@ export function createMockRouter(scenario, { log = () => {} } = {}) {
     if ((m = p.match(/^\/Api\/v1\/Teams\/(\d+)$/))) {
       const t = byId(teams, m[1]);
       return t ? json(route, t) : json(route, { Message: 'Not found' }, 404);
+    }
+
+    // Incident photos: the list, then each thumbnail/full image by name.
+    if ((m = p.match(/^\/Api\/v1\/Image\/IncidentThumbnails\/(\d+)$/))) return json(route, photos.get(Number(m[1])) || []);
+    if ((m = p.match(/^\/Api\/v1\/Image\/IncidentImage\/\d+\/([^/]+)$/))) {
+      if (!photoImages) return route.fulfill({ status: 404, body: '' });
+      const name = decodeURIComponent(m[1]);
+      const set = name.endsWith('.thumb') ? photoImages.thumb : photoImages.full;
+      return route.fulfill({ status: 200, contentType: 'image/jpeg', body: set[sceneIndex(name)] });
     }
 
     if (p === '/Api/v1/ResourceLocations/Radio') return json(route, radio);

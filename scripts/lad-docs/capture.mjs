@@ -64,6 +64,16 @@ function unionOf(page, selector, pad = 2) {
   };
 }
 
+/** Open the photo viewer for 2610-1207 and wait for the first photo and thumbnails. */
+async function openPhotos(page) {
+  await closeConfigAndLoad(page);
+  const row = page.locator('tr.job-row[data-job-id="70006"]');
+  await row.scrollIntoViewIfNeeded();
+  await row.locator('.images-button:visible').click();
+  await page.locator('#incidentImagesModal').waitFor({ state: 'visible' });
+  await settle(page, 1200);
+}
+
 const SHOTS = {
   'config-data': configTab('data'),
   'config-incident-filters': configTab('filters'),
@@ -156,6 +166,28 @@ const SHOTS = {
       await settle(page, 800);
     },
     target: (page) => unionOf(page, 'tr.job-row[data-job-id="70001"] #actionRequiredTags > span', 10),
+  },
+
+  // Incident photo viewer (2610-1207 has three fake photos).
+  'incident-photos': {
+    run: openPhotos,
+    target: (page) => page.locator('#incidentImagesModal .modal-content'),
+  },
+  'incident-photos-zoomed': {
+    run: async (page) => {
+      await openPhotos(page);
+      await page.locator('#incidentImagesModal button[title="Zoom to actual size"]').click();
+      await settle(page, 600);
+      // Pan to the middle of the photo (what drag-to-pan does): scroll the
+      // zoomed preview box so the damaged roof is in view.
+      await page.evaluate(() => {
+        const box = [...document.querySelectorAll('#incidentImagesModal *')]
+          .find((el) => el.scrollWidth > el.clientWidth + 50 && el.scrollHeight > el.clientHeight + 50);
+        if (box) box.scrollTo((box.scrollWidth - box.clientWidth) / 2, (box.scrollHeight - box.clientHeight) * 0.35);
+      });
+      await settle(page, 400);
+    },
+    target: (page) => page.locator('#incidentImagesModal .modal-content'),
   },
 
   spotlight: {

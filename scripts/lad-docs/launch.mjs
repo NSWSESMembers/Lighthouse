@@ -19,6 +19,10 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
 import { buildScenario } from './scenario.mjs';
 import { createMockRouter, BEACON_HOST } from './mockBeacon.mjs';
+import { renderPhotos } from './photos.mjs';
+
+// Rendered once per process and reused across launches (capture.mjs relaunches per shot).
+let photoImagesCache = null;
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DIST = path.join(ROOT, 'dist');
@@ -93,7 +97,8 @@ export async function launchLad(opts = {}) {
     }
   }, { tokenKey: `beaconAPIToken-${BEACON_HOST}`, token: fakeJwt(operatorId), manifest, config: config || null });
 
-  const mock = createMockRouter(scenario, { log });
+  photoImagesCache ??= await renderPhotos(context);
+  const mock = createMockRouter(scenario, { log, photoImages: photoImagesCache });
   await context.route('**/*', async (route) => {
     const url = new URL(route.request().url());
     if (url.origin === APP_ORIGIN) {
