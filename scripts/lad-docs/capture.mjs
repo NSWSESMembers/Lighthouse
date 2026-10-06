@@ -190,6 +190,23 @@ const SHOTS = {
     target: (page) => page.locator('#incidentImagesModal .modal-content'),
   },
 
+  // "Open in Beacon" with no Beacon Remote tab registered: LAD explains why
+  // and offers to open the page in a new window instead.
+  'remote-tab-missing': {
+    launch: { remoteTab: 'missing' },
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      const row = page.locator('tr.job-row[data-job-id="70006"]');
+      await row.scrollIntoViewIfNeeded();
+      await row.locator('[data-bind*="toggleAndExpand"]').first().click();
+      await settle(page, 800);
+      await page.locator('tr.job-row[data-job-id="70006"] button:has-text("Open in Beacon")').first().click();
+      await page.locator('#alerts-container .alert').first().waitFor();
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('#alerts-container .alert').first(),
+  },
+
   spotlight: {
     run: async (page) => {
       await closeConfigAndLoad(page);
@@ -214,7 +231,7 @@ fs.mkdirSync(outDir, { recursive: true });
 let failed = 0;
 for (const name of names) {
   const shot = SHOTS[name];
-  const { browser, page } = await launchLad({ now: NOW, verbose });
+  const { browser, page } = await launchLad({ now: NOW, verbose, ...(shot.launch || {}) });
   try {
     await settle(page, 800);
     await shot.run(page);
