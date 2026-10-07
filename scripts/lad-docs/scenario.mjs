@@ -176,6 +176,29 @@ const TEAM_SPECS = [
   ['DEM06', 'Standby', 2, [], null, null],
 ];
 
+// Satellite tracker fields on a ResourceLocations/Radio feature. All null for
+// a radio without a tracker; ids are invented.
+function satellite({ n, lat, lng, seen, cls, status, battery } = {}) {
+  if (!n) {
+    return {
+      satelliteId: null, satelliteBattery: null, satelliteLatitude: null, satelliteLongitude: null,
+      satelliteClass: null, satelliteEquipmentId: null, satelliteLocationLastUpdated: null,
+      satelliteClassType: null, satelliteStatus: null,
+    };
+  }
+  return {
+    satelliteId: `0-99001${String(n).padStart(2, '0')}`,
+    satelliteBattery: battery,
+    satelliteLatitude: lat,
+    satelliteLongitude: lng,
+    satelliteClass: cls,
+    satelliteEquipmentId: String(99100000 + n),
+    satelliteLocationLastUpdated: seen,
+    satelliteClassType: cls,
+    satelliteStatus: status,
+  };
+}
+
 // Person shape as seen on CreatedBy/LastModifiedBy.
 function person(i) {
   const [first, last] = PEOPLE[i % PEOPLE.length];
@@ -454,17 +477,49 @@ export function buildScenario(now = new Date()) {
         radioLatitude: lat,
         radioLongitude: lng,
         radioLocationLastUpdated: seen,
-        satelliteId: null,
-        satelliteBattery: null,
-        satelliteLatitude: null,
-        satelliteLongitude: null,
-        satelliteClass: null,
-        satelliteEquipmentId: null,
-        satelliteLocationLastUpdated: null,
-        SatelliteClassType: null,
+        // DEM02 also carries a satellite tracker, so the satellite icon and
+        // "Satellite:" line show in the asset popup and library.
+        ...(assetName === 'DEM02' ? satellite({ n: 1, lat, lng, seen, cls: 'Class 3 RIB', status: 'ACTIVE', battery: 'Good' }) : satellite()),
       },
     };
   });
+
+  // A satellite-only boat (no PSN radio) with an inactive tracker and a flat
+  // battery. It matches no team, so it only shows on the Unmatched layer.
+  {
+    const lat = +(HQ.Latitude - 0.011).toFixed(5);
+    const lng = +(HQ.Longitude + 0.009).toFixed(5);
+    const seen = t(30);
+    const id = 6190;
+    radio.push({
+      type: 'Feature',
+      id,
+      geometry: { type: 'Point', coordinates: [lng, lat] },
+      properties: {
+        type: 'Feature',
+        id,
+        name: 'DEMB1',
+        capability: 'Flood Rescue',
+        entity: HQ.Name,
+        resourceType: 'Vessel',
+        sourceType: 'SAP',
+        licensePlate: null,
+        serialNumber: null,
+        radioId: null,
+        equipmentId: null,
+        lastSeen: seen,
+        status: null,
+        direction: null,
+        talkgroup: null,
+        talkgroupLastUpdated: null,
+        smartConnect: null,
+        radioLatitude: null,
+        radioLongitude: null,
+        radioLocationLastUpdated: null,
+        ...satellite({ n: 2, lat, lng, seen, cls: 'Class 4 Punt', status: 'NON ACTIVE', battery: 'Replace' }),
+      },
+    });
+  }
 
   // Vehicle telematics: a FeatureCollection (Beacon's
   // ResourceLocations/Telematics). displayName is "<callsign> <model>",

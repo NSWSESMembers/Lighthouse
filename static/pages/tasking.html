@@ -2014,6 +2014,12 @@
                                         </button>
                                     </li>
                                     <li class="nav-item config-rail-guide" role="presentation">
+                                        <button class="nav-link" type="button" title="Save and close settings, then open the Trackable Asset Library"
+                                            data-bind="click: openTrackableAssetsFromConfig">
+                                            <span class="cfg-rail-ico"><i class="fa fa-satellite-dish"></i></span><span>Trackable Asset Library</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
                                         <a class="nav-link" href="https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html" target="_blank" rel="noopener" title="Open the LAD user guide in a new tab">
                                             <span class="cfg-rail-ico"><i class="fa fa-book"></i></span><span>User guide</span><i class="fa fa-external-link-alt ms-auto small opacity-50"></i>
                                         </a>
@@ -4521,16 +4527,26 @@
                     <div class="mb-3">
                         <div class="input-group">
                             <input type="search" class="form-control"
-                                placeholder="Search by callsign, unit or PSN radio ID..."
+                                placeholder="Search by callsign, unit, PSN radio ID or satellite ID..."
                                 data-bind="value: searchQuery, valueUpdate: 'input'">
                             <button class="btn btn-outline-secondary" type="button" title="Clear"
                                 data-bind="click: clearSearchQuery, visible: searchQuery">&times;</button>
                         </div>
                     </div>
-                    <!-- Talkgroup filter -->
-                    <div class="mb-3">
-                        <select class="form-select"
-                            data-bind="options: talkgroups, value: selectedTalkgroup, optionsCaption: 'All Talkgroups'"></select>
+                    <!-- Talkgroup / Type / Satellite filters -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-12 col-md-4">
+                            <select class="form-select" aria-label="Filter by talkgroup"
+                                data-bind="options: talkgroups, value: selectedTalkgroup, optionsCaption: 'All Talkgroups'"></select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <select class="form-select" aria-label="Filter by type"
+                                data-bind="options: types, value: selectedType, optionsCaption: 'All Types'"></select>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <select class="form-select" aria-label="Filter by satellite tracking"
+                                data-bind="options: satelliteOptions, optionsText: 'label', optionsValue: 'value', value: selectedSatellite, optionsCaption: 'Satellite: Any'"></select>
+                        </div>
                     </div>
                     <!-- Asset list -->
                     <div data-bind="foreach: filteredAssets" style="max-height: 400px; overflow-y: auto;">
@@ -4556,21 +4572,39 @@
                                         <span class="fw-semibold">Talkgroup:</span>
                                         <span class="text-muted" data-bind="text: talkgroup"></span>
                                     </div>
+                                    <div class="small mb-1" data-bind="visible: isSatellite">
+                                        <span class="fw-semibold">Satellite:</span>
+                                        <span class="text-muted" data-bind="text: satelliteSummary"></span>
+                                    </div>
                                 </div>
                                 <!-- Column 3: IDs & Last Seen -->
                                 <div class="flex-shrink-0 ps-3 border-start text-start" style="width: 180px;">
-                                    <div class="small mb-1">
+                                    <div class="small mb-1" data-bind="visible: radioId() || !isSatellite()">
                                         <span class="fw-semibold">PSN ID:</span>
                                         <span class="text-muted" data-bind="text: radioId"></span>
+                                    </div>
+                                    <div class="small mb-1" data-bind="visible: isSatellite">
+                                        <span class="fw-semibold">Sat ID:</span>
+                                        <span class="text-muted" data-bind="text: satelliteId, attr: { title: 'Equipment ID: ' + satelliteEquipmentId() }"></span>
                                     </div>
                                     <div class="small mb-1">
                                         <span class="fw-semibold">Last Seen:</span>
                                         <span class="text-muted" data-bind="text: lastSeenJustAgoText"></span>
+                                        <span class="sat-icon ms-1"
+                                            data-bind="visible: isSatellite, css: { 'sat-icon--inactive': !satelliteActive() }, attr: { title: satelliteIconTitle }"><i class="fas fa-satellite"></i><i class="fas fa-slash sat-icon__slash" data-bind="visible: !satelliteActive()"></i></span>
                                     </div>
                                     <div class="small mb-1">
                                         <span class="fw-semibold">Vehicle Rego:</span>
                                         <span class="text-muted" data-bind="text: licensePlate"></span>
                                     </div>
+                                </div>
+                                <!-- Column 4: Show on map -->
+                                <div class="flex-shrink-0 ps-3 border-start d-flex align-items-center">
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                        title="Show on map"
+                                        data-bind="click: $parent.focusAsset, enable: latLngText">
+                                        <i class="fas fa-crosshairs"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>

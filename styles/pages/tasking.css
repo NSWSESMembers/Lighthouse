@@ -2620,7 +2620,7 @@ overflow: hidden;
   font-weight: 600;
 }
 
-/* Link to the online user guide, pinned to the bottom of the rail. */
+/* First of the bottom-of-rail links (asset library, user guide) -- pins the group to the bottom. */
 .config-rail .config-rail-guide {
   margin-top: auto;
   padding-top: 0.5rem;
@@ -4495,4 +4495,28 @@ input[type="search"]:focus {
 
 .signalr-status-banner__icon {
   font-size: 15px;
+}
+
+/* Satellite-tracked asset marker next to "Last seen"; a red fa-slash is
+   stacked over it when the tracker's satelliteStatus isn't ACTIVE. */
+.sat-icon {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.sat-icon--inactive .fa-satellite {
+  opacity: 0.55;
+}
+
+/* Centre the slash on the satellite glyph itself so it lines up regardless of
+   the surrounding line-height (Leaflet popup vs library card). */
+.sat-icon__slash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  color: #dc3545;
 }

@@ -126,3 +126,68 @@ describe('updateFromJson', () => {
     expect(a.name()).toBe('RES1A');
   });
 });
+
+describe('satellite tracker fields', () => {
+  it('is not a satellite asset without a satelliteId', () => {
+    const a = new Asset(assetData(), deps());
+    expect(a.isSatellite()).toBe(false);
+    expect(a.satelliteBattery()).toBe('');
+  });
+
+  it('maps satellite fields from properties and flags isSatellite', () => {
+    const a = new Asset(assetData({ properties: {
+      satelliteId: '0-1234567', satelliteBattery: 'OK', satelliteClass: 'Class 4 Punt',
+      satelliteClassType: 'Class 4 Punt', satelliteEquipmentId: '10000001', satelliteStatus: 'ACTIVE',
+    } }), deps());
+    expect(a.isSatellite()).toBe(true);
+    expect(a.satelliteId()).toBe('0-1234567');
+    expect(a.satelliteClass()).toBe('Class 4 Punt');
+    expect(a.satelliteEquipmentId()).toBe('10000001');
+    expect(a.satelliteStatus()).toBe('ACTIVE');
+  });
+
+  it('updateFromJson refreshes satellite battery/status', () => {
+    const a = new Asset(assetData({ properties: { satelliteId: '0-1234567', satelliteBattery: 'OK' } }), deps());
+    a.updateFromJson({ properties: { satelliteBattery: 'Replace', satelliteStatus: 'INACTIVE' } });
+    expect(a.satelliteBattery()).toBe('Replace');
+    expect(a.satelliteStatus()).toBe('INACTIVE');
+    expect(a.isSatellite()).toBe(true);
+  });
+});
+
+describe('satelliteBatteryText', () => {
+  it('shows "Replace" as "Low" and passes other values through', () => {
+    const a = new Asset(assetData({ properties: { satelliteId: '0-1', satelliteBattery: 'Replace' } }), deps());
+    expect(a.satelliteBatteryText()).toBe('Low');
+    a.satelliteBattery('OK');
+    expect(a.satelliteBatteryText()).toBe('OK');
+    a.satelliteBattery('');
+    expect(a.satelliteBatteryText()).toBe('');
+  });
+});
+
+describe('satelliteSummary', () => {
+  it('joins class, status and battery, skipping a duplicate class type and blanks', () => {
+    const a = new Asset(assetData({ properties: {
+      satelliteId: '0-1', satelliteClass: 'Class 4 Punt', satelliteClassType: 'Class 4 Punt',
+      satelliteStatus: 'ACTIVE', satelliteBattery: 'Replace',
+    } }), deps());
+    expect(a.satelliteSummary()).toBe('Class 4 Punt · ACTIVE · Battery Low');
+    a.satelliteBattery('');
+    expect(a.satelliteSummary()).toBe('Class 4 Punt · ACTIVE');
+  });
+});
+
+describe('satelliteActive', () => {
+  it('is true only for an ACTIVE status (case-insensitive)', () => {
+    const a = new Asset(assetData({ properties: { satelliteId: '0-1', satelliteStatus: 'ACTIVE' } }), deps());
+    expect(a.satelliteActive()).toBe(true);
+    a.satelliteStatus('active');
+    expect(a.satelliteActive()).toBe(true);
+    a.satelliteStatus('INACTIVE');
+    expect(a.satelliteActive()).toBe(false);
+    expect(a.satelliteIconTitle()).toContain('INACTIVE');
+    a.satelliteStatus('');
+    expect(a.satelliteActive()).toBe(false);
+  });
+});

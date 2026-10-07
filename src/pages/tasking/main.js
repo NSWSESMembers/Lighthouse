@@ -1561,6 +1561,49 @@ function VM() {
         }
     }
 
+    // From the config modal's rail: save + close config exactly like the Save
+    // button, then open the library once config has fully hidden (opening a
+    // second Bootstrap modal mid-hide leaves body.modal-open in a bad state).
+    self.openTrackableAssetsFromConfig = function () {
+        const configEl = document.getElementById('configModal');
+        configEl?.addEventListener('hidden.bs.modal', () => self.openTrackableAssetsModal(), { once: true });
+        self.config.saveAndCloseAndLoad();
+    }
+
+    // Fly the map to a trackable asset (from the Trackable Assets Library) and
+    // open its popup. Assets shown under a filtered-in team live on the matched
+    // layer; everything else is only drawable on the unmatched layer, so that
+    // layer is switched on (and persisted, like a manual toggle) if needed.
+    self.focusTrackableAsset = function (asset) {
+        const lat = +asset?.latitude?.();
+        const lng = +asset?.longitude?.();
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+        const mapVM = self.mapVM;
+        const isMatched = (self.filteredTrackableAssets?.() || []).includes(asset);
+        const [key, layer] = isMatched
+            ? ['matched-assets', mapVM.assetLayer]
+            : ['unmatched-assets', mapVM.unmatchedAssetLayer];
+
+        if (!map.hasLayer(layer)) {
+            localStorage.setItem(`ov.${key}`, "1");
+            map.addLayer(layer);
+            // Re-render the layers drawer so its toggle reflects the new state
+            mapVM.layersDrawer?.refresh();
+        }
+
+        const modalEl = document.getElementById('trackableAssetsModal');
+        if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+
+        // Markers are attached on the next animation frame after the layer is
+        // added, so look the marker up once the flyTo has settled.
+        map.once('moveend', () => {
+            const m = isMatched ? asset.marker : asset.unmatchedMarker;
+            m?.openPopup();
+        });
+        map.flyTo([lat, lng], 14, { animate: true, duration: 0.5 });
+    }
+
 
     // Job registry/upsert
     // might be called from tasking OR job fetch so values might be missing

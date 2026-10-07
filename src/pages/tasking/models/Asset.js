@@ -21,6 +21,38 @@ export function Asset(data = {}, deps = {}) {
     self.talkgroup = ko.observable(data.properties.talkgroup ?? "");
     self.talkgroupLastUpdated = ko.observable(data.properties.talkgroupLastUpdated ?? "");
     self.radioId = ko.observable(data.properties.radioId ?? "");
+
+    // Satellite tracker fields -- present when the location comes from a
+    // satellite tracker rather than a PSN radio. satelliteLatitude/Longitude and
+    // satelliteLocationLastUpdated duplicate geometry/lastSeen, so aren't kept.
+    self.satelliteId = ko.observable(data.properties.satelliteId ?? "");
+    self.satelliteBattery = ko.observable(data.properties.satelliteBattery ?? "");
+    self.satelliteClass = ko.observable(data.properties.satelliteClass ?? "");
+    self.satelliteClassType = ko.observable(data.properties.satelliteClassType ?? "");
+    self.satelliteEquipmentId = ko.observable(data.properties.satelliteEquipmentId ?? "");
+    self.satelliteStatus = ko.observable(data.properties.satelliteStatus ?? "");
+    self.isSatellite = ko.pureComputed(() => !!self.satelliteId());
+    self.satelliteActive = ko.pureComputed(() => safeStr(self.satelliteStatus()).toUpperCase() === 'ACTIVE');
+    self.satelliteIconTitle = ko.pureComputed(() => self.satelliteActive()
+        ? 'Location from satellite tracker'
+        : `Satellite tracker not active (status: ${safeStr(self.satelliteStatus()) || 'unknown'})`);
+    // The feed reports a flat battery as "Replace"; show it as "Low".
+    self.satelliteBatteryText = ko.pureComputed(() => {
+        const v = safeStr(self.satelliteBattery());
+        return v.toLowerCase() === 'replace' ? 'Low' : v;
+    });
+    // One-line "Class 4 Punt · ACTIVE · Battery Low" for compact displays.
+    self.satelliteSummary = ko.pureComputed(() => {
+        const cls = safeStr(self.satelliteClass());
+        const type = safeStr(self.satelliteClassType());
+        const battery = self.satelliteBatteryText();
+        return [
+            cls,
+            type !== cls ? type : "",
+            safeStr(self.satelliteStatus()),
+            battery ? `Battery ${battery}` : "",
+        ].filter(Boolean).join(" · ");
+    });
     self.marker = null;
     self.matchingTeams = ko.observableArray();
 
@@ -78,6 +110,12 @@ export function Asset(data = {}, deps = {}) {
             if (d.properties.direction !== undefined) this.direction(d.properties.direction);
             if (d.properties.talkgroup !== undefined) this.talkgroup(d.properties.talkgroup);
             if (d.properties.talkgroupLastUpdated !== undefined) this.talkgroupLastUpdated(d.properties.talkgroupLastUpdated);
+            if (d.properties.satelliteId !== undefined) this.satelliteId(d.properties.satelliteId ?? "");
+            if (d.properties.satelliteBattery !== undefined) this.satelliteBattery(d.properties.satelliteBattery ?? "");
+            if (d.properties.satelliteClass !== undefined) this.satelliteClass(d.properties.satelliteClass ?? "");
+            if (d.properties.satelliteClassType !== undefined) this.satelliteClassType(d.properties.satelliteClassType ?? "");
+            if (d.properties.satelliteEquipmentId !== undefined) this.satelliteEquipmentId(d.properties.satelliteEquipmentId ?? "");
+            if (d.properties.satelliteStatus !== undefined) this.satelliteStatus(d.properties.satelliteStatus ?? "");
         }
 
         if (d.markerLabel !== undefined) this.markerLabel(d.markerLabel);
