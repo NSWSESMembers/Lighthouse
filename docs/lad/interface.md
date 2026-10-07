@@ -95,7 +95,7 @@ Each entry displays:
 
 ### Searching and Filtering
 
-Search by callsign, unit or zone name, PSN ID, satellite ID or satellite equipment ID using the field at the top. The dropdowns below it narrow the list by **Talkgroup**, **Type** (e.g. Vehicle or Vessel) and **Satellite** (satellite tracked only, or no satellite tracker).
+Search by callsign, unit or zone name, PSN ID, satellite ID or satellite equipment ID using the field at the top. The dropdowns below it narrow the list by **Talkgroup**, **Type** (e.g. Vehicle or Vessel) and **Source** — where the asset's location comes from: a **Satellite tracker**, or **PSN radio only** (no satellite tracker).
 
 ### Satellite-Tracked Assets
 

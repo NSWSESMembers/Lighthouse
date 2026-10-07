@@ -24,7 +24,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 - **Satellite-tracked assets.** Assets located by a satellite tracker show a satellite icon next to their last-seen time, crossed out if the tracker isn't active. The asset popup and the Trackable Assets Library show the tracker's class, status and battery. See [Satellite-Tracked Assets](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#satellite-tracked-assets).
 - **Show an asset on the map from the Trackable Assets Library.** Each entry has a **Show on map** button that focuses the map on the asset and opens its popup, turning on the asset layer it needs. See [Showing an Asset on the Map](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#showing-an-asset-on-the-map).
-- The Trackable Assets Library can be filtered by **Type** and by **Satellite**, and searched by satellite ID.
+- The Trackable Assets Library can be filtered by **Type** and by location **Source** (satellite tracker or PSN radio), and searched by satellite ID.
 - The Trackable Assets Library can also be opened from the bottom of the [Configuration](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html) tabs.
 
 ## LAD "In map view" filter and a user guide
