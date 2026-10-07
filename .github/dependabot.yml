@@ -1,0 +1,21 @@
+# Dependabot version updates. All PRs target master-dev (the integration
+# branch), not master. Note: GitHub always raises *security* update PRs
+# against the repository's default branch, regardless of target-branch.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directories:
+      - "/"
+      - "/lambda/*"
+    target-branch: "master-dev"
+    schedule:
+      interval: "weekly"
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "master-dev"
+    schedule:
+      interval: "weekly"
