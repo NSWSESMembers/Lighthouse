@@ -7,7 +7,7 @@ nav_order: 9
 
 The Situation Map is on the right of the screen (by default — see [Layout](configuration.md#layout)). It displays all filtered incidents and matched teams, giving you a visual picture to support tasking and decision making.
 
-The different kinds of map content — incidents, collaborative layer markers, assets (radios), overlay icons and overlay polygons (areas) — are stacked in a set order, with higher layers drawn over lower ones. The order is set under [Marker Layer Order](configuration.md#marker-layer-order); by default incident markers are always drawn on top.
+The different kinds of map content — incidents, collaborative layer markers, assets (radios and satellite trackers), overlay icons and overlay polygons (areas) — are stacked in a set order, with higher layers drawn over lower ones. The order is set under [Marker Layer Order](configuration.md#marker-layer-order); by default incident markers are always drawn on top.
 
 ## Incident Clustering
 
@@ -119,8 +119,8 @@ Most layers are described by their name. Those that need more explanation:
 
 **Assets**
 
-- **Matched against Teams** — radio assets matched to a team. Only radios that have reported a location in the last 24 hours are shown.
-- **Unmatched against Teams** — radio assets not matched to a team, shown with grey text. Icons are faded if the radio hasn't reported in the last hour.
+- **Matched against Teams** — radios and satellite trackers matched to a team. Only those that have reported a location in the last 24 hours are shown.
+- **Unmatched against Teams** — radios and satellite trackers not matched to a team, shown with grey text. Icons are faded if the asset hasn't reported in the last hour.
   - This layer can slow LAD down and shouldn't be left on.
 
 **NSW SES Geoservices**
@@ -236,11 +236,11 @@ Hover over an incident marker to see a quick summary without opening its popup:
 
 ## Teams
 
-The map shows team locations using the positions reported by the team's matched assets — the GPS in SES-issued PSN radios, or a satellite tracker fitted to the asset (see [Satellite-Tracked Assets](interface.md#satellite-tracked-assets)). Personal phones and non-SES radios aren't tracked. The register *focus* buttons can only zoom to teams that are on the map.
+The map shows team locations using the position reported by the team's matched radio or satellite tracker — the GPS in an SES-issued PSN radio, or a satellite tracker fitted to the asset (see [Satellite-Tracked Assets](interface.md#satellite-tracked-assets)). Personal phones and non-SES radios aren't tracked. The register *focus* buttons can only zoom to teams that are on the map.
 
-Click a radio asset marker to see the radio's details — such as when it was last seen — the team it's matched to, and that team's taskings. If the location comes from a satellite tracker, a satellite icon shows next to the last-seen time (crossed out if the tracker isn't active), with a **Satellite** line giving the tracker's class, status and battery — see [Satellite-Tracked Assets](interface.md#satellite-tracked-assets). Each tasking has two buttons:
+Click an asset marker to see the radio or satellite tracker's details — such as when it was last seen — the team it's matched to, and that team's taskings. If the location comes from a satellite tracker, a satellite icon shows next to the last-seen time (crossed out if the tracker isn't active), with a **Satellite** line giving the tracker's class, status and battery — see [Satellite-Tracked Assets](interface.md#satellite-tracked-assets). Each tasking has two buttons:
 
 - **Route to Asset** (left) — shows a road route from the team's current location to the incident with an approximate ETA.
 - **Open Incident in Remote Tab** — opens the incident in the Beacon remote tab.
 
-![Radio asset popup](images/asset-popup.png)
+![Asset popup](images/asset-popup.png)
