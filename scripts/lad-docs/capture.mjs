@@ -74,6 +74,17 @@ async function openPhotos(page) {
   await settle(page, 1200);
 }
 
+/** Open the Trackable Asset Library from the config modal's rail link (saves + loads, then opens it). */
+async function openAssetLibrary(page) {
+  await page.locator('#configModal button:has-text("Trackable Asset Library")').click();
+  await page.locator('#trackableAssetsModal').waitFor({ state: 'visible' });
+  await settle(page, 1500);
+}
+
+/** A library card by its asset name. */
+const libraryCard = (page, name) =>
+  page.locator('#trackableAssetsModal .card').filter({ has: page.locator('.fs-4', { hasText: new RegExp(`^${name}$`) }) });
+
 const SHOTS = {
   'config-data': configTab('data'),
   'config-incident-filters': configTab('filters'),
@@ -230,6 +241,52 @@ const SHOTS = {
       await settle(page, 600);
     },
     target: (page) => page.locator('#alerts-container .alert').first(),
+  },
+
+  // Trackable Asset Library: search, Talkgroup/Type/Satellite filters and
+  // the asset cards (DEM02 has a satellite tracker, DEMB1 is satellite-only
+  // with an inactive tracker).
+  'trackable-assets-library': {
+    run: openAssetLibrary,
+    target: (page) => page.locator('#trackableAssetsModal .modal-content'),
+  },
+
+  // The same list narrowed to satellite-tracked assets: DEM02 (active tracker)
+  // and DEMB1 (satellite-only, tracker not active -> crossed-out icon).
+  'trackable-assets-library-satellite': {
+    run: async (page) => {
+      await openAssetLibrary(page);
+      await page.locator('#trackableAssetsModal select[aria-label="Filter by location source"]').selectOption({ label: 'Satellite tracker' });
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('#trackableAssetsModal .modal-content'),
+  },
+
+  // Asset popup for DEM02, opened with the library's "Show on map" button.
+  'asset-popup': {
+    run: async (page) => {
+      await openAssetLibrary(page);
+      await libraryCard(page, 'DEM02').locator('button[title="Show on map"]').click();
+      await page.locator('.leaflet-popup .veh-pop').waitFor();
+      await settle(page, 1200);
+    },
+    target: (page) => page.locator('.leaflet-popup-content-wrapper'),
+  },
+
+  // Inline satellite icons (active / crossed out) for the guide text.
+  'icon-satellite': {
+    launch: { scale: 3 },
+    run: openAssetLibrary,
+    target: (page) => unionOf(page, '#trackableAssetsModal .card:has(.fs-4:text-is("DEM02")) .sat-icon:visible', 2),
+  },
+  'icon-show-on-map': {
+    run: openAssetLibrary,
+    target: (page) => unionOf(page, '#trackableAssetsModal .card:has(.fs-4:text-is("DEM02")) button[title="Show on map"]', 1),
+  },
+  'icon-satellite-inactive': {
+    launch: { scale: 3 },
+    run: openAssetLibrary,
+    target: (page) => unionOf(page, '#trackableAssetsModal .card:has(.fs-4:text-is("DEMB1")) .sat-icon:visible', 2),
   },
 
   spotlight: {

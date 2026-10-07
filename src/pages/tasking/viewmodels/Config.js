@@ -1204,7 +1204,7 @@ export function ConfigVM(root, deps) {
         return 'A low-glare dark colour scheme for the whole board and map.';
     });
 
-    // Command palette (Spotlight Search) hotkey. `null` means "use the
+    // Spotlight Search hotkey. `null` means "use the
     // built-in Cmd/Ctrl+K default" -- see utils/hotkeyMatch.js for the
     // combo shape and matching/formatting logic shared with main.js.
     const _isMac = isMacPlatform();

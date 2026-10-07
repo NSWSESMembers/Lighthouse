@@ -42,9 +42,10 @@ function fakeJwt(sub) {
  * @param {'ok'|'missing'|'closed'} [opts.remoteTab='ok']  how the stubbed background answers
  *        "open in Beacon" requests: success, no Remote tab registered, or the Remote tab closed
  * @param {boolean} [opts.verbose]  log mock traffic and page errors
+ * @param {number} [opts.scale=1]  device pixel ratio (e.g. 3 for crisp small inline icons)
  */
 export async function launchLad(opts = {}) {
-  const { headless = true, viewport = { width: 1600, height: 1000 }, config, verbose = false, remoteTab = 'ok' } = opts;
+  const { headless = true, viewport = { width: 1600, height: 1000 }, config, verbose = false, remoteTab = 'ok', scale = 1 } = opts;
   if (!fs.existsSync(path.join(DIST, 'pages/tasking.html'))) {
     throw new Error('dist/pages/tasking.html not found -- run `npm run dev` first');
   }
@@ -54,7 +55,7 @@ export async function launchLad(opts = {}) {
   const log = verbose ? (m) => console.log(m) : () => {};
 
   const browser = await chromium.launch({ channel: 'chrome', headless });
-  const context = await browser.newContext({ viewport, timezoneId: scenario.timezone, locale: 'en-AU' });
+  const context = await browser.newContext({ viewport, deviceScaleFactor: scale, timezoneId: scenario.timezone, locale: 'en-AU' });
   // Shift Date rather than freeze it: row transitions and Leaflet's tile
   // fade measure elapsed Date.now(), so a frozen clock leaves rows and the
   // basemap invisible. Time starts at `now` and runs normally from there.

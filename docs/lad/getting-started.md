@@ -81,7 +81,7 @@ Teams not linked to a radio asset show a location marker with a cross through it
 
 - Confirm the team is **Activated** in Beacon.
 - Confirm the team appears in the LAD Team Register.
-- Confirm the name of the radio the team should match in the [Trackable Assets Library](interface.md#trackable-assets-library) (Team Register filter menu).
+- Confirm the name of the radio the team should match in the [Trackable Assets Library](interface.md#trackable-assets-library) (Team Register filter menu, or the bottom of the Configuration tabs).
 - Confirm the radio is turned on.
 
 **Incorrect or non-standard radio names:** Some radios have names that don't follow the statewide format. In the **Layers** menu, under **Assets**, enable **Unmatched against Teams**. This shows all recently active radios so you can confirm the radio's name and update the team name to suit. You can also check the Trackable Assets Library from the Team Register filter menu.

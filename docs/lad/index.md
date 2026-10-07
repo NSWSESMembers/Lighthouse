@@ -35,7 +35,7 @@ If you are on a device that does not have Lighthouse installed, go to [lighthous
   - Receives the latest updates to Lighthouse before they are published to the stable version. It is the first to receive new features and bug fixes, and is considered *unstable* as it may contain bugs that have not yet been identified and fixed.
   - The development version is not recommended for operational use. It is important to verify that Lighthouse functions are working as intended.
 
-![Install buttons on the Lighthouse website](images/install-buttons.jpg)
+![Install options on the Lighthouse website](images/install-options.png)
 
 ## Contents
 
@@ -47,4 +47,4 @@ If you are on a device that does not have Lighthouse installed, go to [lighthous
 6. [Incident Register](incident-register.md)
 7. [ICEMS](icems.md)
 8. [Situation Map](situation-map.md)
-9. [What's New](whats-new.md)
+9. [What's New](https://lighthouse.ses.nsw.gov.au/whats-new/) — changes in each Lighthouse release
