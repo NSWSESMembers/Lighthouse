@@ -98,7 +98,7 @@ Click the **Toggle In Map View** button (map icon, next to **Toggle Starred**) i
 The list updates as you pan and zoom the map.
 
 - An **incident** is in view when its address is inside the map view. Incidents without a geocoded location aren't listed while the toggle is on.
-- A **team** is in view when any of its [matched radio assets](team-register.md#matched-assets) is inside the map view. Teams without a matched asset aren't listed while the toggle is on.
+- A **team** is in view when any of its [matched radios or satellite trackers](team-register.md#matched-assets) is inside the map view. Teams without a matched radio or satellite tracker aren't listed while the toggle is on.
 
 ![Zoomed-in map with both registers listing only what's in view](images/in-view-only.png)
 

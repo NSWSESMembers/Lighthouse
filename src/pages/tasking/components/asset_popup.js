@@ -18,6 +18,8 @@ export function buildAssetPopupKO() {
 
       <div data-bind="visible: lastSeenText">
         Last seen:&nbsp;<span data-bind="text: lastSeenText"></span>
+        <span class="sat-icon ms-1"
+           data-bind="visible: isSatellite, css: { 'sat-icon--inactive': !satelliteActive() }, attr: { title: satelliteIconTitle }"><i class="fas fa-satellite"></i><i class="fas fa-slash sat-icon__slash" data-bind="visible: !satelliteActive()"></i></span>
       </div>
 
       <div data-bind="visible: talkgroup">
@@ -25,6 +27,10 @@ export function buildAssetPopupKO() {
         <small data-bind="visible: talkgroupLastUpdatedText">
           &nbsp;(<span data-bind="text: talkgroupLastUpdatedText"></span>)
         </small>
+      </div>
+
+      <div data-bind="visible: isSatellite">
+        Satellite:&nbsp;<strong data-bind="text: satelliteSummary"></strong>
       </div>
 
       <div class="veh-pop__coords text-muted" data-bind="visible: latLngText">

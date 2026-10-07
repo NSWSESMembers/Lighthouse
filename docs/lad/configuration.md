@@ -7,9 +7,9 @@ nav_order: 3
 
 When you first launch LAD you are taken to the **Configuration** screen, where you configure the settings and filters LAD uses. You can re-open it at any time with the **Page Configuration** button in either register (see [Register Controls](interface.md#register-controls)).
 
-The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. The **User guide** link at the bottom of the tabs opens this guide in a new tab.
+The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. At the bottom of the tabs, **Trackable Asset Library** saves your settings and opens the [Trackable Assets Library](interface.md#trackable-assets-library), and **User guide** opens this guide in a new tab.
 
-![LAD Configuration screen, Data tab](images/config-data.jpg)
+![LAD Configuration screen, Data tab](images/config-data.png)
 
 ## Data Settings
 
