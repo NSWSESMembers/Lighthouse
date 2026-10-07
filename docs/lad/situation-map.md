@@ -236,7 +236,7 @@ Hover over an incident marker to see a quick summary without opening its popup:
 
 ## Teams
 
-The map shows team locations using GPS from the team's matched radio(s). This only works for SES-issued radios. The register *focus* buttons can only zoom to teams that are on the map.
+The map shows team locations using the positions reported by the team's matched assets — the GPS in SES-issued PSN radios, or a satellite tracker fitted to the asset (see [Satellite-Tracked Assets](interface.md#satellite-tracked-assets)). Personal phones and non-SES radios aren't tracked. The register *focus* buttons can only zoom to teams that are on the map.
 
 Click a radio asset marker to see the radio's details — such as when it was last seen — the team it's matched to, and that team's taskings. If the location comes from a satellite tracker, a satellite icon shows next to the last-seen time (crossed out if the tracker isn't active), with a **Satellite** line giving the tracker's class, status and battery — see [Satellite-Tracked Assets](interface.md#satellite-tracked-assets). Each tasking has two buttons:
 
