@@ -20,7 +20,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 ## LAD satellite trackers and asset library
 
-*Unreleased*
+*7 October 2026 · [v2026.10.07.1](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.07.1)*
 
 - **Satellite-tracked assets.** Assets located by a satellite tracker show a satellite icon next to their last-seen time, crossed out if the tracker isn't active. The asset popup and the Trackable Assets Library show the tracker's class, status and battery. See [Satellite-Tracked Assets](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#satellite-tracked-assets).
 - **Show an asset on the map from the Trackable Assets Library.** Each entry has a **Show on map** button that focuses the map on the asset and opens its popup, turning on the asset layer it needs. See [Showing an Asset on the Map](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#showing-an-asset-on-the-map).
