@@ -7,6 +7,7 @@ on:
 permissions:
   contents: write
   actions: write
+  pull-requests: read
 
 jobs:
   release:
@@ -21,7 +22,30 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      # Skip the release for PRs labelled `no-release`, or whose changes are all
+      # under .github/ (workflows, dependabot config) - repo automation only.
+      - name: Decide whether to release
+        id: gate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HAS_NO_RELEASE_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'no-release') }}
+        run: |
+          if [ "$HAS_NO_RELEASE_LABEL" = "true" ]; then
+            echo "PR #${PR_NUMBER} is labelled no-release; skipping."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" --jq '.[].filename')
+          if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qv '^\.github/'; then
+            echo "PR #${PR_NUMBER} only changes .github/; skipping."
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Compute next version tag
+        if: steps.gate.outputs.release == 'true'
         id: version
         run: |
           today=$(date -u +%Y.%m.%d)
@@ -38,6 +62,7 @@ jobs:
           echo "tag=${tag}" >> "$GITHUB_OUTPUT"
 
       - name: Create and publish release
+        if: steps.gate.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.tag }}
@@ -55,6 +80,7 @@ jobs:
             --notes "$notes"
 
       - name: Trigger Chrome Store publish
+        if: steps.gate.outputs.release == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run publish_prod.yml --ref master
