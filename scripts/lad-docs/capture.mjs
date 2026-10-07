@@ -256,7 +256,7 @@ const SHOTS = {
   'trackable-assets-library-satellite': {
     run: async (page) => {
       await openAssetLibrary(page);
-      await page.locator('#trackableAssetsModal select[aria-label="Filter by satellite tracking"]').selectOption({ label: 'Satellite tracked only' });
+      await page.locator('#trackableAssetsModal select[aria-label="Filter by location source"]').selectOption({ label: 'Satellite tracker' });
       await settle(page, 600);
     },
     target: (page) => page.locator('#trackableAssetsModal .modal-content'),

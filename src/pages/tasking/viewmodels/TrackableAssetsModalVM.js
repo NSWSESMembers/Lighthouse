@@ -11,8 +11,8 @@ export function TrackableAssetsModalVM(mainVM) {
     self.types = ko.observableArray([]);
     self.selectedType = ko.observable();
     self.satelliteOptions = [
-        { value: 'satellite', label: 'Satellite tracked only' },
-        { value: 'none', label: 'No satellite tracker' },
+        { value: 'satellite', label: 'Satellite tracker' },
+        { value: 'none', label: 'PSN radio only' },
     ];
     self.selectedSatellite = ko.observable();
     self.isOpen = ko.observable(false);
