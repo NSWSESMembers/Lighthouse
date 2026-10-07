@@ -39,7 +39,7 @@ The taskings list is filtered by the **Tasking Status** filter and shows all mat
 
 ### Matched Assets
 
-The bottom left of the expanded view lists each matched radio asset. Click one to zoom to it on the Situation Map.
+The bottom left of the expanded view lists each matched radio or satellite tracker. Click one to zoom to it on the Situation Map.
 
 The **primary matched asset** is marked with a gold star. It is used to locate the team for features such as Instant Task (which takes distance into account) and for driving routes from the team to an incident.
 
