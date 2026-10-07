@@ -99,7 +99,7 @@ Search by callsign, unit or zone name, PSN ID, satellite ID or satellite equipme
 
 ### Satellite-Tracked Assets
 
-If an asset's location comes from a satellite tracker, a satellite icon <img class="icon" src="images/icon-satellite.png" alt="Satellite" height="18"> shows next to the time it was last seen. The icon is crossed out <img class="icon" src="images/icon-satellite-inactive.png" alt="Satellite tracker not active" height="18"> if the tracker's status isn't **ACTIVE** — its last reported location may be out of date. A battery the tracker reports as needing replacement shows as **Low**.
+If an asset's location comes from a satellite tracker, a satellite icon <img class="icon" src="images/icon-satellite.png" alt="Satellite" height="18"> shows next to the time it was last seen. The icon is crossed out <img class="icon" src="images/icon-satellite-inactive.png" alt="Satellite tracker not active" height="18"> if the tracker's status isn't **ACTIVE** — its last reported location may be out of date.
 
 ![Trackable Assets Library filtered to satellite-tracked assets](images/trackable-assets-library-satellite.png)
 
