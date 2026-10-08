@@ -1327,6 +1327,22 @@ export function ConfigVM(root, deps) {
     self.clusterRadius = ko.observable(60);   // maxClusterRadius in px (10–80)
     self.clusterRescueJobs = ko.observable(true);
     self.showJobStatusOnMarkers = ko.observable(true);
+    // Swing overlapping asset pins apart around their positions.
+    self.assetPinDeclutter = ko.observable(true);
+    // ...from this zoom level in (13-18)...
+    self.assetPinDeclutterMinZoom = ko.observable(15);
+    // ...and whether crowded pins may move out on lines.
+    self.assetPinAllowLines = ko.observable(true);
+    // What you see at each zoom, for the slider's readout.
+    const ZOOM_LABELS = { 13: 'suburbs', 14: 'neighbourhoods', 15: 'streets', 16: 'street detail', 17: 'buildings', 18: 'close-up' };
+    self.assetPinDeclutterZoomLabel = ko.pureComputed(() => {
+        const z = Number(self.assetPinDeclutterMinZoom());
+        return `zoom ${z} (${ZOOM_LABELS[z] || ''})`;
+    });
+    const assetPinOptions = () => ({
+        minZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
+        allowLines: !!self.assetPinAllowLines(),
+    });
     self.alertsCollapsibleRules = ko.observable(true);
     self.taskingCountActiveOnly = ko.observable(false);
 
@@ -1472,6 +1488,9 @@ export function ConfigVM(root, deps) {
         clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
         showJobStatusOnMarkers: !!self.showJobStatusOnMarkers(),
+        assetPinDeclutter: !!self.assetPinDeclutter(),
+        assetPinDeclutterMinZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
+        assetPinAllowLines: !!self.assetPinAllowLines(),
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
         taskingCountActiveOnly: !!self.taskingCountActiveOnly(),
         suggestionEnabled: !!self.suggestionEnabled(),
@@ -1811,6 +1830,15 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.showJobStatusOnMarkers === 'boolean') {
             self.showJobStatusOnMarkers(cfg.showJobStatusOnMarkers);
         }
+        if (typeof cfg.assetPinDeclutter === 'boolean') {
+            self.assetPinDeclutter(cfg.assetPinDeclutter);
+        }
+        if (Number.isInteger(cfg.assetPinDeclutterMinZoom) && cfg.assetPinDeclutterMinZoom >= 13 && cfg.assetPinDeclutterMinZoom <= 18) {
+            self.assetPinDeclutterMinZoom(cfg.assetPinDeclutterMinZoom);
+        }
+        if (typeof cfg.assetPinAllowLines === 'boolean') {
+            self.assetPinAllowLines(cfg.assetPinAllowLines);
+        }
         if (typeof cfg.alertsCollapsibleRules === 'boolean') {
             self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
         }
@@ -1962,6 +1990,8 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
         root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
         root.mapVM?.applyJobStatusOnMarkers?.(!!self.showJobStatusOnMarkers());
+        root.mapVM?.applyAssetPinDeclutter?.(!!self.assetPinDeclutter());
+        root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
         applyLayoutPresetClass(normalizeLayoutPreset(self.layoutPreset()));
         // Apply dark mode
         self._applyDarkMode();
@@ -2015,6 +2045,21 @@ export function ConfigVM(root, deps) {
 
     self.showJobStatusOnMarkers.subscribe((v) => {
         root.mapVM?.applyJobStatusOnMarkers?.(!!v);
+        self.save();
+    })
+
+    self.assetPinDeclutter.subscribe((v) => {
+        root.mapVM?.applyAssetPinDeclutter?.(!!v);
+        self.save();
+    })
+
+    self.assetPinDeclutterMinZoom.subscribe(() => {
+        root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
+        self.save();
+    })
+
+    self.assetPinAllowLines.subscribe(() => {
+        root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
         self.save();
     })
 

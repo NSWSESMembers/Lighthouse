@@ -3,6 +3,7 @@ import { makePopupNode, bindKoToPopup, unbindKoFromPopup, deferPopupUpdate } fro
 
 import { buildAssetPopupKO } from '../components/asset_popup.js';
 import { buildIcon } from '../components/asset_icon.js';
+import { restorePinPlacement } from './assetPinLayout.js';
 
 function refreshAssetMarkerIcons(asset) {
   //check the html of a new icon vs the current icon to avoid unnecessary updates
@@ -12,6 +13,7 @@ function refreshAssetMarkerIcons(asset) {
     const newIcon = buildIcon(asset, 'matched');
     if (asset.marker.options.icon.options.html !== newIcon.options.html) {
       asset.marker.setIcon(newIcon);
+      restorePinPlacement(asset.marker);
     }
   }
 
@@ -20,15 +22,32 @@ function refreshAssetMarkerIcons(asset) {
     const newIcon = buildIcon(asset, 'unmatched');
     if (asset.unmatchedMarker.options.icon.options.html !== newIcon.options.html) {
       asset.unmatchedMarker.setIcon(newIcon);
+      restorePinPlacement(asset.unmatchedMarker);
     }
   }
 }
 
 
 /**
- * Smoothly move (or just set) the marker to a position.
+ * While a marker's popup is open (clicked, or zoomed to from a team or the
+ * asset library), draw it above its neighbours with the hover highlight, so
+ * it's obvious which pin the popup belongs to.
  */
-function moveMarker(marker, lat, lng, { duration = 700, fps = 60 } = {}) {
+function focusWhilePopupOpen(marker) {
+  const set = (on) => {
+    marker.setZIndexOffset(on ? 1000 : 0);
+    marker.getElement()?.querySelector('.asset-pin')?.classList.toggle('is-focused', on);
+  };
+  marker.on('popupopen', () => set(true));
+  marker.on('popupclose', () => set(false));
+}
+
+/**
+ * Smoothly move (or just set) the marker to a position. onMove runs after
+ * every step, including the last. marker._pinMoving is true while it's on
+ * the way, so the pin layout lets it fit in around pins that aren't moving.
+ */
+function moveMarker(marker, lat, lng, { duration = 700, fps = 60, onMove } = {}) {
   if (!marker) return;
   const to = L.latLng(lat, lng);
   const from = marker.getLatLng?.() || to;
@@ -37,6 +56,7 @@ function moveMarker(marker, lat, lng, { duration = 700, fps = 60 } = {}) {
   // small move -> no animation
   if (dist < 1) {
     marker.setLatLng(to);
+    onMove?.();
     return;
   }
 
@@ -53,10 +73,15 @@ function moveMarker(marker, lat, lng, { duration = 700, fps = 60 } = {}) {
     const latS = from.lat + (to.lat - from.lat) * t;
     const lngS = from.lng + (to.lng - from.lng) * t;
     marker.setLatLng([latS, lngS]);
+    if (f >= frames) {
+      marker._moveAnimCancel = null;
+      marker._pinMoving = false;
+    }
+    onMove?.();
     if (f < frames) rafId = requestAnimationFrame(step);
-    else marker._moveAnimCancel = null;
   };
 
+  marker._pinMoving = true;
   marker._moveAnimCancel = () => { if (rafId) cancelAnimationFrame(rafId); };
   rafId = requestAnimationFrame(step);
 }
@@ -76,7 +101,8 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
   const lng = +asset.longitude?.();
   if (Number.isFinite(lat) && Number.isFinite(lng) && !asset.marker) {
     const icon = buildIcon(asset, 'matched');
-    const m = L.marker([lat, lng], { icon, pane: 'pane-top' });
+    // riseOnHover: a hovered pin comes to the front, with its leader line.
+    const m = L.marker([lat, lng], { icon, pane: 'pane-top', riseOnHover: true });
     m._assetId = asset.id?.();
     const html = buildAssetPopupKO();
     const contentEl = makePopupNode(html, 'veh-pop-root'); // stable node
@@ -111,6 +137,7 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
     asset.marker.on('popupopen', () => {
       viewModel.mapVM.setOpen('asset', asset);
     });
+    focusWhilePopupOpen(asset.marker);
   }
 
   // Already wired? Done.
@@ -123,7 +150,12 @@ export function attachAssetMarker(ko, map, viewModel, asset) {
   subs.push(asset.latLng.subscribe(v => {
     const latNow = +v?.lat, lngNow = +v?.lng;
     if (asset.marker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
-      moveMarker(asset.marker, latNow, lngNow);
+      moveMarker(asset.marker, latNow, lngNow, {
+        // Re-lay out pins on the way, so a pin straightens up as soon as it
+        // leaves a crowd rather than when it arrives (schedule() coalesces
+        // to one layout per frame).
+        onMove: viewModel.mapVM.assetPinLayout?.schedule,
+      });
     }
   }));
 
@@ -166,7 +198,7 @@ export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
 
   if (Number.isFinite(lat) && Number.isFinite(lng) && !asset.unmatchedMarker) {
     const icon = buildIcon(asset, 'unmatched');
-    const m = L.marker([lat, lng], { icon, pane: 'pane-top' });
+    const m = L.marker([lat, lng], { icon, pane: 'pane-top', riseOnHover: true });
     m._assetId = asset.id?.();
 
     const html = buildAssetPopupKO();
@@ -190,6 +222,7 @@ export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
     asset.unmatchedMarker.on('popupopen', () => {
       viewModel.mapVM.setOpen('asset', asset);
     });
+    focusWhilePopupOpen(asset.unmatchedMarker);
   }
 
   // subs (separate from asset._markerSubs)
@@ -201,7 +234,7 @@ export function attachUnmatchedAssetMarker(ko, map, viewModel, asset) {
   subs.push(asset.latLng.subscribe(v => {
     const latNow = +v?.lat, lngNow = +v?.lng;
     if (asset.unmatchedMarker && Number.isFinite(latNow) && Number.isFinite(lngNow)) {
-      moveMarker(asset.unmatchedMarker, latNow, lngNow);
+      moveMarker(asset.unmatchedMarker, latNow, lngNow, { onMove: viewModel.mapVM.assetPinLayout?.schedule });
     }
   }));
 
