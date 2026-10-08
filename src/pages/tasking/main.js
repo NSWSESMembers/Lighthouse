@@ -1561,6 +1561,12 @@ function VM() {
         }
     }
 
+    // The config rail's "User guide" link. Development Preview builds open the
+    // preview copy of the guide (synced from master-dev); production keeps the
+    // stable URL, which is also the static href in tasking.html.
+    const isDevBuild = (globalThis.chrome?.runtime?.getManifest?.()?.name ?? '').includes('Development');
+    self.userGuideUrl = `https://lighthouse.ses.nsw.gov.au/${isDevBuild ? 'preview/' : ''}guides/lad/configuration.html`;
+
     // From the config modal's rail: save + close config exactly like the Save
     // button, then open the library once config has fully hidden (opening a
     // second Bootstrap modal mid-hide leaves body.modal-open in a bad state).
