@@ -1648,6 +1648,7 @@ function VM() {
             asset = new Asset(assetJson, { relativeUpdateTick: self.relativeUpdateTick30s });
             self.trackableAssets.push(asset);
             self.assetsById.set(asset.id(), asset);
+            self.mapVM?.assetTrails?.track(asset);
         }
         return asset;
     };
@@ -2536,6 +2537,7 @@ function VM() {
                     // Remove from observable array and registry
                     self.trackableAssets.remove(asset);
                     self.assetsById.delete(id);
+                    self.mapVM?.assetTrails?.untrack(asset);
                 });
                 //Update Asset/Team mappings only once after all changes
                 self._attachAssetsToMatchingTeams();

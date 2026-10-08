@@ -2918,6 +2918,46 @@
                                                                 </div>
                                                             </fieldset>
                                                         </div>
+
+                                                        <!-- Asset breadcrumb trails -->
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-route me-1"></i>Recent Travel
+                                                                </legend>
+                                                                <div class="form-check form-switch mb-2">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="assetTrailsToggle"
+                                                                        data-bind="checked: config.assetTrails">
+                                                                    <label class="form-check-label"
+                                                                        for="assetTrailsToggle">
+                                                                        Show a breadcrumb trail for the selected asset
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-text mb-3">
+                                                                    While an asset's popup is open, a fading line
+                                                                    through its recent positions shows where it has
+                                                                    come from. Trails
+                                                                    are only kept in this browser, and start from
+                                                                    when this page first saw the vehicle. Turning
+                                                                    this off clears them.
+                                                                </div>
+
+                                                                <div class="ms-3" data-bind="visible: config.assetTrails">
+                                                                    <label for="assetTrailMinutesRange" class="form-label mb-1">
+                                                                        Trail length:
+                                                                        <strong data-bind="text: config.assetTrailMinutesLabel"></strong>
+                                                                    </label>
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        <small class="text-muted text-nowrap">Shorter</small>
+                                                                        <input type="range" class="form-range flex-grow-1"
+                                                                            id="assetTrailMinutesRange" min="15" max="120" step="15"
+                                                                            data-bind="value: config.assetTrailMinutes, valueUpdate: 'input'">
+                                                                        <small class="text-muted text-nowrap">Longer</small>
+                                                                    </div>
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

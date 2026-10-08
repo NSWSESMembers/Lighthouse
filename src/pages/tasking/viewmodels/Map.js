@@ -7,6 +7,7 @@ import { AssetPopupViewModel } from './AssetPopUp';
 import { JobPopupViewModel } from './JobPopUp';
 import { restyleAllJobMarkers } from '../markers/jobMarker.js';
 import { AssetPinLayout } from '../markers/assetPinLayout.js';
+import { AssetTrails } from '../markers/assetTrails.js';
 
 export function MapVM(Lmap, root) {
   const self = this;
@@ -35,6 +36,9 @@ export function MapVM(Lmap, root) {
 
   // Swings overlapping asset pins apart around their tips.
   self.assetPinLayout = new AssetPinLayout(Lmap, [self.assetLayer, self.unmatchedAssetLayer]);
+
+  // Breadcrumb trails of where assets have recently been.
+  self.assetTrails = new AssetTrails(Lmap);
 
   // --- Job marker clustering ---
   // Single cluster group for all job markers (replaces per-type layerGroups)
@@ -299,6 +303,16 @@ export function MapVM(Lmap, root) {
     self.assetPinLayout.setOptions(opts);
   };
 
+  /** "Show recent travel (breadcrumbs)" config option. */
+  self.applyAssetTrails = function (on) {
+    self.assetTrails.setEnabled(!!on);
+  };
+
+  /** Its trail length, in minutes. */
+  self.applyAssetTrailMinutes = function (minutes) {
+    self.assetTrails.setMinutes(minutes);
+  };
+
   /**
    * Re-render all job marker icons — called when the "show status on markers"
    * config option is toggled.
@@ -460,6 +474,7 @@ export function MapVM(Lmap, root) {
       panePlus.style.zIndex = String(z + 1);
 
     });
+    self.assetTrails?.syncPaneZ();
   };
 
   self.changeBasemap = function (basemapKey) {
@@ -674,6 +689,10 @@ export function MapVM(Lmap, root) {
   // helpers
   self.setOpen = (kind, ref) => self.openPopup({ kind, id: ref.id?.(), ref });
   self.clearOpen = () => self.openPopup(null);
+  // Only the selected asset (popup open) shows its breadcrumb trail.
+  self.openPopup.subscribe((open) => {
+    self.assetTrails.select(open?.kind === 'asset' ? open.ref : null);
+  });
 
   self.assetPopups = new Map();
   self.jobPopups = new Map();

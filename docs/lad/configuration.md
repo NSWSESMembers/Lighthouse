@@ -126,6 +126,11 @@ When enabled, LAD adds extra indicators to incident markers so you can see incid
 
 These options only show while **Spread out overlapping asset markers** is on.
 
+#### Recent Travel
+
+- **Show a breadcrumb trail for the selected asset** (on by default). While a vehicle's popup is open, a fading line through its recent positions shows where it has come from. See [Asset Breadcrumb Trails](situation-map.md#asset-breadcrumb-trails). Trails are kept only in this browser. Turning this off clears them.
+- **Trail length** sets how far back the trail goes, from **15 minutes** to **2 hours**. The default is **30 minutes**. Vehicles report their position every few minutes, so a longer trail shows more of the route.
+
 ### All Markers
 
 #### Marker Layer Order

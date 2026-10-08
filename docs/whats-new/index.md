@@ -18,10 +18,11 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
-## LAD overlapping asset markers
+## LAD asset marker spreading and trails
 
 *Unreleased*
 
+- **Breadcrumb trails.** While an asset's popup is open, a fading line through its recent positions shows where it has come from. Change the trail length (30 minutes by default) or turn it off under **Asset markers**. See [Asset Breadcrumb Trails](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#asset-breadcrumb-trails).
 - **Overlapping asset markers spread out.** When zoomed in to street level, asset markers that would sit on top of each other swing around the vehicle's position so each one can be seen and clicked. Where there isn't room, a marker moves out on a line back to a dot where the vehicle is. See [Overlapping Asset Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlapping-asset-markers).
 - The asset marker whose popup is open is drawn on top and highlighted, and its popup opens over the marker rather than beside it.
 - The **Map markers** settings are grouped into **Incident markers**, **Asset markers** and **All markers** sections. Under **Asset markers** you can turn the spreading off, choose the zoom level it starts at, and stop markers moving out on lines. See [Asset Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#asset-markers).
