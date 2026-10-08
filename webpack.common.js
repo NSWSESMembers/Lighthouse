@@ -112,7 +112,8 @@ module.exports = {
     new DotenvPlugin(),
     new ESLintPlugin({
       extensions: ['js', 'ts'],
-      overrideConfigFile: path.resolve(__dirname, '.eslintrc'),
+      configType: 'flat',
+      overrideConfigFile: path.resolve(__dirname, 'eslint.config.mjs'),
     }),
     new CopyPlugin({
       patterns: [
