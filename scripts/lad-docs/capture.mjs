@@ -336,6 +336,38 @@ const SHOTS = {
     }),
   },
 
+  // A selected vehicle's breadcrumb trail: fixes are recorded as positions
+  // arrive, so seed one (30 minutes, a fix every 5) leading to its marker,
+  // then open its popup.
+  'asset-trail': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.evaluate(() => {
+        const mv = window.ko.dataFor(document.body).mapVM; const map = mv.map;
+        let m = null;
+        mv.assetLayer.eachLayer((l) => { m ||= l; });
+        map.setView(m.getLatLng(), 16, { animate: false });
+        const p0 = map.latLngToContainerPoint(m.getLatLng());
+        const offsets = [[250, 210], [205, 150], [185, 95], [120, 75], [55, 40], [0, 0]];
+        const fixes = offsets.map(([dx, dy], i) => {
+          const ll = map.containerPointToLatLng(p0.add([dx, dy]));
+          return { lat: ll.lat, lng: ll.lng, t: Date.now() - (offsets.length - 1 - i) * 5 * 60 * 1000 };
+        });
+        mv.assetTrails.trails.set(String(m._assetId), fixes);
+        window.__shotMarker = m;
+        m.openPopup();
+      });
+      await settle(page, 1500);
+    },
+    target: (page) => ({
+      async screenshot(opts) {
+        const box = await page.locator('#map').boundingBox();
+        const c = await page.evaluate(() => window.ko.dataFor(document.body).mapVM.map.latLngToContainerPoint(window.__shotMarker.getLatLng()));
+        return page.screenshot({ ...opts, clip: { x: box.x + c.x - 200, y: box.y + c.y - 440, width: 490, height: 690 } });
+      },
+    }),
+  },
+
   spotlight: {
     run: async (page) => {
       await closeConfigAndLoad(page);

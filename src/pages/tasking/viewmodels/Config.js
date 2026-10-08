@@ -1333,6 +1333,16 @@ export function ConfigVM(root, deps) {
     self.assetPinDeclutterMinZoom = ko.observable(15);
     // ...and whether crowded pins may move out on lines.
     self.assetPinAllowLines = ko.observable(true);
+    // Breadcrumb trail for the selected asset, and how many minutes back
+    // (15-120: fixes come at most every 5 minutes, so shorter shows nothing).
+    self.assetTrails = ko.observable(true);
+    self.assetTrailMinutes = ko.observable(30);
+    self.assetTrailMinutesLabel = ko.pureComputed(() => {
+        const m = Number(self.assetTrailMinutes());
+        if (m < 60) return `${m} minutes`;
+        const h = m / 60;
+        return `${h} hour${h === 1 ? '' : 's'}`;
+    });
     // What you see at each zoom, for the slider's readout.
     const ZOOM_LABELS = { 13: 'suburbs', 14: 'neighbourhoods', 15: 'streets', 16: 'street detail', 17: 'buildings', 18: 'close-up' };
     self.assetPinDeclutterZoomLabel = ko.pureComputed(() => {
@@ -1491,6 +1501,8 @@ export function ConfigVM(root, deps) {
         assetPinDeclutter: !!self.assetPinDeclutter(),
         assetPinDeclutterMinZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
         assetPinAllowLines: !!self.assetPinAllowLines(),
+        assetTrails: !!self.assetTrails(),
+        assetTrailMinutes: Number(self.assetTrailMinutes()) || 30,
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
         taskingCountActiveOnly: !!self.taskingCountActiveOnly(),
         suggestionEnabled: !!self.suggestionEnabled(),
@@ -1839,6 +1851,12 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.assetPinAllowLines === 'boolean') {
             self.assetPinAllowLines(cfg.assetPinAllowLines);
         }
+        if (typeof cfg.assetTrails === 'boolean') {
+            self.assetTrails(cfg.assetTrails);
+        }
+        if (Number.isInteger(cfg.assetTrailMinutes) && cfg.assetTrailMinutes >= 15 && cfg.assetTrailMinutes <= 120) {
+            self.assetTrailMinutes(cfg.assetTrailMinutes);
+        }
         if (typeof cfg.alertsCollapsibleRules === 'boolean') {
             self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
         }
@@ -1992,6 +2010,8 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyJobStatusOnMarkers?.(!!self.showJobStatusOnMarkers());
         root.mapVM?.applyAssetPinDeclutter?.(!!self.assetPinDeclutter());
         root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
+        root.mapVM?.applyAssetTrailMinutes?.(Number(self.assetTrailMinutes()) || 30);
+        root.mapVM?.applyAssetTrails?.(!!self.assetTrails());
         applyLayoutPresetClass(normalizeLayoutPreset(self.layoutPreset()));
         // Apply dark mode
         self._applyDarkMode();
@@ -2060,6 +2080,16 @@ export function ConfigVM(root, deps) {
 
     self.assetPinAllowLines.subscribe(() => {
         root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
+        self.save();
+    })
+
+    self.assetTrails.subscribe((v) => {
+        root.mapVM?.applyAssetTrails?.(!!v);
+        self.save();
+    })
+
+    self.assetTrailMinutes.subscribe((v) => {
+        root.mapVM?.applyAssetTrailMinutes?.(Number(v) || 30);
         self.save();
     })
 

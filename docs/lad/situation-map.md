@@ -53,6 +53,19 @@ When you're zoomed in to street level (zoom 15 by default), asset markers that w
 
 This can be turned off, and the zoom level and lines changed, under [Map Markers](configuration.md#overlapping-markers).
 
+## Asset Breadcrumb Trails
+
+While a vehicle's popup is open, from clicking its marker or using **Show on map**, a breadcrumb trail shows where it has recently been. The trail is a line through its last reported positions in the marker's colour, with a dot at each position. It fades the older it gets, so you can see which way the vehicle came and roughly when.
+
+![A selected vehicle's breadcrumb trail](images/asset-trail.png)
+
+- The trail covers the last **30 minutes** by default. Older positions drop off as they fade.
+- Vehicles report their position every few minutes, so the line joins one report to the next in a straight line. It shows the direction and rough path of travel, not the exact roads taken.
+- Positions are recorded for every vehicle while LAD is open, so selecting any vehicle shows its recent travel. Trails only go back to when LAD was opened, and they're kept only in your browser.
+- A vehicle that stays put has no trail. When it moves again, the trail starts from where it was parked.
+
+The trail can be turned off, and its length changed, under [Recent Travel](configuration.md#recent-travel).
+
 ## Map Control
 
 ### Zoom
