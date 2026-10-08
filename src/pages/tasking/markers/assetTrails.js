@@ -23,12 +23,19 @@ const PANE = 'pane-asset-trails';
 // Fixes closer than this to the last one are GPS jitter, not travel.
 export const MIN_MOVE_M = 15;
 // Cap per asset, whatever the trail length, so a chatty tracker can't grow
-// a trail (or localStorage) without limit.
-export const MAX_FIXES = 120;
+// a trail (or localStorage) without limit. Fixes come at most every 5
+// minutes, so the longest trail (2 hours) needs about 24.
+export const MAX_FIXES = 40;
 // Trails fade (and old fixes drop off) on this tick, not just when a new
-// fix arrives, so a vehicle that has stopped still loses its trail.
-const REFRESH_INTERVAL = 30 * 1000;
-const SAVE_DELAY = 5000;
+// fix arrives, so a vehicle that has stopped still loses its trail. With
+// fixes minutes apart and trails of 15+ minutes, a minute's fade is barely
+// visible.
+const REFRESH_INTERVAL = 60 * 1000;
+// Saving every asset's trails is the one real cost (~10ms for a thousand
+// assets with 2-hour trails), and every 30s poll brings new fixes, so save
+// at most once a minute -- and when the page is closed, so a reload loses
+// nothing.
+const SAVE_DELAY = 60 * 1000;
 
 /** Approximate distance in metres between two { lat, lng } (fine at these scales). */
 export function distanceM(a, b) {
@@ -106,6 +113,12 @@ export class AssetTrails {
         this.layer = L.layerGroup();
 
         this._load();
+        window.addEventListener('pagehide', () => {
+            if (!this._saveTimer) return;
+            clearTimeout(this._saveTimer);
+            this._saveTimer = null;
+            this._save();
+        });
         setInterval(() => this._refresh(), REFRESH_INTERVAL);
     }
 
