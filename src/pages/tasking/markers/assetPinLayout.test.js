@@ -179,4 +179,43 @@ describe('computePinPlacements', () => {
         const c = centre(pins[0], out.get('a'));
         expect(Math.hypot(c.x - 0, c.y + 28)).toBeGreaterThanOrEqual(16);
     });
+
+    it('keeps a placement from another zoom while it is still clear, then relaxes', () => {
+        // A depot of 5 laid out, then zoomed in one level (positions double):
+        // nobody swaps sides at the zoom itself.
+        const geo = [[100, 100], [104, 100], [100, 104], [108, 102], [102, 108]];
+        const before = computePinPlacements(geo.map(([x, y], id) => ({ id, x, y })), 0);
+        const after = computePinPlacements(geo.map(([x, y], id) => ({ id, x: x * 2, y: y * 2, hint: before.get(id) })), 10000);
+        for (const [id, pl] of before) expect(after.get(id)).toMatchObject({ angle: pl.angle, ext: pl.ext });
+        // Kept spots then relax as usual, once room has been clear a moment.
+        const tilted = [...after.values()].filter(p => p.angle || p.ext);
+        expect(tilted.every(p => p.betterSince === null || p.betterSince === 10000)).toBe(true);
+    });
+
+    it('lays out afresh a placement from another zoom that no longer fits cleanly', () => {
+        // b was upright when far from a; zoomed out it's right under a's body.
+        const out = computePinPlacements([
+            { id: 'a', x: 0, y: 0, hint: { angle: 0, ext: 0 } },
+            { id: 'b', x: 10, y: 0, hint: { angle: 0, ext: 0 } },
+        ]);
+        expect(out.get('a').angle !== 0 || out.get('b').angle !== 0).toBe(true);
+        expect([...out.values()].every(p => p.overlap === 0)).toBe(true);
+    });
+
+    it('keeps to its old side when its spot from another zoom is blocked', () => {
+        // a was swung right; b now sits where a's body was. Swinging up-left
+        // would be cheaper, but a stays on the right.
+        const out = computePinPlacements([
+            { id: 'a', x: 0, y: 0, hint: { angle: 90, ext: 0 } },
+            { id: 'b', x: 28, y: -20, hint: { angle: 0, ext: 0 } },
+        ]);
+        expect(out.get('b')).toMatchObject({ angle: 0, ext: 0 });
+        expect(out.get('a').angle).toBeGreaterThan(0);
+        expect(out.get('a').overlap).toBe(0);
+    });
+
+    it('ignores a hint on a line once lines are turned off', () => {
+        const out = computePinPlacements([{ id: 'a', x: 0, y: 0, hint: { angle: 30, ext: 44 } }], 0, { allowLines: false });
+        expect(out.get('a')).toMatchObject({ angle: 0, ext: 0 });
+    });
 });
