@@ -265,6 +265,14 @@ export function detachUnmatchedAssetMarker(ko, map, viewModel, asset) {
 function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
   const openHandler = (e) => {
     const el = e.popup.getContent(); // our stable node
+    // A reopen (e.g. a double-click toggling closed->open again) can land
+    // inside the 250ms deferred-unbind window below. If so, the pending
+    // unbind is now stale -- cancel it, or it'll fire later and strip the
+    // bindings off a popup that's visibly open again (leaving it blank).
+    if (marker._pendingUnbindTimer) {
+      clearTimeout(marker._pendingUnbindTimer);
+      marker._pendingUnbindTimer = null;
+    }
     vm.mapVM.setOpen?.('asset', asset);
     bindKoToPopup(ko, popupVm, el);
 
@@ -298,8 +306,11 @@ function bindPopupWithKO(ko, marker, vm, asset, popupVm) {
     vm.mapVM.clearOpen?.();
     asset.matchingTeamsInView()?.length !== 0 && asset.matchingTeamsInView()[0].onPopupClose();
 
-    // Defer unbinding to after the close animation completes
-    setTimeout(() => {
+    // Defer unbinding to after the close animation completes. Tracked on
+    // the marker so a fast reopen (see openHandler above) can cancel it.
+    if (marker._pendingUnbindTimer) clearTimeout(marker._pendingUnbindTimer);
+    marker._pendingUnbindTimer = setTimeout(() => {
+      marker._pendingUnbindTimer = null;
       unbindKoFromPopup(ko, el);
     }, 250); // 250ms matches Leaflet's default fade animation
   };
