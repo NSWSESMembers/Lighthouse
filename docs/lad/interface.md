@@ -5,11 +5,11 @@ nav_order: 4
 
 # Interface Overview
 
-The LAD interface has two core components: the **side draw** and the **situation map**. The divider between them can be resized, and the side draw can be hidden completely for a full-screen map by clicking the **<<** button on the map. You can also choose a different arrangement under [Layout](configuration.md#layout).
+The LAD interface has two core components: the **side drawer** and the **situation map**. The divider between them can be resized, and the side drawer can be hidden completely for a full-screen map by clicking the **<<** button on the map. You can also choose a different arrangement under [Layout](configuration.md#layout).
 
 ![LAD interface overview](images/interface-overview.jpg)
 
-**Side draw**
+**Side drawer**
 
 - **Team Register** (top) — lists all filtered teams and their taskings, with actions against those teams. See [Team Register](team-register.md).
 - **Incident Register** (bottom) — lists all filtered incidents and their details, with actions against those incidents. See [Incident Register](incident-register.md).

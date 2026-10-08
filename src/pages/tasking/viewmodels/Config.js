@@ -1253,55 +1253,55 @@ export function ConfigVM(root, deps) {
         {
             id: 'map-right-teams-top',
             name: 'Map Right · Teams Top',
-            description: 'Teams above tasking in the sidebar, map on the right.',
+            description: 'Teams above tasking in the side drawer, map on the right.',
             previewClass: 'preset-map-right-teams-top'
         },
         {
             id: 'map-right-tasking-top',
             name: 'Map Right · Tasking Top',
-            description: 'Tasking above teams in the sidebar, map on the right.',
+            description: 'Tasking above teams in the side drawer, map on the right.',
             previewClass: 'preset-map-right-tasking-top'
         },
         {
             id: 'map-left-teams-top',
             name: 'Map Left · Teams Top',
-            description: 'Map on the left with teams above tasking on the right.',
+            description: 'Map on the left, side drawer on the right with teams above tasking.',
             previewClass: 'preset-map-left-teams-top'
         },
         {
             id: 'map-left-tasking-top',
             name: 'Map Left · Tasking Top',
-            description: 'Map on the left with tasking above teams on the right.',
+            description: 'Map on the left, side drawer on the right with tasking above teams.',
             previewClass: 'preset-map-left-tasking-top'
         },
         {
             id: 'map-right-teams-only',
             name: 'Map Right · Teams Only',
-            description: 'Hide tasking pane, keep teams + map.',
+            description: 'Side drawer shows teams only, map on the right.',
             previewClass: 'preset-map-right-teams-only'
         },
         {
             id: 'map-right-tasking-only',
             name: 'Map Right · Tasking Only',
-            description: 'Hide teams pane, keep tasking + map.',
+            description: 'Side drawer shows tasking only, map on the right.',
             previewClass: 'preset-map-right-tasking-only'
         },
         {
             id: 'map-left-teams-only',
             name: 'Map Left · Teams Only',
-            description: 'Map left with teams-only pane on the right.',
+            description: 'Map on the left, side drawer shows teams only.',
             previewClass: 'preset-map-left-teams-only'
         },
         {
             id: 'map-left-tasking-only',
             name: 'Map Left · Tasking Only',
-            description: 'Map left with tasking-only pane on the right.',
+            description: 'Map on the left, side drawer shows tasking only.',
             previewClass: 'preset-map-left-tasking-only'
         },
         {
             id: 'map-only',
             name: 'Map Only',
-            description: 'Hide both sidebar panes and use the full map view.',
+            description: 'Hide the side drawer and use the full map view.',
             previewClass: 'preset-map-only'
         }
     ];

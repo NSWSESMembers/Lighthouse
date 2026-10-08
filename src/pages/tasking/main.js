@@ -3173,7 +3173,7 @@ function VM() {
         onAdd(map) {
             const c = L.DomUtil.create("div", "leaflet-control sidebar-toggle leaflet-bar");
             c.innerHTML = `
-                <button type="button" class="btn btn-light btn-sm shadow-sm" title="Collapse/expand left panel">
+                <button type="button" class="btn btn-light btn-sm shadow-sm" title="Collapse/expand side drawer">
                     <i class="fas ${this._collapsed ? "fa-angle-double-right" : "fa-angle-double-left"}"></i>
                 </button>
             `;
