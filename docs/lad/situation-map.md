@@ -37,6 +37,22 @@ When enabled under [Map Markers](configuration.md#incident-status-on-markers) (o
 | <img class="icon" src="images/marker-cancelled.png" alt="" height="28"> | **Cancelled or Rejected** — a black cross through the icon. |
 | <img class="icon" src="images/marker-action-required.png" alt="" height="28"> | **Action Required** — a red exclamation mark when the incident has an outstanding action required tag, whatever its status. |
 
+## Overlapping Asset Markers
+
+When you're zoomed in to street level (zoom 15 by default), asset markers that would otherwise sit on top of each other spread out so every vehicle can be seen and clicked:
+
+- **Swing around.** A marker that's in the way swings around its vehicle's position. Its point still sits exactly on where the vehicle is.
+- **Move out on a line.** Where there isn't room to swing around, such as a yard with several vehicles parked together, the marker moves out to a clear spot. It becomes a circle, with a line back to a small dot where the vehicle is. Lines don't cross each other, and avoid running over other markers and dots.
+
+![Overlapping asset markers spread out](images/asset-markers-spread.png)
+
+- Hover over a marker to bring it to the front and highlight it, along with its line and dot.
+- While a vehicle's popup is open, from clicking its marker or using **Show on map**, its marker stays on top and highlighted, and the popup opens over the marker wherever it has moved to.
+- As vehicles move, markers slide smoothly out of each other's way, and markers that aren't moving hold their places.
+- Zoomed further out, markers overlap as normal. Zoom in to separate them.
+
+This can be turned off, and the zoom level and lines changed, under [Map Markers](configuration.md#overlapping-markers).
+
 ## Map Control
 
 ### Zoom

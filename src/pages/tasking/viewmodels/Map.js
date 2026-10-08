@@ -6,6 +6,7 @@ import 'leaflet.markercluster';
 import { AssetPopupViewModel } from './AssetPopUp';
 import { JobPopupViewModel } from './JobPopUp';
 import { restyleAllJobMarkers } from '../markers/jobMarker.js';
+import { AssetPinLayout } from '../markers/assetPinLayout.js';
 
 export function MapVM(Lmap, root) {
   const self = this;
@@ -31,6 +32,9 @@ export function MapVM(Lmap, root) {
   // layers
   self.assetLayer = L.layerGroup();             // not added by default – layers drawer handles visibility
   self.unmatchedAssetLayer = L.layerGroup();   // not added by default
+
+  // Swings overlapping asset pins apart around their tips.
+  self.assetPinLayout = new AssetPinLayout(Lmap, [self.assetLayer, self.unmatchedAssetLayer]);
 
   // --- Job marker clustering ---
   // Single cluster group for all job markers (replaces per-type layerGroups)
@@ -283,6 +287,16 @@ export function MapVM(Lmap, root) {
       }
     });
     self._syncPulseRings();
+  };
+
+  /** "Spread out overlapping asset markers" config option. */
+  self.applyAssetPinDeclutter = function (on) {
+    self.assetPinLayout.setEnabled(!!on);
+  };
+
+  /** Its options: { minZoom, allowLines }. */
+  self.applyAssetPinDeclutterOptions = function (opts) {
+    self.assetPinLayout.setOptions(opts);
   };
 
   /**
