@@ -1,7 +1,9 @@
 name: Sync Docs to Website
 on:
   push:
-    branches: [master]
+    # master -> the stable guide (/guides/lad/, /whats-new/).
+    # master-dev -> the Development Preview copy (/preview/guides/lad/, /preview/whats-new/).
+    branches: [master, master-dev]
     paths: ['docs/lad/**', 'docs/whats-new/**']
   workflow_dispatch:
 
@@ -14,6 +16,19 @@ jobs:
     name: Sync docs to lighthouse.ses.nsw.gov.au
     runs-on: ubuntu-latest
     steps:
+      # Pick where this branch's docs go on the site. Any other branch (e.g. a
+      # manual run from a feature branch) is refused.
+      - name: Choose target
+        id: target
+        run: |
+          case "${{ github.ref_name }}" in
+            master)     echo "prefix="                 >> "$GITHUB_OUTPUT"
+                        echo "stamp=lad_guide"         >> "$GITHUB_OUTPUT" ;;
+            master-dev) echo "prefix=preview/"         >> "$GITHUB_OUTPUT"
+                        echo "stamp=lad_guide_preview" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Docs only sync from master or master-dev, not ${{ github.ref_name }}"; exit 1 ;;
+          esac
+
       - name: Checkout Lighthouse
         uses: actions/checkout@v7
         with:
@@ -29,19 +44,32 @@ jobs:
           path: website
 
       - name: Copy docs
+        env:
+          PREFIX: ${{ steps.target.outputs.prefix }}
         run: |
-          mkdir -p website/guides/lad website/whats-new
-          rsync -a --delete lighthouse/docs/lad/ website/guides/lad/
-          rsync -a --delete lighthouse/docs/whats-new/ website/whats-new/
+          mkdir -p "website/${PREFIX}guides/lad" "website/${PREFIX}whats-new"
+          rsync -a --delete lighthouse/docs/lad/ "website/${PREFIX}guides/lad/"
+          rsync -a --delete lighthouse/docs/whats-new/ "website/${PREFIX}whats-new/"
+
+      # The docs link to each other with absolute https://lighthouse.ses.nsw.gov.au/...
+      # URLs (What's New -> guide sections). Point the preview copy's links at
+      # the preview pages so readers stay in the Development Preview docs.
+      - name: Point preview links at preview pages
+        if: steps.target.outputs.prefix == 'preview/'
+        run: |
+          find website/preview/guides/lad website/preview/whats-new -name '*.md' -exec \
+            sed -i -E 's#https://lighthouse\.ses\.nsw\.gov\.au/(guides/lad|whats-new)/#/preview/\1/#g' {} +
 
       # Same format as the extension's version_name in webpack.prod.js,
       # so the guide footer matches what users see in chrome://extensions.
       - name: Stamp Lighthouse version
+        env:
+          STAMP: ${{ steps.target.outputs.stamp }}
         run: |
           short_sha=$(git -C lighthouse rev-parse --short HEAD)
           build_date=$(TZ=Etc/GMT-10 date +%Y.%m.%d)
           mkdir -p website/_data
-          cat > website/_data/lad_guide.yml <<EOF
+          cat > "website/_data/${STAMP}.yml" <<EOF
           version_name: "${build_date} build ${short_sha}"
           commit: "$(git -C lighthouse rev-parse HEAD)"
           EOF
@@ -50,13 +78,18 @@ jobs:
         working-directory: website
         env:
           SRC_SHA: ${{ github.sha }}
+          SRC_REF: ${{ github.ref_name }}
+          PREFIX: ${{ steps.target.outputs.prefix }}
+          STAMP: ${{ steps.target.outputs.stamp }}
         run: |
-          git add -A guides/lad whats-new _data/lad_guide.yml
+          git add -A "${PREFIX}guides/lad" "${PREFIX}whats-new" "_data/${STAMP}.yml"
           if git diff --cached --quiet; then
             echo "Website docs already up to date"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "Sync docs from NSWSESMembers/Lighthouse@${SRC_SHA::7}"
+          git commit -m "Sync ${PREFIX:+preview }docs from NSWSESMembers/Lighthouse@${SRC_SHA::7} (${SRC_REF})"
+          # master and master-dev syncs, or a website PR, can land in between.
+          git pull --rebase
           git push
