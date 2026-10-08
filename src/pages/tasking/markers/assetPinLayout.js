@@ -54,6 +54,11 @@ const HYSTERESIS = 4;
 // Tips within this distance count as neighbours when choosing which way to
 // lean (away from the crowd).
 const NEIGHBOUR_RADIUS = 80;
+// After a zoom, a pin whose old spot is blocked is placed again, but turning
+// away from the side it was on costs this much per 180deg (a full turn
+// outweighs two line levels), so it stays on that side if there's room and
+// its line just gets longer or shorter.
+const HINT_SWING_COST = 25;
 
 // Below this zoom level pins just overlap, pointing straight down: zoomed
 // out, swinging and stems across a whole region is more noise than help.
@@ -207,10 +212,11 @@ const byScreen = (a, b) => (b.y - a.y) || (a.x - b.x);
 /**
  * Pure placement step.
  *
- * @param {Array<{id:any, x:number, y:number, moving?:boolean, prev?:object}>} pins
+ * @param {Array<{id:any, x:number, y:number, moving?:boolean, prev?:object, hint?:object}>} pins
  *        tip positions in screen pixels; `moving` while the asset is being
  *        animated to a new position; `prev` is this pin's result from the
- *        previous call (it carries the timers)
+ *        previous call (it carries the timers); `hint` is its result from a
+ *        layout at another zoom, kept if it's still completely clear
  * @param {number} [now] ms clock for the improve/cooldown timers
  * @param {object} [opts]
  * @param {boolean} [opts.declutter=true] false leaves every pin upright
@@ -353,11 +359,19 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
         const lean = leanOf(p);
         const a = angle * Math.PI / 180;
         const away = lean ? (1 - (Math.sin(a) * lean.x - Math.cos(a) * lean.y)) / 2 : 0;
-        const cost = (ext / STEM_STEP) * 10 + Math.abs(angle) / 30 + 0.9 * away + soft;
+        const cost = (ext / STEM_STEP) * 10 + Math.abs(angle) / 30 + 0.9 * away + soft + hintSwing(p, angle, ext);
         return { angle, ext, c, stem, overlap, cost };
     };
 
     const isPrev = (p, angle, ext) => !!p.prev && p.prev.angle === angle && p.prev.ext === ext;
+    // Only for pins being placed afresh after a zoom (a kept hint becomes
+    // prev). Upright has no side, so going upright is never held back, and a
+    // pin that was upright has no side to keep.
+    const hintSwing = (p, angle, ext) => {
+        const h = p.hint;
+        if (!h || p.prev || (!angle && !ext) || (!h.angle && !h.ext)) return 0;
+        return HINT_SWING_COST * Math.abs((((angle - h.angle) % 360) + 540) % 360 - 180) / 180;
+    };
 
     // Best clean placement (new spots need HYSTERESIS extra clearance), or
     // the least-bad one if nothing is clean. With `below`, only clean spots
@@ -391,10 +405,23 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
 
     // 1. Pins that aren't moving keep their spot while it's still clear (or,
     //    in a spot too crowded for anything to be clear, no worse than it was).
+    //    After a zoom, a pin keeps its old spot only if it's completely
+    //    clear (a least-bad spot from a tighter zoom would otherwise count as
+    //    "no worse" and never sort itself out). It then relaxes from there
+    //    like any other kept pin (step 3) rather than every pin being laid
+    //    out afresh at once, which reshuffles the whole crowd.
     for (const p of still) {
-        if (!p.prev) continue;
-        const e = evaluate(p, p.prev.angle, p.prev.ext, 0);
-        if (e.overlap > (p.prev.overlap || 0) + 0.01) continue;
+        const prev = p.prev ?? (p.hint?.ext <= maxLevel * STEM_STEP ? p.hint : null);
+        if (!prev) continue;
+        const e = evaluate(p, prev.angle, prev.ext, 0);
+        if (e.overlap > (p.prev ? (prev.overlap || 0) + 0.01 : 0)) continue;
+        // From here on it's this pin's previous placement like any other.
+        if (!p.prev) {
+            p.prev = {
+                angle: prev.angle, ext: prev.ext, overlap: 0, changedAt: prev.changedAt,
+                betterSince: null, searchedAt: -Infinity, searchInterval: IMPROVE_DELAY,
+            };
+        }
         place(p, e.c, e.stem);
         kept.push([p, e]);
     }
@@ -590,8 +617,8 @@ export class AssetPinLayout {
     run() {
         const map = this.map;
         const zoom = map.getZoom();
-        // Placements carry over between layouts only at the same zoom and
-        // options; otherwise pins are laid out afresh (see prev below).
+        // Placements carry over between layouts at the same zoom and
+        // options; from another zoom they're only a hint (see below).
         const layoutKey = zoom + '|' + this._allowLines;
         if (!this._active()) {
             this._straightenAll();
@@ -605,11 +632,13 @@ export class AssetPinLayout {
             {
                 id: i, x: points[i].x, y: points[i].y, moving: !!m._pinMoving,
                 // The keep-your-spot rules are for vehicles moving at a fixed
-                // zoom. A placement from another zoom (or other options) says
-                // nothing about this one (a least-bad spot in a tight crowd would count as "no
-                // worse" once zoomed in and things spread out), so those pins
-                // are laid out afresh, as if new.
+                // zoom. A placement from another zoom (or other options) is
+                // kept only if it's still completely clear (a least-bad spot
+                // in a tight crowd would count as "no worse" once zoomed in
+                // and things spread out); laying every pin out afresh instead
+                // reshuffles the whole map on each zoom step.
                 prev: m._pinState?.layoutKey === layoutKey ? m._pinState : undefined,
+                hint: m._pinState?.layoutKey === layoutKey ? undefined : m._pinState,
             }));
         const placements = computePinPlacements(pins, now, { allowLines: this._allowLines });
 
