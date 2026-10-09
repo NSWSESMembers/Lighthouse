@@ -22,6 +22,14 @@
 export const PIN_TIP_TO_CENTRE = 20 * Math.SQRT2; // 40px teardrop rotated 45deg
 export const STEM_STEP = 22;                      // px per extension level
 const PIN_BODY_RADIUS = 20;
+// The capability code tab (asset_icon.js CODE_TAB_PATH), on the far side of
+// the body from the point, as a circle: centred this far out from the
+// body's centre, this big. Only pins showing a tab (pin.tab) have one.
+const TAB_OFFSET = 26;
+const TAB_RADIUS = 12;
+// Closest a tab may come to another pin's body or tab (centre to centre).
+const TAB_BODY_GAP = PIN_BODY_RADIUS + TAB_RADIUS + 2;
+const TAB_TAB_GAP = 2 * TAB_RADIUS + 2;
 const MAX_EXT_LEVEL = 6;
 
 // Body centres closer than this collide. Bodies are 40px across, so this
@@ -207,13 +215,19 @@ function bodyCentre(x, y, angleDeg, ext) {
     return { x: x + len * Math.sin(a), y: y - len * Math.cos(a) };
 }
 
+function tabCentre(c, angleDeg) {
+    const a = angleDeg * Math.PI / 180;
+    return { x: c.x + TAB_OFFSET * Math.sin(a), y: c.y - TAB_OFFSET * Math.cos(a) };
+}
+
 const byScreen = (a, b) => (b.y - a.y) || (a.x - b.x);
 
 /**
  * Pure placement step.
  *
- * @param {Array<{id:any, x:number, y:number, moving?:boolean, prev?:object, hint?:object}>} pins
- *        tip positions in screen pixels; `moving` while the asset is being
+ * @param {Array<{id:any, x:number, y:number, moving?:boolean, tab?:boolean, prev?:object, hint?:object}>} pins
+ *        tip positions in screen pixels; `tab` if the pin shows a capability
+ *        code tab, which then needs room too; `moving` while the asset is being
  *        animated to a new position; `prev` is this pin's result from the
  *        previous call (it carries the timers); `hint` is its result from a
  *        layout at another zoom, kept if it's still completely clear
@@ -262,20 +276,24 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
     }
 
     const bodies = makeGrid();
+    const tabs = makeGrid();
     const stems = makeSegmentGrid();
-    const placed = new Map(); // pin -> { body, stem }
+    const placed = new Map(); // pin -> { body, tab, stem }
 
-    const place = (p, c, stem) => {
+    const place = (p, c, stem, tc) => {
         const body = { x: c.x, y: c.y, owner: p };
         bodies.add(c.x, c.y, body);
+        const tab = tc ? { x: tc.x, y: tc.y, owner: p } : null;
+        if (tab) tabs.add(tab.x, tab.y, tab);
         const st = stem ? { ...stem, owner: p } : null;
         if (st) stems.add(st);
-        placed.set(p, { body, stem: st });
+        placed.set(p, { body, tab, stem: st });
     };
     const unplace = (p) => {
         const it = placed.get(p);
         if (!it) return;
         bodies.remove(it.body);
+        if (it.tab) tabs.remove(it.tab);
         if (it.stem) stems.remove(it.stem);
         placed.delete(p);
     };
@@ -316,6 +334,34 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
             return false;
         });
 
+        // Code tabs: this body clear of other pins' tabs, and this pin's tab
+        // clear of their bodies, tabs, positions and lines.
+        const tabBodyGap = TAB_BODY_GAP + margin;
+        tabs.some(c.x, c.y, tabBodyGap, (t) => {
+            if (t.owner !== p) overlap += Math.max(0, tabBodyGap - Math.hypot(t.x - c.x, t.y - c.y));
+            return false;
+        });
+        const tc = p.tab ? tabCentre(c, angle) : null;
+        if (tc) {
+            bodies.some(tc.x, tc.y, tabBodyGap, (b) => {
+                if (b.owner !== p) overlap += Math.max(0, tabBodyGap - Math.hypot(b.x - tc.x, b.y - tc.y));
+                return false;
+            });
+            const tabTabGap = TAB_TAB_GAP + margin;
+            tabs.some(tc.x, tc.y, tabTabGap, (t) => {
+                if (t.owner !== p) overlap += Math.max(0, tabTabGap - Math.hypot(t.x - tc.x, t.y - tc.y));
+                return false;
+            });
+            const tabTipGap = TAB_RADIUS + margin;
+            tips.some(tc.x, tc.y, tabTipGap, (o) => {
+                if (o !== p && (p.moving || !o.moving)) overlap += Math.max(0, tabTipGap - Math.hypot(o.x - tc.x, o.y - tc.y));
+                return false;
+            });
+            stems.near(tc.x, tc.y, TAB_RADIUS + 2, (st) => {
+                if (st.owner !== p) overlap += STEM_OVERLAP_WEIGHT * Math.max(0, TAB_RADIUS + 2 - distToSegment(tc.x, tc.y, st));
+            });
+        }
+
         // Not on top of another asset's tip (pins that aren't moving ignore
         // moving ones, which are only passing through)...
         const tipGap = MIN_TIP_GAP + margin;
@@ -336,6 +382,10 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
             const half = Math.hypot(stem.x2 - stem.x1, stem.y2 - stem.y1) / 2;
             bodies.some(mx, my, half + MIN_STEM_GAP, (b) => {
                 if (b.owner !== p) overlap += STEM_OVERLAP_WEIGHT * Math.max(0, MIN_STEM_GAP - distToSegment(b.x, b.y, stem));
+                return false;
+            });
+            tabs.some(mx, my, half + TAB_RADIUS + 2, (t) => {
+                if (t.owner !== p) overlap += STEM_OVERLAP_WEIGHT * Math.max(0, TAB_RADIUS + 2 - distToSegment(t.x, t.y, stem));
                 return false;
             });
             // ...nor cross another line...
@@ -360,7 +410,7 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
         const a = angle * Math.PI / 180;
         const away = lean ? (1 - (Math.sin(a) * lean.x - Math.cos(a) * lean.y)) / 2 : 0;
         const cost = (ext / STEM_STEP) * 10 + Math.abs(angle) / 30 + 0.9 * away + soft + hintSwing(p, angle, ext);
-        return { angle, ext, c, stem, overlap, cost };
+        return { angle, ext, c, tc, stem, overlap, cost };
     };
 
     const isPrev = (p, angle, ext) => !!p.prev && p.prev.angle === angle && p.prev.ext === ext;
@@ -422,7 +472,7 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
                 betterSince: null, searchedAt: -Infinity, searchInterval: IMPROVE_DELAY,
             };
         }
-        place(p, e.c, e.stem);
+        place(p, e.c, e.stem, e.tc);
         kept.push([p, e]);
     }
 
@@ -430,7 +480,7 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
     for (const p of still) {
         if (placed.has(p)) continue;
         const b = bestFor(p);
-        place(p, b.c, b.stem);
+        place(p, b.c, b.stem, b.tc);
         finish(p, { angle: b.angle, ext: b.ext, overlap: b.overlap });
     }
 
@@ -473,7 +523,7 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
         const ready = now - since >= IMPROVE_DELAY && now - (prev.changedAt ?? -Infinity) >= CHANGE_COOLDOWN;
         if (ready) {
             unplace(p);
-            place(p, b.c, b.stem);
+            place(p, b.c, b.stem, b.tc);
             finish(p, { angle: b.angle, ext: b.ext, overlap: 0, searchedAt: now });
         } else {
             keep({ betterSince: since, searchedAt: now, searchInterval: IMPROVE_DELAY });
@@ -491,13 +541,13 @@ export function computePinPlacements(pins, now = 0, { declutter = true, allowLin
             const settled = prev.angle === 0 && prev.ext === 0 && cur.overlap === 0;
             const recent = now - (prev.searchedAt ?? -Infinity) < MOVER_SEARCH_INTERVAL;
             if (cur.overlap <= (prev.overlap || 0) + 0.01 && (settled || recent)) {
-                place(p, cur.c, cur.stem);
+                place(p, cur.c, cur.stem, cur.tc);
                 finish(p, { angle: prev.angle, ext: prev.ext, overlap: cur.overlap, searchDue: !settled });
                 continue;
             }
         }
         const b = bestFor(p);
-        place(p, b.c, b.stem);
+        place(p, b.c, b.stem, b.tc);
         finish(p, { angle: b.angle, ext: b.ext, overlap: b.overlap, searchedAt: now });
     }
 
@@ -515,6 +565,9 @@ function writePlacement(marker) {
     el.querySelector('.asset-pin__rot').style.transform = angle ? `rotate(${angle}deg)` : '';
     el.querySelector('.asset-pin__label').style.transform = angle ? `rotate(${-angle}deg)` : '';
     el.querySelector('.asset-pin__head').style.transform = ext ? `translateY(${-ext}px)` : '';
+    // The code tab swings with the head; past sideways, turn its code over
+    // so it doesn't read upside down.
+    el.querySelector('.asset-pin__code')?.classList.toggle('is-flipped', Math.abs(st.angle) > 90);
     // Pushed out: a circle, with a dot on the true position and a line from
     // the dot to the circle's edge (see tasking.css). Only rotated: the
     // point still sits on the true position, so it keeps it.
@@ -527,12 +580,19 @@ function writePlacement(marker) {
     // The popup opens over the pin's body wherever it has swung to, not over
     // the tip. Leaflet puts the popup's tip at anchor + popupAnchor + offset;
     // the icon's popupAnchor is [0, -42] and Leaflet's default offset is
-    // [0, 7], i.e. 6.7px above an upright body's centre. Keep that.
+    // [0, 7], i.e. 6.7px above an upright body's centre. Keep that. While
+    // the code tab shows, popupAnchor is higher by the tab's height so the
+    // popup meets the tab; the tab swings with the head, so only keep as
+    // much of that lift as the tab still points up (none once it's sideways
+    // or below).
     const popup = marker.getPopup?.();
     if (popup) {
         const a = st.angle * Math.PI / 180;
         const len = PIN_TIP_TO_CENTRE + ext;
-        popup.options.offset = [len * Math.sin(a), -len * Math.cos(a) + PIN_TIP_TO_CENTRE + 7];
+        const anchorY = marker.options?.icon?.options?.popupAnchor?.[1] ?? -42;
+        const codeLift = Math.max(0, -42 - anchorY);
+        const drop = codeLift * (1 - Math.max(0, Math.cos(a)));
+        popup.options.offset = [len * Math.sin(a), -len * Math.cos(a) + PIN_TIP_TO_CENTRE + 7 + drop];
         if (popup.isOpen()) popup.update();
     }
 }
@@ -562,6 +622,9 @@ export class AssetPinLayout {
         this._enabled = true;
         this._minZoom = DECLUTTER_MIN_ZOOM;
         this._allowLines = true;
+        // Whether capability code tabs are showing (config option); a pin
+        // with a code then needs room for its tab too.
+        this._codeTabs = true;
         // Markers currently swung or on a stem: zoomed out, these are all
         // that need touching (back to upright).
         this._tilted = new Set();
@@ -619,7 +682,7 @@ export class AssetPinLayout {
         const zoom = map.getZoom();
         // Placements carry over between layouts at the same zoom and
         // options; from another zoom they're only a hint (see below).
-        const layoutKey = zoom + '|' + this._allowLines;
+        const layoutKey = zoom + '|' + this._allowLines + '|' + this._codeTabs;
         if (!this._active()) {
             this._straightenAll();
             return;
@@ -631,6 +694,8 @@ export class AssetPinLayout {
         const pins = markers.map((m, i) => (
             {
                 id: i, x: points[i].x, y: points[i].y, moving: !!m._pinMoving,
+                // asset_icon.js puts the code on the icon's options.
+                tab: this._codeTabs && !!m.options?.icon?.options?.capabilityCode,
                 // The keep-your-spot rules are for vehicles moving at a fixed
                 // zoom. A placement from another zoom (or other options) is
                 // kept only if it's still completely clear (a least-bad spot
@@ -688,6 +753,16 @@ export class AssetPinLayout {
         if (minZoom === this._minZoom && allowLines === this._allowLines) return;
         this._minZoom = minZoom;
         this._allowLines = allowLines;
+        this.schedule();
+    }
+
+    /**
+     * Capability code tabs shown or hidden (config option): re-lay pins out
+     * so they make room for tabs, or stop doing so.
+     */
+    setCodeTabs(on) {
+        if (this._codeTabs === !!on) return;
+        this._codeTabs = !!on;
         this.schedule();
     }
 

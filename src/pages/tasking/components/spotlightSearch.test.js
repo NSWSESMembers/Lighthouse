@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import ko from 'knockout';
 import { findAssetsByCallsign } from './spotlightSearch.js';

@@ -131,6 +131,26 @@ These options only show while **Spread out overlapping asset markers** is on.
 - **Show a breadcrumb trail for the selected asset** (on by default). While a vehicle's popup is open, a fading line through its recent positions shows where it has come from. See [Asset Breadcrumb Trails](situation-map.md#asset-breadcrumb-trails). Trails are kept only in this browser. Turning this off clears them.
 - **Trail length** sets how far back the trail goes, from **15 minutes** to **2 hours**. The default is **30 minutes**. Vehicles report their position every few minutes, so a longer trail shows more of the route.
 
+#### Capability Codes
+
+- **Show capability codes on asset markers** (on by default). A tab on top of each asset marker shows the asset's capability as a short code, so capabilities with similar colours can be told apart, such as the rescue tiers and Community First Responder. The map legend lists each code next to its capability:
+
+  | Code | Capability | Code | Capability |
+  | --- | --- | --- | --- |
+  | BUS | Bus | HRV | Heavy Rescue |
+  | CMD | Command | GLR | General Land Rescue |
+  | CCV | Corporate Command | SHQ | SHQ Pool / Pool Vehicle |
+  | CFR | Community First Responder | VES | Vessel (class not known) |
+  | GPV | General Purpose | PRT | Portable |
+  | LOG | Logistics | HCV | High Clearance |
+  | STM | Storm | SUP | Support |
+  | LSV | Light Storm | COW | Cell on Wheels |
+  | MSV | Medium Storm | SAV | Strategic Asset |
+  | LRV | Light Rescue | VC1–VC4 | Vessel, Class 1–4 |
+  | MRV | Medium Rescue | | |
+
+  Assets with any other capability, or none, have a grey marker and no code.
+
 ### All Markers
 
 #### Marker Layer Order
