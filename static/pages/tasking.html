@@ -2958,6 +2958,30 @@
                                                                 </div>
                                                             </fieldset>
                                                         </div>
+
+                                                        <!-- Asset capability codes -->
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-tag me-1"></i>Capability Codes
+                                                                </legend>
+                                                                <div class="form-check form-switch mb-2">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="assetCapabilityCodesToggle"
+                                                                        data-bind="checked: config.showAssetCapabilityCodes">
+                                                                    <label class="form-check-label"
+                                                                        for="assetCapabilityCodesToggle">
+                                                                        Show capability codes on asset markers
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-text">
+                                                                    A tab on top of each marker shows the asset's
+                                                                    capability, such as HRV (Heavy Rescue) or MSV
+                                                                    (Medium Storm), so similar colours can be told
+                                                                    apart. See the map legend for the full key.
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -4669,17 +4693,21 @@
                                 data-bind="click: clearSearchQuery, visible: searchQuery">&times;</button>
                         </div>
                     </div>
-                    <!-- Talkgroup / Type / Satellite filters -->
+                    <!-- Talkgroup / Type / Capability / Satellite filters -->
                     <div class="row g-2 mb-3">
-                        <div class="col-12 col-md-4">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <select class="form-select" aria-label="Filter by talkgroup"
                                 data-bind="options: talkgroups, value: selectedTalkgroup, optionsCaption: 'All Talkgroups'"></select>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <select class="form-select" aria-label="Filter by type"
                                 data-bind="options: types, value: selectedType, optionsCaption: 'All Types'"></select>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <select class="form-select" aria-label="Filter by capability"
+                                data-bind="options: capabilities, optionsText: 'label', optionsValue: 'value', value: selectedCapability, optionsCaption: 'All Capabilities'"></select>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
                             <select class="form-select" aria-label="Filter by location source"
                                 data-bind="options: satelliteOptions, optionsText: 'label', optionsValue: 'value', value: selectedSatellite, optionsCaption: 'All Sources'"></select>
                         </div>

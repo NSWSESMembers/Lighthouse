@@ -219,3 +219,49 @@ describe('computePinPlacements', () => {
         expect(out.get('a')).toMatchObject({ angle: 0, ext: 0 });
     });
 });
+
+describe('computePinPlacements with code tabs', () => {
+    // Mirrors TAB_OFFSET / TAB_RADIUS / TAB_BODY_GAP in assetPinLayout.js.
+    const TAB_OFFSET = 26, TAB_BODY_GAP = 34;
+    const tabCentre = (p, pl) => {
+        const c = centre(p, pl), a = pl.angle * Math.PI / 180;
+        return { x: c.x + TAB_OFFSET * Math.sin(a), y: c.y - TAB_OFFSET * Math.cos(a) };
+    };
+    const minTabToBody = (pins, out) => {
+        let min = Infinity;
+        for (const p of pins) {
+            if (!p.tab) continue;
+            const t = tabCentre(p, out.get(p.id));
+            for (const q of pins) {
+                if (q === p) continue;
+                const c = centre(q, out.get(q.id));
+                min = Math.min(min, Math.hypot(t.x - c.x, t.y - c.y));
+            }
+        }
+        return min;
+    };
+
+    // B's position sits 59px above A's: both bodies fit upright, but A's tab
+    // would then sit under B's body.
+    const stacked = (tab) => [{ id: 'a', x: 100, y: 100, tab }, { id: 'b', x: 100, y: 41, tab }];
+
+    it('leaves the stacked pair upright when they have no tabs', () => {
+        const out = computePinPlacements(stacked(false));
+        expect(out.get('a')).toMatchObject({ angle: 0, ext: 0 });
+        expect(out.get('b')).toMatchObject({ angle: 0, ext: 0 });
+    });
+
+    it('moves one of the pair so a tab is not covered by the other body', () => {
+        const pins = stacked(true);
+        const out = computePinPlacements(pins);
+        expect(out.get('a').angle !== 0 || out.get('b').angle !== 0 || out.get('a').ext || out.get('b').ext).toBeTruthy();
+        expect(minTabToBody(pins, out)).toBeGreaterThanOrEqual(TAB_BODY_GAP);
+        expect(minBodyGap(pins, out)).toBeGreaterThanOrEqual(MIN_BODY_GAP);
+    });
+
+    it('keeps tabs clear in a spread-out crowd', () => {
+        const pins = Array.from({ length: 8 }, (_, i) => ({ id: i, x: 100 + (i % 4) * 30, y: 100 + Math.floor(i / 4) * 40, tab: true }));
+        const out = computePinPlacements(pins);
+        expect(minTabToBody(pins, out)).toBeGreaterThanOrEqual(TAB_BODY_GAP);
+    });
+});

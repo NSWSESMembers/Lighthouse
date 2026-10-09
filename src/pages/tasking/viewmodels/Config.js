@@ -1333,6 +1333,8 @@ export function ConfigVM(root, deps) {
     self.assetPinDeclutterMinZoom = ko.observable(15);
     // ...and whether crowded pins may move out on lines.
     self.assetPinAllowLines = ko.observable(true);
+    // Capability code (HRV, MSV, CFR...) in a tab on top of each asset pin.
+    self.showAssetCapabilityCodes = ko.observable(true);
     // Breadcrumb trail for the selected asset, and how many minutes back
     // (15-120: fixes come at most every 5 minutes, so shorter shows nothing).
     self.assetTrails = ko.observable(true);
@@ -1502,6 +1504,7 @@ export function ConfigVM(root, deps) {
         assetPinDeclutterMinZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
         assetPinAllowLines: !!self.assetPinAllowLines(),
         assetTrails: !!self.assetTrails(),
+        showAssetCapabilityCodes: !!self.showAssetCapabilityCodes(),
         assetTrailMinutes: Number(self.assetTrailMinutes()) || 30,
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
         taskingCountActiveOnly: !!self.taskingCountActiveOnly(),
@@ -1854,6 +1857,9 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.assetTrails === 'boolean') {
             self.assetTrails(cfg.assetTrails);
         }
+        if (typeof cfg.showAssetCapabilityCodes === 'boolean') {
+            self.showAssetCapabilityCodes(cfg.showAssetCapabilityCodes);
+        }
         if (Number.isInteger(cfg.assetTrailMinutes) && cfg.assetTrailMinutes >= 15 && cfg.assetTrailMinutes <= 120) {
             self.assetTrailMinutes(cfg.assetTrailMinutes);
         }
@@ -2012,6 +2018,7 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
         root.mapVM?.applyAssetTrailMinutes?.(Number(self.assetTrailMinutes()) || 30);
         root.mapVM?.applyAssetTrails?.(!!self.assetTrails());
+        root.mapVM?.applyAssetCapabilityCodes?.(!!self.showAssetCapabilityCodes());
         applyLayoutPresetClass(normalizeLayoutPreset(self.layoutPreset()));
         // Apply dark mode
         self._applyDarkMode();
@@ -2085,6 +2092,11 @@ export function ConfigVM(root, deps) {
 
     self.assetTrails.subscribe((v) => {
         root.mapVM?.applyAssetTrails?.(!!v);
+        self.save();
+    })
+
+    self.showAssetCapabilityCodes.subscribe((v) => {
+        root.mapVM?.applyAssetCapabilityCodes?.(!!v);
         self.save();
     })
 

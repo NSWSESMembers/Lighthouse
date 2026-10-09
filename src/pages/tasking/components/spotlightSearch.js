@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 import ko from "knockout";
+import { assetCapabilityName, assetCapabilityCode } from "./asset_icon.js";
 
 function safeStr(v) {
     if (v == null) return "";
@@ -1038,15 +1039,17 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         });
 
         return _decorateResults(matches.map((a) => {
+            const code = assetCapabilityCode(a);
+            const capability = assetCapabilityName(a) + (code ? ` (${code})` : "");
             const radioId = safeStr(a.radioId);
             const seen = safeStr(a.lastSeenJustAgoText);
             return {
                 kind: "Execute",
                 ref: { cmd: "find", asset: a },
                 primary: safeStr(a.name),
-                secondary: [safeStr(a.capability), safeStr(a.resourceType), safeStr(a.entity),
+                secondary: [capability, safeStr(a.resourceType), safeStr(a.entity),
                     radioId ? `PSN ${radioId}` : "", seen ? `seen ${seen}` : ""].filter(Boolean).join(" · "),
-                badge: "Asset",
+                badge: code || "Asset",
                 applyText: null
             };
         }), parseTokens(query));

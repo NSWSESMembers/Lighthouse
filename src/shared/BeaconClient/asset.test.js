@@ -81,3 +81,29 @@ describe('filter', () => {
     expect(vi.mocked(request)).not.toHaveBeenCalled();
   });
 });
+
+describe('telematics capability', () => {
+  const teleCapability = async (displayName) => {
+    vi.mocked(request)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce({ features: [teleFeature(displayName)] });
+    const [asset] = await filter(null, ctx);
+    return asset.capability;
+  };
+
+  it('is the make and model after the callsign, as a plain string', async () => {
+    expect(await teleCapability('DEM40 Isuzu D-Max')).toBe('Isuzu D-Max');
+  });
+
+  it('ignores stray whitespace', async () => {
+    expect(await teleCapability('DEM41A  Toyota HiLux ')).toBe('Toyota HiLux');
+  });
+
+  it('drops a dash between the callsign and the model', async () => {
+    expect(await teleCapability('DEM43 - Toyota HiLux')).toBe('Toyota HiLux');
+  });
+
+  it('is empty when there is only a callsign', async () => {
+    expect(await teleCapability('DEM42')).toBe('');
+  });
+});

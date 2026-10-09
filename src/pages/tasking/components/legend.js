@@ -135,79 +135,127 @@ export const LegendControl = L.Control.extend({
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#FFD600;margin-right:6px;border:1px solid #333;"></span>
-      <span>Bus</span>
+      <span>Bus <span class="legend-asset-code">BUS</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#1565C0;margin-right:6px;border:1px solid #333;"></span>
-      <span>Command</span>
+      <span>Command <span class="legend-asset-code">CMD</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#D32F2F;margin-right:6px;border:1px solid #333;"></span>
-      <span>Community First Responder</span>
+      <span>Community First Responder <span class="legend-asset-code">CFR</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#8E24AA;margin-right:6px;border:1px solid:#333;"></span>
-      <span>General Purpose</span>
+      <span>General Purpose <span class="legend-asset-code">GPV</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#795548;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Logistics</span>
+      <span>Logistics <span class="legend-asset-code">LOG</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#FB8C00;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Light Storm</span>
+      <span>Light Storm <span class="legend-asset-code">LSV</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#EF6C00;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Medium Storm</span>
+      <span>Medium Storm <span class="legend-asset-code">MSV</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#C62828;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Light Rescue</span>
+      <span>Light Rescue <span class="legend-asset-code">LRV</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#B71C1C;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Medium Rescue</span>
+      <span>Medium Rescue <span class="legend-asset-code">MRV</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#880E4F;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Heavy Rescue</span>
+      <span>Heavy Rescue <span class="legend-asset-code">HRV</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#5D4037;margin-right:6px;border:1px solid:#333;"></span>
-      <span>SHQ Pool</span>
+      <span>SHQ Pool / Pool Vehicle <span class="legend-asset-code">SHQ</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#0288D1;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Vessel</span>
+      <span>Vessel <span class="legend-asset-code">VES</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#43A047;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Portable</span>
+      <span>Portable <span class="legend-asset-code">PRT</span></span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#00897B;margin-right:6px;border:1px solid #333;"></span>
+      <span>High Clearance <span class="legend-asset-code">HCV</span></span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#546E7A;margin-right:6px;border:1px solid #333;"></span>
+      <span>Support <span class="legend-asset-code">SUP</span></span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#5E35B1;margin-right:6px;border:1px solid #333;"></span>
+      <span>Cell on Wheels <span class="legend-asset-code">COW</span></span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#C2185B;margin-right:6px;border:1px solid #333;"></span>
+      <span>General Land Rescue <span class="legend-asset-code">GLR</span></span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#F57C00;margin-right:6px;border:1px solid #333;"></span>
+      <span>Storm <span class="legend-asset-code">STM</span></span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#37474F;margin-right:6px;border:1px solid #333;"></span>
+      <span>Strategic Asset <span class="legend-asset-code">SAV</span></span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#0D47A1;margin-right:6px;border:1px solid #333;"></span>
+      <span>Corporate Command <span class="legend-asset-code">CCV</span></span>
+    </div>
+
+    <div style="display:flex;align-items:center;margin:2px 0;">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);background:#757575;margin-right:6px;border:1px solid #333;"></span>
+      <span>Other / none</span>
     </div>
 
   </div>
