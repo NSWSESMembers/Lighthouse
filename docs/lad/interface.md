@@ -101,7 +101,7 @@ Search by callsign, unit or zone name, PSN ID, satellite ID or satellite equipme
 
 If an asset's location comes from a satellite tracker, a satellite icon <img class="icon" src="images/icon-satellite.png" alt="Satellite" height="18"> shows next to the time it was last seen. The icon is crossed out <img class="icon" src="images/icon-satellite-inactive.png" alt="Satellite tracker not active" height="18"> if the tracker's status isn't **ACTIVE** — its last reported location may be out of date.
 
-On the map, a vessel with a class (such as Class 3) shows its class as a number in a small white box on the corner of its **VES** capability code tab. The tab only shows while **Show capability codes on asset markers** is on (see [Configuration](configuration.md#capability-codes)).
+On the map, a vessel with a class shows it in its capability code: **VC3** is a Class 3 vessel. A vessel whose class isn't known shows **VES**. The code only shows while **Show capability codes on asset markers** is on (see [Configuration](configuration.md#capability-codes)).
 
 ![Trackable Assets Library filtered to satellite-tracked assets](images/trackable-assets-library-satellite.png)
 

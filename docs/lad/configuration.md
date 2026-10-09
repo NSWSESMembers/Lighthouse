@@ -140,13 +140,13 @@ These options only show while **Spread out overlapping asset markers** is on.
   | BUS | Bus | HRV | Heavy Rescue |
   | CMD | Command | GLR | General Land Rescue |
   | CCV | Corporate Command | SHQ | SHQ Pool / Pool Vehicle |
-  | CFR | Community First Responder | VES | Vessel |
+  | CFR | Community First Responder | VES | Vessel (class not known) |
   | GPV | General Purpose | PRT | Portable |
   | LOG | Logistics | HCV | High Clearance |
   | STM | Storm | SUP | Support |
   | LSV | Light Storm | COW | Cell on Wheels |
   | MSV | Medium Storm | SAV | Strategic Asset |
-  | LRV | Light Rescue | | |
+  | LRV | Light Rescue | VC1–VC4 | Vessel, Class 1–4 |
   | MRV | Medium Rescue | | |
 
   Assets with any other capability, or none, have a grey marker and no code.

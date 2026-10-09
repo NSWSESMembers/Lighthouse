@@ -1549,18 +1549,6 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   transform: rotate(180deg);
 }
 
-/* A vessel's class, in a white box on the tab's corner, after the code.
-   When the code is turned over, the box moves to the tab's other corner
-   (x 11..23 -> -23..-11) so it still reads after the code. */
-.asset-pin__code .asset-pin__class {
-  font-size: 9px;
-  letter-spacing: 0;
-}
-
-.asset-pin__code.is-flipped .asset-pin__classbox {
-  transform: translateX(-34px);
-}
-
 /* The same code next to each capability in the map legend. */
 .legend-asset-code {
   font-size: 0.85em;

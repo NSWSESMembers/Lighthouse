@@ -31,7 +31,9 @@ describe('vessels whose capability is their class', () => {
     it('are coloured and coded as vessels by their resourceType', () => {
         const a = makeAsset();
         expect(assetColor(a)).toBe('#0288D1');
-        expect(assetCapabilityCode(a)).toBe('VES');
+        // The fixture is Class 3; without the class it's plain VES.
+        expect(assetCapabilityCode(a)).toBe('VC3');
+        expect(assetCapabilityCode(a, { withClass: false })).toBe('VES');
     });
 
     it('still go by a known capability first', () => {
@@ -86,22 +88,24 @@ describe('vesselClass', () => {
     });
 });
 
-describe('buildIcon vessel class box', () => {
+describe('vessel class in the code', () => {
     const html = (asset) => buildIcon(asset, 'matched').options.html;
 
-    it('shows the class number in a box on the VES tab', () => {
-        for (const n of [1, 2, 3]) {
-            const h = html(makeAsset({ satelliteClass: `Class ${n} Demo`, satelliteClassType: null }));
-            expect(h).toContain('>VES</text>');
-            expect(h).toMatch(new RegExp(`class="asset-pin__class"[^>]*>${n}</text>`));
+    it('codes a classed vessel VC and its class, in the tab', () => {
+        for (const n of [1, 2, 3, 4]) {
+            const a = makeAsset({ satelliteClass: `Class ${n} Demo`, satelliteClassType: null });
+            expect(assetCapabilityCode(a)).toBe(`VC${n}`);
+            expect(html(a)).toContain(`>VC${n}</text>`);
         }
     });
 
-    it('shows none for other assets', () => {
-        expect(html(makeAsset({ capability: 'Command', resourceType: 'Vehicle', satelliteId: null, satelliteClass: null, satelliteClassType: null })))
-            .not.toContain('asset-pin__class');
-        expect(html(makeAsset({ capability: 'vessel', satelliteId: null, satelliteClass: null, satelliteClassType: null })))
-            .not.toContain('asset-pin__class');
+    it('keeps VES for a vessel without a class, and other codes unchanged', () => {
+        expect(assetCapabilityCode(makeAsset({ capability: 'vessel', satelliteId: null, satelliteClass: null, satelliteClassType: null }))).toBe('VES');
+        expect(assetCapabilityCode(makeAsset({ capability: 'Command', resourceType: 'Vehicle', satelliteClass: 'Class 3 Demo' }))).toBe('CMD');
+    });
+
+    it('draws no separate class box', () => {
+        expect(html(makeAsset())).not.toContain('asset-pin__class');
     });
 });
 

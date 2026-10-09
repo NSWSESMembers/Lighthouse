@@ -32,7 +32,7 @@ export function TrackableAssetsModalVM(mainVM) {
         const caps = new Map();
         allAssets.forEach((a) => {
             const name = assetCapabilityName(a);
-            if (!caps.has(name)) caps.set(name, assetCapabilityCode(a));
+            if (!caps.has(name)) caps.set(name, assetCapabilityCode(a, { withClass: false }));
         });
         self.capabilities([...caps]
             .sort(([a], [b]) => (a === 'Other') - (b === 'Other') || a.localeCompare(b))

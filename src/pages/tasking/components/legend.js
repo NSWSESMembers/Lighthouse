@@ -201,7 +201,7 @@ export const LegendControl = L.Control.extend({
     <div style="display:flex;align-items:center;margin:2px 0;">
       <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
         transform:rotate(-45deg);background:#0288D1;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Vessel <span class="legend-asset-code">VES</span></span>
+      <span>Vessel <span class="legend-asset-code">VES</span><span class="legend-asset-code">, VC1–4 by class</span></span>
     </div>
 
     <div style="display:flex;align-items:center;margin:2px 0;">

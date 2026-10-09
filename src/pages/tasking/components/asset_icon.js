@@ -125,9 +125,15 @@ export function assetCapabilityName(asset) {
     return capabilityNames[key] || key;
 }
 
-/** The asset's capability code (e.g. 'HRV'), or '' if it has none. */
-export function assetCapabilityCode(asset) {
-    return capabilityCodes[capabilityKey(asset)] || '';
+/**
+ * The asset's capability code (e.g. 'HRV'), or '' if it has none. A vessel
+ * with a class gets 'VC' and its class instead of 'VES' (Class 3 -> 'VC3'),
+ * unless `withClass` is false (e.g. to label the capability as a whole).
+ */
+export function assetCapabilityCode(asset, { withClass = true } = {}) {
+    const code = capabilityCodes[capabilityKey(asset)] || '';
+    const cls = withClass && code === 'VES' ? vesselClass(asset) : 0;
+    return cls ? `VC${cls}` : code;
 }
 
 // The code tab, in coordinates centred on the head (the ring's outer edge is
@@ -140,9 +146,6 @@ export function assetCapabilityCode(asset) {
 const CODE_TAB_PATH =
     'M-10,-33 H10 Q14,-33 14,-29 V-22 Q14,-16.98 18,-8.72 L16.65,-8.07 ' +
     'A18.5,18.5 0 0 0 -16.65,-8.07 L-18,-8.72 Q-14,-16.98 -14,-22 V-29 Q-14,-33 -10,-33 Z';
-
-// Vessels show their class (e.g. 3) as a number in a small white box on the
-// code tab's top right corner.
 
 /**
  * A vessel's class, from its satellite tracker's class (e.g. "Class 3 550
@@ -188,21 +191,11 @@ export function buildIcon(asset, matchStatus) {
     // past sideways, so it's never upside down. It's always rendered; the
     // config option just hides it (.asset-codes-off on the map container),
     // so toggling doesn't rebuild every icon.
-    // A vessel's class rides on the tab's top right
-    // corner, so it swings and turns over with the code.
     const code = assetCapabilityCode(asset);
-    const cls = vesselClass(asset);
-    const classBox = cls
-        ? `<g class="asset-pin__classbox">
-               <rect x="11" y="-36" width="12" height="12" rx="2.5" fill="#fff" stroke="rgba(0,0,0,0.55)" stroke-width="1"/>
-               <text class="asset-pin__class" x="17" y="-30" fill="#1c1c1e">${cls}</text>
-             </g>`
-        : '';
     const codeTab = code
         ? `<svg class="asset-pin__code" viewBox="-20 -34 40 26" style="${dull}">
              <path d="${CODE_TAB_PATH}" fill="${bg}"/>
              <text x="0" y="-26.5" fill="${codeTextColor(bg)}">${code}</text>
-             ${classBox}
            </svg>`
         : '';
 
