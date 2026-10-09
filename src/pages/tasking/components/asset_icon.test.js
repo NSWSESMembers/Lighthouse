@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import { Asset } from '../models/Asset.js';
-import { assetColor, assetCapabilityCode, assetCapabilityName, buildIcon, vesselClass } from './asset_icon.js';
+import { assetColor, assetCapabilityCode, assetCapabilityName, assetLegendRows, buildIcon, vesselClass } from './asset_icon.js';
 
 // Shaped like a ResourceLocations/Radio feature (see BeaconClient/asset.js);
 // every value is invented.
@@ -123,5 +123,24 @@ describe('assetCapabilityName', () => {
     it('is Other for an unknown capability or none', () => {
         expect(name({ capability: null, resourceType: 'Vehicle' })).toBe('Other');
         expect(name({ capability: 'Something New', resourceType: 'Vehicle' })).toBe('Other');
+    });
+});
+
+describe('assetLegendRows', () => {
+    const rows = assetLegendRows();
+
+    it('lists every capability once with the colour and code its pins use, then Other', () => {
+        expect(rows.map((r) => r.code).filter(Boolean)).toEqual([
+            'BUS', 'CMD', 'CFR', 'GPV', 'LOG', 'LSV', 'MSV', 'LRV', 'MRV', 'HRV',
+            'SHQ', 'VES', 'PRT', 'HCV', 'SUP', 'COW', 'GLR', 'STM', 'SAV', 'CCV',
+        ]);
+        const heavy = rows.find((r) => r.code === 'HRV');
+        expect(heavy.color).toBe(assetColor(makeAsset({ capability: 'Heavy Rescue', resourceType: 'Vehicle' })));
+        expect(rows.at(-1)).toMatchObject({ name: 'Other / none', color: '#757575', code: '' });
+    });
+
+    it('names vessels and Pool Vehicle as the map does', () => {
+        expect(rows.find((r) => r.code === 'VES')).toMatchObject({ name: 'Vessel', note: 'VC1–4 by class' });
+        expect(rows.find((r) => r.code === 'SHQ').name).toBe('SHQ Pool / Pool Vehicle');
     });
 });
