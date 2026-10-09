@@ -114,6 +114,28 @@ const capabilityNames = {
     'Pool Vehicle': 'SHQ Pool'
 };
 
+// Legend order. Pool Vehicle is listed with SHQ Pool (same colour and code).
+const LEGEND_KEYS = [
+    'Bus', 'Command', 'Community First Responder', 'General Purpose', 'Logistics',
+    'Light Storm', 'Medium Storm', 'Light Rescue', 'Medium Rescue', 'Heavy Rescue',
+    'SHQ Pool', 'vessel', 'portable', 'High Clearance', 'Support', 'Cell on Wheels',
+    'General Land Rescue', 'Storm', 'Strategic Asset', 'Corporate Command'
+];
+const legendNames = { 'SHQ Pool': 'SHQ Pool / Pool Vehicle' };
+
+/**
+ * Rows for the map legend, from the same colours and codes the pins use:
+ * [{ color, name, code, note }], ending with the grey "Other / none".
+ */
+export function assetLegendRows() {
+    return LEGEND_KEYS.map((key) => ({
+        color: capabilityColors[key],
+        name: legendNames[key] || capabilityNames[key] || key,
+        code: capabilityCodes[key],
+        note: key === 'vessel' ? 'VC1–4 by class' : ''
+    })).concat({ color: UNKNOWN_COLOR, name: 'Other / none', code: '', note: '' });
+}
+
 /**
  * The asset's capability as the map shows it: the readable name for its
  * pin colour and code (all vessels are "Vessel", Pool Vehicle is "SHQ

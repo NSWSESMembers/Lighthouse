@@ -108,6 +108,19 @@ const SHOTS = {
 
   main: { run: closeConfigAndLoad },
 
+  // The map legend, expanded.
+  legend: {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.evaluate(() => {
+        const body = document.querySelector('.legend-body');
+        if (body && getComputedStyle(body).display === 'none') document.querySelector('.toggle-legend').click();
+      });
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('.legend-container'),
+  },
+
   'team-register': {
     run: closeConfigAndLoad,
     target: (page) => page.locator('#paneTop'),

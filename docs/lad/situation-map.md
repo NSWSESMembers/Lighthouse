@@ -166,9 +166,9 @@ Most layers are described by their name. Those that need more explanation:
 
 ## Legend
 
-The legend is in the bottom left of the map and explains the icons shown — incident shapes and priority colours, flood rescue categories, job status indicators, overlays and asset types. It can be hidden and re-opened at any time.
+The legend is in the bottom left of the map and explains the icons shown — incident shapes and priority colours, flood rescue categories, job status indicators, overlays and asset types. Each asset type is listed with its marker colour and its capability code (see [Capability Codes](configuration.md#capability-codes)). It can be hidden and re-opened at any time.
 
-![Map legend](images/legend.jpg)
+![Map legend](images/legend.png)
 
 ## Collaborative Map Layer
 
