@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computePinPlacements, PIN_TIP_TO_CENTRE, MIN_BODY_GAP, IMPROVE_DELAY, CHANGE_COOLDOWN } from './assetPinLayout.js';
+import { computePinPlacements, swingDelta, PIN_TIP_TO_CENTRE, MIN_BODY_GAP, IMPROVE_DELAY, CHANGE_COOLDOWN } from './assetPinLayout.js';
 
 function centre(p, { angle, ext }) {
     const a = angle * Math.PI / 180;
@@ -263,5 +263,34 @@ describe('computePinPlacements with code tabs', () => {
         const pins = Array.from({ length: 8 }, (_, i) => ({ id: i, x: 100 + (i % 4) * 30, y: 100 + Math.floor(i / 4) * 40, tab: true }));
         const out = computePinPlacements(pins);
         expect(minTabToBody(pins, out)).toBeGreaterThanOrEqual(TAB_BODY_GAP);
+    });
+});
+
+describe('swingDelta', () => {
+    const tip = { x: 0, y: 0 };
+    // A parked pin's head straight above this pin's head (upright).
+    const above = [{ x: 0, y: -PIN_TIP_TO_CENTRE - 6 }];
+
+    it('takes the short way round when nothing is in the way', () => {
+        expect(swingDelta(tip, -60, 90, 0, 0, [])).toBe(150);
+        expect(swingDelta(tip, 150, -150, 0, 0, [])).toBe(60);
+        expect(swingDelta(tip, 30, 30, 0, 0, above)).toBe(0);
+    });
+
+    it('swings round underneath rather than over a pin in the way', () => {
+        // -60 -> 90 the short way passes upright, through the pin above.
+        expect(swingDelta(tip, -60, 90, 0, 0, above)).toBe(-210);
+        expect(swingDelta(tip, 90, -60, 0, 0, above)).toBe(210);
+    });
+
+    it('works from an unwrapped angle', () => {
+        expect(swingDelta(tip, 300, 90, 0, 0, above)).toBe(-210);
+    });
+
+    it('keeps the short way when the long way is no clearer', () => {
+        const allRound = [0, 90, 180, 270].map((a) => ({
+            x: PIN_TIP_TO_CENTRE * Math.sin(a * Math.PI / 180), y: -PIN_TIP_TO_CENTRE * Math.cos(a * Math.PI / 180),
+        }));
+        expect(swingDelta(tip, -60, 60, 0, 0, allRound)).toBe(120);
     });
 });
