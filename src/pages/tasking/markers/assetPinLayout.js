@@ -222,6 +222,44 @@ function tabCentre(c, angleDeg) {
 
 const byScreen = (a, b) => (b.y - a.y) || (a.x - b.x);
 
+// Heads closer than this (centre to centre) overlap.
+const SWEEP_GAP = 2 * PIN_BODY_RADIUS;
+const SWEEP_STEP = 10; // degrees between samples along a swing
+
+/**
+ * Which way to swing a pin from one angle to another: the signed number of
+ * degrees to turn (the CSS transition animates exactly this). The short way
+ * round, unless its head would sweep over other pins' heads on the way and
+ * the long way round wouldn't (as much) -- e.g. a vehicle passing a parked
+ * one swings round underneath it rather than flipping over the top.
+ *
+ * @param {{x:number,y:number}} tip the pin's position (screen px)
+ * @param {number} from current angle (may be unwrapped, e.g. 400)
+ * @param {number} to target angle
+ * @param {number} fromExt, toExt line length before and after
+ * @param {Array<{x:number,y:number}>} others other pins' head centres
+ */
+export function swingDelta(tip, from, to, fromExt, toExt, others) {
+    const short = ((((to - from) % 360) + 540) % 360) - 180;
+    if (!short) return 0;
+    const near = others.filter((o) => Math.hypot(o.x - tip.x, o.y - tip.y) < PIN_TIP_TO_CENTRE + Math.max(fromExt, toExt) + SWEEP_GAP);
+    if (!near.length) return short;
+    const sweep = (delta) => {
+        const n = Math.ceil(Math.abs(delta) / SWEEP_STEP);
+        let cost = 0;
+        for (let k = 1; k < n; k++) {
+            const t = k / n;
+            const c = bodyCentre(tip.x, tip.y, from + delta * t, fromExt + (toExt - fromExt) * t);
+            for (const o of near) cost += Math.max(0, SWEEP_GAP - Math.hypot(o.x - c.x, o.y - c.y));
+        }
+        return cost;
+    };
+    const shortCost = sweep(short);
+    if (!shortCost) return short;
+    const long = short > 0 ? short - 360 : short + 360;
+    return sweep(long) < shortCost ? long : short;
+}
+
 /**
  * Pure placement step.
  *
@@ -707,6 +745,13 @@ export class AssetPinLayout {
             }));
         const placements = computePinPlacements(pins, now, { allowLines: this._allowLines });
 
+        // Where every head will be, so a pin changing sides can swing round
+        // the way that doesn't pass over the others (swingDelta).
+        const heads = markers.map((m, i) => {
+            const st = placements.get(i);
+            return bodyCentre(points[i].x, points[i].y, st.angle, st.ext);
+        });
+
         let wake = Infinity;
         markers.forEach((m, i) => {
             const st = placements.get(i);
@@ -723,10 +768,12 @@ export class AssetPinLayout {
             if (st.angle || st.ext) this._tilted.add(m);
             else this._tilted.delete(m);
             if (old && old.angle === st.angle && old.ext === st.ext) return;
-            // Unwrap so the CSS transition takes the short way round
-            // (150 -> -150 is a 60deg swing, not 300deg).
+            // Unwrap so the CSS transition turns the chosen way: usually the
+            // short way round (150 -> -150 is a 60deg swing, not 300deg),
+            // but the long way if the short way would pass over other pins.
             const raw = m._pinAngleRaw || 0;
-            m._pinAngleRaw = raw + ((((st.angle - raw) % 360) + 540) % 360 - 180);
+            const others = heads.filter((_, j) => j !== i);
+            m._pinAngleRaw = raw + swingDelta(points[i], raw, st.angle, old?.ext ?? 0, st.ext, others);
             writePlacement(m);
         });
 
