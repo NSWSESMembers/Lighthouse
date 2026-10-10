@@ -1874,7 +1874,7 @@
                 </div>
             </div>
         </aside>
-        <div id="vsplit" class="vsplit" role="separator" aria-orientation="vertical" aria-label="Resize sidebar"></div>
+        <div id="vsplit" class="vsplit" role="separator" aria-orientation="vertical" aria-label="Resize side drawer"></div>
 
         <main class="map-wrap"><!-- flexible area fills remaining width-->
             <div id="map"></div><!-- set to fill parent-->
@@ -2020,7 +2020,7 @@
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <a class="nav-link" href="https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html" target="_blank" rel="noopener" title="Open the LAD user guide in a new tab">
+                                        <a class="nav-link" href="https://lighthouse.ses.nsw.gov.au/guides/lad/" data-bind="attr: { href: userGuideUrl }" target="_blank" rel="noopener" title="Open the LAD user guide in a new tab">
                                             <span class="cfg-rail-ico"><i class="fa fa-book"></i></span><span>User guide</span><i class="fa fa-external-link-alt ms-auto small opacity-50"></i>
                                         </a>
                                     </li>
@@ -2752,117 +2752,277 @@
                                         </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-map" role="tabpanel" aria-labelledby="cfgTab-map" tabindex="0">
-                                                <div class="row g-3">
+                                        <div class="accordion config-subaccordion" id="cfgMapAcc">
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-mapIncidents" aria-expanded="true" aria-controls="cfgSub-mapIncidents">
+                                                    <span class="cfg-sub-ico"><i class="fa fa-exclamation-triangle"></i></span><span>Incident markers</span>
+                                                </button>
+                                            </h2>
+                                            <div id="cfgSub-mapIncidents" class="accordion-collapse collapse show" data-bs-parent="#cfgMapAcc">
+                                                <div class="accordion-body">
+                                                    <div class="row g-3">
+                                                        <!-- Clustering options -->
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-layer-group me-1"></i>Incident Marker Clustering
+                                                                </legend>
 
-                                                    <!-- Clustering options -->
-                                                    <div class="col-md-6">
-                                                        <fieldset>
-                                                            <legend class="form-label fw-semibold mb-2">
-                                                                <i class="fa fa-layer-group me-1"></i>Incident Marker Clustering
-                                                            </legend>
+                                                                <div class="form-check form-switch mb-2">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="clusterEnabledToggle"
+                                                                        data-bind="checked: config.clusterEnabled">
+                                                                    <label class="form-check-label"
+                                                                        for="clusterEnabledToggle">
+                                                                        Enable marker clustering
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-text mb-3">
+                                                                    Groups nearby incident markers into numbered
+                                                                    clusters that expand on click.
+                                                                </div>
 
-                                                            <div class="form-check form-switch mb-2">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    role="switch" id="clusterEnabledToggle"
-                                                                    data-bind="checked: config.clusterEnabled">
-                                                                <label class="form-check-label"
-                                                                    for="clusterEnabledToggle">
-                                                                    Enable marker clustering
-                                                                </label>
-                                                            </div>
-                                                            <div class="form-text mb-3">
-                                                                Groups nearby incident markers into numbered
-                                                                clusters that expand on click.
-                                                            </div>
+                                                                <div data-bind="visible: config.clusterEnabled">
+                                                                    <div class="ms-3 mb-3">
+                                                                        <label for="clusterRadiusRange" class="form-label mb-1">
+                                                                            Cluster radius:
+                                                                            <strong data-bind="text: config.clusterRadius() + 'px'"></strong>
+                                                                        </label>
+                                                                        <div class="d-flex align-items-center gap-2">
+                                                                            <small class="text-muted">Tight</small>
+                                                                            <input type="range" class="form-range flex-grow-1"
+                                                                                id="clusterRadiusRange" min="10" max="80"
+                                                                                step="5"
+                                                                                data-bind="value: config.clusterRadius, valueUpdate: 'input'">
+                                                                            <small class="text-muted">Aggressive</small>
+                                                                        </div>
+                                                                        <div class="form-text">
+                                                                            How close markers must be (in pixels) to be
+                                                                            grouped into a cluster. Lower values keep
+                                                                            markers separate; higher values merge more.
+                                                                        </div>
+                                                                    </div>
 
-                                                            <div data-bind="visible: config.clusterEnabled">
-                                                                <div class="ms-3 mb-3">
-                                                                    <label for="clusterRadiusRange" class="form-label mb-1">
-                                                                        Cluster radius:
-                                                                        <strong data-bind="text: config.clusterRadius() + 'px'"></strong>
+                                                                    <div class="form-check form-switch ms-3">
+                                                                        <input class="form-check-input" type="checkbox"
+                                                                            role="switch" id="clusterRescueToggle"
+                                                                            data-bind="checked: config.clusterRescueJobs">
+                                                                        <label class="form-check-label"
+                                                                            for="clusterRescueToggle">
+                                                                            Include Rescue incidents in clustering
+                                                                        </label>
+                                                                    </div>
+                                                                    <div class="form-text ms-3">
+                                                                        When enabled, Rescue priority incidents cluster with
+                                                                        other markers.
+                                                                    </div>
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+
+                                                        <!-- Incident status on markers -->
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-circle-info me-1"></i>Incident Status on Markers
+                                                                </legend>
+                                                                <div class="form-check form-switch mb-2">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="jobStatusOnMarkersToggle"
+                                                                        data-bind="checked: config.showJobStatusOnMarkers">
+                                                                    <label class="form-check-label"
+                                                                        for="jobStatusOnMarkersToggle">
+                                                                        Show job status on incident markers
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-text">
+                                                                    Styles incident markers by job status: Active gets a
+                                                                    magenta ring, Complete / Referred / Finalised are struck
+                                                                    through, Cancelled / Rejected are crossed out, and jobs
+                                                                    with an action-required tag get a red exclamation dot.
+                                                                    See the map legend for the full key.
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-mapAssets" aria-expanded="false" aria-controls="cfgSub-mapAssets">
+                                                    <span class="cfg-sub-ico"><i class="fa fa-truck"></i></span><span>Asset markers</span>
+                                                </button>
+                                            </h2>
+                                            <div id="cfgSub-mapAssets" class="accordion-collapse collapse" data-bs-parent="#cfgMapAcc">
+                                                <div class="accordion-body">
+                                                    <div class="row g-3">
+                                                        <!-- Asset marker declutter -->
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-arrows-alt me-1"></i>Overlapping Markers
+                                                                </legend>
+                                                                <div class="form-check form-switch mb-2">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="assetPinDeclutterToggle"
+                                                                        data-bind="checked: config.assetPinDeclutter">
+                                                                    <label class="form-check-label"
+                                                                        for="assetPinDeclutterToggle">
+                                                                        Spread out overlapping asset markers
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-text mb-3">
+                                                                    When zoomed in, asset markers that would overlap
+                                                                    swing around their position so each one can be
+                                                                    seen and clicked. Zoomed further out, markers
+                                                                    overlap as normal.
+                                                                </div>
+
+                                                                <div data-bind="visible: config.assetPinDeclutter">
+                                                                    <div class="ms-3 mb-3">
+                                                                        <label for="assetPinMinZoomRange" class="form-label mb-1">
+                                                                            Start spreading out from:
+                                                                            <strong data-bind="text: config.assetPinDeclutterZoomLabel"></strong>
+                                                                        </label>
+                                                                        <div class="d-flex align-items-center gap-2">
+                                                                            <small class="text-muted text-nowrap">Further out</small>
+                                                                            <input type="range" class="form-range flex-grow-1"
+                                                                                id="assetPinMinZoomRange" min="13" max="18" step="1"
+                                                                                data-bind="value: config.assetPinDeclutterMinZoom, valueUpdate: 'input'">
+                                                                            <small class="text-muted text-nowrap">Closer in</small>
+                                                                        </div>
+                                                                        <div class="form-text">
+                                                                            Markers only spread out at this zoom level and
+                                                                            closer. Further out suits busy areas; closer in
+                                                                            suits areas where vehicles are spread out.
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div class="form-check form-switch ms-3">
+                                                                        <input class="form-check-input" type="checkbox"
+                                                                            role="switch" id="assetPinAllowLinesToggle"
+                                                                            data-bind="checked: config.assetPinAllowLines">
+                                                                        <label class="form-check-label"
+                                                                            for="assetPinAllowLinesToggle">
+                                                                            Allow markers to move out on lines
+                                                                        </label>
+                                                                    </div>
+                                                                    <div class="form-text ms-3">
+                                                                        Where there isn't room to swing around, a marker
+                                                                        moves out on a line back to a dot where the
+                                                                        vehicle is. When off, markers stay on their
+                                                                        position and crowded spots overlap.
+                                                                    </div>
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+
+                                                        <!-- Asset breadcrumb trails -->
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-route me-1"></i>Recent Travel
+                                                                </legend>
+                                                                <div class="form-check form-switch mb-2">
+                                                                    <input class="form-check-input" type="checkbox"
+                                                                        role="switch" id="assetTrailsToggle"
+                                                                        data-bind="checked: config.assetTrails">
+                                                                    <label class="form-check-label"
+                                                                        for="assetTrailsToggle">
+                                                                        Show a breadcrumb trail for the selected asset
+                                                                    </label>
+                                                                </div>
+                                                                <div class="form-text mb-3">
+                                                                    While an asset's popup is open, a fading line
+                                                                    through its recent positions shows where it has
+                                                                    come from. Trails
+                                                                    are only kept in this browser, and start from
+                                                                    when this page first saw the vehicle. Turning
+                                                                    this off clears them.
+                                                                </div>
+
+                                                                <div class="ms-3" data-bind="visible: config.assetTrails">
+                                                                    <label for="assetTrailMinutesRange" class="form-label mb-1">
+                                                                        Trail length:
+                                                                        <strong data-bind="text: config.assetTrailMinutesLabel"></strong>
                                                                     </label>
                                                                     <div class="d-flex align-items-center gap-2">
-                                                                        <small class="text-muted">Tight</small>
+                                                                        <small class="text-muted text-nowrap">Shorter</small>
                                                                         <input type="range" class="form-range flex-grow-1"
-                                                                            id="clusterRadiusRange" min="10" max="80"
-                                                                            step="5"
-                                                                            data-bind="value: config.clusterRadius, valueUpdate: 'input'">
-                                                                        <small class="text-muted">Aggressive</small>
-                                                                    </div>
-                                                                    <div class="form-text">
-                                                                        How close markers must be (in pixels) to be
-                                                                        grouped into a cluster. Lower values keep
-                                                                        markers separate; higher values merge more.
+                                                                            id="assetTrailMinutesRange" min="15" max="120" step="15"
+                                                                            data-bind="value: config.assetTrailMinutes, valueUpdate: 'input'">
+                                                                        <small class="text-muted text-nowrap">Longer</small>
                                                                     </div>
                                                                 </div>
+                                                            </fieldset>
+                                                        </div>
 
-                                                                <div class="form-check form-switch ms-3">
+                                                        <!-- Asset capability codes -->
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-tag me-1"></i>Capability Codes
+                                                                </legend>
+                                                                <div class="form-check form-switch mb-2">
                                                                     <input class="form-check-input" type="checkbox"
-                                                                        role="switch" id="clusterRescueToggle"
-                                                                        data-bind="checked: config.clusterRescueJobs">
+                                                                        role="switch" id="assetCapabilityCodesToggle"
+                                                                        data-bind="checked: config.showAssetCapabilityCodes">
                                                                     <label class="form-check-label"
-                                                                        for="clusterRescueToggle">
-                                                                        Include Rescue incidents in clustering
+                                                                        for="assetCapabilityCodesToggle">
+                                                                        Show capability codes on asset markers
                                                                     </label>
                                                                 </div>
-                                                                <div class="form-text ms-3">
-                                                                    When enabled, Rescue priority incidents cluster with
-                                                                    other markers.
+                                                                <div class="form-text">
+                                                                    A tab on top of each marker shows the asset's
+                                                                    capability, such as HRV (Heavy Rescue) or MSV
+                                                                    (Medium Storm), so similar colours can be told
+                                                                    apart. See the map legend for the full key.
                                                                 </div>
-                                                            </div>
-                                                        </fieldset>
+                                                            </fieldset>
+                                                        </div>
                                                     </div>
-
-                                                    <!-- Layer order -->
-                                                    <div class="col-md-6">
-                                                        <fieldset>
-                                                            <legend class="form-label fw-semibold mb-2">
-                                                                <i class="fa fa-sort me-1"></i>Marker Layer Order
-                                                                <small class="text-muted fw-normal">(top → bottom)</small>
-                                                            </legend>
-                                                            <div class="form-text mb-3">
-                                                                Controls the draw order of marker layers on the map. Drag and drop to reorder.
-                                                            </div>
-                                                            <div class="border rounded p-2">
-                                                                <ul class="list-group"
-                                                                    data-bind="foreach: { data: config.paneOrder, as: 'p' }">
-                                                                    <li class="list-group-item d-flex align-items-center gap-2 py-1"
-                                                                        data-bind="sortableRow: { array: $root.config.paneOrder, handle: '.pane-drag-handle' }">
-                                                                        <i class="fa fa-grip-vertical text-muted pane-drag-handle"
-                                                                            style="cursor:grab"></i>
-                                                                        <span data-bind="text: p.name"></span>
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-                                                        </fieldset>
-                                                    </div>
-
-                                                    <!-- Incident status on markers -->
-                                                    <div class="col-md-6">
-                                                        <fieldset>
-                                                            <legend class="form-label fw-semibold mb-2">
-                                                                <i class="fa fa-circle-info me-1"></i>Incident Status on Markers
-                                                            </legend>
-                                                            <div class="form-check form-switch mb-2">
-                                                                <input class="form-check-input" type="checkbox"
-                                                                    role="switch" id="jobStatusOnMarkersToggle"
-                                                                    data-bind="checked: config.showJobStatusOnMarkers">
-                                                                <label class="form-check-label"
-                                                                    for="jobStatusOnMarkersToggle">
-                                                                    Show job status on incident markers
-                                                                </label>
-                                                            </div>
-                                                            <div class="form-text">
-                                                                Styles incident markers by job status: Active gets a
-                                                                magenta ring, Complete / Referred / Finalised are struck
-                                                                through, Cancelled / Rejected are crossed out, and jobs
-                                                                with an action-required tag get a red exclamation dot.
-                                                                See the map legend for the full key.
-                                                            </div>
-                                                        </fieldset>
-                                                    </div>
-
                                                 </div>
+                                            </div>
+                                        </div>
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header">
+                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-mapAll" aria-expanded="false" aria-controls="cfgSub-mapAll">
+                                                    <span class="cfg-sub-ico"><i class="fa fa-map-marker-alt"></i></span><span>All markers</span>
+                                                </button>
+                                            </h2>
+                                            <div id="cfgSub-mapAll" class="accordion-collapse collapse" data-bs-parent="#cfgMapAcc">
+                                                <div class="accordion-body">
+                                                    <div class="row g-3">
+                                                        <!-- Layer order -->
+                                                        <div class="col-md-6">
+                                                            <fieldset>
+                                                                <legend class="form-label fw-semibold mb-2">
+                                                                    <i class="fa fa-sort me-1"></i>Marker Layer Order
+                                                                    <small class="text-muted fw-normal">(top → bottom)</small>
+                                                                </legend>
+                                                                <div class="form-text mb-3">
+                                                                    Controls the draw order of marker layers on the map. Drag and drop to reorder.
+                                                                </div>
+                                                                <div class="border rounded p-2">
+                                                                    <ul class="list-group"
+                                                                        data-bind="foreach: { data: config.paneOrder, as: 'p' }">
+                                                                        <li class="list-group-item d-flex align-items-center gap-2 py-1"
+                                                                            data-bind="sortableRow: { array: $root.config.paneOrder, handle: '.pane-drag-handle' }">
+                                                                            <i class="fa fa-grip-vertical text-muted pane-drag-handle"
+                                                                                style="cursor:grab"></i>
+                                                                            <span data-bind="text: p.name"></span>
+                                                                        </li>
+                                                                    </ul>
+                                                                </div>
+                                                            </fieldset>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        </div>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-collab" role="tabpanel" aria-labelledby="cfgTab-collab" tabindex="0">
                                                 <div class="d-flex align-items-center justify-content-between mb-2">
@@ -4533,17 +4693,21 @@
                                 data-bind="click: clearSearchQuery, visible: searchQuery">&times;</button>
                         </div>
                     </div>
-                    <!-- Talkgroup / Type / Satellite filters -->
+                    <!-- Talkgroup / Type / Capability / Satellite filters -->
                     <div class="row g-2 mb-3">
-                        <div class="col-12 col-md-4">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <select class="form-select" aria-label="Filter by talkgroup"
                                 data-bind="options: talkgroups, value: selectedTalkgroup, optionsCaption: 'All Talkgroups'"></select>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-12 col-md-6 col-lg-3">
                             <select class="form-select" aria-label="Filter by type"
                                 data-bind="options: types, value: selectedType, optionsCaption: 'All Types'"></select>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-12 col-md-6 col-lg-3">
+                            <select class="form-select" aria-label="Filter by capability"
+                                data-bind="options: capabilities, optionsText: 'label', optionsValue: 'value', value: selectedCapability, optionsCaption: 'All Capabilities'"></select>
+                        </div>
+                        <div class="col-12 col-md-6 col-lg-3">
                             <select class="form-select" aria-label="Filter by location source"
                                 data-bind="options: satelliteOptions, optionsText: 'label', optionsValue: 'value', value: selectedSatellite, optionsCaption: 'All Sources'"></select>
                         </div>

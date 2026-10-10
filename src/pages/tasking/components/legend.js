@@ -1,4 +1,5 @@
 var L = require('leaflet');
+import { assetLegendRows } from './asset_icon.js';
 
 // Legend control (collapsible)
 export const LegendControl = L.Control.extend({
@@ -37,6 +38,19 @@ export const LegendControl = L.Control.extend({
         <div style="display:flex;align-items:center;gap:5px;">
           <svg width="22" height="22" viewBox="0 0 22 22" style="flex-shrink:0;overflow:visible;">${r.svg}</svg>
           <span>${r.label}</span>
+        </div>`).join("");
+
+    // Asset capability rows: a fixed-size pin (coloured ring, black core, like
+    // the map's) that a wrapping label can't squash, then the name and code.
+    const assetPin = (color) => `
+        <svg width="14" height="18" viewBox="-1 6 42 52" style="flex-shrink:0;margin-right:6px;" aria-hidden="true">
+          <path d="M20,56 L5.858,41.858 A20,20 0 1 1 34.142,41.858 Z" fill="${color}" stroke="#333" stroke-width="2"/>
+          <circle cx="20" cy="27.7" r="9" fill="#000"/>
+        </svg>`;
+    const assetRows = assetLegendRows().map((r) => `
+        <div style="display:flex;align-items:center;margin:2px 0;">
+          ${assetPin(r.color)}
+          <span>${r.name}${r.code ? ` <span class="legend-asset-code">${r.code}</span>` : ''}${r.note ? `<span class="legend-asset-code">, ${r.note}</span>` : ''}</span>
         </div>`).join("");
 
     div.innerHTML = `
@@ -131,84 +145,7 @@ export const LegendControl = L.Control.extend({
   <div>
   <div class="fw-semibold small mb-1 mt-2">Assets</div>
   <div style="display:grid;grid-template-columns:1fr 1fr;column-gap:12px;row-gap:2px;">
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#FFD600;margin-right:6px;border:1px solid #333;"></span>
-      <span>Bus</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#1565C0;margin-right:6px;border:1px solid #333;"></span>
-      <span>Command</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#D32F2F;margin-right:6px;border:1px solid #333;"></span>
-      <span>Community First Responder</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#8E24AA;margin-right:6px;border:1px solid:#333;"></span>
-      <span>General Purpose</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#795548;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Logistics</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#FB8C00;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Light Storm</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#EF6C00;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Medium Storm</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#C62828;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Light Rescue</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#B71C1C;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Medium Rescue</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#880E4F;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Heavy Rescue</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#5D4037;margin-right:6px;border:1px solid:#333;"></span>
-      <span>SHQ Pool</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#0288D1;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Vessel</span>
-    </div>
-
-    <div style="display:flex;align-items:center;margin:2px 0;">
-      <span style="display:inline-block;width:12px;height:12px;border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);background:#43A047;margin-right:6px;border:1px solid:#333;"></span>
-      <span>Portable</span>
-    </div>
+    ${assetRows}
 
   </div>
   </div>

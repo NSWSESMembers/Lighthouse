@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 import ko from "knockout";
+import { assetCapabilityName, assetCapabilityCode } from "./asset_icon.js";
 
 function safeStr(v) {
     if (v == null) return "";
@@ -169,6 +170,25 @@ function getTaskedTeamsForJob(jobVm) {
     return uniqById(teams, safeId);
 }
 
+
+/**
+ * Trackable assets whose callsign, PSN radio ID or satellite ID contains
+ * `query` (case and spaces ignored), callsigns starting with it first, then
+ * alphabetical. Used by the `find` command.
+ */
+export function findAssetsByCallsign(assets, query, limit = 20) {
+    const norm = (v) => safeStr(v).toLowerCase().replace(/\s+/g, "");
+    const q = norm(query);
+    if (!q) return [];
+    return (assets || [])
+        .map((a) => ({ a, name: norm(a.name) }))
+        .filter(({ a, name }) => name.includes(q)
+            || norm(a.radioId).includes(q)
+            || norm(a.satelliteId).includes(q))
+        .sort((x, y) => (y.name.startsWith(q) - x.name.startsWith(q)) || x.name.localeCompare(y.name))
+        .slice(0, limit)
+        .map(({ a }) => a);
+}
 
 export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     const self = this;
@@ -981,11 +1001,65 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
 
 
+    function commandResultsForFind(raw) {
+        const tokens = parseTokens(raw);
+        const cmd = (tokens[0] || "").toLowerCase();
+        if (cmd !== "find") return null;
+
+        const query = tokens.slice(1).join(" ");
+        if (!query.trim()) {
+            setCommandState({
+                name: "find",
+                stage: "asset",
+                hint: "find <callsign> — type an asset's callsign, PSN ID or satellite ID",
+                team: null,
+                job: null
+            });
+            return [];
+        }
+
+        const matches = findAssetsByCallsign(rootVm.trackableAssets?.() || [], query);
+        if (!matches.length) {
+            setCommandState({
+                name: "find",
+                stage: "error",
+                hint: `No trackable asset matches "${query}".`,
+                team: null,
+                job: null
+            });
+            return [];
+        }
+
+        setCommandState({
+            name: "find",
+            stage: "ready",
+            hint: "Press Enter to zoom to the highlighted asset.",
+            team: null,
+            job: null
+        });
+
+        return _decorateResults(matches.map((a) => {
+            const code = assetCapabilityCode(a);
+            const capability = assetCapabilityName(a) + (code ? ` (${code})` : "");
+            const radioId = safeStr(a.radioId);
+            const seen = safeStr(a.lastSeenJustAgoText);
+            return {
+                kind: "Execute",
+                ref: { cmd: "find", asset: a },
+                primary: safeStr(a.name),
+                secondary: [capability, safeStr(a.resourceType), safeStr(a.entity),
+                    radioId ? `PSN ${radioId}` : "", seen ? `seen ${seen}` : ""].filter(Boolean).join(" · "),
+                badge: code || "Asset",
+                applyText: null
+            };
+        }), parseTokens(query));
+    }
+
     function runSearch() {
         const raw = (self.query() || "");
 
         // Autocomplete for partial command keywords
-        const commandKeywords = ["task", "log", "radio"];
+        const commandKeywords = ["task", "log", "radio", "find"];
         const q = raw.trim().toLowerCase();
         let autocompleteResults = [];
         if (q && !raw.includes(" ")) {
@@ -1008,7 +1082,8 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         const cmdResults =
             commandResultsForTask(raw) ||
             commandResultsForLog(raw) ||
-            commandResultsForRadio(raw);
+            commandResultsForRadio(raw) ||
+            commandResultsForFind(raw);
 
         if (cmdResults) {
             // Prepend autocomplete suggestions if present
@@ -1047,7 +1122,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 kind: "No Results",
                 ref: null,
                 primary: "No results found",
-                secondary: `Try searching for teams, incidents, or use commands: task, log, radio`,
+                secondary: `Try searching for teams, incidents, or use commands: task, log, radio, find`,
                 badge: "",
                 applyText: null
             }]);
@@ -1078,6 +1153,12 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         rootVm.attachNewOpsLogModal?.(jobVm);
     }
 
+    function executeFind(asset) {
+        if (!asset) return;
+        rootVm._closeSpotlight?.();
+        rootVm.focusTrackableAsset?.(asset);
+    }
+
     function executeRadio(teamVm, jobVm) {
         if (!teamVm || !jobVm) return;
         rootVm._closeSpotlight?.();
@@ -1098,6 +1179,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         if (self.isCommandMode()) {
             if (r.kind === "Execute") {
                 if (r.ref?.cmd === "log" && r.ref?.job) { executeLog(r.ref.job); return; }
+                if (r.ref?.cmd === "find" && r.ref?.asset) { executeFind(r.ref.asset); return; }
                 if (r.ref?.cmd === "radio" && r.ref?.team && r.ref?.job) { executeRadio(r.ref.team, r.ref.job); return; }
                 if (r.ref?.cmd === "task" && r.ref?.team && r.ref?.job) { executeTask(r.ref.team, r.ref.job); return; }
             }

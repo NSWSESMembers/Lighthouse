@@ -6,6 +6,9 @@ import 'leaflet.markercluster';
 import { AssetPopupViewModel } from './AssetPopUp';
 import { JobPopupViewModel } from './JobPopUp';
 import { restyleAllJobMarkers } from '../markers/jobMarker.js';
+import { AssetPinLayout } from '../markers/assetPinLayout.js';
+import { AssetTrails } from '../markers/assetTrails.js';
+import { setCapabilityCodesShown } from '../components/asset_icon.js';
 
 export function MapVM(Lmap, root) {
   const self = this;
@@ -31,6 +34,12 @@ export function MapVM(Lmap, root) {
   // layers
   self.assetLayer = L.layerGroup();             // not added by default – layers drawer handles visibility
   self.unmatchedAssetLayer = L.layerGroup();   // not added by default
+
+  // Swings overlapping asset pins apart around their tips.
+  self.assetPinLayout = new AssetPinLayout(Lmap, [self.assetLayer, self.unmatchedAssetLayer]);
+
+  // Breadcrumb trails of where assets have recently been.
+  self.assetTrails = new AssetTrails(Lmap);
 
   // --- Job marker clustering ---
   // Single cluster group for all job markers (replaces per-type layerGroups)
@@ -285,6 +294,37 @@ export function MapVM(Lmap, root) {
     self._syncPulseRings();
   };
 
+  /** "Spread out overlapping asset markers" config option. */
+  self.applyAssetPinDeclutter = function (on) {
+    self.assetPinLayout.setEnabled(!!on);
+  };
+
+  /** Its options: { minZoom, allowLines }. */
+  self.applyAssetPinDeclutterOptions = function (opts) {
+    self.assetPinLayout.setOptions(opts);
+  };
+
+  /** "Show recent travel (breadcrumbs)" config option. */
+  self.applyAssetTrails = function (on) {
+    self.assetTrails.setEnabled(!!on);
+  };
+
+  /** "Show capability codes on asset markers" config option. */
+  self.applyAssetCapabilityCodes = function (on) {
+    self.map.getContainer().classList.toggle('asset-codes-off', !on);
+    // Popups open above the code tab only while it's showing.
+    const markers = [];
+    self.assetLayer?.eachLayer((m) => markers.push(m));
+    self.unmatchedAssetLayer?.eachLayer((m) => markers.push(m));
+    setCapabilityCodesShown(on, markers);
+    self.assetPinLayout.setCodeTabs(on);
+  };
+
+  /** Its trail length, in minutes. */
+  self.applyAssetTrailMinutes = function (minutes) {
+    self.assetTrails.setMinutes(minutes);
+  };
+
   /**
    * Re-render all job marker icons — called when the "show status on markers"
    * config option is toggled.
@@ -446,6 +486,7 @@ export function MapVM(Lmap, root) {
       panePlus.style.zIndex = String(z + 1);
 
     });
+    self.assetTrails?.syncPaneZ();
   };
 
   self.changeBasemap = function (basemapKey) {
@@ -660,6 +701,10 @@ export function MapVM(Lmap, root) {
   // helpers
   self.setOpen = (kind, ref) => self.openPopup({ kind, id: ref.id?.(), ref });
   self.clearOpen = () => self.openPopup(null);
+  // Only the selected asset (popup open) shows its breadcrumb trail.
+  self.openPopup.subscribe((open) => {
+    self.assetTrails.select(open?.kind === 'asset' ? open.ref : null);
+  });
 
   self.assetPopups = new Map();
   self.jobPopups = new Map();

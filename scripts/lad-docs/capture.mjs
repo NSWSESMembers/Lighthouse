@@ -89,6 +89,17 @@ const SHOTS = {
   'config-data': configTab('data'),
   'config-incident-filters': configTab('filters'),
   'config-map-markers': configTab('map'),
+  // Map markers tab with the Asset markers section open (overlapping
+  // markers setting and its options).
+  'config-asset-markers': {
+    run: async (page) => {
+      await page.locator('#cfgTab-map').click();
+      await settle(page, 400);
+      await page.locator('button[data-bs-target="#cfgSub-mapAssets"]').click();
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('#configModal .modal-content'),
+  },
   'config-collab-layers': configTab('collab'),
   'config-layout': configTab('sidebar'),
   'config-starred': configTab('starred'),
@@ -96,6 +107,19 @@ const SHOTS = {
   'config-instant-task': configTab('suggest'),
 
   main: { run: closeConfigAndLoad },
+
+  // The map legend, expanded.
+  legend: {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.evaluate(() => {
+        const body = document.querySelector('.legend-body');
+        if (body && getComputedStyle(body).display === 'none') document.querySelector('.toggle-legend').click();
+      });
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('.legend-container'),
+  },
 
   'team-register': {
     run: closeConfigAndLoad,
@@ -287,6 +311,74 @@ const SHOTS = {
     launch: { scale: 3 },
     run: openAssetLibrary,
     target: (page) => unionOf(page, '#trackableAssetsModal .card:has(.fs-4:text-is("DEMB1")) .sat-icon:visible', 2),
+  },
+
+  // Overlapping asset markers spread out at street level: the demo's five
+  // assets (matched + unmatched layers) moved close together, so some stay
+  // upright, one swings around its position and two move out on lines.
+  'asset-markers-spread': {
+    launch: { scale: 2 },
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.evaluate(() => {
+        const mv = window.ko.dataFor(document.body).mapVM;
+        mv.map.addLayer(mv.unmatchedAssetLayer);
+      });
+      await settle(page, 1500);
+      await page.evaluate(() => {
+        const mv = window.ko.dataFor(document.body).mapVM; const map = mv.map;
+        const ms = [];
+        mv.assetLayer.eachLayer((m) => ms.push(m));
+        mv.unmatchedAssetLayer.eachLayer((m) => ms.push(m));
+        const c = map.getCenter();
+        map.setView(c, 18, { animate: false });
+        const p0 = map.latLngToContainerPoint(c);
+        const offsets = [[0, 0], [34, 6], [-30, 14], [6, -4], [8, 44]];
+        ms.forEach((m, i) => { if (offsets[i]) m.setLatLng(map.containerPointToLatLng(p0.add(offsets[i]))); });
+        window.__shotCentre = c;
+        mv.assetPinLayout.run();
+      });
+      await settle(page, 1200);
+    },
+    target: (page) => ({
+      async screenshot(opts) {
+        const box = await page.locator('#map').boundingBox();
+        const c = await page.evaluate(() => window.ko.dataFor(document.body).mapVM.map.latLngToContainerPoint(window.__shotCentre));
+        return page.screenshot({ ...opts, clip: { x: box.x + c.x - 170, y: box.y + c.y - 180, width: 340, height: 300 } });
+      },
+    }),
+  },
+
+  // A selected vehicle's breadcrumb trail: fixes are recorded as positions
+  // arrive, so seed one (30 minutes, a fix every 5) leading to its marker,
+  // then open its popup.
+  'asset-trail': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.evaluate(() => {
+        const mv = window.ko.dataFor(document.body).mapVM; const map = mv.map;
+        let m = null;
+        mv.assetLayer.eachLayer((l) => { m ||= l; });
+        map.setView(m.getLatLng(), 16, { animate: false });
+        const p0 = map.latLngToContainerPoint(m.getLatLng());
+        const offsets = [[250, 210], [205, 150], [185, 95], [120, 75], [55, 40], [0, 0]];
+        const fixes = offsets.map(([dx, dy], i) => {
+          const ll = map.containerPointToLatLng(p0.add([dx, dy]));
+          return { lat: ll.lat, lng: ll.lng, t: Date.now() - (offsets.length - 1 - i) * 5 * 60 * 1000 };
+        });
+        mv.assetTrails.trails.set(String(m._assetId), fixes);
+        window.__shotMarker = m;
+        m.openPopup();
+      });
+      await settle(page, 1500);
+    },
+    target: (page) => ({
+      async screenshot(opts) {
+        const box = await page.locator('#map').boundingBox();
+        const c = await page.evaluate(() => window.ko.dataFor(document.body).mapVM.map.latLngToContainerPoint(window.__shotMarker.getLatLng()));
+        return page.screenshot({ ...opts, clip: { x: box.x + c.x - 200, y: box.y + c.y - 440, width: 490, height: 690 } });
+      },
+    }),
   },
 
   spotlight: {

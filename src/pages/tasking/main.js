@@ -1561,6 +1561,12 @@ function VM() {
         }
     }
 
+    // The config rail's "User guide" link. Development Preview builds open the
+    // preview copy of the guide (synced from master-dev); production keeps the
+    // stable URL, which is also the static href in tasking.html.
+    const isDevBuild = (globalThis.chrome?.runtime?.getManifest?.()?.name ?? '').includes('Development');
+    self.userGuideUrl = `https://lighthouse.ses.nsw.gov.au/${isDevBuild ? 'preview/' : ''}guides/lad/`;
+
     // From the config modal's rail: save + close config exactly like the Save
     // button, then open the library once config has fully hidden (opening a
     // second Bootstrap modal mid-hide leaves body.modal-open in a bad state).
@@ -1648,6 +1654,7 @@ function VM() {
             asset = new Asset(assetJson, { relativeUpdateTick: self.relativeUpdateTick30s });
             self.trackableAssets.push(asset);
             self.assetsById.set(asset.id(), asset);
+            self.mapVM?.assetTrails?.track(asset);
         }
         return asset;
     };
@@ -2536,6 +2543,7 @@ function VM() {
                     // Remove from observable array and registry
                     self.trackableAssets.remove(asset);
                     self.assetsById.delete(id);
+                    self.mapVM?.assetTrails?.untrack(asset);
                 });
                 //Update Asset/Team mappings only once after all changes
                 self._attachAssetsToMatchingTeams();
@@ -3171,7 +3179,7 @@ function VM() {
         onAdd(map) {
             const c = L.DomUtil.create("div", "leaflet-control sidebar-toggle leaflet-bar");
             c.innerHTML = `
-                <button type="button" class="btn btn-light btn-sm shadow-sm" title="Collapse/expand left panel">
+                <button type="button" class="btn btn-light btn-sm shadow-sm" title="Collapse/expand side drawer">
                     <i class="fas ${this._collapsed ? "fa-angle-double-right" : "fa-angle-double-left"}"></i>
                 </button>
             `;
