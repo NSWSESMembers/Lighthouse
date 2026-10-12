@@ -99,7 +99,12 @@ async function returnAssetLocations(host, userId, token, signal) {
           i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
         }
         i.entity = 'N/A';
-        i.capability = i.properties.displayName.match(/^\w.* (.*)/g);
+        // Telematics has no capability; displayName is "<callsign> <make and
+        // model>" (sometimes "<callsign> - <make and model>"), so use the
+        // make and model. (This was a /g match, which
+        // returns the whole displayName in an array instead of the group.)
+        const model = String(i.properties.displayName).trim().match(/^\S+\s+(?:[-\u2013]\s*)?(.+)$/);
+        i.capability = model ? model[1] : '';
         i.resourceType = i.properties.type;
         i.talkGroup = 'N/A';
         i.talkGroupLastUpdated = 'N/A';

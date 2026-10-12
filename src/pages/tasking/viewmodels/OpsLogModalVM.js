@@ -2,7 +2,6 @@
 import ko from "knockout";
 
 export function CreateOpsLogModalVM(parentVM) {
-  // eslint-disable-next-line @typescript-eslint/no-this-alias
   const self = this;
 
   // Store parentVM reference for use in computeds

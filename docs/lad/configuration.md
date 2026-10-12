@@ -95,11 +95,13 @@ Control which incidents and teams appear based on their sector.
 
 ## Map Markers
 
-The **Map markers** tab controls how incident markers are displayed and the order layers are drawn on the map.
+The **Map markers** tab controls how incident and asset markers are displayed and the order layers are drawn on the map. Its settings are grouped into three sections, **Incident markers**, **Asset markers** and **All markers**. Click a section to open it; opening one closes the others.
 
 ![Map marker settings](images/config-map-markers.png)
 
-### Incident Marker Clustering
+### Incident Markers
+
+#### Incident Marker Clustering
 
 When enabled, markers that are close together on the map are grouped into a cluster to reduce clutter.
 
@@ -108,11 +110,50 @@ When enabled, markers that are close together on the map are grouped into a clus
 
 See [Incident Clustering](situation-map.md#incident-clustering).
 
-### Incident Status on Markers
+#### Incident Status on Markers
 
 When enabled, LAD adds extra indicators to incident markers so you can see incident status, and any unresolved action required tag, at a glance. See [Incident Status on Markers](situation-map.md#incident-status-on-markers).
 
-### Marker Layer Order
+### Asset Markers
+
+![Asset marker settings](images/config-asset-markers.png)
+
+#### Overlapping Markers
+
+- **Spread out overlapping asset markers** (on by default). When zoomed in, asset markers that would overlap swing around the vehicle's position so each one can be seen and clicked. Zoomed further out, markers overlap as they always have. See [Overlapping Asset Markers](situation-map.md#overlapping-asset-markers).
+- **Start spreading out from** sets the zoom level markers start spreading out at. The default is **zoom 15 (streets)**. Slide towards **Further out** (down to zoom 13, suburbs) if you work in a busy area and want markers separated sooner, or towards **Closer in** (up to zoom 18) if vehicles in your area are usually well apart.
+- **Allow markers to move out on lines** (on by default). Where there isn't room for a marker to swing around its position, it moves out on a line back to a dot where the vehicle is. Turn this off to keep every marker on its position; crowded spots then overlap.
+
+These options only show while **Spread out overlapping asset markers** is on.
+
+#### Recent Travel
+
+- **Show a breadcrumb trail for the selected asset** (on by default). While a vehicle's popup is open, a fading line through its recent positions shows where it has come from. See [Asset Breadcrumb Trails](situation-map.md#asset-breadcrumb-trails). Trails are kept only in this browser. Turning this off clears them.
+- **Trail length** sets how far back the trail goes, from **15 minutes** to **2 hours**. The default is **30 minutes**. Vehicles report their position every few minutes, so a longer trail shows more of the route.
+
+#### Capability Codes
+
+- **Show capability codes on asset markers** (on by default). A tab on top of each asset marker shows the asset's capability as a short code, so capabilities with similar colours can be told apart, such as the rescue tiers and Community First Responder. The map legend lists each code next to its capability:
+
+  | Code | Capability | Code | Capability |
+  | --- | --- | --- | --- |
+  | BUS | Bus | HRV | Heavy Rescue |
+  | CMD | Command | GLR | General Land Rescue |
+  | CCV | Corporate Command | SHQ | SHQ Pool / Pool Vehicle |
+  | CFR | Community First Responder | VES | Vessel (class not known) |
+  | GPV | General Purpose | PRT | Portable |
+  | LOG | Logistics | HCV | High Clearance |
+  | STM | Storm | SUP | Support |
+  | LSV | Light Storm | COW | Cell on Wheels |
+  | MSV | Medium Storm | SAV | Strategic Asset |
+  | LRV | Light Rescue | VC1–VC4 | Vessel, Class 1–4 |
+  | MRV | Medium Rescue | | |
+
+  Assets with any other capability, or none, have a grey marker and no code.
+
+### All Markers
+
+#### Marker Layer Order
 
 Controls the order map elements are drawn. Items at the top of the list are drawn over items lower down. Drag to rearrange. The default order (top to bottom) is:
 

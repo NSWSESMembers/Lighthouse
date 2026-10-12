@@ -75,6 +75,14 @@ Creates a radio log against a team on an incident. Works the same way as `task`:
 
 3. Press <kbd>Enter</kbd> to open the [New Ops Log](#new-ops-log) dialog.
 
+### Find Asset command — `find`
+
+Finds any trackable asset, including ones not matched to a team, and zooms the map to it.
+
+1. Type `find` followed by part of the asset's callsign, PSN radio ID or satellite ID (e.g. `find ctn7`).
+2. Matching assets are listed with their capability and marker code, type, HQ, PSN ID and when they were last seen. Callsigns that start with what you typed come first.
+3. Press <kbd>Enter</kbd> (or click an asset) to zoom to it and open its popup. If its asset layer is hidden, LAD turns it on.
+
 ## Starring Incidents and Teams
 
 You can star incidents and teams in each register, then toggle the register between all filtered items (the default) and only starred items.

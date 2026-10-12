@@ -5,11 +5,11 @@ nav_order: 4
 
 # Interface Overview
 
-The LAD interface has two core components: the **side draw** and the **situation map**. The divider between them can be resized, and the side draw can be hidden completely for a full-screen map by clicking the **<<** button on the map. You can also choose a different arrangement under [Layout](configuration.md#layout).
+The LAD interface has two core components: the **side drawer** and the **situation map**. The divider between them can be resized, and the side drawer can be hidden completely for a full-screen map by clicking the **<<** button on the map. You can also choose a different arrangement under [Layout](configuration.md#layout).
 
 ![LAD interface overview](images/interface-overview.jpg)
 
-**Side draw**
+**Side drawer**
 
 - **Team Register** (top) — lists all filtered teams and their taskings, with actions against those teams. See [Team Register](team-register.md).
 - **Incident Register** (bottom) — lists all filtered incidents and their details, with actions against those incidents. See [Incident Register](incident-register.md).
@@ -95,11 +95,13 @@ Each entry displays:
 
 ### Searching and Filtering
 
-Search by callsign, unit or zone name, PSN ID, satellite ID or satellite equipment ID using the field at the top. The dropdowns below it narrow the list by **Talkgroup**, **Type** (e.g. Vehicle or Vessel) and **Source** — where the asset's location comes from: a **Satellite tracker**, or **PSN radio only** (no satellite tracker).
+Search by callsign, unit or zone name, PSN ID, satellite ID or satellite equipment ID using the field at the top. The dropdowns below it narrow the list by **Talkgroup**, **Type** (e.g. Vehicle or Vessel), **Capability** (as shown on the map, with its marker code, e.g. Heavy Rescue (HRV); every vessel is under Vessel) and **Source** — where the asset's location comes from: a **Satellite tracker**, or **PSN radio only** (no satellite tracker).
 
 ### Satellite-Tracked Assets
 
 If an asset's location comes from a satellite tracker, a satellite icon <img class="icon" src="images/icon-satellite.png" alt="Satellite" height="18"> shows next to the time it was last seen. The icon is crossed out <img class="icon" src="images/icon-satellite-inactive.png" alt="Satellite tracker not active" height="18"> if the tracker's status isn't **ACTIVE** — its last reported location may be out of date.
+
+On the map, a vessel with a class shows it in its capability code: **VC3** is a Class 3 vessel. A vessel whose class isn't known shows **VES**. The code only shows while **Show capability codes on asset markers** is on (see [Configuration](configuration.md#capability-codes)).
 
 ![Trackable Assets Library filtered to satellite-tracked assets](images/trackable-assets-library-satellite.png)
 

@@ -19,10 +19,11 @@ jobs:
       - name: Build Package
         run: npm run prod
       - name: Chrome extension upload action
-        uses: mnao305/chrome-extension-upload@v6.0.0
+        uses: mnao305/chrome-extension-upload@v7.0.0
         with:
           file-path: build/*.zip
           extension-id: ${{ secrets.CHROMESTORE_PROD_ID }}
+          publisher-id: ${{ secrets.CHROMESTORE_PUB_ID }}
           client-id: ${{ secrets.CHROMESTORE_CLIENT_ID }}
           client-secret: ${{ secrets.CHROMESTORE_CLIENT_SECRET }}
           refresh-token: ${{ secrets.CHROMESTORE_REFRESH_TOKEN }}

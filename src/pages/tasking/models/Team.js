@@ -85,7 +85,6 @@ function _setDefaultAsset(teamId, assetId) {
 }
 
 export function Team(data = {}, deps = {}) {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
 
 
     /// TEAMS MIGHT NOT HAVE A CURRENTSTATUS IF THEY WERE CREATED FROM TASKING ONLY
@@ -109,13 +108,10 @@ export function Team(data = {}, deps = {}) {
         getTeamTasking,
         fetchTeamById,
         makeTeamLink = () => '#',
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
         flyToAsset = () => { },
         teamTaskStatusFilter = () => [],
         currentlyOpenMapPopup = () => null,
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
         openRadioLogModal = () => { },
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
         openSMSTeamModal = () => { },
         isTeamPinned = () => false,
         toggleTeamPinned = () => false,

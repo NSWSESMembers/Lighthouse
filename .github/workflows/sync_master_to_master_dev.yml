@@ -1,0 +1,47 @@
+name: Sync master into master-dev
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: sync-master-to-master-dev
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Open back-merge PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Open PR if master is ahead of master-dev
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ahead=$(git rev-list --count origin/master-dev..origin/master)
+          if [ "$ahead" -eq 0 ]; then
+            echo "master-dev already contains master; nothing to do."
+            exit 0
+          fi
+
+          existing=$(gh pr list --base master-dev --head master --state open --json number --jq '.[0].number')
+          if [ -n "$existing" ]; then
+            echo "Sync PR #${existing} already open; it picks up the new commits automatically."
+            exit 0
+          fi
+
+          commits=$(git log --oneline --no-decorate origin/master-dev..origin/master | sed 's/^/- /')
+          body=$(printf 'Automated back-merge so master-dev stays current with master.\n\nCommits on master not yet in master-dev:\n\n%s\n' "$commits")
+          gh pr create \
+            --base master-dev \
+            --head master \
+            --title "Sync master into master-dev" \
+            --body "$body"

@@ -146,7 +146,7 @@ whenWeAreReady(function () {
     <a href="#" id="LHClearStorage">Delete All Collections</a>\
     </li>\
     <li>\
-    <a href="http://lighthouse.ses.nsw.gov.au/guides.html">User Guides</a>\
+    <a href="https://lighthouse.ses.nsw.gov.au/preview/guides/lad/">User Guide (Dev Preview)</a>\
     </li>\
     <li>\
     <a href="http://lighthouse.ses.nsw.gov.au">About Lighthouse</a>\

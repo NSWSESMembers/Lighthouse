@@ -1253,55 +1253,55 @@ export function ConfigVM(root, deps) {
         {
             id: 'map-right-teams-top',
             name: 'Map Right · Teams Top',
-            description: 'Teams above tasking in the sidebar, map on the right.',
+            description: 'Teams above tasking in the side drawer, map on the right.',
             previewClass: 'preset-map-right-teams-top'
         },
         {
             id: 'map-right-tasking-top',
             name: 'Map Right · Tasking Top',
-            description: 'Tasking above teams in the sidebar, map on the right.',
+            description: 'Tasking above teams in the side drawer, map on the right.',
             previewClass: 'preset-map-right-tasking-top'
         },
         {
             id: 'map-left-teams-top',
             name: 'Map Left · Teams Top',
-            description: 'Map on the left with teams above tasking on the right.',
+            description: 'Map on the left, side drawer on the right with teams above tasking.',
             previewClass: 'preset-map-left-teams-top'
         },
         {
             id: 'map-left-tasking-top',
             name: 'Map Left · Tasking Top',
-            description: 'Map on the left with tasking above teams on the right.',
+            description: 'Map on the left, side drawer on the right with tasking above teams.',
             previewClass: 'preset-map-left-tasking-top'
         },
         {
             id: 'map-right-teams-only',
             name: 'Map Right · Teams Only',
-            description: 'Hide tasking pane, keep teams + map.',
+            description: 'Side drawer shows teams only, map on the right.',
             previewClass: 'preset-map-right-teams-only'
         },
         {
             id: 'map-right-tasking-only',
             name: 'Map Right · Tasking Only',
-            description: 'Hide teams pane, keep tasking + map.',
+            description: 'Side drawer shows tasking only, map on the right.',
             previewClass: 'preset-map-right-tasking-only'
         },
         {
             id: 'map-left-teams-only',
             name: 'Map Left · Teams Only',
-            description: 'Map left with teams-only pane on the right.',
+            description: 'Map on the left, side drawer shows teams only.',
             previewClass: 'preset-map-left-teams-only'
         },
         {
             id: 'map-left-tasking-only',
             name: 'Map Left · Tasking Only',
-            description: 'Map left with tasking-only pane on the right.',
+            description: 'Map on the left, side drawer shows tasking only.',
             previewClass: 'preset-map-left-tasking-only'
         },
         {
             id: 'map-only',
             name: 'Map Only',
-            description: 'Hide both sidebar panes and use the full map view.',
+            description: 'Hide the side drawer and use the full map view.',
             previewClass: 'preset-map-only'
         }
     ];
@@ -1327,6 +1327,34 @@ export function ConfigVM(root, deps) {
     self.clusterRadius = ko.observable(60);   // maxClusterRadius in px (10–80)
     self.clusterRescueJobs = ko.observable(true);
     self.showJobStatusOnMarkers = ko.observable(true);
+    // Swing overlapping asset pins apart around their positions.
+    self.assetPinDeclutter = ko.observable(true);
+    // ...from this zoom level in (13-18)...
+    self.assetPinDeclutterMinZoom = ko.observable(15);
+    // ...and whether crowded pins may move out on lines.
+    self.assetPinAllowLines = ko.observable(true);
+    // Capability code (HRV, MSV, CFR...) in a tab on top of each asset pin.
+    self.showAssetCapabilityCodes = ko.observable(true);
+    // Breadcrumb trail for the selected asset, and how many minutes back
+    // (15-120: fixes come at most every 5 minutes, so shorter shows nothing).
+    self.assetTrails = ko.observable(true);
+    self.assetTrailMinutes = ko.observable(30);
+    self.assetTrailMinutesLabel = ko.pureComputed(() => {
+        const m = Number(self.assetTrailMinutes());
+        if (m < 60) return `${m} minutes`;
+        const h = m / 60;
+        return `${h} hour${h === 1 ? '' : 's'}`;
+    });
+    // What you see at each zoom, for the slider's readout.
+    const ZOOM_LABELS = { 13: 'suburbs', 14: 'neighbourhoods', 15: 'streets', 16: 'street detail', 17: 'buildings', 18: 'close-up' };
+    self.assetPinDeclutterZoomLabel = ko.pureComputed(() => {
+        const z = Number(self.assetPinDeclutterMinZoom());
+        return `zoom ${z} (${ZOOM_LABELS[z] || ''})`;
+    });
+    const assetPinOptions = () => ({
+        minZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
+        allowLines: !!self.assetPinAllowLines(),
+    });
     self.alertsCollapsibleRules = ko.observable(true);
     self.taskingCountActiveOnly = ko.observable(false);
 
@@ -1472,6 +1500,12 @@ export function ConfigVM(root, deps) {
         clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
         showJobStatusOnMarkers: !!self.showJobStatusOnMarkers(),
+        assetPinDeclutter: !!self.assetPinDeclutter(),
+        assetPinDeclutterMinZoom: Number(self.assetPinDeclutterMinZoom()) || 15,
+        assetPinAllowLines: !!self.assetPinAllowLines(),
+        assetTrails: !!self.assetTrails(),
+        showAssetCapabilityCodes: !!self.showAssetCapabilityCodes(),
+        assetTrailMinutes: Number(self.assetTrailMinutes()) || 30,
         alertsCollapsibleRules: !!self.alertsCollapsibleRules(),
         taskingCountActiveOnly: !!self.taskingCountActiveOnly(),
         suggestionEnabled: !!self.suggestionEnabled(),
@@ -1811,6 +1845,24 @@ export function ConfigVM(root, deps) {
         if (typeof cfg.showJobStatusOnMarkers === 'boolean') {
             self.showJobStatusOnMarkers(cfg.showJobStatusOnMarkers);
         }
+        if (typeof cfg.assetPinDeclutter === 'boolean') {
+            self.assetPinDeclutter(cfg.assetPinDeclutter);
+        }
+        if (Number.isInteger(cfg.assetPinDeclutterMinZoom) && cfg.assetPinDeclutterMinZoom >= 13 && cfg.assetPinDeclutterMinZoom <= 18) {
+            self.assetPinDeclutterMinZoom(cfg.assetPinDeclutterMinZoom);
+        }
+        if (typeof cfg.assetPinAllowLines === 'boolean') {
+            self.assetPinAllowLines(cfg.assetPinAllowLines);
+        }
+        if (typeof cfg.assetTrails === 'boolean') {
+            self.assetTrails(cfg.assetTrails);
+        }
+        if (typeof cfg.showAssetCapabilityCodes === 'boolean') {
+            self.showAssetCapabilityCodes(cfg.showAssetCapabilityCodes);
+        }
+        if (Number.isInteger(cfg.assetTrailMinutes) && cfg.assetTrailMinutes >= 15 && cfg.assetTrailMinutes <= 120) {
+            self.assetTrailMinutes(cfg.assetTrailMinutes);
+        }
         if (typeof cfg.alertsCollapsibleRules === 'boolean') {
             self.alertsCollapsibleRules(cfg.alertsCollapsibleRules);
         }
@@ -1962,6 +2014,11 @@ export function ConfigVM(root, deps) {
         root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
         root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
         root.mapVM?.applyJobStatusOnMarkers?.(!!self.showJobStatusOnMarkers());
+        root.mapVM?.applyAssetPinDeclutter?.(!!self.assetPinDeclutter());
+        root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
+        root.mapVM?.applyAssetTrailMinutes?.(Number(self.assetTrailMinutes()) || 30);
+        root.mapVM?.applyAssetTrails?.(!!self.assetTrails());
+        root.mapVM?.applyAssetCapabilityCodes?.(!!self.showAssetCapabilityCodes());
         applyLayoutPresetClass(normalizeLayoutPreset(self.layoutPreset()));
         // Apply dark mode
         self._applyDarkMode();
@@ -2015,6 +2072,36 @@ export function ConfigVM(root, deps) {
 
     self.showJobStatusOnMarkers.subscribe((v) => {
         root.mapVM?.applyJobStatusOnMarkers?.(!!v);
+        self.save();
+    })
+
+    self.assetPinDeclutter.subscribe((v) => {
+        root.mapVM?.applyAssetPinDeclutter?.(!!v);
+        self.save();
+    })
+
+    self.assetPinDeclutterMinZoom.subscribe(() => {
+        root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
+        self.save();
+    })
+
+    self.assetPinAllowLines.subscribe(() => {
+        root.mapVM?.applyAssetPinDeclutterOptions?.(assetPinOptions());
+        self.save();
+    })
+
+    self.assetTrails.subscribe((v) => {
+        root.mapVM?.applyAssetTrails?.(!!v);
+        self.save();
+    })
+
+    self.showAssetCapabilityCodes.subscribe((v) => {
+        root.mapVM?.applyAssetCapabilityCodes?.(!!v);
+        self.save();
+    })
+
+    self.assetTrailMinutes.subscribe((v) => {
+        root.mapVM?.applyAssetTrailMinutes?.(Number(v) || 30);
         self.save();
     })
 

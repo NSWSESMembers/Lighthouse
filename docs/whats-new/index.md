@@ -18,6 +18,24 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD capability codes, marker spreading and trails
+
+*12 October 2026 · [v2026.10.12](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.12)*
+
+- **Capability codes on asset markers.** Every asset marker shows a short code for its capability, such as HRV (Heavy Rescue), MSV (Medium Storm) or CFR, so capabilities with similar colours can be told apart. Vessels show their class: VC1 to VC4, or VES if the class isn't known. The map legend lists every code, and you can turn the codes off under **Asset markers**. See [Capability Codes](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#capability-codes).
+- More capabilities have their own colour and code, including High Clearance, Support, Cell on Wheels, General Land Rescue and Corporate Command. Vessels whose capability is their class now show as vessels, and assets with an unknown capability are grey instead of Command blue.
+- **Find any asset from Spotlight.** Type `find` and part of a callsign, PSN ID or satellite ID to list matching assets, then press Enter to zoom to one. See [Spotlight Commands](https://lighthouse.ses.nsw.gov.au/guides/lad/common-functions.html#spotlight-commands).
+- The Trackable Assets Library can be filtered by **Capability**. See [Trackable Assets Library](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#trackable-assets-library).
+- **Breadcrumb trails.** While an asset's popup is open, a fading line through its recent positions shows where it has come from. Change the trail length (30 minutes by default) or turn it off under **Asset markers**. See [Asset Breadcrumb Trails](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#asset-breadcrumb-trails).
+- **Overlapping asset markers spread out.** When zoomed in to street level, asset markers that would sit on top of each other swing around the vehicle's position so each one can be seen and clicked. Where there isn't room, a marker moves out on a line back to a dot where the vehicle is. See [Overlapping Asset Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlapping-asset-markers).
+- The asset marker whose popup is open is drawn on top and highlighted, and its popup opens over the marker rather than beside it.
+- The **Map markers** settings are grouped into **Incident markers**, **Asset markers** and **All markers** sections. Under **Asset markers** you can turn the spreading off, choose the zoom level it starts at, and stop markers moving out on lines. See [Asset Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#asset-markers).
+- Panning the map stays smooth with many asset markers shown, including after zooming out and back in.
+- Asset markers now point exactly at the vehicle's position (they sat a few pixels low).
+- A marker that has to move aside keeps its side when you zoom a step, and swings round the far side of a parked vehicle instead of over it.
+- The asset icons in the map legend are all the same pin shape again.
+- The section arrows in the Configuration tabs are visible in dark mode.
+
 ## LAD satellite trackers and asset library
 
 *7 October 2026 · [v2026.10.07.1](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.07.1)*

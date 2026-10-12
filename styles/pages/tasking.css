@@ -1348,19 +1348,150 @@ body.dark-mode .hq-coverage-watermark.is-visible {
 }
 
 /* Marker / map UI */
-.marker-pin {
-  width: 40px;
-  height: 40px;
-  border-radius: 50% 50% 50% 0;
-  background: #c30b82;
-  position: absolute;
-  transform: rotate(-45deg);
-  left: 50%;
-  top: 50%;
-  margin: -15px 0 0 -15px;
+/* Asset pins -- see src/pages/tasking/markers/assetPinLayout.js.
+   Everything is drawn relative to .asset-pin__rot, whose origin is the tip
+   (the icon anchor, 20,56). The layout swings __rot around the tip (0 =
+   straight up, clockwise) and can push __head out along it; the label is
+   counter-rotated so it stays upright. A pin that's only rotated keeps its
+   point on the true position. A pushed-out one (.has-stem) can't, so it
+   becomes a circle, with a dot on the true position and a line from the
+   dot to the circle's edge. These moves are inline
+   transforms from writePlacement, animated by transitions. An upright pin
+   has no transforms and no stem at all: with thousands of markers, any
+   transform or extra element on every pin makes panning crawl once they've
+   all been on screen (e.g. after zooming out and back in), so the line and
+   dot only exist on pushed-out pins. */
+
+/* Only the visible pin is clickable, not the icon's box: once a pin swings
+   away, the empty box would otherwise eat clicks meant for whatever is
+   under it. Clicks on the pin still bubble up to Leaflet's handlers. */
+.leaflet-marker-icon.leaflet-interactive.asset-pin-icon {
+  pointer-events: none;
 }
 
-.marker-pin::after {
+.asset-pin__body,
+.asset-pin__code,
+.asset-pin__label {
+  pointer-events: auto;
+}
+
+.asset-pin {
+  position: absolute;
+  inset: 0;
+}
+
+.asset-pin__rot {
+  position: absolute;
+  left: 20px;
+  top: 56px;
+  width: 0;
+  height: 0;
+}
+
+.asset-pin__rot,
+.asset-pin__head,
+.asset-pin__label {
+  transition: transform 300ms ease-out;
+}
+
+/* Users who've asked their OS for reduced motion get instant moves. */
+@media (prefers-reduced-motion: reduce) {
+  .asset-pin__rot,
+  .asset-pin__head,
+  .asset-pin__label,
+  .asset-pin__stem,
+  .asset-pin__dot,
+  .asset-pin__body::before {
+    transition: none !important;
+  }
+}
+
+/* Line from the true position to the circle's edge (writePlacement sets
+   its length). */
+.asset-pin__stem {
+  display: none;
+  position: absolute;
+  left: -1px;
+  width: 2px;
+  background: var(--pin-color);
+  transition: height 300ms ease-out, top 300ms ease-out;
+}
+
+/* True position. Not rotated, so it's outside __rot, centred on the tip. */
+.asset-pin__dot {
+  display: none;
+  position: absolute;
+  left: 15px;
+  top: 51px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--pin-color);
+  border: 2px solid #fff;
+  box-sizing: border-box;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+  transition: transform 150ms ease-out;
+}
+
+.asset-pin.has-stem .asset-pin__stem,
+.asset-pin.has-stem .asset-pin__dot {
+  display: block;
+}
+
+.asset-pin.has-stem .asset-pin__body::before {
+  opacity: 0;
+}
+
+/* Hover, or its popup is open (.is-focused): the pin rises above its
+   neighbours (riseOnHover / focusWhilePopupOpen in assetMarker.js) and is
+   picked out, with its line and dot if it has them. */
+.asset-pin:hover .asset-pin__stem,
+.asset-pin.is-focused .asset-pin__stem {
+  left: -2px;
+  width: 4px;
+}
+
+.asset-pin:hover .asset-pin__dot,
+.asset-pin.is-focused .asset-pin__dot {
+  transform: scale(1.5);
+}
+
+/* The white outline follows the head's real outline (circle, point and code
+   tab, or just the circle once pushed out): each 2px drop-shadow grows the
+   silhouette so far, so the four together trace it all the way round. Only
+   the one picked-out pin carries the filter. */
+.asset-pin:hover .asset-pin__head,
+.asset-pin.is-focused .asset-pin__head {
+  filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff)
+    drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)
+    drop-shadow(0 0 4px rgba(0, 0, 0, 0.5));
+}
+
+/* Teardrop, unrotated: a 40px circle centred 28.28px above the tip, plus a
+   triangle from the tip up to where the circle's tangents meet it. */
+.asset-pin__body {
+  position: absolute;
+  left: -20px;
+  top: -48.2843px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--pin-color);
+}
+
+.asset-pin__body::before {
+  content: '';
+  position: absolute;
+  left: 5.8579px;
+  top: 34.1421px;
+  border-left: 14.1421px solid transparent;
+  border-right: 14.1421px solid transparent;
+  border-top: 14.1421px solid var(--pin-color);
+  transition: opacity 150ms ease-out;
+}
+
+.asset-pin__body::after {
   content: '';
   width: 34px;
   height: 34px;
@@ -1368,6 +1499,66 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   background: #000;
   position: absolute;
   border-radius: 50%;
+}
+
+/* A 24px box centred on the body. */
+.asset-pin__label {
+  position: absolute;
+  left: -12px;
+  top: -40.2843px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 10px;
+  text-align: center;
+}
+
+.asset-pin__label p {
+  margin: 0;
+}
+
+/* Capability code (HRV, MSV, CFR...) in a tab on the far side of the head
+   from the point, drawn by asset_icon.js (CODE_TAB_PATH) in an SVG whose
+   viewBox is centred on the body: (0,0) lands on the body's centre, 28.28px
+   above the tip. It's part of the head, so it swings with it; past
+   sideways, writePlacement turns the code over (.is-flipped) so it never
+   reads upside down. Positioned without a transform: see the note at the
+   top about transforms on every pin. */
+.asset-pin__code {
+  position: absolute;
+  left: -20px;
+  top: -62.2843px;
+  width: 40px;
+  height: 26px;
+  overflow: visible;
+}
+
+.asset-pin__code text {
+  font: 700 10px system-ui, -apple-system, 'Segoe UI', sans-serif;
+  letter-spacing: 0.3px;
+  text-anchor: middle;
+  dominant-baseline: central;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.asset-pin__code.is-flipped text {
+  transform: rotate(180deg);
+}
+
+/* The same code next to each capability in the map legend. */
+.legend-asset-code {
+  font-size: 0.85em;
+  font-weight: 700;
+  opacity: 0.7;
+}
+
+.asset-codes-off .asset-pin__code,
+.asset-codes-off .legend-asset-code {
+  display: none;
 }
 
 .custom-div-icon i {
@@ -2650,6 +2841,18 @@ overflow: hidden;
 
 .config-subaccordion .accordion-body {
   padding-top: 0.75rem;
+}
+
+/* Dark mode: the shared theme gives every fieldset in a card a #333 panel,
+   which inside an accordion body shows as patchy boxes; and Bootstrap's
+   chevron icon is dark-on-dark. */
+body.dark-mode .config-subaccordion .accordion-body fieldset,
+body.dark-mode .config-subaccordion .accordion-body fieldset legend {
+  background-color: transparent !important;
+}
+
+body.dark-mode .config-subaccordion .accordion-button::after {
+  filter: grayscale(1) invert(1) brightness(1.2);
 }
 
 /* Data pane: preset controls + live "loading now" readout */

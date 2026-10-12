@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var $ = require('jquery');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 var DOM = require('jsx-dom-factory').default;
