@@ -20,7 +20,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 ## LAD user guide reorganised, with search
 
-*Unreleased*
+*14 October 2026*
 
 - **The LAD user guide has been reorganised** so it follows the order you'd use LAD: getting started, the interface, the map and registers, then tasking, logs and messages. Configuration is now a reference page at the end. See the [LAD User Guide](https://lighthouse.ses.nsw.gov.au/guides/lad/).
 - Topics that were split across pages now have one page each: [Assets & Radio Tracking](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html), [Tasking Teams](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html), [Logs & Messages](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html) and [Spotlight](https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html). ICEMS is now part of the [Incident Register](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html#icems) page. Old links still take you to the right section.
