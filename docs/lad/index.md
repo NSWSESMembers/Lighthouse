@@ -39,12 +39,22 @@ If you are on a device that does not have Lighthouse installed, go to [lighthous
 
 ## Contents
 
-1. [Getting Started](getting-started.md) — launching LAD, the remote Beacon tab and radio tracking
-2. [Configuration](configuration.md) — data, filters, map markers, collaborative layers, layout, appearance and Instant Task suggestions
-3. [Interface Overview](interface.md) — layout, register controls, alerts and the Trackable Assets Library
-4. [Common Functions](common-functions.md) — Spotlight, starring, radio logs, SMS, ops logs and Instant Task
-5. [Team Register](team-register.md)
-6. [Incident Register](incident-register.md)
-7. [ICEMS](icems.md)
-8. [Situation Map](situation-map.md)
-9. [What's New](https://lighthouse.ses.nsw.gov.au/whats-new/) — changes in each Lighthouse release
+**Start here**
+
+- [Getting Started](getting-started.md): launching LAD, first-time setup and the remote Beacon tab
+- [Interface Overview](interface.md): layout, register controls, starring, alerts and keyboard shortcuts
+
+**Working in LAD**
+
+- [Situation Map](situation-map.md): map controls, layers, the legend, incidents on the map, address search and collaborative layers
+- [Team Register](team-register.md): team details, matched assets and taskings
+- [Incident Register](incident-register.md): incident details, the Incident Timeline, ICEMS and photos
+- [Assets & Radio Tracking](assets.md): matching radios to teams, the Trackable Assets Library and assets on the map
+- [Tasking Teams](tasking.md): Instant Task, suggestions, drag & drop and tasking statuses
+- [Logs & Messages](logs-and-messages.md): radio logs, ops logs and SMS
+- [Spotlight](spotlight.md): keyboard search and the `task`, `radio`, `log` and `find` commands
+
+**Reference**
+
+- [Configuration](configuration.md): every setting, tab by tab
+- [What's New](https://lighthouse.ses.nsw.gov.au/whats-new/): changes in each Lighthouse release

@@ -1,6 +1,6 @@
 ---
 title: Team Register
-nav_order: 6
+nav_order: 5
 ---
 
 # Team Register
@@ -10,7 +10,7 @@ The Team Register is in the top left of LAD. It lists all filtered teams. Each r
 - Callsign
 - Status
 - HQ (assigned HQ)
-- Task count — current active taskings (Tasked, Enroute, Onsite and Offsite)
+- Task count: current active taskings (Tasked, Enroute, Onsite and Offsite)
 - Team leader
 
 Sort by Callsign, Status, HQ or Task Count by clicking the column heading; click again to swap between ascending and descending.
@@ -27,7 +27,7 @@ Each row's background colour shows the team's current tasking load, so you can q
 
 > **Note:** The task count includes taskings to incidents outside your LAD incident filters (e.g. local storm incidents when your filter is set to flood rescues only).
 
-If a team can't be matched to a radio asset, a car icon with a cross through it <img class="icon" src="images/icon-unmatched-team.png" alt="Unmatched" height="24"> shows next to its callsign and the map focus button is disabled. See [Setting up a Team for Radio Tracking](getting-started.md#setting-up-a-team-for-radio-tracking).
+If a team can't be matched to a radio asset, a car icon with a cross through it <img class="icon" src="images/icon-unmatched-team.png" alt="Unmatched" height="24"> shows next to its callsign and the map focus button is disabled. See [Setting up a Team for Radio Tracking](assets.md#setting-up-a-team-for-radio-tracking).
 
 ## Expanded Team Details
 
@@ -45,6 +45,8 @@ The **primary matched asset** is marked with a gold star. It is used to locate t
 
 Change the primary asset by clicking the star next to another asset. This is synced to all LAD users on their next refresh cycle.
 
+Which assets are matched depends on the team's name. See [Assets & Radio Tracking](assets.md#setting-up-a-team-for-radio-tracking).
+
 ### Toggle Member Capability
 
 Show or hide member capabilities with the tags icon to the right of the **Team Members** heading. Hidden by default.
@@ -57,11 +59,10 @@ Each team row has four action buttons:
 
 ![Team row action buttons](images/team-row-actions.png)
 
-
-- **Radio Log** — opens [New Radio Log](common-functions.md#new-radio-log) against the team.
-- **Message Team** — opens [Send SMS](common-functions.md#send-sms) with the team members as recipients. Greyed out if the team has no members.
-- **Open in Remote Tab** — opens the team's edit page in the Beacon remote tab, e.g. to change the team's name or members.
-- **Focus on map** — focuses the Situation Map on the team's radio location. Greyed out if no radios are matched.
+- **Radio Log**: opens [New Radio Log](logs-and-messages.md#new-radio-log) against the team.
+- **Message Team**: opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients. Greyed out if the team has no members.
+- **Open in Remote Tab**: opens the team's edit page in the Beacon [remote tab](getting-started.md#remote-beacon-tab), e.g. to change the team's name or members.
+- **Focus on map**: focuses the Situation Map on the team's radio location. Greyed out if no radios are matched.
   - If multiple radios are matched, the button shows the count <img class="icon" src="images/icon-multiple-radios.png" alt="2" height="16"> and toggles between them on each click.
   - If one radio is matched to multiple teams, a yellow group icon <img class="icon" src="images/icon-shared-radio.png" alt="Shared radio" height="16"> is shown.
 
@@ -93,22 +94,13 @@ Click **Refresh** to reload the team's tasking details.
 
 Each tasking under a team has four actions:
 
-- **Radio Log** (against the incident) — opens [New Radio Log](common-functions.md#new-radio-log), logged against the incident and including the team's callsign.
-- **Message Team** (against the incident) — opens [Send SMS](common-functions.md#send-sms) with the team members as recipients, associated with the incident.
-- **Open Incident in Remote Tab** — opens the incident in the Beacon remote tab.
-- **Focus on map** — focuses the Situation Map on the incident if it is geocoded and within your incident filters. Greyed out if the incident is outside your filters (it won't be on the map).
+- **Radio Log** (against the incident): opens [New Radio Log](logs-and-messages.md#new-radio-log), logged against the incident and including the team's callsign.
+- **Message Team** (against the incident): opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients, associated with the incident.
+- **Open Incident in Remote Tab**: opens the incident in the Beacon remote tab.
+- **Focus on map**: focuses the Situation Map on the incident if it is geocoded and within your incident filters. Greyed out if the incident is outside your filters (it won't be on the map).
 
 ![Team tasking actions](images/team-tasking-actions.png)
 
 ## Tasking Status
 
-Each tasking shows its status. Click the status to open a dropdown and choose a new one. Some statuses need extra information:
-
-- **Remove Tasking** — only available in the *Tasked* status. Removes the tasking from the team.
-- **En-Route** — requires a time, defaulting to now (tick the override to enter your own). You can set an ETA; the quick ETA buttons add increments, and when the ETA is blank they add to the time set.
-- **Call Off** — requires a reason.
-- **On-Site** — requires a time, defaulting to now (tick the override to enter your own). You can set an ETC; the quick ETC buttons work the same way as quick ETA.
-- **Off-Site** — requires a time, defaulting to now (tick the override to enter your own).
-- **Complete** — opens Beacon's *Team Completion* dialog for the team in the remote tab.
-
-![Tasking status dropdown](images/tasking-status.png)
+Click a tasking's status to change it, e.g. to *En-Route* or *On-Site*. See [Tasking Status](tasking.md#tasking-status).
