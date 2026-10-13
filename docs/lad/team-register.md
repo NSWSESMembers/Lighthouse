@@ -41,11 +41,23 @@ The taskings list is filtered by the **Tasking Status** filter and shows all mat
 
 The bottom left of the expanded view lists each matched radio or satellite tracker. Click one to zoom to it on the Situation Map.
 
-The **primary matched asset** is marked with a gold star. It is used to locate the team for features such as Instant Task (which takes distance into account) and for driving routes from the team to an incident.
-
-Change the primary asset by clicking the star next to another asset. This is synced to all LAD users on their next refresh cycle.
-
 Which assets are matched depends on the team's name. See [Assets & Radio Tracking](assets.md#setting-up-a-team-for-radio-tracking).
+
+### Default Asset
+
+When a team has more than one matched asset, a star shows next to each one. The gold star marks the team's **default asset**, which LAD uses as the team's location for:
+
+- [Instant Task](tasking.md#instant-task) distances, bearings and [suggestions](tasking.md#instant-task-suggestions)
+- routes and distance lines from the team to an incident
+
+A team with only one matched asset has no stars, and that asset is always used.
+
+- Until someone chooses one, the default is the first asset in the list.
+- Click a faded star to make that asset the default. Click the gold star to clear the choice and go back to the first asset.
+- The choice is shared with all LAD users. Other browsers pick it up when they next refresh their asset data.
+- An asset can be the chosen default for only one team. Choosing it for another team clears it from the first.
+
+The focus button and [In Map View](interface.md#listing-only-whats-in-the-map-view) still use all of a team's matched assets.
 
 ### Toggle Member Capability
 
