@@ -18,16 +18,24 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD user guide reorganised, with search
+
+*14 October 2026*
+
+- **The LAD user guide has been reorganised** so it follows the order you'd use LAD: getting started, the interface, the map and registers, then tasking, logs and messages. Configuration is now a reference page at the end. See the [LAD User Guide](https://lighthouse.ses.nsw.gov.au/guides/lad/).
+- Topics that were split across pages now have one page each: [Assets & Radio Tracking](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html), [Tasking Teams](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html), [Logs & Messages](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html) and [Spotlight](https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html). ICEMS is now part of the [Incident Register](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html#icems) page. Old links still take you to the right section.
+- **Search the guide.** Type in the search box at the top of the guide's sidebar (or press <kbd>/</kbd>) and matching sections are listed as you type. Pick one to jump to it, with your search words highlighted.
+
 ## LAD capability codes, marker spreading and trails
 
 *12 October 2026 · [v2026.10.12](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.12)*
 
-- **Capability codes on asset markers.** Every asset marker shows a short code for its capability, such as HRV (Heavy Rescue), MSV (Medium Storm) or CFR, so capabilities with similar colours can be told apart. Vessels show their class: VC1 to VC4, or VES if the class isn't known. The map legend lists every code, and you can turn the codes off under **Asset markers**. See [Capability Codes](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#capability-codes).
+- **Capability codes on asset markers.** Every asset marker shows a short code for its capability, such as HRV (Heavy Rescue), MSV (Medium Storm) or CFR, so capabilities with similar colours can be told apart. Vessels show their class: VC1 to VC4, or VES if the class isn't known. The map legend lists every code, and you can turn the codes off under **Asset markers**. See [Capability Codes](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html#capability-codes).
 - More capabilities have their own colour and code, including High Clearance, Support, Cell on Wheels, General Land Rescue and Corporate Command. Vessels whose capability is their class now show as vessels, and assets with an unknown capability are grey instead of Command blue.
-- **Find any asset from Spotlight.** Type `find` and part of a callsign, PSN ID or satellite ID to list matching assets, then press Enter to zoom to one. See [Spotlight Commands](https://lighthouse.ses.nsw.gov.au/guides/lad/common-functions.html#spotlight-commands).
-- The Trackable Assets Library can be filtered by **Capability**. See [Trackable Assets Library](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#trackable-assets-library).
-- **Breadcrumb trails.** While an asset's popup is open, a fading line through its recent positions shows where it has come from. Change the trail length (30 minutes by default) or turn it off under **Asset markers**. See [Asset Breadcrumb Trails](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#asset-breadcrumb-trails).
-- **Overlapping asset markers spread out.** When zoomed in to street level, asset markers that would sit on top of each other swing around the vehicle's position so each one can be seen and clicked. Where there isn't room, a marker moves out on a line back to a dot where the vehicle is. See [Overlapping Asset Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlapping-asset-markers).
+- **Find any asset from Spotlight.** Type `find` and part of a callsign, PSN ID or satellite ID to list matching assets, then press Enter to zoom to one. See [Spotlight Commands](https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html#spotlight-commands).
+- The Trackable Assets Library can be filtered by **Capability**. See [Trackable Assets Library](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html#trackable-assets-library).
+- **Breadcrumb trails.** While an asset's popup is open, a fading line through its recent positions shows where it has come from. Change the trail length (30 minutes by default) or turn it off under **Asset markers**. See [Asset Breadcrumb Trails](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html#asset-breadcrumb-trails).
+- **Overlapping asset markers spread out.** When zoomed in to street level, asset markers that would sit on top of each other swing around the vehicle's position so each one can be seen and clicked. Where there isn't room, a marker moves out on a line back to a dot where the vehicle is. See [Overlapping Asset Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html#overlapping-asset-markers).
 - The asset marker whose popup is open is drawn on top and highlighted, and its popup opens over the marker rather than beside it.
 - The **Map markers** settings are grouped into **Incident markers**, **Asset markers** and **All markers** sections. Under **Asset markers** you can turn the spreading off, choose the zoom level it starts at, and stop markers moving out on lines. See [Asset Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#asset-markers).
 - Panning the map stays smooth with many asset markers shown, including after zooming out and back in.
@@ -40,8 +48,8 @@ The home page shows the first three `##` entries, so keep the title short.
 
 *7 October 2026 · [v2026.10.07.1](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.07.1)*
 
-- **Satellite-tracked assets.** Assets located by a satellite tracker show a satellite icon next to their last-seen time, crossed out if the tracker isn't active. The asset popup and the Trackable Assets Library show the tracker's class, status and battery. See [Satellite-Tracked Assets](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#satellite-tracked-assets).
-- **Show an asset on the map from the Trackable Assets Library.** Each entry has a **Show on map** button that focuses the map on the asset and opens its popup, turning on the asset layer it needs. See [Showing an Asset on the Map](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#showing-an-asset-on-the-map).
+- **Satellite-tracked assets.** Assets located by a satellite tracker show a satellite icon next to their last-seen time, crossed out if the tracker isn't active. The asset popup and the Trackable Assets Library show the tracker's class, status and battery. See [Satellite-Tracked Assets](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html#satellite-tracked-assets).
+- **Show an asset on the map from the Trackable Assets Library.** Each entry has a **Show on map** button that focuses the map on the asset and opens its popup, turning on the asset layer it needs. See [Showing an Asset on the Map](https://lighthouse.ses.nsw.gov.au/guides/lad/assets.html#showing-an-asset-on-the-map).
 - The Trackable Assets Library can be filtered by **Type** and by location **Source** (satellite tracker or PSN radio), and searched by satellite ID.
 - The Trackable Assets Library can also be opened from the bottom of the [Configuration](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html) tabs.
 
@@ -49,7 +57,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 *6 October 2026 · [v2026.10.06](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.06)*
 
-- **In map view filter.** The Team and Incident registers have a new **Toggle In Map View** button that lists only the teams or incidents inside the area you're looking at on the map. The register header shows how many are in view out of the total. See [Listing Only What's in the Map View](https://lighthouse.ses.nsw.gov.au/guides/lad/common-functions.html#listing-only-whats-in-the-map-view).
+- **In map view filter.** The Team and Incident registers have a new **Toggle In Map View** button that lists only the teams or incidents inside the area you're looking at on the map. The register header shows how many are in view out of the total. See [Listing Only What's in the Map View](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#listing-only-whats-in-the-map-view).
 - **The LAD user guide is online** at [lighthouse.ses.nsw.gov.au/guides/lad](https://lighthouse.ses.nsw.gov.au/guides/lad/). It's based on the v1.6 Learner Guide and can be printed or saved as a PDF. Open it from the new **User guide** link at the bottom of the [Configuration](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html) tabs.
 - The **Resolve** and job status buttons stay greyed out until you've entered the required text, so you can't submit an empty note by mistake.
 - Tidier ops log cards on the timeline. The Important and Action Required flags and the Resolve button now sit together on one row.
@@ -109,7 +117,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 *11 August 2026 · [v2026.08.11.1](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.08.11.1)*
 
-- **Collaborative map layers.** Create a shared layer for an HQ or event, drop markers on it and comment on them. Owners and moderators control who can edit, delete or comment. See [Collaborative Map Layer](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#collaborative-map-layer).
+- **Collaborative map layers.** Create a shared layer for an HQ or event, drop markers on it and comment on them. Owners and moderators control who can edit, delete or comment. See [Collaborative Map Layer](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#collaborative-map-layers).
 - Fixed map popups appearing behind markers, SMS recipients from contact groups, and the BMB unit's HQ location.
 - Security updates to third-party libraries.
 
@@ -134,7 +142,7 @@ The home page shows the first three `##` entries, so keep the title short.
 *March 2026 · [v2026.03.06](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.03.06) to [v2026.03.26](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.03.26)*
 
 - **Instant Task suggestions** suggest a team when you task an incident, based on distance and current tasking count. See [Instant Task Suggestions](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#instant-task-suggestions).
-- **ICEMS** messages are handled in LAD, with each agency's status shown. See [ICEMS](https://lighthouse.ses.nsw.gov.au/guides/lad/icems.html).
+- **ICEMS** messages are handled in LAD, with each agency's status shown. See [ICEMS](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html#icems).
 - **Dark mode**, incident marker clustering, distance tools and **Create Incident at Location** on the map.
 - About 30 new map layers, including NSW Declared Dams.
 - The alerts panel can be collapsed, and incident cards show how long ago they were refreshed.
@@ -144,7 +152,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 *February 2026 · [v2026.02.03](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.02.03) to [v2026.02.14](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.02.14)*
 
-- **Spotlight search** (with commands) and new map tools in LAD. See [Spotlight Menu](https://lighthouse.ses.nsw.gov.au/guides/lad/common-functions.html#spotlight-menu).
+- **Spotlight search** (with commands) and new map tools in LAD. See [Spotlight Menu](https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html#spotlight-menu).
 - New map layers: BOM warnings, rain radar, WaterNSW areas and EPA sites, and power network boundaries.
 - The Trackable Assets Library is sorted alphabetically, and asset matching prefers vehicles over portable radios.
 - Lighthouse location services moved to Amazon Location Service.
