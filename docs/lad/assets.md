@@ -16,8 +16,7 @@ LAD uses the Beacon **team name** to work out which radio to track. Where a call
 **Key points:**
 
 - Radios are matched to teams by their **PSN Radio Name**.
-- Each team has a **primary matched asset**, used for location-based features like tasking suggestions.
-  - It is shown in the [expanded Team Register](team-register.md#matched-assets) as the matched asset with a star against it. It can be changed by the user and is synced to all LAD browsers.
+- If a team matches more than one asset, one of them is its **default asset**, used for distances and routes such as Instant Task suggestions. It's the first matched asset unless someone picks another with the star in the [expanded Team Register](team-register.md#default-asset). The choice is shared with all LAD users.
 - A team can have multiple radios. Include each callsign in the team name.
   - e.g. `PAR56 + PAR913` tracks both radios against the team (if they exist and match the PSN radio name).
 - Exact matches take priority.

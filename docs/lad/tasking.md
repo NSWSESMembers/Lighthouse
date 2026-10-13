@@ -15,7 +15,7 @@ Once tasked, the tasking shows under the team in the [Team Register](team-regist
 
 ## Instant Task
 
-Clicking **Task Team** opens the Instant Task dialog, which lists filtered teams. Use the search bar to find a team by name. Teams are ordered by distance to the incident (geocoded incidents only). Distance is calculated from the team's [primary matched asset](team-register.md#matched-assets).
+Clicking **Task Team** opens the Instant Task dialog, which lists filtered teams. Use the search bar to find a team by name. Teams are ordered by distance to the incident (geocoded incidents only). Distance is calculated from the team's matched asset, or its [default asset](team-register.md#default-asset) if it has more than one.
 
 Each team shows:
 
