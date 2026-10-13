@@ -1,13 +1,15 @@
 ---
 title: Configuration
-nav_order: 3
+nav_order: 11
 ---
 
 # Configuration
 
-When you first launch LAD you are taken to the **Configuration** screen, where you configure the settings and filters LAD uses. You can re-open it at any time with the **Page Configuration** button in either register (see [Register Controls](interface.md#register-controls)).
+When you first launch LAD you are taken to the **Configuration** screen, where you configure the settings and filters LAD uses (see [First-Time Setup](getting-started.md#first-time-setup)). You can re-open it at any time with the **Page Configuration** button in either register (see [Register Controls](interface.md#register-controls)).
 
-The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. At the bottom of the tabs, **Trackable Asset Library** saves your settings and opens the [Trackable Assets Library](interface.md#trackable-assets-library), and **User guide** opens this guide in a new tab.
+This page is a reference for every setting, tab by tab. Each section links to the part of the guide that explains the feature it controls.
+
+The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. At the bottom of the tabs, **Trackable Asset Library** saves your settings and opens the [Trackable Assets Library](assets.md#trackable-assets-library), and **User guide** opens this guide in a new tab.
 
 ![LAD Configuration screen, Data tab](images/config-data.png)
 
@@ -83,15 +85,15 @@ Control which incidents and teams appear based on their sector.
 
 ![Sector filters](images/config-sectors.png)
 
-- **Apply sector filters to** — tick **Incidents** and/or **Teams** to choose what the sector filter applies to.
+- **Apply sector filters to**: tick **Incidents** and/or **Teams** to choose what the sector filter applies to.
 
   ![Apply sector filters to Incidents and Teams](images/config-sectors-apply.png)
 
-- **Include items without a sector** — on by default. Incidents and teams with no sector assigned are always synced.
+- **Include items without a sector**: on by default. Incidents and teams with no sector assigned are always synced.
 
   ![Include items without a sector override](images/config-sectors-override.png)
 
-- **Filter by Sectors** — select the sectors to sync. Only sectors for the headquarters selected in [Data Settings](#headquarter-filters) are available.
+- **Filter by Sectors**: select the sectors to sync. Only sectors for the headquarters selected in [Data Settings](#headquarter-filters) are available.
 
 ## Map Markers
 
@@ -105,8 +107,8 @@ The **Map markers** tab controls how incident and asset markers are displayed an
 
 When enabled, markers that are close together on the map are grouped into a cluster to reduce clutter.
 
-- **Cluster radius** — how close markers must be (in pixels) to cluster. The default is **60px**. Lower values keep markers separate; higher values cluster more.
-- **Include Rescue incidents in clustering** — whether rescue incidents can be clustered with other markers.
+- **Cluster radius**: how close markers must be (in pixels) to cluster. The default is **60px**. Lower values keep markers separate; higher values cluster more.
+- **Include Rescue incidents in clustering**: whether rescue incidents can be clustered with other markers.
 
 See [Incident Clustering](situation-map.md#incident-clustering).
 
@@ -120,7 +122,7 @@ When enabled, LAD adds extra indicators to incident markers so you can see incid
 
 #### Overlapping Markers
 
-- **Spread out overlapping asset markers** (on by default). When zoomed in, asset markers that would overlap swing around the vehicle's position so each one can be seen and clicked. Zoomed further out, markers overlap as they always have. See [Overlapping Asset Markers](situation-map.md#overlapping-asset-markers).
+- **Spread out overlapping asset markers** (on by default). When zoomed in, asset markers that would overlap swing around the vehicle's position so each one can be seen and clicked. Zoomed further out, markers overlap as they always have. See [Overlapping Asset Markers](assets.md#overlapping-asset-markers).
 - **Start spreading out from** sets the zoom level markers start spreading out at. The default is **zoom 15 (streets)**. Slide towards **Further out** (down to zoom 13, suburbs) if you work in a busy area and want markers separated sooner, or towards **Closer in** (up to zoom 18) if vehicles in your area are usually well apart.
 - **Allow markers to move out on lines** (on by default). Where there isn't room for a marker to swing around its position, it moves out on a line back to a dot where the vehicle is. Turn this off to keep every marker on its position; crowded spots then overlap.
 
@@ -128,28 +130,12 @@ These options only show while **Spread out overlapping asset markers** is on.
 
 #### Recent Travel
 
-- **Show a breadcrumb trail for the selected asset** (on by default). While a vehicle's popup is open, a fading line through its recent positions shows where it has come from. See [Asset Breadcrumb Trails](situation-map.md#asset-breadcrumb-trails). Trails are kept only in this browser. Turning this off clears them.
+- **Show a breadcrumb trail for the selected asset** (on by default). While a vehicle's popup is open, a fading line through its recent positions shows where it has come from. See [Asset Breadcrumb Trails](assets.md#asset-breadcrumb-trails). Trails are kept only in this browser. Turning this off clears them.
 - **Trail length** sets how far back the trail goes, from **15 minutes** to **2 hours**. The default is **30 minutes**. Vehicles report their position every few minutes, so a longer trail shows more of the route.
 
 #### Capability Codes
 
-- **Show capability codes on asset markers** (on by default). A tab on top of each asset marker shows the asset's capability as a short code, so capabilities with similar colours can be told apart, such as the rescue tiers and Community First Responder. The map legend lists each code next to its capability:
-
-  | Code | Capability | Code | Capability |
-  | --- | --- | --- | --- |
-  | BUS | Bus | HRV | Heavy Rescue |
-  | CMD | Command | GLR | General Land Rescue |
-  | CCV | Corporate Command | SHQ | SHQ Pool / Pool Vehicle |
-  | CFR | Community First Responder | VES | Vessel (class not known) |
-  | GPV | General Purpose | PRT | Portable |
-  | LOG | Logistics | HCV | High Clearance |
-  | STM | Storm | SUP | Support |
-  | LSV | Light Storm | COW | Cell on Wheels |
-  | MSV | Medium Storm | SAV | Strategic Asset |
-  | LRV | Light Rescue | VC1–VC4 | Vessel, Class 1–4 |
-  | MRV | Medium Rescue | | |
-
-  Assets with any other capability, or none, have a grey marker and no code.
+- **Show capability codes on asset markers** (on by default). A tab on top of each asset marker shows the asset's capability as a short code, so capabilities with similar colours can be told apart, such as the rescue tiers and Community First Responder. The map legend lists each code next to its capability. See [Capability Codes](assets.md#capability-codes) for the full list.
 
 ### All Markers
 
@@ -165,33 +151,9 @@ Controls the order map elements are drawn. Items at the top of the list are draw
 
 ## Collaborative Layers
 
-Collaborative layers hold custom map markers that other users can see. You can create, view and edit multiple collaborative layers at once.
+The **Collaborative layers** tab is where you subscribe to existing collaborative map layers and create new ones. Layers you're subscribed to can be shown from the map's **Layers** menu. See [Collaborative Map Layers](situation-map.md#collaborative-map-layers) for subscribing, creating layers and adding markers.
 
 ![Collaborative Layers settings](images/config-collab-layers.png)
-
-### Subscribing to a Layer
-
-1. Click **Find a layer**. You'll see all layers for the selected headquarters. Click the **X** to remove the headquarters and choose a different one, or leave it blank to search all headquarters.
-2. Click **Subscribe** next to the layer you want.
-
-![Subscribe button next to a layer](images/config-collab-subscribe.png)
-
-### Creating a New Layer
-
-Click **New layer**, enter a layer name and select the headquarters the layer belongs to.
-
-Expand **Advanced options** for more settings:
-
-- **Attach to event** — attach the layer to a specific event.
-- **Marker permissions** — who can add, modify and delete markers on the layer.
-- **Delete permissions** — who can delete the layer.
-- **Comment permissions** — who can comment on markers on the layer.
-
-If any setting gives permissions to moderators, a **Moderators** box appears. Add moderators by searching for their name or member number.
-
-![New layer form with advanced options](images/config-collab-new-layer.png)
-
-See [Collaborative Map Layer](situation-map.md#collaborative-map-layer) for using layers on the map.
 
 ## Layout
 
@@ -201,7 +163,7 @@ Choose a preset layout for LAD — which side the map is on, whether teams or ta
 
 ## Starred Teams & Incidents
 
-View all [starred](common-functions.md#starring-incidents-and-teams) teams and incidents. Use the **Clear** buttons to clear starred teams or incidents, or **Clear all Starred** to clear both.
+View all [starred](interface.md#starring-incidents-and-teams) teams and incidents. Use the **Clear** buttons to clear starred teams or incidents, or **Clear all Starred** to clear both.
 
 ![Starred teams and incidents](images/config-starred.png)
 
@@ -209,19 +171,16 @@ View all [starred](common-functions.md#starring-incidents-and-teams) teams and i
 
 ![Appearance settings](images/config-appearance.png)
 
-- **Theme** — Light, Dark, or Auto (follows your browser setting).
-- **Auto-collapse alert popups** — when enabled, all [alerts](interface.md#alerts) start collapsed when the page loads.
-- **Count active taskings only** — when enabled, *Complete*, *CalledOff* and *Untasked* statuses don't count towards a tasking count.
-- **Spotlight hotkey** — the key combination that opens the [Spotlight menu](common-functions.md#spotlight-menu). Click the field and press the new combination, or click **Reset**.
+- **Theme**: Light, Dark, or Auto (follows your browser setting).
+- **Auto-collapse alert popups**: when enabled, all [alerts](interface.md#alerts) start collapsed when the page loads.
+- **Count active taskings only**: when enabled, *Complete*, *CalledOff* and *Untasked* statuses don't count towards a tasking count.
+- **Spotlight hotkey**: the key combination that opens the [Spotlight menu](spotlight.md). Click the field and press the new combination, or click **Reset**.
 
 ## Instant Task Suggestions
 
-When enabled, LAD suggests a team when you [task an incident](common-functions.md#tasking-teams-instant-task). Suggestions are based on each team's distance and tasking count — they **do not take team capabilities into account**.
+When enabled, LAD suggests a team when you [task an incident](tasking.md#instant-task). Suggestions are based on each team's distance and tasking count, and **do not take team capabilities into account**. See [Instant Task Suggestions](tasking.md#instant-task-suggestions) for how the suggested team is picked.
 
 ![Instant Task Suggestions settings](images/config-instant-task.png)
-
-- **Rescue priority** — the nearest team with zero active taskings is preferred. If every team already has a tasking, LAD falls back to the weighted score.
-- **All other priorities** — every team is scored on a weighted combination of distance and tasking count, and the highest-scoring team is suggested.
 
 ### Use Road Travel Times
 
