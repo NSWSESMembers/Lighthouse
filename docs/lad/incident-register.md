@@ -26,6 +26,7 @@ The Incident Register is in the bottom left of LAD. It lists all filtered incide
   - Click the status to [change it](#changing-incident-status).
 - Address
   - For geocoded incidents, click the address to focus the Situation Map on the incident.
+  - Incidents with no GPS location show the address in italics and it can't be clicked; hover over it to see why. Incidents with neither an address nor a GPS location show *No location*.
 
 Sort by Id, Recv, HQ, Type or Status by clicking the column heading; click again to swap between ascending and descending.
 

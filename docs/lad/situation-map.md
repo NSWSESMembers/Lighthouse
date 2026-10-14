@@ -61,6 +61,10 @@ Overlays sit on top of the basemap to add information. Toggle them on and off in
 
 Most layers are described by their name. Those that need more explanation:
 
+**Visibility**
+
+- **Incidents**: shows or hides every incident marker, along with their [status indicators](#incident-status-on-markers). Focusing an incident from an [alert](interface.md#alerts), the Incident Register or [Spotlight](spotlight.md) turns the layer back on.
+
 **Assets**
 
 - **Matched against Teams** and **Unmatched against Teams**: radios and satellite trackers, split by whether they're matched to a team. See [Asset Layers](assets.md#asset-layers).
@@ -162,7 +166,7 @@ When enabled under [Map Markers](configuration.md#incident-status-on-markers) (o
 | Indicator | Meaning |
 | --- | --- |
 | <img class="icon" src="images/marker-unacknowledged.png" alt="" height="28"> <img class="icon" src="images/marker-unacknowledged-cluster.png" alt="" height="28"> | **Unacknowledged**: a pulsing yellow circle. Also shown on a cluster that contains an unacknowledged incident. |
-| <img class="icon" src="images/marker-active.png" alt="" height="28"> | **Active** (not tasked): a rotating purple dotted ring. |
+| <img class="icon" src="images/marker-active.png" alt="" height="28"> | **Active** (not tasked): a moving purple dotted ring that follows the marker's shape. |
 | — | **Tasked**: no extra indicator. |
 | <img class="icon" src="images/marker-complete.png" alt="" height="28"> | **Referred, Complete or Finalised**: a black diagonal line through the icon. |
 | <img class="icon" src="images/marker-cancelled.png" alt="" height="28"> | **Cancelled or Rejected**: a black cross through the icon. |
