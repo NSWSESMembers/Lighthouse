@@ -7,21 +7,27 @@ nav_order: 6
 
 The Incident Register is in the bottom left of LAD. It lists all filtered incidents. Each row displays:
 
+- **+** / **−**: shows whether the incident is [expanded](#expanded-incident-details). It's also the handle for [dragging the incident onto a team](tasking.md#drag--drop-team-tasking) to task it.
+- **Star**: [stars](interface.md#starring-incidents-and-teams) the incident.
 - Incident ID, with up to three icons underneath:
   - <img class="icon" src="images/icon-incident-photo.png" alt="Photos" height="20"> **Photos**: photos have been uploaded to the incident. Click to open the [photo library](#incident-photos).
   - <img class="icon" src="images/icon-action-pin.png" alt="Outstanding actions" height="20"> **Outstanding actions**: the incident has outstanding *action required* tags. If there's more than one, the number beside the thumbtack shows how many. Click to open the [Incident Timeline](#incident-timeline).
   - <img class="icon" src="images/icon-icems.png" alt="ICEMS" height="20"> **ICEMS**: the incident is linked to ICEMS; hover to see the ICEMS incident number. It turns red when there's an unacknowledged IUM. See [ICEMS](#icems).
 
   ![Incident row showing the photo, outstanding action and ICEMS icons](images/incident-row-icons.png)
-- Received date and time
+- Received (Recv) date and time
 - Assigned HQ
 - Incident type
   - Flood rescue incidents also show the flood rescue category 1–5, e.g. a *Critical Assistance* (category 1) flood rescue shows as `FR-1`.
   - Flood support incidents show the sub-type, e.g. *Medical Resupply*.
+- Situation on scene, up to three lines
 - Status
-  - When tasked, also shows the number of taskings (including completed, called off and untasked teams).
+  - *Active* and *Tasked* incidents also show the number of taskings. This includes completed, called off and untasked teams, unless **Count active taskings only** is on under [Appearance](configuration.md#appearance).
+  - Click the status to [change it](#changing-incident-status).
 - Address
   - For geocoded incidents, click the address to focus the Situation Map on the incident.
+
+Sort by Id, Recv, HQ, Type or Status by clicking the column heading; click again to swap between ascending and descending.
 
 ![Incident Register](images/incident-register.png)
 
@@ -34,9 +40,23 @@ Each row's background colour shows the incident priority:
 | Blue | Immediate |
 | Red | Rescue / life-threatening |
 
+## Changing Incident Status
+
+Click an incident's status to open a dropdown of status changes. Options that don't apply to the incident are greyed out. Opening the dropdown also refreshes the incident, so the options reflect its latest state.
+
+- **Acknowledge**: for *New* (or *Rejected*) incidents.
+- **Reopen**: for *Complete*, *Cancelled* or *Finalised* incidents.
+- **Complete**: only once every tasking is complete, called off or untasked. Requires completion notes.
+- **Reject**: for *New* or *Active* incidents. Requires a reason.
+- **Cancel**: only once every tasking is complete, called off or untasked. Requires a reason.
+
+Each change asks you to confirm before it's made in Beacon.
+
 ## Expanded Incident Details
 
-Click anywhere on an incident row to expand it. The expanded view shows:
+Click anywhere on an incident row to expand it; click again to collapse it. Expanding an incident loads its latest details and taskings from Beacon. Clicking an incident on the map also expands it in the register. Everything in this section is only shown once an incident is expanded.
+
+The expanded view shows:
 
 - Incident tags
 - Outstanding *Action Required* tags: any outstanding notes with action tags. Tags with the same name are grouped with a count, e.g. *Further Action Required ×2*. Click a tag to open the [Incident Timeline](#incident-timeline), where you can [resolve](#action-required-tags--resolving-notes) the notes.
@@ -47,15 +67,18 @@ Click anywhere on an incident row to expand it. The expanded view shows:
 - Incident location details
 - Caller details
 - Contact details
-- Taskings list: every team tasked to the incident, including teams outside your LAD team filters, and untasked, called off and completed teams.
+- [Incident actions](#incident-actions)
+- Taskings list: every team tasked to the incident, including teams outside your LAD team filters, and untasked, called off and completed teams. See [Incident Taskings Actions](#incident-taskings-actions).
+
+To collapse every incident at once, use the **collapse all** button in the [register controls](interface.md#register-controls).
 
 ![Expanded incident details](images/incident-expanded.png)
 
-## Incident Actions
+### Incident Actions
 
 The expanded incident has five action buttons:
 
-- **Task**: opens [Instant Task](tasking.md#instant-task).
+- **Task**: opens [Instant Task](tasking.md#instant-task). Greyed out for *Complete*, *Cancelled*, *Rejected* and *Finalised* incidents.
 - **Target Teams**: finds the closest teams and shows their straight-line distance to the incident. See [Tasking Teams](tasking.md).
 - **Time Line**: opens the [Incident Timeline](#incident-timeline).
 - **New Ops Log**: opens [New Ops Log](logs-and-messages.md#new-ops-log).
@@ -63,9 +86,11 @@ The expanded incident has five action buttons:
 
 ![Incident action buttons](images/incident-actions.png)
 
-## Incident Taskings Actions
+Under the buttons, **Refreshed** shows how long ago the incident's details were loaded. Click it to reload them.
 
-Each team in the incident's taskings list has the same four actions as in the Team Register:
+### Incident Taskings Actions
+
+Each team in the expanded incident's taskings list has the same four actions as in the Team Register:
 
 ![Incident tasking action buttons](images/incident-tasking-actions.png)
 
