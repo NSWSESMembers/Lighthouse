@@ -2060,8 +2060,21 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   }
 }
 
+/* Non-circular rings can't rotate (the shape would spin), so the dashes
+   march along the outline instead — one dash period (4 + 3.5) per cycle. */
+.status-ring-march {
+  animation: status-ring-march 1s linear infinite;
+}
+
+@keyframes status-ring-march {
+  to {
+    stroke-dashoffset: -7.5;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .status-ring-spin {
+  .status-ring-spin,
+  .status-ring-march {
     animation: none;
   }
 }
@@ -2588,6 +2601,14 @@ overflow: hidden;
   -webkit-line-clamp: 5;
   max-height: 6.5em;
   text-align: center;
+}
+
+/* Bootstrap gives disabled buttons pointer-events: none, which also hides
+   their title tooltip. Re-enable hover so the "why disabled" title shows;
+   the disabled attribute still blocks clicks. */
+.btn.btn-disabled-tooltip:disabled {
+  pointer-events: auto;
+  cursor: not-allowed;
 }
 
 /* Time is more actionable at a glance than the date, so it goes on top;

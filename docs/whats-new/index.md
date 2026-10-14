@@ -18,6 +18,16 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD map and dark mode fixes
+
+*15 October 2026 · [v2026.10.15](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.15)*
+
+- **Clicking an incident in an alert works when the Incidents layer is hidden.** The map turns the layer back on, zooms to the incident and opens its popup. This also applies to Spotlight. See [Overlays](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlays).
+- Hiding the **Incidents** layer now also hides the unacknowledged and Active rings, and rescue markers when they aren't clustered. Before, these stayed on the map.
+- The Active ring follows the shape of the incident marker (square, diamond, triangle and so on) instead of always being a circle. See [Incident Status on Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#incident-status-on-markers).
+- **Incidents with no GPS location can't be zoomed to.** The address in the Incident Register is shown in italics and can't be clicked, and a tasking's **Focus on map** button is greyed out. Hover over either to see why. Incidents with no address or GPS location show *No location* instead of "null, null". See [Incident Register](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html).
+- In dark mode, statuses that a tasking or incident can't change to are greyed out in the status menus, the **En route** and **On site** tasking statuses are readable, and boundary and FRAO labels on the map are dark again.
+
 ## LAD user guide reorganised, with search
 
 *14 October 2026*

@@ -552,12 +552,22 @@ export function Job(data = {}, deps = {}) {
     });
 
 
+    // Beacon allows incidents with no GPS fix; those get no map marker and
+    // can't be zoomed to.
+    self.hasLocation = ko.pureComputed(() =>
+        Number.isFinite(self.address.latitude()) && Number.isFinite(self.address.longitude()));
+
+    self.zoomToTitle = ko.pureComputed(() =>
+        self.hasLocation() ? 'Zoom to' : 'No GPS location for this incident');
+
     self.addressDisplayOrGPS = ko.pureComputed(() => {
 
         if (self.address.prettyAddress()) {
             return self.address.prettyAddress();
-        } else {
+        } else if (self.hasLocation()) {
             return `${self.address.latitude()}, ${self.address.longitude()}`;
+        } else {
+            return 'No location';
         }
     });
 
@@ -807,10 +817,14 @@ export function Job(data = {}, deps = {}) {
     }
 
     self.focusAndExpandInList = function () {
-        self.focusMap();
-        // expand the job row
+        // expand the job row first so a map failure can't swallow the click
         self.expand();
         scrollToThisInTable();
+        try {
+            self.focusMap();
+        } catch (err) {
+            console.error("Failed to focus job on map", self.id(), err);
+        }
     };
 
 
