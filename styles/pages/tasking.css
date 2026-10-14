@@ -2060,8 +2060,21 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   }
 }
 
+/* Non-circular rings can't rotate (the shape would spin), so the dashes
+   march along the outline instead — one dash period (4 + 3.5) per cycle. */
+.status-ring-march {
+  animation: status-ring-march 1s linear infinite;
+}
+
+@keyframes status-ring-march {
+  to {
+    stroke-dashoffset: -7.5;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .status-ring-spin {
+  .status-ring-spin,
+  .status-ring-march {
     animation: none;
   }
 }

@@ -337,15 +337,17 @@ function upsertStatusRing(layerGroup, job, marker) {
         const base = marker.options.icon?.options || {};
         const iconSize = base.iconSize || [14, 14];
         const shapeD = base.shapeDiameter || Math.min(iconSize[0], iconSize[1]);
-        const ringR = shapeD / 2 + 4;                 // clear of the shape edge
-        const size = Math.ceil((ringR + 3) * 2);
+        const shapeR = shapeD / 2;
+        const gap = 4;                                 // clear of the shape edge
+        // Sharp shapes (triangle, star) push their outline out up to ~2× gap.
+        const size = Math.ceil((shapeR + gap * 2 + 3) * 2);
         const anchor = [Math.round(size / 2), Math.round(size / 2)];
 
         const ring = L.marker(marker.getLatLng(), {
             pane: 'pane-tippy-top',
             icon: L.divIcon({
                 className: 'status-ring-icon',
-                html: buildStatusRingSvg(size, ringR),
+                html: buildStatusRingSvg(styleForJob(job).shape || 'circle', size, shapeR, gap),
                 iconSize: [size, size],
                 iconAnchor: anchor
             }),
