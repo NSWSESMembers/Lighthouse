@@ -2590,6 +2590,14 @@ overflow: hidden;
   text-align: center;
 }
 
+/* Bootstrap gives disabled buttons pointer-events: none, which also hides
+   their title tooltip. Re-enable hover so the "why disabled" title shows;
+   the disabled attribute still blocks clicks. */
+.btn.btn-disabled-tooltip:disabled {
+  pointer-events: auto;
+  cursor: not-allowed;
+}
+
 /* Time is more actionable at a glance than the date, so it goes on top;
    two explicit lines rather than a wrapped string. */
 .job-cell--received {
