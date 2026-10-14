@@ -383,3 +383,21 @@ describe('hasUnacceptedNotifications', () => {
     expect(j.hasUnacceptedNotifications()).toBe(true);
   });
 });
+
+describe('no-GPS incidents', () => {
+  it('reports hasLocation and a zoom title from the address coordinates', () => {
+    const j = new Job({ Address: { Latitude: -33.8, Longitude: 151.2 } });
+    expect(j.hasLocation()).toBe(true);
+    expect(j.zoomToTitle()).toBe('Zoom to');
+
+    const noGps = new Job({ Address: { PrettyAddress: '1 Test St' } });
+    expect(noGps.hasLocation()).toBe(false);
+    expect(noGps.zoomToTitle()).toBe('No GPS location for this incident');
+  });
+
+  it('shows "No location" rather than "null, null" when there is no address or GPS', () => {
+    expect(new Job({}).addressDisplayOrGPS()).toBe('No location');
+    expect(new Job({ Address: { Latitude: -33.8, Longitude: 151.2 } }).addressDisplayOrGPS()).toBe('-33.8, 151.2');
+    expect(new Job({ Address: { PrettyAddress: '1 Test St' } }).addressDisplayOrGPS()).toBe('1 Test St');
+  });
+});

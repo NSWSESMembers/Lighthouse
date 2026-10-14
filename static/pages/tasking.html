@@ -743,8 +743,7 @@
                                                                                         </button>
                                                                                         <button type="button"
                                                                                             class="btn btn-outline-secondary"
-                                                                                            title="Zoom to"
-                                                                                            data-bind="click: ts.job.focusMap, disable: !ts.job.isFilteredIn(), clickBubble: false">
+                                                                                            data-bind="click: ts.job.focusMap, disable: !ts.job.isFilteredIn() || !ts.job.hasLocation(), attr: { title: ts.job.zoomToTitle }, clickBubble: false">
                                                                                             <i
                                                                                                 class="fa fa-crosshairs"></i>
                                                                                         </button>
@@ -1183,9 +1182,10 @@
                                             <!-- 8. Address -->
                                             <div class="job-cell job-cell--address">
                                                 <span>
-                                                    <div class="d-grid gap-2">
+                                                    <!-- title on the wrapper: a disabled button gets no hover -->
+                                                    <div class="d-grid gap-2" data-bind="attr: { title: j.zoomToTitle }">
                                                         <button class="btn btn-sm btn-outline-dark"
-                                                            data-bind="text: j.addressDisplayOrGPS, flashTextOnChange: j.addressDisplayOrGPS, click: j.focusMap, clickBubble: false,  event: { mouseover: j.mouseEnterAddressButton, mouseleave: j.mouseLeaveAddressButton }"></button>
+                                                            data-bind="text: j.addressDisplayOrGPS, flashTextOnChange: j.addressDisplayOrGPS, click: j.focusMap, disable: !j.hasLocation(), css: { 'fst-italic': !j.hasLocation() }, clickBubble: false,  event: { mouseover: j.mouseEnterAddressButton, mouseleave: j.mouseLeaveAddressButton }"></button>
                                                     </div>
                                                 </span>
                                             </div>
