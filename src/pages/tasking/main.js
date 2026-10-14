@@ -1060,6 +1060,20 @@ function VM() {
                 const lat = job.address.latitude?.();
                 const lng = job.address.longitude?.();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
+                    // Focusing an incident while the Incidents layer is hidden
+                    // would leave the job layers off the map -- zoomToShowLayer
+                    // throws on a cluster group with no map. Treat the focus as
+                    // a request to see it: switch the layer back on (mirrors
+                    // focusing an asset on a hidden asset layer).
+                    if (!self.incidentsVisible()) {
+                        self.incidentsVisible(true);
+                        // deferUpdates queues the subscriber that re-adds the
+                        // layer -- flush it so the layer is on the map before
+                        // zooming to the marker below.
+                        ko.tasks.runEarly();
+                        self.mapVM?.layersDrawer?.refresh();
+                    }
+
                     // If the popup is already open (i.e. this call originated
                     // from the popupopen event chain rather than a deliberate
                     // UI action), bail out.  flyTo can change the zoom level

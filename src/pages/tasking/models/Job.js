@@ -817,10 +817,14 @@ export function Job(data = {}, deps = {}) {
     }
 
     self.focusAndExpandInList = function () {
-        self.focusMap();
-        // expand the job row
+        // expand the job row first so a map failure can't swallow the click
         self.expand();
         scrollToThisInTable();
+        try {
+            self.focusMap();
+        } catch (err) {
+            console.error("Failed to focus job on map", self.id(), err);
+        }
     };
 
 
