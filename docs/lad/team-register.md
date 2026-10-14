@@ -29,13 +29,40 @@ Each row's background colour shows the team's current tasking load, so you can q
 
 If a team can't be matched to a radio asset, a car icon with a cross through it <img class="icon" src="images/icon-unmatched-team.png" alt="Unmatched" height="24"> shows next to its callsign and the map focus button is disabled. See [Setting up a Team for Radio Tracking](assets.md#setting-up-a-team-for-radio-tracking).
 
+## Team Row Actions
+
+Every team row has four action buttons, whether or not the team is expanded:
+
+![Team row action buttons](images/team-row-actions.png)
+
+- **Radio Log**: opens [New Radio Log](logs-and-messages.md#new-radio-log) against the team.
+- **Message Team**: opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients. Greyed out if the team has no members.
+- **Open in Remote Tab**: opens the team's edit page in the Beacon [remote tab](getting-started.md#remote-beacon-tab), e.g. to change the team's name or members.
+- **Focus on map**: focuses the Situation Map on the team's radio location. Greyed out if no radios are matched.
+  - If multiple radios are matched, the button shows the count <img class="icon" src="images/icon-multiple-radios.png" alt="2" height="16"> and toggles between them on each click.
+  - If one radio is matched to multiple teams, a yellow group icon <img class="icon" src="images/icon-shared-radio.png" alt="Shared radio" height="16"> is shown.
+
 ## Expanded Team Details
 
-Click anywhere on a team row to expand it. The expanded view lists team members (including the team leader) and the team's taskings.
+Click anywhere on a team row (or the **+** at its left) to expand it; click again to collapse it. Expanding a team reloads its details and taskings from Beacon. Everything in this section is only shown once a team is expanded:
 
-The taskings list is filtered by the **Tasking Status** filter and shows all matching taskings, including incidents outside your incident filter. By default this is Tasked, Enroute, Onsite and Offsite.
+- [Team Members](#team-members), including the team leader
+- [Matched Assets](#matched-assets), the radios and satellite trackers tracked against the team
+- [Team Taskings](#team-taskings), with actions for each tasking
+
+To collapse every team at once, use the **collapse all** button in the [register controls](interface.md#register-controls).
 
 ![Expanded team details](images/team-expanded.png)
+
+### Team Members
+
+The expanded view lists the team's members, including the team leader.
+
+#### Toggle Member Capability
+
+Show or hide member capabilities with the tags icon to the right of the **Team Members** heading. Hidden by default.
+
+![Member capability toggle](images/team-member-capability-toggle.png)
 
 ### Matched Assets
 
@@ -59,36 +86,17 @@ A team with only one matched asset has no stars, and that asset is always used.
 
 The focus button and [In Map View](interface.md#listing-only-whats-in-the-map-view) still use all of a team's matched assets.
 
-### Toggle Member Capability
+### Team Taskings
 
-Show or hide member capabilities with the tags icon to the right of the **Team Members** heading. Hidden by default.
+The **Taskings** list in the expanded view shows the incidents tasked to the team that match your **Tasking Status** filter (by default Tasked, Enroute, Onsite and Offsite), including incidents outside your incident filter. If the team has taskings outside your filters, a **(x hidden)** count appears next to the **Taskings** heading.
 
-![Member capability toggle](images/team-member-capability-toggle.png)
-
-## Team Row Actions
-
-Each team row has four action buttons:
-
-![Team row action buttons](images/team-row-actions.png)
-
-- **Radio Log**: opens [New Radio Log](logs-and-messages.md#new-radio-log) against the team.
-- **Message Team**: opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients. Greyed out if the team has no members.
-- **Open in Remote Tab**: opens the team's edit page in the Beacon [remote tab](getting-started.md#remote-beacon-tab), e.g. to change the team's name or members.
-- **Focus on map**: focuses the Situation Map on the team's radio location. Greyed out if no radios are matched.
-  - If multiple radios are matched, the button shows the count <img class="icon" src="images/icon-multiple-radios.png" alt="2" height="16"> and toggles between them on each click.
-  - If one radio is matched to multiple teams, a yellow group icon <img class="icon" src="images/icon-shared-radio.png" alt="Shared radio" height="16"> is shown.
-
-## Team Taskings
-
-The Team Taskings section lists incidents tasked to the team that are within your LAD filters and tasking statuses. If the team has taskings outside your filters, a **(x hidden)** count appears next to the **Taskings** heading.
-
-### Refresh
+#### Refresh
 
 Click **Refresh** to reload the team's tasking details.
 
 ![Refresh button](images/team-taskings-refresh.png)
 
-### Reordering Taskings
+#### Reordering Taskings
 
 1. Click the reorder button to enter reordering mode.
 
@@ -102,9 +110,9 @@ Click **Refresh** to reload the team's tasking details.
 
    ![Save or cancel the new order](images/reorder-save.png)
 
-## Team Tasking Actions
+#### Team Tasking Actions
 
-Each tasking under a team has four actions:
+Each tasking in the list has four actions:
 
 - **Radio Log** (against the incident): opens [New Radio Log](logs-and-messages.md#new-radio-log), logged against the incident and including the team's callsign.
 - **Message Team** (against the incident): opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients, associated with the incident.
@@ -113,6 +121,6 @@ Each tasking under a team has four actions:
 
 ![Team tasking actions](images/team-tasking-actions.png)
 
-## Tasking Status
+#### Tasking Status
 
 Click a tasking's status to change it, e.g. to *En-Route* or *On-Site*. See [Tasking Status](tasking.md#tasking-status).
