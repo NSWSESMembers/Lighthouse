@@ -456,20 +456,7 @@ function VM() {
     self.incidentsVisible = ko.observable(localStorage.getItem('map.incidentsVisible') !== 'false');
     self.incidentsVisible.subscribe(v => {
         localStorage.setItem('map.incidentsVisible', v ? 'true' : 'false');
-
-        if (v) {
-            // Show incidents – add the appropriate layer
-            const targetLayer = self.mapVM.clusteringEnabled
-                ? self.mapVM.jobClusterGroup
-                : self.mapVM.unclusteredJobLayer;
-            if (!map.hasLayer(targetLayer)) {
-                targetLayer.addTo(map);
-            }
-        } else {
-            // Hide incidents – remove both possible layers
-            map.removeLayer(self.mapVM.jobClusterGroup);
-            map.removeLayer(self.mapVM.unclusteredJobLayer);
-        }
+        self.mapVM.setIncidentsVisible(v);
     });
 
     self.pageIsLoading = ko.pureComputed(() => {
