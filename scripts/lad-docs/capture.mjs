@@ -136,12 +136,18 @@ const SHOTS = {
   },
 
   'incident-expanded': {
+    // Taller, so the whole expanded panel fits in the incident pane.
+    launch: { viewport: { width: 1600, height: 1300 } },
     run: async (page) => {
       await closeConfigAndLoad(page);
-      // Expand a tasked incident so the tasking timeline is visible.
-      await page.locator('tr.job-row:has-text("Tasked")').first().locator('[data-bind*="toggleAndExpand"]').first().click();
+      // Expand a tasked incident with a tag and a separate contact, so the
+      // tags, the "Called By" line and the taskings list are all visible.
+      await page.locator('tr.job-row[data-job-id="70005"] [data-bind*="toggleAndExpand"]').first().click();
       await settle(page, 800);
+      // The register's sticky header would cover the top of the crop.
+      await page.addStyleTag({ content: 'table.jobs > thead { visibility: hidden; }' });
     },
+    target: (page) => page.locator('tr.job-row .job-details:visible'),
   },
 
   // Team register's toolbar buttons (star -> gear), without the search box.
