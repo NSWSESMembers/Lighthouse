@@ -117,7 +117,7 @@ Each tasking in the list has four actions:
 - **Radio Log** (against the incident): opens [New Radio Log](logs-and-messages.md#new-radio-log), logged against the incident and including the team's callsign.
 - **Message Team** (against the incident): opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients, associated with the incident.
 - **Open Incident in Remote Tab**: opens the incident in the Beacon remote tab.
-- **Focus on map**: focuses the Situation Map on the incident if it is geocoded and within your incident filters. Greyed out if the incident is outside your filters (it won't be on the map).
+- **Focus on map**: focuses the Situation Map on the incident if it is geocoded and within your incident filters. Greyed out if the incident is outside your filters or has no GPS location (it won't be on the map).
 
 ![Team tasking actions](images/team-tasking-actions.png)
 
