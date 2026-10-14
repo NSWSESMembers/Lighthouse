@@ -221,6 +221,9 @@ export function buildScenario(now = new Date()) {
   const jobs = JOB_SPECS.map(([status, prio, type, situation, hoursAgo, tagKeys], i) => {
     const [num, street, locality, postcode, lat, lng] = ADDRESSES[i % ADDRESSES.length];
     const caller = person(i + 5);
+    // Every other incident has a separate on-site contact, so the expanded
+    // view's "Called By" line shows; the rest have the caller as the contact.
+    const contact = i % 2 ? person(i + 10) : null;
     const received = t(hoursAgo);
     const history = [{ Type: 1, Name: 'New', Description: 'New', Timelogged: received, CreatedOn: received, CreatedBy: OPERATOR }];
     if (status !== 'New') {
@@ -245,11 +248,11 @@ export function buildScenario(now = new Date()) {
       CallerFirstName: caller.FirstName,
       CallerLastName: caller.LastName,
       ICEMSIncidentIdentifier: ICEMS_IDS[i] ?? null,
-      ContactCalled: false,
+      ContactCalled: !contact,
       CallerPhoneNumber: fakePhone(i),
-      ContactFirstName: null,
-      ContactLastName: null,
-      ContactPhoneNumber: null,
+      ContactFirstName: contact?.FirstName ?? null,
+      ContactLastName: contact?.LastName ?? null,
+      ContactPhoneNumber: contact ? fakePhone(i + 50) : null,
       EntityAssignedTo: { ...HQ },
       LGA: 'Demo City Council',
       Sector: null,
@@ -340,8 +343,8 @@ export function buildScenario(now = new Date()) {
     Type: j.Type,
     CallerName: `${j.CallerFirstName} ${j.CallerLastName}`,
     CallerNumber: j.CallerPhoneNumber,
-    ContactName: null,
-    ContactNumber: null,
+    ContactName: j.ContactFirstName && `${j.ContactFirstName} ${j.ContactLastName}`,
+    ContactNumber: j.ContactPhoneNumber,
     PermissionToEnterPremises: j.PermissionToEnterPremises,
     HowToEnterPremises: null,
     JobReceived: j.JobReceived,

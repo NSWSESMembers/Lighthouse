@@ -65,8 +65,7 @@ The expanded view shows:
 - Incident details, including the assigned sector
   - Click the current sector to choose a different one from a dropdown.
 - Incident location details
-- Caller details
-- Contact details
+- Contact details: the contact's name and number. If someone else made the call, a *Called By* line shows the caller's name and number; it's hidden when the caller is the contact.
 - [Incident actions](#incident-actions)
 - Taskings list: every team tasked to the incident, including teams outside your LAD team filters, and untasked, called off and completed teams. See [Incident Taskings Actions](#incident-taskings-actions).
 
