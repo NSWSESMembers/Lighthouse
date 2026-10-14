@@ -256,6 +256,27 @@ export function MapVM(Lmap, root) {
   self.jobPulseLayer = L.layerGroup().addTo(self.map);
   self.jobStatusRingLayer = L.layerGroup().addTo(self.map);
 
+  /**
+   * Show/hide every incident layer together: the active marker layer
+   * (cluster group or unclustered), the standalone rescue layer, and the
+   * pulse/status rings that sit on their own layers outside the cluster.
+   */
+  self.setIncidentsVisible = function (visible) {
+    const markerLayer = self.clusteringEnabled ? self.jobClusterGroup : self.unclusteredJobLayer;
+    const layers = [markerLayer, self.rescueJobLayer, self.jobPulseLayer, self.jobStatusRingLayer];
+    if (visible) {
+      layers.forEach(l => { if (!self.map.hasLayer(l)) l.addTo(self.map); });
+      self._syncPulseRings();
+    } else {
+      self.map.removeLayer(self.jobClusterGroup);
+      self.map.removeLayer(self.unclusteredJobLayer);
+      layers.forEach(l => self.map.removeLayer(l));
+    }
+  };
+  if (localStorage.getItem('map.incidentsVisible') === 'false') {
+    self.setIncidentsVisible(false);
+  }
+
   // id → marker lookup (flat, no per-type groups)
   self.jobMarkerIndex = new Map();
 

@@ -194,16 +194,20 @@ export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2
 };
 
 /**
- * SVG for the Active "marching ring" — a dashed circle in a spinning <g>.
- * Rotation (compositor-only) reads as marching ants at this size and is far
- * cheaper than animating stroke-dashoffset on every marker.
+ * SVG for the Active "marching ring" — a dashed outline of the marker's shape,
+ * `gap` px clear of its edge.  `shapeR` is the shape's outer radius.
+ * Circles spin a <g> (compositor-only, cheap); any other shape would visibly
+ * rotate, so those march the dashes along the outline via stroke-dashoffset.
  */
-export function buildStatusRingSvg(box, ringRadius, colour = ACTIVE_RING_COLOUR) {
+export function buildStatusRingSvg(shape, box, shapeR, gap, colour = ACTIVE_RING_COLOUR) {
     const c = box / 2;
+    const isCircle = !SHAPED_OUTLINES.has(shape);
+    const cls = isCircle ? "status-ring-spin" : "status-ring-march";
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}" viewBox="0 0 ${box} ${box}">
-              <g class="status-ring-spin" style="transform-box:fill-box;transform-origin:center">
-                <circle cx="${c}" cy="${c}" r="${ringRadius}" fill="none" stroke="${colour}"
-                        stroke-width="2.75" stroke-linecap="round" stroke-dasharray="4 3.5" />
+              <g class="${cls}" style="transform-box:fill-box;transform-origin:center"
+                 fill="none" stroke="${colour}" stroke-width="2.75" stroke-linecap="round"
+                 stroke-linejoin="round" stroke-dasharray="4 3.5">
+                ${shapeOutlineSvg(shape, c, c, shapeR, gap)}
               </g>
             </svg>`;
 }
@@ -241,63 +245,7 @@ export function buildPulseRingSvg(shape, w, h) {
     const cx = w / 2, cy = h / 2;
     const sw = 2;
     const r = Math.min(w, h) / 2 - sw;
-
-    let outline;
-    switch (shape) {
-        case "circle":
-            outline = `<circle cx="${cx}" cy="${cy}" r="${r}" />`;
-            break;
-        case "square": {
-            outline = `<rect x="${cx - r}" y="${cy - r}" width="${2 * r}" height="${2 * r}" rx="2" ry="2" />`;
-            break;
-        }
-        case "diamond":
-            outline = `<polygon points="${cx},${cy - r} ${cx + r},${cy} ${cx},${cy + r} ${cx - r},${cy}" />`;
-            break;
-        case "triangle": {
-            const th = r * Math.sqrt(3);
-            outline = `<polygon points="${cx},${cy - r} ${cx - th / 2},${cy + r / 2} ${cx + th / 2},${cy + r / 2}" />`;
-            break;
-        }
-        case "hex": {
-            const pts = [];
-            for (let i = 0; i < 6; i++) {
-                const a = (Math.PI / 3) * i - Math.PI / 6;
-                pts.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
-            }
-            outline = `<polygon points="${pts.join(" ")}" />`;
-            break;
-        }
-        case "star": {
-            const spikes = 5, step = Math.PI / spikes, pts = [];
-            for (let i = 0; i < 2 * spikes; i++) {
-                const len = i % 2 === 0 ? r : r / 2.5;
-                const a = i * step - Math.PI / 2;
-                pts.push(`${cx + Math.cos(a) * len},${cy + Math.sin(a) * len}`);
-            }
-            outline = `<polygon points="${pts.join(" ")}" />`;
-            break;
-        }
-        case "pentagon": {
-            const pts = [];
-            for (let i = 0; i < 5; i++) {
-                const a = (2 * Math.PI / 5) * i - Math.PI / 2;
-                pts.push(`${cx + r * Math.cos(a)},${cy + r * Math.sin(a)}`);
-            }
-            outline = `<polygon points="${pts.join(" ")}" />`;
-            break;
-        }
-        case "teardrop":
-            outline = `<path d="M ${cx} ${cy - r} C ${cx + r} ${cy - r / 3}, ${cx + r / 2} ${cy + r}, ${cx} ${cy + r} C ${cx - r / 2} ${cy + r}, ${cx - r} ${cy - r / 3}, ${cx} ${cy - r} Z" />`;
-            break;
-        case "cross": {
-            const s = r * 0.35;
-            outline = `<path d="M${cx - s},${cy - r} h${2 * s} v${r - s} h${r - s} v${2 * s} h${-(r - s)} v${r - s} h${-(2 * s)} v${-(r - s)} h${-(r - s)} v${-(2 * s)} h${r - s}Z" />`;
-            break;
-        }
-        default:
-            outline = `<circle cx="${cx}" cy="${cy}" r="${r}" />`;
-    }
+    const outline = shapeOutlineSvg(shape, cx, cy, r);
 
     return `<svg class="pulse-ring-shape" xmlns="http://www.w3.org/2000/svg"
                 width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
@@ -307,6 +255,61 @@ export function buildPulseRingSvg(shape, w, h) {
             </svg>`;
 }
 
+// Shapes with their own outline; anything else (circle, wave, unknown) falls
+// back to a circle.
+const SHAPED_OUTLINES = new Set(["square", "diamond", "triangle", "hex", "star", "pentagon", "teardrop", "cross"]);
 
+/**
+ * Unstyled outline element for `shape`, centred on (cx, cy), radius `r`
+ * (same meaning as shapeInnerSvg's radius).  `gap` grows the outline so it
+ * sits `gap` px clear of the shape's edges — polygons push their vertices
+ * out by gap/cos(π/n) so the gap is even along the flat sides, not just at
+ * the corners.
+ */
+function shapeOutlineSvg(shape, cx, cy, r, gap = 0) {
+    const poly = (n, R, rot) => {
+        const pts = [];
+        for (let i = 0; i < n; i++) {
+            const a = (2 * Math.PI / n) * i + rot;
+            pts.push(`${cx + R * Math.cos(a)},${cy + R * Math.sin(a)}`);
+        }
+        return `<polygon points="${pts.join(" ")}" />`;
+    };
+    const grow = (n) => r + gap / Math.cos(Math.PI / n);
 
-
+    switch (shape) {
+        case "square": {
+            const h = r + gap;
+            return `<rect x="${cx - h}" y="${cy - h}" width="${2 * h}" height="${2 * h}" rx="${2 + gap}" ry="${2 + gap}" />`;
+        }
+        case "diamond":
+            return poly(4, grow(4), -Math.PI / 2);
+        case "triangle":
+            return poly(3, grow(3), -Math.PI / 2);
+        case "hex":
+            return poly(6, grow(6), -Math.PI / 6);
+        case "pentagon":
+            return poly(5, grow(5), -Math.PI / 2);
+        case "star": {
+            // Sharp tips need more push than the notches to keep a visible gap.
+            const outer = r + gap * 2, inner = r / 2.5 + gap * 1.2;
+            const spikes = 5, step = Math.PI / spikes, pts = [];
+            for (let i = 0; i < 2 * spikes; i++) {
+                const len = i % 2 === 0 ? outer : inner;
+                const a = i * step - Math.PI / 2;
+                pts.push(`${cx + Math.cos(a) * len},${cy + Math.sin(a) * len}`);
+            }
+            return `<polygon points="${pts.join(" ")}" />`;
+        }
+        case "teardrop": {
+            const R = r + gap * 1.2;
+            return `<path d="M ${cx} ${cy - R} C ${cx + R} ${cy - R / 3}, ${cx + R / 2} ${cy + R}, ${cx} ${cy + R} C ${cx - R / 2} ${cy + R}, ${cx - R} ${cy - R / 3}, ${cx} ${cy - R} Z" />`;
+        }
+        case "cross": {
+            const L = r + gap, s = r * 0.35 + gap, a = L - s;
+            return `<path d="M${cx - s},${cy - L} h${2 * s} v${a} h${a} v${2 * s} h${-a} v${a} h${-(2 * s)} v${-a} h${-a} v${-(2 * s)} h${a}Z" />`;
+        }
+        default:
+            return `<circle cx="${cx}" cy="${cy}" r="${r + gap}" />`;
+    }
+}
