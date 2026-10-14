@@ -359,6 +359,15 @@ body.dark-mode .dropdown-item:active {
   color: #fff;
 }
 
+/* Invalid options (e.g. statuses a tasking can't move to) - must stay visibly
+   greyed out, otherwise they read the same as the valid ones. !important to
+   beat the `.row-* *` and `fieldset *` text overrides the menus sit inside */
+body.dark-mode .dropdown-item.disabled,
+body.dark-mode .dropdown-item:disabled {
+  color: #6c6c6c !important;
+  background-color: transparent;
+}
+
 body.dark-mode .dropdown-divider {
   border-color: #444;
 }
@@ -495,6 +504,13 @@ body.dark-mode .row-general {
 
 body.dark-mode .row-general * {
   color: #e0e0e0 !important;
+}
+
+/* Tasking status pills on light backgrounds (En route / On site) keep dark
+   text - the row rules above would otherwise paint them light-on-light */
+body.dark-mode .team-status-button.bg-info,
+body.dark-mode .team-status-button.bg-warning {
+  color: #000 !important;
 }
 
 /* Team row colorings */
