@@ -1162,7 +1162,9 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     function executeRadio(teamVm, jobVm) {
         if (!teamVm || !jobVm) return;
         rootVm._closeSpotlight?.();
-        rootVm.attachJobRadioLogModalByTeamAndIncident?.(jobVm.id?.(), safeStr(teamVm.callsign));
+        // The Ops/Radio Log dialog finds the tasking from the incident + team,
+        // so the status change / Task Team options work from here too.
+        rootVm.openRadioOpsLogModal?.({ job: jobVm, teamCallsign: safeStr(teamVm.callsign) });
     }
 
     self.openResult = (r) => {

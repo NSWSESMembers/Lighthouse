@@ -21,7 +21,7 @@ Add any other tags you need, enter your message in **Text**, then click **Submit
 
 ![Resulting radio log entry](images/radio-log-entry.png)
 
-The Spotlight [`radio`](spotlight.md#radio-log-command--radio) command opens a simpler version of the dialog with only a text box. The *Radio* tag and the subject are set for you.
+The Spotlight [`radio`](spotlight.md#radio-log-command--radio) command opens the same dialog with the incident and team filled in, the same as clicking Radio Log on a tasking.
 
 ### Changing the Team's Status
 

@@ -23,7 +23,6 @@ import { MapVM } from './viewmodels/Map.js';
 import { JobTimeline } from "./viewmodels/JobTimeline.js";
 
 import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
-import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
 import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
 import { OpsLogResolveModalVM } from "./viewmodels/OpsLogResolveModalVM.js";
@@ -513,7 +512,6 @@ function VM() {
 
     ///opslog short cuts
     self.CreateOpsLogModalVM = new CreateOpsLogModalVM(self);
-    self.CreateRadioLogModalVM = new CreateRadioLogModalVM(self);
     self.SendSMSModalVM = new SendSMSModalVM(self);
     self.selectedJob = ko.observable(null);
 
@@ -1363,28 +1361,6 @@ function VM() {
         self.jobTimelineVM.openForJob(job);
         modal.show();
     }
-
-    self.attachJobRadioLogModalByTeamAndIncident = function (jobId, teamCallsign) {
-        const modalEl = document.getElementById('RadioLogModal');
-        const modal = new bootstrap.Modal(modalEl);
-
-        self.CreateRadioLogModalVM.modalInstance = modal;
-
-        self.CreateRadioLogModalVM.openFromTeamPlusIncident(jobId, teamCallsign);
-        modal.show();
-
-        modalEl.addEventListener('shown.bs.modal', function () {
-            document.getElementById('RadioLogTextInput')?.focus();
-        }, { once: true });
-
-        installModalHotkeys({
-            modalEl,
-            onSave: () => self.CreateRadioLogModalVM.submit?.(),
-            onClose: () => modal.hide(),
-            allowInInputs: true // text-heavy modal
-        });
-
-    };
 
     // See utils/smsHelpers.js for the recipient/prefill-text building.
     self.attachSendSMSModal = function (recipients, team = null, tasking = null, job = null) {

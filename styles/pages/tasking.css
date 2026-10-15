@@ -2426,23 +2426,6 @@ overflow: hidden;
   outline: none;
 }
 
-#RadioLogModal input[type='text'],
-#RadioLogModal textarea {
-  width: 100%;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  padding: 6px 8px;
-  font-size: 0.9rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-/* Focus state */
-#RadioLogModal input[type='text']:focus,
-#RadioLogModal textarea:focus {
-  border-color: #1e8740; /* theme colour? */
-  box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
-  outline: none;
-}
-
 .tag-list {
   margin-bottom: 0.25rem;
 }

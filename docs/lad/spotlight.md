@@ -60,7 +60,7 @@ Creates a radio log against a team on an incident. Works the same way as `task`:
 
    ![Team and incident matched](images/spotlight-radio-3.png)
 
-4. Press <kbd>Enter</kbd> to open the [New Radio Log](logs-and-messages.md#new-radio-log) dialog.
+4. Press <kbd>Enter</kbd> to open the [New Radio Log](logs-and-messages.md#new-radio-log) dialog with the incident and team filled in. If the team is tasked to the incident you can [change its status](logs-and-messages.md#changing-the-teams-status); if not, you can [task it](logs-and-messages.md#tasking-the-team-from-a-log).
 
 ### Ops Log command — `log`
 

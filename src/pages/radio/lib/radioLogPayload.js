@@ -1,7 +1,7 @@
 /*
   Pure payload/validation logic for a Radio Ops Console entry -- same field
-  shape as RadioLogModalVM.js's toPayload()/validate() (src/pages/tasking/
-  viewmodels/RadioLogModalVM.js), extracted so it's usable and testable
+  shape as OpsLogModalVM.js's toPayload()/validate() (src/pages/tasking/
+  viewmodels/OpsLogModalVM.js), extracted so it's usable and testable
   without Knockout or a parent tasking view model.
 */
 

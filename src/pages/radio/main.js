@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // data-bs-target -- see the "wires up" comment above), so there's no
     // matching addEventListener here. What the view model needs is a
     // reference to *close* it once confirmResolve() actually succeeds --
-    // same modalInstance convention as RadioLogModalVM.js's own.
+    // same modalInstance convention as OpsLogModalVM.js's own.
     var resolveModalEl = document.getElementById('radioResolveModal');
     viewModel.resolveModalInstance = resolveModalEl ? new bootstrap.Modal(resolveModalEl) : null;
     // Same Ctrl/Cmd+Enter-to-save, Esc-to-close convention as every other
@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Opened declaratively from several Resolve buttons (data-bs-toggle),
     // not a single JS .show() call to hang a one-off focus() off of -- so
     // this listens for every open instead, same as tasking/main.js's own
-    // RadioLogModalVM focus-on-shown (just not { once: true }, since this
+    // Ops/Radio Log dialog focus-on-shown (just not { once: true }, since this
     // modal reopens many times across a session).
     resolveModalEl?.addEventListener('shown.bs.modal', function () {
       document.getElementById('radioResolveTextInput')?.focus();

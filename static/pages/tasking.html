@@ -4501,41 +4501,6 @@
 
 
     <!-- RADIO LOG MODAL -->
-    <div class="modal fade" id="RadioLogModal" tabindex="-1" aria-labelledby="RadioLogModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" data-bind="with: CreateRadioLogModalVM">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="RadioLogModalLabel">
-                        <span data-bind="text: headerLabel"></span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
-                        <span data-bind="text: errorMessage"></span>
-                    </div>
-                    <textarea class="modal-textarea-full" id="RadioLogTextInput" rows="8" maxlength="4000"
-                        data-bind="textInput: text"></textarea>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary d-flex align-items-center gap-2"
-                        data-bind="click: submit, disable: submitting">
-                        <!-- ko if: submitting -->
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        <span>Submitting…</span>
-                        <!-- /ko -->
-                        <!-- ko ifnot: submitting -->
-                        <span>Submit</span>
-                        <!-- /ko -->
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- New Ops Log Modal -->
     <!-- Need to add some sort of error message if it fails -->
     <div class="modal fade" id="CreateOpsLogModal" tabindex="-1" aria-labelledby="CreateOpsLogModalLabel"
@@ -4597,7 +4562,7 @@
                     </div>
                     <h6>Subject</h6>
                     <textarea class="modal-textarea-full" id="OpsLogSubjectInput" rows="1" maxlength="50"
-                        data-bind="value: subject"></textarea>
+                        data-bind="textInput: subject"></textarea>
 
                     <!-- Job & Team selectors (same row) -->
                     <div class="row mb-2 mt-2">
@@ -4643,8 +4608,10 @@
                     </div>
 
                     <h6>Text</h6>
+                    <!-- textInput (not value), so Ctrl+Enter submits what's typed
+                         without the field having to lose focus first -->
                     <textarea class="modal-textarea-full" id="OpsLogTextInput" rows="8" maxlength="4000"
-                        data-bind="value: text"></textarea>
+                        data-bind="textInput: text"></textarea>
 
                     <!-- Team status change details (only for statuses that need them).
                          Nothing is sent until Submit. -->
