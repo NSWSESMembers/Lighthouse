@@ -78,18 +78,20 @@ export function CreateOpsLogModalVM(parentVM) {
     self.initTags();
   }
 
-  // Open for a new radio log — auto-selects the "Radio" contact method tag
-  self.openForRadioLog = async (job) => {
+  // Open for a new radio log — auto-selects the "Radio" contact method tag.
+  // Optionally prefills the incident (job) and the team field/subject (teamCallsign).
+  self.openForRadioLog = async ({ job = null, teamCallsign = "" } = {}) => {
     self.resetFields();
-    if (job && typeof job.id === 'function') {
-      self.jobId(job.id() || "");
-      self.jobIdInput(job.identifier ? job.identifier() : '');
-      self.headerLabel(`New Radio Log for ${job.identifier() || ""}`);
-    } else {
-      self.jobId("");
-      self.jobIdInput("");
-      self.headerLabel("New Radio Log");
+    const hasJob = job && typeof job.id === 'function';
+    const jobIdentifier = hasJob && job.identifier ? job.identifier() || "" : "";
+    self.jobId(hasJob ? job.id() || "" : "");
+    self.jobIdInput(jobIdentifier);
+    if (teamCallsign) {
+      self.teamInput(teamCallsign);
+      self.subject(teamCallsign);
     }
+    const target = [teamCallsign, jobIdentifier].filter(Boolean).join(" on ");
+    self.headerLabel(target ? `New Radio Log for ${target}` : "New Radio Log");
     self.initTags();
 
     // Auto-select the "Radio" tag in Contact Methods (group 3)

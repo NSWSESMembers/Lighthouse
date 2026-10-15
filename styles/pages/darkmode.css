@@ -407,6 +407,27 @@ body.dark-mode .modal-body div {
   color: #e0e0e0;
 }
 
+/* Tag pills (tagFactory.js classes, e.g. the Ops Log modal) set their own
+   text colour in tasking.css -- the generic span rules above would otherwise
+   wash out the selected pills (white background, coloured text). span.label.tag
+   outranks body.dark-mode .modal-body span / .accordion-body span. */
+body.dark-mode span.label.tag {
+  color: #fff;
+}
+
+body.dark-mode span.label.tag-note-selected {
+  color: #6e663c;
+}
+
+body.dark-mode span.label.tag-further-action-selected {
+  color: #ee0039;
+}
+
+body.dark-mode .label.tag span,
+body.dark-mode .label.tag i {
+  color: inherit;
+}
+
 /* Accordion */
 body.dark-mode .accordion-button {
   background-color: #2d2d2d;

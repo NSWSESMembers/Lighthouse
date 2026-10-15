@@ -1111,7 +1111,7 @@ function VM() {
             },
 
             openRadioLogModal: (tasking) => {
-                self.attachJobRadioLogModal(tasking);
+                self.openRadioOpsLogModal({ job: tasking.job, teamCallsign: tasking.teamCallsign() });
             },
 
             openNewOpsLogModal: (job) => {
@@ -1216,7 +1216,7 @@ function VM() {
                 }),
 
             openRadioLogModal: (team) => {
-                self.attachTeamRadioLogModal(team);
+                self.openRadioOpsLogModal({ teamCallsign: team.callsign() });
             },
 
             teamTaskStatusFilter: () => self.config.teamTaskStatusFilter(),
@@ -1364,28 +1364,6 @@ function VM() {
         modal.show();
     }
 
-    self.attachJobRadioLogModal = function (tasking) {
-        const modalEl = document.getElementById('RadioLogModal');
-        const modal = new bootstrap.Modal(modalEl);
-
-        self.CreateRadioLogModalVM.modalInstance = modal;
-
-        self.CreateRadioLogModalVM.openForTasking(tasking);
-        modal.show();
-
-        modalEl.addEventListener('shown.bs.modal', function () {
-            document.getElementById('RadioLogTextInput')?.focus();
-        }, { once: true });
-
-        installModalHotkeys({
-            modalEl,
-            onSave: () => self.CreateRadioLogModalVM.submit?.(),
-            onClose: () => modal.hide(),
-            allowInInputs: true // text-heavy modal
-        });
-
-    };
-
     self.attachJobRadioLogModalByTeamAndIncident = function (jobId, teamCallsign) {
         const modalEl = document.getElementById('RadioLogModal');
         const modal = new bootstrap.Modal(modalEl);
@@ -1447,30 +1425,6 @@ function VM() {
 
     }
 
-    self.attachTeamRadioLogModal = function (team) {
-        const modalEl = document.getElementById('RadioLogModal');
-        const modal = new bootstrap.Modal(modalEl);
-
-        const vm = self.CreateRadioLogModalVM;
-
-        vm.modalInstance = modal;
-
-        vm.openForTeam(team);
-        modal.show();
-
-        modalEl.addEventListener('shown.bs.modal', function () {
-            document.getElementById('RadioLogTextInput')?.focus();
-        }, { once: true });
-
-        installModalHotkeys({
-            modalEl,
-            onSave: () => self.CreateRadioLogModalVM.submit?.(),
-            onClose: () => modal.hide(),
-            allowInInputs: true // text-heavy modal
-        });
-
-    };
-
     self.attachNewOpsLogModal = function (job) {
         const modalEl = document.getElementById('CreateOpsLogModal');
         const modal = new bootstrap.Modal(modalEl);
@@ -1512,7 +1466,14 @@ function VM() {
         }, { once: true });
     };
 
+    // Toolbar button -- KO passes ($data, event), so don't forward them as opts.
     self.openBlankRadioOpsLogModal = function() {
+        self.openRadioOpsLogModal();
+    };
+
+    // Radio log in the Ops Log modal with the Radio tag auto-selected.
+    // opts: { job, teamCallsign } -- both optional, used to prefill.
+    self.openRadioOpsLogModal = function(opts = {}) {
         const modalEl = document.getElementById('CreateOpsLogModal');
         const modal = new bootstrap.Modal(modalEl);
 
@@ -1520,7 +1481,7 @@ function VM() {
 
         vm.modalInstance = modal;
 
-        vm.openForRadioLog({}); // blank radio log with Radio tag auto-selected
+        vm.openForRadioLog(opts);
         modal.show();
 
         modalEl.addEventListener('shown.bs.modal', function () {
