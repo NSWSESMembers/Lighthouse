@@ -1,5 +1,26 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 import ko from "knockout";
+import { addMinutesToInputTime, statusColorClass } from "../models/Tasking.js";
+
+// Turns a failed status change (BeaconApiError or network error) into
+// something readable for the modal's error banner.
+function describeStatusError(err) {
+  if (err && err.name === "BeaconApiError") {
+    if (err.status === 401 || err.status === 403) {
+      return "Beacon refused the request (your session may have expired)";
+    }
+    let msg = "";
+    try {
+      const body = JSON.parse(err.body);
+      const modelState = body && body.ModelState ? Object.values(body.ModelState).flat()[0] : "";
+      msg = (body && (body.Message || body.message || body.ExceptionMessage)) || modelState || "";
+    } catch (_) { /* not JSON -- fall back to the status code */ }
+    return msg
+      ? `Beacon said "${msg}"`
+      : `Beacon returned an error (${err.status}${err.statusText ? " " + err.statusText : ""})`;
+  }
+  return "couldn't reach Beacon";
+}
 
 export function CreateOpsLogModalVM(parentVM) {
   const self = this;
@@ -80,7 +101,8 @@ export function CreateOpsLogModalVM(parentVM) {
 
   // Open for a new radio log — auto-selects the "Radio" contact method tag.
   // Optionally prefills the incident (job) and the team field/subject (teamCallsign).
-  self.openForRadioLog = async ({ job = null, teamCallsign = "" } = {}) => {
+  // Passing the tasking as well enables the team status change in the footer.
+  self.openForRadioLog = async ({ job = null, teamCallsign = "", tasking = null } = {}) => {
     self.resetFields();
     const hasJob = job && typeof job.id === 'function';
     const jobIdentifier = hasJob && job.identifier ? job.identifier() || "" : "";
@@ -92,6 +114,8 @@ export function CreateOpsLogModalVM(parentVM) {
     }
     const target = [teamCallsign, jobIdentifier].filter(Boolean).join(" on ");
     self.headerLabel(target ? `New Radio Log for ${target}` : "New Radio Log");
+    // after the incident/team fields are set, so showStatusChange sees a match
+    self.tasking(tasking);
     self.initTags();
 
     // Auto-select the "Radio" tag in Contact Methods (group 3)
@@ -147,25 +171,163 @@ export function CreateOpsLogModalVM(parentVM) {
       return true;
   }
 
+  function showSubmitError(message) {
+    self.errorMessage(`Error: ${message}`);
+    self.showError(true);
+  }
+
+  // ── Team status change (radio log opened from a tasking row) ──
+  // A draft only: nothing is sent until Submit, which changes the status first
+  // and only creates the log if that worked (see submit). The options and their
+  // enabled rules are read live from the Tasking, so they follow SignalR
+  // updates while the modal is open.
+  self.tasking = ko.observable(null);
+  self.pendingStatusKey = ko.observable(null); // null = no change
+  self.statusTimeOverride = ko.observable(false);
+  self.statusTime = ko.observable(null);
+  self.statusEta = ko.observable(null);
+  self.statusEtc = ko.observable(null);
+  self.statusReason = ko.observable("");
+
+  // Only while the incident + team fields still point at the tasking we opened
+  // from -- pointing the log somewhere else hides (and clears) the status change.
+  self.showStatusChange = ko.pureComputed(() => {
+    const ts = self.tasking();
+    if (!ts || !ts.job) return false;
+    return self.jobIdInput() === (ts.job.identifier() || "")
+      && String(self.jobId()) === String(ts.job.id())
+      && self.teamInput() === ts.teamCallsign();
+  });
+
+  self.currentStatusLabel = ko.pureComputed(() => self.tasking()?.currentStatus() || "");
+  self.currentStatusCss = ko.pureComputed(() => statusColorClass(self.currentStatusLabel()));
+  self.statusOptions = ko.pureComputed(() => self.tasking()?.statusOptions() || []);
+  self.pendingStatusOption = ko.pureComputed(() =>
+    self.statusOptions().find(o => o.key === self.pendingStatusKey()) || null
+  );
+  self.pendingStatusLabel = ko.pureComputed(() => self.pendingStatusOption()?.label || "No change");
+  self.pendingStatusCss = ko.pureComputed(() =>
+    self.pendingStatusKey() ? statusColorClass(self.pendingStatusKey()) : "bg-secondary text-white"
+  );
+  // the team's status moved on (e.g. SignalR) and the picked option no longer applies
+  self.pendingStatusUnavailable = ko.pureComputed(() => {
+    const option = self.pendingStatusOption();
+    return !!option && !option.enabled;
+  });
+
+  self.pendingNeedsTime = ko.pureComputed(() => !!self.pendingStatusOption()?.needsTimeSet);
+  self.pendingNeedsETA = ko.pureComputed(() => !!self.pendingStatusOption()?.needsETA);
+  self.pendingNeedsETC = ko.pureComputed(() => !!self.pendingStatusOption()?.needsETC);
+  self.pendingNeedsReason = ko.pureComputed(() => !!self.pendingStatusOption()?.needsReason);
+  self.showStatusDetails = ko.pureComputed(() => self.showStatusChange()
+    && (self.pendingNeedsTime() || self.pendingNeedsETA() || self.pendingNeedsETC() || self.pendingNeedsReason())
+  );
+
+  self.submitLabel = ko.pureComputed(() =>
+    self.showStatusChange() && self.pendingStatusOption() ? `Submit & ${self.pendingStatusLabel()}` : "Submit"
+  );
+
+  self.clearPendingStatus = function () {
+    self.pendingStatusKey(null);
+    self.statusTimeOverride(false);
+    self.statusTime(null);
+    self.statusEta(null);
+    self.statusEtc(null);
+    self.statusReason("");
+  };
+
+  self.pickPendingStatus = function (option) {
+    if (!option || !option.enabled) return;
+    self.clearPendingStatus();
+    self.pendingStatusKey(option.key);
+    self.statusTime(addMinutesToInputTime(null, 0)); // prefill the override with now
+    self._scrollStatusDetailsIntoView();
+  };
+
+  // The details box renders at the bottom of the (scrollable) modal body, often
+  // below the fold -- bring it into view. Waits a frame so the deferred KO
+  // update has rendered it (tasking page sets ko.options.deferUpdates).
+  self._scrollStatusDetailsIntoView = function () {
+    requestAnimationFrame(() => {
+      if (!self.showStatusDetails()) return;
+      document.querySelector('#CreateOpsLogModal .ops-log-status-details')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    });
+  };
+
+  self.showStatusChange.subscribe(visible => {
+    if (!visible) self.clearPendingStatus();
+  });
+
+  self.statusQuickButtons = [1, 5, 10, 30, 60].map(minutes => ({ label: `+${minutes}`, minutes }));
+  self.onStatusEtaQuickButtonClick = (btn) => self.statusEta(addMinutesToInputTime(self.statusEta(), btn.minutes));
+  self.onStatusEtcQuickButtonClick = (btn) => self.statusEtc(addMinutesToInputTime(self.statusEtc(), btn.minutes));
+
   self.submitting = ko.observable(false);
 
-  self.submit = function () {
-    if (!validate()) {
+  // Order matters: the status change goes first and the log is only created
+  // if it worked, so the log never records a change that didn't happen.
+  // Complete is the exception -- it isn't an API call but a hand-off to
+  // Beacon's completion screen, which opens once the log has saved.
+  self.submit = async function () {
+    if (self.submitting() || !validate()) {
         return;
     }
-    self.submitting(true);
-    const payload = self.toPayload();
 
-    parentVM.createOpsLogEntry(payload, function (result) {
+    const tasking = self.showStatusChange() ? self.tasking() : null;
+    const option = tasking ? self.pendingStatusOption() : null;
+    const callsign = tasking ? tasking.teamCallsign() : "";
+
+    if (option && !option.enabled) {
+        showSubmitError(`${callsign} is now ${tasking.currentStatus()}, so "${option.label}" isn't available any more. Pick another status or "No change". Nothing was submitted.`);
+        return;
+    }
+    if (option && option.key === "Complete" && !tasking.taskCompletionLink()) {
+        showSubmitError("Can't open the completion screen in Beacon from this page (no Beacon source). Nothing was submitted.");
+        return;
+    }
+
+    self.submitting(true);
+    try {
+        let statusChanged = false;
+        if (option && option.key !== "Complete") {
+            const { action, payload } = tasking.buildStatusChange({
+                newStatus: option.key,
+                time: self.statusTimeOverride() ? self.statusTime() : null, // null = now
+                eta: self.statusEta(),
+                etc: self.statusEtc(),
+                reason: self.statusReason(),
+            });
+            try {
+                await parentVM.applyTaskingStatusChange(tasking, action, payload);
+            } catch (err) {
+                console.error("Team status change failed:", err);
+                showSubmitError(`Couldn't change ${callsign} to "${option.label}": ${describeStatusError(err)}. The log entry was not saved.`);
+                return;
+            }
+            statusChanged = true;
+            // It landed -- drop the draft so retrying a failed log doesn't send it again.
+            self.clearPendingStatus();
+        }
+
+        const result = await new Promise(resolve => parentVM.createOpsLogEntry(self.toPayload(), resolve));
         if (!result) {
             console.error("Ops Log submit failed");
+            showSubmitError(statusChanged
+                ? `${callsign} was changed to "${option.label}", but the log entry didn't save. Submit again to retry the log (the status won't be sent twice).`
+                : "The log entry didn't save. Please try again.");
             return;
+        }
+
+        if (option && option.key === "Complete") {
+            tasking.openCompletionInBeacon();
         }
         if (self.modalInstance) {
             self.modalInstance.hide();
         }
+    } finally {
         self.submitting(false);
-    });
+    }
   };
 
   self.resetFields = function () {
@@ -200,6 +362,9 @@ export function CreateOpsLogModalVM(parentVM) {
     self.teamInput("");
     self.teamInputHasFocus(false);
     self.teamActiveIndex(-1);
+
+    self.tasking(null);
+    self.clearPendingStatus();
   };
 
   function uiTag(tag) {

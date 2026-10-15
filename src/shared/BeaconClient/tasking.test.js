@@ -71,6 +71,17 @@ describe('untaskTeam', () => {
   });
 });
 
+describe('throwOnError (status changes that must report failure)', () => {
+  it.each([
+    ['updateTeamStatus', () => updateTeamStatus('t1', 'Onsite', {}, { ...ctx, throwOnError: true })],
+    ['callOffTeam', () => callOffTeam('t1', {}, { ...ctx, throwOnError: true })],
+    ['untaskTeam', () => untaskTeam('t1', {}, { ...ctx, throwOnError: true })],
+  ])('%s turns nullOnError off', async (_name, call) => {
+    await call();
+    expect(request).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ nullOnError: false }));
+  });
+});
+
 describe('sequence', () => {
   it('PUTs to /Sequences without nullOnError (rejects on failure)', async () => {
     const body = { Sequences: [{ Id: 1, Order: 0 }] };

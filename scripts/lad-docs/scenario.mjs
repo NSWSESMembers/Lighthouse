@@ -78,12 +78,44 @@ const TAGS = {
   RoofLeak: { Id: 9136, Name: 'Roof Leak', TagGroupId: 6, Description: null },
 };
 
-// Ops-log tags. Group 27 (OpsLogActionItems) are the action-required ones;
-// names follow Beacon's vocabulary, ids are fake.
+// Ops-log tag groups, as the Ops/Radio Log modal lists them: 2 Contact Types,
+// 3 Contact Methods, 4 Entry Purpose, 27 Action Items (the action-required
+// ones). Names follow Beacon's vocabulary; ids are fake, except the ones
+// tagFactory.js keys an icon off (TagIconsOverride) -- those keep that id so
+// the pills render with the same icon as in Beacon, and Radio (6) is what the
+// radio log auto-selects.
+const ICON_TAG_IDS = {
+  Ambulance: 11, FRNSW: 13, Police: 10, SES: 15,
+  ICEMS: 420, 'Phone Call': 2, Radio: 6,
+  Incoming: 256, Outgoing: 257,
+};
+const opsTagGroup = (groupId, firstId, names) =>
+  names.map((Name, i) => ({ Id: ICON_TAG_IDS[Name] ?? firstId + i, Name, TagGroupId: groupId, Description: null }));
+
+const OPS_TAG_GROUPS = {
+  2: opsTagGroup(2, 9300, [
+    'Ambulance', 'Arborist', 'BOM', 'Contractor', 'Council', 'Crane/EWP', 'Electricity', 'FRNSW',
+    'Gas', 'HAZMAT', 'Incident Contact', 'NPWS', 'Other', 'Police', 'Recon', 'Resident',
+    'RFS', 'RMS', 'SES', 'Telco', 'TMC', 'Water',
+  ]),
+  3: opsTagGroup(3, 9230, ['Email', 'Face-to-Face', 'Fax', 'ICEMS', 'Phone Call', 'Printed', 'Radio', 'SMS']),
+  4: opsTagGroup(4, 9400, [
+    'All Capabilities', 'Backdated', 'CFR', 'Flood/Storm', 'FR In Water', 'FR On Water', 'GLR',
+    'Incoming', 'Information', 'Outgoing', 'RCR', 'Support', 'Unavailability', 'Update', 'VR',
+  ]),
+  27: opsTagGroup(27, 9270, [
+    'Awaiting Update', 'Call Made', 'Call Needed', 'Further Action Required', 'Handover', 'Media',
+    'Not SES Incident', 'Ready To Task', 'Referral Required', 'Reopened', 'Retrieve Equipment',
+    'Teams Complete', 'Untasked', 'Welfare Check',
+  ]),
+};
+const opsTag = (groupId, name) => OPS_TAG_GROUPS[groupId].find((t) => t.Name === name);
+
+// The ops-log tags the fixture entries below use.
 const OPS_TAGS = {
-  FurtherAction: { Id: 9271, Name: 'Further Action Required', TagGroupId: 27, Description: null },
-  CallMade: { Id: 9272, Name: 'Call Made', TagGroupId: 27, Description: null },
-  PhoneCall: { Id: 9231, Name: 'Phone Call', TagGroupId: 3, Description: null },
+  FurtherAction: opsTag(27, 'Further Action Required'),
+  CallMade: opsTag(27, 'Call Made'),
+  PhoneCall: opsTag(3, 'Phone Call'),
 };
 
 // Ops log entries: [jobIndex, subject, text, tagKeys, hoursAgo, actionRequired]
@@ -551,9 +583,11 @@ export function buildScenario(now = new Date()) {
     })),
   };
 
+  const stampTag = (x) => ({ ...x, CreatedOn: '2015-01-01T00:00:00', CreatedBy: 1 });
   const tagGroups = {
-    5: [TAGS.BranchDown, TAGS.TreeOnHouse].map((x) => ({ ...x, CreatedOn: '2015-01-01T00:00:00', CreatedBy: 1 })),
-    6: [TAGS.RoofLeak].map((x) => ({ ...x, CreatedOn: '2015-01-01T00:00:00', CreatedBy: 1 })),
+    5: [TAGS.BranchDown, TAGS.TreeOnHouse].map(stampTag),
+    6: [TAGS.RoofLeak].map(stampTag),
+    ...Object.fromEntries(Object.entries(OPS_TAG_GROUPS).map(([groupId, tags]) => [groupId, tags.map(stampTag)])),
   };
 
   // Job history endpoint shape (Jobs/{id}/History).

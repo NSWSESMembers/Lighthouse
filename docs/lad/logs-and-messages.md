@@ -9,16 +9,36 @@ LAD can create radio logs and ops log entries, and send SMS to team members, wit
 
 ## New Radio Log
 
-Clicking a **Radio Log** button opens the New Radio Log dialog. The title shows the team's callsign, plus the incident ID if opened against an incident.
+Clicking a **Radio Log** button opens the New Radio Log dialog. It is the same dialog as [New Ops Log](#new-ops-log), with the *Radio* contact method already selected. The title shows the team's callsign, plus the incident ID if opened against an incident.
 
-- Clicking Radio Log against a **team on an incident** creates the log against that incident.
-- Clicking Radio Log against the **team** itself does not associate it with an incident.
+- Clicking Radio Log on a **tasking** (a team on an incident) fills in the **Incident** and **Team** fields, and the subject is the team's callsign. The log is created against that incident, and you can [change the team's status](#changing-the-teams-status) at the same time.
+- Clicking Radio Log on a **team** fills in the **Team** field and the subject, but does not associate the log with an incident.
+- Clicking Radio Log in the [register controls](interface.md#register-controls) opens the dialog with nothing filled in.
 
 ![New Radio Log dialog](images/radio-log-dialog.png)
 
-Clicking **Submit** creates a new ops log entry. The subject is the team's Beacon name followed by your message, and the entry has the *Radio* tag applied. If created against an incident, it is visible in that incident's *Notes* / *Ops Log Entries*.
+Add any other tags you need, enter your message in **Text**, then click **Submit**. The entry is created with the tags you selected. If created against an incident, it is visible in that incident's *Notes* / *Ops Log Entries*.
 
 ![Resulting radio log entry](images/radio-log-entry.png)
+
+The Spotlight [`radio`](spotlight.md#radio-log-command--radio) command opens a simpler version of the dialog with only a text box. The *Radio* tag and the subject are set for you.
+
+### Changing the Team's Status
+
+When New Radio Log is opened from a tasking, the bottom of the dialog shows the team's current status for that incident, followed by **update to** and a status menu. The menu starts at **No change** and lists the same statuses as [Tasking Status](tasking.md#tasking-status). Statuses the team can't change to from its current status are greyed out.
+
+![Status change in New Radio Log](images/radio-log-status-change.png)
+
+- Picking a status does not change anything straight away. The change is made when you click **Submit**, and the button shows the status, for example **Submit & On site**.
+- If the status needs more information (a time, ETA, ETC or reason), a **Status change** box appears at the bottom of the dialog, and the dialog scrolls down to it. It works the same way as in the tasking status dropdown.
+- **Complete** opens Beacon's *Team Completion* dialog in the remote tab after the log entry is saved.
+- If you change the **Incident** or **Team** field to something else, the status menu is hidden and the status is not changed.
+
+When you click **Submit**, LAD changes the status first and only saves the log entry if that worked:
+
+- If the status change fails, the dialog shows why and stays open. Nothing is logged, so you can fix it or pick **No change** and submit again.
+- If the team's status changed while the dialog was open (for example, someone else set it in Beacon) and the status you picked is no longer available, the dialog says so and nothing is submitted.
+- If the status changes but the log entry fails to save, the dialog tells you. Submitting again only retries the log entry; the status is not sent twice.
 
 ## New Ops Log
 

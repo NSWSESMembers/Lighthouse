@@ -4646,9 +4646,104 @@
                     <textarea class="modal-textarea-full" id="OpsLogTextInput" rows="8" maxlength="4000"
                         data-bind="value: text"></textarea>
 
+                    <!-- Team status change details (only for statuses that need them).
+                         Nothing is sent until Submit. -->
+                    <!-- ko if: showStatusDetails -->
+                    <div class="ops-log-status-details mt-3">
+                        <h6 class="mb-2">Status change: <span data-bind="text: pendingStatusLabel"></span></h6>
+
+                        <!-- ko if: pendingNeedsTime -->
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="OpsLogStatusTimeOverride"
+                                data-bind="checked: statusTimeOverride">
+                            <label class="form-check-label" for="OpsLogStatusTimeOverride">
+                                Override set time for this status
+                            </label>
+                        </div>
+                        <!-- ko if: statusTimeOverride -->
+                        <div class="row align-items-center mb-2">
+                            <label class="col-3 col-form-label col-form-label-sm">Time</label>
+                            <div class="col-9">
+                                <input type="datetime-local" class="form-control form-control-sm"
+                                    data-bind="textInput: statusTime">
+                            </div>
+                        </div>
+                        <!-- /ko -->
+                        <!-- /ko -->
+
+                        <!-- ko if: pendingNeedsETA -->
+                        <div class="row mb-2">
+                            <label class="col-3 col-form-label col-form-label-sm">ETA</label>
+                            <div class="col-9">
+                                <input type="datetime-local" class="form-control form-control-sm mb-1"
+                                    data-bind="textInput: statusEta">
+                                <div class="d-flex flex-wrap gap-2" data-bind="foreach: statusQuickButtons">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        data-bind="text: label, click: $parent.onStatusEtaQuickButtonClick"></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /ko -->
+
+                        <!-- ko if: pendingNeedsETC -->
+                        <div class="row mb-2">
+                            <label class="col-3 col-form-label col-form-label-sm">ETC</label>
+                            <div class="col-9">
+                                <input type="datetime-local" class="form-control form-control-sm mb-1"
+                                    data-bind="textInput: statusEtc">
+                                <div class="d-flex flex-wrap gap-2" data-bind="foreach: statusQuickButtons">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        data-bind="text: label, click: $parent.onStatusEtcQuickButtonClick"></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /ko -->
+
+                        <!-- ko if: pendingNeedsReason -->
+                        <div class="row mb-2">
+                            <label class="col-3 col-form-label col-form-label-sm">Reason</label>
+                            <div class="col-9">
+                                <textarea class="form-control form-control-sm" rows="2"
+                                    data-bind="textInput: statusReason"></textarea>
+                            </div>
+                        </div>
+                        <!-- /ko -->
+                    </div>
+                    <!-- /ko -->
+
                 </div>
 
                 <div class="modal-footer">
+                    <!-- Team status: current → pending. Only when opened from a tasking row
+                         and the incident/team fields still match it. Applied on Submit. -->
+                    <!-- ko if: showStatusChange -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 me-auto">
+                        <span class="team-status-button ops-log-status-current" title="Current team status"
+                            data-bind="text: currentStatusLabel, css: currentStatusCss"></span>
+                        <span class="small">update to</span>
+                        <div class="dropup">
+                            <button type="button" class="team-status-button dropdown-toggle"
+                                data-bs-toggle="dropdown" aria-expanded="false" title="New team status (applied on Submit)"
+                                data-bind="text: pendingStatusLabel, css: pendingStatusCss"></button>
+                            <ul class="dropdown-menu shadow">
+                                <li>
+                                    <button type="button" class="dropdown-item"
+                                        data-bind="click: clearPendingStatus, css: { active: !pendingStatusKey() }">No change</button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <!-- ko foreach: statusOptions -->
+                                <li>
+                                    <button type="button" class="dropdown-item"
+                                        data-bind="text: label, enable: enabled, click: $parent.pickPendingStatus,
+                                                   css: { active: $parent.pendingStatusKey() === key }"></button>
+                                </li>
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                        <span class="small text-danger" data-bind="visible: pendingStatusUnavailable">No longer available</span>
+                    </div>
+                    <!-- /ko -->
+
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary d-flex align-items-center gap-2"
                         data-bind="click: submit, disable: submitting">
@@ -4657,7 +4752,7 @@
                         <span>Submitting…</span>
                         <!-- /ko -->
                         <!-- ko ifnot: submitting -->
-                        <span>Submit</span>
+                        <span data-bind="text: submitLabel">Submit</span>
                         <!-- /ko -->
                     </button>
                 </div>

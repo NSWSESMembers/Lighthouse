@@ -74,6 +74,22 @@ async function openPhotos(page) {
   await settle(page, 1200);
 }
 
+/**
+ * Open New Radio Log from the Radio Log button on DEM01's tasking under
+ * 2610-1207 (70006), so the incident, team and status change are all filled.
+ */
+async function openTaskingRadioLog(page) {
+  await closeConfigAndLoad(page);
+  const row = page.locator('tr.job-row[data-job-id="70006"]');
+  await row.scrollIntoViewIfNeeded();
+  await row.locator('[data-bind*="toggleAndExpand"]').first().click();
+  await settle(page, 800);
+  await row.locator('button[title="Radio Log"]:visible').first().click();
+  await page.locator('#CreateOpsLogModal').waitFor({ state: 'visible' });
+  await page.locator('#OpsLogTextInput').fill('Team arrived on scene, starting roof assessment.');
+  await settle(page, 600);
+}
+
 /** Open the Trackable Asset Library from the config modal's rail link (saves + loads, then opens it). */
 async function openAssetLibrary(page) {
   await page.locator('#configModal button:has-text("Trackable Asset Library")').click();
@@ -385,6 +401,30 @@ const SHOTS = {
         return page.screenshot({ ...opts, clip: { x: box.x + c.x - 200, y: box.y + c.y - 440, width: 490, height: 690 } });
       },
     }),
+  },
+
+  // New Radio Log opened from a tasking: Radio tag selected, incident and
+  // team filled, current status + "update to" in the footer.
+  'radio-log-dialog': {
+    launch: { viewport: { width: 1400, height: 1000 } },
+    run: openTaskingRadioLog,
+    target: (page) => page.locator('#CreateOpsLogModal .modal-content'),
+  },
+
+  // ...with On site picked: the status change details and the footer.
+  'radio-log-status-change': {
+    launch: { viewport: { width: 1400, height: 1000 } },
+    run: async (page) => {
+      await openTaskingRadioLog(page);
+      await page.locator('#CreateOpsLogModal .modal-footer .dropup .dropdown-toggle').click();
+      await page.locator('#CreateOpsLogModal .modal-footer .dropdown-item:has-text("On site")').click();
+      await page.locator('#CreateOpsLogModal .ops-log-status-details button:has-text("+30")').click();
+      // don't capture the +30 button in its hover/focus state
+      await page.mouse.move(0, 0);
+      await page.evaluate(() => document.activeElement?.blur());
+      await settle(page, 800);
+    },
+    target: (page) => unionOf(page, '#CreateOpsLogModal .ops-log-status-details, #CreateOpsLogModal .modal-footer', 0),
   },
 
   spotlight: {

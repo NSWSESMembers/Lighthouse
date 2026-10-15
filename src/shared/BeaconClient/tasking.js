@@ -27,8 +27,9 @@ export function task(teamId, jobId, ctx = {}) {
  * @param {string|number} taskingId
  * @param {string} status  status path segment (e.g. "OnRoute")
  * @param {Record<string, unknown>} payload
- * @param {{host: string, token: string, signal?: AbortSignal}} ctx
- * @returns {Promise<any>}  response body, or null on failure
+ * @param {{host: string, token: string, signal?: AbortSignal, throwOnError?: boolean}} ctx
+ *        throwOnError: reject with BeaconApiError instead of resolving null
+ * @returns {Promise<any>}  response body, or null on failure (unless throwOnError)
  */
 export function updateTeamStatus(taskingId, status, payload, ctx = {}) {
   const { host, token, signal } = ctx;
@@ -37,15 +38,16 @@ export function updateTeamStatus(taskingId, status, payload, ctx = {}) {
     token,
     signal,
     json: payload,
-    nullOnError: true,
+    nullOnError: !ctx.throwOnError,
   });
 }
 
 /**
  * @param {string|number} taskingId
  * @param {Record<string, unknown>} payload
- * @param {{host: string, token: string, signal?: AbortSignal}} ctx
- * @returns {Promise<any>}  response body, or null on failure
+ * @param {{host: string, token: string, signal?: AbortSignal, throwOnError?: boolean}} ctx
+ *        throwOnError: reject with BeaconApiError instead of resolving null
+ * @returns {Promise<any>}  response body, or null on failure (unless throwOnError)
  */
 export function callOffTeam(taskingId, payload, ctx = {}) {
   const { host, token, signal } = ctx;
@@ -54,15 +56,16 @@ export function callOffTeam(taskingId, payload, ctx = {}) {
     token,
     signal,
     json: payload,
-    nullOnError: true,
+    nullOnError: !ctx.throwOnError,
   });
 }
 
 /**
  * @param {string|number} taskingId
  * @param {Record<string, unknown>|string} payload  form fields (or a pre-encoded string)
- * @param {{host: string, token: string, signal?: AbortSignal}} ctx
- * @returns {Promise<any>}  response body, or null on failure
+ * @param {{host: string, token: string, signal?: AbortSignal, throwOnError?: boolean}} ctx
+ *        throwOnError: reject with BeaconApiError instead of resolving null
+ * @returns {Promise<any>}  response body, or null on failure (unless throwOnError)
  */
 export function untaskTeam(taskingId, payload, ctx = {}) {
   const { host, token, signal } = ctx;
@@ -71,7 +74,7 @@ export function untaskTeam(taskingId, payload, ctx = {}) {
     token,
     signal,
     form: payload,
-    nullOnError: true,
+    nullOnError: !ctx.throwOnError,
   });
 }
 

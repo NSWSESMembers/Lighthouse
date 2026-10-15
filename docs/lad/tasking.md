@@ -67,4 +67,6 @@ Each tasking shows its status, in both registers and in the incident's map popup
 
 ![Tasking status dropdown](images/tasking-status.png)
 
+You can also change a tasking's status while logging a radio message: click the tasking's **Radio Log** button and pick the new status at the bottom of the dialog. See [Changing the Team's Status](logs-and-messages.md#changing-the-teams-status).
+
 To change the order of a team's taskings, see [Reordering Taskings](team-register.md#reordering-taskings).

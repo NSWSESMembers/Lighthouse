@@ -94,7 +94,7 @@ Each team in the expanded incident's taskings list has the same four actions as 
 
 ![Incident tasking action buttons](images/incident-tasking-actions.png)
 
-- **Radio Log** (against the incident): opens [New Radio Log](logs-and-messages.md#new-radio-log), logged against the incident and including the team's callsign.
+- **Radio Log** (against the incident): opens [New Radio Log](logs-and-messages.md#new-radio-log) with the incident and team filled in. You can also [change the team's status](logs-and-messages.md#changing-the-teams-status) when you submit.
 - **Message Team** (against the incident): opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients, associated with the incident.
 - **Open in Remote Tab**: opens the team in the Beacon remote tab.
 - **Focus on map**: focuses the Situation Map on the team's radio location, if matched.

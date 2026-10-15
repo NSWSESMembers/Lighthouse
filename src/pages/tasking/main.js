@@ -1111,7 +1111,7 @@ function VM() {
             },
 
             openRadioLogModal: (tasking) => {
-                self.openRadioOpsLogModal({ job: tasking.job, teamCallsign: tasking.teamCallsign() });
+                self.openRadioOpsLogModal({ job: tasking.job, teamCallsign: tasking.teamCallsign(), tasking });
             },
 
             openNewOpsLogModal: (job) => {
@@ -2352,6 +2352,33 @@ function VM() {
                 showAlert("Failed to Untask Team.", "danger", 5000);
                 cb(null);
             });
+    }
+
+    // Promise version of updateTeamStatus/callOffTeam/untaskTeam for callers that
+    // must know whether the change landed (the Ops/Radio Log modal only logs
+    // after a successful status change). Those three resolve null/[] on an HTTP
+    // error (nullOnError), so this asks the client to throw instead -- rejects
+    // with the BeaconApiError (or network error); no alert, the caller shows it.
+    // action/payload come from Tasking.buildStatusChange.
+    self.applyTaskingStatusChange = async function (tasking, action, payload) {
+        const t = await getToken();
+        const ctx = { ...beaconCtx(t), throwOnError: true };
+        let data;
+        if (action === "Enroute" || action === "Onsite" || action === "Offsite") {
+            data = await BeaconClient.tasking.updateTeamStatus(tasking.id(), action, payload, ctx);
+        } else if (action === "CallOff") {
+            data = await BeaconClient.tasking.callOffTeam(tasking.id(), payload, ctx);
+        } else if (action === "Untask") {
+            data = await BeaconClient.tasking.untaskTeam(tasking.id(), payload, ctx);
+        } else {
+            throw new Error(`Unknown status action: ${action}`);
+        }
+        tasking.job.fetchTasking({ force: true });
+        if (tasking.team?.isFilteredIn?.()) {
+            tasking.team.fetchTasking({ force: true });
+            tasking.team.refreshData();
+        }
+        return data;
     }
 
     self.fetchJobById = async function (jobId, cb) {

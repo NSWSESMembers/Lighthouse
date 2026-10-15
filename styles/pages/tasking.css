@@ -3317,6 +3317,25 @@ body.dark-mode .config-subaccordion .accordion-button::after {
   display: inline-block;
 }
 
+/* Ops/Radio Log modal: read-only current-status pill (no caret) beside the
+   pending-status dropup, plus the status change details box */
+.team-status-button.ops-log-status-current {
+  display: inline-block;
+  padding-right: 8px;
+  cursor: default;
+  text-align: center;
+}
+
+.ops-log-status-details {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+}
+
+body.dark-mode .ops-log-status-details {
+  border-color: #444;
+}
+
 #TeamStatusDropdown {
   display: none;
 }
