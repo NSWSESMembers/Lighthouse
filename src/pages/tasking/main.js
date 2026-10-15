@@ -2381,6 +2381,23 @@ function VM() {
         return data;
     }
 
+    // Promise version of assignJobToTeam for the Ops/Radio Log dialog's "Task
+    // Team": rejects (no alert -- the dialog shows it) unless Beacon created the
+    // tasking, so the dialog only saves the log after a successful tasking.
+    self.applyTaskTeam = async function (teamVm, jobVm) {
+        const t = await getToken();
+        const r = await BeaconClient.tasking.task(teamVm.id(), jobVm.id(), { ...beaconCtx(t), throwOnError: true });
+        if (!(r && r.length > 0)) {
+            const err = new Error("Beacon did not create the tasking");
+            err.userMessage = "Beacon didn't create the tasking";
+            throw err;
+        }
+        jobVm.fetchTasking({ force: true });
+        teamVm.fetchTasking({ force: true });
+        teamVm.refreshData();
+        return r;
+    }
+
     self.fetchJobById = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
         try {

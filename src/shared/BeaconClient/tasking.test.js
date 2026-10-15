@@ -73,6 +73,7 @@ describe('untaskTeam', () => {
 
 describe('throwOnError (status changes that must report failure)', () => {
   it.each([
+    ['task', () => task('team1', 'job1', { ...ctx, throwOnError: true })],
     ['updateTeamStatus', () => updateTeamStatus('t1', 'Onsite', {}, { ...ctx, throwOnError: true })],
     ['callOffTeam', () => callOffTeam('t1', {}, { ...ctx, throwOnError: true })],
     ['untaskTeam', () => untaskTeam('t1', {}, { ...ctx, throwOnError: true })],

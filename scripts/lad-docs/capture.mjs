@@ -427,6 +427,26 @@ const SHOTS = {
     target: (page) => unionOf(page, '#CreateOpsLogModal .ops-log-status-details, #CreateOpsLogModal .modal-footer', 0),
   },
 
+  // Blank New Radio Log pointed at a team that isn't tasked to the incident
+  // (DEM02 on 2610-1207): the Task Team / Task Team & SMS choice in the footer.
+  'radio-log-task-team': {
+    launch: { viewport: { width: 1400, height: 1000 } },
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('#paneTop button[title="Radio Log"]:visible').first().click();
+      await page.locator('#CreateOpsLogModal').waitFor({ state: 'visible' });
+      await settle(page, 600); // the dialog focuses Text once shown
+      await page.locator('#CreateOpsLogModal input[placeholder^="Search by incident"]').fill('2610-1207');
+      await page.locator('#CreateOpsLogModal ul[data-ops-log-dropdown="job"] button').first().dispatchEvent('mousedown');
+      await page.locator('#CreateOpsLogModal input[placeholder^="Search by team"]').fill('DEM02');
+      await page.locator('#OpsLogTextInput').fill('DEM02 available, tasking to this incident.');
+      await page.locator('#CreateOpsLogModal .modal-footer button:has-text("Task Team & SMS")').click();
+      await page.mouse.move(0, 0);
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('#CreateOpsLogModal .modal-footer'),
+  },
+
   spotlight: {
     run: async (page) => {
       await closeConfigAndLoad(page);

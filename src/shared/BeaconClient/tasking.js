@@ -9,8 +9,9 @@ import { request } from './core/request.js';
  *
  * @param {string|number} teamId
  * @param {string|number} jobId
- * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
- * @returns {Promise<any>}  response body, or null on failure
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal, throwOnError?: boolean}} ctx
+ *        throwOnError: reject with BeaconApiError instead of resolving null
+ * @returns {Promise<any>}  response body, or null on failure (unless throwOnError)
  */
 export function task(teamId, jobId, ctx = {}) {
   const { host, userId = 'notPassed', token, signal } = ctx;
@@ -19,7 +20,7 @@ export function task(teamId, jobId, ctx = {}) {
     token,
     signal,
     json: { TeamIds: [teamId], JobIds: [jobId], LighthouseFunction: 'client.TaskTeam', userId },
-    nullOnError: true,
+    nullOnError: !ctx.throwOnError,
   });
 }
 

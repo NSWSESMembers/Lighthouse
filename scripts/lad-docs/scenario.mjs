@@ -328,36 +328,34 @@ export function buildScenario(now = new Date()) {
     };
   });
 
-  // Ops log entries (OperationsLog/search shape).
-  const opsLog = OPS_LOG_SPECS.map(([ji, subject, text, tagKeys, hoursAgo, actionRequired], i) => {
-    const j = jobs[ji];
-    const at = t(hoursAgo);
-    return {
-      Id: 41000 + i,
-      JobLabel: j.Identifier,
-      JobId: j.Id,
-      EventLabel: j.Event.Identifier,
-      EventId: j.Event.Id,
-      Entity: { ...HQ },
-      Important: false,
-      Position: null,
-      Subject: subject,
-      Text: text,
-      Restricted: false,
-      ActionRequired: actionRequired,
-      ActionReminder: null,
-      ReadOnly: false,
-      TalkgroupId: null,
-      TalkgroupLabel: null,
-      TalkgroupRequestId: null,
-      TalkgroupRequestLabel: null,
-      TimeLogged: at,
-      Tags: tagKeys.map((k) => ({ ...OPS_TAGS[k], CreatedOn: '2015-01-01T00:00:00', CreatedBy: 1 })),
-      CreatedOn: at,
-      CreatedBy: OPERATOR,
-      ICEMSIncidentIdentifier: null,
-    };
+  // Ops log entries (OperationsLog/search shape). j may be null (no incident).
+  const opsLogRow = (id, j, subject, text, tags, at, actionRequired) => ({
+    Id: id,
+    JobLabel: j ? j.Identifier : null,
+    JobId: j ? j.Id : null,
+    EventLabel: j ? j.Event.Identifier : null,
+    EventId: j ? j.Event.Id : null,
+    Entity: { ...HQ },
+    Important: false,
+    Position: null,
+    Subject: subject,
+    Text: text,
+    Restricted: false,
+    ActionRequired: actionRequired,
+    ActionReminder: null,
+    ReadOnly: false,
+    TalkgroupId: null,
+    TalkgroupLabel: null,
+    TalkgroupRequestId: null,
+    TalkgroupRequestLabel: null,
+    TimeLogged: at,
+    Tags: tags.map((tag) => ({ ...tag, CreatedOn: '2015-01-01T00:00:00', CreatedBy: 1 })),
+    CreatedOn: at,
+    CreatedBy: OPERATOR,
+    ICEMSIncidentIdentifier: null,
   });
+  const opsLog = OPS_LOG_SPECS.map(([ji, subject, text, tagKeys, hoursAgo, actionRequired], i) =>
+    opsLogRow(41000 + i, jobs[ji], subject, text, tagKeys.map((k) => OPS_TAGS[k]), t(hoursAgo), actionRequired));
   // What Beacon reports as a job's outstanding action tags: the group-27
   // tags on its unresolved action-required entries.
   const actionTagsByJob = new Map();
@@ -432,52 +430,69 @@ export function buildScenario(now = new Date()) {
   });
 
   const taskings = [];
+  // A tasking row: `reached` = how many TASKING_STEPS are done, at stepTimes.
+  const taskingRow = (tm, j, sequence, reached, stepTimes) => {
+    const history = TASKING_STEPS.slice(0, reached).map(([id, name], k) => ({
+      Type: id, Name: name, Description: name, TimeLogged: stepTimes[k], EstimatedCompletion: null,
+      CreatedOn: stepTimes[k], CreatedBy: OPERATOR,
+    }));
+    const [curId, curName] = TASKING_STEPS[reached - 1];
+    const stamp = (k) => (k < reached ? stepTimes[k] : null);
+    return {
+      Id: 90000 + taskings.length,
+      CurrentStatus: curName,
+      CurrentStatusTime: stepTimes[reached - 1],
+      CurrentStatusId: curId,
+      EstimatedStatusEndTime: null,
+      Enroute: stamp(1),
+      EnrouteEstimatedCompletion: stamp(1),
+      Onsite: stamp(2),
+      OnsiteEstimatedCompletion: stamp(2),
+      Offsite: stamp(3),
+      Complete: null,
+      Team: taskingTeam(tm),
+      Job: taskingJob(j),
+      Sequence: sequence,
+      Manifest: [],
+      DistanceToScene: null,
+      InjuriesSustained: false,
+      AARCompleted: false,
+      CISPRequired: false,
+      RiskAssessmentCompleted: false,
+      VesselUsed: false,
+      PrimaryActivityType: null,
+      PrimaryTaskType: null,
+      ActionTaken: null,
+      EquipmentUsed: [],
+      EquipmentKeptByName: null,
+      EquipmentKeptByNumber: null,
+      Injuries: [],
+      SafetyManagementSheet: null,
+      JobTeamStatusTypeHistory: history,
+    };
+  };
   TEAM_SPECS.forEach(([, , , jobIdx], ti) => {
     jobIdx.forEach((ji, seq) => {
       // First job in a team's queue is under way; the rest are just tasked.
       const reached = seq === 0 ? (ti % 2 === 0 ? 3 : 2) : 1; // how many TASKING_STEPS are done
       const startH = Math.max(0.15, JOB_SPECS[ji][4] - 0.1);
       const stepTimes = TASKING_STEPS.slice(0, reached).map((_, k) => t(startH - k * 0.05));
-      const history = TASKING_STEPS.slice(0, reached).map(([id, name], k) => ({
-        Type: id, Name: name, Description: name, TimeLogged: stepTimes[k], EstimatedCompletion: null,
-        CreatedOn: stepTimes[k], CreatedBy: OPERATOR,
-      }));
-      const [curId, curName] = TASKING_STEPS[reached - 1];
-      const stamp = (k) => (k < reached ? stepTimes[k] : null);
-      taskings.push({
-        Id: 90000 + taskings.length,
-        CurrentStatus: curName,
-        CurrentStatusTime: stepTimes[reached - 1],
-        CurrentStatusId: curId,
-        EstimatedStatusEndTime: null,
-        Enroute: stamp(1),
-        EnrouteEstimatedCompletion: stamp(1),
-        Onsite: stamp(2),
-        OnsiteEstimatedCompletion: stamp(2),
-        Offsite: stamp(3),
-        Complete: null,
-        Team: taskingTeam(teams[ti]),
-        Job: taskingJob(jobs[ji]),
-        Sequence: seq + 1,
-        Manifest: [],
-        DistanceToScene: null,
-        InjuriesSustained: false,
-        AARCompleted: false,
-        CISPRequired: false,
-        RiskAssessmentCompleted: false,
-        VesselUsed: false,
-        PrimaryActivityType: null,
-        PrimaryTaskType: null,
-        ActionTaken: null,
-        EquipmentUsed: [],
-        EquipmentKeptByName: null,
-        EquipmentKeptByNumber: null,
-        Injuries: [],
-        SafetyManagementSheet: null,
-        JobTeamStatusTypeHistory: history,
-      });
+      taskings.push(taskingRow(teams[ti], jobs[ji], seq + 1, reached, stepTimes));
     });
   });
+
+  // What POST /Api/v1/Tasking creates (the mock calls this): a new "Tasked"
+  // tasking at the end of the team's queue, so a "Task Team" click-through
+  // shows the team on the incident after LAD refetches.
+  const createTasking = (teamId, jobId) => {
+    const tm = teams.find((x) => x.Id === Number(teamId));
+    const j = jobs.find((x) => x.Id === Number(jobId));
+    if (!tm || !j) return null;
+    const seq = taskings.filter((x) => x.Team.Id === tm.Id).length + 1;
+    const row = taskingRow(tm, j, seq, 1, [t(0)]);
+    taskings.push(row);
+    return row;
+  };
 
   // PSN radio positions: a bare array of GeoJSON features (Beacon's
   // ResourceLocations/Radio), see BeaconClient/asset.js.
@@ -590,6 +605,18 @@ export function buildScenario(now = new Date()) {
     ...Object.fromEntries(Object.entries(OPS_TAG_GROUPS).map(([groupId, tags]) => [groupId, tags.map(stampTag)])),
   };
 
+  // What POST /Api/v1/OperationsLog creates (the mock calls this with the
+  // form fields LAD sends), so a submitted log shows in the incident timeline.
+  const allTags = Object.values(tagGroups).flat();
+  const createOpsLogEntry = (form) => {
+    const j = jobs.find((x) => x.Id === Number(form.get('JobId'))) || null;
+    const tagIds = form.getAll('TagIds[]').map(Number);
+    const tags = allTags.filter((tag) => tagIds.includes(tag.Id)).map(({ Id, Name, TagGroupId, Description }) => ({ Id, Name, TagGroupId, Description }));
+    const row = opsLogRow(41000 + opsLog.length, j, form.get('Subject') || '', form.get('Text') || '', tags, t(0), form.get('ActionRequired') === 'true');
+    opsLog.push(row);
+    return row;
+  };
+
   // Job history endpoint shape (Jobs/{id}/History).
   const jobHistory = (jobId) => {
     const j = jobs.find((x) => x.Id === jobId);
@@ -602,5 +629,8 @@ export function buildScenario(now = new Date()) {
   // Image/IncidentThumbnails per job.
   const photos = new Map(Object.entries(PHOTO_COUNTS).map(([ji, n]) => [jobs[ji].Id, photoList(jobs[ji].Id, n)]));
 
-  return { hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents: ICEMS_INCIDENTS, timezone: TZ };
+  return {
+    hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents: ICEMS_INCIDENTS, timezone: TZ,
+    createTasking, createOpsLogEntry,
+  };
 }

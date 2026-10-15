@@ -4744,6 +4744,18 @@
                     </div>
                     <!-- /ko -->
 
+                    <!-- Team not tasked to the incident: optionally task it on Submit
+                         (and open Send SMS after the dialog closes). -->
+                    <!-- ko if: canTaskTeam -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 me-auto">
+                        <span class="small"><strong data-bind="text: resolvedTeamCallsign"></strong> isn't tasked to this incident</span>
+                        <button type="button" class="btn btn-sm" title="Task the team to this incident when you click Submit"
+                            data-bind="click: toggleTaskTeam, css: taskTeamBtnCss, attr: { 'aria-pressed': taskTeamSelected }">Task Team</button>
+                        <button type="button" class="btn btn-sm" title="Task the team when you click Submit, then open Send SMS"
+                            data-bind="click: toggleTaskTeamSms, css: taskTeamSmsBtnCss, attr: { 'aria-pressed': taskTeamSmsSelected }">Task Team &amp; SMS</button>
+                    </div>
+                    <!-- /ko -->
+
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary d-flex align-items-center gap-2"
                         data-bind="click: submit, disable: submitting">
