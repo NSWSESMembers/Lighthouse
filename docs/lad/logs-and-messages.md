@@ -39,11 +39,7 @@ The menu starts at **No change** and lists the same statuses as [Tasking Status]
 - **Complete** opens Beacon's *Team Completion* dialog in the remote tab after the log entry is saved.
 - If you change the **Incident** or **Team** field, the status menu follows: it switches to that team's tasking on that incident, or is hidden if there isn't one. Any status you'd picked is cleared.
 
-When you click **Submit**, LAD changes the status first and only saves the log entry if that worked:
-
-- If the status change fails, the dialog shows why and stays open. Nothing is logged, so you can fix it or pick **No change** and submit again.
-- If the team's status changed while the dialog was open (for example, someone else set it in Beacon) and the status you picked is no longer available, the dialog says so and nothing is submitted.
-- If the status changes but the log entry fails to save, the dialog tells you. Submitting again only retries the log entry; the status is not sent twice.
+When you click **Submit**, LAD changes the status first, then saves the log entry. If anything goes wrong, the dialog stays open and shows the error, so you can fix it and submit again. A status that has already been changed isn't sent twice.
 
 ### Tasking the Team from a Log
 
@@ -56,7 +52,7 @@ If the **Incident** and **Team** fields point at a team that isn't tasked to tha
 
 Click a button again to unselect it. Nothing happens until you click **Submit**, and the button shows what will happen, for example **Submit, Task Team & SMS**. The team must be a known team: type its callsign or pick one of its trackable assets.
 
-As with a status change, LAD tasks the team first and only saves the log entry if that worked. If tasking fails, the dialog shows why and nothing is logged. If the team is tasked but the log entry fails to save, submitting again only retries the log entry and doesn't task the team twice, and Send SMS still opens once it saves. If someone else tasks the team to the incident while the dialog is open, the dialog says so and the status menu is shown instead.
+As with a status change, LAD tasks the team first, then saves the log entry. If anything goes wrong, the dialog stays open and shows the error, so you can fix it and submit again. A team that has already been tasked isn't tasked twice.
 
 ## New Ops Log
 
