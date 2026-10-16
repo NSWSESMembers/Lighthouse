@@ -101,6 +101,18 @@ async function openAssetLibrary(page) {
 const libraryCard = (page, name) =>
   page.locator('#trackableAssetsModal .card').filter({ has: page.locator('.fs-4', { hasText: new RegExp(`^${name}$`) }) });
 
+// Spotlight's input only searches on keydown, so type rather than fill().
+async function openSpotlight(page, query) {
+  await closeConfigAndLoad(page);
+  await page.keyboard.press('Control+k');
+  await settle(page, 600);
+  await page.locator('#spotlightSearchInput').pressSequentially(query);
+  await settle(page, 600);
+}
+
+const spotlightBox = (page) => unionOf(page,
+  '#SpotlightSearchModal .input-group, #SpotlightSearchModal .modal-body > .d-flex.flex-wrap, #spotlightResults button', 6);
+
 const SHOTS = {
   'config-data': configTab('data'),
   'config-incident-filters': configTab('filters'),
@@ -449,11 +461,46 @@ const SHOTS = {
 
   spotlight: {
     run: async (page) => {
-      await closeConfigAndLoad(page);
-      await page.keyboard.press('Control+k');
-      await page.locator('#SpotlightSearchModal input').first().fill('DEM0');
+      await openSpotlight(page, 'DEM0');
+    },
+  },
+
+  // Command shots crop to the search box, command bar and results (or the dialog it opens).
+  'spotlight-msg': {
+    run: async (page) => {
+      await openSpotlight(page, 'msg dem02');
+    },
+    target: spotlightBox,
+  },
+
+  'spotlight-calloff': {
+    run: async (page) => {
+      await openSpotlight(page, 'calloff dem02');
+      await page.locator('#spotlightResults button').first().click(); // the team's tasked incident
       await settle(page, 600);
     },
+    target: spotlightBox,
+  },
+
+  'spotlight-calloff-dialog': {
+    run: async (page) => {
+      await openSpotlight(page, 'calloff dem02');
+      await page.locator('#spotlightResults button').first().click();
+      await settle(page, 600);
+      await page.locator('#spotlightSearchInput').press('Enter');
+      await settle(page, 800);
+      await page.keyboard.type('Resident has arranged a private contractor');
+      await settle(page, 300);
+    },
+    target: (page) => page.locator('#CallOffModal .modal-content'),
+  },
+
+  'spotlight-help': {
+    run: async (page) => {
+      await openSpotlight(page, '?');
+      await settle(page, 400);
+    },
+    target: (page) => page.locator('#SpotlightHelpModal .modal-content'),
   },
 };
 

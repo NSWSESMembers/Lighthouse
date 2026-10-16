@@ -61,7 +61,7 @@ Each tasking shows its status, in both registers and in the incident's map popup
 
 - **Remove Tasking**: only available in the *Tasked* status. Removes the tasking from the team.
 - **En-Route**: requires a time, defaulting to now (tick the override to enter your own). You can set an ETA; the quick ETA buttons add increments, and when the ETA is blank they add to the time set.
-- **Call Off**: requires a reason.
+- **Call Off**: requires a reason. You can also call a team off from Spotlight with the [`calloff` command](spotlight.md#call-off-command--calloff).
 - **On-Site**: requires a time, defaulting to now (tick the override to enter your own). You can set an ETC; the quick ETC buttons work the same way as quick ETA.
 - **Off-Site**: requires a time, defaulting to now (tick the override to enter your own).
 - **Complete**: opens Beacon's *Team Completion* dialog for the team in the remote tab.

@@ -70,7 +70,7 @@ Ops log entries for an incident are shown in its [Incident Timeline](incident-re
 
 ## Send SMS
 
-Clicking an **SMS** button opens the Send SMS dialog, listing every team member and their SMS number from their Beacon contact details.
+Clicking an **SMS** button opens the Send SMS dialog, listing every team member and their SMS number from their Beacon contact details. You can also open it for a team from Spotlight with the [`msg` command](spotlight.md#sms-team-command--msg).
 
 Choose recipients with the checkbox next to each member, then click **Send**. Setting **Operational** to *Yes* marks it as an operational SMS in the Beacon message register.
 
