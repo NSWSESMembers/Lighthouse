@@ -18,6 +18,16 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD radio logs with status changes
+
+*15 October 2026*
+
+- **Change a team's status from a radio log.** When a radio or ops log's **Incident** and **Team** fields point at a team tasked to that incident (straight away when you open **Radio Log** from a tasking, or once you fill them in), the bottom of the dialog shows the team's current status with an **update to** menu. The new status is only set when you click **Submit**, and the log entry is only saved if the status change worked. If it doesn't, the dialog explains why and nothing is logged. See [Changing the Team's Status](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html#changing-the-teams-status).
+- **Task a team from a radio or ops log.** If the team in the log isn't tasked to the incident, choose **Task Team** or **Task Team & SMS** at the bottom of the dialog. The team is tasked when you click **Submit**, before the log entry is saved, and **Task Team & SMS** opens Send SMS once the dialog closes. See [Tasking the Team from a Log](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html#tasking-the-team-from-a-log).
+- **Radio Log on teams and taskings, and the Spotlight `radio` command, open the full dialog.** It now uses the same dialog as New Ops Log, with the *Radio* tag already selected, so you can add other tags. The incident, team and subject are filled in for you. See [New Radio Log](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html#new-radio-log).
+- If a log entry fails to save, the **Submit** button no longer stays stuck on *Submitting…*.
+- In dark mode, selected tags in the New Ops Log and New Radio Log dialogs are readable.
+
 ## LAD map and dark mode fixes
 
 *15 October 2026 · [v2026.10.15](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.15)*
