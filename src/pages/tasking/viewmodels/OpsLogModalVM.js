@@ -54,6 +54,18 @@ export function CreateOpsLogModalVM(parentVM) {
   self.errorMessage = ko.observable("");
   self.showError = ko.observable(false);
 
+  // The alert sits at the top of the (scrollable) modal body, but Submit is in
+  // the footer and the body is often scrolled down by then (e.g. with the
+  // status-change panel open) -- scroll back up so the error is seen. Waits a
+  // frame so the deferred KO update has shown it.
+  self.showError.subscribe((shown) => {
+    if (!shown) return;
+    requestAnimationFrame(() => {
+      document.querySelector('#CreateOpsLogModal .modal-body')
+        ?.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
   self.uiTags = ko.observableArray([]);
   self.tagsByGroup = {};
 
