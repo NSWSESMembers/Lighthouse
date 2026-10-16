@@ -45,6 +45,7 @@ function makeParent(jobs = [], teams = []) {
     applyTaskTeam: vi.fn(async (team, job) => { calls.push(['task', team, job]); return [{ Id: 'new' }]; }),
     createOpsLogEntry: vi.fn((payload, cb) => { calls.push(['log', payload]); cb({ Id: 1 }); }),
     attachSendSMSModal: vi.fn((...args) => { calls.push(['sms', ...args]); }),
+    reloadJobTaskings: vi.fn(async () => { calls.push(['reload']); return true; }),
   };
 }
 
@@ -105,12 +106,48 @@ describe('OpsLogModalVM team status change', () => {
 
     expect(parent.createOpsLogEntry).not.toHaveBeenCalled();
     expect(vm.showError()).toBe(true);
-    expect(vm.errorMessage()).toContain('Couldn\'t change Par Air to "En route"');
-    expect(vm.errorMessage()).toContain('Tasking is already complete');
-    expect(vm.errorMessage()).toContain('was not saved');
+    expect(vm.errorMessage()).toBe('Error: Tasking is already complete. Try again.');
     expect(modal.hide).not.toHaveBeenCalled();
     expect(vm.submitting()).toBe(false);
     expect(vm.pendingStatusKey()).toBe('Enroute'); // kept so they can retry
+    expect(parent.reloadJobTaskings).not.toHaveBeenCalled(); // a 4xx is a real "no"
+  });
+
+  it('a 500 where the status change went through anyway still saves the log, and does not resend', async () => {
+    parent.applyTaskingStatusChange.mockImplementationOnce(async () => { throw new BeaconApiError(500, 'Internal Server Error', 'u', ''); });
+    parent.reloadJobTaskings.mockImplementationOnce(async () => { tasking.currentStatus('Onsite'); return true; });
+    vm.pickPendingStatus(option(vm, 'Onsite'));
+
+    await vm.submit();
+
+    expect(parent.reloadJobTaskings).toHaveBeenCalledWith(tasking.job);
+    expect(parent.applyTaskingStatusChange).toHaveBeenCalledTimes(1);
+    expect(parent.createOpsLogEntry).toHaveBeenCalled();
+    expect(vm.showError()).toBe(false);
+    expect(modal.hide).toHaveBeenCalled();
+  });
+
+  it('a 500 where the status did not change reports the failure and keeps the draft', async () => {
+    parent.applyTaskingStatusChange.mockRejectedValueOnce(new BeaconApiError(502, 'Bad Gateway', 'u', ''));
+    vm.pickPendingStatus(option(vm, 'Enroute'));
+
+    await vm.submit();
+
+    expect(parent.reloadJobTaskings).toHaveBeenCalled();
+    expect(parent.createOpsLogEntry).not.toHaveBeenCalled();
+    expect(vm.errorMessage()).toBe('Error: Beacon returned 502 Bad Gateway. Try again.');
+    expect(vm.pendingStatusKey()).toBe('Enroute');
+  });
+
+  it('a network error with a failed reload reports the failure', async () => {
+    parent.applyTaskingStatusChange.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    parent.reloadJobTaskings.mockResolvedValueOnce(false);
+    vm.pickPendingStatus(option(vm, 'Enroute'));
+
+    await vm.submit();
+
+    expect(parent.createOpsLogEntry).not.toHaveBeenCalled();
+    expect(vm.errorMessage()).toBe("Error: Couldn't reach Beacon. Try again.");
   });
 
   it('if the log fails after the status landed, says so and does not resend the status on retry', async () => {
@@ -330,9 +367,37 @@ describe('OpsLogModalVM Task Team (team not tasked to the incident)', () => {
     await vm.submit();
     expect(parent.createOpsLogEntry).not.toHaveBeenCalled();
     expect(parent.attachSendSMSModal).not.toHaveBeenCalled();
-    expect(vm.errorMessage()).toContain("Couldn't task DEM03 to 0015-5759: Beacon didn't create the tasking. The log entry was not saved.");
+    expect(vm.errorMessage()).toBe("Error: Beacon didn't create the tasking. Try again.");
     expect(vm.pendingTask()).toBe('taskSms'); // kept for a retry
     expect(vm.modalInstance.hide).not.toHaveBeenCalled();
+    expect(parent.reloadJobTaskings).not.toHaveBeenCalled();
+  });
+
+  it('a 500 where the tasking was created anyway still logs and opens the SMS, without tasking twice', async () => {
+    parent.applyTaskTeam.mockRejectedValueOnce(new BeaconApiError(500, 'Internal Server Error', 'u', ''));
+    parent.reloadJobTaskings.mockImplementationOnce(async () => {
+      makeTasking('Tasked', { job, callsign: 'DEM03', id: 'created' });
+      return true;
+    });
+    vm.toggleTaskTeamSms();
+
+    await vm.submit();
+
+    expect(parent.reloadJobTaskings).toHaveBeenCalledWith(job);
+    expect(parent.calls.map(c => c[0])).toEqual(['log', 'sms']);
+    expect(parent.applyTaskTeam).toHaveBeenCalledTimes(1);
+    expect(vm.showError()).toBe(false);
+  });
+
+  it('a 500 where no tasking was created reports the failure', async () => {
+    parent.applyTaskTeam.mockRejectedValueOnce(new BeaconApiError(500, 'Internal Server Error', 'u', ''));
+    vm.toggleTaskTeam();
+
+    await vm.submit();
+
+    expect(parent.reloadJobTaskings).toHaveBeenCalledWith(job);
+    expect(parent.createOpsLogEntry).not.toHaveBeenCalled();
+    expect(vm.errorMessage()).toBe('Error: Beacon returned 500 Internal Server Error. Try again.');
   });
 
   it('if the log fails after tasking, a retry does not task again and still opens the SMS', async () => {
