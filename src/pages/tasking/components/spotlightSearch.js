@@ -172,6 +172,24 @@ function getTaskedTeamsForJob(jobVm) {
 
 
 /**
+ * The team's tasking on the incident that can still be called off (Tasked or
+ * En route), or null. Taskings live on both the team and the incident.
+ */
+export function findCallOffTasking(teamVm, jobVm) {
+    const teamId = safeId(teamVm);
+    const jobId = safeId(jobVm);
+    if (!teamId || !jobId) return null;
+    const all = [...(ko.unwrap(teamVm?.taskings) || []), ...(ko.unwrap(jobVm?.taskings) || [])];
+    return all.find((ts) => {
+        try {
+            return safeId(ko.unwrap(ts?.team)) === teamId
+                && safeId(ko.unwrap(ts?.job)) === jobId
+                && ts.canCalloff?.();
+        } catch { return false; }
+    }) || null;
+}
+
+/**
  * Trackable assets whose callsign, PSN radio ID or satellite ID contains
  * `query` (case and spaces ignored), callsigns starting with it first, then
  * alphabetical. Used by the `find` command.
@@ -190,6 +208,19 @@ export function findAssetsByCallsign(assets, query, limit = 20) {
         .map(({ a }) => a);
 }
 
+/**
+ * Every Spotlight command, in cheatsheet order. Drives command autocomplete
+ * and the help panel, so add new commands here.
+ */
+export const SPOTLIGHT_COMMANDS = [
+    { name: "task", syntax: "task <team> <incident>", description: "Task a team to an incident (either order)" },
+    { name: "radio", syntax: "radio <team> <incident>", description: "Create a radio log for a team on an incident (either order)" },
+    { name: "log", syntax: "log <incident>", description: "Create an ops log entry against an incident" },
+    { name: "msg", syntax: "msg <team>", description: "Send an SMS to a team" },
+    { name: "calloff", syntax: "calloff <team> <incident>", description: "Call a team off an incident (either order)" },
+    { name: "find", syntax: "find <callsign>", description: "Find any asset by callsign, PSN ID or satellite ID and zoom to it" },
+];
+
 export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     const self = this;
 
@@ -202,6 +233,14 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
     self.query = ko.observable("");
     self.clearQuery = () => self.query('');
+
+    // Help modal (cheatsheet): the ? button, or ? typed into an empty input
+    self.commands = SPOTLIGHT_COMMANDS;
+    self.hotkeyLabel = ko.pureComputed(() => safeStr(rootVm.config?.spotlightHotkeyLabel?.()));
+    self.openHelp = () => rootVm._openSpotlightHelp?.();
+
+    // Cheatsheet row click: back to Spotlight with that command started
+    self.useCommand = (c) => rootVm._closeSpotlightHelp?.(`${c.name} `);
     self.activeIndex = ko.observable(0);
     self.results = ko.observableArray([]);
 
@@ -370,12 +409,17 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
 
     self.isOrderlessCommand = ko.pureComputed(() => {
         const c = (self.commandName() || "").toLowerCase();
-        return c === "task" || c === "radio";
+        return c === "task" || c === "radio" || c === "calloff";
     });
 
     self.commandNeedsOnlyJob = ko.pureComputed(() => {
         const c = (self.commandName() || "").toLowerCase();
         return c === "log";
+    });
+
+    self.commandNeedsOnlyTeam = ko.pureComputed(() => {
+        const c = (self.commandName() || "").toLowerCase();
+        return c === "msg";
     });
 
     function topMatchesForToken(tokenLower) {
@@ -750,254 +794,360 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         );
     }
 
-    function commandResultsForRadio(raw) {
-        let tokens = parseTokens(raw);
+    function commandResultsForMsg(raw) {
+        const tokens = parseTokens(raw);
         const cmd = (tokens[0] || "").toLowerCase();
+        if (cmd !== "msg") return null;
 
-        if (cmd === "task" || cmd === "radio") {
-            tokens = foldTeamTokens(tokens);
-        }
-        if (cmd !== "radio") return null;
+        // Callsigns can contain spaces, so the whole remainder is the team token
+        const aTok = tokens.slice(1).join(" ").toLowerCase();
 
-        const aTok = (tokens[1] || "").toLowerCase();
-        const bTok = (tokens[2] || "").toLowerCase();
+        const teamRow = (t) => ({
+            kind: "Team",
+            ref: t.ref,
+            primary: t.primary,
+            secondary: t.secondary,
+            badge: "Team",
+            applyText: `msg ${quoteIfNeeded(t.callsign)}`
+        });
 
-        // no args -> teams first (same UX as task)
-        if (!tokens[1]) {
+        // No team yet → show team suggestions
+        if (!aTok) {
             setCommandState({
-                name: "radio",
+                name: "msg",
                 stage: "team",
-                hint: "radio <team> <incident> (either order) — select first argument",
+                hint: "msg <team> — select a team",
                 team: null,
                 job: null
             });
 
             const { teamMatches } = topMatchesForToken("");
-            return _decorateResults(
-                teamMatches.slice(0, 15).map(({ item: t }) => ({
+            return _decorateResults(teamMatches.slice(0, 15).map(({ item }) => teamRow(item)));
+        }
+
+        const A = topMatchesForToken(aTok);
+
+        // Unique match → ready to run
+        if (A.uniqueTeam) {
+            setCommandState({
+                name: "msg",
+                stage: "ready",
+                hint: "Press Enter to SMS the team.",
+                team: A.uniqueTeam,
+                job: null
+            });
+
+            return _decorateResults([{
+                kind: "Execute",
+                ref: { cmd: "msg", team: A.uniqueTeam },
+                primary: `SMS — ${safeStr(A.uniqueTeam.callsign)}`,
+                secondary: "Open Send SMS modal for the team",
+                badge: "Send SMS",
+                applyText: null
+            }]);
+        }
+
+        // Not unique → show filtered team suggestions
+        setCommandState({
+            name: "msg",
+            stage: "team",
+            hint: "Select a team (or refine token)",
+            team: null,
+            job: null
+        });
+
+        return _decorateResults(A.teamMatches.slice(0, 15).map(({ item }) => teamRow(item)));
+    }
+
+    /**
+     * Shared parser for commands that take a team and an incident in either
+     * order (radio, calloff). `jobsForTeam`/`teamsForJob` give the other side's
+     * tasked matches, listed first; with `onlyTasked` nothing else is offered.
+     * `noTaskedHint` explains an empty onlyTasked list; `blockedHint(team, job)`
+     * returns a reason the pair can't run, or null.
+     */
+    function teamJobCommand(name, { readyHint, executeRow, jobsForTeam, teamsForJob, onlyTasked = false, noTaskedHint = () => "", blockedHint = () => null }) {
+        // Tasked-first ordering; with onlyTasked the untasked rest is dropped
+        const split = (items, preferred) => {
+            const pref = [];
+            const rest = [];
+            for (const x of items) (preferred.has(safeId(x.ref)) ? pref : rest).push(x);
+            return onlyTasked ? pref : pref.concat(rest);
+        };
+
+        const noTaskedState = (team, job) => setCommandState({
+            name,
+            stage: "error",
+            hint: noTaskedHint(team, job),
+            team,
+            job
+        });
+
+        return function (raw) {
+            let tokens = parseTokens(raw);
+            const cmd = (tokens[0] || "").toLowerCase();
+            if (cmd !== name) return null;
+            tokens = foldTeamTokens(tokens);
+
+            const aTok = (tokens[1] || "").toLowerCase();
+            const bTok = (tokens[2] || "").toLowerCase();
+
+            // no args -> teams first (same UX as task)
+            if (!tokens[1]) {
+                setCommandState({
+                    name,
+                    stage: "team",
+                    hint: `${name} <team> <incident> (either order) — select first argument`,
+                    team: null,
+                    job: null
+                });
+
+                const { teamMatches } = topMatchesForToken("");
+                return _decorateResults(
+                    teamMatches.slice(0, 15).map(({ item: t }) => ({
+                        kind: "Team",
+                        ref: t.ref,
+                        primary: t.primary,
+                        secondary: t.secondary,
+                        badge: "Team",
+                        applyText: `${name} ${quoteIfNeeded(t.callsign)} `
+                    }))
+                );
+            }
+
+            const A = topMatchesForToken(aTok);
+
+            // one arg only -> decide likely side and show other-side suggestions with tasking-first ordering
+            if (!tokens[2]) {
+                const aIsTeam = !!A.uniqueTeam && !A.uniqueJob;
+                const aIsJob = !!A.uniqueJob && !A.uniqueTeam;
+
+                if (aIsTeam) {
+                    const team = A.uniqueTeam;
+
+                    setCommandState({
+                        name,
+                        stage: "incident",
+                        hint: `Team matched (${safeStr(team.callsign)}). Now select an incident.`,
+                        team,
+                        job: null
+                    });
+
+                    const preferred = new Set(jobsForTeam(team).map(j => safeId(j)));
+                    const { jobMatches } = topMatchesForToken(""); // allow anything
+
+                    const ordered = split(jobMatches.map(({ item }) => item), preferred);
+                    if (!ordered.length) { noTaskedState(team, null); return []; }
+
+                    const rows = ordered.slice(0, 20).map((j) => ({
+                        kind: "Incident",
+                        ref: j.ref,
+                        primary: j.primary,
+                        secondary: j.secondary,
+                        badge: preferred.has(safeId(j.ref)) ? "Active Tasking" : "Incident",
+                        applyText: `${name} ${quoteIfNeeded(team.callsign)} ${quoteIfNeeded(j.identifier)}`
+                    }));
+
+                    return _decorateResults(rows);
+                }
+
+                if (aIsJob) {
+
+                    setCommandState({
+                        name,
+                        stage: "team",
+                        hint: `Incident matched (${safeStr(A.uniqueJob.identifier)}). Now select a team.`,
+                        team: null,
+                        job: A.uniqueJob
+                    });
+
+                    const preferred = new Set(teamsForJob(A.uniqueJob).map(t => safeId(t)));
+                    const { teamMatches } = topMatchesForToken(""); // allow anything
+
+                    const ordered = split(teamMatches.map(({ item }) => item), preferred);
+                    if (!ordered.length) { noTaskedState(null, A.uniqueJob); return []; }
+
+                    const rows = ordered.slice(0, 20).map((t) => ({
+                        kind: "Team",
+                        ref: t.ref,
+                        primary: t.primary,
+                        secondary: t.secondary,
+                        badge: preferred.has(safeId(t.ref)) ? "Active Tasking" : "Team",
+                        applyText: `${name} ${quoteIfNeeded(A.uniqueJob.identifier)} ${quoteIfNeeded(t.callsign)}`
+                    }));
+
+                    return _decorateResults(rows);
+                }
+
+                // ambiguous first token -> show both lists (no special ordering yet)
+                setCommandState({
+                    name,
+                    stage: "command",
+                    hint: "Pick a team or incident",
+                    team: null,
+                    job: null
+                });
+
+                const teamRows = A.teamMatches.slice(0, 8).map(({ item: t }) => ({
                     kind: "Team",
                     ref: t.ref,
                     primary: t.primary,
                     secondary: t.secondary,
                     badge: "Team",
-                    applyText: `radio ${quoteIfNeeded(t.callsign)} `
-                }))
-            );
-        }
+                    applyText: `${name} ${quoteIfNeeded(t.callsign)} `
 
-        const A = topMatchesForToken(aTok);
+                }));
 
-        // one arg only -> decide likely side and show other-side suggestions with tasking-first ordering
-        if (!tokens[2]) {
-            const aIsTeam = !!A.uniqueTeam && !A.uniqueJob;
-            const aIsJob = !!A.uniqueJob && !A.uniqueTeam;
-
-            if (aIsTeam) {
-                const team = A.uniqueTeam;
-
-                setCommandState({
-                    name: "radio",
-                    stage: "incident",
-                    hint: `Team matched (${safeStr(team.callsign)}). Now select an incident.`,
-                    team,
-                    job: null
-                });
-
-                const preferred = new Set(getTaskedJobsForTeam(team).map(j => safeId(j)));
-                const { jobMatches } = topMatchesForToken(""); // allow anything
-
-                const pref = [];
-                const rest = [];
-                for (const { item: j } of jobMatches) {
-                    (preferred.has(safeId(j.ref)) ? pref : rest).push(j);
-                }
-
-                const rows = pref.concat(rest).slice(0, 20).map((j) => ({
+                const jobRows = A.jobMatches.slice(0, 8).map(({ item: j }) => ({
                     kind: "Incident",
                     ref: j.ref,
                     primary: j.primary,
                     secondary: j.secondary,
-                    badge: preferred.has(safeId(j.ref)) ? "Active Tasking" : "Incident",
-                    applyText: `radio ${quoteIfNeeded(team.callsign)} ${quoteIfNeeded(j.identifier)}`
+                    badge: "Incident",
+                    applyText: `${name} ${quoteIfNeeded(j.identifier)} `
+
                 }));
 
-                return _decorateResults(rows);
+                return _decorateResults(teamRows.concat(jobRows));
             }
 
-            if (aIsJob) {
+            // two args -> resolve either order like task, execute when both unique
+            const B = topMatchesForToken(bTok);
 
-                setCommandState({
-                    name: "radio",
-                    stage: "team",
-                    hint: `Incident matched (${safeStr(A.uniqueJob.identifier)}). Now select a team.`,
-                    team: null,
-                    job: A.uniqueJob
-                });
+            const team = A.uniqueTeam || B.uniqueTeam || null;
+            const job = A.uniqueJob || B.uniqueJob || null;
 
-                const preferred = new Set(getTaskedTeamsForJob(A.uniqueJob).map(t => safeId(t)));
-                const { teamMatches } = topMatchesForToken(""); // allow anything
-
-                const pref = [];
-                const rest = [];
-                for (const { item: t } of teamMatches) {
-                    (preferred.has(safeId(t.ref)) ? pref : rest).push(t);
+            if (team && job) {
+                const blocked = blockedHint(team, job);
+                if (blocked) {
+                    setCommandState({ name, stage: "error", hint: blocked, team, job });
+                    return [];
                 }
 
-                const rows = pref.concat(rest).slice(0, 20).map((t) => ({
-                    kind: "Team",
-                    ref: t.ref,
-                    primary: t.primary,
-                    secondary: t.secondary,
-                    badge: preferred.has(safeId(t.ref)) ? "Active Tasking" : "Team",
-                    applyText: `radio ${quoteIfNeeded(job.identifier)} ${quoteIfNeeded(t.callsign)}`
-                }));
+                setCommandState({
+                    name,
+                    stage: "ready",
+                    hint: readyHint,
+                    team,
+                    job
+                });
 
-                return _decorateResults(rows);
+                return _decorateResults([{
+                    kind: "Execute",
+                    ref: { cmd: name, team, job },
+                    ...executeRow(team, job),
+                    applyText: null
+                }]);
             }
 
-            // ambiguous first token -> show both lists (no special ordering yet)
+            // not resolvable yet -> whichever side is known, reorder suggestions with tasked-first
+            if (team && !job) {
+                setCommandState({
+                    name,
+                    stage: "incident",
+                    hint: "Select an incident (tasked ones are shown first)",
+                    team,
+                    job: null
+                });
+
+                const preferred = new Set(jobsForTeam(team).map(j => safeId(j)));
+                const { jobMatches } = topMatchesForToken(bTok);
+
+                return _decorateResults(
+                    split(jobMatches.map(({ item }) => item), preferred).slice(0, 20).map((j) => ({
+                        kind: "Incident",
+                        ref: j.ref,
+                        primary: j.primary,
+                        secondary: j.secondary,
+                        badge: preferred.has(safeId(j.ref)) ? "Tasked" : "Incident",
+                        applyText: `${name} ${quoteIfNeeded(team.callsign)} ${quoteIfNeeded(j.identifier)}`
+                    }))
+                );
+            }
+
+            if (job && !team) {
+                setCommandState({
+                    name,
+                    stage: "team",
+                    hint: "Select a team (tasked ones are shown first)",
+                    team: null,
+                    job
+                });
+
+                const preferred = new Set(teamsForJob(job).map(t => safeId(t)));
+                const { teamMatches } = topMatchesForToken(bTok);
+
+                return _decorateResults(
+                    split(teamMatches.map(({ item }) => item), preferred).slice(0, 20).map((t) => ({
+                        kind: "Team",
+                        ref: t.ref,
+                        primary: t.primary,
+                        secondary: t.secondary,
+                        badge: preferred.has(safeId(t.ref)) ? "Tasked" : "Team",
+                        applyText: `${name} ${quoteIfNeeded(job.identifier)} ${quoteIfNeeded(t.callsign)}`
+                    }))
+                );
+            }
+
+            // still ambiguous -> show both token suggestions
             setCommandState({
-                name: "radio",
+                name,
                 stage: "command",
-                hint: "Pick a team or incident",
+                hint: "Both tokens ambiguous — pick team/incident",
                 team: null,
                 job: null
             });
 
-            const teamRows = A.teamMatches.slice(0, 8).map(({ item: t }) => ({
+            const teamRows = B.teamMatches.slice(0, 8).map(({ item: t }) => ({
                 kind: "Team",
                 ref: t.ref,
                 primary: t.primary,
                 secondary: t.secondary,
-                badge: "Team",
-                applyText: `radio ${quoteIfNeeded(t.callsign)} `
-
+                badge: "team",
+                applyText: `${name} ${quoteIfNeeded(t.callsign)} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
             }));
 
-            const jobRows = A.jobMatches.slice(0, 8).map(({ item: j }) => ({
+            const jobRows = B.jobMatches.slice(0, 8).map(({ item: j }) => ({
                 kind: "Incident",
                 ref: j.ref,
                 primary: j.primary,
                 secondary: j.secondary,
                 badge: "Incident",
-                applyText: `radio ${quoteIfNeeded(j.identifier)} `
-
+                applyText: `${name} ${quoteIfNeeded(j.identifier)} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
             }));
 
             return _decorateResults(teamRows.concat(jobRows));
-        }
-
-        // two args -> resolve either order like task, but execute radio when both unique
-        const B = topMatchesForToken(bTok);
-
-        const team = A.uniqueTeam || B.uniqueTeam || null;
-        const job = A.uniqueJob || B.uniqueJob || null;
-
-        if (team && job) {
-            setCommandState({
-                name: "radio",
-                stage: "ready",
-                hint: "Press Enter to open Radio Log.",
-                team,
-                job
-            });
-
-            return _decorateResults([{
-                kind: "Execute",
-                ref: { cmd: "radio", team, job },
-                primary: `Radio Log — ${safeStr(team.callsign)} / ${safeStr(job.identifier)}`,
-                secondary: "Open radio log modal",
-                badge: "Create Log",
-                applyText: null
-            }]);
-        }
-
-        // not resolvable yet -> whichever side is known, reorder suggestions with tasked-first
-        if (team && !job) {
-            setCommandState({
-                name: "radio",
-                stage: "incident",
-                hint: "Select an incident (tasked ones are shown first)",
-                team,
-                job: null
-            });
-
-            const preferred = new Set(getTaskedJobsForTeam(team).map(j => safeId(j)));
-            const { jobMatches } = topMatchesForToken(bTok);
-
-            const pref = [];
-            const rest = [];
-            for (const { item: j } of jobMatches) (preferred.has(safeId(j.ref)) ? pref : rest).push(j);
-
-            return _decorateResults(
-                pref.concat(rest).slice(0, 20).map((j) => ({
-                    kind: "Incident",
-                    ref: j.ref,
-                    primary: j.primary,
-                    secondary: j.secondary,
-                    badge: preferred.has(safeId(j.ref)) ? "Tasked" : "Incident",
-                    applyText: `radio ${quoteIfNeeded(team.callsign)} ${quoteIfNeeded(j.identifier)}`
-                }))
-            );
-        }
-
-        if (job && !team) {
-            setCommandState({
-                name: "radio",
-                stage: "team",
-                hint: "Select a team (tasked ones are shown first)",
-                team: null,
-                job
-            });
-
-            const preferred = new Set(getTaskedTeamsForJob(job).map(t => safeId(t)));
-            const { teamMatches } = topMatchesForToken(bTok);
-
-            const pref = [];
-            const rest = [];
-            for (const { item: t } of teamMatches) (preferred.has(safeId(t.ref)) ? pref : rest).push(t);
-
-            return _decorateResults(
-                pref.concat(rest).slice(0, 20).map((t) => ({
-                    kind: "Team",
-                    ref: t.ref,
-                    primary: t.primary,
-                    secondary: t.secondary,
-                    badge: preferred.has(safeId(t.ref)) ? "Tasked" : "Team",
-                    applyText: `radio ${quoteIfNeeded(job.identifier)} ${quoteIfNeeded(t.callsign)}`
-                }))
-            );
-        }
-
-        // still ambiguous -> show both token suggestions
-        setCommandState({
-            name: "radio",
-            stage: "command",
-            hint: "Both tokens ambiguous — pick team/incident",
-            team: null,
-            job: null
-        });
-
-        const teamRows = B.teamMatches.slice(0, 8).map(({ item: t }) => ({
-            kind: "Team",
-            ref: t.ref,
-            primary: t.primary,
-            secondary: t.secondary,
-            badge: "team",
-            applyText: `radio ${quoteIfNeeded(t.callsign)} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
-        }));
-
-        const jobRows = B.jobMatches.slice(0, 8).map(({ item: j }) => ({
-            kind: "Incident",
-            ref: j.ref,
-            primary: j.primary,
-            secondary: j.secondary,
-            badge: "Incident",
-            applyText: `radio ${quoteIfNeeded(j.identifier)} ${tokens[2] || ""}`.trimEnd() + (tokens[2] ? "" : " ")
-        }));
-
-        return _decorateResults(teamRows.concat(jobRows));
+        };
     }
+
+    const commandResultsForRadio = teamJobCommand("radio", {
+        readyHint: "Press Enter to open Radio Log.",
+        executeRow: (team, job) => ({
+            primary: `Radio Log — ${safeStr(team.callsign)} / ${safeStr(job.identifier)}`,
+            secondary: "Open radio log modal",
+            badge: "Create Log"
+        }),
+        jobsForTeam: getTaskedJobsForTeam,
+        teamsForJob: getTaskedTeamsForJob
+    });
+
+    const commandResultsForCallOff = teamJobCommand("calloff", {
+        readyHint: "Press Enter to call off the team.",
+        executeRow: (team, job) => ({
+            primary: `Call off — ${safeStr(team.callsign)} / ${safeStr(job.identifier)}`,
+            secondary: "Open call off dialog",
+            badge: "Call Off"
+        }),
+        jobsForTeam: (team) => getTaskedJobsForTeam(team).filter(j => findCallOffTasking(team, j)),
+        teamsForJob: (job) => getTaskedTeamsForJob(job).filter(t => findCallOffTasking(t, job)),
+        onlyTasked: true,
+        noTaskedHint: (team, job) => team
+            ? `${safeStr(team.callsign)} has no tasking that can be called off.`
+            : `${safeStr(job.identifier)} has no team that can be called off.`,
+        blockedHint: (team, job) => findCallOffTasking(team, job)
+            ? null
+            : `${safeStr(team.callsign)} has no tasking on ${safeStr(job.identifier)} that can be called off.`
+    });
 
 
 
@@ -1058,8 +1208,9 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     function runSearch() {
         const raw = (self.query() || "");
 
+
         // Autocomplete for partial command keywords
-        const commandKeywords = ["task", "log", "radio", "find"];
+        const commandKeywords = SPOTLIGHT_COMMANDS.map(c => c.name);
         const q = raw.trim().toLowerCase();
         let autocompleteResults = [];
         if (q && !raw.includes(" ")) {
@@ -1083,7 +1234,9 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             commandResultsForTask(raw) ||
             commandResultsForLog(raw) ||
             commandResultsForRadio(raw) ||
-            commandResultsForFind(raw);
+            commandResultsForCallOff(raw) ||
+            commandResultsForFind(raw) ||
+            commandResultsForMsg(raw);
 
         if (cmdResults) {
             // Prepend autocomplete suggestions if present
@@ -1122,7 +1275,7 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                 kind: "No Results",
                 ref: null,
                 primary: "No results found",
-                secondary: `Try searching for teams, incidents, or use commands: task, log, radio, find`,
+                secondary: `Try searching for teams, incidents, or use commands: ${SPOTLIGHT_COMMANDS.map(c => c.name).join(", ")}. Type ? for help`,
                 badge: "",
                 applyText: null
             }]);
@@ -1159,6 +1312,19 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
         rootVm.focusTrackableAsset?.(asset);
     }
 
+    function executeMsg(teamVm) {
+        if (!teamVm) return;
+        rootVm._closeSpotlight?.();
+        rootVm.attachSendSMSModal?.([], teamVm);
+    }
+
+    function executeCallOff(teamVm, jobVm) {
+        const tasking = findCallOffTasking(teamVm, jobVm);
+        if (!tasking) return;
+        rootVm._closeSpotlight?.();
+        rootVm.attachCallOffModal?.(tasking);
+    }
+
     function executeRadio(teamVm, jobVm) {
         if (!teamVm || !jobVm) return;
         rootVm._closeSpotlight?.();
@@ -1180,7 +1346,9 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
             if (r.kind === "Execute") {
                 if (r.ref?.cmd === "log" && r.ref?.job) { executeLog(r.ref.job); return; }
                 if (r.ref?.cmd === "find" && r.ref?.asset) { executeFind(r.ref.asset); return; }
+                if (r.ref?.cmd === "msg" && r.ref?.team) { executeMsg(r.ref.team); return; }
                 if (r.ref?.cmd === "radio" && r.ref?.team && r.ref?.job) { executeRadio(r.ref.team, r.ref.job); return; }
+                if (r.ref?.cmd === "calloff" && r.ref?.team && r.ref?.job) { executeCallOff(r.ref.team, r.ref.job); return; }
                 if (r.ref?.cmd === "task" && r.ref?.team && r.ref?.job) { executeTask(r.ref.team, r.ref.job); return; }
             }
 
@@ -1230,6 +1398,12 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
     self.onInputKeyDown = (_, e) => {
         const key = e.key;
 
+        if (key === "?" && !self.query()) {
+            e.preventDefault();
+            self.openHelp();
+            return true;
+        }
+
         if (key === "ArrowDown") {
             e.preventDefault();
             setActiveByIndex(self.activeIndex() + 1, { scroll: true });
@@ -1261,6 +1435,17 @@ export function SpotlightSearchVM({ rootVm, getTeams, getJobs }) {
                     const t = self.matchedTeam();
                     const j = self.matchedJob();
                     if (t && j) { executeRadio(t, j); return true; }
+                }
+
+                if (cmd === "calloff") {
+                    const t = self.matchedTeam();
+                    const j = self.matchedJob();
+                    if (t && j) { executeCallOff(t, j); return true; }
+                }
+
+                if (cmd === "msg") {
+                    const t = self.matchedTeam();
+                    if (t) { executeMsg(t); return true; }
                 }
 
             }

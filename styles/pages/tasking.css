@@ -4618,6 +4618,29 @@ input[type='search']::-ms-clear {
   min-height: 0;              /* critical for flex overflow */
 }
 
+/* Spotlight help modal */
+.spotlight-help-command {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1rem;
+}
+
+.spotlight-help-command code {
+  flex: 0 0 13rem;
+}
+
+.spotlight-help-keys {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+
+.spotlight-help-keys > :nth-child(odd) {
+  justify-self: start;
+}
+
 .spotlight-secondary {
   display: -webkit-box;
   -webkit-line-clamp: 2;      /* 1 or 2 */

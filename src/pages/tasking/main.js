@@ -26,6 +26,7 @@ import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
 import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
 import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
+import { CallOffModalVM } from "./viewmodels/CallOffModalVM.js";
 import { OpsLogResolveModalVM } from "./viewmodels/OpsLogResolveModalVM.js";
 import { TrackableAssetsModalVM } from "./viewmodels/TrackableAssetsModalVM.js";
 import IncidentImagesModalVM from "./viewmodels/IncidentImagesModalVM";
@@ -520,6 +521,7 @@ function VM() {
     self.trackableAssetsModalVM = new TrackableAssetsModalVM(self);
 
     self.jobStatusConfirmVM = new JobStatusConfirmModalVM(self);
+    self.callOffVM = new CallOffModalVM();
 
     self.incidentImagesVM = new IncidentImagesModalVM({
         getToken,
@@ -545,6 +547,29 @@ function VM() {
 
         vm.open(job, newStatus);
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => vm.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true
+        });
+    };
+
+    self.attachCallOffModal = function (tasking) {
+        if (!tasking) return;
+        const modalEl = document.getElementById("CallOffModal");
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.callOffVM;
+        vm.modalInstance = modal;
+
+        vm.open(tasking);
+        modal.show();
+
+        modalEl.addEventListener('shown.bs.modal', function () {
+            document.getElementById('CallOffReasonInput')?.focus();
+        }, { once: true });
 
         installModalHotkeys({
             modalEl,
@@ -1774,7 +1799,7 @@ function VM() {
     self._spotlightModalEl = null;
     self._spotlightModal = null;
 
-    self._openSpotlight = () => {
+    self._openSpotlight = (initialQuery = "") => {
 
         self.teamSearch(''); // clear team search to avoid confusion
         self.jobSearch('');  // clear job search to avoid confusion
@@ -1785,7 +1810,7 @@ function VM() {
         self._spotlightModalEl = el;
         self._spotlightModal = bootstrap.Modal.getOrCreateInstance(el);
 
-        self.spotlightSearchVM.query("");
+        self.spotlightSearchVM.query(initialQuery);
         self.spotlightSearchVM.results.removeAll();
         self.spotlightSearchVM.activeIndex(0);
         self.spotlightSearchVM.rebuildIndex?.();
@@ -1806,6 +1831,26 @@ function VM() {
 
     self._closeSpotlight = () => {
         try { self._spotlightModal?.hide(); } catch { /* empty */ }
+    };
+
+    // Help modal swaps with Spotlight; closing it goes back to Spotlight,
+    // with the clicked command typed in if there was one.
+    let spotlightHelpReturnQuery = "";
+
+    self._openSpotlightHelp = () => {
+        const el = document.getElementById("SpotlightHelpModal");
+        if (!el) return;
+        spotlightHelpReturnQuery = "";
+        self._closeSpotlight();
+
+        const modal = bootstrap.Modal.getOrCreateInstance(el);
+        el.addEventListener('hidden.bs.modal', () => self._openSpotlight(spotlightHelpReturnQuery), { once: true });
+        modal.show();
+    };
+
+    self._closeSpotlightHelp = (returnQuery = "") => {
+        spotlightHelpReturnQuery = returnQuery;
+        bootstrap.Modal.getInstance(document.getElementById("SpotlightHelpModal"))?.hide();
     };
 
     // --- Initial load state management ---
