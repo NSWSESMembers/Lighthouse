@@ -462,7 +462,9 @@ export function CreateOpsLogModalVM(parentVM) {
         if (taskMode) {
             try {
                 // Before this, the team had no active tasking here (canTaskTeam).
-                await applyAndConfirm(job, () => parentVM.applyTaskTeam(team, job), () => !!self.activeTasking());
+                // Checks the team/job captured at Submit, not the live fields.
+                await applyAndConfirm(job, () => parentVM.applyTaskTeam(team, job), () =>
+                  job.taskings().some(ts => ts.team && ts.team.id() === team.id() && !ts.cannotUpdateStatus()));
             } catch (err) {
                 logSubmitFailure(`Task ${team.callsign()} to ${job.identifier()} failed`, err);
                 showSubmitError(submitFailureMessage(err));
