@@ -44,9 +44,24 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null 
     const method = route.request().method();
     let m;
 
+    // Task a team (JSON {TeamIds, JobIds}) -- creates the tasking, and returns
+    // the created rows as Beacon does (LAD treats an empty result as failure).
+    if (method === 'POST' && p === '/Api/v1/Tasking') {
+      const body = route.request().postDataJSON() || {};
+      const rows = (body.TeamIds || []).flatMap((teamId) => (body.JobIds || []).map((jobId) => scenario.createTasking(teamId, jobId))).filter(Boolean);
+      log(`[mock] POST ${p} -> ${rows.length} tasking(s) created`);
+      return json(route, rows);
+    }
+    // Create an ops log entry (form-encoded) -- returns the created entry.
+    if (method === 'POST' && p === '/Api/v1/OperationsLog') {
+      const entry = scenario.createOpsLogEntry(new URLSearchParams(route.request().postData() || ''));
+      log(`[mock] POST ${p} -> ops log ${entry.Id}`);
+      return json(route, entry);
+    }
+
     if (method !== 'GET') {
-      // Writes (task/untask, status changes, ops log, SMS...) succeed with
-      // nothing changed -- enough for click-throughs not to error.
+      // Other writes (untask, status changes, SMS...) succeed with nothing
+      // changed -- enough for click-throughs not to error.
       log(`[mock] ${method} ${p} (accepted, no-op)`);
       return route.fulfill({ status: 200, contentType: 'application/json', body: 'null' });
     }

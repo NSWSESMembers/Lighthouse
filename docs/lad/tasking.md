@@ -5,11 +5,12 @@ nav_order: 8
 
 # Tasking Teams
 
-There are three ways to task a team to an incident in LAD:
+There are four ways to task a team to an incident in LAD:
 
 - **Instant Task**: click **Task** on an incident in the [Incident Register](incident-register.md#incident-actions), or **Task Team** in its [map popup](situation-map.md#incident-popup-actions).
 - **Drag & drop**: drag an incident onto a team in the Team Register.
 - **Spotlight**: type `task`, then a team and an incident. See [Task Team command](spotlight.md#task-team-command--task).
+- **From a radio or ops log**: fill in the log's **Incident** and **Team**, then choose **Task Team** or **Task Team & SMS**. The team is tasked when you submit the log. See [Tasking the Team from a Log](logs-and-messages.md#tasking-the-team-from-a-log).
 
 Once tasked, the tasking shows under the team in the [Team Register](team-register.md#team-taskings) and under the incident in the [Incident Register](incident-register.md#incident-taskings-actions), where you can [update its status](#tasking-status).
 
@@ -66,5 +67,7 @@ Each tasking shows its status, in both registers and in the incident's map popup
 - **Complete**: opens Beacon's *Team Completion* dialog for the team in the remote tab.
 
 ![Tasking status dropdown](images/tasking-status.png)
+
+You can also change a tasking's status while logging a radio message: click the tasking's **Radio Log** button and pick the new status at the bottom of the dialog. See [Changing the Team's Status](logs-and-messages.md#changing-the-teams-status).
 
 To change the order of a team's taskings, see [Reordering Taskings](team-register.md#reordering-taskings).
