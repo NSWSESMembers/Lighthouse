@@ -536,6 +536,17 @@ const SHOTS = {
     target: (page) => page.locator('#CreateOpsLogModal .modal-footer'),
   },
 
+  // The Layers panel: search, basemap picker and every overlay group.
+  overlays: {
+    launch: { viewport: { width: 1800, height: 1200 } },
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('.ld-toggle-btn').click();
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('.ld-panel'),
+  },
+
   // Overlay layers that drop clickable markers on the map, each labelled:
   // a Transport NSW incident and camera, a HazardWatch warning (area +
   // icon) and an SES unit HQ (unit locations ship with the extension; the

@@ -26,6 +26,7 @@ The home page shows the first three `##` entries, so keep the title short.
 - **Call off a team from Spotlight.** Type `calloff` with a team and an incident, in either order, then press Enter and give a reason. Only taskings that can be called off are offered. See [Call Off command](https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html#call-off-command--calloff).
 - **Spotlight help.** Click the **?** button in Spotlight, or type `?`, to see all the commands, what you can search for and the keyboard shortcuts. Click a command to start it. See [Spotlight](https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html).
 - The Spotlight `radio` command now lists teams when you type the incident before the team.
+- The *SES Unit Locations* overlay is now called *SES Units*, and its popup has a cleaner layout. Long contact details no longer spill out of the popup, and the unit's status now shows correctly: it always said *Not Monitoring* before. Units with a hyphen in their name, such as Waverley-Woollahra, now load their details. See [Overlays](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlays).
 
 ## LAD radio logs with status changes
 

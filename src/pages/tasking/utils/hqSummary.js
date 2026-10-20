@@ -1,75 +1,98 @@
 var $ = require('jquery');
 
-export function fetchHqDetailsSummary(HQName, host, token, cb) {
+// Beacon HeadquartersStatusTypeId -> display name.
+const HQ_STATUS_NAMES = { 1: 'Monitoring', 2: 'Not Monitoring', 3: 'Unavailable' };
+
+/**
+ * Beacon Entities/Search URL for an HQ marker. EntityName matches the 3-letter
+ * unit code as well as names, so units are searched by code; zone/state/office
+ * HQs have no code and fall back to the name.
+ */
+export function hqSearchUrl(host, { code, name }) {
+  const query = code || String(name || '').replace(/\s*-\s*/g, ' - ');
+  // A code also substring-matches other units' names, so ask for enough
+  // results that pickHq can find the exact code.
+  return host + '/Api/v1/Entities/Search?EntityName=' + encodeURIComponent(query) + '&PageIndex=1&PageSize=50';
+}
+
+/** The search result for this HQ: an exact code match, else (no code) an exact name match or the first result. */
+export function pickHq(results, { code, name }) {
+  if (!results?.length) return null;
+  const same = (a, b) => String(a || '').toUpperCase() === String(b || '').toUpperCase();
+  if (code) return results.find((r) => same(r.Code, code)) || null;
+  return results.find((r) => same(r.Name, name)) || results[0];
+}
+
+export function fetchHqDetailsSummary(hqRef, host, token, cb) {
   var hq = {};
   $.ajax({
     type: 'GET',
-    url: host + '/Api/v1/Headquarters/Search?Name=' + HQName,
+    url: hqSearchUrl(host, hqRef),
     beforeSend: function (n) {
       n.setRequestHeader('Authorization', 'Bearer ' + token);
     },
     cache: false,
     dataType: 'json',
     complete: function (response, textStatus) {
-        console.log("HQ Search response:", response);   
-      if (textStatus == 'success') {
-        if (response.responseJSON.Results.length) {
-          var v = response.responseJSON.Results[0];
-          hq.Entity = v.Entity;
-          v.Entity.EntityTypeId = 1; //shouldnt be using entity for filters, so add the missing things
-          hq.HeadquartersStatus = v.HeadquartersStatusType.Name;
-          fetchHqAccreditations(v.Id, function (acred) {
-            hq.acred = [];
-            $.each(acred, function (k, v) {
-              if (v.HeadquarterAccreditationStatusType.Id == 1) {
-                //1 is available. everything else is bad. only return what is avail
-                hq.acred.push(v.HeadquarterAccreditationType.Name);
-              }
-            });
-            if (
-              typeof hq.contacts !== 'undefined' &&
-              typeof hq.currentJobCount !== 'undefined' &&
-              typeof hq.currentTeamCount !== 'undefined'
-            ) {
-              //lazy mans way to only return once all the data is back
-              cb(hq);
-            }
-          });
-          fetchHqJobCount(v.Id, function (jobcount) {
-            hq.currentJobCount = jobcount; //return a count
-            if (
-              typeof hq.contacts !== 'undefined' &&
-              typeof hq.acred !== 'undefined' &&
-              typeof hq.currentTeamCount !== 'undefined'
-            ) {
-              //lazy mans way to only return once all the data is back
-              cb(hq);
-            }
-          });
-          fetchHqTeamCount(v.Id, function (teamcount) {
-            hq.currentTeamCount = teamcount; //return a count
-            if (
-              typeof hq.contacts !== 'undefined' &&
-              typeof hq.acred !== 'undefined' &&
-              typeof hq.currentJobCount !== 'undefined'
-            ) {
-              //lazy mans way to only return once all the data is back
-              cb(hq);
-            }
-          });
-          fetchHqContacts(v.Id, function (contacts) {
-            //lazy mans way to only return once all the data is back
-            hq.contacts = contacts; //return them all
-            if (
-              typeof hq.currentJobCount !== 'undefined' &&
-              typeof hq.acred !== 'undefined' &&
-              typeof hq.currentTeamCount !== 'undefined'
-            ) {
-              cb(hq);
-            }
-          });
-        }
+      var v = textStatus == 'success' ? pickHq(response.responseJSON?.Results, hqRef) : null;
+      if (!v) {
+        cb(null); // main.js rejects on a falsy result, so the popup shows an error
+        return;
       }
+      // Beacon HQ ids are entity ids, so the entity's Id drives the lookups below.
+      hq.Entity = v;
+      hq.HeadquartersStatusId = v.HeadquartersStatusTypeId;
+      hq.HeadquartersStatus = HQ_STATUS_NAMES[v.HeadquartersStatusTypeId] || '';
+      fetchHqAccreditations(v.Id, function (acred) {
+        hq.acred = [];
+        $.each(acred, function (k, v) {
+          if (v.HeadquarterAccreditationStatusType.Id == 1) {
+            //1 is available. everything else is bad. only return what is avail
+            hq.acred.push(v.HeadquarterAccreditationType.Name);
+          }
+        });
+        if (
+          typeof hq.contacts !== 'undefined' &&
+          typeof hq.currentJobCount !== 'undefined' &&
+          typeof hq.currentTeamCount !== 'undefined'
+        ) {
+          //lazy mans way to only return once all the data is back
+          cb(hq);
+        }
+      });
+      fetchHqJobCount(v.Id, function (jobcount) {
+        hq.currentJobCount = jobcount; //return a count
+        if (
+          typeof hq.contacts !== 'undefined' &&
+          typeof hq.acred !== 'undefined' &&
+          typeof hq.currentTeamCount !== 'undefined'
+        ) {
+          //lazy mans way to only return once all the data is back
+          cb(hq);
+        }
+      });
+      fetchHqTeamCount(v.Id, function (teamcount) {
+        hq.currentTeamCount = teamcount; //return a count
+        if (
+          typeof hq.contacts !== 'undefined' &&
+          typeof hq.acred !== 'undefined' &&
+          typeof hq.currentJobCount !== 'undefined'
+        ) {
+          //lazy mans way to only return once all the data is back
+          cb(hq);
+        }
+      });
+      fetchHqContacts(v.Id, function (contacts) {
+        //lazy mans way to only return once all the data is back
+        hq.contacts = contacts; //return them all
+        if (
+          typeof hq.currentJobCount !== 'undefined' &&
+          typeof hq.acred !== 'undefined' &&
+          typeof hq.currentTeamCount !== 'undefined'
+        ) {
+          cb(hq);
+        }
+      });
     },
   });
 

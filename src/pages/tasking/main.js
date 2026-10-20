@@ -3349,16 +3349,16 @@ function VM() {
 
 
 
-    self.fetchHQDetails = async function (hqName) {
-        console.log("Fetching HQ details for:", hqName);
+    // hqRef: { code, name } -- searched by unit code, or by name when there is no code.
+    self.fetchHQDetails = async function (hqRef) {
         const t = await getToken(); // Wait for the token to be ready
 
         return new Promise((resolve, reject) => {
-            fetchHqDetailsSummary(hqName, apiHost, t, (hqDetails) => {
+            fetchHqDetailsSummary(hqRef, apiHost, t, (hqDetails) => {
                 if (hqDetails) {
                     resolve(hqDetails); // Resolve the promise with the resultte
                 } else {
-                    console.warn("No HQ details found for name:", hqName);
+                    console.warn("No HQ details found for:", hqRef);
                     reject(new Error("No HQ details found"));
                 }
             });
