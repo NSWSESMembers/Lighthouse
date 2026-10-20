@@ -20,7 +20,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 ## LAD radio log status changes and Spotlight commands
 
-*21 October 2026 · [v2026.10.21](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.21)*
+*21 October 2026 · [v2026.10.20](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.20)*
 
 ### Radio and ops logs
 
