@@ -70,7 +70,7 @@ Some overlays drop their own markers on the map. Click one to open a popup with 
 | **Transport NSW Incidents** | Live Traffic icon (crash, hazard, breakdown, traffic lights out, changed conditions) | What happened, where, traffic advice, speed limit, start/end time and who is managing it |
 | **Transport NSW Cameras** | Camera icon | What the camera faces and its latest image (click the image to enlarge it) |
 | **HazardWatch Active Warnings** | Warning icon in the middle of each warning area | The full published warning. Clicking anywhere in the area also works |
-| **SES Unit Locations** | SES logo at each unit headquarters | Whether the unit is monitoring, its active teams and incidents, SRB accreditations and contacts |
+| **SES Units** | SES logo at each unit headquarters | The unit's status (Monitoring, Not Monitoring or Unavailable), its active teams and incidents, SRB accreditations and contacts |
 | **EPA Contamination Sites** | Red dot | Site name, address, activity type and management class |
 | **NSW Declared Dams** | Blue dot | Dam name, place, owner and declared status |
 
@@ -97,7 +97,7 @@ Most layers are described by their name. Those that need more explanation:
 - **Filtered Unit Boundaries**: a pink outline around your filtered headquarters.
 - **NSW SES Zone Boundaries**: SES zone boundaries.
 - **Unit/Zone Boundaries Hybrid**: SES zone and unit boundaries.
-- **SES Unit Locations**: the location of every SES unit headquarters.
+- **SES Units**: the location of every SES unit headquarters.
 - **Active FRAOs**: active FRAO declarations, from the Beacon FRAO register.
 
 **HazardWatch**

@@ -258,15 +258,66 @@ function colorByUnitCode(code) {
 
 
 
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+// Escape, then allow line breaks after @ and . so a long email wraps between
+// its parts rather than mid-word.
+function softBreaks(s) {
+  return escapeHtml(s).replace(/([@.])/g, '$1<wbr>');
+}
+
+// Beacon HeadquartersStatusType ids: 1 monitoring, 2 not monitoring, 3 unavailable.
+const HQ_STATUS_CLASS = { 1: 'lhq-status--monitoring', 2: 'lhq-status--not-monitoring', 3: 'lhq-status--unavailable' };
+
+function hqPopupHeader(name, statusHtml = '') {
+  return `<div class="lhq-popup__header"><span class="lhq-popup__name">${escapeHtml(name)}</span>${statusHtml}</div>`;
+}
+
+function hqPopupLoadingHtml(name) {
+  return `<div class="lhq-popup">${hqPopupHeader(name)}
+    <div class="lhq-popup__muted"><i class="fa fa-spinner fa-spin"></i> Loading unit details…</div></div>`;
+}
+
+function hqPopupErrorHtml(name) {
+  return `<div class="lhq-popup">${hqPopupHeader(name)}
+    <div class="lhq-popup__muted"><i class="fa fa-exclamation-triangle"></i> Couldn't load unit details.</div></div>`;
+}
+
+function hqPopupHtml(name, details) {
+  const status = details.HeadquartersStatus
+    ? `<span class="lhq-status ${HQ_STATUS_CLASS[details.HeadquartersStatusId] || ''}">${escapeHtml(details.HeadquartersStatus)}</span>`
+    : '';
+  const acred = details.acred || [];
+  const contacts = details.contacts || [];
+  return `
+    <div class="lhq-popup">
+      ${hqPopupHeader(name, status)}
+      <div class="lhq-popup__stats">
+        <div class="lhq-popup__stat"><span class="lhq-popup__stat-value">${escapeHtml(details.currentTeamCount)}</span><span class="lhq-popup__stat-label">Active teams</span></div>
+        <div class="lhq-popup__stat"><span class="lhq-popup__stat-value">${escapeHtml(details.currentJobCount)}</span><span class="lhq-popup__stat-label">Active incidents</span></div>
+      </div>
+      <div class="lhq-popup__section">SRB accreditations</div>
+      ${acred.length
+        ? `<div class="lhq-popup__tags">${acred.map((a) => `<span class="lhq-popup__tag">${escapeHtml(a)}</span>`).join('')}</div>`
+        : '<div class="lhq-popup__muted">None</div>'}
+      <div class="lhq-popup__section">Contacts</div>
+      ${contacts.length
+        ? `<dl class="lhq-popup__contacts">${contacts.map((c) => `<div><dt>${escapeHtml(c.Description)}</dt><dd>${softBreaks(c.Detail)}</dd></div>`).join('')}</dl>`
+        : '<div class="lhq-popup__muted">None</div>'}
+    </div>`;
+}
+
 export function registerSESUnitLocationsLayer(vm) {
   vm.mapVM.registerPollingLayer("sesUnitLocations", {
-    label: "SES Unit Locations",
+    label: "SES Units",
     menuGroup: "NSW SES Geoservices",
     refreshMs: 0, // No auto-refresh, only redraw on filter change
     visibleByDefault: localStorage.getItem(`ov.unit-locations`) || false,
     fetchFn: async () => {
       const response = await fetch('/resources/SES_HQs.geojson');
-      if (!response.ok) throw new Error("Failed to fetch SES Unit Locations");
+      if (!response.ok) throw new Error("Failed to fetch SES Units");
       return await response.json();
     },
     drawFn: (layerGroup, data) => {
@@ -283,50 +334,15 @@ export function registerSESUnitLocationsLayer(vm) {
               iconAnchor: [8, 16], // Anchor point of the icon
               popupAnchor: [0, -16] // Point from which the popup opens relative to the iconAnchor
             })
-          }).bindPopup(`<strong>Loading ${name}...</strong>`, { pane: "pane-popup-top" });
+          }).bindPopup(hqPopupLoadingHtml(name), { pane: "pane-popup-top", maxWidth: 320 });
 
           marker.on('popupopen', async () => {
             try {
-              const details = await vm.fetchHQDetails(feature.properties.HQNAME);
-              const popupContent = `
-            <div style="background-color: #333; color: #fff; padding: 5px; text-align: center; font-weight: bold; width: 300px;">
-              ${name}
-            </div>
-            <div style="display: flex; justify-content: center;">
-            <strong>${details.isMonitoring ? "Unit Is Monitoring" : "Unit Is Not Monitoring"}</strong>
-            </div>
-            <div style="padding: 5px;">
-              
-              <div style="display: flex; justify-content: space-between;">
-              <p><strong>Active Teams:</strong> ${details.currentTeamCount}</p>
-              <p><strong>Active Incidents:</strong> ${details.currentJobCount}</p>
-              </div>
-              <p><strong>SRB Accreditations:</strong></p>
-              <ul>
-              ${details.acred.map(acred => `<li>${acred}</li>`).join('')}
-              </ul>
-              <p><strong>Contacts:</strong></p>
-              <table border="1" style="width: 300px; border-collapse: collapse; table-layout: fixed;">
-              <thead>
-              <tr>
-              <th style="width: 40%;">Description</th>
-              <th style="width: 60%;">Detail</th>
-              </tr>
-              </thead>
-              <tbody>
-              ${details.contacts.map(contact => `
-              <tr>
-              <td>${contact.Description}</td>
-              <td>${contact.Detail}</td>
-              </tr>
-              `).join('')}
-              </tbody>
-              </table>
-            </div>
-            `;
+              const details = await vm.fetchHQDetails({ code: feature.properties.UNIT_CODE, name: feature.properties.HQNAME });
+              const popupContent = hqPopupHtml(name, details);
               marker.getPopup().setContent(popupContent);
             } catch (error) {
-              marker.getPopup().setContent(`<strong>${name}</strong><br><em>Failed to load details</em>`);
+              marker.getPopup().setContent(hqPopupErrorHtml(name));
               console.error("Error fetching HQ details:", error);
             }
           });
