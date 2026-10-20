@@ -1680,6 +1680,100 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
+/* LHQ popup on the SES Units layer (mapLayers/geoservices.js). */
+.lhq-popup {
+  width: 280px;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+.lhq-popup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 14px 6px 0; /* clear the popup close button */
+  border-bottom: 1px solid #dee2e6;
+}
+.lhq-popup__name {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.lhq-status {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #e9ecef;
+  color: #495057;
+}
+.lhq-status--monitoring { background: #d1e7dd; color: #0f5132; }
+.lhq-status--unavailable { background: #f8d7da; color: #842029; }
+.lhq-popup__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+.lhq-popup__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  background: #f1f3f5;
+}
+.lhq-popup__stat-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.lhq-popup__stat-label,
+.lhq-popup__muted {
+  color: #6c757d;
+}
+.lhq-popup__section {
+  margin: 8px 0 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6c757d;
+}
+.lhq-popup__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.lhq-popup__tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid #9ec5fe;
+  background: #e7f1ff;
+  color: #084298;
+}
+.lhq-popup__contacts {
+  margin: 0;
+}
+.lhq-popup__contacts > div {
+  padding: 3px 0;
+  border-top: 1px solid #e9ecef;
+}
+.lhq-popup__contacts > div:first-child {
+  border-top: 0;
+}
+.lhq-popup__contacts dt {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #6c757d;
+}
+.lhq-popup__contacts dd {
+  margin: 0;
+  font-size: 0.85rem;
+  overflow-wrap: break-word;
+  user-select: text;
+}
+
 .job-popup {
   min-width: 380px;
   max-width: 380px;
@@ -2421,23 +2515,6 @@ overflow: hidden;
 /* Focus state */
 #CreateOpsLogModal input[type='text']:focus,
 #CreateOpsLogModal textarea:focus {
-  border-color: #1e8740; /* theme colour? */
-  box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
-  outline: none;
-}
-
-#RadioLogModal input[type='text'],
-#RadioLogModal textarea {
-  width: 100%;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  padding: 6px 8px;
-  font-size: 0.9rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-/* Focus state */
-#RadioLogModal input[type='text']:focus,
-#RadioLogModal textarea:focus {
   border-color: #1e8740; /* theme colour? */
   box-shadow: 0 0 0 2px rgba(30, 135, 64, 0.2);
   outline: none;
@@ -3315,6 +3392,25 @@ body.dark-mode .config-subaccordion .accordion-button::after {
 
 .team-status-button.dropdown-toggle::after {
   display: inline-block;
+}
+
+/* Ops/Radio Log modal: read-only current-status pill (no caret) beside the
+   pending-status dropup, plus the status change details box */
+.team-status-button.ops-log-status-current {
+  display: inline-block;
+  padding-right: 8px;
+  cursor: default;
+  text-align: center;
+}
+
+.ops-log-status-details {
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+}
+
+body.dark-mode .ops-log-status-details {
+  border-color: #444;
 }
 
 #TeamStatusDropdown {
@@ -4616,6 +4712,29 @@ input[type='search']::-ms-clear {
   flex: 1 1 auto;
   overflow: auto;
   min-height: 0;              /* critical for flex overflow */
+}
+
+/* Spotlight help modal */
+.spotlight-help-command {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1rem;
+}
+
+.spotlight-help-command code {
+  flex: 0 0 13rem;
+}
+
+.spotlight-help-keys {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 0.75rem;
+  align-items: baseline;
+}
+
+.spotlight-help-keys > :nth-child(odd) {
+  justify-self: start;
 }
 
 .spotlight-secondary {

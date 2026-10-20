@@ -516,7 +516,7 @@ export function createRadioConsoleViewModel({ host, source, userId, personId, si
   // reminder" option and made every card taller regardless of whether it
   // was ever going to be resolved from here). `resolveModalInstance` is
   // set externally by main.js once it creates the bootstrap.Modal -- same
-  // convention as RadioLogModalVM.js's `modalInstance`. ----
+  // convention as OpsLogModalVM.js's `modalInstance`. ----
   self.resolveModalInstance = null;
   self.resolveModalAction = ko.observable(null); // the outstandingActions wrapper currently open, or null
   self.resolveModalEntry = ko.pureComputed(() => self.resolveModalAction()?.entry ?? null);
@@ -1350,7 +1350,7 @@ export function createRadioConsoleViewModel({ host, source, userId, personId, si
   self.submitOutcomeUnconfirmed = ko.observable(false);
   self.submitNotInFilterNotice = ko.observable('');
   // Each tag carries its own `selected` observable and no-argument
-  // `toggle()` method (mirroring RadioLogModalVM.js's createUiTag) rather
+  // `toggle()` method (mirroring OpsLogModalVM.js's uiTag) rather
   // than a shared selected-ids array checked via `.indexOf(id)` in the
   // binding -- knockout-secure-binding's data-bind parser can't call a
   // function with an argument, so a per-item bare `click: toggle` /

@@ -1948,6 +1948,34 @@
         </div>
     </div>
 
+    <!-- Call Off Modal (Spotlight calloff command) -->
+    <div class="modal fade" id="CallOffModal" tabindex="-1" aria-labelledby="CallOffModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content" data-bind="with: callOffVM">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="CallOffModalLabel">
+                        Call off <span data-bind="text: teamLabel"></span> — <span data-bind="text: jobLabel"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <label class="form-label" for="CallOffReasonInput">Reason</label>
+                    <textarea id="CallOffReasonInput" class="form-control" rows="3"
+                        placeholder="Enter reason for call off (required)" data-bind="textInput: reason"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" data-bind="click: submit, enable: canSubmit">
+                        Call off
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Config Modal -->
     <div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -4501,41 +4529,6 @@
 
 
     <!-- RADIO LOG MODAL -->
-    <div class="modal fade" id="RadioLogModal" tabindex="-1" aria-labelledby="RadioLogModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" data-bind="with: CreateRadioLogModalVM">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="RadioLogModalLabel">
-                        <span data-bind="text: headerLabel"></span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div data-bind="visible: showError" class="alert alert-danger py-1 px-2 mb-2">
-                        <span data-bind="text: errorMessage"></span>
-                    </div>
-                    <textarea class="modal-textarea-full" id="RadioLogTextInput" rows="8" maxlength="4000"
-                        data-bind="textInput: text"></textarea>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary d-flex align-items-center gap-2"
-                        data-bind="click: submit, disable: submitting">
-                        <!-- ko if: submitting -->
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        <span>Submitting…</span>
-                        <!-- /ko -->
-                        <!-- ko ifnot: submitting -->
-                        <span>Submit</span>
-                        <!-- /ko -->
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- New Ops Log Modal -->
     <!-- Need to add some sort of error message if it fails -->
     <div class="modal fade" id="CreateOpsLogModal" tabindex="-1" aria-labelledby="CreateOpsLogModalLabel"
@@ -4597,7 +4590,7 @@
                     </div>
                     <h6>Subject</h6>
                     <textarea class="modal-textarea-full" id="OpsLogSubjectInput" rows="1" maxlength="50"
-                        data-bind="value: subject"></textarea>
+                        data-bind="textInput: subject"></textarea>
 
                     <!-- Job & Team selectors (same row) -->
                     <div class="row mb-2 mt-2">
@@ -4643,12 +4636,121 @@
                     </div>
 
                     <h6>Text</h6>
+                    <!-- textInput (not value), so Ctrl+Enter submits what's typed
+                         without the field having to lose focus first -->
                     <textarea class="modal-textarea-full" id="OpsLogTextInput" rows="8" maxlength="4000"
-                        data-bind="value: text"></textarea>
+                        data-bind="textInput: text"></textarea>
+
+                    <!-- Team status change details (only for statuses that need them).
+                         Nothing is sent until Submit. -->
+                    <!-- ko if: showStatusDetails -->
+                    <div class="ops-log-status-details mt-3">
+                        <h6 class="mb-2">Status change: <span data-bind="text: pendingStatusLabel"></span></h6>
+
+                        <!-- ko if: pendingNeedsTime -->
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="OpsLogStatusTimeOverride"
+                                data-bind="checked: statusTimeOverride">
+                            <label class="form-check-label" for="OpsLogStatusTimeOverride">
+                                Override set time for this status
+                            </label>
+                        </div>
+                        <!-- ko if: statusTimeOverride -->
+                        <div class="row align-items-center mb-2">
+                            <label class="col-3 col-form-label col-form-label-sm">Time</label>
+                            <div class="col-9">
+                                <input type="datetime-local" class="form-control form-control-sm"
+                                    data-bind="textInput: statusTime">
+                            </div>
+                        </div>
+                        <!-- /ko -->
+                        <!-- /ko -->
+
+                        <!-- ko if: pendingNeedsETA -->
+                        <div class="row mb-2">
+                            <label class="col-3 col-form-label col-form-label-sm">ETA</label>
+                            <div class="col-9">
+                                <input type="datetime-local" class="form-control form-control-sm mb-1"
+                                    data-bind="textInput: statusEta">
+                                <div class="d-flex flex-wrap gap-2" data-bind="foreach: statusQuickButtons">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        data-bind="text: label, click: $parent.onStatusEtaQuickButtonClick"></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /ko -->
+
+                        <!-- ko if: pendingNeedsETC -->
+                        <div class="row mb-2">
+                            <label class="col-3 col-form-label col-form-label-sm">ETC</label>
+                            <div class="col-9">
+                                <input type="datetime-local" class="form-control form-control-sm mb-1"
+                                    data-bind="textInput: statusEtc">
+                                <div class="d-flex flex-wrap gap-2" data-bind="foreach: statusQuickButtons">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                                        data-bind="text: label, click: $parent.onStatusEtcQuickButtonClick"></button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /ko -->
+
+                        <!-- ko if: pendingNeedsReason -->
+                        <div class="row mb-2">
+                            <label class="col-3 col-form-label col-form-label-sm">Reason</label>
+                            <div class="col-9">
+                                <textarea class="form-control form-control-sm" rows="2"
+                                    data-bind="textInput: statusReason"></textarea>
+                            </div>
+                        </div>
+                        <!-- /ko -->
+                    </div>
+                    <!-- /ko -->
 
                 </div>
 
                 <div class="modal-footer">
+                    <!-- Team status: current → pending. Only when opened from a tasking row
+                         and the incident/team fields still match it. Applied on Submit. -->
+                    <!-- ko if: showStatusChange -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 me-auto">
+                        <span class="team-status-button ops-log-status-current" title="Current team status"
+                            data-bind="text: currentStatusLabel, css: currentStatusCss"></span>
+                        <span class="small">update to</span>
+                        <div class="dropup">
+                            <button type="button" class="team-status-button dropdown-toggle"
+                                data-bs-toggle="dropdown" aria-expanded="false" title="New team status (applied on Submit)"
+                                data-bind="text: pendingStatusLabel, css: pendingStatusCss"></button>
+                            <ul class="dropdown-menu shadow">
+                                <li>
+                                    <button type="button" class="dropdown-item"
+                                        data-bind="click: clearPendingStatus, css: { active: !pendingStatusKey() }">No change</button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <!-- ko foreach: statusOptions -->
+                                <li>
+                                    <button type="button" class="dropdown-item"
+                                        data-bind="text: label, enable: enabled, click: $parent.pickPendingStatus,
+                                                   css: { active: $parent.pendingStatusKey() === key }"></button>
+                                </li>
+                                <!-- /ko -->
+                            </ul>
+                        </div>
+                        <span class="small text-danger" data-bind="visible: pendingStatusUnavailable">No longer available</span>
+                    </div>
+                    <!-- /ko -->
+
+                    <!-- Team not tasked to the incident: optionally task it on Submit
+                         (and open Send SMS after the dialog closes). -->
+                    <!-- ko if: canTaskTeam -->
+                    <div class="d-flex flex-wrap align-items-center gap-2 me-auto">
+                        <span class="small"><strong data-bind="text: resolvedTeamCallsign"></strong> isn't tasked to this incident</span>
+                        <button type="button" class="btn btn-sm" title="Task the team to this incident when you click Submit"
+                            data-bind="click: toggleTaskTeam, css: taskTeamBtnCss, attr: { 'aria-pressed': taskTeamSelected }">Task Team</button>
+                        <button type="button" class="btn btn-sm" title="Task the team when you click Submit, then open Send SMS"
+                            data-bind="click: toggleTaskTeamSms, css: taskTeamSmsBtnCss, attr: { 'aria-pressed': taskTeamSmsSelected }">Task Team &amp; SMS</button>
+                    </div>
+                    <!-- /ko -->
+
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary d-flex align-items-center gap-2"
                         data-bind="click: submit, disable: submitting">
@@ -4657,7 +4759,7 @@
                         <span>Submitting…</span>
                         <!-- /ko -->
                         <!-- ko ifnot: submitting -->
-                        <span>Submit</span>
+                        <span data-bind="text: submitLabel">Submit</span>
                         <!-- /ko -->
                     </button>
                 </div>
@@ -4921,6 +5023,10 @@
               " />
                         <button class="btn btn-outline-secondary" type="button" title="Clear"
                             data-bind="click: clearQuery, visible: query">&times;</button>
+                        <button class="btn btn-outline-secondary" type="button" title="Commands and shortcuts"
+                            aria-label="Spotlight help" data-bind="click: openHelp">
+                            <i class="fa fa-question"></i>
+                        </button>
                     </div>
                     <!-- after the input, before the results list -->
                     <div class="mt-2 d-flex flex-wrap gap-2 align-items-center" data-bind="visible: isCommandMode">
@@ -4935,12 +5041,12 @@
                             <span data-bind="text: matchedJobText"></span>
                         </span>
                         <!-- Unmatched badges after -->
-                        <!-- TEAM badge (show for orderless commands) -->
+                        <!-- TEAM badge (show for orderless or single input commands) -->
                         <span data-bind="visible: !matchedTeamText()">
                             <span class="badge bg-secondary"
-                                data-bind="visible: isOrderlessCommand() && commandStage() === 'team'">team…</span>
+                                data-bind="visible: (isOrderlessCommand() || commandNeedsOnlyTeam()) && commandStage() === 'team'">team…</span>
                             <span class="badge bg-light text-dark border"
-                                data-bind="visible: isOrderlessCommand() && commandStage() !== 'team'">team</span>
+                                data-bind="visible: (isOrderlessCommand() || commandNeedsOnlyTeam()) && commandStage() !== 'team'">team</span>
                         </span>
                         <!-- INCIDENT badge (show for orderless or single input commands) -->
                         <span data-bind="visible: !matchedJobText()">
@@ -4966,7 +5072,7 @@
                         </div>
                     </div>
                     <div class="small text-muted mt-2 d-flex justify-content-between">
-                        <span>↑↓ navigate • Enter open • Esc close</span>
+                        <span>↑↓ navigate • Enter open • Esc close • ? help</span>
                         <span data-bind="text: positionText, visible: positionText"></span>
                     </div>
 
@@ -4975,6 +5081,59 @@
         </div>
     </div>
 
+
+    <!-- Spotlight help / cheatsheet -->
+    <div class="modal fade" id="SpotlightHelpModal" tabindex="-1" aria-labelledby="SpotlightHelpModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" data-bind="with: spotlightSearchVM">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="SpotlightHelpModalLabel">Spotlight commands</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">Click a command to start it in Spotlight.</p>
+                    <div class="list-group" data-bind="foreach: commands">
+                        <button type="button" class="list-group-item list-group-item-action spotlight-help-command"
+                            data-bind="click: $parent.useCommand">
+                            <code data-bind="text: syntax"></code>
+                            <span data-bind="text: description"></span>
+                        </button>
+                    </div>
+                    <p class="small mt-2 mb-0">
+                        After a command, type part of a team's callsign or an incident's ID or address until its badge
+                        turns green, or pick it from the list. Callsigns with spaces can be put in quotes.
+                    </p>
+
+                    <div class="row mt-4 g-4">
+                        <div class="col-md-6">
+                            <h6>Search</h6>
+                            <p class="small mb-0">
+                                Anything that isn't a command searches incidents (ID, type, status, HQ, LGA, sector,
+                                address, tags, situation, caller) and teams (callsign, HQ, team leader, members). Every
+                                word must match.
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Keys</h6>
+                            <div class="small spotlight-help-keys">
+                                <kbd data-bind="text: hotkeyLabel"></kbd><span>Open Spotlight</span>
+                                <span><kbd>↑</kbd> <kbd>↓</kbd></span><span>Move through results</span>
+                                <kbd>Enter</kbd><span>Open the result, or run the command once it's ready</span>
+                                <kbd>Esc</kbd><span>Close</span>
+                                <kbd>?</kbd><span>Show this help (in an empty search box)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <a href="https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html" target="_blank"
+                        rel="noopener">Spotlight guide</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back to Spotlight</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- MAP CONTEXT MENU (floating) -->
     <div id="mapContextMenu" class="dropdown-menu shadow"

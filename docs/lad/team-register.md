@@ -35,7 +35,7 @@ Every team row has four action buttons, whether or not the team is expanded:
 
 ![Team row action buttons](images/team-row-actions.png)
 
-- **Radio Log**: opens [New Radio Log](logs-and-messages.md#new-radio-log) against the team.
+- **Radio Log**: opens [New Radio Log](logs-and-messages.md#new-radio-log) with the team filled in. The log isn't attached to an incident.
 - **Message Team**: opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients. Greyed out if the team has no members.
 - **Open in Remote Tab**: opens the team's edit page in the Beacon [remote tab](getting-started.md#remote-beacon-tab), e.g. to change the team's name or members.
 - **Focus on map**: focuses the Situation Map on the team's radio location. Greyed out if no radios are matched.
@@ -114,7 +114,7 @@ Click **Refresh** to reload the team's tasking details.
 
 Each tasking in the list has four actions:
 
-- **Radio Log** (against the incident): opens [New Radio Log](logs-and-messages.md#new-radio-log), logged against the incident and including the team's callsign.
+- **Radio Log** (against the incident): opens [New Radio Log](logs-and-messages.md#new-radio-log) with the incident and team filled in. You can also [change the team's status](logs-and-messages.md#changing-the-teams-status) when you submit.
 - **Message Team** (against the incident): opens [Send SMS](logs-and-messages.md#send-sms) with the team members as recipients, associated with the incident.
 - **Open Incident in Remote Tab**: opens the incident in the Beacon remote tab.
 - **Focus on map**: focuses the Situation Map on the incident if it is geocoded and within your incident filters. Greyed out if the incident is outside your filters or has no GPS location (it won't be on the map).

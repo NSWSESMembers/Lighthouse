@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import ko from 'knockout';
-import { findAssetsByCallsign } from './spotlightSearch.js';
+import { findAssetsByCallsign, findCallOffTasking } from './spotlightSearch.js';
 
 const asset = (name, { radioId = '', satelliteId = '' } = {}) => ({
     name: ko.observable(name),
@@ -28,5 +28,26 @@ describe('findAssetsByCallsign', () => {
         expect(findAssetsByCallsign(assets, '  ')).toEqual([]);
         expect(findAssetsByCallsign(assets, 'zzz')).toEqual([]);
         expect(findAssetsByCallsign(assets, 'dem', 2)).toHaveLength(2);
+    });
+});
+
+describe('findCallOffTasking', () => {
+    const vm = (id) => ({ id: ko.observable(id) });
+    const tasking = (team, job, canCalloff) => ({ team, job: ko.observable(job), canCalloff: () => canCalloff });
+
+    it("finds the team's tasking on the incident that can be called off, from either side", () => {
+        const team = vm(1), job = vm(10), other = vm(11);
+        const done = tasking(team, job, false);
+        const live = tasking(team, job, true);
+        team.taskings = ko.observableArray([tasking(team, other, true), done]);
+        job.taskings = ko.observableArray([done, live]);
+        expect(findCallOffTasking(team, job)).toBe(live);
+    });
+
+    it('returns null when no matching tasking can be called off', () => {
+        const team = vm(1), job = vm(10);
+        team.taskings = ko.observableArray([tasking(team, job, false)]);
+        expect(findCallOffTasking(team, job)).toBeNull();
+        expect(findCallOffTasking(team, null)).toBeNull();
     });
 });

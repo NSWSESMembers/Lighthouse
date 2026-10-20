@@ -23,9 +23,9 @@ import { MapVM } from './viewmodels/Map.js';
 import { JobTimeline } from "./viewmodels/JobTimeline.js";
 
 import { CreateOpsLogModalVM } from "./viewmodels/OpsLogModalVM.js";
-import { CreateRadioLogModalVM } from "./viewmodels/RadioLogModalVM.js";
 import { SendSMSModalVM } from "./viewmodels/SMSTeamModalVM.js";
 import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js";
+import { CallOffModalVM } from "./viewmodels/CallOffModalVM.js";
 import { OpsLogResolveModalVM } from "./viewmodels/OpsLogResolveModalVM.js";
 import { TrackableAssetsModalVM } from "./viewmodels/TrackableAssetsModalVM.js";
 import IncidentImagesModalVM from "./viewmodels/IncidentImagesModalVM";
@@ -513,13 +513,13 @@ function VM() {
 
     ///opslog short cuts
     self.CreateOpsLogModalVM = new CreateOpsLogModalVM(self);
-    self.CreateRadioLogModalVM = new CreateRadioLogModalVM(self);
     self.SendSMSModalVM = new SendSMSModalVM(self);
     self.selectedJob = ko.observable(null);
 
     self.trackableAssetsModalVM = new TrackableAssetsModalVM(self);
 
     self.jobStatusConfirmVM = new JobStatusConfirmModalVM(self);
+    self.callOffVM = new CallOffModalVM();
 
     self.incidentImagesVM = new IncidentImagesModalVM({
         getToken,
@@ -545,6 +545,29 @@ function VM() {
 
         vm.open(job, newStatus);
         modal.show();
+
+        installModalHotkeys({
+            modalEl,
+            onSave: () => vm.submit?.(),
+            onClose: () => modal.hide(),
+            allowInInputs: true
+        });
+    };
+
+    self.attachCallOffModal = function (tasking) {
+        if (!tasking) return;
+        const modalEl = document.getElementById("CallOffModal");
+        const modal = new bootstrap.Modal(modalEl);
+
+        const vm = self.callOffVM;
+        vm.modalInstance = modal;
+
+        vm.open(tasking);
+        modal.show();
+
+        modalEl.addEventListener('shown.bs.modal', function () {
+            document.getElementById('CallOffReasonInput')?.focus();
+        }, { once: true });
 
         installModalHotkeys({
             modalEl,
@@ -1111,7 +1134,7 @@ function VM() {
             },
 
             openRadioLogModal: (tasking) => {
-                self.attachJobRadioLogModal(tasking);
+                self.openRadioOpsLogModal({ job: tasking.job, teamCallsign: tasking.teamCallsign(), tasking });
             },
 
             openNewOpsLogModal: (job) => {
@@ -1216,7 +1239,7 @@ function VM() {
                 }),
 
             openRadioLogModal: (team) => {
-                self.attachTeamRadioLogModal(team);
+                self.openRadioOpsLogModal({ teamCallsign: team.callsign() });
             },
 
             teamTaskStatusFilter: () => self.config.teamTaskStatusFilter(),
@@ -1364,50 +1387,6 @@ function VM() {
         modal.show();
     }
 
-    self.attachJobRadioLogModal = function (tasking) {
-        const modalEl = document.getElementById('RadioLogModal');
-        const modal = new bootstrap.Modal(modalEl);
-
-        self.CreateRadioLogModalVM.modalInstance = modal;
-
-        self.CreateRadioLogModalVM.openForTasking(tasking);
-        modal.show();
-
-        modalEl.addEventListener('shown.bs.modal', function () {
-            document.getElementById('RadioLogTextInput')?.focus();
-        }, { once: true });
-
-        installModalHotkeys({
-            modalEl,
-            onSave: () => self.CreateRadioLogModalVM.submit?.(),
-            onClose: () => modal.hide(),
-            allowInInputs: true // text-heavy modal
-        });
-
-    };
-
-    self.attachJobRadioLogModalByTeamAndIncident = function (jobId, teamCallsign) {
-        const modalEl = document.getElementById('RadioLogModal');
-        const modal = new bootstrap.Modal(modalEl);
-
-        self.CreateRadioLogModalVM.modalInstance = modal;
-
-        self.CreateRadioLogModalVM.openFromTeamPlusIncident(jobId, teamCallsign);
-        modal.show();
-
-        modalEl.addEventListener('shown.bs.modal', function () {
-            document.getElementById('RadioLogTextInput')?.focus();
-        }, { once: true });
-
-        installModalHotkeys({
-            modalEl,
-            onSave: () => self.CreateRadioLogModalVM.submit?.(),
-            onClose: () => modal.hide(),
-            allowInInputs: true // text-heavy modal
-        });
-
-    };
-
     // See utils/smsHelpers.js for the recipient/prefill-text building.
     self.attachSendSMSModal = function (recipients, team = null, tasking = null, job = null) {
         var msgRecipients = team ? buildSmsRecipientsFromTeam(team) : recipients;
@@ -1446,30 +1425,6 @@ function VM() {
         });
 
     }
-
-    self.attachTeamRadioLogModal = function (team) {
-        const modalEl = document.getElementById('RadioLogModal');
-        const modal = new bootstrap.Modal(modalEl);
-
-        const vm = self.CreateRadioLogModalVM;
-
-        vm.modalInstance = modal;
-
-        vm.openForTeam(team);
-        modal.show();
-
-        modalEl.addEventListener('shown.bs.modal', function () {
-            document.getElementById('RadioLogTextInput')?.focus();
-        }, { once: true });
-
-        installModalHotkeys({
-            modalEl,
-            onSave: () => self.CreateRadioLogModalVM.submit?.(),
-            onClose: () => modal.hide(),
-            allowInInputs: true // text-heavy modal
-        });
-
-    };
 
     self.attachNewOpsLogModal = function (job) {
         const modalEl = document.getElementById('CreateOpsLogModal');
@@ -1512,7 +1467,14 @@ function VM() {
         }, { once: true });
     };
 
+    // Toolbar button -- KO passes ($data, event), so don't forward them as opts.
     self.openBlankRadioOpsLogModal = function() {
+        self.openRadioOpsLogModal();
+    };
+
+    // Radio log in the Ops Log modal with the Radio tag auto-selected.
+    // opts: { job, teamCallsign } -- both optional, used to prefill.
+    self.openRadioOpsLogModal = function(opts = {}) {
         const modalEl = document.getElementById('CreateOpsLogModal');
         const modal = new bootstrap.Modal(modalEl);
 
@@ -1520,7 +1482,7 @@ function VM() {
 
         vm.modalInstance = modal;
 
-        vm.openForRadioLog({}); // blank radio log with Radio tag auto-selected
+        vm.openForRadioLog(opts);
         modal.show();
 
         modalEl.addEventListener('shown.bs.modal', function () {
@@ -1774,7 +1736,7 @@ function VM() {
     self._spotlightModalEl = null;
     self._spotlightModal = null;
 
-    self._openSpotlight = () => {
+    self._openSpotlight = (initialQuery = "") => {
 
         self.teamSearch(''); // clear team search to avoid confusion
         self.jobSearch('');  // clear job search to avoid confusion
@@ -1785,7 +1747,7 @@ function VM() {
         self._spotlightModalEl = el;
         self._spotlightModal = bootstrap.Modal.getOrCreateInstance(el);
 
-        self.spotlightSearchVM.query("");
+        self.spotlightSearchVM.query(initialQuery);
         self.spotlightSearchVM.results.removeAll();
         self.spotlightSearchVM.activeIndex(0);
         self.spotlightSearchVM.rebuildIndex?.();
@@ -1806,6 +1768,26 @@ function VM() {
 
     self._closeSpotlight = () => {
         try { self._spotlightModal?.hide(); } catch { /* empty */ }
+    };
+
+    // Help modal swaps with Spotlight; closing it goes back to Spotlight,
+    // with the clicked command typed in if there was one.
+    let spotlightHelpReturnQuery = "";
+
+    self._openSpotlightHelp = () => {
+        const el = document.getElementById("SpotlightHelpModal");
+        if (!el) return;
+        spotlightHelpReturnQuery = "";
+        self._closeSpotlight();
+
+        const modal = bootstrap.Modal.getOrCreateInstance(el);
+        el.addEventListener('hidden.bs.modal', () => self._openSpotlight(spotlightHelpReturnQuery), { once: true });
+        modal.show();
+    };
+
+    self._closeSpotlightHelp = (returnQuery = "") => {
+        spotlightHelpReturnQuery = returnQuery;
+        bootstrap.Modal.getInstance(document.getElementById("SpotlightHelpModal"))?.hide();
     };
 
     // --- Initial load state management ---
@@ -2391,6 +2373,50 @@ function VM() {
                 showAlert("Failed to Untask Team.", "danger", 5000);
                 cb(null);
             });
+    }
+
+    // Promise version of updateTeamStatus/callOffTeam/untaskTeam for callers that
+    // must know whether the change landed (the Ops/Radio Log modal only logs
+    // after a successful status change). Those three resolve null/[] on an HTTP
+    // error (nullOnError), so this asks the client to throw instead -- rejects
+    // with the BeaconApiError (or network error); no alert, the caller shows it.
+    // action/payload come from Tasking.buildStatusChange.
+    self.applyTaskingStatusChange = async function (tasking, action, payload) {
+        const t = await getToken();
+        const ctx = { ...beaconCtx(t), throwOnError: true };
+        let data;
+        if (action === "Enroute" || action === "Onsite" || action === "Offsite") {
+            data = await BeaconClient.tasking.updateTeamStatus(tasking.id(), action, payload, ctx);
+        } else if (action === "CallOff") {
+            data = await BeaconClient.tasking.callOffTeam(tasking.id(), payload, ctx);
+        } else if (action === "Untask") {
+            data = await BeaconClient.tasking.untaskTeam(tasking.id(), payload, ctx);
+        } else {
+            throw new Error(`Unknown status action: ${action}`);
+        }
+        tasking.job.fetchTasking({ force: true });
+        if (tasking.team?.isFilteredIn?.()) {
+            tasking.team.fetchTasking({ force: true });
+            tasking.team.refreshData();
+        }
+        return data;
+    }
+
+    // Promise version of assignJobToTeam for the Ops/Radio Log dialog's "Task
+    // Team": rejects (no alert -- the dialog shows it) unless Beacon created the
+    // tasking, so the dialog only saves the log after a successful tasking.
+    self.applyTaskTeam = async function (teamVm, jobVm) {
+        const t = await getToken();
+        const r = await BeaconClient.tasking.task(teamVm.id(), jobVm.id(), { ...beaconCtx(t), throwOnError: true });
+        if (!(r && r.length > 0)) {
+            const err = new Error("Beacon did not create the tasking");
+            err.userMessage = "Beacon didn't create the tasking";
+            throw err;
+        }
+        jobVm.fetchTasking({ force: true });
+        teamVm.fetchTasking({ force: true });
+        teamVm.refreshData();
+        return r;
     }
 
     self.fetchJobById = async function (jobId, cb) {
@@ -3323,16 +3349,16 @@ function VM() {
 
 
 
-    self.fetchHQDetails = async function (hqName) {
-        console.log("Fetching HQ details for:", hqName);
+    // hqRef: { code, name } -- searched by unit code, or by name when there is no code.
+    self.fetchHQDetails = async function (hqRef) {
         const t = await getToken(); // Wait for the token to be ready
 
         return new Promise((resolve, reject) => {
-            fetchHqDetailsSummary(hqName, apiHost, t, (hqDetails) => {
+            fetchHqDetailsSummary(hqRef, apiHost, t, (hqDetails) => {
                 if (hqDetails) {
                     resolve(hqDetails); // Resolve the promise with the resultte
                 } else {
-                    console.warn("No HQ details found for name:", hqName);
+                    console.warn("No HQ details found for:", hqRef);
                     reject(new Error("No HQ details found"));
                 }
             });

@@ -16,6 +16,41 @@ import { Enum } from "../utils/enum.js";
 const _tick = ko.observable(Date.now());
 setInterval(() => _tick(Date.now()), 300000);
 
+// Pill colour for a tasking status name (Tasked, Enroute, Onsite, ...).
+export function statusColorClass(statusName) {
+    switch ((statusName || "").toLowerCase()) {
+        case "tasked":
+            return "bg-primary text-white";
+        case "enroute":
+            return "bg-info";
+        case "onsite":
+            return "bg-warning";
+        case "complete":
+            return "bg-success";
+        default:
+            return "bg-secondary text-white";
+    }
+}
+
+// Adds minutes to a datetime-local input value (or to now if empty) and returns
+// it in datetime-local format -- backs the ETA/ETC "+N" quick buttons.
+export function addMinutesToInputTime(existingValue, minutes) {
+    // Case 1: No existing time → start with current time
+    let base = existingValue ? new Date(existingValue) : new Date();
+
+    base.setMinutes(base.getMinutes() + minutes);
+
+    // Convert back to datetime-local format
+    const pad = (n) => n.toString().padStart(2, "0");
+    return (
+        base.getFullYear() + "-" +
+        pad(base.getMonth() + 1) + "-" +
+        pad(base.getDate()) + "T" +
+        pad(base.getHours()) + ":" +
+        pad(base.getMinutes())
+    );
+}
+
 export function Tasking(data = {}) {
     const self = this;
 
@@ -194,19 +229,7 @@ export function Tasking(data = {}) {
         Need to get rid fo this.
     */
     self.tagColorFromStatus = function () {
-        const status = (self.currentStatus() || "").toLowerCase();
-        switch (status) {
-            case "tasked":
-                return "bg-primary text-white";
-            case "enroute":
-                return "bg-info";
-            case "onsite":
-                return "bg-warning";
-            case "complete":
-                return "bg-success";
-            default:
-                return "bg-secondary text-white";
-        }
+        return statusColorClass(self.currentStatus());
     }
 
     /* 
@@ -365,13 +388,7 @@ export function Tasking(data = {}) {
         }
 
         if (option.key === "Complete") {
-            //DO THE MAGIC LIGHTHOUSE STUFF OPENING HERE THINGO
-            const url = self.taskCompletionLink()
-            if (url) {
-                console.log("Opening completion in Beacon:", url);
-                openURLInBeacon(url);
-                showAlert("Teams must be completed from Beacon. Your Beacon Remote tab has been opened to the team completion screen for the selected team", "warning", 5000);
-            }
+            self.openCompletionInBeacon();
             self.closeStatusDropdown();
         }
 
@@ -380,21 +397,16 @@ export function Tasking(data = {}) {
         if (event && event.stopPropagation) event.stopPropagation();
     };
 
-    function addMinutesToInputTime(existingValue, minutes) {
-        // Case 1: No existing time → start with current time
-        let base = existingValue ? new Date(existingValue) : new Date();
-
-        base.setMinutes(base.getMinutes() + minutes);
-
-        // Convert back to datetime-local format
-        const pad = (n) => n.toString().padStart(2, "0");
-        return (
-            base.getFullYear() + "-" +
-            pad(base.getMonth() + 1) + "-" +
-            pad(base.getDate()) + "T" +
-            pad(base.getHours()) + ":" +
-            pad(base.getMinutes())
-        );
+    // Teams are completed in Beacon, not LAD -- opens the Beacon Remote tab on
+    // this tasking's completion screen. Returns false if there's no source to open.
+    self.openCompletionInBeacon = function () {
+        //DO THE MAGIC LIGHTHOUSE STUFF OPENING HERE THINGO
+        const url = self.taskCompletionLink()
+        if (!url) return false;
+        console.log("Opening completion in Beacon:", url);
+        openURLInBeacon(url);
+        showAlert("Teams must be completed from Beacon. Your Beacon Remote tab has been opened to the team completion screen for the selected team", "warning", 5000);
+        return true;
     }
 
     self.goBackFromDetails = function () {
@@ -404,40 +416,44 @@ export function Tasking(data = {}) {
         self.needsETC(false);
     }
 
-    self.updateTaskingStatus = function () {
-        console.log("SUBMITTING");
-        const formattedTime = moment(self.time()).format("YYYY-MM-DDTHH:mm:ssZ");
+    // Builds the Beacon request for a status change from this tasking's current
+    // state plus a draft ({ newStatus, time, eta, etc, reason }). Writes nothing --
+    // shared by the row dropdown below and the Ops/Radio Log modal, which holds
+    // its own draft and only sends on Submit. action is null for Complete (that's
+    // a Beacon handoff, see openCompletionInBeacon) or an unknown status.
+    self.buildStatusChange = function ({ newStatus, time, eta, etc, reason } = {}) {
+        const formattedTime = (time ? moment(time) : moment()).format("YYYY-MM-DDTHH:mm:ssZ");
         let action = null; // our friendly UI name is different to the Beacon API backend name, so this value is for that backend value that will be used to form the URL later on.
         let payload = { timeLogged: formattedTime, overrideFutureStatuses: 0, description: "", LighthouseFunction: "updatingTeamStatus" };
 
-        if (self.newStatus() === "Enroute") {
+        if (newStatus === "Enroute") {
             action = "Enroute";
-            if (self.eta() && moment(self.eta()).isValid()) {
-                payload.estimatedCompletion = moment(self.eta()).format("YYYY-MM-DDTHH:mm:ssZ");
+            if (eta && moment(eta).isValid()) {
+                payload.estimatedCompletion = moment(eta).format("YYYY-MM-DDTHH:mm:ssZ");
             } else {
                 payload.estimatedCompletion = null;
             }
         }
 
         // CONSTRUCT PAYLOD FOR ONSITE
-        if (self.newStatus() === "Onsite") {
+        if (newStatus === "Onsite") {
             action = "Onsite";
-            if (self.etc() && moment(self.etc()).isValid()) {
-                payload.estimatedCompletion = moment(self.etc()).format("YYYY-MM-DDTHH:mm:ssZ");
+            if (etc && moment(etc).isValid()) {
+                payload.estimatedCompletion = moment(etc).format("YYYY-MM-DDTHH:mm:ssZ");
             } else {
                 payload.estimatedCompletion = null;
             }
         }
 
         // CONSTRUCT PAYLOAD FOR OFFSITE
-        if (self.newStatus() === "Offsite") {
+        if (newStatus === "Offsite") {
             action = "Offsite";
             payload.estimatedCompletion = null;
             payload.taskingId = self.id();
         }
 
         // Construct Payload for Call Off
-        if (self.newStatus() === "CallOff") {
+        if (newStatus === "CallOff") {
             action = "CallOff";
             payload.TaskingId = self.id();
             payload.InjuriesSustained = false;
@@ -445,14 +461,14 @@ export function Tasking(data = {}) {
             payload.CISPRequired = false;
             payload.VesselUsed = false;
             payload.RiskAssessmentCompleted = false;
-            payload.ReasonForCallOff = self.callOffReason();
+            payload.ReasonForCallOff = reason;
             payload.InjuredPeopleIds = [];
             payload.CompleteJob = false;
             payload.LighthouseFunction = "callOffTeamFromJob";
         }
 
         // Construct Payload for Untask
-        if (self.newStatus() === "Untask") {
+        if (newStatus === "Untask") {
             action = "Untask";
             delete payload.timeLogged;
             delete payload.description;
@@ -465,17 +481,30 @@ export function Tasking(data = {}) {
 
 
         // Decide whether we are overriding tasking - and apply tasking override value if we are.
-        if (self.newStatus() === "Enroute" && self.currentStatus() !== "Tasked") {
+        if (newStatus === "Enroute" && self.currentStatus() !== "Tasked") {
             payload.overrideFutureStatuses = self.id();
         }
 
-        if (self.newStatus() === "Onsite" && self.currentStatus() !== "Enroute") {
+        if (newStatus === "Onsite" && self.currentStatus() !== "Enroute") {
             payload.overrideFutureStatuses = self.id();
         }
 
-        if (self.newStatus() === "Offsite" && self.currentStatus() !== "Onsite") {
+        if (newStatus === "Offsite" && self.currentStatus() !== "Onsite") {
             payload.overrideFutureStatuses = self.id();
         }
+
+        return { action, payload };
+    }
+
+    self.updateTaskingStatus = function () {
+        console.log("SUBMITTING");
+        const { action, payload } = self.buildStatusChange({
+            newStatus: self.newStatus(),
+            time: self.time(),
+            eta: self.eta(),
+            etc: self.etc(),
+            reason: self.callOffReason(),
+        });
 
         // Send to ParentVM to make API Call
         // If it's a POST Request send it to the UpdateTeamStatus API - sends Tasking, Action (what status we are changing to), Payload and Callback.

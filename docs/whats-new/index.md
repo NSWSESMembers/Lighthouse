@@ -18,9 +18,32 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD radio log status changes and Spotlight commands
+
+*21 October 2026 · [v2026.10.21](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.21)*
+
+### Radio and ops logs
+
+- **Change a team's status from a radio log.** When a radio or ops log's **Incident** and **Team** fields point at a team tasked to that incident (straight away when you open **Radio Log** from a tasking, or once you fill them in), the bottom of the dialog shows the team's current status with an **update to** menu. The new status is only set when you click **Submit**, and the log entry is only saved if the status change worked. If it doesn't, the dialog explains why and nothing is logged. See [Changing the Team's Status](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html#changing-the-teams-status).
+- **Task a team from a radio or ops log.** If the team in the log isn't tasked to the incident, choose **Task Team** or **Task Team & SMS** at the bottom of the dialog. The team is tasked when you click **Submit**, before the log entry is saved, and **Task Team & SMS** opens Send SMS once the dialog closes. See [Tasking the Team from a Log](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html#tasking-the-team-from-a-log).
+- **Radio Log on teams and taskings, and the Spotlight `radio` command, open the full dialog.** It now uses the same dialog as New Ops Log, with the *Radio* tag already selected, so you can add other tags. The incident, team and subject are filled in for you. See [New Radio Log](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html#new-radio-log).
+- If a log entry fails to save, the **Submit** button no longer stays stuck on *Submitting…*.
+- In dark mode, selected tags in the New Ops Log and New Radio Log dialogs are readable.
+
+### Spotlight
+
+- **SMS a team from Spotlight.** Type `msg` and a team's callsign, then press Enter to open the Send SMS dialog for that team. See [SMS Team command](https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html#sms-team-command--msg).
+- **Call off a team from Spotlight.** Type `calloff` with a team and an incident, in either order, then press Enter and give a reason. Only taskings that can be called off are offered. See [Call Off command](https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html#call-off-command--calloff).
+- **Spotlight help.** Click the **?** button in Spotlight, or type `?`, to see all the commands, what you can search for and the keyboard shortcuts. Click a command to start it. See [Spotlight](https://lighthouse.ses.nsw.gov.au/guides/lad/spotlight.html).
+- The Spotlight `radio` command now lists teams when you type the incident before the team.
+
+### Map
+
+- The *SES Unit Locations* overlay is now called *SES Units*, and its popup has a cleaner layout. Long contact details no longer spill out of the popup, and the unit's status now shows correctly: it always said *Not Monitoring* before. Units with a hyphen in their name, such as Waverley-Woollahra, now load their details. See [Overlays](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlays).
+
 ## LAD map and dark mode fixes
 
-*15 October 2026 · [v2026.10.15](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.15)*
+*15 October 2026 · [v2026.10.14](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.14)*
 
 - **Clicking an incident in an alert works when the Incidents layer is hidden.** The map turns the layer back on, zooms to the incident and opens its popup. This also applies to Spotlight. See [Overlays](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlays).
 - Hiding the **Incidents** layer now also hides the unacknowledged and Active rings, and rescue markers when they aren't clustered. Before, these stayed on the map.
