@@ -113,6 +113,83 @@ async function openSpotlight(page, query) {
 const spotlightBox = (page) => unionOf(page,
   '#SpotlightSearchModal .input-group, #SpotlightSearchModal .modal-body > .d-flex.flex-wrap, #spotlightResults button', 6);
 
+/*
+  Fake overlay feeds. Transport NSW and HazardWatch reach LAD through the
+  extension's background page (chrome.runtime.sendMessage), which the
+  harness stubs, so these answer those messages with invented features
+  around Demo City. Positions are [east, north] metres from OVERLAY_ORIGIN
+  (the demo HQ); `label` is the callout drawn on the overlay-markers shot.
+*/
+const OVERLAY_ORIGIN = { lat: -33.815, lng: 151.001 };
+const OVERLAY_FEEDS = {
+  'transport-incidents': [
+    { at: [450, 1250], label: 'Traffic incident', properties: {
+      displayName: 'Crash', mainCategory: 'Crash',
+      roads: [{ mainStreet: 'Banksia Rd', locationQualifier: 'near', suburb: 'Demo River' }],
+      adviceA: 'Exercise caution.', adviceB: 'Reduced speed limit.', otherAdvice: 'One lane closed eastbound.',
+      speedLimit: 40, start: '2026-10-05T14:10:00+11:00', hideEndDate: true, attendingGroups: ['Police', 'Tow truck'],
+    } },
+  ],
+  'transport-cameras': [
+    { at: [800, 350], label: 'Traffic camera', properties: { direction: 'N', view: 'Waratah Lane at Kurrajong Rd, looking north', href: '' } },
+  ],
+};
+
+/** A fake HazardWatch warning area; LAD puts its icon in the middle. */
+const HAZARDWATCH_FEED = {
+  ring: [[-750, 0], [150, -150], [400, 500], [-100, 900], [-800, 650], [-750, 0]],
+  label: 'HazardWatch warning',
+  properties: {
+    hw_event: 'Flood',
+    'hw_AustralianWarningSystem:WarningLevel': 'Watch and Act',
+    hw_title: 'Demo River: prepare to evacuate',
+    hw_description: '<p>Demo River is expected to reach the moderate flood level this evening. Low-lying parts of Demo River and Demo Flats may be affected.</p><p>Prepare to evacuate and follow the advice of emergency services.</p>',
+  },
+};
+
+/**
+ * Close the config, answer the background-page overlay feeds with the fake
+ * data above, then switch on the overlay layers `keys` (mapVM.onlineLayers
+ * keys) and wait for them to draw. Incidents and assets are hidden so only
+ * overlay markers are on the map; the view is centred `centre` metres from
+ * OVERLAY_ORIGIN, and is stored as window.__shotCentre.
+ */
+async function showOverlays(page, keys, { zoom = 15, centre = [0, 0] } = {}) {
+  await closeConfigAndLoad(page);
+  await page.evaluate(({ keys, zoom, centre, origin, feeds, hw }) => {
+    const vm = window.ko.dataFor(document.body); const mv = vm.mapVM; const map = mv.map;
+    const toLngLat = ([e, n]) => [origin.lng + e / (111320 * Math.cos((origin.lat * Math.PI) / 180)), origin.lat + n / 110540];
+    const feature = (geometry, properties) => ({ type: 'Feature', geometry, properties });
+    const points = (rows) => ({ type: 'FeatureCollection', features: rows.map((r) => feature({ type: 'Point', coordinates: toLngLat(r.at) }, r.properties)) });
+    const hazardWatch = { type: 'FeatureCollection', features: [feature({ type: 'Polygon', coordinates: [hw.ring.map(toLngLat)] }, hw.properties)] };
+    sessionStorage.setItem('lighthouseTransportApiKeyCache', 'demo');
+    const send = window.chrome.runtime.sendMessage;
+    window.chrome.runtime.sendMessage = (msg, cb) => {
+      if (feeds[msg?.type]) return setTimeout(() => cb(points(feeds[msg.type])), 0);
+      if (/^hazard-watch/.test(msg?.type)) return setTimeout(() => cb(hazardWatch), 0);
+      return send(msg, cb);
+    };
+    vm.incidentsVisible(false);
+    map.removeLayer(mv.assetLayer);
+    const [lng, lat] = toLngLat(centre);
+    window.__shotCentre = { lat, lng };
+    map.setView(window.__shotCentre, zoom, { animate: false });
+    keys.forEach((k) => { const e = mv.onlineLayers.get(k); map.addLayer(e.layerGroup); e.refresh(); });
+  }, { keys, zoom, centre, origin: OVERLAY_ORIGIN, feeds: OVERLAY_FEEDS, hw: HAZARDWATCH_FEED });
+  await settle(page, 2500);
+}
+
+/** A `width` x `height` crop of the map around window.__shotCentre, shifted by [dx, dy]. */
+function mapCrop(page, width, height, [dx, dy] = [0, 0]) {
+  return {
+    async screenshot(opts) {
+      const box = await page.locator('#map').boundingBox();
+      const c = await page.evaluate(() => window.ko.dataFor(document.body).mapVM.map.latLngToContainerPoint(window.__shotCentre));
+      return page.screenshot({ ...opts, clip: { x: box.x + c.x - width / 2 + dx, y: box.y + c.y - height / 2 + dy, width, height } });
+    },
+  };
+}
+
 const SHOTS = {
   'config-data': configTab('data'),
   'config-incident-filters': configTab('filters'),
@@ -457,6 +534,48 @@ const SHOTS = {
       await settle(page, 600);
     },
     target: (page) => page.locator('#CreateOpsLogModal .modal-footer'),
+  },
+
+  // Overlay layers that drop clickable markers on the map, each labelled:
+  // a Transport NSW incident and camera, a HazardWatch warning (area +
+  // icon) and an SES unit HQ (unit locations ship with the extension; the
+  // rest is fake). Incidents and assets are hidden.
+  'overlay-markers': {
+    launch: { viewport: { width: 1800, height: 1000 }, scale: 2 },
+    run: async (page) => {
+      await showOverlays(page, ['transport-incidents', 'transport-cameras', 'hazardwatch-warnings', 'sesUnitLocations'], { centre: [0, 850] });
+      await page.evaluate(({ feeds, hw }) => {
+        const mv = window.ko.dataFor(document.body).mapVM; const map = mv.map;
+        const labels = [];
+        for (const [key, rows] of Object.entries(feeds)) {
+          mv.onlineLayers.get(key).layerGroup.eachLayer((m, i = 0) => labels.push([m, rows[i]?.label]));
+        }
+        const markersOf = (key) => { const out = []; const walk = (g) => g.eachLayer((l) => (l.getLatLng && l.options.icon ? out.push(l) : l.eachLayer && walk(l))); walk(mv.onlineLayers.get(key).layerGroup); return out; };
+        markersOf('hazardwatch-warnings').forEach((m) => labels.push([m, hw.label]));
+        // The unit HQ marker nearest the view centre.
+        const hq = markersOf('sesUnitLocations').sort((a, b) => map.distance(a.getLatLng(), window.__shotCentre) - map.distance(b.getLatLng(), window.__shotCentre))[0];
+        labels.push([hq, 'SES unit HQ']);
+        labels.forEach(([m, text]) => text && m.bindTooltip(text, { permanent: true, direction: 'right', offset: [12, 0], className: 'shot-callout' }).openTooltip());
+        const style = document.createElement('style');
+        style.textContent = '.shot-callout{font-size:13px;font-weight:600;padding:3px 8px;border:2px solid #1f6feb;color:#1f2328}.shot-callout.leaflet-tooltip-right:before{border-right-color:#1f6feb}';
+        document.head.appendChild(style);
+      }, { feeds: Object.fromEntries(Object.entries(OVERLAY_FEEDS).map(([k, rows]) => [k, rows.map((r) => ({ label: r.label }))])), hw: { label: HAZARDWATCH_FEED.label } });
+      await settle(page, 800);
+    },
+    target: (page) => mapCrop(page, 640, 580, [60, 0]),
+  },
+
+  // The popup from clicking an overlay marker (the traffic incident).
+  'overlay-marker-popup': {
+    launch: { viewport: { width: 1800, height: 1000 } },
+    run: async (page) => {
+      await showOverlays(page, ['transport-incidents'], { centre: [450, 1250], zoom: 16 });
+      await page.evaluate(() => {
+        window.ko.dataFor(document.body).mapVM.onlineLayers.get('transport-incidents').layerGroup.eachLayer((m) => m.openPopup());
+      });
+      await settle(page, 1000);
+    },
+    target: (page) => mapCrop(page, 380, 320, [0, -110]),
   },
 
   spotlight: {
