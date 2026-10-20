@@ -55,9 +55,32 @@ To change basemap, open the **Layers** menu, open the basemap dropdown and pick 
 
 ### Overlays
 
-Overlays sit on top of the basemap to add information. Toggle them on and off in the Layers menu, or use the search bar at the top to find a layer. Many overlay features show more detail when clicked, e.g. clicking a HazardWatch warning shows the full warning.
+Overlays sit on top of the basemap to add information. Toggle them on and off in the Layers menu, or use the search bar at the top to find a layer.
 
 ![Overlay layers](images/overlays.png)
+
+#### Clickable Overlay Markers
+
+Some overlays drop their own markers on the map. Click one to open a popup with more detail.
+
+![Overlay markers on the map: an SES unit HQ, a traffic incident, a HazardWatch warning and a traffic camera](images/overlay-markers.png)
+
+| Overlay | Marker | Click it to see |
+| --- | --- | --- |
+| **Transport NSW Incidents** | Live Traffic icon (crash, hazard, breakdown, traffic lights out, changed conditions) | What happened, where, traffic advice, speed limit, start/end time and who is managing it |
+| **Transport NSW Cameras** | Camera icon | What the camera faces and its latest image (click the image to enlarge it) |
+| **HazardWatch Active Warnings** | Warning icon in the middle of each warning area | The full published warning. Clicking anywhere in the area also works |
+| **SES Unit Locations** | SES logo at each unit headquarters | Whether the unit is monitoring, its active teams and incidents, SRB accreditations and contacts |
+| **EPA Contamination Sites** | Red dot | Site name, address, activity type and management class |
+| **NSW Declared Dams** | Blue dot | Dam name, place, owner and declared status |
+
+![Popup from clicking a traffic incident marker](images/overlay-marker-popup.png)
+
+Some area overlays also open a popup when you click inside an area: **BOM Land Warnings** (warning type, severity and times) and **WaterNSW Special & Controlled Areas** (area name and class). Other overlays, such as boundaries, radar and BOM observations, are pictures only and don't respond to clicks.
+
+Overlay markers are drawn under incidents by default. If one is hidden behind an incident, change the [Marker Layer Order](configuration.md#marker-layer-order).
+
+#### Overlay Notes
 
 Most layers are described by their name. Those that need more explanation:
 
