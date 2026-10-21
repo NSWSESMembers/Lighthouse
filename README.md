@@ -21,7 +21,7 @@ Lighthouse runs within the Chrome web browser and talks to Beacon as the signed-
 
 Lighthouse simply interfaces with the same information and functionality as normal Beacon, just in a different (and hopefully more effective and efficient) way.
 
-Some features use a small Lighthouse backend (AWS Lambda, source in [`lambda/`](lambda/)) for things Beacon doesn't provide: address geocoding, driving routes, map layers and tiles, myAvailability lookups, and shared LAD configuration.
+Some features use a small Lighthouse backend (AWS Lambda, source in [`lambda/`](lambda/)) for things Beacon doesn't provide: address geocoding, driving routes, map layers and tiles, and shared LAD configuration.
 
 ## Usage
 
