@@ -39,7 +39,7 @@
   },
   "browserslist": "> 0.25%, not dead",
   "dependencies": {
-    "@babel/runtime": "^7.27.0",
+    "@babel/runtime": "^8.0.7",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/signalr": "^10.0.11",
     "@tmcw/togeojson": "^5.7.0",
