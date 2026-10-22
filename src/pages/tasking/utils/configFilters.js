@@ -46,8 +46,11 @@ export function jobMatchesConfigFilters(jb, config) {
     const jobHqId = String(jb.entityAssignedTo.id());
     const hqMatch = hqIds.size === 0 || hqIds.has(jobHqId);
 
-    // Sector filtering — only when scope includes incidents
-    if (config.applySectorsToIncidents() && sectorIds.size > 0) {
+    // Sector filtering — only when scope includes incidents. A job whose
+    // sector isn't loaded yet (lean bulk search/tasking payloads carry none)
+    // came back from a search the server already filtered by SectorIds, so
+    // let it through; a full GET makes it known and this re-checks.
+    if (config.applySectorsToIncidents() && sectorIds.size > 0 && jb.sectorKnown?.() !== false) {
         const sectorId = String(jb.sector().id());
         const sectorMatch = sectorIds.has(sectorId);
 

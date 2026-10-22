@@ -1985,30 +1985,6 @@ function VM() {
         }
     }
 
-    // Batched form of fetchUnresolvedActionsLog for the bulk refresh cycle.
-    // Jobs with no unresolved entries get an empty list so resolved actions
-    // clear; jobs a per-job fetch updated after this started are left alone.
-    self.fetchAllUnresolvedActions = async function (jobIds) {
-        const jobs = jobIds.map(id => self.jobsById.get(id)).filter(Boolean);
-        if (!jobs.length) return;
-        const startTime = Date.now();
-        const received = jobs.map(j => new Date(j.jobReceived()).getTime()).filter(Number.isFinite);
-        const dateFrom = new Date(received.length ? Math.min(...received) : startTime - self.config.fetchPeriod() * 86400000);
-
-        const t = await getToken();   // blocks here until token is ready
-        try {
-            const data = await BeaconClient.operationslog.unresolvedActionsForJobs(jobs.map(j => j.id()), dateFrom, beaconCtx(t));
-            const tagsByJob = new Map(jobs.map(j => [j.id(), []]));
-            data.results.forEach(entry => tagsByJob.get(entry.JobId)?.push(...(entry.Tags || [])));
-            jobs.forEach(job => {
-                if (job.lastActionTagsUpdate > startTime) return;
-                job.updateFromJson({ ActionRequiredTags: tagsByJob.get(job.id()) });
-            });
-        } catch (err) {
-            console.error("Failed to fetch unresolved actions for jobs:", err);
-        }
-    }
-
     self.fetchUnacknowledgedJobNotifications = async function (job) {
         const t = await getToken();   // blocks here until token is ready
         return BeaconClient.notifications.unaccepted(job.id(), beaconCtx(t));
@@ -2422,8 +2398,16 @@ function VM() {
     self.fetchJobById = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
         try {
-            const res = await BeaconClient.job.get(jobId, beaconCtx(t));
+            // The job GET has no ImageCount; the thumbnail list (filenames
+            // only, so cheap) gives it. A failed list leaves the count as-is.
+            const [res, thumbs] = await Promise.all([
+                BeaconClient.job.get(jobId, beaconCtx(t)),
+                BeaconClient.images.getIncidentImages(jobId, beaconCtx(t)).catch(() => null),
+            ]);
             if (res) {
+                if (Array.isArray(thumbs)) res.ImageCount = thumbs.length;
+                // A full GET is authoritative on the sector: no key means none.
+                if (res.Sector === undefined) res.Sector = null;
                 self.getOrCreateJob(res);
                 cb && cb(true);
             } else {
@@ -2622,10 +2606,13 @@ function VM() {
             incidentTypeFilterToView,
             sectorToView,
             self.config.applySectorsToIncidents() ? `Unsectorised=${self.config.includeIncidentsWithoutSector()}` : '',
-            `ViewModelType=6`,
         ].filter(param => param && param.trim() !== '');
 
-        const url = paramsArray.join('&');
+        // Lean model (2): the only search model with ImageCount, InFrao,
+        // EventId and ActionRequiredTags. It has no Sector (Job.sectorKnown
+        // covers that) and combined caller/contact names (see
+        // splitLeanContactFields). Search ignores 6 ("Edit") and returns full.
+        const url = [...paramsArray, 'ViewModelType=2'].join('&');
 
         try {
             const allJobs = await BeaconClient.job.searchRaw(url, beaconCtx(t, {
@@ -2665,10 +2652,6 @@ function VM() {
             // async and its merges land after the network round-trip, not
             // synchronously when it's called.
             self.fetchAllUnacceptedNotifications();
-            // ViewModelType=6 carries no ActionRequiredTags, so pull them for
-            // this cycle's jobs in bulk. Also repairs any opsLogUpdated pushes
-            // missed while SignalR was down.
-            self.fetchAllUnresolvedActions([...fetchedJobIds]);
         } catch (err) {
             console.error("Failed to fetch jobs:", err);
             myViewModel.jobsLoading(false);

@@ -653,6 +653,11 @@ body.dark-mode .action-required-button {
   color: #fbbf24;
 }
 
+body.dark-mode .images-button:hover,
+body.dark-mode .images-button:focus-visible {
+  color: #5da3ff !important;
+}
+
 body.dark-mode .leaflet-control {
   background-color: transparent !important;
   border-color: transparent !important;

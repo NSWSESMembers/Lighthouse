@@ -105,6 +105,20 @@ describe('jobMatchesConfigFilters', () => {
             const config = makeConfig({ applySectorsToIncidents: () => true, sectorFilters: () => [{ id: 'secA' }] });
             expect(jobMatchesConfigFilters(makeJob({ sector: () => ({ id: () => 'secB' }) }), config)).toBe(false);
         });
+
+        it('trusts the server for a job whose sector is not loaded yet', () => {
+            // Lean search results carry no Sector; the search was already
+            // filtered by SectorIds/Unsectorised server-side.
+            const config = makeConfig({
+                applySectorsToIncidents: () => true,
+                sectorFilters: () => [{ id: 'secA' }],
+                includeIncidentsWithoutSector: () => false,
+            });
+            const unknown = makeJob({ sector: () => ({ id: () => null }), sectorKnown: () => false });
+            const knownNone = makeJob({ sector: () => ({ id: () => null }), sectorKnown: () => true });
+            expect(jobMatchesConfigFilters(unknown, config)).toBe(true);
+            expect(jobMatchesConfigFilters(knownNone, config)).toBe(false);
+        });
     });
 });
 
