@@ -34,12 +34,6 @@ export function splitLeanContactFields(d, job = null) {
         const number = d[`${P}Number`];
         if (number !== undefined && d[`${P}PhoneNumber`] === undefined) out[`${P}PhoneNumber`] = number;
     }
-    // Lean has no ContactCalled. For a new job, infer it from whether a
-    // separate contact exists (matched 98/100 live jobs); once created, leave
-    // it to full GETs so the two sources can't flip it back and forth.
-    if (!job && d.ContactCalled === undefined && d.ContactName !== undefined) {
-        out.ContactCalled = !(d.ContactName || d.ContactNumber);
-    }
     return out;
 }
 
@@ -714,7 +708,6 @@ export function Job(data = {}, deps = {}) {
         if (d.ContactFirstName !== undefined) setIfChanged(this.contactFirstName, d.ContactFirstName || "");
         if (d.ContactLastName !== undefined) setIfChanged(this.contactLastName, d.ContactLastName || "");
         if (d.ContactPhoneNumber !== undefined) setIfChanged(this.contactPhoneNumber, d.ContactPhoneNumber || "");
-        if (d.ContactCalled !== undefined) setIfChanged(this.contactCalled, !!d.ContactCalled);
 
         if (d.PermissionToEnterPremises !== undefined) setIfChanged(this.permissionToEnterPremises, !!d.PermissionToEnterPremises);
         if (d.HowToEnterPremises !== undefined) setIfChanged(this.howToEnterPremises, d.HowToEnterPremises ?? null);

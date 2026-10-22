@@ -419,9 +419,13 @@ describe('lean (ViewModelType=2) search payloads', () => {
     expect(j.imageCount()).toBe(3);
   });
 
-  it('infers ContactCalled for a new job from whether a separate contact exists', () => {
-    expect(new Job(lean).contactCalled()).toBe(true);
-    expect(new Job({ ...lean, ContactName: 'Sam Lee', ContactNumber: '0411111111' }).contactCalled()).toBe(false);
+  it('keeps caller and incident contact separate for lean jobs', () => {
+    // Lean has no ContactCalled; LAD has always shown the incident contact
+    // and "Called By" caller separately for these.
+    const j = new Job({ ...lean, ContactName: null });
+    expect(j.contactCalled()).toBe(false);
+    j.updateFromJson({ ContactCalled: true });
+    expect(j.contactCalled()).toBe(false);
   });
 
   it('leaves ContactCalled and split names from a full GET alone on later lean polls', () => {
@@ -440,12 +444,6 @@ describe('lean (ViewModelType=2) search payloads', () => {
     j.updateFromJson({ ...lean, CallerName: 'Jo Bloggs' });
     expect(j.callerFirstName()).toBe('Jo Bloggs');
     expect(j.callerLastName()).toBe('');
-  });
-
-  it('applies ContactCalled from a full payload', () => {
-    const j = new Job(lean);
-    j.updateFromJson({ ContactCalled: false });
-    expect(j.contactCalled()).toBe(false);
   });
 
   it('passes payloads without lean fields through untouched', () => {
