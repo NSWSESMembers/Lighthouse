@@ -187,7 +187,8 @@ function convertArrayOfObjectsToCSV(data) {
   keys = Object.keys(data[0]);
 
   result = '';
-  result += keys.join(columnDelimiter);
+  result += keys.map(csvField).join(columnDelimiter);   // Fix handling of quotes and line breaks
+
   result += lineDelimiter;
 
   data.forEach(function(item) {
@@ -200,7 +201,7 @@ function convertArrayOfObjectsToCSV(data) {
         result += columnDelimiter;
 //      if (item[key] === undefined)
 //        item[key] = 0;
-      result += "\""+item[key]+"\"";
+      result += csvField(item[key]);  // Fix handling of quotes and line breaks
       ctr++;
     });
     result += lineDelimiter;
@@ -235,4 +236,10 @@ function findInArr(arr,name) {
         }
     }
     return null;
+}
+
+function csvField(value) {
+  return `"${String(value ?? '')
+    .replace(/"/g, '""')
+    .replace(/\r?\n/g, ' ')}"`;
 }
