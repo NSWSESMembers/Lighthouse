@@ -86,8 +86,12 @@ export function buildAssetPopupKO() {
                       <span class="text-muted ms-1" data-bind="text: tsk.jobTypeName"></span>
                       <span class="text-muted ms-1" data-bind="text: tsk.jobPriority"></span>
                     </div>
-                    <div class="text-end text-muted ms-2"
-                         data-bind="text: tsk.statusTimeAgoLabel"></div>
+                    <div class="text-end ms-2">
+                      <!-- ko with: tsk.etaInfo -->
+                      <span class="eta-chip" data-bind="css: chipClass, fastTooltip: title"><i class="fa" data-bind="css: iconClass"></i><span data-bind="text: label"></span></span>
+                      <!-- /ko -->
+                      <div class="text-muted" data-bind="text: tsk.statusTimeAgoLabel, css: { small: tsk.etaInfo() }"></div>
+                    </div>
                   </div>
 
                   <!-- Second row: address -->

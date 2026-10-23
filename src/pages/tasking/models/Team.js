@@ -3,6 +3,7 @@ import ko from "knockout";
 
 import { Entity } from "./Entity.js";
 import { Sector } from "./Sector.js";
+import { primaryEtaTasking } from "./Tasking.js";
 
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 
@@ -450,6 +451,18 @@ export function Team(data = {}, deps = {}) {
             if (seqA !== seqB) return seqA - seqB;
             return new Date(b.currentStatusTime()) - new Date(a.currentStatusTime());
         });
+    });
+
+    // The listed tasking whose ETA/ETC matters most (soonest ETA, else
+    // soonest ETC) and its etaInfo -- drives the chip on the team row.
+    self.etaTasking = ko.pureComputed(() => primaryEtaTasking(self.filteredTaskings()));
+    self.etaInfo = ko.pureComputed(() => {
+        const t = self.etaTasking();
+        return t ? t.etaInfo() : null;
+    });
+    self.etaTitle = ko.pureComputed(() => {
+        const t = self.etaTasking();
+        return t ? `${t.job.identifier()}: ${t.etaInfo().title}` : '';
     });
 
     // ── Reorder mode ──

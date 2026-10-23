@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { Job } from '../models/Job.js';
 import { buildJobTooltipHtml } from './job_tooltip.js';
+import { Tasking } from '../models/Tasking.js';
 
 function makeJob(overrides = {}) {
     return new Job({
@@ -64,5 +65,28 @@ describe('buildJobTooltipHtml', () => {
         });
         const html = buildJobTooltipHtml(job);
         expect(html).toContain('Callback Required +1');
+    });
+});
+
+describe('buildJobTooltipHtml ETA/ETC badges', () => {
+    const fmt = (d) => {
+        const p = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+    };
+    // 30 s short of the minute, so the rounded-up countdown reads exactly m.
+    const inMinutes = (m) => fmt(new Date(Date.now() + m * 60000 - 30000));
+
+    it('adds a badge per team with an ETA or ETC, and none for a Tasked team', () => {
+        const job = makeJob();
+        const enroute = new Tasking({ Id: 1, CurrentStatus: 'Enroute', EnrouteEstimatedCompletion: inMinutes(9) });
+        enroute.team = { callsign: () => 'TEAM<1>' };
+        const tasked = new Tasking({ Id: 2, CurrentStatus: 'Tasked' });
+        tasked.team = { callsign: () => 'TEAM2' };
+        job.taskings.push(enroute, tasked);
+
+        const html = buildJobTooltipHtml(job);
+        expect(html).toContain('eta-chip eta-chip--ok');
+        expect(html).toContain('TEAM&lt;1&gt; &middot; ETA 9m');
+        expect(html).not.toContain('TEAM2');
     });
 });

@@ -23,6 +23,7 @@ The Incident Register is in the bottom left of LAD. It lists all filtered incide
 - Situation on scene, up to three lines
 - Status
   - *Active* and *Tasked* incidents also show the number of taskings. This includes completed, called off and untasked teams, unless **Count active taskings only** is on under [Appearance](configuration.md#appearance).
+  - If a team is on the way or on scene, its [ETA or ETC](tasking.md#arrival-and-completion-times) shows underneath.
   - Click the status to [change it](#changing-incident-status).
 - Address
   - For geocoded incidents, click the address to focus the Situation Map on the incident.

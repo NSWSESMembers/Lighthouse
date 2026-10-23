@@ -18,6 +18,18 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD arrival times and a clearer status menu
+
+*24 October 2026*
+
+- **See when teams will arrive and finish.** When a team is En-Route with an ETA, or On-Site with an ETC, LAD counts down to it in the Team Register, the Incident Register, expanded teams and incidents, the map popups and the incident hover tooltip. Blue is on track, amber is due within 5 minutes and red is overdue. Hover over a countdown to see the clock time. See [Arrival and Completion Times](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#arrival-and-completion-times).
+- **New alert: Teams overdue on ETA/ETC.** Lists teams that are 5 minutes or more past their ETA or ETC. Click a team to jump to it. See [Alerts](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#alerts).
+- A team's ETA and ETC now update in LAD when they're changed in Beacon. Before, LAD kept showing the time from when the tasking first loaded.
+- **A clearer status menu.** A tasking's status menu now shows its progress, leads with the next step, and lists skip-aheads (including Complete) and Call off / Remove tasking separately. See [Tasking Status](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#tasking-status).
+- **Change a team's ETA or ETC without changing its status.** Click **Change** next to the ETA or ETC in the status menu, add time with the +5 to +60 buttons (each click adds on) or type a time, and save. The team's En route or On site time stays the same. See [Changing the ETA or ETC](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#changing-the-eta-or-etc).
+- **Correct an earlier status on purpose.** Setting a tasking back, e.g. On site to En route, is now under **Correct an earlier status…**, shows which status times Beacon will clear, and needs a tick to confirm. See [Correcting an Earlier Status](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#correcting-an-earlier-status).
+- **Call off is only offered when Beacon will accept it.** LAD now uses the same rule as Beacon's own screens, so it no longer offers Call off for a team that has been on site (unless corrected back to En route) or Off site. If Beacon still refuses a status change, call off or remove, LAD now shows Beacon's reason instead of failing silently.
+
 ## LAD overlay loading status
 
 *24 October 2026*

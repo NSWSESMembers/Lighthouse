@@ -97,6 +97,17 @@ async function openAssetLibrary(page) {
   await settle(page, 1500);
 }
 
+/** Expand DEM01 and open the status menu of its `n`th tasking; returns the open menu. */
+async function openTaskingStatusMenu(page, n) {
+  await closeConfigAndLoad(page);
+  const row = page.locator('tr.team-row').first();
+  await row.locator('[data-bind*="toggleAndExpand"]').first().click();
+  await settle(page, 900);
+  await row.locator('.team-status-button').nth(n).click();
+  await settle(page, 500);
+  return page.locator('.tasking-dropdown-menu.show');
+}
+
 /** A library card by its asset name. */
 const libraryCard = (page, name) =>
   page.locator('#trackableAssetsModal .card').filter({ has: page.locator('.fs-4', { hasText: new RegExp(`^${name}$`) }) });
@@ -697,6 +708,73 @@ const SHOTS = {
       await settle(page, 400);
     },
     target: (page) => page.locator('#SpotlightHelpModal .modal-content'),
+  },
+
+  // Tasking status menu on DEM01's taskings: 2610-1206 (On site) and
+  // 2610-1207 (Tasked).
+  'tasking-status-tasked': {
+    run: (page) => openTaskingStatusMenu(page, 1),
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+  'tasking-status-enroute': {
+    run: async (page) => {
+      const menu = await openTaskingStatusMenu(page, 1);
+      await menu.locator('.tsm-next').click();
+      await settle(page, 300);
+      await menu.locator('.tsm-eu-quick button', { hasText: '+15' }).click();
+      await settle(page, 300);
+      await page.mouse.move(0, 0); // no hover highlight on the buttons
+      await settle(page, 200);
+    },
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+  'tasking-status-onsite': {
+    run: (page) => openTaskingStatusMenu(page, 0),
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+  'tasking-status-correct': {
+    run: async (page) => {
+      const menu = await openTaskingStatusMenu(page, 0);
+      await menu.locator('.tsm-correct').click();
+      await settle(page, 300);
+      await menu.locator('.tsm-back-item').first().click();
+      await settle(page, 400);
+    },
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+  'tasking-status-change-etc': {
+    run: async (page) => {
+      const menu = await openTaskingStatusMenu(page, 0);
+      await menu.locator('.tsm-edit').click();
+      await settle(page, 300);
+      await menu.locator('.tsm-eu-quick button', { hasText: '+10' }).click();
+      await settle(page, 300);
+      await page.mouse.move(0, 0); // no hover highlight on the buttons
+      await settle(page, 200);
+    },
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+
+  // ETA/ETC chips (scenario.mjs ESTIMATES): DEM01 ETC on track, DEM02 ETA
+  // 14 min late, DEM03 ETC due soon, DEM04 ETA on track.
+  'eta-team-rows': {
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, 'tr.team-row'),
+  },
+  'eta-incident-rows': {
+    // Tall enough that all three rows are in the register's view.
+    launch: { viewport: { width: 1600, height: 1700 } },
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, ['70009', '70008', '70007'].map((id) => `tr.job-row[data-job-id="${id}"]`).join(', ')),
+  },
+  // DEM02 is more than 5 minutes past its ETA.
+  'alert-overdue-eta-bar': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('[data-rule-id="overdue-eta-teams"]').waitFor();
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('[data-rule-id="overdue-eta-teams"]'),
   },
 };
 

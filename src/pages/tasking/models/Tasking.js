@@ -16,6 +16,183 @@ import { Enum } from "../utils/enum.js";
 const _tick = ko.observable(Date.now());
 setInterval(() => _tick(Date.now()), 300000);
 
+// Separate, faster clock for the ETA/ETC countdowns and the overdue alert --
+// a 5-minute tick would leave "ETA 3m" on screen long after the team was due.
+const _etaTick = ko.observable(Date.now());
+setInterval(() => _etaTick(Date.now()), 30000);
+
+// "Due soon" (amber) at this many minutes or less to go.
+export const ETA_SOON_MINUTES = 5;
+// The "Teams overdue" alert fires once an ETA/ETC is this many minutes past.
+export const ETA_ALERT_MINUTES = 5;
+
+// 9m, 1h 35m, 1d 21h -- two units at most, so a long-stale estimate stays short.
+function formatMinutes(m) {
+    if (m < 60) return `${m}m`;
+    if (m < 1440) {
+        const h = Math.floor(m / 60);
+        const r = m % 60;
+        return r ? `${h}h ${r}m` : `${h}h`;
+    }
+    const d = Math.floor(m / 1440);
+    const h = Math.floor((m % 1440) / 60);
+    return h ? `${d}d ${h}h` : `${d}d`;
+}
+
+// Largest unit only (14m, 3h, 1d), for the chips in the narrow Team and
+// Incident Register cells. Lateness rounds down ("at least 5h late");
+// time left rounds to nearest (95m -> 2h).
+function formatMinutesCompact(m, { round = false } = {}) {
+    const r = round ? Math.round : Math.floor;
+    if (m < 60) return `${m}m`;
+    if (m < 1440) return `${r(m / 60)}h`;
+    return `${r(m / 1440)}d`;
+}
+
+// The estimate that applies to a tasking right now: the ETA (Beacon's
+// EnrouteEstimatedCompletion) while Enroute, the ETC
+// (OnsiteEstimatedCompletion) while Onsite, nothing in any other status.
+// Returns null when there's no usable estimate, else
+//   { kind: 'ETA'|'ETC', time: Date, minutesLeft, minutesLate,
+//     state: 'ok'|'soon'|'late', label, compactLabel, clockLabel, title,
+//     chipClass, lineClass, iconClass }
+// minutesLeft rounds up (1m until it's due); minutesLate rounds down (so
+// "5m late" means a full five minutes past).
+export function etaInfoFor(status, enrouteEstimate, onsiteEstimate, nowMs = Date.now()) {
+    const s = (status || '').toLowerCase();
+    let kind, raw;
+    if (s === 'enroute') { kind = 'ETA'; raw = enrouteEstimate; }
+    else if (s === 'onsite') { kind = 'ETC'; raw = onsiteEstimate; }
+    else return null;
+    if (!raw) return null;
+    const m = moment(raw);
+    if (!m.isValid()) return null;
+
+    const diffMin = (m.valueOf() - nowMs) / 60000;
+    const minutesLeft = diffMin > 0 ? Math.ceil(diffMin) : 0;
+    const minutesLate = diffMin > 0 ? 0 : Math.max(0, Math.floor(-diffMin));
+    const state = diffMin <= 0 ? 'late' : minutesLeft <= ETA_SOON_MINUTES ? 'soon' : 'ok';
+
+    // Chip labels drop to whole days past 24 h so they fit their cells;
+    // the clock line and the hover title keep the detail (1d 21h).
+    const short = (mins) => (mins >= 1440 ? formatMinutesCompact(mins) : formatMinutes(mins));
+    let rel, chipRel, compactRel, titleRel;
+    if (state !== 'late') {
+        rel = formatMinutes(minutesLeft);
+        chipRel = short(minutesLeft);
+        compactRel = formatMinutesCompact(minutesLeft, { round: true });
+        titleRel = `in ${rel}`;
+    } else if (minutesLate < 1) {
+        rel = chipRel = compactRel = 'now';
+        titleRel = 'due now';
+    } else {
+        rel = `${formatMinutes(minutesLate)} late`;
+        chipRel = `${short(minutesLate)} late`;
+        compactRel = `+${formatMinutesCompact(minutesLate)}`;
+        titleRel = `${formatMinutes(minutesLate)} overdue`;
+    }
+    const clock = m.format('HH:mm');
+    const full = kind === 'ETA' ? 'Estimated arrival' : 'Estimated completion';
+    return {
+        kind,
+        time: m.toDate(),
+        minutesLeft,
+        minutesLate,
+        state,
+        label: `${kind} ${chipRel}`,
+        compactLabel: `${kind} ${compactRel}`,
+        clockLabel: `${kind} ${clock} · ${rel}`,
+        compactClockLabel: `${kind} ${clock} · ${compactRel}`,
+        clock,
+        relative: titleRel,
+        title: `${full} ${clock} (${titleRel})`,
+        chipClass: `eta-chip--${state}`,
+        lineClass: `eta-line--${state}`,
+        iconClass: state === 'late' ? 'fa-exclamation-circle' : 'fa-clock',
+    };
+}
+
+// Of a set of taskings, the one whose estimate matters most: the soonest
+// (or most overdue) ETA, else the soonest ETC. Null if none has one.
+export function primaryEtaTasking(taskings) {
+    let best = null;
+    for (const t of taskings || []) {
+        const e = t.etaInfo && t.etaInfo();
+        if (!e) continue;
+        if (!best) { best = { t, e }; continue; }
+        if (e.kind !== best.e.kind) {
+            if (e.kind === 'ETA') best = { t, e };
+        } else if (e.time < best.e.time) {
+            best = { t, e };
+        }
+    }
+    return best ? best.t : null;
+}
+
+// Quick-add buttons for an ETA/ETC (a datetime-local observable), measured
+// from a fixed reference time -- `anchor`, a computed moment: the status time
+// on the status-change page, the current estimate (or now) in the Change
+// ETA/ETC editor. Each click adds to the ETA/ETC picked so far, or to the
+// anchor if it's blank or earlier. The label reads "From 10:00, add:" and then
+// "From 10:00: +25m" -- how far the ETA/ETC is past the anchor, however it was
+// set (buttons or typed) -- so the "from" time only moves if the anchor does.
+const QUICK_ADD_MINUTES = [5, 10, 15, 30, 60];
+function quickAdd(target, anchor) {
+    const pickedAfterAnchor = () => {
+        const v = target();
+        return v && moment(v).isValid() && !moment(v).isBefore(anchor(), "minute") ? moment(v) : null;
+    };
+    const label = ko.pureComputed(() => {
+        const a = anchor();
+        const when = a.isSame(moment(), "minute") ? `now (${a.format("HH:mm")})` : a.format("HH:mm");
+        const picked = pickedAfterAnchor();
+        const diff = picked ? picked.diff(a, "minutes") : 0;
+        return diff > 0 ? `From ${when}: +${formatMinutes(diff)}` : `From ${when}, add:`;
+    });
+    const buttons = QUICK_ADD_MINUTES.map(minutes => ({ minutes, label: `+${minutes}` }));
+    const click = (btn, event) => {
+        const base = pickedAfterAnchor() || anchor().clone();
+        target(base.add(btn.minutes, "minutes").format("YYYY-MM-DDTHH:mm"));
+        if (event && event.preventDefault) event.preventDefault();
+        if (event && event.stopPropagation) event.stopPropagation();
+    };
+    return { label, buttons, click };
+}
+
+// A tasking's forward progress, in order. Complete is a Beacon handoff.
+export const TASKING_STEPS = [
+    { key: "Tasked", label: "Tasked" },
+    { key: "Enroute", label: "En route" },
+    { key: "Onsite", label: "On site" },
+    { key: "Offsite", label: "Off site" },
+    { key: "Complete", label: "Complete" },
+];
+
+// Port of Beacon's own canCallOff (its tasking UI), from a tasking's
+// JobTeamStatusTypeHistory ([{ Name, TimeLogged }], in Beacon's order).
+// Matches what trainbeacon accepts/refuses (tested 2026-10-23):
+//   - ever Complete or ever Offsite -> no
+//   - been Onsite: no if the first Onsite is at/after the last Enroute and
+//     there's only one Enroute (a normal arrival, or a skip straight to
+//     Onsite then one Enroute override); a correction back to Enroute adds a
+//     second Enroute entry and allows it again
+//   - otherwise yes
+export function canCallOffFromHistory(history) {
+    const list = history || [];
+    if (list.some(h => h.Name === "Complete")) return false;
+    if (list.some(h => h.Name === "Offsite")) return false;
+
+    const firstOnsite = list.find(h => h.Name === "Onsite");
+    if (firstOnsite) {
+        const enroutes = list.filter(h => h.Name === "Enroute");
+        const lastEnroute = enroutes.length ? enroutes[enroutes.length - 1] : null;
+        if (lastEnroute && !moment(firstOnsite.TimeLogged).isBefore(moment(lastEnroute.TimeLogged)) && enroutes.length <= 1) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // Pill colour for a tasking status name (Tasked, Enroute, Onsite, ...).
 export function statusColorClass(statusName) {
     switch ((statusName || "").toLowerCase()) {
@@ -69,6 +246,9 @@ export function Tasking(data = {}) {
     self.onsite = ko.observable(data.Onsite ?? null);
     self.onsiteEstimatedCompletion = ko.observable(data.OnsiteEstimatedCompletion ?? null);
     self.offsite = ko.observable(data.Offsite ?? null);
+    // Beacon's status history ({ Name, TimeLogged, ... }) -- gates Call off
+    // (canCallOffFromHistory). Comes with every REST tasking fetch.
+    self.statusHistory = ko.observableArray(data.JobTeamStatusTypeHistory || []);
     self.complete = ko.observable(data.Complete ?? null);
 
     self.sequence = ko.observable(data.Sequence ?? 0);
@@ -127,6 +307,17 @@ export function Tasking(data = {}) {
     self.isUntasked = ko.pureComputed(() => (self.currentStatus() || "").toLowerCase() === "untasked");
     self.isComplete = ko.pureComputed(() => !!self.complete());
 
+    // ETA (Enroute) / ETC (Onsite) countdown -- see etaInfoFor. Re-reads the
+    // 30-second clock so the countdown and overdue state stay current.
+    self.etaInfo = ko.pureComputed(() => {
+        _etaTick();
+        return etaInfoFor(self.currentStatus(), self.enrouteEstimatedCompletion(), self.onsiteEstimatedCompletion());
+    });
+    self.etaOverdueForAlert = ko.pureComputed(() => {
+        const e = self.etaInfo();
+        return !!e && e.minutesLate >= ETA_ALERT_MINUTES;
+    });
+
     // convenience proxies
     // self.team can be null -- a tasking may be upserted before its team
     // reference resolves (e.g. a REST tasking record with no/partial Team
@@ -149,6 +340,7 @@ export function Tasking(data = {}) {
 
     // patch model with partial updates
     self.updateFrom = (patch = {}) => {
+        const before = { status: self.currentStatus(), time: self.currentStatusTime() };
         if (patch.CurrentStatus !== undefined) {
             self.currentStatus(patch.CurrentStatus);
         } else if (patch.CurrentStatusId !== undefined) {
@@ -162,9 +354,22 @@ export function Tasking(data = {}) {
         if (patch.CurrentStatusId !== undefined) self.currentStatusId(patch.CurrentStatusId);
         if (patch.EstimatedStatusEndTime !== undefined) self.estimatedStatusEndTime(patch.EstimatedStatusEndTime);
         if (patch.Enroute !== undefined) self.enroute(patch.Enroute);
+        if (patch.EnrouteEstimatedCompletion !== undefined) self.enrouteEstimatedCompletion(patch.EnrouteEstimatedCompletion);
         if (patch.Onsite !== undefined) self.onsite(patch.Onsite);
+        if (patch.OnsiteEstimatedCompletion !== undefined) self.onsiteEstimatedCompletion(patch.OnsiteEstimatedCompletion);
         if (patch.Offsite !== undefined) self.offsite(patch.Offsite);
         if (patch.Complete !== undefined) self.complete(patch.Complete);
+
+        if (patch.JobTeamStatusTypeHistory !== undefined) {
+            self.statusHistory(patch.JobTeamStatusTypeHistory || []);
+        } else if (self.currentStatus() !== before.status || self.currentStatusTime() !== before.time) {
+            // A SignalR push carries no history -- record the change locally
+            // so Call off gating doesn't wait for the next REST fetch.
+            self.statusHistory.push({
+                Name: self.currentStatus(),
+                TimeLogged: self.currentStatusTime() || moment().format("YYYY-MM-DDTHH:mm:ss"),
+            });
+        }
     };
 
     self.setJob = function (newJob) {
@@ -238,6 +443,10 @@ export function Tasking(data = {}) {
 
     self.onStatusDropdownToggleClick = function () {
         self.statusDropdownPage("status");
+        self.statusChangeMode("forward");
+        self.correctionTarget(null);
+        self.correctionAck(false);
+        self.estimateDraft(null);
         self.needsTimeSet(false);
         self.needsETA(false);
         self.needsETC(false);
@@ -298,8 +507,17 @@ export function Tasking(data = {}) {
         !self.cannotUpdateStatus() && self.isTasked()
     );
 
+    // Beacon refuses to call off a team that has been on site ("Cannot call
+    // off: Team has been onsite, team must be completed") -- offer Call off
+    // exactly when Beacon's own UI does (canCallOffFromHistory). Without any
+    // history yet (e.g. a tasking first seen via a push), fall back to the
+    // current On site / Off site times.
+    self.callOffAllowedByHistory = ko.pureComputed(() => {
+        const history = self.statusHistory();
+        return history.length ? canCallOffFromHistory(history) : !(self.onsite() || self.offsite());
+    });
     self.canCalloff = ko.pureComputed(() =>
-        !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute())
+        !self.cannotUpdateStatus() && (self.isTasked() || self.isEnroute()) && self.callOffAllowedByHistory()
     );
 
     self.canOnsite = ko.pureComputed(() =>
@@ -314,35 +532,21 @@ export function Tasking(data = {}) {
         !self.cannotUpdateStatus() && self.isActiveStatus()
     );
 
-    self.etaQuickButtons = [
-        { label: "+1", minutes: 1 },
-        { label: "+5", minutes: 5 },
-        { label: "+10", minutes: 10 },
-        { label: "+30", minutes: 30 },
-        { label: "+60", minutes: 60 }
-    ];
-
-    self.onEtaQuickButtonClick = function (btn, event) {
-        self.eta(addMinutesToInputTime(self.eta(), btn.minutes));
-
-        if (event && event.preventDefault) event.preventDefault();
-        if (event && event.stopPropagation) event.stopPropagation();
-    }
-
-    self.etcQuickButtons = [
-        { label: "+1", minutes: 1 },
-        { label: "+5", minutes: 5 },
-        { label: "+10", minutes: 10 },
-        { label: "+30", minutes: 30 },
-        { label: "+60", minutes: 60 }
-    ];
-
-    self.onEtcQuickButtonClick = function (btn, event) {
-        self.etc(addMinutesToInputTime(self.etc(), btn.minutes));
-
-        if (event && event.preventDefault) event.preventDefault();
-        if (event && event.stopPropagation) event.stopPropagation();
-    }
+    // ETA/ETC quick buttons on the status-change page -- see quickAdd. They
+    // count from the time the status is being set: now, or the override time.
+    const statusTimeAnchor = ko.pureComputed(() => {
+        _etaTick();
+        const t = self.timeOverrideEnabled() ? self.time() : null;
+        return t && moment(t).isValid() ? moment(t).seconds(0).milliseconds(0) : moment().seconds(0).milliseconds(0);
+    });
+    const etaQuick = quickAdd(self.eta, statusTimeAnchor);
+    self.etaQuickButtons = etaQuick.buttons;
+    self.etaQuickLabel = etaQuick.label;
+    self.onEtaQuickButtonClick = etaQuick.click;
+    const etcQuick = quickAdd(self.etc, statusTimeAnchor);
+    self.etcQuickButtons = etcQuick.buttons;
+    self.etcQuickLabel = etcQuick.label;
+    self.onEtcQuickButtonClick = etcQuick.click;
 
     self.statusOptions = ko.pureComputed(function () {
         return [
@@ -410,21 +614,264 @@ export function Tasking(data = {}) {
     }
 
     self.goBackFromDetails = function () {
-        self.statusDropdownPage("status");
+        self.statusDropdownPage(self.statusChangeMode() === "correction" ? "correct" : "status");
+        self.statusChangeMode("forward");
         self.needsTimeSet(false);
         self.needsETA(false);
         self.needsETC(false);
+        self.needsReason(false);
     }
+
+    /*
+        FORWARD-FIRST STATUS MENU
+        The row dropdown leads with the next status, lists skip-aheads and
+        stops separately, and hides going backwards behind "Correct an earlier
+        status…" plus a tick box, since Beacon then removes the later status
+        times. Changing the ETA/ETC of the current status is its own action.
+        statusOptions (above) stays as-is for the Ops/Radio Log and Call Off
+        modals, which only ever move forward.
+    */
+
+    // "forward" | "correction" | "estimate" -- what the details page is for.
+    self.statusChangeMode = ko.observable("forward");
+    self.correctPageVisible = ko.pureComputed(() => self.statusDropdownPage() === "correct");
+    self.isCorrectionMode = ko.pureComputed(() => self.statusChangeMode() === "correction");
+    self.isEstimateMode = ko.pureComputed(() => self.statusChangeMode() === "estimate");
+    self.isForwardMode = ko.pureComputed(() => self.statusChangeMode() === "forward");
+
+    // Where the tasking is in TASKING_STEPS (-1 for Untasked/CalledOff).
+    self.stepIndex = ko.pureComputed(() => {
+        if (self.isComplete()) return 4;
+        if (self.isOffsite()) return 3;
+        if (self.isOnsite()) return 2;
+        if (self.isEnroute()) return 1;
+        if (self.isTasked()) return 0;
+        return -1;
+    });
+
+    // Time a step was reached, only for steps done so far (a later step's
+    // stale timestamp from before an override isn't shown).
+    const stepTime = (key) => {
+        const i = TASKING_STEPS.findIndex(s => s.key === key);
+        if (i > self.stepIndex()) return null;
+        if (i === self.stepIndex()) return self.currentStatusTime();
+        return { Enroute: self.enroute(), Onsite: self.onsite(), Offsite: self.offsite() }[key] || null;
+    };
+    const hhmm = (t) => (t && moment(t).isValid() ? moment(t).format("HH:mm") : "");
+    const toInputTime = (m) => m.format("YYYY-MM-DDTHH:mm"); // datetime-local value
+
+    self.progressSteps = ko.pureComputed(() => {
+        const cur = self.stepIndex();
+        return TASKING_STEPS.map((s, i) => ({
+            label: s.label,
+            css: i < cur ? "done" : i === cur ? "cur" : "",
+            time: hhmm(stepTime(s.key)),
+        }));
+    });
+    self.progressFillStyle = ko.pureComputed(() =>
+        `width: calc((100% - 28px) * ${Math.max(0, self.stepIndex()) / (TASKING_STEPS.length - 1)})`
+    );
+
+    const optionFor = (key) => self.statusOptions().find(o => o.key === key);
+
+    // Every later status the tasking can move to, in order.
+    const forwardEntries = ko.pureComputed(() => {
+        const cur = self.stepIndex();
+        if (cur < 0) return [];
+        return TASKING_STEPS
+            .map((s, i) => ({ s, i, option: optionFor(s.key) }))
+            .filter(({ i, option }) => i > cur && option && option.enabled)
+            .map(({ s, i, option }) => {
+                // Off site is optional before Complete, so it isn't "skipped".
+                const skipped = TASKING_STEPS.slice(cur + 1, i)
+                    .filter(x => !(s.key === "Complete" && x.key === "Offsite"))
+                    .map(x => x.label);
+                return {
+                    option,
+                    label: s.label,
+                    isNext: skipped.length === 0,
+                    note: skipped.length === 0 ? "" : skipped.length === 1 ? `skips ${skipped[0]}` : `skips ${skipped.length} steps`,
+                    inBeacon: s.key === "Complete",
+                };
+            });
+    });
+    // Usually one next step; from On site both Off site and Complete are.
+    self.nextStepEntries = ko.pureComputed(() => forwardEntries().filter(e => e.isNext));
+    self.skipAheadEntries = ko.pureComputed(() => forwardEntries().filter(e => !e.isNext));
+    self.stopEntries = ko.pureComputed(() =>
+        ["CallOff", "Untask"]
+            .map(optionFor)
+            .filter(o => o && o.enabled)
+            .map(option => ({ option, label: option.key === "CallOff" ? "Call off" : "Remove tasking" }))
+    );
+
+    self.chooseStatusEntry = function (entry, event) {
+        self.statusChangeMode("forward");
+        self.onStatusOptionClick(entry.option, event);
+    };
+
+    // --- Going backwards ---
+    // Beacon can set En route / On site again (with overrideFutureStatuses);
+    // there's no "back to Tasked", and Complete/Called off/Untasked are final.
+    self.correctionEntries = ko.pureComputed(() => {
+        const cur = self.stepIndex();
+        if (self.cannotUpdateStatus() || cur < 2 || cur > 3) return [];
+        return TASKING_STEPS
+            .map((s, i) => ({ s, i }))
+            .filter(({ s, i }) => i < cur && (s.key === "Enroute" || s.key === "Onsite"))
+            .reverse() // nearest first
+            .map(({ s, i }) => {
+                const removed = TASKING_STEPS.slice(i + 1, cur + 1)
+                    .map(x => `${x.label}${hhmm(stepTime(x.key)) ? " " + hhmm(stepTime(x.key)) : ""}`);
+                // Back to En route: would Beacon still refuse a call off? (It
+                // does once the team has been Off site.) Check the history as
+                // it would be after this correction.
+                const original = s.key === "Enroute" ? self.enroute() : null;
+                const stillNoCallOff = s.key === "Enroute" && !canCallOffFromHistory([
+                    ...self.statusHistory(),
+                    { Name: "Enroute", TimeLogged: original || moment().format("YYYY-MM-DDTHH:mm:ss") },
+                ]);
+                return {
+                    key: s.key,
+                    label: s.label,
+                    removes: removed.join(", "),
+                    stillNoCallOff,
+                    option: {
+                        key: s.key, label: s.label, enabled: true, needsDetails: true, needsTimeSet: true,
+                        needsETA: s.key === "Enroute", needsETC: s.key === "Onsite", needsReason: false,
+                    },
+                };
+            });
+    });
+    self.canCorrect = ko.pureComputed(() => self.correctionEntries().length > 0);
+    self.correctionTarget = ko.observable(null);
+    self.correctionAck = ko.observable(false);
+    self.correctionTitle = ko.pureComputed(() => {
+        const t = self.correctionTarget();
+        const cur = TASKING_STEPS[self.stepIndex()];
+        return t && cur ? `${cur.label} → ${t.label}` : "";
+    });
+    self.openCorrection = function () {
+        self.statusDropdownPage("correct");
+    };
+    self.backToStatusPage = function () {
+        self.statusDropdownPage("status");
+    };
+    self.chooseCorrection = function (entry, event) {
+        self.correctionTarget(entry);
+        self.correctionAck(false);
+        self.statusChangeMode("correction");
+        self.onStatusOptionClick(entry.option, event);
+        // A correction restores the earlier status as it was: start from the
+        // time it was originally set (shown, and editable) and its estimate.
+        const original = entry.key === "Enroute" ? self.enroute() : self.onsite();
+        if (original && moment(original).isValid()) {
+            self.time(toInputTime(moment(original)));
+            self.timeOverrideEnabled(true);
+        }
+        const estimate = entry.key === "Enroute" ? self.enrouteEstimatedCompletion() : self.onsiteEstimatedCompletion();
+        if (estimate && moment(estimate).isValid()) {
+            self[entry.key === "Enroute" ? "eta" : "etc"](toInputTime(moment(estimate)));
+        }
+    };
+
+    // --- New ETA/ETC for the current status ---
+    self.estimateKind = ko.pureComputed(() => (self.isEnroute() ? "ETA" : self.isOnsite() ? "ETC" : null));
+    self.estimateDraft = ko.observable(null); // datetime-local value
+    const currentEstimate = () => (self.isEnroute() ? self.enrouteEstimatedCompletion() : self.onsiteEstimatedCompletion());
+    // The editor counts from the current estimate, or from now once it has passed.
+    const estimateAnchor = ko.pureComputed(() => {
+        _etaTick();
+        const now = moment().seconds(0).milliseconds(0);
+        const cur = currentEstimate();
+        return cur && moment(cur).isAfter(now) ? moment(cur).seconds(0).milliseconds(0) : now;
+    });
+    const estimateQuick = quickAdd(self.estimateDraft, estimateAnchor);
+    self.estimateQuickLabel = estimateQuick.label;
+    self.estimateQuickButtons = estimateQuick.buttons;
+    self.onEstimateQuickClick = estimateQuick.click;
+    // Back to the current estimate (or blank if there isn't one).
+    self.resetEstimateDraft = function (data, event) {
+        const cur = currentEstimate();
+        self.estimateDraft(cur && moment(cur).isValid() ? toInputTime(moment(cur)) : null);
+        if (event && event.stopPropagation) event.stopPropagation();
+    };
+    // Preview of the draft, in the same terms as the countdown chips.
+    self.estimateDraftInfo = ko.pureComputed(() => {
+        _etaTick();
+        const d = self.estimateDraft();
+        if (!d) return null;
+        return etaInfoFor(self.currentStatus(), d, d);
+    });
+    self.estimateUnchanged = ko.pureComputed(() => {
+        const d = self.estimateDraft();
+        const cur = currentEstimate();
+        return !d || (cur && moment(d).isSame(moment(cur), "minute"));
+    });
+    self.estimateSince = ko.pureComputed(() => hhmm(self.currentStatusTime()));
+    self.estimateEditLabel = ko.pureComputed(() => (self.etaInfo() ? "Change" : `Set ${self.estimateKind()}`));
+    self.currentStepLabel = ko.pureComputed(() => TASKING_STEPS[self.stepIndex()]?.label || self.currentStatus());
+    self.openEstimateEditor = function (data, event) {
+        const kind = self.estimateKind();
+        if (!kind) return;
+        self.onStatusDropdownToggleClick();
+        self.statusChangeMode("estimate");
+        self.newStatus(kind === "ETA" ? "Enroute" : "Onsite");
+        // Keep the time the team reached this status -- only the estimate changes.
+        self.time(self.currentStatusTime());
+        self.resetEstimateDraft();
+        self.statusDropdownPage("details");
+        if (event && event.stopPropagation) event.stopPropagation();
+    };
+
+    // --- Status-change page header and time line ---
+    self.statusChangeTitle = ko.pureComputed(() => {
+        if (self.newStatus() === "CallOff") return "Call off";
+        const to = TASKING_STEPS.find(s => s.key === self.newStatus());
+        return `${self.currentStepLabel()} → ${to ? to.label : ""}`;
+    });
+    self.statusChangeIcon = ko.pureComputed(() => (self.newStatus() === "CallOff" ? "fa-ban tsm-head-stop" : "fa-arrow-right"));
+    // "now (10:00)" until the user picks a different time.
+    self.timeNowLabel = ko.pureComputed(() => {
+        _etaTick();
+        return `now (${moment().format("HH:mm")})`;
+    });
+    self.enableTimeOverride = function (data, event) {
+        self.timeOverrideEnabled(true);
+        if (event && event.stopPropagation) event.stopPropagation();
+    };
+    self.useNowTime = function (data, event) {
+        self.timeOverrideEnabled(false);
+        self.time(moment().seconds(0).milliseconds(0).format("YYYY-MM-DDTHH:mm"));
+        if (event && event.stopPropagation) event.stopPropagation();
+    };
+
+    // --- Details page submit ---
+    self.submitLabel = ko.pureComputed(() => {
+        if (self.isEstimateMode()) {
+            const i = self.estimateDraftInfo();
+            return `Save ${self.estimateKind()}${i ? " " + moment(i.time).format("HH:mm") : ""}`;
+        }
+        const step = TASKING_STEPS.find(s => s.key === self.newStatus());
+        if (self.isCorrectionMode()) return `Change to ${step ? step.label : ""}`;
+        if (self.newStatus() === "CallOff") return "Call off";
+        return step ? `Set ${step.label}` : "Submit";
+    });
+    self.submitDisabled = ko.pureComputed(() =>
+        (self.isCorrectionMode() && !self.correctionAck()) ||
+        (self.isEstimateMode() && self.estimateUnchanged())
+    );
+    self.submitCss = ko.pureComputed(() => (self.isCorrectionMode() ? "btn-warning" : "btn-primary"));
 
     // Builds the Beacon request for a status change from this tasking's current
     // state plus a draft ({ newStatus, time, eta, etc, reason }). Writes nothing --
     // shared by the row dropdown below and the Ops/Radio Log modal, which holds
     // its own draft and only sends on Submit. action is null for Complete (that's
     // a Beacon handoff, see openCompletionInBeacon) or an unknown status.
-    self.buildStatusChange = function ({ newStatus, time, eta, etc, reason } = {}) {
+    self.buildStatusChange = function ({ newStatus, time, eta, etc, reason, description = "" } = {}) {
         const formattedTime = (time ? moment(time) : moment()).format("YYYY-MM-DDTHH:mm:ssZ");
         let action = null; // our friendly UI name is different to the Beacon API backend name, so this value is for that backend value that will be used to form the URL later on.
-        let payload = { timeLogged: formattedTime, overrideFutureStatuses: 0, description: "", LighthouseFunction: "updatingTeamStatus" };
+        let payload = { timeLogged: formattedTime, overrideFutureStatuses: 0, description, LighthouseFunction: "updatingTeamStatus" };
 
         if (newStatus === "Enroute") {
             action = "Enroute";
@@ -498,12 +945,18 @@ export function Tasking(data = {}) {
 
     self.updateTaskingStatus = function () {
         console.log("SUBMITTING");
+        if (self.submitDisabled()) return;
+        const estimate = self.isEstimateMode() ? self.estimateDraft() : null;
+        const target = self.correctionTarget();
         const { action, payload } = self.buildStatusChange({
             newStatus: self.newStatus(),
             time: self.time(),
-            eta: self.eta(),
-            etc: self.etc(),
+            eta: estimate && self.newStatus() === "Enroute" ? estimate : self.eta(),
+            etc: estimate && self.newStatus() === "Onsite" ? estimate : self.etc(),
             reason: self.callOffReason(),
+            description: self.isCorrectionMode() && target
+                ? `Status corrected from ${TASKING_STEPS[self.stepIndex()]?.label} to ${target.label} (Lighthouse)`
+                : "",
         });
 
         // Send to ParentVM to make API Call
