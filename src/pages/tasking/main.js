@@ -82,6 +82,7 @@ import { renderFRAOSLayer } from "./mapLayers/frao.js";
 import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
+import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
@@ -387,10 +388,8 @@ map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.
 map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 750;
 
 
-// Tile rows kept loaded beyond each edge of the map (Leaflet default 2).
-// Panning back over ground just seen otherwise rebuilds those tiles and
-// flashes grey squares while they decode and fade in.
-const BASEMAP_KEEP_BUFFER = 4;
+// Tile rows kept loaded beyond each edge of the map, by device memory.
+const BASEMAP_KEEP_BUFFER = basemapKeepBuffer(navigator.deviceMemory);
 
 function buildBasemapLayer(key) {
     // --- NSW VECTOR BASEMAP (Topographic style) ---
