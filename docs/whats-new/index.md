@@ -45,6 +45,7 @@ The home page shows the first three `##` entries, so keep the title short.
 - If you use a basemap other than Esri Topographic, the map no longer loads Esri Topographic underneath it as well. Panning and zooming download fewer map tiles, so the map is quicker on slow connections. If you use Esri Topographic, nothing changes.
 - You can still zoom in as far as before on Esri Dark.
 - Panning back and forth over the same area shows fewer grey squares, because the map keeps more of the surrounding map tiles loaded.
+- Dragging the map onto new ground shows fewer grey squares too, because the map loads a row of tiles just past each edge before you get there. This is turned off on slow connections and when Chrome's data saving is on, so it doesn't use extra data there. It doesn't apply to the NSW Vector basemap.
 
 ## Radio log and CSV export fixes
 

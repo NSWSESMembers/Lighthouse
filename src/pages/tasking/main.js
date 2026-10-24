@@ -86,6 +86,7 @@ import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
 import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
+import { withEdgeBuffer } from "./utils/basemapEdgeBuffer.js";
 import { layerStatusView, summarizeLayerStatuses } from "./utils/layerStatus.js";
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
@@ -424,25 +425,25 @@ function buildBasemapLayer(key) {
 
     // --- NSW RASTER BASEMAPS (tile MapServer) ---
     if (key === "nsw-base") {
-        return L.tileLayer(
+        return withEdgeBuffer(L.tileLayer(
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
             {
                 maxZoom: 20,
                 keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
-        );
+        ));
     }
 
     if (key === "nsw-imagery") {
-        return L.tileLayer(
+        return withEdgeBuffer(L.tileLayer(
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
             {
                 maxZoom: 20,
                 keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
-        );
+        ));
     }
 
     // --- EXISTING ESRI BASEMAPS ---
@@ -452,11 +453,11 @@ function buildBasemapLayer(key) {
     // maxNativeZoom first to keep repeat calls the same.)
     const tiles = esri.BasemapLayer.TILES[key]?.options;
     const nativeMax = tiles ? (tiles.maxNativeZoom ?? tiles.maxZoom) : undefined;
-    return esri.basemapLayer(key, {
+    return withEdgeBuffer(esri.basemapLayer(key, {
         ignoreDeprecationWarning: true,
         keepBuffer: BASEMAP_KEEP_BUFFER,
         ...(nativeMax < 19 ? { maxNativeZoom: nativeMax, maxZoom: 19 } : {}),
-    });
+    }));
 }
 
 
