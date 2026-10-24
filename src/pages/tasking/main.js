@@ -2395,6 +2395,16 @@ function VM() {
         return r;
     }
 
+    // For the Ops/Radio Log dialog to check whether a change Beacon errored on
+    // went through anyway: resolves true once the job's taskings are reloaded,
+    // false if that failed too.
+    self.reloadJobTaskings = function (jobVm) {
+        return new Promise(resolve => self.fetchJobTasking(jobVm.id(), (ok) => {
+            if (ok) jobVm.lastTaskingDataUpdate = new Date();
+            resolve(!!ok);
+        }));
+    }
+
     self.fetchJobById = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
         try {
