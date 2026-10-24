@@ -387,6 +387,11 @@ map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.
 map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 750;
 
 
+// Tile rows kept loaded beyond each edge of the map (Leaflet default 2).
+// Panning back over ground just seen otherwise rebuilds those tiles and
+// flashes grey squares while they decode and fade in.
+const BASEMAP_KEEP_BUFFER = 4;
+
 function buildBasemapLayer(key) {
     // --- NSW VECTOR BASEMAP (Topographic style) ---
     if (key === "nsw-vector") {
@@ -420,6 +425,7 @@ function buildBasemapLayer(key) {
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
             {
                 maxZoom: 20,
+                keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
         );
@@ -430,6 +436,7 @@ function buildBasemapLayer(key) {
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
             {
                 maxZoom: 20,
+                keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
         );
@@ -444,6 +451,7 @@ function buildBasemapLayer(key) {
     const nativeMax = tiles ? (tiles.maxNativeZoom ?? tiles.maxZoom) : undefined;
     return esri.basemapLayer(key, {
         ignoreDeprecationWarning: true,
+        keepBuffer: BASEMAP_KEEP_BUFFER,
         ...(nativeMax < 19 ? { maxNativeZoom: nativeMax, maxZoom: 19 } : {}),
     });
 }

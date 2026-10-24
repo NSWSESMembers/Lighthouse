@@ -24,6 +24,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 - If you use a basemap other than Esri Topographic, the map no longer loads Esri Topographic underneath it as well. Panning and zooming download fewer map tiles, so the map is quicker on slow connections. If you use Esri Topographic, nothing changes.
 - You can still zoom in as far as before on Esri Dark.
+- Panning back and forth over the same area shows fewer grey squares, because the map keeps more of the surrounding map tiles loaded.
 
 ## LAD council road closures on the map
 
