@@ -121,12 +121,30 @@ const spotlightBox = (page) => unionOf(page,
   (the demo HQ); `label` is the callout drawn on the overlay-markers shot.
 */
 const OVERLAY_ORIGIN = { lat: -33.815, lng: 151.001 };
+
+/** Google encoded polyline (as in Live Traffic's encodedPolylines) for [east, north] metre offsets. */
+function encodePolyline(offsets) {
+  const value = (v) => {
+    let n = v < 0 ? ~(v << 1) : v << 1;
+    let out = '';
+    while (n >= 0x20) { out += String.fromCharCode((0x20 | (n & 0x1f)) + 63); n >>= 5; }
+    return out + String.fromCharCode(n + 63);
+  };
+  let prev = [0, 0];
+  return offsets.map(([e, n]) => {
+    const lat = Math.round((OVERLAY_ORIGIN.lat + n / 110540) * 1e5);
+    const lng = Math.round((OVERLAY_ORIGIN.lng + e / (111320 * Math.cos((OVERLAY_ORIGIN.lat * Math.PI) / 180))) * 1e5);
+    const chunk = value(lat - prev[0]) + value(lng - prev[1]);
+    prev = [lat, lng];
+    return chunk;
+  }).join('');
+}
 const OVERLAY_FEEDS = {
   'transport-incidents': [
     { at: [450, 1250], label: 'Traffic incident', properties: {
       displayName: 'Crash', mainCategory: 'Crash', CategoryIcon: 'Crash',
       roads: [{ mainStreet: 'Banksia Rd', locationQualifier: 'near', suburb: 'Demo River' }],
-      adviceA: 'Exercise caution.', adviceB: 'Reduced speed limit.', otherAdvice: 'One lane closed eastbound.',
+      adviceA: 'Exercise caution', adviceB: 'Reduced speed limit', otherAdvice: 'One lane closed eastbound.',
       speedLimit: 40, start: '2026-10-05T14:10:00+11:00', hideEndDate: true, attendingGroups: ['Police', 'Tow truck'],
     } },
   ],
@@ -134,8 +152,10 @@ const OVERLAY_FEEDS = {
     { at: [-550, 1650], label: 'Council report', properties: {
       displayName: 'Flooding', mainCategory: 'Flooding', CategoryIcon: 'Flood', impactingNetwork: true,
       roads: [{ mainStreet: 'Old Ferry Rd', locationQualifier: 'at', suburb: 'Demo Flats' }],
-      adviceA: 'Road closed.', adviceB: 'Use alternative route.', otherAdvice: 'Closed by Demo Shire Council. Water over the causeway.',
+      adviceA: 'Road closed', adviceB: 'Use alternative route', speedLimit: -1, otherAdvice: 'Closed by Demo Shire Council. Water over the causeway.',
       start: '2026-10-05T08:30:00+11:00', hideEndDate: true,
+      // The closed stretch of road, drawn as a line like Live Traffic does.
+      encodedPolylines: [{ coords: encodePolyline([[-800, 1480], [-550, 1650], [-300, 1740]]) }],
     } },
   ],
   'transport-cameras': [
@@ -573,7 +593,8 @@ const SHOTS = {
         };
         for (const [key, rows] of Object.entries(layerRows)) {
           let i = 0;
-          mv.onlineLayers.get(key).layerGroup.eachLayer((m) => labels.push([m, rows[i++]?.label]));
+          // Markers only: hazard lines and areas share the layer group.
+          mv.onlineLayers.get(key).layerGroup.eachLayer((m) => m.options.icon && labels.push([m, rows[i++]?.label]));
         }
         const markersOf = (key) => { const out = []; const walk = (g) => g.eachLayer((l) => (l.getLatLng && l.options.icon ? out.push(l) : l.eachLayer && walk(l))); walk(mv.onlineLayers.get(key).layerGroup); return out; };
         markersOf('hazardwatch-warnings').forEach((m) => labels.push([m, hw.label]));
@@ -596,7 +617,7 @@ const SHOTS = {
     run: async (page) => {
       await showOverlays(page, ['transport-incidents'], { centre: [450, 1250], zoom: 16 });
       await page.evaluate(() => {
-        window.ko.dataFor(document.body).mapVM.onlineLayers.get('transport-incidents').layerGroup.getLayers()[0].openPopup(); // the traffic incident, not the council report
+        window.ko.dataFor(document.body).mapVM.onlineLayers.get('transport-incidents').layerGroup.getLayers().find((m) => m.options.icon).openPopup(); // the traffic incident, not the council report
       });
       await settle(page, 1000);
     },

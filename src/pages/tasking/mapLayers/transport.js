@@ -1,6 +1,11 @@
 import BeaconClient from '../../../shared/BeaconClient.js';
 import L from "leaflet";
-import { transportHazardIcon } from "../utils/transportHazardIcon.js";
+import {
+  transportHazardAdvice,
+  transportHazardColour,
+  transportHazardIcon,
+  transportHazardShapes,
+} from "../utils/transportHazard.js";
 
 
 export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params) {
@@ -87,9 +92,12 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
     drawFn: (layerGroup, data) => {
       if (!data) return;
       const drawHazard = (f, council) => {
-        if (!f.geometry || f.geometry.type.toLowerCase() !== "point") return;
+        if (!f?.properties) return;
+        const { points, lines, areas } = transportHazardShapes(f);
+        if (points.length === 0 && lines.length === 0 && areas.length === 0) return;
 
         const icon = transportHazardIcon(f, { council });
+        const colour = transportHazardColour(f, { council });
         const popupTitle = council ? "Council Report" : "Traffic Hazard";
 
         const details = `
@@ -101,15 +109,11 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
           <br>
           <strong>Category:</strong> ${f.properties.mainCategory || "Unknown"}
           <br>
-          <strong>Advice:</strong> ${f.properties.adviceA || ""} ${f.properties.adviceB || ""} ${
-            f.properties.adviceC || ""
-          }
+          <strong>Advice:</strong> ${transportHazardAdvice(f.properties) || "None"}
           <br>
           <strong>Details:</strong> ${
             f.properties.otherAdvice || "No additional details available."
           }
-          <br>
-          <strong>Speed Limit:</strong> ${f.properties.speedLimit || "N/A"} km/h
           <br>
           <strong>Start:</strong> ${
             f.properties.start ? new Date(f.properties.start).toLocaleString() : "Unknown"
@@ -128,19 +132,32 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
           }
         `;
 
-        const [lng, lat] = f.geometry.coordinates || [];
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        // Affected areas and stretches of road, as Live Traffic draws them; click for the same popup.
+        areas.forEach((rings) => {
+          layerGroup.addLayer(
+            L.polygon(rings, { color: colour, weight: 1, fillColor: colour, fillOpacity: 0.2, pane: "pane-lowest-plus" })
+              .bindPopup(details, { pane: "pane-popup-top" }),
+          );
+        });
+        lines.forEach((line) => {
+          layerGroup.addLayer(
+            L.polyline(line, { color: colour, weight: 6, opacity: 0.8, pane: "pane-middle" })
+              .bindPopup(details, { pane: "pane-popup-top" }),
+          );
+        });
 
-        const marker = L.marker([lat, lng], {
-          icon: L.icon({
-            iconUrl: icon,
-            iconSize: [32, 32],
-            iconAnchor: [16, 16],
-            popupAnchor: [0, -16],
-          }),
-        }).bindPopup(details, { pane: "pane-popup-top" });
+        points.forEach((latLng) => {
+          const marker = L.marker(latLng, {
+            icon: L.icon({
+              iconUrl: icon,
+              iconSize: [32, 32],
+              iconAnchor: [16, 16],
+              popupAnchor: [0, -16],
+            }),
+          }).bindPopup(details, { pane: "pane-popup-top" });
 
-        layerGroup.addLayer(marker);
+          layerGroup.addLayer(marker);
+        });
       };
       data.incidents.forEach((f) => drawHazard(f, false));
       data.council.forEach((f) => drawHazard(f, true));
