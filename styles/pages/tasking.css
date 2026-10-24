@@ -3862,6 +3862,112 @@ body.dark-mode .ops-log-status-details {
   padding: 3px 6px;
 }
 
+/* ── Layer load status (polling layers) ── */
+.layers-drawer .ld-has-status > .me-2 {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.layers-drawer .ld-has-status > .ms-auto {
+  margin-left: 4px !important;
+}
+.ld-status {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.ld-status-pill {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 15px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.ld-status-ok { background: #dff3e6; color: #1d7a45; }
+.ld-status-zero { background: #eceef1; color: #5f6773; }
+.ld-status-warn { background: #fdf0d2; color: #8a5d00; }
+.ld-status-error { background: #fbe2df; color: #b02a20; }
+.ld-status-spin {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #d5e2f7;
+  border-top-color: #2563c9;
+  animation: ld-spin 0.7s linear infinite;
+}
+@keyframes ld-spin { to { transform: rotate(360deg); } }
+
+.ld-status-detail {
+  flex: 0 0 100%;
+  font-size: 10px;
+  line-height: 1.3;
+  margin-top: 1px;
+  white-space: normal;
+}
+.ld-status-detail-muted { color: #6c757d; }
+.ld-status-detail-warn { color: #8a5d00; }
+.ld-status-detail-error { color: #b02a20; }
+.ld-status-retry {
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+/* Active rows have a dark fill -- lighten the detail line to match */
+.layers-drawer .ld-overlay-btn.active .ld-status-detail-muted { color: rgba(255, 255, 255, 0.82); }
+.layers-drawer .ld-overlay-btn.active .ld-status-detail-warn { color: #ffd98a; }
+/* A failed layer swaps the dark active fill for a red-tinted one */
+.layers-drawer .ld-overlay-btn.active.ld-status-failed,
+.layers-drawer .ld-overlay-btn.active.ld-status-failed:hover {
+  background: #fdf1ef;
+  border-color: #e9a59e;
+  color: #8f2219;
+}
+
+/* Layers button: loading ring + failed/ok badge */
+.layers-drawer .ld-toggle-btn {
+  position: relative;
+  overflow: visible;
+}
+/* Small round spinner in the button's corner (where the badge sits) */
+.ld-load-ring {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #d5e2f7;
+  border-top-color: #2563c9;
+  background: #fff;
+  box-shadow: 0 0 0 1px #fff;
+  animation: ld-spin 0.7s linear infinite;
+  pointer-events: none;
+}
+.ld-load-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  border: 2px solid #fff;
+  box-sizing: content-box;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  color: #fff;
+  pointer-events: none;
+}
+.ld-load-badge-failed { background: #c0392b; }
+.ld-load-badge-ok { background: #1d7a45; }
+.ld-load-ring[hidden],
+.ld-load-badge[hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ld-status-spin, .ld-load-ring { animation-duration: 2.5s; }
+}
+
 /* ── Collaborative layer list (config modal) — scrolls instead of growing the modal indefinitely ── */
 .collab-layer-list-scroll {
   max-height: 280px;
