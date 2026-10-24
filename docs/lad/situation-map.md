@@ -63,16 +63,18 @@ Overlays sit on top of the basemap to add information. Toggle them on and off in
 
 Some overlays drop their own markers on the map. Click one to open a popup with more detail.
 
-![Overlay markers on the map: an SES unit HQ, a traffic incident, a HazardWatch warning and a traffic camera](images/overlay-markers.png)
+![Overlay markers on the map: an SES unit HQ, a council report, a traffic incident, a HazardWatch warning and a traffic camera](images/overlay-markers.png)
 
 | Overlay | Marker | Click it to see |
 | --- | --- | --- |
-| **Transport NSW Incidents** | Live Traffic icon (crash, hazard, breakdown, traffic lights out, changed conditions) | What happened, where, traffic advice, speed limit, start/end time and who is managing it |
+| **Transport NSW Incidents** | Live Traffic icon for the type of incident (crash, hazard, breakdown, traffic lights out, changed conditions, flooding, fire, bad weather, snow and ice) | What happened, where, traffic advice (with the speed limit when it's reduced), when it started and ends, who is attending and who reported it. Council reports are titled *Council Report* and show the council's name and contact details. Details the report doesn't include are left out |
 | **Transport NSW Cameras** | Camera icon | What the camera faces and its latest image (click the image to enlarge it) |
 | **HazardWatch Active Warnings** | Warning icon in the middle of each warning area | The full published warning. Clicking anywhere in the area also works |
 | **SES Units** | SES logo at each unit headquarters | The unit's status (Monitoring, Not Monitoring or Unavailable), its active teams and incidents, SRB accreditations and contacts |
 | **EPA Contamination Sites** | Red dot | Site name, address, activity type and management class |
 | **NSW Declared Dams** | Blue dot | Dam name, place, owner and declared status |
+
+**Transport NSW Incidents** shows both incidents managed by Transport NSW and road closures and hazards reported by local councils. Council reports are often regional road closures, such as flooded causeways, that don't appear as Transport NSW incidents. Council roadworks are left out. Where Transport NSW maps the affected stretch of road or area, it's drawn as a coloured line or shaded area, coloured as on Live Traffic NSW: blue for flooding and weather, dark red for fire and heavy impact, orange for moderate and grey for low impact. Click a line or area for the same details.
 
 ![Popup from clicking a traffic incident marker](images/overlay-marker-popup.png)
 
