@@ -77,7 +77,7 @@ import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
 import { registerSESZonesGridLayer } from "./mapLayers/geoservices.js";
 import { registerSESUnitsZonesHybridGridLayer } from "./mapLayers/geoservices.js";
 import { registerSESUnitLocationsLayer } from "./mapLayers/geoservices.js";
-import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
+import { registerTransportIncidentsLayer, registerTransportCouncilReportsLayer } from "./mapLayers/transport.js";
 import { renderFRAOSLayer } from "./mapLayers/frao.js";
 import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
@@ -2834,6 +2834,7 @@ function VM() {
 
     registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
     registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
+    registerTransportCouncilReportsLayer(self, map, getToken, apiHost, params);
 
     registerSESZonesGridLayer(self);
     registerSESUnitsZonesHybridGridLayer(self, map);

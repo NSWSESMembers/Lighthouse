@@ -51,15 +51,34 @@ export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params
 }
 
 export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, params) {
-  vm.mapVM.registerPollingLayer("transport-incidents", {
+  registerTransportHazardLayer(vm, getToken, apiHost, params, {
+    id: "transport-incidents", // also the background.js message type
     label: "Transport NSW Incidents",
+    popupTitle: "Traffic Hazard",
+  });
+}
+
+// Council (LGA) reported closures/hazards, e.g. regional road closures entered via OneRoad.
+// These are a separate Live Traffic feed (v1/live/hazards/regional-lga-incident/open)
+// and are not included in the incidents feed above.
+export function registerTransportCouncilReportsLayer(vm, map, getToken, apiHost, params) {
+  registerTransportHazardLayer(vm, getToken, apiHost, params, {
+    id: "transport-local-reports", // also the background.js message type
+    label: "Transport NSW Council Reports",
+    popupTitle: "Council Report",
+  });
+}
+
+function registerTransportHazardLayer(vm, getToken, apiHost, params, { id, label, popupTitle }) {
+  vm.mapVM.registerPollingLayer(id, {
+    label,
     menuGroup: "Transport NSW",
     refreshMs: 600000, // 10 mins poll
-    visibleByDefault: localStorage.getItem(`ov.transport-incidents`) || false,
+    visibleByDefault: localStorage.getItem(`ov.${id}`) || false,
     fetchFn: async () => {
       const t = await getToken(); // blocks here until token is ready
-      const res = await fetchTransportIncidentsAsync(apiHost, params.userId, t);
-      if (!res.ok) throw new Error("transport-incidents fetch failed: " + res.status);
+      const res = await fetchTransportFeedAsync(id, apiHost, params.userId, t);
+      if (!res.ok) throw new Error(`${id} fetch failed: ` + res.status);
       return res.response;
     },
     drawFn: (layerGroup, geojson) => {
@@ -95,11 +114,11 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
         }
 
         const details = `
-          <strong>Traffic Hazard: ${f.properties.displayName || "Unknown"}</strong>
+          <strong>${popupTitle}: ${f.properties.displayName || "Unknown"}</strong>
           <br>
-          <strong>Location:</strong> ${f.properties.roads[0]?.mainStreet || "Unknown"}
-          ${f.properties.roads[0]?.locationQualifier || ""} 
-          ${f.properties.roads[0]?.suburb || ""}
+          <strong>Location:</strong> ${f.properties.roads?.[0]?.mainStreet || "Unknown"}
+          ${f.properties.roads?.[0]?.locationQualifier || ""}
+          ${f.properties.roads?.[0]?.suburb || ""}
           <br>
           <strong>Category:</strong> ${f.properties.mainCategory || "Unknown"}
           <br>
@@ -192,7 +211,8 @@ async function fetchTransportCamerasAsync(apiHost, userId, token) {
     });
 }
 
-async function fetchTransportIncidentsAsync(apiHost, userId, token) {
+// type is the background.js message type, e.g. 'transport-incidents' or 'transport-local-reports'
+async function fetchTransportFeedAsync(type, apiHost, userId, token) {
     let sessionKey = 'lighthouseTransportApiKeyCache';
     let transportApiKeyCache = sessionStorage.getItem(sessionKey);
 
@@ -202,9 +222,9 @@ async function fetchTransportIncidentsAsync(apiHost, userId, token) {
     }
 
     return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ type: 'transport-incidents', params: { apiKey: transportApiKeyCache } }, function (response) {
+        chrome.runtime.sendMessage({ type, params: { apiKey: transportApiKeyCache } }, function (response) {
             if (response.error) {
-                console.error(`Update to transport-incidents failed: ${response.error} http-code:${response.httpCode}`);
+                console.error(`Update to ${type} failed: ${response.error} http-code:${response.httpCode}`);
                 reject(response);
             } else {
                 resolve({ok: true, response});
