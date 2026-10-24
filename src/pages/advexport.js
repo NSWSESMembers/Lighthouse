@@ -393,6 +393,12 @@ function HackTheMatrix(id, host, progressBar) {
   });
 }
 
+function csvField(value) {
+  return `"${String(value ?? '')
+    .replace(/"/g, '""')
+    .replace(/\r?\n/g, ' ')}"`;
+}
+
 function convertArrayOfObjectsToCSV(args) {
   var result, ctr, keys, columnDelimiter, lineDelimiter, data;
 
@@ -407,15 +413,16 @@ function convertArrayOfObjectsToCSV(args) {
   keys = args.keys;
 
   result = '';
-  result += keys.join(columnDelimiter);
+  result += keys.map(csvField).join(columnDelimiter);   // Fix handling of quotes and line breaks
   result += lineDelimiter;
 
   data.forEach(function(item) {
       ctr = 0;
       keys.forEach(function() {
-          if (ctr > 0) result += columnDelimiter;
-          item[ctr] = `"${item[ctr]}"`
-          result += item[ctr];
+          if (ctr > 0) {
+            result += columnDelimiter;
+          }
+          result += csvField(item[ctr]);
           ctr++;
       });
       result += lineDelimiter;
