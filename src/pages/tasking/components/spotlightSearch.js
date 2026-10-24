@@ -63,7 +63,6 @@ function buildJobSearchText(j) {
         (() => { try { return j.entityAssignedTo?.code?.(); } catch { return ""; } })(),
         (() => { try { return j.entityAssignedTo?.name?.(); } catch { return ""; } })(),
         j.lga,
-        j.sectorName,
         addr,
         j.contactFirstName, j.contactLastName, j.contactPhoneNumber,
         j.callerFirstName, j.callerLastName, j.callerPhoneNumber,

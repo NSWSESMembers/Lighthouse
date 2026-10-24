@@ -18,6 +18,15 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD incident photo icon fix
+
+*22 October 2026*
+
+- The photo icon on incident rows shows again for every incident with photos. A Beacon change meant it only appeared on incidents that had a team tasked, and not always then.
+- The photo icon now turns blue when you hover over it, so it's clear you can click it to view the photos.
+- LAD makes fewer requests to Beacon each time it refreshes incidents.
+- Spotlight no longer matches incidents by sector name.
+
 ## LAD radio log status changes and Spotlight commands
 
 *21 October 2026 · [v2026.10.20](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.20)*

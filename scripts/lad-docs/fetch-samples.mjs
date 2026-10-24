@@ -103,7 +103,7 @@ async function widening(name, buildUrl) {
 
 const jobsPage = await widening('jobs-search', (from, hq) =>
   `${host}/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=${ctx.userId}` +
-  `&StartDate=${from.toISOString()}&EndDate=${end.toISOString()}${hq ? `&Hq=${hq}` : ''}&ViewModelType=6`);
+  `&StartDate=${from.toISOString()}&EndDate=${end.toISOString()}${hq ? `&Hq=${hq}` : ''}&ViewModelType=1`);
 
 const jobIds = (jobsPage?.Results || []).map((j) => j.Id);
 if (jobIds.length) {
@@ -142,7 +142,7 @@ const redactLong = (v) => {
 const poolFrom = new Date(end.getTime() - 30 * 86400 * 1000);
 const pool = await firstPage(
   `${host}/Api/v1/Jobs/Search?LighthouseFunction=GetJSONfromBeacon&userId=${ctx.userId}` +
-  `&StartDate=${poolFrom.toISOString()}&EndDate=${end.toISOString()}&ViewModelType=6`, 100,
+  `&StartDate=${poolFrom.toISOString()}&EndDate=${end.toISOString()}&ViewModelType=2`, 100,
 ).catch(() => null);
 const poolJobs = pool?.Results || [];
 console.log(`  job pool: ${poolJobs.length} jobs (any HQ, 30 days)`);
@@ -164,18 +164,14 @@ if (icemsJob) {
   console.error('  icems-incident: no ICEMS job in the pool');
 }
 
-// ImageCount is only on the tasking view of a job, so ask for the pool's
-// taskings and pick a job that has photos.
-const poolTaskings = poolJobs.length
-  ? await job.getTasking(poolJobs.map((j) => j.Id), ctx).catch(() => ({ results: [] }))
-  : { results: [] };
-const photoJob = poolTaskings.results.map((t) => t.Job).find((j) => j?.ImageCount > 0);
+// The pool uses the lean model (2), which carries ImageCount.
+const photoJob = poolJobs.find((j) => j.ImageCount > 0);
 if (photoJob) {
   await step('incident-thumbnails', async () => redactLong(await request(
     `${host}/Api/v1/Image/IncidentThumbnails/${photoJob.Id}?LighthouseFunction=getIncidentThumbnails&userId=${ctx.userId}`,
     { token })));
 } else {
-  console.error('  incident-thumbnails: no tasked job with photos in the pool');
+  console.error('  incident-thumbnails: no job with photos in the pool');
 }
 
 // Trim big collections down to a few rows so the samples stay readable.

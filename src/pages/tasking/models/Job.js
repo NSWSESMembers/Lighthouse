@@ -14,8 +14,32 @@ import { InstantTaskViewModel } from '../viewmodels/InstantTask.js';
 import { Enum } from "../utils/enum.js";
 import { getSingleFetchCooldownMs } from "../signalr/pushMode.js";
 
+// The bulk search's lean model (ViewModelType=2) carries combined
+// CallerName/CallerNumber/ContactName/ContactNumber where the full model has
+// split First/Last/PhoneNumber fields. Map lean payloads onto the full field
+// names. A name already held split (from a full GET) is left alone when it
+// joins to the same value, so lean polls don't flip it to "Jane Smith" + "".
+export function splitLeanContactFields(d, job = null) {
+    if (!['CallerName', 'CallerNumber', 'ContactName', 'ContactNumber'].some(k => d[k] !== undefined)) return d;
+    const out = { ...d };
+    for (const [P, p] of [['Caller', 'caller'], ['Contact', 'contact']]) {
+        const name = d[`${P}Name`];
+        if (name !== undefined && d[`${P}FirstName`] === undefined) {
+            const held = job ? [job[`${p}FirstName`](), job[`${p}LastName`]()].filter(Boolean).join(' ') : null;
+            if (held !== (name || '')) {
+                out[`${P}FirstName`] = name || '';
+                out[`${P}LastName`] = '';
+            }
+        }
+        const number = d[`${P}Number`];
+        if (number !== undefined && d[`${P}PhoneNumber`] === undefined) out[`${P}PhoneNumber`] = number;
+    }
+    return out;
+}
+
 export function Job(data = {}, deps = {}) {
     const self = this;
+    data = splitLeanContactFields(data);
 
     // ---- injected adapters (all optional, safe defaults) ----
     const {
@@ -205,6 +229,10 @@ export function Job(data = {}, deps = {}) {
     self.marker = null;  // will hold the L.Marker instance
     self.taskings = ko.observableArray(); //array of taskings
     self.sector = ko.observable(new Sector(data.Sector || {}));
+    // The lean bulk search and tasking payloads carry no Sector at all, so an
+    // empty sector() may just mean "not loaded yet". Only a payload with the
+    // key (full GET, Sector:null when unassigned) makes it known.
+    self.sectorKnown = ko.observable(data.Sector !== undefined);
     self.suppliers = ko.observableArray([]);
 
     // computed
@@ -656,9 +684,11 @@ export function Job(data = {}, deps = {}) {
 
     Job.prototype.updateFromJson = function (d = {}) {
         this.lastDataUpdate(new Date());
+        d = splitLeanContactFields(d, this);
 
         // sector might be undefined or null. they mean different things
         if (d.Sector !== undefined) { //sector present in payload
+            if (!this.sectorKnown()) this.sectorKnown(true);
             if (d.Sector === null) { //theres no sector assigned
                 if (JSON.stringify(this.sector()) !== JSON.stringify(new Sector({}))) {
                     this.sector(new Sector({}));

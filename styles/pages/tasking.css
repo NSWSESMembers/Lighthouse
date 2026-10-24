@@ -4673,6 +4673,15 @@ input[type='search']::-ms-clear {
 .images-button {
   color: var(--bs-secondary-color) !important;
   font-size: 13px;
+  cursor: pointer;
+  transition: color 0.12s ease, transform 0.12s ease;
+}
+
+/* Muted at rest, so make it read as clickable on hover/focus. */
+.images-button:hover,
+.images-button:focus-visible {
+  color: var(--bs-link-hover-color) !important;
+  transform: scale(1.25);
 }
 
 .leaflet-control-geosearch form {

@@ -629,8 +629,12 @@ export function buildScenario(now = new Date()) {
   // Image/IncidentThumbnails per job.
   const photos = new Map(Object.entries(PHOTO_COUNTS).map(([ji, n]) => [jobs[ji].Id, photoList(jobs[ji].Id, n)]));
 
+  // Jobs/Search with ViewModelType=2 returns the same lean shape -- the only
+  // search model carrying ImageCount.
+  const leanJobs = jobs.map(taskingJob);
+
   return {
-    hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents: ICEMS_INCIDENTS, timezone: TZ,
+    hq: HQ, jobs, leanJobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents: ICEMS_INCIDENTS, timezone: TZ,
     createTasking, createOpsLogEntry,
   };
 }

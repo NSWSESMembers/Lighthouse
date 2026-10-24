@@ -15,7 +15,7 @@ Click the **?** button at the end of the search box, or type `?` in an empty sea
 
 Spotlight searches incidents and teams within your LAD filters. Selecting a result takes you to that incident or team in its register and zooms the map to it (if it is on the map).
 
-**Searchable incident fields:** ID, type, status, assigned HQ, LGA, assigned sector, address, tags, situation on scene, caller and contact details.
+**Searchable incident fields:** ID, type, status, assigned HQ, LGA, address, tags, situation on scene, caller and contact details.
 
 **Searchable team fields:** callsign, assigned HQ, team leader's name, team members' names.
 

@@ -443,6 +443,7 @@ export default function IncidentImagesModalVM({ getToken, apiHost, userId, Beaco
         try {
             const token = await getToken();
             const list = await getIncidentImages(job.id(), token);
+            if (list) job.imageCount(list.length);
 
             const vms = (list || []).map(dto => new ImageVM(dto));
             vm.images(vms);

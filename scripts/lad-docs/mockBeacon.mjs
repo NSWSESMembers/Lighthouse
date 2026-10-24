@@ -36,7 +36,7 @@ function idsParam(url, name) {
 }
 
 export function createMockRouter(scenario, { log = () => {}, photoImages = null } = {}) {
-  const { hq, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents } = scenario;
+  const { hq, jobs, leanJobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents } = scenario;
   const byId = (rows, id) => rows.find((r) => r.Id === Number(id));
 
   function beacon(route, url) {
@@ -71,7 +71,7 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null 
     if (p === '/Api/v1/Entities/Search') return json(route, paged(url, [hq]));
     if ((m = p.match(/^\/Api\/v1\/Tags\/Group\/(\d+)$/))) return json(route, paged(url, tagGroups[m[1]] || []));
 
-    if (p === '/Api/v1/Jobs/Search') return json(route, paged(url, jobs));
+    if (p === '/Api/v1/Jobs/Search') return json(route, paged(url, url.searchParams.get('ViewModelType') === '2' ? leanJobs : jobs));
     // No unacknowledged ICEMS notifications in the demo (Job.js expects an array).
     if (/^\/Api\/v1\/Jobs\/\d+\/unacceptednotifications$/.test(p)) return json(route, []);
     // ICEMS incident detail (agencies involved) -- see scenario.mjs on its structure.
