@@ -59,6 +59,21 @@ Overlays sit on top of the basemap to add information. Toggle them on and off in
 
 ![Overlay layers](images/overlays.png)
 
+#### Overlay Loading Status
+
+When you turn an overlay on, its row in the Layers menu shows how it's going:
+
+- A **spinner** while it loads.
+- A **green number** once it has loaded: how many items it put on the map. Overlays that are pictures, such as radar and satellite, show a tick instead. Hover over the row to see how many items are in your current view and when the overlay last updated.
+- A **grey 0** and *Nothing to show right now* when the overlay loaded but has nothing to show, such as HazardWatch with no active warnings.
+- **failed** and a red row when it couldn't load, with the reason. Click **Retry** to try again.
+- **stale** when a later refresh failed. The overlay keeps showing what it last loaded, and the row says what time that was.
+- An **amber** number or count of map tiles when only part of it loaded, for example when some radar tiles failed.
+
+The Layers button <img class="icon" src="images/icon-layers.png" alt="Layers" height="20"> shows a small spinner while any overlay is loading, a green tick when they've all loaded, and a red number if any have failed or gone stale, so you can tell without opening the menu.
+
+![Overlay loading status in the Layers menu: counts for loaded overlays, a failed overlay with Retry, and the red failed count on the Layers button](images/overlay-status.png)
+
 #### Clickable Overlay Markers
 
 Some overlays drop their own markers on the map. Click one to open a popup with more detail.

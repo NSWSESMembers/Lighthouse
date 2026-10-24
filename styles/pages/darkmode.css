@@ -818,6 +818,25 @@ body.dark-mode .layers-drawer .ld-overlay-btn:hover {
   background: #373737 !important;
 }
 
+/* Layer load status */
+body.dark-mode .layers-drawer .ld-status-ok { background: #173325; color: #6fd29a; }
+body.dark-mode .layers-drawer .ld-status-zero { background: #33373d; color: #aab2bd; }
+body.dark-mode .layers-drawer .ld-status-warn { background: #3a2f12; color: #e8bd55; }
+body.dark-mode .layers-drawer .ld-status-error { background: #3e1d1a; color: #f2867b; }
+body.dark-mode .layers-drawer .ld-status-spin { border-color: #2a3a55; border-top-color: #7aa7ff; }
+body.dark-mode .layers-drawer .ld-status-detail-muted { color: #9aa3ae; }
+body.dark-mode .layers-drawer .ld-overlay-btn.active .ld-status-detail-muted { color: rgba(255, 255, 255, 0.85); }
+body.dark-mode .layers-drawer .ld-status-detail-warn { color: #e8bd55; }
+body.dark-mode .layers-drawer .ld-status-detail-error,
+body.dark-mode .layers-drawer .ld-status-detail-error span { color: #f2867b; }
+body.dark-mode .layers-drawer .ld-status-detail-warn span { color: #e8bd55; }
+body.dark-mode .layers-drawer .ld-overlay-btn.ld-status-failed {
+  background: #3a2220 !important;
+  border-color: #7a3a33 !important;
+}
+body.dark-mode .layers-drawer .ld-load-ring { border-color: #2a3a55; border-top-color: #7aa7ff; background: #2d2d2d; box-shadow: 0 0 0 1px #2d2d2d; }
+body.dark-mode .layers-drawer .ld-load-badge { color: #fff; border-color: #2d2d2d; }
+
 /* Sidebar collapse control button */
 body.dark-mode .sidebar-toggle .btn,
 body.dark-mode .leaflet-control.sidebar-toggle .btn,

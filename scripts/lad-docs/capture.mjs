@@ -576,6 +576,36 @@ const SHOTS = {
     target: (page) => page.locator('.ld-panel'),
   },
 
+  // Overlay load status in the Layers panel: counts for loaded overlays and a
+  // failed one. BOM Rain Radar Still fails here because its tiles come
+  // through Beacon, which the mock doesn't serve -- a real error state. The
+  // crop runs from the Layers button (with its failed badge) to that row.
+  'overlay-status': {
+    launch: { viewport: { width: 1800, height: 1200 }, scale: 2 },
+    run: async (page) => {
+      const keys = ['transport-incidents', 'hazardwatch-warnings', 'sesUnitLocations', 'bomRadar'];
+      await showOverlays(page, keys);
+      // showOverlays adds the layers directly; mark their rows on as a click would
+      await page.evaluate((keys) => {
+        keys.forEach((k) => localStorage.setItem(`ov.online-${k}`, '1'));
+        window.ko.dataFor(document.body).mapVM.layersDrawer.refresh();
+      }, keys);
+      const open = await page.locator('.ld-panel').evaluate((el) => !el.classList.contains('d-none'));
+      if (!open) await page.locator('.ld-toggle-btn').click();
+      await page.mouse.move(0, 0);
+      await settle(page, 2000);
+    },
+    target: (page) => ({
+      async screenshot(opts) {
+        const btn = await page.locator('.ld-toggle-btn').boundingBox();
+        const panel = await page.locator('.ld-panel').boundingBox();
+        const row = await page.locator('.ld-overlay-btn[data-key="online-bomRadar"]').boundingBox();
+        const x = btn.x - 8; const y = btn.y - 10;
+        return page.screenshot({ ...opts, clip: { x, y, width: panel.x + panel.width + 8 - x, height: row.y + row.height + 6 - y } });
+      },
+    }),
+  },
+
   // Overlay layers that drop clickable markers on the map, each labelled:
   // a Transport NSW incident, council report and camera, a HazardWatch warning (area +
   // icon) and an SES unit HQ (unit locations ship with the extension; the

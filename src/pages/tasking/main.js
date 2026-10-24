@@ -83,6 +83,7 @@ import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
 import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
+import { layerStatusView, summarizeLayerStatuses } from "./utils/layerStatus.js";
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
@@ -2921,6 +2922,8 @@ function VM() {
                 title="Layers"
                 aria-expanded="${this._open ? "true" : "false"}">
           <i class="fas fa-layer-group"></i>
+          <span class="ld-load-ring" hidden></span>
+          <span class="ld-load-badge" hidden></span>
         </button>
       </div>
       <div class="ld-panel ${this._open ? "" : "d-none"} shadow-sm rounded-3">
@@ -2995,6 +2998,10 @@ function VM() {
             if (!this._currentBase) this._setBasemap(this._baseKey, map);
 
             this._renderOverlays();
+
+            // Repaint a row + the button badge whenever a layer's load status changes
+            self.mapVM.onLayerStatusChange((key) => this._paintStatus(key));
+            this._paintBadge();
 
             // --- Search filter ---
             const searchInput = c.querySelector(".ld-search-input");
@@ -3105,6 +3112,7 @@ function VM() {
             // --- Build two-column grid of always-visible groups ---
             const grid = c.querySelector(".ld-grid");
             grid.innerHTML = "";
+            this._statusRows = new Map(); // polling layer key -> row button
 
             groups.forEach((defs, groupKey) => {
                 const cell = document.createElement("div");
@@ -3152,7 +3160,7 @@ function VM() {
                 }
 
                 // Build layer toggle buttons
-                defs.forEach(({ key, label, layer, visibleByDefault }) => {
+                defs.forEach(({ key, statusKey, label, layer, visibleByDefault }) => {
                     const stored = localStorage.getItem(`ov.${key}`);
                     const saved = (stored === null)
                         ? (visibleByDefault === true)
@@ -3173,7 +3181,26 @@ function VM() {
                             <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
                         </span>`;
 
-                    obtn.addEventListener("click", () => {
+                    if (statusKey) {
+                        // Load status: pill beside the toggle, detail line under the label
+                        obtn.classList.add("ld-has-status", "flex-wrap");
+                        const pill = document.createElement("span");
+                        pill.className = "ld-status";
+                        obtn.querySelector(".ms-auto").before(pill);
+                        const detail = document.createElement("span");
+                        detail.className = "ld-status-detail";
+                        detail.hidden = true;
+                        obtn.appendChild(detail);
+                        obtn.addEventListener("mouseenter", () => this._updateStatusTitle(statusKey));
+                        this._statusRows.set(statusKey, obtn);
+                        this._paintStatus(statusKey, { badge: false });
+                    }
+
+                    obtn.addEventListener("click", (ev) => {
+                        if (statusKey && ev.target.closest(".ld-status-retry")) {
+                            self.mapVM.refreshPollingLayer(statusKey);
+                            return;
+                        }
                         const icon = obtn.querySelector("i");
                         const isOn = obtn.classList.contains("active");
                         if (isOn) {
@@ -3198,6 +3225,84 @@ function VM() {
             });
         },
 
+
+        /** Paint one polling layer's row from its current load status. */
+        _paintStatus(key, { badge = true } = {}) {
+            const row = this._statusRows?.get(key);
+            if (row) {
+                const view = layerStatusView(self.mapVM.getLayerStatus(key));
+                const pill = row.querySelector(".ld-status");
+                const detail = row.querySelector(".ld-status-detail");
+                pill.replaceChildren();
+                if (view.pill?.cls === "loading") {
+                    const spin = document.createElement("span");
+                    spin.className = "ld-status-spin";
+                    spin.setAttribute("role", "img");
+                    spin.setAttribute("aria-label", "Loading");
+                    pill.appendChild(spin);
+                } else if (view.pill) {
+                    const p = document.createElement("span");
+                    p.className = `ld-status-pill ld-status-${view.pill.cls}`;
+                    p.textContent = view.pill.text;
+                    pill.appendChild(p);
+                }
+                detail.replaceChildren();
+                detail.hidden = !view.detail;
+                if (view.detail) {
+                    detail.className = `ld-status-detail ld-status-detail-${view.detail.cls}`;
+                    detail.append(view.detail.text);
+                    if (view.retry) {
+                        const retry = document.createElement("span");
+                        retry.className = "ld-status-retry";
+                        retry.textContent = "Retry";
+                        detail.append(" ", retry);
+                    }
+                }
+                row.classList.toggle("ld-status-failed", view.pill?.cls === "error");
+                row.title = view.title;
+            }
+            if (badge) this._paintBadge();
+        },
+
+        /** Hover title: add how many items are in the current map view. */
+        _updateStatusTitle(key) {
+            const row = this._statusRows?.get(key);
+            if (!row) return;
+            const status = self.mapVM.getLayerStatus(key);
+            const view = layerStatusView(status);
+            const inView = status.count ? self.mapVM.countLayerItemsInView(key) : null;
+            row.title = inView === null ? view.title : `${view.title} (${inView} in view)`;
+        },
+
+        /** Layers button: corner spinner while any layer loads, red count of failed layers, brief tick when all loaded. */
+        _paintBadge() {
+            const btn = this._container?.querySelector(".ld-toggle-btn");
+            if (!btn) return;
+            const ring = btn.querySelector(".ld-load-ring");
+            const badge = btn.querySelector(".ld-load-badge");
+            const sum = summarizeLayerStatuses(self.mapVM.getAllLayerStatuses());
+            // Spinner and badge share the corner; a failure count wins
+            ring.hidden = sum.loading === 0 || sum.failed > 0;
+
+            clearTimeout(this._tickTimer);
+            badge.className = "ld-load-badge";
+            if (sum.failed) {
+                badge.hidden = false;
+                badge.classList.add("ld-load-badge-failed");
+                badge.textContent = String(sum.failed);
+                btn.title = `Layers: ${sum.failed} layer${sum.failed === 1 ? "" : "s"} failed to load, open for details`;
+            } else if (this._wasLoading && !sum.loading && sum.on) {
+                badge.hidden = false;
+                badge.classList.add("ld-load-badge-ok");
+                badge.textContent = "✓";
+                this._tickTimer = setTimeout(() => { badge.hidden = true; }, 1600);
+                btn.title = "Layers: all loaded";
+            } else {
+                badge.hidden = true;
+                btn.title = sum.loading ? `Layers: loading ${sum.loading}…` : "Layers";
+            }
+            this._wasLoading = sum.loading > 0;
+        },
 
         onRemove() { /* nothing to clean up */ },
 
