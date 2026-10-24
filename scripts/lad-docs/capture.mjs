@@ -152,7 +152,7 @@ const OVERLAY_FEEDS = {
     { at: [-550, 1650], label: 'Council report', properties: {
       displayName: 'Flooding', mainCategory: 'Flooding', CategoryIcon: 'Flood', impactingNetwork: true,
       roads: [{ mainStreet: 'Old Ferry Rd', locationQualifier: 'at', suburb: 'Demo Flats' }],
-      adviceA: 'Road closed', adviceB: 'Use alternative route', speedLimit: -1, otherAdvice: 'Closed by Demo Shire Council. Water over the causeway.',
+      adviceA: 'Road closed', adviceB: 'Use alternative route', speedLimit: -1, otherAdvice: '<p><strong>The road is closed to through traffic.</strong></p><p>Water over the causeway. Residents can still get in from the east.</p>',
       start: '2026-10-05T08:30:00+11:00', hideEndDate: true,
       OrgName: 'Demo Shire Council', OrgContact: '02 5550 0100',
       // The closed stretch of road, drawn as a line like Live Traffic does.

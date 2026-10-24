@@ -224,22 +224,25 @@ const formatTime = (v) => {
 };
 
 /**
- * The popup rows for a hazard, as [label, text] pairs. Like livetraffic.com,
+ * The popup rows for a hazard, as [label, text, { html }] entries; html marks
+ * text that is feed HTML (council details) to sanitise, not escape. Like livetraffic.com,
  * fields the feed leaves empty are left out rather than shown as "Unknown".
  * Council reports say which council reported them, with its contact details.
  */
 export function transportHazardRows(f, { council = false } = {}) {
   const p = f?.properties || {};
   const rows = [];
-  const add = (label, text) => {
+  const add = (label, text, { html = false } = {}) => {
     const t = clean(text);
-    if (t) rows.push([label, t]);
+    if (t) rows.push(html ? [label, t, { html }] : [label, t]);
   };
 
   add('Location', transportHazardLocation(p));
-  if (clean(p.mainCategory) !== clean(p.displayName)) add('Category', p.mainCategory);
+  // Council titles are often the category plus a word, e.g. "CHANGED TRAFFIC CONDITIONS Unplanned".
+  const category = clean(p.mainCategory);
+  if (!clean(p.displayName).toLowerCase().includes(category.toLowerCase())) add('Category', category);
   add('Advice', transportHazardAdvice(p));
-  add('Details', p.otherAdvice);
+  add('Details', p.otherAdvice, { html: true });
   const extra = (Array.isArray(p.additionalInfo) ? p.additionalInfo : []).map(clean).filter(Boolean);
   add('More info', extra.join('; '));
 

@@ -394,6 +394,23 @@ body.sidebar-collapsed .vsplit {
   opacity: 1;
 }
 
+/* Sanitised free-text HTML from external feeds (e.g. council traffic
+   reports, see utils/feedHtml.js): tight paragraphs, and long reports
+   scroll instead of making the popup taller than the map. */
+.lh-feed-html {
+  max-height: 12em;
+  overflow-y: auto;
+}
+.lh-feed-html p,
+.lh-feed-html ul,
+.lh-feed-html ol {
+  margin: 0 0 0.4em;
+}
+.lh-feed-html ul,
+.lh-feed-html ol {
+  padding-left: 1.2em;
+}
+
 /* Job/incident marker hover tooltip -- a quick glance, not a popup.
    Non-interactive (Leaflet tooltips default to pointer-events: none), so
    it can never intercept a click meant for the marker underneath, and it

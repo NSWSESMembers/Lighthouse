@@ -6,9 +6,7 @@ import {
   transportHazardRows,
   transportHazardShapes,
 } from "../utils/transportHazard.js";
-
-const escapeHtml = (v) =>
-  String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+import { escapeHtml, sanitizeFeedHtml } from "../utils/feedHtml.js";
 
 
 export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params) {
@@ -106,7 +104,10 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
         const details = [
           `<strong>${escapeHtml(popupTitle)}: ${escapeHtml(f.properties.displayName || f.properties.mainCategory || "Incident")}</strong>`,
           ...transportHazardRows(f, { council }).map(
-            ([label, text]) => `<strong>${escapeHtml(label)}:</strong> ${escapeHtml(text)}`,
+            ([label, text, opts]) =>
+              `<strong>${escapeHtml(label)}:</strong> ${
+                opts?.html ? `<div class="lh-feed-html">${sanitizeFeedHtml(text)}</div>` : escapeHtml(text)
+              }`,
           ),
         ].join("<br>");
 

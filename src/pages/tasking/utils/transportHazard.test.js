@@ -221,4 +221,17 @@ describe('transportHazardRows', () => {
     expect(labels(rows)).toEqual(['When', 'Attending', 'Reported by']);
     expect(rows[1][1]).toBe('Police, Tow truck');
   });
+
+  it('marks council details as feed HTML and hides a category the title already says', () => {
+    const rows = transportHazardRows(
+      feature({
+        displayName: 'CHANGED TRAFFIC CONDITIONS Unplanned',
+        mainCategory: 'CHANGED TRAFFIC CONDITIONS',
+        otherAdvice: '<p>The road is closed.</p>',
+      }),
+      { council: true },
+    );
+    expect(rows[0]).toEqual(['Details', '<p>The road is closed.</p>', { html: true }]);
+    expect(labels(rows)).not.toContain('Category');
+  });
 });
