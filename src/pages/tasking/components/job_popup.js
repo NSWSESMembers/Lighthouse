@@ -169,8 +169,12 @@ export function buildJobPopupKO() {
                   data-bind="text: teamCallsign"></td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee"><span class="badge"
                 data-bind="text: currentStatus, css: tagColorFromStatus(), flashOnChange: currentStatus"></span></td>
-              <td style="padding:4px 8px;border-bottom:1px solid #eee"
-                  data-bind="text: statusTimeAgoLabel"></td>
+              <td style="padding:4px 8px;border-bottom:1px solid #eee">
+                <div data-bind="text: statusTimeAgoLabel"></div>
+                <!-- ko with: etaInfo -->
+                <div class="eta-line" data-bind="text: clockLabel, css: lineClass, fastTooltip: title"></div>
+                <!-- /ko -->
+              </td>
               <td style="padding:4px 8px;border-bottom:1px solid #eee">
                 <div class="btn-group btn-group-sm" role="group" aria-label="Tasking actions">               
                   <button type="button" class="btn btn-small btn-outline-secondary"

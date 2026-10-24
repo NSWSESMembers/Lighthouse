@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 import ko from "knockout";
 import { addMinutesToInputTime, statusColorClass } from "../models/Tasking.js";
+import { beaconErrorMessage } from "../utils/beaconError.js";
 
 // The banner text for a failed status change or tasking (BeaconApiError,
 // network error, or an error carrying a userMessage): Beacon's own message
@@ -8,12 +9,7 @@ import { addMinutesToInputTime, statusColorClass } from "../models/Tasking.js";
 function describeStatusError(err) {
   if (err && err.userMessage) return err.userMessage;
   if (err && err.name === "BeaconApiError") {
-    let msg = "";
-    try {
-      const body = JSON.parse(err.body);
-      const modelState = body && body.ModelState ? Object.values(body.ModelState).flat()[0] : "";
-      msg = (body && (body.Message || body.message || body.ExceptionMessage)) || modelState || "";
-    } catch (_) { /* not JSON -- fall back to the status code */ }
+    const msg = beaconErrorMessage(err);
     if (msg) return msg;
     if (err.status === 401 || err.status === 403) return "Beacon refused the request (your session may have expired)";
     return `Beacon returned ${err.status}${err.statusText ? " " + err.statusText : ""}`;

@@ -649,6 +649,59 @@ body.dark-mode .job-tooltip__badge--warn {
   background: rgba(217, 119, 6, 0.25);
   color: #fbbf24;
 }
+body.dark-mode .tsm-track::before { background: #495057; }
+body.dark-mode .tsm-step { color: #6c757d; }
+body.dark-mode .tsm-step i { background: #212529; border-color: #6c757d; }
+body.dark-mode .tsm-step.done,
+body.dark-mode .tsm-step small { color: #adb5bd; }
+body.dark-mode .tsm-step.cur { color: #f8f9fa; }
+body.dark-mode .tsm-now { background: rgba(255, 255, 255, 0.05); border-color: #495057; }
+body.dark-mode .tsm-edit,
+body.dark-mode .tsm-eu-quick button { background: transparent; color: #93c5fd; border-color: #3b82f6; }
+body.dark-mode .tsm-edit:hover,
+body.dark-mode .tsm-eu-quick button:hover { background: #3b82f6; color: #fff; }
+body.dark-mode .tsm-item.tsm-stop { color: #fca5a5; }
+body.dark-mode .tsm-sep,
+body.dark-mode .tsm-foot { border-color: #495057; }
+body.dark-mode .tsm-link { color: #93c5fd; }
+body.dark-mode .tsm-field-title { color: #f8f9fa; }
+body.dark-mode .tsm-correct:hover { background: rgba(255, 255, 255, 0.06); }
+body.dark-mode .tsm-warn,
+body.dark-mode .tsm-ack { background: rgba(217, 119, 6, 0.18); border-color: rgba(251, 191, 36, 0.5); color: #fde68a; }
+body.dark-mode .tsm-warn b { color: #fef3c7; }
+body.dark-mode .tsm-back-item { background: transparent; border-color: rgba(251, 191, 36, 0.5); color: #f8f9fa; }
+body.dark-mode .tsm-back-item:hover { background: rgba(217, 119, 6, 0.18); }
+body.dark-mode .tsm-back-item small { color: #fbbf24; }
+body.dark-mode .tsm-eu-box { border-color: #495057; }
+body.dark-mode .tsm-eu-new { background: rgba(59, 130, 246, 0.15); border-color: #3b82f6; }
+body.dark-mode .tsm-eu-new .v,
+body.dark-mode .tsm-eu-new .r { color: #93c5fd; }
+body.dark-mode .tsm-eu-label { color: #ced4da; }
+body.dark-mode .tsm-eu-reset { color: #adb5bd; }
+body.dark-mode .eta-chip {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.45);
+  color: #93c5fd;
+}
+body.dark-mode .eta-chip--soon {
+  background: rgba(217, 119, 6, 0.22);
+  border-color: rgba(251, 191, 36, 0.45);
+  color: #fbbf24;
+}
+body.dark-mode .eta-chip--late {
+  background: rgba(220, 38, 38, 0.22);
+  border-color: rgba(248, 113, 113, 0.5);
+  color: #fca5a5;
+}
+body.dark-mode .eta-line {
+  color: #93c5fd;
+}
+body.dark-mode .eta-line--soon {
+  color: #fbbf24;
+}
+body.dark-mode .eta-line--late {
+  color: #fca5a5;
+}
 body.dark-mode .action-required-button {
   color: #fbbf24;
 }

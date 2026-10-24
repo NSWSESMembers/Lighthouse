@@ -5,6 +5,7 @@ import { Entity } from "./Entity.js";
 import { Address } from "./Address.js";
 import { Tag } from "./Tag.js";
 import { Sector } from "./Sector.js";
+import { primaryEtaTasking } from "./Tasking.js";
 import { UnacceptedNotification } from "./UnacceptedNotification.js";
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 import { jobsToUI } from "../utils/jobTypesToUI.js";
@@ -557,6 +558,18 @@ export function Job(data = {}, deps = {}) {
             return status !== "Complete" && status !== "CalledOff" && status !== "Untasked";
         })
     );
+
+    // The tasking whose ETA/ETC matters most for this incident (soonest
+    // ETA, else soonest ETC) and its etaInfo -- drives the chip on the row.
+    self.etaTasking = ko.pureComputed(() => primaryEtaTasking(self.taskings()));
+    self.etaInfo = ko.pureComputed(() => {
+        const t = self.etaTasking();
+        return t ? t.etaInfo() : null;
+    });
+    self.etaTitle = ko.pureComputed(() => {
+        const t = self.etaTasking();
+        return t ? `${t.teamCallsign()}: ${t.etaInfo().title}` : '';
+    });
 
     self.sortedTaskings = ko.pureComputed(() =>
         self.taskings().slice().sort((a, b) =>

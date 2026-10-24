@@ -58,6 +58,14 @@ export function buildJobTooltipHtml(job) {
     const badges = agencyBadges(job).map(a =>
         `<span class="job-tooltip__badge" title="${escapeHtml(a.statusLabel)}"><span class="job-tooltip__badge-dot" style="background:${a.dotColor}"></span>${escapeHtml(a.name)}</span>`
     );
+    // Teams on the way / on scene with an ETA or ETC, soonest first.
+    const etas = (job.taskings?.() || [])
+        .map(t => ({ t, e: t.etaInfo?.() }))
+        .filter(x => x.e)
+        .sort((a, b) => a.e.time - b.e.time);
+    for (const { t, e } of etas) {
+        badges.push(`<span class="eta-chip ${e.chipClass}" title="${escapeHtml(e.title)}"><i class="fa ${e.iconClass}"></i>${escapeHtml(t.teamCallsign())} &middot; ${escapeHtml(e.label)}</span>`);
+    }
     const actionTags = job.actionRequiredTags?.() || [];
     if (actionTags.length) {
         const first = actionTags[0].name?.() || '';

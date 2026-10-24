@@ -10,7 +10,7 @@ The Team Register is in the top left of LAD. It lists all filtered teams. Each r
 - Callsign
 - Status
 - HQ (assigned HQ)
-- Task count: current active taskings (Tasked, Enroute, Onsite and Offsite)
+- Task count: current active taskings (Tasked, Enroute, Onsite and Offsite), with the team's soonest [ETA or ETC](tasking.md#arrival-and-completion-times) underneath
 - Team leader
 
 Sort by Callsign, Status, HQ or Task Count by clicking the column heading; click again to swap between ascending and descending.

@@ -11,6 +11,7 @@ require('../lib/shared_chrome_code.js'); // side-effect
 
 
 import { showAlert } from './components/windowAlert.js';
+import { describeBeaconError } from './utils/beaconError.js';
 
 import { ResizeDividers } from './resize.js';
 import { initPopupAutoPan } from './utils/popupAutoPan.js';
@@ -70,6 +71,8 @@ import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
 import { installFlashOnChangeBinding } from "./bindings/flashOnChange.js";
 import { installRowTransitionBindings } from "./bindings/rowTransitions.js";
 import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
+import "./bindings/holdHeight.js";   // registers ko.bindingHandlers.holdHeight
+import "./bindings/dateTime24.js";   // registers ko.bindingHandlers.dateTime24
 import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
@@ -2335,8 +2338,13 @@ function VM() {
         }
     }
 
+    // showAlert renders HTML; Beacon's error text goes in as plain text.
+    const escapeAlertText = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    // The three below throw on an HTTP error (throwOnError) so Beacon's reason,
+    // e.g. why a call-off was refused, reaches the user instead of being swallowed.
     self.updateTeamStatus = function (tasking, status, payload, cb) {
-        BeaconClient.tasking.updateTeamStatus(tasking.id(), status, payload, beaconCtx(token))
+        BeaconClient.tasking.updateTeamStatus(tasking.id(), status, payload, { ...beaconCtx(token), throwOnError: true })
             .then((data) => {
                 tasking.job.fetchTasking({ force: true });
                 if (tasking.team?.isFilteredIn?.()) {
@@ -2347,13 +2355,13 @@ function VM() {
             })
             .catch((err) => {
                 console.error("Failed to update team status:", err);
-                showAlert("Failed to update team status.", "danger", 5000);
+                showAlert(`Failed to update team status: ${escapeAlertText(describeBeaconError(err))}`, "danger", 8000);
                 cb([]);
             });
     }
 
     self.callOffTeam = function (tasking, payload, cb) {
-        BeaconClient.tasking.callOffTeam(tasking.id(), payload, beaconCtx(token))
+        BeaconClient.tasking.callOffTeam(tasking.id(), payload, { ...beaconCtx(token), throwOnError: true })
             .then((data) => {
                 tasking.job.fetchTasking({ force: true });
                 if (tasking.team?.isFilteredIn?.()) {
@@ -2364,13 +2372,13 @@ function VM() {
             })
             .catch((err) => {
                 console.error("Failed to call off team:", err);
-                showAlert("Failed to call off team.", "danger", 5000);
+                showAlert(`Failed to call off team: ${escapeAlertText(describeBeaconError(err))}`, "danger", 8000);
                 cb([]);
             });
     }
 
     self.untaskTeam = function (tasking, payload, cb) {
-        BeaconClient.tasking.untaskTeam(tasking.id(), payload, beaconCtx(token))
+        BeaconClient.tasking.untaskTeam(tasking.id(), payload, { ...beaconCtx(token), throwOnError: true })
             .then((data) => {
                 tasking.job.fetchTasking({ force: true });
                 if (tasking.team?.isFilteredIn?.()) {
@@ -2381,7 +2389,7 @@ function VM() {
             })
             .catch((err) => {
                 console.error("Failed to Untask Team:", err);
-                showAlert("Failed to Untask Team.", "danger", 5000);
+                showAlert(`Failed to remove tasking: ${escapeAlertText(describeBeaconError(err))}`, "danger", 8000);
                 cb(null);
             });
     }
