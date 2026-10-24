@@ -34,6 +34,14 @@ The home page shows the first three `##` entries, so keep the title short.
 - You can still zoom in as far as before on Esri Dark.
 - Panning back and forth over the same area shows fewer grey squares, because the map keeps more of the surrounding map tiles loaded.
 
+## Radio log and CSV export fixes
+
+*24 October 2026*
+
+- If Beacon returns an error when a radio or ops log changes a team's status or tasks a team, LAD now checks whether the change went through anyway. If it did, the log entry is saved as normal. Before, the dialog reported a failure and didn't save the log, and submitting again was refused by Beacon. See [Changing the Team's Status](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html#changing-the-teams-status).
+- When a status change or tasking from a log does fail, the dialog shows Beacon's reason followed by *Try again*.
+- NITC Export and Advanced Export CSV files no longer break when a field contains quotation marks or line breaks, so they open correctly in Excel and import into ArcGIS. Line breaks within a field become spaces.
+
 ## LAD council road closures on the map
 
 *24 October 2026*
