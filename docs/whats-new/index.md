@@ -18,6 +18,13 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD basemap fix
+
+*24 October 2026*
+
+- If you use a basemap other than Esri Topographic, the map no longer loads Esri Topographic underneath it as well. Panning and zooming download fewer map tiles, so the map is quicker on slow connections. If you use Esri Topographic, nothing changes.
+- You can still zoom in as far as before on Esri Dark.
+
 ## LAD council road closures on the map
 
 *24 October 2026*

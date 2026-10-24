@@ -390,12 +390,28 @@ map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 7
 function buildBasemapLayer(key) {
     // --- NSW VECTOR BASEMAP (Topographic style) ---
     if (key === "nsw-vector") {
-        return esriVector.vectorTileLayer(
+        const layer = esriVector.vectorTileLayer(
             "https://portal.spatial.nsw.gov.au/vectortileservices/rest/services/Hosted/NSW_BaseMap_VectorTile/VectorTileServer",
             {
                 attribution: "© NSW Spatial Services"
             }
         );
+        // Leaflet only applies zoom limits from grid (tile) layers, so as the
+        // only basemap this left the map's maxZoom at Infinity, and the
+        // marker cluster grid rebuild (MapVM.ensureClusterGridCompatibility)
+        // never ends. Register its limits the way GridLayer does.
+        layer.options.minZoom = 0;
+        layer.options.maxZoom = 20;
+        const { onAdd, onRemove } = layer;
+        layer.onAdd = function (map) {
+            onAdd.call(this, map);
+            map._addZoomLimit(this);
+        };
+        layer.onRemove = function (map) {
+            map._removeZoomLimit(this);
+            onRemove.call(this, map);
+        };
+        return layer;
     }
 
     // --- NSW RASTER BASEMAPS (tile MapServer) ---
@@ -420,7 +436,16 @@ function buildBasemapLayer(key) {
     }
 
     // --- EXISTING ESRI BASEMAPS ---
-    return esri.basemapLayer(key, { ignoreDeprecationWarning: true });
+    // Dark and Gray only have tiles to zoom 16. Keep zoom 19 on every
+    // basemap by scaling up their last tiles rather than capping the map.
+    // (esri merges these options into its shared config, so read
+    // maxNativeZoom first to keep repeat calls the same.)
+    const tiles = esri.BasemapLayer.TILES[key]?.options;
+    const nativeMax = tiles ? (tiles.maxNativeZoom ?? tiles.maxZoom) : undefined;
+    return esri.basemapLayer(key, {
+        ignoreDeprecationWarning: true,
+        ...(nativeMax < 19 ? { maxNativeZoom: nativeMax, maxZoom: 19 } : {}),
+    });
 }
 
 
@@ -433,8 +458,10 @@ legend.addTo(map);
 
 ResizeDividers(map)
 
-// Esri default basemap (others: 'Streets','Imagery','Topographic','Gray','DarkGray', etc.)
-esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(map);
+// Saved basemap. Added now because Leaflet needs a layer with a maxZoom on
+// the map before the marker cluster groups are added. The Layers drawer takes
+// it over as its current basemap, so switching basemap removes it.
+const initialBasemap = (buildBasemapLayer(minimapInitialKey) || buildBasemapLayer("Topographic")).addTo(map);
 
 function VM() {
 
@@ -2868,8 +2895,8 @@ function VM() {
 
         initialize(opts = {}) {
             L.Util.setOptions(this, opts);
-            this._currentBase = null;
-            this._baseKey = localStorage.getItem("map.base") || "Topographic";
+            this._currentBase = initialBasemap; // already on the map, see above
+            this._baseKey = minimapInitialKey;
             this._open = localStorage.getItem("layers.open") === "1";
         },
 
@@ -2958,7 +2985,7 @@ function VM() {
                 basemapMenu.appendChild(li);
             });
 
-            this._setBasemap(this._baseKey, map);
+            if (!this._currentBase) this._setBasemap(this._baseKey, map);
 
             this._renderOverlays();
 
@@ -3168,15 +3195,17 @@ function VM() {
         onRemove() { /* nothing to clean up */ },
 
         _setBasemap(key, map) {
-            if (this._currentBase) {
-                map.removeLayer(this._currentBase);
-                this._currentBase = null;
-            }
-
+            // Add the new basemap before removing the old one: with no basemap
+            // the map has no maxZoom, and the marker cluster grid rebuild on
+            // zoomlevelschange (MapVM.ensureClusterGridCompatibility) hangs.
+            const previous = this._currentBase;
             this._currentBase = buildBasemapLayer(key);
 
             if (this._currentBase) {
                 this._currentBase.addTo(map);
+            }
+            if (previous) {
+                map.removeLayer(previous);
             }
 
             const nextMiniMapLayer = buildBasemapLayer(key);
