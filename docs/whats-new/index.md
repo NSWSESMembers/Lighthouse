@@ -25,7 +25,7 @@ The home page shows the first three `##` entries, so keep the title short.
 - The **Transport NSW Incidents** overlay now also shows road closures and hazards reported by local councils, such as regional road closures and flooded causeways. Their popups are titled *Council Report*. The separate **Transport NSW Council Reports** overlay has been folded into it. See [Clickable Overlay Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#clickable-overlay-markers).
 - Transport NSW incident markers use the same icons as Live Traffic NSW, so flooding, fire, bad weather, and snow and ice each have their own icon instead of the general hazard icon.
 - Closed or affected stretches of road are drawn on the map as coloured lines, and affected areas as shaded areas, as on Live Traffic NSW. Click one for the incident's details.
-- Transport NSW incident popups no longer show *Speed Limit: -1 km/h*. The speed limit now appears in the advice, only when it has been reduced.
+- Transport NSW incident popups no longer show *Speed Limit: -1 km/h* or a list of *Unknown* fields. They show only the details the report includes, the way Live Traffic NSW does, and the speed limit appears in the advice only when it has been reduced. Popups also say who reported the incident, and council reports include the council's contact details.
 
 ## LAD incident photo icon fix
 

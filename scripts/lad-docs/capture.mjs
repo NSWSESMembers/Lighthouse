@@ -154,6 +154,7 @@ const OVERLAY_FEEDS = {
       roads: [{ mainStreet: 'Old Ferry Rd', locationQualifier: 'at', suburb: 'Demo Flats' }],
       adviceA: 'Road closed', adviceB: 'Use alternative route', speedLimit: -1, otherAdvice: 'Closed by Demo Shire Council. Water over the causeway.',
       start: '2026-10-05T08:30:00+11:00', hideEndDate: true,
+      OrgName: 'Demo Shire Council', OrgContact: '02 5550 0100',
       // The closed stretch of road, drawn as a line like Live Traffic does.
       encodedPolylines: [{ coords: encodePolyline([[-800, 1480], [-550, 1650], [-300, 1740]]) }],
     } },

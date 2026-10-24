@@ -67,7 +67,7 @@ Some overlays drop their own markers on the map. Click one to open a popup with 
 
 | Overlay | Marker | Click it to see |
 | --- | --- | --- |
-| **Transport NSW Incidents** | Live Traffic icon for the type of incident (crash, hazard, breakdown, traffic lights out, changed conditions, flooding, fire, bad weather, snow and ice) | What happened, where, traffic advice (with the speed limit when it's reduced), start/end time and who is managing it. Council reports are titled *Council Report* |
+| **Transport NSW Incidents** | Live Traffic icon for the type of incident (crash, hazard, breakdown, traffic lights out, changed conditions, flooding, fire, bad weather, snow and ice) | What happened, where, traffic advice (with the speed limit when it's reduced), when it started and ends, who is attending and who reported it. Council reports are titled *Council Report* and show the council's name and contact details. Details the report doesn't include are left out |
 | **Transport NSW Cameras** | Camera icon | What the camera faces and its latest image (click the image to enlarge it) |
 | **HazardWatch Active Warnings** | Warning icon in the middle of each warning area | The full published warning. Clicking anywhere in the area also works |
 | **SES Units** | SES logo at each unit headquarters | The unit's status (Monitoring, Not Monitoring or Unavailable), its active teams and incidents, SRB accreditations and contacts |

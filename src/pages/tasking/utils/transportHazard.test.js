@@ -4,6 +4,8 @@ import {
   transportHazardAdvice,
   transportHazardColour,
   transportHazardIcon,
+  transportHazardLocation,
+  transportHazardRows,
   transportHazardShapes,
 } from './transportHazard.js';
 
@@ -164,5 +166,59 @@ describe('transportHazardAdvice', () => {
     );
     expect(transportHazardAdvice({ adviceA: 'Road closed', speedLimit: -1 })).toBe('Road closed');
     expect(transportHazardAdvice({})).toBe('');
+  });
+});
+
+describe('transportHazardLocation', () => {
+  it('builds the location like Live Traffic', () => {
+    const at = (road) => transportHazardLocation({ roads: [road] });
+    expect(
+      at({ mainStreet: 'PACIFIC HWY', locationQualifier: 'At', crossStreet: 'BANKSIA RD', suburb: 'Demo River' }),
+    ).toBe('Pacific Hwy at Banksia Rd, Demo River');
+    expect(
+      at({ mainStreet: 'OLD FERRY RD', locationQualifier: 'between', crossStreet: 'A ST', secondLocation: 'B ST' }),
+    ).toBe('Old Ferry Rd between A St and B St');
+    expect(at({ mainStreet: 'M1 NSW', startRoadName: 'Exit 5' })).toBe('M1 NSW near Exit 5');
+    expect(at({ suburb: 'Demo Flats' })).toBe('Demo Flats');
+    expect(transportHazardLocation({})).toBe('');
+  });
+});
+
+describe('transportHazardRows', () => {
+  const labels = (rows) => rows.map(([label]) => label);
+
+  it('leaves out empty fields instead of showing Unknown', () => {
+    const rows = transportHazardRows(feature({ displayName: 'Hazard', mainCategory: 'Hazard', speedLimit: -1 }));
+    expect(rows).toEqual([['Reported by', 'Transport for NSW']]);
+  });
+
+  it('shows the council and its contacts for council reports', () => {
+    const rows = transportHazardRows(
+      feature({
+        displayName: 'Flooding',
+        mainCategory: 'Flooding',
+        adviceA: 'Road closed',
+        start: '2026-10-05T08:30:00+11:00',
+        hideEndDate: true,
+        attendingGroups: [' '],
+        OrgName: 'Demo Shire Council',
+        OrgContact: '02 0000 0000',
+      }),
+      { council: true },
+    );
+    expect(labels(rows)).toEqual(['Advice', 'From', 'Reported by', 'Council phone']);
+    expect(rows[2][1]).toBe('Demo Shire Council');
+  });
+
+  it('shows a start-to-end range and attending groups', () => {
+    const rows = transportHazardRows(
+      feature({
+        start: '2026-10-05T08:30:00+11:00',
+        end: '2026-10-05T12:00:00+11:00',
+        attendingGroups: ['Police', 'Tow truck'],
+      }),
+    );
+    expect(labels(rows)).toEqual(['When', 'Attending', 'Reported by']);
+    expect(rows[1][1]).toBe('Police, Tow truck');
   });
 });

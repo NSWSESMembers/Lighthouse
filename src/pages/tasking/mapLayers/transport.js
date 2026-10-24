@@ -1,11 +1,14 @@
 import BeaconClient from '../../../shared/BeaconClient.js';
 import L from "leaflet";
 import {
-  transportHazardAdvice,
   transportHazardColour,
   transportHazardIcon,
+  transportHazardRows,
   transportHazardShapes,
 } from "../utils/transportHazard.js";
+
+const escapeHtml = (v) =>
+  String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 
 export function registerTransportCamerasLayer(vm, map, getToken, apiHost, params) {
@@ -100,37 +103,12 @@ export function registerTransportIncidentsLayer(vm, map, getToken, apiHost, para
         const colour = transportHazardColour(f, { council });
         const popupTitle = council ? "Council Report" : "Traffic Hazard";
 
-        const details = `
-          <strong>${popupTitle}: ${f.properties.displayName || "Unknown"}</strong>
-          <br>
-          <strong>Location:</strong> ${f.properties.roads?.[0]?.mainStreet || "Unknown"}
-          ${f.properties.roads?.[0]?.locationQualifier || ""}
-          ${f.properties.roads?.[0]?.suburb || ""}
-          <br>
-          <strong>Category:</strong> ${f.properties.mainCategory || "Unknown"}
-          <br>
-          <strong>Advice:</strong> ${transportHazardAdvice(f.properties) || "None"}
-          <br>
-          <strong>Details:</strong> ${
-            f.properties.otherAdvice || "No additional details available."
-          }
-          <br>
-          <strong>Start:</strong> ${
-            f.properties.start ? new Date(f.properties.start).toLocaleString() : "Unknown"
-          }
-          <br>
-          <strong>End:</strong> ${
-            f.properties.hideEndDate
-              ? "Ongoing"
-              : f.properties.end
-              ? new Date(f.properties.end).toLocaleString()
-              : "Unknown"
-          }
-          <br>
-          <strong>Managed By:</strong> ${
-            f.properties.attendingGroups?.join(", ") || "Unknown"
-          }
-        `;
+        const details = [
+          `<strong>${escapeHtml(popupTitle)}: ${escapeHtml(f.properties.displayName || f.properties.mainCategory || "Incident")}</strong>`,
+          ...transportHazardRows(f, { council }).map(
+            ([label, text]) => `<strong>${escapeHtml(label)}:</strong> ${escapeHtml(text)}`,
+          ),
+        ].join("<br>");
 
         // Affected areas and stretches of road, as Live Traffic draws them; click for the same popup.
         areas.forEach((rings) => {

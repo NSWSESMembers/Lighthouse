@@ -187,3 +187,77 @@ export function transportHazardAdvice(p) {
     .map((a) => (a === 'Reduced speed limit' && hasSpeed ? `${a} (${speed} km/h)` : a))
     .join(', ');
 }
+
+const clean = (v) => (typeof v === 'string' ? v.trim() : v == null ? '' : String(v).trim());
+
+// Live Traffic title-cases road names unless they carry a state code (e.g. "NSW").
+const roadName = (v) =>
+  ['NSW', 'ACT', 'NT', 'WA', 'QLD', 'VIC'].some((s) => v.includes(s))
+    ? v
+    : v.toLowerCase().replace(/\b./g, (c) => c.toUpperCase());
+
+/** "Main St at Cross St, Suburb", built the way livetraffic.com does. Empty when unknown. */
+export function transportHazardLocation(p) {
+  const r = p?.roads?.[0];
+  if (!r) return '';
+  const main = clean(r.mainStreet);
+  const cross = clean(r.crossStreet);
+  const second = clean(r.secondLocation);
+  const start = clean(r.startRoadName);
+  const qualifier = clean(r.locationQualifier).toLowerCase();
+  const join = (...parts) => parts.filter(Boolean).join(' ');
+
+  let where = '';
+  if (main && start && main !== start) where = `${roadName(main)} near ${start}`;
+  else if (main && cross && second) where = join(roadName(main), qualifier, roadName(cross), 'and', roadName(second));
+  else if (main && (cross || second)) where = join(roadName(main), qualifier, roadName(cross || second));
+  else if (main) where = roadName(main);
+
+  const suburb = clean(r.suburb);
+  return [where, suburb].filter(Boolean).join(', ');
+}
+
+const formatTime = (v) => {
+  if (!v) return '';
+  const d = new Date(v);
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString();
+};
+
+/**
+ * The popup rows for a hazard, as [label, text] pairs. Like livetraffic.com,
+ * fields the feed leaves empty are left out rather than shown as "Unknown".
+ * Council reports say which council reported them, with its contact details.
+ */
+export function transportHazardRows(f, { council = false } = {}) {
+  const p = f?.properties || {};
+  const rows = [];
+  const add = (label, text) => {
+    const t = clean(text);
+    if (t) rows.push([label, t]);
+  };
+
+  add('Location', transportHazardLocation(p));
+  if (clean(p.mainCategory) !== clean(p.displayName)) add('Category', p.mainCategory);
+  add('Advice', transportHazardAdvice(p));
+  add('Details', p.otherAdvice);
+  const extra = (Array.isArray(p.additionalInfo) ? p.additionalInfo : []).map(clean).filter(Boolean);
+  add('More info', extra.join('; '));
+
+  const start = formatTime(p.start);
+  const end = formatTime(p.end);
+  if (start && (p.hideEndDate || !end)) add('From', start);
+  else if (start && end) add('When', start === end ? start : `${start} to ${end}`);
+  else add('Until', end);
+  add('Last updated', formatTime(p.lastUpdated));
+
+  const attending = (Array.isArray(p.attendingGroups) ? p.attendingGroups : []).map(clean).filter(Boolean);
+  add('Attending', attending.join(', '));
+  if (council || p.OrgName) {
+    add('Reported by', p.OrgName || 'Local council');
+    add('Council phone', p.OrgContact);
+    add('Council email', p.OrgEmail);
+  } else {
+    add('Reported by', 'Transport for NSW');
+  }
+  return rows;
+}
