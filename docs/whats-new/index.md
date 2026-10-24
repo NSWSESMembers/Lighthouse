@@ -18,6 +18,13 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD council road closures on the map
+
+*24 October 2026*
+
+- The **Transport NSW Incidents** overlay now also shows road closures and hazards reported by local councils, such as regional road closures and flooded causeways. Their popups are titled *Council Report*. The separate **Transport NSW Council Reports** overlay has been folded into it. See [Clickable Overlay Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#clickable-overlay-markers).
+- Transport NSW incident markers use the same icons as Live Traffic NSW, so flooding, fire, bad weather, and snow and ice each have their own icon instead of the general hazard icon.
+
 ## LAD incident photo icon fix
 
 *22 October 2026*

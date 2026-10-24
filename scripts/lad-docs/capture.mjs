@@ -124,10 +124,18 @@ const OVERLAY_ORIGIN = { lat: -33.815, lng: 151.001 };
 const OVERLAY_FEEDS = {
   'transport-incidents': [
     { at: [450, 1250], label: 'Traffic incident', properties: {
-      displayName: 'Crash', mainCategory: 'Crash',
+      displayName: 'Crash', mainCategory: 'Crash', CategoryIcon: 'Crash',
       roads: [{ mainStreet: 'Banksia Rd', locationQualifier: 'near', suburb: 'Demo River' }],
       adviceA: 'Exercise caution.', adviceB: 'Reduced speed limit.', otherAdvice: 'One lane closed eastbound.',
       speedLimit: 40, start: '2026-10-05T14:10:00+11:00', hideEndDate: true, attendingGroups: ['Police', 'Tow truck'],
+    } },
+  ],
+  'transport-local-reports': [
+    { at: [-550, 1650], label: 'Council report', properties: {
+      displayName: 'Flooding', mainCategory: 'Flooding', CategoryIcon: 'Flood', impactingNetwork: true,
+      roads: [{ mainStreet: 'Old Ferry Rd', locationQualifier: 'at', suburb: 'Demo Flats' }],
+      adviceA: 'Road closed.', adviceB: 'Use alternative route.', otherAdvice: 'Closed by Demo Shire Council. Water over the causeway.',
+      start: '2026-10-05T08:30:00+11:00', hideEndDate: true,
     } },
   ],
   'transport-cameras': [
@@ -548,7 +556,7 @@ const SHOTS = {
   },
 
   // Overlay layers that drop clickable markers on the map, each labelled:
-  // a Transport NSW incident and camera, a HazardWatch warning (area +
+  // a Transport NSW incident, council report and camera, a HazardWatch warning (area +
   // icon) and an SES unit HQ (unit locations ship with the extension; the
   // rest is fake). Incidents and assets are hidden.
   'overlay-markers': {
@@ -558,8 +566,14 @@ const SHOTS = {
       await page.evaluate(({ feeds, hw }) => {
         const mv = window.ko.dataFor(document.body).mapVM; const map = mv.map;
         const labels = [];
-        for (const [key, rows] of Object.entries(feeds)) {
-          mv.onlineLayers.get(key).layerGroup.eachLayer((m, i = 0) => labels.push([m, rows[i]?.label]));
+        // The incidents layer draws the incident feed, then the council reports feed.
+        const layerRows = {
+          'transport-incidents': [...feeds['transport-incidents'], ...feeds['transport-local-reports']],
+          'transport-cameras': feeds['transport-cameras'],
+        };
+        for (const [key, rows] of Object.entries(layerRows)) {
+          let i = 0;
+          mv.onlineLayers.get(key).layerGroup.eachLayer((m) => labels.push([m, rows[i++]?.label]));
         }
         const markersOf = (key) => { const out = []; const walk = (g) => g.eachLayer((l) => (l.getLatLng && l.options.icon ? out.push(l) : l.eachLayer && walk(l))); walk(mv.onlineLayers.get(key).layerGroup); return out; };
         markersOf('hazardwatch-warnings').forEach((m) => labels.push([m, hw.label]));
@@ -582,7 +596,7 @@ const SHOTS = {
     run: async (page) => {
       await showOverlays(page, ['transport-incidents'], { centre: [450, 1250], zoom: 16 });
       await page.evaluate(() => {
-        window.ko.dataFor(document.body).mapVM.onlineLayers.get('transport-incidents').layerGroup.eachLayer((m) => m.openPopup());
+        window.ko.dataFor(document.body).mapVM.onlineLayers.get('transport-incidents').layerGroup.getLayers()[0].openPopup(); // the traffic incident, not the council report
       });
       await settle(page, 1000);
     },
