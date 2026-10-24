@@ -1,0 +1,30 @@
+name: Master PR source check
+# PRs into master must come from this repo's master-dev branch. Make the
+# "Source is master-dev" job a required check on master (ruleset) to enforce it;
+# admins can bypass the ruleset for a genuine hotfix.
+#
+# pull_request_target so the check always runs the copy of this file on master,
+# not one a PR could edit. It never checks out or runs PR code - keep it that way.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+    branches: [master]
+
+permissions: {}
+
+jobs:
+  source:
+    name: Source is master-dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check head branch
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [ "$HEAD_REPO" = "$GITHUB_REPOSITORY" ] && [ "$HEAD_REF" = "master-dev" ]; then
+            echo "PR comes from ${HEAD_REPO}:${HEAD_REF}."
+            exit 0
+          fi
+          echo "::error::PRs into master must come from ${GITHUB_REPOSITORY}:master-dev, not ${HEAD_REPO}:${HEAD_REF}. Retarget this PR to master-dev."
+          exit 1
