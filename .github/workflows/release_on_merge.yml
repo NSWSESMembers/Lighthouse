@@ -1,6 +1,6 @@
 name: Cut Release on Merge to Master
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
     branches: [master]
 
