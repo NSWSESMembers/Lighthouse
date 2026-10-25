@@ -1,6 +1,8 @@
-# Dependabot version updates. All PRs target master-dev (the integration
-# branch), not master. Note: GitHub always raises *security* update PRs
-# against the repository's default branch, regardless of target-branch.
+# Dependabot version updates: one grouped PR per ecosystem per week, all
+# targeting master-dev (the integration branch), not master.
+# Note: GitHub always raises *security* update PRs against the repository's
+# default branch (master), regardless of target-branch, and as soon as an
+# advisory is published rather than on this schedule.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -10,12 +12,25 @@ updates:
     target-branch: "master-dev"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Australia/Sydney"
     groups:
-      npm-minor-patch:
-        update-types: ["minor", "patch"]
+      npm-weekly:
+        patterns: ["*"]
+    ignore:
+      # TypeScript 7 is parked until typescript-eslint supports it (see #516).
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: "master-dev"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Australia/Sydney"
+    groups:
+      actions-weekly:
+        patterns: ["*"]
