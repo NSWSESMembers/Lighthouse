@@ -62,11 +62,15 @@ export function registerRainRadarLayer(vm, map) {
   let speed        = FRAME_INTERVAL_MS;
 
   /* ── helpers ───────────────────────────────────────────────── */
-  function buildTileLayer(framePath) {
+  function buildTileLayer(framePath, isLatest) {
     return L.tileLayer(
       `${host}${framePath}/512/{z}/{x}/{y}/2/1_1.png`,
       {
         pane: "pane-lowest-plus",
+        // Load status (Layers drawer) follows the latest frame only -- the
+        // older animation frames load in the background, and a dropped tile
+        // in one of those isn't worth a "failed to load" warning.
+        skipLoadStatus: !isLatest,
         tileSize: 512,
         zoomOffset: -1,
         maxNativeZoom: 7,
@@ -148,46 +152,54 @@ export function registerRainRadarLayer(vm, map) {
   }
 
   /* ── data loading ──────────────────────────────────────────── */
-  async function loadFrames(layerGroup) {
+  async function fetchFrameList() {
+    const res = await fetch(`${RAINVIEWER_API}?_cb=${Date.now()}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`RainViewer API ${res.status}`);
+    return res.json();
+  }
+
+  function applyFrames(layerGroup, json) {
+    const past = json?.radar?.past;
+    if (!past || past.length === 0) return;
+
+    const newHost = json.host;
+    const pathsMatch =
+      host === newHost &&
+      frames.length === past.length &&
+      frames.every((f, i) => f.path === past[i].path);
+
+    if (pathsMatch) return; // nothing changed
+
+    // tear down old tile layers
+    tileLayers.forEach((tl) => {
+      if (layerGroup.hasLayer(tl)) layerGroup.removeLayer(tl);
+    });
+
+    host = newHost;
+    frames = past;
+    tileLayers = frames.map((f, i) => {
+      const tl = buildTileLayer(f.path, i === frames.length - 1);
+      layerGroup.addLayer(tl);
+      return tl;
+    });
+
+    // update slider range
+    if (control) {
+      const slider = control._container.querySelector(".rv-slider");
+      if (slider) { slider.max = frames.length - 1; slider.value = frames.length - 1; }
+    }
+
+    // show latest frame
+    frameIdx = -1;
+    showFrame(frames.length - 1);
+  }
+
+  // Periodic refresh -- the frames already on the map stay if this fails.
+  async function refreshFrames(layerGroup) {
     try {
-      const res = await fetch(`${RAINVIEWER_API}?_cb=${Date.now()}`, {
-        cache: "no-store",
-      });
-      if (!res.ok) throw new Error(`RainViewer API ${res.status}`);
-      const json = await res.json();
-      const past = json.radar?.past;
-      if (!past || past.length === 0) return;
-
-      const newHost = json.host;
-      const pathsMatch =
-        host === newHost &&
-        frames.length === past.length &&
-        frames.every((f, i) => f.path === past[i].path);
-
-      if (pathsMatch) return; // nothing changed
-
-      // tear down old tile layers
-      tileLayers.forEach((tl) => {
-        if (layerGroup.hasLayer(tl)) layerGroup.removeLayer(tl);
-      });
-
-      host = newHost;
-      frames = past;
-      tileLayers = frames.map((f) => {
-        const tl = buildTileLayer(f.path);
-        layerGroup.addLayer(tl);
-        return tl;
-      });
-
-      // update slider range
-      if (control) {
-        const slider = control._container.querySelector(".rv-slider");
-        if (slider) { slider.max = frames.length - 1; slider.value = frames.length - 1; }
-      }
-
-      // show latest frame
-      frameIdx = -1;
-      showFrame(frames.length - 1);
+      applyFrames(layerGroup, await fetchFrameList());
     } catch (err) {
       console.warn("[RainViewer Radar] Failed to load frames:", err);
     }
@@ -331,9 +343,9 @@ export function registerRainRadarLayer(vm, map) {
     menuGroup: "RainViewer",
     refreshMs: 0,
     visibleByDefault: localStorage.getItem(`ov.rainRadar`) || false,
-    fetchFn: async () => {
-      return {};
-    },
+    // The frame list is fetched here (not in drawFn) so the Layers drawer
+    // shows loading / failed for it like any other feed.
+    fetchFn: fetchFrameList,
     drawFn: (layerGroup, data) => {
       if (!data) return;
 
@@ -353,9 +365,9 @@ export function registerRainRadarLayer(vm, map) {
       // Clean up control + timers when the layerGroup is removed from the map
       layerGroup.on("remove", cleanup);
 
-      // Initial load + periodic refresh of frame list
-      loadFrames(layerGroup);
-      dataTimer = setInterval(() => loadFrames(layerGroup), DATA_REFRESH_MS);
+      // Initial frames + periodic refresh of frame list
+      applyFrames(layerGroup, data);
+      dataTimer = setInterval(() => refreshFrames(layerGroup), DATA_REFRESH_MS);
 
       // Auto-play
       play();
