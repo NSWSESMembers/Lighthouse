@@ -1283,7 +1283,9 @@ export function MapVM(Lmap, root) {
     }
     // A tile or Esri layer drawn into a polling layer's group (in drawFn, or
     // later, like RainViewer's frames): follow its load events for status.
+    // A child can opt out with `skipLoadStatus` (RainViewer's older frames).
     if (!isTileChild(layer) && !isFeatureChild(layer)) return;
+    if (layer.options?.skipLoadStatus) return;
     for (const entry of self.onlineLayers.values()) {
       if (entry.layerGroup.hasLayer(layer)) {
         watchLayerChild(entry, layer);
