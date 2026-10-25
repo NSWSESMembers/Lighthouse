@@ -37,6 +37,7 @@ The home page shows the first three `##` entries, so keep the title short.
 - The Layers menu now shows whether each overlay loaded. A spinner shows while it loads, then the number of items it put on the map, *Nothing to show right now* if it loaded empty, or **failed** with the reason and a **Retry** link. Before, an overlay that failed looked the same as one with nothing to show. See [Overlay Loading Status](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-loading-status).
 - If an overlay loaded but a later refresh fails, it keeps showing what it last loaded and is marked **stale** with the time of that data.
 - The Layers button shows a spinner while overlays load and a red number when any have failed, so you can see problems with the menu closed, including overlays switched on from your last session.
+- **BOM Land Warnings now shows thunderstorm warnings.** Their areas were never drawn before, because LAD asked the BOM service for details it doesn't have.
 
 ## LAD basemap fix
 

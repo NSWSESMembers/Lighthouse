@@ -140,7 +140,9 @@ export function registerBOMLandWarningsLayer(vm) {
         url: `${BASE_URL}/3`,
         pane: "pane-lowest",
         where: "1=1",
-        fields: ["OBJECTID", "severity", "status", "phase", "start_time_local", "end_time_local", "state_code"],
+        // Same schema as layer 2 -- asking for any other field makes the
+        // service reject the whole query (HTTP 200 with a 400 error body).
+        fields: ["OBJECTID", "product", "phenomena", "warning", "validfrom_utc", "validto_utc"],
         style: () => ({
           weight: 1.5,
           color: "#6E6E6E",
@@ -153,10 +155,9 @@ export function registerBOMLandWarningsLayer(vm) {
       thunderstorm.bindPopup((layer) => {
         const p = layer.feature.properties;
         return `<strong>⛈️ Thunderstorm Warning</strong><br>
-          <strong>Severity:</strong> ${severityLabel(p.severity)}<br>
-          ${p.phase ? `<strong>Phase:</strong> ${p.phase}<br>` : ""}
-          ${p.start_time_local ? `<strong>From:</strong> ${new Date(p.start_time_local).toLocaleString()}<br>` : ""}
-          ${p.end_time_local ? `<strong>Until:</strong> ${new Date(p.end_time_local).toLocaleString()}` : ""}`;
+          ${p.phenomena ? `${p.phenomena}<br>` : ""}
+          ${p.validfrom_utc ? `<strong>From:</strong> ${new Date(p.validfrom_utc).toLocaleString()}<br>` : ""}
+          ${p.validto_utc ? `<strong>Until:</strong> ${new Date(p.validto_utc).toLocaleString()}` : ""}`;
       }, { pane: "pane-popup-top" });
       layerGroup.addLayer(thunderstorm);
 

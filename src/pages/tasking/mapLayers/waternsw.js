@@ -36,7 +36,6 @@ export function registerWaterNSWBoundariesLayer(vm) {
         where: "1=1",
         fields: ["OBJECTID", "Class", "NAME"],
         style: (feature) => {
-            console.log(feature)
           const cls = feature.properties.Class;
           const colours = styleByClass(cls);
           return {

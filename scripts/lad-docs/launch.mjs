@@ -107,7 +107,7 @@ export async function launchLad(opts = {}) {
   }, { tokenKey: `beaconAPIToken-${BEACON_HOST}`, token: fakeJwt(operatorId), manifest, config: config || null, remoteTab });
 
   photoImagesCache ??= await renderPhotos(context);
-  const mock = createMockRouter(scenario, { log, photoImages: photoImagesCache });
+  const mock = createMockRouter(scenario, { log, photoImages: photoImagesCache, manifest });
   await context.route('**/*', async (route) => {
     const url = new URL(route.request().url());
     if (url.origin === APP_ORIGIN) {

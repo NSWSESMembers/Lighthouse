@@ -9,7 +9,7 @@ import { restyleAllJobMarkers } from '../markers/jobMarker.js';
 import { AssetPinLayout } from '../markers/assetPinLayout.js';
 import { AssetTrails } from '../markers/assetTrails.js';
 import { setCapabilityCodesShown } from '../components/asset_icon.js';
-import { deriveLayerStatus } from '../utils/layerStatus.js';
+import { deriveLayerStatus, describeLayerError } from '../utils/layerStatus.js';
 
 export function MapVM(Lmap, root) {
   const self = this;
@@ -599,12 +599,6 @@ export function MapVM(Lmap, root) {
   const isFeatureChild = (layer) =>
     typeof layer._requestFeatures === 'function' && typeof layer.eachFeature === 'function';
 
-  function describeLayerError(err) {
-    const msg = (err && (err.message || String(err))) || 'Failed to load';
-    if (/failed to fetch|networkerror/i.test(msg)) return 'Network error, check your connection';
-    return msg.length > 140 ? msg.slice(0, 137) + '…' : msg;
-  }
-
   /** Follow an async child layer's own load events (tiles / Esri features). */
   function watchLayerChild(entry, layer) {
     const kind = isTileChild(layer) ? 'tiles' : isFeatureChild(layer) ? 'features' : null;
@@ -618,6 +612,7 @@ export function MapVM(Lmap, root) {
     // committed on 'load', so a reload doesn't flash zero tiles.
     let cycleOk = 0;
     let cycleErr = 0;
+    let cycleError = null;
     rec.handlers = kind === 'tiles'
       ? {
         loading: () => { rec.pending = true; cycleOk = 0; cycleErr = 0; changed(); },
@@ -632,9 +627,20 @@ export function MapVM(Lmap, root) {
         },
       }
       : {
-        loading: () => { rec.pending = true; rec.error = null; changed(); },
-        requesterror: (e) => { rec.error = describeLayerError(e); changed(); },
-        load: () => { rec.pending = false; rec.settled = true; changed(); },
+        // The last error stays up while a pan re-requests, so a failed layer
+        // doesn't read "Nothing to show" mid-retry. esri fires 'load' before
+        // that request's 'requesterror' (same call stack), so the cycle's
+        // result is committed a microtask after 'load'.
+        loading: () => { rec.pending = true; cycleError = null; changed(); },
+        requesterror: (e) => { cycleError = describeLayerError(e); rec.error = cycleError; changed(); },
+        load: () => {
+          rec.pending = false;
+          rec.settled = true;
+          queueMicrotask(() => {
+            if (!rec.pending) rec.error = cycleError;
+            changed();
+          });
+        },
       };
     layer.on(rec.handlers);
 
