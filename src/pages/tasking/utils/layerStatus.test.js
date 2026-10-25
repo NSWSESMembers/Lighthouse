@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveLayerStatus, summarizeLayerStatuses, layerStatusView, formatClock } from './layerStatus.js';
+import { deriveLayerStatus, summarizeLayerStatuses, layerStatusView, formatClock, describeLayerError } from './layerStatus.js';
 
 const at = new Date(2026, 9, 24, 10, 42);
 const track = (over = {}) => ({
@@ -140,5 +140,28 @@ describe('formatClock', () => {
   it('formats HH:MM', () => {
     expect(formatClock(new Date(2026, 0, 1, 7, 5))).toBe('07:05');
     expect(formatClock(null)).toBe('');
+  });
+});
+
+describe('describeLayerError', () => {
+  it('uses an Error or string message', () => {
+    expect(describeLayerError(new Error('HTTP 503'))).toBe('HTTP 503');
+    expect(describeLayerError('Bad feed')).toBe('Bad feed');
+  });
+
+  it('never shows [object Object] for an esri requesterror event', () => {
+    expect(describeLayerError({ url: 'x', message: undefined, code: 500 })).toBe('Server error 500');
+    expect(describeLayerError({ message: 'Invalid token', code: 498 })).toBe('Invalid token');
+    expect(describeLayerError({ error: { message: 'Timed out' } })).toBe('Timed out');
+    expect(describeLayerError({})).toBe('Failed to load');
+  });
+
+  it('maps fetch network failures to a friendly message', () => {
+    expect(describeLayerError(new TypeError('Failed to fetch'))).toBe('Network error, check your connection');
+  });
+
+  it('falls back when there is nothing to say', () => {
+    expect(describeLayerError(null)).toBe('Failed to load');
+    expect(describeLayerError(new Error(''))).toBe('Failed to load');
   });
 });

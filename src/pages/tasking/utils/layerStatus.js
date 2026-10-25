@@ -22,6 +22,23 @@
 //   error    - failed with nothing to show
 
 /**
+ * Short user-facing message for a failed fetch or child request. Takes an
+ * Error, a string, or an event object -- esri-leaflet's 'requesterror' fires
+ * { message, code } and often leaves message undefined.
+ */
+export function describeLayerError(err) {
+  let msg = '';
+  if (typeof err === 'string') msg = err;
+  else if (err) {
+    msg = err.message || err.error?.message || '';
+    if (!msg && err.code) msg = `Server error ${err.code}`;
+  }
+  msg = String(msg).trim() || 'Failed to load';
+  if (/failed to fetch|networkerror/i.test(msg)) return 'Network error, check your connection';
+  return msg.length > 140 ? msg.slice(0, 137) + '…' : msg;
+}
+
+/**
  * @param {object} track - raw tracking state (see above)
  * @param {number|null} count - items drawn (markers, else shapes); null if unknown
  * @returns {{phase: string, count: number|null, error: string|null,
