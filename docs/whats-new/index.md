@@ -18,6 +18,13 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD street zoom and team popup fix
+
+*26 October 2026*
+
+- **Double-click an incident's address to zoom in to street level.** A single click still focuses the map on the incident and opens its popup. A double-click goes on to street level, so you can see the exact location. This also works on the zoom button in an expanded team's taskings. See [Incident Register](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html).
+- Clicking a tasked team in an incident's popup now opens that team in the Team Register even if it has no tracked vehicle or radio. Before, nothing happened. See [Incident Popup Actions](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#incident-popup-actions).
+
 ## LAD arrival times and a clearer status menu
 
 *24 October 2026*

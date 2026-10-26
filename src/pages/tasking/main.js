@@ -1106,6 +1106,14 @@ function VM() {
         }
     }
 
+    // Zoom used when an incident's zoom-to button is double-clicked: street
+    // level, closer than the single-click focus (which only zooms as far as
+    // it takes to break the incident out of its cluster).
+    const JOB_STREET_ZOOM = 17;
+    // The latest single-click focus, so a double-click that lands while
+    // that focus is still animating can take over once it settles.
+    let jobFocus = null;
+
     function makeJobDeps() {
         return {
             makeJobLink: (id) => `${params.source}/Jobs/${id}`,
@@ -1118,7 +1126,7 @@ function VM() {
                 self.fetchJobById(jobId, cb);
             },
 
-            flyToJob: (job) => {
+            flyToJob: (job, { street = false } = {}) => {
                 const lat = job.address.latitude?.();
                 const lng = job.address.longitude?.();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
@@ -1136,15 +1144,50 @@ function VM() {
                         self.mapVM?.layersDrawer?.refresh();
                     }
 
+                    const m = job.marker;
+                    const cg = self.mapVM?.jobClusterGroup;
+
+                    // Fly in to street level, keeping the popup open: zooming
+                    // in only splits clusters, so a marker that's showing
+                    // stays on the map. If the popup wasn't open (focus
+                    // still clustered, or closed meanwhile), open it once
+                    // the map settles; zoomToShowLayer spiderfies the marker
+                    // if it still shares a spot with others at this zoom.
+                    const flyToStreet = () => {
+                        map.once('moveend', () => {
+                            if (!m || m.isPopupOpen()) return;
+                            if (cg && cg.hasLayer(m)) cg.zoomToShowLayer(m, () => m.openPopup());
+                            else m.openPopup();
+                        });
+                        map.flyTo([lat, lng], JOB_STREET_ZOOM, { animate: true, duration: 0.5 });
+                    };
+
+                    // Second click of a double-click. If the first click's
+                    // focus is still in flight (cluster zoom/spiderfy, flyTo),
+                    // interrupting it would leave its pending callback to
+                    // spiderfy or open the popup mid-flight -- flag it and
+                    // let it fly in when it settles instead.
+                    if (street) {
+                        const pending = jobFocus?.job === job && !jobFocus.settled
+                            && Date.now() - jobFocus.at < 2000;
+                        if (pending) jobFocus.street = true;
+                        else flyToStreet();
+                        return;
+                    }
+
                     // If the popup is already open (i.e. this call originated
                     // from the popupopen event chain rather than a deliberate
                     // UI action), bail out.  flyTo can change the zoom level
                     // which triggers markercluster reclustering — the marker
                     // disappears and the popup is abruptly closed.
-                    if (job.marker?.isPopupOpen?.()) return;
+                    if (m?.isPopupOpen?.()) return;
 
-                    const m = job.marker;
-                    const cg = self.mapVM?.jobClusterGroup;
+                    const focus = jobFocus = { job, at: Date.now(), settled: false, street: false };
+                    const settle = () => {
+                        focus.settled = true;
+                        if (focus.street) flyToStreet();
+                        else m.openPopup();
+                    };
 
                     // If the marker lives in the cluster group, use
                     // zoomToShowLayer – it zooms/pans as needed, spiderfies
@@ -1152,9 +1195,7 @@ function VM() {
                     // further, and only then fires the callback so the
                     // popup opens on the visible, individual marker.
                     if (m && cg && cg.hasLayer(m)) {
-                        cg.zoomToShowLayer(m, () => {
-                            m.openPopup();
-                        });
+                        cg.zoomToShowLayer(m, settle);
                     } else if (m) {
                         // Marker is on a standalone layer (rescueJobLayer,
                         // unclusteredJobLayer) – simple flyTo. Wait for it to
@@ -1163,10 +1204,11 @@ function VM() {
                         // correction while the flyTo animation is still
                         // moving the map, and the two visibly fight (a
                         // camera move, then an abrupt extra snap).
-                        map.once('moveend', () => m.openPopup());
+                        map.once('moveend', settle);
                         map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
                     } else {
                         // Doesn't exist yet -- nothing to open a popup on.
+                        focus.settled = true;
                         map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
                     }
                 }

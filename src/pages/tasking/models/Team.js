@@ -621,7 +621,12 @@ export function Team(data = {}, deps = {}) {
         if (self.isFilteredIn() === false) return;
 
         const assets = self.trackableAssets();
-        if (!assets || assets.length === 0) return;
+        // Nothing to fly to, so no asset popup opens to expand the team
+        // (onPopupOpen) -- expand it in the list directly.
+        if (!assets || assets.length === 0) {
+            self.focusAndExpandInList();
+            return;
+        }
         const op = currentlyOpenMapPopup();
         let nextIdx = 0;
 

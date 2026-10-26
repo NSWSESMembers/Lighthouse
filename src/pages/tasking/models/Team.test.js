@@ -401,6 +401,16 @@ describe('markerFocus', () => {
     t.markerFocus();
     expect(flyToAsset).toHaveBeenCalledWith(a1);
   });
+
+  it('expands the team in the list when it has no trackable asset', () => {
+    const flyToAsset = vi.fn();
+    const t = new Team({}, { flyToAsset, currentlyOpenMapPopup: () => null });
+    t.isFilteredIn(true);
+    const expand = vi.spyOn(t, 'expand');
+    t.markerFocus();
+    expect(flyToAsset).not.toHaveBeenCalled();
+    expect(expand).toHaveBeenCalled();
+  });
 });
 
 describe('isPinned / togglePinned', () => {
