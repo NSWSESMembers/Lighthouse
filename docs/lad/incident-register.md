@@ -26,7 +26,7 @@ The Incident Register is in the bottom left of LAD. It lists all filtered incide
   - If a team is on the way or on scene, its [ETA or ETC](tasking.md#arrival-and-completion-times) shows underneath.
   - Click the status to [change it](#changing-incident-status).
 - Address
-  - For geocoded incidents, click the address to focus the Situation Map on the incident.
+  - For geocoded incidents, click the address to focus the Situation Map on the incident. Double-click it to zoom in to street level.
   - Incidents with no GPS location show the address in italics and it can't be clicked; hover over it to see why. Incidents with neither an address nor a GPS location show *No location*.
 
 Sort by Id, Recv, HQ, Type or Status by clicking the column heading; click again to swap between ascending and descending.

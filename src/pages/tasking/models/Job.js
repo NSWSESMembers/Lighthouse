@@ -47,7 +47,7 @@ export function Job(data = {}, deps = {}) {
         makeJobLink = (_id) => "#",
         fetchJobTasking = (_jobId, cb) => cb(null),
         fetchJobById = (_jobId, cb) => cb(null),
-        flyToJob = (_job) => {/* noop */ },
+        flyToJob = (_job, _opts) => {/* noop */ },
         attachAndFillTimelineModal = (_job) => { /* noop */ },
         fetchUnacknowledgedJobNotifications = async (_job) => ([]),
         acknowledgeUnacceptedNotification = async (_notificationId) => ({}),
@@ -848,9 +848,12 @@ export function Job(data = {}, deps = {}) {
     }
 
     // ---- map focus (delegated) ----
-    self.focusMap = function () {
+    // Bound to the zoom-to buttons, so KO passes the click event; the
+    // second click of a double-click (event.detail 2) zooms in to street
+    // level. Programmatic calls pass no event and always do the normal focus.
+    self.focusMap = function (_data, event) {
         if (self.isFilteredIn() === false) return;
-        flyToJob(self);
+        flyToJob(self, { street: event?.detail >= 2 });
     };
 
     self.toggleAndExpand = function () {
