@@ -304,6 +304,17 @@ function buildDefaultRules(vm) {
       label: `${team.callsign()} — ${matching.length} active: ${breakdown}`
     };
   };
+  // --- teams 5+ min past their ETA/ETC (Tasking.etaOverdueForAlert) ---
+  const overdueTaskings = allTeams.flatMap(team =>
+    (team.filteredTaskings ? team.filteredTaskings() : team.taskings())
+      .filter(t => t.etaOverdueForAlert?.())
+      .map(t => ({ team, t, e: t.etaInfo() }))
+  ).sort((a, b) => b.e.minutesLate - a.e.minutesLate);
+
+  const asOverdueItem = ({ team, t, e }) => ({
+    id: String(team.id()),
+    label: `${team.callsign()} — ${t.job?.identifier?.() ?? '?'} — ${e.label}`
+  });
   // --- single summary rule for “alerts hidden because incident isn’t pinned” ---
   let hiddenCount = 0;
   if (pinnedOnlyIncidents) {
@@ -395,6 +406,18 @@ function buildDefaultRules(vm) {
       onClick: (id) => {
         const found = jobs.find(j => jobKey(j) === id);
         found?.focusAndExpandInList();
+      }
+    },
+    {
+      id: 'overdue-eta-teams',
+      level: 'warning',
+      title: 'Teams overdue on ETA/ETC',
+      active: overdueTaskings.length > 0,
+      items: overdueTaskings.slice(0, 10).map(asOverdueItem),
+      count: overdueTaskings.length,
+      onClick: (id) => {
+        const found = allTeams.find(t => String(t.id()) === id);
+        found?.focusAndExpandInList?.();
       }
     },
     {

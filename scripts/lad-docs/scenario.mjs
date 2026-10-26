@@ -431,7 +431,8 @@ export function buildScenario(now = new Date()) {
 
   const taskings = [];
   // A tasking row: `reached` = how many TASKING_STEPS are done, at stepTimes.
-  const taskingRow = (tm, j, sequence, reached, stepTimes) => {
+  // `est` = { eta, etc } in minutes from now (negative = already past).
+  const taskingRow = (tm, j, sequence, reached, stepTimes, est = {}) => {
     const history = TASKING_STEPS.slice(0, reached).map(([id, name], k) => ({
       Type: id, Name: name, Description: name, TimeLogged: stepTimes[k], EstimatedCompletion: null,
       CreatedOn: stepTimes[k], CreatedBy: OPERATOR,
@@ -445,9 +446,10 @@ export function buildScenario(now = new Date()) {
       CurrentStatusId: curId,
       EstimatedStatusEndTime: null,
       Enroute: stamp(1),
-      EnrouteEstimatedCompletion: stamp(1),
+      // ETA: the arrival time once onsite, else the estimate given on Enroute.
+      EnrouteEstimatedCompletion: reached > 2 ? stepTimes[2] : reached === 2 && est.eta != null ? t(-est.eta / 60) : null,
       Onsite: stamp(2),
-      OnsiteEstimatedCompletion: stamp(2),
+      OnsiteEstimatedCompletion: reached > 2 && est.etc != null ? t(-est.etc / 60) : null,
       Offsite: stamp(3),
       Complete: null,
       Team: taskingTeam(tm),
@@ -471,13 +473,16 @@ export function buildScenario(now = new Date()) {
       JobTeamStatusTypeHistory: history,
     };
   };
+  // ETA/ETC per team for its under-way job, covering each countdown state:
+  // on track, due within 5 min, and overdue by more than 5 min (alert).
+  const ESTIMATES = [{ etc: 35 }, { eta: -14 }, { etc: 4 }, { eta: 9 }];
   TEAM_SPECS.forEach(([, , , jobIdx], ti) => {
     jobIdx.forEach((ji, seq) => {
       // First job in a team's queue is under way; the rest are just tasked.
       const reached = seq === 0 ? (ti % 2 === 0 ? 3 : 2) : 1; // how many TASKING_STEPS are done
       const startH = Math.max(0.15, JOB_SPECS[ji][4] - 0.1);
       const stepTimes = TASKING_STEPS.slice(0, reached).map((_, k) => t(startH - k * 0.05));
-      taskings.push(taskingRow(teams[ti], jobs[ji], seq + 1, reached, stepTimes));
+      taskings.push(taskingRow(teams[ti], jobs[ji], seq + 1, reached, stepTimes, seq === 0 ? ESTIMATES[ti] : {}));
     });
   });
 
@@ -629,8 +634,12 @@ export function buildScenario(now = new Date()) {
   // Image/IncidentThumbnails per job.
   const photos = new Map(Object.entries(PHOTO_COUNTS).map(([ji, n]) => [jobs[ji].Id, photoList(jobs[ji].Id, n)]));
 
+  // Jobs/Search with ViewModelType=2 returns the same lean shape -- the only
+  // search model carrying ImageCount.
+  const leanJobs = jobs.map(taskingJob);
+
   return {
-    hq: HQ, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents: ICEMS_INCIDENTS, timezone: TZ,
+    hq: HQ, jobs, leanJobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents: ICEMS_INCIDENTS, timezone: TZ,
     createTasking, createOpsLogEntry,
   };
 }

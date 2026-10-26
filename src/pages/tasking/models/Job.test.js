@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import ko from 'knockout';
-import { Job } from './Job.js';
+import { Job, splitLeanContactFields } from './Job.js';
 import { Enum } from '../utils/enum.js';
 
 describe('derived computeds', () => {
@@ -399,5 +399,65 @@ describe('no-GPS incidents', () => {
     expect(new Job({}).addressDisplayOrGPS()).toBe('No location');
     expect(new Job({ Address: { Latitude: -33.8, Longitude: 151.2 } }).addressDisplayOrGPS()).toBe('-33.8, 151.2');
     expect(new Job({ Address: { PrettyAddress: '1 Test St' } }).addressDisplayOrGPS()).toBe('1 Test St');
+  });
+});
+
+describe('lean (ViewModelType=2) search payloads', () => {
+  const lean = {
+    Id: 1,
+    CallerName: 'Jane Smith', CallerNumber: '0400000000',
+    ContactName: null, ContactNumber: null,
+    ImageCount: 3,
+  };
+
+  it('maps combined caller/contact fields onto the split fields', () => {
+    const j = new Job(lean);
+    expect(j.callerFirstName()).toBe('Jane Smith');
+    expect(j.callerLastName()).toBe('');
+    expect(j.callerPhoneNumber()).toBe('0400000000');
+    expect(j.contactFirstName()).toBe('');
+    expect(j.imageCount()).toBe(3);
+  });
+
+  it('keeps caller and incident contact separate for lean jobs', () => {
+    // Lean has no ContactCalled; LAD has always shown the incident contact
+    // and "Called By" caller separately for these.
+    const j = new Job({ ...lean, ContactName: null });
+    expect(j.contactCalled()).toBe(false);
+    j.updateFromJson({ ContactCalled: true });
+    expect(j.contactCalled()).toBe(false);
+  });
+
+  it('leaves ContactCalled and split names from a full GET alone on later lean polls', () => {
+    const j = new Job({
+      Id: 1, CallerFirstName: 'Jane', CallerLastName: 'Smith', CallerPhoneNumber: '0400000000',
+      ContactCalled: false, Sector: null,
+    });
+    j.updateFromJson(lean);
+    expect(j.callerFirstName()).toBe('Jane');
+    expect(j.callerLastName()).toBe('Smith');
+    expect(j.contactCalled()).toBe(false);
+  });
+
+  it('takes a changed caller name from a lean poll', () => {
+    const j = new Job({ Id: 1, CallerFirstName: 'Jane', CallerLastName: 'Smith' });
+    j.updateFromJson({ ...lean, CallerName: 'Jo Bloggs' });
+    expect(j.callerFirstName()).toBe('Jo Bloggs');
+    expect(j.callerLastName()).toBe('');
+  });
+
+  it('passes payloads without lean fields through untouched', () => {
+    const d = { Id: 1, CallerFirstName: 'Jane' };
+    expect(splitLeanContactFields(d)).toBe(d);
+  });
+
+  it('treats the sector as unknown until a payload carries the Sector key', () => {
+    const j = new Job(lean);
+    expect(j.sectorKnown()).toBe(false);
+    j.updateFromJson({ ImageCount: 4 });
+    expect(j.sectorKnown()).toBe(false);
+    j.updateFromJson({ Sector: null });
+    expect(j.sectorKnown()).toBe(true);
+    expect(new Job({ Id: 2, Sector: null }).sectorKnown()).toBe(true);
   });
 });

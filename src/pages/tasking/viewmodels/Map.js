@@ -9,6 +9,7 @@ import { restyleAllJobMarkers } from '../markers/jobMarker.js';
 import { AssetPinLayout } from '../markers/assetPinLayout.js';
 import { AssetTrails } from '../markers/assetTrails.js';
 import { setCapabilityCodesShown } from '../components/asset_icon.js';
+import { deriveLayerStatus, describeLayerError } from '../utils/layerStatus.js';
 
 export function MapVM(Lmap, root) {
   const self = this;
@@ -552,8 +553,165 @@ export function MapVM(Lmap, root) {
 
 
   // --- online/polling overlay layers registry ---
-  // key -> { key, label, layerGroup, refreshMs, timerId, visibleByDefault, fetchFn, drawFn }
+  // key -> { key, label, layerGroup, refreshMs, timerId, visibleByDefault, fetchFn, drawFn, track }
   self.onlineLayers = new Map();
+
+  // --- Load status for polling layers ---
+  // Each entry keeps a raw `track` (see utils/layerStatus.js) that records
+  // whether its fetch is pending/failed and whether async children (WMS tile
+  // layers, Esri feature layers) are still loading after drawFn returned.
+  // The Layers drawer subscribes via onLayerStatusChange to repaint its row
+  // and the Layers button badge.
+  const layerStatusListeners = new Set();
+  const pendingStatusKeys = new Set();
+
+  /** Subscribe to load status changes -- fn(key). Returns an unsubscribe fn. */
+  self.onLayerStatusChange = function (fn) {
+    layerStatusListeners.add(fn);
+    return () => layerStatusListeners.delete(fn);
+  };
+
+  // Coalesced to one notify per key per microtask -- Esri fires 'load' then
+  // 'requesterror' back to back, and a row shouldn't flash "empty" between.
+  function emitLayerStatus(key) {
+    if (pendingStatusKeys.has(key)) return;
+    pendingStatusKeys.add(key);
+    queueMicrotask(() => {
+      pendingStatusKeys.delete(key);
+      layerStatusListeners.forEach((fn) => {
+        try { fn(key); } catch (e) { console.error('Layer status listener failed:', e); }
+      });
+    });
+  }
+
+  const newLayerTrack = () => ({
+    on: false,
+    fetch: 'idle',
+    fetchError: null,
+    hasData: false,
+    updatedAt: null,
+    children: new Map(),
+    seq: 0,
+  });
+
+  const isTileChild = (layer) => layer instanceof L.GridLayer;
+  // esri-leaflet FeatureLayer (duck-typed so Map.js doesn't import esri)
+  const isFeatureChild = (layer) =>
+    typeof layer._requestFeatures === 'function' && typeof layer.eachFeature === 'function';
+
+  /** Follow an async child layer's own load events (tiles / Esri features). */
+  function watchLayerChild(entry, layer) {
+    const kind = isTileChild(layer) ? 'tiles' : isFeatureChild(layer) ? 'features' : null;
+    if (!kind) return;
+    const id = L.stamp(layer);
+    if (entry.track.children.has(id)) return;
+
+    const rec = { kind, layer, pending: false, settled: false, tilesOk: 0, tilesErr: 0, error: null, handlers: null };
+    const changed = () => emitLayerStatus(entry.key);
+    // Tile counts are per load cycle (a pan starts a new one) and only
+    // committed on 'load', so a reload doesn't flash zero tiles.
+    let cycleOk = 0;
+    let cycleErr = 0;
+    let cycleError = null;
+    rec.handlers = kind === 'tiles'
+      ? {
+        loading: () => { rec.pending = true; cycleOk = 0; cycleErr = 0; changed(); },
+        tileload: () => { cycleOk++; },
+        tileerror: () => { cycleErr++; },
+        load: () => {
+          rec.pending = false;
+          rec.settled = true;
+          rec.tilesOk = cycleOk;
+          rec.tilesErr = cycleErr;
+          changed();
+        },
+      }
+      : {
+        // The last error stays up while a pan re-requests, so a failed layer
+        // doesn't read "Nothing to show" mid-retry. esri fires 'load' before
+        // that request's 'requesterror' (same call stack), so the cycle's
+        // result is committed a microtask after 'load'.
+        loading: () => { rec.pending = true; cycleError = null; changed(); },
+        requesterror: (e) => { cycleError = describeLayerError(e); rec.error = cycleError; changed(); },
+        load: () => {
+          rec.pending = false;
+          rec.settled = true;
+          queueMicrotask(() => {
+            if (!rec.pending) rec.error = cycleError;
+            changed();
+          });
+        },
+      };
+    layer.on(rec.handlers);
+
+    // The first 'loading' fires inside the child's onAdd, before map
+    // 'layeradd' reaches us, so read its current state instead.
+    rec.pending = kind === 'tiles' ? !!layer._loading : layer._activeRequests > 0;
+    rec.settled = !rec.pending;
+    entry.track.children.set(id, rec);
+    changed();
+  }
+
+  function unwatchLayerChildren(entry) {
+    for (const rec of entry.track.children.values()) rec.layer.off(rec.handlers);
+    entry.track.children.clear();
+  }
+
+  function setLayerOff(entry) {
+    unwatchLayerChildren(entry);
+    const seq = entry.track.seq + 1;
+    entry.track = newLayerTrack();
+    entry.track.seq = seq; // in-flight fetches from before the toggle are ignored
+    emitLayerStatus(entry.key);
+  }
+
+  // Walks a layer group's drawn items, skipping tile layers. Markers are
+  // counted if there are any (most feeds draw a marker per item plus extra
+  // shapes); otherwise shapes are counted.
+  function countLayerItems(group, bounds) {
+    let markers = 0;
+    let shapes = 0;
+    const inBounds = (layer) => {
+      if (!bounds) return true;
+      if (typeof layer.getLatLng === 'function') return bounds.contains(layer.getLatLng());
+      if (typeof layer.getBounds === 'function') {
+        const b = layer.getBounds();
+        return !!b && b.isValid() && bounds.intersects(b);
+      }
+      return false;
+    };
+    const walk = (layer) => {
+      if (isTileChild(layer)) return;
+      if (isFeatureChild(layer)) { layer.eachFeature(walk); return; }
+      if (typeof layer.eachLayer === 'function') { layer.eachLayer(walk); return; }
+      if (!inBounds(layer)) return;
+      if (layer instanceof L.Marker || layer instanceof L.CircleMarker) markers++;
+      else shapes++;
+    };
+    group.eachLayer(walk);
+    return markers || shapes;
+  }
+
+  /** Current load status for a polling layer key -- see deriveLayerStatus. */
+  self.getLayerStatus = function (key) {
+    const entry = self.onlineLayers.get(key);
+    if (!entry) return deriveLayerStatus(null, null);
+    const count = entry.track.hasData ? countLayerItems(entry.layerGroup) : null;
+    return deriveLayerStatus(entry.track, count);
+  };
+
+  // For the Layers button badge, which only needs loading/failed -- skips
+  // counting items, so "empty" and "ok" aren't distinguished here.
+  self.getAllLayerStatuses = function () {
+    return [...self.onlineLayers.values()].map((entry) => deriveLayerStatus(entry.track, null));
+  };
+
+  /** Items of a polling layer inside the current map view (for row tooltips). */
+  self.countLayerItemsInView = function (key) {
+    const entry = self.onlineLayers.get(key);
+    if (!entry || !entry.track.hasData) return null;
+    return countLayerItems(entry.layerGroup, self.map.getBounds());
+  };
 
   /**
    * Register a polling overlay layer that:
@@ -582,6 +740,7 @@ export function MapVM(Lmap, root) {
       const existing = self.onlineLayers.get(key);
       if (existing.timerId) clearInterval(existing.timerId);
       if (existing.layerGroup) existing.layerGroup.clearLayers();
+      unwatchLayerChildren(existing);
     }
 
     const layerGroup = L.layerGroup();
@@ -602,6 +761,7 @@ export function MapVM(Lmap, root) {
       skipIfBusy: opts.skipIfBusy,
       timerId: null,
       menuGroup: opts.menuGroup || null,
+      track: newLayerTrack(),
     };
 
 
@@ -610,13 +770,30 @@ export function MapVM(Lmap, root) {
       if (!self.map.hasLayer(layerGroup)) return;
       if (entry.skipIfBusy?.()) return;
 
+      const track = entry.track;
+      const seq = ++track.seq;
+      track.on = true;
+      track.fetch = 'pending';
+      emitLayerStatus(key);
+
       try {
         const data = await entry.fetchFn();
         layerGroup.clearLayers();
         entry.drawFn(layerGroup, data);
+        if (seq !== entry.track.seq) return;
+        track.fetch = 'done';
+        track.fetchError = null;
+        track.hasData = true;
+        track.updatedAt = new Date();
       } catch (err) {
         console.error('Polling layer [' + key + '] refresh failed:', err);
+        if (seq !== entry.track.seq) return;
+        // Markers from the last good fetch stay on the map (clearLayers only
+        // runs on success); the status shows them as stale.
+        track.fetch = 'failed';
+        track.fetchError = describeLayerError(err);
       }
+      emitLayerStatus(key);
     }
 
     // expose for manual refresh
@@ -645,28 +822,14 @@ export function MapVM(Lmap, root) {
     if (!entry) return;
     if (entry.timerId) clearInterval(entry.timerId);
     if (entry.layerGroup && self.map.hasLayer(entry.layerGroup)) self.map.removeLayer(entry.layerGroup);
+    unwatchLayerChildren(entry);
     self.onlineLayers.delete(key);
+    emitLayerStatus(key);
   };
 
   self.refreshPollingLayer = function (key) {
-    const entry = self.onlineLayers.get(key);
-    if (!entry) return;
-
-    async function run() {
-      // bail if layer is not currently visible on the map
-      if (!self.map.hasLayer(entry.layerGroup)) return;
-      if (entry.skipIfBusy?.()) return;
-
-      try {
-        const data = await entry.fetchFn();
-        entry.layerGroup.clearLayers();
-        entry.drawFn(entry.layerGroup, data);
-      } catch (e) {
-        console.error("Manual refresh failed for layer:", key, e);
-      }
-    }
-
-    run();
+    // refresh() itself bails if the layer is not on the map or is busy
+    self.onlineLayers.get(key)?.refresh();
   };
 
   /**
@@ -706,6 +869,7 @@ export function MapVM(Lmap, root) {
       if (entry.layerGroup) {
         defs.push({
           key: 'online-' + k,
+          statusKey: k,
           label: entry.label || k,
           layer: entry.layerGroup,
           group: entry.menuGroup || null,
@@ -1113,15 +1277,47 @@ export function MapVM(Lmap, root) {
   self.map.on('zoomend', self._syncPulseRings);
 
   self.map.on('layeradd', (ev) => {
-    // find which polling layer this corresponds to
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [key, entry] of self.onlineLayers.entries()) {
-      if (entry.layerGroup === ev.layer) {
+    const layer = ev.layer;
+    for (const entry of self.onlineLayers.values()) {
+      if (entry.layerGroup === layer) {
         // trigger immediate fetch now that it's visible
         if (typeof entry.refresh === 'function') {
           entry.refresh();
         }
-        break;
+        return;
+      }
+    }
+    // A tile or Esri layer drawn into a polling layer's group (in drawFn, or
+    // later, like RainViewer's frames): follow its load events for status.
+    // A child can opt out with `skipLoadStatus` (RainViewer's older frames).
+    if (!isTileChild(layer) && !isFeatureChild(layer)) return;
+    if (layer.options?.skipLoadStatus) return;
+    for (const entry of self.onlineLayers.values()) {
+      if (entry.layerGroup.hasLayer(layer)) {
+        watchLayerChild(entry, layer);
+        return;
+      }
+    }
+  });
+
+  self.map.on('layerremove', (ev) => {
+    const layer = ev.layer;
+    for (const entry of self.onlineLayers.values()) {
+      if (entry.layerGroup === layer) {
+        setLayerOff(entry);
+        return;
+      }
+    }
+    // A child removed by clearLayers() before a redraw -- stop following it.
+    if (!isTileChild(layer) && !isFeatureChild(layer)) return;
+    const id = L.stamp(layer);
+    for (const entry of self.onlineLayers.values()) {
+      const rec = entry.track.children.get(id);
+      if (rec) {
+        layer.off(rec.handlers);
+        entry.track.children.delete(id);
+        emitLayerStatus(entry.key);
+        return;
       }
     }
   });

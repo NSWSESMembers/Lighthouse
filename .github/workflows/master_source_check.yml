@@ -3,6 +3,9 @@ name: Master PR source check
 # "Source is master-dev" job a required check on master (ruleset) to enforce it;
 # admins can bypass the ruleset for a genuine hotfix.
 #
+# Dependabot security PRs always target master (GitHub ignores target-branch for
+# them). They get the no-release label so merging one doesn't cut a release.
+#
 # pull_request_target so the check always runs the copy of this file on master,
 # not one a PR could edit. It never checks out or runs PR code - keep it that way.
 on:
@@ -13,6 +16,19 @@ on:
 permissions: {}
 
 jobs:
+  label-dependabot:
+    name: Label Dependabot no-release
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && (github.event.action == 'opened' || github.event.action == 'reopened')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Add no-release label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --add-label no-release
+
   source:
     name: Source is master-dev
     runs-on: ubuntu-latest

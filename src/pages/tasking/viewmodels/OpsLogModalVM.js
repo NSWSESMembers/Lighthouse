@@ -1,27 +1,52 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 import ko from "knockout";
 import { addMinutesToInputTime, statusColorClass } from "../models/Tasking.js";
+import { beaconErrorMessage } from "../utils/beaconError.js";
 
-// Turns a failed status change or tasking (BeaconApiError, network error, or an
-// error carrying a userMessage) into something readable for the error banner.
+// The banner text for a failed status change or tasking (BeaconApiError,
+// network error, or an error carrying a userMessage): Beacon's own message
+// where it gave one. The full error goes to the console (logSubmitFailure).
 function describeStatusError(err) {
   if (err && err.userMessage) return err.userMessage;
   if (err && err.name === "BeaconApiError") {
-    if (err.status === 401 || err.status === 403) {
-      return "Beacon refused the request (your session may have expired)";
-    }
-    let msg = "";
-    try {
-      const body = JSON.parse(err.body);
-      const modelState = body && body.ModelState ? Object.values(body.ModelState).flat()[0] : "";
-      msg = (body && (body.Message || body.message || body.ExceptionMessage)) || modelState || "";
-    } catch (_) { /* not JSON -- fall back to the status code */ }
-    return msg
-      ? `Beacon said "${msg}"`
-      : `Beacon returned an error (${err.status}${err.statusText ? " " + err.statusText : ""})`;
+    const msg = beaconErrorMessage(err);
+    if (msg) return msg;
+    if (err.status === 401 || err.status === 403) return "Beacon refused the request (your session may have expired)";
+    return `Beacon returned ${err.status}${err.statusText ? " " + err.statusText : ""}`;
   }
-  return "couldn't reach Beacon";
+  return "Couldn't reach Beacon";
 }
+
+function submitFailureMessage(err) {
+  return `${describeStatusError(err).replace(/[.\s]+$/, "")}. Try again.`;
+}
+
+function logSubmitFailure(what, err) {
+  if (err && err.name === "BeaconApiError") {
+    console.error(`${what}: ${err.message}`, { status: err.status, statusText: err.statusText, url: err.url, body: err.body }, err);
+  } else {
+    console.error(`${what}:`, err);
+  }
+}
+
+// A 5xx or a network error doesn't mean the change didn't happen -- Beacon's
+// tasking endpoints have been known to 500 after applying it -- so the caller
+// re-checks before reporting a failure. A 4xx, or our own error with a
+// userMessage, is a real "no".
+function isUncertainFailure(err) {
+  if (!err || err.userMessage || err.name === "AbortError") return false;
+  if (err.name === "BeaconApiError") return err.status >= 500;
+  return true;
+}
+
+// Tasking.currentStatus once each status action has gone through.
+const STATUS_AFTER_ACTION = {
+  Enroute: "enroute",
+  Onsite: "onsite",
+  Offsite: "offsite",
+  CallOff: "calledoff",
+  Untask: "untasked",
+};
 
 export function CreateOpsLogModalVM(parentVM) {
   const self = this;
@@ -187,6 +212,26 @@ export function CreateOpsLogModalVM(parentVM) {
   function showSubmitError(message) {
     self.errorMessage(`Error: ${message}`);
     self.showError(true);
+  }
+
+  // Run a status change or tasking. If Beacon's answer leaves it unclear
+  // whether it went through (see isUncertainFailure), reload the incident's
+  // taskings and resolve anyway if landed() now says it did -- so the log
+  // still saves and a retry doesn't send it twice. Otherwise rethrow; the
+  // reload means a retry is checked against fresh data.
+  async function applyAndConfirm(job, apply, landed) {
+    try {
+      await apply();
+    } catch (err) {
+      if (!isUncertainFailure(err) || !job || !parentVM.reloadJobTaskings) throw err;
+      const reloaded = await parentVM.reloadJobTaskings(job);
+      ko.tasks.runEarly(); // let computeds (activeTasking) see the reload
+      if (reloaded && landed()) {
+        console.warn("Beacon returned an error, but the change went through:", err);
+        return;
+      }
+      throw err;
+    }
   }
 
   // ── Team status change ──
@@ -412,10 +457,13 @@ export function CreateOpsLogModalVM(parentVM) {
         let tasked = false;
         if (taskMode) {
             try {
-                await parentVM.applyTaskTeam(team, job);
+                // Before this, the team had no active tasking here (canTaskTeam).
+                // Checks the team/job captured at Submit, not the live fields.
+                await applyAndConfirm(job, () => parentVM.applyTaskTeam(team, job), () =>
+                  job.taskings().some(ts => ts.team && ts.team.id() === team.id() && !ts.cannotUpdateStatus()));
             } catch (err) {
-                console.error("Task team failed:", err);
-                showSubmitError(`Couldn't task ${team.callsign()} to ${job.identifier()}: ${describeStatusError(err)}. The log entry was not saved.`);
+                logSubmitFailure(`Task ${team.callsign()} to ${job.identifier()} failed`, err);
+                showSubmitError(submitFailureMessage(err));
                 return;
             }
             tasked = true;
@@ -435,10 +483,14 @@ export function CreateOpsLogModalVM(parentVM) {
                 reason: self.statusReason(),
             });
             try {
-                await parentVM.applyTaskingStatusChange(tasking, action, payload);
+                await applyAndConfirm(
+                  tasking.job,
+                  () => parentVM.applyTaskingStatusChange(tasking, action, payload),
+                  () => (tasking.currentStatus() || "").toLowerCase() === STATUS_AFTER_ACTION[action],
+                );
             } catch (err) {
-                console.error("Team status change failed:", err);
-                showSubmitError(`Couldn't change ${callsign} to "${option.label}": ${describeStatusError(err)}. The log entry was not saved.`);
+                logSubmitFailure(`Change ${callsign} to "${option.label}" failed`, err);
+                showSubmitError(submitFailureMessage(err));
                 return;
             }
             statusChanged = true;

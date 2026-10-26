@@ -47,7 +47,7 @@ Layers control what is shown on the map. Open the Layers menu with the layer but
 
 The basemap is the underlying street or imagery map. The default is **Esri Topographic**; basemaps are available from Esri, Spatial NSW and SIX Maps, covering both street and satellite imagery.
 
-Not all basemaps have data at every zoom level. If you zoom in beyond what the selected basemap supports, Esri Topographic is shown until you zoom back out.
+How far you can zoom in depends on the basemap. The Esri basemaps go down to street level, and the Spatial NSW and SIX Maps basemaps one level further. Esri Dark has less detail, so at the closest zoom levels it shows its most detailed map enlarged, which looks blurry.
 
 To change basemap, open the **Layers** menu, open the basemap dropdown and pick one.
 
@@ -59,20 +59,37 @@ Overlays sit on top of the basemap to add information. Toggle them on and off in
 
 ![Overlay layers](images/overlays.png)
 
+#### Overlay Loading Status
+
+When you turn an overlay on, its row in the Layers menu shows how it's going:
+
+- A **spinner** while it loads.
+- A **green number** once it has loaded: how many items it put on the map. Overlays that are pictures, such as radar and satellite, show a tick instead. Hover over the row to see how many items are in your current view and when the overlay last updated.
+- A **grey 0** and *Nothing to show right now* when the overlay loaded but has nothing to show, such as HazardWatch with no active warnings.
+- **failed** and a red row when it couldn't load, with the reason. Click **Retry** to try again.
+- **stale** when a later refresh failed. The overlay keeps showing what it last loaded, and the row says what time that was.
+- An **amber** number or count of map tiles when only part of it loaded, for example when some radar tiles failed.
+
+The Layers button <img class="icon" src="images/icon-layers.png" alt="Layers" height="20"> shows a small spinner while any overlay is loading, a green tick when they've all loaded, and a red number if any have failed or gone stale, so you can tell without opening the menu.
+
+![Overlay loading status in the Layers menu: counts for loaded overlays, a failed overlay with Retry, and the red failed count on the Layers button](images/overlay-status.png)
+
 #### Clickable Overlay Markers
 
 Some overlays drop their own markers on the map. Click one to open a popup with more detail.
 
-![Overlay markers on the map: an SES unit HQ, a traffic incident, a HazardWatch warning and a traffic camera](images/overlay-markers.png)
+![Overlay markers on the map: an SES unit HQ, a council report, a traffic incident, a HazardWatch warning and a traffic camera](images/overlay-markers.png)
 
 | Overlay | Marker | Click it to see |
 | --- | --- | --- |
-| **Transport NSW Incidents** | Live Traffic icon (crash, hazard, breakdown, traffic lights out, changed conditions) | What happened, where, traffic advice, speed limit, start/end time and who is managing it |
+| **Transport NSW Incidents** | Live Traffic icon for the type of incident (crash, hazard, breakdown, traffic lights out, changed conditions, flooding, fire, bad weather, snow and ice) | What happened, where, traffic advice (with the speed limit when it's reduced), when it started and ends, who is attending and who reported it. Council reports are titled *Council Report* and show the council's name and contact details. Details the report doesn't include are left out |
 | **Transport NSW Cameras** | Camera icon | What the camera faces and its latest image (click the image to enlarge it) |
 | **HazardWatch Active Warnings** | Warning icon in the middle of each warning area | The full published warning. Clicking anywhere in the area also works |
 | **SES Units** | SES logo at each unit headquarters | The unit's status (Monitoring, Not Monitoring or Unavailable), its active teams and incidents, SRB accreditations and contacts |
 | **EPA Contamination Sites** | Red dot | Site name, address, activity type and management class |
 | **NSW Declared Dams** | Blue dot | Dam name, place, owner and declared status |
+
+**Transport NSW Incidents** shows both incidents managed by Transport NSW and road closures and hazards reported by local councils. Council reports are often regional road closures, such as flooded causeways, that don't appear as Transport NSW incidents. Council roadworks are left out. Where Transport NSW maps the affected stretch of road or area, it's drawn as a coloured line or shaded area, coloured as on Live Traffic NSW: blue for flooding and weather, dark red for fire and heavy impact, orange for moderate and grey for low impact. Click a line or area for the same details.
 
 ![Popup from clicking a traffic incident marker](images/overlay-marker-popup.png)
 
@@ -153,7 +170,7 @@ An incident popup can also be dragged onto a team in the Team Register to [task 
 
 ![Incident popup taskings](images/incident-popup-taskings.png)
 
-- **Team row**: click to zoom to the team's location (if available).
+- **Team row**: click to zoom to the team's location and open it in the Team Register. A team with no tracked vehicle or radio just opens in the Team Register.
 - **Team status**: click to [change the tasking status](tasking.md#tasking-status).
 - **Route to Asset** (left button): shows a road route from the team's current location to the incident with an approximate ETA.
 - **Fit Bounds** (right button): zooms in as far as possible while keeping both the team and incident in view.

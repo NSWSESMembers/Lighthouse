@@ -97,6 +97,17 @@ async function openAssetLibrary(page) {
   await settle(page, 1500);
 }
 
+/** Expand DEM01 and open the status menu of its `n`th tasking; returns the open menu. */
+async function openTaskingStatusMenu(page, n) {
+  await closeConfigAndLoad(page);
+  const row = page.locator('tr.team-row').first();
+  await row.locator('[data-bind*="toggleAndExpand"]').first().click();
+  await settle(page, 900);
+  await row.locator('.team-status-button').nth(n).click();
+  await settle(page, 500);
+  return page.locator('.tasking-dropdown-menu.show');
+}
+
 /** A library card by its asset name. */
 const libraryCard = (page, name) =>
   page.locator('#trackableAssetsModal .card').filter({ has: page.locator('.fs-4', { hasText: new RegExp(`^${name}$`) }) });
@@ -121,13 +132,42 @@ const spotlightBox = (page) => unionOf(page,
   (the demo HQ); `label` is the callout drawn on the overlay-markers shot.
 */
 const OVERLAY_ORIGIN = { lat: -33.815, lng: 151.001 };
+
+/** Google encoded polyline (as in Live Traffic's encodedPolylines) for [east, north] metre offsets. */
+function encodePolyline(offsets) {
+  const value = (v) => {
+    let n = v < 0 ? ~(v << 1) : v << 1;
+    let out = '';
+    while (n >= 0x20) { out += String.fromCharCode((0x20 | (n & 0x1f)) + 63); n >>= 5; }
+    return out + String.fromCharCode(n + 63);
+  };
+  let prev = [0, 0];
+  return offsets.map(([e, n]) => {
+    const lat = Math.round((OVERLAY_ORIGIN.lat + n / 110540) * 1e5);
+    const lng = Math.round((OVERLAY_ORIGIN.lng + e / (111320 * Math.cos((OVERLAY_ORIGIN.lat * Math.PI) / 180))) * 1e5);
+    const chunk = value(lat - prev[0]) + value(lng - prev[1]);
+    prev = [lat, lng];
+    return chunk;
+  }).join('');
+}
 const OVERLAY_FEEDS = {
   'transport-incidents': [
     { at: [450, 1250], label: 'Traffic incident', properties: {
-      displayName: 'Crash', mainCategory: 'Crash',
+      displayName: 'Crash', mainCategory: 'Crash', CategoryIcon: 'Crash',
       roads: [{ mainStreet: 'Banksia Rd', locationQualifier: 'near', suburb: 'Demo River' }],
-      adviceA: 'Exercise caution.', adviceB: 'Reduced speed limit.', otherAdvice: 'One lane closed eastbound.',
+      adviceA: 'Exercise caution', adviceB: 'Reduced speed limit', otherAdvice: 'One lane closed eastbound.',
       speedLimit: 40, start: '2026-10-05T14:10:00+11:00', hideEndDate: true, attendingGroups: ['Police', 'Tow truck'],
+    } },
+  ],
+  'transport-local-reports': [
+    { at: [-550, 1650], label: 'Council report', properties: {
+      displayName: 'Flooding', mainCategory: 'Flooding', CategoryIcon: 'Flood', impactingNetwork: true,
+      roads: [{ mainStreet: 'Old Ferry Rd', locationQualifier: 'at', suburb: 'Demo Flats' }],
+      adviceA: 'Road closed', adviceB: 'Use alternative route', speedLimit: -1, otherAdvice: '<p><strong>The road is closed to through traffic.</strong></p><p>Water over the causeway. Residents can still get in from the east.</p>',
+      start: '2026-10-05T08:30:00+11:00', hideEndDate: true,
+      OrgName: 'Demo Shire Council', OrgContact: '02 5550 0100',
+      // The closed stretch of road, drawn as a line like Live Traffic does.
+      encodedPolylines: [{ coords: encodePolyline([[-800, 1480], [-550, 1650], [-300, 1740]]) }],
     } },
   ],
   'transport-cameras': [
@@ -547,8 +587,38 @@ const SHOTS = {
     target: (page) => page.locator('.ld-panel'),
   },
 
+  // Overlay load status in the Layers panel: counts for loaded overlays and a
+  // failed one. BOM Rain Radar Still fails here because its tiles come
+  // through Beacon, which the mock doesn't serve -- a real error state. The
+  // crop runs from the Layers button (with its failed badge) to that row.
+  'overlay-status': {
+    launch: { viewport: { width: 1800, height: 1200 }, scale: 2 },
+    run: async (page) => {
+      const keys = ['transport-incidents', 'hazardwatch-warnings', 'sesUnitLocations', 'bomRadar'];
+      await showOverlays(page, keys);
+      // showOverlays adds the layers directly; mark their rows on as a click would
+      await page.evaluate((keys) => {
+        keys.forEach((k) => localStorage.setItem(`ov.online-${k}`, '1'));
+        window.ko.dataFor(document.body).mapVM.layersDrawer.refresh();
+      }, keys);
+      const open = await page.locator('.ld-panel').evaluate((el) => !el.classList.contains('d-none'));
+      if (!open) await page.locator('.ld-toggle-btn').click();
+      await page.mouse.move(0, 0);
+      await settle(page, 2000);
+    },
+    target: (page) => ({
+      async screenshot(opts) {
+        const btn = await page.locator('.ld-toggle-btn').boundingBox();
+        const panel = await page.locator('.ld-panel').boundingBox();
+        const row = await page.locator('.ld-overlay-btn[data-key="online-bomRadar"]').boundingBox();
+        const x = btn.x - 8; const y = btn.y - 10;
+        return page.screenshot({ ...opts, clip: { x, y, width: panel.x + panel.width + 8 - x, height: row.y + row.height + 6 - y } });
+      },
+    }),
+  },
+
   // Overlay layers that drop clickable markers on the map, each labelled:
-  // a Transport NSW incident and camera, a HazardWatch warning (area +
+  // a Transport NSW incident, council report and camera, a HazardWatch warning (area +
   // icon) and an SES unit HQ (unit locations ship with the extension; the
   // rest is fake). Incidents and assets are hidden.
   'overlay-markers': {
@@ -558,8 +628,15 @@ const SHOTS = {
       await page.evaluate(({ feeds, hw }) => {
         const mv = window.ko.dataFor(document.body).mapVM; const map = mv.map;
         const labels = [];
-        for (const [key, rows] of Object.entries(feeds)) {
-          mv.onlineLayers.get(key).layerGroup.eachLayer((m, i = 0) => labels.push([m, rows[i]?.label]));
+        // The incidents layer draws the incident feed, then the council reports feed.
+        const layerRows = {
+          'transport-incidents': [...feeds['transport-incidents'], ...feeds['transport-local-reports']],
+          'transport-cameras': feeds['transport-cameras'],
+        };
+        for (const [key, rows] of Object.entries(layerRows)) {
+          let i = 0;
+          // Markers only: hazard lines and areas share the layer group.
+          mv.onlineLayers.get(key).layerGroup.eachLayer((m) => m.options.icon && labels.push([m, rows[i++]?.label]));
         }
         const markersOf = (key) => { const out = []; const walk = (g) => g.eachLayer((l) => (l.getLatLng && l.options.icon ? out.push(l) : l.eachLayer && walk(l))); walk(mv.onlineLayers.get(key).layerGroup); return out; };
         markersOf('hazardwatch-warnings').forEach((m) => labels.push([m, hw.label]));
@@ -582,7 +659,7 @@ const SHOTS = {
     run: async (page) => {
       await showOverlays(page, ['transport-incidents'], { centre: [450, 1250], zoom: 16 });
       await page.evaluate(() => {
-        window.ko.dataFor(document.body).mapVM.onlineLayers.get('transport-incidents').layerGroup.eachLayer((m) => m.openPopup());
+        window.ko.dataFor(document.body).mapVM.onlineLayers.get('transport-incidents').layerGroup.getLayers().find((m) => m.options.icon).openPopup(); // the traffic incident, not the council report
       });
       await settle(page, 1000);
     },
@@ -631,6 +708,73 @@ const SHOTS = {
       await settle(page, 400);
     },
     target: (page) => page.locator('#SpotlightHelpModal .modal-content'),
+  },
+
+  // Tasking status menu on DEM01's taskings: 2610-1206 (On site) and
+  // 2610-1207 (Tasked).
+  'tasking-status-tasked': {
+    run: (page) => openTaskingStatusMenu(page, 1),
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+  'tasking-status-enroute': {
+    run: async (page) => {
+      const menu = await openTaskingStatusMenu(page, 1);
+      await menu.locator('.tsm-next').click();
+      await settle(page, 300);
+      await menu.locator('.tsm-eu-quick button', { hasText: '+15' }).click();
+      await settle(page, 300);
+      await page.mouse.move(0, 0); // no hover highlight on the buttons
+      await settle(page, 200);
+    },
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+  'tasking-status-onsite': {
+    run: (page) => openTaskingStatusMenu(page, 0),
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+  'tasking-status-correct': {
+    run: async (page) => {
+      const menu = await openTaskingStatusMenu(page, 0);
+      await menu.locator('.tsm-correct').click();
+      await settle(page, 300);
+      await menu.locator('.tsm-back-item').first().click();
+      await settle(page, 400);
+    },
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+  'tasking-status-change-etc': {
+    run: async (page) => {
+      const menu = await openTaskingStatusMenu(page, 0);
+      await menu.locator('.tsm-edit').click();
+      await settle(page, 300);
+      await menu.locator('.tsm-eu-quick button', { hasText: '+10' }).click();
+      await settle(page, 300);
+      await page.mouse.move(0, 0); // no hover highlight on the buttons
+      await settle(page, 200);
+    },
+    target: (page) => page.locator('.tasking-dropdown-menu.show'),
+  },
+
+  // ETA/ETC chips (scenario.mjs ESTIMATES): DEM01 ETC on track, DEM02 ETA
+  // 14 min late, DEM03 ETC due soon, DEM04 ETA on track.
+  'eta-team-rows': {
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, 'tr.team-row'),
+  },
+  'eta-incident-rows': {
+    // Tall enough that all three rows are in the register's view.
+    launch: { viewport: { width: 1600, height: 1700 } },
+    run: closeConfigAndLoad,
+    target: (page) => unionOf(page, ['70009', '70008', '70007'].map((id) => `tr.job-row[data-job-id="${id}"]`).join(', ')),
+  },
+  // DEM02 is more than 5 minutes past its ETA.
+  'alert-overdue-eta-bar': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('[data-rule-id="overdue-eta-teams"]').waitFor();
+      await settle(page, 600);
+    },
+    target: (page) => page.locator('[data-rule-id="overdue-eta-teams"]'),
   },
 };
 

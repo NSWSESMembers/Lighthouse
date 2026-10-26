@@ -18,6 +18,50 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## LAD arrival times, overlay status and street zoom
+
+*26 October 2026 · [v2026.10.26](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.26)*
+
+### Arrival times and the status menu
+
+- **See when teams will arrive and finish.** When a team is En-Route with an ETA, or On-Site with an ETC, LAD counts down to it in the Team Register, the Incident Register, expanded teams and incidents, the map popups and the incident hover tooltip. Blue is on track, amber is due within 5 minutes and red is overdue. Hover over a countdown to see the clock time. See [Arrival and Completion Times](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#arrival-and-completion-times).
+- **New alert: Teams overdue on ETA/ETC.** Lists teams that are 5 minutes or more past their ETA or ETC. Click a team to jump to it. See [Alerts](https://lighthouse.ses.nsw.gov.au/guides/lad/interface.html#alerts).
+- A team's ETA and ETC now update in LAD when they're changed in Beacon. Before, LAD kept showing the time from when the tasking first loaded.
+- **A clearer status menu.** A tasking's status menu now shows its progress, leads with the next step, and lists skip-aheads (including Complete) and Call off / Remove tasking separately. See [Tasking Status](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#tasking-status).
+- **Change a team's ETA or ETC without changing its status.** Click **Change** next to the ETA or ETC in the status menu, add time with the +5 to +60 buttons (each click adds on) or type a time, and save. The team's En route or On site time stays the same. See [Changing the ETA or ETC](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#changing-the-eta-or-etc).
+- **Correct an earlier status on purpose.** Setting a tasking back, e.g. On site to En route, is now under **Correct an earlier status…**, shows which status times Beacon will clear, and needs a tick to confirm. See [Correcting an Earlier Status](https://lighthouse.ses.nsw.gov.au/guides/lad/tasking.html#correcting-an-earlier-status).
+- **Call off is only offered when Beacon will accept it.** LAD now uses the same rule as Beacon's own screens, so it no longer offers Call off for a team that has been on site (unless corrected back to En route) or Off site. If Beacon still refuses a status change, call off or remove, LAD now shows Beacon's reason instead of failing silently.
+
+### Map
+
+- The Layers menu now shows whether each overlay loaded. A spinner shows while it loads, then the number of items it put on the map, *Nothing to show right now* if it loaded empty, or **failed** with the reason and a **Retry** link. Before, an overlay that failed looked the same as one with nothing to show. See [Overlay Loading Status](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#overlay-loading-status).
+- If an overlay loaded but a later refresh fails, it keeps showing what it last loaded and is marked **stale** with the time of that data.
+- The Layers button shows a spinner while overlays load and a red number when any have failed, so you can see problems with the menu closed, including overlays switched on from your last session.
+- **BOM Land Warnings now shows thunderstorm warnings.** Their areas were never drawn before, because LAD asked the BOM service for details it doesn't have.
+- **Double-click an incident's address to zoom in to street level.** A single click still focuses the map on the incident and opens its popup. A double-click goes on to street level, so you can see the exact location. This also works on the zoom button in an expanded team's taskings. See [Incident Register](https://lighthouse.ses.nsw.gov.au/guides/lad/incident-register.html).
+- The **Transport NSW Incidents** overlay now also shows road closures and hazards reported by local councils, such as regional road closures and flooded causeways. Their popups are titled *Council Report*. The separate **Transport NSW Council Reports** overlay has been folded into it. See [Clickable Overlay Markers](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#clickable-overlay-markers).
+- Transport NSW incident markers use the same icons as Live Traffic NSW, so flooding, fire, bad weather, and snow and ice each have their own icon instead of the general hazard icon.
+- Closed or affected stretches of road are drawn on the map as coloured lines, and affected areas as shaded areas, as on Live Traffic NSW. Click one for the incident's details.
+- Transport NSW incident popups no longer show *Speed Limit: -1 km/h* or a list of *Unknown* fields. They show only the details the report includes, the way Live Traffic NSW does, and the speed limit appears in the advice only when it has been reduced. Popups also say who reported the incident, and council reports include the council's contact details.
+- If you use a basemap other than Esri Topographic, the map no longer loads Esri Topographic underneath it as well. Panning and zooming download fewer map tiles, so the map is quicker on slow connections. If you use Esri Topographic, nothing changes.
+- You can still zoom in as far as before on Esri Dark.
+- Panning back and forth over the same area shows fewer grey squares, because the map keeps more of the surrounding map tiles loaded.
+- Dragging the map onto new ground shows fewer grey squares too, because the map loads a row of tiles just past each edge before you get there. This is turned off on slow connections and when Chrome's data saving is on, so it doesn't use extra data there. It doesn't apply to the NSW Vector basemap.
+
+### Incidents and teams
+
+- The photo icon on incident rows shows again for every incident with photos. A Beacon change meant it only appeared on incidents that had a team tasked, and not always then.
+- The photo icon now turns blue when you hover over it, so it's clear you can click it to view the photos.
+- LAD makes fewer requests to Beacon each time it refreshes incidents.
+- Spotlight no longer matches incidents by sector name.
+- Clicking a tasked team in an incident's popup now opens that team in the Team Register even if it has no tracked vehicle or radio. Before, nothing happened. See [Incident Popup Actions](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#incident-popup-actions).
+
+### Radio logs and exports
+
+- If Beacon returns an error when a radio or ops log changes a team's status or tasks a team, LAD now checks whether the change went through anyway. If it did, the log entry is saved as normal. Before, the dialog reported a failure and didn't save the log, and submitting again was refused by Beacon. See [Changing the Team's Status](https://lighthouse.ses.nsw.gov.au/guides/lad/logs-and-messages.html#changing-the-teams-status).
+- When a status change or tasking from a log does fail, the dialog shows Beacon's reason followed by *Try again*.
+- NITC Export and Advanced Export CSV files no longer break when a field contains quotation marks or line breaks, so they open correctly in Excel and import into ArcGIS. Line breaks within a field become spaces.
+
 ## LAD radio log status changes and Spotlight commands
 
 *21 October 2026 · [v2026.10.20](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.20)*

@@ -35,8 +35,34 @@ function idsParam(url, name) {
   return [...url.searchParams.getAll(`${name}[]`), ...url.searchParams.getAll(name)].map(Number);
 }
 
-export function createMockRouter(scenario, { log = () => {}, photoImages = null } = {}) {
-  const { hq, jobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents } = scenario;
+/**
+ * The extension's host_permissions let its pages fetch those origins
+ * without CORS. The harness page is an ordinary web origin, so XHR/fetch to
+ * them is fetched from Node and handed back with CORS headers instead --
+ * otherwise feeds like WaterNSW fail here but work in the extension.
+ */
+function hostPermissionMatcher(manifest) {
+  const patterns = (manifest?.host_permissions || []).map((p) =>
+    new RegExp('^' + p.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$'));
+  return (url) => patterns.some((re) => re.test(url));
+}
+
+async function fulfillWithCors(route) {
+  const req = route.request();
+  if (req.method() === 'OPTIONS') {
+    return route.fulfill({ status: 204, headers: { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*' } });
+  }
+  try {
+    const res = await route.fetch();
+    return route.fulfill({ response: res, headers: { ...res.headers(), 'access-control-allow-origin': '*' } });
+  } catch {
+    return route.abort('failed');
+  }
+}
+
+export function createMockRouter(scenario, { log = () => {}, photoImages = null, manifest = null } = {}) {
+  const hostPermitted = hostPermissionMatcher(manifest);
+  const { hq, jobs, leanJobs, teams, taskings, radio, telematics, tagGroups, jobHistory, opsLog, photos, icemsIncidents } = scenario;
   const byId = (rows, id) => rows.find((r) => r.Id === Number(id));
 
   function beacon(route, url) {
@@ -71,7 +97,7 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null 
     if (p === '/Api/v1/Entities/Search') return json(route, paged(url, [hq]));
     if ((m = p.match(/^\/Api\/v1\/Tags\/Group\/(\d+)$/))) return json(route, paged(url, tagGroups[m[1]] || []));
 
-    if (p === '/Api/v1/Jobs/Search') return json(route, paged(url, jobs));
+    if (p === '/Api/v1/Jobs/Search') return json(route, paged(url, url.searchParams.get('ViewModelType') === '2' ? leanJobs : jobs));
     // No unacknowledged ICEMS notifications in the demo (Job.js expects an array).
     if (/^\/Api\/v1\/Jobs\/\d+\/unacceptednotifications$/.test(p)) return json(route, []);
     // ICEMS incident detail (agencies involved) -- see scenario.mjs on its structure.
@@ -139,6 +165,8 @@ export function createMockRouter(scenario, { log = () => {}, photoImages = null 
     const url = new URL(route.request().url());
     if (url.origin === BEACON_HOST) return beacon(route, url);
     if (url.host === LAMBDA_HOST) return lambda(route, url);
+    const type = route.request().resourceType();
+    if ((type === 'xhr' || type === 'fetch') && hostPermitted(url.href)) return fulfillWithCors(route);
     return route.continue();
   };
 }

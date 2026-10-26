@@ -48,7 +48,8 @@ jobs:
         if: steps.gate.outputs.release == 'true'
         id: version
         run: |
-          today=$(date -u +%Y.%m.%d)
+          # Sydney date, not UTC: a morning release would otherwise get yesterday's tag.
+          today=$(TZ=Australia/Sydney date +%Y.%m.%d)
           base="v${today}"
           if ! git rev-parse -q --verify "refs/tags/${base}" >/dev/null; then
             tag="$base"

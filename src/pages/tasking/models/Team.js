@@ -3,6 +3,7 @@ import ko from "knockout";
 
 import { Entity } from "./Entity.js";
 import { Sector } from "./Sector.js";
+import { primaryEtaTasking } from "./Tasking.js";
 
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 
@@ -452,6 +453,18 @@ export function Team(data = {}, deps = {}) {
         });
     });
 
+    // The listed tasking whose ETA/ETC matters most (soonest ETA, else
+    // soonest ETC) and its etaInfo -- drives the chip on the team row.
+    self.etaTasking = ko.pureComputed(() => primaryEtaTasking(self.filteredTaskings()));
+    self.etaInfo = ko.pureComputed(() => {
+        const t = self.etaTasking();
+        return t ? t.etaInfo() : null;
+    });
+    self.etaTitle = ko.pureComputed(() => {
+        const t = self.etaTasking();
+        return t ? `${t.job.identifier()}: ${t.etaInfo().title}` : '';
+    });
+
     // ── Reorder mode ──
     self.reorderMode = ko.observable(false);
     self.reorderList = ko.observableArray([]);
@@ -608,7 +621,12 @@ export function Team(data = {}, deps = {}) {
         if (self.isFilteredIn() === false) return;
 
         const assets = self.trackableAssets();
-        if (!assets || assets.length === 0) return;
+        // Nothing to fly to, so no asset popup opens to expand the team
+        // (onPopupOpen) -- expand it in the list directly.
+        if (!assets || assets.length === 0) {
+            self.focusAndExpandInList();
+            return;
+        }
         const op = currentlyOpenMapPopup();
         let nextIdx = 0;
 

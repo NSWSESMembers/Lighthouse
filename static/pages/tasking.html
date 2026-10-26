@@ -297,8 +297,12 @@
                                             <!-- 4. HQ -->
                                             <div class="team-cell" data-bind="text: t.assignedTo().code"></div>
 
-                                            <!-- 5. Task Count -->
-                                            <div class="team-cell" data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount">
+                                            <!-- 5. Task Count (+ ETA/ETC of the tasking that matters most) -->
+                                            <div class="team-cell team-cell--count">
+                                                <div data-bind="text: t.taskedJobCount() + ' Active', flashTextOnChange: t.taskedJobCount"></div>
+                                                <!-- ko with: t.etaInfo -->
+                                                <span class="eta-chip" data-bind="css: chipClass, fastTooltip: t.etaTitle"><i class="fa" data-bind="css: iconClass"></i><span data-bind="text: compactLabel"></span></span>
+                                                <!-- /ko -->
                                             </div>
 
                                             <!-- 6. Team Leader -->
@@ -539,165 +543,12 @@
                                                                                         </button>
                                                                                         <div
                                                                                             class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
-                                                                                            <!-- ko if: ts.statusPageVisible -->
-                                                                                            <div>
-                                                                                                <!-- ko if: ts.cannotUpdateStatus -->
-                                                                                                <p>You cannot change
-                                                                                                    statuses.</p>
-                                                                                                <!-- /ko -->
-                                                                                                <!-- ko foreach: ts.statusOptions -->
-                                                                                                <li>
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        class="dropdown-item"
-                                                                                                        data-bind="text: label,
-                                                                                                                    enable: enabled,
-                                                                                                                    click: $parent.onStatusOptionClick,
-                                                                                                                    clickBubble: false">
-                                                                                                    </button>
-                                                                                                </li>
-                                                                                                <!-- /ko -->
-                                                                                            </div>
-                                                                                            <!-- /ko -->
-
-                                                                                            <!-- ko if: detailsPageVisible -->
-                                                                                            <div>
-
-                                                                                                <!-- Time override toggle (only shown if system allows time setting) -->
-                                                                                                <!-- ko if: ts.needsTimeSet -->
-                                                                                                <div
-                                                                                                    class="form-check mb-3">
-                                                                                                    <input
-                                                                                                        class="form-check-input"
-                                                                                                        type="checkbox"
-                                                                                                        id="timeOverrideChk"
-                                                                                                        data-bind="checked: ts.timeOverrideEnabled">
-                                                                                                    <label
-                                                                                                        class="form-check-label"
-                                                                                                        for="timeOverrideChk">
-                                                                                                        Override set
-                                                                                                        time
-                                                                                                        for this status
-                                                                                                    </label>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- Time -->
-                                                                                                <!-- ko if: ts.needsTimeSet && ts.timeOverrideEnabled -->
-                                                                                                <div
-                                                                                                    class="row align-items-center mb-3">
-                                                                                                    <label
-                                                                                                        class="col-3 col-form-label">
-                                                                                                        Time
-                                                                                                    </label>
-                                                                                                    <div class="col-9">
-                                                                                                        <input
-                                                                                                            type="datetime-local"
-                                                                                                            class="form-control"
-                                                                                                            data-bind="value: ts.time">
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- ETA -->
-                                                                                                <!-- ko if: ts.needsETA -->
-                                                                                                <div class="row mb-3">
-                                                                                                    <label
-                                                                                                        class="col-3 col-form-label">
-                                                                                                        ETA
-                                                                                                    </label>
-                                                                                                    <div class="col-9">
-                                                                                                        <input
-                                                                                                            type="datetime-local"
-                                                                                                            class="form-control mb-2"
-                                                                                                            data-bind="value: ts.eta">
-
-                                                                                                        <div
-                                                                                                            class="d-flex flex-wrap gap-2">
-                                                                                                            <!-- ko foreach: ts.etaQuickButtons -->
-                                                                                                            <button
-                                                                                                                type="button"
-                                                                                                                class="btn btn-outline-secondary btn-sm"
-                                                                                                                data-bind="
-                                                                                                                    text: label,
-                                                                                                                    click: $parent.onEtaQuickButtonClick,
-                                                                                                                    clickbubble: false">
-                                                                                                            </button>
-                                                                                                            <!-- /ko -->
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- ETC -->
-                                                                                                <!-- ko if: ts.needsETC -->
-                                                                                                <div class="row mb-3">
-                                                                                                    <label
-                                                                                                        class="col-3 col-form-label">
-                                                                                                        ETC
-                                                                                                    </label>
-                                                                                                    <div class="col-9">
-                                                                                                        <input
-                                                                                                            type="datetime-local"
-                                                                                                            class="form-control mb-2"
-                                                                                                            data-bind="value: ts.etc">
-
-                                                                                                        <div
-                                                                                                            class="d-flex flex-wrap gap-2">
-                                                                                                            <!-- ko foreach: ts.etcQuickButtons -->
-                                                                                                            <button
-                                                                                                                type="button"
-                                                                                                                class="btn btn-outline-secondary btn-sm"
-                                                                                                                data-bind="
-                                                                                                                    text: label,
-                                                                                                                    click: $parent.onEtcQuickButtonClick,
-                                                                                                                    clickbubble: false">
-                                                                                                            </button>
-                                                                                                            <!-- /ko -->
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- Reason -->
-                                                                                                <!-- ko if: ts.needsReason -->
-                                                                                                <div class="row mb-3">
-                                                                                                    <label
-                                                                                                        class="col-3 col-form-label">
-                                                                                                        Reason
-                                                                                                    </label>
-                                                                                                    <div class="col-9">
-                                                                                                        <textarea
-                                                                                                            class="form-control"
-                                                                                                            rows="2"
-                                                                                                            data-bind="value: ts.callOffReason">
-                                                                                                        </textarea>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- Submit & Back -->
-                                                                                                <div
-                                                                                                    class="d-flex justify-content-end gap-2">
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        class="btn btn-sm btn-secondary"
-                                                                                                        data-bind="click: ts.goBackFromDetails">
-                                                                                                        Back
-                                                                                                    </button>
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        class="btn btn-sm btn-primary"
-                                                                                                        data-bind="click: updateTaskingStatus">
-                                                                                                        Submit
-                                                                                                    </button>
-                                                                                                </div>
-
-                                                                                            </div>
-
-                                                                                            <!-- /ko -->
+                                                                                            <!-- ko template: { name: 'tasking-status-menu-template', data: ts } --><!-- /ko -->
                                                                                         </div>
                                                                                     </div>
+                                                                                    <!-- ko with: ts.etaInfo -->
+                                                                                    <div class="eta-line" data-bind="text: clockLabel, css: lineClass, fastTooltip: title"></div>
+                                                                                    <!-- /ko -->
                                                                                 </td>
                                                                                 <!-- ko if: t.reorderMode -->
                                                                                 <td data-bind="css: ts.job.rowColour()">
@@ -1175,6 +1026,9 @@
                                                         <!-- /ko -->
                                                     </ul>
                                                 </div>
+                                                <!-- ko with: j.etaInfo -->
+                                                <span class="eta-chip" data-bind="css: chipClass, fastTooltip: j.etaTitle"><i class="fa" data-bind="css: iconClass"></i><span data-bind="text: compactLabel"></span></span>
+                                                <!-- /ko -->
                                             </div>
 
 
@@ -1655,168 +1509,15 @@
                                                                                         </button>
                                                                                         <div
                                                                                             class="dropdown-menu team-tasking-dropdown-menu tasking-dropdown-menu p-2 shadow">
-                                                                                            <!-- ko if: ts.statusPageVisible -->
-                                                                                            <div>
-                                                                                                <!-- ko if: ts.cannotUpdateStatus -->
-                                                                                                <p>You cannot change
-                                                                                                    statuses.</p>
-                                                                                                <!-- /ko -->
-                                                                                                <!-- ko foreach: ts.statusOptions -->
-                                                                                                <li>
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        class="dropdown-item"
-                                                                                                        data-bind="text: label,
-                                                                                                                    enable: enabled,
-                                                                                                                    click: $parent.onStatusOptionClick,
-                                                                                                                    clickBubble: false">
-                                                                                                    </button>
-                                                                                                </li>
-                                                                                                <!-- /ko -->
-                                                                                            </div>
-                                                                                            <!-- /ko -->
-
-                                                                                            <!-- ko if: detailsPageVisible -->
-                                                                                            <div class="tasking-status-details-form">
-
-                                                                                                <!-- Time override toggle (only shown if system allows time setting) -->
-                                                                                                <!-- ko if: ts.needsTimeSet -->
-                                                                                                <div
-                                                                                                    class="form-check mb-3">
-                                                                                                    <input
-                                                                                                        class="form-check-input"
-                                                                                                        type="checkbox"
-                                                                                                        id="timeOverrideChk"
-                                                                                                        data-bind="checked: ts.timeOverrideEnabled">
-                                                                                                    <label
-                                                                                                        class="form-check-label"
-                                                                                                        for="timeOverrideChk">
-                                                                                                        Override set
-                                                                                                        time
-                                                                                                        for this status
-                                                                                                    </label>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- Time -->
-                                                                                                <!-- ko if: ts.needsTimeSet && ts.timeOverrideEnabled -->
-                                                                                                <div
-                                                                                                    class="row align-items-center mb-3">
-                                                                                                    <label
-                                                                                                        class="col-3 col-form-label">
-                                                                                                        Time
-                                                                                                    </label>
-                                                                                                    <div class="col-9">
-                                                                                                        <input
-                                                                                                            type="datetime-local"
-                                                                                                            class="form-control"
-                                                                                                            data-bind="value: ts.time">
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- ETA -->
-                                                                                                <!-- ko if: ts.needsETA -->
-                                                                                                <div class="row mb-3">
-                                                                                                    <label
-                                                                                                        class="col-3 col-form-label">
-                                                                                                        ETA
-                                                                                                    </label>
-                                                                                                    <div class="col-9">
-                                                                                                        <input
-                                                                                                            type="datetime-local"
-                                                                                                            class="form-control mb-2"
-                                                                                                            data-bind="value: ts.eta">
-
-                                                                                                        <div
-                                                                                                            class="d-flex flex-wrap gap-2">
-                                                                                                            <!-- ko foreach: ts.etaQuickButtons -->
-                                                                                                            <button
-                                                                                                                type="button"
-                                                                                                                class="btn btn-outline-secondary btn-sm"
-                                                                                                                data-bind="
-                                                                                                                    text: label,
-                                                                                                                    click: $parent.onEtaQuickButtonClick,
-                                                                                                                    clickbubble: false">
-                                                                                                            </button>
-                                                                                                            <!-- /ko -->
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- ETC -->
-                                                                                                <!-- ko if: ts.needsETC -->
-                                                                                                <div class="row mb-3">
-                                                                                                    <label
-                                                                                                        class="col-3 col-form-label">
-                                                                                                        ETC
-                                                                                                    </label>
-                                                                                                    <div class="col-9">
-                                                                                                        <input
-                                                                                                            type="datetime-local"
-                                                                                                            class="form-control mb-2"
-                                                                                                            data-bind="value: ts.etc">
-
-                                                                                                        <div
-                                                                                                            class="d-flex flex-wrap gap-2">
-                                                                                                            <!-- ko foreach: ts.etcQuickButtons -->
-                                                                                                            <button
-                                                                                                                type="button"
-                                                                                                                class="btn btn-outline-secondary btn-sm"
-                                                                                                                data-bind="
-                                                                                                                    text: label,
-                                                                                                                    click: $parent.onEtcQuickButtonClick,
-                                                                                                                    clickbubble: false">
-                                                                                                            </button>
-                                                                                                            <!-- /ko -->
-                                                                                                        </div>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- Reason -->
-                                                                                                <!-- ko if: ts.needsReason -->
-                                                                                                <div class="row mb-3">
-                                                                                                    <label
-                                                                                                        class="col-3 col-form-label">
-                                                                                                        Reason
-                                                                                                    </label>
-                                                                                                    <div class="col-9">
-                                                                                                        <textarea
-                                                                                                            class="form-control"
-                                                                                                            rows="2"
-                                                                                                            data-bind="value: ts.callOffReason">
-                                                                                                        </textarea>
-                                                                                                    </div>
-                                                                                                </div>
-                                                                                                <!-- /ko -->
-
-                                                                                                <!-- Submit & Back -->
-                                                                                                <div
-                                                                                                    class="d-flex justify-content-end gap-2">
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        class="btn btn-sm btn-secondary"
-                                                                                                        data-bind="click: ts.goBackFromDetails">
-                                                                                                        Back
-                                                                                                    </button>
-                                                                                                    <button
-                                                                                                        type="button"
-                                                                                                        class="btn btn-sm btn-primary"
-                                                                                                        data-bind="click: updateTaskingStatus">
-                                                                                                        Submit
-                                                                                                    </button>
-                                                                                                </div>
-
-                                                                                            </div>
-
-                                                                                            <!-- /ko -->
+                                                                                            <!-- ko template: { name: 'tasking-status-menu-template', data: ts } --><!-- /ko -->
                                                                                         </div>
                                                                                     </div>
                                                                                 </td>
-                                                                                <td
-                                                                                    data-bind="text: ts.statusTimeAgoLabel">
+                                                                                <td>
+                                                                                    <div data-bind="text: ts.statusTimeAgoLabel"></div>
+                                                                                    <!-- ko with: ts.etaInfo -->
+                                                                                    <div class="eta-line" data-bind="text: clockLabel, css: lineClass, fastTooltip: title"></div>
+                                                                                    <!-- /ko -->
                                                                                 </td>
                                                                                 <td>
                                                                                     <div class="btn-group btn-group-sm"
@@ -4659,8 +4360,7 @@
                         <div class="row align-items-center mb-2">
                             <label class="col-3 col-form-label col-form-label-sm">Time</label>
                             <div class="col-9">
-                                <input type="datetime-local" class="form-control form-control-sm"
-                                    data-bind="textInput: statusTime">
+                                <div data-bind="dateTime24: statusTime"></div>
                             </div>
                         </div>
                         <!-- /ko -->
@@ -4670,8 +4370,7 @@
                         <div class="row mb-2">
                             <label class="col-3 col-form-label col-form-label-sm">ETA</label>
                             <div class="col-9">
-                                <input type="datetime-local" class="form-control form-control-sm mb-1"
-                                    data-bind="textInput: statusEta">
+                                <div class="mb-1" data-bind="dateTime24: statusEta"></div>
                                 <div class="d-flex flex-wrap gap-2" data-bind="foreach: statusQuickButtons">
                                     <button type="button" class="btn btn-outline-secondary btn-sm"
                                         data-bind="text: label, click: $parent.onStatusEtaQuickButtonClick"></button>
@@ -4684,8 +4383,7 @@
                         <div class="row mb-2">
                             <label class="col-3 col-form-label col-form-label-sm">ETC</label>
                             <div class="col-9">
-                                <input type="datetime-local" class="form-control form-control-sm mb-1"
-                                    data-bind="textInput: statusEtc">
+                                <div class="mb-1" data-bind="dateTime24: statusEtc"></div>
                                 <div class="d-flex flex-wrap gap-2" data-bind="foreach: statusQuickButtons">
                                     <button type="button" class="btn btn-outline-secondary btn-sm"
                                         data-bind="text: label, click: $parent.onStatusEtcQuickButtonClick"></button>
@@ -5153,6 +4851,219 @@
     </div>
 
 
+
+
+    <!-- Tasking status dropdown (team and incident taskings tables): forward
+         first, guarded corrections, and a separate ETA/ETC editor. Bound to a
+         Tasking -- see "FORWARD-FIRST STATUS MENU" in models/Tasking.js. -->
+    <script type="text/html" id="tasking-status-menu-template">
+        <!-- One fixed-width frame for every page; it never gets shorter while
+             the menu is open (holdHeight), so a menu that opened upwards
+             doesn't jump when the page changes. -->
+        <div class="tsm-frame" data-bind="holdHeight: statusDropdownPage">
+        <!-- ko if: statusPageVisible -->
+        <div class="tsm">
+            <!-- ko if: cannotUpdateStatus -->
+            <p class="mb-0 small text-muted">You cannot change statuses.</p>
+            <!-- /ko -->
+            <!-- ko ifnot: cannotUpdateStatus -->
+            <div class="tsm-track">
+                <span class="tsm-track-fill" data-bind="attr: { style: progressFillStyle }"></span>
+                <!-- ko foreach: progressSteps -->
+                <span class="tsm-step" data-bind="css: css"><i></i><span data-bind="text: label"></span><small data-bind="text: time"></small></span>
+                <!-- /ko -->
+            </div>
+
+            <!-- ko if: estimateKind -->
+            <div class="tsm-now">
+                <div class="tsm-now-status"><span class="tsm-now-head">Now</span> <b data-bind="text: currentStepLabel"></b> since <span data-bind="text: estimateSince"></span></div>
+                <div class="tsm-now-eta">
+                    <!-- ko with: etaInfo -->
+                    <span class="eta-chip" data-bind="css: chipClass, fastTooltip: title"><i class="fa" data-bind="css: iconClass"></i><span data-bind="text: compactClockLabel"></span></span>
+                    <!-- /ko -->
+                    <!-- ko ifnot: etaInfo -->
+                    <span class="tsm-none">No <span data-bind="text: estimateKind"></span> set</span>
+                    <!-- /ko -->
+                    <button type="button" class="tsm-edit" data-bind="click: openEstimateEditor, clickBubble: false"><i class="fas fa-pencil-alt"></i><span data-bind="text: estimateEditLabel"></span></button>
+                </div>
+            </div>
+            <!-- /ko -->
+
+            <!-- ko if: nextStepEntries().length -->
+            <div class="tsm-caption">Next step</div>
+            <div class="tsm-next-row" data-bind="foreach: nextStepEntries">
+                <button type="button" class="btn btn-primary btn-sm tsm-next" data-bind="click: $parent.chooseStatusEntry, clickBubble: false">
+                    <i class="fa fa-arrow-right"></i><span data-bind="text: label"></span>
+                    <!-- ko if: inBeacon --><i class="fas fa-external-link-alt tsm-ext" title="Opens in Beacon"></i><!-- /ko -->
+                </button>
+            </div>
+            <!-- /ko -->
+
+            <!-- ko if: skipAheadEntries().length -->
+            <div class="tsm-caption">Skip ahead</div>
+            <!-- ko foreach: skipAheadEntries -->
+            <button type="button" class="dropdown-item tsm-item" data-bind="click: $parent.chooseStatusEntry, clickBubble: false">
+                <span data-bind="text: label"></span>
+                <small><span data-bind="text: note"></span><!-- ko if: inBeacon --> <i class="fas fa-external-link-alt" title="Opens in Beacon"></i><!-- /ko --></small>
+            </button>
+            <!-- /ko -->
+            <!-- /ko -->
+
+            <!-- ko if: stopEntries().length -->
+            <div class="tsm-caption">Stop this tasking</div>
+            <!-- ko foreach: stopEntries -->
+            <button type="button" class="dropdown-item tsm-item tsm-stop" data-bind="text: label, click: $parent.chooseStatusEntry, clickBubble: false"></button>
+            <!-- /ko -->
+            <!-- /ko -->
+
+            <!-- ko if: canCorrect -->
+            <div class="tsm-sep"></div>
+            <button type="button" class="tsm-correct" data-bind="click: openCorrection, clickBubble: false"><i class="fa fa-undo"></i>Correct an earlier status…</button>
+            <!-- /ko -->
+            <!-- /ko -->
+        </div>
+        <!-- /ko -->
+
+        <!-- ko if: correctPageVisible -->
+        <div class="tsm">
+            <div class="tsm-warn">
+                <div class="tsm-warn-title"><i class="fa fa-undo"></i>Set an earlier status</div>
+                Only to fix a mistake. Beacon clears the later status times (they stay in the tasking's history).
+            </div>
+            <!-- ko foreach: correctionEntries -->
+            <button type="button" class="tsm-back-item" data-bind="click: $parent.chooseCorrection, clickBubble: false">
+                <span data-bind="text: label"></span><small data-bind="text: 'Clears ' + removes"></small>
+            </button>
+            <!-- /ko -->
+            <div class="d-flex justify-content-end mt-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bind="click: backToStatusPage, clickBubble: false">Back</button>
+            </div>
+        </div>
+        <!-- /ko -->
+
+        <!-- ko if: detailsPageVisible -->
+        <div class="tsm tsm-page">
+            <!-- ko if: isEstimateMode -->
+            <div class="tsm-eu">
+                <div class="tsm-eu-title"><i class="fa fa-clock"></i><span data-bind="text: 'Change ' + estimateKind()"></span></div>
+                <div class="tsm-eu-sub"><span data-bind="text: currentStepLabel"></span> since <span data-bind="text: estimateSince"></span> (unchanged)</div>
+                <div class="tsm-eu-cmp">
+                    <div class="tsm-eu-box tsm-eu-old">
+                        <div class="k">Current</div>
+                        <!-- ko with: etaInfo -->
+                        <div class="v" data-bind="text: clock"></div>
+                        <div class="r" data-bind="text: relative, css: lineClass"></div>
+                        <!-- /ko -->
+                        <!-- ko ifnot: etaInfo -->
+                        <div class="v">—</div>
+                        <div class="r">not set</div>
+                        <!-- /ko -->
+                    </div>
+                    <div class="tsm-eu-arrow"><i class="fa fa-arrow-right"></i></div>
+                    <div class="tsm-eu-box tsm-eu-new">
+                        <div class="k">New</div>
+                        <!-- ko with: estimateDraftInfo -->
+                        <div class="v" data-bind="text: clock"></div>
+                        <div class="r" data-bind="text: relative"></div>
+                        <!-- /ko -->
+                        <!-- ko ifnot: estimateDraftInfo -->
+                        <div class="v">—</div>
+                        <div class="r">pick a time</div>
+                        <!-- /ko -->
+                    </div>
+                </div>
+                <div class="tsm-eu-label d-flex justify-content-between">
+                    <span data-bind="text: estimateQuickLabel"></span>
+                    <!-- ko ifnot: estimateUnchanged -->
+                    <button type="button" class="tsm-eu-reset" data-bind="click: resetEstimateDraft, clickBubble: false">Reset</button>
+                    <!-- /ko -->
+                </div>
+                <div class="tsm-eu-quick" data-bind="foreach: estimateQuickButtons">
+                    <button type="button" data-bind="text: label, click: $parent.onEstimateQuickClick, clickBubble: false"></button>
+                </div>
+                <div class="tsm-eu-label">Or an exact time</div>
+                <div class="mb-2" data-bind="dateTime24: estimateDraft"></div>
+            </div>
+            <!-- /ko -->
+
+            <!-- ko ifnot: isEstimateMode -->
+            <!-- ko if: isCorrectionMode -->
+            <!-- ko with: correctionTarget -->
+            <div class="tsm-warn">
+                <div class="tsm-warn-title"><i class="fa fa-undo"></i><span data-bind="text: $parent.correctionTitle"></span></div>
+                Correcting an earlier status. Beacon will clear <b data-bind="text: removes"></b>; it stays in the tasking's history.
+                <!-- ko if: stillNoCallOff -->
+                <div class="mt-1"><b>The team still can't be called off afterwards</b>: it has been Off site, so Beacon needs it completed.</div>
+                <!-- /ko -->
+            </div>
+            <!-- /ko -->
+            <!-- /ko -->
+            <!-- ko if: isForwardMode -->
+            <div class="tsm-eu-title tsm-head"><i class="fa" data-bind="css: statusChangeIcon"></i><span data-bind="text: statusChangeTitle"></span></div>
+            <!-- /ko -->
+
+            <!-- ko if: needsTimeSet -->
+            <!-- ko ifnot: timeOverrideEnabled -->
+            <div class="tsm-time">
+                <span class="tsm-field-title mb-0">Time</span>
+                <span class="tsm-time-now" data-bind="text: timeNowLabel"></span>
+                <button type="button" class="tsm-link" data-bind="click: enableTimeOverride, clickBubble: false">Change</button>
+            </div>
+            <!-- /ko -->
+            <!-- ko if: timeOverrideEnabled -->
+            <div class="tsm-field-title d-flex justify-content-between">
+                <span>Time</span>
+                <button type="button" class="tsm-link" data-bind="click: useNowTime, clickBubble: false">Use now</button>
+            </div>
+            <div class="mb-2" data-bind="dateTime24: time"></div>
+            <!-- /ko -->
+            <!-- /ko -->
+
+            <!-- ko if: needsETA -->
+            <!-- Same order as the Change ETA editor: add-to line, quick buttons, exact time. -->
+            <div class="tsm-field-title">ETA</div>
+            <div class="tsm-eu-label" data-bind="text: etaQuickLabel"></div>
+            <div class="tsm-eu-quick" data-bind="foreach: etaQuickButtons">
+                <button type="button" data-bind="text: label, click: $parent.onEtaQuickButtonClick, clickBubble: false"></button>
+            </div>
+            <div class="tsm-eu-label">Or an exact time</div>
+            <div class="mb-2" data-bind="dateTime24: eta"></div>
+            <!-- /ko -->
+
+            <!-- ko if: needsETC -->
+            <!-- Same order as the Change ETC editor: add-to line, quick buttons, exact time. -->
+            <div class="tsm-field-title">ETC</div>
+            <div class="tsm-eu-label" data-bind="text: etcQuickLabel"></div>
+            <div class="tsm-eu-quick" data-bind="foreach: etcQuickButtons">
+                <button type="button" data-bind="text: label, click: $parent.onEtcQuickButtonClick, clickBubble: false"></button>
+            </div>
+            <div class="tsm-eu-label">Or an exact time</div>
+            <div class="mb-2" data-bind="dateTime24: etc"></div>
+            <!-- /ko -->
+
+            <!-- ko if: needsReason -->
+            <div class="tsm-eu-label">Reason</div>
+            <textarea class="form-control form-control-sm mb-2" rows="2" data-bind="value: callOffReason"></textarea>
+            <!-- /ko -->
+
+            <!-- ko if: isCorrectionMode -->
+            <!-- ko with: correctionTarget -->
+            <label class="tsm-ack">
+                <input type="checkbox" data-bind="checked: $parent.correctionAck">
+                <span>Clear <span data-bind="text: removes"></span> and set the team back to <span data-bind="text: label"></span></span>
+            </label>
+            <!-- /ko -->
+            <!-- /ko -->
+            <!-- /ko -->
+
+            <div class="tsm-foot">
+                <button type="button" class="btn btn-sm btn-secondary" data-bind="click: goBackFromDetails, clickBubble: false">Back</button>
+                <button type="button" class="btn btn-sm" data-bind="text: submitLabel, css: submitCss, enable: !submitDisabled(), click: updateTaskingStatus, clickBubble: false"></button>
+            </div>
+        </div>
+        <!-- /ko -->
+        </div>
+    </script>
 
     <script src="tasking/main.js" type="text/javascript"></script>
 

@@ -5,6 +5,7 @@ import { Entity } from "./Entity.js";
 import { Address } from "./Address.js";
 import { Tag } from "./Tag.js";
 import { Sector } from "./Sector.js";
+import { primaryEtaTasking } from "./Tasking.js";
 import { UnacceptedNotification } from "./UnacceptedNotification.js";
 import { openURLInBeacon } from '../utils/chromeRunTime.js';
 import { jobsToUI } from "../utils/jobTypesToUI.js";
@@ -14,15 +15,39 @@ import { InstantTaskViewModel } from '../viewmodels/InstantTask.js';
 import { Enum } from "../utils/enum.js";
 import { getSingleFetchCooldownMs } from "../signalr/pushMode.js";
 
+// The bulk search's lean model (ViewModelType=2) carries combined
+// CallerName/CallerNumber/ContactName/ContactNumber where the full model has
+// split First/Last/PhoneNumber fields. Map lean payloads onto the full field
+// names. A name already held split (from a full GET) is left alone when it
+// joins to the same value, so lean polls don't flip it to "Jane Smith" + "".
+export function splitLeanContactFields(d, job = null) {
+    if (!['CallerName', 'CallerNumber', 'ContactName', 'ContactNumber'].some(k => d[k] !== undefined)) return d;
+    const out = { ...d };
+    for (const [P, p] of [['Caller', 'caller'], ['Contact', 'contact']]) {
+        const name = d[`${P}Name`];
+        if (name !== undefined && d[`${P}FirstName`] === undefined) {
+            const held = job ? [job[`${p}FirstName`](), job[`${p}LastName`]()].filter(Boolean).join(' ') : null;
+            if (held !== (name || '')) {
+                out[`${P}FirstName`] = name || '';
+                out[`${P}LastName`] = '';
+            }
+        }
+        const number = d[`${P}Number`];
+        if (number !== undefined && d[`${P}PhoneNumber`] === undefined) out[`${P}PhoneNumber`] = number;
+    }
+    return out;
+}
+
 export function Job(data = {}, deps = {}) {
     const self = this;
+    data = splitLeanContactFields(data);
 
     // ---- injected adapters (all optional, safe defaults) ----
     const {
         makeJobLink = (_id) => "#",
         fetchJobTasking = (_jobId, cb) => cb(null),
         fetchJobById = (_jobId, cb) => cb(null),
-        flyToJob = (_job) => {/* noop */ },
+        flyToJob = (_job, _opts) => {/* noop */ },
         attachAndFillTimelineModal = (_job) => { /* noop */ },
         fetchUnacknowledgedJobNotifications = async (_job) => ([]),
         acknowledgeUnacceptedNotification = async (_notificationId) => ({}),
@@ -205,6 +230,10 @@ export function Job(data = {}, deps = {}) {
     self.marker = null;  // will hold the L.Marker instance
     self.taskings = ko.observableArray(); //array of taskings
     self.sector = ko.observable(new Sector(data.Sector || {}));
+    // The lean bulk search and tasking payloads carry no Sector at all, so an
+    // empty sector() may just mean "not loaded yet". Only a payload with the
+    // key (full GET, Sector:null when unassigned) makes it known.
+    self.sectorKnown = ko.observable(data.Sector !== undefined);
     self.suppliers = ko.observableArray([]);
 
     // computed
@@ -530,6 +559,18 @@ export function Job(data = {}, deps = {}) {
         })
     );
 
+    // The tasking whose ETA/ETC matters most for this incident (soonest
+    // ETA, else soonest ETC) and its etaInfo -- drives the chip on the row.
+    self.etaTasking = ko.pureComputed(() => primaryEtaTasking(self.taskings()));
+    self.etaInfo = ko.pureComputed(() => {
+        const t = self.etaTasking();
+        return t ? t.etaInfo() : null;
+    });
+    self.etaTitle = ko.pureComputed(() => {
+        const t = self.etaTasking();
+        return t ? `${t.teamCallsign()}: ${t.etaInfo().title}` : '';
+    });
+
     self.sortedTaskings = ko.pureComputed(() =>
         self.taskings().slice().sort((a, b) =>
             new Date(a.currentStatusTime) - new Date(b.currentStatusTime)
@@ -656,9 +697,11 @@ export function Job(data = {}, deps = {}) {
 
     Job.prototype.updateFromJson = function (d = {}) {
         this.lastDataUpdate(new Date());
+        d = splitLeanContactFields(d, this);
 
         // sector might be undefined or null. they mean different things
         if (d.Sector !== undefined) { //sector present in payload
+            if (!this.sectorKnown()) this.sectorKnown(true);
             if (d.Sector === null) { //theres no sector assigned
                 if (JSON.stringify(this.sector()) !== JSON.stringify(new Sector({}))) {
                     this.sector(new Sector({}));
@@ -805,9 +848,12 @@ export function Job(data = {}, deps = {}) {
     }
 
     // ---- map focus (delegated) ----
-    self.focusMap = function () {
+    // Bound to the zoom-to buttons, so KO passes the click event; the
+    // second click of a double-click (event.detail 2) zooms in to street
+    // level. Programmatic calls pass no event and always do the normal focus.
+    self.focusMap = function (_data, event) {
         if (self.isFilteredIn() === false) return;
-        flyToJob(self);
+        flyToJob(self, { street: event?.detail >= 2 });
     };
 
     self.toggleAndExpand = function () {

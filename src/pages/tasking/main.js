@@ -11,6 +11,7 @@ require('../lib/shared_chrome_code.js'); // side-effect
 
 
 import { showAlert } from './components/windowAlert.js';
+import { describeBeaconError } from './utils/beaconError.js';
 
 import { ResizeDividers } from './resize.js';
 import { initPopupAutoPan } from './utils/popupAutoPan.js';
@@ -70,6 +71,8 @@ import { noBubbleFromDisabledButtonsBindings } from "./bindings/noBubble.js"
 import { installFlashOnChangeBinding } from "./bindings/flashOnChange.js";
 import { installRowTransitionBindings } from "./bindings/rowTransitions.js";
 import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
+import "./bindings/holdHeight.js";   // registers ko.bindingHandlers.holdHeight
+import "./bindings/dateTime24.js";   // registers ko.bindingHandlers.dateTime24
 import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
 
 import { registerTransportCamerasLayer } from "./mapLayers/transport.js";
@@ -77,11 +80,14 @@ import { registerUnitBoundaryLayer } from "./mapLayers/geoservices.js";
 import { registerSESZonesGridLayer } from "./mapLayers/geoservices.js";
 import { registerSESUnitsZonesHybridGridLayer } from "./mapLayers/geoservices.js";
 import { registerSESUnitLocationsLayer } from "./mapLayers/geoservices.js";
-import { registerTransportIncidentsLayer, registerTransportCouncilReportsLayer } from "./mapLayers/transport.js";
+import { registerTransportIncidentsLayer } from "./mapLayers/transport.js";
 import { renderFRAOSLayer } from "./mapLayers/frao.js";
 import { registerHazardWatchWarningsLayer } from "./mapLayers/hazardwatch.js"
 import { registerPowerBoundariesGridLayer } from "./mapLayers/power.js";
 import { registerWaterNSWBoundariesLayer, registerEPAContaminationSitesLayer } from "./mapLayers/waternsw.js";
+import { basemapKeepBuffer } from "./utils/basemapKeepBuffer.js";
+import { withEdgeBuffer } from "./utils/basemapEdgeBuffer.js";
+import { layerStatusView, summarizeLayerStatuses } from "./utils/layerStatus.js";
 import { registerNSWDeclaredDamsLayer } from "./mapLayers/dams.js";
 import { registerBOMLandWarningsLayer } from "./mapLayers/bom.js";
 import { registerRainRadarLayer } from "./mapLayers/rainviewer.js";
@@ -387,40 +393,71 @@ map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.
 map.createPane('pane-popup-top'); map.getPane('pane-popup-top').style.zIndex = 750;
 
 
+// Tile rows kept loaded beyond each edge of the map, by device memory.
+const BASEMAP_KEEP_BUFFER = basemapKeepBuffer(navigator.deviceMemory);
+
 function buildBasemapLayer(key) {
     // --- NSW VECTOR BASEMAP (Topographic style) ---
     if (key === "nsw-vector") {
-        return esriVector.vectorTileLayer(
+        const layer = esriVector.vectorTileLayer(
             "https://portal.spatial.nsw.gov.au/vectortileservices/rest/services/Hosted/NSW_BaseMap_VectorTile/VectorTileServer",
             {
                 attribution: "© NSW Spatial Services"
             }
         );
+        // Leaflet only applies zoom limits from grid (tile) layers, so as the
+        // only basemap this left the map's maxZoom at Infinity, and the
+        // marker cluster grid rebuild (MapVM.ensureClusterGridCompatibility)
+        // never ends. Register its limits the way GridLayer does.
+        layer.options.minZoom = 0;
+        layer.options.maxZoom = 20;
+        const { onAdd, onRemove } = layer;
+        layer.onAdd = function (map) {
+            onAdd.call(this, map);
+            map._addZoomLimit(this);
+        };
+        layer.onRemove = function (map) {
+            map._removeZoomLimit(this);
+            onRemove.call(this, map);
+        };
+        return layer;
     }
 
     // --- NSW RASTER BASEMAPS (tile MapServer) ---
     if (key === "nsw-base") {
-        return L.tileLayer(
+        return withEdgeBuffer(L.tileLayer(
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Base_Map/MapServer/tile/{z}/{y}/{x}",
             {
                 maxZoom: 20,
+                keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
-        );
+        ));
     }
 
     if (key === "nsw-imagery") {
-        return L.tileLayer(
+        return withEdgeBuffer(L.tileLayer(
             "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/{z}/{y}/{x}",
             {
                 maxZoom: 20,
+                keepBuffer: BASEMAP_KEEP_BUFFER,
                 attribution: "© NSW Spatial Services"
             }
-        );
+        ));
     }
 
     // --- EXISTING ESRI BASEMAPS ---
-    return esri.basemapLayer(key, { ignoreDeprecationWarning: true });
+    // Dark and Gray only have tiles to zoom 16. Keep zoom 19 on every
+    // basemap by scaling up their last tiles rather than capping the map.
+    // (esri merges these options into its shared config, so read
+    // maxNativeZoom first to keep repeat calls the same.)
+    const tiles = esri.BasemapLayer.TILES[key]?.options;
+    const nativeMax = tiles ? (tiles.maxNativeZoom ?? tiles.maxZoom) : undefined;
+    return withEdgeBuffer(esri.basemapLayer(key, {
+        ignoreDeprecationWarning: true,
+        keepBuffer: BASEMAP_KEEP_BUFFER,
+        ...(nativeMax < 19 ? { maxNativeZoom: nativeMax, maxZoom: 19 } : {}),
+    }));
 }
 
 
@@ -433,8 +470,10 @@ legend.addTo(map);
 
 ResizeDividers(map)
 
-// Esri default basemap (others: 'Streets','Imagery','Topographic','Gray','DarkGray', etc.)
-esri.basemapLayer('Topographic', { ignoreDeprecationWarning: true }).addTo(map);
+// Saved basemap. Added now because Leaflet needs a layer with a maxZoom on
+// the map before the marker cluster groups are added. The Layers drawer takes
+// it over as its current basemap, so switching basemap removes it.
+const initialBasemap = (buildBasemapLayer(minimapInitialKey) || buildBasemapLayer("Topographic")).addTo(map);
 
 function VM() {
 
@@ -1067,6 +1106,14 @@ function VM() {
         }
     }
 
+    // Zoom used when an incident's zoom-to button is double-clicked: street
+    // level, closer than the single-click focus (which only zooms as far as
+    // it takes to break the incident out of its cluster).
+    const JOB_STREET_ZOOM = 17;
+    // The latest single-click focus, so a double-click that lands while
+    // that focus is still animating can take over once it settles.
+    let jobFocus = null;
+
     function makeJobDeps() {
         return {
             makeJobLink: (id) => `${params.source}/Jobs/${id}`,
@@ -1079,7 +1126,7 @@ function VM() {
                 self.fetchJobById(jobId, cb);
             },
 
-            flyToJob: (job) => {
+            flyToJob: (job, { street = false } = {}) => {
                 const lat = job.address.latitude?.();
                 const lng = job.address.longitude?.();
                 if (Number.isFinite(lat) && Number.isFinite(lng)) {
@@ -1097,15 +1144,50 @@ function VM() {
                         self.mapVM?.layersDrawer?.refresh();
                     }
 
+                    const m = job.marker;
+                    const cg = self.mapVM?.jobClusterGroup;
+
+                    // Fly in to street level, keeping the popup open: zooming
+                    // in only splits clusters, so a marker that's showing
+                    // stays on the map. If the popup wasn't open (focus
+                    // still clustered, or closed meanwhile), open it once
+                    // the map settles; zoomToShowLayer spiderfies the marker
+                    // if it still shares a spot with others at this zoom.
+                    const flyToStreet = () => {
+                        map.once('moveend', () => {
+                            if (!m || m.isPopupOpen()) return;
+                            if (cg && cg.hasLayer(m)) cg.zoomToShowLayer(m, () => m.openPopup());
+                            else m.openPopup();
+                        });
+                        map.flyTo([lat, lng], JOB_STREET_ZOOM, { animate: true, duration: 0.5 });
+                    };
+
+                    // Second click of a double-click. If the first click's
+                    // focus is still in flight (cluster zoom/spiderfy, flyTo),
+                    // interrupting it would leave its pending callback to
+                    // spiderfy or open the popup mid-flight -- flag it and
+                    // let it fly in when it settles instead.
+                    if (street) {
+                        const pending = jobFocus?.job === job && !jobFocus.settled
+                            && Date.now() - jobFocus.at < 2000;
+                        if (pending) jobFocus.street = true;
+                        else flyToStreet();
+                        return;
+                    }
+
                     // If the popup is already open (i.e. this call originated
                     // from the popupopen event chain rather than a deliberate
                     // UI action), bail out.  flyTo can change the zoom level
                     // which triggers markercluster reclustering — the marker
                     // disappears and the popup is abruptly closed.
-                    if (job.marker?.isPopupOpen?.()) return;
+                    if (m?.isPopupOpen?.()) return;
 
-                    const m = job.marker;
-                    const cg = self.mapVM?.jobClusterGroup;
+                    const focus = jobFocus = { job, at: Date.now(), settled: false, street: false };
+                    const settle = () => {
+                        focus.settled = true;
+                        if (focus.street) flyToStreet();
+                        else m.openPopup();
+                    };
 
                     // If the marker lives in the cluster group, use
                     // zoomToShowLayer – it zooms/pans as needed, spiderfies
@@ -1113,9 +1195,7 @@ function VM() {
                     // further, and only then fires the callback so the
                     // popup opens on the visible, individual marker.
                     if (m && cg && cg.hasLayer(m)) {
-                        cg.zoomToShowLayer(m, () => {
-                            m.openPopup();
-                        });
+                        cg.zoomToShowLayer(m, settle);
                     } else if (m) {
                         // Marker is on a standalone layer (rescueJobLayer,
                         // unclusteredJobLayer) – simple flyTo. Wait for it to
@@ -1124,10 +1204,11 @@ function VM() {
                         // correction while the flyTo animation is still
                         // moving the map, and the two visibly fight (a
                         // camera move, then an abrupt extra snap).
-                        map.once('moveend', () => m.openPopup());
+                        map.once('moveend', settle);
                         map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
                     } else {
                         // Doesn't exist yet -- nothing to open a popup on.
+                        focus.settled = true;
                         map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
                     }
                 }
@@ -1985,30 +2066,6 @@ function VM() {
         }
     }
 
-    // Batched form of fetchUnresolvedActionsLog for the bulk refresh cycle.
-    // Jobs with no unresolved entries get an empty list so resolved actions
-    // clear; jobs a per-job fetch updated after this started are left alone.
-    self.fetchAllUnresolvedActions = async function (jobIds) {
-        const jobs = jobIds.map(id => self.jobsById.get(id)).filter(Boolean);
-        if (!jobs.length) return;
-        const startTime = Date.now();
-        const received = jobs.map(j => new Date(j.jobReceived()).getTime()).filter(Number.isFinite);
-        const dateFrom = new Date(received.length ? Math.min(...received) : startTime - self.config.fetchPeriod() * 86400000);
-
-        const t = await getToken();   // blocks here until token is ready
-        try {
-            const data = await BeaconClient.operationslog.unresolvedActionsForJobs(jobs.map(j => j.id()), dateFrom, beaconCtx(t));
-            const tagsByJob = new Map(jobs.map(j => [j.id(), []]));
-            data.results.forEach(entry => tagsByJob.get(entry.JobId)?.push(...(entry.Tags || [])));
-            jobs.forEach(job => {
-                if (job.lastActionTagsUpdate > startTime) return;
-                job.updateFromJson({ ActionRequiredTags: tagsByJob.get(job.id()) });
-            });
-        } catch (err) {
-            console.error("Failed to fetch unresolved actions for jobs:", err);
-        }
-    }
-
     self.fetchUnacknowledgedJobNotifications = async function (job) {
         const t = await getToken();   // blocks here until token is ready
         return BeaconClient.notifications.unaccepted(job.id(), beaconCtx(t));
@@ -2324,8 +2381,13 @@ function VM() {
         }
     }
 
+    // showAlert renders HTML; Beacon's error text goes in as plain text.
+    const escapeAlertText = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    // The three below throw on an HTTP error (throwOnError) so Beacon's reason,
+    // e.g. why a call-off was refused, reaches the user instead of being swallowed.
     self.updateTeamStatus = function (tasking, status, payload, cb) {
-        BeaconClient.tasking.updateTeamStatus(tasking.id(), status, payload, beaconCtx(token))
+        BeaconClient.tasking.updateTeamStatus(tasking.id(), status, payload, { ...beaconCtx(token), throwOnError: true })
             .then((data) => {
                 tasking.job.fetchTasking({ force: true });
                 if (tasking.team?.isFilteredIn?.()) {
@@ -2336,13 +2398,13 @@ function VM() {
             })
             .catch((err) => {
                 console.error("Failed to update team status:", err);
-                showAlert("Failed to update team status.", "danger", 5000);
+                showAlert(`Failed to update team status: ${escapeAlertText(describeBeaconError(err))}`, "danger", 8000);
                 cb([]);
             });
     }
 
     self.callOffTeam = function (tasking, payload, cb) {
-        BeaconClient.tasking.callOffTeam(tasking.id(), payload, beaconCtx(token))
+        BeaconClient.tasking.callOffTeam(tasking.id(), payload, { ...beaconCtx(token), throwOnError: true })
             .then((data) => {
                 tasking.job.fetchTasking({ force: true });
                 if (tasking.team?.isFilteredIn?.()) {
@@ -2353,13 +2415,13 @@ function VM() {
             })
             .catch((err) => {
                 console.error("Failed to call off team:", err);
-                showAlert("Failed to call off team.", "danger", 5000);
+                showAlert(`Failed to call off team: ${escapeAlertText(describeBeaconError(err))}`, "danger", 8000);
                 cb([]);
             });
     }
 
     self.untaskTeam = function (tasking, payload, cb) {
-        BeaconClient.tasking.untaskTeam(tasking.id(), payload, beaconCtx(token))
+        BeaconClient.tasking.untaskTeam(tasking.id(), payload, { ...beaconCtx(token), throwOnError: true })
             .then((data) => {
                 tasking.job.fetchTasking({ force: true });
                 if (tasking.team?.isFilteredIn?.()) {
@@ -2370,7 +2432,7 @@ function VM() {
             })
             .catch((err) => {
                 console.error("Failed to Untask Team:", err);
-                showAlert("Failed to Untask Team.", "danger", 5000);
+                showAlert(`Failed to remove tasking: ${escapeAlertText(describeBeaconError(err))}`, "danger", 8000);
                 cb(null);
             });
     }
@@ -2419,11 +2481,29 @@ function VM() {
         return r;
     }
 
+    // For the Ops/Radio Log dialog to check whether a change Beacon errored on
+    // went through anyway: resolves true once the job's taskings are reloaded,
+    // false if that failed too.
+    self.reloadJobTaskings = function (jobVm) {
+        return new Promise(resolve => self.fetchJobTasking(jobVm.id(), (ok) => {
+            if (ok) jobVm.lastTaskingDataUpdate = new Date();
+            resolve(!!ok);
+        }));
+    }
+
     self.fetchJobById = async function (jobId, cb) {
         const t = await getToken();   // blocks here until token is ready
         try {
-            const res = await BeaconClient.job.get(jobId, beaconCtx(t));
+            // The job GET has no ImageCount; the thumbnail list (filenames
+            // only, so cheap) gives it. A failed list leaves the count as-is.
+            const [res, thumbs] = await Promise.all([
+                BeaconClient.job.get(jobId, beaconCtx(t)),
+                BeaconClient.images.getIncidentImages(jobId, beaconCtx(t)).catch(() => null),
+            ]);
             if (res) {
+                if (Array.isArray(thumbs)) res.ImageCount = thumbs.length;
+                // A full GET is authoritative on the sector: no key means none.
+                if (res.Sector === undefined) res.Sector = null;
                 self.getOrCreateJob(res);
                 cb && cb(true);
             } else {
@@ -2622,10 +2702,13 @@ function VM() {
             incidentTypeFilterToView,
             sectorToView,
             self.config.applySectorsToIncidents() ? `Unsectorised=${self.config.includeIncidentsWithoutSector()}` : '',
-            `ViewModelType=6`,
         ].filter(param => param && param.trim() !== '');
 
-        const url = paramsArray.join('&');
+        // Lean model (2): the only search model with ImageCount, InFrao,
+        // EventId and ActionRequiredTags. It has no Sector (Job.sectorKnown
+        // covers that) and combined caller/contact names (see
+        // splitLeanContactFields). Search ignores 6 ("Edit") and returns full.
+        const url = [...paramsArray, 'ViewModelType=2'].join('&');
 
         try {
             const allJobs = await BeaconClient.job.searchRaw(url, beaconCtx(t, {
@@ -2665,10 +2748,6 @@ function VM() {
             // async and its merges land after the network round-trip, not
             // synchronously when it's called.
             self.fetchAllUnacceptedNotifications();
-            // ViewModelType=6 carries no ActionRequiredTags, so pull them for
-            // this cycle's jobs in bulk. Also repairs any opsLogUpdated pushes
-            // missed while SignalR was down.
-            self.fetchAllUnresolvedActions([...fetchedJobIds]);
         } catch (err) {
             console.error("Failed to fetch jobs:", err);
             myViewModel.jobsLoading(false);
@@ -2834,7 +2913,6 @@ function VM() {
 
     registerUnitBoundaryLayer(self, map, getToken, apiHost, params);
     registerTransportIncidentsLayer(self, map, getToken, apiHost, params);
-    registerTransportCouncilReportsLayer(self, map, getToken, apiHost, params);
 
     registerSESZonesGridLayer(self);
     registerSESUnitsZonesHybridGridLayer(self, map);
@@ -2876,8 +2954,8 @@ function VM() {
 
         initialize(opts = {}) {
             L.Util.setOptions(this, opts);
-            this._currentBase = null;
-            this._baseKey = localStorage.getItem("map.base") || "Topographic";
+            this._currentBase = initialBasemap; // already on the map, see above
+            this._baseKey = minimapInitialKey;
             this._open = localStorage.getItem("layers.open") === "1";
         },
 
@@ -2895,6 +2973,8 @@ function VM() {
                 title="Layers"
                 aria-expanded="${this._open ? "true" : "false"}">
           <i class="fas fa-layer-group"></i>
+          <span class="ld-load-ring" hidden></span>
+          <span class="ld-load-badge" hidden></span>
         </button>
       </div>
       <div class="ld-panel ${this._open ? "" : "d-none"} shadow-sm rounded-3">
@@ -2966,9 +3046,13 @@ function VM() {
                 basemapMenu.appendChild(li);
             });
 
-            this._setBasemap(this._baseKey, map);
+            if (!this._currentBase) this._setBasemap(this._baseKey, map);
 
             this._renderOverlays();
+
+            // Repaint a row + the button badge whenever a layer's load status changes
+            self.mapVM.onLayerStatusChange((key) => this._paintStatus(key));
+            this._paintBadge();
 
             // --- Search filter ---
             const searchInput = c.querySelector(".ld-search-input");
@@ -3079,6 +3163,7 @@ function VM() {
             // --- Build two-column grid of always-visible groups ---
             const grid = c.querySelector(".ld-grid");
             grid.innerHTML = "";
+            this._statusRows = new Map(); // polling layer key -> row button
 
             groups.forEach((defs, groupKey) => {
                 const cell = document.createElement("div");
@@ -3126,7 +3211,7 @@ function VM() {
                 }
 
                 // Build layer toggle buttons
-                defs.forEach(({ key, label, layer, visibleByDefault }) => {
+                defs.forEach(({ key, statusKey, label, layer, visibleByDefault }) => {
                     const stored = localStorage.getItem(`ov.${key}`);
                     const saved = (stored === null)
                         ? (visibleByDefault === true)
@@ -3147,7 +3232,26 @@ function VM() {
                             <i class="fas ${saved ? "fa-toggle-on" : "fa-toggle-off"}"></i>
                         </span>`;
 
-                    obtn.addEventListener("click", () => {
+                    if (statusKey) {
+                        // Load status: pill beside the toggle, detail line under the label
+                        obtn.classList.add("ld-has-status", "flex-wrap");
+                        const pill = document.createElement("span");
+                        pill.className = "ld-status";
+                        obtn.querySelector(".ms-auto").before(pill);
+                        const detail = document.createElement("span");
+                        detail.className = "ld-status-detail";
+                        detail.hidden = true;
+                        obtn.appendChild(detail);
+                        obtn.addEventListener("mouseenter", () => this._updateStatusTitle(statusKey));
+                        this._statusRows.set(statusKey, obtn);
+                        this._paintStatus(statusKey, { badge: false });
+                    }
+
+                    obtn.addEventListener("click", (ev) => {
+                        if (statusKey && ev.target.closest(".ld-status-retry")) {
+                            self.mapVM.refreshPollingLayer(statusKey);
+                            return;
+                        }
                         const icon = obtn.querySelector("i");
                         const isOn = obtn.classList.contains("active");
                         if (isOn) {
@@ -3173,18 +3277,98 @@ function VM() {
         },
 
 
+        /** Paint one polling layer's row from its current load status. */
+        _paintStatus(key, { badge = true } = {}) {
+            const row = this._statusRows?.get(key);
+            if (row) {
+                const view = layerStatusView(self.mapVM.getLayerStatus(key));
+                const pill = row.querySelector(".ld-status");
+                const detail = row.querySelector(".ld-status-detail");
+                pill.replaceChildren();
+                if (view.pill?.cls === "loading") {
+                    const spin = document.createElement("span");
+                    spin.className = "ld-status-spin";
+                    spin.setAttribute("role", "img");
+                    spin.setAttribute("aria-label", "Loading");
+                    pill.appendChild(spin);
+                } else if (view.pill) {
+                    const p = document.createElement("span");
+                    p.className = `ld-status-pill ld-status-${view.pill.cls}`;
+                    p.textContent = view.pill.text;
+                    pill.appendChild(p);
+                }
+                detail.replaceChildren();
+                detail.hidden = !view.detail;
+                if (view.detail) {
+                    detail.className = `ld-status-detail ld-status-detail-${view.detail.cls}`;
+                    detail.append(view.detail.text);
+                    if (view.retry) {
+                        const retry = document.createElement("span");
+                        retry.className = "ld-status-retry";
+                        retry.textContent = "Retry";
+                        detail.append(" ", retry);
+                    }
+                }
+                row.classList.toggle("ld-status-failed", view.pill?.cls === "error");
+                row.title = view.title;
+            }
+            if (badge) this._paintBadge();
+        },
+
+        /** Hover title: add how many items are in the current map view. */
+        _updateStatusTitle(key) {
+            const row = this._statusRows?.get(key);
+            if (!row) return;
+            const status = self.mapVM.getLayerStatus(key);
+            const view = layerStatusView(status);
+            const inView = status.count ? self.mapVM.countLayerItemsInView(key) : null;
+            row.title = inView === null ? view.title : `${view.title} (${inView} in view)`;
+        },
+
+        /** Layers button: corner spinner while any layer loads, red count of failed layers, brief tick when all loaded. */
+        _paintBadge() {
+            const btn = this._container?.querySelector(".ld-toggle-btn");
+            if (!btn) return;
+            const ring = btn.querySelector(".ld-load-ring");
+            const badge = btn.querySelector(".ld-load-badge");
+            const sum = summarizeLayerStatuses(self.mapVM.getAllLayerStatuses());
+            // Spinner and badge share the corner; a failure count wins
+            ring.hidden = sum.loading === 0 || sum.failed > 0;
+
+            clearTimeout(this._tickTimer);
+            badge.className = "ld-load-badge";
+            if (sum.failed) {
+                badge.hidden = false;
+                badge.classList.add("ld-load-badge-failed");
+                badge.textContent = String(sum.failed);
+                btn.title = `Layers: ${sum.failed} layer${sum.failed === 1 ? "" : "s"} failed to load, open for details`;
+            } else if (this._wasLoading && !sum.loading && sum.on) {
+                badge.hidden = false;
+                badge.classList.add("ld-load-badge-ok");
+                badge.textContent = "✓";
+                this._tickTimer = setTimeout(() => { badge.hidden = true; }, 1600);
+                btn.title = "Layers: all loaded";
+            } else {
+                badge.hidden = true;
+                btn.title = sum.loading ? `Layers: loading ${sum.loading}…` : "Layers";
+            }
+            this._wasLoading = sum.loading > 0;
+        },
+
         onRemove() { /* nothing to clean up */ },
 
         _setBasemap(key, map) {
-            if (this._currentBase) {
-                map.removeLayer(this._currentBase);
-                this._currentBase = null;
-            }
-
+            // Add the new basemap before removing the old one: with no basemap
+            // the map has no maxZoom, and the marker cluster grid rebuild on
+            // zoomlevelschange (MapVM.ensureClusterGridCompatibility) hangs.
+            const previous = this._currentBase;
             this._currentBase = buildBasemapLayer(key);
 
             if (this._currentBase) {
                 this._currentBase.addTo(map);
+            }
+            if (previous) {
+                map.removeLayer(previous);
             }
 
             const nextMiniMapLayer = buildBasemapLayer(key);

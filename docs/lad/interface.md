@@ -90,6 +90,10 @@ Alerts display in the top right corner of LAD under certain conditions:
 
   ![Incidents missing geolocation alert](images/alert-missing-geolocation-bar.png)
 
+- **Teams overdue on ETA/ETC**: teams 5 minutes or more past their ETA (while *Enroute*) or ETC (while *Onsite*). Click a team to jump to it in the Team Register. See [Arrival and Completion Times](tasking.md#arrival-and-completion-times).
+
+  ![Teams overdue on ETA/ETC alert](images/alert-overdue-eta-bar.png)
+
 ### Managing Alerts
 
 Minimise an alert by clicking the cross on its right. Minimised alerts show as small icons and can be re-opened at any time. Minimising does not dismiss the underlying alerts. An alert automatically re-appears if another incident meets its condition, e.g. a new unacknowledged ICEMS message.
