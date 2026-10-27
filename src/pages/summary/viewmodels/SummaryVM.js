@@ -9,6 +9,15 @@ import { THEMES, SOUNDS, loadSettings, saveSettings, soundFile } from "../data/s
 
 // Auto-refresh period, as on the old page: it's left up on a screen.
 export const REFRESH_SECONDS = 30;
+// After a failed load the page keeps trying on its own (a wall screen has
+// nobody to click Try again): 30 s, then doubling, up to this.
+export const MAX_RETRY_SECONDS = 300;
+
+/** Seconds to wait after `failures` failed loads in a row (0 = none failed). */
+export function retryDelay(failures) {
+    if (failures <= 0) return REFRESH_SECONDS;
+    return Math.min(MAX_RETRY_SECONDS, REFRESH_SECONDS * 2 ** (failures - 1));
+}
 // How long the New tile stays highlighted after new incidents come in.
 export const NEW_HIGHLIGHT_MS = 8000;
 // The report usually comes back in well under a second: only show the
@@ -122,6 +131,8 @@ export function SummaryVM(deps) {
         const s = Math.max(0, self.secondsToRefresh());
         return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
     });
+    // Under the first-load error: when the page will try again by itself.
+    self.retryText = ko.pureComputed(() => `Trying again in ${self.countdownText()}`);
 
     self.loader = ko.pureComputed(() => waitingRing({
         startedAt: self.loadStartedAt(),
@@ -181,6 +192,11 @@ export function SummaryVM(deps) {
     let highlightTimer = null;
     let loaderTimer = null;
     let lastNew = null; // New count from the last load of this range
+    let failures = 0;   // failed loads in a row, for retryDelay
+    // The range the numbers on screen are for. A failed range switch goes
+    // back to this choice, so the buttons, date box and numbers agree.
+    let shownChoice = self.rangeChoice();
+    let skipReloadFor = null;
 
     function ctx(extra) {
         return { host: params.host, userId: params.userId, token: self.token(), ...extra };
@@ -209,8 +225,12 @@ export function SummaryVM(deps) {
 
         const controller = new AbortController();
         const firstLoad = self.loadedAt() === null;
-        const range = rangeForChoice(launchRange, self.rangeChoice(), now());
-        self.range(range);
+        const choice = self.rangeChoice();
+        const range = rangeForChoice(launchRange, choice, now());
+        // Nothing is on screen yet on the first load, so the date box can show
+        // what's loading. After that it waits for the report, so the numbers
+        // on screen keep their own dates if this load fails.
+        if (firstLoad) self.range(range);
         self.error(null);
         if (firstLoad) {
             self.loading(true);
@@ -235,6 +255,9 @@ export function SummaryVM(deps) {
             const summary = summarize(report);
             noticeNew(summary);
             self.summary(summary);
+            self.range(range);
+            shownChoice = choice;
+            failures = 0;
             self.loadedAt(now());
             self.loading(false);
             clearTimeout(loaderTimer);
@@ -248,12 +271,19 @@ export function SummaryVM(deps) {
                 if (controller.signal.aborted) return;
                 console.error("Incident summary load failed", err);
                 self.error(errorText(err, PAGE_NAME));
+                failures++;
+                if (self.loadedAt() !== null && self.rangeChoice() !== shownChoice) {
+                    // Switching range failed: the old range's numbers are still
+                    // up, so put its button back (without loading it again).
+                    skipReloadFor = shownChoice;
+                    self.rangeChoice(shownChoice);
+                }
             } finally {
                 if (inFlight && inFlight.controller === controller) {
                     inFlight = null;
                     self.refreshing(false);
+                    self.secondsToRefresh(retryDelay(failures));
                 }
-                self.secondsToRefresh(REFRESH_SECONDS);
             }
         })();
         inFlight = { controller, promise: settled };
@@ -268,10 +298,14 @@ export function SummaryVM(deps) {
         self.load({ replace: true });
     };
 
-    /** Called once a second by main.js. */
+    /**
+     * Called once a second by main.js. Counts down to the next refresh, or
+     * after a failure to the next try, first load included: an error never
+     * stops the page refreshing.
+     */
     self.tick = function () {
         self.clock(+now());
-        if (self.loading() || self.error()) return;
+        if (inFlight) return;
         const next = self.secondsToRefresh() - 1;
         if (next <= 0) {
             self.secondsToRefresh(REFRESH_SECONDS);
@@ -281,7 +315,11 @@ export function SummaryVM(deps) {
         }
     };
 
-    self.rangeChoice.subscribe(() => {
+    self.rangeChoice.subscribe((value) => {
+        if (skipReloadFor !== null && value === skipReloadFor) {
+            skipReloadFor = null;
+            return;
+        }
         lastNew = null; // a different range: its New count isn't "new incidents"
         if (self.token()) self.load({ replace: true });
     });

@@ -199,6 +199,68 @@ check('a Beacon error shows why and offers Try again', async () => {
   }
 });
 
+/** Answer the page's next JobsSummary requests with `status` until the returned function is called. */
+async function breakBeacon(page, status) {
+  const handler = (route) => route.fulfill({ status, contentType: 'application/json', body: '{"Message":"Demo failure"}' });
+  await page.route('**/Reports/JobsSummary**', handler);
+  return () => page.unroute('**/Reports/JobsSummary**', handler);
+}
+
+check('a failed refresh keeps the numbers up and recovers by itself', async () => {
+  const { browser, page, pageErrors } = await launchSummary(base);
+  try {
+    await waitForSummary(page);
+    const before = await cellNumber(page, 'total');
+    const fix = await breakBeacon(page, 503);
+    await page.locator('.footer-refresh button').click();
+    await page.locator('.alert-warning', { hasText: "Couldn't refresh" }).waitFor();
+    assert(await cellNumber(page, 'total') === before, 'numbers changed after a failed refresh');
+    // The countdown keeps running after the error (it froze before).
+    const t0 = await page.evaluate(() => window.summaryVM.secondsToRefresh());
+    await page.waitForTimeout(2200);
+    const t1 = await page.evaluate(() => window.summaryVM.secondsToRefresh());
+    assert(t1 < t0, `countdown stuck at ${t0} after the error`);
+    await fix();
+    await page.evaluate(() => window.summaryVM.secondsToRefresh(2)); // skip the wait
+    await page.waitForFunction(() => !window.summaryVM.error(), null, { timeout: 8000 });
+    assert(!(await page.locator('.alert-warning').count()), 'warning still showing');
+    assert(!pageErrors.length, `page errors: ${pageErrors.join('; ')}`);
+  } finally {
+    await browser.close();
+  }
+});
+
+check('a failed first load tries again by itself', async () => {
+  const { browser, page, pageErrors } = await launchSummary({ ...base, failSummaryTimes: 1 });
+  try {
+    await page.locator('#summary-loading .alert-danger').waitFor();
+    const text = await page.locator('#retry-countdown').textContent();
+    assert(/^Trying again in 00:(30|29|28)$/.test(text), `retry text "${text}"`);
+    await page.evaluate(() => window.summaryVM.secondsToRefresh(2)); // skip the wait
+    await page.waitForFunction(() => !window.summaryVM.loading(), null, { timeout: 8000 });
+    assert(await cellNumber(page, 'total') > 0, 'no numbers after the retry');
+    assert(!pageErrors.length, `page errors: ${pageErrors.join('; ')}`);
+  } finally {
+    await browser.close();
+  }
+});
+
+check('a failed range switch keeps the shown dates and range button', async () => {
+  const { browser, page } = await launchSummary(base);
+  try {
+    await waitForSummary(page);
+    const dates = await page.locator('.date-box').textContent();
+    await breakBeacon(page, 500);
+    await page.locator('label[for="range-168"]').click();
+    await page.locator('.alert-warning', { hasText: "Couldn't refresh" }).waitFor();
+    await settle(page, 300);
+    assert(await page.locator('.date-box').textContent() === dates, 'date box changed for a range that failed to load');
+    assert(await page.locator('#range-launch').isChecked(), 'range button not put back');
+  } finally {
+    await browser.close();
+  }
+});
+
 check('a quick load never flashes the ring', async () => {
   const { browser, page } = await launchSummary({ ...base, summaryDelayMs: 0 });
   try {

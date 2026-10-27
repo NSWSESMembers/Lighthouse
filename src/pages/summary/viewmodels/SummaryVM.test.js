@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ko from 'knockout';
-import { SummaryVM, REFRESH_SECONDS, LOADER_DELAY_MS } from './SummaryVM.js';
+import { SummaryVM, REFRESH_SECONDS, LOADER_DELAY_MS, MAX_RETRY_SECONDS, retryDelay } from './SummaryVM.js';
 import { THEME_KEY, SOUND_KEY } from '../data/settings.js';
 
 const H = 3600 * 1000;
@@ -211,6 +211,63 @@ describe('SummaryVM', () => {
     vm.tick();
     await vm.load();
     expect(client.job.summary).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps refreshing after a failed refresh, and recovers', async () => {
+    const summary = vi.fn(async () => report({ New: 1 }));
+    const { vm } = makeVM({ summary });
+    vm.setToken('t');
+    await vm.load();
+    summary.mockImplementationOnce(async () => { throw Object.assign(new Error('x'), { status: 503 }); });
+    vm.refreshNow();
+    await vm.load();
+    expect(vm.error()).toMatch(/503/);
+    expect(vm.loading()).toBe(false); // the last numbers stay up
+    // The countdown runs on (to the first retry) and the next load clears the error.
+    for (let i = 0; i < retryDelay(1); i++) vm.tick();
+    expect(summary).toHaveBeenCalledTimes(3); // the countdown itself reloaded
+    await vm.load(); // join it
+    expect(vm.error()).toBe(null);
+    expect(vm.secondsToRefresh()).toBe(REFRESH_SECONDS);
+  });
+
+  it('retries a failed first load by itself, backing off', async () => {
+    const summary = vi.fn(async () => { throw Object.assign(new Error('x'), { status: 503 }); });
+    const { vm } = makeVM({ summary });
+    vm.setToken('t');
+    await vm.load();
+    expect(vm.secondsToRefresh()).toBe(30);
+    expect(vm.retryText()).toBe('Trying again in 00:30');
+    for (let i = 0; i < 30; i++) vm.tick();
+    expect(summary).toHaveBeenCalledTimes(2);
+    await vm.load();
+    expect(vm.secondsToRefresh()).toBe(60); // second failure: twice as long
+    summary.mockImplementation(async () => report({ New: 4 }));
+    for (let i = 0; i < 60; i++) vm.tick();
+    await vm.load();
+    expect(vm.loading()).toBe(false);
+    expect(vm.error()).toBe(null);
+  });
+
+  it('backs off up to five minutes', () => {
+    expect([0, 1, 2, 3, 4, 5, 9].map(retryDelay)).toEqual([30, 30, 60, 120, 240, 300, 300]);
+    expect(MAX_RETRY_SECONDS).toBe(300);
+  });
+
+  it('a failed range switch keeps the shown dates and puts the button back', async () => {
+    const summary = vi.fn(async () => report({ New: 1 }));
+    const { vm } = makeVM({ summary });
+    vm.setToken('t');
+    await vm.load();
+    const shown = vm.rangeText();
+    summary.mockImplementationOnce(async () => { throw Object.assign(new Error('x'), { status: 500 }); });
+    vm.rangeChoice('168');
+    await vm.load();
+    expect(vm.error()).toMatch(/500/);
+    expect(vm.rangeText()).toBe(shown);
+    expect(vm.rangeChoice()).toBe('launch');
+    await Promise.resolve();
+    expect(summary).toHaveBeenCalledTimes(2); // putting the button back didn't reload
   });
 
   it('applies and remembers the theme and sound', () => {

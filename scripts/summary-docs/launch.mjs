@@ -12,7 +12,8 @@ import { buildScenario, summaryRows } from './scenario.mjs';
 
 export { settle, BEACON_HOST };
 
-function mockBeacon(scenario, log, { failSummary, summaryDelayMs }) {
+function mockBeacon(scenario, log, { failSummary, failSummaryTimes = 0, summaryDelayMs }) {
+  let failsLeft = failSummaryTimes;
   return async (route, url) => {
     const p = url.pathname.replace(/\/+$/, '');
     let m;
@@ -23,6 +24,10 @@ function mockBeacon(scenario, log, { failSummary, summaryDelayMs }) {
     if (p === '/Api/v1/Reports/JobsSummary') {
       if (summaryDelayMs) await new Promise((resolve) => setTimeout(resolve, summaryDelayMs));
       if (failSummary) return json(route, { Message: 'Demo failure' }, failSummary);
+      if (failsLeft > 0) {
+        failsLeft--;
+        return json(route, { Message: 'Demo failure' }, 503);
+      }
       const hqs = url.searchParams.getAll('EntityIds').map(Number);
       const start = new Date(url.searchParams.get('StartDate'));
       const end = new Date(url.searchParams.get('EndDate'));
@@ -41,6 +46,7 @@ function mockBeacon(scenario, log, { failSummary, summaryDelayMs }) {
  * @param {number[]} [opts.hq]  HQ ids to open with; default all four demo units, [] for "all of NSW"
  * @param {'today'|undefined} [opts.launch]  'today': open with today's range, as Beacon's menu does
  * @param {number} [opts.failSummary]  answer JobsSummary with this HTTP status instead
+ * @param {number} [opts.failSummaryTimes]  answer the first N JobsSummary requests with a 503, then normally
  * @param {number} [opts.summaryDelayMs]  delay each JobsSummary answer (to watch the ring)
  * @param {Record<string,string>} [opts.storage]  localStorage to start with (the Settings choices)
  */

@@ -20,7 +20,7 @@ If no HQ is selected, the page covers all of NSW.
 
 ![Waiting for Beacon](images/loading.png)
 
-Beacon usually answers in well under a second. If it takes longer, a ring spins with *Asking Beacon for the incident summary…*. If Beacon hasn't answered after 10 seconds, the page says it's still waiting and offers **Load the last 24 h instead**. If Beacon can't be reached, a message says why, with a **Try again** button. A *401* error means your Beacon login has expired: open Incident Summary from Beacon again.
+Beacon usually answers in well under a second. If it takes longer, a ring spins with *Asking Beacon for the incident summary…*. If Beacon hasn't answered after 10 seconds, the page says it's still waiting and offers **Load the last 24 h instead**. If Beacon can't be reached, a message says why, with a **Try again** button. The page also tries again by itself: after 30 seconds, then less often while Beacon keeps failing (up to every 5 minutes), so a screen on the wall recovers without anyone touching it. A *401* error means your Beacon login has expired: open Incident Summary from Beacon again.
 
 ## Reading the Page
 
@@ -57,7 +57,7 @@ Chrome only lets a page play sounds once you've clicked somewhere on it, so clic
 | **As opened** / **Last 24 h** / **48 h** / **72 h** / **7 days** | The time range. **As opened** is the range the page was opened with. The others count back from now, and move forward with each refresh. |
 | Refresh (right) | Counts down to the next automatic refresh (every 30 seconds). Click it to refresh now. *Updated* shows when the numbers last came in. |
 
-If a refresh fails, a message above the footer says why, with **Try again**. The last numbers stay on screen.
+If a refresh fails, a message above the footer says why, with **Try again**. The last numbers stay on screen, with their own dates, and the page keeps trying on its own (see [Opening Incident Summary](#opening-incident-summary)). If changing the time range fails, the range buttons go back to the range on screen.
 
 ## Settings
 

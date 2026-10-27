@@ -21,9 +21,12 @@
                     <i class="fa-solid fa-triangle-exclamation me-1"></i>
                     <span data-bind="text: error"></span>
                 </div>
-                <button type="button" class="btn btn-sm btn-primary" data-bind="click: retry">
-                    <i class="fa-solid fa-rotate-right me-1"></i>Try again
-                </button>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" data-bind="click: retry">
+                        <i class="fa-solid fa-rotate-right me-1"></i>Try again
+                    </button>
+                    <span class="small text-body-secondary" id="retry-countdown" data-bind="text: retryText"></span>
+                </div>
                 <!-- /ko -->
             </div>
         </div>
