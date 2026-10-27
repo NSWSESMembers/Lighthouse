@@ -10,6 +10,15 @@
 */
 
 /**
+ * A date param, or an invalid Date when it's missing. Not new Date(null):
+ * that's 1 January 1970, which would pass isValidRange and have the page
+ * search Beacon's whole incident history.
+ */
+function dateParam(value) {
+  return value ? new Date(value) : new Date(NaN);
+}
+
+/**
  * @param {string} search  location.search, with or without the leading "?"
  * @returns {{host: string, source: string, userId: string, hqIds: string[], start: Date, end: Date}}
  */
@@ -24,8 +33,8 @@ export function parsePageParams(search) {
     source: p.get('source') || '',
     userId: p.get('userId') || 'notPassed',
     hqIds,
-    start: new Date(p.get('start')),
-    end: new Date(p.get('end')),
+    start: dateParam(p.get('start')),
+    end: dateParam(p.get('end')),
   };
 }
 

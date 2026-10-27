@@ -25,6 +25,12 @@ const APP_ORIGIN = 'http://lighthouse.demo.test';
 export const BEACON_HOST = 'https://beacon.demo.test';
 export const TIMEZONE = 'Australia/Sydney';
 
+// Beacon timestamps are offset-free Sydney local time. The browser is pinned
+// to Sydney (timezoneId below), but the mocks parse them here in Node: pin
+// Node too, or on a machine in another timezone the mock picks the wrong
+// incidents and the checks disagree with the page.
+process.env.TZ = TIMEZONE;
+
 export const json = (route, body, status = 200) =>
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
 
