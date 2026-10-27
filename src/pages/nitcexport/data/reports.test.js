@@ -37,7 +37,7 @@ describe('participantHours', () => {
 });
 
 describe('activityRows', () => {
-  it('writes the old columns, ISO times and Name[hours] participants (PR #608)', () => {
+  it('writes the old columns, ISO times and Name[hours] participants (PR #608) split by semicolons', () => {
     const rows = activityRows([task({
       Name: 'Hall #2 clean (east)',
       Tags: [{ Name: 'Training' }, { Name: 'Maintenance' }],
@@ -45,7 +45,7 @@ describe('activityRows', () => {
     })]);
     expect(rows).toEqual([[
       'Hall #2 clean (east)', '2026-10-20T18:00:00+11:00', '2026-10-20T21:00:00+11:00', 'DEM',
-      'Training,Maintenance', 2, 5.5, 'Alex Sample[2.5] Sam Example[3]',
+      'Training,Maintenance', 2, 5.5, 'Alex Sample[2.5]; Sam Example[3]',
     ]]);
     expect(ACTIVITY_HEADER).toHaveLength(rows[0].length);
   });

@@ -66,7 +66,7 @@ Click **Download CSV**. The page fetches every matching task from Beacon (100 at
 | **Tags** | The task's tags, with commas between them |
 | **TotalParticipants** | How many members took part |
 | **TotalHours** | Everyone's hours added up |
-| **Participants** | Each member with their hours in square brackets, e.g. *Alex Sample[2.5] Sam Example[3]* |
+| **Participants** | Each member with their hours in square brackets, separated by semicolons, e.g. *Alex Sample[2.5]; Sam Example[3]* |
 
 ### Member List columns
 

@@ -48,8 +48,9 @@ const personName = (person) => person?.FullName || [person?.FirstName, person?.L
 
 /**
  * Activity List rows, in the order Beacon sent the tasks (newest first).
- * Participants are written `Name[hours]` with a space between each (PR
- * #608: square brackets, as names can have round ones in them).
+ * Participants are written `Name[hours]` (PR #608: square brackets, as
+ * names can have round ones in them), separated by "; " so a spreadsheet
+ * can split them (names have spaces in them, so a space alone can't).
  *
  * @param {object[]} tasks
  * @returns {Array<Array<string|number>>}  cells in ACTIVITY_HEADER order
@@ -65,7 +66,7 @@ export function activityRows(tasks) {
       tagNames(task).join(','),
       people.length,
       roundHours(people.reduce((sum, p) => sum + p.hours, 0)),
-      people.map((p) => `${p.name}[${p.hours}]`).join(' '),
+      people.map((p) => `${p.name}[${p.hours}]`).join('; '),
     ];
   });
 }

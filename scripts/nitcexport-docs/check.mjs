@@ -70,12 +70,12 @@ check('opens with one small request: count, title, Activity List preview match B
   assert(await page.locator('#preview-table tbody tr').count() === 10, 'preview is not 10 rows');
   const first = await page.locator('#preview-table tbody tr').first().locator('td').allTextContents();
   assert(first[0] === want[0].Name, `first row "${first[0]}", expected "${want[0].Name}"`);
-  assert(/^(\S.*?\[\d+(\.\d+)?\])( \S.*?\[\d+(\.\d+)?\])*$/.test(first[7]), `participants "${first[7]}" not Name[hours]`);
+  assert(/^([^;\]]+\[\d+(\.\d+)?\])(; [^;\]]+\[\d+(\.\d+)?\])*$/.test(first[7]), `participants "${first[7]}" not Name[hours]`);
   assert((await page.locator('#download').textContent()).includes(`Download CSV (${want.length} tasks)`), 'download button text');
   assert(await page.locator('.lh-page-footer').isVisible(), 'footer hidden after loading');
 }));
 
-check('Activity List CSV: every task, old header, ISO times, Name[hours] (PR #608), # kept', () => withPage({ pageDelayMs: 300 }, async ({ page, scenario, stats }) => {
+check('Activity List CSV: every task, old header, ISO times, Name[hours]; Name[hours] (PR #608), # kept', () => withPage({ pageDelayMs: 300 }, async ({ page, scenario, stats }) => {
   await waitForNitc(page);
   const want = expectedTasks(scenario);
   const before = stats.searches;
@@ -96,7 +96,7 @@ check('Activity List CSV: every task, old header, ISO times, Name[hours] (PR #60
     assert(r[4] === t.Tags.map((g) => g.Name).join(','), `row ${i} tags "${r[4]}"`);
     assert(Number(r[5]) === t.Participants.length, `row ${i} ${r[5]} participants`);
     const parts = t.Participants.map((p) => `${p.Person.FullName}[${hoursBetween(p.StartDate, p.EndDate || t.EndDate)}]`);
-    assert(r[7] === parts.join(' '), `row ${i} participants "${r[7]}", expected "${parts.join(' ')}"`);
+    assert(r[7] === parts.join('; '), `row ${i} participants "${r[7]}", expected "${parts.join('; ')}"`);
   });
   assert(rows[1][0] === 'Hall #2 clean-up (east wing)', `"#" or brackets lost: "${rows[1][0]}"`);
   assert(rows.slice(1).every((r) => !r.some((c) => c === 'undefined' || c === 'null' || c === 'NaN' || c.includes('[object'))), 'a cell says undefined/null/NaN/[object');
