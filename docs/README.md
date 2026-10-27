@@ -6,14 +6,15 @@ These folders are published to <https://lighthouse.ses.nsw.gov.au>:
 | --- | --- |
 | `docs/lad/` | [/guides/lad/](https://lighthouse.ses.nsw.gov.au/guides/lad/), the LAD user guide |
 | `docs/stats/` | [/guides/stats/](https://lighthouse.ses.nsw.gov.au/guides/stats/), the Incident Statistics guide |
+| `docs/summary/` | [/guides/summary/](https://lighthouse.ses.nsw.gov.au/guides/summary/), the Incident Summary guide |
 | `docs/whats-new/` | [/whats-new/](https://lighthouse.ses.nsw.gov.au/whats-new/), changes in each release (the home page shows the latest three) |
 
 There are two copies of each, one per release channel:
 
 | Branch | Extension | Published at |
 | --- | --- | --- |
-| `master` | Lighthouse (Chrome Web Store release) | `/guides/lad/`, `/guides/stats/`, `/whats-new/` |
-| `master-dev` | Lighthouse Development Preview | `/preview/guides/lad/`, `/preview/guides/stats/`, `/preview/whats-new/` |
+| `master` | Lighthouse (Chrome Web Store release) | `/guides/lad/`, `/guides/stats/`, `/guides/summary/`, `/whats-new/` |
+| `master-dev` | Lighthouse Development Preview | `/preview/guides/lad/`, `/preview/guides/stats/`, `/preview/guides/summary/`, `/preview/whats-new/` |
 
 Both copies come from the same files, so you only ever write the docs once. A
 change shows up in the preview copy when it merges to `master-dev`, and in the
@@ -31,8 +32,8 @@ When a change to either folder lands on `master` or `master-dev`, the
 [Sync Docs to Website](../.github/workflows/sync_website_docs.yml) workflow copies it
 into
 [NSWSESMembers/lighthouse.ses.nsw.gov.au](https://github.com/NSWSESMembers/lighthouse.ses.nsw.gov.au):
-`master` into `guides/lad/`, `guides/stats/` and `whats-new/`, `master-dev` into
-`preview/guides/lad/`, `preview/guides/stats/` and `preview/whats-new/`. GitHub Pages then builds it with Jekyll. The page layouts
+`master` into `guides/lad/`, `guides/stats/`, `guides/summary/` and `whats-new/`, `master-dev` into
+`preview/guides/lad/`, `preview/guides/stats/`, `preview/guides/summary/` and `preview/whats-new/`. GitHub Pages then builds it with Jekyll. The page layouts
 and styles live in the website repo (`_layouts/`, `assets/site.css`), not here.
 
 So the stable guide only describes features users of the release actually have,
@@ -62,16 +63,18 @@ The comment at the top of the file has the full format.
 ## Updating the guides
 
 Update the matching guide in the **same PR** as any user-facing change to LAD
-(`docs/lad/`) or Incident Statistics (`docs/stats/`):
+(`docs/lad/`), Incident Statistics (`docs/stats/`) or Incident Summary (`docs/summary/`):
 
 1. Edit the relevant page in the guide's folder, or add a new one.
 2. Add a bullet to [What's New](whats-new/index.md), linking to the guide section.
 3. Put screenshots in the guide's `images/` folder and use kebab-case names
    (`team-expanded.png`). Crop them to the relevant part of the UI, and blur or
-   avoid real phone numbers. Both pages have a harness that captures them from
-   fake data: `npm run lad:shots` ([scripts/lad-docs](../scripts/lad-docs/README.md))
-   and `npm run stats:shots -- --out docs/stats/images`
-   ([scripts/stats-docs](../scripts/stats-docs/README.md)).
+   avoid real phone numbers. Each page has a harness that captures them from
+   fake data: `npm run lad:shots` ([scripts/lad-docs](../scripts/lad-docs/README.md)),
+   `npm run stats:shots -- --out docs/stats/images`
+   ([scripts/stats-docs](../scripts/stats-docs/README.md)) and
+   `npm run summary:shots -- --out docs/summary/images`
+   ([scripts/summary-docs](../scripts/summary-docs/README.md)).
 
 ## Conventions
 
@@ -89,8 +92,8 @@ Update the matching guide in the **same PR** as any user-facing change to LAD
   GitHub, and Pages rewrites them to `.html`.
 - Mark a missing or outdated screenshot with `<!-- TODO: screenshot of ... -->` so
   it's easy to find with grep.
-- Don't add a `README.md` inside `docs/lad/`, `docs/stats/` or `docs/whats-new/`.
-  Jekyll would publish it as a page.
+- Don't add a `README.md` inside `docs/lad/`, `docs/stats/`, `docs/summary/` or
+  `docs/whats-new/`. Jekyll would publish it as a page.
 
 ## Previewing locally
 
@@ -99,6 +102,7 @@ Check out the website repo next to this one, then:
 ```sh
 rsync -a --delete docs/lad/ ../lighthouse.ses.nsw.gov.au/guides/lad/
 rsync -a --delete docs/stats/ ../lighthouse.ses.nsw.gov.au/guides/stats/
+rsync -a --delete docs/summary/ ../lighthouse.ses.nsw.gov.au/guides/summary/
 rsync -a --delete docs/whats-new/ ../lighthouse.ses.nsw.gov.au/whats-new/
 # or, to preview the Development Preview copy, sync into preview/guides/lad/ and
 # preview/whats-new/ instead and add a _data/lad_guide_preview.yml stamp

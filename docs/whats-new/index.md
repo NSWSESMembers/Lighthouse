@@ -18,9 +18,11 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
-## A new Incident Statistics page
+## New Incident Statistics and Incident Summary pages
 
 *27 October 2026*
+
+### Incident Statistics
 
 - **Job Statistics is now Incident Statistics, rebuilt.** It has the same charts, with a cleaner layout that fits any window size and follows your computer's light or dark mode. It's in the Lighthouse menu in Beacon as **Incident Statistics**. See the [Incident Statistics guide](https://lighthouse.ses.nsw.gov.au/guides/stats/).
 - **Sleeker, easier-to-read charts.** The pie charts are now donuts with a legend that lists each slice's count and percentage. Hover over a slice or a legend row to highlight both and see the details in the middle. No two slices in a chart share a colour. See [Breakdown](https://lighthouse.ses.nsw.gov.au/guides/stats/#breakdown).
@@ -34,6 +36,16 @@ The home page shows the first three `##` entries, so keep the title short.
 - The latest incidents table shows each incident's status, and an incident that isn't closed yet shows a dash instead of a blank.
 - **See how far a load has got.** While incidents load, a ring counts them as they arrive (e.g. *9,200 of 20,316 incidents*), with the page it's on and the time left. If Beacon is slow to answer, it says so and offers to load the last 24 hours instead. See [Loading](https://lighthouse.ses.nsw.gov.au/guides/stats/#loading).
 - If Beacon can't be reached, the page now says why and offers **Try again**, instead of a red progress bar.
+
+### Incident Summary
+
+- **Job Summary is now Incident Summary, refreshed.** Same layout and colours, with numbers that fit the window, from a phone to a wall screen. The text is now Atkinson Hyperlegible, a typeface designed to keep look-alike characters (1, l and I; 0 and O) apart, so it's easier to read from across the room. It's in the Lighthouse menu in Beacon as **Incident Summary**. See the [Incident Summary guide](https://lighthouse.ses.nsw.gov.au/guides/summary/).
+- **The boxes are coloured by Beacon, as in LAD:** orange for Beacon, green for Train Beacon and blue for Dev Beacon.
+- **New incidents light up.** When a refresh finds more New incidents, the New number is highlighted for a few seconds, as well as playing your alert sound. See [New Incidents](https://lighthouse.ses.nsw.gov.au/guides/summary/#new-incidents).
+- **Pick the time range from the footer:** as opened, the last 24, 48 or 72 hours, or the last 7 days.
+- **Simpler colour settings:** follow your computer's light or dark mode, or keep it Light or Dark. Your old theme carries over. The sound setting now has a **Test** button. See [Settings](https://lighthouse.ses.nsw.gov.au/guides/summary/#settings).
+- If Beacon is slow or can't be reached, the page now says so and offers **Try again**, instead of a red progress bar. It also keeps trying by itself, so a wall screen recovers when Beacon comes back. A failed refresh keeps the last numbers on screen.
+- The page no longer stops loading when Beacon's report leaves out an incident type.
 
 ## LAD arrival times, overlay status and street zoom
 

@@ -27,7 +27,10 @@
     "lad:samples": "node scripts/lad-docs/fetch-samples.mjs",
     "stats:demo": "node scripts/stats-docs/demo.mjs",
     "stats:shots": "node scripts/stats-docs/capture.mjs",
-    "stats:check": "node scripts/stats-docs/check.mjs"
+    "stats:check": "node scripts/stats-docs/check.mjs",
+    "summary:demo": "node scripts/summary-docs/demo.mjs",
+    "summary:shots": "node scripts/summary-docs/capture.mjs",
+    "summary:check": "node scripts/summary-docs/check.mjs"
   },
   "husky": {
     "hooks": {
@@ -43,6 +46,7 @@
   "browserslist": "> 0.25%, not dead",
   "dependencies": {
     "@babel/runtime": "^8.0.7",
+    "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/signalr": "^10.0.11",
     "@tmcw/togeojson": "^5.7.0",
