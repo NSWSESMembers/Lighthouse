@@ -412,6 +412,19 @@ check('a filtered pie shows its selected count in the middle', async () => {
   }
 });
 
+check('the header links to the guide (preview copy in a Development build)', async () => {
+  for (const [watermark, expected] of [[false, 'https://lighthouse.ses.nsw.gov.au/guides/stats/'], [true, 'https://lighthouse.ses.nsw.gov.au/preview/guides/stats/']]) {
+    const { browser, page } = await launchStats({ now: NOW, verbose, watermark });
+    try {
+      await waitForStats(page, { cloud: false });
+      const href = await page.locator('.stats-header a.guide-link').getAttribute('href');
+      assert(href === expected, `guide link ${href}, expected ${expected}`);
+    } finally {
+      await browser.close();
+    }
+  }
+});
+
 check('dark mode follows the OS setting', async () => {
   const { browser, page } = await launchStats({ now: NOW, verbose, dark: true });
   try {

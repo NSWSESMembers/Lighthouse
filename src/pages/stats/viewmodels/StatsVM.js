@@ -54,6 +54,7 @@ export function StatsVM(deps) {
     const launchRange = { start: params.start, end: params.end };
 
     self.source = params.source;
+    self.guideUrl = deps.guideUrl || "https://lighthouse.ses.nsw.gov.au/guides/stats/";
 
     // Token arrives from chrome.storage (setToken) after construction.
     self.token = ko.observable("");

@@ -18,6 +18,8 @@ Incident Statistics shows how many incidents an HQ has had over a period, what k
 
 If no HQ is selected, the page covers all of NSW.
 
+The **Guide** button at the top right of the page opens this guide.
+
 ## Loading
 
 ![Loading incidents](images/loading.png)

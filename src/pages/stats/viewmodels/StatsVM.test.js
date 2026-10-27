@@ -70,6 +70,12 @@ describe('StatsVM', () => {
     expect(vm.pageTitle()).toBe('Incident Statistics: Demo City');
   });
 
+  it('links to the stats guide (the stable copy unless told otherwise)', () => {
+    expect(makeVM().vm.guideUrl).toBe('https://lighthouse.ses.nsw.gov.au/guides/stats/');
+    const vm = new StatsVM({ params, client: {}, charts: fakeCharts(), guideUrl: 'https://x.test/preview/guides/stats/' });
+    expect(vm.guideUrl).toBe('https://x.test/preview/guides/stats/');
+  });
+
   it('does not reload when the token is renewed', async () => {
     const { vm, client } = makeVM();
     vm.setToken('a');

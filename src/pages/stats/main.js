@@ -48,8 +48,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let vm = null;
         const charts = new StatsCharts({ onFiltered: () => vm && vm.syncFromCharts() });
+        // Development Preview builds open the preview copy of the guide
+        // (synced from master-dev), as LAD's "User guide" link does.
+        const isDevBuild = (chrome.runtime.getManifest().name || '').includes('Development');
         vm = new StatsVM({
             params,
+            guideUrl: `https://lighthouse.ses.nsw.gov.au/${isDevBuild ? 'preview/' : ''}guides/stats/`,
             client: BeaconClient,
             charts,
             clusters: () => loadClusters('../resources/unitClusters.json'),
