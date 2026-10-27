@@ -275,53 +275,72 @@ function HackTheMatrix(id, host, progressBar) {
         //console.log(key)
         switch (key) {
           case 'JobReceived':
-            var rawdate = parseISOLocal(d.JobReceived);
-            rawValue = rawdate;
+            // Export dates as YYYY-MM-DD HH:mm:ss, e.g. 2026-10-03 08:55:20
+            // Balances human readability with reliable Excel and Power Query date recognition
+            rawValue = moment(
+              parseISOLocal(d.JobReceived)
+            ).format('YYYY-MM-DD HH:mm:ss');
             break;
           case 'Tags':
             rawValue = d.Tags.map(function(d) {
-              return d.Name
+              return d.Name;
             }).join(',');
             break;
-            case 'Categories':
-              rawValue = d.Categories.map(function(d) {
-                return d.Name
-              }).join(',');
-              break;
-            case 'FloodRescueCategories':
-              if (d.Categories.length > 0) {
-                console.log(d.Categories)
-              rawValue = d.Categories[0].Id - 8 //just because it is.
-              }
-              break;  
+          case 'Categories':
+            rawValue = d.Categories.map(function(d) {
+              return d.Name;
+            }).join(',');
+            break;
+          case 'FloodRescueCategories':
+            if (d.Categories.length > 0) {
+              console.log(d.Categories);
+              rawValue = d.Categories[0].Id - 8; // just because it is
+            }
+            break;
           case 'JobAcknowledged':
-            _.each(d.JobStatusTypeHistory.reverse(), function(history) {
+            _.each([...d.JobStatusTypeHistory].reverse(), function(history) {
               if (history.Name == 'Active') {
-                var rawdate = new Date(history.Timelogged);
-                rawValue = rawdate;
+                rawValue = moment(
+                  parseISOLocal(history.Timelogged)
+                ).format('YYYY-MM-DD HH:mm:ss');
                 return false;
               }
-            })
+            });
             break;
           case 'JobCompleted':
             _.each(d.JobStatusTypeHistory, function(history) {
               if (history.Name == 'Complete') {
-                var rawdate = new Date(history.Timelogged);
-                rawValue = rawdate;
+                rawValue = moment(
+                  parseISOLocal(history.Timelogged)
+                ).format('YYYY-MM-DD HH:mm:ss');
                 return false;
               }
-            })
+            });
             break;
           case 'JobFinalised':
             _.each(d.JobStatusTypeHistory, function(history) {
               if (history.Name == 'Finalised') {
-                var rawdate = new Date(history.Timelogged);
-                rawValue = rawdate;
+                rawValue = moment(
+                  parseISOLocal(history.Timelogged)
+                ).format('YYYY-MM-DD HH:mm:ss');
                 return false;
               }
-            })
+            });
             break;
         }
+
+        if (rawValue == null || rawValue === '') {
+          jobRow.push('');
+          return; // Continue to next item
+        }
+
+        jobRow.push(rawValue);
+      });
+
+      return jobRow;
+    });
+
+
         if (rawValue == null || rawValue === '') {
           jobRow.push('');
           return; // Continue to next item
