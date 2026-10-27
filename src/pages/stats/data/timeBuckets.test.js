@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import crossfilter from 'crossfilter2';
-import { bucketFor, closedOrPlaceholder, cumulativeGroup, withoutEmptyBins, roundUp, NOT_CLOSED } from './timeBuckets.js';
+import { bucketFor, closedBucket, cumulativeGroup, withoutEmptyBins, roundUp, NOT_CLOSED } from './timeBuckets.js';
 
 const day = (n) => new Date(Date.UTC(2026, 9, n));
 
@@ -20,17 +20,29 @@ describe('bucketFor', () => {
   });
 });
 
-describe('closedOrPlaceholder', () => {
-  it('stands in for open jobs', () => {
-    expect(closedOrPlaceholder({ closed: null })).toBe(NOT_CLOSED);
-    expect(closedOrPlaceholder({ closed: day(3) })).toEqual(day(3));
+describe('closedBucket', () => {
+  // Like a day floor in Sydney: moves every date, the placeholder included.
+  const shiftingFloor = (d) => new Date(+d - 10 * 3600 * 1000);
+
+  it('floors close times and keeps open incidents on the placeholder', () => {
+    const key = closedBucket(shiftingFloor);
+    expect(key({ closed: null })).toBe(NOT_CLOSED);
+    expect(key({ closed: day(3) })).toEqual(new Date(+day(3) - 10 * 3600 * 1000));
+  });
+
+  it('never moves the placeholder, so open incidents stay out of the running total', () => {
+    const facts = [{ closed: day(1) }, { closed: null }, { closed: null }, { closed: day(3) }];
+    const dim = crossfilter(facts).dimension(closedBucket(shiftingFloor));
+    const totals = cumulativeGroup(dim.group()).all();
+    expect(totals.at(-1).value).toBe(2);
+    expect(totals.some((d) => +d.key < +day(1) - 86400000)).toBe(false);
   });
 });
 
 describe('cumulativeGroup', () => {
   it('runs totals over time, skipping still-open jobs', () => {
     const facts = [{ closed: day(1) }, { closed: day(1) }, { closed: null }, { closed: day(3) }];
-    const dim = crossfilter(facts).dimension(closedOrPlaceholder);
+    const dim = crossfilter(facts).dimension(closedBucket((d) => d));
     const out = cumulativeGroup(dim.group()).all();
     expect(out).toEqual([
       { key: day(1), value: 2 },

@@ -160,6 +160,125 @@ check('a 30-day launch range uses daily buckets', async () => {
   }
 });
 
+/** The running totals' last values and the facts they should match, read from the page. */
+const runningTotals = (page) => page.evaluate(() => {
+  const c = window.statsCharts;
+  const [received, closed] = c.charts.running.children().map((ch) => ch.group().all().at(-1)?.value ?? 0);
+  const facts = c.filteredFacts();
+  const domainStart = +c.charts.closed.x().domain()[0];
+  return {
+    received,
+    closed,
+    expectReceived: facts.length,
+    expectClosed: facts.filter((f) => f.closed).length,
+    closedBarsBeforeRange: c.charts.closed.group().all().filter((d) => +d.key < domainStart && d.value).length,
+  };
+});
+
+async function brushReceived(page, from, to) {
+  const plot = page.locator('#chart-received g.chart-body');
+  await plot.scrollIntoViewIfNeeded();
+  const box = await plot.boundingBox();
+  await page.mouse.move(box.x + box.width * from, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * to, box.y + box.height / 2, { steps: 8 });
+  await page.mouse.up();
+  await settle(page, 600);
+}
+
+for (const [label, hours] of [['hourly (72 h)', 72], ['daily (30 days)', 24 * 30]]) {
+  check(`running totals count only closed incidents, and follow the received brush: ${label}`, async () => {
+    const { browser, page, pageErrors } = await launchStats({ now: NOW, verbose, hours });
+    try {
+      await waitForStats(page, { cloud: false });
+      const all = await runningTotals(page);
+      assert(all.closed === all.expectClosed, `closed total ${all.closed}, ${all.expectClosed} incidents closed`);
+      assert(all.received === all.expectReceived, `received total ${all.received}, expected ${all.expectReceived}`);
+      assert(all.closedBarsBeforeRange === 0, `${all.closedBarsBeforeRange} closed bars before the range (open incidents)`);
+      await brushReceived(page, 0.55, 0.9);
+      const brushed = await runningTotals(page);
+      assert(brushed.expectReceived < all.expectReceived, 'brush selected everything');
+      assert(brushed.received === brushed.expectReceived, `brushed: received line ${brushed.received}, ${brushed.expectReceived} selected`);
+      assert(brushed.closed === brushed.expectClosed, `brushed: closed line ${brushed.closed}, ${brushed.expectClosed} selected and closed`);
+      assert(!pageErrors.length, `page errors: ${pageErrors.join('; ')}`);
+    } finally {
+      await browser.close();
+    }
+  });
+}
+
+check('a chart with more keys than colours never shows two slices alike', async () => {
+  const { browser, page, pageErrors } = await launchStats({ now: NOW, verbose, hours: 24 * 7 });
+  const dupes = () => page.$$eval('.pie-legend', (legends) => legends.map((l) => {
+    const colours = [...l.querySelectorAll('.pie-legend-swatch')].map((x) => x.style.backgroundColor);
+    return colours.length !== new Set(colours).size ? `${l.id}: ${colours.join(' ')}` : null;
+  }).filter(Boolean));
+  try {
+    await waitForStats(page, { cloud: false });
+    const localities = await page.evaluate(() => new Set(window.statsCharts.filteredFacts().map((f) => f.locality)).size);
+    assert(localities > 18, `only ${localities} localities in the demo data`);
+    // Every row, Others included, fits a default-size card without scrolling.
+    const overflowing = await page.$$eval('.pie-legend', (ls) => ls.filter((l) => l.scrollHeight > l.clientHeight + 1).map((l) => l.id));
+    assert(!overflowing.length, `legends scroll: ${overflowing.join(', ')}`);
+    // Filtering by each unit brings a different set of localities into view.
+    const units = await page.locator('#legend-unit .pie-legend-row').count();
+    for (let i = 0; i < units; i++) {
+      await page.locator('#legend-unit .pie-legend-row').nth(i).click();
+      await settle(page, 300);
+      const found = await dupes();
+      assert(!found.length, `with unit ${i} selected: ${found.join(' | ')}`);
+      await page.locator('#legend-unit .pie-legend-row').nth(i).click();
+      await settle(page, 300);
+    }
+    assert(!pageErrors.length, `page errors: ${pageErrors.join('; ')}`);
+  } finally {
+    await browser.close();
+  }
+});
+
+check('legends act on the new charts after switching between daily and hourly', async () => {
+  const { browser, page, pageErrors } = await launchStats({ now: NOW, verbose, hours: 24 * 30 });
+  try {
+    await waitForStats(page, { cloud: false });
+    await page.locator('label[for="range-24"]').click();
+    await page.waitForFunction(() => window.statsVM.receivedTitle() === 'Incidents received per hour' && !window.statsVM.refreshing());
+    await settle(page, 500);
+    await page.locator('#legend-type .pie-legend-row').first().click();
+    await settle(page, 500);
+    const s = await page.evaluate(() => ({
+      filtered: window.statsVM.filteredCount(),
+      total: window.statsVM.totalCount(),
+      typeFiltered: window.statsCharts.isFiltered('type'),
+      rows: document.querySelectorAll('#legend-type .pie-legend-row').length,
+      bars: window.statsCharts.charts.type.data().length,
+    }));
+    assert(s.typeFiltered && s.filtered < s.total, `legend click didn't filter the new chart: ${JSON.stringify(s)}`);
+    assert(s.rows === s.bars, `legend has ${s.rows} rows for ${s.bars} slices`);
+    assert(!pageErrors.length, `page errors: ${pageErrors.join('; ')}`);
+  } finally {
+    await browser.close();
+  }
+});
+
+check('a failed range switch keeps the old range on screen', async () => {
+  const { browser, page, pageErrors } = await launchStats({ now: NOW, verbose });
+  try {
+    await waitForStats(page, { cloud: false });
+    const before = await page.evaluate(() => ({ heading: window.statsVM.rangeText(), total: window.statsVM.totalCount() }));
+    // Make the next search fail, then switch range.
+    await page.route('**/Api/v1/Jobs/Search**', (route) => route.fulfill({ status: 500, body: '{}' }));
+    await page.locator('label[for="range-24"]').click();
+    await page.waitForFunction(() => window.statsVM.error());
+    await settle(page, 300);
+    const after = await page.evaluate(() => ({ heading: window.statsVM.rangeText(), total: window.statsVM.totalCount(), choice: window.statsVM.rangeChoice() }));
+    assert(after.heading === before.heading && after.total === before.total, `heading/data changed: ${JSON.stringify({ before, after })}`);
+    assert(after.choice === 'launch' && await page.locator('#range-launch').isChecked(), `range button left on ${after.choice}`);
+    assert(!pageErrors.length, `page errors: ${pageErrors.join('; ')}`);
+  } finally {
+    await browser.close();
+  }
+});
+
 check('a filter survives a refresh', async () => {
   const { browser, page, pageErrors } = await launchStats({ now: NOW, verbose });
   try {

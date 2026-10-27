@@ -25,6 +25,16 @@ describe('parsePageParams', () => {
   it('gives invalid dates when start/end are missing', () => {
     expect(isValidRange(parsePageParams(''))).toBe(false);
   });
+
+  it('rejects a range with only one end, rather than starting it in 1970', () => {
+    // new Date(null) is 1 Jan 1970: with a real end that made a valid range
+    // over Beacon's whole history.
+    const noStart = parsePageParams('end=2026-10-15T00%3A00%3A00.000Z');
+    expect(isNaN(noStart.start)).toBe(true);
+    expect(isValidRange(noStart)).toBe(false);
+    expect(isValidRange(parsePageParams('start=2026-10-14T00%3A00%3A00.000Z'))).toBe(false);
+    expect(isValidRange(parsePageParams('start=&end=2026-10-15T00%3A00%3A00.000Z'))).toBe(false);
+  });
 });
 
 describe('rangeForChoice', () => {

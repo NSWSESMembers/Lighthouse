@@ -37,11 +37,13 @@ export const CLUSTERS = {
   'Demo Point': { clusterCode: 'DSC', clusterName: 'Demo South' },
 };
 
+// 28 localities: more than the 18 pie colours, so the Locality chart has to
+// keep the slices it shows distinct (pieColors fit) -- check.mjs relies on it.
 const LOCALITIES = {
-  9001: ['Demo City', 'Northvale', 'Eastbrook'],
-  9002: ['Demo Heights', 'Hillcrest', 'Ridgeway'],
-  9003: ['Demo Vale', 'Riverside Park', 'Westmere'],
-  9004: ['Demo Point', 'Harbourview', 'Sandy Cove'],
+  9001: ['Demo City', 'Northvale', 'Eastbrook', 'Maple Flat', 'Copper Hill', 'Stonebridge', 'Larkspur'],
+  9002: ['Demo Heights', 'Hillcrest', 'Ridgeway', 'Fernlea', 'Oakmere', 'Windy Gap', 'Bramble Park'],
+  9003: ['Demo Vale', 'Riverside Park', 'Westmere', 'Reedy Creek', 'Millbrook', 'Heron Point', 'Kestrel Downs'],
+  9004: ['Demo Point', 'Harbourview', 'Sandy Cove', 'Gull Rock', 'Pebble Bay', 'Saltmarsh', 'Lantern Head'],
 };
 // Each unit's first locality is in one fake LGA, the rest in another.
 const LGAS = {

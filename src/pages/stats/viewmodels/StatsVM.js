@@ -220,6 +220,11 @@ export function StatsVM(deps) {
     // ---- loading --------------------------------------------------------
 
     let inFlight = null;
+    // The range choice whose incidents are on screen. `range` (the heading)
+    // only changes when a load succeeds; a failed switch puts the toolbar
+    // back to this choice, so the buttons, heading and charts always agree.
+    let shownChoice = self.rangeChoice();
+    let skipReloadFor = null;
 
     function ctx(extra) {
         return { host: params.host, userId: params.userId, token: self.token(), ...extra };
@@ -237,8 +242,11 @@ export function StatsVM(deps) {
 
         const controller = new AbortController();
         const firstLoad = !charts.built;
-        const range = rangeForChoice(launchRange, self.rangeChoice(), now());
-        self.range(range);
+        const choice = self.rangeChoice();
+        const range = rangeForChoice(launchRange, choice, now());
+        // Nothing is on screen yet on the first load, so the heading can show
+        // what's loading. After that it waits for the data.
+        if (firstLoad) self.range(range);
         self.error(null);
         if (firstLoad) {
             self.loading(true);
@@ -283,6 +291,8 @@ export function StatsVM(deps) {
             }
             self.events(result.events);
             charts.load(result.facts, range.start, range.end);
+            self.range(range);
+            shownChoice = choice;
             self.syncFromCharts();
             self.loadedAt(now());
             self.loading(false);
@@ -296,6 +306,12 @@ export function StatsVM(deps) {
                 if (controller.signal.aborted) return;
                 console.error("Incident statistics load failed", err);
                 self.error(errorText(err, "Incident Statistics"));
+                if (charts.built && self.rangeChoice() !== shownChoice) {
+                    // Switching range failed: the old range's charts are still
+                    // up, so put its button back (without loading it again).
+                    skipReloadFor = shownChoice;
+                    self.rangeChoice(shownChoice);
+                }
             } finally {
                 if (inFlight && inFlight.controller === controller) {
                     inFlight = null;
@@ -329,7 +345,11 @@ export function StatsVM(deps) {
         }
     };
 
-    self.rangeChoice.subscribe(() => {
+    self.rangeChoice.subscribe((value) => {
+        if (skipReloadFor !== null && value === skipReloadFor) {
+            skipReloadFor = null;
+            return;
+        }
         if (self.token()) self.load({ replace: true });
     });
 

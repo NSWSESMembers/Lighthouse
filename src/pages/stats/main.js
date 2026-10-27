@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
             renderWordCloud,
         });
         window.statsVM = vm; // for the stats-docs harness and the console
+        window.statsCharts = charts;
 
         ko.applyBindings(vm);
         ko.tasks.runEarly(); // the breakdown cards must be in the DOM for the grids

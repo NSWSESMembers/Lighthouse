@@ -13,7 +13,7 @@ import { buildScenario } from './scenario.mjs';
 
 export { settle, BEACON_HOST };
 
-/** Beacon timestamps are offset-free Sydney local time; the browser is pinned to Sydney too. */
+/** Beacon timestamps are offset-free Sydney local time; launchPage.mjs pins Node and the browser to Sydney. */
 const beaconDate = (s) => new Date(s);
 
 function mockBeacon(scenario, log) {

@@ -19,11 +19,16 @@ export const OTHERS_LABEL = 'Others';
 /**
  * Colour per key for one chart. Keys get colours in the order first seen,
  * so passing them biggest-first gives the big slices the strong colours,
- * and a key keeps its colour across filtering and refreshes. Within one
- * chart no two keys share a colour until 18 have been seen.
+ * and a key keeps its colour across filtering and refreshes.
+ *
+ * A chart can have far more keys than colours (Locality, Assigned Unit), so
+ * colours repeat across keys. Before each render, call `fit()` with the keys
+ * about to be shown: any shown key whose colour a bigger shown slice already
+ * has moves to a free colour, so the slices on screen never share one. At
+ * most 10 slices show (9 + Others), against 18 colours.
  *
  * @param {string[]} [initialKeys]  keys to assign first (largest first)
- * @returns {(key: string) => string}
+ * @returns {((key: string) => string) & {fit: (shownKeys: string[]) => void}}
  */
 export function pieColors(initialKeys = []) {
   const assigned = new Map();
@@ -31,6 +36,23 @@ export function pieColors(initialKeys = []) {
     if (key === OTHERS_LABEL) return OTHERS_COLOR;
     if (!assigned.has(key)) assigned.set(key, PIE_PALETTE[assigned.size % PIE_PALETTE.length]);
     return assigned.get(key);
+  };
+  colorFor.fit = (shownKeys) => {
+    const taken = new Set();
+    for (const key of shownKeys) {
+      if (key === OTHERS_LABEL) continue;
+      const current = colorFor(key);
+      if (!taken.has(current)) {
+        taken.add(current);
+        continue;
+      }
+      // Clashes with a bigger slice on screen: prefer a colour no key has yet.
+      const inUse = new Set(assigned.values());
+      const free = PIE_PALETTE.find((c) => !taken.has(c) && !inUse.has(c))
+        || PIE_PALETTE.find((c) => !taken.has(c));
+      assigned.set(key, free);
+      taken.add(free);
+    }
   };
   initialKeys.forEach(colorFor);
   return colorFor;
@@ -101,10 +123,7 @@ export function decoratePie(chart, { legendEl, noun }) {
       .join((enter) => {
         const row = enter.append('button')
           .attr('type', 'button')
-          .attr('class', 'pie-legend-row')
-          .on('mouseenter', (_e, d) => setHover(d.name))
-          .on('mouseleave', () => setHover(null))
-          .on('click', (_e, d) => chart.legendToggle(d));
+          .attr('class', 'pie-legend-row');
         row.append('span').attr('class', 'pie-legend-swatch');
         row.append('span').attr('class', 'pie-legend-name');
         row.append('span').attr('class', 'pie-legend-count');
@@ -112,6 +131,10 @@ export function decoratePie(chart, { legendEl, noun }) {
         return row;
       })
       .order()
+      // On every row, new or reused, so they always act on this chart.
+      .on('mouseenter', (_e, d) => setHover(d.name))
+      .on('mouseleave', () => setHover(null))
+      .on('click', (_e, d) => chart.legendToggle(d))
       .classed('is-selected', (d) => filters.includes(String(d.name)))
       .classed('is-deselected', (d) => anySelected && !filters.includes(String(d.name)))
       .attr('title', (d) => `${d.name}: ${d.data.toLocaleString()} (${percentText(d.data, total)})`)

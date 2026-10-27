@@ -17,7 +17,7 @@ import { scaleTime, scaleLinear, schemeTableau10 } from 'd3';
 import { BREAKDOWNS, chartElementId, legendElementId } from './breakdowns.js';
 import { pieColors, decoratePie, OTHERS_LABEL } from './pieStyle.js';
 import {
-  bucketFor, closedOrPlaceholder, cumulativeGroup, withoutEmptyBins, roundUp, NOT_CLOSED,
+  bucketFor, closedBucket, cumulativeGroup, withoutEmptyBins, roundUp, NOT_CLOSED,
 } from '../data/timeBuckets.js';
 
 const HOUR_MS = 3600 * 1000;
@@ -77,6 +77,12 @@ export class StatsCharts {
       const el = c.anchor();
       if (el && el.replaceChildren) el.replaceChildren();
     });
+    // The pie legends sit beside their charts, not in them: clear those too,
+    // or the new charts reuse rows wired to the old ones.
+    for (const b of BREAKDOWNS) {
+      const legend = document.getElementById(legendElementId(b.key));
+      if (legend) legend.replaceChildren();
+    }
     chartRegistry.clear();
     this.charts = {};
     this.ndx = null;
@@ -141,6 +147,10 @@ export class StatsCharts {
     const dimension = this.ndx.dimension(accessor, !!multi);
     const group = dimension.group();
     const chart = pieChart('#' + chartElementId(key));
+    const colors = pieColors(group.top(Infinity).map((d) => d.key));
+    const fitColors = () => colors.fit(chart.data().map((d) => d.key));
+    chart.on('preRender.colors', fitColors);
+    chart.on('preRedraw.colors', fitColors);
     chart
       .useViewBoxResizing(true)
       .width(PIE.size)
@@ -149,8 +159,9 @@ export class StatsCharts {
       .innerRadius(PIE.innerRadius)
       .dimension(dimension)
       .group(group)
-      // Its own colours per chart, biggest slices first, so no two slices match.
-      .colors(pieColors(group.top(Infinity).map((d) => d.key)))
+      // Its own colours per chart, biggest slices first; fit() before each
+      // draw keeps the slices on screen distinct (see pieColors).
+      .colors(colors)
       .slicesCap(SLICES)
       .othersLabel(OTHERS_LABEL)
       .renderLabel(false)
@@ -161,8 +172,9 @@ export class StatsCharts {
 
   _timeCharts(start, end) {
     const { floor, units: xUnits } = this.bucket;
+    const closedKey = closedBucket(floor);
     const receivedDim = this.ndx.dimension((f) => floor(f.received));
-    const closedDim = this.ndx.dimension((f) => floor(closedOrPlaceholder(f)));
+    const closedDim = this.ndx.dimension(closedKey);
     const receivedGroup = receivedDim.group();
     const closedGroup = closedDim.group();
     const closedOnly = {
@@ -186,6 +198,13 @@ export class StatsCharts {
     this.charts.received = bar('chart-received', receivedDim, receivedGroup);
     this.charts.closed = bar('chart-closed', closedDim, closedOnly);
 
+    // The running totals get dimensions of their own. A crossfilter group
+    // ignores its own dimension's filter, so sharing the bar charts' ones
+    // left each line deaf to its own chart's brush (brush Received and only
+    // the Closed line changed).
+    const runReceivedGroup = this.ndx.dimension((f) => floor(f.received)).group();
+    const runClosedGroup = this.ndx.dimension(closedKey).group();
+
     const running = compositeChart('#chart-running');
     running
       .useViewBoxResizing(true)
@@ -201,12 +220,12 @@ export class StatsCharts {
       .compose([
         lineChart(running)
           .dimension(receivedDim)
-          .group(cumulativeGroup(receivedGroup), 'Received (running total)')
+          .group(cumulativeGroup(runReceivedGroup), 'Received (running total)')
           .colors('#d62728')
           .renderDataPoints({ radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8 }),
         lineChart(running)
           .dimension(closedDim)
-          .group(cumulativeGroup(closedGroup), 'Closed (running total)')
+          .group(cumulativeGroup(runClosedGroup), 'Closed (running total)')
           .colors('#1f77b4')
           .dashStyle([5, 2])
           .renderDataPoints({ radius: 2, fillOpacity: 0.8, strokeOpacity: 0.8 }),

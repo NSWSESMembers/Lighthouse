@@ -154,7 +154,8 @@
   align-items: center;
   gap: .5rem;
   width: 100%;
-  padding: .15rem .4rem;
+  padding: .05rem .4rem; /* 9 slices + Others fit a default-height card */
+  line-height: 1.35;
   border: 0;
   border-radius: .35rem;
   background: transparent;

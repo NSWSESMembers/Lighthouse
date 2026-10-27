@@ -192,6 +192,40 @@ describe('StatsVM', () => {
     expect(NOW - start).toBe(24 * H);
   });
 
+  it('keeps the heading and range buttons on the old range when switching fails', async () => {
+    let fail = false;
+    const search = vi.fn(async () => {
+      if (fail) throw Object.assign(new Error('x'), { status: 500 });
+      return { results: [beaconJob(1)] };
+    });
+    const { vm, charts } = makeVM({ search });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vm.setToken('t');
+    await vm.load();
+    const shown = vm.range();
+    const heading = vm.rangeText();
+    fail = true;
+    vm.rangeChoice('24');
+    await vm.load();
+    expect(vm.error()).toMatch(/500/);
+    expect(vm.range()).toBe(shown);
+    expect(vm.rangeText()).toBe(heading);
+    expect(vm.rangeChoice()).toBe('launch');
+    // Putting the button back doesn't load the old range again.
+    expect(search).toHaveBeenCalledTimes(2);
+    expect(charts.load).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the new range in the heading once it has loaded', async () => {
+    const { vm } = makeVM();
+    vm.setToken('t');
+    await vm.load();
+    vm.rangeChoice('24');
+    await vm.load();
+    expect(NOW - vm.range().start).toBe(24 * H);
+    expect(vm.rangeChoice()).toBe('24');
+  });
+
   it('counts down and refreshes when the timer runs out', async () => {
     const { vm, client } = makeVM();
     vm.setToken('t');

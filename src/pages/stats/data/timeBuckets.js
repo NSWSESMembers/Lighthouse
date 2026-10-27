@@ -25,7 +25,15 @@ export function bucketFor(start, end) {
     : { label: 'Day', floor: timeDay, units: timeDays };
 }
 
-export const closedOrPlaceholder = (fact) => fact.closed || NOT_CLOSED;
+/**
+ * Bucket key for when an incident closed: its close time floored to the
+ * bucket, or NOT_CLOSED itself while it's open. The placeholder is never
+ * floored -- a Sydney-time day floor moves it, and open incidents would then
+ * slip past the NOT_CLOSED filters and count as closed.
+ *
+ * @param {(d: Date) => Date} floor  bucketFor(...).floor
+ */
+export const closedBucket = (floor) => (fact) => (fact.closed ? floor(fact.closed) : NOT_CLOSED);
 
 /**
  * Wraps a crossfilter group so all() returns running totals, skipping the
