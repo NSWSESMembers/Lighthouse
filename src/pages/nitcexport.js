@@ -114,7 +114,7 @@ function HackTheMatrix(progressBar) {
                 numParticipants++;
                 var hours = parseFloat((Math.abs(new Date(p.EndDate) - new Date(p.StartDate)) / 36e5).toFixed(2));
                 totalHours += hours;
-                participants +=  p.Person.FullName + "(" + hours.toString() + ") ";
+                participants +=  p.Person.FullName + "[" + hours.toString() + "] ";
             });
             var rObj = {};
             rObj["Name"] = d.Name.replaceAll('#','');
