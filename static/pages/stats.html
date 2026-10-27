@@ -1,267 +1,233 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
+
 <head>
-<meta charset="utf-8">
-<title>Beacon Stats</title>
-<style>
-body {
-    opacity: 0;
-}
-</style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Incident Statistics</title>
 </head>
-<body class="stats">
-  <div id="loading">
-    <div id="loadmiddle">
-      <div id="loadinner">
-        <p>Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
-        <div class="progress">
-          <div id="loadprogress" class="progress-bar" role="progressbar"></div>
+
+<body style="opacity:0; transition: opacity .25s ease;">
+
+    <header class="lh-page-header">
+        <div class="container-fluid py-2 d-flex align-items-center gap-2 flex-wrap">
+            <img class="brand-icon" src="../icons/lighthouse64.png" alt="">
+            <div class="me-auto">
+                <h1 class="h5 mb-0">Incident Statistics: <span data-bind="text: scopeTitle"></span></h1>
+                <div class="small text-body-secondary" data-bind="text: rangeText"></div>
+            </div>
+            <a class="btn btn-sm guide-link" target="_blank" rel="noopener" href="https://lighthouse.ses.nsw.gov.au/guides/stats/"
+                data-bind="attr: { href: guideUrl }">
+                <i class="fa-regular fa-circle-question me-1" aria-hidden="true"></i>Guide
+            </a>
         </div>
-      </div>
+    </header>
+
+    <!-- First load: a ring that counts incidents as pages arrive (viewmodels/loadProgress.js,
+         drawn by src/pages/shared/loadRing.js), or the error that stopped it -->
+    <div class="lh-page-loading px-3" id="stats-loading" data-bind="visible: loading">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <!-- ko ifnot: error -->
+                <div data-bind="component: { name: 'load-ring', params: { view: loader, label: 'Loading incidents', shorter: loadShorterRange } }"></div>
+                <!-- /ko -->
+                <!-- ko if: error -->
+                <div class="alert alert-danger mb-2" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <span data-bind="text: error"></span>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary" data-bind="click: retry">
+                    <i class="fa-solid fa-rotate-right me-1"></i>Try again
+                </button>
+                <!-- /ko -->
+            </div>
+        </div>
     </div>
-  </div>
-<div id="loadinginline">
-  <div id="loadmiddleinline">
-    <div id="loadinnerinline">
-      Updating<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+
+    <div data-bind="visible: !loading()" style="display:none">
+
+        <div class="stats-toolbar">
+            <div class="container-fluid py-2 d-flex align-items-center gap-2 flex-wrap">
+                <div class="btn-group btn-group-sm" role="group" aria-label="Time range" data-bind="foreach: rangeChoices">
+                    <input type="radio" class="btn-check" name="range" autocomplete="off"
+                        data-bind="attr: { id: id }, checkedValue: value, checked: $parent.rangeChoice">
+                    <label class="btn btn-outline-secondary" data-bind="attr: { for: id }, text: label"></label>
+                </div>
+
+                <span class="fw-semibold ms-2" data-bind="text: countText"></span>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-bind="visible: isFiltered, click: resetAll">
+                    <i class="fa-solid fa-filter-circle-xmark me-1"></i>Clear all filters
+                </button>
+
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    <span class="spinner-border spinner-border-sm text-secondary" role="status"
+                        data-bind="visible: refreshing" title="Updating"></span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Refresh now (refreshes automatically)"
+                        data-bind="click: refreshNow, disable: refreshing">
+                        <i class="fa-solid fa-rotate me-1"></i><span data-bind="text: countdownText"></span>
+                    </button>
+                </div>
+            </div>
+            <!-- ko if: error -->
+            <div class="container-fluid pb-2">
+                <div class="alert alert-warning py-1 px-2 mb-0 d-flex align-items-center gap-2" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>Couldn't refresh: <span data-bind="text: error"></span></span>
+                    <button type="button" class="btn btn-sm btn-outline-dark ms-auto py-0" data-bind="click: retry">Try again</button>
+                </div>
+            </div>
+            <!-- /ko -->
+        </div>
+
+        <main class="container-fluid py-3">
+
+            <!-- ko if: hasEvents -->
+            <section class="mb-3">
+                <div class="small text-body-secondary mb-1"><i class="fa-solid fa-bolt me-1"></i>Events in these incidents</div>
+                <div class="events-list d-flex flex-wrap gap-1" data-bind="foreach: events">
+                    <span class="badge text-bg-secondary fw-normal" data-bind="text: $data"></span>
+                </div>
+            </section>
+            <!-- /ko -->
+
+            <!-- Breakdowns: one pie per field, in groups. Each group is a gridstack
+                 grid (breakdownLayout.js): drag a card by its header, resize from its corner. -->
+            <section class="mb-4 breakdowns">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <h2 class="h6 text-uppercase text-body-secondary mb-0">Breakdown</h2>
+                    <span class="small text-body-secondary d-none d-md-inline">Drag a card by its title to move it, or its corner to resize it.</span>
+                    <button type="button" class="btn btn-link btn-sm ms-auto py-0" data-bind="click: resetLayout">
+                        <i class="fa-solid fa-table-cells-large me-1"></i>Reset layout
+                    </button>
+                </div>
+                <!-- ko foreach: breakdownGroups -->
+                <div class="breakdown-group">
+                    <h3 class="breakdown-group-title" data-bind="text: title"></h3>
+                    <div class="grid-stack" data-bind="attr: { id: gridId }, foreach: items">
+                        <div class="grid-stack-item" data-bind="attr: { 'gs-id': key }">
+                            <div class="grid-stack-item-content card chart-card shadow-sm">
+                                <div class="card-header">
+                                    <i class="fa-solid fa-grip-vertical drag-grip" aria-hidden="true"></i>
+                                    <span data-bind="text: title"></span>
+                                    <span class="filter-text small text-primary" data-bind="visible: filtered, text: filterText, attr: { title: filterText }"></span>
+                                    <button type="button" class="btn btn-link btn-sm p-0 btn-reset"
+                                        data-bind="visible: filtered, click: $root.resetBreakdown">reset</button>
+                                </div>
+                                <div class="card-body pie-wrap">
+                                    <div class="pie-chart" data-bind="attr: { id: elementId }"></div>
+                                    <div class="pie-legend" data-bind="attr: { id: legendId }"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- /ko -->
+            </section>
+
+            <!-- Completion times -->
+            <section class="mb-4">
+                <h2 class="h6 text-uppercase text-body-secondary">Completion times</h2>
+                <div class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3 mb-3" data-bind="foreach: durationTiles">
+                    <div class="col">
+                        <div class="card duration-tile h-100 shadow-sm">
+                            <div class="card-body py-2">
+                                <div class="small fw-semibold" data-bind="text: label"></div>
+                                <div class="small text-body-secondary" data-bind="text: sub"></div>
+                                <div class="value mt-1" data-bind="text: value"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card chart-card shadow-sm">
+                    <div class="card-header">
+                        <span>Time to complete</span>
+                        <span class="small fw-normal text-body-secondary" data-bind="text: durationCountText"></span>
+                        <button type="button" class="btn btn-link btn-sm p-0 btn-reset" data-bind="visible: durationFiltered, click: resetDuration">reset</button>
+                    </div>
+                    <div class="card-body chart-body py-2" id="chart-duration"></div>
+                </div>
+            </section>
+
+            <!-- Over time -->
+            <section class="mb-4">
+                <h2 class="h6 text-uppercase text-body-secondary">Over time</h2>
+                <div class="row row-cols-1 row-cols-xl-2 g-3 mb-3">
+                    <div class="col">
+                        <div class="card chart-card h-100 shadow-sm">
+                            <div class="card-header">
+                                <span data-bind="text: receivedTitle"></span>
+                                <button type="button" class="btn btn-link btn-sm p-0 btn-reset" data-bind="visible: receivedFiltered, click: resetReceived">reset</button>
+                            </div>
+                            <div class="card-body chart-body py-2" id="chart-received"></div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card chart-card h-100 shadow-sm">
+                            <div class="card-header">
+                                <span data-bind="text: closedTitle"></span>
+                                <button type="button" class="btn btn-link btn-sm p-0 btn-reset" data-bind="visible: closedFiltered, click: resetClosed">reset</button>
+                            </div>
+                            <div class="card-body chart-body py-2" id="chart-closed"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card chart-card shadow-sm">
+                    <div class="card-header"><span>Running totals</span></div>
+                    <div class="card-body chart-body py-2" id="chart-running"></div>
+                </div>
+            </section>
+
+            <!-- Latest incidents -->
+            <section class="mb-4">
+                <h2 class="h6 text-uppercase text-body-secondary">Latest incidents <span class="text-lowercase">(most recent 15 matching the filters)</span></h2>
+                <div class="card shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0 latest-jobs">
+                            <thead>
+                                <tr>
+                                    <th>Incident</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Received</th>
+                                    <th>Closed</th>
+                                    <th>Address</th>
+                                    <th>Situation on scene</th>
+                                </tr>
+                            </thead>
+                            <tbody data-bind="foreach: latestJobs">
+                                <tr>
+                                    <td class="text-nowrap"><a target="_blank" rel="noopener" data-bind="attr: { href: jobUrl }, text: jobIdentifier"></a></td>
+                                    <td data-bind="text: jobType"></td>
+                                    <td data-bind="text: jobStatus"></td>
+                                    <td data-bind="text: receivedText"></td>
+                                    <td data-bind="text: closedText"></td>
+                                    <td data-bind="text: addressText"></td>
+                                    <td class="situation" data-bind="text: situationText"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Word cloud -->
+            <section class="mb-4">
+                <h2 class="h6 text-uppercase text-body-secondary">Situation on scene</h2>
+                <div class="card shadow-sm">
+                    <div class="card-body" id="word-cloud"></div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="lh-page-footer container-fluid pb-3 text-body-secondary">
+            Designed &amp; developed by volunteers of the NSW SES.
+            <a href="https://github.com/NSWSESMembers/Lighthouse" target="_blank" rel="noopener">Lighthouse</a>
+            is distributed under an
+            <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/LICENSE.txt" rel="license noopener" target="_blank">MIT Licence</a>.
+        </footer>
     </div>
-  </div>
-</div>
 
-<div align="center" id="results" style="display: none">
-  <header>
-    <div>
-    <h2>Loading...</h2>
-    <h4>Loading...</h4>
-    <div class="dates"></div>
-    <div class="marquee"><p><span id="events"></span></p></div>
-    <span style="cursor: pointer;" href="#" class="total"></span>
-    <div>
-  </header>
-
-  <table class="graphs">
-    <tr>
-      <td>
-        <div class="span4" id="dc-jobstatus-chart">
-          <h4>Job Status</h4>
-        </div>
-      </td>
-      <td>
-        <div class="span4" id="dc-agency-chart">
-          <h4>Referring Agency</h4>
-        </div>
-      </td>
-      <td>
-        <div class="span4" id="dc-event-chart">
-          <h4>Events</h4>
-        </div>
-      </td>
-    </tr>
-        <tr>
-      <td>
-        <div class="span4" id="dc-jobtype-chart">
-          <h4>Job Types</h4>
-        </div>
-      </td>
-      <td>
-        <div class="span4" id="dc-unit-chart">
-          <h4>Assigned Unit</h4>
-        </div>
-      </td>
-      <td>
-        <div class="span4" id="dc-priority-chart">
-          <h4>Job Priorities</h4>
-        </div>
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <div class="span4" id="dc-tasktype-chart">
-          <h4>Storm Damage Aggregate</h4>
-        </div>
-      </td>
-      <td>
-        <div class="span4" id="dc-hazardtags-chart">
-          <h4>Job Hazard Tags</h4>
-        </div>
-      </td>
-      <td>
-        <div class="span4" id="dc-propertytags-chart">
-          <h4>Property Tags</h4>
-        </div>
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <div class="span4" id="dc-local-chart">
-        <h4>Job Localities</h4>
-        </div>
-      </td>
-      <td>
-        <div class="span4" id="dc-cluster-chart">
-          <h4>Job Cluster</h4>
-        </div>
-      </td>
-      <td>
-        <div class="span4" id="dc-zone-chart">
-          <h4>Job Zone</h4>
-        </div>
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <div class="span4" id="dc-sector-chart">
-          <h4>Job Sector</h4>
-        </div>
-      </td>
-      <td>
-        <div class="span4" id="dc-categories-chart">
-          <h4>Job Categorisation Categories</h4>
-        </div>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3">
-        <span class="span12">
-          <hr style="width:90%">
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <span class="span4" id="dc-uppermean-chart">
-          <h4>Average Completion Time - Fast Jobs</h4>
-          <h5>Quickest 20% of Jobs</h5>
-        </span>
-      </td>
-      <td>
-        <span class="span4" id="dc-middlemean-chart">
-          <h4>Average Job Completion Time</h4>
-          <h5>Majority of Jobs</h5>
-        </span>
-      </td>
-      <td>
-        <span class="span4" id="dc-lowermean-chart">
-          <h4>Average Completion Time - Slow Jobs</h4>
-          <h5>Slowest 20% of Jobs</h5>
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3">
-        <span class="span12" id="dc-completionbell-chart" style="float:inherit; padding-top:30px;display: inline-block;">
-          <h4>Job Completion Times (Hrs)</h4>
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <span class="span4" id="dc-lowerupper-chart">
-          <h4>25% of Jobs Completed Within</h4>
-        </span>
-      </td>
-      <td>
-        <span class="span4" id="dc-middlemiddle-chart">
-          <h4>50% of Jobs Completed Within</h4>
-        </span>
-      </td>
-      <td>
-        <span class="span4" id="dc-upperlower-chart">
-          <h4>75% of Jobs Completed Within</h4>
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3">
-        <span class="span12">
-          <hr style="width:90%">
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3">
-        <span class="span12" id="dc-timeopen-chart" style="float:inherit; padding-top:30px;display: inline-block;">
-          <h4 id="receivedTitle">Jobs Received Per X</h4>
-        </span>
-        <span class="span12" id="dc-timeclosed-chart" style="float:inherit; padding-top:30px;display: inline-block;">
-          <h4 id="completedTitle">Jobs Completed Per X</h4>
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3">
-    <span class="span12" id="dc-running-chart" style="float:inherit; padding-top:30px;display: inline-block;">
-          <h4 id="runningTitle">Jobs received per X</h4>
-        </span>
-        </td>
-    </tr>
-    <tr>
-      <td colspan="3">
-        <span>
-          <table class="table table-hover" id="dc-table-graph" style="width:90%;margin-left:auto;margin-right:auto;align;text-align:left;">
-            <thead>
-              <tr class="header">
-                <th>Job Number</th>
-                <th>Job Type</th>
-                <th>Created At</th>
-                <th>Completed At</th>
-                <th>Address</th>
-              </tr>
-            </thead>
-          </table>
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3">
-        <span class="span12">
-          <hr style="width:90%">
-        </span>
-      </td>
-    </tr>
-    <tr>
-      <td colspan="3">
-        <h4>Situation On Scene Wordcloud</h4>
-        <div width="500px" height="350px" class="cloud" id="cloud">
-        </div>
-      </td>
-    </tr>
-  </table>
-</div>
-
-<footer>
-  <form>
-    <div>Override time frame with</div>
-    <label>
-      <input id="radio1" name="slide" type="radio" value="24">Last 24Hrs
-    </label>
-    <label>
-      <input id="radio2" name="slide" type="radio" value="48">Last 48hrs
-    </label>
-    <label>
-      <input id="radio3" name="slide" type="radio" value="72">Last 72 Hrs
-    </label>
-    <label>
-      <input id="radio3" name="slide" type="radio" value="reset">Reset
-    </label>
-  </form>
-  <div class="lastline">
-    Designed &amp; developed by volunteers of the NSW SES.
-    <a href="https://github.com/NSWSESMembers/Lighthouse" target="_blank">Lighthouse</a>
-    is distributed under an
-    <a href= "https://github.com/NSWSESMembers/Lighthouse/blob/master/LICENSE.txt" rel="license" target="_blank">MIT Licence</a>.
-    <div class="timer">
-      <a href="#" id="refresh">
-        <i class="fas fa-sync"></i>
-        <span id="time">00:00</span>
-      </a>
-    </div>
-  </div>
-</footer>
-<script src="vendors/tinycolor.js" type="text/javascript"></script>
-<script src="vendors/tinygradient/tinygradient.min.js" type="text/javascript"></script>
-<script src="vendors/greensock-js/src/minified/TweenMax.min.js"></script>
-
-<script src="stats.js" type="text/javascript"></script>
+    <script src="stats/main.js" type="text/javascript"></script>
 </body>
+
 </html>

@@ -95,7 +95,7 @@ whenWeAreReady(function () {
         lighthouseUrl +
         'pages/stats.html' +
         vars +
-        '" target="_blank">Job Statistics (' +
+        '" target="_blank">Incident Statistics (' +
         unitName +
         ' Today)</a>\
     </li>\
@@ -181,7 +181,7 @@ whenWeAreReady(function () {
         lighthouseUrl +
         'pages/stats.html' +
         vars +
-        '" target="_blank">Job Statistics (' +
+        '" target="_blank">Incident Statistics (' +
         unitName +
         ' Today)</a>\
     </li>\

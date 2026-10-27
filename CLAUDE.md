@@ -1,8 +1,10 @@
 # Lighthouse — notes for Claude
 
 Chrome extension for NSW SES Beacon. Most active work is the LAD (tasking)
-page in `src/pages/tasking/`; shared Beacon API code is in
-`src/shared/BeaconClient/`; AWS Lambda backends are in `lambda/`.
+page in `src/pages/tasking/`; the Incident Statistics page (`stats.html`) is
+`src/pages/stats/`, built the same way (Bootstrap 5, knockout-secure-binding,
+BeaconClient); shared Beacon API code is in `src/shared/BeaconClient/`; AWS
+Lambda backends are in `lambda/`.
 
 ## Branches and PRs
 
@@ -46,6 +48,22 @@ await browser.close();
 `launchLad` options: `headless`, `viewport`, `now`, `config` (pre-seeded
 `lh-taskingConfig`), `remoteTab`, `verbose`, `scale`.
 
+## Running Incident Statistics without Beacon: `scripts/stats-docs`
+
+Same idea for `stats.html` (fake data in `scripts/stats-docs/scenario.mjs`).
+`stats:check` is an end-to-end check run in Chrome (filtering, ranges,
+refresh, errors); run it after changing the page. Details in
+`scripts/stats-docs/README.md`.
+
+```sh
+npm run dev && npm run stats:check                 # end-to-end checks
+npm run stats:demo                                 # headed Chrome window
+npm run stats:shots -- --out docs/stats/images     # guide screenshots
+```
+
+The stats page imports dc.js from `dc/src/index.js` with its own d3 7
+compat layer (`charts/dcD3Compat.js`): dc's dist bundle crashes on d3 7.
+
 ### Fixture data rules
 
 `scenario.mjs` copies the _structure_ of real Beacon responses, but every
@@ -71,8 +89,8 @@ copy values from `build/lad-samples/` (real payloads from
 
 ## User-facing docs
 
-The LAD user guide (`docs/lad/`) and What's New (`docs/whats-new/index.md`)
-are synced to the website: `master` publishes the stable copy, `master-dev`
+The LAD user guide (`docs/lad/`), the Incident Statistics guide
+(`docs/stats/`) and What's New (`docs/whats-new/index.md`) are synced to the website: `master` publishes the stable copy, `master-dev`
 the Development Preview. For user-visible changes,
 update the matching guide page and add a What's New entry in the same PR. Use
-`npm run lad:shots` for guide screenshots.
+`npm run lad:shots` / `npm run stats:shots` for guide screenshots.
