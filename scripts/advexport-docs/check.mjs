@@ -64,8 +64,9 @@ async function withPage(opts, fn) {
   }
 }
 
-check('loads all four demo units: count, title, default columns and preview match Beacon', () => withPage({}, async ({ page, scenario }) => {
+check('opens with one small request: count, title, default columns and preview match Beacon', () => withPage({}, async ({ page, scenario, stats }) => {
   await waitForExport(page);
+  assert(stats.searches === 1 && stats.pageSizes[0] === 10, `opening asked Beacon ${stats.searches} times, page sizes ${stats.pageSizes}`);
   const want = expectedJobs(scenario);
   assert(want.length > 100, 'scenario too thin to check anything');
   assert(!(await page.evaluate(() => window.exportVM.error())), 'error shown');
@@ -82,10 +83,16 @@ check('loads all four demo units: count, title, default columns and preview matc
   assert(await page.locator('.lh-page-footer').isVisible(), 'footer hidden after loading');
 }));
 
-check('downloads every incident as CSV: old header, ISO dates, one row per incident', () => withPage({}, async ({ page, scenario }) => {
+check('Download CSV fetches every incident: old header, ISO dates, one row per incident', () => withPage({ pageDelayMs: 300 }, async ({ page, scenario, stats }) => {
   await waitForExport(page);
   const want = expectedJobs(scenario);
-  const { name, text } = await downloadCsv(page);
+  const before = stats.searches;
+  const downloaded = downloadCsv(page);
+  await page.locator('#download-progress .loader-ring').waitFor();
+  const { name, text } = await downloaded;
+  assert(stats.searches - before === Math.ceil(want.length / 100), `download made ${stats.searches - before} searches for ${want.length} incidents`);
+  assert(stats.pageSizes.slice(before).every((n) => n === 100), `download page sizes ${stats.pageSizes.slice(before)}`);
+  await page.locator('#download-progress').waitFor({ state: 'detached' });
   assert(/^Incident export - 4 DMZ units - 2026-10-15 15\d\d\.csv$/.test(name), `file name "${name}"`);
   const rows = parseCsv(text);
   assert(JSON.stringify(rows[0]) === JSON.stringify(DEFAULT_HEADER), `header ${rows[0].join(',')}`);
@@ -132,21 +139,24 @@ check('no columns ticked: download off, with a hint', () => withPage({}, async (
   assert(await page.getByText('Tick some columns above').isVisible(), 'preview not replaced');
 }));
 
-check('ICEMS update counts: only ICEMS incidents, four at a time, counts match the Ops Logs', () => withPage({ opsLogDelayMs: 120 }, async ({ page, scenario, stats }) => {
+check('ICEMS update counts: preview counts its rows; Download counts every ICEMS incident, four at a time', () => withPage({ opsLogDelayMs: 120 }, async ({ page, scenario, stats }) => {
   await waitForExport(page);
   const want = expectedJobs(scenario);
   const icems = want.filter((j) => j.ICEMSIncidentIdentifier);
+  const previewIcems = want.slice(0, 10).filter((j) => j.ICEMSIncidentIdentifier);
   assert(icems.length >= 8, `only ${icems.length} ICEMS incidents in range`);
   assert(stats.opsLogs === 0, 'Ops Logs read before the column was ticked');
-  await page.locator('#preview-table').waitFor();
   await field(page, 'ICEMSIUMTransactions').check();
-  await page.locator('.icems-progress').waitFor();
-  assert(await page.locator('#download').isDisabled(), 'download enabled while counting');
-  await page.locator('.icems-progress').waitFor({ state: 'detached', timeout: 20000 });
-  assert(stats.opsLogs === icems.length, `${stats.opsLogs} Ops Log requests for ${icems.length} ICEMS incidents`);
-  assert(stats.opsLogMostAtOnce === 4, `${stats.opsLogMostAtOnce} Ops Log requests at once, expected 4`);
+  await page.waitForFunction(() => window.exportVM.previewIcems() !== null);
+  assert(stats.opsLogs === previewIcems.length, `preview read ${stats.opsLogs} Ops Logs for ${previewIcems.length} previewed ICEMS incidents`);
 
-  const { text } = await downloadCsv(page);
+  const before = stats.opsLogs;
+  stats.opsLogMostAtOnce = 0;
+  const downloaded = downloadCsv(page);
+  await page.locator('#download-progress .progress').waitFor();
+  const { text } = await downloaded;
+  assert(stats.opsLogs - before === icems.length, `download read ${stats.opsLogs - before} Ops Logs for ${icems.length} ICEMS incidents`);
+  assert(stats.opsLogMostAtOnce === 4, `${stats.opsLogMostAtOnce} Ops Log requests at once, expected 4`);
   const rows = parseCsv(text);
   const col = rows[0].indexOf('ICEMSIUMTransactions');
   assert(col === rows[0].length - 1, 'ICEMS column not last');
@@ -155,7 +165,6 @@ check('ICEMS update counts: only ICEMS incidents, four at a time, counts match t
     const expected = j.ICEMSIncidentIdentifier ? String(scenario.opsLogs.get(j.Id).updates) : '';
     assert(got === expected, `${j.Identifier}: ${got}, expected "${expected}"`);
   }
-  assert(stats.opsLogs === icems.length, 'download counted again');
 }));
 
 // The same seeded scenario the page will get, to pick a failing incident up front.
@@ -163,9 +172,8 @@ const failingIcems = expectedJobs(buildScenario(new Date(NOW))).filter((j) => j.
 
 check('an Ops Log that fails leaves that count empty, with a note', () => withPage({ failOpsLogFor: [failingIcems.Id], storage: { 'lh-advexport-fields': JSON.stringify(['Identifier', 'ICEMSIUMTransactions']) } }, async ({ page }) => {
   await waitForExport(page);
-  const note = page.getByText("Couldn't read the Ops Log for 1 ICEMS incident: their count is left empty.");
-  await note.waitFor({ timeout: 10000 });
   const { text } = await downloadCsv(page);
+  await page.getByText("Couldn't read the Ops Log for 1 ICEMS incident: their count is empty in the CSV.").waitFor();
   const row = parseCsv(text).find((r) => r[0] === failingIcems.Identifier);
   assert(row && row[1] === '', `failed incident's count "${row && row[1]}"`);
 }));
@@ -188,6 +196,36 @@ check('a failed Reload keeps the incidents and says so', () => withPage({}, asyn
   await page.getByText("Couldn't reload:").waitFor();
   assert(await page.locator('#preview-table tbody tr').count() === 10, 'preview gone after a failed reload');
   assert(await page.locator('#download').isEnabled(), 'download off after a failed reload');
+}));
+
+check('a failed Download says why; Try again downloads, Close goes back', () => withPage({}, async ({ page, stats }) => {
+  await waitForExport(page);
+  stats.failNext = 1;
+  await page.locator('#download').click();
+  const alert = page.locator('#download-progress .alert-danger');
+  await alert.waitFor();
+  assert((await alert.textContent()).includes('Beacon returned 503'), `message "${(await alert.textContent()).trim()}"`);
+  const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#download-progress button', { hasText: 'Try again' }).click()]);
+  assert(download.suggestedFilename().endsWith('.csv'), 'no CSV after Try again');
+  await page.locator('#download-progress').waitFor({ state: 'detached' });
+
+  stats.failNext = 1;
+  await page.locator('#download').click();
+  await alert.waitFor();
+  await page.locator('#download-progress button', { hasText: 'Close' }).click();
+  await page.locator('#download-progress').waitFor({ state: 'detached' });
+  assert(await page.locator('#download').isEnabled(), 'download off after Close');
+}));
+
+check('Cancel stops a download and saves nothing', () => withPage({ pageDelayMs: 800 }, async ({ page }) => {
+  await waitForExport(page);
+  let saved = false;
+  page.on('download', () => { saved = true; });
+  await page.locator('#download').click();
+  await page.locator('#cancel-download').click();
+  await page.locator('#download-progress').waitFor({ state: 'detached' });
+  await page.waitForTimeout(3500);
+  assert(!saved, 'a CSV was saved after Cancel');
 }));
 
 check('401 says to reopen the page from Beacon', () => withPage({ failSearch: 401 }, async ({ page }) => {

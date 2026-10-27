@@ -18,8 +18,8 @@ Add `--verbose` to any of them to log mock traffic and page errors.
 | File | What it does |
 | --- | --- |
 | `scenario.mjs` | The incidents from the Incident Statistics harness ([`scripts/stats-docs/scenario.mjs`](../stats-docs/scenario.mjs)), plus the columns only the export shows: invented caller and contact names, ACMA fiction-range phone numbers, premises access, and an Ops Log with some ICEMS Incident Update Messages for each ICEMS incident. Seeded. |
-| `launch.mjs` | `launchExport()`: answers `Entities/{id}`, `Jobs/Search` (HQ and date filters, Beacon's paging) and `OperationsLog/search`, and counts requests in `stats` (including the most Ops Log requests at once). `downloadCsv()` clicks Download and returns the file. |
-| `check.mjs` | End-to-end checks: count, title, default columns and preview; the downloaded CSV (header, ISO times, one row per incident, quotes and line breaks); remembered columns, All / None, Reset; no columns; ICEMS counts (only ICEMS incidents, four at a time, right numbers, a failed Ops Log); Beacon errors, Try again and a failed Reload; no incidents; one HQ / all of NSW; header colour per Beacon; the guide link; OS dark mode. |
+| `launch.mjs` | `launchExport()`: answers `Entities/{id}`, `Jobs/Search` (HQ and date filters, Beacon's paging) and `OperationsLog/search`, and counts requests in `stats` (searches, page sizes, the most Ops Log requests at once). `downloadCsv()` clicks Download and returns the file. |
+| `check.mjs` | End-to-end checks: opening makes one 10-row request; count, title, default columns and preview; Download CSV fetches every incident (header, ISO times, one row per incident, quotes and line breaks); remembered columns, All / None, Reset; no columns; ICEMS counts (preview rows, then every ICEMS incident four at a time, right numbers, a failed Ops Log); Beacon errors, Try again, a failed Reload, a failed Download, Cancel; no incidents; one HQ / all of NSW; header colour per Beacon; the guide link; OS dark mode. |
 | `capture.mjs` | The shot list. Add a shot by adding an entry to `SHOTS`. |
 | `demo.mjs` | Headed launcher. |
 

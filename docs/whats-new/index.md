@@ -50,13 +50,13 @@ The home page shows the first three `##` entries, so keep the title short.
 ### Incident Export
 
 - **Job Export is now Incident Export, rebuilt.** Same column groups, with a cleaner layout that follows your computer's light or dark mode, and a header coloured by Beacon as in LAD. It's in the Lighthouse menu in Beacon as **Incident Export**. See the [Incident Export guide](https://lighthouse.ses.nsw.gov.au/guides/export/).
-- **Preview before you download.** The page loads the incidents when it opens and shows the first 10 rows with the columns you've ticked, changing as you tick. See [Preview](https://lighthouse.ses.nsw.gov.au/guides/export/#preview).
+- **Preview before you download.** The page shows the newest 10 incidents and how many there are, with the columns you've ticked, changing as you tick. **Download CSV** then fetches every incident, with a ring counting them and a **Cancel** button. See [Preview](https://lighthouse.ses.nsw.gov.au/guides/export/#preview) and [Downloading](https://lighthouse.ses.nsw.gov.au/guides/export/#downloading).
 - **Your columns are remembered**, and each group has **All** and **None**. **Reset to the default columns** goes back to the usual set. See [Choosing Columns](https://lighthouse.ses.nsw.gov.au/guides/export/#choosing-columns).
 - **Times are in ISO 8601 format** (e.g. *2026-10-15T09:41:00+11:00*), instead of the long *Thu Oct 15 2026 09:41:00 GMT+1100 (…)* text that spreadsheets couldn't sort. See [Downloading](https://lighthouse.ses.nsw.gov.au/guides/export/#downloading).
-- **ICEMS update counts are about four times faster**, with a progress bar, and they now include the last incident (the old export always missed it).
+- **ICEMS update counts are about four times faster**, with a progress bar, and they now include the last incident (the old export always missed it). The preview shows them for its 10 incidents as soon as you tick the column.
 - **Premises Access - Info** is filled in. It was always empty before.
 - **Acknowledged** is when the incident first went Active, and **Completed** and **Finalised** are the last time it reached that status. Before, ticking Acknowledged could change which Completed and Finalised times you got.
-- While incidents load, a ring counts them as they arrive. If Beacon can't be reached, the page says why and offers **Try again**. The page also says so if you tick no columns, and no longer sits on *Loading* when it has no Beacon login.
+- If Beacon can't be reached, the page says why and offers **Try again**. The page also says so if you tick no columns, and no longer sits on *Loading* when it has no Beacon login.
 
 ## LAD arrival times, overlay status and street zoom
 

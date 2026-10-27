@@ -48,6 +48,7 @@ function mockBeacon(scenario, log, opts, stats) {
       });
       const size = Number(url.searchParams.get('PageSize')) || rows.length || 1;
       const index = Number(url.searchParams.get('PageIndex')) || 1;
+      stats.pageSizes.push(size);
       log(`[mock] Jobs/Search -> ${rows.length} (page ${index})`);
       return json(route, { CurrentPage: index, PageSize: size, TotalItems: rows.length, Results: rows.slice((index - 1) * size, index * size) });
     }
@@ -88,7 +89,7 @@ export async function launchExport(opts = {}) {
   const now = opts.now ? new Date(opts.now) : new Date();
   const scenario = buildScenario(now);
   const hq = opts.hq ?? scenario.units.map((u) => u.Id);
-  const stats = { searches: 0, opsLogs: 0, opsLogRunning: 0, opsLogMostAtOnce: 0, failNext: 0 };
+  const stats = { searches: 0, pageSizes: [], opsLogs: 0, opsLogRunning: 0, opsLogMostAtOnce: 0, failNext: 0 };
   let log = () => {};
   const beacon = mockBeacon(scenario, (msg) => log(msg), opts, stats);
   const launched = await launchPage({ ...opts, page: 'advexport.html', beacon, hq, now, shiftClock: Boolean(opts.now) });
@@ -107,7 +108,7 @@ export async function waitForExport(page) {
   await settle(page, 500);
 }
 
-/** Click Download and return { name, text } of the CSV the page saved. */
+/** Click Download CSV (which fetches every incident) and return { name, text } of the CSV the page saved. */
 export async function downloadCsv(page) {
   const [download] = await Promise.all([page.waitForEvent('download'), page.locator('#download').click()]);
   const stream = await download.createReadStream();

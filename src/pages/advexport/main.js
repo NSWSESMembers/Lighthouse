@@ -2,10 +2,10 @@
   Incident Export page (pages/advexport.html).
 
   Opened from Beacon's Lighthouse menu ("Incident Export") and the Jobs
-  screen's "Advanced Export (Filtered)" button. Loads every incident for an
-  HQ, several HQs or all of NSW over the range it was opened with, lets you
-  pick the columns (remembered for next time), previews the first rows and
-  downloads them all as a CSV.
+  screen's "Advanced Export (Filtered)" button. For an HQ, several HQs or
+  all of NSW over the range it was opened with: pick the columns
+  (remembered for next time), preview the newest incidents (one small
+  request on open), and Download CSV fetches every incident and saves them.
 */
 
 import BeaconClient from '../../shared/BeaconClient.js';

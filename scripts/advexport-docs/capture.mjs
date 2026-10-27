@@ -39,27 +39,38 @@ const SHOTS = {
     launch: { viewport: WIDE },
     target: (page) => page.locator('.export-preview'),
   },
-  // The ICEMS column ticked: counting the Ops Logs.
-  icems: {
-    launch: { viewport: WIDE, opsLogDelayMs: 600 },
+  // Download CSV: fetching every incident.
+  download: {
+    launch: { viewport: WIDE, pageDelayMs: 2500 },
     run: async (page) => {
       await waitForExport(page);
-      await page.locator('.export-field:has(input[value="ICEMSIUMTransactions"])').click();
-      await page.locator('.icems-progress').waitFor();
-      await page.waitForTimeout(1300);
+      await page.locator('#download').click();
+      await page.waitForFunction(() => window.exportVM.dlLoaded() >= 100);
+      await page.waitForTimeout(500);
     },
-    target: (page) => page.locator('.export-actions').locator('xpath=..'),
+    target: (page) => page.locator('#download-progress .card'),
+  },
+  // Download CSV with the ICEMS column ticked: counting the Ops Logs.
+  icems: {
+    launch: { viewport: WIDE, opsLogDelayMs: 600, storage: { 'lh-advexport-fields': JSON.stringify(['Identifier', 'JobReceived', 'ICEMSIncidentIdentifier', 'ICEMSIUMTransactions']) } },
+    run: async (page) => {
+      await waitForExport(page);
+      await page.waitForFunction(() => window.exportVM.previewIcems() !== null);
+      await page.locator('#download').click();
+      await page.locator('#download-progress .progress').waitFor();
+      await page.waitForFunction(() => window.exportVM.icemsDone() >= 12);
+    },
+    target: (page) => page.locator('#download-progress .card'),
   },
   'header-train': {
     launch: { viewport: WIDE, env: 'trainbeacon' },
     target: (page) => page.locator('.lh-page-header'),
   },
   loading: {
-    launch: { viewport: { width: 900, height: 600 }, pageDelayMs: 2500 },
+    launch: { viewport: { width: 900, height: 600 }, pageDelayMs: 60000 },
     run: async (page) => {
       await page.locator('#export-loading .loader-ring').waitFor();
-      await page.waitForFunction(() => window.exportVM.loadLoaded() >= 100);
-      await page.waitForTimeout(500); // not settle(): that waits for the load to finish
+      await page.waitForTimeout(2200);
     },
     target: (page) => page.locator('#export-loading .card'),
   },

@@ -23,8 +23,8 @@
         </div>
     </header>
 
-    <!-- First load: a ring that counts incidents as pages arrive (src/pages/shared/incidentLoad.js,
-         drawn by src/pages/shared/loadRing.js), or the error that stopped it -->
+    <!-- First load (the preview: one small request): a waiting ring (src/pages/shared/loadRing.js),
+         or the error that stopped it -->
     <div class="lh-page-loading px-3" id="export-loading" data-bind="visible: loading">
         <div class="card shadow-sm">
             <div class="card-body">
@@ -49,7 +49,7 @@
         <!-- ko if: error -->
         <div class="alert alert-warning py-2 d-flex align-items-center gap-2" role="alert">
             <i class="fa-solid fa-triangle-exclamation"></i>
-            <span>Couldn't reload: <span data-bind="text: error"></span> The export below is from the last load.</span>
+            <span>Couldn't reload: <span data-bind="text: error"></span> The preview below is from the last check.</span>
             <button type="button" class="btn btn-sm btn-outline-dark ms-auto py-0" data-bind="click: retry">Try again</button>
         </div>
         <!-- /ko -->
@@ -78,7 +78,7 @@
                     Reset to the default columns
                 </button>
                 <span class="small text-body-secondary ms-auto" data-bind="text: loadedText"></span>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="reload" title="Load the incidents again"
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="reload" title="Check Beacon again for the preview and count"
                     data-bind="click: reload, disable: reloading">
                     <span class="spinner-border spinner-border-sm me-1" role="status" data-bind="visible: reloading"></span>
                     <i class="fa-solid fa-rotate me-1" aria-hidden="true" data-bind="visible: !reloading()"></i>Reload
@@ -91,15 +91,7 @@
             <div class="text-end small text-danger" data-bind="text: downloadHint"></div>
             <!-- /ko -->
 
-            <!-- ko if: icemsCounting -->
-            <div class="icems-progress small" role="status">
-                <div data-bind="text: icemsText"></div>
-                <div class="progress" role="progressbar" aria-label="Counting ICEMS updates" style="height: 6px">
-                    <div class="progress-bar" data-bind="style: icemsPct"></div>
-                </div>
-            </div>
-            <!-- /ko -->
-            <!-- ko if: !icemsCounting() && icemsText() -->
+            <!-- ko if: icemsText -->
             <div class="alert alert-warning small py-1 px-2 mt-2 mb-0" role="status" data-bind="text: icemsText"></div>
             <!-- /ko -->
         </form>
@@ -135,6 +127,40 @@
             <!-- /ko -->
         </section>
     </main>
+
+    <!-- Download CSV: every incident (a ring that counts them, src/pages/shared/incidentLoad.js),
+         then the ICEMS counts if that column is ticked, then the file. -->
+    <!-- ko if: downloading -->
+    <div class="export-overlay" id="download-progress" role="dialog" aria-modal="true" aria-label="Preparing the CSV">
+        <div class="card shadow">
+            <div class="card-body">
+                <!-- ko ifnot: dlError -->
+                <div data-bind="component: { name: 'load-ring', params: { view: dlLoader, label: 'Fetching incidents for the CSV' } }"></div>
+                <!-- ko if: dlCounting -->
+                <div class="progress mt-3" role="progressbar" aria-label="Counting ICEMS updates" style="height: 6px">
+                    <div class="progress-bar" data-bind="style: icemsPct"></div>
+                </div>
+                <!-- /ko -->
+                <div class="text-end mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="cancel-download" data-bind="click: cancelDownload">Cancel</button>
+                </div>
+                <!-- /ko -->
+                <!-- ko if: dlError -->
+                <div class="alert alert-danger mb-2" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    Couldn't fetch the incidents: <span data-bind="text: dlError"></span>
+                </div>
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bind="click: cancelDownload">Close</button>
+                    <button type="button" class="btn btn-sm btn-primary" data-bind="click: retryDownload">
+                        <i class="fa-solid fa-rotate-right me-1"></i>Try again
+                    </button>
+                </div>
+                <!-- /ko -->
+            </div>
+        </div>
+    </div>
+    <!-- /ko -->
 
     <!-- Hidden with the page while it loads, or it floats under the ring. -->
     <footer class="lh-page-footer container-fluid py-3 text-body-secondary" data-bind="visible: !loading()" style="display:none">

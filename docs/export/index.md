@@ -5,7 +5,7 @@ nav_order: 1
 
 # Incident Export
 
-Incident Export downloads an HQ's incidents as a CSV file you can open in Excel or Google Sheets. You pick the columns, check the first few rows in a preview, and download every incident in the range.
+Incident Export downloads an HQ's incidents as a CSV file you can open in Excel or Google Sheets. You pick the columns, check the newest few incidents in a preview, and download every incident in the range.
 
 > **Note:** Screenshots showing "Demo City" use made-up data.
 
@@ -20,15 +20,15 @@ If no HQ is selected, the export covers all of NSW. The header names the HQs and
 
 ![Opened from Train Beacon](images/header-train.png)
 
-## Loading
+## Opening the Page
 
-The page loads the incidents as soon as it opens. Beacon sends them 100 at a time, so a ring counts them as they arrive, with the page it's on and the time left. If Beacon hasn't answered after 10 seconds, the page says it's still waiting.
+When the page opens, it asks Beacon for just the newest 10 incidents and how many there are in the range, which is quick even for a big range. The incidents themselves are only all fetched when you click **Download CSV**.
 
-![Loading incidents](images/loading.png)
+![Waiting for Beacon](images/loading.png)
 
 If Beacon can't be reached, a message says why, with a **Try again** button. A *401* error means your Beacon login has expired: open Incident Export from Beacon again.
 
-**Reload** (next to Download) loads the incidents again, for example to pick up ones that came in since you opened the page. If a reload fails, the incidents you already have stay, and a message says the export is from the last load.
+**Reload** (next to Download) checks Beacon again for the preview and the count, for example to see incidents that came in since you opened the page. If it fails, the preview you had stays, and a message says so.
 
 ## Choosing Columns
 
@@ -51,11 +51,15 @@ Tick the columns you want, in four groups:
 
 ![Preview](images/preview.png)
 
-Under the columns, the preview shows the first 10 incidents with the columns you've ticked, newest first. It changes as you tick and untick columns. The download has every incident, not just these 10.
+Under the columns, the preview shows the newest 10 incidents with the columns you've ticked. It changes as you tick and untick columns, without asking Beacon again. The download has every incident, not just these 10.
 
 ## Downloading
 
-Click **Download CSV**. The file is named after the HQs and the time, e.g. *Incident export - Demo City - 2026-10-15 1530.csv*.
+Click **Download CSV**. The page fetches every incident in the range from Beacon (100 at a time), so a ring counts them as they arrive, with the time left. The file is saved when they're all in, named after the HQs and the time, e.g. *Incident export - Demo City - 2026-10-15 1530.csv*. Each click fetches them again, so the file is always up to date.
+
+![Fetching incidents for the CSV](images/download.png)
+
+**Cancel** stops the download. If Beacon can't be reached, the message says why, with **Try again** and **Close**.
 
 - **Times** are in ISO 8601 format with the offset from UTC, e.g. *2026-10-15T09:41:00+11:00*: NSW time, with +11:00 in daylight saving and +10:00 outside it.
 - **Acknowledged** is when the incident first went Active. **Completed** and **Finalised** are the last time it reached that status, so an incident that was reopened shows when it was closed again.
@@ -69,7 +73,7 @@ Click **Download CSV**. The file is named after the HQs and the time, e.g. *Inci
 
 ![Counting ICEMS updates](images/icems.png)
 
-The count comes from each incident's Ops Log, so ticking the column reads one Ops Log per ICEMS incident. A bar shows how far it has got, and **Download** waits until it's done. If an Ops Log can't be read, that incident's count is left empty and a note says how many were missed.
+The count comes from each incident's Ops Log, one per ICEMS incident. Ticking the column counts the incidents in the preview straight away. **Download CSV** counts the rest after fetching the incidents, four at a time, with a bar showing how far it has got. If an Ops Log can't be read, that incident's count is left empty and a note says how many were missed.
 
 ## Dark Mode
 

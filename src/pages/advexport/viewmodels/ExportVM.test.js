@@ -18,20 +18,25 @@ function makeJobs(n, icemsEvery = 0) {
   }));
 }
 
-function makeClient({ jobs = makeJobs(3), fail = null } = {}) {
-  return {
+/** A fake Beacon: honours pageSize/pageLimit like requestPaginated. */
+function makeClient({ jobs = makeJobs(3) } = {}) {
+  const client = {
+    jobs,
     unit: { getName: vi.fn(async () => UNIT) },
     job: {
       search: vi.fn(async (scope, start, end, ctx) => {
-        if (fail) throw fail;
-        ctx.onProgress && ctx.onProgress(jobs.length, jobs.length);
-        return { results: jobs, totalItems: jobs.length };
+        const { pageSize = 100, pageLimit = 0 } = ctx;
+        const all = client.jobs;
+        const rows = pageLimit ? all.slice(0, pageSize * pageLimit) : all;
+        if (ctx.onProgress) ctx.onProgress(rows.length, all.length);
+        return { results: rows, totalItems: all.length };
       }),
     },
     operationslog: {
       search: vi.fn(async () => ({ results: [{ Subject: 'Incident Update Message' }, { Subject: 'Incident Update Message' }] })),
     },
   };
+  return client;
 }
 
 function memoryStorage(initial = {}) {
@@ -62,43 +67,58 @@ async function loaded(opts) {
 }
 
 const field = (vm, key) => vm.groups.flatMap((g) => g.fields).find((f) => f.key === key);
+const flush = () => new Promise((r) => setTimeout(r, 0));
 
 beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
 });
 
-describe('ExportVM loading', () => {
-  it('loads once the token arrives, with the HQ looked up', async () => {
-    const { vm, client } = await loaded();
+describe('ExportVM preview', () => {
+  it('asks Beacon for one small page once the token arrives', async () => {
+    const { vm, client } = await loaded({ client: makeClient({ jobs: makeJobs(250) }) });
     expect(client.unit.getName).toHaveBeenCalledWith('9001', expect.objectContaining({ token: 't' }));
-    const [scope, start, end] = client.job.search.mock.calls[0];
+    expect(client.job.search).toHaveBeenCalledTimes(1);
+    const [scope, start, end, ctx] = client.job.search.mock.calls[0];
     expect(scope).toBe(UNIT);
     expect(start).toBe(params.start);
     expect(end).toBe(params.end);
+    expect(ctx).toMatchObject({ pageSize: PREVIEW_ROWS, pageLimit: 1 });
     expect(vm.loading()).toBe(false);
+    expect(vm.previewJobs()).toHaveLength(PREVIEW_ROWS);
+    expect(vm.countText()).toBe('250 incidents');
+    expect(vm.downloadText()).toBe('Download CSV (250 incidents)');
+    expect(vm.previewNote()).toBe(`Newest ${PREVIEW_ROWS} of 250 incidents. Download CSV fetches them all.`);
     expect(vm.pageTitle()).toBe('Incident Export: Demo City');
-    expect(vm.countText()).toBe('3 incidents');
+  });
+
+  it('re-renders for ticked columns without asking Beacon again', async () => {
+    const { vm, client } = await loaded({ client: makeClient({ jobs: makeJobs(15) }) });
+    vm.groups.forEach((g) => g.selectNone());
+    field(vm, 'Identifier').checked(true);
+    field(vm, 'JobReceived').checked(true);
+    expect(vm.previewHeader()).toEqual(['Id', 'Received']);
+    expect(vm.previewRows()[0].cells.map((c) => c.text)).toEqual(['2610-1000', '2026-10-27T08:00:00+11:00']);
+    expect(client.job.search).toHaveBeenCalledTimes(1);
   });
 
   it('shows the error and tries again on request', async () => {
-    const client = makeClient({ fail: Object.assign(new Error('x'), { status: 503 }) });
+    const client = makeClient();
+    client.job.search.mockRejectedValueOnce(Object.assign(new Error('x'), { status: 503 }));
     const { vm } = await loaded({ client });
     expect(vm.loading()).toBe(true);
     expect(vm.error()).toBe('Beacon returned 503.');
-    client.job.search.mockImplementation(async () => ({ results: makeJobs(2) }));
     await vm.retry();
     expect(vm.error()).toBe(null);
     expect(vm.loading()).toBe(false);
-    expect(vm.jobs()).toHaveLength(2);
   });
 
-  it('keeps the last incidents when a reload fails', async () => {
+  it('keeps the last preview when a reload fails', async () => {
     const { vm, client } = await loaded();
-    client.job.search.mockImplementation(async () => { throw Object.assign(new Error('x'), { status: 500 }); });
+    client.job.search.mockRejectedValueOnce(Object.assign(new Error('x'), { status: 500 }));
     await vm.reload();
     expect(vm.loading()).toBe(false);
     expect(vm.error()).toBe('Beacon returned 500.');
-    expect(vm.jobs()).toHaveLength(3);
+    expect(vm.previewJobs()).toHaveLength(3);
     expect(vm.canDownload()).toBe(true);
   });
 
@@ -118,6 +138,14 @@ describe('ExportVM loading', () => {
     expect(vm.error()).toBe(NO_TOKEN_TEXT);
     vm.retry();
     expect(vm.error()).toBe(NO_TOKEN_TEXT);
+  });
+
+  it('can\'t download with no incidents', async () => {
+    const { vm, saveFile } = await loaded({ client: makeClient({ jobs: [] }) });
+    expect(vm.isEmpty()).toBe(true);
+    expect(vm.canDownload()).toBe(false);
+    await vm.download();
+    expect(saveFile).not.toHaveBeenCalled();
   });
 });
 
@@ -141,7 +169,7 @@ describe('ExportVM columns', () => {
     expect(vm.selectedKeys()).toEqual(['Identifier', 'Tags']);
   });
 
-  it('ticks and clears a whole group', async () => {
+  it('ticks and clears a whole group; no columns, no download', async () => {
     const { vm } = await loaded();
     const address = vm.groups[1];
     address.selectAll();
@@ -155,60 +183,94 @@ describe('ExportVM columns', () => {
   });
 });
 
-describe('ExportVM preview and download', () => {
-  it('previews the first rows with labels, all rows go in the CSV', async () => {
-    const { vm, saveFile } = await loaded({ client: makeClient({ jobs: makeJobs(PREVIEW_ROWS + 5) }) });
+describe('ExportVM download', () => {
+  it('fetches every incident on click, then saves them all', async () => {
+    const { vm, client, saveFile } = await loaded({ client: makeClient({ jobs: makeJobs(250) }) });
     vm.groups.forEach((g) => g.selectNone());
     field(vm, 'Identifier').checked(true);
     field(vm, 'JobReceived').checked(true);
-    expect(vm.previewHeader()).toEqual(['Id', 'Received']);
-    expect(vm.previewRows()).toHaveLength(PREVIEW_ROWS);
-    expect(vm.previewRows()[0].cells.map((c) => c.text)).toEqual(['2610-1000', '2026-10-27T08:00:00+11:00']);
-    expect(vm.previewNote()).toBe(`First ${PREVIEW_ROWS} of 15 incidents. The download has them all.`);
-
     await vm.download();
+    expect(client.job.search).toHaveBeenCalledTimes(2);
+    const ctx = client.job.search.mock.calls[1][3];
+    expect(ctx.pageLimit).toBeUndefined();
+    expect(ctx.signal).toBeInstanceOf(AbortSignal);
     const [name, text] = saveFile.mock.calls[0];
     expect(name).toBe('Incident export - Demo City - 2026-10-27 1100.csv');
     const lines = text.trim().split('\n');
     expect(lines[0]).toBe('"Identifier","JobReceived"');
-    expect(lines).toHaveLength(16);
+    expect(lines).toHaveLength(251);
+    expect(vm.downloading()).toBe(false);
   });
 
-  it('can\'t download with no incidents', async () => {
-    const { vm, saveFile } = await loaded({ client: makeClient({ jobs: [] }) });
-    expect(vm.isEmpty()).toBe(true);
-    expect(vm.canDownload()).toBe(false);
+  it('fetches again on every click (the CSV is always current)', async () => {
+    const { vm, client, saveFile } = await loaded();
     await vm.download();
+    client.jobs = makeJobs(5);
+    await vm.download();
+    expect(client.job.search).toHaveBeenCalledTimes(3);
+    expect(saveFile.mock.calls[1][1].trim().split('\n')).toHaveLength(6);
+    expect(vm.countText()).toBe('5 incidents');
+  });
+
+  it('keeps the dialog open with the error, and can try again or close', async () => {
+    const { vm, client, saveFile } = await loaded();
+    client.job.search.mockRejectedValueOnce(Object.assign(new Error('x'), { status: 502 }));
+    await vm.download();
+    expect(vm.downloading()).toBe(true);
+    expect(vm.dlError()).toBe('Beacon returned 502.');
     expect(saveFile).not.toHaveBeenCalled();
+    await vm.retryDownload();
+    expect(saveFile).toHaveBeenCalledTimes(1);
+    expect(vm.downloading()).toBe(false);
+
+    client.job.search.mockRejectedValueOnce(new Error('x'));
+    await vm.download();
+    vm.cancelDownload();
+    expect(vm.downloading()).toBe(false);
+    expect(vm.dlError()).toBe(null);
+  });
+
+  it('cancel aborts the fetch and saves nothing', async () => {
+    const { vm, client, saveFile } = await loaded();
+    let release;
+    client.job.search.mockImplementationOnce((scope, s, e, ctx) => new Promise((resolve, reject) => {
+      release = () => resolve({ results: makeJobs(3), totalItems: 3 });
+      ctx.signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    }));
+    const p = vm.download();
+    expect(vm.downloading()).toBe(true);
+    vm.cancelDownload();
+    await p;
+    release();
+    expect(saveFile).not.toHaveBeenCalled();
+    expect(vm.downloading()).toBe(false);
+    expect(vm.dlError()).toBe(null);
   });
 });
 
 describe('ExportVM ICEMS update counts', () => {
-  it('only counts when the column is ticked, and only ICEMS incidents', async () => {
-    const { vm, client } = await loaded({ client: makeClient({ jobs: makeJobs(6, 2) }) });
+  it('counts the preview\'s ICEMS incidents when the column is ticked', async () => {
+    const { vm, client } = await loaded({ client: makeClient({ jobs: makeJobs(30, 2) }) });
     expect(client.operationslog.search).not.toHaveBeenCalled();
     field(vm, 'ICEMSIUMTransactions').checked(true);
     ko.tasks.runEarly();
-    expect(vm.icemsCounting()).toBe(true);
-    expect(vm.canDownload()).toBe(false);
     expect(vm.previewRows()[0].cells.at(-1).text).toBe('…');
-    await vm.countIcems();
-    ko.tasks.runEarly();
-    expect(client.operationslog.search).toHaveBeenCalledTimes(3);
-    expect(vm.icemsCounting()).toBe(false);
-    expect(vm.canDownload()).toBe(true);
-    const cells = vm.previewRows().map((r) => r.cells.at(-1).text);
-    expect(cells).toEqual(['2', '', '2', '', '2', '']);
+    await flush();
+    expect(client.operationslog.search).toHaveBeenCalledTimes(5); // 5 of the 10 previewed
+    expect(vm.previewRows().slice(0, 4).map((r) => r.cells.at(-1).text)).toEqual(['2', '', '2', '']);
   });
 
-  it('counts again after a reload, not before', async () => {
+  it('counts every ICEMS incident on download', async () => {
     const storage = memoryStorage({ [CHOICES_KEY]: JSON.stringify(['Identifier', 'ICEMSIUMTransactions']) });
-    const { vm, client } = await loaded({ storage, client: makeClient({ jobs: makeJobs(2, 1) }) });
-    await vm.countIcems();
-    expect(client.operationslog.search).toHaveBeenCalledTimes(2);
-    await vm.reload();
-    await vm.countIcems();
-    expect(client.operationslog.search).toHaveBeenCalledTimes(4);
+    const { vm, client, saveFile } = await loaded({ storage, client: makeClient({ jobs: makeJobs(30, 2) }) });
+    await flush();
+    client.operationslog.search.mockClear();
+    await vm.download();
+    expect(client.operationslog.search).toHaveBeenCalledTimes(15);
+    expect(vm.icemsDone()).toBe(15);
+    const rows = saveFile.mock.calls[0][1].trim().split('\n');
+    expect(rows[1]).toBe('"2610-1000","2"');
+    expect(rows[2]).toBe('"2610-1001",""');
   });
 
   it('notes incidents whose Ops Log could not be read', async () => {
@@ -218,9 +280,9 @@ describe('ExportVM ICEMS update counts', () => {
       return { results: [] };
     });
     const storage = memoryStorage({ [CHOICES_KEY]: JSON.stringify(['ICEMSIUMTransactions']) });
-    const { vm } = await loaded({ storage, client });
-    await vm.countIcems();
-    expect(vm.icemsText()).toBe("Couldn't read the Ops Log for 1 ICEMS incident: their count is left empty.");
-    expect(vm.csvText()).toBe('"ICEMSIUMTransactions"\n"0"\n""\n');
+    const { vm, saveFile } = await loaded({ storage, client });
+    await vm.download();
+    expect(vm.icemsText()).toBe("Couldn't read the Ops Log for 1 ICEMS incident: their count is empty in the CSV.");
+    expect(saveFile.mock.calls[0][1]).toBe('"ICEMSIUMTransactions"\n"0"\n""\n');
   });
 });

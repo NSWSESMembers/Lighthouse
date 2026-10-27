@@ -4,6 +4,7 @@ import ko from "knockout";
 import { isValidRange, rangeText, scopeTitle } from "../../shared/params.js";
 import { loadUnits, errorText } from "../../shared/beacon.js";
 import { describeLoad } from "../../shared/incidentLoad.js";
+import { waitingRing } from "../../shared/loadRing.js";
 import { FIELD_GROUPS, DEFAULT_KEYS, fieldFor, buildRows, orderedKeys } from "../data/fields.js";
 import { toCsv, fileName } from "../data/csv.js";
 import { fileStamp } from "../data/dates.js";
@@ -11,7 +12,8 @@ import { icemsIncidents, countIcemsUpdates } from "../data/icemsUpdates.js";
 import { loadChoices, saveChoices, clearChoices } from "../data/choices.js";
 
 const PAGE_NAME = "Incident Export";
-// Rows in the preview table; the download has them all.
+// The preview is one small request: the newest PREVIEW_ROWS incidents, with
+// Beacon's total. Download CSV fetches every incident then.
 export const PREVIEW_ROWS = 10;
 // Beacon hands the page its sign-in when it opens it. If none has come by
 // then, the page wasn't opened from Beacon (or the sign-in has gone).
@@ -19,8 +21,8 @@ export const NO_TOKEN_MS = 15000;
 export const NO_TOKEN_TEXT = "Lighthouse has no Beacon sign-in for this page. Open Incident Export again from Beacon.";
 
 /**
- * Incident Export page: pick columns, see the first rows, download a CSV
- * of every incident in the range the page was opened with.
+ * Incident Export page: pick columns, preview the newest incidents, and
+ * download a CSV of every incident in the range the page was opened with.
  *
  * @param {object} deps
  * @param {{host, source, userId, hqIds, start, end}} deps.params  parsePageParams()
@@ -45,19 +47,16 @@ export function ExportVM(deps) {
     self.token = ko.observable("");
     self.units = ko.observable(null); // null until looked up
 
-    self.loading = ko.observable(true);   // first load: the ring
-    self.reloading = ko.observable(false); // Reload: small spinner
-    self.loadPhase = ko.observable("starting"); // starting | incidents | finishing
-    self.loadLoaded = ko.observable(0);
-    self.loadTotal = ko.observable(null);
-    self.loadStartedAt = ko.observable(+now());
-    self.firstPageAt = ko.observable(null);
-    self.lastPageAt = ko.observable(null);
-    self.clock = ko.observable(+now());
-    self.error = ko.observable(null);
+    function ctx(extra) {
+        return { host: params.host, userId: params.userId, token: self.token(), ...extra };
+    }
+    // job.search takes a single entity, an array, or [] for no HQ filter.
+    function searchScope() {
+        const units = self.units();
+        return units.length === 1 ? units[0] : units;
+    }
 
-    self.jobs = ko.observableArray([]);
-    self.loadedAt = ko.observable(null);
+    self.clock = ko.observable(+now()); // ticks each second while something loads (tick)
 
     // ---- headings -------------------------------------------------------
 
@@ -67,17 +66,6 @@ export function ExportVM(deps) {
     });
     self.pageTitle = ko.pureComputed(() => `${PAGE_NAME}: ${self.scopeTitle()}`);
     self.rangeText = rangeText(range);
-
-    self.loader = ko.pureComputed(() => describeLoad({
-        phase: self.loadPhase(),
-        loaded: self.loadLoaded(),
-        total: self.loadTotal(),
-        startedAt: self.loadStartedAt(),
-        firstPageAt: self.firstPageAt(),
-        lastPageAt: self.lastPageAt(),
-        now: self.clock(),
-        finishingTitle: "Preparing the export…",
-    }));
 
     // ---- columns --------------------------------------------------------
 
@@ -115,135 +103,49 @@ export function ExportVM(deps) {
         allFields.forEach((f) => f.checked(defaults.has(f.key)));
         if (storage) clearChoices(storage);
     };
-
-    // ---- ICEMS update counts (only when that column is ticked) ----------
-
-    self.icemsUpdates = ko.observable(null); // Map once counted for the current incidents
-    self.icemsCounting = ko.observable(false);
-    self.icemsDone = ko.observable(0);
-    self.icemsTotal = ko.observable(0);
-    self.icemsFailed = ko.observable(0);
     self.needsIcems = ko.pureComputed(() => self.selectedKeys().some((k) => fieldFor(k).needsIcemsUpdates));
 
-    let icemsRun = null;
-    function ctx(extra) {
-        return { host: params.host, userId: params.userId, token: self.token(), ...extra };
-    }
+    // ---- preview: the newest PREVIEW_ROWS, one small request --------------
 
-    self.countIcems = async function () {
-        if (icemsRun) return icemsRun.promise;
-        const controller = new AbortController();
-        const jobs = icemsIncidents(self.jobs());
-        self.icemsCounting(true);
-        self.icemsFailed(0);
-        const promise = countIcemsUpdates(client, jobs, ctx({ signal: controller.signal }), {
-            onProgress: (done, total) => {
-                self.icemsDone(done);
-                self.icemsTotal(total);
-            },
-        }).then(({ counts, failed }) => {
-            if (controller.signal.aborted) return;
-            self.icemsUpdates(counts);
-            self.icemsFailed(failed);
-        }).finally(() => {
-            if (icemsRun && icemsRun.controller === controller) {
-                icemsRun = null;
-                self.icemsCounting(false);
-            }
+    self.loading = ko.observable(true);    // first preview: the loading card
+    self.reloading = ko.observable(false); // Reload: small spinner
+    self.loadStartedAt = ko.observable(+now());
+    self.error = ko.observable(null);      // the preview's load error
+    self.previewJobs = ko.observableArray([]);
+    self.total = ko.observable(0);         // Beacon's count for the whole range
+    self.loadedAt = ko.observable(null);
+
+    self.loader = ko.pureComputed(() => waitingRing({
+        startedAt: self.loadStartedAt(),
+        now: self.clock(),
+        title: "Asking Beacon for incidents…",
+    }));
+
+    // ICEMS counts for the preview rows only (a handful of Ops Logs).
+    self.previewIcems = ko.observable(null);
+    let previewIcemsFor = null;
+    function countPreviewIcems() {
+        const jobs = self.previewJobs();
+        if (previewIcemsFor === jobs) return;
+        previewIcemsFor = jobs;
+        self.previewIcems(null);
+        countIcemsUpdates(client, icemsIncidents(jobs), ctx()).then(({ counts }) => {
+            if (previewIcemsFor === jobs) self.previewIcems(counts);
         });
-        icemsRun = { controller, promise };
-        return promise;
-    };
-
-    function stopIcems() {
-        if (icemsRun) icemsRun.controller.abort();
-        icemsRun = null;
-        self.icemsCounting(false);
-        self.icemsUpdates(null);
     }
-
     self.needsIcems.subscribe((needed) => {
-        if (needed && !self.loading() && !self.icemsUpdates()) self.countIcems();
+        if (needed && !self.loading()) countPreviewIcems();
     });
-
-    self.icemsText = ko.pureComputed(() => {
-        if (self.icemsCounting()) return `Counting ICEMS updates: ${self.icemsDone()} of ${self.icemsTotal()} ICEMS incidents`;
-        const failed = self.icemsFailed();
-        if (failed) return `Couldn't read the Ops Log for ${failed} ICEMS ${failed === 1 ? "incident" : "incidents"}: their count is left empty.`;
-        return "";
-    });
-    self.icemsPct = ko.pureComputed(() => {
-        const total = self.icemsTotal();
-        return { width: (total ? Math.round((self.icemsDone() / total) * 100) : 0) + "%" };
-    });
-
-    // ---- preview and download -------------------------------------------
-
-    self.countText = ko.pureComputed(() => {
-        const n = self.jobs().length;
-        return `${n.toLocaleString()} ${n === 1 ? "incident" : "incidents"}`;
-    });
-    self.isEmpty = ko.pureComputed(() => !self.loading() && !self.error() && self.jobs().length === 0);
-
-    // Cells are { text } objects, not bare strings: knockout-secure-binding
-    // falls back to `window` for a falsy binding value, and `text` isn't a
-    // window global, so an empty cell stays empty.
-    self.previewHeader = ko.pureComputed(() => self.selectedKeys().map((k) => fieldFor(k).label));
-    self.previewRows = ko.pureComputed(() => {
-        const keys = self.selectedKeys();
-        const extra = { icemsUpdates: self.icemsUpdates() };
-        const pending = self.needsIcems() && !self.icemsUpdates();
-        return buildRows(self.jobs().slice(0, PREVIEW_ROWS), keys, extra).map((cells) => ({
-            cells: cells.map((c, i) => ({
-                text: pending && fieldFor(keys[i]).needsIcemsUpdates ? "…" : String(c),
-            })),
-        }));
-    });
-    self.previewNote = ko.pureComputed(() => {
-        const n = self.jobs().length;
-        if (n <= PREVIEW_ROWS) return "";
-        return `First ${PREVIEW_ROWS} of ${n.toLocaleString()} incidents. The download has them all.`;
-    });
-
-    self.canDownload = ko.pureComputed(() =>
-        !self.loading() && !self.reloading() && !self.noneSelected() && self.jobs().length > 0 && !self.icemsCounting());
-    self.downloadText = ko.pureComputed(() => {
-        if (self.icemsCounting()) return "Counting ICEMS updates…";
-        return `Download CSV (${self.countText()})`;
-    });
-    self.downloadHint = ko.pureComputed(() => {
-        if (self.noneSelected()) return "Tick at least one column to export.";
-        return "";
-    });
-
-    /** The CSV for the ticked columns (header = Beacon field names, as the old page). */
-    self.csvText = function () {
-        const keys = self.selectedKeys();
-        return toCsv(keys, buildRows(self.jobs(), keys, { icemsUpdates: self.icemsUpdates() }));
-    };
-
-    self.download = async function () {
-        if (!self.canDownload()) return;
-        if (self.needsIcems() && !self.icemsUpdates()) await self.countIcems();
-        saveFile(fileName(self.scopeTitle(), fileStamp(now())), self.csvText());
-    };
-
-    // ---- loading --------------------------------------------------------
 
     let inFlight = null;
 
-    /** Fetch every incident in the range (first load, Try again, Reload). */
+    /** The preview (first load, Try again, Reload). */
     self.load = async function () {
         if (inFlight) return inFlight;
         const firstLoad = self.loadedAt() === null;
         self.error(null);
         if (firstLoad) {
             self.loading(true);
-            self.loadPhase("starting");
-            self.loadLoaded(0);
-            self.loadTotal(null);
-            self.firstPageAt(null);
-            self.lastPageAt(null);
             self.loadStartedAt(+now());
             self.clock(+now());
         } else {
@@ -254,33 +156,16 @@ export function ExportVM(deps) {
             try {
                 if (!isValidRange(range)) throw new Error("This page was opened without a valid start and end date. Open it again from Beacon.");
                 if (self.units() === null) self.units(await loadUnits(client, params.hqIds, ctx()));
-                const units = self.units();
-                // job.search takes a single entity, an array, or [] for no HQ filter.
-                const scope = units.length === 1 ? units[0] : units;
-                const { results } = await client.job.search(scope, range.start, range.end, ctx({
-                    onProgress: (done, total) => {
-                        if (!firstLoad) return;
-                        const at = +now();
-                        if (self.firstPageAt() === null) self.firstPageAt(at);
-                        self.lastPageAt(at);
-                        self.loadTotal(total);
-                        self.loadLoaded(done);
-                        self.clock(at);
-                        self.loadPhase("incidents");
-                    },
-                }));
-                if (firstLoad) {
-                    if (self.loadTotal() === null) self.loadTotal(results.length);
-                    self.loadLoaded(results.length);
-                    self.loadPhase("finishing");
-                }
-                stopIcems();
-                self.jobs(results);
+                const { results, totalItems } = await client.job.search(searchScope(), range.start, range.end,
+                    ctx({ pageSize: PREVIEW_ROWS, pageLimit: 1 }));
+                const rows = results.slice(0, PREVIEW_ROWS);
+                self.previewJobs(rows);
+                self.total(Math.max(totalItems || 0, rows.length));
                 self.loadedAt(now());
                 self.loading(false);
-                if (self.needsIcems()) self.countIcems();
+                if (self.needsIcems()) countPreviewIcems();
             } catch (err) {
-                console.error("Incident export load failed", err);
+                console.error("Incident export preview failed", err);
                 self.error(errorText(err, PAGE_NAME));
             } finally {
                 self.reloading(false);
@@ -299,17 +184,164 @@ export function ExportVM(deps) {
     };
     self.reload = () => self.load();
 
+    self.countText = ko.pureComputed(() => {
+        const n = self.total();
+        return `${n.toLocaleString()} ${n === 1 ? "incident" : "incidents"}`;
+    });
+    self.isEmpty = ko.pureComputed(() => !self.loading() && !self.error() && self.total() === 0);
     self.loadedText = ko.pureComputed(() => {
         const at = self.loadedAt();
         if (!at) return "";
-        return "Loaded " + at.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+        return "Checked " + at.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
     });
 
-    /** Each second, for the ring's waiting time. */
-    self.tick = function () {
-        if (!self.loading()) return;
+    // Cells are { text } objects, not bare strings: knockout-secure-binding
+    // falls back to `window` for a falsy binding value, and `text` isn't a
+    // window global, so an empty cell stays empty.
+    self.previewHeader = ko.pureComputed(() => self.selectedKeys().map((k) => fieldFor(k).label));
+    self.previewRows = ko.pureComputed(() => {
+        const keys = self.selectedKeys();
+        const icems = self.previewIcems();
+        return buildRows(self.previewJobs(), keys, { icemsUpdates: icems }).map((cells) => ({
+            cells: cells.map((c, i) => ({
+                text: !icems && fieldFor(keys[i]).needsIcemsUpdates ? "…" : String(c),
+            })),
+        }));
+    });
+    self.previewNote = ko.pureComputed(() => {
+        const n = self.total();
+        if (n <= self.previewJobs().length) return "";
+        return `Newest ${self.previewJobs().length} of ${n.toLocaleString()} incidents. Download CSV fetches them all.`;
+    });
+
+    // ---- download: every incident, then (if ticked) ICEMS counts ----------
+
+    self.downloading = ko.observable(false);
+    self.dlPhase = ko.observable("starting"); // starting | incidents | icems
+    self.dlLoaded = ko.observable(0);
+    self.dlTotal = ko.observable(null);
+    self.dlStartedAt = ko.observable(+now());
+    self.dlFirstPageAt = ko.observable(null);
+    self.dlLastPageAt = ko.observable(null);
+    self.dlError = ko.observable(null);
+    self.icemsDone = ko.observable(0);
+    self.icemsTotal = ko.observable(0);
+    self.icemsFailed = ko.observable(0); // in the last download
+
+    self.dlLoader = ko.pureComputed(() => {
+        const icems = self.dlPhase() === "icems";
+        return describeLoad({
+            phase: icems ? "finishing" : self.dlPhase(),
+            loaded: self.dlLoaded(),
+            total: self.dlTotal(),
+            startedAt: self.dlStartedAt(),
+            firstPageAt: self.dlFirstPageAt(),
+            lastPageAt: self.dlLastPageAt(),
+            now: self.clock(),
+            finishingTitle: `Counting ICEMS updates: ${self.icemsDone()} of ${self.icemsTotal()}`,
+        });
+    });
+    self.icemsPct = ko.pureComputed(() => {
+        const total = self.icemsTotal();
+        return { width: (total ? Math.round((self.icemsDone() / total) * 100) : 0) + "%" };
+    });
+    self.dlCounting = ko.pureComputed(() => self.dlPhase() === "icems");
+    self.icemsText = ko.pureComputed(() => {
+        const failed = self.icemsFailed();
+        if (!failed) return "";
+        return `Couldn't read the Ops Log for ${failed} ICEMS ${failed === 1 ? "incident" : "incidents"}: their count is empty in the CSV.`;
+    });
+
+    self.canDownload = ko.pureComputed(() =>
+        !self.loading() && !self.reloading() && !self.downloading() && !self.noneSelected() && self.total() > 0);
+    self.downloadText = ko.pureComputed(() => `Download CSV (${self.countText()})`);
+    self.downloadHint = ko.pureComputed(() => (self.noneSelected() ? "Tick at least one column to export." : ""));
+
+    /** The CSV for the ticked columns (header = Beacon field names, as the old page). */
+    self.csvText = function (jobs, icemsUpdates) {
+        const keys = self.selectedKeys();
+        return toCsv(keys, buildRows(jobs, keys, { icemsUpdates }));
+    };
+
+    let dlController = null;
+
+    self.download = async function () {
+        if (!self.canDownload()) return;
+        const controller = new AbortController();
+        dlController = controller;
+        const aborted = () => controller.signal.aborted;
+        self.downloading(true);
+        self.dlError(null);
+        self.dlPhase("starting");
+        self.dlLoaded(0);
+        self.dlTotal(null);
+        self.dlFirstPageAt(null);
+        self.dlLastPageAt(null);
+        self.dlStartedAt(+now());
         self.clock(+now());
-        if (!self.token() && !self.error() && +now() - self.loadStartedAt() >= NO_TOKEN_MS) self.error(NO_TOKEN_TEXT);
+        self.icemsFailed(0);
+        try {
+            const { results } = await client.job.search(searchScope(), range.start, range.end, ctx({
+                signal: controller.signal,
+                onProgress: (done, total) => {
+                    if (aborted()) return;
+                    const at = +now();
+                    if (self.dlFirstPageAt() === null) self.dlFirstPageAt(at);
+                    self.dlLastPageAt(at);
+                    self.dlTotal(total);
+                    self.dlLoaded(done);
+                    self.clock(at);
+                    self.dlPhase("incidents");
+                },
+            }));
+            if (aborted()) return;
+            if (self.dlTotal() === null) self.dlTotal(results.length);
+            self.dlLoaded(results.length);
+            self.total(results.length); // Beacon's latest count
+
+            let icemsUpdates = null;
+            if (self.needsIcems()) {
+                const icems = icemsIncidents(results);
+                self.icemsDone(0);
+                self.icemsTotal(icems.length);
+                self.dlPhase("icems");
+                const { counts, failed } = await countIcemsUpdates(client, icems, ctx({ signal: controller.signal }), {
+                    onProgress: (done) => self.icemsDone(done),
+                });
+                if (aborted()) return;
+                icemsUpdates = counts;
+                self.icemsFailed(failed);
+            }
+            saveFile(fileName(self.scopeTitle(), fileStamp(now())), self.csvText(results, icemsUpdates));
+            self.downloading(false);
+        } catch (err) {
+            if (aborted()) return;
+            console.error("Incident export download failed", err);
+            self.dlError(errorText(err, PAGE_NAME));
+        } finally {
+            if (dlController === controller) dlController = null;
+        }
+    };
+
+    /** Stop a download in progress (or close its error). */
+    self.cancelDownload = function () {
+        if (dlController) dlController.abort();
+        dlController = null;
+        self.downloading(false);
+        self.dlError(null);
+    };
+    self.retryDownload = function () {
+        self.downloading(false);
+        return self.download();
+    };
+
+    // ---- clock and token --------------------------------------------------
+
+    /** Each second, for the rings' waiting times and the no-sign-in message. */
+    self.tick = function () {
+        if (!self.loading() && !self.downloading()) return;
+        self.clock(+now());
+        if (self.loading() && !self.token() && !self.error() && +now() - self.loadStartedAt() >= NO_TOKEN_MS) self.error(NO_TOKEN_TEXT);
     };
 
     self.setToken = function (token) {
