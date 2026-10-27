@@ -181,3 +181,25 @@ body.watermark {
   font-size: .875rem;
   color: var(--bs-secondary-color);
 }
+
+/* ---- a dialog over the page (e.g. an export's Download progress) ---- */
+
+.lh-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 15vh 1rem 0;
+  background: rgba(0, 0, 0, .35);
+}
+
+.lh-overlay .card {
+  width: 100%;
+  max-width: 540px;
+}
+
+.lh-overlay .progress-bar {
+  background: var(--lh-env-color);
+}

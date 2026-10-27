@@ -1,6 +1,6 @@
 /*
   Shared harness for the Lighthouse pages Beacon opens in a new tab
-  (Incident Statistics, Incident Summary, Incident Export): launch a built page from dist/
+  (Incident Statistics, Incident Summary, Incident Export, NITC Export): launch a built page from dist/
   in the locally installed Google Chrome, outside the extension, against a
   mock Beacon.
 
@@ -41,6 +41,7 @@ export const json = (route, body, status = 200) =>
  * @param {Record<string, any>} [opts.appJson]  app paths answered with this JSON instead of dist/
  *        (e.g. { '/resources/unitClusters.json': fakeClusters })
  * @param {number[]} opts.hq  HQ ids for the `hq` param ([] for "all of NSW")
+ * @param {Record<string,string>} [opts.extraParams]  more URL params (e.g. NITC Export's TagIds)
  * @param {Date} opts.now  the instant the page's clock starts at (and the launch range ends)
  * @param {boolean} [opts.shiftClock]  shift the page's Date to `now` (else it uses the real time)
  * @param {number} [opts.hours=72]  launch range: the last N hours to `now`
@@ -57,7 +58,7 @@ export const json = (route, body, status = 200) =>
  */
 export async function launchPage(opts) {
   const {
-    page: pageFile, beacon, appJson = {}, hq, now, shiftClock = false, hours = 72, range,
+    page: pageFile, beacon, appJson = {}, hq, now, shiftClock = false, hours = 72, range, extraParams = {},
     headless = true, viewport = { width: 1440, height: 1000 },
     dark = false, verbose = false, scale = 1, watermark = false, env = 'production',
   } = opts;
@@ -134,6 +135,7 @@ export async function launchPage(opts) {
     hq: hq.join(','),
     start: launchRange.start.toISOString(),
     end: launchRange.end.toISOString(),
+    ...extraParams,
   });
   await page.goto(`${APP_ORIGIN}/pages/${pageFile}?${params}`);
   await page.waitForFunction(() => document.body.style.opacity === '1');

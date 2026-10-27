@@ -1,10 +1,10 @@
 name: Sync Docs to Website
 on:
   push:
-    # master -> the stable guides (/guides/lad/, /guides/stats/, /guides/summary/, /guides/export/, /whats-new/).
+    # master -> the stable guides (/guides/lad/, /guides/stats/, /guides/summary/, /guides/export/, /guides/nitc/, /whats-new/).
     # master-dev -> the Development Preview copy (/preview/guides/lad/, ...).
     branches: [master, master-dev]
-    paths: ['docs/lad/**', 'docs/stats/**', 'docs/summary/**', 'docs/export/**', 'docs/whats-new/**']
+    paths: ['docs/lad/**', 'docs/stats/**', 'docs/summary/**', 'docs/export/**', 'docs/nitc/**', 'docs/whats-new/**']
   workflow_dispatch:
 
 concurrency:
@@ -47,11 +47,12 @@ jobs:
         env:
           PREFIX: ${{ steps.target.outputs.prefix }}
         run: |
-          mkdir -p "website/${PREFIX}guides/lad" "website/${PREFIX}guides/stats" "website/${PREFIX}guides/summary" "website/${PREFIX}guides/export" "website/${PREFIX}whats-new"
+          mkdir -p "website/${PREFIX}guides/lad" "website/${PREFIX}guides/stats" "website/${PREFIX}guides/summary" "website/${PREFIX}guides/export" "website/${PREFIX}guides/nitc" "website/${PREFIX}whats-new"
           rsync -a --delete lighthouse/docs/lad/ "website/${PREFIX}guides/lad/"
           rsync -a --delete lighthouse/docs/stats/ "website/${PREFIX}guides/stats/"
           rsync -a --delete lighthouse/docs/summary/ "website/${PREFIX}guides/summary/"
           rsync -a --delete lighthouse/docs/export/ "website/${PREFIX}guides/export/"
+          rsync -a --delete lighthouse/docs/nitc/ "website/${PREFIX}guides/nitc/"
           rsync -a --delete lighthouse/docs/whats-new/ "website/${PREFIX}whats-new/"
 
       # The docs link to each other with absolute https://lighthouse.ses.nsw.gov.au/...
@@ -60,8 +61,8 @@ jobs:
       - name: Point preview links at preview pages
         if: steps.target.outputs.prefix == 'preview/'
         run: |
-          find website/preview/guides/lad website/preview/guides/stats website/preview/guides/summary website/preview/guides/export website/preview/whats-new -name '*.md' -exec \
-            sed -i -E 's#https://lighthouse\.ses\.nsw\.gov\.au/(guides/lad|guides/stats|guides/summary|guides/export|whats-new)/#/preview/\1/#g' {} +
+          find website/preview/guides/lad website/preview/guides/stats website/preview/guides/summary website/preview/guides/export website/preview/guides/nitc website/preview/whats-new -name '*.md' -exec \
+            sed -i -E 's#https://lighthouse\.ses\.nsw\.gov\.au/(guides/lad|guides/stats|guides/summary|guides/export|guides/nitc|whats-new)/#/preview/\1/#g' {} +
 
       # Same format as the extension's version_name in webpack.prod.js,
       # so the guide footer matches what users see in chrome://extensions.
@@ -85,7 +86,7 @@ jobs:
           PREFIX: ${{ steps.target.outputs.prefix }}
           STAMP: ${{ steps.target.outputs.stamp }}
         run: |
-          git add -A "${PREFIX}guides/lad" "${PREFIX}guides/stats" "${PREFIX}guides/summary" "${PREFIX}guides/export" "${PREFIX}whats-new" "_data/${STAMP}.yml"
+          git add -A "${PREFIX}guides/lad" "${PREFIX}guides/stats" "${PREFIX}guides/summary" "${PREFIX}guides/export" "${PREFIX}guides/nitc" "${PREFIX}whats-new" "_data/${STAMP}.yml"
           if git diff --cached --quiet; then
             echo "Website docs already up to date"
             exit 0

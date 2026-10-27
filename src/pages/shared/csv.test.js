@@ -25,7 +25,7 @@ describe('toCsv', () => {
 
 describe('fileName', () => {
   it('names the scope and time, without characters Windows refuses', () => {
-    expect(fileName('Demo City', '2026-10-27 1015')).toBe('Incident export - Demo City - 2026-10-27 1015.csv');
-    expect(fileName('A/B: "C"', '2026-10-27 1015')).toBe('Incident export - A-B- -C- - 2026-10-27 1015.csv');
+    expect(fileName('Incident export', 'Demo City', '2026-10-27 1015')).toBe('Incident export - Demo City - 2026-10-27 1015.csv');
+    expect(fileName('Incident export', 'A/B: "C"', '2026-10-27 1015')).toBe('Incident export - A-B- -C- - 2026-10-27 1015.csv');
   });
 });

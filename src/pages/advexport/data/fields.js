@@ -11,7 +11,7 @@
   icemsUpdates.js and passed in).
 */
 
-import { isoDateTime } from './dates.js';
+import { isoDateTime } from '../../shared/dates.js';
 
 /** Status history entries named `name`, oldest first. */
 function statusTimes(job, name) {

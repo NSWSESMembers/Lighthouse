@@ -1,5 +1,5 @@
 /*
-  Beacon's times as ISO 8601 with the UTC offset, for the CSV:
+  Beacon's times as ISO 8601 with the UTC offset, for the CSV exports:
   "2026-10-27T10:00:00+11:00".
 
   Beacon sends offset-free NSW local times ("2026-10-27T10:00:00"). The

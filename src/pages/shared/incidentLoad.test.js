@@ -85,3 +85,14 @@ describe('etaText', () => {
     expect(etaText(150000)).toBe('about 3 min left');
   });
 });
+
+describe('describeLoad: one / many', () => {
+  it('can count something other than incidents', () => {
+    const base = { startedAt: 0, now: 1000, one: 'task', many: 'tasks' };
+    expect(describeLoad({ ...base, phase: 'starting', loaded: 0, total: null }).title).toBe('Asking Beacon for tasks…');
+    const v = describeLoad({ ...base, phase: 'incidents', loaded: 100, total: 250 });
+    expect(v.title).toBe('Loading tasks');
+    expect(v.centreLabel2).toBe('tasks');
+    expect(describeLoad({ ...base, phase: 'finishing', loaded: 1, total: 1 }).meta).toBe('1 task loaded');
+  });
+});

@@ -18,7 +18,7 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
-## New Incident Statistics, Summary and Export pages
+## New Statistics, Summary and Export pages
 
 *27 October 2026*
 
@@ -57,6 +57,16 @@ The home page shows the first three `##` entries, so keep the title short.
 - **Premises Access - Info** is filled in. It was always empty before.
 - **Acknowledged** is when the incident first went Active, and **Completed** and **Finalised** are the last time it reached that status. Before, ticking Acknowledged could change which Completed and Finalised times you got.
 - If Beacon can't be reached, the page says why and offers **Try again**. The page also says so if you tick no columns, and no longer sits on *Loading* when it has no Beacon login.
+
+### NITC Export
+
+- **NITC Export, rebuilt.** The **Export (Filtered)** button on Beacon's NITC screen opens it in a new tab with the screen's filters. Same two reports, Activity List and Member List, with a cleaner layout that follows your computer's light or dark mode, and a header coloured by Beacon as in LAD. See the [NITC Export guide](https://lighthouse.ses.nsw.gov.au/guides/nitc/).
+- **Preview before you download.** The page shows the report for the newest 10 tasks and how many tasks match. **Download CSV** then fetches every task, with a ring counting them and a **Cancel** button. Your report choice is remembered. See [Preview](https://lighthouse.ses.nsw.gov.au/guides/nitc/#preview).
+- **Participants are written with their hours in square brackets and separated by semicolons**, e.g. *Alex Sample[2.5]; Sam Example[3]*, so a name with round brackets in it can't be mistaken for hours, and a spreadsheet can split the list on *;*. If a spreadsheet or Power Query step reads the old *Alex Sample(2.5) Sam Example(3)* format, it needs updating. See [Activity List columns](https://lighthouse.ses.nsw.gov.au/guides/nitc/#activity-list-columns).
+- **The Member List has a TotalHours column**, puts hours from untagged tasks under **No tag** (they were left out before), lists the tags A to Z, and gives two members with the same name a row each (they were added together before). See [Member List columns](https://lighthouse.ses.nsw.gov.au/guides/nitc/#member-list-columns).
+- **Times are right, in ISO 8601 format** (e.g. *2026-10-15T09:41:00+11:00*). The old export's times were 11 hours early in daylight saving (10 hours outside it), and in the long *Thu Oct 15 2026 09:41:00 GMT+1100 (…)* text. See [Hours and times](https://lighthouse.ses.nsw.gov.au/guides/nitc/#hours-and-times).
+- Task names keep any *#* in them (it used to be removed), and a member with no sign-off time gets the task's end time instead of a nonsense number of hours.
+- If Beacon can't be reached, or no tasks match, the page now says so, instead of doing nothing.
 
 ## LAD arrival times, overlay status and street zoom
 

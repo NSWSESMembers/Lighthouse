@@ -6,8 +6,8 @@ import { loadUnits, errorText } from "../../shared/beacon.js";
 import { describeLoad } from "../../shared/incidentLoad.js";
 import { waitingRing } from "../../shared/loadRing.js";
 import { FIELD_GROUPS, DEFAULT_KEYS, fieldFor, buildRows, orderedKeys } from "../data/fields.js";
-import { toCsv, fileName } from "../data/csv.js";
-import { fileStamp } from "../data/dates.js";
+import { toCsv, fileName } from "../../shared/csv.js";
+import { fileStamp } from "../../shared/dates.js";
 import { icemsIncidents, countIcemsUpdates } from "../data/icemsUpdates.js";
 import { loadChoices, saveChoices, clearChoices } from "../data/choices.js";
 
@@ -312,7 +312,7 @@ export function ExportVM(deps) {
                 icemsUpdates = counts;
                 self.icemsFailed(failed);
             }
-            saveFile(fileName(self.scopeTitle(), fileStamp(now())), self.csvText(results, icemsUpdates));
+            saveFile(fileName("Incident export", self.scopeTitle(), fileStamp(now())), self.csvText(results, icemsUpdates));
             self.downloading(false);
         } catch (err) {
             if (aborted()) return;
