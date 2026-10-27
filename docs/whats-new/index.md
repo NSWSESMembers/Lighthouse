@@ -18,9 +18,26 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
-## A refreshed Incident Summary
+## New Incident Statistics and Incident Summary pages
 
 *27 October 2026*
+
+### Incident Statistics
+
+- **Job Statistics is now Incident Statistics, rebuilt.** It has the same charts, with a cleaner layout that fits any window size and follows your computer's light or dark mode. It's in the Lighthouse menu in Beacon as **Incident Statistics**. See the [Incident Statistics guide](https://lighthouse.ses.nsw.gov.au/guides/stats/).
+- **Sleeker, easier-to-read charts.** The pie charts are now donuts with a legend that lists each slice's count and percentage. Hover over a slice or a legend row to highlight both and see the details in the middle. No two slices in a chart share a colour. See [Breakdown](https://lighthouse.ses.nsw.gov.au/guides/stats/#breakdown).
+- **Two new charts:** **LGA** (the incident's local government area) and **ICEMS** (how many incidents came in from other agencies through ICEMS). See [Breakdown](https://lighthouse.ses.nsw.gov.au/guides/stats/#breakdown).
+- **Charts are grouped and arrangeable.** The breakdown charts are in three groups (Incident, Location, Damage and tags). Drag a chart by its title to move it, or its corner to resize it. Your layout is remembered, and **Reset layout** puts it back. See [Arranging the Charts](https://lighthouse.ses.nsw.gov.au/guides/stats/#arranging-the-charts).
+- **The header is coloured by Beacon, as in LAD:** orange for Beacon, green for Train Beacon and blue for Dev Beacon, so you can tell at a glance which one you're looking at.
+- **Pick the time range from the toolbar:** as opened, the last 24, 48 or 72 hours, or the last 7 days.
+- **Every chart has a reset link** while it's filtered, and **Clear all filters** removes them all. The toolbar shows how many incidents match your filters.
+- **The word cloud follows your filters**, like the other charts. Before, it always showed every incident.
+- The **25% / 50% / 75% of incidents completed within** figures were swapped, so *25%* showed the time three quarters of incidents were completed within. They're now the right way round.
+- The latest incidents table shows each incident's status, and an incident that isn't closed yet shows a dash instead of a blank.
+- **See how far a load has got.** While incidents load, a ring counts them as they arrive (e.g. *9,200 of 20,316 incidents*), with the page it's on and the time left. If Beacon is slow to answer, it says so and offers to load the last 24 hours instead. See [Loading](https://lighthouse.ses.nsw.gov.au/guides/stats/#loading).
+- If Beacon can't be reached, the page now says why and offers **Try again**, instead of a red progress bar.
+
+### Incident Summary
 
 - **Job Summary is now Incident Summary, refreshed.** Same layout and colours, with numbers that fit the window, from a phone to a wall screen. The text is now Atkinson Hyperlegible, a typeface designed to keep look-alike characters (1, l and I; 0 and O) apart, so it's easier to read from across the room. It's in the Lighthouse menu in Beacon as **Incident Summary**. See the [Incident Summary guide](https://lighthouse.ses.nsw.gov.au/guides/summary/).
 - **The boxes are coloured by Beacon, as in LAD:** orange for Beacon, green for Train Beacon and blue for Dev Beacon.

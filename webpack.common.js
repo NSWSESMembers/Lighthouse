@@ -24,6 +24,7 @@ const injectScripts = glob.sync('./src/injectscripts/**/*.js')
 const pagesScripts = [
   ...glob.sync('./src/pages/*.js'),
   './src/pages/tasking/main.js',
+  './src/pages/stats/main.js',
   './src/pages/summary/main.js',
   './src/pages/radio/main.js',
 ].reduce((acc, path) => {
