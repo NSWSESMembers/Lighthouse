@@ -204,10 +204,13 @@ check('401 says to reopen the page from Beacon', () => withPage({ failSearch: 40
   assert(msg.includes('Reopen NITC Export from Beacon'), `message "${msg.trim()}"`);
 }));
 
-check('no tasks match: says so, nothing to download', () => withPage({ range: { start: new Date('2026-01-01T00:00:00+11:00'), end: new Date('2026-01-02T00:00:00+11:00') } }, async ({ page }) => {
+check('no tasks match: says so, nothing to download, footer at the bottom', () => withPage({ range: { start: new Date('2026-01-01T00:00:00+11:00'), end: new Date('2026-01-02T00:00:00+11:00') } }, async ({ page }) => {
   await waitForNitc(page);
   assert(await page.getByText("No tasks match the NITC screen's filters").isVisible(), 'no empty message');
   assert(await page.locator('#download').isDisabled(), 'download enabled with no tasks');
+  // A short page: the footer sits at the bottom of the window, not under the content.
+  const bottom = await page.locator('.lh-page-footer').evaluate((el) => Math.round(el.getBoundingClientRect().bottom));
+  assert(bottom === await page.evaluate(() => innerHeight), `footer ends at ${bottom}, window is ${await page.evaluate(() => innerHeight)}`);
 }));
 
 check('header colour follows Beacon; Guide links to the guide', async () => {

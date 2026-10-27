@@ -3,6 +3,23 @@
 /* NITC Export page (src/pages/nitcexport/). Beacon colour, header, Guide
    button, loading ring and the Download dialog: include/lighthouse-page.css. */
 
+/* ---- footer at the bottom of the window when the page is short --------- */
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+body > main {
+  flex: 1 0 auto;
+}
+
+/* Auto side margins in a flex column shrink the card to its content. */
+.lh-page-loading {
+  width: 100%;
+}
+
 /* ---- report type (the old page's centred box) -------------------------- */
 
 .nitc-report {
