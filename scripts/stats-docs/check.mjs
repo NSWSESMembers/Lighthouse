@@ -392,6 +392,46 @@ check('a Beacon error shows a message and Try again', async () => {
   }
 });
 
+check('a failed refresh keeps the charts up and recovers by itself', async () => {
+  const { browser, page, pageErrors } = await launchStats({ now: NOW, verbose });
+  try {
+    await waitForStats(page, { cloud: false });
+    const before = (await vmState(page)).total;
+    const fail = (route) => route.fulfill({ status: 503, contentType: 'application/json', body: '{"Message":"Demo failure"}' });
+    await page.route('**/Jobs/Search**', fail);
+    await page.locator('.stats-toolbar button[title^="Refresh now"]').click();
+    await page.locator('.stats-toolbar .alert-warning').waitFor();
+    assert((await vmState(page)).total === before, 'charts changed after a failed refresh');
+    // The countdown keeps running after the error (it used to stop for good).
+    const t0 = await page.evaluate(() => window.statsVM.secondsToRefresh());
+    await page.waitForTimeout(2200);
+    const t1 = await page.evaluate(() => window.statsVM.secondsToRefresh());
+    assert(t1 < t0, `countdown stuck at ${t0} after the error`);
+    await page.unroute('**/Jobs/Search**', fail);
+    await page.evaluate(() => window.statsVM.secondsToRefresh(2)); // skip the wait
+    await page.waitForFunction(() => !window.statsVM.error(), null, { timeout: 10000 });
+    assert(!(await page.locator('.stats-toolbar .alert-warning').count()), 'warning still showing');
+    assert(!pageErrors.length, `page errors: ${pageErrors.join('; ')}`);
+  } finally {
+    await browser.close();
+  }
+});
+
+check('a failed first load tries again by itself', async () => {
+  const { browser, page, pageErrors } = await launchStats({ now: NOW, verbose, failSearchTimes: 1 });
+  try {
+    await page.locator('#stats-loading .alert-danger').waitFor();
+    const text = await page.locator('#retry-countdown').textContent();
+    assert(/^Trying again in 01:00$|^Trying again in 00:5\d$/.test(text), `retry text "${text}"`);
+    await page.evaluate(() => window.statsVM.secondsToRefresh(2)); // skip the wait
+    await page.waitForFunction(() => !window.statsVM.loading(), null, { timeout: 10000 });
+    assert((await vmState(page)).total > 0, 'no incidents after the retry');
+    assert(!pageErrors.length, `page errors: ${pageErrors.join('; ')}`);
+  } finally {
+    await browser.close();
+  }
+});
+
 check('header colour follows the Beacon it was opened from', async () => {
   const colours = {};
   for (const env of ['production', 'trainbeacon', 'devbeacon']) {

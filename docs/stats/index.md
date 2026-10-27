@@ -45,7 +45,7 @@ The heading shows which HQs the statistics cover and the date range. Its colour 
 
 Your filters stay in place when the page refreshes.
 
-If Beacon can't be reached, a message says why, with a **Try again** button. A *401* error means your Beacon login has expired: open Incident Statistics from Beacon again.
+If Beacon can't be reached, a message says why, with a **Try again** button. The page also tries again by itself: after a minute, then less often while Beacon keeps failing (up to every 10 minutes), so a screen left showing the statistics recovers without anyone touching it. If a refresh fails, the charts you had stay on screen until one succeeds. A *401* error means your Beacon login has expired: open Incident Statistics from Beacon again.
 
 The page follows your computer's light or dark mode setting.
 

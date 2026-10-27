@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ko from 'knockout';
-import { StatsVM, REFRESH_SECONDS } from './StatsVM.js';
+import { StatsVM, REFRESH_SECONDS, retryDelay } from './StatsVM.js';
 
 const H = 3600 * 1000;
 const NOW = new Date('2026-10-15T05:00:00Z');
@@ -238,13 +238,45 @@ describe('StatsVM', () => {
     expect(vm.secondsToRefresh()).toBe(REFRESH_SECONDS);
   });
 
-  it('pauses the countdown while there is an error', async () => {
-    const { vm } = makeVM();
-    vm.error('boom');
-    vm.loading(false);
-    vm.secondsToRefresh(10);
-    vm.tick();
-    expect(vm.secondsToRefresh()).toBe(10);
+  it('keeps counting down after a failed refresh, and recovers', async () => {
+    const search = vi.fn(async () => ({ results: [beaconJob(1)] }));
+    const { vm } = makeVM({ search });
+    vm.setToken('t');
+    await vm.load();
+    search.mockImplementationOnce(async () => { throw Object.assign(new Error('x'), { status: 503 }); });
+    vm.refreshNow();
+    await vm.load();
+    expect(vm.error()).toMatch(/503/);
+    expect(vm.loading()).toBe(false); // the charts stay up
+    expect(vm.secondsToRefresh()).toBe(60);
+    // The countdown runs on after the error (it used to stop) and reloads by itself.
+    for (let i = 0; i < 60; i++) vm.tick();
+    expect(search).toHaveBeenCalledTimes(3);
+    await vm.load(); // join it
+    expect(vm.error()).toBe(null);
+    expect(vm.secondsToRefresh()).toBe(REFRESH_SECONDS);
+  });
+
+  it('retries a failed first load by itself, backing off', async () => {
+    const search = vi.fn(async () => { throw Object.assign(new Error('x'), { status: 503 }); });
+    const { vm } = makeVM({ search });
+    vm.setToken('t');
+    await vm.load();
+    expect(vm.loading()).toBe(true);
+    expect(vm.retryText()).toBe('Trying again in 01:00');
+    for (let i = 0; i < 60; i++) vm.tick();
+    expect(search).toHaveBeenCalledTimes(2);
+    await vm.load();
+    expect(vm.secondsToRefresh()).toBe(120); // second failure: twice as long
+    search.mockImplementation(async () => ({ results: [beaconJob(1)] }));
+    for (let i = 0; i < 120; i++) vm.tick();
+    await vm.load();
+    expect(vm.loading()).toBe(false);
+    expect(vm.error()).toBe(null);
+  });
+
+  it('backs off from 1 min up to 10 min', () => {
+    expect([0, 1, 2, 3, 4, 5, 9].map(retryDelay)).toEqual([REFRESH_SECONDS, 60, 120, 240, 480, 600, 600]);
   });
 
   it('describes the filter state', async () => {
