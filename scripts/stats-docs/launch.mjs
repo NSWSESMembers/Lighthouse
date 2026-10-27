@@ -57,11 +57,13 @@ function mockBeacon(scenario, log) {
  * @param {number} [opts.pageDelayMs=0]  delay each Jobs/Search page by this much (to watch the loader)
  * @param {number} [opts.firstPageDelayMs]  delay the first page by this much instead (default pageDelayMs)
  * @param {number} [opts.failSearch]  answer Jobs/Search with this HTTP status instead
+ * @param {number} [opts.failSearchTimes]  answer the first N Jobs/Search requests with a 503, then normally
  * @param {boolean} [opts.verbose]  log mock traffic and page errors
  * @param {number} [opts.scale=1]  device pixel ratio
  */
 export async function launchStats(opts = {}) {
-  const { failSearch = 0, pageDelayMs = 0, firstPageDelayMs = pageDelayMs } = opts;
+  const { failSearch = 0, failSearchTimes = 0, pageDelayMs = 0, firstPageDelayMs = pageDelayMs } = opts;
+  let failsLeft = failSearchTimes;
   const now = opts.now ? new Date(opts.now) : new Date();
   const scenario = buildScenario(now);
   const hq = opts.hq ?? scenario.units.map((u) => u.Id);
@@ -73,6 +75,10 @@ export async function launchStats(opts = {}) {
       const delay = first ? firstPageDelayMs : pageDelayMs;
       if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
       if (failSearch) return json(route, { Message: 'Demo failure' }, failSearch);
+      if (failsLeft > 0) {
+        failsLeft--;
+        return json(route, { Message: 'Demo failure' }, 503);
+      }
     }
     return mock(route, url);
   };

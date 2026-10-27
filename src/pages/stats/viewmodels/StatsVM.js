@@ -9,9 +9,20 @@ import { summarizeDurations, formatDuration } from "../data/durations.js";
 import { bucketFor } from "../data/timeBuckets.js";
 import { wordFrequencies } from "../data/wordCount.js";
 import { describeLoad } from "./loadProgress.js";
+import { retryDelay as nextDelay } from "../../shared/retry.js";
 
 // Auto-refresh period, as on the old page.
 export const REFRESH_SECONDS = 180;
+// After a failed load the page keeps trying on its own, as it's often left
+// up on a screen: 1 min, then doubling up to 10 min. Slower than Incident
+// Summary's, as a load here is many Jobs/Search pages, not one report.
+export const FIRST_RETRY_SECONDS = 60;
+export const MAX_RETRY_SECONDS = 600;
+
+/** Seconds to wait after `failures` failed loads in a row (0 = none failed). */
+export function retryDelay(failures) {
+    return nextDelay(failures, { refresh: REFRESH_SECONDS, first: FIRST_RETRY_SECONDS, max: MAX_RETRY_SECONDS });
+}
 const LATEST_ROWS = 15;
 
 const ROW_FMT = new Intl.DateTimeFormat("en-AU", {
@@ -139,6 +150,8 @@ export function StatsVM(deps) {
         const s = Math.max(0, self.secondsToRefresh());
         return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
     });
+    // Under the first-load error: when the page will try again by itself.
+    self.retryText = ko.pureComputed(() => `Trying again in ${self.countdownText()}`);
 
     self.durationTiles = ko.pureComputed(() => {
         const d = self.durations();
@@ -220,6 +233,7 @@ export function StatsVM(deps) {
     // ---- loading --------------------------------------------------------
 
     let inFlight = null;
+    let failures = 0; // failed loads in a row, for retryDelay
     // The range choice whose incidents are on screen. `range` (the heading)
     // only changes when a load succeeds; a failed switch puts the toolbar
     // back to this choice, so the buttons, heading and charts always agree.
@@ -293,6 +307,7 @@ export function StatsVM(deps) {
             charts.load(result.facts, range.start, range.end);
             self.range(range);
             shownChoice = choice;
+            failures = 0;
             self.syncFromCharts();
             self.loadedAt(now());
             self.loading(false);
@@ -306,6 +321,7 @@ export function StatsVM(deps) {
                 if (controller.signal.aborted) return;
                 console.error("Incident statistics load failed", err);
                 self.error(errorText(err, "Incident Statistics"));
+                failures++;
                 if (charts.built && self.rangeChoice() !== shownChoice) {
                     // Switching range failed: the old range's charts are still
                     // up, so put its button back (without loading it again).
@@ -316,8 +332,8 @@ export function StatsVM(deps) {
                 if (inFlight && inFlight.controller === controller) {
                     inFlight = null;
                     self.refreshing(false);
+                    self.secondsToRefresh(retryDelay(failures));
                 }
-                self.secondsToRefresh(REFRESH_SECONDS);
             }
         })();
         inFlight = { controller, promise: settled };
@@ -332,10 +348,14 @@ export function StatsVM(deps) {
         self.load({ replace: true });
     };
 
-    /** Called once a second by main.js. */
+    /**
+     * Called once a second by main.js. Counts down to the next refresh, or
+     * after a failure to the next try, first load included: an error never
+     * stops the page refreshing.
+     */
     self.tick = function () {
         self.clock(+now());
-        if (self.loading() || self.error()) return;
+        if (inFlight) return;
         const next = self.secondsToRefresh() - 1;
         if (next <= 0) {
             self.secondsToRefresh(REFRESH_SECONDS);

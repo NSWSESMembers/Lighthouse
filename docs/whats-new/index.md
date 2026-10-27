@@ -35,7 +35,7 @@ The home page shows the first three `##` entries, so keep the title short.
 - The **25% / 50% / 75% of incidents completed within** figures were swapped, so *25%* showed the time three quarters of incidents were completed within. They're now the right way round.
 - The latest incidents table shows each incident's status, and an incident that isn't closed yet shows a dash instead of a blank.
 - **See how far a load has got.** While incidents load, a ring counts them as they arrive (e.g. *9,200 of 20,316 incidents*), with the page it's on and the time left. If Beacon is slow to answer, it says so and offers to load the last 24 hours instead. See [Loading](https://lighthouse.ses.nsw.gov.au/guides/stats/#loading).
-- If Beacon can't be reached, the page now says why and offers **Try again**, instead of a red progress bar.
+- If Beacon can't be reached, the page now says why and offers **Try again**, instead of a red progress bar. It also keeps trying by itself, so a screen left showing the statistics recovers when Beacon comes back.
 
 ### Incident Summary
 

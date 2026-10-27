@@ -4,6 +4,7 @@ import ko from "knockout";
 import { RANGE_CHOICES, rangeForChoice, isValidRange, rangeText, scopeTitle } from "../../shared/params.js";
 import { loadUnits, errorText } from "../../shared/beacon.js";
 import { waitingRing } from "../../shared/loadRing.js";
+import { retryDelay as nextDelay } from "../../shared/retry.js";
 import { summarize, percentText } from "../data/summaryCounts.js";
 import { THEMES, SOUNDS, loadSettings, saveSettings, soundFile } from "../data/settings.js";
 
@@ -15,8 +16,7 @@ export const MAX_RETRY_SECONDS = 300;
 
 /** Seconds to wait after `failures` failed loads in a row (0 = none failed). */
 export function retryDelay(failures) {
-    if (failures <= 0) return REFRESH_SECONDS;
-    return Math.min(MAX_RETRY_SECONDS, REFRESH_SECONDS * 2 ** (failures - 1));
+    return nextDelay(failures, { refresh: REFRESH_SECONDS, first: REFRESH_SECONDS, max: MAX_RETRY_SECONDS });
 }
 // How long the New tile stays highlighted after new incidents come in.
 export const NEW_HIGHLIGHT_MS = 8000;
