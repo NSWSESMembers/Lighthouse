@@ -118,8 +118,10 @@ function HackTheMatrix(progressBar) {
             });
             var rObj = {};
             rObj["Name"] = d.Name.replaceAll('#','');
-            rObj["StartDate"] = d.StartDateFixed;
-            rObj["EndDate"] = d.EndDateFixed;
+            // Export dates as YYYY-MM-DD HH:mm:ss, e.g. 2026-10-03 08:55:20
+            // Balances human readability with reliable Excel and Power Query date recognition
+            rObj["StartDate"] = moment(d.StartDateFixed).format('YYYY-MM-DD HH:mm:ss');
+            rObj["EndDate"] = moment(d.EndDateFixed).format('YYYY-MM-DD HH:mm:ss');
             rObj["Unit"] = d.CreatedAt.Code;
             rObj["Tags"] = tags;
             rObj["TotalParticipants"] = numParticipants;
