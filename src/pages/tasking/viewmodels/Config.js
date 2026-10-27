@@ -4,6 +4,9 @@ import ko from 'knockout';
 import * as bootstrap from 'bootstrap5'; // Modal, Tooltip, etc.
 import { Enum } from '../utils/enum.js';
 import {
+    STACK_PANES, defaultStackIds, normaliseStackIds, insertStackId, mergeKnownOrder, clampOpacityPct,
+} from '../utils/layerStack.js';
+import {
     createCollabLayer, deleteCollabLayer, updateCollabLayerModerators, updateCollabLayerPermissions,
     updateCollabLayerAttachment,
     refreshSubscribedLayers, searchLayersForHq, subscribeToLayer, unsubscribeFromLayer,
@@ -394,39 +397,147 @@ export function ConfigVM(root, deps) {
     self.applySectorsToIncidents = ko.observable(false);
     self.applySectorsToTeams = ko.observable(false);
 
-    //Map layer order
+    // Map layer order & transparency (utils/layerStack.js). stackIds is the
+    // full saved order, top -> bottom, including overlays that haven't
+    // registered yet; layerStackRows is what the list shows.
+    let stackIds = defaultStackIds();
+    let stackOpacity = {}; // id -> percent, only where it differs from the layer's default
+    const stackRowCache = new Map();
+    self.layerStackRows = ko.observableArray([]);
+    self.layerStackCount = ko.pureComputed(() => self.layerStackRows().length);
+    // List search: rows that don't match are hidden, not removed, so the
+    // full order stays intact for dragging and saving.
+    self.layerStackQuery = ko.observable('');
+    self.layerStackOnlyOn = ko.observable(false);
+    const layerStackTerms = ko.pureComputed(() =>
+        String(self.layerStackQuery() || '').toLowerCase().split(/\s+/).filter(Boolean));
+    self.layerStackShown = ko.pureComputed(() => self.layerStackRows().filter(r => r.matches()));
+    self.layerStackFiltered = ko.pureComputed(() => self.layerStackShown().length !== self.layerStackRows().length);
+    self.layerStackShownCount = ko.pureComputed(() => self.layerStackShown().length);
+    self.layerStackNoMatches = ko.pureComputed(() => self.layerStackShownCount() === 0);
+    self.clearLayerStackSearch = () => {
+        self.layerStackQuery('');
+        self.layerStackOnlyOn(false);
+    };
+    self.layerStackVisibleCount = ko.pureComputed(() => self.layerStackRows().filter(r => r.visible()).length);
 
-    self.paneDefs = [
-        { id: 'pane-tippy-top', name: 'Incident markers' },
-        { id: 'pane-collab', name: 'Collaborative layer markers' },
-        { id: 'pane-top', name: 'Asset markers' },
-        { id: 'pane-middle', name: 'Map overlay markers & labels' },
-        { id: 'pane-lowest', name: 'Map overlay polygons & drawings' }
-    ];
+    const applyLayerStack = () => {
+        root.mapVM?.applyLayerStack?.(self.layerStackRows().map(r => ({ id: r.id, opacityPct: r.opacityPct() })));
+    };
 
-    // UI list (objects so bindings are property-only)
-    self.paneOrder = ko.observableArray(self.paneDefs.map(p => ({ id: p.id, name: p.name })));
-
-    self.rebuildPaneOrderFromIds = function (ids) {
-        const byId = new Map(self.paneDefs.map(p => [p.id, p]));
-        const list = (ids || [])
-            .map(id => byId.get(id))
-            .filter(Boolean)
-            .map(p => ({ id: p.id, name: p.name }));
-
-        // Ensure all panes exist. Panes missing from a saved order (e.g. one
-        // introduced after the config was last saved) are inserted at their
-        // default position relative to paneDefs, rather than always at the
-        // bottom, so a newly-added pane keeps its intended default stacking.
-        self.paneDefs.forEach((p, defIdx) => {
-            if (list.some(x => x.id === p.id)) return;
-            const nextKnownDef = self.paneDefs.slice(defIdx + 1).find(d => list.some(x => x.id === d.id));
-            const insertAt = nextKnownDef ? list.findIndex(x => x.id === nextKnownDef.id) : list.length;
-            list.splice(insertAt, 0, { id: p.id, name: p.name });
+    const stackRow = (id) => {
+        let row = stackRowCache.get(id);
+        if (row) return row;
+        const pane = STACK_PANES.find(p => p.id === id);
+        const overlay = ko.observable(null);
+        row = {
+            id,
+            overlay,
+            isPane: !!pane,
+            name: ko.pureComputed(() => pane ? pane.name : (overlay()?.label || id)),
+            group: ko.pureComputed(() => pane ? 'Lighthouse' : (overlay()?.menuGroup || 'Other')),
+            visible: ko.pureComputed(() => pane ? true : !!overlay()?.visible()),
+            opacityPct: ko.observable(100),
+            defaultPct: () => overlay()?.defaultOpacity ?? 100,
+        };
+        row.opacityLabel = ko.pureComputed(() => `${row.opacityPct()}%`);
+        row.stateLabel = ko.pureComputed(() => (row.visible() ? 'On map' : 'Off'));
+        row.matches = ko.pureComputed(() => {
+            if (self.layerStackOnlyOn() && !row.visible()) return false;
+            const text = `${row.name()} ${row.group()}`.toLowerCase();
+            return layerStackTerms().every(t => text.includes(t));
         });
+        // First/last of the rows shown, so the arrows work on a searched list.
+        row.isFirst = ko.pureComputed(() => self.layerStackShown()[0] === row);
+        row.isLast = ko.pureComputed(() => self.layerStackShown().at(-1) === row);
+        row.visibleLabel = ko.pureComputed(() => `${row.visible() ? 'Hide' : 'Show'} ${row.name()} on the map`);
+        row.opacityPct.subscribe((raw) => {
+            const v = clampOpacityPct(raw);
+            if (v !== raw) { row.opacityPct(v); return; }
+            // Loads and resets record the value first, so only a change from
+            // the slider gets past here (subscribers run deferred).
+            if (v === (stackOpacity[id] ?? row.defaultPct())) return;
+            if (v === row.defaultPct()) delete stackOpacity[id]; else stackOpacity[id] = v;
+            applyLayerStack();
+            self.save();
+        });
+        stackRowCache.set(id, row);
+        return row;
+    };
 
-        self.paneOrder(list);
-    }
+    /** Rebuild the list from stackIds and the overlays the map has registered. */
+    self.syncLayerStackRows = () => {
+        const overlays = root.mapVM?.stackOverlays?.() || [];
+        const byId = new Map(overlays.map(o => [o.id, o]));
+        for (const o of overlays) {
+            if (!stackIds.includes(o.id)) stackIds = insertStackId(stackIds, o.id, o.stack, id => byId.get(id)?.stack);
+        }
+        const rows = stackIds
+            .filter(id => !id.startsWith('ov:') || byId.has(id))
+            .map(id => {
+                const row = stackRow(id);
+                if (!row.isPane) row.overlay(byId.get(id));
+                row.opacityPct(clampOpacityPct(stackOpacity[id] ?? row.defaultPct()));
+                return row;
+            });
+        self.layerStackRows(rows);
+        applyLayerStack();
+    };
+
+    /** Move a row past its next shown neighbour (skipping rows hidden by the search). */
+    const moveLayer = (row, by) => {
+        const rows = self.layerStackRows();
+        const shown = self.layerStackShown();
+        const neighbour = shown[shown.indexOf(row) + by];
+        const from = rows.indexOf(row);
+        const to = rows.indexOf(neighbour);
+        if (!neighbour || from < 0 || to < 0) return;
+        self.layerStackRows.splice(from, 1);
+        self.layerStackRows.splice(to, 0, row);
+    };
+    /** On/off switch on an overlay row (built-in rows have no switch). */
+    self.toggleLayerVisible = (row) => {
+        const o = row.overlay();
+        if (o) root.mapVM?.setOverlayVisible?.(o.key, !o.visible());
+        return true;
+    };
+    self.moveLayerUp = (row) => moveLayer(row, -1);
+    self.moveLayerDown = (row) => moveLayer(row, 1);
+
+    /** Open the modal at the Map layers tab (from the Layers drawer). */
+    self.openLayerStackSettings = (query = '') => {
+        self.layerStackQuery(String(query || '').trim());
+        self.layerStackOnlyOn(false);
+        const modalEl = document.getElementById('configModal');
+        const tabEl = document.getElementById('cfgTab-layers');
+        const paneEl = document.getElementById('cfgPane-layers');
+        if (!modalEl || !tabEl || !paneEl) return;
+        bootstrap.Tab.getOrCreateInstance(tabEl).show();
+        const focusSearch = () => paneEl.querySelector('input[type=search]')?.focus();
+        if (modalEl.classList.contains('show')) focusSearch();
+        else modalEl.addEventListener('shown.bs.modal', focusSearch, { once: true });
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    };
+
+    /** Put every layer back at its default position and full opacity. */
+    self.resetLayerStack = () => {
+        stackIds = defaultStackIds();
+        stackOpacity = {};
+        for (const row of stackRowCache.values()) row.opacityPct(row.defaultPct());
+        self.syncLayerStackRows();
+        self.save();
+    };
+
+    const loadLayerStack = (cfg) => {
+        // paneOrder: the marker-pane order saved before overlays were listed one by one
+        stackIds = normaliseStackIds(Array.isArray(cfg.layerStack) ? cfg.layerStack : cfg.paneOrder);
+        stackOpacity = {};
+        if (cfg.layerOpacity && typeof cfg.layerOpacity === 'object') {
+            for (const [id, v] of Object.entries(cfg.layerOpacity)) stackOpacity[id] = clampOpacityPct(v);
+        }
+        for (const row of stackRowCache.values()) row.opacityPct(clampOpacityPct(stackOpacity[row.id] ?? row.defaultPct()));
+        self.syncLayerStackRows();
+    };
 
     // Other settings
     self.signalrEnabled = ko.observable(true);
@@ -1495,7 +1606,8 @@ export function ConfigVM(root, deps) {
         applySectorsToTeams: !!self.applySectorsToTeams(),
         pinnedTeamIds: ko.toJS(self.pinnedTeamIds),
         pinnedIncidentIds: ko.toJS(self.pinnedIncidentIds),
-        paneOrder: self.paneOrder().map(p => p.id),
+        layerStack: stackIds.slice(),
+        layerOpacity: { ...stackOpacity },
         clusterEnabled: !!self.clusterEnabled(),
         clusterRadius: Number(self.clusterRadius()) || 60,
         clusterRescueJobs: !!self.clusterRescueJobs(),
@@ -1827,11 +1939,7 @@ export function ConfigVM(root, deps) {
             self.pinnedIncidentIds(cfg.pinnedIncidentIds.map(x => String(x)));
         }
 
-        if (Array.isArray(cfg.paneOrder)) {
-            self.rebuildPaneOrderFromIds(cfg.paneOrder);
-        } else {
-            self.rebuildPaneOrderFromIds(); // defaults
-        }
+        loadLayerStack(cfg);
 
         if (typeof cfg.clusterEnabled === 'boolean') {
             self.clusterEnabled(cfg.clusterEnabled);
@@ -2010,7 +2118,7 @@ export function ConfigVM(root, deps) {
 
     self.afterConfigLoad = () => {
         self._refreshSectors();
-        root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
+        applyLayerStack();
         root.mapVM?.applyClusterRadius?.(Number(self.clusterRadius()) || 60);
         root.mapVM?.applyClusterEnabled?.(!!self.clusterEnabled());
         root.mapVM?.applyJobStatusOnMarkers?.(!!self.showJobStatusOnMarkers());
@@ -2050,9 +2158,17 @@ export function ConfigVM(root, deps) {
         root.fetchAllJobsData();
     })
 
-    self.paneOrder.subscribe(() => {
-        root.mapVM?.applyPaneOrder?.(self.paneOrder().map(p => p.id));
-    })
+    // Dragged in the list: fold the new order back into the full saved order.
+    // Rebuilds from stackIds come through here too; they change nothing.
+    self.layerStackRows.subscribe((rows) => {
+        const merged = mergeKnownOrder(stackIds, rows.map(r => r.id));
+        if (merged.join('\n') === stackIds.join('\n')) return;
+        stackIds = merged;
+        applyLayerStack();
+        self.save();
+    });
+    // Overlays register (and collaborative layers come and go) after config loads.
+    root.mapVM?.stackOverlays?.subscribe(() => self.syncLayerStackRows());
 
     self.clusterRadius.subscribe((v) => {
         const r = Math.max(10, Math.min(80, Number(v) || 60));

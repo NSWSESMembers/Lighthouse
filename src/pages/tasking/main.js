@@ -72,6 +72,7 @@ import { installFlashOnChangeBinding } from "./bindings/flashOnChange.js";
 import { installRowTransitionBindings } from "./bindings/rowTransitions.js";
 import "./bindings/fastTooltip.js";  // registers ko.bindingHandlers.fastTooltip
 import "./bindings/holdHeight.js";   // registers ko.bindingHandlers.holdHeight
+import "./bindings/fitInPane.js";    // registers ko.bindingHandlers.fitInPane
 import "./bindings/dateTime24.js";   // registers ko.bindingHandlers.dateTime24
 import "./bindings/bsDropdownOpen.js";  // registers ko.bindingHandlers.bsDropdownOpen
 
@@ -385,8 +386,8 @@ map.createPane('pane-collab-plus'); map.getPane('pane-collab-plus').style.zIndex
 map.createPane('pane-tippy-top'); map.getPane('pane-tippy-top').style.zIndex = 700;
 map.createPane('pane-tippy-top-plus'); map.getPane('pane-tippy-top-plus').style.zIndex = 701;
 
-// Fixed above every reorderable marker pane (Config's paneOrder only ever
-// assigns 300-700, see Map.js applyPaneOrder) so popups -- which would
+// Fixed above every reorderable pane (the layer order only ever assigns
+// 300-702, see utils/layerStack.js stackZIndexes) so popups -- which would
 // otherwise sit in Leaflet's default popupPane (also z-index 700, but
 // painted before these custom panes and so behind them on tie) -- always
 // render above every marker, including the topmost "Incident markers" pane.
@@ -2979,8 +2980,12 @@ function VM() {
       </div>
       <div class="ld-panel ${this._open ? "" : "d-none"} shadow-sm rounded-3">
         <!-- Search box -->
-        <div class="ld-search-row p-2">
+        <div class="ld-search-row p-2 d-flex gap-1">
           <input type="text" class="form-control form-control-sm ld-search-input" placeholder="Search layers..." />
+          <button type="button" class="btn btn-sm btn-outline-secondary ld-stack-btn"
+                  title="Layer order &amp; transparency" aria-label="Layer order and transparency settings">
+            <i class="fas fa-sliders-h"></i>
+          </button>
         </div>
         <!-- Basemap dropdown (spans full width) -->
         <div class="ld-basemap-row">
@@ -3056,6 +3061,13 @@ function VM() {
 
             // --- Search filter ---
             const searchInput = c.querySelector(".ld-search-input");
+
+            // Opens Configuration > Map layers, carrying
+            // over whatever is typed in the drawer's search.
+            L.DomEvent.on(c.querySelector(".ld-stack-btn"), "click", (ev) => {
+                L.DomEvent.stop(ev);
+                self.config.openLayerStackSettings(searchInput.value);
+            });
             this._searchFilter = (query) => {
                 const q = query.toLowerCase().trim();
                 const grid = c.querySelector(".ld-grid");

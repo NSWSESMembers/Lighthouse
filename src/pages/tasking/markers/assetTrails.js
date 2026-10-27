@@ -124,10 +124,13 @@ export class AssetTrails {
 
     get windowMs() { return this.minutes * 60 * 1000; }
 
-    /** Keep the trails just under the asset pins (pane-top), wherever the pane order puts them. */
+    /** Keep the trails just under the asset pins (pane-top), wherever the layer order puts them, at the same opacity. */
     syncPaneZ() {
-        const z = Number(this.map.getPane('pane-top')?.style.zIndex) || 600;
-        this.map.getPane(PANE).style.zIndex = String(z - 1);
+        const assets = this.map.getPane('pane-top');
+        const z = Number(assets?.style.zIndex) || 600;
+        const pane = this.map.getPane(PANE);
+        pane.style.zIndex = String(z - 1);
+        pane.style.opacity = assets?.style.opacity || '';
     }
 
     setEnabled(on) {

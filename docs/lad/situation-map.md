@@ -7,7 +7,7 @@ nav_order: 4
 
 The Situation Map is on the right of the screen (by default, see [Layout](configuration.md#layout)). It displays all filtered incidents and matched teams, giving you a visual picture to support tasking and decision making.
 
-The different kinds of map content (incidents, collaborative layer markers, assets, overlay icons and overlay polygons) are stacked in a set order, with higher layers drawn over lower ones. The order is set under [Marker Layer Order](configuration.md#marker-layer-order); by default incident markers are always drawn on top.
+Map layers (incidents, assets, routes and each overlay) are stacked in order, with higher layers drawn over lower ones. By default incident markers are drawn on top and weather imagery at the bottom. You can change the order, and make any layer see-through, on the [Map layers](configuration.md#map-layers) tab of the Configuration screen.
 
 ## Map Control
 
@@ -55,7 +55,7 @@ To change basemap, open the **Layers** menu, open the basemap dropdown and pick 
 
 ### Overlays
 
-Overlays sit on top of the basemap to add information. Toggle them on and off in the Layers menu, or use the search bar at the top to find a layer.
+Overlays sit on top of the basemap to add information. Toggle them on and off in the Layers menu, or use the search bar at the top to find a layer. The <img class="icon" src="images/icon-layer-order.png" alt="Layer order and transparency" height="20"> button next to the search bar opens the [Map layers](configuration.md#map-layers) settings, where you can move an overlay above or below other layers or make it see-through. Anything typed in the search bar is carried across.
 
 ![Overlay layers](images/overlays.png)
 
@@ -95,7 +95,7 @@ Some overlays drop their own markers on the map. Click one to open a popup with 
 
 Some area overlays also open a popup when you click inside an area: **BOM Land Warnings** (warning type, severity and times) and **WaterNSW Special & Controlled Areas** (area name and class). Other overlays, such as boundaries, radar and BOM observations, are pictures only and don't respond to clicks.
 
-Overlay markers are drawn under incidents by default. If one is hidden behind an incident, change the [Marker Layer Order](configuration.md#marker-layer-order).
+Overlay markers are drawn under incidents by default. If one is hidden behind an incident, move it up on the [Map layers](configuration.md#map-layers) tab of the Configuration screen.
 
 #### Overlay Notes
 

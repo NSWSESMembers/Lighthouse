@@ -8,6 +8,7 @@ export function registerBOMAllFloodLevelsLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomAll", {
     label: "BOM Flood Levels",
     menuGroup: "BOM Observations",
+    stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomAllFlood`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -36,6 +37,7 @@ export function registerBOMRainfallLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomRainfall", {
     label: "BOM Rainfall (9am)",
     menuGroup: "BOM Observations",
+    stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomRainfall`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -66,6 +68,8 @@ export function registerBOMRadarLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomRadar", {
     label: "BOM Rain Radar Still",
     menuGroup: "BOM Radar & Satellite",
+    stack: "tiles",
+    defaultOpacity: 50,
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomRadar`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -95,6 +99,7 @@ export function registerBOMSatTrueColorLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomSatTrueColor", {
     label: "BOM Satellite Composite True Colour",
     menuGroup: "BOM Radar & Satellite",
+    stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomSatTrueColor`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -124,6 +129,7 @@ export function registerBOMThunderstormTrackingLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomThunderstormTracking", {
     label: "BOM Thunderstorm Tracking",
     menuGroup: "BOM Radar & Satellite",
+    stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomThunderstormTracking`) || false,
     fetchFn: async () => {
@@ -155,6 +161,7 @@ export function registerBOMWindLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomWind", {
     label: "BOM Wind Barbs & Raster",
     menuGroup: "BOM Forecasts",
+    stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomWind`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -184,6 +191,7 @@ export function registerBOMMSLPLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomMSLP", {
     label: "BOM MSLP Contours",
     menuGroup: "BOM Forecasts",
+    stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomMSLP`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -213,6 +221,7 @@ export function registerBOMLightningLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomLightning", {
     label: "BOM Lightning Strikes (0-2 hrs ago) Cloud to Ground",
     menuGroup: "BOM Radar & Satellite",
+    stack: "tiles",
     refreshMs: 600000, // 10 min
     visibleByDefault: localStorage.getItem(`ov.bomLightning`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -242,6 +251,7 @@ export function registerBOMLightning24hLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomLightning24h", {
     label: "BOM Lightning (2-24 hrs ago) Cloud to Ground",
     menuGroup: "BOM Radar & Satellite",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomLightning24h`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -271,6 +281,7 @@ export function registerBOMTsunamiLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomTsunami", {
     label: "BOM Tsunami Warning",
     menuGroup: "BOM Warnings",
+    stack: "tiles",
     refreshMs: 300000, // 5 min – critical warning
     visibleByDefault: localStorage.getItem(`ov.bomTsunami`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -300,6 +311,7 @@ export function registerBOMTropicalCycloneLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomTropicalCyclone", {
     label: "BOM Tropical Cyclone Tracking",
     menuGroup: "BOM Warnings",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomTropicalCyclone`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -336,6 +348,7 @@ export function registerBOMFireDangerRatingLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomFireDangerRating", {
     label: "BOM Fire Danger Rating (Today)",
     menuGroup: "BOM Forecasts",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomFireDangerRating`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -366,6 +379,7 @@ export function registerBOMHeatwaveLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomHeatwave", {
     label: "BOM Heatwave Forecast (Days +0 to +2)",
     menuGroup: "BOM Forecasts",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomHeatwave`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -396,6 +410,7 @@ export function registerBOMHazardousSurfLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomHazardousSurf", {
     label: "BOM Hazardous Surf Warning (Today)",
     menuGroup: "BOM Warnings",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomHazardousSurf`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -425,6 +440,7 @@ export function registerBOMCoastalHazardLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomCoastalHazard", {
     label: "BOM Coastal Hazard Warning",
     menuGroup: "BOM Warnings",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomCoastalHazard`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -454,6 +470,7 @@ export function registerBOMRoadWeatherLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomRoadWeather", {
     label: "BOM Road Weather Alert (Metro)",
     menuGroup: "BOM Warnings",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomRoadWeather`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -483,6 +500,7 @@ export function registerBOMSurfaceGustLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomSurfaceGust", {
     label: "BOM Surface Obs Wind Gust (km/h)",
     menuGroup: "BOM Observations",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomSurfaceGust`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -512,6 +530,7 @@ export function registerBOMSurfaceTempLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomSurfaceTemp", {
     label: "BOM Surface Obs Air Temp (°C)",
     menuGroup: "BOM Observations",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomSurfaceTemp`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -541,6 +560,7 @@ export function registerBOMFireBehaviourIndexLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomFireBehaviourIndex", {
     label: "BOM Fire Behaviour Index (AFDRS)",
     menuGroup: "BOM Forecasts",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomFireBehaviourIndex`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -571,6 +591,7 @@ export function registerBOMHazardousWindLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomHazardousWind", {
     label: "BOM Hazardous Wind Onset (6 hrs)",
     menuGroup: "BOM Forecasts",
+    stack: "tiles",
     refreshMs: 600000,
     visibleByDefault: localStorage.getItem(`ov.bomHazardousWind`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -601,6 +622,7 @@ export function registerBOMFloodWarningBoundariesLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomFloodWarningBoundaries", {
     label: "BOM Flood Warning Boundaries",
     menuGroup: "BOM Observations",
+    stack: "tiles",
     refreshMs: 3600000, // 1 hr – reference data
     visibleByDefault: localStorage.getItem(`ov.bomFloodWarningBoundaries`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
@@ -630,6 +652,7 @@ export function registerBOMFireWeatherDistrictsLayer(vm, sourceUrl) {
   vm.mapVM.registerPollingLayer("bomFireWeatherDistricts", {
     label: "BOM Fire Weather Districts",
     menuGroup: "BOM Observations",
+    stack: "tiles",
     refreshMs: 3600000, // 1 hr – reference data
     visibleByDefault: localStorage.getItem(`ov.bomFireWeatherDistricts`) || false,
     fetchFn: async () => ({ cacheBuster: Date.now() }),
