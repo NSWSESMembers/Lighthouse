@@ -8,22 +8,12 @@
   pages so far took.
 */
 
-export const PAGE_SIZE = 100; // BeaconClient job.search
-export const SLOW_AFTER_MS = 10000;
-export const MAX_PAGE_DOTS = 12;
-export const RING_CIRCUMFERENCE = 2 * Math.PI * 52; // r=52 in the 120x120 viewBox
+import { SLOW_AFTER_MS, RING_CIRCUMFERENCE, centreValueSize, waitingRing } from '../../shared/loadRing.js';
 
-/**
- * Font size for the ring's centre number, so it fits inside the ring
- * (inner width ~90 of the 120 viewBox) at any count: "311" to "120,316".
- */
-export function centreValueSize(text) {
-  const n = String(text).length;
-  if (n <= 3) return '30px';
-  if (n <= 5) return '24px';
-  if (n <= 6) return '20px';
-  return '17px';
-}
+export { SLOW_AFTER_MS, RING_CIRCUMFERENCE, centreValueSize };
+
+export const PAGE_SIZE = 100; // BeaconClient job.search
+export const MAX_PAGE_DOTS = 12;
 
 /** "about 6 s left", "about 2 min left". */
 export function etaText(ms) {
@@ -55,24 +45,7 @@ export function estimateMsLeft({ pagesDone, pages, firstPageAt, lastPageAt, now 
  */
 export function describeLoad({ phase, loaded, total, startedAt, firstPageAt = null, lastPageAt = null, now }) {
   if (phase === 'starting' || total === null) {
-    const waited = Math.max(0, now - startedAt);
-    const slow = waited >= SLOW_AFTER_MS;
-    return {
-      indeterminate: true,
-      ringOffset: RING_CIRCUMFERENCE * 0.75,
-      centreValue: '',
-      centreValueSize: '30px',
-      centreLabel: '',
-      centreLabel2: '',
-      title: slow ? 'Still waiting for Beacon' : 'Asking Beacon for incidents…',
-      meta: `waiting ${Math.floor(waited / 1000)} s`,
-      slow,
-      pageDots: [],
-      showPageBar: false,
-      pageBarPct: 0,
-      ariaNow: 0,
-      ariaMax: 100,
-    };
+    return waitingRing({ startedAt, now, title: 'Asking Beacon for incidents…' });
   }
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -98,6 +71,7 @@ export function describeLoad({ phase, loaded, total, startedAt, firstPageAt = nu
     pageDots: many ? [] : Array.from({ length: pages }, (_, i) => ({ done: i < pagesDone })),
     showPageBar: many,
     pageBarPct: Math.round((pagesDone / pages) * 100),
+    pageBarStyle: { width: Math.round((pagesDone / pages) * 100) + '%' },
     ariaNow: Math.round(fraction * 100),
     ariaMax: 100,
   };

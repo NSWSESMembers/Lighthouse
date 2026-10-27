@@ -14,17 +14,11 @@
   otherwise the viewport is captured.
 */
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { launchStats, waitForStats, settle } from './launch.mjs';
+import { arg } from '../page-docs/launchPage.mjs';
+import { runShots } from '../page-docs/runners.mjs';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-
-function arg(name, fallback) {
-  const i = process.argv.indexOf(`--${name}`);
-  return i > -1 ? process.argv[i + 1] : fallback;
-}
+const verbose = process.argv.includes('--verbose');
 
 // Pinned "now": a Thursday afternoon in Sydney.
 const NOW = arg('now', '2026-10-15T15:30:00+11:00');
@@ -127,35 +121,10 @@ const SHOTS = {
   },
 };
 
-const outDir = path.resolve(ROOT, arg('out', 'build/stats-screenshots'));
-const only = arg('only', '')?.split(',').filter(Boolean);
-const verbose = process.argv.includes('--verbose');
-const names = only.length ? only : Object.keys(SHOTS);
-const unknown = names.filter((n) => !SHOTS[n]);
-if (unknown.length) {
-  console.error(`Unknown shot(s): ${unknown.join(', ')}\nAvailable: ${Object.keys(SHOTS).join(', ')}`);
-  process.exit(1);
-}
-
-fs.mkdirSync(outDir, { recursive: true });
-let failed = 0;
-for (const name of names) {
-  const shot = SHOTS[name];
-  const { browser, page, pageErrors } = await launchStats({ now: NOW, verbose, ...(shot.launch || {}) });
-  try {
-    await shot.run(page);
-    // The sticky toolbar would cover the top of a cropped section.
-    await page.addStyleTag({ content: '.stats-toolbar { position: static !important; }' });
-    if (pageErrors.length) throw new Error(`page error: ${pageErrors[0]}`);
-    const file = path.join(outDir, `${name}.png`);
-    const target = shot.target ? shot.target(page) : page;
-    await target.screenshot({ path: file, animations: 'disabled' });
-    console.log(`✓ ${path.relative(ROOT, file)}`);
-  } catch (err) {
-    failed++;
-    console.error(`✗ ${name}: ${err.message.split('\n')[0]}`);
-  } finally {
-    await browser.close();
-  }
-}
-process.exit(failed ? 1 : 0);
+await runShots({
+  shots: SHOTS,
+  defaultOut: 'build/stats-screenshots',
+  launch: (extra) => launchStats({ now: NOW, verbose, ...extra }),
+  // The sticky toolbar would cover the top of a cropped section.
+  beforeShot: (page) => page.addStyleTag({ content: '.stats-toolbar { position: static !important; }' }),
+});

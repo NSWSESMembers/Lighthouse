@@ -9,7 +9,7 @@
 
 <body style="opacity:0; transition: opacity .25s ease;">
 
-    <header class="stats-header">
+    <header class="lh-page-header">
         <div class="container-fluid py-2 d-flex align-items-center gap-2 flex-wrap">
             <img class="brand-icon" src="../icons/lighthouse64.png" alt="">
             <div class="me-auto">
@@ -23,41 +23,13 @@
         </div>
     </header>
 
-    <!-- First load: a ring that counts incidents as pages arrive (viewmodels/loadProgress.js),
-         or the error that stopped it -->
-    <div class="stats-loading px-3" id="stats-loading" data-bind="visible: loading">
+    <!-- First load: a ring that counts incidents as pages arrive (viewmodels/loadProgress.js,
+         drawn by src/pages/shared/loadRing.js), or the error that stopped it -->
+    <div class="lh-page-loading px-3" id="stats-loading" data-bind="visible: loading">
         <div class="card shadow-sm">
             <div class="card-body">
                 <!-- ko ifnot: error -->
-                <!-- ko with: loader -->
-                <div class="loader" role="progressbar" aria-label="Loading incidents"
-                    data-bind="attr: { 'aria-valuenow': ariaNow, 'aria-valuemax': ariaMax, 'aria-valuetext': title }" aria-valuemin="0">
-                    <svg class="loader-ring" viewBox="0 0 120 120" aria-hidden="true" data-bind="css: { spinning: indeterminate }">
-                        <circle class="loader-track" cx="60" cy="60" r="52"></circle>
-                        <circle class="loader-fill" cx="60" cy="60" r="52" transform="rotate(-90 60 60)"
-                            data-bind="attr: { 'stroke-dasharray': $root.ringCircumference, 'stroke-dashoffset': ringOffset }"></circle>
-                        <text class="loader-value" x="60" y="58" text-anchor="middle" data-bind="text: centreValue, style: { fontSize: centreValueSize }"></text>
-                        <text class="loader-label" x="60" y="74" text-anchor="middle" data-bind="text: centreLabel"></text>
-                        <text class="loader-label" x="60" y="86" text-anchor="middle" data-bind="text: centreLabel2"></text>
-                    </svg>
-                    <div class="loader-text" aria-live="polite">
-                        <div class="loader-title" data-bind="text: title"></div>
-                        <!-- ko if: pageDots.length -->
-                        <div class="loader-pages" data-bind="foreach: pageDots">
-                            <span class="loader-page" data-bind="css: { done: done }"></span>
-                        </div>
-                        <!-- /ko -->
-                        <!-- ko if: showPageBar -->
-                        <div class="loader-pagebar"><div data-bind="style: pageBarStyle"></div></div>
-                        <!-- /ko -->
-                        <div class="loader-meta" data-bind="text: meta"></div>
-                        <!-- ko if: slow -->
-                        <p class="loader-slow">Beacon is slower than usual. You can keep waiting, or load a shorter time range.</p>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" data-bind="click: $root.loadShorterRange">Load the last 24 h instead</button>
-                        <!-- /ko -->
-                    </div>
-                </div>
-                <!-- /ko -->
+                <div data-bind="component: { name: 'load-ring', params: { view: loader, label: 'Loading incidents', shorter: loadShorterRange } }"></div>
                 <!-- /ko -->
                 <!-- ko if: error -->
                 <div class="alert alert-danger mb-2" role="alert">
@@ -247,7 +219,7 @@
             </section>
         </main>
 
-        <footer class="stats-footer container-fluid pb-3 text-body-secondary">
+        <footer class="lh-page-footer container-fluid pb-3 text-body-secondary">
             Designed &amp; developed by volunteers of the NSW SES.
             <a href="https://github.com/NSWSESMembers/Lighthouse" target="_blank" rel="noopener">Lighthouse</a>
             is distributed under an

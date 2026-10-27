@@ -10,6 +10,7 @@
 */
 
 import { launchStats, waitForStats, settle } from './launch.mjs';
+import { assert, runChecks } from '../page-docs/runners.mjs';
 import { wordFrequencies } from '../../src/pages/stats/data/wordCount.js';
 
 const NOW = '2026-10-15T15:30:00+11:00';
@@ -278,7 +279,7 @@ check('header colour follows the Beacon it was opened from', async () => {
     const { browser, page } = await launchStats({ now: NOW, verbose, env });
     try {
       await waitForStats(page, { cloud: false });
-      colours[env] = await page.evaluate(() => getComputedStyle(document.querySelector('.stats-header')).backgroundColor);
+      colours[env] = await page.evaluate(() => getComputedStyle(document.querySelector('.lh-page-header')).backgroundColor);
     } finally {
       await browser.close();
     }
@@ -417,7 +418,7 @@ check('the header links to the guide (preview copy in a Development build)', asy
     const { browser, page } = await launchStats({ now: NOW, verbose, watermark });
     try {
       await waitForStats(page, { cloud: false });
-      const href = await page.locator('.stats-header a.guide-link').getAttribute('href');
+      const href = await page.locator('.lh-page-header a.guide-link').getAttribute('href');
       assert(href === expected, `guide link ${href}, expected ${expected}`);
     } finally {
       await browser.close();
@@ -436,19 +437,4 @@ check('dark mode follows the OS setting', async () => {
   }
 });
 
-function assert(cond, msg) {
-  if (!cond) throw new Error(msg);
-}
-
-let failed = 0;
-for (const { name, fn } of checks) {
-  try {
-    await fn();
-    console.log(`✓ ${name}`);
-  } catch (err) {
-    failed++;
-    console.error(`✗ ${name}: ${err.message.split('\n')[0]}`);
-  }
-}
-console.log(failed ? `\n${failed} of ${checks.length} checks failed` : `\nAll ${checks.length} checks passed`);
-process.exit(failed ? 1 : 0);
+await runChecks(checks);

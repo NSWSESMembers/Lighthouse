@@ -1,26 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { loadUnits, loadJobs, loadClusters } from './loadStats.js';
+import { loadJobs, loadClusters } from './loadStats.js';
 
 const ctx = { host: 'https://api.test', userId: '17', token: 't' };
 
 const beaconJob = (Id, Event = null) => ({
   Id, Identifier: `J${Id}`, JobReceived: '2026-10-15T08:00:00', JobStatusTypeHistory: [], Tags: [],
   EntityAssignedTo: { Name: 'Demo City' }, Event,
-});
-
-describe('loadUnits', () => {
-  it('looks up every HQ id with the context', async () => {
-    const getName = vi.fn(async (id) => ({ Id: Number(id), Name: `Unit ${id}` }));
-    const units = await loadUnits({ unit: { getName } }, ['1', '2'], ctx);
-    expect(units.map((u) => u.Name)).toEqual(['Unit 1', 'Unit 2']);
-    expect(getName).toHaveBeenCalledWith('1', ctx);
-  });
-
-  it('is empty for all of NSW, and drops null answers', async () => {
-    const getName = vi.fn(async () => null);
-    expect(await loadUnits({ unit: { getName } }, [], ctx)).toEqual([]);
-    expect(await loadUnits({ unit: { getName } }, ['9'], ctx)).toEqual([]);
-  });
 });
 
 describe('loadJobs', () => {

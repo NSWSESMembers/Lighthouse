@@ -4,7 +4,7 @@ Runs the built Incident Statistics page (`dist/pages/stats.html`, source in
 `src/pages/stats/`) outside the extension, in your installed Google Chrome,
 against a mock Beacon serving **entirely fake data**. Use it to check the page
 end to end, click around without a Beacon login, or regenerate the guide's
-screenshots.
+screenshots. Built on the shared harness in [`scripts/page-docs`](../page-docs/README.md).
 
 ```sh
 npm run dev                  # build dist/ first
@@ -21,12 +21,12 @@ Requires Google Chrome installed; `playwright-core` drives it (no browser downlo
 | File | What it does |
 | --- | --- |
 | `scenario.mjs` | The fake world: four units in one zone, ~360 incidents over the last week, weighted to a storm in the last two days. Seeded, so the data is the same for a given `now`. |
-| `launch.mjs` | `launchStats()`: stubs `chrome.*` and a fake token, passes the URL params Beacon's menu would, serves `dist/` from a fake origin, and answers `Entities/{id}` and `Jobs/Search` (filtered by HQ and date, paged). Swaps `resources/unitClusters.json` for fake clusters. Other network requests are blocked. |
+| `launch.mjs` | `launchStats()`: on `launchPage()` (fake `chrome.*`, token, URL params, `dist/` served from a fake origin); answers `Entities/{id}` and `Jobs/Search` (filtered by HQ and date, paged). Swaps `resources/unitClusters.json` for fake clusters. Other network requests are blocked. |
 | `check.mjs` | End-to-end checks: loading, filtering by pie and by brushing, range buttons, hourly vs daily buckets, a filter surviving a refresh, single-HQ title, word cloud counts, header colour per Beacon, Beacon errors, dark mode. |
 | `capture.mjs` | The shot list. Add a shot by adding an entry to `SHOTS`. |
 | `demo.mjs` | Headed launcher. |
 
-The unit tests (`npm test`) cover the data handling in `src/pages/stats/data/`
+The unit tests (`npm test`) cover the data handling in `src/pages/stats/data/`, the shared page code in `src/pages/shared/`
 and the view model. `check.mjs` covers what those can't: dc.js, the bindings and
 the page in a real browser. Run it after changing the page.
 

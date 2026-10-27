@@ -1,24 +1,11 @@
 /*
-  Fetches everything the stats page shows: the HQ entities (for the title)
-  and the jobs in range, prepared as crossfilter facts.
+  Fetches the jobs the stats page shows, prepared as crossfilter facts.
+  (The HQ lookup is shared: src/pages/shared/beacon.js loadUnits.)
 
   The Beacon client is passed in (BeaconClient in the page, a stub in tests).
 */
 
 import { prepareJobs, eventLabels } from './prepareJobs.js';
-
-/**
- * Looks up each HQ id. Done once per page load, the names don't change.
- *
- * @param {{unit: {getName: Function}}} client
- * @param {string[]} hqIds  [] for all of NSW
- * @param {{host: string, userId: string, token: string}} ctx
- * @returns {Promise<object[]>}
- */
-export async function loadUnits(client, hqIds, ctx) {
-  const units = await Promise.all(hqIds.map((id) => client.unit.getName(id, ctx)));
-  return units.filter(Boolean);
-}
 
 /**
  * @param {{job: {search: Function}}} client

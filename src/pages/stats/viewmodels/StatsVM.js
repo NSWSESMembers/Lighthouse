@@ -2,45 +2,27 @@
 import ko from "knockout";
 
 import { BREAKDOWNS, BREAKDOWN_GROUPS, chartElementId, legendElementId, gridElementId } from "../charts/breakdowns.js";
-import { rangeForChoice, isValidRange, scopeTitle } from "../data/params.js";
-import { loadUnits, loadJobs } from "../data/loadStats.js";
+import { RANGE_CHOICES, rangeForChoice, isValidRange, rangeText, scopeTitle } from "../../shared/params.js";
+import { loadUnits, errorText } from "../../shared/beacon.js";
+import { loadJobs } from "../data/loadStats.js";
 import { summarizeDurations, formatDuration } from "../data/durations.js";
 import { bucketFor } from "../data/timeBuckets.js";
 import { wordFrequencies } from "../data/wordCount.js";
-import { describeLoad, RING_CIRCUMFERENCE } from "./loadProgress.js";
+import { describeLoad } from "./loadProgress.js";
 
 // Auto-refresh period, as on the old page.
 export const REFRESH_SECONDS = 180;
 const LATEST_ROWS = 15;
 
-export const RANGE_CHOICES = [
-    { value: "launch", id: "range-launch", label: "As opened" },
-    { value: "24", id: "range-24", label: "Last 24 h" },
-    { value: "48", id: "range-48", label: "48 h" },
-    { value: "72", id: "range-72", label: "72 h" },
-    { value: "168", id: "range-168", label: "7 days" },
-];
-
-const DATE_FMT = new Intl.DateTimeFormat("en-AU", {
-    weekday: "short", day: "numeric", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-});
 const ROW_FMT = new Intl.DateTimeFormat("en-AU", {
     day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
 });
-
-function errorText(err) {
-    if (!err) return "Unknown error";
-    if (err.status === 401) return "Beacon refused the request (401). Reopen Incident Statistics from Beacon to sign in again.";
-    if (err.status) return `Beacon returned ${err.status}${err.statusText ? " " + err.statusText : ""}.`;
-    return err.message || String(err);
-}
 
 /**
  * Incident Statistics page.
  *
  * @param {object} deps
- * @param {{host, source, userId, hqIds, start, end}} deps.params  parseStatsParams()
+ * @param {{host, source, userId, hqIds, start, end}} deps.params  parsePageParams()
  * @param {object} deps.client      BeaconClient (unit.getName, job.search)
  * @param {object} deps.charts      StatsCharts, or a stand-in in tests
  * @param {() => Promise<object|null>} [deps.clusters]  unitClusters.json loader
@@ -64,7 +46,8 @@ export function StatsVM(deps) {
 
     self.loading = ko.observable(true);      // first load: full-page progress
     self.refreshing = ko.observable(false);  // later loads: small spinner
-    // First-load ring (loadProgress.js): raw counts and times, described by `loader`.
+    // First-load ring (loadProgress.js, drawn by the shared load-ring component):
+    // raw counts and times, described by `loader`.
     self.loadPhase = ko.observable("starting"); // starting | incidents | charts
     self.loadLoaded = ko.observable(0);
     self.loadTotal = ko.observable(null);       // Beacon's total, once the first page is back
@@ -72,7 +55,6 @@ export function StatsVM(deps) {
     self.firstPageAt = ko.observable(null);
     self.lastPageAt = ko.observable(null);
     self.clock = ko.observable(+now());         // ticks each second (tick)
-    self.ringCircumference = RING_CIRCUMFERENCE.toFixed(2);
     self.error = ko.observable(null);
     self.loadedAt = ko.observable(null);
 
@@ -121,12 +103,7 @@ export function StatsVM(deps) {
         return units ? scopeTitle(units) : "…";
     });
     self.pageTitle = ko.pureComputed(() => `Incident Statistics: ${self.scopeTitle()}`);
-    self.rangeText = ko.pureComputed(() => {
-        const { start, end } = self.range();
-        return isValidRange({ start, end })
-            ? `${DATE_FMT.format(start)} to ${DATE_FMT.format(end)}`
-            : "No valid date range";
-    });
+    self.rangeText = ko.pureComputed(() => rangeText(self.range()));
     self.bucketLabel = ko.pureComputed(() => {
         const { start, end } = self.range();
         return isValidRange({ start, end }) ? bucketFor(start, end).label : "Hour";
@@ -134,18 +111,15 @@ export function StatsVM(deps) {
     self.receivedTitle = ko.pureComputed(() => `Incidents received per ${self.bucketLabel().toLowerCase()}`);
     self.closedTitle = ko.pureComputed(() => `Incidents closed per ${self.bucketLabel().toLowerCase()}`);
 
-    self.loader = ko.pureComputed(() => {
-        const view = describeLoad({
-            phase: self.loadPhase(),
-            loaded: self.loadLoaded(),
-            total: self.loadTotal(),
-            startedAt: self.loadStartedAt(),
-            firstPageAt: self.firstPageAt(),
-            lastPageAt: self.lastPageAt(),
-            now: self.clock(),
-        });
-        return { ...view, pageBarStyle: { width: view.pageBarPct + "%" } };
-    });
+    self.loader = ko.pureComputed(() => describeLoad({
+        phase: self.loadPhase(),
+        loaded: self.loadLoaded(),
+        total: self.loadTotal(),
+        startedAt: self.loadStartedAt(),
+        firstPageAt: self.firstPageAt(),
+        lastPageAt: self.lastPageAt(),
+        now: self.clock(),
+    }));
 
     /** From the "Still waiting" message: give up on this range for a shorter one. */
     self.loadShorterRange = function () {
@@ -321,7 +295,7 @@ export function StatsVM(deps) {
             } catch (err) {
                 if (controller.signal.aborted) return;
                 console.error("Incident statistics load failed", err);
-                self.error(errorText(err));
+                self.error(errorText(err, "Incident Statistics"));
             } finally {
                 if (inFlight && inFlight.controller === controller) {
                     inFlight = null;

@@ -10,6 +10,8 @@
   PRNG keeps the data identical between runs for a given `now`.
 */
 
+import { UNITS, prng } from '../page-docs/units.mjs';
+
 const TZ = 'Australia/Sydney';
 
 /** Beacon-style offset-free local timestamp, `hoursAgo` before `now`. */
@@ -24,35 +26,8 @@ export function beaconTime(now, hoursAgo = 0) {
   return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}`;
 }
 
-function prng(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-const ZONE = { Id: 9000, Code: 'DMZ', Name: 'Demo Zone', ParentEntity: { Id: 1, Code: 'STA', Name: 'Demo State' } };
-
-const entity = (Id, Code, Name, Latitude, Longitude) => ({
-  Id, Code, Name, Latitude, Longitude,
-  EntityTypeId: 1,
-  HeadquartersStatusTypeId: 1,
-  ParentEntity: { Id: ZONE.Id, Code: ZONE.Code, Name: ZONE.Name },
-  AriaCodeType: { Id: 1, Name: 'Not Applicable', Description: null },
-  AriaCode: null,
-  CadCode: `SES${Id}`,
-});
-
-export const UNITS = [
-  entity(9001, 'DEM', 'Demo City', -33.815, 151.001),
-  entity(9002, 'DMH', 'Demo Heights', -33.79, 150.96),
-  entity(9003, 'DMV', 'Demo Vale', -33.86, 150.98),
-  entity(9004, 'DMP', 'Demo Point', -33.84, 151.05),
-];
+// The four fake units in one fake zone, shared with the other page harnesses.
+export { UNITS };
 
 /** Stand-in for static/resources/unitClusters.json, keyed by the fake unit names. */
 export const CLUSTERS = {

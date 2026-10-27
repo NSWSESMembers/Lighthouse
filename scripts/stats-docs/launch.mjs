@@ -1,31 +1,17 @@
 /*
   Launch the built Incident Statistics page (dist/pages/stats.html) in the
-  locally installed Google Chrome, outside the extension, against a mock
-  Beacon serving the fake scenario (scenario.mjs).
-
-  What stands in for the extension:
-    - window.chrome: storage.local holding a fake bearer token, and
-      runtime.getManifest -- the only chrome.* APIs the page touches.
-    - the URL params Beacon's Lighthouse menu passes (host/source/hq/start/end).
-    - dist/ served from a fake origin via request interception, with
-      resources/unitClusters.json swapped for the scenario's fake clusters.
+  locally installed Google Chrome against a mock Beacon serving the fake
+  scenario (scenario.mjs). The extension stand-ins are in
+  scripts/page-docs/launchPage.mjs; resources/unitClusters.json is swapped
+  for the scenario's fake clusters.
 
   Requires a build first: `npm run dev` (or `npm run prod`).
 */
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright-core';
+import { launchPage, json, settle, BEACON_HOST } from '../page-docs/launchPage.mjs';
 import { buildScenario } from './scenario.mjs';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const DIST = path.join(ROOT, 'dist');
-const APP_ORIGIN = 'http://lighthouse.demo.test';
-export const BEACON_HOST = 'https://beacon.demo.test';
-
-const json = (route, body, status = 200) =>
-  route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+export { settle, BEACON_HOST };
 
 /** Beacon timestamps are offset-free Sydney local time; the browser is pinned to Sydney too. */
 const beaconDate = (s) => new Date(s);
@@ -75,102 +61,27 @@ function mockBeacon(scenario, log) {
  * @param {number} [opts.scale=1]  device pixel ratio
  */
 export async function launchStats(opts = {}) {
-  const {
-    headless = true, viewport = { width: 1440, height: 1000 }, hours = 72,
-    dark = false, failSearch = 0, verbose = false, scale = 1, watermark = false, env = 'production',
-    pageDelayMs = 0, firstPageDelayMs = pageDelayMs,
-  } = opts;
-  if (!fs.existsSync(path.join(DIST, 'pages/stats.html'))) {
-    throw new Error('dist/pages/stats.html not found -- run `npm run dev` first');
-  }
-  const manifest = JSON.parse(fs.readFileSync(path.join(DIST, 'manifest.json'), 'utf8'));
-  // The page watermarks Development builds; guide screenshots shouldn't carry it.
-  if (!watermark) manifest.name = manifest.name.replace(/\s*Development.*$/i, '');
+  const { failSearch = 0, pageDelayMs = 0, firstPageDelayMs = pageDelayMs } = opts;
   const now = opts.now ? new Date(opts.now) : new Date();
   const scenario = buildScenario(now);
   const hq = opts.hq ?? scenario.units.map((u) => u.Id);
-  const log = verbose ? (msg) => console.log(msg) : () => {};
-  const pageErrors = [];
-
-  const browser = await chromium.launch({ channel: 'chrome', headless });
-  const context = await browser.newContext({
-    viewport, deviceScaleFactor: scale, timezoneId: scenario.timezone, locale: 'en-AU',
-    colorScheme: dark ? 'dark' : 'light',
-  });
-  if (opts.now) {
-    // Shift Date rather than freeze it, so timers and transitions still run.
-    await context.addInitScript((offsetMs) => {
-      const RealDate = Date;
-      // eslint-disable-next-line no-global-assign
-      Date = class extends RealDate {
-        constructor(...args) { if (args.length === 0) super(RealDate.now() + offsetMs); else super(...args); }
-        static now() { return RealDate.now() + offsetMs; }
-      };
-    }, now.getTime() - Date.now());
-  }
-
-  await context.addInitScript(({ tokenKey, manifest }) => {
-    const store = { [tokenKey]: JSON.stringify({ token: 'demo-token', expdate: '2099-01-01T00:00:00Z' }) };
-    window.chrome = {
-      runtime: { id: 'lighthouse-demo', getManifest: () => manifest },
-      storage: {
-        local: {
-          get: (keys, cb) => {
-            const list = typeof keys === 'string' ? [keys] : Array.isArray(keys) ? keys : Object.keys(keys || store);
-            const out = {};
-            list.forEach((k) => { if (k in store) out[k] = store[k]; });
-            setTimeout(() => cb(out), 0);
-          },
-          set: (obj, cb) => { Object.assign(store, obj); cb && setTimeout(cb, 0); },
-        },
-      },
-    };
-  }, { tokenKey: `beaconAPIToken-${BEACON_HOST}`, manifest });
-
-  const beacon = mockBeacon(scenario, log);
-  await context.route('**/*', async (route) => {
-    const url = new URL(route.request().url());
-    if (url.origin === APP_ORIGIN) {
-      if (url.pathname === '/resources/unitClusters.json') return json(route, scenario.clusters);
-      const file = path.join(DIST, decodeURIComponent(url.pathname));
-      if (file.startsWith(DIST) && fs.existsSync(file) && fs.statSync(file).isFile()) return route.fulfill({ path: file });
-      log(`[app] 404 ${url.pathname}`);
-      return route.fulfill({ status: 404, body: '' });
+  let log = () => {};
+  const mock = mockBeacon(scenario, (msg) => log(msg));
+  const beacon = async (route, url) => {
+    if (url.pathname.startsWith('/Api/v1/Jobs/Search')) {
+      const first = (Number(url.searchParams.get('PageIndex')) || 1) === 1;
+      const delay = first ? firstPageDelayMs : pageDelayMs;
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+      if (failSearch) return json(route, { Message: 'Demo failure' }, failSearch);
     }
-    if (url.origin === BEACON_HOST) {
-      if (url.pathname.startsWith('/Api/v1/Jobs/Search')) {
-        const first = (Number(url.searchParams.get('PageIndex')) || 1) === 1;
-        const delay = first ? firstPageDelayMs : pageDelayMs;
-        if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-      if (failSearch && url.pathname.startsWith('/Api/v1/Jobs/Search')) {
-        return json(route, { Message: 'Demo failure' }, failSearch);
-      }
-      return beacon(route, url);
-    }
-    log(`[net] blocked ${url.href.slice(0, 120)}`);
-    return route.abort();
+    return mock(route, url);
+  };
+  const launched = await launchPage({
+    ...opts, page: 'stats.html', beacon, hq, now, shiftClock: Boolean(opts.now),
+    appJson: { '/resources/unitClusters.json': scenario.clusters },
   });
-
-  const page = await context.newPage();
-  page.on('pageerror', (e) => {
-    pageErrors.push(e.message);
-    if (verbose) console.log(`[page error] ${e.message}`);
-  });
-  if (verbose) page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') console.log(`[console] ${m.text().slice(0, 300)}`); });
-
-  const params = new URLSearchParams({
-    host: BEACON_HOST,
-    source: env === 'production' ? BEACON_HOST : `https://${env}.ses.nsw.gov.au`,
-    userId: '17',
-    hq: hq.join(','),
-    start: new Date(now.getTime() - hours * 3600 * 1000).toISOString(),
-    end: now.toISOString(),
-  });
-  await page.goto(`${APP_ORIGIN}/pages/stats.html?${params}`);
-  await page.waitForFunction(() => document.body.style.opacity === '1');
-
-  return { browser, context, page, scenario, pageErrors };
+  log = launched.log;
+  return { ...launched, scenario };
 }
 
 /** Wait for the first load to finish (or fail) and the word cloud to lay out. */
@@ -178,10 +89,4 @@ export async function waitForStats(page, { cloud = true } = {}) {
   await page.waitForFunction(() => window.statsVM && (!window.statsVM.loading() || window.statsVM.error()));
   if (cloud) await page.locator('#word-cloud svg, #word-cloud p').first().waitFor({ timeout: 10000 }).catch(() => {});
   await settle(page);
-}
-
-/** Let fetches, chart transitions and KO's deferred updates finish. */
-export async function settle(page, ms = 900) {
-  await page.waitForLoadState('networkidle').catch(() => {});
-  await page.waitForTimeout(ms);
 }
