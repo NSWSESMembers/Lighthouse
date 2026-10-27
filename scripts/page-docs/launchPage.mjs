@@ -1,6 +1,6 @@
 /*
   Shared harness for the Lighthouse pages Beacon opens in a new tab
-  (Incident Statistics, Incident Summary): launch a built page from dist/
+  (Incident Statistics, Incident Summary, Incident Export): launch a built page from dist/
   in the locally installed Google Chrome, outside the extension, against a
   mock Beacon.
 

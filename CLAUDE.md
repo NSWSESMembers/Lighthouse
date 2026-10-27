@@ -2,8 +2,9 @@
 
 Chrome extension for NSW SES Beacon. Most active work is the LAD (tasking)
 page in `src/pages/tasking/`; the Incident Statistics page (`stats.html`) is
-`src/pages/stats/` and the Incident Summary page (`summary.html`) is
-`src/pages/summary/`, both built the same way (Bootstrap 5,
+`src/pages/stats/`, the Incident Summary page (`summary.html`) is
+`src/pages/summary/` and the Incident Export page (`advexport.html`) is
+`src/pages/advexport/`, all built the same way (Bootstrap 5,
 knockout-secure-binding, BeaconClient), with code shared between them in
 `src/pages/shared/` (params, page setup, load ring) and
 `styles/pages/include/lighthouse-page.css`; shared Beacon API code is in
@@ -70,7 +71,7 @@ compat layer (`charts/dcD3Compat.js`): dc's dist bundle crashes on d3 7.
 ## Running Incident Summary without Beacon: `scripts/summary-docs`
 
 Same idea for `summary.html` (fake data in `scripts/summary-docs/scenario.mjs`).
-Both harnesses are built on the shared page harness in `scripts/page-docs/`.
+These harnesses are built on the shared page harness in `scripts/page-docs/`.
 `summary:check` is an end-to-end check in Chrome; run it after changing the
 page. Details in `scripts/summary-docs/README.md`.
 
@@ -78,6 +79,19 @@ page. Details in `scripts/summary-docs/README.md`.
 npm run dev && npm run summary:check                    # end-to-end checks
 npm run summary:demo                                    # headed Chrome window
 npm run summary:shots -- --out docs/summary/images      # guide screenshots
+```
+
+## Running Incident Export without Beacon: `scripts/advexport-docs`
+
+Same idea for `advexport.html` (incidents reuse `scripts/stats-docs/scenario.mjs`,
+plus fake callers and ICEMS Ops Logs in `scripts/advexport-docs/scenario.mjs`).
+`advexport:check` is an end-to-end check in Chrome, including the downloaded
+CSV; run it after changing the page. Details in `scripts/advexport-docs/README.md`.
+
+```sh
+npm run dev && npm run advexport:check                  # end-to-end checks
+npm run advexport:demo                                  # headed Chrome window
+npm run advexport:shots -- --out docs/export/images     # guide screenshots
 ```
 
 ### Fixture data rules
@@ -106,8 +120,10 @@ copy values from `build/lad-samples/` (real payloads from
 ## User-facing docs
 
 The LAD user guide (`docs/lad/`), the Incident Statistics guide
-(`docs/stats/`), the Incident Summary guide (`docs/summary/`) and What's New
+(`docs/stats/`), the Incident Summary guide (`docs/summary/`), the Incident
+Export guide (`docs/export/`) and What's New
 (`docs/whats-new/index.md`) are synced to the website: `master` publishes the stable copy, `master-dev`
 the Development Preview. For user-visible changes,
 update the matching guide page and add a What's New entry in the same PR. Use
-`npm run lad:shots` / `npm run stats:shots` / `npm run summary:shots` for guide screenshots.
+`npm run lad:shots` / `npm run stats:shots` / `npm run summary:shots` /
+`npm run advexport:shots` for guide screenshots.

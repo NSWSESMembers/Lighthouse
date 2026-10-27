@@ -1,6 +1,6 @@
 # Shared page harness
 
-The pieces every new-tab page harness uses (`scripts/summary-docs`, and
+The pieces every new-tab page harness uses (`scripts/summary-docs`, `scripts/advexport-docs`, and
 `scripts/stats-docs` once it moves over). Each page's folder adds only its fake
 Beacon answers, its checks and its shot list.
 

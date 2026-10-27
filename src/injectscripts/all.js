@@ -104,7 +104,7 @@ whenWeAreReady(function () {
         lighthouseUrl +
         'pages/advexport.html' +
         vars +
-        '" target="_blank">Job Export (' +
+        '" target="_blank">Incident Export (' +
         unitName +
         ' Today)</a>\
     </li>\
@@ -190,7 +190,7 @@ whenWeAreReady(function () {
         lighthouseUrl +
         'pages/advexport.html' +
         vars +
-        '" target="_blank">Job Export (' +
+        '" target="_blank">Incident Export (' +
         unitName +
         ' Today)</a>\
     </li>\
