@@ -138,9 +138,15 @@ function HackTheMatrix(progressBar) {
                 var name = p.Person.FullName;
                 var hours = parseFloat((Math.abs(new Date(p.EndDate) - new Date(p.StartDate)) / 36e5).toFixed(2));
                 if ((i = findInArr(exports, name)) == null) {
-                    exports.push({Name: name});
+                    exports.push({
+                        Name: name,
+                        ActualHours: 0
+                    });
                     i = exports.length - 1;
                 }
+                // Track actual participant hours independently of tag allocations.
+                // Tag columns may double-count hours when an activity has multiple tags.
+                exports[i].ActualHours += hours;
                 activities.forEach(function(a) {
                     if (typeof exports[i][a] === 'undefined') {
                         exports[i][a] = hours;
@@ -148,9 +154,9 @@ function HackTheMatrix(progressBar) {
                         exports[i][a] += hours;
                     }
                     if (typeof listOfActivities[a] === 'undefined')
-                        listOfActivities.push(a);       // Keep track of all the activities in this export
+                        listOfActivities.push(a);
                 });
-            });
+            });    
         });
         // Pad out the activities so we have the same number of columns for all members
         for (let i =0; i < exports.length; i++) {
