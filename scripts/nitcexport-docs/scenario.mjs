@@ -1,10 +1,12 @@
 /*
   Deterministic demo data for the NITC Export page: Non-Incident Task
   Cards for the four fake HQs (scripts/page-docs/units.mjs), in the
-  structure the page reads from Beacon's NonIncident/Search
-  (ViewModelType 6): Name, Description, NonIncidentType, StartDate /
-  EndDate (offset-free Sydney time), CreatedAt (the HQ), Tags, and
-  Participants with their Person and own start / end.
+  structure of Beacon's NonIncident/Search (ViewModelType 6), checked
+  against a trainbeacon sample (build/lad-samples/nonincident-search.json,
+  `npm run lad:samples`): Name, Type, StartDate / EndDate (offset-free
+  Sydney time, as Beacon sends every time here), CreatedAt (the HQ),
+  CreatedBy, Tags, Completed, Address, and Participants with their Person,
+  ParticipantType (Beacon pads its Name with spaces) and own start / end.
 
   Every value is invented. A few tasks are awkward on purpose: a name with
   "#" and brackets in it, a task with no tags, a participant with no end
@@ -41,6 +43,9 @@ const NAMES = {
 };
 const TAGS_FOR = { 1: [701, 702, 703], 2: [704], 3: [705], 4: [706] };
 
+/** A Person as Beacon nests it (participants, CreatedBy). */
+const person = (p) => ({ Id: p.Id, FirstName: p.FirstName, LastName: p.LastName, FullName: p.FullName, Gender: p.Gender, RegistrationNumber: p.RegistrationNumber });
+
 export function buildScenario(now = new Date()) {
   const rand = prng(20261028);
   const pick = (list) => list[Math.floor(rand() * list.length)];
@@ -49,7 +54,10 @@ export function buildScenario(now = new Date()) {
   const people = Array.from({ length: 40 }, (_, i) => {
     const FirstName = FIRST[i % FIRST.length];
     const LastName = LAST[Math.floor(i / FIRST.length + i) % LAST.length];
-    return { Id: 80000 + i, FirstName, LastName, FullName: `${FirstName} ${LastName}`, unit: UNITS[i % UNITS.length].Id };
+    return {
+      Id: 80000 + i, FirstName, LastName, FullName: `${FirstName} ${LastName}`,
+      Gender: [1, 2, null, 4][i % 4], RegistrationNumber: String(90000000 + i), unit: UNITS[i % UNITS.length].Id,
+    };
   });
   people[39].FirstName = people[0].FirstName;
   people[39].LastName = people[0].LastName;
@@ -69,24 +77,35 @@ export function buildScenario(now = new Date()) {
     const tagIds = TAGS_FOR[type.Id].filter(() => rand() < 0.6);
     if (!tagIds.length) tagIds.push(TAGS_FOR[type.Id][0]);
     const crew = people.filter((p) => p.unit === unit.Id && rand() < 0.45);
+    const lead = crew[0] || people.find((p) => p.unit === unit.Id);
     tasks.push({
       Id: 30000 + i,
       Name: pick(NAMES[type.Id]),
-      Description: `${type.Name} at ${unit.Name}`,
-      NonIncidentType: type,
+      Description: null,
+      Type: { ...type, Description: null },
       StartDate: start,
       EndDate: end,
+      GnafId: null,
+      Address: {
+        GnafId: null, Latitude: null, Longitude: null, Type: null, Flat: null, Level: null,
+        StreetNumber: null, Street: null, Locality: null, PostCode: null, PrettyAddress: `${unit.Name} HQ`, AdditionalAddressInfo: null,
+      },
+      Tags: TAGS.filter((t) => tagIds.includes(t.Id)).map((t) => ({ ...t, CreatedOn: '2015-08-04T11:32:36', CreatedBy: 1, Description: null })),
+      Resources: [],
       CreatedAt: { Id: unit.Id, Code: unit.Code, Name: unit.Name },
-      Tags: TAGS.filter((t) => tagIds.includes(t.Id)),
+      CreatedBy: person(lead),
+      Completed: hoursAgo > 48,
+      SafetyManagementSheet: { Id: 50000 + i, SignedBy: null, SignedOn: null },
       Participants: crew.map((p, n) => {
         // Most stay the whole task; some leave early or arrive late.
         const late = rand() < 0.2 ? 0.5 : 0;
         const early = rand() < 0.2 ? 0.5 : 0;
         return {
           Id: 3000000 + i * 100 + n,
-          Person: { Id: p.Id, FirstName: p.FirstName, LastName: p.LastName, FullName: p.FullName },
+          Person: person(p),
           StartDate: beaconTime(now, hoursAgo - late),
           EndDate: beaconTime(now, hoursAgo - length + early),
+          ParticipantType: { Id: 1, Name: 'Attendee'.padEnd(50), Description: null },
         };
       }),
     });

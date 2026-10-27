@@ -17,7 +17,7 @@ Add `--verbose` to any of them to log mock traffic and page errors.
 
 | File | What it does |
 | --- | --- |
-| `scenario.mjs` | 160 Non-Incident Task Cards over 30 days for the four fake HQs, in the structure the page reads from `NonIncident/Search` (ViewModelType 6), with invented members as participants. Includes a name with `#` and brackets, a task with no tags, a participant with no end time and two members with the same name. Seeded. |
+| `scenario.mjs` | 160 Non-Incident Task Cards over 30 days for the four fake HQs, in the structure of `NonIncident/Search` (ViewModelType 6, checked against a trainbeacon sample), with invented members as participants. Includes a name with `#` and brackets, a task with no tags, a participant with no end time and two members with the same name. Seeded. |
 | `launch.mjs` | `launchNitc()`: answers `Entities/{id}` and `NonIncident/Search` (HQ, type, tag and date filters, Beacon's paging), and records each search URL and page size in `stats`. `downloadCsv()` clicks Download and returns the file. |
 | `check.mjs` | End-to-end checks: opening makes one 10-row request; count, title, preview; Activity List CSV (header, ISO times, `Name[hours]` participants, `#` kept, one row per task); Member List CSV (a row per member by person id, Total Hours adding up, a column per tag, No tag); the remembered report; the NITC screen's filters reach Beacon and the header; Beacon errors, Try again, a failed Reload, a failed Download, Cancel; 401; no tasks; header colour per Beacon; the guide link; OS dark mode. |
 | `capture.mjs` | The shot list. Add a shot by adding an entry to `SHOTS`. |
@@ -30,6 +30,6 @@ Add `--verbose` to any of them to log mock traffic and page errors.
 next N searches; or set `stats.failNext` mid-run), `pageDelayMs` (to watch the
 ring), `storage` (localStorage to start with, e.g. `{ 'lh-nitcexport-report': 'member' }`).
 
-The scenario's *structure* is inferred from what the old page read (no real
-NonIncident sample was to hand). `npm run lad:samples` now also saves
-`build/lad-samples/nonincident-search.json` to check it against.
+`npm run lad:samples` saves a real `build/lad-samples/nonincident-search.json`
+to check the scenario's structure against (never copy its values). Beacon
+sends every time in it without an offset: NSW local time.

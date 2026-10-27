@@ -20,7 +20,7 @@ export function searchRows(scenario, { entityIds = [], typeIds = [], tagIds = []
   return scenario.tasks.filter((t) => {
     const at = beaconDate(t.StartDate);
     return (!entityIds.length || entityIds.includes(t.CreatedAt.Id))
-      && (!typeIds.length || typeIds.includes(t.NonIncidentType.Id))
+      && (!typeIds.length || typeIds.includes(t.Type.Id))
       && (!tagIds.length || t.Tags.some((g) => tagIds.includes(g.Id)))
       && at >= start && at <= end;
   });
