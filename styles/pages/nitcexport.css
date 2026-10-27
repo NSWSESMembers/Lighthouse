@@ -1,1 +1,108 @@
-@import url("include/common.css");
+@import url('include/lighthouse-page.css');
+
+/* NITC Export page (src/pages/nitcexport/). Beacon colour, header, Guide
+   button, loading ring and the Download dialog: include/lighthouse-page.css. */
+
+/* ---- report type (the old page's centred box) -------------------------- */
+
+.nitc-report {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color-translucent);
+  border-radius: var(--bs-border-radius-lg);
+  padding: 1rem 1rem .75rem;
+}
+
+.nitc-report legend {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: .5rem;
+}
+
+.nitc-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: .5rem;
+}
+
+.nitc-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  padding: .6rem .75rem;
+  border-radius: var(--bs-border-radius);
+  background: var(--bs-secondary-bg);
+  border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+}
+
+.nitc-choice:hover {
+  border-color: var(--bs-border-color);
+}
+
+.nitc-choice.checked {
+  background: color-mix(in srgb, var(--lh-env-color) 18%, var(--bs-body-bg));
+  border-color: color-mix(in srgb, var(--lh-env-color) 45%, transparent);
+}
+
+.nitc-choice .form-check-input {
+  margin: .2rem 0 0;
+  flex: 0 0 auto;
+}
+
+.nitc-choice-label {
+  display: block;
+  font-weight: 600;
+}
+
+.nitc-choice-hint {
+  display: block;
+  font-size: .85rem;
+  color: var(--bs-secondary-color);
+}
+
+.nitc-actions {
+  border-top: 1px solid var(--bs-border-color-translucent);
+  margin-top: .75rem;
+  padding-top: .75rem;
+}
+
+/* ---- preview ---------------------------------------------------------- */
+
+.nitc-preview {
+  margin-top: 1.25rem;
+}
+
+#preview-table {
+  font-size: .8rem;
+}
+
+#preview-table th,
+#preview-table td {
+  white-space: nowrap;
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The Activity List's participants: let them wrap, it's the long one. */
+#preview-table:not(.member-list) td:last-child {
+  white-space: normal;
+  min-width: 18rem;
+  max-width: 40rem;
+}
+
+/* Hours columns line up. */
+#preview-table.member-list td:not(:first-child),
+#preview-table.member-list th:not(:first-child),
+#preview-table:not(.member-list) td:nth-child(6),
+#preview-table:not(.member-list) td:nth-child(7) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.lh-empty {
+  padding: 1.5rem 0;
+}

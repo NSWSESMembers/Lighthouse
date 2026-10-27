@@ -1,6 +1,7 @@
 /*
   What the first-load ring shows on the pages that load a whole incident
-  search (Incident Statistics, Incident Export).
+  search (Incident Statistics, Incident Export), or NITC search (NITC
+  Export: `one` / `many` say "task" / "tasks").
 
   Nearly all of a load is the incident search: 100 incidents per request,
   one request after another, and Beacon only says how many there are once
@@ -14,7 +15,7 @@ import { SLOW_AFTER_MS, RING_CIRCUMFERENCE, centreValueSize, waitingRing } from 
 
 export { SLOW_AFTER_MS, RING_CIRCUMFERENCE, centreValueSize };
 
-export const PAGE_SIZE = 100; // BeaconClient job.search
+export const PAGE_SIZE = 100; // BeaconClient job.search, nitc.search
 export const MAX_PAGE_DOTS = 12;
 
 /** "about 6 s left", "about 2 min left". */
@@ -45,10 +46,15 @@ export function estimateMsLeft({ pagesDone, pages, firstPageAt, lastPageAt, now 
  * @param {number|null} s.lastPageAt
  * @param {number} s.now
  * @param {string} [s.finishingTitle='Finishing…']  the title once every incident is in
+ * @param {string} [s.one='incident']  what's being counted, for one
+ * @param {string} [s.many='incidents']  ... and for more than one
  */
-export function describeLoad({ phase, loaded, total, startedAt, firstPageAt = null, lastPageAt = null, now, finishingTitle = 'Finishing…' }) {
+export function describeLoad({
+  phase, loaded, total, startedAt, firstPageAt = null, lastPageAt = null, now,
+  finishingTitle = 'Finishing…', one = 'incident', many: plural = 'incidents',
+}) {
   if (phase === 'starting' || total === null) {
-    return waitingRing({ startedAt, now, title: 'Asking Beacon for incidents…' });
+    return waitingRing({ startedAt, now, title: `Asking Beacon for ${plural}…` });
   }
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -65,10 +71,10 @@ export function describeLoad({ phase, loaded, total, startedAt, firstPageAt = nu
     centreValueSize: centreValueSize((finishing ? total : loaded).toLocaleString()),
     // Two short lines: "of 20,316" / "incidents" fits where one line doesn't.
     centreLabel: `of ${total.toLocaleString()}`,
-    centreLabel2: total === 1 ? 'incident' : 'incidents',
-    title: finishing ? finishingTitle : 'Loading incidents',
+    centreLabel2: total === 1 ? one : plural,
+    title: finishing ? finishingTitle : `Loading ${plural}`,
     meta: finishing
-      ? `${total.toLocaleString()} ${total === 1 ? 'incident' : 'incidents'} loaded`
+      ? `${total.toLocaleString()} ${total === 1 ? one : plural} loaded`
       : `page ${Math.max(1, pagesDone)} of ${pages}${left ? ' · ' + etaText(left) : ''}`,
     slow: false,
     pageDots: many ? [] : Array.from({ length: pages }, (_, i) => ({ done: i < pagesDone })),

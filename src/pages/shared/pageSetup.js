@@ -1,6 +1,6 @@
 /*
   Start-up shared by the Bootstrap 5 / knockout-secure-binding pages Beacon
-  opens in a new tab (Incident Statistics, Incident Summary, Incident Export): colour mode,
+  opens in a new tab (Incident Statistics, Incident Summary, Incident Export, NITC Export): colour mode,
   Beacon colour, Development watermark, guide link and KO set-up.
 
   Extension pages only (uses chrome.runtime and the DOM).

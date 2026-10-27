@@ -124,6 +124,13 @@ if (teamId) {
   await step('team-tasking', () => team.getTasking(teamId, ctx));
 }
 
+// NITC Export (src/pages/nitcexport/): the NonIncident/Search shape, and in
+// particular whether StartDate / EndDate carry an offset or a "Z".
+await widening('nonincident-search', (from, hq) =>
+  `${host}/Api/v1/NonIncident/Search?LighthouseFunction=GetNITCJSONfromBeacon&userId=${ctx.userId}` +
+  `&StartDate=${from.toISOString()}&EndDate=${end.toISOString()}${hq ? `&EntityIds%5B%5D=${hq}` : ''}` +
+  `&ViewModelType=6&SortField=Start&SortOrder=desc`);
+
 await step('radio', () => request(`${host}/Api/v1/ResourceLocations/Radio?resourceTypes=&LighthouseFunction=fetchRadioAssets&userId=${ctx.userId}`, { token }));
 await step('telematics', () => request(`${host}/Api/v1/ResourceLocations/Telematics?LighthouseFunction=fetchTeleAssets&userId=${ctx.userId}`, { token }));
 await step('tags-group-5', () => request(`${host}/Api/v1/Tags/Group/5?LighthouseFunction=TagsGroup&userId=${ctx.userId}`, { token }));

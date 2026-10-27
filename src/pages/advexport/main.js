@@ -14,6 +14,7 @@ const BeaconToken = require('../lib/shared_token_code.js');
 import { parsePageParams } from '../shared/params.js';
 import { colourScheme, markPage, guideUrl, withKnockout } from '../shared/pageSetup.js';
 import { registerLoadRing } from '../shared/loadRing.js';
+import { saveCsv } from '../shared/csv.js';
 import { ExportVM } from './viewmodels/ExportVM.js';
 
 // css order reasons... load this last
@@ -21,20 +22,6 @@ import '../../../styles/pages/advexport.css';
 
 const params = parsePageParams(window.location.search);
 colourScheme();
-
-/** Hands the CSV to the browser as a download. */
-function saveFile(name, text) {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  // Revoking straight away can cancel the download in Chrome; give it a minute.
-  setTimeout(() => URL.revokeObjectURL(url), 60000);
-}
 
 document.addEventListener('DOMContentLoaded', function () {
   markPage(params.source);
@@ -47,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
       guideUrl: guideUrl('export'),
       client: BeaconClient,
       storage: window.localStorage,
-      saveFile,
+      saveFile: saveCsv,
     });
     window.exportVM = vm; // for the advexport-docs harness and the console
 

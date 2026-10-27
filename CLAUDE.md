@@ -3,10 +3,11 @@
 Chrome extension for NSW SES Beacon. Most active work is the LAD (tasking)
 page in `src/pages/tasking/`; the Incident Statistics page (`stats.html`) is
 `src/pages/stats/`, the Incident Summary page (`summary.html`) is
-`src/pages/summary/` and the Incident Export page (`advexport.html`) is
-`src/pages/advexport/`, all built the same way (Bootstrap 5,
+`src/pages/summary/`, the Incident Export page (`advexport.html`) is
+`src/pages/advexport/` and the NITC Export page (`nitcexport.html`) is
+`src/pages/nitcexport/`, all built the same way (Bootstrap 5,
 knockout-secure-binding, BeaconClient), with code shared between them in
-`src/pages/shared/` (params, page setup, load ring) and
+`src/pages/shared/` (params, page setup, load ring, CSV, dates) and
 `styles/pages/include/lighthouse-page.css`; shared Beacon API code is in
 `src/shared/BeaconClient/`; AWS Lambda backends are in `lambda/`.
 
@@ -94,6 +95,21 @@ npm run advexport:demo                                  # headed Chrome window
 npm run advexport:shots -- --out docs/export/images     # guide screenshots
 ```
 
+## Running NITC Export without Beacon: `scripts/nitcexport-docs`
+
+Same idea for `nitcexport.html` (fake Non-Incident Task Cards in
+`scripts/nitcexport-docs/scenario.mjs`). Opened from Beacon's NITC screen
+"Export (Filtered)" button (`src/injectscripts/nitc/nitc.js`) with that
+screen's filters. `nitcexport:check` is an end-to-end check in Chrome,
+including both downloaded CSVs; run it after changing the page. Details in
+`scripts/nitcexport-docs/README.md`.
+
+```sh
+npm run dev && npm run nitcexport:check                 # end-to-end checks
+npm run nitcexport:demo                                 # headed Chrome window
+npm run nitcexport:shots -- --out docs/nitc/images      # guide screenshots
+```
+
 ### Fixture data rules
 
 `scenario.mjs` copies the _structure_ of real Beacon responses, but every
@@ -121,9 +137,9 @@ copy values from `build/lad-samples/` (real payloads from
 
 The LAD user guide (`docs/lad/`), the Incident Statistics guide
 (`docs/stats/`), the Incident Summary guide (`docs/summary/`), the Incident
-Export guide (`docs/export/`) and What's New
+Export guide (`docs/export/`), the NITC Export guide (`docs/nitc/`) and What's New
 (`docs/whats-new/index.md`) are synced to the website: `master` publishes the stable copy, `master-dev`
 the Development Preview. For user-visible changes,
 update the matching guide page and add a What's New entry in the same PR. Use
 `npm run lad:shots` / `npm run stats:shots` / `npm run summary:shots` /
-`npm run advexport:shots` for guide screenshots.
+`npm run advexport:shots` / `npm run nitcexport:shots` for guide screenshots.

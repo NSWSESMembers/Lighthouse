@@ -1,6 +1,6 @@
 /*
   Page parameters for the Lighthouse pages Beacon opens in a new tab
-  (Incident Statistics, Incident Summary, Incident Export).
+  (Incident Statistics, Incident Summary, Incident Export, NITC Export).
 
   Beacon's Lighthouse menu and the Jobs screen's "(Filtered)" buttons open
   them with:

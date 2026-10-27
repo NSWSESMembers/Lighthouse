@@ -1,6 +1,6 @@
 /*
   Beacon calls and errors shared by the pages Beacon opens in a new tab
-  (Incident Statistics, Incident Summary, Incident Export). The Beacon client is passed in
+  (Incident Statistics, Incident Summary, Incident Export, NITC Export). The Beacon client is passed in
   (BeaconClient in the page, a stub in tests).
 */
 

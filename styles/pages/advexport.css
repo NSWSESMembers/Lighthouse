@@ -61,26 +61,6 @@
   padding-top: .75rem;
 }
 
-.export-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1050;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 15vh 1rem 0;
-  background: rgba(0, 0, 0, .35);
-}
-
-.export-overlay .card {
-  width: 100%;
-  max-width: 540px;
-}
-
-.export-overlay .progress-bar {
-  background: var(--lh-env-color);
-}
-
 /* ---- preview ---------------------------------------------------------- */
 
 .export-preview {
