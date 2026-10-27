@@ -1,265 +1,187 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="en">
+
 <head>
-  <meta charset="utf-8">
-  <title>Beacon Job Stats</title>
-  <style>
-  body {
-      opacity: 0;
-  }
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Incident Summary</title>
 </head>
-<body>
-  <div id="loading">
-    <div id="loadmiddle">
-      <div id="loadinner">
-        <p>Loading<span class="dots"><span>.</span><span>.</span><span>.</span></span></p>
-        <div class="progress">
-          <div id="loadprogress" class="progress-bar" role="progressbar"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal fade"  id="settingsmodal" role="dialog" aria-labelledby="basicModal" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">Settings</h4>
-          <button type="button" class="close" data-dismiss="modal">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label id="themepicker">Visual Theme:</label>
-            <div class="radio">
-              <label><input type="radio" name="themebox" value="wob" >White on black</label>
-            </div>
-            <div class="radio">
-              <label><input type="radio" name="themebox" value="boo" >Black on orange</label>
-            </div>
-            <div class="radio">
-              <label><input type="radio" name="themebox" value="night" >Night mode (grey,black)</label>
-            </div>
-          </div>
-          <div class="form-group">
-            <label for="newJobSound">New Job Alert Sound:</label>
-            <select class="form-control" id="newJobSound">
-            </select>
-          </div>
-          <br>
-          <div class="modal-footer">
-            <button id="submitButton" type="button" class="btn btn-success">Save & Close</button>
-            <button type="button" class="btn btn-primary" data-dismiss="modal">Go Back</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div id="container">
-  <div id="results">
-    <div class="row">
-     <div class="col-md-4" style="padding-right:0">
-      <div class="lh-box">
-        <div class="lh-heading" id="title">NSW</div>
-      </div>
-      <div class="lh-box">
-        <div class="row">
-          <div class="col-md-5">
-            <div class="lh-details" id="title-details-start">
-            </div>
-          </div>
-          <div class="col-md-2">
-            <div class="lh-details">
-              TO
-            </div>
-          </div>
-          <div class="col-md-5">
-            <div class="lh-details" id="title-details-finish">
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-8" style="padding-left:0">
-      <div class="lh-box">
-        <div class="lh-title">Summary</div>
-        <div class="lh-body">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="lh-cell" id="outstanding">
-                <div class="lh-label">Outstanding</div>
-                <div class="lh-sublabel">New + Active + Tasked + Referred</div>
-                <div class="lh-value"></div>
-                <div class="lh-subscript"></div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="lh-cell" id="completedsum">
-                <div class="lh-label">Completed</div>
-                <div class="lh-sublabel">Completed + Cancelled + Rejected + Finalised</div>
-                <div class="lh-value"></div>
-                <div class="lh-subscript"></div>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <div class="lh-cell" id="totalnumber">
-                <div class="lh-label">Total</div>
-                <div class="lh-value"></div>
-                <div class="lh-subscript"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <div class="lh-box" style="margin-top:0px">
-    <div class="lh-title">Job Status</div>
-    <div class="lh-body">
-      <div class="row">
-        <div class="col-md-3">
-          <div class="lh-cell" id="new">
-            <div class="lh-label">New</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="lh-cell" id="active">
-            <div class="lh-label">Active</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="lh-cell" id="tasked">
-            <div class="lh-label">Tasked</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="lh-cell" id="referred">
-            <div class="lh-label">Referred</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-    </div>
-  </div>
-  </div>
-  <div class="lh-box">
-    <div class="lh-title">Job Finalisation</div>
-    <div class="lh-body">
-      <div class="row">
-        <div class="col-md-3">
-          <div class="lh-cell" id="completed">
-            <div class="lh-label">Completed</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="lh-cell" id="cancelled">
-            <div class="lh-label">Cancelled</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="lh-cell" id="rejected">
-            <div class="lh-label">Rejected</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="lh-cell" id="finalised">
-            <div class="lh-label">Finalised</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<body style="opacity:0; transition: opacity .25s ease;">
 
-  <div class="lh-box">
-    <div class="lh-title">Job Type</div>
-    <div class="lh-body">
-      <div class="row">
-        <div class="col-md-3">
-          <div class="lh-cell" id="support">
-            <div class="lh-label">Support</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
+    <!-- First load: the ring (src/pages/shared/loadRing.js) if Beacon takes a moment, or the error that stopped it -->
+    <div class="lh-page-loading px-3" id="summary-loading" data-bind="visible: showLoader">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <!-- ko ifnot: error -->
+                <div data-bind="component: { name: 'load-ring', params: { view: loader, label: 'Loading the incident summary', shorter: loadShorterRange } }"></div>
+                <!-- /ko -->
+                <!-- ko if: error -->
+                <div class="alert alert-danger mb-2" role="alert">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>
+                    <span data-bind="text: error"></span>
+                </div>
+                <button type="button" class="btn btn-sm btn-primary" data-bind="click: retry">
+                    <i class="fa-solid fa-rotate-right me-1"></i>Try again
+                </button>
+                <!-- /ko -->
+            </div>
         </div>
-        <div class="col-md-3">
-          <div class="lh-cell" id="flood">
-            <div class="lh-label">Flood</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="lh-cell" id="rescue">
-            <div class="lh-label">Rescue</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="lh-cell" id="storm">
-            <div class="lh-label">Storm</div>
-            <div class="lh-value"></div>
-            <div class="lh-subscript"></div>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
-</div>
-<div class="footer">
-  <form>
-    Override time frame with<br>
-    <label>
-      <input id="radio1" name="slide" type="radio" value="24">
-      Last 24Hrs
-    </label>
-    <label>
-      <input id="radio2" name="slide" type="radio" value="48">
-      Last 48hrs
-    </label>
-    <label>
-      <input id="radio3" name="slide" type="radio" value="72">
-      Last 72 Hrs
-    </label>
-    <label>
-      <input id="radio3" name="slide" type="radio" value="reset">
-      Reset
-    </label>
-  </form>
-  Designed &amp; developed by volunteers of the NSW SES.
-  <a href="https://github.com/NSWSESMembers/Lighthouse" target="_blank">Lighthouse</a>
-  is distributed under an
-  <a href= "https://github.com/NSWSESMembers/Lighthouse/blob/master/LICENSE.txt" rel="license" target="_blank">MIT Licence</a>.
-  <div style="float:right;margin-right: 5px;margin-bottom:5px">
-    <div>
-      <a href="#" id="refresh">
-        <i class="fas fa-sync"></i>
-        <span id="time">00:00</span>
-      </a>
+
+    <!-- The old Job Summary's layout: a title box and a date box beside the
+         Summary box, then a box per group. Box colour = which Beacon (summary.css). -->
+    <div class="summary-page" data-bind="visible: !loading()" style="display:none">
+        <div class="row g-0">
+            <div class="col-md-4 d-flex flex-column">
+                <div class="lh-box title-box">
+                    <h1 class="lh-heading" data-bind="attr: { title: scopeTitle }">
+                        <span class="lh-heading-sub">Incident Summary</span>
+                        <span class="lh-heading-scope" data-bind="text: scopeShort"></span>
+                    </h1>
+                </div>
+                <div class="lh-box date-box">
+                    <div class="lh-details" data-bind="with: rangeStart">
+                        <div data-bind="text: dayText"></div>
+                        <div class="lh-details-time" data-bind="text: timeText"></div>
+                        <div data-bind="text: dateText"></div>
+                    </div>
+                    <div class="lh-details lh-details-to">TO</div>
+                    <div class="lh-details" data-bind="with: rangeEnd">
+                        <div data-bind="text: dayText"></div>
+                        <div class="lh-details-time" data-bind="text: timeText"></div>
+                        <div data-bind="text: dateText"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8 d-flex">
+                <section class="lh-box headline flex-fill">
+                    <h2 class="lh-title">Summary</h2>
+                    <div class="lh-body">
+                        <div class="row row-cols-1 row-cols-sm-3 g-0" data-bind="template: { name: 'summary-tile', foreach: headlineTiles }"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ko if: isEmpty -->
+        <div class="lh-empty" role="status">No incidents in this range.</div>
+        <!-- /ko -->
+
+        <section class="lh-box">
+            <h2 class="lh-title">Incident Status</h2>
+            <div class="lh-body">
+                <div class="row row-cols-2 row-cols-md-4 g-0" data-bind="template: { name: 'summary-tile', foreach: openTiles }"></div>
+            </div>
+        </section>
+
+        <section class="lh-box">
+            <h2 class="lh-title">Incident Finalisation</h2>
+            <div class="lh-body">
+                <div class="row row-cols-2 row-cols-md-4 g-0" data-bind="template: { name: 'summary-tile', foreach: closedTiles }"></div>
+            </div>
+        </section>
+
+        <section class="lh-box">
+            <h2 class="lh-title">Incident Type</h2>
+            <div class="lh-body">
+                <div class="row row-cols-2 row-cols-md-4 g-0" data-bind="template: { name: 'summary-tile', foreach: typeTiles }"></div>
+            </div>
+        </section>
+
+        <!-- ko if: error -->
+        <div class="alert alert-warning py-1 px-2 mx-2 mb-2 d-flex align-items-center gap-2" role="alert">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>Couldn't refresh: <span data-bind="text: error"></span></span>
+            <button type="button" class="btn btn-sm btn-outline-dark ms-auto py-0" data-bind="click: retry">Try again</button>
+        </div>
+        <!-- /ko -->
+
+        <!-- The old footer: settings on the left, time range in the middle, refresh on the right. -->
+        <footer class="summary-footer">
+            <button type="button" class="btn btn-sm btn-link footer-icon" id="settings-button" title="Settings: colours, new incident sound and the guide"
+                data-bind="click: openSettings">
+                <i class="fa-solid fa-gear"></i><span class="visually-hidden">Settings</span>
+            </button>
+            <div class="footer-middle">
+                <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                    <span>Time frame</span>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Time range" data-bind="foreach: rangeChoices">
+                        <input type="radio" class="btn-check" name="range" autocomplete="off"
+                            data-bind="attr: { id: id }, checkedValue: value, checked: $parent.rangeChoice">
+                        <label class="btn btn-outline-secondary" data-bind="attr: { for: id }, text: label"></label>
+                    </div>
+                </div>
+                <div class="footer-credit">
+                    Designed &amp; developed by volunteers of the NSW SES.
+                    <a href="https://github.com/NSWSESMembers/Lighthouse" target="_blank" rel="noopener">Lighthouse</a>
+                    is distributed under an
+                    <a href="https://github.com/NSWSESMembers/Lighthouse/blob/master/LICENSE.txt" rel="license noopener" target="_blank">MIT Licence</a>.
+                </div>
+            </div>
+            <div class="footer-refresh">
+                <span class="small" data-bind="text: updatedText"></span>
+                <span class="spinner-border spinner-border-sm" role="status" data-bind="visible: refreshing" title="Updating"></span>
+                <button type="button" class="btn btn-sm btn-link footer-icon" title="Refresh now (refreshes automatically)"
+                    data-bind="click: refreshNow, disable: refreshing">
+                    <i class="fa-solid fa-rotate me-1"></i><span data-bind="text: countdownText"></span>
+                </button>
+            </div>
+        </footer>
     </div>
-  </div>
-  <div style="float:left;margin-left: 5px;margin-bottom:5px">
-    <a href="#" id="settings">
-      <i style="vertical-align:middle;" class="fas fa-cogs"></i>
-    </a>
-  </div>
-</div>
-</div>
-<script src="vendors/greensock-js/src/minified/TweenMax.min.js"></script>
-<script src="summary.js" type="text/javascript"></script>
+
+        <!-- One cell, as on the old page: label, what it adds up, the count (sized to fit, summary.css), its share of the total. -->
+    <script type="text/html" id="summary-tile">
+        <div class="col">
+            <div class="lh-cell" data-bind="attr: { id: tileId, title: tileTitle }, css: { 'is-new': tileKey === 'new' && $root.newHighlight() }">
+                <div class="lh-label" data-bind="text: tileLabel"></div>
+                <div class="lh-sublabel" data-bind="text: tileSub"></div>
+                <div class="lh-value" data-bind="text: tileValue, attr: { 'data-chars': tileChars }"></div>
+                <div class="lh-subscript" data-bind="text: tilePct"></div>
+            </div>
+        </div>
+    </script>
+
+    <div class="modal fade" id="settings-modal" tabindex="-1" aria-labelledby="settings-title" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="settings-title">Settings</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <fieldset class="mb-3">
+                        <legend class="form-label fs-6 fw-semibold">Colours</legend>
+                        <!-- ko foreach: themes -->
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="theme"
+                                data-bind="attr: { id: id }, checkedValue: value, checked: $parent.theme">
+                            <label class="form-check-label" data-bind="attr: { for: id }, text: label"></label>
+                        </div>
+                        <!-- /ko -->
+                    </fieldset>
+                    <label for="sound-select" class="form-label fw-semibold">Sound when new incidents come in</label>
+                    <div class="input-group">
+                        <select class="form-select" id="sound-select"
+                            data-bind="options: sounds, optionsText: 'label', optionsValue: 'value', value: sound"></select>
+                        <button type="button" class="btn btn-outline-secondary" data-bind="click: testSound, enable: hasSound">
+                            <i class="fa-solid fa-volume-high me-1"></i>Test
+                        </button>
+                    </div>
+                    <div class="form-text">Plays when the New count goes up. Chrome only plays sounds once you've clicked somewhere on the page.</div>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-outline-secondary me-auto guide-link" target="_blank" rel="noopener" href="https://lighthouse.ses.nsw.gov.au/guides/summary/"
+                        data-bind="attr: { href: guideUrl }">
+                        <i class="fa-regular fa-circle-question me-1" aria-hidden="true"></i>Guide
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="summary/main.js" type="text/javascript"></script>
 </body>
+
 </html>

@@ -1,0 +1,183 @@
+@import url('~fontawesome7/css/fontawesome.min.css');
+@import url('~fontawesome7/css/solid.min.css');
+@import url('~fontawesome7/css/regular.min.css');
+@import url('~bootstrap5/dist/css/bootstrap.css');
+
+/*
+  Shared by the Bootstrap 5 pages Beacon opens in a new tab (Incident
+  Statistics, Incident Summary): Beacon colour, header, Guide button and the
+  first-load ring (src/pages/shared/loadRing.js). The body classes come
+  from src/pages/shared/pageSetup.js markPage().
+*/
+
+/* Which Beacon: the same colours as LAD's headers (tasking.css). */
+:root {
+  --lh-env-color: #f7931d; /* production */
+}
+
+body.env-trainbeacon {
+  --lh-env-color: #219f56;
+}
+
+body.env-devbeacon {
+  --lh-env-color: #2d9ee0;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bs-tertiary-bg);
+}
+
+body.watermark {
+  background-image: url('../../../static/pages/images/dev_watermark.png');
+}
+
+/* ---- header ---------------------------------------------------------- */
+
+.lh-page-header {
+  background: var(--lh-env-color);
+  color: #1a1a1a; /* white on these colours is too faint to read */
+}
+
+.lh-page-header .text-body-secondary {
+  color: rgba(0, 0, 0, .72) !important;
+}
+
+.lh-page-header .guide-link {
+  color: inherit;
+  border: 1px solid rgba(0, 0, 0, .25);
+  background: rgba(255, 255, 255, .35);
+}
+
+.lh-page-header .guide-link:hover {
+  background: rgba(255, 255, 255, .6);
+}
+
+.lh-page-header .brand-icon {
+  width: 32px;
+  height: 32px;
+  padding: 2px;
+  border-radius: 50%;
+  background: white; /* the logo is orange, like the production header */
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .08);
+}
+
+.lh-page-footer {
+  font-size: .8rem;
+}
+
+/* ---- first-load ring (load-ring component) ---------------------------- */
+
+.lh-page-loading {
+  max-width: 540px;
+  margin: 15vh auto 0;
+}
+
+.loader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.loader-ring {
+  flex: 0 0 auto;
+  width: 152px;
+  height: 152px;
+}
+
+.loader-track,
+.loader-fill {
+  fill: none;
+  stroke-width: 10;
+}
+
+.loader-track {
+  stroke: var(--bs-secondary-bg);
+}
+
+.loader-fill {
+  stroke: var(--lh-env-color);
+  stroke-linecap: round;
+  transition: stroke-dashoffset .4s ease;
+}
+
+.loader-ring.spinning {
+  animation: loader-spin 1s linear infinite;
+}
+
+@keyframes loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loader-ring.spinning { animation-duration: 3s; }
+  .loader-fill { transition: none; }
+}
+
+.loader-value {
+  font-size: 30px; /* scaled down for long counts: loadRing.js centreValueSize */
+  font-weight: 700;
+  fill: var(--bs-body-color);
+}
+
+.loader-label {
+  font-size: 10px;
+  fill: var(--bs-secondary-color);
+}
+
+.loader-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .6rem;
+  min-width: 0;
+}
+
+.loader-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.loader-pages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.loader-page {
+  width: 28px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--bs-secondary-bg);
+}
+
+.loader-page.done {
+  background: var(--lh-env-color);
+}
+
+.loader-pagebar {
+  width: 200px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--bs-secondary-bg);
+  overflow: hidden;
+}
+
+.loader-pagebar > div {
+  height: 100%;
+  background: var(--lh-env-color);
+  transition: width .4s ease;
+}
+
+.loader-meta {
+  font-size: .85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--bs-secondary-color);
+}
+
+.loader-slow {
+  margin: 0;
+  font-size: .875rem;
+  color: var(--bs-secondary-color);
+}

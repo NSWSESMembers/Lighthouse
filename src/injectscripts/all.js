@@ -86,7 +86,7 @@ whenWeAreReady(function () {
         lighthouseUrl +
         'pages/summary.html' +
         vars +
-        '" target="_blank">Job Summary (' +
+        '" target="_blank">Incident Summary (' +
         unitName +
         ' Today)</a>\
     </li>\
@@ -172,7 +172,7 @@ whenWeAreReady(function () {
         lighthouseUrl +
         'pages/summary.html' +
         vars +
-        '" target="_blank">Job Summary (' +
+        '" target="_blank">Incident Summary (' +
         unitName +
         ' Today)</a>\
     </li>\

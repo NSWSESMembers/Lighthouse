@@ -18,6 +18,18 @@ section of the LAD guide with a full https://lighthouse.ses.nsw.gov.au/guides/la
 The home page shows the first three `##` entries, so keep the title short.
 -->
 
+## A refreshed Incident Summary
+
+*27 October 2026*
+
+- **Job Summary is now Incident Summary, refreshed.** Same layout and colours, with numbers that fit the window, from a phone to a wall screen. The text is now Atkinson Hyperlegible, a typeface designed to keep look-alike characters (1, l and I; 0 and O) apart, so it's easier to read from across the room. It's in the Lighthouse menu in Beacon as **Incident Summary**. See the [Incident Summary guide](https://lighthouse.ses.nsw.gov.au/guides/summary/).
+- **The boxes are coloured by Beacon, as in LAD:** orange for Beacon, green for Train Beacon and blue for Dev Beacon.
+- **New incidents light up.** When a refresh finds more New incidents, the New number is highlighted for a few seconds, as well as playing your alert sound. See [New Incidents](https://lighthouse.ses.nsw.gov.au/guides/summary/#new-incidents).
+- **Pick the time range from the footer:** as opened, the last 24, 48 or 72 hours, or the last 7 days.
+- **Simpler colour settings:** follow your computer's light or dark mode, or keep it Light or Dark. Your old theme carries over. The sound setting now has a **Test** button. See [Settings](https://lighthouse.ses.nsw.gov.au/guides/summary/#settings).
+- If Beacon is slow or can't be reached, the page now says so and offers **Try again**, instead of a red progress bar. A failed refresh keeps the last numbers on screen.
+- The page no longer stops loading when Beacon's report leaves out an incident type.
+
 ## LAD arrival times, overlay status and street zoom
 
 *26 October 2026 · [v2026.10.26](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.26)*

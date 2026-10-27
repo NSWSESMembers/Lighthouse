@@ -1,7 +1,11 @@
 # Lighthouse — notes for Claude
 
 Chrome extension for NSW SES Beacon. Most active work is the LAD (tasking)
-page in `src/pages/tasking/`; shared Beacon API code is in
+page in `src/pages/tasking/`; the Incident Summary page (`summary.html`) is
+`src/pages/summary/`, built the same way (Bootstrap 5, knockout-secure-binding,
+BeaconClient), with code shared between the new-tab pages in
+`src/pages/shared/` (params, page setup, load ring) and
+`styles/pages/include/lighthouse-page.css`; shared Beacon API code is in
 `src/shared/BeaconClient/`; AWS Lambda backends are in `lambda/`.
 
 ## Branches and PRs
@@ -46,6 +50,19 @@ await browser.close();
 `launchLad` options: `headless`, `viewport`, `now`, `config` (pre-seeded
 `lh-taskingConfig`), `remoteTab`, `verbose`, `scale`.
 
+## Running Incident Summary without Beacon: `scripts/summary-docs`
+
+Same idea for `summary.html` (fake data in `scripts/summary-docs/scenario.mjs`),
+built on the shared page harness in `scripts/page-docs/`. `summary:check` is an
+end-to-end check in Chrome; run it after changing the page. Details in
+`scripts/summary-docs/README.md`.
+
+```sh
+npm run dev && npm run summary:check                    # end-to-end checks
+npm run summary:demo                                    # headed Chrome window
+npm run summary:shots -- --out docs/summary/images      # guide screenshots
+```
+
 ### Fixture data rules
 
 `scenario.mjs` copies the _structure_ of real Beacon responses, but every
@@ -71,8 +88,8 @@ copy values from `build/lad-samples/` (real payloads from
 
 ## User-facing docs
 
-The LAD user guide (`docs/lad/`) and What's New (`docs/whats-new/index.md`)
-are synced to the website: `master` publishes the stable copy, `master-dev`
+The LAD user guide (`docs/lad/`), the Incident Summary guide
+(`docs/summary/`) and What's New (`docs/whats-new/index.md`) are synced to the website: `master` publishes the stable copy, `master-dev`
 the Development Preview. For user-visible changes,
 update the matching guide page and add a What's New entry in the same PR. Use
-`npm run lad:shots` for guide screenshots.
+`npm run lad:shots` / `npm run summary:shots` for guide screenshots.
