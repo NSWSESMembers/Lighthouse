@@ -45,13 +45,13 @@ function fakeJwt(sub) {
  * @param {number} [opts.scale=1]  device pixel ratio (e.g. 3 for crisp small inline icons)
  */
 export async function launchLad(opts = {}) {
-  const { headless = true, viewport = { width: 1600, height: 1000 }, config, verbose = false, remoteTab = 'ok', scale = 1 } = opts;
+  const { headless = true, viewport = { width: 1600, height: 1000 }, config, verbose = false, remoteTab = 'ok', scale = 1, jobCount } = opts;
   if (!fs.existsSync(path.join(DIST, 'pages/tasking.html'))) {
     throw new Error('dist/pages/tasking.html not found -- run `npm run dev` first');
   }
   const manifest = JSON.parse(fs.readFileSync(path.join(DIST, 'manifest.json'), 'utf8'));
   const now = opts.now ? new Date(opts.now) : new Date();
-  const scenario = buildScenario(now);
+  const scenario = buildScenario(now, { jobCount });
   const log = verbose ? (m) => console.log(m) : () => {};
 
   const browser = await chromium.launch({ channel: 'chrome', headless });
