@@ -150,6 +150,7 @@ export function removeJobMarker(vm, jobOrId) {
         if (layer?.hasLayer(m)) layer.removeLayer(m);
     }
     markers.delete(id);
+    vm.mapVM.destroyJobPopupVM?.(id);
 
     const job = vm.jobsById?.get?.(id);
     if (job) job.marker = null;

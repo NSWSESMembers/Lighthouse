@@ -70,6 +70,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 ### LAD
 
+- **Performance improvements** for LAD left open for a long time.
 - **The pulsing ring on New incidents and the marching ring on Active incidents now move with their marker.** They used to stay behind for a moment when markers gathered into a cluster or spread out of one, and could go missing until the next zoom. See [Incident Clustering](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#incident-clustering).
 - With clustering turned off, an incident that drops off the list now disappears from the map too.
 
