@@ -756,6 +756,12 @@ body.dark-mode .leaflet-control-scale {
   border-color: #444 !important;
 }
 
+/* RainViewer radar playback control (mapLayers/rainviewer.js) */
+body.dark-mode .leaflet-control.rv-control {
+  background-color: #2d2d2d !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45) !important;
+}
+
 /* Map alerts control (custom .alerts UI) */
 body.dark-mode .leaflet-control.alerts {
   background: transparent !important;

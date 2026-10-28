@@ -4870,140 +4870,179 @@ body.dark-mode .ops-log-status-details {
   background: #f0f4f9;
 }
 
-/* ── Radar playback bar (bottom-center) ── */
-.rv-wrapper {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  pointer-events: auto;
-}
-
-.rv-legend-container {
-  pointer-events: auto;
-}
-
+/* ── RainViewer radar playback (Leaflet control, bottom-left above Legend) ──
+   Collapsed to a chip by default; the chip opens the scrubber panel. Its
+   width is set from the map's width in rainviewer.js (fitToMap). */
 .rv-control {
   background: #fff;
   color: #333;
-  padding: 8px 12px;
-  border-radius: 0 0 4px 4px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   font-size: 12px;
-  font-family: system-ui, -apple-system, sans-serif;
-  box-shadow: 0 2px 6px rgba(0,0,0,.25);
   user-select: none;
-  pointer-events: auto;
+  overflow: visible;
 }
 .rv-control button {
-  border: 1px solid #ddd;
-  background: #f9f9f9;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
   font-size: 12px;
-  padding: 4px 6px;
-  border-radius: 3px;
-  transition: all 0.15s ease;
-  min-width: 32px;
+  line-height: 1;
+  padding: 5px 7px;
+  border-radius: 4px;
 }
-.rv-control button:hover {
-  background: #fff;
-  border-color: #999;
+.rv-control button:hover:not(:disabled) {
+  background: #f0f2f5;
+  border-color: #ccd2d9;
 }
-.rv-control button:active {
-  background: #f0f0f0;
+.rv-control button:disabled {
+  cursor: default;
 }
-.rv-control input[type="range"] {
-  cursor: pointer;
-  height: 4px;
-  border-radius: 2px;
-  outline: none;
-}
-.rv-control input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #4a90e2;
-  cursor: pointer;
-  border: 1px solid #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,.3);
-}
-.rv-control input[type="range"]::-moz-range-thumb {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #4a90e2;
-  cursor: pointer;
-  border: 1px solid #fff;
-  box-shadow: 0 1px 2px rgba(0,0,0,.3);
-}
-.rv-control select {
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 12px;
-  padding: 4px 6px;
-  cursor: pointer;
-  background: #f9f9f9;
-  font-family: system-ui, -apple-system, sans-serif;
-  min-width: 58px;
-}
-.rv-control select:hover {
-  border-color: #999;
-}
-.rv-legend-panel {
+
+.rv-chip {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+}
+.rv-chip .rv-play {
+  width: 26px;
+}
+.rv-chip .rv-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.rv-chip .rv-title {
+  font-weight: 600;
+}
+/* Fixed widths so the chip doesn't change size as the frames tick over. */
+.rv-chip .rv-timestamp {
+  display: inline-block;
+  min-width: 5ch;
+  font-variant-numeric: tabular-nums;
+}
+.rv-chip .rv-chevron {
+  font-size: 10px;
+  opacity: 0.6;
+}
+.rv-control .rv-age {
+  min-width: 11ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #8a5a00;
+  background: #fff3d6;
+}
+.rv-control .rv-age.is-latest {
+  color: #1d6b35;
+  background: #e3f4e8;
+}
+
+.leaflet-bottom.rv-corner-raised {
+  z-index: 1001;
+}
+
+.rv-panel {
+  border-top: 1px solid #e5e7eb;
+  padding: 6px 8px 8px;
+}
+.rv-panel[hidden] {
+  display: none;
+}
+.rv-row {
+  display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
+}
+.rv-slider {
+  flex: 1 1 auto;
+  min-width: 50px;
+  cursor: pointer;
+}
+.rv-control .rv-speed {
+  flex: 0 0 auto;
+  width: auto;
+  border: 1px solid #ccd2d9;
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 2px 4px;
   background: #fff;
-  border-radius: 4px 4px 0 0;
-  border-bottom: 1px solid #eee;
-  box-shadow: 0 -1px 3px rgba(0,0,0,.15);
+  color: inherit;
+  cursor: pointer;
+}
+.rv-control.rv-narrow .rv-speed {
+  display: none;
+}
+
+.rv-legend {
+  margin-top: 6px;
 }
 .rv-legend-title {
   font-size: 10px;
   font-weight: 600;
   color: #666;
+  margin-bottom: 2px;
 }
-.rv-divider {
-  border-left: 1px solid #ddd;
-  height: 20px;
+.rv-legend-bar {
+  display: flex;
+  height: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+.rv-swatch {
+  flex: 1;
+  position: relative;
+  cursor: help;
+}
+.rv-swatch-tip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 6px;
+  padding: 4px 6px;
+  background: #333;
+  color: #fff;
+  font-size: 11px;
+  white-space: nowrap;
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 1001;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+.rv-swatch:hover .rv-swatch-tip {
+  opacity: 1;
 }
 
-.dark-mode .rv-legend-panel {
-  background: #2b2b2b;
-  border-bottom-color: #444;
+.dark-mode .rv-control {
+  color: #ddd;
+}
+.dark-mode .rv-control button:hover:not(:disabled) {
+  background: #3a3a3a;
+  border-color: #555;
+}
+.dark-mode .rv-panel {
+  border-top-color: #444;
+}
+.dark-mode .rv-control .rv-speed {
+  background: #3a3a3a;
+  border-color: #555;
 }
 .dark-mode .rv-legend-title {
   color: #bbb;
 }
-.dark-mode .rv-control {
-  background: #2b2b2b;
-  color: #ddd;
+.dark-mode .rv-control .rv-age {
+  color: #ffd27a;
+  background: #4a3a14;
 }
-.dark-mode .rv-control button,
-.dark-mode .rv-control select {
-  background: #3a3a3a;
-  border-color: #555;
-  color: #ddd;
-}
-.dark-mode .rv-control button:hover,
-.dark-mode .rv-control select:hover {
-  background: #444;
-  border-color: #777;
-}
-.dark-mode .rv-control button:active {
-  background: #333;
-}
-.dark-mode .rv-control input[type="range"]::-webkit-slider-thumb {
-  border-color: #2b2b2b;
-}
-.dark-mode .rv-control input[type="range"]::-moz-range-thumb {
-  border-color: #2b2b2b;
-}
-.dark-mode .rv-divider {
-  border-left-color: #555;
+.dark-mode .rv-control .rv-age.is-latest {
+  color: #8fdca6;
+  background: #1f3d29;
 }
 
 /* ── Basemap accordion with thumbnail grid ── */

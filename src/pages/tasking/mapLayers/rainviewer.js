@@ -44,8 +44,9 @@ const COLOR_SCALE = [
 
 /**
  * Register an animated rainfall radar overlay powered by the RainViewer API.
- * Loops through the past ~2 hours of composite radar frames with on-map
- * playback controls (play / pause / step / scrub).
+ * Loops through the past ~2 hours of composite radar frames with a playback
+ * control (play / pause / step / scrub) that sits above the Legend.
+ * Opacity is set in the Map layers tab like any other overlay.
  */
 export function registerRainRadarLayer(vm, map) {
   /* ── state ─────────────────────────────────────────────────── */
@@ -84,7 +85,7 @@ export function registerRainRadarLayer(vm, map) {
 
   function fmtTime(unix) {
     const d = new Date(unix * 1000);
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
   }
 
   /* ── frame display ─────────────────────────────────────────── */
@@ -96,28 +97,10 @@ export function registerRainRadarLayer(vm, map) {
       tileLayers[frameIdx].setOpacity(0);
     }
     frameIdx = idx;
-    
-    // Get current opacity from control, default to 0.6
-    let opacity = 0.6;
-    if (control && control._container) {
-      const opacitySlider = control._container.querySelector(".rv-opacity");
-      if (opacitySlider) {
-        opacity = parseInt(opacitySlider.value, 10) / 100;
-      }
-    }
-    
-    if (tileLayers[frameIdx]) {
-      tileLayers[frameIdx].setOpacity(opacity);
-    }
-
-    // update control UI
-    if (control) {
-      const ts = control._container.querySelector(".rv-timestamp");
-      const slider = control._container.querySelector(".rv-slider");
-      const frame = frames[frameIdx];
-      if (ts) ts.textContent = frame?.time ? fmtTime(frame.time) : "--:--";
-      if (slider) slider.value = frameIdx;
-    }
+    // Full strength here; the layer's opacity in the Map layers tab fades
+    // the whole pane.
+    tileLayers[frameIdx]?.setOpacity(1);
+    control?.update();
   }
 
   function stepForward() {
@@ -130,26 +113,25 @@ export function registerRainRadarLayer(vm, map) {
     showFrame((frameIdx - 1 + tileLayers.length) % tileLayers.length);
   }
 
+  function showLatest() {
+    pause();
+    showFrame(tileLayers.length - 1);
+  }
+
   function play() {
     if (playing) return;
     playing = true;
-    updatePlayBtn();
+    control?.update();
     playTimer = setInterval(stepForward, speed);
   }
 
   function pause() {
     playing = false;
-    updatePlayBtn();
+    control?.update();
     if (playTimer) { clearInterval(playTimer); playTimer = null; }
   }
 
   function togglePlay() { playing ? pause() : play(); }
-
-  function updatePlayBtn() {
-    if (!control) return;
-    const btn = control._container.querySelector(".rv-play");
-    if (btn) btn.textContent = playing ? "⏸" : "▶";
-  }
 
   /* ── data loading ──────────────────────────────────────────── */
   async function fetchFrameList() {
@@ -160,6 +142,10 @@ export function registerRainRadarLayer(vm, map) {
     return res.json();
   }
 
+  // New frame list (first load or the 5-minute refresh). Layers for frames
+  // still in the list are kept, so only the new frame loads. The view stays
+  // on the frame it was showing; if that was the latest, it moves on to the
+  // new latest. Play/pause is left as it was.
   function applyFrames(layerGroup, json) {
     const past = json?.radar?.past;
     if (!past || past.length === 0) return;
@@ -172,28 +158,42 @@ export function registerRainRadarLayer(vm, map) {
 
     if (pathsMatch) return; // nothing changed
 
-    // tear down old tile layers
-    tileLayers.forEach((tl) => {
-      if (layerGroup.hasLayer(tl)) layerGroup.removeLayer(tl);
-    });
+    const followLatest = frameIdx < 0 || frameIdx === frames.length - 1;
+    const shownPath = frames[frameIdx]?.path;
+    if (frameIdx >= 0) tileLayers[frameIdx]?.setOpacity(0);
+    frameIdx = -1;
+
+    // Layers worth keeping, by frame path (none if the tile host changed).
+    const kept = new Map();
+    if (host === newHost) frames.forEach((f, i) => kept.set(f.path, tileLayers[i]));
 
     host = newHost;
     frames = past;
+    const lastIdx = frames.length - 1;
     tileLayers = frames.map((f, i) => {
-      const tl = buildTileLayer(f.path, i === frames.length - 1);
-      layerGroup.addLayer(tl);
+      let tl = kept.get(f.path);
+      kept.delete(f.path);
+      if (!tl) {
+        tl = buildTileLayer(f.path, i === lastIdx);
+        layerGroup.addLayer(tl);
+      } else if (i !== lastIdx && !tl.options.skipLoadStatus) {
+        // The old latest frame: load status follows the latest only, and it
+        // is attached when a layer is added, so add it again as an older one.
+        layerGroup.removeLayer(tl);
+        tl.options.skipLoadStatus = true;
+        layerGroup.addLayer(tl);
+      }
       return tl;
     });
+    // Frames that have aged out of the list.
+    kept.forEach((tl) => layerGroup.removeLayer(tl));
 
-    // update slider range
-    if (control) {
-      const slider = control._container.querySelector(".rv-slider");
-      if (slider) { slider.max = frames.length - 1; slider.value = frames.length - 1; }
+    let idx = lastIdx;
+    if (!followLatest) {
+      // Stay on the same frame, or the oldest one left if it has aged out.
+      idx = Math.max(0, frames.findIndex((f) => f.path === shownPath));
     }
-
-    // show latest frame
-    frameIdx = -1;
-    showFrame(frames.length - 1);
+    showFrame(idx);
   }
 
   // Periodic refresh -- the frames already on the map stay if this fails.
@@ -205,143 +205,170 @@ export function registerRainRadarLayer(vm, map) {
     }
   }
 
-  /* ── Radar playback bar (bottom-center of map) with legend ──────── */
-  class RadarControl {
-    constructor() { this._container = null; this._map = null; this._legendContainer = null; }
+  /* ── Radar playback control (bottom-left, above the Legend) ─────── */
+  // A chip (play/pause, frame time, how old it is) that opens a panel with
+  // the scrubber, step buttons, speed and colour scale. Open/closed is
+  // remembered per browser.
+  const EXPANDED_KEY = "lh-rainRadar.expanded";
+  const NARROW_PX = 300; // map width below which the speed menu is hidden
 
-    addTo(m) {
-      this._map = m;
-      const wrapper = document.createElement("div");
-      wrapper.className = "rv-wrapper";
+  function readExpanded() {
+    try { return localStorage.getItem(EXPANDED_KEY) === "1"; } catch { return false; }
+  }
+  function writeExpanded(on) {
+    try { localStorage.setItem(EXPANDED_KEY, on ? "1" : "0"); } catch { /* ignore */ }
+  }
 
-      // Legend above the controls
-      const legendDiv = document.createElement("div");
-      legendDiv.className = "rv-legend-container";
-      legendDiv.innerHTML = `
-        <div class="rv-legend-panel">
-          <span class="rv-legend-title">Rainfall Intensity (dBZ)</span>
-          <div class="rv-legend-bar" style="display: flex; height: 16px; border: 1px solid rgba(0,0,0,0.2); border-radius: 2px; overflow: visible; width: 100%; max-width: 320px; position: relative;"></div>
-        </div>`;
-      
-      const legendBar = legendDiv.querySelector(".rv-legend-bar");
-      COLOR_SCALE.forEach((item) => {
-        const swatch = document.createElement("div");
-        swatch.style.flex = "1";
-        swatch.style.backgroundColor = item.color;
-        swatch.style.cursor = "help";
-        swatch.style.pointerEvents = "auto";
-        swatch.style.position = "relative";
-        
-        // Fast custom tooltip
-        const tooltip = document.createElement("div");
-        tooltip.style.position = "absolute";
-        tooltip.style.bottom = "100%";
-        tooltip.style.left = "50%";
-        tooltip.style.transform = "translateX(-50%)";
-        tooltip.style.marginBottom = "6px";
-        tooltip.style.padding = "6px 8px";
-        tooltip.style.backgroundColor = "#333";
-        tooltip.style.color = "#fff";
-        tooltip.style.fontSize = "11px";
-        tooltip.style.fontWeight = "500";
-        tooltip.style.whiteSpace = "nowrap";
-        tooltip.style.borderRadius = "3px";
-        tooltip.style.pointerEvents = "none";
-        tooltip.style.zIndex = "1001";
-        tooltip.style.opacity = "0";
-        tooltip.style.transition = "opacity 0.1s ease";
-        tooltip.textContent = `${item.dBZ} dBZ: ${item.label}`;
-        swatch.appendChild(tooltip);
-        
-        swatch.addEventListener("mouseenter", () => {
-          tooltip.style.opacity = "1";
-        });
-        swatch.addEventListener("mouseleave", () => {
-          tooltip.style.opacity = "0";
-        });
-        
-        legendBar.appendChild(swatch);
-      });
-      
-      this._legendContainer = legendDiv;
-      wrapper.appendChild(legendDiv);
+  const RadarControl = L.Control.extend({
+    options: { position: "bottomleft" },
 
-      // Control bar below legend
-      const c = document.createElement("div");
-      c.className = "rv-control";
+    onAdd(m) {
+      const c = L.DomUtil.create("div", "rv-control leaflet-control");
       L.DomEvent.disableClickPropagation(c);
       L.DomEvent.disableScrollPropagation(c);
 
+      const swatches = COLOR_SCALE.map((item) => `
+        <div class="rv-swatch" style="background-color:${item.color}">
+          <div class="rv-swatch-tip">${item.dBZ} dBZ: ${item.label}</div>
+        </div>`).join("");
+
       c.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="display: flex; gap: 2px; align-items: center;">
-            <button class="rv-step-back" title="Previous frame">⏮</button>
-            <button class="rv-play" title="Play / Pause">▶</button>
-            <button class="rv-step-fwd" title="Next frame">⏭</button>
+        <div class="rv-chip">
+          <button type="button" class="rv-play" title="Play / pause radar animation"><i class="fa fa-solid fa-play"></i></button>
+          <button type="button" class="rv-toggle" title="Show radar playback controls" aria-expanded="false">
+            <span class="rv-title">Radar</span>
+            <span class="rv-timestamp">--:--</span>
+            <i class="fa fa-solid fa-chevron-up rv-chevron"></i>
+          </button>
+          <button type="button" class="rv-age" title="Jump to the latest radar frame"></button>
+        </div>
+        <div class="rv-panel" hidden>
+          <div class="rv-row">
+            <button type="button" class="rv-step-back" title="Previous frame"><i class="fa fa-solid fa-step-backward"></i></button>
+            <button type="button" class="rv-step-fwd" title="Next frame"><i class="fa fa-solid fa-step-forward"></i></button>
+            <input class="rv-slider" type="range" min="0" max="0" value="0" title="Scrub through frames" aria-label="Radar frame" />
+            <select class="rv-speed" title="Playback speed" aria-label="Playback speed">
+              <option value="1000">0.5×</option>
+              <option value="500" selected>1×</option>
+              <option value="250">2×</option>
+              <option value="125">4×</option>
+            </select>
           </div>
-          
-          <input class="rv-slider" type="range" min="0" max="0" value="0" title="Scrub through frames" style="width: 140px;" />
-          <span class="rv-timestamp" style="font-size: 12px; min-width: 45px; font-weight: 500;">--:--</span>
-          
-          <select class="rv-speed" title="Playback speed" style="min-width: 58px;">
-            <option value="1000">0.5×</option>
-            <option value="500" selected>1×</option>
-            <option value="250">2×</option>
-            <option value="125">4×</option>
-          </select>
-          
-          <div class="rv-divider"></div>
-          
-          <div style="display: flex; align-items: center; gap: 4px;">
-            <label style="font-size: 11px; font-weight: 500; margin: 0; white-space: nowrap;">Opacity:</label>
-            <input class="rv-opacity" type="range" min="0" max="100" value="60" title="Radar layer opacity" style="width: 70px;" />
-            <span class="rv-opacity-val" style="font-size: 11px; min-width: 25px;">60%</span>
+          <div class="rv-legend">
+            <div class="rv-legend-title">Rainfall intensity (dBZ)</div>
+            <div class="rv-legend-bar">${swatches}</div>
           </div>
         </div>`;
 
-      c.querySelector(".rv-play").addEventListener("click", togglePlay);
+      this._els = {
+        play: c.querySelector(".rv-play"),
+        toggle: c.querySelector(".rv-toggle"),
+        chevron: c.querySelector(".rv-chevron"),
+        ts: c.querySelector(".rv-timestamp"),
+        age: c.querySelector(".rv-age"),
+        panel: c.querySelector(".rv-panel"),
+        slider: c.querySelector(".rv-slider"),
+      };
+      const { play: playBtn, toggle, age, slider } = this._els;
+
+      playBtn.addEventListener("click", togglePlay);
+      toggle.addEventListener("click", () => this.setExpanded(this._els.panel.hidden));
+      age.addEventListener("click", showLatest);
       c.querySelector(".rv-step-back").addEventListener("click", () => { pause(); stepBack(); });
       c.querySelector(".rv-step-fwd").addEventListener("click", () => { pause(); stepForward(); });
-      c.querySelector(".rv-slider").addEventListener("input", (e) => {
+      slider.addEventListener("input", (e) => {
+        // Read first: pause() redraws the control, resetting the slider.
+        const idx = parseInt(e.target.value, 10);
         pause();
-        showFrame(parseInt(e.target.value, 10));
+        showFrame(idx);
       });
       c.querySelector(".rv-speed").addEventListener("change", (e) => {
         speed = parseInt(e.target.value, 10);
         if (playing) { pause(); play(); }
       });
 
-      // Opacity control
-      c.querySelector(".rv-opacity").addEventListener("input", (e) => {
-        const opacityVal = parseInt(e.target.value, 10) / 100;
-        c.querySelector(".rv-opacity-val").textContent = e.target.value + "%";
-        if (frameIdx >= 0 && frameIdx < tileLayers.length && tileLayers[frameIdx]) {
-          tileLayers[frameIdx].setOpacity(opacityVal);
-        }
-      });
-
-      wrapper.appendChild(c);
-      m.getContainer().appendChild(wrapper);
       this._container = c;
-      return this;
-    }
+      this._fit = () => this.fitToMap();
+      m.on("resize", this._fit);
+      // Keep the "min ago" in the badge tooltip current while paused.
+      this._ageTimer = setInterval(() => this.update(), 30000);
+      this.update();
+      return c;
+    },
 
-    remove() {
-      const wrapper = this._container?.parentNode;
-      if (wrapper && wrapper.parentNode) {
-        wrapper.parentNode.removeChild(wrapper);
+    onRemove(m) {
+      m.off("resize", this._fit);
+      clearInterval(this._ageTimer);
+      this._raiseCorner(false);
+    },
+
+    // Each map corner is its own stacking context, so on a narrow map the
+    // minimap (bottom-right) would paint over the open panel. Lift this
+    // corner above it while the panel is open.
+    _raiseCorner(on) {
+      const corner = this._container?.parentNode;
+      if (corner) corner.classList.toggle("rv-corner-raised", on);
+    },
+
+    setExpanded(on, persist = true) {
+      const { panel, toggle, chevron } = this._els;
+      panel.hidden = !on;
+      toggle.setAttribute("aria-expanded", String(on));
+      toggle.title = on ? "Hide radar playback controls" : "Show radar playback controls";
+      chevron.classList.toggle("fa-chevron-up", !on);
+      chevron.classList.toggle("fa-chevron-down", on);
+      if (persist) writeExpanded(on);
+      this._raiseCorner(on);
+      this.fitToMap();
+    },
+
+    // Fit the open panel to the map: up to 320px, never wider than the map
+    // less its margins; drop the speed menu on narrow maps.
+    fitToMap() {
+      const c = this._container;
+      if (!c || !this._map) return;
+      const mapW = this._map.getSize().x;
+      c.style.maxWidth = `${Math.max(120, mapW - 20)}px`;
+      c.style.width = this._els.panel.hidden ? "" : `${Math.min(320, Math.max(120, mapW - 20))}px`;
+      c.classList.toggle("rv-narrow", mapW < NARROW_PX);
+    },
+
+    // Sync the chip and panel with the current frame / playing state.
+    update() {
+      if (!this._els) return;
+      const { play: playBtn, ts, age, slider } = this._els;
+      const icon = playBtn.querySelector("i");
+      icon.classList.toggle("fa-play", !playing);
+      icon.classList.toggle("fa-pause", playing);
+
+      const frame = frames[frameIdx];
+      const latest = frames.length > 0 && frameIdx === frames.length - 1;
+      ts.textContent = frame?.time ? fmtTime(frame.time) : "--:--";
+      const ago = frame?.time ? Math.max(0, Math.round((Date.now() / 1000 - frame.time) / 60)) : null;
+      const agoText = ago === null ? "" : ` (${ago} min ago)`;
+      if (frame?.time && !latest) {
+        const behind = Math.round((frames[frames.length - 1].time - frame.time) / 60);
+        age.textContent = `−${behind} min`;
+        age.title = `${behind} min before the latest frame${agoText}. Click to jump to it.`;
+      } else {
+        age.textContent = "Latest";
+        age.title = `Showing the latest radar frame${agoText}`;
       }
-      this._container = null;
-      this._legendContainer = null;
-      this._map = null;
-    }
-  }
+      age.classList.toggle("is-latest", latest || !frame);
+      age.disabled = latest || !frame;
+
+      slider.max = Math.max(0, frames.length - 1);
+      if (frameIdx >= 0) slider.value = frameIdx;
+    },
+  });
 
   /* ── layer registration ────────────────────────────────────── */
   vm.mapVM.registerPollingLayer("rainRadar", {
     label: "RainViewer Animated Rainfall Radar",
     menuGroup: "RainViewer",
     stack: "tiles",
+    // The playback bar used to default the frames to 60%.
+    defaultOpacity: 60,
     refreshMs: 0,
     visibleByDefault: localStorage.getItem(`ov.rainRadar`) || false,
     // The frame list is fetched here (not in drawFn) so the Layers drawer
@@ -362,6 +389,8 @@ export function registerRainRadarLayer(vm, map) {
       // Add playback control to the map
       control = new RadarControl();
       control.addTo(map);
+      // Opened only once added -- it sizes itself to the map and lifts its corner.
+      control.setExpanded(readExpanded(), false);
 
       // Clean up control + timers when the layerGroup is removed from the map
       layerGroup.off("remove", cleanup).on("remove", cleanup);
