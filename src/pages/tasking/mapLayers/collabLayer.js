@@ -194,6 +194,7 @@ function registerLayerPolling(vm, apiUrl, layer, actorId, getToken, getMemberId)
     vm.mapVM.registerPollingLayer(key, {
         label: layer.name,
         menuGroup: "Collaborative Layers",
+        stack: "collab",
         refreshMs: REFRESH_MS,
         visibleByDefault: stored === null ? true : stored === "1",
         fetchFn: async () => fetchLayerMarkers(apiUrl, layer.id, await getToken()),

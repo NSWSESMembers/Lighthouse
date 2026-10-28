@@ -1717,6 +1717,11 @@
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="cfgTab-layers" data-bs-toggle="pill" data-bs-target="#cfgPane-layers" type="button" role="tab" aria-controls="cfgPane-layers" aria-selected="false">
+                                            <span class="cfg-rail-ico"><i class="fa fa-sliders-h"></i></span><span>Map layers</span>
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="cfgTab-collab" data-bs-toggle="pill" data-bs-target="#cfgPane-collab" type="button" role="tab" aria-controls="cfgPane-collab" aria-selected="false">
                                             <span class="cfg-rail-ico"><i class="fa fa-layer-group"></i></span><span>Collaborative layers</span>
                                         </button>
@@ -2714,43 +2719,86 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="accordion-item">
-                                            <h2 class="accordion-header">
-                                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#cfgSub-mapAll" aria-expanded="false" aria-controls="cfgSub-mapAll">
-                                                    <span class="cfg-sub-ico"><i class="fa fa-map-marker-alt"></i></span><span>All markers</span>
-                                                </button>
-                                            </h2>
-                                            <div id="cfgSub-mapAll" class="accordion-collapse collapse" data-bs-parent="#cfgMapAcc">
-                                                <div class="accordion-body">
-                                                    <div class="row g-3">
-                                                        <!-- Layer order -->
-                                                        <div class="col-md-6">
-                                                            <fieldset>
-                                                                <legend class="form-label fw-semibold mb-2">
-                                                                    <i class="fa fa-sort me-1"></i>Marker Layer Order
-                                                                    <small class="text-muted fw-normal">(top → bottom)</small>
-                                                                </legend>
-                                                                <div class="form-text mb-3">
-                                                                    Controls the draw order of marker layers on the map. Drag and drop to reorder.
-                                                                </div>
-                                                                <div class="border rounded p-2">
-                                                                    <ul class="list-group"
-                                                                        data-bind="foreach: { data: config.paneOrder, as: 'p' }">
-                                                                        <li class="list-group-item d-flex align-items-center gap-2 py-1"
-                                                                            data-bind="sortableRow: { array: $root.config.paneOrder, handle: '.pane-drag-handle' }">
-                                                                            <i class="fa fa-grip-vertical text-muted pane-drag-handle"
-                                                                                style="cursor:grab"></i>
-                                                                            <span data-bind="text: p.name"></span>
-                                                                        </li>
-                                                                    </ul>
-                                                                </div>
-                                                            </fieldset>
-                                                        </div>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="cfgPane-layers" role="tabpanel" aria-labelledby="cfgTab-layers" tabindex="0">
+                                                <h6 class="fw-semibold mb-2">
+                                                    <i class="fa fa-sliders-h me-1"></i>Map Layer Order &amp; Transparency
+                                                </h6>
+                                                <!-- Layer order & transparency (Config.js layerStackRows) -->
+                                                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                                    <div class="form-text mt-0">
+                                                        Every map layer, top to bottom. Layers higher in the list are drawn
+                                                        over lower ones. Drag <i class="fa fa-grip-vertical"></i> or use the arrows to reorder,
+                                                        and use the slider to make a layer see-through. The switch turns a
+                                                        layer on or off, the same as the <i class="fas fa-layer-group"></i> Layers
+                                                        button; layers showing now are marked <span class="badge text-bg-success">On map</span>.
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap"
+                                                        data-bind="click: config.resetLayerStack">
+                                                        <i class="fa fa-undo me-1"></i>Reset
+                                                    </button>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-3 mb-2">
+                                                    <div class="input-group input-group-sm layer-stack-search">
+                                                        <span class="input-group-text"><i class="fa fa-search"></i></span>
+                                                        <input type="search" class="form-control" placeholder="Search layers, e.g. radar or BOM"
+                                                            aria-label="Search layers" data-bind="textInput: config.layerStackQuery">
+                                                    </div>
+                                                    <div class="form-check form-switch mb-0 text-nowrap">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="layerStackOnlyOn"
+                                                            data-bind="checked: config.layerStackOnlyOn">
+                                                        <label class="form-check-label small" for="layerStackOnlyOn">On map only</label>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
-                                        </div>
+                                                <div class="small text-muted mb-1">
+                                                    <span data-bind="text: config.layerStackVisibleCount"></span> of
+                                                    <span data-bind="text: config.layerStackCount"></span> layers on the map
+                                                    <!-- ko if: config.layerStackFiltered -->
+                                                    &middot; showing <span data-bind="text: config.layerStackShownCount"></span>
+                                                    <button type="button" class="btn btn-link p-0 align-baseline layer-stack-showall"
+                                                        data-bind="click: config.clearLayerStackSearch">Show all</button>
+                                                    <!-- /ko -->
+                                                </div>
+                                                <div class="text-muted small border rounded p-3 text-center" data-bind="visible: config.layerStackNoMatches">
+                                                    No layers match.
+                                                </div>
+                                                <ul class="list-group layer-stack-list"
+                                                    data-bind="foreach: { data: config.layerStackRows, as: 'r' }, fitInPane: true">
+                                                    <li class="list-group-item d-flex align-items-center gap-2 py-1 layer-stack-row"
+                                                        data-bind="sortableRow: { array: $root.config.layerStackRows, handle: '.pane-drag-handle' }, css: { 'layer-stack-off': !r.visible(), 'layer-stack-hidden': !r.matches() }">
+                                                        <i class="fa fa-grip-vertical text-muted pane-drag-handle" style="cursor:grab"
+                                                            title="Drag to reorder"></i>
+                                                        <div class="form-check form-switch mb-0 layer-stack-switch">
+                                                            <!-- ko if: r.isPane -->
+                                                            <i class="fa fa-lock text-muted" title="Always on the map"></i>
+                                                            <!-- /ko -->
+                                                            <!-- ko ifnot: r.isPane -->
+                                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                                data-bind="checked: r.visible, click: $root.config.toggleLayerVisible, attr: { title: r.visibleLabel, 'aria-label': r.visibleLabel }">
+                                                            <!-- /ko -->
+                                                        </div>
+                                                        <div class="flex-grow-1 text-truncate">
+                                                            <span class="layer-stack-name" data-bind="text: r.name"></span>
+                                                            <span class="badge ms-1" data-bind="text: r.stateLabel, css: { 'text-bg-success': r.visible(), 'text-bg-light border text-muted': !r.visible() }"></span>
+                                                            <div class="small text-muted text-truncate" data-bind="text: r.group"></div>
+                                                        </div>
+                                                        <input type="range" class="form-range layer-stack-opacity" min="10" max="100" step="5"
+                                                            aria-label="Layer opacity"
+                                                            data-bind="value: r.opacityPct, valueUpdate: 'input', attr: { title: r.opacityLabel }">
+                                                        <span class="small text-muted text-end layer-stack-pct" data-bind="text: r.opacityLabel"></span>
+                                                        <div class="btn-group btn-group-sm flex-shrink-0" role="group" aria-label="Move layer">
+                                                            <button type="button" class="btn btn-outline-secondary py-0 px-1" title="Move up" aria-label="Move up"
+                                                                data-bind="click: $root.config.moveLayerUp, disable: r.isFirst">
+                                                                <i class="fa fa-chevron-up"></i>
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-secondary py-0 px-1" title="Move down" aria-label="Move down"
+                                                                data-bind="click: $root.config.moveLayerDown, disable: r.isLast">
+                                                                <i class="fa fa-chevron-down"></i>
+                                                            </button>
+                                                        </div>
+                                                    </li>
+                                                </ul>
                                     </div>
                                     <div class="tab-pane fade" id="cfgPane-collab" role="tabpanel" aria-labelledby="cfgTab-collab" tabindex="0">
                                                 <div class="d-flex align-items-center justify-content-between mb-2">

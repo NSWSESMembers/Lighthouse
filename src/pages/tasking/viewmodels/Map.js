@@ -10,6 +10,7 @@ import { AssetPinLayout } from '../markers/assetPinLayout.js';
 import { AssetTrails } from '../markers/assetTrails.js';
 import { setCapabilityCodesShown } from '../components/asset_icon.js';
 import { deriveLayerStatus, describeLayerError } from '../utils/layerStatus.js';
+import { STACK_PANES, clampOpacityPct, installStackPaneRemap, overlayPaneName, overlayStackId, stackZIndexes } from '../utils/layerStack.js';
 
 export function MapVM(Lmap, root) {
   const self = this;
@@ -478,23 +479,47 @@ export function MapVM(Lmap, root) {
   // Reconcile cluster grids whenever any layer changes map min/max zooms.
   self.map.on('zoomlevelschange', self.ensureClusterGridCompatibility);
 
-  self.applyPaneOrder = function (paneOrderTopToBottom) {
-    if (!Array.isArray(paneOrderTopToBottom) || paneOrderTopToBottom.length === 0) return;
+  // Each polling overlay draws into its own pane container, so it can be
+  // ordered and faded on its own (Configuration > Map > Layer order).
+  const attachOverlayGroup = installStackPaneRemap(L, self.map);
 
-    // Keep big gaps so you can still place other UI panes/overlays between if needed
-    const base = 300;
-    const step = 100;
+  /**
+   * Registered overlays, for the Configuration layer list:
+   * { key, id, label, menuGroup, stack, visible: ko.observable(bool) }
+   */
+  self.stackOverlays = ko.observableArray([]);
+  const stackOverlayFor = (layerGroup) => self.stackOverlays().find(o => o.layerGroup === layerGroup);
 
-    paneOrderTopToBottom.forEach((paneName, idx) => {
-      const pane = self.map.getPane(paneName);
-      const panePlus = self.map.getPane(`${paneName}-plus`);
+  /** Show or hide a polling overlay, as its Layers drawer toggle would. */
+  self.setOverlayVisible = function (key, on) {
+    const entry = self.onlineLayers.get(key);
+    if (!entry) return;
+    if (on) self.map.addLayer(entry.layerGroup);
+    else self.map.removeLayer(entry.layerGroup);
+    localStorage.setItem(`ov.online-${key}`, on ? '1' : '0');
+    self.layersDrawer?.refresh();
+  };
 
-      if (!pane || !panePlus) return;
-      // topmost gets highest zIndex
-      const z = base + (step * (paneOrderTopToBottom.length - 1 - idx));
-      pane.style.zIndex = String(z);
-      panePlus.style.zIndex = String(z + 1);
-
+  /**
+   * Apply the layer stack, top -> bottom. Pane rows set each of their
+   * Leaflet panes (STACK_PANES); overlay rows set the overlay's container.
+   * @param {{ id: string, opacityPct: number }[]} rows
+   */
+  self.applyLayerStack = function (rows) {
+    if (!Array.isArray(rows) || rows.length === 0) return;
+    const zs = stackZIndexes(rows.length);
+    rows.forEach((row, idx) => {
+      const opacity = String((Number(row.opacityPct) || 100) / 100);
+      const z = zs[idx];
+      const names = row.id.startsWith('ov:')
+        ? [overlayPaneName(row.id.slice(3))]
+        : STACK_PANES.find(p => p.id === row.id)?.panes || [];
+      names.forEach((name, i) => {
+        const pane = self.map.getPane(name);
+        if (!pane) return;
+        pane.style.zIndex = String(z + i);
+        pane.style.opacity = opacity === '1' ? '' : opacity;
+      });
     });
     self.assetTrails?.syncPaneZ();
   };
@@ -712,6 +737,8 @@ export function MapVM(Lmap, root) {
    *   label: string,
    *   refreshMs?: number,
    *   visibleByDefault?: boolean,
+   *   stack?: 'vector'|'tiles'|'collab',  // default slot in the layer order (see utils/layerStack.js insertStackId)
+   *   defaultOpacity?: number,  // default opacity in the layer order, percent (100 if unset)
    *   fetchFn: () => Promise<any>,
    *   drawFn: (layerGroup: L.LayerGroup, data: any) => void
    * }} opts
@@ -732,6 +759,7 @@ export function MapVM(Lmap, root) {
     }
 
     const layerGroup = L.layerGroup();
+    attachOverlayGroup(layerGroup, key);
     const entry = {
       key,
       label: opts.label || key,
@@ -788,6 +816,17 @@ export function MapVM(Lmap, root) {
     entry.refresh = refreshIfVisible;
 
     self.onlineLayers.set(key, entry);
+    self.stackOverlays.remove(o => o.key === key);
+    self.stackOverlays.push({
+      key,
+      id: overlayStackId(key),
+      label: entry.label,
+      menuGroup: entry.menuGroup,
+      stack: opts.stack || 'vector',
+      defaultOpacity: clampOpacityPct(opts.defaultOpacity ?? 100),
+      layerGroup,
+      visible: ko.observable(!!entry.visibleByDefault),
+    });
 
     // Add to map first if visibleByDefault, then do the initial fetch
     if (entry.visibleByDefault) {
@@ -812,6 +851,7 @@ export function MapVM(Lmap, root) {
     if (entry.layerGroup && self.map.hasLayer(entry.layerGroup)) self.map.removeLayer(entry.layerGroup);
     unwatchLayerChildren(entry);
     self.onlineLayers.delete(key);
+    self.stackOverlays.remove(o => o.key === key);
     emitLayerStatus(key);
   };
 
@@ -1235,6 +1275,7 @@ export function MapVM(Lmap, root) {
     const layer = ev.layer;
     for (const entry of self.onlineLayers.values()) {
       if (entry.layerGroup === layer) {
+        stackOverlayFor(layer)?.visible(true);
         // trigger immediate fetch now that it's visible
         if (typeof entry.refresh === 'function') {
           entry.refresh();
@@ -1259,6 +1300,7 @@ export function MapVM(Lmap, root) {
     const layer = ev.layer;
     for (const entry of self.onlineLayers.values()) {
       if (entry.layerGroup === layer) {
+        stackOverlayFor(layer)?.visible(false);
         setLayerOff(entry);
         return;
       }

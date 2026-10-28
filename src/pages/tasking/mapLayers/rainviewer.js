@@ -341,6 +341,7 @@ export function registerRainRadarLayer(vm, map) {
   vm.mapVM.registerPollingLayer("rainRadar", {
     label: "RainViewer Animated Rainfall Radar",
     menuGroup: "RainViewer",
+    stack: "tiles",
     refreshMs: 0,
     visibleByDefault: localStorage.getItem(`ov.rainRadar`) || false,
     // The frame list is fetched here (not in drawFn) so the Layers drawer

@@ -9,7 +9,7 @@ When you first launch LAD you are taken to the **Configuration** screen, where y
 
 This page is a reference for every setting, tab by tab. Each section links to the part of the guide that explains the feature it controls.
 
-The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. At the bottom of the tabs, **Trackable Asset Library** saves your settings and opens the [Trackable Assets Library](assets.md#trackable-assets-library), and **User guide** opens this guide in a new tab.
+The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Map layers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. At the bottom of the tabs, **Trackable Asset Library** saves your settings and opens the [Trackable Assets Library](assets.md#trackable-assets-library), and **User guide** opens this guide in a new tab.
 
 ![LAD Configuration screen, Data tab](images/config-data.png)
 
@@ -97,7 +97,7 @@ Control which incidents and teams appear based on their sector.
 
 ## Map Markers
 
-The **Map markers** tab controls how incident and asset markers are displayed and the order layers are drawn on the map. Its settings are grouped into three sections, **Incident markers**, **Asset markers** and **All markers**. Click a section to open it; opening one closes the others.
+The **Map markers** tab controls how incident and asset markers are displayed. Its settings are grouped into two sections, **Incident markers** and **Asset markers**. The order and transparency of map layers are on the [Map layers](#map-layers) tab. Click a section to open it; opening one closes the others.
 
 ![Map marker settings](images/config-map-markers.png)
 
@@ -137,17 +137,28 @@ These options only show while **Spread out overlapping asset markers** is on.
 
 - **Show capability codes on asset markers** (on by default). A tab on top of each asset marker shows the asset's capability as a short code, so capabilities with similar colours can be told apart, such as the rescue tiers and Community First Responder. The map legend lists each code next to its capability. See [Capability Codes](assets.md#capability-codes) for the full list.
 
-### All Markers
+## Map Layers
 
-#### Marker Layer Order
+The **Map layers** tab sets the order map layers are drawn in and how see-through each one is.
 
-Controls the order map elements are drawn. Items at the top of the list are drawn over items lower down. Drag to rearrange. The default order (top to bottom) is:
+![Layer order and transparency settings](images/config-layer-order.png)
+
+It lists every map layer: incident markers, asset markers, routes and measuring, and each overlay from the **Layers** menu, including your collaborative layers. Layers at the top of the list are drawn over layers lower down. To find a layer quickly, type in the search box (for example `radar` or `bom warn`; it matches layer names and their **Layers** menu group), or turn on **On map only** to list just the layers showing now. **Show all** clears both. To get here straight from the map, click <img class="icon" src="images/icon-layer-order.png" alt="Layer order and transparency" height="20"> next to the search bar in the **Layers** menu. For each layer you can:
+
+- **Turn it on or off** with the switch. This is the same as its toggle in the **Layers** menu. Layers on the map are marked **On map**; the rest are marked **Off** and greyed out. Incident and asset markers, and routes and measuring, are always listed as on; hide incidents and assets from the **Layers** menu as before.
+- **Move it** by dragging the grip on the left, or with the up and down arrows (easier in a long list).
+- **Make it see-through** with the slider, from 100% (solid) down to 10%. Layers start at 100%, except **BOM Rain Radar Still**, which starts at 50% so roads and boundaries show through it.
+
+Order and transparency are remembered for layers that are off, and apply when you turn them on. **Reset** puts every layer back in its default position and transparency. By default, from top to bottom:
 
 1. Incident markers
-2. Collaborative layer markers
+2. Collaborative layers
 3. Asset markers
-4. Map overlay markers & labels
-5. Map overlay polygons & drawings
+4. Routes, measuring & HQ coverage
+5. Other overlays (boundaries, warnings, Transport NSW, HazardWatch and so on)
+6. Weather imagery (radar, satellite and BOM forecast and observation maps)
+
+Moving a filled overlay above incidents or assets can stop you clicking the markers under it. Lower its transparency or move it back down if that happens.
 
 ## Collaborative Layers
 

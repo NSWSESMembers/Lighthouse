@@ -3376,6 +3376,48 @@ overflow: hidden;
   margin-right: 0.5rem;
 }
 
+/* Configuration > Map markers > Layer order & transparency */
+.layer-stack-list {
+  max-height: 26rem;
+  overflow-y: auto;
+}
+
+.layer-stack-row.layer-stack-off .layer-stack-name {
+  opacity: 0.6;
+}
+
+.layer-stack-row.is-dragover {
+  box-shadow: inset 0 2px 0 var(--bs-primary);
+}
+
+/* Rows hidden by the search (beats the row's d-flex !important) */
+.layer-stack-list > .layer-stack-row.layer-stack-hidden {
+  display: none !important;
+}
+
+.layer-stack-showall {
+  font-size: inherit;
+}
+
+.layer-stack-search {
+  max-width: 22rem;
+}
+
+.layer-stack-switch {
+  width: 2.5rem;
+  flex: none;
+}
+
+.layer-stack-opacity {
+  width: 7rem;
+  flex: none;
+}
+
+.layer-stack-pct {
+  width: 2.5rem;
+  flex: none;
+}
+
 .cfg-subhead {
   font-size: 0.8rem;
   font-weight: 600;

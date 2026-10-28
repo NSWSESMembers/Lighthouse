@@ -245,6 +245,22 @@ const SHOTS = {
     },
     target: (page) => page.locator('#configModal .modal-content'),
   },
+  // Map layers tab: a few overlays on, rain radar faded to 40%.
+  'config-layer-order': {
+    run: async (page) => {
+      await page.evaluate(() => {
+        const vm = window.ko.dataFor(document.body);
+        ['sesUnitLocations', 'unit-boundary', 'bomRadar'].forEach((k) => vm.mapVM.setOverlayVisible(k, true));
+      });
+      await page.locator('#cfgTab-layers').click();
+      await settle(page, 600);
+      const radar = page.locator('#cfgPane-layers .layer-stack-row').filter({ hasText: 'BOM Rain Radar Still' });
+      await radar.locator('input[type=range]').fill('40');
+      await page.locator('#cfgPane-layers .layer-stack-list').evaluate((el) => { el.scrollTop = 0; });
+      await settle(page, 300);
+    },
+    target: (page) => page.locator('#configModal .modal-content'),
+  },
   'config-collab-layers': configTab('collab'),
   'config-layout': configTab('sidebar'),
   'config-starred': configTab('starred'),
@@ -446,6 +462,17 @@ const SHOTS = {
       await settle(page, 1200);
     },
     target: (page) => page.locator('.leaflet-popup-content-wrapper'),
+  },
+
+  // The Layers drawer's button to the Map layers settings, for inline use.
+  'icon-layer-order': {
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      const open = await page.locator('.ld-panel').evaluate((el) => !el.classList.contains('d-none'));
+      if (!open) await page.locator('.ld-toggle-btn').click();
+      await settle(page, 300);
+    },
+    target: (page) => unionOf(page, '.ld-stack-btn', 1),
   },
 
   // Inline satellite icons (active / crossed out) for the guide text.
