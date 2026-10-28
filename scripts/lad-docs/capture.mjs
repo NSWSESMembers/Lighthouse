@@ -603,13 +603,28 @@ const SHOTS = {
     target: (page) => page.locator('#CreateOpsLogModal .modal-footer'),
   },
 
-  // The Layers panel: search, basemap picker and every overlay group.
+  // The Layers panel: search, the section rail and one overlay group.
   overlays: {
     launch: { viewport: { width: 1800, height: 1200 } },
     run: async (page) => {
       await closeConfigAndLoad(page);
       await page.locator('.ld-toggle-btn').click();
+      await page.locator('.ld-rail-item', { hasText: 'NSW SES Geoservices' }).click();
+      await page.mouse.move(0, 0);
       await settle(page, 600);
+    },
+    target: (page) => page.locator('.ld-panel'),
+  },
+
+  // The Layers panel's Basemap section: a picture per basemap.
+  basemap: {
+    launch: { viewport: { width: 1800, height: 1200 } },
+    run: async (page) => {
+      await closeConfigAndLoad(page);
+      await page.locator('.ld-toggle-btn').click();
+      await page.locator('.ld-rail-item', { hasText: 'Basemap' }).click();
+      await page.mouse.move(0, 0);
+      await settle(page, 1500);
     },
     target: (page) => page.locator('.ld-panel'),
   },
@@ -630,6 +645,7 @@ const SHOTS = {
       }, keys);
       const open = await page.locator('.ld-panel').evaluate((el) => !el.classList.contains('d-none'));
       if (!open) await page.locator('.ld-toggle-btn').click();
+      await page.locator('.ld-rail-item', { hasText: 'On the map' }).click();
       await page.mouse.move(0, 0);
       await settle(page, 2000);
     },

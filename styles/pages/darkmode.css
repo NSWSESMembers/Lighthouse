@@ -877,6 +877,19 @@ body.dark-mode .layers-drawer .ld-overlay-btn:hover {
   background: #373737 !important;
 }
 
+body.dark-mode .ld-rail,
+body.dark-mode .ld-narrow .ld-rail { border-color: #444 !important; }
+body.dark-mode .ld-rail-sep { background: #444; }
+body.dark-mode .ld-rail-item { color: #e0e0e0; }
+body.dark-mode .ld-rail-item:hover { background: #373737; }
+body.dark-mode .ld-rail-item[aria-current="true"] { background: #5a6068; color: #fff; }
+body.dark-mode .ld-rail-count { background: #444a52; color: #e0e0e0; }
+body.dark-mode .ld-narrow .ld-rail-item { border-color: #555; }
+body.dark-mode .ld-pane-title { color: #cfd5de; }
+body.dark-mode .ld-empty { color: #9aa3ae; }
+body.dark-mode .ld-base-tile { color: #e0e0e0; }
+body.dark-mode .ld-base-tile.active { border-color: #7aa7ff; }
+
 /* Layer load status */
 body.dark-mode .layers-drawer .ld-status-ok { background: #173325; color: #6fd29a; }
 body.dark-mode .layers-drawer .ld-status-zero { background: #33373d; color: #aab2bd; }
