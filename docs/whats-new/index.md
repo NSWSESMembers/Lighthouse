@@ -68,6 +68,11 @@ The home page shows the first three `##` entries, so keep the title short.
 - Task names keep any *#* in them (it used to be removed), and a member with no sign-off time gets the task's end time instead of a nonsense number of hours.
 - If Beacon can't be reached, or no tasks match, the page now says so, instead of doing nothing.
 
+### LAD
+
+- **The pulsing ring on New incidents and the marching ring on Active incidents now move with their marker.** They used to stay behind for a moment when markers gathered into a cluster or spread out of one, and could go missing until the next zoom. See [Incident Clustering](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#incident-clustering).
+- With clustering turned off, an incident that drops off the list now disappears from the map too.
+
 ## LAD arrival times, overlay status and street zoom
 
 *26 October 2026 · [v2026.10.26](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.26)*

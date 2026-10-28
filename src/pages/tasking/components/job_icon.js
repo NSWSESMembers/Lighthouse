@@ -1,4 +1,4 @@
-import {jobsToUI, statusClosedMark, ACTIVE_RING_COLOUR} from "../utils/jobTypesToUI.js";
+import {jobsToUI, statusClosedMark, statusHasRing, ACTIVE_RING_COLOUR} from "../utils/jobTypesToUI.js";
 
 // --- SVG factory (shape+style → L.divIcon) ---
 import L from "leaflet";
@@ -151,7 +151,7 @@ function alertPipSvg(pad, d, radius) {
            `</g>`;
 }
 
-export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2, closedMark = null, alert = false }) {
+export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2, closedMark = null, alert = false, pulse = false, ring = false }) {
     const d = radius * 2;
     const inner = shapeInnerSvg({ shape, fill, stroke, radius, strokeWidth });
 
@@ -162,7 +162,7 @@ export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2
 
         return L.divIcon({
             className: "job-svg-marker",
-            html: svg,
+            html: withRings(svg, { shape, radius, c: radius, pulse, ring }),
             iconSize: [d, d],
             iconAnchor: [radius, radius],
             popupAnchor: [0, -radius],
@@ -171,7 +171,7 @@ export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2
     }
 
     // Padded symmetrically so iconAnchor stays at the shape centre; the pulse /
-    // status rings key off `shapeDiameter` rather than this padded box.
+    // status rings are sized off the shape, not this padded box.
     // ~radius*0.55 covers the "!" pip halo and the strike's small overhang.
     const pad = Math.ceil(radius * 0.55);
     const box = d + pad * 2;
@@ -185,13 +185,43 @@ export function makeShapeIcon({ shape, fill, stroke, radius = 7, strokeWidth = 2
 
     return L.divIcon({
         className: "job-svg-marker",
-        html: svg,
+        html: withRings(svg, { shape, radius, c, pulse, ring }),
         iconSize: [box, box],
         iconAnchor: [c, c],
         popupAnchor: [0, -radius],
         shapeDiameter: d
     });
 };
+
+/**
+ * Wrap the marker SVG with its New pulse ring and/or Active marching ring.
+ * The rings live inside the marker's own icon element (overflowing it,
+ * centred on the shape at (c, c)) so they move, fade, cluster and uncluster
+ * with the marker -- markercluster animates markers with _setPos() and CSS
+ * transitions, which a separate follower marker can't track.
+ * The marching ring comes first so the shape paints over it; the pulse ring
+ * comes last so it paints over the shape.
+ */
+function withRings(svg, { shape, radius, c, pulse, ring }) {
+    if (!pulse && !ring) return svg;
+    const box = (size, html) => {
+        const o = c - size / 2;
+        return `<div class="job-marker-ring" style="left:${o}px;top:${o}px;width:${size}px;height:${size}px">${html}</div>`;
+    };
+    let html = "";
+    if (ring) {
+        const gap = 4;                                 // clear of the shape edge
+        // Sharp shapes (triangle, star) push their outline out up to ~2× gap.
+        const size = Math.ceil((radius + gap * 2 + 3) * 2);
+        html += box(size, buildStatusRingSvg(shape, size, radius, gap));
+    }
+    html += svg;
+    if (pulse) {
+        const size = Math.round(radius * 2 * 3);
+        html += box(size, buildPulseRingSvg(shape, size, size));
+    }
+    return html;
+}
 
 /**
  * SVG for the Active "marching ring" — a dashed outline of the marker's shape,
@@ -224,22 +254,24 @@ export function styleForJob(job, { showStatus = false } = {}) {
     const out = { shape: style.shape, fill: style.fillcolor, stroke: style.strokecolor, radius, strokeWidth: 2.25 };
     // tweak strokeWidth if you need stronger outlines
 
-    // Only attach status keys when the option is on, so JSON.stringify(style)
-    // (the change-detection key) is byte-identical to the old behaviour when off.
-    // Note: the Active marching ring is a sibling layer, not part of this icon —
-    // see upsertStatusRing() in jobMarker.js.
+    // Only attach status keys when the option is on.  Every key here is part
+    // of JSON.stringify(style), the marker's change-detection key, so a status
+    // change that adds or drops a ring rebuilds the icon.
     if (showStatus) {
         const mark = statusClosedMark(job.statusName?.());
         if (mark) out.closedMark = mark;
         if ((job.actionRequiredTags?.() || []).length > 0) out.alert = true;
+        if (statusHasRing(job.statusName?.())) out.ring = true;
     }
+    // New jobs always pulse, whatever the option.
+    if ((job.statusName?.() || '').toLowerCase() === 'new') out.pulse = true;
 
     return out;
 }
 
 /**
  * Build an SVG outline that matches the marker shape, used as the pulse-ring
- * overlay.  `w`/`h` are the pixel dimensions of the ring's L.divIcon box.
+ * overlay.  `w`/`h` are the pixel dimensions of the ring's box.
  */
 export function buildPulseRingSvg(shape, w, h) {
     const cx = w / 2, cy = h / 2;
