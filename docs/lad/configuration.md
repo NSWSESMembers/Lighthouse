@@ -9,7 +9,7 @@ When you first launch LAD you are taken to the **Configuration** screen, where y
 
 This page is a reference for every setting, tab by tab. Each section links to the part of the guide that explains the feature it controls.
 
-The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Map layers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. At the bottom of the tabs, **Trackable Asset Library** saves your settings and opens the [Trackable Assets Library](assets.md#trackable-assets-library), and **User guide** opens this guide in a new tab.
+The settings are split into tabs down the left: **Data**, **Filters**, **Map markers**, **Map layers**, **Collaborative layers**, **Layout**, **Starred**, **Appearance** and **Instant Task Suggestions**. On Train Beacon and Test Beacon there's also a [Simulated Exercise](#simulated-exercise) tab. At the bottom of the tabs, **Trackable Asset Library** saves your settings and opens the [Trackable Assets Library](assets.md#trackable-assets-library), and **User guide** opens this guide in a new tab.
 
 ![LAD Configuration screen, Data tab](images/config-data.png)
 
@@ -200,6 +200,33 @@ When enabled, distance comes from an estimated driving time instead of straight-
 ### Weights
 
 Set separate weights for **Rescue** and **Standard** (non-rescue) incidents, balancing the importance of distance against tasking count.
+
+## Simulated Exercise
+
+*Train Beacon and Test Beacon only.* The tab isn't shown on any other Beacon.
+
+During a training exercise run with CADence, the simulated teams' vehicles and vessels can be shown in place of real radio positions. They move on the [Situation Map](situation-map.md), match their Beacon teams the same way radios do (see [Setting up a Team for Radio Tracking](assets.md#setting-up-a-team-for-radio-tracking)) and appear in [Instant Task suggestions](tasking.md#instant-task-suggestions). Satellite trackers still show as normal.
+
+1. Open the **Simulated Exercise** tab. The running exercises are listed.
+2. Pick the exercise, then your headquarters under **Your headquarters**. In a group exercise each headquarters has its own copy of the teams, with the same callsigns, so pick the one you're working from. LAD picks it for you when your Beacon headquarters is one of them. An individual exercise has one headquarters, which is shown but can't be changed.
+3. Click **Show simulated assets**, then **Close**.
+
+LAD only reads the positions for the headquarters you picked, and only gives them to teams assigned to that headquarters. A team with the same callsign at another headquarters shows no simulated position, rather than one that belongs to a different copy of the exercise. To follow another headquarters, pick it under **Your headquarters** and click **Switch to this exercise**.
+
+While simulated assets are shown, a **Simulated exercise assets** [alert](interface.md#alerts) on the map counts the simulated positions. Open it to change exercise, or to stop and show real radio positions again. The choice only lasts until you close the LAD tab, and each LAD tab can show a different exercise.
+
+When the exercise ends, LAD goes back to live asset locations and puts up a banner at the top right of the map saying the exercise has ended, with a **Choose another exercise** link back to this tab. The banner stays until you close it or choose another exercise. LAD does the same if the CADence exercise service stops accepting your Beacon sign-in.
+
+The exercise list and positions come from the CADence exercise service, which checks your Beacon sign-in. Nothing is sent to it until you open the tab.
+
+### On Beacon's job and situational awareness pages
+
+While a LAD tab shows an exercise, Lighthouse's maps on Beacon's own pages show it too. These maps show where each simulated vehicle and vessel is. They don't match them to teams.
+
+- **Job page:** the **Nearest Asset Locations** map and table show the exercise's vehicles and vessels in place of radio positions, and a note under the map names the exercise. They come from the copy for the job's own headquarters, which in a group exercise may not be the one LAD shows. A job at a headquarters with no copy in the exercise shows real radio positions. Satellite trackers still show as normal.
+- **Situational awareness map:** a **Simulated Exercise Assets** layer appears under **Lighthouse > NSW SES**, next to **Filtered Asset Locations**, which keeps showing real positions. Turn it on to see the exercise's vehicles and vessels. It updates every 30 seconds and stays on for the next exercise until you turn it off.
+
+If you have more than one LAD tab showing an exercise, these pages follow the one you chose most recently. When no LAD tab is showing an exercise, they go back to real positions and the layer's button goes away.
 
 ## Sharing Configurations
 

@@ -4,9 +4,14 @@ var _ = require('underscore');
 var DOM = require('jsx-dom-factory').default;
 var $ = require('jquery');
 var vincenty = require('../../lib/vincenty.js');
+import { serveSimulationToPage } from '../../shared/cadenceSimulationPage.js';
 
 // inject all.css - browserify-css takes care of this
 require('../../styles/jobs.view.css');
+
+// Train and Test Beacon: tell the inject script which CADence exercise LAD is
+// showing, so the Nearest Asset Locations map can show it too.
+serveSimulationToPage();
 
 window.addEventListener("message", function(event) {
   // We only accept messages from ourselves or the extension
@@ -298,6 +303,7 @@ let job_nearest_asset_widget = (
           <div id="map-errors" style="visibility:hidden"></div>
           <div id="filter-warning" style="visibility:hidden"></div>
         </div>
+        <div id="asset-simulated-note" style="display:none"></div>
         </div>
   </div>
 );

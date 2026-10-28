@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { request } from './core/request.js';
-import { filter } from './asset.js';
+import { filter, simulated } from './asset.js';
+import { isSimulationUnavailable } from '../cadenceSimulation.js';
 
 vi.mock('./core/request.js', () => ({ request: vi.fn() }));
 
@@ -105,5 +106,195 @@ describe('telematics capability', () => {
 
   it('is empty when there is only a callsign', async () => {
     expect(await teleCapability('DEM42')).toBe('');
+  });
+});
+
+describe('simulated exercise feed (ctx.simulation)', () => {
+  const FEED = 'https://api.dev.cadence-extension.com/v1';
+  const trainCtx = {
+    host: 'https://apitrainbeacon.ses.nsw.gov.au',
+    token: 'tok',
+    userId: 'u1',
+    simulation: { exerciseId: 'ex1', copyId: 'individual' },
+  };
+  // Shaped like the CADence backend's resource-locations feed (values invented).
+  const simFeature = (name, extra = {}) => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [151.1, -33.9] },
+    properties: {
+      id: `cadence-ex1-individual-${name}`,
+      name,
+      entity: 'Demo City',
+      capability: 'General Purpose',
+      resourceType: 'Vehicle',
+      lastSeen: '2026-10-15T01:23:45.000Z',
+      direction: 90,
+      talkgroup: 'CADence exercise',
+      talkgroupLastUpdated: '2026-10-15T01:23:45.000Z',
+      radioId: '',
+      licensePlate: 'SIM',
+      ...extra,
+    },
+  });
+  const radioCacheKey = 'apitrainbeacon.ses.nsw.gov.au-LighthouseFetchedRadioAssets';
+
+  it("reads the radio half from the exercise feed and the telematics half from Beacon", async () => {
+    vi.mocked(request)
+      .mockResolvedValueOnce([simFeature('DMC56')])
+      .mockResolvedValueOnce({ features: [teleFeature('DMC40 Demo Ute')] });
+
+    const result = await filter(null, trainCtx);
+
+    const urls = vi.mocked(request).mock.calls.map(([url]) => url);
+    expect(urls[0]).toBe(`${FEED}/feed/exercises/ex1/copies/individual/resource-locations`);
+    expect(urls[1]).toMatch(/^https:\/\/apitrainbeacon\.ses\.nsw\.gov\.au\/Api\/v1\/ResourceLocations\/Telematics\?/);
+    expect(urls.some((u) => u.includes('/ResourceLocations/Radio'))).toBe(false);
+    expect(result.map((r) => r.type).sort()).toEqual(['psn', 'telematics']);
+  });
+
+  it('normalises simulated features exactly like PSN radios', async () => {
+    vi.mocked(request)
+      .mockResolvedValueOnce([simFeature('DMC711', { resourceType: 'Vessel', capability: 'Class 1' })])
+      .mockResolvedValueOnce({ features: [] });
+
+    const [vessel] = await filter(null, trainCtx);
+
+    expect(vessel).toMatchObject({
+      type: 'psn',
+      name: 'DMC711 (PSN)',
+      unitCode: 'DMC',
+      vehCode: '711',
+      markerLabel: 'DMC<br>711',
+      entity: 'Demo City',
+      capability: 'Class 1',
+      resourceType: 'Vessel',
+      talkGroup: 'CADence exercise',
+      licensePlate: 'SIM',
+      lastSeen: '2026-10-15T01:23:45.000Z',
+    });
+  });
+
+  it('never reads or writes the radio cache', async () => {
+    localStorage.setItem(
+      radioCacheKey,
+      JSON.stringify({ timestamp: Math.round(Date.now() / 1000), data: [radioAsset('REAL1')] }),
+    );
+    vi.mocked(request).mockResolvedValueOnce([simFeature('DMC56')]).mockResolvedValueOnce({ features: [] });
+
+    const result = await filter(null, trainCtx);
+
+    expect(result.map((r) => r.properties.name)).toEqual(['DMC56']);
+    // The cached real feed is still the only thing under the radio key.
+    expect(JSON.parse(localStorage.getItem(radioCacheKey)).data[0].properties.name).toBe('REAL1');
+  });
+
+  it('fetches fresh positions on every call', async () => {
+    vi.mocked(request)
+      .mockResolvedValueOnce([simFeature('DMC56')])
+      .mockResolvedValueOnce({ features: [] })
+      .mockResolvedValueOnce([simFeature('DMC56', { lastSeen: '2026-10-15T01:24:15.000Z' })]);
+
+    await filter(null, trainCtx);
+    const [second] = await filter(null, trainCtx);
+
+    expect(second.lastSeen).toBe('2026-10-15T01:24:15.000Z');
+    // Telematics was cached by the first call, so only the feed was re-read.
+    expect(vi.mocked(request)).toHaveBeenCalledTimes(3);
+  });
+
+  it('rejects when the exercise feed fails, instead of returning telematics alone', async () => {
+    vi.mocked(request)
+      .mockRejectedValueOnce(Object.assign(new Error('Beacon API 502'), { status: 502 }))
+      .mockResolvedValueOnce({ features: [teleFeature('DMC40 Demo Ute')] });
+
+    const err = await filter(null, trainCtx).catch((e) => e);
+    expect(err.name).toBe('SimulationFeedError');
+    expect(err.status).toBe(502);
+    expect(isSimulationUnavailable(err)).toBe(false);
+  });
+
+  it('reports a refused sign-in as unavailable', async () => {
+    vi.mocked(request)
+      .mockRejectedValueOnce(Object.assign(new Error('Beacon API 403'), { status: 403 }))
+      .mockResolvedValueOnce({ features: [] });
+
+    const err = await filter(null, trainCtx).catch((e) => e);
+    expect(isSimulationUnavailable(err)).toBe(true);
+  });
+
+  it('refuses a simulation on production without calling the exercise backend', async () => {
+    vi.mocked(request).mockResolvedValueOnce({ features: [] }); // telematics
+    const prodCtx = { ...trainCtx, host: 'https://apibeacon.ses.nsw.gov.au' };
+
+    const err = await filter(null, prodCtx).catch((e) => e);
+
+    expect(isSimulationUnavailable(err)).toBe(true);
+    const urls = vi.mocked(request).mock.calls.map(([url]) => url);
+    expect(urls.every((u) => u.startsWith('https://apibeacon.ses.nsw.gov.au/'))).toBe(true);
+  });
+
+  it('uses the real feed when the simulation is null', async () => {
+    vi.mocked(request).mockResolvedValueOnce([radioAsset('REAL1')]).mockResolvedValueOnce({ features: [] });
+
+    const result = await filter(null, { ...trainCtx, simulation: null });
+
+    expect(vi.mocked(request).mock.calls[0][0]).toMatch(/\/Api\/v1\/ResourceLocations\/Radio\?/);
+    expect(result[0].properties.name).toBe('REAL1');
+  });
+
+  it("marks each simulated asset with its copy's HQ, and leaves telematics alone", async () => {
+    vi.mocked(request)
+      .mockResolvedValueOnce([simFeature('DMC56'), simFeature('DMC711')])
+      .mockResolvedValueOnce({ features: [teleFeature('DMC40 Demo Ute')] });
+
+    const result = await filter(null, { ...trainCtx, simulation: { ...trainCtx.simulation, participantHqId: 101 } });
+
+    expect(result.filter((r) => r.type === 'psn').map((r) => r.exerciseHqId)).toEqual(['101', '101']);
+    expect(result.find((r) => r.type === 'telematics').exerciseHqId).toBeUndefined();
+  });
+
+  it('marks nothing when the simulation has no HQ, or for the real feed', async () => {
+    vi.mocked(request).mockResolvedValueOnce([simFeature('DMC56')]).mockResolvedValueOnce({ features: [] });
+    const [simulatedAsset] = await filter(null, trainCtx);
+    expect(simulatedAsset.exerciseHqId).toBeUndefined();
+
+    vi.mocked(request).mockResolvedValueOnce([radioAsset('REAL1')]);
+    const [real] = await filter(null, { ...trainCtx, simulation: null });
+    expect(real.exerciseHqId).toBeUndefined();
+  });
+
+  describe('simulated()', () => {
+    it('returns only the exercise assets, normalised like radios, without asking Beacon', async () => {
+      vi.mocked(request).mockResolvedValueOnce([
+        simFeature('DMC56'),
+        simFeature('DMC711', { resourceType: 'Vessel', capability: 'Class 1' }),
+      ]);
+
+      const assets = await simulated(trainCtx);
+
+      expect(vi.mocked(request).mock.calls.map(([url]) => url)).toEqual([
+        `${FEED}/feed/exercises/ex1/copies/individual/resource-locations`,
+      ]);
+      expect(assets.map((a) => [a.type, a.name, a.unitCode, a.vehCode, a.resourceType])).toEqual([
+        ['psn', 'DMC56 (PSN)', 'DMC', '56', 'Vehicle'],
+        ['psn', 'DMC711 (PSN)', 'DMC', '711', 'Vessel'],
+      ]);
+      expect(localStorage.getItem(radioCacheKey)).toBeNull();
+    });
+
+    it('refuses production, and a missing selection, without calling anything', async () => {
+      const prod = await simulated({ ...trainCtx, host: 'https://apibeacon.ses.nsw.gov.au' }).catch((e) => e);
+      const none = await simulated({ ...trainCtx, simulation: null }).catch((e) => e);
+
+      expect(isSimulationUnavailable(prod)).toBe(true);
+      expect(isSimulationUnavailable(none)).toBe(true);
+      expect(request).not.toHaveBeenCalled();
+    });
+
+    it('passes a refused sign-in on', async () => {
+      vi.mocked(request).mockRejectedValueOnce(Object.assign(new Error('403'), { status: 403 }));
+      const err = await simulated(trainCtx).catch((e) => e);
+      expect(isSimulationUnavailable(err)).toBe(true);
+    });
   });
 });

@@ -2,6 +2,14 @@ const $ = require('jquery');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DOM = require('jsx-dom-factory').default;
 import BeaconClient from '../../shared/BeaconClient.js';
+import { simulationEnvironment, simulationLabel, sameSimulation } from '../../shared/cadenceSimulation.js';
+import { watchSharedSelection } from '../../shared/cadenceSimulationShare.js';
+
+// The Simulated Exercise Assets layer: its refresh interval matches LAD's
+// radio refresh, and its on/off state is remembered like the other layers'.
+const SIMULATED_ASSETS_LAYER = 'ses-assets-simulated';
+const SIMULATED_ASSETS_BUTTON = 'toggleSesSimulatedAssetsBtn';
+const SIMULATED_ASSETS_INTERVAL = 30000;
 
 
 const lighthouseIcon = chrome.runtime.getURL('icons/lh-black.png');
@@ -139,6 +147,10 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             <img style="max-width: 16px; vertical-align: top;margin-right: 4px;" src={assetIcon} />
             <span class="tag-text">Filtered Asset Locations</span>
             </span>
+            <span id="toggleSesSimulatedAssetsBtn" class="label tag tag-lh-filter tag-disabled" style="display: none">
+            <img style="max-width: 16px; vertical-align: top;margin-right: 4px;" src={assetIcon} />
+            <span class="tag-text">Simulated Exercise Assets</span>
+            </span>
             </li>
             </ul>
             </li>
@@ -258,6 +270,8 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
         this._registerClickHandler('toggleBoundaryEndeavourBtn', 'power-boundary-endeavour', this._requestEndeavourBoundaryOutageLayerUpdate, 5 * 60000); // every 60 mins
 
         this._registerClickHandler('toggleBoundaryEssentialBtn', 'power-boundary-essential', this._requestEssentialBoundaryOutageLayerUpdate, 5 * 60000); // every 60 mins
+
+        this._initialiseSimulatedAssetsLayer();
 
         window.addEventListener('message', function (event) {
             // We only accept messages from background
@@ -522,6 +536,95 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
                     .catch((error) => console.log(error));
             }
       }
+    }
+
+    /**
+     * The Simulated Exercise Assets layer (Train and Test Beacon only): the
+     * vehicles and vessels of the CADence exercise LAD is showing for this
+     * Beacon environment, beside the live asset layers (see
+     * shared/cadenceSimulationShare.js). Its button only shows while a LAD
+     * tab is showing an exercise, and the layer stays on from one exercise to
+     * the next until it's turned off.
+     */
+     _initialiseSimulatedAssetsLayer() {
+        const button = $(`#${SIMULATED_ASSETS_BUTTON}`);
+        const environment = simulationEnvironment(location.origin);
+        if (!environment) {
+            button.remove();
+            return;
+        }
+        const savedKey = `Lighthouse-${SIMULATED_ASSETS_BUTTON}`;
+
+        button.on('click', () => {
+            const turnOn = button.hasClass('tag-disabled');
+            localStorage.setItem(savedKey, turnOn);
+            this._setSimulatedAssetsLayer(turnOn && !!this._simulation);
+        });
+
+        watchSharedSelection(environment.env, (selection) => {
+            const previous = this._simulation;
+            this._simulation = selection;
+            const on = !button.hasClass('tag-disabled');
+            if (!selection) {
+                // LAD isn't showing an exercise any more.
+                button.hide();
+                if (on) this._setSimulatedAssetsLayer(false);
+                return;
+            }
+            button
+                .attr('title', `Simulated positions from the CADence exercise ${simulationLabel(selection)}, as shown in LAD`)
+                .show();
+            if (on) {
+                if (!sameSimulation(previous, selection)) this._requestSesSimulatedAssets();
+            } else if (localStorage.getItem(savedKey) === 'true') {
+                this._setSimulatedAssetsLayer(true);
+            }
+        });
+    }
+
+    _setSimulatedAssetsLayer(on) {
+        const button = $(`#${SIMULATED_ASSETS_BUTTON}`);
+        clearInterval(this._timers[SIMULATED_ASSETS_LAYER]);
+        this._simulatedAssetsRequest = (this._simulatedAssetsRequest || 0) + 1; // drops a response in flight
+        if (on) {
+            button.removeClass('tag-disabled');
+            this._requestSesSimulatedAssets();
+            this._timers[SIMULATED_ASSETS_LAYER] = setInterval(
+                () => this._requestSesSimulatedAssets(),
+                SIMULATED_ASSETS_INTERVAL,
+            );
+        } else {
+            button.addClass('tag-disabled');
+            // Nothing's drawn before the inject script has sent its token over.
+            if (this._token) window.postMessage({ type: 'LH_CLEAR_LAYER_DATA', layer: SIMULATED_ASSETS_LAYER }, '*');
+        }
+    }
+
+    /**
+     * Requests an update to the Simulated Exercise Assets layer.
+     */
+     _requestSesSimulatedAssets() {
+        const selection = this._simulation;
+        if (!selection || $(`#${SIMULATED_ASSETS_BUTTON}`).hasClass('tag-disabled')) return;
+        if (!this._token || !this._base) {
+            // The inject script hasn't sent the token over yet
+            clearTimeout(this._simulatedAssetsRetry);
+            this._simulatedAssetsRetry = setTimeout(() => this._requestSesSimulatedAssets(), 2000);
+            return;
+        }
+        const request = (this._simulatedAssetsRequest = (this._simulatedAssetsRequest || 0) + 1);
+        BeaconClient.asset
+            .simulated({
+                host: this._base,
+                token: this._token,
+                simulation: { exerciseId: selection.exerciseId, copyId: selection.copyId },
+            })
+            .then((assets) => {
+                // A newer request, another exercise, or the layer turned off.
+                if (request !== this._simulatedAssetsRequest) return;
+                ContentScriptMapManager._passLayerDataToInject(SIMULATED_ASSETS_LAYER, assets);
+            })
+            .catch((error) => console.warn('Failed to fetch the simulated exercise assets', error));
     }
 
     /**

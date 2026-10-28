@@ -9,6 +9,13 @@ var esri = require('esri-leaflet');
 var chroma = require('chroma-js');
 import BeaconClient from '../../shared/BeaconClient.js';
 import AmazonLocationRouter from "../../shared/als.js";
+import { createPageSimulation } from '../../shared/cadenceSimulationPage.js';
+import {
+  simulationLabel,
+  sameSimulation,
+  selectionForHq,
+  isSimulationUnavailable,
+} from '../../shared/cadenceSimulation.js';
 
 
 require('leaflet-easybutton');
@@ -38,6 +45,45 @@ whenLighthouseIsReady(function () {
 var assetMap; //global map holder
 var assetMapRenderAtTime;
 var assetMapRenderTimer;
+
+// CADence simulated exercises (Train and Test Beacon only). While LAD is
+// showing one, the map's radio positions come from the exercise instead of
+// Beacon (see shared/cadenceSimulationPage.js): from the copy for the job's
+// own HQ, which may not be the one LAD shows, since each HQ in a group
+// exercise has its own copy with teams of the same callsigns. A job in an HQ
+// with no copy keeps the live feed. assetMapSimulation is what the drawn map
+// came from: undefined while nothing is drawn, null for the live feed,
+// otherwise the exercise copy.
+var simulatedExercise = createPageSimulation({
+  host: function () {
+    return typeof urls !== 'undefined' ? urls.Base : null;
+  },
+});
+var assetMapSimulation;
+
+// The copy of LAD's exercise for this job's HQ, or null for the live feed.
+function jobSimulation(selection) {
+  var assigned = masterViewModel.entityAssignedTo;
+  var entity = assigned && typeof assigned.peek === 'function' ? assigned.peek() : null;
+  return selectionForHq(selection, entity ? entity.Id : null);
+}
+
+// Redraw if the drawn map no longer shows what it should.
+function redrawIfSimulationChanged(selection) {
+  if (assetMapSimulation === undefined || sameSimulation(jobSimulation(selection), assetMapSimulation)) return;
+  $('#assetLocationButtonRefresh').trigger('click');
+}
+
+// LAD started, switched or stopped showing an exercise: redraw from the new
+// feed, so the map doesn't keep showing what LAD has moved on from.
+simulatedExercise.onChange(redrawIfSimulationChanged);
+
+// The job moved to another HQ, which may have another copy or none.
+if (masterViewModel.entityAssignedTo && typeof masterViewModel.entityAssignedTo.subscribe === 'function') {
+  masterViewModel.entityAssignedTo.subscribe(function () {
+    redrawIfSimulationChanged(simulatedExercise.latest());
+  });
+}
 
 // Cache of the most recent getJobResponseSummary() result, so the create-team
 // picker modal (opened well after the popover fetch, from either the
@@ -597,6 +643,72 @@ let quickMessage = return_quickmessagebutton();
 
 let instantRadiologModal = return_quickradiologmodal();
 
+// The assets for the map and the asset filter: Beacon's feed, with the radio
+// positions from the job HQ's copy of the CADence exercise LAD is showing, if
+// any. Resolves { assets, simulation }, simulation being that copy or null.
+function fetchJobAssets() {
+  return simulatedExercise.current().then(function (selection) {
+    var simulation = jobSimulation(selection);
+    return BeaconClient.asset
+      .filter([], {
+        host: urls.Base,
+        userId: user.Id,
+        token: user.accessToken,
+        simulation: simulation ? { exerciseId: simulation.exerciseId, copyId: simulation.copyId } : null,
+      })
+      .then(
+        function (assets) {
+          return { assets: assets, simulation: simulation };
+        },
+        function (error) {
+          // Say which feed failed, so the map still redraws when LAD changes.
+          if (error && typeof error === 'object') error.lighthouseSimulation = simulation;
+          throw error;
+        },
+      );
+  });
+}
+
+// Remember what the map was drawn from (see assetMapSimulation), and redraw
+// if LAD (or the job's HQ) changed while the assets were loading.
+function trackMapSimulation(simulation) {
+  assetMapSimulation = simulation;
+  if (!sameSimulation(simulation, jobSimulation(simulatedExercise.latest()))) {
+    setTimeout(function () {
+      $('#assetLocationButtonRefresh').trigger('click');
+    }, 0);
+  }
+}
+
+// Note under the map when its positions are simulated.
+function noteMapSimulation(simulation) {
+  // The draw worked, so an error from an earlier one no longer applies.
+  $('#map-errors').css('visibility', 'hidden');
+  var note = $('#asset-simulated-note');
+  if (simulation) {
+    note
+      .empty()
+      .append(
+        'Simulated locations from the CADence exercise ',
+        $('<strong>').text(simulationLabel(simulation)),
+        ', shown in place of radio positions.',
+      )
+      .show();
+  } else {
+    note.hide().empty();
+  }
+  trackMapSimulation(simulation);
+}
+
+function assetMapErrorText(error) {
+  if (error && error.name === 'SimulationFeedError') {
+    return isSimulationUnavailable(error)
+      ? "The CADence exercise service didn't accept your Beacon sign-in, so simulated locations can't be shown."
+      : "Couldn't load the simulated exercise locations. Refresh to try again.";
+  }
+  return error;
+}
+
 function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
   if (!masterViewModel.geocodedAddress.peek().Latitude && !masterViewModel.geocodedAddress.peek().Longitude) {
     $('#nearest-asset-geoerror').show();
@@ -858,7 +970,9 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
     );
     mapMarkers.push(jobMarker.addTo(assetMap));
 
-    BeaconClient.asset.filter([], { host: urls.Base, userId: user.Id, token: user.accessToken }).then(function (response) {
+    fetchJobAssets().then(function (feed) {
+      var response = feed.assets;
+      noteMapSimulation(feed.simulation);
       if (response.length) {
         var assetDistances = [];
         var furthestDistance; //need a way to know the furthest marker
@@ -1301,8 +1415,11 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
   cb();
 }
     }).catch(function (error) {
-  $('#map-errors').html(error);
+  $('#map-errors').html(assetMapErrorText(error));
   $('#map-errors').css('visibility', 'unset');
+  if (error && typeof error === 'object' && 'lighthouseSimulation' in error) {
+    trackMapSimulation(error.lighthouseSimulation);
+  }
 });
   }
 }
@@ -1315,6 +1432,8 @@ function assetLocationMapOff() {
   $('#nearest-asset-table tbody').empty();
   $('#nearest-asset-geoerror').hide();
   $('#asset-route-warning').css('visibility', 'hidden');
+  assetMapSimulation = undefined;
+  $('#asset-simulated-note').hide().empty();
 
   if (assetMap && assetMap.remove) {
     assetMap.off();
@@ -1579,7 +1698,8 @@ function assetLocationButtonFiltered(bypassUI) {
 
     $('#asset-map-filter-loading').css('visibility', 'unset');
 
-    BeaconClient.asset.filter([], { host: urls.Base, userId: user.Id, token: user.accessToken }).then(function (res) {
+    fetchJobAssets().then(function (feed) {
+      var res = feed.assets;
       if (res.length) {
         let sorted = [];
 
