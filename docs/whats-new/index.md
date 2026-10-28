@@ -70,8 +70,7 @@ The home page shows the first three `##` entries, so keep the title short.
 
 ### LAD
 
-- **Incidents no longer get stuck in the incident list.** In a tab left open for a long time, incidents that had been completed could stay in the list with their old status, and some open incidents went missing from the map. The list now keeps up with Beacon, and every incident in it has its marker.
-- **LAD no longer slowly fills up memory.** It used to keep every incident it had seen since it opened. An incident is now let go once it has been outside your filters for 10 minutes, unless it's starred, open, or tasked to a team in your team list.
+- **Performance improvements** for LAD left open for a long time.
 
 ## LAD arrival times, overlay status and street zoom
 
