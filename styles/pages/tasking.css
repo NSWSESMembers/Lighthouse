@@ -4253,20 +4253,27 @@ body.dark-mode .ops-log-status-details {
   left: 100%;
   margin-left: 6px;
   background: #fff;
-  padding: 8px;
-  width: 760px;
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-  overflow-x: hidden;
+  /* width and height are fitted to the map (fitPanel in main.js) */
+  width: 540px;
+  height: 440px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   border: 1px solid #ccc;
   border-radius: 0.5rem;
   z-index: 1000;
+}
+
+/* Open panel draws over the bottom corners' controls (minimap) */
+.leaflet-top.leaflet-left:has(.ld-panel:not(.d-none)) {
+  z-index: 1001;
 }
 
 /* ── Search row ── */
 .ld-search-row {
   border-bottom: 1px solid #e0e0e0;
   padding: 6px 8px;
+  flex: none;
 }
 .ld-search-input {
   font-size: 12px;
@@ -4275,30 +4282,133 @@ body.dark-mode .ops-log-status-details {
   color: #999;
 }
 
-/* ── Basemap dropdown row (full width above grid) ── */
-.ld-basemap-row {
-  margin-bottom: 8px;
+/* ── Section rail + selected section ── */
+.ld-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 152px minmax(0, 1fr);
 }
-.ld-basemap-btn {
-  font-size: 12px;
-  padding: 4px 8px;
-}
-.ld-basemap-menu {
-  font-size: 12px;
-  max-height: 260px;
+.ld-rail {
   overflow-y: auto;
-  width: 100%;
+  border-right: 1px solid #e9ecef;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
-.ld-basemap-menu .dropdown-item img {
-  flex-shrink: 0;
+.ld-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: #495057;
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 5px 7px;
+  text-align: left;
+}
+.ld-rail-item:hover {
+  background: #f0f1f3;
+}
+.ld-rail-item:focus-visible {
+  outline: 2px solid #86b7fe;
+  outline-offset: -2px;
+}
+.ld-rail-item[aria-current="true"] {
+  background: #6c757d;
+  color: #fff;
+}
+.ld-rail-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ld-rail-sub {
+  display: block;
+  font-size: 10.5px;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ld-rail-count {
+  flex: none;
+  min-width: 1.5em;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e2e5e9;
+  color: #495057;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.ld-rail-count:empty {
+  display: none;
+}
+.ld-rail-item[aria-current="true"] .ld-rail-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+.ld-rail-sep {
+  height: 1px;
+  background: #e9ecef;
+  margin: 4px 2px;
+  flex: none;
+}
+.ld-pane {
+  overflow-y: auto;
+  min-width: 0;
+  padding: 8px;
+}
+.ld-pane-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #555;
+  margin-bottom: 6px;
+}
+.ld-empty {
+  font-size: 12px;
+  color: #6c757d;
+  padding: 4px 0;
 }
 
-/* ── Three-column group grid ── */
+/* Narrow map: the rail becomes a scrolling row of chips above the list */
+.ld-narrow .ld-body {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+.ld-narrow .ld-rail {
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-right: 0;
+  border-bottom: 1px solid #e9ecef;
+  gap: 4px;
+}
+.ld-narrow .ld-rail-item {
+  flex: none;
+  width: auto;
+  white-space: nowrap;
+  border: 1px solid #ced4da;
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.ld-narrow .ld-rail-sep,
+.ld-narrow .ld-rail-sub {
+  display: none;
+}
+
+/* ── Layer list: one column, a cell per group ── */
 .ld-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px 10px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 .ld-grid-cell {
   min-width: 0;
@@ -5045,22 +5155,25 @@ body.dark-mode .ops-log-status-details {
   background: #1f3d29;
 }
 
-/* ── Basemap accordion with thumbnail grid ── */
+/* ── Basemap section: thumbnail tiles ── */
 
-.ld-bases-grid {
+.ld-bases {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
   gap: 6px;
+  margin-bottom: 8px;
 }
 
 .ld-base-tile {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  cursor: pointer;
+  align-items: stretch;
+  gap: 3px;
   border-radius: 6px;
   padding: 3px;
   border: 2px solid transparent;
+  background: none;
+  color: #444;
   transition: border-color 0.15s;
 }
 
@@ -5068,29 +5181,26 @@ body.dark-mode .ops-log-status-details {
   border-color: #90caf9;
 }
 
+.ld-base-tile:focus-visible {
+  outline: 2px solid #86b7fe;
+}
+
 .ld-base-tile.active {
   border-color: #1a73e8;
 }
 
 .ld-base-thumb {
-  width: 48px;
-  height: 48px;
+  width: 100%;
+  height: 60px;
   border-radius: 4px;
-  background-size: cover;
-  background-position: center;
+  object-fit: cover;
   background-color: #e0e0e0;
 }
 
 .ld-base-name {
-  font-size: 9px;
+  font-size: 11px;
+  line-height: 1.2;
   text-align: center;
-  margin-top: 2px;
-  line-height: 1.1;
-  color: #444;
-  max-width: 54px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* header layout: bar + small hide button */

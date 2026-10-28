@@ -43,19 +43,21 @@ Measure distances between multiple points. Several separate measurements can be 
 
 Layers control what is shown on the map. Open the Layers menu with the layer button <img class="icon" src="images/icon-layers.png" alt="Layers" height="20"> in the top left of the map.
 
+The menu has a list of sections down the left: **Basemap**, **On the map** (every layer that's turned on), then each group of overlays. Click a section to show its layers. A number beside a group shows how many of its layers are on. The menu fits itself to the map and stops above the Legend. On a narrow map the sections become a row of buttons along the top.
+
 ### Basemap
 
 The basemap is the underlying street or imagery map. The default is **Esri Topographic**; basemaps are available from Esri, Spatial NSW and SIX Maps, covering both street and satellite imagery.
 
 How far you can zoom in depends on the basemap. The Esri basemaps go down to street level, and the Spatial NSW and SIX Maps basemaps one level further. Esri Dark has less detail, so at the closest zoom levels it shows its most detailed map enlarged, which looks blurry.
 
-To change basemap, open the **Layers** menu, open the basemap dropdown and pick one.
+To change basemap, open the **Layers** menu, click **Basemap** at the top of the list and click a basemap's picture. The section shows the current basemap's name under **Basemap**.
 
 ![Basemap selector](images/basemap.png)
 
 ### Overlays
 
-Overlays sit on top of the basemap to add information. Toggle them on and off in the Layers menu, or use the search bar at the top to find a layer. The <img class="icon" src="images/icon-layer-order.png" alt="Layer order and transparency" height="20"> button next to the search bar opens the [Map layers](configuration.md#map-layers) settings, where you can move an overlay above or below other layers or make it see-through. Anything typed in the search bar is carried across.
+Overlays sit on top of the basemap to add information. Pick a group in the Layers menu and toggle its overlays on and off, or use the search bar at the top to find a layer in any group (or a basemap). Click **On the map** to see everything that's on and turn layers off. A layer you turn off stays in that list until you pick another section, so you can turn it back on. The <img class="icon" src="images/icon-layer-order.png" alt="Layer order and transparency" height="20"> button next to the search bar opens the [Map layers](configuration.md#map-layers) settings, where you can move an overlay above or below other layers or make it see-through. Anything typed in the search bar is carried across.
 
 ![Overlay layers](images/overlays.png)
 

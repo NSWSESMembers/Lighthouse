@@ -3029,20 +3029,16 @@ function VM() {
             <i class="fas fa-sliders-h"></i>
           </button>
         </div>
-        <!-- Basemap dropdown (spans full width) -->
-        <div class="ld-basemap-row">
-          <div class="dropdown w-100">
-            <button class="btn btn-sm btn-outline-secondary w-100 text-start d-flex align-items-center ld-basemap-btn"
-                    type="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <i class="fas fa-map me-2"></i>
-              <span class="ld-basemap-label">Basemap</span>
-              <i class="fas fa-caret-down ms-auto"></i>
-            </button>
-            <ul class="dropdown-menu ld-basemap-menu shadow"></ul>
+        <!-- Section rail (Basemap, On the map, then each overlay group) and the selected section -->
+        <div class="ld-body">
+          <nav class="ld-rail" aria-label="Layer groups"></nav>
+          <div class="ld-pane">
+            <div class="ld-pane-title"></div>
+            <div class="ld-bases"></div>
+            <div class="ld-grid"></div>
+            <div class="ld-empty" hidden></div>
           </div>
         </div>
-        <!-- Two-column grid of groups -->
-        <div class="ld-grid"></div>
       </div>
     `;
 
@@ -3067,34 +3063,35 @@ function VM() {
                 "nsw-imagery": "https://maps.six.nsw.gov.au/arcgis/rest/services/public/NSW_Imagery/MapServer/tile/16/39312/60258",
             };
 
-            const basemapLabel = c.querySelector(".ld-basemap-label");
-            const basemapMenu = c.querySelector(".ld-basemap-menu");
+            this._basemapNames = basemapNames;
 
-            const currentBaseName = basemapNames.find(b => b.key === this._baseKey)?.name || "Basemap";
-            basemapLabel.textContent = currentBaseName;
-
+            // Basemap section: a thumbnail tile per basemap
+            const bases = c.querySelector(".ld-bases");
             basemapNames.forEach(({ name, key }) => {
-                const li = document.createElement("li");
                 const thumb = basemapThumbs[key] || basemapThumbs["Topographic"];
-                li.innerHTML = `<button type="button" class="dropdown-item d-flex align-items-center gap-2 ${key === this._baseKey ? "active" : ""}">
-                    <img src="${thumb}" width="28" height="28" style="border-radius:3px;object-fit:cover;" alt="" />
-                    <span>${name}</span>
-                </button>`;
-                const btn = li.querySelector("button");
-                btn.addEventListener("click", () => {
+                const tile = document.createElement("button");
+                tile.type = "button";
+                tile.className = "ld-base-tile";
+                tile.dataset.base = key;
+                tile.dataset.label = name;
+                tile.innerHTML = `<img class="ld-base-thumb" src="${thumb}" alt="" loading="lazy" />
+                    <span class="ld-base-name">${name}</span>`;
+                tile.addEventListener("click", () => {
                     if (key === this._baseKey) return;
                     this._setBasemap(key, map);
                     this._baseKey = key;
                     localStorage.setItem("map.base", key);
-                    basemapLabel.textContent = name;
-                    basemapMenu.querySelectorAll(".dropdown-item").forEach(d => d.classList.remove("active"));
-                    btn.classList.add("active");
+                    this._markBasemap(key);
                 });
-                basemapMenu.appendChild(li);
+                bases.appendChild(tile);
             });
+
+            const storedSection = localStorage.getItem("layers.section");
+            this._section = storedSection || "__on";
 
             if (!this._currentBase) this._setBasemap(this._baseKey, map);
 
+            this._searchInput = c.querySelector(".ld-search-input");
             this._renderOverlays();
 
             // Repaint a row + the button badge whenever a layer's load status changes
@@ -3111,49 +3108,37 @@ function VM() {
                 self.config.openLayerStackSettings(searchInput.value);
             });
             this._searchFilter = (query) => {
-                const q = query.toLowerCase().trim();
-                const grid = c.querySelector(".ld-grid");
-                const cells = grid.querySelectorAll(".ld-grid-cell");
-
-                cells.forEach(cell => {
-                    const buttons = cell.querySelectorAll(".ld-overlay-btn");
-                    let anyVisible = false;
-
-                    buttons.forEach(btn => {
-                        let shouldShow = !q; // Show all if no query
-
-                        if (q) {
-                            // Extract label from the span.me-2 text content
-                            const labelSpan = btn.querySelector("span.me-2");
-                            const label = labelSpan ? labelSpan.textContent.trim().toLowerCase() : "";
-                            shouldShow = label.includes(q);
-                        }
-
-                        btn.style.setProperty("display", shouldShow ? "" : "none", "important");
-                        if (shouldShow) anyVisible = true;
-                    });
-
-                    // Show cell only if at least one button is visible
-                    cell.style.setProperty("display", anyVisible ? "" : "none", "important");
-                });
+                searchInput.value = query;
+                this._applyView();
             };
 
-            searchInput.addEventListener("input", (e) => {
-                this._searchFilter(e.target.value);
+            searchInput.addEventListener("input", () => this._applyView());
+
+            // Keep the rail counts in step as rows are toggled
+            c.querySelector(".ld-grid").addEventListener("click", (ev) => {
+                if (ev.target.closest(".ld-overlay-btn")) this._updateCounts();
             });
 
             // --- Toggle button ---
             const toggleBtn = c.querySelector(".ld-toggle-btn");
             const panel = c.querySelector(".ld-panel");
 
+            // Size the panel to the map, not the window: stop short of the
+            // map's right edge, and above the Legend in the bottom corner.
             const fitPanel = () => {
                 requestAnimationFrame(() => {
+                    if (panel.classList.contains("d-none")) return;
+                    const mapRect = map.getContainer().getBoundingClientRect();
                     const rect = panel.getBoundingClientRect();
-                    const avail = window.innerHeight - rect.top - 20; // 20px bottom margin
-                    panel.style.maxHeight = Math.max(avail, 160) + "px";
+                    const width = Math.max(Math.min(560, mapRect.right - rect.left - 12), 260);
+                    panel.style.width = width + "px";
+                    panel.classList.toggle("ld-narrow", width < 400);
+                    const avail = mapRect.bottom - rect.top - 56;
+                    panel.style.height = Math.max(Math.min(avail, 480), 200) + "px";
                 });
             };
             this._fitPanel = fitPanel;
+            map.on("resize", fitPanel);
 
             L.DomEvent.on(toggleBtn, "click", (ev) => {
                 L.DomEvent.stop(ev);
@@ -3214,7 +3199,7 @@ function VM() {
 
             const groupTitle = (k) => (k && String(k).trim() ? k : "Other");
 
-            // --- Build two-column grid of always-visible groups ---
+            // --- Build a cell per group; _applyView shows the selected section ---
             const grid = c.querySelector(".ld-grid");
             grid.innerHTML = "";
             this._statusRows = new Map(); // polling layer key -> row button
@@ -3222,6 +3207,7 @@ function VM() {
             groups.forEach((defs, groupKey) => {
                 const cell = document.createElement("div");
                 cell.className = "ld-grid-cell";
+                cell.dataset.group = groupTitle(groupKey);
 
                 // Group header (static label)
                 const header = document.createElement("div");
@@ -3328,6 +3314,129 @@ function VM() {
                 cell.appendChild(body);
                 grid.appendChild(cell);
             });
+
+            this._renderRail([...groups.keys()].map(groupTitle));
+            this._markBasemap(this._baseKey);
+            this._applyView();
+        },
+
+        /** Rail of sections: Basemap, On the map, then one per overlay group. */
+        _renderRail(groupNames) {
+            const rail = this._container.querySelector(".ld-rail");
+            const item = (section, label, icon = "") => `
+                <button type="button" class="ld-rail-item" data-section="${section}">
+                    ${icon ? `<i class="fas ${icon} fa-fw"></i>` : ""}
+                    <span class="ld-rail-label">${label}${section === "__base" ? `<span class="ld-rail-sub"></span>` : ""}</span>
+                    <span class="ld-rail-count"></span>
+                </button>`;
+            rail.innerHTML = item("__base", "Basemap", "fa-map")
+                + item("__on", "On the map", "fa-eye")
+                + `<div class="ld-rail-sep"></div>`
+                + groupNames.map((g) => item(g, g)).join("");
+            rail.querySelectorAll(".ld-rail-item").forEach((btn, i) => {
+                // dataset holds the unescaped group name; the template only used it for markup
+                btn.dataset.section = i < 2 ? btn.dataset.section : groupNames[i - 2];
+                btn.addEventListener("click", () => {
+                    this._section = btn.dataset.section;
+                    localStorage.setItem("layers.section", this._section);
+                    this._searchInput.value = "";
+                    this._applyView();
+                    this._container.querySelector(".ld-pane").scrollTop = 0;
+                });
+            });
+            if (this._section !== "__base" && this._section !== "__on" && !groupNames.includes(this._section)) {
+                this._section = "__on";
+            }
+        },
+
+        /** Show the rows for the search query, or else for the selected section. */
+        _applyView() {
+            const c = this._container;
+            const q = this._searchInput.value.toLowerCase().trim();
+            const section = this._section;
+            const show = (el, visible) => el.style.setProperty("display", visible ? "" : "none", "important");
+            let any = false;
+
+            const tiles = c.querySelectorAll(".ld-base-tile");
+            let anyTile = false;
+            tiles.forEach((tile) => {
+                const visible = q ? tile.dataset.label.toLowerCase().includes(q) : section === "__base";
+                show(tile, visible);
+                anyTile ||= visible;
+            });
+            show(c.querySelector(".ld-bases"), anyTile);
+            any ||= anyTile;
+
+            c.querySelectorAll(".ld-grid-cell").forEach((cell) => {
+                let anyRow = false;
+                cell.querySelectorAll(".ld-overlay-btn").forEach((btn) => {
+                    const label = (btn.querySelector("span.me-2")?.textContent || "").trim().toLowerCase();
+                    const visible = q ? label.includes(q)
+                        : section === "__on" ? btn.classList.contains("active")
+                            : cell.dataset.group === section;
+                    show(btn, visible);
+                    anyRow ||= visible;
+                });
+                show(cell, anyRow);
+                // Group headers label mixed lists; one group's own section has its name as the title
+                show(cell.querySelector(".ld-group-header"), !!q || section === "__on");
+                any ||= anyRow;
+            });
+
+            const title = q ? "Search results"
+                : section === "__base" ? "Basemap"
+                    : section === "__on" ? "On the map" : section;
+            c.querySelector(".ld-pane-title").textContent = title;
+
+            const empty = c.querySelector(".ld-empty");
+            empty.textContent = q ? `No layers match "${this._searchInput.value.trim()}".`
+                : "No layers are on. Pick a group to turn one on.";
+            empty.hidden = any;
+
+            const rail = c.querySelector(".ld-rail");
+            const narrow = c.querySelector(".ld-panel").classList.contains("ld-narrow");
+            c.querySelectorAll(".ld-rail-item").forEach((btn) => {
+                const current = !q && btn.dataset.section === section;
+                btn.setAttribute("aria-current", current ? "true" : "false");
+                // On a narrow map the rail is a scrolling row: keep the selected chip in view
+                if (current && narrow && rail.scrollWidth > rail.clientWidth) {
+                    const left = btn.offsetLeft - rail.offsetLeft;
+                    if (left < rail.scrollLeft || left + btn.offsetWidth > rail.scrollLeft + rail.clientWidth) {
+                        rail.scrollLeft = left - 8;
+                    }
+                }
+            });
+            this._updateCounts();
+        },
+
+        /** Number of layers on, per group and in total, on the rail. */
+        _updateCounts() {
+            const c = this._container;
+            const counts = new Map();
+            let total = 0;
+            c.querySelectorAll(".ld-grid-cell").forEach((cell) => {
+                const n = cell.querySelectorAll(".ld-overlay-btn.active").length;
+                counts.set(cell.dataset.group, n);
+                total += n;
+            });
+            c.querySelectorAll(".ld-rail-item").forEach((btn) => {
+                const s = btn.dataset.section;
+                const n = s === "__on" ? total : counts.get(s) || 0;
+                const el = btn.querySelector(".ld-rail-count");
+                if (el) el.textContent = s === "__base" || !n ? "" : String(n);
+            });
+        },
+
+        /** Mark the current basemap's tile and show its name on the rail. */
+        _markBasemap(key) {
+            const c = this._container;
+            if (!c) return;
+            c.querySelectorAll(".ld-base-tile").forEach((tile) => {
+                tile.classList.toggle("active", tile.dataset.base === key);
+                tile.setAttribute("aria-pressed", tile.dataset.base === key ? "true" : "false");
+            });
+            const sub = c.querySelector(".ld-rail-sub");
+            if (sub) sub.textContent = this._basemapNames.find((b) => b.key === key)?.name || "";
         },
 
 
