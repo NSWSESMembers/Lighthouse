@@ -62,6 +62,11 @@ export function installMapContextMenu({
     // Layer for reverse-geocode markers (cleared/replaced each time)
     const geocodeResultsLayer = L.layerGroup().addTo(map);
     const geocodeClickedPointLayer = L.layerGroup().addTo(map);
+    // A click anywhere on the map clears the last reverse-geocode result.
+    map.on('click', () => {
+        geocodeResultsLayer.clearLayers();
+        geocodeClickedPointLayer.clearLayers();
+    });
 
     const hideMenu = () => {
         ctxMenu.style.display = "none";
@@ -124,13 +129,6 @@ export function installMapContextMenu({
     btnGeocode.addEventListener("click", async () => {
         hideMenu();
         if (!lastLatLng) return;
-
-        // one-time setup
-        map.on('click', () => {
-            geocodeResultsLayer.clearLayers();
-            geocodeClickedPointLayer.clearLayers();
-        });
-
 
         // clear previous markers
         geocodeResultsLayer.clearLayers();

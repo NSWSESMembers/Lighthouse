@@ -68,6 +68,11 @@ The home page shows the first three `##` entries, so keep the title short.
 - Task names keep any *#* in them (it used to be removed), and a member with no sign-off time gets the task's end time instead of a nonsense number of hours.
 - If Beacon can't be reached, or no tasks match, the page now says so, instead of doing nothing.
 
+### LAD
+
+- **Incidents no longer get stuck in the incident list.** In a tab left open for a long time, incidents that had been completed could stay in the list with their old status, and some open incidents went missing from the map. The list now keeps up with Beacon, and every incident in it has its marker.
+- **LAD no longer slowly fills up memory.** It used to keep every incident it had seen since it opened. An incident is now let go once it has been outside your filters for 10 minutes, unless it's starred, open, or tasked to a team in your team list.
+
 ## LAD arrival times, overlay status and street zoom
 
 *26 October 2026 · [v2026.10.26](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.26)*
