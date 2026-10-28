@@ -37,7 +37,6 @@ whenLighthouseIsReady(function () {
 
 var assetMap; //global map holder
 var assetMapRenderAtTime;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 var assetMapRenderTimer;
 
 // Cache of the most recent getJobResponseSummary() result, so the create-team
@@ -1311,7 +1310,7 @@ function renderNearestAssets({ teamFilter, activeOnly, resultsToDisplay, cb }) {
 //the asset location buttons
 
 function assetLocationMapOff() {
-  clearInterval(assetMapRenderAtTime);
+  clearInterval(assetMapRenderTimer);
   $('#nearest-asset-box').hide();
   $('#nearest-asset-table tbody').empty();
   $('#nearest-asset-geoerror').hide();
