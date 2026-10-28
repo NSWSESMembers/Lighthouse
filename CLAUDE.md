@@ -51,7 +51,11 @@ await browser.close();
 ```
 
 `launchLad` options: `headless`, `viewport`, `now`, `config` (pre-seeded
-`lh-taskingConfig`), `remoteTab`, `verbose`, `scale`.
+`lh-taskingConfig`), `remoteTab`, `verbose`, `scale`, `jobCount` (scale the
+fake incidents up, for benchmarks).
+
+Benchmark code changes against their base with `npm run lad:bench` (details
+and the base-worktree recipe in `scripts/lad-docs/README.md`).
 
 ## Running Incident Statistics without Beacon: `scripts/stats-docs`
 

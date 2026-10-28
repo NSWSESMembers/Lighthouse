@@ -2466,6 +2466,7 @@ body.dark-mode .hq-coverage-watermark.is-visible {
 /* Ensure the embedded SVG is a tight, block-level box */
 .leaflet-marker-icon.job-svg-marker > svg {
   display: block; /* no inline baseline */
+  position: relative; /* paints over the marching ring, under the pulse ring */
   overflow: visible; /* avoid stroke clipping */
   shape-rendering: geometricPrecision;
   vector-effect: non-scaling-stroke; /* keeps stroke width stable if scaled */
@@ -2544,16 +2545,11 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   stroke-width: 1.5;
 }
 
-/* PULSE RING (separate follower marker using L.divIcon) */
-.pulse-ring-icon {
-  pointer-events: none; /* clicks go to the base marker */
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  line-height: 0;
-  font-size: 0;
-  will-change: transform;
+/* New pulse ring / Active marching ring — drawn inside the job marker's own
+   icon (see withRings() in job_icon.js), overflowing it, centred on the shape. */
+.job-marker-ring {
+  position: absolute;
+  pointer-events: none; /* clicks go to the marker shape */
 }
 
 .pulse-ring {
@@ -2593,19 +2589,9 @@ body.dark-mode .hq-coverage-watermark.is-visible {
   }
 }
 
-/* STATUS RING — the Active "marching ring" (separate follower marker).
+/* STATUS RING — the Active "marching ring".
    A dashed circle whose <g> rotates, which reads as marching ants and is
    compositor-only (cheap) unlike animating stroke-dashoffset. */
-.status-ring-icon {
-  pointer-events: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  line-height: 0;
-  font-size: 0;
-}
-
 .status-ring-spin {
   animation: status-ring-spin 9s linear infinite;
 }

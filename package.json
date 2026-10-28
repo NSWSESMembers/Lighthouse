@@ -25,6 +25,7 @@
     "lad:demo": "node scripts/lad-docs/demo.mjs",
     "lad:shots": "node scripts/lad-docs/capture.mjs",
     "lad:samples": "node scripts/lad-docs/fetch-samples.mjs",
+    "lad:bench": "node scripts/lad-docs/bench.mjs",
     "stats:demo": "node scripts/stats-docs/demo.mjs",
     "stats:shots": "node scripts/stats-docs/capture.mjs",
     "stats:check": "node scripts/stats-docs/check.mjs",

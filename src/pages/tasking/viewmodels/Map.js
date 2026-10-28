@@ -252,23 +252,15 @@ export function MapVM(Lmap, root) {
   // Track whether clustering is currently active
   self.clusteringEnabled = true;
 
-  // Separate plain layers for the pulse ring (New) and the marching ring
-  // (Active) – not clustered, follow their marker, visibility kept in sync
-  // by _syncPulseRings.
-  self.jobPulseLayer = L.layerGroup().addTo(self.map);
-  self.jobStatusRingLayer = L.layerGroup().addTo(self.map);
-
   /**
    * Show/hide every incident layer together: the active marker layer
-   * (cluster group or unclustered), the standalone rescue layer, and the
-   * pulse/status rings that sit on their own layers outside the cluster.
+   * (cluster group or unclustered) and the standalone rescue layer.
    */
   self.setIncidentsVisible = function (visible) {
     const markerLayer = self.clusteringEnabled ? self.jobClusterGroup : self.unclusteredJobLayer;
-    const layers = [markerLayer, self.rescueJobLayer, self.jobPulseLayer, self.jobStatusRingLayer];
+    const layers = [markerLayer, self.rescueJobLayer];
     if (visible) {
       layers.forEach(l => { if (!self.map.hasLayer(l)) l.addTo(self.map); });
-      self._syncPulseRings();
     } else {
       self.map.removeLayer(self.jobClusterGroup);
       self.map.removeLayer(self.unclusteredJobLayer);
@@ -314,7 +306,6 @@ export function MapVM(Lmap, root) {
         }
       }
     });
-    self._syncPulseRings();
   };
 
   /** "Spread out overlapping asset markers" config option. */
@@ -389,7 +380,6 @@ export function MapVM(Lmap, root) {
     // Re-add — clearLayers rebuilt grid structures with the new radius so
     // addLayers will cluster correctly.
     if (markers.length) self.jobClusterGroup.addLayers(markers);
-    self._syncPulseRings();
   };
 
   /**
@@ -435,8 +425,6 @@ export function MapVM(Lmap, root) {
         self.unclusteredJobLayer.addTo(self.map);
       }
     }
-
-    self._syncPulseRings();
   };
 
   /**
@@ -963,11 +951,16 @@ export function MapVM(Lmap, root) {
     return vm;
   };
 
-  self.destroyJobPopupVM = (job) => {
-    const vm = self.jobPopups.get(job.id());
+  // Called when a job's marker is removed, so the cached VM (which holds the
+  // Job) doesn't outlive it. Only releases the VM's own subscriptions: the
+  // drawn route / crow-flies line are shared map state, cleared when the
+  // popup that drew them closes (removing the marker closes it).
+  self.destroyJobPopupVM = (jobOrId) => {
+    const id = typeof jobOrId === 'number' ? jobOrId : jobOrId?.id?.();
+    const vm = self.jobPopups.get(id);
     if (vm) {
-      vm.dispose();
-      self.jobPopups.delete(job.id());
+      vm.releaseRouteSubs();
+      self.jobPopups.delete(id);
     }
   };
 
@@ -1277,44 +1270,6 @@ export function MapVM(Lmap, root) {
     self.clearRoutes();
     self.clearJobAssetBullseye();
   };
-
-  // Ring visibility management for clustering.  The pulse ring (New) and the
-  // marching ring (Active) are only shown while their marker is individually
-  // visible — hidden while it's inside a cluster, shown again on spiderfy /
-  // unclustered / zoom-in.  Both rings follow the same rule.
-  self._syncPulseRings = function () {
-    const setVisible = (ring, layer, visible) => {
-      if (!ring) return;
-      const has = layer.hasLayer(ring);
-      if (visible && !has) layer.addLayer(ring);
-      else if (!visible && has) layer.removeLayer(ring);
-    };
-
-    self.jobMarkerIndex.forEach((marker) => {
-      if (!marker._pulseRing && !marker._statusRing) return;
-
-      let visible;
-      if (self.rescueJobLayer.hasLayer(marker)) {
-        visible = true;
-      } else if (!self.clusteringEnabled || self.unclusteredJobLayer.hasLayer(marker)) {
-        visible = true;
-      } else {
-        try {
-          visible = self.jobClusterGroup.getVisibleParent(marker) === marker;
-        } catch (err) {
-          visible = false; // on error, hide to be safe
-        }
-      }
-
-      setVisible(marker._pulseRing, self.jobPulseLayer, visible);
-      setVisible(marker._statusRing, self.jobStatusRingLayer, visible);
-    });
-  };
-
-  self.jobClusterGroup.on('animationend', self._syncPulseRings);
-  self.jobClusterGroup.on('spiderfied', self._syncPulseRings);
-  self.jobClusterGroup.on('unspiderfied', self._syncPulseRings);
-  self.map.on('zoomend', self._syncPulseRings);
 
   self.map.on('layeradd', (ev) => {
     const layer = ev.layer;

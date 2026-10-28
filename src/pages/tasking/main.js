@@ -53,6 +53,8 @@ import { computeMatchedAssetsForTeam } from './utils/assetTeamMatching.js';
 import { compareByKey, compareJobsByKey } from './utils/tableSort.js';
 import { buildJobSuggestionPool, buildJobSearchSuggestions, filterJobsBySearchTerm } from './utils/searchMatching.js';
 import { createMarkerBatcher } from './utils/markerBatcher.js';
+import { subscribeMembership } from './utils/arrayChanges.js';
+import { selectJobsToDrop } from './utils/jobSweep.js';
 import { mapJobNotificationToJobJson, withJobReceivedFallback } from './utils/pushNotificationMapping.js';
 import { buildSmsRecipientsFromTeam, buildSmsPrefillFromTasking, buildSmsPrefillFromJob } from './utils/smsHelpers.js';
 import { decodeJwtSub } from './utils/jwt.js';
@@ -2132,20 +2134,27 @@ function VM() {
         });
     })
 
+    // The handlers below track what joined/left each filtered list with
+    // subscribeMembership, not KO's arrayChange diffs, which can report a
+    // still-listed item as deleted -- see utils/arrayChanges.js.
+
     //fetch tasking if a team is added
-    self.filteredTeams.subscribe((changes) => {
-        changes.forEach(ch => {
-            if (ch.status === 'added') {
-                console.log("Team visibly filtered in: ", ch.value.callsign());
-                ch.value.isFilteredIn(true);
-            } else if (ch.status === 'deleted') {
-                if (ch.value.expanded() || ch.value.popUpIsOpen()) {
-                    showAlert("The team you were viewing has been refreshed and filtered out based on the current filters", "warning", 4000);
-                }
-                ch.value.isFilteredIn(false);
+    subscribeMembership(self.filteredTeams, ({ added, removed }) => {
+        removed.forEach(team => {
+            if (team.expanded() || team.popUpIsOpen()) {
+                showAlert("The team you were viewing has been refreshed and filtered out based on the current filters", "warning", 4000);
+            }
+            team.isFilteredIn(false);
+        });
+        added.forEach(team => {
+            console.log("Team visibly filtered in: ", team.callsign());
+            team.isFilteredIn(true);
+            if (team.taskingsDropped) {
+                team.taskingsDropped = false;
+                team.fetchTasking({ force: true });
             }
         });
-    }, null, "arrayChange");
+    });
 
 
     // --- Debounced initial-load batch for newly filtered-in jobs ---
@@ -2181,69 +2190,56 @@ function VM() {
     }
 
     // automatically refresh markers when jobs change
-    self.filteredJobsAgainstConfig.subscribe((changes) => {
+    subscribeMembership(self.filteredJobsAgainstConfig, ({ added, removed }) => {
         // Bail early if incidents are not visible – no need to attach markers
         if (!self.incidentsVisible()) {
             return;
         }
-        changes.forEach(ch => {
-            if (ch.status === 'added') {
-                scheduleInitialTaskingFetch(ch.value);
-            } else if (ch.status === 'deleted') {
-                if (ch.value.expanded() || ch.value.popUpIsOpen()) {
-                    showAlert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.", "warning", 4000);
-                }
+        removed.forEach(job => {
+            if (job.expanded() || job.popUpIsOpen()) {
+                showAlert("The job you were viewing has been refreshed and filtered out based on the current filters. It has probably been closed or completed.", "warning", 4000);
             }
         });
-    }, null, 'arrayChange');
+        added.forEach(job => scheduleInitialTaskingFetch(job));
+    });
 
     //filtered by UI or Staring
-    self.filteredJobs.subscribe((changes) => {
-        changes.forEach(ch => {
-            if (ch.status === 'added') {
-                jobMarkerBatcher.scheduleAdd(ch.value);
-                ch.value.isFilteredIn(true);
-            } else if (ch.status === 'deleted') {
-                jobMarkerBatcher.scheduleRemove(ch.value);
-                ch.value.isFilteredIn(false);
-            }
+    subscribeMembership(self.filteredJobs, ({ added, removed }) => {
+        removed.forEach(job => {
+            jobMarkerBatcher.scheduleRemove(job);
+            job.isFilteredIn(false);
         });
-    }, null, 'arrayChange');
+        added.forEach(job => {
+            jobMarkerBatcher.scheduleAdd(job);
+            job.isFilteredIn(true);
+        });
+    });
 
     // Maintain markers only for currently filtered assets
-    self.filteredTrackableAssets.subscribe((changes) => {
+    subscribeMembership(self.filteredTrackableAssets, ({ added, removed }) => {
         // bail fast if the layer is not currently visible
         if (!self.mapVM || !map.hasLayer(self.mapVM.assetLayer)) {
             return;
         }
-        changes.forEach(ch => {
-            const a = ch.value;
-            if (ch.status === 'added') {
-                console.log("Attaching marker for asset filtered in:", a.name());
-                matchedAssetMarkerBatcher.scheduleAdd(a);
-            } else if (ch.status === 'deleted') {
-                console.log("Asset filtered out:", a.name());
-                //console.log("Detaching marker for asset no longer filtered in:", a.id());
-                // keep the asset in registry, but remove map marker + subs
-                matchedAssetMarkerBatcher.scheduleRemove(a);
-            }
+        // keep the asset in registry, but remove map marker + subs
+        removed.forEach(a => {
+            console.log("Asset filtered out:", a.name());
+            matchedAssetMarkerBatcher.scheduleRemove(a);
         });
-    }, null, "arrayChange");
+        added.forEach(a => {
+            console.log("Attaching marker for asset filtered in:", a.name());
+            matchedAssetMarkerBatcher.scheduleAdd(a);
+        });
+    });
 
-    self.unmatchedTrackableAssets.subscribe((changes) => {
+    subscribeMembership(self.unmatchedTrackableAssets, ({ added, removed }) => {
         // bail fast if the layer is not currently visible
         if (!self.mapVM || !map.hasLayer(self.mapVM.unmatchedAssetLayer)) {
             return;
         }
-        changes.forEach(ch => {
-            const a = ch.value;
-            if (ch.status === 'added') {
-                unmatchedAssetMarkerBatcher.scheduleAdd(a);
-            } else if (ch.status === 'deleted') {
-                unmatchedAssetMarkerBatcher.scheduleRemove(a);
-            }
-        });
-    }, null, "arrayChange");
+        removed.forEach(a => unmatchedAssetMarkerBatcher.scheduleRemove(a));
+        added.forEach(a => unmatchedAssetMarkerBatcher.scheduleAdd(a));
+    });
 
     // --- Matched asset layer: populate / tear-down on toggle ---
     map.on('layeradd', (ev) => {
@@ -2853,6 +2849,50 @@ function VM() {
 
         console.log("Jobs/Teams refresh timer started:", interval, "ms");
     }
+
+    // ---------------- DROP INCIDENTS NOBODY NEEDS -----------------
+    // Polling and push only ever add incidents; one that completes (or
+    // otherwise leaves the filters) just stops being shown. Drop it -- with
+    // its taskings -- once it has been out for a while and nothing on
+    // screen still refers to it. See utils/jobSweep.js.
+
+    const jobsOutSince = new Map();
+
+    function jobStillNeeded(job) {
+        if (self.jobMatchesConfigFilters(job)) return true;
+        if (self.isIncidentPinned(job.id())) return true;
+        if (job.marker || job.expanded() || job.popUpIsOpen()) return true;
+        if (self.selectedJob() === job || self.mapVM?.openPopup()?.ref === job) return true;
+        // A team on the board lists its taskings, completed ones included.
+        return job.taskings().some(t => t.team?.isFilteredIn?.());
+    }
+
+    self.dropUnneededJobs = function () {
+        const drop = selectJobsToDrop(self.jobs(), { now: Date.now(), outSince: jobsOutSince, keep: jobStillNeeded });
+        if (!drop.length) return;
+
+        const dropSet = new Set(drop);
+        const deadTaskings = new Set();
+        drop.forEach(job => {
+            self.jobsById.delete(job.id());
+            self.mapVM?.destroyJobPopupVM(job);
+            job.taskings().forEach(t => {
+                deadTaskings.add(t);
+                self.taskingsById.delete(t.id());
+                const team = t.team;
+                if (team?.taskings) {
+                    team.taskings.remove(t);
+                    // Its list is now partial: refetch if it's listed again.
+                    team.taskingsDropped = true;
+                }
+            });
+        });
+        self.jobs(self.jobs().filter(j => !dropSet.has(j)));
+        if (deadTaskings.size) self.taskings(self.taskings().filter(t => !deadTaskings.has(t)));
+        console.log(`[sweep] Dropped ${drop.length} incidents and ${deadTaskings.size} taskings no longer needed`);
+    };
+
+    setInterval(() => self.dropUnneededJobs(), 5 * 60 * 1000);
 
 
 

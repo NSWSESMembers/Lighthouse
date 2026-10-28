@@ -68,9 +68,12 @@ The home page shows the first three `##` entries, so keep the title short.
 - Task names keep any *#* in them (it used to be removed), and a member with no sign-off time gets the task's end time instead of a nonsense number of hours.
 - If Beacon can't be reached, or no tasks match, the page now says so, instead of doing nothing.
 
-### LAD map layers
+### LAD
 
 - **Reorder and fade any map layer.** The new **Map layers** tab of the **Configuration** screen lists every map layer, each overlay on its own, instead of the five fixed groups that were under **Map markers**. Drag a layer or use the arrows to move it, use the slider to make it see-through (BOM Rain Radar Still now starts at 50%, so roads and boundaries show through), and turn it on or off with its switch. Search the list, or show only the layers on the map. Layers showing now are marked **On map**. To get there from the map, use the new button next to the search bar in the **Layers** menu. See [Map Layers](https://lighthouse.ses.nsw.gov.au/guides/lad/configuration.html#map-layers).
+- **Performance improvements** for LAD left open for a long time.
+- **The pulsing ring on New incidents and the marching ring on Active incidents now move with their marker.** They used to stay behind for a moment when markers gathered into a cluster or spread out of one, and could go missing until the next zoom. See [Incident Clustering](https://lighthouse.ses.nsw.gov.au/guides/lad/situation-map.html#incident-clustering).
+- With clustering turned off, an incident that drops off the list now disappears from the map too.
 
 ## LAD arrival times, overlay status and street zoom
 

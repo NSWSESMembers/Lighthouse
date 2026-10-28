@@ -364,7 +364,7 @@ export function registerRainRadarLayer(vm, map) {
       control.addTo(map);
 
       // Clean up control + timers when the layerGroup is removed from the map
-      layerGroup.on("remove", cleanup);
+      layerGroup.off("remove", cleanup).on("remove", cleanup);
 
       // Initial frames + periodic refresh of frame list
       applyFrames(layerGroup, data);
