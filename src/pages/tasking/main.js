@@ -2965,10 +2965,12 @@ function VM() {
     registerNSWDeclaredDamsLayer(self);
     registerBOMLandWarningsLayer(self);
     registerBOMRainfallLayer(self, sourceUrl);
+    // Tile overlays join the bottom of the default layer order as they
+    // register, so registering storms first draws them over the radar.
+    registerBOMThunderstormTrackingLayer(self, sourceUrl);
     registerBOMRadarLayer(self, sourceUrl);
     registerBOMAllFloodLevelsLayer(self, sourceUrl);
     registerBOMSatTrueColorLayer(self, sourceUrl);
-    registerBOMThunderstormTrackingLayer(self, sourceUrl);
     registerBOMWindLayer(self, sourceUrl);
     registerBOMMSLPLayer(self, sourceUrl);
     registerBOMLightningLayer(self, sourceUrl);

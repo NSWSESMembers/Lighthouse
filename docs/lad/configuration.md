@@ -156,7 +156,7 @@ Order and transparency are remembered for layers that are off, and apply when yo
 3. Asset markers
 4. Routes, measuring & HQ coverage
 5. Other overlays (boundaries, warnings, Transport NSW, HazardWatch and so on)
-6. Weather imagery (radar, satellite and BOM forecast and observation maps)
+6. Weather imagery (radar, satellite and BOM forecast and observation maps), with **BOM Thunderstorm Tracking** above **BOM Rain Radar Still** so storm cells show over the rain
 
 Moving a filled overlay above incidents or assets can stop you clicking the markers under it. Lower its transparency or move it back down if that happens.
 
