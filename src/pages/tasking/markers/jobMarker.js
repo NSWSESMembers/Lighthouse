@@ -235,6 +235,7 @@ export function removeJobMarker(vm, jobOrId) {
     if (clusterGroup.hasLayer(m)) clusterGroup.removeLayer(m);
     if (rescueLayer.hasLayer(m)) rescueLayer.removeLayer(m);
     markers.delete(id);
+    vm.mapVM.destroyJobPopupVM?.(id);
 
     const job = vm.jobsById?.get?.(id);
     if (job) job.marker = null;

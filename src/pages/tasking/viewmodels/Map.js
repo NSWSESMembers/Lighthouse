@@ -923,11 +923,16 @@ export function MapVM(Lmap, root) {
     return vm;
   };
 
-  self.destroyJobPopupVM = (job) => {
-    const vm = self.jobPopups.get(job.id());
+  // Called when a job's marker is removed, so the cached VM (which holds the
+  // Job) doesn't outlive it. Only releases the VM's own subscriptions: the
+  // drawn route / crow-flies line are shared map state, cleared when the
+  // popup that drew them closes (removing the marker closes it).
+  self.destroyJobPopupVM = (jobOrId) => {
+    const id = typeof jobOrId === 'number' ? jobOrId : jobOrId?.id?.();
+    const vm = self.jobPopups.get(id);
     if (vm) {
-      vm.dispose();
-      self.jobPopups.delete(job.id());
+      vm.releaseRouteSubs();
+      self.jobPopups.delete(id);
     }
   };
 

@@ -68,6 +68,10 @@ The home page shows the first three `##` entries, so keep the title short.
 - Task names keep any *#* in them (it used to be removed), and a member with no sign-off time gets the task's end time instead of a nonsense number of hours.
 - If Beacon can't be reached, or no tasks match, the page now says so, instead of doing nothing.
 
+### LAD
+
+- **Performance improvements** for LAD left open for a long time.
+
 ## LAD arrival times, overlay status and street zoom
 
 *26 October 2026 · [v2026.10.26](https://github.com/NSWSESMembers/Lighthouse/releases/tag/v2026.10.26)*

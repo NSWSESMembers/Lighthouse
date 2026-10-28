@@ -153,9 +153,14 @@ export class JobPopupViewModel {
     }
 
     removeRouteToAsset = () => {
+        this.releaseRouteSubs();
+        this.api.clearRoutes();
+    }
+
+    // Stop following the route's ends, leaving the drawn route alone.
+    releaseRouteSubs = () => {
         this._routeSubs.forEach(sub => sub.dispose());
         this._routeSubs = [];
-        this.api.clearRoutes();
     }
 
     dispose = () => {
