@@ -1,10 +1,10 @@
 name: Sync Docs to Website
 on:
   push:
-    # master -> the stable guide (/guides/lad/, /whats-new/).
+    # master -> the stable guide (/guides/lad/, /whats-new/, /privacy/).
     # master-dev -> the Development Preview copy (/preview/guides/lad/, /preview/whats-new/).
     branches: [master, master-dev]
-    paths: ['docs/lad/**', 'docs/whats-new/**']
+    paths: ['docs/lad/**', 'docs/whats-new/**', 'docs/privacy/**']
   workflow_dispatch:
 
 concurrency:
@@ -47,9 +47,10 @@ jobs:
         env:
           PREFIX: ${{ steps.target.outputs.prefix }}
         run: |
-          mkdir -p "website/${PREFIX}guides/lad" "website/${PREFIX}whats-new"
+          mkdir -p "website/${PREFIX}guides/lad" "website/${PREFIX}whats-new" "website/${PREFIX}privacy"
           rsync -a --delete lighthouse/docs/lad/ "website/${PREFIX}guides/lad/"
           rsync -a --delete lighthouse/docs/whats-new/ "website/${PREFIX}whats-new/"
+          rsync -a --delete lighthouse/docs/privacy/ "website/${PREFIX}privacy/"
 
       # The docs link to each other with absolute https://lighthouse.ses.nsw.gov.au/...
       # URLs (What's New -> guide sections). Point the preview copy's links at
@@ -57,7 +58,7 @@ jobs:
       - name: Point preview links at preview pages
         if: steps.target.outputs.prefix == 'preview/'
         run: |
-          find website/preview/guides/lad website/preview/whats-new -name '*.md' -exec \
+          find website/preview/guides/lad website/preview/whats-new website/preview/privacy -name '*.md' -exec \
             sed -i -E 's#https://lighthouse\.ses\.nsw\.gov\.au/(guides/lad|whats-new)/#/preview/\1/#g' {} +
 
       # Same format as the extension's version_name in webpack.prod.js,
@@ -82,7 +83,7 @@ jobs:
           PREFIX: ${{ steps.target.outputs.prefix }}
           STAMP: ${{ steps.target.outputs.stamp }}
         run: |
-          git add -A "${PREFIX}guides/lad" "${PREFIX}whats-new" "_data/${STAMP}.yml"
+          git add -A "${PREFIX}guides/lad" "${PREFIX}whats-new" "${PREFIX}privacy" "_data/${STAMP}.yml"
           if git diff --cached --quiet; then
             echo "Website docs already up to date"
             exit 0

@@ -6,13 +6,14 @@ These folders are published to <https://lighthouse.ses.nsw.gov.au>:
 | --- | --- |
 | `docs/lad/` | [/guides/lad/](https://lighthouse.ses.nsw.gov.au/guides/lad/), the LAD user guide |
 | `docs/whats-new/` | [/whats-new/](https://lighthouse.ses.nsw.gov.au/whats-new/), changes in each release (the home page shows the latest three) |
+| `docs/privacy/` | [/privacy/](https://lighthouse.ses.nsw.gov.au/privacy/), the privacy policy linked from the Chrome Web Store listing |
 
 There are two copies of each, one per release channel:
 
 | Branch | Extension | Published at |
 | --- | --- | --- |
-| `master` | Lighthouse (Chrome Web Store release) | `/guides/lad/`, `/whats-new/` |
-| `master-dev` | Lighthouse Development Preview | `/preview/guides/lad/`, `/preview/whats-new/` |
+| `master` | Lighthouse (Chrome Web Store release) | `/guides/lad/`, `/whats-new/`, `/privacy/` |
+| `master-dev` | Lighthouse Development Preview | `/preview/guides/lad/`, `/preview/whats-new/`, `/preview/privacy/` |
 
 Both copies come from the same files, so you only ever write the docs once. A
 change shows up in the preview copy when it merges to `master-dev`, and in the
@@ -50,6 +51,14 @@ guide was last updated for that build.
 The workflow needs a `WEBSITE_SYNC_TOKEN` repo secret: a fine-grained PAT (or GitHub
 App token) with **Contents: read & write** on the website repo only. You can also
 run it manually from the Actions tab.
+
+## Updating the privacy policy
+
+[`privacy/index.md`](privacy/index.md) is the policy the Chrome Web Store listing
+links to (`https://lighthouse.ses.nsw.gov.au/privacy/`). Update it in the **same PR**
+as any change to what data Lighthouse sends, stores or where it sends it (a new
+backend route, host permission or third-party service), bump its "Last updated"
+date, and keep the store's Privacy practices tab in step.
 
 ## Updating What's New
 
@@ -94,6 +103,7 @@ Check out the website repo next to this one, then:
 ```sh
 rsync -a --delete docs/lad/ ../lighthouse.ses.nsw.gov.au/guides/lad/
 rsync -a --delete docs/whats-new/ ../lighthouse.ses.nsw.gov.au/whats-new/
+rsync -a --delete docs/privacy/ ../lighthouse.ses.nsw.gov.au/privacy/
 # or, to preview the Development Preview copy, sync into preview/guides/lad/ and
 # preview/whats-new/ instead and add a _data/lad_guide_preview.yml stamp
 cd ../lighthouse.ses.nsw.gov.au
