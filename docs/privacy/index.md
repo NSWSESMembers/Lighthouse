@@ -1,10 +1,7 @@
 ---
-layout: default
 title: Privacy Policy
 description: What data the Lighthouse browser extension uses, where it goes, and why.
 ---
-
-# Lighthouse Privacy Policy
 
 _Last updated: 29 October 2026_
 
