@@ -9,6 +9,7 @@ import {
   SimulationFeedError,
   exerciseDisplayName,
   simulationLabel,
+  simulatedLocationsTitle,
   sameSimulation,
   selectionForHq,
   selectionStatus,
@@ -354,6 +355,17 @@ describe('labels', () => {
     );
     expect(simulationLabel({ exerciseName: '', mode: 'group' })).toBe('Unnamed exercise');
     expect(simulationLabel(null)).toBe('');
+  });
+
+  it('titles the navbar pill with the exercise, not a headquarters copy the page may not be showing', () => {
+    expect(simulatedLocationsTitle({ exerciseName: 'Storm night', copyName: 'Demo City', mode: 'group' })).toBe(
+      'LAD and job maps are showing simulated vehicles and vessels from the CADence exercise Storm night, ' +
+        'not live radio positions. Click to change or stop.',
+    );
+    expect(simulatedLocationsTitle({ exerciseName: ' ', mode: 'individual' })).toContain(
+      'from the CADence exercise Unnamed exercise,',
+    );
+    expect(simulatedLocationsTitle(null)).toBe('');
   });
 
   it('compares selections by exercise and copy', () => {

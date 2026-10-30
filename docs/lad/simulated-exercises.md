@@ -19,6 +19,8 @@ The exercise is chosen on the **CADence Simulated Exercise** page. Open it from 
 
 The choice applies to every Lighthouse tab on that Beacon, including LAD tabs that are already open. It lasts until you click **Show real radio positions**, the exercise ends, or you close Chrome. To follow another headquarters or exercise, pick it and click **Switch to this exercise**.
 
+While it's on, every Beacon page on that Beacon shows a **Simulated locations** pill next to the **Lighthouse** menu, as a reminder that the locations Lighthouse shows aren't live. Hover over it for the exercise's name, or click it to open the CADence Simulated Exercise page.
+
 The exercise list and positions come from the CADence exercise service, which checks your Beacon sign-in. Nothing is sent to it until you open the page. See [the CADence exercise service](https://lighthouse.ses.nsw.gov.au/privacy/#the-cadence-exercise-service) in the privacy policy.
 
 ## Exercise Radio

@@ -1,7 +1,17 @@
 /* global user, urls, $, lighthouseUrl, filterViewModel, moment, layout, utility, lighthouseEnviroment, contentViewModel */
 
 var clusterCodes = require('../lib/clusters.js');
-var { simulationEnvironment } = require('../shared/cadenceSimulation.js');
+var { simulationEnvironment, simulatedLocationsTitle } = require('../shared/cadenceSimulation.js');
+var { createPageSimulation } = require('../shared/cadenceSimulationPage.js');
+
+// The CADence exercise chosen for this Beacon environment (Train and Test
+// Beacon only), as reported by contentscripts/all.js. Created before the page
+// is ready, so it hears every report.
+var simulatedExercise = createPageSimulation({
+  host: function () {
+    return typeof urls !== 'undefined' ? urls.Base : null;
+  },
+});
 
 window.postMessage(
   {
@@ -316,6 +326,31 @@ whenWeAreReady(function () {
   $('#lhsimexmenuitem > a').mousedown(function () {
     updateToken();
   });
+
+  // Train and Test Beacon: while a CADence exercise is chosen, a pill beside
+  // the Lighthouse menu says the asset locations Lighthouse shows aren't live.
+  // It opens the CADence Simulated Exercise page, so like the menu item it
+  // hands that page the Beacon token first.
+  if (simulationEnvironment(location.origin)) {
+    var simulatedLocationsPill = $(
+      '<li id="lhsimexpill" style="display: none"><a target="_blank">' +
+        '<span class="lh-simex-pill">Simulated locations</span></a></li>',
+    );
+    simulatedLocationsPill
+      .children('a')
+      .attr('href', lighthouseUrl + 'pages/simulatedexercise.html' + vars)
+      .mousedown(function () {
+        updateToken();
+      });
+    $('#lhmenu').after(simulatedLocationsPill);
+
+    var showSimulatedLocationsPill = function (selection) {
+      simulatedLocationsPill.children('a').attr('title', simulatedLocationsTitle(selection));
+      simulatedLocationsPill.toggle(!!selection);
+    };
+    simulatedExercise.onChange(showSimulatedLocationsPill);
+    simulatedExercise.current().then(showSimulatedLocationsPill);
+  }
 
   function updateTokenAndRegister() {
     updateToken()

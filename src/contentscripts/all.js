@@ -18,6 +18,12 @@ if (location.origin.indexOf("beacon.ses.nsw.gov.au") != -1) {
   // inject all.css - browserify-css takes care of this
   require('../styles/all.css');
 
+  // Train and Test Beacon: tell Lighthouse's scripts in the page which CADence
+  // exercise is chosen, for the Simulated locations pill beside the Lighthouse
+  // menu (injectscripts/all.js) and the job page's Nearest Asset Locations map.
+  var { serveSimulationToPage } = require('../shared/cadenceSimulationPage.js');
+  serveSimulationToPage();
+
   //set the extension code var into the head
   // var s = document.createElement('script');
   // s.setAttribute('type', 'text/javascript');

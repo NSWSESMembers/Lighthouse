@@ -265,3 +265,31 @@ border: 2px dashed rgb(51, 51, 51);
   font-size: 2vw;
   text-align: center;
 }
+
+/* CADence: the Simulated locations pill beside the Lighthouse menu while an
+   exercise is chosen (injectscripts/all.js). Dark text on amber, whatever
+   colour Beacon's navbar is, and 20px tall like the navbar's link text, so
+   the navbar keeps its height. */
+#lhsimexpill > a {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.lh-simex-pill {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 1px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+  background-color: #ffc107;
+  color: #212529;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+#lhsimexpill > a:hover .lh-simex-pill,
+#lhsimexpill > a:focus .lh-simex-pill {
+  background-color: #ffcd39;
+}

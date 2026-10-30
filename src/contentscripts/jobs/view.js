@@ -4,14 +4,12 @@ var _ = require('underscore');
 var DOM = require('jsx-dom-factory').default;
 var $ = require('jquery');
 var vincenty = require('../../lib/vincenty.js');
-import { serveSimulationToPage } from '../../shared/cadenceSimulationPage.js';
 
 // inject all.css - browserify-css takes care of this
 require('../../styles/jobs.view.css');
 
-// Train and Test Beacon: tell the inject script which CADence exercise LAD is
-// showing, so the Nearest Asset Locations map can show it too.
-serveSimulationToPage();
+// The CADence exercise choice reaches the page's inject script from
+// contentscripts/all.js, which runs on every Beacon page.
 
 window.addEventListener("message", function(event) {
   // We only accept messages from ourselves or the extension

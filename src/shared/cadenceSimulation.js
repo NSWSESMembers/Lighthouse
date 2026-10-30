@@ -96,6 +96,20 @@ export function simulationLabel(selection) {
   return selection.mode === 'group' && selection.copyName ? `${name} · ${selection.copyName}` : name;
 }
 
+/**
+ * The tooltip of the "Simulated locations" pill in Beacon's navbar
+ * (injectscripts/all.js) while `selection` is chosen, or '' for none. It names
+ * the exercise only: a job page shows the copy for the job's own HQ, which may
+ * not be the one chosen. Plain text: set it as an attribute, never as HTML.
+ */
+export function simulatedLocationsTitle(selection) {
+  if (!selection) return '';
+  return (
+    'LAD and job maps are showing simulated vehicles and vessels from the CADence exercise ' +
+    `${exerciseDisplayName(selection.exerciseName)}, not live radio positions. Click to change or stop.`
+  );
+}
+
 /** True when two selections (or two nulls) are the same exercise copy. */
 export function sameSimulation(a, b) {
   if (!a || !b) return !a && !b;
