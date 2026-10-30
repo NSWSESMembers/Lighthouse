@@ -562,36 +562,26 @@ function VM() {
 
     self.trackableAssetsModalVM = new TrackableAssetsModalVM(self);
 
-    // CADence simulated exercises (Train/Test Beacon only). While an exercise
-    // copy is selected, fetchAllTrackableAssets reads the radio feed from the
-    // exercise instead of Beacon; see viewmodels/SimulatedExerciseVM.js and
-    // shared/cadenceSimulation.js. Picked from the Simulated Exercise tab of
-    // the config modal, which only shows on those environments.
+    // CADence simulated exercises (Train/Test Beacon only). The exercise is
+    // chosen on Lighthouse's CADence Simulated Exercise page and LAD follows
+    // it: while one is chosen, fetchAllTrackableAssets reads the radio feed
+    // from the exercise instead of Beacon. See viewmodels/SimulatedExerciseVM.js
+    // and shared/cadenceSimulationShare.js.
     self.simulatedExercise = new SimulatedExerciseVM({
         host: apiHost,
-        hqId: params.hq,
         getToken,
         onSelectionChange: () => self.fetchAllTrackableAssets(),
-        openPicker: () => self.openSimulatedExercisePicker(),
+        openPage: () => self.openSimulatedExercisePage(),
     });
     // Registered before installAlerts() runs, so the alert overlay picks it up.
     registerAlertRule(() => self.simulatedExercise.alertRules());
 
-    // Beacon's own job and situational awareness pages follow this tab's
-    // selection while it's open (shared/cadenceSimulationShare.js).
-    window.addEventListener('pagehide', () => self.simulatedExercise.withdrawFromBeacon());
-    window.addEventListener('pageshow', (event) => {
-        if (event.persisted) self.simulatedExercise.publishToBeacon();
-    });
-
-    // The map alert's "change" item: open config on the Simulated Exercise tab
-    // (showing the tab refreshes the exercise list, see DOMContentLoaded).
-    self.openSimulatedExercisePicker = function () {
-        const configEl = document.getElementById('configModal');
-        const tabEl = document.getElementById('cfgTab-simex');
-        if (!configEl || !tabEl) return;
-        bootstrap.Modal.getOrCreateInstance(configEl).show();
-        bootstrap.Tab.getOrCreateInstance(tabEl).show();
+    // The map alert's "change" item and the ended banner's link: open the
+    // CADence Simulated Exercise page with LAD's own Beacon parameters, in
+    // one tab that's reused if it's already open.
+    self.openSimulatedExercisePage = function () {
+        const url = new URL('simulatedexercise.html' + window.location.search, window.location.href);
+        window.open(url.href, 'lh-simulated-exercise');
     };
 
     self.jobStatusConfirmVM = new JobStatusConfirmModalVM(self);
@@ -2660,12 +2650,14 @@ function VM() {
     self.fetchAllTrackableAssets = async function () {
         if (!assetDataRefreshInterlock) {
             const t = await getToken();   // blocks here until token is ready
-            // With a simulated exercise selected the radio half of the feed
-            // comes from the exercise. Note which selection this request is
-            // for: if the user switches (or stops) while it's in flight, the
-            // change has already started a fresh fetch, so this response is
-            // dropped rather than drawn over it.
+            // With a simulated exercise chosen the radio half of the feed
+            // comes from the exercise, so the first fetch waits until the
+            // choice has been read. Note which selection this request is
+            // for: if it changes while the request is in flight, the change
+            // has already started a fresh fetch, so this response is dropped
+            // rather than drawn over it.
             const simulatedExercise = self.simulatedExercise;
+            await simulatedExercise.ready;
             const simulation = simulatedExercise.feedSelection();
             const simulationGeneration = simulatedExercise.generation();
             try {
@@ -2707,9 +2699,10 @@ function VM() {
                 if (simulationGeneration !== simulatedExercise.generation()) return;
                 if (simulation && isSimulationUnavailable(err)) {
                     // The exercise backend refused this Beacon sign-in: go back
-                    // to the real feed (stop() refetches and tells the user).
+                    // to the real feed everywhere (endHere() refetches and
+                    // tells the user).
                     console.warn("Simulated exercise feed unavailable, returning to the real feed:", err);
-                    simulatedExercise.stop('unavailable');
+                    simulatedExercise.endHere('unavailable');
                     return;
                 }
                 console.error("Error fetching trackable assets:", err);
@@ -4186,20 +4179,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Alerts overlay
         installAlerts(map, myViewModel);
-
-        // Simulated Exercise config tab (Train/Test Beacon only): load the
-        // exercise list when the tab is shown, or when config opens with it
-        // already showing. Nothing is requested until then.
-        const simexTabEl = document.getElementById('cfgTab-simex');
-        if (simexTabEl && myViewModel.simulatedExercise.available) {
-            const refreshExercises = () => {
-                if (!myViewModel.simulatedExercise.loading()) myViewModel.simulatedExercise.refresh();
-            };
-            simexTabEl.addEventListener('shown.bs.tab', refreshExercises);
-            document.getElementById('configModal')?.addEventListener('shown.bs.modal', () => {
-                if (simexTabEl.classList.contains('active')) refreshExercises();
-            });
-        }
 
 
         //show config modal on load

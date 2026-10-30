@@ -2,8 +2,14 @@ const $ = require('jquery');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const DOM = require('jsx-dom-factory').default;
 import BeaconClient from '../../shared/BeaconClient.js';
-import { simulationEnvironment, simulationLabel, sameSimulation } from '../../shared/cadenceSimulation.js';
-import { watchSharedSelection } from '../../shared/cadenceSimulationShare.js';
+import {
+    simulationEnvironment,
+    simulationLabel,
+    sameSimulation,
+    selectionStatus,
+    isSimulationUnavailable,
+} from '../../shared/cadenceSimulation.js';
+import { watchSharedSelection, endSharedSelection } from '../../shared/cadenceSimulationShare.js';
 
 // The Simulated Exercise Assets layer: its refresh interval matches LAD's
 // radio refresh, and its on/off state is remembered like the other layers'.
@@ -540,11 +546,11 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
 
     /**
      * The Simulated Exercise Assets layer (Train and Test Beacon only): the
-     * vehicles and vessels of the CADence exercise LAD is showing for this
-     * Beacon environment, beside the live asset layers (see
-     * shared/cadenceSimulationShare.js). Its button only shows while a LAD
-     * tab is showing an exercise, and the layer stays on from one exercise to
-     * the next until it's turned off.
+     * vehicles and vessels of the CADence exercise chosen for this Beacon
+     * environment on the CADence Simulated Exercise page, beside the live
+     * asset layers (see shared/cadenceSimulationShare.js). Its button only
+     * shows while an exercise is chosen, and the layer stays on from one
+     * exercise to the next until it's turned off.
      */
      _initialiseSimulatedAssetsLayer() {
         const button = $(`#${SIMULATED_ASSETS_BUTTON}`);
@@ -553,6 +559,7 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             button.remove();
             return;
         }
+        this._simulationEnv = environment.env;
         const savedKey = `Lighthouse-${SIMULATED_ASSETS_BUTTON}`;
 
         button.on('click', () => {
@@ -566,14 +573,12 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
             this._simulation = selection;
             const on = !button.hasClass('tag-disabled');
             if (!selection) {
-                // LAD isn't showing an exercise any more.
+                // No exercise is chosen any more.
                 button.hide();
                 if (on) this._setSimulatedAssetsLayer(false);
                 return;
             }
-            button
-                .attr('title', `Simulated positions from the CADence exercise ${simulationLabel(selection)}, as shown in LAD`)
-                .show();
+            button.attr('title', `Simulated positions from the CADence exercise ${simulationLabel(selection)}`).show();
             if (on) {
                 if (!sameSimulation(previous, selection)) this._requestSesSimulatedAssets();
             } else if (localStorage.getItem(savedKey) === 'true') {
@@ -623,8 +628,37 @@ const essentialIcon = chrome.runtime.getURL('icons/essential.png');
                 // A newer request, another exercise, or the layer turned off.
                 if (request !== this._simulatedAssetsRequest) return;
                 ContentScriptMapManager._passLayerDataToInject(SIMULATED_ASSETS_LAYER, assets);
+                // An ended exercise sends no positions, and so does one that
+                // hasn't published any yet: check which.
+                if (assets.length === 0) this._checkSimulationStillRunning(selection);
             })
-            .catch((error) => console.warn('Failed to fetch the simulated exercise assets', error));
+            .catch((error) => {
+                console.warn('Failed to fetch the simulated exercise assets', error);
+                if (isSimulationUnavailable(error)) this._endSimulation(selection, 'unavailable');
+            });
+    }
+
+    /**
+     * After an empty simulated feed: if the exercise has ended (or the
+     * backend refused the sign-in), send everything back to live positions.
+     * LAD and the CADence Simulated Exercise page say why.
+     */
+    _checkSimulationStillRunning(selection) {
+        if (this._simulationCheck) return;
+        this._simulationCheck = selectionStatus(selection, { host: this._base, token: this._token })
+            .then((status) => {
+                if (status === 'ended' || status === 'unavailable') return this._endSimulation(selection, status);
+            })
+            .catch((error) => console.warn("Couldn't check the simulated exercise is still running", error))
+            .finally(() => {
+                this._simulationCheck = null;
+            });
+    }
+
+    _endSimulation(selection, reason) {
+        return endSharedSelection(this._simulationEnv, selection, reason).catch((error) =>
+            console.warn("Couldn't record that the simulated exercise ended", error),
+        );
     }
 
     /**

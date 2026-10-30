@@ -28,6 +28,7 @@ const pagesScripts = [
   './src/pages/summary/main.js',
   './src/pages/advexport/main.js',
   './src/pages/nitcexport/main.js',
+  './src/pages/simulatedexercise/main.js',
   './src/pages/radio/main.js',
 ].reduce((acc, path) => {
     const entry = path.replace(/src\/pages\/(.*)\.js/, 'pages/$1');

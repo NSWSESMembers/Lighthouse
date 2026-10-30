@@ -1,39 +1,59 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
-  sharedSelectionFrom,
-  createTabPublisher,
-  watchSharedSelection,
-  installSharedSelection,
+  sharedKey,
   copyList,
+  selectionFrom,
+  sharedStateFrom,
+  readSharedState,
+  chooseSharedSelection,
+  stopSharedSelection,
+  endSharedSelection,
+  watchSharedState,
+  watchSharedSelection,
+  sharedChoice,
+  installSharedSelection,
   SHARE_ACCESS_MESSAGE,
 } from './cadenceSimulationShare.js';
 
-const KEY = (tabId) => `lh-simulatedExercise-tab-${tabId}`;
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+const LIVE = { selection: null, ended: null };
 
-// Enough of chrome.storage.session / chrome.tabs / chrome.runtime for these
-// tests. `denied` mimics a content script before the background has opened
-// session storage to it.
-function makeChrome({ tabId = 7, denied = false } = {}) {
+// Enough of chrome.storage.session / chrome.runtime for these tests.
+// `denied` mimics a content script before the background has opened session
+// storage to it. `holdReads` keeps get() pending until releaseReads().
+function makeChrome({ denied = false, holdReads = false } = {}) {
   const store = {};
   const listeners = new Set();
-  const removedListeners = [];
-  const state = { denied };
+  const state = { denied, held: [] };
   const fire = (changes) => listeners.forEach((listener) => listener(changes, 'session'));
+  const guard = () => {
+    if (state.denied) throw new Error('Access to storage is not allowed from this context.');
+  };
+  const pick = (keys) => {
+    if (keys == null) return structuredClone(store);
+    const out = {};
+    [].concat(keys).forEach((key) => {
+      if (key in store) out[key] = structuredClone(store[key]);
+    });
+    return out;
+  };
   const session = {
-    get: vi.fn(async () => {
-      if (state.denied) throw new Error('Access to storage is not allowed from this context.');
-      return structuredClone(store);
+    get: vi.fn(async (keys) => {
+      guard();
+      if (!holdReads) return pick(keys);
+      return new Promise((resolve) => state.held.push(() => resolve(pick(keys))));
     }),
     set: vi.fn(async (items) => {
+      guard();
       const changes = {};
       for (const [key, value] of Object.entries(items)) {
-        changes[key] = { oldValue: store[key], newValue: value };
+        changes[key] = { oldValue: store[key], newValue: structuredClone(value) };
         store[key] = structuredClone(value);
       }
       fire(changes);
     }),
     remove: vi.fn(async (keys) => {
+      guard();
       const changes = {};
       [].concat(keys).forEach((key) => {
         if (key in store) {
@@ -52,10 +72,6 @@ function makeChrome({ tabId = 7, denied = false } = {}) {
       session,
       onChanged: { addListener: (l) => listeners.add(l), removeListener: (l) => listeners.delete(l) },
     },
-    tabs: {
-      getCurrent: vi.fn(async () => (tabId == null ? undefined : { id: tabId })),
-      onRemoved: { addListener: (l) => removedListeners.push(l) },
-    },
     runtime: {
       sendMessage: vi.fn(async () => {
         state.denied = false;
@@ -67,7 +83,8 @@ function makeChrome({ tabId = 7, denied = false } = {}) {
     store,
     session,
     chromeApi,
-    closeTab: (id) => removedListeners.forEach((listener) => listener(id, {})),
+    fireOther: (changes, area = 'local') => listeners.forEach((listener) => listener(changes, area)),
+    releaseReads: () => state.held.splice(0).forEach((release) => release()),
     listenerCount: () => listeners.size,
   };
 }
@@ -96,6 +113,14 @@ const floodGroup = {
   ],
   selectedAt: 2000,
 };
+const active = (selection) => ({ state: 'active', selection });
+
+describe('sharedKey', () => {
+  it('keeps one key per Beacon environment', () => {
+    expect(sharedKey('train')).toBe('lh-simulatedExercise-train');
+    expect(sharedKey('test')).toBe('lh-simulatedExercise-test');
+  });
+});
 
 describe('copyList', () => {
   it('keeps well-formed copies, as strings', () => {
@@ -114,229 +139,302 @@ describe('copyList', () => {
   });
 });
 
-describe('sharedSelectionFrom', () => {
-  const items = {
-    [KEY(1)]: { env: 'train', ...stormNight },
-    [KEY(2)]: { env: 'train', ...floodGroup },
-    [KEY(3)]: { env: 'test', ...stormNight, selectedAt: 5000 },
-    [KEY(4)]: { env: 'train', ...floodGroup, exerciseId: '', selectedAt: 9000 },
-    'some-other-key': { env: 'train', ...floodGroup, exerciseId: 'other', selectedAt: 9999 },
-  };
-
-  it('follows the latest choice in the environment', () => {
-    expect(sharedSelectionFrom(items, 'train')).toEqual(floodGroup);
-    expect(sharedSelectionFrom(items, 'test')).toEqual({ ...stormNight, selectedAt: 5000 });
-  });
-
-  it('is null when no LAD tab shows an exercise there', () => {
-    expect(sharedSelectionFrom(items, 'dev')).toBeNull();
-    expect(sharedSelectionFrom({}, 'train')).toBeNull();
-    expect(sharedSelectionFrom(undefined, 'train')).toBeNull();
-  });
-
-  it('settles a tie the same way every time', () => {
-    const tied = {
-      [KEY(1)]: { env: 'train', ...stormNight },
-      [KEY(2)]: { env: 'train', ...floodGroup, selectedAt: 1000 },
-    };
-    expect(sharedSelectionFrom(tied, 'train').exerciseId).toBe('ex-grp');
-  });
-
-  it('reads an entry without HQ details as having none, and cleans its copy list', () => {
-    const { participantHqId, copies, ...bare } = floodGroup;
-    expect(participantHqId && copies).toBeTruthy();
-    expect(sharedSelectionFrom({ [KEY(1)]: { env: 'train', ...bare } }, 'train')).toEqual({
-      ...bare,
-      participantHqId: '',
+describe('selectionFrom', () => {
+  it('cleans a stored selection', () => {
+    expect(selectionFrom(floodGroup)).toEqual(floodGroup);
+    expect(
+      selectionFrom({ exerciseId: 7, copyId: 102, participantHqId: 102, mode: 'odd', copies: [null], extra: 1 }),
+    ).toEqual({
+      exerciseId: '7',
+      copyId: '102',
+      exerciseName: '',
+      copyName: '',
+      mode: 'individual',
+      participantHqId: '102',
       copies: [],
+      selectedAt: 0,
     });
-    const junk = { [KEY(1)]: { env: 'train', ...floodGroup, copies: [null, ...floodGroup.copies, { copyId: 'x' }] } };
-    expect(sharedSelectionFrom(junk, 'train').copies).toEqual(floodGroup.copies);
+  });
+
+  it("is null without an exercise, a copy or the copy's HQ", () => {
+    expect(selectionFrom(null)).toBeNull();
+    expect(selectionFrom('ex-ind')).toBeNull();
+    expect(selectionFrom({ ...stormNight, exerciseId: '' })).toBeNull();
+    expect(selectionFrom({ ...stormNight, copyId: undefined })).toBeNull();
+    expect(selectionFrom({ ...stormNight, participantHqId: '' })).toBeNull();
+    expect(selectionFrom({ ...stormNight, exerciseId: { id: 1 } })).toBeNull();
   });
 });
 
-describe('createTabPublisher', () => {
-  it("writes this tab's selection under the tab's own key, and removes it for null", async () => {
-    const { chromeApi, store } = makeChrome({ tabId: 7 });
-    const publisher = createTabPublisher({ env: 'train', chromeApi });
+describe('sharedStateFrom', () => {
+  it('reads an active choice', () => {
+    expect(sharedStateFrom(active(floodGroup))).toEqual({ selection: floodGroup, ended: null });
+  });
 
-    await publisher.publish({ ...floodGroup, label: 'not stored' });
-    expect(store).toEqual({ [KEY(7)]: { env: 'train', ...floodGroup } });
+  it('reads an ended one as live positions, saying why', () => {
+    expect(sharedStateFrom({ state: 'ended', reason: 'unavailable', selection: stormNight, endedAt: 5 })).toEqual({
+      selection: null,
+      ended: { selection: stormNight, reason: 'unavailable', endedAt: 5 },
+    });
+    expect(sharedStateFrom({ state: 'ended', reason: 'other', selection: stormNight }).ended.reason).toBe('ended');
+  });
 
-    await publisher.publish(null);
+  it('reads anything else as live positions', () => {
+    expect(sharedStateFrom(undefined)).toEqual(LIVE);
+    expect(sharedStateFrom({ state: 'active' })).toEqual(LIVE);
+    expect(sharedStateFrom({ state: 'active', selection: { ...stormNight, participantHqId: '' } })).toEqual(LIVE);
+    expect(sharedStateFrom({ state: 'paused', selection: stormNight })).toEqual(LIVE);
+    // The format before the page: one key per LAD tab, the selection at the top level.
+    expect(sharedStateFrom({ env: 'train', ...stormNight })).toEqual(LIVE);
+  });
+});
+
+describe('choosing, stopping and ending', () => {
+  it('stores the choice under its environment, stamping when it was made', async () => {
+    const { chromeApi, store } = makeChrome();
+    await chooseSharedSelection(
+      'train',
+      { ...stormNight, selectedAt: undefined, label: 'not stored' },
+      {
+        chromeApi,
+        now: () => 4242,
+      },
+    );
+    expect(store).toEqual({ [sharedKey('train')]: active({ ...stormNight, selectedAt: 4242 }) });
+
+    await chooseSharedSelection('test', floodGroup, { chromeApi });
+    expect(store[sharedKey('test')]).toEqual(active(floodGroup));
+    expect(store[sharedKey('train')].selection.exerciseId).toBe('ex-ind');
+  });
+
+  it('refuses an incomplete choice, or one with nowhere to keep it', async () => {
+    const { chromeApi, store } = makeChrome();
+    await expect(chooseSharedSelection('train', { exerciseId: 'ex-ind' }, { chromeApi })).rejects.toThrow();
+    await expect(chooseSharedSelection('', stormNight, { chromeApi })).rejects.toThrow();
+    await expect(chooseSharedSelection('train', stormNight, { chromeApi: undefined })).rejects.toThrow();
     expect(store).toEqual({});
   });
 
-  it('keeps writes in order', async () => {
+  it('stops by removing the choice', async () => {
     const { chromeApi, store } = makeChrome();
-    const publisher = createTabPublisher({ env: 'test', chromeApi });
-
-    publisher.publish(stormNight);
-    publisher.publish(null);
-    await publisher.publish(floodGroup);
-
-    expect(Object.values(store)).toEqual([{ env: 'test', ...floodGroup }]);
+    store[sharedKey('train')] = active(stormNight);
+    store[sharedKey('test')] = active(floodGroup);
+    await stopSharedSelection('train', { chromeApi });
+    expect(Object.keys(store)).toEqual([sharedKey('test')]);
+    await expect(stopSharedSelection('train', { chromeApi: undefined })).resolves.toBeUndefined();
   });
 
-  it('stamps a selection with no time on it', async () => {
+  it('records that the chosen exercise ended', async () => {
     const { chromeApi, store } = makeChrome();
-    await createTabPublisher({ env: 'train', chromeApi }).publish({ ...stormNight, selectedAt: undefined });
-    expect(store[KEY(7)].selectedAt).toBeGreaterThan(0);
+    store[sharedKey('train')] = active(floodGroup);
+
+    const ended = await endSharedSelection('train', { exerciseId: 'ex-grp', copyId: '102' }, 'ended', {
+      chromeApi,
+      now: () => 9000,
+    });
+
+    expect(ended).toBe(true);
+    expect(store[sharedKey('train')]).toEqual({
+      state: 'ended',
+      reason: 'ended',
+      selection: floodGroup,
+      endedAt: 9000,
+    });
+    await expect(readSharedState('train', { chromeApi })).resolves.toEqual({
+      selection: null,
+      ended: { selection: floodGroup, reason: 'ended', endedAt: 9000 },
+    });
   });
 
-  it('does nothing outside an extension tab', async () => {
-    const notATab = makeChrome({ tabId: null });
-    await createTabPublisher({ env: 'train', chromeApi: notATab.chromeApi }).publish(stormNight);
-    expect(notATab.store).toEqual({});
+  it('records a refused sign-in the same way', async () => {
+    const { chromeApi, store } = makeChrome();
+    store[sharedKey('test')] = active(stormNight);
+    await endSharedSelection('test', stormNight, 'unavailable', { chromeApi });
+    expect(store[sharedKey('test')].reason).toBe('unavailable');
+  });
 
-    await expect(
-      createTabPublisher({ env: 'train', chromeApi: undefined }).publish(stormNight),
-    ).resolves.toBeUndefined();
-    const noEnv = makeChrome();
-    await createTabPublisher({ env: '', chromeApi: noEnv.chromeApi }).publish(stormNight);
-    expect(noEnv.store).toEqual({});
+  it("doesn't undo a newer choice, or end one that isn't there", async () => {
+    const { chromeApi, store } = makeChrome();
+    store[sharedKey('train')] = active(floodGroup);
+
+    // The Demo City copy was found to have ended after the user switched to Demo Vale's.
+    expect(await endSharedSelection('train', { exerciseId: 'ex-grp', copyId: '101' }, 'ended', { chromeApi })).toBe(
+      false,
+    );
+    expect(await endSharedSelection('train', stormNight, 'ended', { chromeApi })).toBe(false);
+    expect(store[sharedKey('train')]).toEqual(active(floodGroup));
+
+    expect(await endSharedSelection('test', stormNight, 'ended', { chromeApi })).toBe(false);
+    expect(store[sharedKey('test')]).toBeUndefined();
+    expect(await endSharedSelection('train', null, 'ended', { chromeApi })).toBe(false);
+  });
+
+  it('wakes the background when session storage is still closed to a content script', async () => {
+    const { chromeApi, store } = makeChrome({ denied: true });
+    await chooseSharedSelection('train', stormNight, { chromeApi });
+    expect(chromeApi.runtime.sendMessage).toHaveBeenCalledWith({ type: SHARE_ACCESS_MESSAGE });
+    expect(store[sharedKey('train')]).toEqual(active(stormNight));
   });
 });
 
-describe('watchSharedSelection', () => {
-  it('reports the current selection, then each change', async () => {
-    const { chromeApi } = makeChrome();
-    const ladA = createTabPublisher({ env: 'train', chromeApi });
-    await ladA.publish(stormNight);
+describe('readSharedState', () => {
+  it('reads one environment', async () => {
+    const { chromeApi, store } = makeChrome();
+    store[sharedKey('train')] = active(stormNight);
+    await expect(readSharedState('train', { chromeApi })).resolves.toEqual({ selection: stormNight, ended: null });
+    await expect(readSharedState('test', { chromeApi })).resolves.toEqual(LIVE);
+  });
+
+  it('is live positions without extension storage', async () => {
+    await expect(readSharedState('train', { chromeApi: undefined })).resolves.toEqual(LIVE);
+    await expect(readSharedState('', { chromeApi: makeChrome().chromeApi })).resolves.toEqual(LIVE);
+  });
+
+  it('passes an error on when storage stays closed', async () => {
+    const { chromeApi } = makeChrome({ denied: true });
+    chromeApi.runtime.sendMessage = vi.fn(async () => ({ ok: true })); // still closed afterwards
+    await expect(readSharedState('train', { chromeApi })).rejects.toThrow(/not allowed/);
+  });
+});
+
+describe('watchSharedState', () => {
+  it('reports the current state, then each change', async () => {
+    const { chromeApi, store } = makeChrome();
+    store[sharedKey('train')] = active(stormNight);
     const onChange = vi.fn();
 
-    watchSharedSelection('train', onChange, { chromeApi, removalGraceMs: 0 });
+    watchSharedState('train', onChange, { chromeApi });
     await flush();
-    expect(onChange).toHaveBeenLastCalledWith(stormNight);
+    expect(onChange).toHaveBeenLastCalledWith({ selection: stormNight, ended: null });
 
-    // A second LAD tab picks another exercise later: Beacon pages follow it.
-    const ladB = createTabPublisher({
-      env: 'train',
-      chromeApi: { ...chromeApi, tabs: { getCurrent: async () => ({ id: 8 }) } },
+    await chooseSharedSelection('train', floodGroup, { chromeApi });
+    expect(onChange).toHaveBeenLastCalledWith({ selection: floodGroup, ended: null });
+
+    await endSharedSelection('train', floodGroup, 'ended', { chromeApi, now: () => 7 });
+    expect(onChange).toHaveBeenLastCalledWith({
+      selection: null,
+      ended: { selection: floodGroup, reason: 'ended', endedAt: 7 },
     });
-    await ladB.publish(floodGroup);
-    await flush();
-    expect(onChange).toHaveBeenLastCalledWith(floodGroup);
 
-    // ...and go back to the first when it stops.
-    await ladB.publish(null);
-    await flush();
-    expect(onChange).toHaveBeenLastCalledWith(stormNight);
-
-    await ladA.publish(null);
-    await flush();
-    expect(onChange).toHaveBeenLastCalledWith(null);
+    await stopSharedSelection('train', { chromeApi });
+    expect(onChange).toHaveBeenLastCalledWith(LIVE);
     expect(onChange).toHaveBeenCalledTimes(4);
   });
 
-  it('ignores changes that leave the selection the same, or are in another environment', async () => {
-    const { chromeApi, session } = makeChrome();
-    await createTabPublisher({ env: 'train', chromeApi }).publish(stormNight);
+  it('ignores other environments, other keys, other storage areas and repeats', async () => {
+    const { chromeApi, session, fireOther } = makeChrome();
     const onChange = vi.fn();
-    watchSharedSelection('train', onChange, { chromeApi });
+    watchSharedState('train', onChange, { chromeApi });
     await flush();
-
-    await session.set({ 'unrelated-key': 1 });
-    await createTabPublisher({
-      env: 'test',
-      chromeApi: { ...chromeApi, tabs: { getCurrent: async () => ({ id: 9 }) } },
-    }).publish(floodGroup);
-    await flush();
-
     expect(onChange).toHaveBeenCalledTimes(1);
+
+    await chooseSharedSelection('test', floodGroup, { chromeApi });
+    await session.set({ 'unrelated-key': 1 });
+    fireOther({ [sharedKey('train')]: { newValue: active(stormNight) } }, 'local');
+    await stopSharedSelection('train', { chromeApi }); // nothing to remove: no event
+    await chooseSharedSelection('train', stormNight, { chromeApi });
+    await chooseSharedSelection('train', stormNight, { chromeApi }); // the same again
+
+    expect(onChange).toHaveBeenCalledTimes(2);
+    expect(onChange).toHaveBeenLastCalledWith({ selection: stormNight, ended: null });
+  });
+
+  it("doesn't report a first read that a change has overtaken", async () => {
+    const { chromeApi, store, releaseReads } = makeChrome({ holdReads: true });
+    store[sharedKey('train')] = active(stormNight);
+    const onChange = vi.fn();
+
+    watchSharedState('train', onChange, { chromeApi });
+    // The page chooses again before the first read has come back.
+    await chromeApi.storage.session.set({ [sharedKey('train')]: active(floodGroup) });
+    releaseReads();
+    await flush();
+
+    expect(onChange.mock.calls).toEqual([[{ selection: floodGroup, ended: null }]]);
   });
 
   it('wakes the background and retries when session storage is still closed to it', async () => {
     const { chromeApi, store } = makeChrome({ denied: true });
-    store[KEY(3)] = { env: 'test', ...stormNight };
+    store[sharedKey('test')] = active(stormNight);
     const onChange = vi.fn();
 
-    watchSharedSelection('test', onChange, { chromeApi });
+    watchSharedState('test', onChange, { chromeApi });
     await flush();
 
     expect(chromeApi.runtime.sendMessage).toHaveBeenCalledWith({ type: SHARE_ACCESS_MESSAGE });
-    expect(onChange).toHaveBeenCalledWith(stormNight);
+    expect(onChange).toHaveBeenCalledWith({ selection: stormNight, ended: null });
   });
 
-  it('reports null when the selection cannot be read at all', async () => {
+  it('reports live positions when the state cannot be read at all', async () => {
     const { chromeApi } = makeChrome({ denied: true });
     chromeApi.runtime.sendMessage = vi.fn(async () => ({ ok: true })); // still closed afterwards
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const onChange = vi.fn();
 
-    watchSharedSelection('test', onChange, { chromeApi });
+    watchSharedState('test', onChange, { chromeApi });
     await flush();
 
-    expect(onChange).toHaveBeenCalledWith(null);
+    expect(onChange).toHaveBeenCalledWith(LIVE);
     warn.mockRestore();
   });
 
-  it('reports null straight away without extension storage', () => {
+  it('reports live positions straight away without extension storage', () => {
     const onChange = vi.fn();
-    watchSharedSelection('train', onChange, { chromeApi: undefined });
-    expect(onChange).toHaveBeenCalledWith(null);
+    watchSharedState('train', onChange, { chromeApi: undefined });
+    expect(onChange).toHaveBeenCalledWith(LIVE);
   });
 
   it('stops listening when asked', async () => {
     const { chromeApi, listenerCount } = makeChrome();
     const onChange = vi.fn();
-    const stop = watchSharedSelection('train', onChange, { chromeApi });
+    const stop = watchSharedState('train', onChange, { chromeApi });
     await flush();
     stop();
     expect(listenerCount()).toBe(0);
+    await chooseSharedSelection('train', stormNight, { chromeApi });
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
+});
 
-  describe('when a LAD tab takes its selection away', () => {
-    beforeEach(() => vi.useFakeTimers());
-    afterEach(() => vi.useRealTimers());
+describe('watchSharedSelection', () => {
+  it('reports only the exercise copy to show', async () => {
+    const { chromeApi } = makeChrome();
+    const onChange = vi.fn();
+    watchSharedSelection('train', onChange, { chromeApi });
+    await flush();
+    expect(onChange).toHaveBeenLastCalledWith(null);
 
-    it('waits before going back to live positions', async () => {
-      const { chromeApi } = makeChrome();
-      const lad = createTabPublisher({ env: 'train', chromeApi });
-      await lad.publish(stormNight);
-      const onChange = vi.fn();
-      watchSharedSelection('train', onChange, { chromeApi, removalGraceMs: 4000 });
-      await vi.advanceTimersByTimeAsync(0);
-      expect(onChange).toHaveBeenCalledTimes(1);
+    await chooseSharedSelection('train', stormNight, { chromeApi });
+    expect(onChange).toHaveBeenLastCalledWith(stormNight);
 
-      await lad.publish(null);
-      await vi.advanceTimersByTimeAsync(3900);
-      expect(onChange).toHaveBeenCalledTimes(1);
+    // Ending and then clearing both mean live positions: reported once.
+    await endSharedSelection('train', stormNight, 'ended', { chromeApi });
+    await stopSharedSelection('train', { chromeApi });
+    expect(onChange.mock.calls).toEqual([[null], [stormNight], [null]]);
+  });
+});
 
-      await vi.advanceTimersByTimeAsync(200);
-      expect(onChange).toHaveBeenLastCalledWith(null);
+describe('sharedChoice', () => {
+  it('ties the calls to one environment', async () => {
+    const { chromeApi, store } = makeChrome();
+    const train = sharedChoice('train', { chromeApi });
+    const onChange = vi.fn();
+    train.watch(onChange);
+    await flush();
+
+    await train.choose(floodGroup);
+    expect(store[sharedKey('train')]).toEqual(active(floodGroup));
+    await expect(train.read()).resolves.toEqual({ selection: floodGroup, ended: null });
+
+    await expect(train.end(floodGroup, 'unavailable')).resolves.toBe(true);
+    expect(onChange).toHaveBeenLastCalledWith({
+      selection: null,
+      ended: expect.objectContaining({ selection: floodGroup, reason: 'unavailable' }),
     });
 
-    it("doesn't report anything when the tab publishes it again in time (a reload)", async () => {
-      const { chromeApi } = makeChrome();
-      const lad = createTabPublisher({ env: 'train', chromeApi });
-      await lad.publish(stormNight);
-      const onChange = vi.fn();
-      watchSharedSelection('train', onChange, { chromeApi, removalGraceMs: 4000 });
-      await vi.advanceTimersByTimeAsync(0);
-
-      await lad.publish(null);
-      await vi.advanceTimersByTimeAsync(1500);
-      await lad.publish(stormNight); // same choice, same selectedAt
-      await vi.advanceTimersByTimeAsync(10000);
-
-      expect(onChange).toHaveBeenCalledTimes(1);
-      expect(onChange).toHaveBeenLastCalledWith(stormNight);
-    });
-
-    it('reports a new choice straight away', async () => {
-      const { chromeApi } = makeChrome();
-      const lad = createTabPublisher({ env: 'train', chromeApi });
-      await lad.publish(stormNight);
-      const onChange = vi.fn();
-      watchSharedSelection('train', onChange, { chromeApi, removalGraceMs: 4000 });
-      await vi.advanceTimersByTimeAsync(0);
-
-      await lad.publish(floodGroup);
-      await vi.advanceTimersByTimeAsync(0);
-
-      expect(onChange).toHaveBeenLastCalledWith(floodGroup);
-    });
+    await train.choose(stormNight);
+    await train.stop();
+    expect(store).toEqual({});
   });
 });
 
@@ -347,15 +445,13 @@ describe('installSharedSelection', () => {
     expect(session.setAccessLevel).toHaveBeenCalledWith({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
   });
 
-  it("forgets a LAD tab's selection when the tab closes", async () => {
-    const { chromeApi, store, closeTab } = makeChrome();
-    installSharedSelection({ chromeApi });
-    store[KEY(7)] = { env: 'train', ...stormNight };
-    store[KEY(8)] = { env: 'train', ...floodGroup };
-
-    closeTab(7);
-    await flush();
-
-    expect(Object.keys(store)).toEqual([KEY(8)]);
+  it('does nothing without session storage, and survives a failure', async () => {
+    await expect(installSharedSelection({ chromeApi: undefined })).resolves.toBeUndefined();
+    const { chromeApi, session } = makeChrome();
+    session.setAccessLevel.mockRejectedValueOnce(new Error('nope'));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await expect(installSharedSelection({ chromeApi })).resolves.toBeUndefined();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

@@ -10,6 +10,7 @@ import {
   simulationLabel,
   sameSimulation,
   selectionForHq,
+  selectionStatus,
 } from './cadenceSimulation.js';
 
 vi.mock('./BeaconClient/core/request.js', async (importOriginal) => {
@@ -180,6 +181,66 @@ describe('listExercises', () => {
     const abort = new DOMException('The operation was aborted.', 'AbortError');
     vi.mocked(request).mockRejectedValueOnce(abort);
     await expect(listExercises(TRAIN)).rejects.toBe(abort);
+  });
+});
+
+describe('selectionStatus', () => {
+  const listing = {
+    exercises: [
+      {
+        exerciseId: 'ex1',
+        name: 'Demo storm night',
+        mode: 'group',
+        createdAt: '2026-10-15T09:00:00.000Z',
+        copies: [
+          { copyId: '101', participantHqId: '101', participantHqName: 'Demo City' },
+          { copyId: '102', participantHqId: '102', participantHqName: 'Demo Vale' },
+        ],
+      },
+    ],
+  };
+
+  it('is running while the exercise and that copy are listed', async () => {
+    vi.mocked(request).mockResolvedValueOnce(listing);
+    await expect(selectionStatus({ exerciseId: 'ex1', copyId: '102' }, TRAIN)).resolves.toBe('running');
+    expect(request).toHaveBeenCalledWith(`${FEED}/feed/exercises`, { token: 'train-token', signal: undefined });
+  });
+
+  it('has ended once the exercise, or that copy, is no longer listed', async () => {
+    vi.mocked(request).mockResolvedValueOnce(listing);
+    await expect(selectionStatus({ exerciseId: 'ex0', copyId: '101' }, TRAIN)).resolves.toBe('ended');
+    vi.mocked(request).mockResolvedValueOnce(listing);
+    await expect(selectionStatus({ exerciseId: 'ex1', copyId: '103' }, TRAIN)).resolves.toBe('ended');
+    vi.mocked(request).mockResolvedValueOnce({ exercises: [] });
+    await expect(selectionStatus({ exerciseId: 'ex1', copyId: '101' }, TEST)).resolves.toBe('ended');
+  });
+
+  it('compares ids as strings', async () => {
+    vi.mocked(request).mockResolvedValueOnce(listing);
+    await expect(selectionStatus({ exerciseId: 'ex1', copyId: 101 }, TRAIN)).resolves.toBe('running');
+  });
+
+  it.each([401, 403])('is unavailable when the backend refuses the token (%i)', async (status) => {
+    vi.mocked(request).mockRejectedValueOnce(new BeaconApiError(status, 'Forbidden', `${FEED}/feed/exercises`, ''));
+    await expect(selectionStatus({ exerciseId: 'ex1', copyId: '101' }, TRAIN)).resolves.toBe('unavailable');
+  });
+
+  it('is unavailable off Train and Test Beacon, without contacting the backend', async () => {
+    await expect(selectionStatus({ exerciseId: 'ex1', copyId: '101' }, PROD)).resolves.toBe('unavailable');
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it("is unknown when the list couldn't be loaded", async () => {
+    vi.mocked(request).mockRejectedValueOnce(new BeaconApiError(502, 'Bad Gateway', `${FEED}/feed/exercises`, ''));
+    await expect(selectionStatus({ exerciseId: 'ex1', copyId: '101' }, TRAIN)).resolves.toBe('unknown');
+    vi.mocked(request).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    await expect(selectionStatus({ exerciseId: 'ex1', copyId: '101' }, TRAIN)).resolves.toBe('unknown');
+  });
+
+  it('passes an abort on', async () => {
+    const abort = new DOMException('The operation was aborted.', 'AbortError');
+    vi.mocked(request).mockRejectedValueOnce(abort);
+    await expect(selectionStatus({ exerciseId: 'ex1', copyId: '101' }, TRAIN)).rejects.toBe(abort);
   });
 });
 

@@ -5,8 +5,8 @@ var tj = require('@tmcw/togeojson');
 var DOMParser = require('@xmldom/xmldom').DOMParser;
 import { installSharedSelection, SHARE_ACCESS_MESSAGE } from './shared/cadenceSimulationShare.js';
 
-// CADence simulated exercises: lets Beacon pages read the exercise LAD is
-// showing, and forgets a LAD tab's choice when the tab closes.
+// CADence simulated exercises: lets Beacon pages read the exercise chosen on
+// the CADence Simulated Exercise page (shared/cadenceSimulationShare.js).
 const simulatedExerciseShareReady = installSharedSelection();
 
 // Check whether new version is installed

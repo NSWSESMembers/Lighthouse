@@ -46,14 +46,14 @@ var assetMap; //global map holder
 var assetMapRenderAtTime;
 var assetMapRenderTimer;
 
-// CADence simulated exercises (Train and Test Beacon only). While LAD is
-// showing one, the map's radio positions come from the exercise instead of
-// Beacon (see shared/cadenceSimulationPage.js): from the copy for the job's
-// own HQ, which may not be the one LAD shows, since each HQ in a group
-// exercise has its own copy with teams of the same callsigns. A job in an HQ
-// with no copy keeps the live feed. assetMapSimulation is what the drawn map
-// came from: undefined while nothing is drawn, null for the live feed,
-// otherwise the exercise copy.
+// CADence simulated exercises (Train and Test Beacon only). While one is
+// chosen on the CADence Simulated Exercise page, the map's radio positions
+// come from the exercise instead of Beacon (see shared/cadenceSimulationPage.js):
+// from the copy for the job's own HQ, which may not be the chosen one, since
+// each HQ in a group exercise has its own copy with teams of the same
+// callsigns. A job in an HQ with no copy keeps the live feed.
+// assetMapSimulation is what the drawn map came from: undefined while nothing
+// is drawn, null for the live feed, otherwise the exercise copy.
 var simulatedExercise = createPageSimulation({
   host: function () {
     return typeof urls !== 'undefined' ? urls.Base : null;
@@ -61,7 +61,7 @@ var simulatedExercise = createPageSimulation({
 });
 var assetMapSimulation;
 
-// The copy of LAD's exercise for this job's HQ, or null for the live feed.
+// The copy of the chosen exercise for this job's HQ, or null for the live feed.
 function jobSimulation(selection) {
   var assigned = masterViewModel.entityAssignedTo;
   var entity = assigned && typeof assigned.peek === 'function' ? assigned.peek() : null;
@@ -74,8 +74,8 @@ function redrawIfSimulationChanged(selection) {
   $('#assetLocationButtonRefresh').trigger('click');
 }
 
-// LAD started, switched or stopped showing an exercise: redraw from the new
-// feed, so the map doesn't keep showing what LAD has moved on from.
+// An exercise was chosen, switched, stopped or ended: redraw from the new
+// feed, so the map doesn't keep showing what's no longer chosen.
 simulatedExercise.onChange(redrawIfSimulationChanged);
 
 // The job moved to another HQ, which may have another copy or none.
@@ -644,8 +644,8 @@ let quickMessage = return_quickmessagebutton();
 let instantRadiologModal = return_quickradiologmodal();
 
 // The assets for the map and the asset filter: Beacon's feed, with the radio
-// positions from the job HQ's copy of the CADence exercise LAD is showing, if
-// any. Resolves { assets, simulation }, simulation being that copy or null.
+// positions from the job HQ's copy of the chosen CADence exercise, if any.
+// Resolves { assets, simulation }, simulation being that copy or null.
 function fetchJobAssets() {
   return simulatedExercise.current().then(function (selection) {
     var simulation = jobSimulation(selection);

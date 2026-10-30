@@ -1,6 +1,7 @@
 /* global user, urls, $, lighthouseUrl, filterViewModel, moment, layout, utility, lighthouseEnviroment, contentViewModel */
 
 var clusterCodes = require('../lib/clusters.js');
+var { simulationEnvironment } = require('../shared/cadenceSimulation.js');
 
 window.postMessage(
   {
@@ -69,6 +70,15 @@ whenWeAreReady(function () {
   let lighthouseMenu = MakeMenu(lighthouseUrl, vars, user.hq.Code);
 
   function MakeMenu(lighthouseUrl, vars, unitName) {
+    // CADence simulated exercises only run on Train Beacon and Test Beacon,
+    // so the page that chooses one is only offered there.
+    var simulatedExerciseItem = simulationEnvironment(location.origin)
+      ? '<li id="lhsimexmenuitem"><a href="' +
+        lighthouseUrl +
+        'pages/simulatedexercise.html' +
+        vars +
+        '" target="_blank">CADence Simulated Exercise</a></li>'
+      : '';
     if (lighthouseEnviroment == 'Development') {
       //dev version
       return $.parseHTML(
@@ -139,7 +149,9 @@ whenWeAreReady(function () {
         'pages/radiocon.html' +
         vars +
         '" target="_blank">Radio Operations Console</a>\
-    </li>\
+    </li>' +
+        simulatedExerciseItem +
+        '\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
     <li id="lhstoragemenuitem">\
@@ -225,7 +237,9 @@ whenWeAreReady(function () {
         'pages/radiocon.html' +
         vars +
         '" target="_blank">Radio Operations Console</a>\
-    </li>\
+    </li>' +
+        simulatedExerciseItem +
+        '\
     <li role="presentation" class="divider"></li><li role="presentation" class="dropdown-header">About\
     </li>\
     <li id="lhstoragemenuitem">\
@@ -296,6 +310,10 @@ whenWeAreReady(function () {
   });
 
   $('#lhradiomenuitem > a').mousedown(function () {
+    updateToken();
+  });
+
+  $('#lhsimexmenuitem > a').mousedown(function () {
     updateToken();
   });
 

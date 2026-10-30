@@ -1,6 +1,6 @@
 /*
   Tells Lighthouse's scripts in a Beacon page's own context (injectscripts/)
-  which CADence exercise copy LAD is showing, if any (Train and Test Beacon
+  which CADence exercise copy has been chosen, if any (Train and Test Beacon
   only). Those scripts can't read extension storage, so the page's content
   script answers for them over window.postMessage:
 
@@ -35,7 +35,7 @@ function pageSelection(value) {
 }
 
 /**
- * Content script: keep the page told which exercise copy LAD is showing for
+ * Content script: keep the page told which exercise copy is chosen for
  * this Beacon environment. Does nothing outside Train and Test Beacon.
  *
  * @param {{win?: Window, watch?: typeof watchSharedSelection}} [opts]
@@ -57,7 +57,7 @@ export function serveSimulationToPage({ win = window, watch = watchSharedSelecti
 }
 
 /**
- * Inject script: the exercise copy LAD is showing for this Beacon
+ * Inject script: the exercise copy chosen for this Beacon
  * environment, as reported by the content script (see serveSimulationToPage).
  * Create it early, so it hears every change.
  *

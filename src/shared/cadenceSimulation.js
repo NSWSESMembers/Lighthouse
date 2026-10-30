@@ -4,9 +4,10 @@
   CADence is a training tool that runs simulated teams in Beacon for an
   exercise. Its backend publishes where each simulated vehicle and vessel is,
   in the same GeoJSON shape as Beacon's `GET /Api/v1/ResourceLocations/Radio`.
-  While a user has picked an exercise, BeaconClient/asset.js reads the radio
-  feed from here instead of from Beacon, so the simulated teams draw, match
-  their Beacon teams and feed Instant Task suggestions like real radios.
+  While a member has chosen an exercise on Lighthouse's CADence Simulated
+  Exercise page (see cadenceSimulationShare.js), BeaconClient/asset.js reads the
+  radio feed from here instead of from Beacon, so the simulated teams draw,
+  match their Beacon teams and feed Instant Task suggestions like real radios.
 
   The backend signs the user in with the Beacon bearer token Lighthouse
   already holds: it checks the issuer, signature, audience and beaconApi
@@ -95,7 +96,7 @@ export function sameSimulation(a, b) {
  * selection, or null when that HQ has no copy in it. A group exercise gives
  * each participant HQ its own copy, with teams of the same callsigns, so
  * Beacon's job page shows the copy for the job's own HQ rather than the one
- * LAD is showing.
+ * that was chosen.
  *
  * @param {{exerciseId: string, copyId: string, exerciseName?: string, copyName?: string, mode?: string,
  *   participantHqId?: string,
@@ -204,6 +205,32 @@ export async function listExercises(ctx = {}) {
   const body = await feedRequest(`${feedBase}/feed/exercises`, { token, signal });
   const exercises = Array.isArray(body?.exercises) ? body.exercises : [];
   return exercises.map(normaliseExercise).filter((e) => e && e.copies.length > 0);
+}
+
+/**
+ * Whether a chosen exercise copy is still running, judged from the exercise
+ * list. An empty position feed needs this check: the backend sends one for an
+ * exercise that has ended, but also for a running one that hasn't published
+ * positions yet.
+ *
+ * @param {{exerciseId: string, copyId: string}} selection
+ * @param {{host: string, token: string, signal?: AbortSignal}} ctx
+ * @returns {Promise<'running'|'ended'|'unavailable'|'unknown'>} 'ended' when the exercise or that copy is
+ *   no longer listed, 'unavailable' when the backend refused the token (or this isn't Train or Test Beacon),
+ *   'unknown' when the list couldn't be loaded (network, 5xx)
+ */
+export async function selectionStatus(selection, ctx = {}) {
+  let exercises;
+  try {
+    exercises = await listExercises(ctx);
+  } catch (err) {
+    if (err && err.name === 'AbortError') throw err;
+    return isSimulationUnavailable(err) ? 'unavailable' : 'unknown';
+  }
+  const exerciseId = String(selection?.exerciseId ?? '');
+  const copyId = String(selection?.copyId ?? '');
+  const exercise = exercises.find((e) => e.exerciseId === exerciseId);
+  return exercise && exercise.copies.some((c) => c.copyId === copyId) ? 'running' : 'ended';
 }
 
 /**

@@ -1,21 +1,12 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 import ko from 'knockout';
-import moment from 'moment';
 import {
   simulationEnvironment,
-  listExercises,
-  isSimulationUnavailable,
-  exerciseDisplayName,
   simulationLabel,
+  sameSimulation,
+  selectionStatus,
 } from '../../../shared/cadenceSimulation.js';
-import { createTabPublisher, copyList } from '../../../shared/cadenceSimulationShare.js';
-
-// The selection lives in sessionStorage: it survives a reload of this LAD tab
-// but not the tab closing, and each tab can show a different exercise copy
-// (handy for a facilitator watching several headquarters). It's also
-// published for Beacon's own job and situational awareness pages, which
-// follow the most recently chosen one (see shared/cadenceSimulationShare.js).
-const STORAGE_PREFIX = 'lh-simulatedExercise-';
+import { sharedChoice } from '../../../shared/cadenceSimulationShare.js';
 
 const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
@@ -26,95 +17,35 @@ function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (c) => HTML_ESCAPES[c]);
 }
 
-function defaultStorage() {
-  try {
-    return globalThis.sessionStorage ?? null;
-  } catch (_) {
-    return null;
-  }
-}
-
-function startedText(createdAt) {
-  const started = moment(createdAt, moment.ISO_8601);
-  if (!createdAt || !started.isValid()) return '';
-  return started.isSame(moment(), 'day') ? started.format('h:mm a') : started.format('D MMM h:mm a');
-}
-
-function exerciseLabel(exercise) {
-  const started = startedText(exercise.createdAt);
-  const details = [exercise.mode === 'group' ? 'group' : 'individual', started ? `started ${started}` : '']
-    .filter(Boolean)
-    .join(', ');
-  return `${exerciseDisplayName(exercise.name)} (${details})`;
-}
-
 /**
- * Picker and state for CADence simulated exercises in LAD (Train and Test
- * Beacon only). While a copy is selected, the page passes feedSelection() to
- * BeaconClient.asset.filter so the radio feed comes from the exercise.
+ * CADence simulated exercises in LAD (Train and Test Beacon only). The
+ * exercise is chosen on Lighthouse's CADence Simulated Exercise page and
+ * shared through chrome.storage.session (see shared/cadenceSimulationShare.js);
+ * LAD follows that choice. While a copy is chosen, the page passes
+ * feedSelection() to BeaconClient.asset.filter so the radio feed comes from
+ * the exercise.
  *
  * @param {object} deps
  * @param {string} deps.host  Beacon API host (params.host); decides availability
- * @param {string} [deps.hqId]  the user's current HQ id, to preselect their copy of a group exercise
  * @param {() => Promise<string>} deps.getToken  current Beacon bearer token
- * @param {Storage} [deps.storage]  defaults to sessionStorage
- * @param {{publish: (selection: object|null) => Promise<void>}|null} [deps.share]  where the selection is published
- *   for Beacon pages; defaults to this tab's entry in chrome.storage.session, null to publish nothing
+ * @param {{watch: Function, stop: Function, end: Function}|null} [deps.share]  the shared choice for this
+ *   environment; defaults to chrome.storage.session (sharedChoice), null to follow nothing
  * @param {(selection: object|null) => void} [deps.onSelectionChange]  refetch assets
- * @param {() => void} [deps.openPicker]  bring up the picker (the map alert's "change" item and the
- *   ended banner's link)
+ * @param {() => void} [deps.openPage]  open the CADence Simulated Exercise page (the map alert's
+ *   "change" item and the ended banner's link)
  */
 export function SimulatedExerciseVM(deps = {}) {
   const self = this;
-  const { host, hqId, getToken, onSelectionChange, openPicker } = deps;
-  const storage = deps.storage !== undefined ? deps.storage : defaultStorage();
+  const { host, getToken, onSelectionChange, openPage } = deps;
   const environment = simulationEnvironment(host);
-  const storageKey = environment ? `${STORAGE_PREFIX}${environment.env}` : null;
-  const share =
-    deps.share !== undefined ? deps.share : environment ? createTabPublisher({ env: environment.env }) : null;
+  const share = deps.share !== undefined ? deps.share : environment ? sharedChoice(environment.env) : null;
 
   self.available = !!environment;
   self.environmentLabel = environment ? environment.label : '';
 
   // ---- Current selection (what the map shows) ----------------------------
 
-  function readSelection() {
-    if (!storageKey || !storage) return null;
-    try {
-      const parsed = JSON.parse(storage.getItem(storageKey) || 'null');
-      if (!parsed || typeof parsed.exerciseId !== 'string' || typeof parsed.copyId !== 'string') return null;
-      if (!parsed.exerciseId || !parsed.copyId) return null;
-      // Without its HQ, the copy's positions couldn't be kept to that HQ's
-      // teams (see Asset.exerciseHqId), so such a selection isn't restored.
-      if (typeof parsed.participantHqId !== 'string' || !parsed.participantHqId) return null;
-      return {
-        exerciseId: parsed.exerciseId,
-        copyId: parsed.copyId,
-        exerciseName: String(parsed.exerciseName ?? ''),
-        copyName: String(parsed.copyName ?? ''),
-        mode: parsed.mode === 'group' ? 'group' : 'individual',
-        participantHqId: parsed.participantHqId,
-        // Every copy of the exercise, for Beacon's job page (see cadenceSimulationShare.js).
-        copies: copyList(parsed.copies),
-        // When it was chosen: Beacon pages follow the latest choice across LAD tabs.
-        selectedAt: Number(parsed.selectedAt) || Date.now(),
-      };
-    } catch (_) {
-      return null;
-    }
-  }
-
-  function writeSelection(selection) {
-    if (!storageKey || !storage) return;
-    try {
-      if (selection) storage.setItem(storageKey, JSON.stringify(selection));
-      else storage.removeItem(storageKey);
-    } catch (_) {
-      /* storage unavailable: the selection just won't survive a reload */
-    }
-  }
-
-  self.selection = ko.observable(readSelection());
+  self.selection = ko.observable(null);
   self.active = ko.pureComputed(() => !!self.selection());
   self.activeLabel = ko.pureComputed(() => simulationLabel(self.selection()));
   // Bumped on every change, so the page can drop an asset response that was
@@ -147,49 +78,69 @@ export function SimulatedExerciseVM(deps = {}) {
     );
   });
   self.noticeLinkText = ko.pureComputed(() =>
-    self.notice()?.reason === 'ended' ? 'Choose another exercise' : 'Open Simulated Exercise settings',
+    self.notice()?.reason === 'ended' ? 'Choose another exercise' : 'Open Simulated Exercise',
   );
 
   // For click bindings: both ignore the ($data, event) Knockout passes.
   self.dismissNotice = function () {
     self.notice(null);
   };
-  // The banner's link. Opening the picker counts as having seen the banner.
+  // The banner's link. Opening the page counts as having seen the banner.
   self.chooseAnotherExercise = function () {
     self.notice(null);
-    if (typeof openPicker === 'function') openPicker();
+    if (typeof openPage === 'function') openPage();
   };
 
-  function setSelection(selection) {
+  function setSelection(selection, { refetch = true } = {}) {
     self.selection(selection);
     self.assetCount(0);
     self.generation(self.generation() + 1);
-    writeSelection(selection);
-    if (share) share.publish(selection);
     // Showing an exercise again makes an earlier "has ended" banner stale.
     if (selection) self.notice(null);
-    if (typeof onSelectionChange === 'function') onSelectionChange(selection);
+    if (refetch && typeof onSelectionChange === 'function') onSelectionChange(selection);
   }
 
-  // ---- Beacon pages ------------------------------------------------------
+  // ---- Following the shared choice ----------------------------------------
   //
-  // Lighthouse's maps on Beacon's own job and situational awareness pages
-  // show the exercise this tab shows (the latest choice, if several LAD tabs
-  // show one). The page withdraws it when the tab unloads, and publishes it
-  // again if the tab comes back from the back/forward cache.
+  // The first report is the choice already made when LAD opened. LAD's own
+  // first asset fetch waits for it (see `ready`) and reads it, so it doesn't
+  // start another fetch. After that, a change made on the Simulated Exercise
+  // page, in another LAD tab or on a Beacon page refetches the assets.
 
-  /** Publish the current selection (or its absence) for Beacon pages. */
-  self.publishToBeacon = function () {
-    if (share) share.publish(self.selection());
-  };
+  let resolveReady;
+  /** Resolves once the shared choice has been read, so the first asset fetch uses it. */
+  self.ready = new Promise((resolve) => {
+    resolveReady = resolve;
+  });
 
-  /** Stop Beacon pages following this tab, keeping the tab's own selection. */
-  self.withdrawFromBeacon = function () {
-    if (share) share.publish(null);
-  };
+  let firstReport = true;
+  function follow({ selection, ended }) {
+    const refetch = !firstReport;
+    firstReport = false;
+    const showing = self.selection();
+    if (selection) {
+      if (!sameSimulation(selection, showing)) setSelection(selection, { refetch });
+      else self.selection(selection); // same copy; keep the latest names
+    } else if (showing) {
+      setSelection(null, { refetch });
+      // It ended on its own, noticed here or anywhere else: say why.
+      if (ended && sameSimulation(ended.selection, showing)) {
+        self.notice({ reason: ended.reason, label: simulationLabel(showing) });
+      }
+    }
+    resolveReady();
+  }
 
-  // A selection restored on reload is still showing.
-  if (self.selection()) self.publishToBeacon();
+  if (share) {
+    try {
+      share.watch(follow);
+    } catch (err) {
+      console.warn('[simulated-exercise] Could not follow the chosen exercise:', err);
+      resolveReady();
+    }
+  } else {
+    resolveReady();
+  }
 
   /**
    * { exerciseId, copyId, participantHqId } for BeaconClient.asset.filter, or
@@ -203,185 +154,47 @@ export function SimulatedExerciseVM(deps = {}) {
       : null;
   };
 
-  // ---- Picker state (the Simulated Exercise configuration tab) -----------
-
-  self.exercises = ko.observableArray([]);
-  self.loading = ko.observable(false);
-  self.loaded = ko.observable(false);
-  // The backend refused this Beacon sign-in, so the list says nothing about
-  // what's running.
-  self.refused = ko.observable(false);
-  self.message = ko.observable('');
-  self.messageIsError = ko.observable(false);
-
-  function setMessage(text, isError = false) {
-    self.message(text);
-    self.messageIsError(!!isError);
-  }
-
-  self.chosenExerciseId = ko.observable();
-  self.chosenCopyId = ko.observable();
-  self.chosenExercise = ko.pureComputed(
-    () => self.exercises().find((e) => e.exerciseId === self.chosenExerciseId()) || null,
-  );
-  self.chosenCopies = ko.pureComputed(() => self.chosenExercise()?.copies || []);
-  self.needsCopyChoice = ko.pureComputed(() => self.chosenCopies().length > 1);
-  // The headquarters dropdown shows once an exercise is chosen. An individual
-  // exercise has one copy, so it just names that HQ and can't be changed.
-  self.showCopyChoice = ko.pureComputed(() => !!self.chosenExercise());
-  self.copyCaption = ko.pureComputed(() => (self.needsCopyChoice() ? 'Choose a headquarters…' : undefined));
-  self.copyHelp = ko.pureComputed(() =>
-    self.needsCopyChoice()
-      ? 'A group exercise gives each headquarters its own copy of the teams, with the same callsigns. ' +
-        "Pick the one you're working from. Simulated positions only go to teams assigned to it."
-      : 'Simulated positions only go to teams assigned to this headquarters.',
-  );
-  self.noExercises = ko.pureComputed(() => self.loaded() && self.exercises().length === 0);
-  self.exerciseCaption = ko.pureComputed(() => {
-    if (!self.loaded()) return self.loading() ? 'Loading exercises…' : 'Refresh to list exercises';
-    if (self.refused()) return 'Not available';
-    return self.noExercises() ? 'No exercises running' : 'Choose an exercise…';
-  });
-  self.canShow = ko.pureComputed(() => {
-    const exercise = self.chosenExercise();
-    const copyId = self.chosenCopyId();
-    if (!exercise || !copyId || !exercise.copies.some((c) => c.copyId === copyId)) return false;
-    const selection = self.selection();
-    return !(selection && selection.exerciseId === exercise.exerciseId && selection.copyId === copyId);
-  });
-  self.showButtonText = ko.pureComputed(() => (self.active() ? 'Switch to this exercise' : 'Show simulated assets'));
-
-  // The copy to offer for an exercise: the only one, the one showing, or the
-  // one for the user's own HQ. Otherwise the user picks.
-  function defaultCopyId(exercise) {
-    if (!exercise) return undefined;
-    if (exercise.copies.length === 1) return exercise.copies[0].copyId;
-    const selection = self.selection();
-    if (selection && selection.exerciseId === exercise.exerciseId) {
-      if (exercise.copies.some((c) => c.copyId === selection.copyId)) return selection.copyId;
+  /**
+   * Back to live positions everywhere, because the user stopped from LAD
+   * (the map alert's "stop" item).
+   */
+  self.stop = function () {
+    if (!self.selection()) return;
+    setSelection(null);
+    if (share) {
+      Promise.resolve()
+        .then(() => share.stop())
+        .catch((err) => console.warn('[simulated-exercise] Could not stop the exercise everywhere:', err));
     }
-    const mine = hqId != null && hqId !== '' ? exercise.copies.find((c) => c.participantHqId === String(hqId)) : null;
-    return mine ? mine.copyId : undefined;
-  }
-
-  self.chosenExerciseId.subscribe((exerciseId) => {
-    const exercise = self.exercises().find((e) => e.exerciseId === exerciseId);
-    const current = self.chosenCopyId();
-    if (!exercise || !exercise.copies.some((c) => c.copyId === current)) {
-      self.chosenCopyId(defaultCopyId(exercise));
-    }
-  });
-
-  let refreshSeq = 0;
+  };
 
   /**
-   * Load the active exercises for this Beacon environment. Only runs when the
-   * user opens the picker (or the feed comes back empty while one is
-   * selected), so the backend never sees the token of someone who isn't
-   * using simulated exercises. Ends the selection if its exercise or copy is
-   * no longer listed.
+   * The exercise has ended ('ended') or the backend refused the sign-in
+   * ('unavailable'), found out here. LAD goes back to live positions straight
+   * away and puts up the banner; recording it in the shared choice sends
+   * everything else back too.
    *
-   * @returns {Promise<object[]|null>} the exercises, or null if the list couldn't be loaded
+   * @param {'ended'|'unavailable'} reason
+   * @returns {Promise<void>}
    */
-  self.refresh = async function () {
-    if (!self.available) return null;
-    const seq = ++refreshSeq;
-    self.loading(true);
-    try {
-      const token = await getToken();
-      const list = await listExercises({ host, token });
-      if (seq !== refreshSeq) return self.exercises();
-
-      const rows = list
-        .map((e) => ({ ...e, label: exerciseLabel(e) }))
-        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
-      self.exercises(rows);
-      self.loaded(true);
-      self.refused(false);
-      setMessage(rows.length ? '' : `No exercises are running on ${self.environmentLabel} right now.`);
-
-      const selection = self.selection();
-      const showing = selection ? rows.find((e) => e.exerciseId === selection.exerciseId) : null;
-      if (selection && !(showing && showing.copies.some((c) => c.copyId === selection.copyId))) {
-        self.stop('ended');
-      }
-
-      const chosen =
-        rows.find((e) => e.exerciseId === self.chosenExerciseId()) ||
-        (self.selection() ? showing : null) ||
-        (rows.length === 1 ? rows[0] : null);
-      self.chosenExerciseId(chosen ? chosen.exerciseId : undefined);
-      const copyId = self.chosenCopyId();
-      if (!chosen || !chosen.copies.some((c) => c.copyId === copyId)) self.chosenCopyId(defaultCopyId(chosen));
-      return rows;
-    } catch (err) {
-      if (seq !== refreshSeq) return self.exercises();
-      if (isSimulationUnavailable(err)) {
-        self.exercises([]);
-        self.loaded(true);
-        self.refused(true);
-        setMessage(
-          `The CADence exercise service didn't accept your ${self.environmentLabel} sign-in, so simulated assets ` +
-            `aren't available. Reload Beacon and try again.`,
-          true,
-        );
-        if (self.active()) self.stop('unavailable');
-      } else {
-        console.error('[simulated-exercise] Failed to load exercises:', err);
-        setMessage("Couldn't load the exercise list. Check your connection and try again.", true);
-      }
-      return null;
-    } finally {
-      if (seq === refreshSeq) self.loading(false);
-    }
-  };
-
-  /** Show the chosen exercise copy in place of the real radio feed. */
-  self.show = function () {
-    if (!self.canShow()) return;
-    const exercise = self.chosenExercise();
-    const copy = exercise.copies.find((c) => c.copyId === self.chosenCopyId());
-    setMessage('');
-    setSelection({
-      exerciseId: exercise.exerciseId,
-      copyId: copy.copyId,
-      exerciseName: exercise.name,
-      copyName: copy.participantHqName,
-      mode: exercise.mode,
-      participantHqId: copy.participantHqId,
-      copies: copyList(exercise.copies),
-      selectedAt: Date.now(),
-    });
-  };
-
-  /**
-   * Back to the live feed. `reason` is 'user', 'ended' (the exercise finished
-   * or its copy went away) or 'unavailable' (the backend refused the sign-in).
-   * The last two weren't the user's doing, so they put up the banner (see
-   * notice above) saying why the map changed.
-   */
-  self.stop = function (reason = 'user') {
+  self.endHere = async function (reason) {
     const selection = self.selection();
     if (!selection) return;
     setSelection(null);
-    if (reason !== 'ended' && reason !== 'unavailable') return;
-    const label = simulationLabel(selection);
-    self.notice({ reason, label });
-    // Also say it in the picker, which may be what found out (refresh()
-    // has already shown why for 'unavailable').
-    if (reason === 'ended') setMessage(`${label} has ended. Now showing live asset locations.`);
-  };
-
-  // For click bindings: Knockout passes ($data, event), which mustn't land in `reason`.
-  self.stopFromPicker = function () {
-    self.stop('user');
+    self.notice({ reason, label: simulationLabel(selection) });
+    if (!share) return;
+    try {
+      await share.end(selection, reason);
+    } catch (err) {
+      console.warn('[simulated-exercise] Could not record that the exercise ended:', err);
+    }
   };
 
   let verifying = null;
 
   /**
    * After a feed response: remember how many simulated assets came back, and
-   * when there were none, check the exercise is still listed. An empty feed
+   * when there were none, check the exercise is still running. An empty feed
    * is what the backend sends once an exercise has ended, and also before a
    * running one first publishes positions; only the first case ends the mode.
    *
@@ -394,11 +207,21 @@ export function SimulatedExerciseVM(deps = {}) {
 
   /** @returns {Promise<boolean>} whether a selection is still active afterwards */
   self.verifyStillRunning = function () {
-    if (!self.active()) return Promise.resolve(false);
+    const selection = self.selection();
+    if (!selection) return Promise.resolve(false);
     if (!verifying) {
-      verifying = self.refresh().finally(() => {
-        verifying = null;
-      });
+      verifying = (async () => {
+        const token = await getToken();
+        const status = await selectionStatus(selection, { host, token });
+        // Leave it if the choice changed while the list was loading.
+        if ((status === 'ended' || status === 'unavailable') && sameSimulation(self.selection(), selection)) {
+          await self.endHere(status);
+        }
+      })()
+        .catch((err) => console.warn("[simulated-exercise] Couldn't check the exercise is still running:", err))
+        .finally(() => {
+          verifying = null;
+        });
     }
     return verifying.then(() => self.active());
   };
@@ -418,8 +241,8 @@ export function SimulatedExerciseVM(deps = {}) {
           { id: 'stop', label: 'Stop and show real radio positions' },
         ],
         onClick: (id) => {
-          if (id === 'stop') self.stop('user');
-          else if (id === 'change' && typeof openPicker === 'function') openPicker();
+          if (id === 'stop') self.stop();
+          else if (id === 'change' && typeof openPage === 'function') openPage();
         },
       },
     ];

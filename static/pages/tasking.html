@@ -1759,12 +1759,6 @@
                                             <span class="cfg-rail-ico"><i class="fa fa-robot"></i></span><span>Instant Task Suggestions</span>
                                         </button>
                                     </li>
-                                    <!-- Train/Test Beacon only (see viewmodels/SimulatedExerciseVM.js) -->
-                                    <li class="nav-item" role="presentation" data-bind="visible: simulatedExercise.available">
-                                        <button class="nav-link" id="cfgTab-simex" data-bs-toggle="pill" data-bs-target="#cfgPane-simex" type="button" role="tab" aria-controls="cfgPane-simex" aria-selected="false">
-                                            <span class="cfg-rail-ico"><i class="fa fa-graduation-cap"></i></span><span>Simulated Exercise</span>
-                                        </button>
-                                    </li>
                                     <li class="nav-item config-rail-guide" role="presentation">
                                         <button class="nav-link" type="button" title="Save and close settings, then open the Trackable Asset Library"
                                             data-bind="click: openTrackableAssetsFromConfig">
@@ -3521,74 +3515,6 @@
                                                     </div><!-- /row -->
                                                 </div><!-- /visible -->
 
-                                    </div>
-                                    <!-- Simulated Exercise: Train/Test Beacon only (viewmodels/SimulatedExerciseVM.js) -->
-                                    <div class="tab-pane fade" id="cfgPane-simex" role="tabpanel" aria-labelledby="cfgTab-simex" tabindex="0">
-                                        <div class="d-flex align-items-center justify-content-between mb-2">
-                                            <h6 class="fw-semibold mb-0">
-                                                <i class="fa fa-graduation-cap me-1"></i>Simulated Exercise
-                                            </h6>
-                                            <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button" title="Refresh exercise list"
-                                                data-bind="click: simulatedExercise.refresh, disable: simulatedExercise.loading">
-                                                <i class="fa fa-sync" data-bind="css: { 'fa-spin': simulatedExercise.loading }"></i>
-                                            </button>
-                                        </div>
-                                        <p class="small text-muted mb-3">
-                                            Show the simulated teams from a CADence training exercise instead of real
-                                            radio positions. Their vehicles and vessels move on the map, match their
-                                            Beacon teams and appear in Instant Task suggestions like real radios. Only
-                                            available on <span data-bind="text: simulatedExercise.environmentLabel"></span>.
-                                            The exercise list and positions come from the CADence exercise service,
-                                            which checks your Beacon sign-in.
-                                        </p>
-
-                                        <!-- ko if: simulatedExercise.active -->
-                                        <div class="alert alert-info py-2 small d-flex align-items-center justify-content-between gap-2" role="status">
-                                            <span>
-                                                Showing simulated assets from
-                                                <strong data-bind="text: simulatedExercise.activeLabel"></strong>.
-                                            </span>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 text-nowrap"
-                                                data-bind="click: simulatedExercise.stopFromPicker">Show real assets</button>
-                                        </div>
-                                        <!-- /ko -->
-
-                                        <div class="mb-2">
-                                            <label class="form-label small mb-1" for="simexExercise">Exercise</label>
-                                            <select id="simexExercise" class="form-select form-select-sm"
-                                                data-bind="options: simulatedExercise.exercises,
-                                                    optionsText: 'label',
-                                                    optionsValue: 'exerciseId',
-                                                    optionsCaption: simulatedExercise.exerciseCaption,
-                                                    value: simulatedExercise.chosenExerciseId,
-                                                    disable: simulatedExercise.noExercises"></select>
-                                        </div>
-
-                                        <!-- ko if: simulatedExercise.showCopyChoice -->
-                                        <div class="mb-2">
-                                            <label class="form-label small mb-1" for="simexCopy">Your headquarters</label>
-                                            <select id="simexCopy" class="form-select form-select-sm"
-                                                data-bind="options: simulatedExercise.chosenCopies,
-                                                    optionsText: 'participantHqName',
-                                                    optionsValue: 'copyId',
-                                                    optionsCaption: simulatedExercise.copyCaption,
-                                                    value: simulatedExercise.chosenCopyId,
-                                                    disable: !simulatedExercise.needsCopyChoice()"></select>
-                                            <div class="form-text" data-bind="text: simulatedExercise.copyHelp"></div>
-                                        </div>
-                                        <!-- /ko -->
-
-                                        <button type="button" class="btn btn-sm btn-primary mt-1"
-                                            data-bind="click: simulatedExercise.show, enable: simulatedExercise.canShow,
-                                                text: simulatedExercise.showButtonText"></button>
-                                        <div class="small mt-2"
-                                            data-bind="visible: simulatedExercise.message, text: simulatedExercise.message,
-                                                css: { 'text-danger': simulatedExercise.messageIsError, 'text-muted': !simulatedExercise.messageIsError() }"></div>
-                                        <div class="form-text mt-3">
-                                            Simulated positions replace the real radio feed until you show real assets
-                                            again, the exercise ends, or you close this LAD tab. They refresh every 30
-                                            seconds.
-                                        </div>
                                     </div>
                                     </div>
                                 </div>
