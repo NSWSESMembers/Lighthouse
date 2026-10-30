@@ -3,7 +3,7 @@ title: Privacy Policy
 description: What data the Lighthouse browser extension uses, where it goes, and why.
 ---
 
-_Last updated: 29 October 2026_
+_Last updated: 30 October 2026_
 
 This policy covers the **Lighthouse** and **Lighthouse Development Preview**
 extensions for Google Chrome ("Lighthouse"). Lighthouse is built and maintained
@@ -34,6 +34,8 @@ its pages can load Beacon data for you, the same way Beacon's own pages do.
   working when it expires, and is removed when you remove Lighthouse.
 - It is only ever sent to Beacon itself, to load data you're allowed to see, and
   to the Lighthouse backend (below), so it can check you're a signed-in Beacon user.
+  On Train Beacon and Test Beacon, if you use simulated exercises, it's also sent to
+  the CADence exercise service (below) for the same check.
 - Lighthouse never sees or stores your Beacon password.
 
 ### Beacon data shown on the page
@@ -50,7 +52,8 @@ mode, panel positions and page preferences. These are kept in your browser's
 local storage and extension storage. Some page preferences use Chrome sync
 storage (`chrome.storage.sync`), so they follow you to other computers where
 you're signed in to Chrome with sync turned on. These settings contain no
-Beacon incident data.
+Beacon incident data. The simulated exercise you choose to show (see below) is
+kept in Chrome's session storage (`chrome.storage.session`) until you close Chrome.
 
 ## The Lighthouse backend
 
@@ -76,6 +79,37 @@ maintainers.
 Lighthouse also downloads files that contain no personal data from
 `static.lighthouse-extension.com` and `map.lighthouse-extension.com`, such as
 notice banners, message templates and SES unit and zone boundary maps.
+
+## The CADence exercise service
+
+CADence is a training tool that runs simulated teams in Beacon for exercises.
+On Train Beacon and Test Beacon only, Lighthouse can show
+a CADence exercise's simulated vehicles and vessels in place of real radio
+positions (see [Simulated Exercises](https://lighthouse.ses.nsw.gov.au/guides/lad/simulated-exercises.html)).
+The exercise list and positions come from CADence's own exercise service, which
+runs on Amazon Web Services in the Sydney region (`ap-southeast-2`) at
+`api.dev.cadence-extension.com`. It's run by the CADence developer, separately
+from the Lighthouse backend.
+
+Lighthouse only contacts it from Train Beacon and Test Beacon, once you open the
+CADence Simulated Exercise page or while an exercise you chose there is showing.
+It never contacts it from production Beacon, so your production Beacon token is
+never sent to it. Every request must carry a valid Train or Test Beacon token. The
+service checks that token and then throws it away. It doesn't keep the token.
+
+| Feature | What is sent | What is kept |
+| --- | --- | --- |
+| Listing the running exercises | Your Train or Test Beacon token | Nothing. |
+| Showing an exercise's simulated vehicles and vessels | Your token, and the exercise and headquarters you chose | Nothing. |
+
+For troubleshooting, the service logs requests it refuses (the address requested
+and the reason) and errors (which feature failed). These logs don't include your
+token or your Beacon member id. They're kept in Amazon CloudWatch for 30 days.
+
+The exercises themselves are set up by the facilitator running CADence. Lighthouse
+shows each one's name and headquarters, and its simulated teams' callsigns and
+positions. None of it comes from Lighthouse users. The service deletes an
+exercise and its positions 30 days after the exercise ends.
 
 ## Other services Lighthouse connects to
 
@@ -125,7 +159,8 @@ including its Limited Use requirements.
   created in LAD. To have shared settings or map-layer content removed
   completely, contact us (below).
 - **Not using a feature** means its data is never sent. For example, if you
-  never share a configuration, nothing is stored for it.
+  never share a configuration, nothing is stored for it, and if you never open
+  the CADence Simulated Exercise page, nothing is sent to the CADence exercise service.
 
 ## Changes to this policy
 
