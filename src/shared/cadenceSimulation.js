@@ -19,27 +19,38 @@
 
 import { request } from './BeaconClient/core/request.js';
 
-// The CADence backend, /v1 included. This is its development deployment, the
-// only one so far, and it only accepts Train and Test Beacon tokens.
-const CADENCE_FEED_BASE = 'https://api.dev.cadence-extension.com/v1';
+// A CADence deployment: its backend (`feedBase`, /v1 included) and its radio
+// join page (`radioUrl`), which belong together, so a Beacon environment takes
+// both from the same deployment. `radioQr` is a static QR code of radioUrl,
+// relative to the extension root (static/ in this repo), shown on the CADence
+// Simulated Exercise page: make a new one if radioUrl changes.
+//
+// This is CADence's development deployment, the only one so far. Its backend
+// only accepts Train and Test Beacon tokens.
+const CADENCE_DEV = Object.freeze({
+  feedBase: 'https://api.dev.cadence-extension.com/v1',
+  radioUrl: 'https://radio.dev.cadence-extension.com',
+  radioQr: 'icons/cadence-radio-dev-qr.svg',
+});
 
-// Beacon environments that can run CADence exercises. `api` is the Beacon API
-// base the pages receive as `host` (Beacon's urls.Base); `site` is the Beacon
-// site origin they receive as `source`. Either identifies the environment.
+// Beacon environments that can run CADence exercises, and the CADence
+// deployment each one uses. `api` is the Beacon API base the pages receive as
+// `host` (Beacon's urls.Base); `site` is the Beacon site origin they receive
+// as `source`. Either identifies the environment.
 const ENVIRONMENTS = Object.freeze([
   Object.freeze({
     env: 'train',
     label: 'Train Beacon',
     site: 'https://trainbeacon.ses.nsw.gov.au',
     api: 'https://apitrainbeacon.ses.nsw.gov.au',
-    feedBase: CADENCE_FEED_BASE,
+    ...CADENCE_DEV,
   }),
   Object.freeze({
     env: 'test',
     label: 'Test Beacon',
     site: 'https://testbeacon.ses.nsw.gov.au',
     api: 'https://apitestbeacon.ses.nsw.gov.au',
-    feedBase: CADENCE_FEED_BASE,
+    ...CADENCE_DEV,
   }),
 ]);
 
@@ -135,7 +146,8 @@ function originOf(value) {
  * simulated exercises aren't offered there (production and everything else).
  *
  * @param {string} hostOrSite  e.g. params.host / urls.Base, or params.source
- * @returns {{env: string, label: string, site: string, api: string, feedBase: string}|null}
+ * @returns {{env: string, label: string, site: string, api: string, feedBase: string, radioUrl: string,
+ *   radioQr: string}|null}
  */
 export function simulationEnvironment(hostOrSite) {
   const origin = originOf(hostOrSite);

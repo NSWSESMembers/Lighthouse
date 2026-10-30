@@ -59,6 +59,12 @@ export function SimulatedExercisePageVM(deps = {}) {
     ? `CADence Simulated Exercise (${self.environmentLabel})`
     : 'CADence Simulated Exercise';
 
+  // The radio join page of the CADence deployment this environment's exercise
+  // list comes from, and its static QR code (relative to this page).
+  self.radioUrl = environment ? environment.radioUrl : '';
+  self.radioHost = environment ? new URL(environment.radioUrl).host : '';
+  self.radioQrSrc = environment ? `../${environment.radioQr}` : '';
+
   let token = null;
 
   // ---- What Lighthouse shows now (the shared choice) ----------------------

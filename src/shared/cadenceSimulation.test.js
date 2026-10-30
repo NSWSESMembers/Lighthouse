@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { request, BeaconApiError } from './BeaconClient/core/request.js';
 import {
   simulationEnvironment,
@@ -58,6 +59,18 @@ describe('simulationEnvironment', () => {
   it('ignores a trailing slash or path', () => {
     expect(simulationEnvironment('https://apitrainbeacon.ses.nsw.gov.au/')?.env).toBe('train');
     expect(simulationEnvironment('https://trainbeacon.ses.nsw.gov.au/Jobs/Tasking')?.env).toBe('train');
+  });
+
+  it("takes the radio join page and its QR code from the backend's own CADence deployment", () => {
+    ['https://apitrainbeacon.ses.nsw.gov.au', 'https://apitestbeacon.ses.nsw.gov.au'].forEach((host) => {
+      const { feedBase, radioUrl, radioQr } = simulationEnvironment(host);
+      // A deployment serves its backend at api.<domain> and its join page at radio.<domain>.
+      expect(new URL(radioUrl).host).toBe(new URL(feedBase).host.replace(/^api\./, 'radio.'));
+      expect(radioUrl).toBe('https://radio.dev.cadence-extension.com');
+      // The QR code is a static file in the extension (static/ here), made for that join page.
+      const svg = readFileSync(new URL(`../../static/${radioQr}`, import.meta.url), 'utf8');
+      expect(svg).toContain(`<title>QR code for ${radioUrl}</title>`);
+    });
   });
 
   it('never offers production or the other Beacon environments', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { listExercises, SimulationFeedError } from '../../../shared/cadenceSimulation.js';
+import { listExercises, SimulationFeedError, simulationEnvironment } from '../../../shared/cadenceSimulation.js';
 import { SimulatedExercisePageVM } from './SimulatedExercisePageVM.js';
 
 vi.mock('../../../shared/cadenceSimulation.js', async (importOriginal) => {
@@ -110,10 +110,24 @@ describe('availability', () => {
     const vm = new SimulatedExercisePageVM({ host: PROD_HOST });
     expect(vm.available).toBe(false);
     expect(vm.pageTitle).toBe('CADence Simulated Exercise');
+    expect([vm.radioUrl, vm.radioHost, vm.radioQrSrc]).toEqual(['', '', '']);
     vm.setToken('prod-token');
     await expect(vm.refresh()).resolves.toBeNull();
     await vm.show();
     expect(listExercises).not.toHaveBeenCalled();
+  });
+
+  it("links the radio join page of the CADence deployment its exercises come from, with that page's QR code", async () => {
+    for (const host of [TRAIN_HOST, 'https://apitestbeacon.ses.nsw.gov.au']) {
+      const { vm } = await makeVM({ host });
+      const environment = simulationEnvironment(host);
+      expect(vm.radioUrl).toBe(environment.radioUrl);
+      expect(vm.radioUrl).toBe('https://radio.dev.cadence-extension.com');
+      expect(vm.radioHost).toBe('radio.dev.cadence-extension.com');
+      // The page is pages/simulatedexercise.html; the QR code is a file in the extension root.
+      expect(vm.radioQrSrc).toBe(`../${environment.radioQr}`);
+      expect(vm.radioQrSrc).toBe('../icons/cadence-radio-dev-qr.svg');
+    }
   });
 
   it('asks for nothing until it has a Beacon token, then loads the list once', async () => {

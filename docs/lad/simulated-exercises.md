@@ -21,6 +21,12 @@ The choice applies to every Lighthouse tab on that Beacon, including LAD tabs th
 
 The exercise list and positions come from the CADence exercise service, which checks your Beacon sign-in. Nothing is sent to it until you open the page. See [the CADence exercise service](https://lighthouse.ses.nsw.gov.au/privacy/#the-cadence-exercise-service) in the privacy policy.
 
+## Exercise Radio
+
+The CADence Simulated Exercise page also has an **Exercise radio** section, with a link and a QR code for CADence's radio join page. Join the exercise radio there to talk to the simulated teams. It's best to join from a phone: scan the QR code with your phone's camera.
+
+To join, you need the exercise's join code. For an individual exercise it's shown in CADence. For a group exercise, your facilitator gives it to you.
+
 ## In LAD
 
 The simulated vehicles and vessels move on the [Situation Map](situation-map.md), match their Beacon teams the same way radios do (see [Setting up a Team for Radio Tracking](assets.md#setting-up-a-team-for-radio-tracking)) and appear in [Instant Task suggestions](tasking.md#instant-task-suggestions).

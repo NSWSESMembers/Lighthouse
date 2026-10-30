@@ -24,3 +24,15 @@ body > main {
 .simex-page .card ul {
   padding-left: 1.25rem;
 }
+
+/* ---- exercise radio ------------------------------------------------------- */
+
+/* The QR code keeps its own size: 6 px a module, quiet zone included. */
+.simex-radio-qr {
+  flex: 0 0 auto;
+  border-radius: 0.375rem;
+}
+
+.simex-radio-text {
+  flex: 1 1 16rem;
+}

@@ -107,6 +107,29 @@
             </div>
         </section>
 
+        <section class="card shadow-sm mb-3" aria-labelledby="simex-radio-title" id="simex-radio">
+            <div class="card-body">
+                <h2 class="h6" id="simex-radio-title">Exercise radio</h2>
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <!-- Black on white with its own quiet zone in both themes, so phones can scan it. -->
+                    <img class="simex-radio-qr" id="simex-radio-qr" width="222" height="222"
+                        data-bind="attr: { src: radioQrSrc, alt: 'QR code for ' + radioHost }">
+                    <div class="simex-radio-text">
+                        <p class="mb-2">
+                            Talk to the simulated teams on the exercise radio. It's best to join from a phone, so
+                            scan this code with your phone's camera. You can also open
+                            <a id="simex-radio-link" target="_blank" rel="noopener noreferrer"
+                                data-bind="attr: { href: radioUrl }, text: radioHost"></a>.
+                        </p>
+                        <p class="small text-body-secondary mb-0" id="simex-radio-code">
+                            To join, you need the exercise's join code. For an individual exercise it's shown in
+                            CADence. For a group exercise, your facilitator gives it to you.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section class="card shadow-sm" aria-labelledby="simex-about-title">
             <div class="card-body small">
                 <h2 class="h6" id="simex-about-title">What changes</h2>
