@@ -3,6 +3,11 @@
 
 var tj = require('@tmcw/togeojson');
 var DOMParser = require('@xmldom/xmldom').DOMParser;
+import { installSharedSelection, SHARE_ACCESS_MESSAGE } from './shared/cadenceSimulationShare.js';
+
+// CADence simulated exercises: lets Beacon pages read the exercise chosen on
+// the CADence Simulated Exercise page (shared/cadenceSimulationShare.js).
+const simulatedExerciseShareReady = installSharedSelection();
 
 // Check whether new version is installed
 // chrome.runtime.onInstalled.addListener(function(details){
@@ -91,7 +96,11 @@ chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
 
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.type === 'API_TOKEN_UPDATE') {
+  if (request.type === SHARE_ACCESS_MESSAGE) {
+    // A content script found session storage closed: answer once it's open.
+    simulatedExerciseShareReady.then(() => sendResponse({ ok: true }));
+    return true;
+  } else if (request.type === 'API_TOKEN_UPDATE') {
     let key = 'beaconAPIToken-' + request.host;
     chrome.storage.local
       .set({ key: JSON.stringify(request.token) })

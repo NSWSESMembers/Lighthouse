@@ -1578,6 +1578,19 @@
 
         <main class="map-wrap"><!-- flexible area fills remaining width-->
             <div id="map"></div><!-- set to fill parent-->
+            <!-- A simulated exercise ended (or its sign-in was refused) and LAD went back
+                 to live positions. main.js moves this onto the map, above the map alerts,
+                 and it stays up until closed (SimulatedExerciseVM.notice). -->
+            <div id="simexNotice" class="alert alert-dismissible simex-notice" role="status" style="display:none"
+                data-bind="visible: simulatedExercise.noticeVisible,
+                    css: { 'alert-info': !simulatedExercise.noticeIsWarning(), 'alert-warning': simulatedExercise.noticeIsWarning }">
+                <strong data-bind="visible: simulatedExercise.noticeName, text: simulatedExercise.noticeName"></strong>
+                <span data-bind="text: simulatedExercise.noticeText"></span>
+                <a href="#" class="alert-link text-nowrap"
+                    data-bind="click: simulatedExercise.chooseAnotherExercise, text: simulatedExercise.noticeLinkText"></a>
+                <button type="button" class="btn-close" aria-label="Dismiss"
+                    data-bind="click: simulatedExercise.dismissNotice"></button>
+            </div>
         </main>
     </div>
 

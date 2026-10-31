@@ -2,6 +2,7 @@
 global.jQuery = $;
 
 import BeaconClient from '../../shared/BeaconClient.js';
+import { isSimulationUnavailable } from '../../shared/cadenceSimulation.js';
 const BeaconToken = require('../lib/shared_token_code.js');
 import { startBeaconSignalRConnection, stopBeaconSignalRConnection, connectionStatus, getConnectionStatus, messageReceived } from './signalr/connection.js';
 import { setPushModeEnabled } from './signalr/pushMode.js';
@@ -29,9 +30,10 @@ import { JobStatusConfirmModalVM } from "./viewmodels/JobStatusConfirmModalVM.js
 import { CallOffModalVM } from "./viewmodels/CallOffModalVM.js";
 import { OpsLogResolveModalVM } from "./viewmodels/OpsLogResolveModalVM.js";
 import { TrackableAssetsModalVM } from "./viewmodels/TrackableAssetsModalVM.js";
+import { SimulatedExerciseVM } from "./viewmodels/SimulatedExerciseVM.js";
 import IncidentImagesModalVM from "./viewmodels/IncidentImagesModalVM";
 
-import { installAlerts } from './components/alerts.js';
+import { installAlerts, registerAlertRule } from './components/alerts.js';
 import { LegendControl } from './components/legend.js';
 import { SpotlightSearchVM } from "./components/spotlightSearch.js";
 import { registerAcronymTextBinding } from "./components/acronymText.js";
@@ -559,6 +561,28 @@ function VM() {
     self.selectedJob = ko.observable(null);
 
     self.trackableAssetsModalVM = new TrackableAssetsModalVM(self);
+
+    // CADence simulated exercises (Train/Test Beacon only). The exercise is
+    // chosen on Lighthouse's CADence Simulated Exercise page and LAD follows
+    // it: while one is chosen, fetchAllTrackableAssets reads the radio feed
+    // from the exercise instead of Beacon. See viewmodels/SimulatedExerciseVM.js
+    // and shared/cadenceSimulationShare.js.
+    self.simulatedExercise = new SimulatedExerciseVM({
+        host: apiHost,
+        getToken,
+        onSelectionChange: () => self.fetchAllTrackableAssets(),
+        openPage: () => self.openSimulatedExercisePage(),
+    });
+    // Registered before installAlerts() runs, so the alert overlay picks it up.
+    registerAlertRule(() => self.simulatedExercise.alertRules());
+
+    // The map alert's "change" item and the ended banner's link: open the
+    // CADence Simulated Exercise page with LAD's own Beacon parameters, in
+    // one tab that's reused if it's already open.
+    self.openSimulatedExercisePage = function () {
+        const url = new URL('simulatedexercise.html' + window.location.search, window.location.href);
+        window.open(url.href, 'lh-simulated-exercise');
+    };
 
     self.jobStatusConfirmVM = new JobStatusConfirmModalVM(self);
     self.callOffVM = new CallOffModalVM();
@@ -2626,8 +2650,22 @@ function VM() {
     self.fetchAllTrackableAssets = async function () {
         if (!assetDataRefreshInterlock) {
             const t = await getToken();   // blocks here until token is ready
+            // With a simulated exercise chosen the radio half of the feed
+            // comes from the exercise, so the first fetch waits until the
+            // choice has been read. Note which selection this request is
+            // for: if it changes while the request is in flight, the change
+            // has already started a fresh fetch, so this response is dropped
+            // rather than drawn over it.
+            const simulatedExercise = self.simulatedExercise;
+            await simulatedExercise.ready;
+            const simulation = simulatedExercise.feedSelection();
+            const simulationGeneration = simulatedExercise.generation();
             try {
-                const assets = await BeaconClient.asset.filter('', beaconCtx(t));
+                const assets = await BeaconClient.asset.filter('', beaconCtx(t, { simulation }));
+                if (simulationGeneration !== simulatedExercise.generation()) return;
+                if (simulation) {
+                    simulatedExercise.positionsReceived(assets.filter(a => a.type === 'psn').length);
+                }
                 assets.forEach(function (a) {
                     myViewModel.getOrCreateAsset(a);
                 })
@@ -2658,8 +2696,19 @@ function VM() {
 
                 myViewModel._markInitialFetchDone();
             } catch (err) {
+                if (simulationGeneration !== simulatedExercise.generation()) return;
+                if (simulation && isSimulationUnavailable(err)) {
+                    // The exercise backend refused this Beacon sign-in: go back
+                    // to the real feed everywhere (endHere() refetches and
+                    // tells the user).
+                    console.warn("Simulated exercise feed unavailable, returning to the real feed:", err);
+                    simulatedExercise.endHere('unavailable');
+                    return;
+                }
                 console.error("Error fetching trackable assets:", err);
-                showAlert('Failed to fetch trackable assets. Your session may have expired', 'danger', 5000);
+                showAlert(simulation
+                    ? 'Failed to fetch the simulated exercise positions. Showing the last positions received.'
+                    : 'Failed to fetch trackable assets. Your session may have expired', 'danger', 5000);
             } finally {
                 assetDataRefreshInterlock = false;
             }
@@ -4110,6 +4159,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 myViewModel.refreshSectorsForDropdown();
             }
         });
+
+        // The simulated-exercise banner (SimulatedExerciseVM.notice, markup next
+        // to #map) goes first in the map's top-right corner, above the map
+        // alerts. It stays up until it's closed, so it mustn't cover the
+        // registers' toolbars the way a top-of-page alert would.
+        const simexNoticeEl = document.getElementById('simexNotice');
+        if (simexNoticeEl) {
+            const simexNoticeControl = L.control({ position: 'topright' });
+            simexNoticeControl.onAdd = () => {
+                L.DomEvent.disableClickPropagation(simexNoticeEl);
+                L.DomEvent.disableScrollPropagation(simexNoticeEl);
+                return simexNoticeEl;
+            };
+            simexNoticeControl.addTo(map);
+            const corner = simexNoticeEl.parentNode;
+            corner.insertBefore(simexNoticeEl, corner.firstChild);
+        }
 
         // Alerts overlay
         installAlerts(map, myViewModel);

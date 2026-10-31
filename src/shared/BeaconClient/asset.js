@@ -1,5 +1,6 @@
 import moment from 'moment';
 import { request } from './core/request.js';
+import { fetchResourceLocations as fetchSimulatedRadioAssets } from '../cadenceSimulation.js';
 
 const CACHE_SECONDS = 20;
 
@@ -28,7 +29,14 @@ function writeCache(key, data) {
   }
 }
 
-async function fetchRadioAssets(host, userId, token, signal) {
+async function fetchRadioAssets(host, userId, token, signal, simulation) {
+  if (simulation) {
+    // A CADence exercise is selected (Train/Test Beacon only, see
+    // ../cadenceSimulation.js): its simulated positions replace Beacon's radio
+    // feed. Never cached: the feed is served no-store and positions move every
+    // few seconds, so a cached copy would show teams where they were.
+    return fetchSimulatedRadioAssets(simulation, { host, token, signal });
+  }
   const key = cacheKey(host, 'LighthouseFetchedRadioAssets');
   const cached = readCache(key);
   if (cached) {
@@ -53,35 +61,53 @@ async function fetchTeleAssets(host, userId, token, signal) {
   return data;
 }
 
-async function returnAssetLocations(host, userId, token, signal) {
+// Radio (PSN) features -> assets. Numeric names aren't callsigns, so they're
+// dropped. `exerciseHqId` is set for a CADence exercise copy's positions: the
+// HQ that copy belongs to (see models/Asset.js in tasking).
+function normaliseRadioAssets(features, exerciseHqId = null) {
+  const assets = [];
+  features.forEach((i) => {
+    if (isNaN(i.properties.name)) {
+      i.type = 'psn';
+      if (exerciseHqId != null && exerciseHqId !== '') i.exerciseHqId = String(exerciseHqId);
+      i.lastSeen = i.properties.lastSeen;
+      i.name = `${i.properties.name} (PSN)`;
+      i.unitCode = i.properties.name.match(/([a-z]+)/i) ? i.properties.name.match(/([a-z]+)/i)[1] : i.properties.name;
+      i.vehCode = i.properties.name.match(/[a-z]+(\d*[a-z]?)/i) ? i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1] : '';
+      i.markerLabel = i.properties.name;
+      if (i.unitCode && i.vehCode) {
+        i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
+      }
+      i.entity = i.properties.entity;
+      i.capability = i.properties.capability;
+      i.resourceType = i.properties.resourceType;
+      i.talkGroup = i.properties.talkgroup != null ? i.properties.talkgroup : 'Unknown';
+      i.talkGroupLastUpdated = i.properties.talkgroupLastUpdated != null ? i.properties.talkgroupLastUpdated : 'Unknown';
+      i.licensePlate = i.properties.licensePlate;
+      assets.push(i);
+    }
+  });
+  return assets;
+}
+
+async function returnAssetLocations(host, userId, token, signal, simulation) {
   const [radio, tele] = await Promise.allSettled([
-    fetchRadioAssets(host, userId, token, signal),
+    fetchRadioAssets(host, userId, token, signal, simulation),
     fetchTeleAssets(host, userId, token, signal),
   ]);
+
+  // With a simulated exercise selected, a failed radio fetch rejects instead of
+  // quietly returning telematics only: the caller has to know, either to keep
+  // the positions it last drew (network/5xx) or to drop back to the real feed
+  // (the backend refused the token, see isSimulationUnavailable).
+  if (simulation && radio.status === 'rejected') {
+    throw radio.reason;
+  }
 
   const response = [];
 
   if (radio.status === 'fulfilled') {
-    radio.value.forEach((i) => {
-      if (isNaN(i.properties.name)) {
-        i.type = 'psn';
-        i.lastSeen = i.properties.lastSeen;
-        i.name = `${i.properties.name} (PSN)`;
-        i.unitCode = i.properties.name.match(/([a-z]+)/i) ? i.properties.name.match(/([a-z]+)/i)[1] : i.properties.name;
-        i.vehCode = i.properties.name.match(/[a-z]+(\d*[a-z]?)/i) ? i.properties.name.match(/[a-z]+(\d*[a-z]?)/i)[1] : '';
-        i.markerLabel = i.properties.name;
-        if (i.unitCode && i.vehCode) {
-          i.markerLabel = `${i.unitCode}<br>${i.vehCode}`;
-        }
-        i.entity = i.properties.entity;
-        i.capability = i.properties.capability;
-        i.resourceType = i.properties.resourceType;
-        i.talkGroup = i.properties.talkgroup != null ? i.properties.talkgroup : 'Unknown';
-        i.talkGroupLastUpdated = i.properties.talkgroupLastUpdated != null ? i.properties.talkgroupLastUpdated : 'Unknown';
-        i.licensePlate = i.properties.licensePlate;
-        response.push(i);
-      }
-    });
+    response.push(...normaliseRadioAssets(radio.value, simulation ? simulation.participantHqId : null));
   } else {
     console.error('Error fetching PSN asset locations', radio.reason);
   }
@@ -122,15 +148,40 @@ async function returnAssetLocations(host, userId, token, signal) {
 /**
  * SES asset locations (radio + telematics, merged and normalised).
  *
+ * Pass `ctx.simulation` ({ exerciseId, copyId } of a CADence exercise copy) to
+ * read the radio half from that exercise's simulated positions instead of
+ * Beacon. That only works on Train and Test Beacon; anywhere else the call
+ * rejects with a SimulationFeedError that isSimulationUnavailable() accepts,
+ * without contacting the CADence backend. With `participantHqId` in it too,
+ * each simulated asset carries that HQ as `exerciseHqId`, so LAD only matches
+ * it to teams assigned to that HQ.
+ *
  * @param {string[]} assetFilter  asset names to keep; empty/falsy returns everything
- * @param {{host: string, userId?: string, token: string, signal?: AbortSignal}} ctx
+ * @param {{host: string, userId?: string, token: string, signal?: AbortSignal,
+ *          simulation?: {exerciseId: string, copyId: string, participantHqId?: string}|null}} ctx
  * @returns {Promise<object[]>}
  */
 export async function filter(assetFilter, ctx = {}) {
-  const { host, userId = 'notPassed', token, signal } = ctx;
-  const response = await returnAssetLocations(host, userId, token, signal);
+  const { host, userId = 'notPassed', token, signal, simulation = null } = ctx;
+  const response = await returnAssetLocations(host, userId, token, signal, simulation);
   if (!assetFilter || assetFilter.length === 0) {
     return response;
   }
   return response.filter((v) => assetFilter.includes(v.name));
+}
+
+/**
+ * Only the simulated vehicles and vessels of a CADence exercise copy,
+ * normalised like filter()'s radio assets. For a map that draws the exercise
+ * as a layer of its own beside the live feed (the situational awareness map),
+ * so Beacon's telematics aren't included. Train and Test Beacon only; anywhere
+ * else it rejects like filter() does with `ctx.simulation`.
+ *
+ * @param {{host: string, token: string, signal?: AbortSignal,
+ *          simulation: {exerciseId: string, copyId: string}}} ctx
+ * @returns {Promise<object[]>}
+ */
+export async function simulated(ctx = {}) {
+  const { host, token, signal, simulation = null } = ctx;
+  return normaliseRadioAssets(await fetchSimulatedRadioAssets(simulation, { host, token, signal }));
 }
