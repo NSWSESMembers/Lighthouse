@@ -123,6 +123,19 @@ Most layers are described by their name. Those that need more explanation:
 
 - **HazardWatch Active Warnings**: flood, tsunami, severe weather, coastal erosion and snow warnings. Click a warning to see the published product details. Refer to the Public Information Manual for more on warnings.
 
+**BOM Warnings**
+
+- **BOM Severe Thunderstorm Warning**: the areas under a current severe thunderstorm warning, and the storm cells named in those warnings, with an arrow for the direction each is moving and the time of the cell's position (UTC).
+- **BOM Volcanic Ash Advisory**: advisories from the Darwin Volcanic Ash Advisory Centre: the erupting volcano, the ash cloud now, and where it's forecast to be in 6, 12 and 18 hours.
+
+**BOM Radar & Satellite**
+
+- **BOM Rain Radar Still**, **BOM Thunderstorm Tracking**, **BOM Satellite Composite True Colour** and the two **BOM Lightning** layers load as one picture of the area you're looking at, so the whole map always shows the same radar scan or satellite image. After you pan or zoom, the new picture replaces the old one once it has loaded. A big jump can show a blank edge for a moment.
+
+**BOM Observations**
+
+- **BOM Sea Surface Temperature (°C)**: the daily sea surface temperature analysis, shaded with contour lines.
+
 **RainViewer**
 
 - **RainViewer Animated Rainfall Radar**: the last two hours of rainfall radar, played on a loop. While it's on, a small **Radar** bar sits above the [Legend](#legend) with play/pause, the time of the frame showing, and how far that frame is behind the latest one. Click **Radar** to open the step buttons, a slider to drag through the frames, the playback speed and the colour scale (hover over a colour to see its rain or hail level). Click the time badge, or **Latest**, to jump back to the newest frame. New frames are added every few minutes: if you've paused on an earlier frame it stays on that frame, and if you're on the latest it moves on to the new one. The bar remembers whether you left it open. To make the radar more or less see-through, use the [Map layers](configuration.md#map-layers) tab; it starts at 60%.
